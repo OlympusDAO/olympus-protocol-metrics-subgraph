@@ -1,0 +1,79 @@
+type DailyBond @entity {
+  id: ID!
+  timestamp: BigInt!
+  token: Token!
+  amount: BigDecimal!
+  value: BigDecimal!
+}
+
+type Rebase @entity {
+  id: ID!
+  amount: BigDecimal!
+  stakedOhms: BigDecimal!
+  percentage: BigDecimal!
+  contract: String!
+  timestamp: BigInt!
+  value: BigDecimal!
+}
+
+type DailyStakingReward @entity {
+  id: ID!
+  timestamp: BigInt!
+  amount: BigDecimal!
+  value: BigDecimal!
+}
+
+type Token @entity {
+  id: ID!
+}
+
+type ProtocolMetric @entity {
+  id: ID!
+  timestamp: BigInt!
+  ohmCirculatingSupply: BigDecimal!
+  sOhmCirculatingSupply: BigDecimal!
+  totalSupply: BigDecimal!
+  ohmPrice: BigDecimal!
+  marketCap: BigDecimal!
+  totalValueLocked: BigDecimal!
+  treasuryRiskFreeValue: BigDecimal!
+  treasuryMarketValue: BigDecimal!
+  nextEpochRebase: BigDecimal!
+  nextDistributedOhm: BigDecimal!
+  treasuryDaiRiskFreeValue: BigDecimal!
+  treasuryFraxRiskFreeValue: BigDecimal!
+  treasuryLusdRiskFreeValue: BigDecimal!
+  treasuryWETHRiskFreeValue: BigDecimal!
+  treasuryDaiMarketValue: BigDecimal!
+  treasuryFraxMarketValue: BigDecimal!
+  treasuryLusdMarketValue: BigDecimal!
+  treasuryXsushiMarketValue: BigDecimal!
+  treasuryWETHMarketValue: BigDecimal!
+  treasuryCVXMarketValue: BigDecimal!
+  currentAPY: BigDecimal!
+  runway2dot5k: BigDecimal
+  runway5k: BigDecimal
+  runway7dot5k: BigDecimal
+  runway10k: BigDecimal
+  runway20k: BigDecimal
+  runway50k: BigDecimal
+  runway70k: BigDecimal
+  runway100k: BigDecimal
+  runwayCurrent: BigDecimal
+  treasuryOhmDaiPOL: BigDecimal!
+  treasuryOhmFraxPOL: BigDecimal!
+  treasuryOhmLusdPOL: BigDecimal!
+  treasuryOhmEthPOL: BigDecimal!
+}
+
+type BondDiscount @entity {
+  id: ID!
+  timestamp: BigInt!
+  dai_discount: BigDecimal!
+  ohmdai_discount: BigDecimal!
+  frax_discount: BigDecimal!
+  ohmfrax_discount: BigDecimal!
+  eth_discount: BigDecimal!
+  lusd_discount: BigDecimal!
+  ohmlusd_discount: BigDecimal!
+}
