@@ -1,3 +1,5 @@
-# Example Subgraph
+# Olympus Protocl Metrics Subgraph
 
-An example to help you get started with The Graph. For more information see the docs on https://thegraph.com/docs/.
+Gathers data from bonds, liquidity and Olympus treasury.
+
+Used in the dashboard https://app.olympusdao.finance/ and the Olympus Playground.
