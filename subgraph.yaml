@@ -1,6 +1,6 @@
 specVersion: 0.0.2
-description: Olympus DAO Subgraph
-repository: https://github.com/OlympusDAO/olympus-subgraph
+description: Olympus Protocol Metrics Subgraph
+repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
   file: ./schema.graphql
 dataSources:
