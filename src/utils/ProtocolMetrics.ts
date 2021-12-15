@@ -91,7 +91,7 @@ function getSohmSupply(blockNumber: BigInt): BigDecimal{
 
     if(blockNumber.gt(BigInt.fromString(SOHM_ERC20_CONTRACTV3_BLOCK))){
         let sohm_contract_v3 = sOlympusERC20V2.bind(Address.fromString(SOHM_ERC20_CONTRACTV3))
-        sohm_supply = sohm_supply = toDecimal(sohm_contract_v3.circulatingSupply(), 9)
+        sohm_supply = toDecimal(sohm_contract_v3.circulatingSupply(), 9)
     }
     
     log.debug("sOHM Supply {}", [sohm_supply.toString()])
