@@ -13,7 +13,7 @@ import { Distributor } from '../../generated/sOlympusERC20V1/Distributor';
 import { ethereum } from '@graphprotocol/graph-ts'
 
 import { ProtocolMetric } from '../../generated/schema'
-import { AAVE_ALLOCATOR, ADAI_ERC20_CONTRACT, CIRCULATING_SUPPLY_CONTRACT, CIRCULATING_SUPPLY_CONTRACT_BLOCK, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR1_BLOCK, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR2_BLOCK, ERC20DAI_CONTRACT, ERC20FRAX_CONTRACT, LUSDBOND_CONTRACT1_BLOCK, LUSD_ERC20_CONTRACT, LUSD_ERC20_CONTRACTV2_BLOCK, OHMDAI_ONSEN_ID, OHM_ERC20_CONTRACT, ONSEN_ALLOCATOR, SOHM_ERC20_CONTRACT, SOHM_ERC20_CONTRACTV2, SOHM_ERC20_CONTRACTV2_BLOCK, STAKING_CONTRACT_V1, STAKING_CONTRACT_V2, STAKING_CONTRACT_V2_BLOCK, SUSHI_MASTERCHEF, SUSHI_OHMDAI_PAIR, SUSHI_OHMETH_PAIR, SUSHI_OHMLUSD_PAIR, TREASURY_ADDRESS, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V2_BLOCK, SUSHI_OHMETH_PAIR_BLOCK, UNI_OHMFRAX_PAIR, UNI_OHMFRAX_PAIR_BLOCK, UNI_OHMLUSD_PAIR_BLOCK, WETH_ERC20_CONTRACT, XSUSI_ERC20_CONTRACT, CVX_ERC20_CONTRACT, CVX_ERC20_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT, STAKING_CONTRACT_V3_BLOCK, STAKING_CONTRACT_V3, TREASURY_ADDRESS_V3, SOHM_ERC20_CONTRACTV3, SOHM_ERC20_CONTRACTV3_BLOCK } from './Constants';
+import { AAVE_ALLOCATOR, ADAI_ERC20_CONTRACT, CIRCULATING_SUPPLY_CONTRACT, CIRCULATING_SUPPLY_CONTRACT_BLOCK, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR1_BLOCK, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR2_BLOCK, ERC20DAI_CONTRACT, ERC20FRAX_CONTRACT, LUSDBOND_CONTRACT1_BLOCK, LUSD_ERC20_CONTRACT, LUSD_ERC20_CONTRACTV2_BLOCK, OHMDAI_ONSEN_ID, OHM_ERC20_CONTRACT, ONSEN_ALLOCATOR, SOHM_ERC20_CONTRACT, SOHM_ERC20_CONTRACTV2, SOHM_ERC20_CONTRACTV2_BLOCK, STAKING_CONTRACT_V1, STAKING_CONTRACT_V2, STAKING_CONTRACT_V2_BLOCK, SUSHI_MASTERCHEF, SUSHI_OHMDAI_PAIR, SUSHI_OHMETH_PAIR, SUSHI_OHMLUSD_PAIR, TREASURY_ADDRESS, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V2_BLOCK, SUSHI_OHMETH_PAIR_BLOCK, UNI_OHMFRAX_PAIR, UNI_OHMFRAX_PAIR_BLOCK, UNI_OHMLUSD_PAIR_BLOCK, WETH_ERC20_CONTRACT, XSUSI_ERC20_CONTRACT, CVX_ERC20_CONTRACT, CVX_ERC20_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT, STAKING_CONTRACT_V3_BLOCK, STAKING_CONTRACT_V3, TREASURY_ADDRESS_V3, SOHM_ERC20_CONTRACTV3, SOHM_ERC20_CONTRACTV3_BLOCK, OHMV2_ERC20_CONTRACT_BLOCK, OHMV2_ERC20_CONTRACT, DAO_WALLET, SUSHI_OHMETH_PAIR_BLOCKV2, SUSHI_OHMETH_PAIRV2 } from './Constants';
 import { dayFromTimestamp } from './Dates';
 import { toDecimal } from './Decimals';
 import { getOHMUSDRate, getDiscountedPairUSD, getPairUSD, getXsushiUSDRate, getETHUSDRate, getPairWETH, getCVXUSDRate } from './Price';
@@ -58,23 +58,27 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric{
 }
 
 
-function getTotalSupply(): BigDecimal{
+function getTotalSupply(blockNumber: BigInt): BigDecimal{
     let ohm_contract = OlympusERC20.bind(Address.fromString(OHM_ERC20_CONTRACT))
     let total_supply = toDecimal(ohm_contract.totalSupply(), 9)
+    if(blockNumber.gt(BigInt.fromString(OHMV2_ERC20_CONTRACT_BLOCK))){
+        ohm_contract = OlympusERC20.bind(Address.fromString(OHMV2_ERC20_CONTRACT))
+        total_supply = toDecimal(ohm_contract.totalSupply(), 9)
+    }
+
     log.debug("Total Supply {}", [total_supply.toString()])
     return total_supply
 }
 
 function getCriculatingSupply(blockNumber: BigInt, total_supply: BigDecimal): BigDecimal{
-    let circ_supply = BigDecimal.fromString("0")
-    if(blockNumber.gt(BigInt.fromString(CIRCULATING_SUPPLY_CONTRACT_BLOCK))){
-        let circulatingsupply_contract = CirculatingSupply.bind(Address.fromString(CIRCULATING_SUPPLY_CONTRACT))
-        circ_supply = toDecimal(circulatingsupply_contract.OHMCirculatingSupply(), 9)
+    let ohm_contract = OlympusERC20.bind(Address.fromString(OHM_ERC20_CONTRACT))
+    let circ_supply = total_supply.minus(toDecimal(ohm_contract.balanceOf(Address.fromString(DAO_WALLET)), 9))
+    if(blockNumber.gt(BigInt.fromString(OHMV2_ERC20_CONTRACT_BLOCK))){
+        ohm_contract = OlympusERC20.bind(Address.fromString(OHMV2_ERC20_CONTRACT))
+        circ_supply = total_supply.minus(toDecimal(ohm_contract.balanceOf(Address.fromString(DAO_WALLET)), 9))
     }
-    else{
-        circ_supply = total_supply;
-    }
-    log.debug("Circulating Supply {}", [total_supply.toString()])
+
+    log.debug("Circulating Supply {}", [circ_supply.toString()])
     return circ_supply
 }
 
@@ -111,6 +115,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     let ohmfraxPair = UniswapV2Pair.bind(Address.fromString(UNI_OHMFRAX_PAIR))
     let ohmlusdPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMLUSD_PAIR))
     let ohmethPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMETH_PAIR))
+    let ohmethPairv2 = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMETH_PAIRV2))
 
     let treasury_address = TREASURY_ADDRESS;
     if(blockNumber.gt(BigInt.fromString(TREASURY_ADDRESS_V2_BLOCK))){
@@ -209,6 +214,20 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
 
         ohmeth_rfv = getDiscountedPairUSD(ohmethBalance, SUSHI_OHMETH_PAIR)
         ohmethTotalLP = toDecimal(ohmethPair.totalSupply(), 18)
+        if (ohmethTotalLP.gt(BigDecimal.fromString("0")) &&  ohmethBalance.gt(BigInt.fromI32(0))){
+            ohmethPOL = toDecimal(ohmethBalance, 18).div(ohmethTotalLP).times(BigDecimal.fromString("100"))
+        }
+    }
+
+    if(blockNumber.gt(BigInt.fromString(SUSHI_OHMETH_PAIR_BLOCKV2))){
+        ohmethBalance = ohmethPairv2.balanceOf(Address.fromString(TREASURY_ADDRESS_V3))
+        log.debug("ohmethBalance {}", [ohmethBalance.toString()])
+
+        ohmeth_value = getPairWETH(ohmethBalance, SUSHI_OHMETH_PAIRV2)
+        log.debug("ohmeth_value {}", [ohmeth_value.toString()])
+
+        ohmeth_rfv = getDiscountedPairUSD(ohmethBalance, SUSHI_OHMETH_PAIRV2)
+        ohmethTotalLP = toDecimal(ohmethPairv2.totalSupply(), 18)
         if (ohmethTotalLP.gt(BigDecimal.fromString("0")) &&  ohmethBalance.gt(BigInt.fromI32(0))){
             ohmethPOL = toDecimal(ohmethBalance, 18).div(ohmethTotalLP).times(BigDecimal.fromString("100"))
         }
@@ -358,7 +377,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void{
     let pm = loadOrCreateProtocolMetric(block.timestamp);
 
     //Total Supply
-    pm.totalSupply = getTotalSupply()
+    pm.totalSupply = getTotalSupply(blockNumber)
 
     //Circ Supply
     pm.ohmCirculatingSupply = getCriculatingSupply(blockNumber, pm.totalSupply)
