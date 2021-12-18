@@ -188,9 +188,14 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     if(blockNumber.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))){
         ohmdaiPOL = toDecimal(ohmdaiSushiBalancev2, 18).div(ohmdaiTotalLPv2).times(BigDecimal.fromString("100"))
     }
-    let ohmdai_value = getPairUSD(ohmdaiBalance, SUSHI_OHMDAI_PAIR).plus(getPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2))
-    let ohmdai_rfv = getDiscountedPairUSD(ohmdaiBalance, SUSHI_OHMDAI_PAIR).plus(getDiscountedPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2))
-
+    let ohmdai_value = getPairUSD(ohmdaiBalance, SUSHI_OHMDAI_PAIR)
+    if(blockNumber.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))){
+        ohmdai_value = ohmdai_value.plus(getPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2))
+    }
+    let ohmdai_rfv = getDiscountedPairUSD(ohmdaiBalance, SUSHI_OHMDAI_PAIR)
+    if(blockNumber.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))){
+        ohmdai_rfv = ohmdai_rfv.plus(getDiscountedPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2))
+    }
     //OHMFRAX
     let ohmfraxBalance = BigInt.fromI32(0)
     let ohmfrax_value = BigDecimal.fromString("0")
@@ -207,10 +212,10 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
         }
     }
     if(blockNumber.gt(BigInt.fromString(UNI_OHMFRAX_PAIR_BLOCKV2))){
-        ohmfraxBalance = ohmfraxPair.balanceOf(Address.fromString(TREASURY_ADDRESS_V3))
+        ohmfraxBalance = ohmfraxPairV2.balanceOf(Address.fromString(TREASURY_ADDRESS_V3))
         ohmfrax_value = getPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIRV2)
         ohmfrax_rfv = getDiscountedPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIRV2)
-        ohmfraxTotalLP = toDecimal(ohmfraxPair.totalSupply(), 18)
+        ohmfraxTotalLP = toDecimal(ohmfraxPairV2.totalSupply(), 18)
         if (ohmfraxTotalLP.gt(BigDecimal.fromString("0")) &&  ohmfraxBalance.gt(BigInt.fromI32(0))){
             ohmfraxPOL = toDecimal(ohmfraxBalance, 18).div(ohmfraxTotalLP).times(BigDecimal.fromString("100"))
         }
