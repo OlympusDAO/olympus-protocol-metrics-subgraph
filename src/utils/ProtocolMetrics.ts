@@ -13,7 +13,7 @@ import { Distributor } from '../../generated/sOlympusERC20V1/Distributor';
 import { ethereum } from '@graphprotocol/graph-ts'
 
 import { ProtocolMetric } from '../../generated/schema'
-import { AAVE_ALLOCATOR, ADAI_ERC20_CONTRACT, CIRCULATING_SUPPLY_CONTRACT, CIRCULATING_SUPPLY_CONTRACT_BLOCK, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR1_BLOCK, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR2_BLOCK, ERC20DAI_CONTRACT, ERC20FRAX_CONTRACT, LUSDBOND_CONTRACT1_BLOCK, LUSD_ERC20_CONTRACT, LUSD_ERC20_CONTRACTV2_BLOCK, OHMDAI_ONSEN_ID, OHM_ERC20_CONTRACT, ONSEN_ALLOCATOR, SOHM_ERC20_CONTRACT, SOHM_ERC20_CONTRACTV2, SOHM_ERC20_CONTRACTV2_BLOCK, STAKING_CONTRACT_V1, STAKING_CONTRACT_V2, STAKING_CONTRACT_V2_BLOCK, SUSHI_MASTERCHEF, SUSHI_OHMDAI_PAIR, SUSHI_OHMETH_PAIR, SUSHI_OHMLUSD_PAIR, TREASURY_ADDRESS, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V2_BLOCK, SUSHI_OHMETH_PAIR_BLOCK, UNI_OHMFRAX_PAIR, UNI_OHMFRAX_PAIR_BLOCK, UNI_OHMLUSD_PAIR_BLOCK, WETH_ERC20_CONTRACT, XSUSI_ERC20_CONTRACT, CVX_ERC20_CONTRACT, CVX_ERC20_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT, STAKING_CONTRACT_V3_BLOCK, STAKING_CONTRACT_V3, TREASURY_ADDRESS_V3, SOHM_ERC20_CONTRACTV3, SOHM_ERC20_CONTRACTV3_BLOCK, OHMV2_ERC20_CONTRACT_BLOCK, OHMV2_ERC20_CONTRACT, DAO_WALLET, SUSHI_OHMETH_PAIR_BLOCKV2, SUSHI_OHMETH_PAIRV2 } from './Constants';
+import { AAVE_ALLOCATOR, ADAI_ERC20_CONTRACT, CIRCULATING_SUPPLY_CONTRACT, CIRCULATING_SUPPLY_CONTRACT_BLOCK, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR1_BLOCK, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR2_BLOCK, ERC20DAI_CONTRACT, ERC20FRAX_CONTRACT, LUSDBOND_CONTRACT1_BLOCK, LUSD_ERC20_CONTRACT, LUSD_ERC20_CONTRACTV2_BLOCK, OHMDAI_ONSEN_ID, OHM_ERC20_CONTRACT, ONSEN_ALLOCATOR, SOHM_ERC20_CONTRACT, SOHM_ERC20_CONTRACTV2, SOHM_ERC20_CONTRACTV2_BLOCK, STAKING_CONTRACT_V1, STAKING_CONTRACT_V2, STAKING_CONTRACT_V2_BLOCK, SUSHI_MASTERCHEF, SUSHI_OHMDAI_PAIR, SUSHI_OHMETH_PAIR, SUSHI_OHMLUSD_PAIR, TREASURY_ADDRESS, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V2_BLOCK, SUSHI_OHMETH_PAIR_BLOCK, UNI_OHMFRAX_PAIR, UNI_OHMFRAX_PAIR_BLOCK, UNI_OHMLUSD_PAIR_BLOCK, WETH_ERC20_CONTRACT, XSUSI_ERC20_CONTRACT, CVX_ERC20_CONTRACT, CVX_ERC20_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT, STAKING_CONTRACT_V3_BLOCK, STAKING_CONTRACT_V3, TREASURY_ADDRESS_V3, SOHM_ERC20_CONTRACTV3, SOHM_ERC20_CONTRACTV3_BLOCK, OHMV2_ERC20_CONTRACT_BLOCK, OHMV2_ERC20_CONTRACT, DAO_WALLET, SUSHI_OHMETH_PAIR_BLOCKV2, SUSHI_OHMETH_PAIRV2, SUSHI_OHMDAI_PAIRV2, UNI_OHMFRAX_PAIRV2, SUSHI_OHMDAI_PAIRV2_BLOCK, UNI_OHMFRAX_PAIR_BLOCKV2 } from './Constants';
 import { dayFromTimestamp } from './Dates';
 import { toDecimal } from './Decimals';
 import { getOHMUSDRate, getDiscountedPairUSD, getPairUSD, getXsushiUSDRate, getETHUSDRate, getPairWETH, getCVXUSDRate } from './Price';
@@ -111,8 +111,11 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     let lusdERC20 = ERC20.bind(Address.fromString(LUSD_ERC20_CONTRACT))
 
     let ohmdaiPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIR))
+    let ohmdaiPairV2 = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIRV2))
     let ohmdaiOnsenMC = MasterChef.bind(Address.fromString(SUSHI_MASTERCHEF))
     let ohmfraxPair = UniswapV2Pair.bind(Address.fromString(UNI_OHMFRAX_PAIR))
+    let ohmfraxPairV2 = UniswapV2Pair.bind(Address.fromString(UNI_OHMFRAX_PAIRV2))
+
     let ohmlusdPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMLUSD_PAIR))
     let ohmethPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMETH_PAIR))
     let ohmethPairv2 = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMETH_PAIRV2))
@@ -163,9 +166,30 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     let ohmdaiOnsenBalance = ohmdaiOnsenMC.userInfo(BigInt.fromI32(OHMDAI_ONSEN_ID), Address.fromString(ONSEN_ALLOCATOR)).value0
     let ohmdaiBalance = ohmdaiSushiBalance.plus(ohmdaiOnsenBalance)
     let ohmdaiTotalLP = toDecimal(ohmdaiPair.totalSupply(), 18)
+
+
+    //OHMFRAX
+    let ohmdaiSushiBalancev2 = BigInt.fromI32(0)
+    let ohmdai_valuev2 = BigDecimal.fromString("0")
+    let ohmdai_rfvv2 = BigDecimal.fromString("0")
+    let ohmdaiTotalLPv2 = BigDecimal.fromString("0")
+    let ohmdaiPOLv2 = BigDecimal.fromString("0")
+    if(blockNumber.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))){
+        ohmdaiSushiBalancev2 = ohmdaiPairV2.balanceOf(Address.fromString(TREASURY_ADDRESS_V3))
+        ohmdai_valuev2 = getPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2)
+        ohmdai_rfvv2 = getDiscountedPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2)
+        ohmdaiTotalLPv2 = toDecimal(ohmdaiPairV2.totalSupply(), 18)
+        if (ohmdaiTotalLPv2.gt(BigDecimal.fromString("0")) &&  ohmdaiSushiBalancev2.gt(BigInt.fromI32(0))){
+            ohmdaiPOLv2 = toDecimal(ohmdaiSushiBalancev2, 18).div(ohmdaiTotalLPv2).times(BigDecimal.fromString("100"))
+        }
+    }
+
     let ohmdaiPOL = toDecimal(ohmdaiBalance, 18).div(ohmdaiTotalLP).times(BigDecimal.fromString("100"))
-    let ohmdai_value = getPairUSD(ohmdaiBalance, SUSHI_OHMDAI_PAIR)
-    let ohmdai_rfv = getDiscountedPairUSD(ohmdaiBalance, SUSHI_OHMDAI_PAIR)
+    if(blockNumber.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))){
+        ohmdaiPOL = toDecimal(ohmdaiSushiBalancev2, 18).div(ohmdaiTotalLPv2).times(BigDecimal.fromString("100"))
+    }
+    let ohmdai_value = getPairUSD(ohmdaiBalance, SUSHI_OHMDAI_PAIR).plus(getPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2))
+    let ohmdai_rfv = getDiscountedPairUSD(ohmdaiBalance, SUSHI_OHMDAI_PAIR).plus(getDiscountedPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2))
 
     //OHMFRAX
     let ohmfraxBalance = BigInt.fromI32(0)
@@ -174,9 +198,18 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     let ohmfraxTotalLP = BigDecimal.fromString("0")
     let ohmfraxPOL = BigDecimal.fromString("0")
     if(blockNumber.gt(BigInt.fromString(UNI_OHMFRAX_PAIR_BLOCK))){
-        ohmfraxBalance = ohmfraxPair.balanceOf(Address.fromString(treasury_address)).plus(ohmfraxPair.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
+        ohmfraxBalance = ohmfraxPair.balanceOf(Address.fromString(treasury_address))
         ohmfrax_value = getPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIR)
         ohmfrax_rfv = getDiscountedPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIR)
+        ohmfraxTotalLP = toDecimal(ohmfraxPair.totalSupply(), 18)
+        if (ohmfraxTotalLP.gt(BigDecimal.fromString("0")) &&  ohmfraxBalance.gt(BigInt.fromI32(0))){
+            ohmfraxPOL = toDecimal(ohmfraxBalance, 18).div(ohmfraxTotalLP).times(BigDecimal.fromString("100"))
+        }
+    }
+    if(blockNumber.gt(BigInt.fromString(UNI_OHMFRAX_PAIR_BLOCKV2))){
+        ohmfraxBalance = ohmfraxPair.balanceOf(Address.fromString(TREASURY_ADDRESS_V3))
+        ohmfrax_value = getPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIRV2)
+        ohmfrax_rfv = getDiscountedPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIRV2)
         ohmfraxTotalLP = toDecimal(ohmfraxPair.totalSupply(), 18)
         if (ohmfraxTotalLP.gt(BigDecimal.fromString("0")) &&  ohmfraxBalance.gt(BigInt.fromI32(0))){
             ohmfraxPOL = toDecimal(ohmfraxBalance, 18).div(ohmfraxTotalLP).times(BigDecimal.fromString("100"))
