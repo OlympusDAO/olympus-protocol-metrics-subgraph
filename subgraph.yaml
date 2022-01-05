@@ -31,6 +31,8 @@ dataSources:
           file: ./abis/OlympusERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: UniswapV3Pair
+          file: ./abis/UniswapV3Pair.json
         - name: ConvexAllocator
           file: ./abis/ConvexAllocator.json
         - name: CirculatingSupply
@@ -99,6 +101,8 @@ dataSources:
           file: ./abis/OlympusERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: UniswapV3Pair
+          file: ./abis/UniswapV3Pair.json
         - name: ConvexAllocator
           file: ./abis/ConvexAllocator.json
         - name: CirculatingSupply
@@ -221,6 +225,8 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: UniswapV3Pair
+          file: ./abis/UniswapV3Pair.json
         - name: OHMDAIBondV1
           file: ./abis/OHMDAIBondV1.json
       callHandlers:
@@ -244,6 +250,8 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: UniswapV3Pair
+          file: ./abis/UniswapV3Pair.json
         - name: OHMDAIBondV2
           file: ./abis/OHMDAIBondV2.json
       callHandlers:
@@ -267,6 +275,8 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: UniswapV3Pair
+          file: ./abis/UniswapV3Pair.json
         - name: OHMDAIBondV3
           file: ./abis/OHMDAIBondV3.json
       callHandlers:
@@ -290,6 +300,8 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: UniswapV3Pair
+          file: ./abis/UniswapV3Pair.json
         - name: OHMDAIBondV4
           file: ./abis/OHMDAIBondV4.json
       callHandlers:
@@ -313,6 +325,8 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: UniswapV3Pair
+          file: ./abis/UniswapV3Pair.json
         - name: OHMFRAXBondV1
           file: ./abis/OHMFRAXBondV1.json
       callHandlers:
@@ -336,6 +350,8 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: UniswapV3Pair
+          file: ./abis/UniswapV3Pair.json
         - name: OHMFRAXBondV2
           file: ./abis/OHMFRAXBondV2.json
       callHandlers:
@@ -380,6 +396,8 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: UniswapV3Pair
+          file: ./abis/UniswapV3Pair.json
         - name: ETHBondV1
           file: ./abis/ETHBondV1.json
       callHandlers:
@@ -424,6 +442,8 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: UniswapV3Pair
+          file: ./abis/UniswapV3Pair.json
         - name: OHMLUSDBondV1
           file: ./abis/LUSDBondV1.json
       callHandlers:
@@ -447,6 +467,8 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: UniswapV3Pair
+          file: ./abis/UniswapV3Pair.json
         - name: OHMETHBondV1
           file: ./abis/OHMETHBondV1.json
       callHandlers:
@@ -480,6 +502,8 @@ dataSources:
           file: ./abis/OlympusERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: UniswapV3Pair
+          file: ./abis/UniswapV3Pair.json
         - name: ConvexAllocator
           file: ./abis/ConvexAllocator.json
         - name: CirculatingSupply
