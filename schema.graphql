@@ -50,6 +50,7 @@ type ProtocolMetric @entity {
   treasuryXsushiMarketValue: BigDecimal!
   treasuryWETHMarketValue: BigDecimal!
   treasuryCVXMarketValue: BigDecimal!
+  treasuryOtherMarketValue: BigDecimal!
   currentAPY: BigDecimal!
   runway2dot5k: BigDecimal
   runway5k: BigDecimal

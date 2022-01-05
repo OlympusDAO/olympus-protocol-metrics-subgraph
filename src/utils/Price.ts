@@ -1,8 +1,9 @@
 import {
-    SUSHI_OHMDAI_PAIR, SUSHI_XSUSHI_ETH_PAIR, SUSHI_USDC_ETH_PAIR, SUSHI_CVX_ETH_PAIR, SUSHI_OHMDAI_PAIRV2_BLOCK, SUSHI_OHMDAI_PAIRV2
+    SUSHI_OHMDAI_PAIR, SUSHI_XSUSHI_ETH_PAIR, SUSHI_USDC_ETH_PAIR, SUSHI_CVX_ETH_PAIR, SUSHI_OHMDAI_PAIRV2_BLOCK, SUSHI_OHMDAI_PAIRV2, UNI_FXS_ETH_PAIR
 } from './Constants'
 import { Address, BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
-import { UniswapV2Pair } from '../../generated/OlympusStakingV1/UniswapV2Pair';
+import { UniswapV2Pair } from '../../generated/ProtocolMetrics/UniswapV2Pair';
+import { UniswapV3Pair } from '../../generated/ProtocolMetrics/UniswapV3Pair';
 import { toDecimal } from './Decimals'
 
 
@@ -51,6 +52,22 @@ export function getXsushiUSDRate(): BigDecimal {
 
     return xsushiRate
 
+}
+
+export function getFXSUSDRate(): BigDecimal {
+    let pair = UniswapV3Pair.bind(Address.fromString(UNI_FXS_ETH_PAIR))
+
+    let priceETH = pair.slot0().value0.times(pair.slot0().value0).toBigDecimal()
+    log.debug("fxs priceETH {}", [priceETH.toString()])
+
+    let priceDiv = BigInt.fromI32(2).pow(192).toBigDecimal()
+    priceETH = priceETH.div(priceDiv)
+
+    let priceUSD = priceETH.times(getETHUSDRate()) 
+
+    log.debug("fxs rate {}", [priceUSD.toString()])
+
+    return priceUSD
 }
 
 export function getCVXUSDRate(): BigDecimal {
