@@ -9,5 +9,5 @@ export function handleDeposit(call: DepositCall): void {
   let token = loadOrCreateToken(OHMLUSDLPBOND_TOKEN)
   let amount = toDecimal(call.inputs._amount, 18)
 
-  createDailyBondRecord(call.block.timestamp, token, amount, getPairUSD(call.inputs._amount, SUSHI_OHMLUSD_PAIR))
+  createDailyBondRecord(call.block.timestamp, token, amount, getPairUSD(call.inputs._amount, SUSHI_OHMLUSD_PAIR, call.block.number))
 }

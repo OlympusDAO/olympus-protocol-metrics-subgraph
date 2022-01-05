@@ -8,6 +8,7 @@ export const LUSDBOND_TOKEN: string = "LUSD";
 export const OHMLUSDLPBOND_TOKEN: string = "OHM-LUSD";
 export const OHMETHLPBOND_TOKEN: string = "OHM-WETH";
 
+export const MIGRATION_CONTRACT = '0x184f3fad8618a6f458c16bae63f70c426fe784b3';
 
 export const SUSHI_OHMDAI_PAIR = '0x34d7d7Aaf50AD4944B70B320aCB24C95fa2def7c';
 export const SUSHI_OHMDAI_PAIRV2 = '0x055475920a8c93cffb64d039a8205f7acc7722d3';

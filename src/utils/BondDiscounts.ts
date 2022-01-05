@@ -40,7 +40,7 @@ export function loadOrCreateBondDiscount(timestamp: BigInt): BondDiscount{
 
 export function updateBondDiscounts(blockNumber: BigInt): void{
     let bd = loadOrCreateBondDiscount(blockNumber);
-    let ohmRate = getOHMUSDRate();
+    let ohmRate = getOHMUSDRate(blockNumber);
 
     //OHMDAI
     if(blockNumber.gt(BigInt.fromString(OHMDAISLPBOND_CONTRACT1_BLOCK))){

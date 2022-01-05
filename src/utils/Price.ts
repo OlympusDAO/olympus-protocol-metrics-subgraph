@@ -1,5 +1,5 @@
 import {
-    SUSHI_OHMDAI_PAIR, SUSHI_XSUSHI_ETH_PAIR, SUSHI_USDC_ETH_PAIR, SUSHI_CVX_ETH_PAIR
+    SUSHI_OHMDAI_PAIR, SUSHI_XSUSHI_ETH_PAIR, SUSHI_USDC_ETH_PAIR, SUSHI_CVX_ETH_PAIR, SUSHI_OHMDAI_PAIRV2_BLOCK, SUSHI_OHMDAI_PAIRV2
 } from './Constants'
 import { Address, BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
 import { UniswapV2Pair } from '../../generated/OlympusStakingV1/UniswapV2Pair';
@@ -22,8 +22,12 @@ export function getETHUSDRate(): BigDecimal {
     return ethRate
 }
 
-export function getOHMUSDRate(): BigDecimal {
+export function getOHMUSDRate(block: BigInt): BigDecimal {
     let pair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIR))
+
+    if(block.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))){
+        pair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIRV2))
+    }
 
     let reserves = pair.getReserves()
     let reserve0 = reserves.value0.toBigDecimal()
@@ -81,25 +85,25 @@ export function getDiscountedPairUSD(lp_amount: BigInt, pair_adress: string): Bi
     return result
 }
 
-export function getPairUSD(lp_amount: BigInt, pair_adress: string): BigDecimal{
+export function getPairUSD(lp_amount: BigInt, pair_adress: string, block: BigInt): BigDecimal{
     let pair = UniswapV2Pair.bind(Address.fromString(pair_adress))
     let total_lp = pair.totalSupply()
     let lp_token_0 = pair.getReserves().value0
     let lp_token_1 = pair.getReserves().value1
     let ownedLP = toDecimal(lp_amount,18).div(toDecimal(total_lp,18))
-    let ohm_value = toDecimal(lp_token_0, 9).times(getOHMUSDRate())
+    let ohm_value = toDecimal(lp_token_0, 9).times(getOHMUSDRate(block))
     let total_lp_usd = ohm_value.plus(toDecimal(lp_token_1, 18))
 
     return ownedLP.times(total_lp_usd)
 }
 
-export function getPairWETH(lp_amount: BigInt, pair_adress: string): BigDecimal{
+export function getPairWETH(lp_amount: BigInt, pair_adress: string, block: BigInt): BigDecimal{
     let pair = UniswapV2Pair.bind(Address.fromString(pair_adress))
     let total_lp = pair.totalSupply()
     let lp_token_0 = pair.getReserves().value0
     let lp_token_1 = pair.getReserves().value1
     let ownedLP = toDecimal(lp_amount,18).div(toDecimal(total_lp,18))
-    let ohm_value = toDecimal(lp_token_0, 9).times(getOHMUSDRate())
+    let ohm_value = toDecimal(lp_token_0, 9).times(getOHMUSDRate(block))
     let eth_value = toDecimal(lp_token_1, 18).times(getETHUSDRate())
     let total_lp_usd = ohm_value.plus(eth_value)
 

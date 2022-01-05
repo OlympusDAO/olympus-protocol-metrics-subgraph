@@ -13,7 +13,7 @@ import { Distributor } from '../../generated/sOlympusERC20V1/Distributor';
 import { ethereum } from '@graphprotocol/graph-ts'
 
 import { ProtocolMetric } from '../../generated/schema'
-import { AAVE_ALLOCATOR, ADAI_ERC20_CONTRACT, CIRCULATING_SUPPLY_CONTRACT, CIRCULATING_SUPPLY_CONTRACT_BLOCK, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR1_BLOCK, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR2_BLOCK, ERC20DAI_CONTRACT, ERC20FRAX_CONTRACT, LUSDBOND_CONTRACT1_BLOCK, LUSD_ERC20_CONTRACT, LUSD_ERC20_CONTRACTV2_BLOCK, OHMDAI_ONSEN_ID, OHM_ERC20_CONTRACT, ONSEN_ALLOCATOR, SOHM_ERC20_CONTRACT, SOHM_ERC20_CONTRACTV2, SOHM_ERC20_CONTRACTV2_BLOCK, STAKING_CONTRACT_V1, STAKING_CONTRACT_V2, STAKING_CONTRACT_V2_BLOCK, SUSHI_MASTERCHEF, SUSHI_OHMDAI_PAIR, SUSHI_OHMETH_PAIR, SUSHI_OHMLUSD_PAIR, TREASURY_ADDRESS, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V2_BLOCK, SUSHI_OHMETH_PAIR_BLOCK, UNI_OHMFRAX_PAIR, UNI_OHMFRAX_PAIR_BLOCK, UNI_OHMLUSD_PAIR_BLOCK, WETH_ERC20_CONTRACT, XSUSI_ERC20_CONTRACT, CVX_ERC20_CONTRACT, CVX_ERC20_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT, STAKING_CONTRACT_V3_BLOCK, STAKING_CONTRACT_V3, TREASURY_ADDRESS_V3, SOHM_ERC20_CONTRACTV3, SOHM_ERC20_CONTRACTV3_BLOCK, OHMV2_ERC20_CONTRACT_BLOCK, OHMV2_ERC20_CONTRACT, DAO_WALLET, SUSHI_OHMETH_PAIR_BLOCKV2, SUSHI_OHMETH_PAIRV2, SUSHI_OHMDAI_PAIRV2, UNI_OHMFRAX_PAIRV2, SUSHI_OHMDAI_PAIRV2_BLOCK, UNI_OHMFRAX_PAIR_BLOCKV2 } from './Constants';
+import { AAVE_ALLOCATOR, ADAI_ERC20_CONTRACT, CIRCULATING_SUPPLY_CONTRACT, CIRCULATING_SUPPLY_CONTRACT_BLOCK, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR1_BLOCK, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR2_BLOCK, ERC20DAI_CONTRACT, ERC20FRAX_CONTRACT, LUSDBOND_CONTRACT1_BLOCK, LUSD_ERC20_CONTRACT, LUSD_ERC20_CONTRACTV2_BLOCK, OHMDAI_ONSEN_ID, OHM_ERC20_CONTRACT, ONSEN_ALLOCATOR, SOHM_ERC20_CONTRACT, SOHM_ERC20_CONTRACTV2, SOHM_ERC20_CONTRACTV2_BLOCK, STAKING_CONTRACT_V1, STAKING_CONTRACT_V2, STAKING_CONTRACT_V2_BLOCK, SUSHI_MASTERCHEF, SUSHI_OHMDAI_PAIR, SUSHI_OHMETH_PAIR, SUSHI_OHMLUSD_PAIR, TREASURY_ADDRESS, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V2_BLOCK, SUSHI_OHMETH_PAIR_BLOCK, UNI_OHMFRAX_PAIR, UNI_OHMFRAX_PAIR_BLOCK, UNI_OHMLUSD_PAIR_BLOCK, WETH_ERC20_CONTRACT, XSUSI_ERC20_CONTRACT, CVX_ERC20_CONTRACT, CVX_ERC20_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT, STAKING_CONTRACT_V3_BLOCK, STAKING_CONTRACT_V3, TREASURY_ADDRESS_V3, SOHM_ERC20_CONTRACTV3, SOHM_ERC20_CONTRACTV3_BLOCK, OHMV2_ERC20_CONTRACT_BLOCK, OHMV2_ERC20_CONTRACT, DAO_WALLET, SUSHI_OHMETH_PAIR_BLOCKV2, SUSHI_OHMETH_PAIRV2, SUSHI_OHMDAI_PAIRV2, UNI_OHMFRAX_PAIRV2, SUSHI_OHMDAI_PAIRV2_BLOCK, UNI_OHMFRAX_PAIR_BLOCKV2, MIGRATION_CONTRACT } from './Constants';
 import { dayFromTimestamp } from './Dates';
 import { toDecimal } from './Decimals';
 import { getOHMUSDRate, getDiscountedPairUSD, getPairUSD, getXsushiUSDRate, getETHUSDRate, getPairWETH, getCVXUSDRate } from './Price';
@@ -57,6 +57,23 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric{
     return protocolMetric as ProtocolMetric
 }
 
+function getOHMMarketcap(blockNumber: BigInt): BigDecimal{
+    //Used to calculate current marketcap
+    let marketCap = getOHMUSDRate(blockNumber).times(getCriculatingSupply(blockNumber, getTotalSupply(blockNumber)))
+    log.debug("Market Cap current: {}", [marketCap.toString()])
+
+    //Used to calculate ciculating MarketCap of OHM v1 if v2 is already deployed
+    // if(blockNumber.gt(BigInt.fromString(OHMV2_ERC20_CONTRACT_BLOCK))){
+    //     let block = BigInt.fromI32(1)
+    //     let v1MarketCap = getOHMUSDRate(block).times(getCriculatingSupply(block, getTotalSupply(block)))
+    //     marketCap = marketCap.plus(v1MarketCap)
+    //     log.debug("Market Cap v1: {}", [v1MarketCap.toString()])
+    // }
+
+    log.debug("Market Cap total: {}", [marketCap.toString()])
+
+    return marketCap
+}
 
 function getTotalSupply(blockNumber: BigInt): BigDecimal{
     let ohm_contract = OlympusERC20.bind(Address.fromString(OHM_ERC20_CONTRACT))
@@ -73,9 +90,12 @@ function getTotalSupply(blockNumber: BigInt): BigDecimal{
 function getCriculatingSupply(blockNumber: BigInt, total_supply: BigDecimal): BigDecimal{
     let ohm_contract = OlympusERC20.bind(Address.fromString(OHM_ERC20_CONTRACT))
     let circ_supply = total_supply.minus(toDecimal(ohm_contract.balanceOf(Address.fromString(DAO_WALLET)), 9))
+    circ_supply = circ_supply.minus(toDecimal(ohm_contract.balanceOf(Address.fromString(MIGRATION_CONTRACT)), 9))
+    
     if(blockNumber.gt(BigInt.fromString(OHMV2_ERC20_CONTRACT_BLOCK))){
         ohm_contract = OlympusERC20.bind(Address.fromString(OHMV2_ERC20_CONTRACT))
         circ_supply = total_supply.minus(toDecimal(ohm_contract.balanceOf(Address.fromString(DAO_WALLET)), 9))
+        circ_supply = circ_supply.minus(toDecimal(ohm_contract.balanceOf(Address.fromString(MIGRATION_CONTRACT)), 9))
     }
 
     log.debug("Circulating Supply {}", [circ_supply.toString()])
@@ -176,7 +196,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     let ohmdaiPOLv2 = BigDecimal.fromString("0")
     if(blockNumber.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))){
         ohmdaiSushiBalancev2 = ohmdaiPairV2.balanceOf(Address.fromString(TREASURY_ADDRESS_V3))
-        ohmdai_valuev2 = getPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2)
+        ohmdai_valuev2 = getPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2, blockNumber)
         ohmdai_rfvv2 = getDiscountedPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2)
         ohmdaiTotalLPv2 = toDecimal(ohmdaiPairV2.totalSupply(), 18)
         if (ohmdaiTotalLPv2.gt(BigDecimal.fromString("0")) &&  ohmdaiSushiBalancev2.gt(BigInt.fromI32(0))){
@@ -188,9 +208,9 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     if(blockNumber.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))){
         ohmdaiPOL = toDecimal(ohmdaiSushiBalancev2, 18).div(ohmdaiTotalLPv2).times(BigDecimal.fromString("100"))
     }
-    let ohmdai_value = getPairUSD(ohmdaiBalance, SUSHI_OHMDAI_PAIR)
+    let ohmdai_value = getPairUSD(ohmdaiBalance, SUSHI_OHMDAI_PAIR, blockNumber)
     if(blockNumber.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))){
-        ohmdai_value = ohmdai_value.plus(getPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2))
+        ohmdai_value = ohmdai_value.plus(getPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2, blockNumber))
     }
     let ohmdai_rfv = getDiscountedPairUSD(ohmdaiBalance, SUSHI_OHMDAI_PAIR)
     if(blockNumber.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))){
@@ -204,7 +224,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     let ohmfraxPOL = BigDecimal.fromString("0")
     if(blockNumber.gt(BigInt.fromString(UNI_OHMFRAX_PAIR_BLOCK))){
         ohmfraxBalance = ohmfraxPair.balanceOf(Address.fromString(treasury_address))
-        ohmfrax_value = getPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIR)
+        ohmfrax_value = getPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIR, blockNumber)
         ohmfrax_rfv = getDiscountedPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIR)
         ohmfraxTotalLP = toDecimal(ohmfraxPair.totalSupply(), 18)
         if (ohmfraxTotalLP.gt(BigDecimal.fromString("0")) &&  ohmfraxBalance.gt(BigInt.fromI32(0))){
@@ -213,7 +233,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     }
     if(blockNumber.gt(BigInt.fromString(UNI_OHMFRAX_PAIR_BLOCKV2))){
         ohmfraxBalance = ohmfraxPairV2.balanceOf(Address.fromString(TREASURY_ADDRESS_V3))
-        ohmfrax_value = getPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIRV2)
+        ohmfrax_value = getPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIRV2, blockNumber)
         ohmfrax_rfv = getDiscountedPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIRV2)
         ohmfraxTotalLP = toDecimal(ohmfraxPairV2.totalSupply(), 18)
         if (ohmfraxTotalLP.gt(BigDecimal.fromString("0")) &&  ohmfraxBalance.gt(BigInt.fromI32(0))){
@@ -229,7 +249,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     let ohmlusdPOL = BigDecimal.fromString("0")
     if(blockNumber.gt(BigInt.fromString(UNI_OHMLUSD_PAIR_BLOCK))){
         ohmlusdBalance = ohmlusdPair.balanceOf(Address.fromString(treasury_address)).plus(ohmlusdPair.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
-        ohmlusd_value = getPairUSD(ohmlusdBalance, SUSHI_OHMLUSD_PAIR)
+        ohmlusd_value = getPairUSD(ohmlusdBalance, SUSHI_OHMLUSD_PAIR, blockNumber)
         ohmlusd_rfv = getDiscountedPairUSD(ohmlusdBalance, SUSHI_OHMLUSD_PAIR)
         ohmlusdTotalLP = toDecimal(ohmlusdPair.totalSupply(), 18)
         if (ohmlusdTotalLP.gt(BigDecimal.fromString("0")) &&  ohmlusdBalance.gt(BigInt.fromI32(0))){
@@ -247,7 +267,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
         ohmethBalance = ohmethPair.balanceOf(Address.fromString(treasury_address)).plus(ohmethPair.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
         log.debug("ohmethBalance {}", [ohmethBalance.toString()])
 
-        ohmeth_value = getPairWETH(ohmethBalance, SUSHI_OHMETH_PAIR)
+        ohmeth_value = getPairWETH(ohmethBalance, SUSHI_OHMETH_PAIR, blockNumber)
         log.debug("ohmeth_value {}", [ohmeth_value.toString()])
 
         ohmeth_rfv = getDiscountedPairUSD(ohmethBalance, SUSHI_OHMETH_PAIR)
@@ -261,7 +281,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
         ohmethBalance = ohmethPairv2.balanceOf(Address.fromString(TREASURY_ADDRESS_V3))
         log.debug("ohmethBalance {}", [ohmethBalance.toString()])
 
-        ohmeth_value = getPairWETH(ohmethBalance, SUSHI_OHMETH_PAIRV2)
+        ohmeth_value = getPairWETH(ohmethBalance, SUSHI_OHMETH_PAIRV2, blockNumber)
         log.debug("ohmeth_value {}", [ohmeth_value.toString()])
 
         ohmeth_rfv = getDiscountedPairUSD(ohmethBalance, SUSHI_OHMETH_PAIRV2)
@@ -424,10 +444,10 @@ export function updateProtocolMetrics(block: ethereum.Block): void{
     pm.sOhmCirculatingSupply = getSohmSupply(blockNumber)
 
     //OHM Price
-    pm.ohmPrice = getOHMUSDRate()
+    pm.ohmPrice = getOHMUSDRate(block.number)
 
     //OHM Market Cap
-    pm.marketCap = pm.ohmCirculatingSupply.times(pm.ohmPrice)
+    pm.marketCap = getOHMMarketcap(block.number)
 
     //Total Value Locked
     pm.totalValueLocked = pm.sOhmCirculatingSupply.times(pm.ohmPrice)

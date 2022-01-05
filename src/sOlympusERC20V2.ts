@@ -20,10 +20,10 @@ export function rebaseFunction(call: RebaseCall): void {
         rebase.contract = STAKING_CONTRACT_V2
         rebase.percentage = rebase.amount.div(rebase.stakedOhms)
         rebase.timestamp = call.block.timestamp
-        rebase.value = rebase.amount.times(getOHMUSDRate())
+        rebase.value = rebase.amount.times(getOHMUSDRate(call.block.number))
         rebase.save()
 
-        createDailyStakingReward(rebase.timestamp, rebase.amount)
+        createDailyStakingReward(rebase.timestamp, rebase.amount, call.block.number)
         updateProtocolMetrics(call.block)
     }
 }
