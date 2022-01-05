@@ -366,7 +366,8 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
         ohmdaiPOL,
         ohmfraxPOL,
         ohmlusdPOL,
-        ohmethPOL
+        ohmethPOL,
+        other_value
     ]
 }
 
@@ -502,6 +503,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void{
     pm.treasuryOhmFraxPOL = mv_rfv[13]
     pm.treasuryOhmLusdPOL = mv_rfv[14]
     pm.treasuryOhmEthPOL = mv_rfv[15]
+    pm.treasuryOtherMarketValue = mv_rfv[16]
 
     // Rebase rewards, APY, rebase
     pm.nextDistributedOhm = getNextOHMRebase(blockNumber)
