@@ -69,6 +69,8 @@ dataSources:
           file: ./abis/LUSDBondV1.json
         - name: OHMLUSDBondV1
           file: ./abis/OHMLUSDBondV1.json
+        - name: VeFXS
+          file: ./abis/VeFXS.json
         - name: Distributor
           file: ./abis/Distributor.json
       callHandlers:
@@ -139,6 +141,8 @@ dataSources:
           file: ./abis/LUSDBondV1.json
         - name: OHMLUSDBondV1
           file: ./abis/OHMLUSDBondV1.json
+        - name: VeFXS
+          file: ./abis/VeFXS.json
         - name: Distributor
           file: ./abis/Distributor.json
       callHandlers:
@@ -540,6 +544,8 @@ dataSources:
           file: ./abis/LUSDBondV1.json
         - name: OHMLUSDBondV1
           file: ./abis/OHMLUSDBondV1.json
+        - name: VeFXS
+          file: ./abis/VeFXS.json
         - name: Distributor
           file: ./abis/Distributor.json
       blockHandlers:

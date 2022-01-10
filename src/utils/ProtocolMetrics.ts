@@ -4,6 +4,7 @@ import { sOlympusERC20 } from '../../generated/OlympusStakingV1/sOlympusERC20';
 import { sOlympusERC20V2 } from '../../generated/OlympusStakingV1/sOlympusERC20V2';
 import { CirculatingSupply } from '../../generated/OlympusStakingV1/CirculatingSupply';
 import { ERC20 } from '../../generated/OlympusStakingV1/ERC20';
+import { VeFXS } from '../../generated/ProtocolMetrics/VeFXS';
 import { UniswapV2Pair } from '../../generated/OlympusStakingV1/UniswapV2Pair';
 import { MasterChef } from '../../generated/OlympusStakingV1/MasterChef';
 import { OlympusStakingV2 } from '../../generated/OlympusStakingV2/OlympusStakingV2';
@@ -186,9 +187,9 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     }
 
     let vefxs_value = BigDecimal.fromString("0")
-    let vefxsERC20 = ERC20.bind(Address.fromString(VEFXSERC20_CONTRACT))
+    let veFXS = VeFXS.bind(Address.fromString(VEFXSERC20_CONTRACT))
     if(blockNumber.gt(BigInt.fromString(VEFXSERC20_BLOCK))){
-        let vefxsbalance = vefxsERC20.balanceOf(Address.fromString(VEFXS_ALLOCATOR))
+        let vefxsbalance = veFXS.locked(Address.fromString(VEFXS_ALLOCATOR)).value0
         vefxs_value = toDecimal(vefxsbalance, 18).times(getFXSUSDRate())
         log.debug("vefxs_value {}", [vefxs_value.toString()])
         other_value = other_value.plus(vefxs_value)
