@@ -1,5 +1,5 @@
-import { RebaseCall } from '../generated/sOlympusERC20V2/sOlympusERC20V2'
-import { OlympusERC20 } from '../generated/sOlympusERC20V2/OlympusERC20'
+import { RebaseCall } from '../generated/ProtocolMetrics/sOlympusERC20V2'
+import { OlympusERC20 } from '../generated/ProtocolMetrics/OlympusERC20'
 import { createDailyStakingReward } from './utils/DailyStakingReward'
 import { Rebase } from '../generated/schema'
 import { Address, BigInt } from '@graphprotocol/graph-ts'
