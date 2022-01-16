@@ -7,13 +7,14 @@ import { VeFXS } from '../../generated/ProtocolMetrics/VeFXS';
 import { UniswapV2Pair } from '../../generated/ProtocolMetrics/UniswapV2Pair';
 import { MasterChef } from '../../generated/ProtocolMetrics/MasterChef';
 import { OlympusStakingV2 } from '../../generated/ProtocolMetrics/OlympusStakingV2';
+import { OlympusStakingV3, StakeCall } from '../../generated/ProtocolMetrics/OlympusStakingV3';
 import { OlympusStakingV1 } from '../../generated/ProtocolMetrics/OlympusStakingV1';
 import { ConvexAllocator } from '../../generated/ProtocolMetrics/ConvexAllocator';
 import { Distributor } from '../../generated/sOlympusERC20V1/Distributor';
 import { ethereum } from '@graphprotocol/graph-ts'
 
 import { ProtocolMetric } from '../../generated/schema'
-import { AAVE_ALLOCATOR, ADAI_ERC20_CONTRACT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR1_BLOCK, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR2_BLOCK, ERC20DAI_CONTRACT, ERC20FRAX_CONTRACT, LUSDBOND_CONTRACT1_BLOCK, LUSD_ERC20_CONTRACT, LUSD_ERC20_CONTRACTV2_BLOCK, OHMDAI_ONSEN_ID, OHM_ERC20_CONTRACT, ONSEN_ALLOCATOR, SOHM_ERC20_CONTRACT, SOHM_ERC20_CONTRACTV2, SOHM_ERC20_CONTRACTV2_BLOCK, STAKING_CONTRACT_V1, STAKING_CONTRACT_V2, STAKING_CONTRACT_V2_BLOCK, SUSHI_MASTERCHEF, SUSHI_OHMDAI_PAIR, SUSHI_OHMETH_PAIR, SUSHI_OHMLUSD_PAIR, TREASURY_ADDRESS, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V2_BLOCK, SUSHI_OHMETH_PAIR_BLOCK, UNI_OHMFRAX_PAIR, UNI_OHMFRAX_PAIR_BLOCK, UNI_OHMLUSD_PAIR_BLOCK, WETH_ERC20_CONTRACT, XSUSI_ERC20_CONTRACT, CVX_ERC20_CONTRACT, CVX_ERC20_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT, STAKING_CONTRACT_V3_BLOCK, STAKING_CONTRACT_V3, TREASURY_ADDRESS_V3, SOHM_ERC20_CONTRACTV3, SOHM_ERC20_CONTRACTV3_BLOCK, OHMV2_ERC20_CONTRACT_BLOCK, OHMV2_ERC20_CONTRACT, DAO_WALLET, SUSHI_OHMETH_PAIR_BLOCKV2, SUSHI_OHMETH_PAIRV2, SUSHI_OHMDAI_PAIRV2, UNI_OHMFRAX_PAIRV2, SUSHI_OHMDAI_PAIRV2_BLOCK, UNI_OHMFRAX_PAIR_BLOCKV2, MIGRATION_CONTRACT, CONVEX_CVX_ALLOCATOR, VLCVX_ERC20_CONTRACT_BLOCK, VLCVX_ERC20_CONTRACT, FXS_ERC20_CONTRACT, FXS_ERC20_CONTRACT_BLOCK, UNI_FXS_ETH_PAIR_BLOCK, VEFXSERC20_CONTRACT, VEFXSERC20_BLOCK, VEFXS_ALLOCATOR } from './Constants';
+import { AAVE_ALLOCATOR, ADAI_ERC20_CONTRACT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR1_BLOCK, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR2_BLOCK, ERC20DAI_CONTRACT, ERC20FRAX_CONTRACT, LUSDBOND_CONTRACT1_BLOCK, LUSD_ERC20_CONTRACT, LUSD_ERC20_CONTRACTV2_BLOCK, OHMDAI_ONSEN_ID, OHM_ERC20_CONTRACT, ONSEN_ALLOCATOR, SOHM_ERC20_CONTRACT, SOHM_ERC20_CONTRACTV2, SOHM_ERC20_CONTRACTV2_BLOCK, STAKING_CONTRACT_V1, STAKING_CONTRACT_V2, STAKING_CONTRACT_V2_BLOCK, SUSHI_MASTERCHEF, SUSHI_OHMDAI_PAIR, SUSHI_OHMETH_PAIR, SUSHI_OHMLUSD_PAIR, TREASURY_ADDRESS, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V2_BLOCK, SUSHI_OHMETH_PAIR_BLOCK, UNI_OHMFRAX_PAIR, UNI_OHMFRAX_PAIR_BLOCK, UNI_OHMLUSD_PAIR_BLOCK, WETH_ERC20_CONTRACT, XSUSI_ERC20_CONTRACT, CVX_ERC20_CONTRACT, CVX_ERC20_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT, STAKING_CONTRACT_V3_BLOCK, STAKING_CONTRACT_V3, TREASURY_ADDRESS_V3, SOHM_ERC20_CONTRACTV3, SOHM_ERC20_CONTRACTV3_BLOCK, OHMV2_ERC20_CONTRACT_BLOCK, OHMV2_ERC20_CONTRACT, DAO_WALLET, SUSHI_OHMETH_PAIR_BLOCKV2, SUSHI_OHMETH_PAIRV2, SUSHI_OHMDAI_PAIRV2, UNI_OHMFRAX_PAIRV2, SUSHI_OHMDAI_PAIRV2_BLOCK, UNI_OHMFRAX_PAIR_BLOCKV2, MIGRATION_CONTRACT, CONVEX_CVX_ALLOCATOR, VLCVX_ERC20_CONTRACT_BLOCK, VLCVX_ERC20_CONTRACT, FXS_ERC20_CONTRACT, FXS_ERC20_CONTRACT_BLOCK, UNI_FXS_ETH_PAIR_BLOCK, VEFXSERC20_CONTRACT, VEFXSERC20_BLOCK, VEFXS_ALLOCATOR, OHMLUSD_ONSEN_ID, CONVEX_ALLOCATOR3_BLOCK, CONVEX_ALLOCATOR3 } from './Constants';
 import { dayFromTimestamp } from './Dates';
 import { toDecimal } from './Decimals';
 import { getOHMUSDRate, getDiscountedPairUSD, getPairUSD, getXsushiUSDRate, getETHUSDRate, getPairWETH, getCVXUSDRate, getFXSUSDRate } from './Price';
@@ -150,7 +151,10 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     let adaiBalance = aDaiERC20.balanceOf(Address.fromString(AAVE_ALLOCATOR))
     let fraxBalance = fraxERC20.balanceOf(Address.fromString(treasury_address)).plus(fraxERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
     
-    let other_value = BigDecimal.fromString("0") 
+    //Cross chain assets that can not be tracked right now 20000000
+    // tokemak 7.5 MM
+    // butterfly 10% MC = 45MM
+    let other_value = BigDecimal.fromString("72500000") 
 
     let xSushiBalance = xSushiERC20.balanceOf(Address.fromString(treasury_address)).plus(xSushiERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
     let xSushi_value = toDecimal(xSushiBalance, 18).times(getXsushiUSDRate())
@@ -194,6 +198,9 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
         other_value = other_value.plus(vefxs_value)
     }
 
+
+
+
     let wethBalance = wethERC20.balanceOf(Address.fromString(treasury_address)).plus(wethERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
     let weth_value = toDecimal(wethBalance, 18).times(getETHUSDRate())
     let lusdBalance = BigInt.fromI32(0)
@@ -212,6 +219,11 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
         let allocator2 = ConvexAllocator.bind(Address.fromString(CONVEX_ALLOCATOR2))
         convexrfv = convexrfv.plus(allocator2.totalValueDeployed())
     }
+    if(blockNumber.gt(BigInt.fromString(CONVEX_ALLOCATOR3_BLOCK))){
+        let allocator3 = ConvexAllocator.bind(Address.fromString(CONVEX_ALLOCATOR3))
+        convexrfv = convexrfv.plus(allocator3.totalValueDeployed())
+    }
+
     //Multiplied by 10e9 for consistency
     convexrfv = convexrfv.times(BigInt.fromString("1000000000"))
     fraxBalance = fraxBalance.plus(convexrfv)
@@ -223,7 +235,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     let ohmdaiTotalLP = toDecimal(ohmdaiPair.totalSupply(), 18)
 
 
-    //OHMFRAX
+    //OHMDAIv2
     let ohmdaiSushiBalancev2 = BigInt.fromI32(0)
     let ohmdai_valuev2 = BigDecimal.fromString("0")
     let ohmdai_rfvv2 = BigDecimal.fromString("0")
@@ -256,6 +268,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     if(blockNumber.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))){
         ohmdai_rfv = ohmdai_rfv.plus(getDiscountedPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2))
     }
+
     //OHMFRAX
     let ohmfraxBalance = BigInt.fromI32(0)
     let ohmfrax_value = BigDecimal.fromString("0")
@@ -265,19 +278,19 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     if(blockNumber.gt(BigInt.fromString(UNI_OHMFRAX_PAIR_BLOCK))){
         ohmfraxBalance = ohmfraxPair.balanceOf(Address.fromString(treasury_address))
         ohmfrax_value = getPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIR, blockNumber)
-        ohmfrax_rfv = getDiscountedPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIR)
+        ohmfrax_rfv = ohmfrax_rfv.plus(getDiscountedPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIR))
         ohmfraxTotalLP = toDecimal(ohmfraxPair.totalSupply(), 18)
         if (ohmfraxTotalLP.gt(BigDecimal.fromString("0")) &&  ohmfraxBalance.gt(BigInt.fromI32(0))){
-            ohmfraxPOL = toDecimal(ohmfraxBalance, 18).div(ohmfraxTotalLP).times(BigDecimal.fromString("100"))
+            ohmfraxPOL = ohmfraxPOL.plus(toDecimal(ohmfraxBalance, 18).div(ohmfraxTotalLP).times(BigDecimal.fromString("100")))
         }
     }
     if(blockNumber.gt(BigInt.fromString(UNI_OHMFRAX_PAIR_BLOCKV2))){
         ohmfraxBalance = ohmfraxPairV2.balanceOf(Address.fromString(TREASURY_ADDRESS_V3))
-        ohmfrax_value = getPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIRV2, blockNumber)
-        ohmfrax_rfv = getDiscountedPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIRV2)
+        ohmfrax_value = ohmfrax_rfv.plus(getPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIRV2, blockNumber))
+        ohmfrax_rfv = ohmfrax_rfv.plus(getDiscountedPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIRV2))
         ohmfraxTotalLP = toDecimal(ohmfraxPairV2.totalSupply(), 18)
         if (ohmfraxTotalLP.gt(BigDecimal.fromString("0")) &&  ohmfraxBalance.gt(BigInt.fromI32(0))){
-            ohmfraxPOL = toDecimal(ohmfraxBalance, 18).div(ohmfraxTotalLP).times(BigDecimal.fromString("100"))
+            ohmfraxPOL = ohmfraxPOL.plus(toDecimal(ohmfraxBalance, 18).div(ohmfraxTotalLP).times(BigDecimal.fromString("100")))
         }
     }
 
@@ -289,7 +302,14 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     let ohmlusdPOL = BigDecimal.fromString("0")
     if(blockNumber.gt(BigInt.fromString(UNI_OHMLUSD_PAIR_BLOCK))){
         ohmlusdBalance = ohmlusdPair.balanceOf(Address.fromString(treasury_address)).plus(ohmlusdPair.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
+
+        let ohmlusdOnsenBalance = ohmdaiOnsenMC.userInfo(BigInt.fromI32(OHMLUSD_ONSEN_ID), Address.fromString(ONSEN_ALLOCATOR)).value0
+        ohmlusdBalance = ohmlusdBalance.plus(ohmlusdOnsenBalance)
+
         ohmlusd_value = getPairUSD(ohmlusdBalance, SUSHI_OHMLUSD_PAIR, blockNumber)
+
+        log.debug("ohmlusd_value {}", [ohmlusd_value.toString()])
+
         ohmlusd_rfv = getDiscountedPairUSD(ohmlusdBalance, SUSHI_OHMLUSD_PAIR)
         ohmlusdTotalLP = toDecimal(ohmlusdPair.totalSupply(), 18)
         if (ohmlusdTotalLP.gt(BigDecimal.fromString("0")) &&  ohmlusdBalance.gt(BigInt.fromI32(0))){
@@ -400,7 +420,7 @@ function getNextOHMRebase(blockNumber: BigInt): BigDecimal{
     }
 
     if(blockNumber.gt(BigInt.fromString(STAKING_CONTRACT_V3_BLOCK))){
-        let staking_contract_v3 = OlympusStakingV2.bind(Address.fromString(STAKING_CONTRACT_V3))
+        let staking_contract_v3 = OlympusStakingV3.bind(Address.fromString(STAKING_CONTRACT_V3))
         let distribution_v3 = toDecimal(staking_contract_v3.epoch().value3,9)
         log.debug("next_distribution v3 {}", [distribution_v3.toString()])
         next_distribution = next_distribution.plus(distribution_v3)
@@ -536,10 +556,6 @@ export function updateProtocolMetrics(block: ethereum.Block): void{
     updateBondDiscounts(blockNumber)
 }
 
-export function handleBlock(block: ethereum.Block): void {
-    //When wer are close to present where we update metrics every 10 blocks
-    let skipBlocks = 10;
-    if(block.number.toI32()%skipBlocks==0){
-        updateProtocolMetrics(block)
-    }
+export function handleMetrics(call: StakeCall): void {
+    updateProtocolMetrics(call.block)
 }
