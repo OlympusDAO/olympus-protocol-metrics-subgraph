@@ -14,10 +14,10 @@ import { Distributor } from '../../generated/sOlympusERC20V1/Distributor';
 import { ethereum } from '@graphprotocol/graph-ts'
 
 import { ProtocolMetric } from '../../generated/schema'
-import { AAVE_ALLOCATOR, ADAI_ERC20_CONTRACT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR1_BLOCK, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR2_BLOCK, ERC20DAI_CONTRACT, ERC20FRAX_CONTRACT, LUSDBOND_CONTRACT1_BLOCK, LUSD_ERC20_CONTRACT, LUSD_ERC20_CONTRACTV2_BLOCK, OHMDAI_ONSEN_ID, OHM_ERC20_CONTRACT, ONSEN_ALLOCATOR, SOHM_ERC20_CONTRACT, SOHM_ERC20_CONTRACTV2, SOHM_ERC20_CONTRACTV2_BLOCK, STAKING_CONTRACT_V1, STAKING_CONTRACT_V2, STAKING_CONTRACT_V2_BLOCK, SUSHI_MASTERCHEF, SUSHI_OHMDAI_PAIR, SUSHI_OHMETH_PAIR, SUSHI_OHMLUSD_PAIR, TREASURY_ADDRESS, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V2_BLOCK, SUSHI_OHMETH_PAIR_BLOCK, UNI_OHMFRAX_PAIR, UNI_OHMFRAX_PAIR_BLOCK, UNI_OHMLUSD_PAIR_BLOCK, WETH_ERC20_CONTRACT, XSUSI_ERC20_CONTRACT, CVX_ERC20_CONTRACT, CVX_ERC20_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT, STAKING_CONTRACT_V3_BLOCK, STAKING_CONTRACT_V3, TREASURY_ADDRESS_V3, SOHM_ERC20_CONTRACTV3, SOHM_ERC20_CONTRACTV3_BLOCK, OHMV2_ERC20_CONTRACT_BLOCK, OHMV2_ERC20_CONTRACT, DAO_WALLET, SUSHI_OHMETH_PAIR_BLOCKV2, SUSHI_OHMETH_PAIRV2, SUSHI_OHMDAI_PAIRV2, UNI_OHMFRAX_PAIRV2, SUSHI_OHMDAI_PAIRV2_BLOCK, UNI_OHMFRAX_PAIR_BLOCKV2, MIGRATION_CONTRACT, CONVEX_CVX_ALLOCATOR, VLCVX_ERC20_CONTRACT_BLOCK, VLCVX_ERC20_CONTRACT, FXS_ERC20_CONTRACT, FXS_ERC20_CONTRACT_BLOCK, UNI_FXS_ETH_PAIR_BLOCK, VEFXSERC20_CONTRACT, VEFXSERC20_BLOCK, VEFXS_ALLOCATOR, OHMLUSD_ONSEN_ID, CONVEX_ALLOCATOR3_BLOCK, CONVEX_ALLOCATOR3 } from './Constants';
+import { AAVE_ALLOCATOR, ADAI_ERC20_CONTRACT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR1_BLOCK, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR2_BLOCK, ERC20DAI_CONTRACT, ERC20FRAX_CONTRACT, LUSDBOND_CONTRACT1_BLOCK, LUSD_ERC20_CONTRACT, LUSD_ERC20_CONTRACTV2_BLOCK, OHMDAI_ONSEN_ID, OHM_ERC20_CONTRACT, ONSEN_ALLOCATOR, SOHM_ERC20_CONTRACT, SOHM_ERC20_CONTRACTV2, SOHM_ERC20_CONTRACTV2_BLOCK, STAKING_CONTRACT_V1, STAKING_CONTRACT_V2, STAKING_CONTRACT_V2_BLOCK, SUSHI_MASTERCHEF, SUSHI_OHMDAI_PAIR, SUSHI_OHMETH_PAIR, SUSHI_OHMLUSD_PAIR, TREASURY_ADDRESS, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V2_BLOCK, SUSHI_OHMETH_PAIR_BLOCK, UNI_OHMFRAX_PAIR, UNI_OHMFRAX_PAIR_BLOCK, UNI_OHMLUSD_PAIR_BLOCK, WETH_ERC20_CONTRACT, XSUSI_ERC20_CONTRACT, CVX_ERC20_CONTRACT, CVX_ERC20_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT, STAKING_CONTRACT_V3_BLOCK, STAKING_CONTRACT_V3, TREASURY_ADDRESS_V3, SOHM_ERC20_CONTRACTV3, SOHM_ERC20_CONTRACTV3_BLOCK, OHMV2_ERC20_CONTRACT_BLOCK, OHMV2_ERC20_CONTRACT, DAO_WALLET, SUSHI_OHMETH_PAIR_BLOCKV2, SUSHI_OHMETH_PAIRV2, SUSHI_OHMDAI_PAIRV2, UNI_OHMFRAX_PAIRV2, SUSHI_OHMDAI_PAIRV2_BLOCK, UNI_OHMFRAX_PAIR_BLOCKV2, MIGRATION_CONTRACT, CONVEX_CVX_ALLOCATOR, VLCVX_ERC20_CONTRACT_BLOCK, VLCVX_ERC20_CONTRACT, FXS_ERC20_CONTRACT, FXS_ERC20_CONTRACT_BLOCK, UNI_FXS_ETH_PAIR_BLOCK, VEFXSERC20_CONTRACT, VEFXSERC20_BLOCK, VEFXS_ALLOCATOR, OHMLUSD_ONSEN_ID, CONVEX_ALLOCATOR3_BLOCK, CONVEX_ALLOCATOR3, WBTC_ERC20_CONTRACT, UST_ERC20_CONTRACT } from './Constants';
 import { dayFromTimestamp } from './Dates';
 import { toDecimal } from './Decimals';
-import { getOHMUSDRate, getDiscountedPairUSD, getPairUSD, getXsushiUSDRate, getETHUSDRate, getPairWETH, getCVXUSDRate, getFXSUSDRate } from './Price';
+import { getOHMUSDRate, getDiscountedPairUSD, getPairUSD, getXsushiUSDRate, getETHUSDRate, getPairWETH, getCVXUSDRate, getFXSUSDRate, getBTCUSDRate } from './Price';
 import { updateBondDiscounts } from './BondDiscounts';
 
 export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric{
@@ -44,9 +44,11 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric{
         protocolMetric.treasuryDaiMarketValue = BigDecimal.fromString("0")
         protocolMetric.treasuryFraxMarketValue = BigDecimal.fromString("0")
         protocolMetric.treasuryLusdMarketValue = BigDecimal.fromString("0")
+        protocolMetric.treasuryUstMarketValue = BigDecimal.fromString("0")
         protocolMetric.treasuryXsushiMarketValue = BigDecimal.fromString("0")
         protocolMetric.treasuryWETHRiskFreeValue = BigDecimal.fromString("0")
         protocolMetric.treasuryWETHMarketValue = BigDecimal.fromString("0")
+        protocolMetric.treasuryWBTCMarketValue = BigDecimal.fromString("0")
         protocolMetric.treasuryCVXMarketValue = BigDecimal.fromString("0")
         protocolMetric.treasuryOtherMarketValue = BigDecimal.fromString("0")
         protocolMetric.treasuryOhmDaiPOL = BigDecimal.fromString("0")
@@ -131,6 +133,8 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     let xSushiERC20 = ERC20.bind(Address.fromString(XSUSI_ERC20_CONTRACT))
     let wethERC20 = ERC20.bind(Address.fromString(WETH_ERC20_CONTRACT))
     let lusdERC20 = ERC20.bind(Address.fromString(LUSD_ERC20_CONTRACT))
+    let wbtcERC20 = ERC20.bind(Address.fromString(WBTC_ERC20_CONTRACT))
+    let ustERC20 = ERC20.bind(Address.fromString(UST_ERC20_CONTRACT))
 
     let ohmdaiPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIR))
     let ohmdaiPairV2 = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIRV2))
@@ -203,10 +207,18 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
 
     let wethBalance = wethERC20.balanceOf(Address.fromString(treasury_address)).plus(wethERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
     let weth_value = toDecimal(wethBalance, 18).times(getETHUSDRate())
+
+    let wbtcBalance = wbtcERC20.balanceOf(Address.fromString(treasury_address)).plus(wbtcERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
+    let wbtc_value = toDecimal(wbtcBalance, 18).times(getBTCUSDRate())
+
     let lusdBalance = BigInt.fromI32(0)
     if(blockNumber.gt(BigInt.fromString(LUSD_ERC20_CONTRACTV2_BLOCK))){
         lusdBalance = lusdERC20.balanceOf(Address.fromString(treasury_address)).plus(lusdERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
     }
+
+    let ustBalance = BigInt.fromI32(0)
+    ustBalance = ustERC20.balanceOf(Address.fromString(treasury_address)).plus(ustERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
+    let ustRFV = toDecimal(ustBalance, 18)
 
     //CONVEX Frax allocator
     // TODO add to mv and mvrfv
@@ -395,7 +407,9 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
         ohmfraxPOL,
         ohmlusdPOL,
         ohmethPOL,
-        other_value
+        other_value,
+        wbtc_value,
+        ustRFV
     ]
 }
 
@@ -532,6 +546,8 @@ export function updateProtocolMetrics(block: ethereum.Block): void{
     pm.treasuryOhmLusdPOL = mv_rfv[14]
     pm.treasuryOhmEthPOL = mv_rfv[15]
     pm.treasuryOtherMarketValue = mv_rfv[16]
+    pm.treasuryWBTCMarketValue = mv_rfv[17]
+    pm.treasuryUstMarketValue = mv_rfv[18]
 
     // Rebase rewards, APY, rebase
     pm.nextDistributedOhm = getNextOHMRebase(blockNumber)
@@ -540,7 +556,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void{
     pm.nextEpochRebase = apy_rebase[1]
 
     //Runway
-    let runways = getRunway(pm.totalSupply, pm.treasuryRiskFreeValue, pm.nextEpochRebase, block)
+    let runways = getRunway(pm.sOhmCirculatingSupply, pm.treasuryRiskFreeValue, pm.nextEpochRebase, block)
     pm.runway2dot5k = runways[0]
     pm.runway5k = runways[1]
     pm.runway7dot5k = runways[2]

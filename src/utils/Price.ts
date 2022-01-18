@@ -1,5 +1,5 @@
 import {
-    SUSHI_OHMDAI_PAIR, SUSHI_XSUSHI_ETH_PAIR, SUSHI_USDC_ETH_PAIR, SUSHI_CVX_ETH_PAIR, SUSHI_OHMDAI_PAIRV2_BLOCK, SUSHI_OHMDAI_PAIRV2, UNI_FXS_ETH_PAIR
+    SUSHI_OHMDAI_PAIR, SUSHI_XSUSHI_ETH_PAIR, SUSHI_USDC_ETH_PAIR, SUSHI_CVX_ETH_PAIR, SUSHI_OHMDAI_PAIRV2_BLOCK, SUSHI_OHMDAI_PAIRV2, UNI_FXS_ETH_PAIR, UNI_USDC_WBTC_PAIR
 } from './Constants'
 import { Address, BigDecimal, BigInt, log } from '@graphprotocol/graph-ts'
 import { UniswapV2Pair } from '../../generated/ProtocolMetrics/UniswapV2Pair';
@@ -7,6 +7,7 @@ import { UniswapV3Pair } from '../../generated/ProtocolMetrics/UniswapV3Pair';
 import { toDecimal } from './Decimals'
 
 
+let BIG_DECIMAL_1E8 = BigDecimal.fromString('1e8')
 let BIG_DECIMAL_1E9 = BigDecimal.fromString('1e9')
 let BIG_DECIMAL_1E12 = BigDecimal.fromString('1e12')
 
@@ -19,6 +20,19 @@ export function getETHUSDRate(): BigDecimal {
 
     let ethRate = reserve0.div(reserve1).times(BIG_DECIMAL_1E12)
     log.debug("ETH rate {}", [ethRate.toString()])
+    
+    return ethRate
+}
+
+export function getBTCUSDRate(): BigDecimal {
+    let pair = UniswapV2Pair.bind(Address.fromString(UNI_USDC_WBTC_PAIR))
+
+    let reserves = pair.getReserves()
+    let reserve0 = reserves.value0.toBigDecimal()
+    let reserve1 = reserves.value1.toBigDecimal()
+
+    let ethRate = reserve0.div(reserve1).times(BIG_DECIMAL_1E8)
+    log.debug("BTC rate {}", [ethRate.toString()])
     
     return ethRate
 }

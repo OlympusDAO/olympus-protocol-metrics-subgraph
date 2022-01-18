@@ -47,8 +47,10 @@ type ProtocolMetric @entity {
   treasuryDaiMarketValue: BigDecimal!
   treasuryFraxMarketValue: BigDecimal!
   treasuryLusdMarketValue: BigDecimal!
+  treasuryUstMarketValue: BigDecimal!
   treasuryXsushiMarketValue: BigDecimal!
   treasuryWETHMarketValue: BigDecimal!
+  treasuryWBTCMarketValue: BigDecimal!
   treasuryCVXMarketValue: BigDecimal!
   treasuryOtherMarketValue: BigDecimal!
   currentAPY: BigDecimal!
