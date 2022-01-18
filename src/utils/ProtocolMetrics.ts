@@ -218,9 +218,8 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
 
     let ustBalance = BigInt.fromI32(0)
     if(blockNumber.gt(BigInt.fromString(UST_ERC20_CONTRACT_BLOCK))){
-        ustBalance = ustERC20.balanceOf(Address.fromString(treasury_address)).plus(ustERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
+        ustBalance = ustERC20.balanceOf(Address.fromString(treasury_address)).plus(ustERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3))).times(BigInt.fromString("1000000000000"))
     }
-    let ustRFV = toDecimal(ustBalance, 6)
 
     //CONVEX Frax allocator
     // TODO add to mv and mvrfv
@@ -365,7 +364,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
         }
     }
 
-    let stableValue = daiBalance.plus(fraxBalance).plus(adaiBalance).plus(lusdBalance)
+    let stableValue = daiBalance.plus(fraxBalance).plus(adaiBalance).plus(lusdBalance).plus(ustBalance)
     let stableValueDecimal = toDecimal(stableValue, 18)
 
     let lpValue = ohmdai_value.plus(ohmfrax_value).plus(ohmlusd_value).plus(ohmeth_value)
@@ -411,7 +410,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
         ohmethPOL,
         other_value,
         wbtc_value,
-        ustRFV
+        toDecimal(ustBalance, 18)
     ]
 }
 
