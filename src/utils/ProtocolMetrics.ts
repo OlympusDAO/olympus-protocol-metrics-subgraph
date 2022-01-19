@@ -370,7 +370,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     let lpValue = ohmdai_value.plus(ohmfrax_value).plus(ohmlusd_value).plus(ohmeth_value)
     let rfvLpValue = ohmdai_rfv.plus(ohmfrax_rfv).plus(ohmlusd_rfv).plus(ohmeth_rfv)
 
-    let mv = stableValueDecimal.plus(lpValue).plus(weth_value).plus(other_value)
+    let mv = stableValueDecimal.plus(lpValue).plus(weth_value).plus(wbtc_value).plus(other_value)
     let rfv = stableValueDecimal.plus(rfvLpValue)
 
     log.debug("Treasury Market Value {}", [mv.toString()])
