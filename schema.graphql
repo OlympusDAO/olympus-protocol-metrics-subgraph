@@ -53,6 +53,10 @@ type ProtocolMetric @entity {
   treasuryWBTCMarketValue: BigDecimal!
   treasuryCVXMarketValue: BigDecimal!
   treasuryOtherMarketValue: BigDecimal!
+  treasuryLPValue: BigDecimal!
+  treasuryStableBacking: BigDecimal!
+  treasuryVolatileBacking: BigDecimal!
+  treasuryTotalBacking: BigDecimal!
   currentAPY: BigDecimal!
   runway2dot5k: BigDecimal
   runway5k: BigDecimal

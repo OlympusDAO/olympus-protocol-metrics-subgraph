@@ -55,6 +55,10 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric{
         protocolMetric.treasuryOhmFraxPOL = BigDecimal.fromString("0")
         protocolMetric.treasuryOhmLusdPOL = BigDecimal.fromString("0")
         protocolMetric.treasuryOhmEthPOL = BigDecimal.fromString("0")
+        protocolMetric.treasuryStableBacking = BigDecimal.fromString("0")
+        protocolMetric.treasuryLPValue = BigDecimal.fromString("0")
+        protocolMetric.treasuryVolatileBacking = BigDecimal.fromString("0")
+        protocolMetric.treasuryTotalBacking = BigDecimal.fromString("0")
 
         protocolMetric.save()
     }
@@ -158,11 +162,11 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     //Cross chain assets that can not be tracked right now 20000000
     // tokemak 7.5 MM
     // butterfly 10% MC = 45MM
-    let other_value = BigDecimal.fromString("72500000") 
+    let volatile_value = BigDecimal.fromString("72500000") 
 
     let xSushiBalance = xSushiERC20.balanceOf(Address.fromString(treasury_address)).plus(xSushiERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
     let xSushi_value = toDecimal(xSushiBalance, 18).times(getXsushiUSDRate())
-    other_value = other_value.plus(xSushi_value)
+    volatile_value = volatile_value.plus(xSushi_value)
     log.debug("xSushi_value {}", [xSushi_value.toString()])
 
     let cvx_value = BigDecimal.fromString("0")
@@ -182,7 +186,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
         cvx_value = cvx_value.plus(toDecimal(vlCVXbalance, 18).times(getCVXUSDRate()))
     }
     log.debug("cvx_value {}", [cvx_value.toString()])
-    other_value = other_value.plus(cvx_value)
+    volatile_value = volatile_value.plus(cvx_value)
 
     let fxs_value = BigDecimal.fromString("0")
     let fxsERC20 = ERC20.bind(Address.fromString(FXS_ERC20_CONTRACT))
@@ -190,7 +194,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
         let fxsbalance = fxsERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V2)).plus(fxsERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
         fxs_value = toDecimal(fxsbalance, 18).times(getFXSUSDRate())
         log.debug("fxs_value {}", [fxs_value.toString()])
-        other_value = other_value.plus(fxs_value)
+        volatile_value = volatile_value.plus(fxs_value)
     }
 
     let vefxs_value = BigDecimal.fromString("0")
@@ -199,7 +203,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
         let vefxsbalance = veFXS.locked(Address.fromString(VEFXS_ALLOCATOR)).value0
         vefxs_value = toDecimal(vefxsbalance, 18).times(getFXSUSDRate())
         log.debug("vefxs_value {}", [vefxs_value.toString()])
-        other_value = other_value.plus(vefxs_value)
+        volatile_value = volatile_value.plus(vefxs_value)
     }
 
 
@@ -370,8 +374,13 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     let lpValue = ohmdai_value.plus(ohmfrax_value).plus(ohmlusd_value).plus(ohmeth_value)
     let rfvLpValue = ohmdai_rfv.plus(ohmfrax_rfv).plus(ohmlusd_rfv).plus(ohmeth_rfv)
 
-    let mv = stableValueDecimal.plus(lpValue).plus(weth_value).plus(wbtc_value).plus(other_value)
+    let mv = stableValueDecimal.plus(lpValue).plus(weth_value).plus(wbtc_value).plus(volatile_value)
     let rfv = stableValueDecimal.plus(rfvLpValue)
+
+    let treasuryStableBacking = stableValueDecimal
+    let treasuryVolatileBacking = volatile_value
+    let treasuryTotalBacking = treasuryStableBacking.plus(treasuryVolatileBacking)
+    let treasuryLPValue = lpValue
 
     log.debug("Treasury Market Value {}", [mv.toString()])
     log.debug("Treasury RFV {}", [rfv.toString()])
@@ -408,9 +417,13 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
         ohmfraxPOL,
         ohmlusdPOL,
         ohmethPOL,
-        other_value,
+        volatile_value,
         wbtc_value,
-        toDecimal(ustBalance, 18)
+        toDecimal(ustBalance, 18),
+        treasuryStableBacking,
+        treasuryVolatileBacking,
+        treasuryTotalBacking,
+        treasuryLPValue
     ]
 }
 
@@ -549,6 +562,10 @@ export function updateProtocolMetrics(block: ethereum.Block): void{
     pm.treasuryOtherMarketValue = mv_rfv[16]
     pm.treasuryWBTCMarketValue = mv_rfv[17]
     pm.treasuryUstMarketValue = mv_rfv[18]
+    pm.treasuryStableBacking = mv_rfv[19]
+    pm.treasuryVolatileBacking = mv_rfv[20]
+    pm.treasuryTotalBacking = mv_rfv[21]
+    pm.treasuryLPValue = mv_rfv[22]
 
     // Rebase rewards, APY, rebase
     pm.nextDistributedOhm = getNextOHMRebase(blockNumber)

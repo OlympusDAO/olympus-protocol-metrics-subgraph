@@ -499,6 +499,42 @@ export class ProtocolMetric extends Entity {
     this.set("treasuryOtherMarketValue", Value.fromBigDecimal(value));
   }
 
+  get treasuryLPValue(): BigDecimal {
+    let value = this.get("treasuryLPValue");
+    return value.toBigDecimal();
+  }
+
+  set treasuryLPValue(value: BigDecimal) {
+    this.set("treasuryLPValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryStableBacking(): BigDecimal {
+    let value = this.get("treasuryStableBacking");
+    return value.toBigDecimal();
+  }
+
+  set treasuryStableBacking(value: BigDecimal) {
+    this.set("treasuryStableBacking", Value.fromBigDecimal(value));
+  }
+
+  get treasuryVolatileBacking(): BigDecimal {
+    let value = this.get("treasuryVolatileBacking");
+    return value.toBigDecimal();
+  }
+
+  set treasuryVolatileBacking(value: BigDecimal) {
+    this.set("treasuryVolatileBacking", Value.fromBigDecimal(value));
+  }
+
+  get treasuryTotalBacking(): BigDecimal {
+    let value = this.get("treasuryTotalBacking");
+    return value.toBigDecimal();
+  }
+
+  set treasuryTotalBacking(value: BigDecimal) {
+    this.set("treasuryTotalBacking", Value.fromBigDecimal(value));
+  }
+
   get currentAPY(): BigDecimal {
     let value = this.get("currentAPY");
     return value.toBigDecimal();
