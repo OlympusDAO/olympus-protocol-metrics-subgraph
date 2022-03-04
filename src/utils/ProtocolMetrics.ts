@@ -159,10 +159,15 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     let adaiBalance = aDaiERC20.balanceOf(Address.fromString(AAVE_ALLOCATOR))
     let fraxBalance = fraxERC20.balanceOf(Address.fromString(treasury_address)).plus(fraxERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
     
-    //Cross chain assets that can not be tracked right now 30000000
-    // tokemak 7.5 MM
-    // butterfly 10% MC = 15MM
-    let volatile_value = BigDecimal.fromString("32500000") 
+    //Cross chain assets that can not be tracked right now
+    // pklima
+    // butterfly
+    // Vsta
+    // PhantomDAO
+    // Lobis
+    let vesting_assets = BigDecimal.fromString("32500000") 
+
+    let volatile_value = vesting_assets
 
     let xSushiBalance = xSushiERC20.balanceOf(Address.fromString(treasury_address)).plus(xSushiERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
     let xSushi_value = toDecimal(xSushiBalance, 18).times(getXsushiUSDRate())
@@ -379,7 +384,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
 
     let treasuryStableBacking = stableValueDecimal
     let treasuryVolatileBacking = volatile_value.plus(weth_value).plus(wbtc_value)
-    let treasuryTotalBacking = treasuryStableBacking.plus(treasuryVolatileBacking).plus(lpValue.div(BigDecimal.fromString("2"))).minus(cvx_value).minus(fxs_value)
+    let treasuryTotalBacking = treasuryStableBacking.minus(vesting_assets).plus(treasuryVolatileBacking).plus(lpValue.div(BigDecimal.fromString("2"))).minus(cvx_value).minus(fxs_value)
     let treasuryLPValue = lpValue
 
     log.debug("Treasury Market Value {}", [mv.toString()])
