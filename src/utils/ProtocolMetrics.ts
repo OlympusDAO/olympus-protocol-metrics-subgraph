@@ -384,7 +384,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
 
     let treasuryStableBacking = stableValueDecimal
     let treasuryVolatileBacking = volatile_value.plus(weth_value).plus(wbtc_value)
-    let treasuryTotalBacking = treasuryStableBacking.minus(vesting_assets).plus(treasuryVolatileBacking).plus(lpValue.div(BigDecimal.fromString("2"))).minus(cvx_value).minus(fxs_value)
+    let treasuryTotalBacking = treasuryStableBacking.minus(vesting_assets).plus(treasuryVolatileBacking).plus(lpValue.div(BigDecimal.fromString("2"))).minus(cvx_value).minus(fxs_value).minus(getTotalSupply(blockNumber))
     let treasuryLPValue = lpValue
 
     log.debug("Treasury Market Value {}", [mv.toString()])
