@@ -488,7 +488,7 @@ function getNextOHMRebase(blockNumber: BigInt): BigDecimal{
 }
 
 function getAPY_Rebase(sOHM: BigDecimal, distributedOHM: BigDecimal): BigDecimal[]{
-    let nextEpochRebase = distributedOHM.div(sOHM).times(BigDecimal.fromString("100"));
+    let nextEpochRebase = distributedOHM.div(sOHM);
 
     let nextEpochRebase_number = Number.parseFloat(nextEpochRebase.toString())
     let currentAPY = Math.pow(((nextEpochRebase_number/100)+1), (365*3)-1)*100
@@ -526,7 +526,7 @@ function getRunway(totalSupply: BigDecimal, rfv: BigDecimal, rebase: BigDecimal,
         let runway50k_num = (Math.log(treasury_runway) / Math.log(1+0.00569158))/3;
         let runway70k_num = (Math.log(treasury_runway) / Math.log(1+0.00600065))/3;
         let runway100k_num = (Math.log(treasury_runway) / Math.log(1+0.00632839))/3;
-        let nextEpochRebase_number = Number.parseFloat(rebase.toString())/100
+        let nextEpochRebase_number = Number.parseFloat(rebase.toString())
         if(block.number.toI32() > DISTRIBUTOR_CONTRACT_BLOCK){
             let distributorContract = Distributor.bind(Address.fromString(DISTRIBUTOR_CONTRACT))
             nextEpochRebase_number = Number.parseFloat(toDecimal(distributorContract.info(BigInt.fromI32(4)).value0,6).toString())
