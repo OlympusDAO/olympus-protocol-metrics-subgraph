@@ -117,6 +117,23 @@ export function getDiscountedPairUSD(lp_amount: BigInt, pair_adress: string): Bi
     return result
 }
 
+export function getDiscountedPairLUSD(lp_amount: BigInt, pair_adress: string): BigDecimal{
+    let pair = UniswapV2Pair.bind(Address.fromString(pair_adress))
+
+    let total_lp = pair.totalSupply()
+    let lp_token_1 = toDecimal(pair.getReserves().value0, 18)
+    let lp_token_2 = toDecimal(pair.getReserves().value1, 9)
+    let kLast = lp_token_1.times(lp_token_2).truncate(0).digits
+
+    let part1 = toDecimal(lp_amount,18).div(toDecimal(total_lp,18))
+    let two = BigInt.fromI32(2)
+
+    let sqrt = kLast.sqrt();
+    let part2 = toDecimal(two.times(sqrt), 0)
+    let result = part1.times(part2)
+    return result
+}
+
 export function getPairUSD(lp_amount: BigInt, pair_adress: string, block: BigInt): BigDecimal{
     let pair = UniswapV2Pair.bind(Address.fromString(pair_adress))
     let total_lp = pair.totalSupply()
@@ -124,6 +141,18 @@ export function getPairUSD(lp_amount: BigInt, pair_adress: string, block: BigInt
     let lp_token_1 = pair.getReserves().value1
     let ownedLP = toDecimal(lp_amount,18).div(toDecimal(total_lp,18))
     let ohm_value = toDecimal(lp_token_0, 9).times(getOHMUSDRate(block))
+    let total_lp_usd = ohm_value.plus(toDecimal(lp_token_1, 18))
+
+    return ownedLP.times(total_lp_usd)
+}
+
+export function getPairLUSD(lp_amount: BigInt, pair_adress: string, block: BigInt): BigDecimal{
+    let pair = UniswapV2Pair.bind(Address.fromString(pair_adress))
+    let total_lp = pair.totalSupply()
+    let lp_token_0 = pair.getReserves().value0
+    let lp_token_1 = pair.getReserves().value1
+    let ownedLP = toDecimal(lp_amount,9).div(toDecimal(total_lp,18))
+    let ohm_value = toDecimal(lp_token_0, 18).times(getOHMUSDRate(block))
     let total_lp_usd = ohm_value.plus(toDecimal(lp_token_1, 18))
 
     return ownedLP.times(total_lp_usd)
