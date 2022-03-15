@@ -151,9 +151,9 @@ export function getPairLUSD(lp_amount: BigInt, pair_adress: string, block: BigIn
     let total_lp = pair.totalSupply()
     let lp_token_0 = pair.getReserves().value0
     let lp_token_1 = pair.getReserves().value1
-    let ownedLP = toDecimal(lp_amount,9).div(toDecimal(total_lp,18))
-    let ohm_value = toDecimal(lp_token_0, 18).times(getOHMUSDRate(block))
-    let total_lp_usd = ohm_value.plus(toDecimal(lp_token_1, 18))
+    let ownedLP = toDecimal(lp_amount,18).div(toDecimal(total_lp,18))
+    let ohm_value = toDecimal(lp_token_1, 9).times(getOHMUSDRate(block))
+    let total_lp_usd = ohm_value.plus(toDecimal(lp_token_0, 18))
 
     return ownedLP.times(total_lp_usd)
 }

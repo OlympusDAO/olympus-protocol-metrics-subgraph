@@ -491,7 +491,7 @@ function getAPY_Rebase(sOHM: BigDecimal, distributedOHM: BigDecimal): BigDecimal
     let nextEpochRebase = distributedOHM.div(sOHM).times(BigDecimal.fromString("100"));
 
     let nextEpochRebase_number = Number.parseFloat(nextEpochRebase.toString())
-    let currentAPY = Math.pow(((nextEpochRebase_number/100)+1), (365*3)-1)*100
+    let currentAPY = (Math.pow(((nextEpochRebase_number/100)+1), (365*3))-1)*100
 
     let currentAPYdecimal = BigDecimal.fromString(currentAPY.toString())
 
