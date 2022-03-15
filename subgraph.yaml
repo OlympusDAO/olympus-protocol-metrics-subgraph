@@ -163,7 +163,7 @@ dataSources:
     source:
       address: '0x04906695D6D12CF5459975d7C3C03356E4Ccd460'
       abi: sOlympusERC20V3
-      startBlock: 13700000
+      startBlock: 13806000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -570,7 +570,7 @@ dataSources:
     source:
       address: '0xB63cac384247597756545b500253ff8E607a8020'
       abi: OlympusStakingV3
-      startBlock: 13700000
+      startBlock: 14128000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
