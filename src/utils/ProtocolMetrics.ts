@@ -162,9 +162,13 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
 
     let daiBalance = daiERC20.balanceOf(Address.fromString(treasury_address)).plus(daiERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
     daiBalance = daiBalance.plus(aDaiERC20.balanceOf(Address.fromString(AAVE_ALLOCATOR)))
+
+    let tribeBalance = BigInt.fromI32(0)
+
     if(blockNumber.gt(BigInt.fromString(RARI_ALLOCATOR_BLOCK))){
         let rariallocator = RariAllocator.bind(Address.fromString(RARI_ALLOCATOR))
         daiBalance = daiBalance.plus(rariallocator.amountAllocated(BigInt.fromI32(3)))
+        tribeBalance = rariallocator.amountAllocated(BigInt.fromI32(4))
     }
 
     let fraxBalance = fraxERC20.balanceOf(Address.fromString(treasury_address)).plus(fraxERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
