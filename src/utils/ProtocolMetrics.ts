@@ -249,7 +249,8 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
 
 
     let ustBalance = BigInt.fromI32(0)
-    if(blockNumber.gt(BigInt.fromString(UST_ERC20_CONTRACT_BLOCK))){
+    if (blockNumber.gt(BigInt.fromString(UST_ERC20_CONTRACT_BLOCK))) {
+        // TODO hard-coded UST price (ruh roh)
         ustBalance = ustERC20.balanceOf(Address.fromString(treasury_address)).plus(ustERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3))).times(BigInt.fromString("1000000000000"))
     }
 
@@ -270,6 +271,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     }
 
     //Multiplied by 10e9 for consistency
+    // TODO determine if the multiplier is correct
     convexrfv = convexrfv.times(BigInt.fromString("1000000000"))
     fraxBalance = fraxBalance.plus(convexrfv)
 
