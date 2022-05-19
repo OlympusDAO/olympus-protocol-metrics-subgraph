@@ -182,6 +182,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     // Vsta
     // PhantomDAO
     // Lobis
+    // TODO remove hard-coded number
     let vesting_assets = BigDecimal.fromString("32500000") 
 
     let volatile_value = vesting_assets
