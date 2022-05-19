@@ -160,6 +160,8 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
         treasury_address = TREASURY_ADDRESS_V2;
     }
 
+    // TODO add FEI
+
     let daiBalance = daiERC20.balanceOf(Address.fromString(treasury_address)).plus(daiERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
     daiBalance = daiBalance.plus(aDaiERC20.balanceOf(Address.fromString(AAVE_ALLOCATOR)))
     if(blockNumber.gt(BigInt.fromString(AAVE_ALLOCATOR_V2_BLOCK))){
@@ -443,6 +445,8 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     log.debug("Treasury OHM-FRAX RFV {}", [ohmfrax_rfv.toString()])
     log.debug("Treasury OHM-LUSD RFV {}", [ohmlusd_rfv.toString()])
     log.debug("Convex Allocator {}", [toDecimal(convexrfv, 18).toString()])
+
+    // TODO OHMDAI RFV and OHMDAI value are the same. Correct?
 
     return [
         mv, 
