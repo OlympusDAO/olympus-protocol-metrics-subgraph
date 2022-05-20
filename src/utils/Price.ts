@@ -99,7 +99,31 @@ export function getCVXUSDRate(): BigDecimal {
 
 }
 
-//(slp_treasury/slp_supply)*(2*sqrt(lp_dai * lp_ohm))
+/**
+ * To calculate the risk-free value of an OHM-DAI LP, we assume
+ * that DAI = $1 and OHM = $1.
+ * 
+ * The multiple of the quantity of tokens on both sides of the LP
+ * remains constant in a Uniswap V2 pool: x * y = k
+ * 
+ * Given this: x1 * y1 = x2 * y2
+ * 
+ * However, if x2 = y2, then: x1 * y1 = x2^2
+ * 
+ * x2 = sqrt(x1 * y1)
+ * 
+ * This tells us the number of DAI (or OHM) tokens required at the
+ * position on the constant product curve.
+ * 
+ * If we assume that 1 DAI = 1 OHM, then the value of the entire 
+ * liquidity pool at RFC is: (1 + 1) * sqrt(# DAI * # OHM)
+ * 
+ * The total value, given the balance, is therefore:
+ * 
+ * (# LP tokens / LP total supply) * (2) * sqrt(# DAI * # OHM)
+ * 
+ * This blog also helps illustrate it: https://olympusdao.medium.com/a-primer-on-oly-bonds-9763f125c124
+ */
 export function getDiscountedPairUSD(lp_amount: BigInt, pair_adress: string): BigDecimal{
     let pair = UniswapV2Pair.bind(Address.fromString(pair_adress))
 
@@ -134,6 +158,7 @@ export function getDiscountedPairLUSD(lp_amount: BigInt, pair_adress: string): B
     return result
 }
 
+// Percentage of LP supply * 
 export function getPairUSD(lp_amount: BigInt, pair_adress: string, block: BigInt): BigDecimal{
     let pair = UniswapV2Pair.bind(Address.fromString(pair_adress))
     let total_lp = pair.totalSupply()

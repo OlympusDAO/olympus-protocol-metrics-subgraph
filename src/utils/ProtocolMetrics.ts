@@ -178,6 +178,9 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
 
     let fraxBalance = fraxERC20.balanceOf(Address.fromString(treasury_address)).plus(fraxERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
     
+    // TODO add balancer
+    // TODO add uniswap v3
+    
     //Cross chain assets that can not be tracked right now
     // pklima
     // butterfly
@@ -446,8 +449,61 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     log.debug("Treasury OHM-LUSD RFV {}", [ohmlusd_rfv.toString()])
     log.debug("Convex Allocator {}", [toDecimal(convexrfv, 18).toString()])
 
-    // TODO OHMDAI RFV and OHMDAI value are the same. Correct?
+    /**
+     * DAI risk-free value
+     * 
+     * ohmDaiBalance = Sushi OHM-DAI pair (treasury v2 & treasury v3) + onsen allocator balance
+     * 
+     * ohmdaiSushiBalancev2 = Sushi OHM-DAI pair v2 (treasury v3)
+     * 
+     * daiBalance = DAI (treasury v3 & treasury v3) + aDAI (Aave) + aDAI (Aave v2)
+     * 
+     * getDiscountedPairUSD = (LP amount / LP supply) * (2 * sqrt(DAI quantity * OHM quantity))
+     * 
+     * = getDiscountedPairUSD(ohmDaiBalance) + getDiscountedPairUSD(ohmdaiSushiBalancev2) + daiBalance
+     */
 
+    /**
+     * Treasury volatile backing
+     * 
+     * vesting_assets = 32500000
+     * 
+     * xSushi_value = xSUSHI (treasury v2 & treasury v3)
+     * 
+     * cvx_value = CVX (treasury v2 & treasury v3) + vlCVX (Convex allocator)
+     * 
+     * fxs_value = FXS (treasury v2 & treasury v3)
+     * 
+     * weth_value = wETH (treasury v2 & treasury v3)
+     * 
+     * wbtc_value = wBTC (treasury v3 & treasury v3)
+     * 
+     * = treasuryVolatileBacking = vesting_assets + xSushi_value + cvx_value + fxs_value + veFXS (veFXS allocator) + weth_value + wbtc_value
+     */
+
+    /**
+     * Treasury total backing
+     * 
+     * convexrfv = (convex allocator 1 total value deployed + convex allocator 2 total value deployed + convex allocator 3 total value deployed)
+     * 
+     * fraxBalance = FRAX (treasury v2 & treasury v3) + convexrfv
+     * 
+     * lusdBalance = LUSD (treasury v2 & treasury v3) + LUSD stability pool deposits
+     * 
+     * ustBalance = UST (treasury v3 & treasury v3)
+     * 
+     * treasuryStableBacking = daiBalance + fraxBalance + lusdBalance + ustBalance
+     * 
+     * getPairUSD = (LP amount / LP supply) * (OHM value + USD value)
+     * 
+     * ohmdai_value = getPairUSD(ohmDaiBalance) + getPairUSD(ohmdaiSushiBalancev2)
+     * 
+     * lpValue = ohmdai_value + ohmfrax_value + ohmlusd_value + ohmeth_value
+     * 
+     * getCriculatingSupply =
+     * 
+     * = treasuryStableBacking - vesting_assets + treasuryVolatileBacking + (lpValue / 2) - cvx_value - fxs_value - getCriculatingSupply
+     */
     return [
         mv, 
         rfv,
