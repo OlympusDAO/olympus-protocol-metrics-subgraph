@@ -16,11 +16,12 @@ import { Distributor } from '../../generated/sOlympusERC20V1/Distributor';
 import { ethereum } from '@graphprotocol/graph-ts'
 
 import { ProtocolMetric } from '../../generated/schema'
-import { AAVE_ALLOCATOR, ADAI_ERC20_CONTRACT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR1_BLOCK, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR2_BLOCK, ERC20DAI_CONTRACT, ERC20FRAX_CONTRACT, LUSDBOND_CONTRACT1_BLOCK, LUSD_ERC20_CONTRACT, LUSD_ERC20_CONTRACTV2_BLOCK, OHMDAI_ONSEN_ID, OHM_ERC20_CONTRACT, ONSEN_ALLOCATOR, SOHM_ERC20_CONTRACT, SOHM_ERC20_CONTRACTV2, SOHM_ERC20_CONTRACTV2_BLOCK, STAKING_CONTRACT_V1, STAKING_CONTRACT_V2, STAKING_CONTRACT_V2_BLOCK, SUSHI_MASTERCHEF, SUSHI_OHMDAI_PAIR, SUSHI_OHMETH_PAIR, SUSHI_OHMLUSD_PAIR, TREASURY_ADDRESS, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V2_BLOCK, SUSHI_OHMETH_PAIR_BLOCK, UNI_OHMFRAX_PAIR, UNI_OHMFRAX_PAIR_BLOCK, UNI_OHMLUSD_PAIR_BLOCK, WETH_ERC20_CONTRACT, XSUSI_ERC20_CONTRACT, CVX_ERC20_CONTRACT, CVX_ERC20_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT, STAKING_CONTRACT_V3_BLOCK, STAKING_CONTRACT_V3, TREASURY_ADDRESS_V3, SOHM_ERC20_CONTRACTV3, SOHM_ERC20_CONTRACTV3_BLOCK, OHMV2_ERC20_CONTRACT_BLOCK, OHMV2_ERC20_CONTRACT, DAO_WALLET, SUSHI_OHMETH_PAIR_BLOCKV2, SUSHI_OHMETH_PAIRV2, SUSHI_OHMDAI_PAIRV2, UNI_OHMFRAX_PAIRV2, SUSHI_OHMDAI_PAIRV2_BLOCK, UNI_OHMFRAX_PAIR_BLOCKV2, MIGRATION_CONTRACT, CONVEX_CVX_ALLOCATOR, VLCVX_ERC20_CONTRACT_BLOCK, VLCVX_ERC20_CONTRACT, FXS_ERC20_CONTRACT, FXS_ERC20_CONTRACT_BLOCK, UNI_FXS_ETH_PAIR_BLOCK, VEFXSERC20_CONTRACT, VEFXSERC20_BLOCK, VEFXS_ALLOCATOR, OHMLUSD_ONSEN_ID, CONVEX_ALLOCATOR3_BLOCK, CONVEX_ALLOCATOR3, WBTC_ERC20_CONTRACT, UST_ERC20_CONTRACT, UST_ERC20_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT_BLOCK_V2, DISTRIBUTOR_CONTRACT_V2, BONDS_DEPOSIT, SUSHI_OHMLUSD_PAIR_V2, SUSHI_OHMLUSD_PAIR_V2_BLOCK, LUSD_ALLOCATOR_BLOCK, STABILITY_POOL, LUSD_ALLOCATOR, RARI_ALLOCATOR_BLOCK, RARI_ALLOCATOR, AAVE_ALLOCATOR_V2_BLOCK, AAVE_ALLOCATOR_V2 } from './Constants';
+import { AAVE_ALLOCATOR, ADAI_ERC20_CONTRACT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR1_BLOCK, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR2_BLOCK, ERC20DAI_CONTRACT, ERC20FRAX_CONTRACT, LUSDBOND_CONTRACT1_BLOCK, LUSD_ERC20_CONTRACT, LUSD_ERC20_CONTRACTV2_BLOCK, OHMDAI_ONSEN_ID, OHM_ERC20_CONTRACT, ONSEN_ALLOCATOR, SOHM_ERC20_CONTRACT, SOHM_ERC20_CONTRACTV2, SOHM_ERC20_CONTRACTV2_BLOCK, STAKING_CONTRACT_V1, STAKING_CONTRACT_V2, STAKING_CONTRACT_V2_BLOCK, SUSHI_MASTERCHEF, SUSHI_OHMDAI_PAIR, SUSHI_OHMETH_PAIR, SUSHI_OHMLUSD_PAIR, TREASURY_ADDRESS, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V2_BLOCK, SUSHI_OHMETH_PAIR_BLOCK, UNI_OHMFRAX_PAIR, UNI_OHMFRAX_PAIR_BLOCK, UNI_OHMLUSD_PAIR_BLOCK, WETH_ERC20_CONTRACT, XSUSI_ERC20_CONTRACT, CVX_ERC20_CONTRACT, CVX_ERC20_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT, STAKING_CONTRACT_V3_BLOCK, STAKING_CONTRACT_V3, TREASURY_ADDRESS_V3, SOHM_ERC20_CONTRACTV3, SOHM_ERC20_CONTRACTV3_BLOCK, OHMV2_ERC20_CONTRACT_BLOCK, OHMV2_ERC20_CONTRACT, DAO_WALLET, SUSHI_OHMETH_PAIR_BLOCKV2, SUSHI_OHMETH_PAIRV2, SUSHI_OHMDAI_PAIRV2, UNI_OHMFRAX_PAIRV2, SUSHI_OHMDAI_PAIRV2_BLOCK, UNI_OHMFRAX_PAIR_BLOCKV2, MIGRATION_CONTRACT, CONVEX_CVX_ALLOCATOR, VLCVX_ERC20_CONTRACT_BLOCK, VLCVX_ERC20_CONTRACT, FXS_ERC20_CONTRACT, FXS_ERC20_CONTRACT_BLOCK, UNI_FXS_ETH_PAIR_BLOCK, VEFXSERC20_CONTRACT, VEFXSERC20_BLOCK, VEFXS_ALLOCATOR, OHMLUSD_ONSEN_ID, CONVEX_ALLOCATOR3_BLOCK, CONVEX_ALLOCATOR3, WBTC_ERC20_CONTRACT, UST_ERC20_CONTRACT, UST_ERC20_CONTRACT_BLOCK, DISTRIBUTOR_CONTRACT_BLOCK_V2, DISTRIBUTOR_CONTRACT_V2, BONDS_DEPOSIT, SUSHI_OHMLUSD_PAIR_V2, SUSHI_OHMLUSD_PAIR_V2_BLOCK, LUSD_ALLOCATOR_BLOCK, STABILITY_POOL, LUSD_ALLOCATOR, RARI_ALLOCATOR_BLOCK, RARI_ALLOCATOR, AAVE_ALLOCATOR_V2_BLOCK, AAVE_ALLOCATOR_V2, SUSHI_USDC_ETH_PAIR, UNI_ETH_WBTC_PAIR, SUSHI_XSUSHI_ETH_PAIR, UNI_FXS_ETH_PAIR, SUSHI_CVX_ETH_PAIR, SUSHI_UST_ETH_PAIR } from './Constants';
 import { dayFromTimestamp } from './Dates';
 import { toDecimal } from './Decimals';
 import { getOHMUSDRate, getDiscountedPairUSD, getPairUSD, getXsushiUSDRate, getETHUSDRate, getPairWETH, getCVXUSDRate, getFXSUSDRate, getBTCUSDRate, getPairLUSD, getDiscountedPairLUSD } from './Price';
 import { updateBondDiscounts } from './BondDiscounts';
+import { UniswapV3Pair } from '../../generated/ProtocolMetrics/UniswapV3Pair';
 
 export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric{
     let dayTimestamp = dayFromTimestamp(timestamp);
@@ -133,11 +134,204 @@ function getSohmSupply(blockNumber: BigInt): BigDecimal{
     return sohm_supply
 }
 
+type contractsDictType = { [key: string]: ERC20 | UniswapV2Pair | RariAllocator | MasterChef | VeFXS | ConvexAllocator | UniswapV3Pair | StabilityPool };
+function bindContracts(): contractsDictType {
+    return {
+        ERC20DAI_CONTRACT: ERC20.bind(Address.fromString(ERC20DAI_CONTRACT)),
+        ERC20FRAX_CONTRACT: ERC20.bind(Address.fromString(ERC20FRAX_CONTRACT)),
+        ADAI_ERC20_CONTRACT: ERC20.bind(Address.fromString(ADAI_ERC20_CONTRACT)),
+        XSUSI_ERC20_CONTRACT: ERC20.bind(Address.fromString(XSUSI_ERC20_CONTRACT)),
+        WETH_ERC20_CONTRACT: ERC20.bind(Address.fromString(WETH_ERC20_CONTRACT)),
+        LUSD_ERC20_CONTRACT: ERC20.bind(Address.fromString(LUSD_ERC20_CONTRACT)),
+        WBTC_ERC20_CONTRACT: ERC20.bind(Address.fromString(WBTC_ERC20_CONTRACT)),
+        UST_ERC20_CONTRACT: ERC20.bind(Address.fromString(UST_ERC20_CONTRACT)),
+        CVX_ERC20_CONTRACT: ERC20.bind(Address.fromString(CVX_ERC20_CONTRACT)),
+        VLCVX_ERC20_CONTRACT: ERC20.bind(Address.fromString(VLCVX_ERC20_CONTRACT)),
+        FXS_ERC20_CONTRACT: ERC20.bind(Address.fromString(FXS_ERC20_CONTRACT)),
+        SUSHI_OHMDAI_PAIR: UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIR)),
+        SUSHI_OHMDAI_PAIRV2: UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIRV2)),
+        UNI_OHMFRAX_PAIR: UniswapV2Pair.bind(Address.fromString(UNI_OHMFRAX_PAIR)),
+        UNI_OHMFRAX_PAIRV2: UniswapV2Pair.bind(Address.fromString(UNI_OHMFRAX_PAIRV2)),
+        SUSHI_OHMLUSD_PAIR: UniswapV2Pair.bind(Address.fromString(SUSHI_OHMLUSD_PAIR)),
+        SUSHI_OHMLUSD_PAIR_V2: UniswapV2Pair.bind(Address.fromString(SUSHI_OHMLUSD_PAIR_V2)),
+        SUSHI_OHMETH_PAIR: UniswapV2Pair.bind(Address.fromString(SUSHI_OHMETH_PAIR)),
+        SUSHI_OHMETH_PAIRV2: UniswapV2Pair.bind(Address.fromString(SUSHI_OHMETH_PAIRV2)),
+        SUSHI_USDC_ETH_PAIR: UniswapV2Pair.bind(Address.fromString(SUSHI_USDC_ETH_PAIR)),
+        UNI_ETH_WBTC_PAIR: UniswapV2Pair.bind(Address.fromString(UNI_ETH_WBTC_PAIR)),
+        SUSHI_XSUSHI_ETH_PAIR: UniswapV2Pair.bind(Address.fromString(SUSHI_XSUSHI_ETH_PAIR)),
+        SUSHI_CVX_ETH_PAIR: UniswapV2Pair.bind(Address.fromString(SUSHI_CVX_ETH_PAIR)),
+        SUSHI_UST_ETH_PAIR: UniswapV2Pair.bind(Address.fromString(SUSHI_UST_ETH_PAIR)),
+        UNI_FXS_ETH_PAIR: UniswapV3Pair.bind(Address.fromString(UNI_FXS_ETH_PAIR)),
+        SUSHI_MASTERCHEF: MasterChef.bind(Address.fromString(SUSHI_MASTERCHEF)),
+        VEFXSERC20_CONTRACT: VeFXS.bind(Address.fromString(VEFXSERC20_CONTRACT)),
+        RARI_ALLOCATOR: RariAllocator.bind(Address.fromString(RARI_ALLOCATOR)),
+        CONVEX_ALLOCATOR1: ConvexAllocator.bind(Address.fromString(CONVEX_ALLOCATOR1)),
+        CONVEX_ALLOCATOR2: ConvexAllocator.bind(Address.fromString(CONVEX_ALLOCATOR2)),
+        CONVEX_ALLOCATOR3: ConvexAllocator.bind(Address.fromString(CONVEX_ALLOCATOR3)),
+        STABILITY_POOL: StabilityPool.bind(Address.fromString(STABILITY_POOL)),
+    };
+}
+
+/**
+ * Helper method to simplify getting the balance from an ERC20 contract.
+ * 
+ * @param contract The bound ERC20 contract.
+ * @param address The address of the holder.
+ * @returns BigInt
+ */
+function getBalance(contract: ERC20, address: string): BigInt {
+    return contract.balanceOf(Address.fromString(address));
+}
+
+/**
+ * Calculates the balance of DAI across the following:
+ * - treasury address (V1 or V2)
+ * - treasury address V3
+ * - Aave allocator
+ * - Aave allocator v2
+ * - Rari allocator
+ * 
+ * @param contracts object with bound contracts
+ * @param blockNumber the current block number
+ * @param treasury_address the v1 or v2 treasury address
+ * @returns BigInt representing the balance
+ */
+function getDaiBalance(contracts: contractsDictType, blockNumber: BigInt, treasury_address: string): BigInt {
+    const daiERC20 = contracts[ERC20DAI_CONTRACT] as ERC20;
+    const aDaiERC20 = contracts[ADAI_ERC20_CONTRACT] as ERC20;
+    const rariAllocator = contracts[RARI_ALLOCATOR] as RariAllocator;
+
+    // Treasury (V1 or V2)
+    let daiBalance = getBalance(daiERC20, treasury_address);
+    // Treasury V3
+    daiBalance = daiBalance.plus(getBalance(daiERC20, TREASURY_ADDRESS_V3));
+    // Aave allocator
+    daiBalance = daiBalance.plus(getBalance(aDaiERC20, AAVE_ALLOCATOR));
+    // Aave allocator V2
+    if (blockNumber.gt(BigInt.fromString(AAVE_ALLOCATOR_V2_BLOCK))) {
+        daiBalance = daiBalance.plus(getBalance(aDaiERC20, AAVE_ALLOCATOR_V2));
+    }
+    // Rari allocator
+    if (blockNumber.gt(BigInt.fromString(RARI_ALLOCATOR_BLOCK))) {
+        daiBalance = daiBalance.plus(rariAllocator.amountAllocated(BigInt.fromI32(3)));
+    }
+
+    return daiBalance;
+}
+
+/**
+ * Calculates the balance of TRIBE across the following:
+ * - Rari allocator
+ * 
+ * @param contracts object with bound contracts
+ * @param blockNumber current block number
+ * @returns BigInt representing the balance
+ */
+function getTribeBalance(contracts: contractsDictType, blockNumber: BigInt): BigInt {
+    const rariAllocator = contracts[RARI_ALLOCATOR] as RariAllocator; 
+    let tribeBalance = BigInt.fromI32(0)
+
+    if (blockNumber.gt(BigInt.fromString(RARI_ALLOCATOR_BLOCK))) {
+        tribeBalance = rariAllocator.amountAllocated(BigInt.fromI32(4));
+    }
+
+    return tribeBalance;
+}
+
+/**
+ * Calculates the balance of FRAX across the following:
+ * - Convex allocator 1
+ * - Convex allocator 2
+ * - Convex allocator 3
+ * 
+ * @param contracts object with bound contracts
+ * @param blockNumber current block number
+ * @returns BigInt representing the balance
+ */
+function getFraxAllocatedInConvexBalance(contracts: contractsDictType, blockNumber: BigInt): BigInt {
+    // TODO add to mv and mvrfv?
+    const allocator1 = contracts[CONVEX_ALLOCATOR1] as ConvexAllocator;
+    const allocator2 = contracts[CONVEX_ALLOCATOR2] as ConvexAllocator;
+    const allocator3 = contracts[CONVEX_ALLOCATOR3] as ConvexAllocator;
+    let convexrfv =  BigInt.fromString("0");
+
+    if (blockNumber.gt(BigInt.fromString(CONVEX_ALLOCATOR1_BLOCK))) {
+        convexrfv = convexrfv.plus(allocator1.totalValueDeployed());
+    }
+    if (blockNumber.gt(BigInt.fromString(CONVEX_ALLOCATOR2_BLOCK))) {
+        convexrfv = convexrfv.plus(allocator2.totalValueDeployed());
+    }
+    if (blockNumber.gt(BigInt.fromString(CONVEX_ALLOCATOR3_BLOCK))) {
+        convexrfv = convexrfv.plus(allocator3.totalValueDeployed());
+    }
+
+    //Multiplied by 10e9 for consistency
+    // TODO determine if the multiplier is correct
+    convexrfv = convexrfv.times(BigInt.fromString("1000000000"));
+    log.debug("Convex Allocator {}", [toDecimal(convexrfv, 18).toString()]);
+    return convexrfv;
+}
+
+/**
+ * Calculates the balance of FRAX across the following:
+ * - treasury address (V1 or V2)
+ * - treasury address V3
+ * - Convex allocators
+ * 
+ * @param contracts object with bound contracts
+ * @param blockNumber the current block number
+ * @param treasury_address the v1 or v2 treasury address
+ * @returns BigInt representing the balance
+ */
+function getFraxBalance(contracts: contractsDictType, blockNumber: BigInt, treasury_address: string): BigInt {
+    const fraxERC20 = contracts[ERC20FRAX_CONTRACT] as ERC20;
+
+    // Treasury (V1 or V2)
+    let fraxBalance = getBalance(fraxERC20, treasury_address);
+    // Treasury V3
+    fraxBalance = fraxBalance.plus(getBalance(fraxERC20, TREASURY_ADDRESS_V3));
+    // Convex allocators
+    fraxBalance = fraxBalance.plus(getFraxAllocatedInConvexBalance(contracts, blockNumber));
+    
+    return fraxBalance;
+}
+
+/**
+ * Returns the value of vesting assets in the treasury
+ * 
+ * @returns BigDecimal
+ */
+function getVestingAssets(): BigDecimal {
+    //Cross chain assets that can not be tracked right now
+    // pklima
+    // butterfly
+    // Vsta
+    // PhantomDAO
+    // Lobis
+    // TODO remove hard-coded number
+    return BigDecimal.fromString("32500000") 
+}
+
+/**
+ * Returns the balance of xSUSHI tokens in the following:
+ * - treasury address (V1 or V2)
+ * - treasury address V3
+ * 
+ * @param contracts object with bound contracts
+ * @param blockNumber the current block number
+ * @param treasury_address the v1 or v2 treasury address
+ * @returns BigInt representing the balance
+ */
+function getXSushiBalance(contracts: contractsDictType, blockNumber: BigInt, treasury_address: string): BigInt {
+    const xSushiERC20 = contracts[XSUSI_ERC20_CONTRACT] as ERC20;
+    let xSushiBalance = getBalance(xSushiERC20, treasury_address);
+    xSushiBalance = xSushiBalance.plus(getBalance(xSushiERC20, TREASURY_ADDRESS_V3));
+
+    return xSushiBalance;
+}
+
 function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
-    let daiERC20 = ERC20.bind(Address.fromString(ERC20DAI_CONTRACT))
-    let fraxERC20 = ERC20.bind(Address.fromString(ERC20FRAX_CONTRACT))
-    let aDaiERC20 = ERC20.bind(Address.fromString(ADAI_ERC20_CONTRACT))
-    let xSushiERC20 = ERC20.bind(Address.fromString(XSUSI_ERC20_CONTRACT))
+    const contracts = bindContracts();
     let wethERC20 = ERC20.bind(Address.fromString(WETH_ERC20_CONTRACT))
     let lusdERC20 = ERC20.bind(Address.fromString(LUSD_ERC20_CONTRACT))
     let wbtcERC20 = ERC20.bind(Address.fromString(WBTC_ERC20_CONTRACT))
@@ -156,44 +350,27 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     let ohmethPairv2 = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMETH_PAIRV2))
 
     let treasury_address = TREASURY_ADDRESS;
-    if(blockNumber.gt(BigInt.fromString(TREASURY_ADDRESS_V2_BLOCK))){
+    if (blockNumber.gt(BigInt.fromString(TREASURY_ADDRESS_V2_BLOCK))) {
         treasury_address = TREASURY_ADDRESS_V2;
     }
 
     // TODO add FEI
 
-    let daiBalance = daiERC20.balanceOf(Address.fromString(treasury_address)).plus(daiERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
-    daiBalance = daiBalance.plus(aDaiERC20.balanceOf(Address.fromString(AAVE_ALLOCATOR)))
-    if(blockNumber.gt(BigInt.fromString(AAVE_ALLOCATOR_V2_BLOCK))){
-        daiBalance = daiBalance.plus(aDaiERC20.balanceOf(Address.fromString(AAVE_ALLOCATOR_V2)))
-    }
+    const daiBalance = getDaiBalance(contracts, blockNumber, treasury_address);
+    // TODO TRIBE not used anywhere
+    const tribeBalance = getTribeBalance(contracts, blockNumber);
 
-    let tribeBalance = BigInt.fromI32(0)
-
-    if(blockNumber.gt(BigInt.fromString(RARI_ALLOCATOR_BLOCK))){
-        let rariallocator = RariAllocator.bind(Address.fromString(RARI_ALLOCATOR))
-        daiBalance = daiBalance.plus(rariallocator.amountAllocated(BigInt.fromI32(3)))
-        tribeBalance = rariallocator.amountAllocated(BigInt.fromI32(4))
-    }
-
-    let fraxBalance = fraxERC20.balanceOf(Address.fromString(treasury_address)).plus(fraxERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
+    const fraxBalance = getFraxBalance(contracts, blockNumber, treasury_address);
     
     // TODO add balancer
     // TODO add uniswap v3
     
-    //Cross chain assets that can not be tracked right now
-    // pklima
-    // butterfly
-    // Vsta
-    // PhantomDAO
-    // Lobis
-    // TODO remove hard-coded number
-    let vesting_assets = BigDecimal.fromString("32500000") 
+    const vesting_assets = getVestingAssets();
 
     let volatile_value = vesting_assets
 
-    let xSushiBalance = xSushiERC20.balanceOf(Address.fromString(treasury_address)).plus(xSushiERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
-    let xSushi_value = toDecimal(xSushiBalance, 18).times(getXsushiUSDRate())
+    const xSushiBalance = getXSushiBalance(contracts, blockNumber, treasury_address);
+    const xSushi_value = toDecimal(xSushiBalance, 18).times(getXsushiUSDRate())
     volatile_value = volatile_value.plus(xSushi_value)
     log.debug("xSushi_value {}", [xSushi_value.toString()])
 
@@ -258,27 +435,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
         // TODO hard-coded UST price (ruh roh)
         ustBalance = ustERC20.balanceOf(Address.fromString(treasury_address)).plus(ustERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3))).times(BigInt.fromString("1000000000000"))
     }
-
-    //CONVEX Frax allocator
-    // TODO add to mv and mvrfv
-    let convexrfv =  BigInt.fromString("0");
-    if(blockNumber.gt(BigInt.fromString(CONVEX_ALLOCATOR1_BLOCK))){
-        let allocator1 = ConvexAllocator.bind(Address.fromString(CONVEX_ALLOCATOR1))
-        convexrfv = convexrfv.plus(allocator1.totalValueDeployed())
-    }
-    if(blockNumber.gt(BigInt.fromString(CONVEX_ALLOCATOR2_BLOCK))){
-        let allocator2 = ConvexAllocator.bind(Address.fromString(CONVEX_ALLOCATOR2))
-        convexrfv = convexrfv.plus(allocator2.totalValueDeployed())
-    }
-    if(blockNumber.gt(BigInt.fromString(CONVEX_ALLOCATOR3_BLOCK))){
-        let allocator3 = ConvexAllocator.bind(Address.fromString(CONVEX_ALLOCATOR3))
-        convexrfv = convexrfv.plus(allocator3.totalValueDeployed())
-    }
-
-    //Multiplied by 10e9 for consistency
-    // TODO determine if the multiplier is correct
-    convexrfv = convexrfv.times(BigInt.fromString("1000000000"))
-    fraxBalance = fraxBalance.plus(convexrfv)
 
     //OHMDAI
     let ohmdaiSushiBalance = ohmdaiPair.balanceOf(Address.fromString(treasury_address)).plus(ohmdaiPair.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
@@ -447,7 +603,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     log.debug("Treasury Frax value {}", [toDecimal(fraxBalance, 18).toString()])
     log.debug("Treasury OHM-FRAX RFV {}", [ohmfrax_rfv.toString()])
     log.debug("Treasury OHM-LUSD RFV {}", [ohmlusd_rfv.toString()])
-    log.debug("Convex Allocator {}", [toDecimal(convexrfv, 18).toString()])
 
     /**
      * DAI risk-free value
@@ -513,6 +668,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
      * - why subtract fxs_value? It's not locked
      * - why isn't veFXS subtracted from treasuryVolatileBacking? Since it's locked
      * - include FEI balance?
+     * - include TRIBE balance?
      */
     return [
         mv, 
