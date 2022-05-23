@@ -478,11 +478,13 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
      * 
      * wbtc_value = wBTC (treasury v3 & treasury v3)
      * 
-     * = treasuryVolatileBacking = vesting_assets + xSushi_value + cvx_value + fxs_value + veFXS (veFXS allocator) + weth_value + wbtc_value
+     * treasuryVolatileBacking = vesting_assets + xSushi_value + cvx_value + fxs_value + veFXS (veFXS allocator) + weth_value + wbtc_value
      */
 
     /**
      * Treasury total backing
+     * 
+     * vesting_assets = 32500000
      * 
      * convexrfv = (convex allocator 1 total value deployed + convex allocator 2 total value deployed + convex allocator 3 total value deployed)
      * 
@@ -500,9 +502,9 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
      * 
      * lpValue = ohmdai_value + ohmfrax_value + ohmlusd_value + ohmeth_value
      * 
-     * getCriculatingSupply =
+     * getCriculatingSupply (of OHM V2) = (contract total supply - DAO wallet balance - migration contract balance - bonds deposit balance)
      * 
-     * = treasuryStableBacking - vesting_assets + treasuryVolatileBacking + (lpValue / 2) - cvx_value - fxs_value - getCriculatingSupply
+     * treasuryTotalBacking = treasuryStableBacking - vesting_assets + treasuryVolatileBacking + (lpValue / 2) - cvx_value - fxs_value - getCriculatingSupply
      */
     return [
         mv, 
