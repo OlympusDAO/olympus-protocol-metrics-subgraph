@@ -45,3 +45,21 @@ export class TokenRecords {
     }, BigDecimal.fromString("0"));
   }
 }
+
+export class TokensRecords {
+  tokens: { [key: string]: TokenRecords };
+
+  construct() {
+    this.tokens = {};
+  }
+
+  addToken(token: string, records: TokenRecords) {
+    this.tokens[token] = records;
+  }
+
+  getValue(): BigDecimal {
+    return Object.values(this.tokens).reduce((accumulator, obj) => {
+      return accumulator.plus(obj.getValue());
+    }, BigDecimal.fromString("0"));
+  }
+}

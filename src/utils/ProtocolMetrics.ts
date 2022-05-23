@@ -126,7 +126,7 @@ import {
 } from "./Price";
 import { updateBondDiscounts } from "./BondDiscounts";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
-import { TokenRecord, TokenRecords } from "./TokenRecord";
+import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
 
 export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
   let dayTimestamp = dayFromTimestamp(timestamp);
@@ -463,17 +463,27 @@ function getFeiBalance(
   contracts: contractsDictType,
   blockNumber: BigInt,
   treasury_address: string
-): BigInt {
+): TokenRecords {
   const feiERC20 = contracts[FEI_ERC20_CONTRACT] as ERC20;
 
-  // Treasury (V1 or V2)
-  let feiBalance = getBalance(feiERC20, treasury_address, blockNumber);
-  // Treasury V3
-  feiBalance = feiBalance.plus(
-    getBalance(feiERC20, TREASURY_ADDRESS_V3, blockNumber)
-  );
+  const sources = [
+    new TokenRecord(
+      "FEI",
+      "Treasury Wallet",
+      treasury_address,
+      BigDecimal.fromString("1"),
+      toDecimal(getBalance(feiERC20, treasury_address, blockNumber), 18)
+    ),
+    new TokenRecord(
+      "FEI",
+      "Treasury Wallet V3",
+      TREASURY_ADDRESS_V3,
+      BigDecimal.fromString("1"),
+      toDecimal(getBalance(feiERC20, TREASURY_ADDRESS_V3, blockNumber), 18)
+    ),
+  ];
 
-  return feiBalance;
+  return new TokenRecords(sources);
 }
 
 /**
@@ -522,28 +532,69 @@ function getTribeBalance(
 function getFraxAllocatedInConvexBalance(
   contracts: contractsDictType,
   blockNumber: BigInt
-): BigInt {
+): TokenRecords {
   // TODO add to mv and mvrfv?
   const allocator1 = contracts[CONVEX_ALLOCATOR1] as ConvexAllocator;
   const allocator2 = contracts[CONVEX_ALLOCATOR2] as ConvexAllocator;
   const allocator3 = contracts[CONVEX_ALLOCATOR3] as ConvexAllocator;
-  let convexrfv = BigInt.fromString("0");
 
-  if (blockNumber.gt(BigInt.fromString(CONVEX_ALLOCATOR1_BLOCK))) {
-    convexrfv = convexrfv.plus(allocator1.totalValueDeployed());
-  }
-  if (blockNumber.gt(BigInt.fromString(CONVEX_ALLOCATOR2_BLOCK))) {
-    convexrfv = convexrfv.plus(allocator2.totalValueDeployed());
-  }
-  if (blockNumber.gt(BigInt.fromString(CONVEX_ALLOCATOR3_BLOCK))) {
-    convexrfv = convexrfv.plus(allocator3.totalValueDeployed());
-  }
+  const sources = [];
 
   //Multiplied by 10e9 for consistency
   // TODO determine if the multiplier is correct
-  convexrfv = convexrfv.times(BigInt.fromString("1000000000"));
-  log.debug("Convex Allocator {}", [toDecimal(convexrfv, 18).toString()]);
-  return convexrfv;
+
+  if (blockNumber.gt(BigInt.fromString(CONVEX_ALLOCATOR1_BLOCK))) {
+    sources.push(
+      new TokenRecord(
+        "FRAX",
+        "Convex Allocator 1",
+        CONVEX_ALLOCATOR1,
+        BigDecimal.fromString("1"),
+        toDecimal(
+          allocator1
+            .totalValueDeployed()
+            .times(BigInt.fromString("1000000000")),
+          18
+        )
+      )
+    );
+  }
+
+  if (blockNumber.gt(BigInt.fromString(CONVEX_ALLOCATOR2_BLOCK))) {
+    sources.push(
+      new TokenRecord(
+        "FRAX",
+        "Convex Allocator 2",
+        CONVEX_ALLOCATOR2,
+        BigDecimal.fromString("1"),
+        toDecimal(
+          allocator2
+            .totalValueDeployed()
+            .times(BigInt.fromString("1000000000")),
+          18
+        )
+      )
+    );
+  }
+
+  if (blockNumber.gt(BigInt.fromString(CONVEX_ALLOCATOR3_BLOCK))) {
+    sources.push(
+      new TokenRecord(
+        "FRAX",
+        "Convex Allocator 3",
+        CONVEX_ALLOCATOR3,
+        BigDecimal.fromString("1"),
+        toDecimal(
+          allocator3
+            .totalValueDeployed()
+            .times(BigInt.fromString("1000000000")),
+          18
+        )
+      )
+    );
+  }
+
+  return new TokenRecords(sources);
 }
 
 /**
@@ -561,21 +612,28 @@ function getFraxBalance(
   contracts: contractsDictType,
   blockNumber: BigInt,
   treasury_address: string
-): BigInt {
+): TokenRecords {
   const fraxERC20 = contracts[ERC20FRAX_CONTRACT] as ERC20;
 
-  // Treasury (V1 or V2)
-  let fraxBalance = getBalance(fraxERC20, treasury_address, blockNumber);
-  // Treasury V3
-  fraxBalance = fraxBalance.plus(
-    getBalance(fraxERC20, TREASURY_ADDRESS_V3, blockNumber)
-  );
-  // Convex allocators
-  fraxBalance = fraxBalance.plus(
-    getFraxAllocatedInConvexBalance(contracts, blockNumber)
-  );
+  const sources = [
+    new TokenRecord(
+      "FRAX",
+      "Treasury Wallet",
+      treasury_address,
+      BigDecimal.fromString("1"),
+      toDecimal(getBalance(fraxERC20, treasury_address, blockNumber), 18)
+    ),
+    new TokenRecord(
+      "FRAX",
+      "Treasury Wallet V3",
+      TREASURY_ADDRESS_V3,
+      BigDecimal.fromString("1"),
+      toDecimal(getBalance(fraxERC20, TREASURY_ADDRESS_V3, blockNumber), 18)
+    ),
+    ...getFraxAllocatedInConvexBalance(contracts, blockNumber).records,
+  ];
 
-  return fraxBalance;
+  return new TokenRecords(sources);
 }
 
 /**
@@ -672,36 +730,60 @@ function getLUSDBalance(
   contracts: contractsDictType,
   blockNumber: BigInt,
   treasury_address: string
-): BigInt {
+): TokenRecords {
   const lusdERC20 = contracts[LUSD_ERC20_CONTRACT] as ERC20;
   const stabilityPoolContract = contracts[STABILITY_POOL] as StabilityPool;
-  let lusdBalance = BigInt.fromI32(0);
 
-  lusdBalance = lusdBalance.plus(
-    getBalance(
-      lusdERC20,
+  const sources = [
+    new TokenRecord(
+      "LUSD",
+      "Treasury Wallet",
       treasury_address,
-      blockNumber,
-      BigInt.fromString(LUSD_ERC20_CONTRACTV2_BLOCK)
-    )
-  );
-  lusdBalance = lusdBalance.plus(
-    getBalance(
-      lusdERC20,
-      TREASURY_ADDRESS_V3,
-      blockNumber,
-      BigInt.fromString(LUSD_ERC20_CONTRACTV2_BLOCK)
-    )
-  );
+      BigDecimal.fromString("1"),
+      toDecimal(
+        getBalance(
+          lusdERC20,
+          treasury_address,
+          blockNumber,
+          BigInt.fromString(LUSD_ERC20_CONTRACTV2_BLOCK)
+        ),
+        18
+      )
+    ),
+    new TokenRecord(
+      "LUSD",
+      "Treasury Wallet V3",
+      treasury_address,
+      BigDecimal.fromString("1"),
+      toDecimal(
+        getBalance(
+          lusdERC20,
+          TREASURY_ADDRESS_V3,
+          blockNumber,
+          BigInt.fromString(LUSD_ERC20_CONTRACTV2_BLOCK)
+        ),
+        18
+      )
+    ),
+  ];
 
   if (blockNumber.gt(BigInt.fromString(LUSD_ALLOCATOR_BLOCK))) {
-    lusdBalance = lusdBalance.plus(
-      stabilityPoolContract.deposits(Address.fromString(LUSD_ALLOCATOR)).value0
+    sources.push(
+      new TokenRecord(
+        "LUSD",
+        "LUSD Allocator",
+        LUSD_ALLOCATOR,
+        BigDecimal.fromString("1"),
+        toDecimal(
+          stabilityPoolContract.deposits(Address.fromString(LUSD_ALLOCATOR))
+            .value0,
+          18
+        )
+      )
     );
   }
 
-  console.debug("LUSD Balance {}", [lusdBalance.toString()]);
-  return lusdBalance;
+  return new TokenRecords(sources);
 }
 
 /**
@@ -718,29 +800,43 @@ function getUSTBalance(
   contracts: contractsDictType,
   blockNumber: BigInt,
   treasury_address: string
-): BigInt {
+): TokenRecords {
   const ustERC20 = contracts[UST_ERC20_CONTRACT] as ERC20;
-  let ustBalance = BigInt.fromI32(0);
 
-  ustBalance = ustBalance.plus(
-    getBalance(
-      ustERC20,
-      treasury_address,
-      blockNumber,
-      BigInt.fromString(UST_ERC20_CONTRACT_BLOCK)
-    )
-  );
-  ustBalance = ustBalance.plus(
-    getBalance(
-      ustERC20,
-      TREASURY_ADDRESS_V3,
-      blockNumber,
-      BigInt.fromString(UST_ERC20_CONTRACT_BLOCK)
-    )
-  );
+  const sources = [
+    new TokenRecord(
+      "UST",
+      "Treasury Wallet",
+      UST_ERC20_CONTRACT,
+      BigDecimal.fromString("1"),
+      toDecimal(
+        getBalance(
+          ustERC20,
+          treasury_address,
+          blockNumber,
+          BigInt.fromString(UST_ERC20_CONTRACT_BLOCK)
+        ),
+        18
+      )
+    ),
+    new TokenRecord(
+      "UST",
+      "Treasury Wallet V3",
+      UST_ERC20_CONTRACT,
+      BigDecimal.fromString("1"),
+      toDecimal(
+        getBalance(
+          ustERC20,
+          TREASURY_ADDRESS_V3,
+          blockNumber,
+          BigInt.fromString(UST_ERC20_CONTRACT_BLOCK)
+        ),
+        18
+      )
+    ),
+  ];
 
-  console.debug("UST balance {}", [ustBalance.toString()]);
-  return ustBalance;
+  return new TokenRecords(sources);
 }
 
 /**
@@ -790,13 +886,6 @@ function getValue(
 }
 
 /**
- * Balance
- * Value
- * Description
- * Block number
- */
-
-/**
  * Returns the value of USD-pegged stablecoins:
  * - DAI
  * - FRAX
@@ -817,27 +906,32 @@ function getStableValue(
   contracts: contractsDictType,
   blockNumber: BigInt,
   treasury_address: string
-): BigDecimal {
-  let value = BigDecimal.fromString("0");
+): TokensRecords {
+  const records = new TokensRecords();
 
-  value = value.plus(
-    getDaiBalance(contracts, blockNumber, treasury_address).getValue()
+  records.addToken(
+    "DAI",
+    getDaiBalance(contracts, blockNumber, treasury_address)
   );
-  value = value.plus(
-    toDecimal(getFraxBalance(contracts, blockNumber, treasury_address), 18)
+  records.addToken(
+    "FRAX",
+    getFraxBalance(contracts, blockNumber, treasury_address)
   );
-  value = value.plus(
-    toDecimal(getLUSDBalance(contracts, blockNumber, treasury_address), 18)
+  records.addToken(
+    "UST",
+    getUSTBalance(contracts, blockNumber, treasury_address)
   );
-  value = value.plus(
-    toDecimal(getUSTBalance(contracts, blockNumber, treasury_address), 18)
+  records.addToken(
+    "LUSD",
+    getLUSDBalance(contracts, blockNumber, treasury_address)
   );
-  value = value.plus(
-    toDecimal(getFeiBalance(contracts, blockNumber, treasury_address), 18)
+  records.addToken(
+    "FEI",
+    getFeiBalance(contracts, blockNumber, treasury_address)
   );
 
-  console.debug("Stablecoin value {}", [value.toString()]);
-  return value;
+  console.debug("Stablecoin tokens: {}", [records.toString()]);
+  return records;
 }
 
 function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
@@ -871,9 +965,15 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   }
 
   const daiTokens = getDaiBalance(contracts, blockNumber, treasury_address);
-  console.debug("DAI Tokens {}", [daiTokens]);
   const daiBalance = daiTokens.getBalance();
-  const fraxBalance = getFraxBalance(contracts, blockNumber, treasury_address);
+  const fraxTokens = getFraxBalance(contracts, blockNumber, treasury_address);
+  const fraxBalance = fraxTokens.getBalance();
+  const lusdTokens = getLUSDBalance(contracts, blockNumber, treasury_address);
+  const lusdBalance = lusdTokens.getBalance();
+  const feiTokens = getFeiBalance(contracts, blockNumber, treasury_address);
+  const feiBalance = feiTokens.getBalance();
+  const ustTokens = getUSTBalance(contracts, blockNumber, treasury_address);
+  const ustBalance = ustTokens.getValue();
 
   // TODO add balancer
   // TODO add uniswap v3
@@ -944,13 +1044,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     .balanceOf(Address.fromString(treasury_address))
     .plus(wbtcERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)));
   let wbtc_value = toDecimal(wbtcBalance, 8).times(getBTCUSDRate());
-
-  const lusdBalance = getLUSDBalance(contracts, blockNumber, treasury_address);
-
-  let ustBalance = getUSTBalance(contracts, blockNumber, treasury_address);
-  // TODO hard-coded UST price (ruh roh)
-  // Variable is also mis-named
-  ustBalance = ustBalance.times(BigInt.fromString("1000000000000"));
 
   //OHMDAI
   let ohmdaiSushiBalance = ohmdaiPair
@@ -1184,11 +1277,12 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     }
   }
 
-  const stableValueDecimal = getStableValue(
+  const stableValueRecords = getStableValue(
     contracts,
     blockNumber,
     treasury_address
   );
+  const stableValueDecimal = stableValueRecords.getValue();
 
   let lpValue = ohmdai_value
     .plus(ohmfrax_value)
@@ -1224,9 +1318,9 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   log.debug("Treasury DAI value {}", [daiBalance.toString()]);
   log.debug("Treasury xSushi value {}", [xSushiValue.toString()]);
   log.debug("Treasury WETH value {}", [weth_value.toString()]);
-  log.debug("Treasury LUSD value {}", [toDecimal(lusdBalance, 18).toString()]);
+  log.debug("Treasury LUSD value {}", [lusdBalance.toString()]);
   log.debug("Treasury OHM-DAI RFV {}", [ohmdai_rfv.toString()]);
-  log.debug("Treasury Frax value {}", [toDecimal(fraxBalance, 18).toString()]);
+  log.debug("Treasury Frax value {}", [fraxBalance.toString()]);
   log.debug("Treasury OHM-FRAX RFV {}", [ohmfrax_rfv.toString()]);
   log.debug("Treasury OHM-LUSD RFV {}", [ohmlusd_rfv.toString()]);
 
@@ -1302,16 +1396,16 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     // treasuryDaiRiskFreeValue = DAI RFV * DAI + aDAI
     ohmdai_rfv.plus(daiBalance),
     // treasuryFraxRiskFreeValue = FRAX RFV * FRAX
-    ohmfrax_rfv.plus(toDecimal(fraxBalance, 18)),
+    ohmfrax_rfv.plus(fraxBalance),
     // treasuryDaiMarketValue = DAI LP * DAI + aDAI
     ohmdai_value.plus(daiBalance),
     // treasuryFraxMarketValue = FRAX LP * FRAX
-    ohmfrax_value.plus(toDecimal(fraxBalance, 18)),
+    ohmfrax_value.plus(fraxBalance),
     xSushiValue,
     ohmeth_rfv.plus(weth_value),
     ohmeth_value.plus(weth_value),
-    ohmlusd_rfv.plus(toDecimal(lusdBalance, 18)),
-    ohmlusd_value.plus(toDecimal(lusdBalance, 18)),
+    ohmlusd_rfv.plus(lusdBalance),
+    ohmlusd_value.plus(lusdBalance),
     cvxVlCvxValue,
     // POL
     ohmdaiPOL,
@@ -1320,7 +1414,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     ohmethPOL,
     volatile_value,
     wbtc_value,
-    toDecimal(ustBalance, 18),
+    ustBalance,
     treasuryStableBacking,
     treasuryVolatileBacking,
     treasuryTotalBacking,
