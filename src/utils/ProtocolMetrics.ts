@@ -653,6 +653,47 @@ function getValue(
   return toDecimal(balance, decimals).times(rate);
 }
 
+/**
+ * Returns the value of USD-pegged stablecoins:
+ * - DAI
+ * - FRAX
+ * - LUSD
+ * - UST
+ *
+ * This currently (incorrectly) assumes that the value of each stablecoin is $1.
+ *
+ * TODO: lookup stablecoin price
+ * TODO: FEI
+ *
+ * @param contracts object with bound contracts
+ * @param blockNumber the current block number
+ * @param treasury_address the v1 or v2 treasury address
+ * @returns BigDecimal representing the balance
+ */
+function getStableValue(
+  contracts: contractsDictType,
+  blockNumber: BigInt,
+  treasury_address: string
+): BigDecimal {
+  let value = BigDecimal.fromString("0");
+
+  value = value.plus(
+    toDecimal(getDaiBalance(contracts, blockNumber, treasury_address), 18)
+  );
+  value = value.plus(
+    toDecimal(getFraxBalance(contracts, blockNumber, treasury_address), 18)
+  );
+  value = value.plus(
+    toDecimal(getLUSDBalance(contracts, blockNumber, treasury_address), 18)
+  );
+  value = value.plus(
+    toDecimal(getUSTBalance(contracts, blockNumber, treasury_address), 18)
+  );
+
+  console.debug("Stablecoin value {}", [value.toString()]);
+  return value;
+}
+
 function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const contracts = bindContracts();
   let wethERC20 = ERC20.bind(Address.fromString(WETH_ERC20_CONTRACT));
@@ -682,8 +723,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   if (blockNumber.gt(BigInt.fromString(TREASURY_ADDRESS_V2_BLOCK))) {
     treasury_address = TREASURY_ADDRESS_V2;
   }
-
-  // TODO add FEI
 
   const daiBalance = getDaiBalance(contracts, blockNumber, treasury_address);
   // TODO TRIBE not used anywhere
@@ -992,11 +1031,11 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     }
   }
 
-  let stableValue = daiBalance
-    .plus(fraxBalance)
-    .plus(lusdBalance)
-    .plus(ustBalance);
-  let stableValueDecimal = toDecimal(stableValue, 18);
+  const stableValueDecimal = getStableValue(
+    contracts,
+    blockNumber,
+    treasury_address
+  );
 
   let lpValue = ohmdai_value
     .plus(ohmfrax_value)
