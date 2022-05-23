@@ -330,12 +330,108 @@ function getXSushiBalance(contracts: contractsDictType, blockNumber: BigInt, tre
     return xSushiBalance;
 }
 
+/**
+ * Returns the balance of CVX tokens in the following:
+ * - treasury address (V1 or V2)
+ * - treasury address V3
+ * 
+ * @param contracts object with bound contracts
+ * @param blockNumber the current block number
+ * @param treasury_address the v1 or v2 treasury address
+ * @returns BigInt representing the balance
+ */
+function getCVXBalance(contracts: contractsDictType, blockNumber: BigInt, treasury_address: string): BigInt {
+    const cvxERC20 = contracts[CVX_ERC20_CONTRACT] as ERC20;
+    let cvxBalance = BigInt.fromString("0");
+
+    if (blockNumber.gt(BigInt.fromString(CVX_ERC20_CONTRACT_BLOCK))) {
+        cvxBalance = cvxBalance.plus(getBalance(cvxERC20, treasury_address));
+        cvxBalance = cvxBalance.plus(getBalance(cvxERC20, TREASURY_ADDRESS_V3));
+    }
+
+    log.debug("CVXbalance {}", [cvxBalance.toString()]);
+    return cvxBalance;
+}
+
+/**
+ * Returns the balance of LUSD tokens in the following:
+ * - treasury address (V1 or V2)
+ * - treasury address V3
+ * - LUSD allocator
+ * 
+ * @param contracts object with bound contracts
+ * @param blockNumber the current block number
+ * @param treasury_address the v1 or v2 treasury address
+ * @returns BigInt representing the balance
+ */
+ function getLUSDBalance(contracts: contractsDictType, blockNumber: BigInt, treasury_address: string): BigInt {
+    const lusdERC20 = contracts[LUSD_ERC20_CONTRACT] as ERC20;
+    const stabilityPoolContract = contracts[STABILITY_POOL] as StabilityPool;
+    let lusdBalance = BigInt.fromI32(0);
+
+    if (blockNumber.gt(BigInt.fromString(LUSD_ERC20_CONTRACTV2_BLOCK))) {
+        lusdBalance = lusdBalance.plus(getBalance(lusdERC20, treasury_address));
+        lusdBalance = lusdBalance.plus(getBalance(lusdERC20, TREASURY_ADDRESS_V3));
+    }
+
+    if (blockNumber.gt(BigInt.fromString(LUSD_ALLOCATOR_BLOCK))) {
+        lusdBalance = lusdBalance.plus(stabilityPoolContract.deposits(Address.fromString(LUSD_ALLOCATOR)).value0);
+    }
+
+    console.debug("LUSD Balance {}", [lusdBalance.toString()]);
+    return lusdBalance;
+ }
+
+/**
+ * Returns the balance of UST tokens in the following:
+ * - treasury address (V1 or V2)
+ * - treasury address V3
+ * 
+ * @param contracts object with bound contracts
+ * @param blockNumber the current block number
+ * @param treasury_address the v1 or v2 treasury address
+ * @returns BigInt representing the balance
+ */
+function getUSTBalance(contracts: contractsDictType, blockNumber: BigInt, treasury_address: string): BigInt {
+    const ustERC20 = contracts[UST_ERC20_CONTRACT] as ERC20;
+    let ustBalance = BigInt.fromI32(0);
+
+    if (blockNumber.gt(BigInt.fromString(UST_ERC20_CONTRACT_BLOCK))) {
+        // TODO hard-coded UST price (ruh roh)
+        ustBalance = ustBalance.plus(getBalance(ustERC20, treasury_address));
+        ustBalance = ustBalance.plus(getBalance(ustERC20, TREASURY_ADDRESS_V3));
+    }
+
+    console.debug("UST balance {}", [ustBalance.toString()]);
+    return ustBalance;
+}
+
+/**
+ * Returns the balance of vlCVX tokens in the following:
+ * - CVX allocator
+ * 
+ * @param contracts object with bound contracts
+ * @param blockNumber the current block number
+ * @param treasury_address the v1 or v2 treasury address
+ * @returns BigInt representing the balance
+ */
+function getVlCVXBalance(contracts: contractsDictType, blockNumber: BigInt, treasury_address: string): BigInt {
+    const vlERC20 = contracts[VLCVX_ERC20_CONTRACT] as ERC20;
+    let vlCvxBalance = BigInt.fromString("0");
+
+    if (blockNumber.gt(BigInt.fromString(VLCVX_ERC20_CONTRACT_BLOCK))) {
+        vlCvxBalance = vlCvxBalance.plus(getBalance(vlERC20, CONVEX_CVX_ALLOCATOR));
+        vlERC20.balanceOf(Address.fromString(CONVEX_CVX_ALLOCATOR));
+    }
+
+    log.debug("vlCVXbalance {}", [vlCvxBalance.toString()]);
+    return vlCvxBalance;
+}
+
 function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     const contracts = bindContracts();
     let wethERC20 = ERC20.bind(Address.fromString(WETH_ERC20_CONTRACT))
-    let lusdERC20 = ERC20.bind(Address.fromString(LUSD_ERC20_CONTRACT))
     let wbtcERC20 = ERC20.bind(Address.fromString(WBTC_ERC20_CONTRACT))
-    let ustERC20 = ERC20.bind(Address.fromString(UST_ERC20_CONTRACT))
 
     let ohmdaiPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIR))
     let ohmdaiPairV2 = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIRV2))
@@ -375,21 +471,11 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
     log.debug("xSushi_value {}", [xSushi_value.toString()])
 
     let cvx_value = BigDecimal.fromString("0")
+    const cvxBalance = getCVXBalance(contracts, blockNumber, treasury_address);
+    cvx_value = toDecimal(cvxBalance, 18).times(getCVXUSDRate());
 
-    let cvxERC20 = ERC20.bind(Address.fromString(CVX_ERC20_CONTRACT))
-
-    if(blockNumber.gt(BigInt.fromString(CVX_ERC20_CONTRACT_BLOCK))){
-        let cvxBalance = cvxERC20.balanceOf(Address.fromString(treasury_address)).plus(cvxERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
-        log.debug("CVXbalance {}", [cvxBalance.toString()])
-        cvx_value = toDecimal(cvxBalance, 18).times(getCVXUSDRate())
-    }
-
-    let vlERC20 = ERC20.bind(Address.fromString(VLCVX_ERC20_CONTRACT))
-    if(blockNumber.gt(BigInt.fromString(VLCVX_ERC20_CONTRACT_BLOCK))){
-        let vlCVXbalance = vlERC20.balanceOf(Address.fromString(CONVEX_CVX_ALLOCATOR))
-        log.debug("vlCVXbalance {}", [vlCVXbalance.toString()])
-        cvx_value = cvx_value.plus(toDecimal(vlCVXbalance, 18).times(getCVXUSDRate()))
-    }
+    const vlCvxBalance = getVlCVXBalance(contracts, blockNumber, treasury_address);
+    cvx_value = cvx_value.plus(toDecimal(vlCvxBalance, 18).times(getCVXUSDRate()));
     log.debug("cvx_value {}", [cvx_value.toString()])
     volatile_value = volatile_value.plus(cvx_value)
 
@@ -411,30 +497,18 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
         volatile_value = volatile_value.plus(vefxs_value)
     }
 
-
-
-
     let wethBalance = wethERC20.balanceOf(Address.fromString(treasury_address)).plus(wethERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
     let weth_value = toDecimal(wethBalance, 18).times(getETHUSDRate())
 
     let wbtcBalance = wbtcERC20.balanceOf(Address.fromString(treasury_address)).plus(wbtcERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
-    let wbtc_value = toDecimal(wbtcBalance, 8).times(getBTCUSDRate())
+    let wbtc_value = toDecimal(wbtcBalance, 8).times(getBTCUSDRate());
 
-    let lusdBalance = BigInt.fromI32(0)
-    if(blockNumber.gt(BigInt.fromString(LUSD_ERC20_CONTRACTV2_BLOCK))){
-        lusdBalance = lusdERC20.balanceOf(Address.fromString(treasury_address)).plus(lusdERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
-    }
-    if(blockNumber.gt(BigInt.fromString(LUSD_ALLOCATOR_BLOCK))){
-        let stabilityPoolContract = StabilityPool.bind(Address.fromString(STABILITY_POOL))
-        lusdBalance = lusdBalance.plus(stabilityPoolContract.deposits(Address.fromString(LUSD_ALLOCATOR)).value0)
-    }
+    const lusdBalance = getLUSDBalance(contracts, blockNumber, treasury_address);
 
-
-    let ustBalance = BigInt.fromI32(0)
-    if (blockNumber.gt(BigInt.fromString(UST_ERC20_CONTRACT_BLOCK))) {
-        // TODO hard-coded UST price (ruh roh)
-        ustBalance = ustERC20.balanceOf(Address.fromString(treasury_address)).plus(ustERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3))).times(BigInt.fromString("1000000000000"))
-    }
+    let ustBalance = getUSTBalance(contracts, blockNumber, treasury_address);
+    // TODO hard-coded UST price (ruh roh)
+    // Variable is also mis-named
+    ustBalance = ustBalance.times(BigInt.fromString("1000000000000"));
 
     //OHMDAI
     let ohmdaiSushiBalance = ohmdaiPair.balanceOf(Address.fromString(treasury_address)).plus(ohmdaiPair.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)))
