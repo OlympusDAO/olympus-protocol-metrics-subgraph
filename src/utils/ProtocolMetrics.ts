@@ -346,7 +346,8 @@ function bindContracts(): contractsDictType {
 
 /**
  * Calculates the balance of DAI across the following:
- * - treasury address (V1 or V2)
+ * - treasury address V1
+ * - treasury address V2
  * - treasury address V3
  * - Aave allocator
  * - Aave allocator v2
@@ -354,13 +355,11 @@ function bindContracts(): contractsDictType {
  *
  * @param contracts object with bound contracts
  * @param blockNumber the current block number
- * @param treasury_address the v1 or v2 treasury address
  * @returns BigInt representing the balance
  */
 function getDaiBalance(
   contracts: contractsDictType,
-  blockNumber: BigInt,
-  treasury_address: string
+  blockNumber: BigInt
 ): TokenRecords {
   const daiERC20 = contracts[ERC20DAI_CONTRACT] as ERC20;
   const aDaiERC20 = contracts[ADAI_ERC20_CONTRACT] as ERC20;
@@ -370,9 +369,16 @@ function getDaiBalance(
     new TokenRecord(
       "DAI",
       "Treasury Wallet",
-      treasury_address,
+      TREASURY_ADDRESS,
       BigDecimal.fromString("1"),
-      toDecimal(getBalance(daiERC20, treasury_address, blockNumber), 18)
+      toDecimal(getBalance(daiERC20, TREASURY_ADDRESS, blockNumber), 18)
+    ),
+    new TokenRecord(
+      "DAI",
+      "Treasury Wallet V2",
+      TREASURY_ADDRESS_V2,
+      BigDecimal.fromString("1"),
+      toDecimal(getBalance(daiERC20, TREASURY_ADDRESS_V2, blockNumber), 18)
     ),
     new TokenRecord(
       "DAI",
@@ -423,18 +429,17 @@ function getDaiBalance(
 
 /**
  * Calculates the balance of FEI across the following:
- * - treasury address (V1 or V2)
+ * - treasury address V1
+ * - treasury address V2
  * - treasury address V3
  *
  * @param contracts object with bound contracts
  * @param blockNumber the current block number
- * @param treasury_address the v1 or v2 treasury address
  * @returns BigInt representing the balance
  */
 function getFeiBalance(
   contracts: contractsDictType,
-  blockNumber: BigInt,
-  treasury_address: string
+  blockNumber: BigInt
 ): TokenRecords {
   const feiERC20 = contracts[FEI_ERC20_CONTRACT] as ERC20;
 
@@ -442,9 +447,16 @@ function getFeiBalance(
     new TokenRecord(
       "FEI",
       "Treasury Wallet",
-      treasury_address,
+      TREASURY_ADDRESS,
       BigDecimal.fromString("1"),
-      toDecimal(getBalance(feiERC20, treasury_address, blockNumber), 18)
+      toDecimal(getBalance(feiERC20, TREASURY_ADDRESS, blockNumber), 18)
+    ),
+    new TokenRecord(
+      "FEI",
+      "Treasury Wallet V2",
+      TREASURY_ADDRESS_V2,
+      BigDecimal.fromString("1"),
+      toDecimal(getBalance(feiERC20, TREASURY_ADDRESS_V2, blockNumber), 18)
     ),
     new TokenRecord(
       "FEI",
@@ -460,6 +472,9 @@ function getFeiBalance(
 
 /**
  * Calculates the balance of TRIBE across the following:
+ * - treasury address V1
+ * - treasury address V2
+ * - treasury address V3
  * - Rari allocator
  *
  * @param contracts object with bound contracts
@@ -468,16 +483,19 @@ function getFeiBalance(
  */
 function getTribeBalance(
   contracts: contractsDictType,
-  blockNumber: BigInt,
-  treasury_address: string
+  blockNumber: BigInt
 ): BigInt {
   const rariAllocator = contracts[RARI_ALLOCATOR] as RariAllocator;
   const tribeERC20 = contracts[TRIBE_ERC20_CONTRACT] as ERC20;
   let tribeBalance = BigInt.fromI32(0);
 
-  // Treasury (V1 or V2)
+  // Treasury V1
   tribeBalance = tribeBalance.plus(
-    getBalance(tribeERC20, treasury_address, blockNumber)
+    getBalance(tribeERC20, TREASURY_ADDRESS, blockNumber)
+  );
+  // Treasury V2
+  tribeBalance = tribeBalance.plus(
+    getBalance(tribeERC20, TREASURY_ADDRESS_V2, blockNumber)
   );
   // Treasury V3
   tribeBalance = tribeBalance.plus(
@@ -571,19 +589,18 @@ function getFraxAllocatedInConvexBalance(
 
 /**
  * Calculates the balance of FRAX across the following:
- * - treasury address (V1 or V2)
+ * - treasury address V1
+ * - treasury address V2
  * - treasury address V3
  * - Convex allocators
  *
  * @param contracts object with bound contracts
  * @param blockNumber the current block number
- * @param treasury_address the v1 or v2 treasury address
  * @returns BigInt representing the balance
  */
 function getFraxBalance(
   contracts: contractsDictType,
-  blockNumber: BigInt,
-  treasury_address: string
+  blockNumber: BigInt
 ): TokenRecords {
   const fraxERC20 = contracts[ERC20FRAX_CONTRACT] as ERC20;
 
@@ -591,9 +608,16 @@ function getFraxBalance(
     new TokenRecord(
       "FRAX",
       "Treasury Wallet",
-      treasury_address,
+      TREASURY_ADDRESS,
       BigDecimal.fromString("1"),
-      toDecimal(getBalance(fraxERC20, treasury_address, blockNumber), 18)
+      toDecimal(getBalance(fraxERC20, TREASURY_ADDRESS, blockNumber), 18)
+    ),
+    new TokenRecord(
+      "FRAX",
+      "Treasury Wallet V2",
+      TREASURY_ADDRESS_V2,
+      BigDecimal.fromString("1"),
+      toDecimal(getBalance(fraxERC20, TREASURY_ADDRESS_V2, blockNumber), 18)
     ),
     new TokenRecord(
       "FRAX",
@@ -626,21 +650,27 @@ function getVestingAssets(): BigDecimal {
 
 /**
  * Returns the balance of xSUSHI tokens in the following:
- * - treasury address (V1 or V2)
+ * - treasury address V1
+ * - treasury address V2
  * - treasury address V3
  *
  * @param contracts object with bound contracts
  * @param blockNumber the current block number
- * @param treasury_address the v1 or v2 treasury address
  * @returns BigInt representing the balance
  */
 function getXSushiBalance(
   contracts: contractsDictType,
-  blockNumber: BigInt,
-  treasury_address: string
+  blockNumber: BigInt
 ): BigInt {
   const xSushiERC20 = contracts[XSUSI_ERC20_CONTRACT] as ERC20;
-  let xSushiBalance = getBalance(xSushiERC20, treasury_address, blockNumber);
+  let xSushiBalance = BigInt.fromString("0");
+
+  xSushiBalance = xSushiBalance.plus(
+    getBalance(xSushiERC20, TREASURY_ADDRESS, blockNumber)
+  );
+  xSushiBalance = xSushiBalance.plus(
+    getBalance(xSushiERC20, TREASURY_ADDRESS_V2, blockNumber)
+  );
   xSushiBalance = xSushiBalance.plus(
     getBalance(xSushiERC20, TREASURY_ADDRESS_V3, blockNumber)
   );
@@ -650,18 +680,17 @@ function getXSushiBalance(
 
 /**
  * Returns the balance of CVX tokens in the following:
- * - treasury address (V1 or V2)
+ * - treasury address V1
+ * - treasury address V2
  * - treasury address V3
  *
  * @param contracts object with bound contracts
  * @param blockNumber the current block number
- * @param treasury_address the v1 or v2 treasury address
  * @returns BigInt representing the balance
  */
 function getCVXBalance(
   contracts: contractsDictType,
-  blockNumber: BigInt,
-  treasury_address: string
+  blockNumber: BigInt
 ): BigInt {
   const cvxERC20 = contracts[CVX_ERC20_CONTRACT] as ERC20;
   let cvxBalance = BigInt.fromString("0");
@@ -669,7 +698,15 @@ function getCVXBalance(
   cvxBalance = cvxBalance.plus(
     getBalance(
       cvxERC20,
-      treasury_address,
+      TREASURY_ADDRESS,
+      blockNumber,
+      BigInt.fromString(CVX_ERC20_CONTRACT_BLOCK)
+    )
+  );
+  cvxBalance = cvxBalance.plus(
+    getBalance(
+      cvxERC20,
+      TREASURY_ADDRESS_V2,
       blockNumber,
       BigInt.fromString(CVX_ERC20_CONTRACT_BLOCK)
     )
@@ -689,19 +726,18 @@ function getCVXBalance(
 
 /**
  * Returns the balance of LUSD tokens in the following:
- * - treasury address (V1 or V2)
+ * - treasury address V1
+ * - treasury address V2
  * - treasury address V3
  * - LUSD allocator
  *
  * @param contracts object with bound contracts
  * @param blockNumber the current block number
- * @param treasury_address the v1 or v2 treasury address
  * @returns BigInt representing the balance
  */
 function getLUSDBalance(
   contracts: contractsDictType,
-  blockNumber: BigInt,
-  treasury_address: string
+  blockNumber: BigInt
 ): TokenRecords {
   const lusdERC20 = contracts[LUSD_ERC20_CONTRACT] as ERC20;
   const stabilityPoolContract = contracts[STABILITY_POOL] as StabilityPool;
@@ -710,12 +746,27 @@ function getLUSDBalance(
     new TokenRecord(
       "LUSD",
       "Treasury Wallet",
-      treasury_address,
+      TREASURY_ADDRESS,
       BigDecimal.fromString("1"),
       toDecimal(
         getBalance(
           lusdERC20,
-          treasury_address,
+          TREASURY_ADDRESS,
+          blockNumber,
+          BigInt.fromString(LUSD_ERC20_CONTRACTV2_BLOCK)
+        ),
+        18
+      )
+    ),
+    new TokenRecord(
+      "LUSD",
+      "Treasury Wallet V2",
+      TREASURY_ADDRESS_V2,
+      BigDecimal.fromString("1"),
+      toDecimal(
+        getBalance(
+          lusdERC20,
+          TREASURY_ADDRESS_V2,
           blockNumber,
           BigInt.fromString(LUSD_ERC20_CONTRACTV2_BLOCK)
         ),
@@ -725,7 +776,7 @@ function getLUSDBalance(
     new TokenRecord(
       "LUSD",
       "Treasury Wallet V3",
-      treasury_address,
+      TREASURY_ADDRESS_V3,
       BigDecimal.fromString("1"),
       toDecimal(
         getBalance(
@@ -760,7 +811,8 @@ function getLUSDBalance(
 
 /**
  * Returns the balance of UST tokens in the following:
- * - treasury address (V1 or V2)
+ * - treasury address V1
+ * - treasury address V2
  * - treasury address V3
  *
  * @param contracts object with bound contracts
@@ -770,8 +822,7 @@ function getLUSDBalance(
  */
 function getUSTBalance(
   contracts: contractsDictType,
-  blockNumber: BigInt,
-  treasury_address: string
+  blockNumber: BigInt
 ): TokenRecords {
   const ustERC20 = contracts[UST_ERC20_CONTRACT] as ERC20;
 
@@ -779,12 +830,27 @@ function getUSTBalance(
     new TokenRecord(
       "UST",
       "Treasury Wallet",
-      UST_ERC20_CONTRACT,
+      TREASURY_ADDRESS,
       BigDecimal.fromString("1"),
       toDecimal(
         getBalance(
           ustERC20,
-          treasury_address,
+          TREASURY_ADDRESS,
+          blockNumber,
+          BigInt.fromString(UST_ERC20_CONTRACT_BLOCK)
+        ),
+        18
+      )
+    ),
+    new TokenRecord(
+      "UST",
+      "Treasury Wallet V2",
+      TREASURY_ADDRESS_V2,
+      BigDecimal.fromString("1"),
+      toDecimal(
+        getBalance(
+          ustERC20,
+          TREASURY_ADDRESS_V2,
           blockNumber,
           BigInt.fromString(UST_ERC20_CONTRACT_BLOCK)
         ),
@@ -794,7 +860,7 @@ function getUSTBalance(
     new TokenRecord(
       "UST",
       "Treasury Wallet V3",
-      UST_ERC20_CONTRACT,
+      TREASURY_ADDRESS_V3,
       BigDecimal.fromString("1"),
       toDecimal(
         getBalance(
@@ -817,13 +883,11 @@ function getUSTBalance(
  *
  * @param contracts object with bound contracts
  * @param blockNumber the current block number
- * @param treasury_address the v1 or v2 treasury address
  * @returns BigInt representing the balance
  */
 function getVlCVXBalance(
   contracts: contractsDictType,
-  blockNumber: BigInt,
-  treasury_address: string
+  blockNumber: BigInt
 ): BigInt {
   const vlERC20 = contracts[VLCVX_ERC20_CONTRACT] as ERC20;
   let vlCvxBalance = BigInt.fromString("0");
@@ -855,7 +919,6 @@ function getVlCVXBalance(
  *
  * @param contracts object with bound contracts
  * @param blockNumber the current block number
- * @param treasury_address the v1 or v2 treasury address
  * @returns BigDecimal representing the balance
  */
 function getStableValue(
@@ -865,26 +928,11 @@ function getStableValue(
 ): TokensRecords {
   const records = new TokensRecords();
 
-  records.addToken(
-    "DAI",
-    getDaiBalance(contracts, blockNumber, treasury_address)
-  );
-  records.addToken(
-    "FRAX",
-    getFraxBalance(contracts, blockNumber, treasury_address)
-  );
-  records.addToken(
-    "UST",
-    getUSTBalance(contracts, blockNumber, treasury_address)
-  );
-  records.addToken(
-    "LUSD",
-    getLUSDBalance(contracts, blockNumber, treasury_address)
-  );
-  records.addToken(
-    "FEI",
-    getFeiBalance(contracts, blockNumber, treasury_address)
-  );
+  records.addToken("DAI", getDaiBalance(contracts, blockNumber));
+  records.addToken("FRAX", getFraxBalance(contracts, blockNumber));
+  records.addToken("UST", getUSTBalance(contracts, blockNumber));
+  records.addToken("LUSD", getLUSDBalance(contracts, blockNumber));
+  records.addToken("FEI", getFeiBalance(contracts, blockNumber));
 
   console.debug("Stablecoin tokens: {}", [records.toString()]);
   return records;
@@ -920,15 +968,15 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     treasury_address = TREASURY_ADDRESS_V2;
   }
 
-  const daiTokens = getDaiBalance(contracts, blockNumber, treasury_address);
+  const daiTokens = getDaiBalance(contracts, blockNumber);
   const daiBalance = daiTokens.getBalance();
-  const fraxTokens = getFraxBalance(contracts, blockNumber, treasury_address);
+  const fraxTokens = getFraxBalance(contracts, blockNumber);
   const fraxBalance = fraxTokens.getBalance();
-  const lusdTokens = getLUSDBalance(contracts, blockNumber, treasury_address);
+  const lusdTokens = getLUSDBalance(contracts, blockNumber);
   const lusdBalance = lusdTokens.getBalance();
-  const feiTokens = getFeiBalance(contracts, blockNumber, treasury_address);
+  const feiTokens = getFeiBalance(contracts, blockNumber);
   const feiBalance = feiTokens.getBalance();
-  const ustTokens = getUSTBalance(contracts, blockNumber, treasury_address);
+  const ustTokens = getUSTBalance(contracts, blockNumber);
   const ustBalance = ustTokens.getValue();
 
   // TODO add balancer
@@ -938,33 +986,21 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
 
   let volatile_value = vesting_assets;
 
-  const xSushiBalance = getXSushiBalance(
-    contracts,
-    blockNumber,
-    treasury_address
-  );
+  const xSushiBalance = getXSushiBalance(contracts, blockNumber);
   const xSushiValue = getValue(xSushiBalance, 18, getXsushiUSDRate());
   console.debug("xSushiValue {}", [xSushiValue.toString()]);
   volatile_value = volatile_value.plus(xSushiValue);
 
-  const cvxBalance = getCVXBalance(contracts, blockNumber, treasury_address);
+  const cvxBalance = getCVXBalance(contracts, blockNumber);
   const cvxValue = getValue(cvxBalance, 18, getCVXUSDRate());
   log.debug("cvxValue {}", [cvxValue.toString()]);
   volatile_value = volatile_value.plus(cvxValue);
 
-  const tribeBalance = getTribeBalance(
-    contracts,
-    blockNumber,
-    treasury_address
-  );
+  const tribeBalance = getTribeBalance(contracts, blockNumber);
   const tribeValue = getValue(tribeBalance, 18, getTribeUSDRate());
   volatile_value = volatile_value.plus(tribeValue);
 
-  const vlCvxBalance = getVlCVXBalance(
-    contracts,
-    blockNumber,
-    treasury_address
-  );
+  const vlCvxBalance = getVlCVXBalance(contracts, blockNumber);
   const vlCvxValue = getValue(vlCvxBalance, 18, getCVXUSDRate());
   log.debug("vlCvxValue {}", [vlCvxValue.toString()]);
   volatile_value = volatile_value.plus(vlCvxValue);
