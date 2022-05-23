@@ -364,7 +364,7 @@ function getBalance(
     return contract.balanceOf(Address.fromString(address));
 
   // Minimum set and passed, return the balance
-  if (currentBlockNumber >= minimumBlockNumber)
+  if (currentBlockNumber > minimumBlockNumber)
     return contract.balanceOf(Address.fromString(address));
 
   // Minimum set and not passed, return 0
@@ -404,11 +404,14 @@ function getDaiBalance(
     getBalance(aDaiERC20, AAVE_ALLOCATOR, blockNumber)
   );
   // Aave allocator V2
-  if (blockNumber.gt(BigInt.fromString(AAVE_ALLOCATOR_V2_BLOCK))) {
-    daiBalance = daiBalance.plus(
-      getBalance(aDaiERC20, AAVE_ALLOCATOR_V2, blockNumber)
-    );
-  }
+  daiBalance = daiBalance.plus(
+    getBalance(
+      aDaiERC20,
+      AAVE_ALLOCATOR_V2,
+      blockNumber,
+      BigInt.fromString(AAVE_ALLOCATOR_V2_BLOCK)
+    )
+  );
   // Rari allocator
   if (blockNumber.gt(BigInt.fromString(RARI_ALLOCATOR_BLOCK))) {
     daiBalance = daiBalance.plus(
@@ -606,14 +609,22 @@ function getCVXBalance(
   const cvxERC20 = contracts[CVX_ERC20_CONTRACT] as ERC20;
   let cvxBalance = BigInt.fromString("0");
 
-  if (blockNumber.gt(BigInt.fromString(CVX_ERC20_CONTRACT_BLOCK))) {
-    cvxBalance = cvxBalance.plus(
-      getBalance(cvxERC20, treasury_address, blockNumber)
-    );
-    cvxBalance = cvxBalance.plus(
-      getBalance(cvxERC20, TREASURY_ADDRESS_V3, blockNumber)
-    );
-  }
+  cvxBalance = cvxBalance.plus(
+    getBalance(
+      cvxERC20,
+      treasury_address,
+      blockNumber,
+      BigInt.fromString(CVX_ERC20_CONTRACT_BLOCK)
+    )
+  );
+  cvxBalance = cvxBalance.plus(
+    getBalance(
+      cvxERC20,
+      TREASURY_ADDRESS_V3,
+      blockNumber,
+      BigInt.fromString(CVX_ERC20_CONTRACT_BLOCK)
+    )
+  );
 
   log.debug("CVXbalance {}", [cvxBalance.toString()]);
   return cvxBalance;
@@ -639,14 +650,22 @@ function getLUSDBalance(
   const stabilityPoolContract = contracts[STABILITY_POOL] as StabilityPool;
   let lusdBalance = BigInt.fromI32(0);
 
-  if (blockNumber.gt(BigInt.fromString(LUSD_ERC20_CONTRACTV2_BLOCK))) {
-    lusdBalance = lusdBalance.plus(
-      getBalance(lusdERC20, treasury_address, blockNumber)
-    );
-    lusdBalance = lusdBalance.plus(
-      getBalance(lusdERC20, TREASURY_ADDRESS_V3, blockNumber)
-    );
-  }
+  lusdBalance = lusdBalance.plus(
+    getBalance(
+      lusdERC20,
+      treasury_address,
+      blockNumber,
+      BigInt.fromString(LUSD_ERC20_CONTRACTV2_BLOCK)
+    )
+  );
+  lusdBalance = lusdBalance.plus(
+    getBalance(
+      lusdERC20,
+      TREASURY_ADDRESS_V3,
+      blockNumber,
+      BigInt.fromString(LUSD_ERC20_CONTRACTV2_BLOCK)
+    )
+  );
 
   if (blockNumber.gt(BigInt.fromString(LUSD_ALLOCATOR_BLOCK))) {
     lusdBalance = lusdBalance.plus(
@@ -676,15 +695,22 @@ function getUSTBalance(
   const ustERC20 = contracts[UST_ERC20_CONTRACT] as ERC20;
   let ustBalance = BigInt.fromI32(0);
 
-  if (blockNumber.gt(BigInt.fromString(UST_ERC20_CONTRACT_BLOCK))) {
-    // TODO hard-coded UST price (ruh roh)
-    ustBalance = ustBalance.plus(
-      getBalance(ustERC20, treasury_address, blockNumber)
-    );
-    ustBalance = ustBalance.plus(
-      getBalance(ustERC20, TREASURY_ADDRESS_V3, blockNumber)
-    );
-  }
+  ustBalance = ustBalance.plus(
+    getBalance(
+      ustERC20,
+      treasury_address,
+      blockNumber,
+      BigInt.fromString(UST_ERC20_CONTRACT_BLOCK)
+    )
+  );
+  ustBalance = ustBalance.plus(
+    getBalance(
+      ustERC20,
+      TREASURY_ADDRESS_V3,
+      blockNumber,
+      BigInt.fromString(UST_ERC20_CONTRACT_BLOCK)
+    )
+  );
 
   console.debug("UST balance {}", [ustBalance.toString()]);
   return ustBalance;
@@ -707,11 +733,14 @@ function getVlCVXBalance(
   const vlERC20 = contracts[VLCVX_ERC20_CONTRACT] as ERC20;
   let vlCvxBalance = BigInt.fromString("0");
 
-  if (blockNumber.gt(BigInt.fromString(VLCVX_ERC20_CONTRACT_BLOCK))) {
-    vlCvxBalance = vlCvxBalance.plus(
-      getBalance(vlERC20, CONVEX_CVX_ALLOCATOR, blockNumber)
-    );
-  }
+  vlCvxBalance = vlCvxBalance.plus(
+    getBalance(
+      vlERC20,
+      CONVEX_CVX_ALLOCATOR,
+      blockNumber,
+      BigInt.fromString(VLCVX_ERC20_CONTRACT_BLOCK)
+    )
+  );
 
   log.debug("vlCVXbalance {}", [vlCvxBalance.toString()]);
   return vlCvxBalance;
