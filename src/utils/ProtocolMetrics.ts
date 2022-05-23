@@ -126,6 +126,7 @@ import {
 } from "./Price";
 import { updateBondDiscounts } from "./BondDiscounts";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
+import { TokenRecord, TokenRecords } from "./TokenRecord";
 
 export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
   let dayTimestamp = dayFromTimestamp(timestamp);
@@ -388,38 +389,64 @@ function getDaiBalance(
   contracts: contractsDictType,
   blockNumber: BigInt,
   treasury_address: string
-): BigInt {
+): TokenRecords {
   const daiERC20 = contracts[ERC20DAI_CONTRACT] as ERC20;
   const aDaiERC20 = contracts[ADAI_ERC20_CONTRACT] as ERC20;
   const rariAllocator = contracts[RARI_ALLOCATOR] as RariAllocator;
 
-  // Treasury (V1 or V2)
-  let daiBalance = getBalance(daiERC20, treasury_address, blockNumber);
-  // Treasury V3
-  daiBalance = daiBalance.plus(
-    getBalance(daiERC20, TREASURY_ADDRESS_V3, blockNumber)
-  );
-  // Aave allocator
-  daiBalance = daiBalance.plus(
-    getBalance(aDaiERC20, AAVE_ALLOCATOR, blockNumber)
-  );
-  // Aave allocator V2
-  daiBalance = daiBalance.plus(
-    getBalance(
-      aDaiERC20,
+  const sources = [
+    new TokenRecord(
+      "DAI",
+      "Treasury Wallet",
+      treasury_address,
+      BigDecimal.fromString("1"),
+      toDecimal(getBalance(daiERC20, treasury_address, blockNumber), 18)
+    ),
+    new TokenRecord(
+      "DAI",
+      "Treasury Wallet V3",
+      TREASURY_ADDRESS_V3,
+      BigDecimal.fromString("1"),
+      toDecimal(getBalance(daiERC20, TREASURY_ADDRESS_V3, blockNumber), 18)
+    ),
+    new TokenRecord(
+      "DAI",
+      "Aave Allocator",
+      AAVE_ALLOCATOR,
+      BigDecimal.fromString("1"),
+      toDecimal(getBalance(aDaiERC20, AAVE_ALLOCATOR, blockNumber), 18)
+    ),
+    new TokenRecord(
+      "DAI",
+      "Aave Allocator V2",
       AAVE_ALLOCATOR_V2,
-      blockNumber,
-      BigInt.fromString(AAVE_ALLOCATOR_V2_BLOCK)
-    )
-  );
+      BigDecimal.fromString("1"),
+      toDecimal(
+        getBalance(
+          aDaiERC20,
+          AAVE_ALLOCATOR_V2,
+          blockNumber,
+          BigInt.fromString(AAVE_ALLOCATOR_V2_BLOCK)
+        ),
+        18
+      )
+    ),
+  ];
+
   // Rari allocator
   if (blockNumber.gt(BigInt.fromString(RARI_ALLOCATOR_BLOCK))) {
-    daiBalance = daiBalance.plus(
-      rariAllocator.amountAllocated(BigInt.fromI32(3))
+    sources.push(
+      new TokenRecord(
+        "DAI",
+        "Rari Allocator",
+        RARI_ALLOCATOR,
+        BigDecimal.fromString("1"),
+        toDecimal(rariAllocator.amountAllocated(BigInt.fromI32(3)), 18)
+      )
     );
   }
 
-  return daiBalance;
+  return new TokenRecords(sources);
 }
 
 /**
@@ -794,7 +821,7 @@ function getStableValue(
   let value = BigDecimal.fromString("0");
 
   value = value.plus(
-    toDecimal(getDaiBalance(contracts, blockNumber, treasury_address), 18)
+    getDaiBalance(contracts, blockNumber, treasury_address).getValue()
   );
   value = value.plus(
     toDecimal(getFraxBalance(contracts, blockNumber, treasury_address), 18)
@@ -843,7 +870,9 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     treasury_address = TREASURY_ADDRESS_V2;
   }
 
-  const daiBalance = getDaiBalance(contracts, blockNumber, treasury_address);
+  const daiTokens = getDaiBalance(contracts, blockNumber, treasury_address);
+  console.debug("DAI Tokens {}", [daiTokens]);
+  const daiBalance = daiTokens.getBalance();
   const fraxBalance = getFraxBalance(contracts, blockNumber, treasury_address);
 
   // TODO add balancer
@@ -1192,7 +1221,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
 
   log.debug("Treasury Market Value {}", [mv.toString()]);
   log.debug("Treasury RFV {}", [rfv.toString()]);
-  log.debug("Treasury DAI value {}", [toDecimal(daiBalance, 18).toString()]);
+  log.debug("Treasury DAI value {}", [daiBalance.toString()]);
   log.debug("Treasury xSushi value {}", [xSushiValue.toString()]);
   log.debug("Treasury WETH value {}", [weth_value.toString()]);
   log.debug("Treasury LUSD value {}", [toDecimal(lusdBalance, 18).toString()]);
@@ -1271,11 +1300,11 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     mv,
     rfv,
     // treasuryDaiRiskFreeValue = DAI RFV * DAI + aDAI
-    ohmdai_rfv.plus(toDecimal(daiBalance, 18)),
+    ohmdai_rfv.plus(daiBalance),
     // treasuryFraxRiskFreeValue = FRAX RFV * FRAX
     ohmfrax_rfv.plus(toDecimal(fraxBalance, 18)),
     // treasuryDaiMarketValue = DAI LP * DAI + aDAI
-    ohmdai_value.plus(toDecimal(daiBalance, 18)),
+    ohmdai_value.plus(daiBalance),
     // treasuryFraxMarketValue = FRAX LP * FRAX
     ohmfrax_value.plus(toDecimal(fraxBalance, 18)),
     xSushiValue,
