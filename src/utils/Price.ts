@@ -7,6 +7,7 @@ import {
   SUSHI_OHMDAI_PAIRV2,
   UNI_FXS_ETH_PAIR,
   UNI_ETH_WBTC_PAIR,
+  UNI_TRIBE_ETH_PAIR,
 } from "./Constants";
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
@@ -74,6 +75,27 @@ export function getXsushiUSDRate(): BigDecimal {
   log.debug("xsushiRate rate {}", [xsushiRate.toString()]);
 
   return xsushiRate;
+}
+
+export function getTribeUSDRate(): BigDecimal {
+  let pair = UniswapV3Pair.bind(Address.fromString(UNI_TRIBE_ETH_PAIR));
+
+  let priceETH = pair
+    .slot0()
+    .value0.times(pair.slot0().value0)
+    .toBigDecimal();
+  log.debug("tribe priceETH {}", [priceETH.toString()]);
+
+  let priceDiv = BigInt.fromI32(2)
+    .pow(192)
+    .toBigDecimal();
+  priceETH = priceETH.div(priceDiv);
+
+  let priceUSD = priceETH.times(getETHUSDRate());
+
+  log.debug("tribe rate {}", [priceUSD.toString()]);
+
+  return priceUSD;
 }
 
 export function getFXSUSDRate(): BigDecimal {

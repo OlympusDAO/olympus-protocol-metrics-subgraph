@@ -105,6 +105,8 @@ import {
   UNI_FXS_ETH_PAIR,
   SUSHI_CVX_ETH_PAIR,
   SUSHI_UST_ETH_PAIR,
+  FEI_ERC20_CONTRACT,
+  TRIBE_ERC20_CONTRACT,
 } from "./Constants";
 import { dayFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
@@ -120,6 +122,7 @@ import {
   getBTCUSDRate,
   getPairLUSD,
   getDiscountedPairLUSD,
+  getTribeUSDRate,
 } from "./Price";
 import { updateBondDiscounts } from "./BondDiscounts";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
@@ -393,6 +396,31 @@ function getDaiBalance(
 }
 
 /**
+ * Calculates the balance of FEI across the following:
+ * - treasury address (V1 or V2)
+ * - treasury address V3
+ *
+ * @param contracts object with bound contracts
+ * @param blockNumber the current block number
+ * @param treasury_address the v1 or v2 treasury address
+ * @returns BigInt representing the balance
+ */
+function getFeiBalance(
+  contracts: contractsDictType,
+  blockNumber: BigInt,
+  treasury_address: string
+): BigInt {
+  const feiERC20 = contracts[FEI_ERC20_CONTRACT] as ERC20;
+
+  // Treasury (V1 or V2)
+  let feiBalance = getBalance(feiERC20, treasury_address);
+  // Treasury V3
+  feiBalance = feiBalance.plus(getBalance(feiERC20, TREASURY_ADDRESS_V3));
+
+  return feiBalance;
+}
+
+/**
  * Calculates the balance of TRIBE across the following:
  * - Rari allocator
  *
@@ -402,10 +430,17 @@ function getDaiBalance(
  */
 function getTribeBalance(
   contracts: contractsDictType,
-  blockNumber: BigInt
+  blockNumber: BigInt,
+  treasury_address: string
 ): BigInt {
   const rariAllocator = contracts[RARI_ALLOCATOR] as RariAllocator;
+  const tribeERC20 = contracts[TRIBE_ERC20_CONTRACT] as ERC20;
   let tribeBalance = BigInt.fromI32(0);
+
+  // Treasury (V1 or V2)
+  tribeBalance = tribeBalance.plus(getBalance(tribeERC20, treasury_address));
+  // Treasury V3
+  tribeBalance = tribeBalance.plus(getBalance(tribeERC20, TREASURY_ADDRESS_V3));
 
   if (blockNumber.gt(BigInt.fromString(RARI_ALLOCATOR_BLOCK))) {
     tribeBalance = rariAllocator.amountAllocated(BigInt.fromI32(4));
@@ -659,11 +694,11 @@ function getValue(
  * - FRAX
  * - LUSD
  * - UST
+ * - FEI
  *
  * This currently (incorrectly) assumes that the value of each stablecoin is $1.
  *
  * TODO: lookup stablecoin price
- * TODO: FEI
  *
  * @param contracts object with bound contracts
  * @param blockNumber the current block number
@@ -688,6 +723,9 @@ function getStableValue(
   );
   value = value.plus(
     toDecimal(getUSTBalance(contracts, blockNumber, treasury_address), 18)
+  );
+  value = value.plus(
+    toDecimal(getFeiBalance(contracts, blockNumber, treasury_address), 18)
   );
 
   console.debug("Stablecoin value {}", [value.toString()]);
@@ -725,9 +763,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   }
 
   const daiBalance = getDaiBalance(contracts, blockNumber, treasury_address);
-  // TODO TRIBE not used anywhere
-  const tribeBalance = getTribeBalance(contracts, blockNumber);
-
   const fraxBalance = getFraxBalance(contracts, blockNumber, treasury_address);
 
   // TODO add balancer
@@ -750,6 +785,14 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const cvxValue = getValue(cvxBalance, 18, getCVXUSDRate());
   log.debug("cvxValue {}", [cvxValue.toString()]);
   volatile_value = volatile_value.plus(cvxValue);
+
+  const tribeBalance = getTribeBalance(
+    contracts,
+    blockNumber,
+    treasury_address
+  );
+  const tribeValue = getValue(tribeBalance, 18, getTribeUSDRate());
+  volatile_value = volatile_value.plus(tribeValue);
 
   const vlCvxBalance = getVlCVXBalance(
     contracts,
