@@ -637,6 +637,22 @@ function getVlCVXBalance(
   return vlCvxBalance;
 }
 
+/**
+ * Determines the value of a given balance.
+ *
+ * @param balance Balance of a token
+ * @param decimals Number of decimals
+ * @param rate The conversion rate
+ * @returns BigDecimal representing the value
+ */
+function getValue(
+  balance: BigInt,
+  decimals: number,
+  rate: BigDecimal
+): BigDecimal {
+  return toDecimal(balance, decimals).times(rate);
+}
+
 function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const contracts = bindContracts();
   let wethERC20 = ERC20.bind(Address.fromString(WETH_ERC20_CONTRACT));
@@ -687,24 +703,25 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     blockNumber,
     treasury_address
   );
-  const xSushi_value = toDecimal(xSushiBalance, 18).times(getXsushiUSDRate());
-  volatile_value = volatile_value.plus(xSushi_value);
-  log.debug("xSushi_value {}", [xSushi_value.toString()]);
+  const xSushiValue = getValue(xSushiBalance, 18, getXsushiUSDRate());
+  console.debug("xSushiValue {}", [xSushiValue.toString()]);
+  volatile_value = volatile_value.plus(xSushiValue);
 
-  let cvx_value = BigDecimal.fromString("0");
   const cvxBalance = getCVXBalance(contracts, blockNumber, treasury_address);
-  cvx_value = toDecimal(cvxBalance, 18).times(getCVXUSDRate());
+  const cvxValue = getValue(cvxBalance, 18, getCVXUSDRate());
+  log.debug("cvxValue {}", [cvxValue.toString()]);
+  volatile_value = volatile_value.plus(cvxValue);
 
   const vlCvxBalance = getVlCVXBalance(
     contracts,
     blockNumber,
     treasury_address
   );
-  cvx_value = cvx_value.plus(
-    toDecimal(vlCvxBalance, 18).times(getCVXUSDRate())
-  );
-  log.debug("cvx_value {}", [cvx_value.toString()]);
-  volatile_value = volatile_value.plus(cvx_value);
+  const vlCvxValue = getValue(vlCvxBalance, 18, getCVXUSDRate());
+  log.debug("vlCvxValue {}", [vlCvxValue.toString()]);
+  volatile_value = volatile_value.plus(vlCvxValue);
+
+  const cvxVlCvxValue = cvxValue.plus(vlCvxValue);
 
   let fxs_value = BigDecimal.fromString("0");
   let fxsERC20 = ERC20.bind(Address.fromString(FXS_ERC20_CONTRACT));
@@ -1005,7 +1022,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     .minus(vesting_assets)
     .plus(treasuryVolatileBacking)
     .plus(lpValue.div(BigDecimal.fromString("2")))
-    .minus(cvx_value)
+    .minus(cvxVlCvxValue)
     .minus(fxs_value)
     .minus(getCriculatingSupply(blockNumber, getTotalSupply(blockNumber)));
   let treasuryLPValue = lpValue;
@@ -1013,7 +1030,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   log.debug("Treasury Market Value {}", [mv.toString()]);
   log.debug("Treasury RFV {}", [rfv.toString()]);
   log.debug("Treasury DAI value {}", [toDecimal(daiBalance, 18).toString()]);
-  log.debug("Treasury xSushi value {}", [xSushi_value.toString()]);
+  log.debug("Treasury xSushi value {}", [xSushiValue.toString()]);
   log.debug("Treasury WETH value {}", [weth_value.toString()]);
   log.debug("Treasury LUSD value {}", [toDecimal(lusdBalance, 18).toString()]);
   log.debug("Treasury OHM-DAI RFV {}", [ohmdai_rfv.toString()]);
@@ -1098,12 +1115,12 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     ohmdai_value.plus(toDecimal(daiBalance, 18)),
     // treasuryFraxMarketValue = FRAX LP * FRAX
     ohmfrax_value.plus(toDecimal(fraxBalance, 18)),
-    xSushi_value,
+    xSushiValue,
     ohmeth_rfv.plus(weth_value),
     ohmeth_value.plus(weth_value),
     ohmlusd_rfv.plus(toDecimal(lusdBalance, 18)),
     ohmlusd_value.plus(toDecimal(lusdBalance, 18)),
-    cvx_value,
+    cvxVlCvxValue,
     // POL
     ohmdaiPOL,
     ohmfraxPOL,
