@@ -1,6 +1,25 @@
 import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
+import { MasterChef } from "../../generated/ProtocolMetrics/MasterChef";
+import { RariAllocator } from "../../generated/ProtocolMetrics/RariAllocator";
+import { StabilityPool } from "../../generated/ProtocolMetrics/StabilityPool";
+import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
+import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
+import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
 import { toDecimal } from "./Decimals";
+
+export type contractsDictType = {
+  [key: string]:
+    | ERC20
+    | UniswapV2Pair
+    | RariAllocator
+    | MasterChef
+    | VeFXS
+    | ConvexAllocator
+    | UniswapV3Pair
+    | StabilityPool;
+};
 
 /**
  * Helper method to simplify getting the balance from an ERC20 contract.
