@@ -505,6 +505,14 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[]{
      * getCriculatingSupply (of OHM V2) = (contract total supply - DAO wallet balance - migration contract balance - bonds deposit balance)
      * 
      * treasuryTotalBacking = treasuryStableBacking - vesting_assets + treasuryVolatileBacking + (lpValue / 2) - cvx_value - fxs_value - getCriculatingSupply
+     * 
+     * Clarity needed:
+     * - CVX should not be subtracted.
+     * - vlCVX should not be subtracted (locked only for 3 months)
+     * - why substract getCriculatingSupply or include it at all?
+     * - why subtract fxs_value? It's not locked
+     * - why isn't veFXS subtracted from treasuryVolatileBacking? Since it's locked
+     * - include FEI balance?
      */
     return [
         mv, 
