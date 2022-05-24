@@ -1,4 +1,5 @@
 import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+
 import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { MasterChef } from "../../generated/ProtocolMetrics/MasterChef";
@@ -40,11 +41,11 @@ export function getBalance(
 ): BigInt {
   // No minimum, return the balance
   if (!minimumBlockNumber)
-    return contract.balanceOf(Address.fromString(address));
+    {return contract.balanceOf(Address.fromString(address));}
 
   // Minimum set and passed, return the balance
   if (currentBlockNumber > minimumBlockNumber)
-    return contract.balanceOf(Address.fromString(address));
+    {return contract.balanceOf(Address.fromString(address));}
 
   // Minimum set and not passed, return 0
   return BigInt.fromString("0");

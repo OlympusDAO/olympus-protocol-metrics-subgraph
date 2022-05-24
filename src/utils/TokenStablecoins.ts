@@ -1,38 +1,39 @@
-import { BigDecimal, BigInt, Address, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+
 import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { RariAllocator } from "../../generated/ProtocolMetrics/RariAllocator";
 import { StabilityPool } from "../../generated/ProtocolMetrics/StabilityPool";
 import {
-  ERC20DAI_CONTRACT,
-  ADAI_ERC20_CONTRACT,
-  RARI_ALLOCATOR,
-  TREASURY_ADDRESS,
-  TREASURY_ADDRESS_V2,
-  TREASURY_ADDRESS_V3,
   AAVE_ALLOCATOR,
   AAVE_ALLOCATOR_V2,
   AAVE_ALLOCATOR_V2_BLOCK,
-  RARI_ALLOCATOR_BLOCK,
-  FEI_ERC20_CONTRACT,
+  ADAI_ERC20_CONTRACT,
   CONVEX_ALLOCATOR1,
-  CONVEX_ALLOCATOR2,
-  CONVEX_ALLOCATOR3,
   CONVEX_ALLOCATOR1_BLOCK,
+  CONVEX_ALLOCATOR2,
   CONVEX_ALLOCATOR2_BLOCK,
+  CONVEX_ALLOCATOR3,
   CONVEX_ALLOCATOR3_BLOCK,
+  ERC20DAI_CONTRACT,
   ERC20FRAX_CONTRACT,
-  LUSD_ERC20_CONTRACT,
-  STABILITY_POOL,
-  LUSD_ERC20_CONTRACTV2_BLOCK,
-  LUSD_ALLOCATOR_BLOCK,
+  FEI_ERC20_CONTRACT,
   LUSD_ALLOCATOR,
+  LUSD_ALLOCATOR_BLOCK,
+  LUSD_ERC20_CONTRACT,
+  LUSD_ERC20_CONTRACTV2_BLOCK,
+  RARI_ALLOCATOR,
+  RARI_ALLOCATOR_BLOCK,
+  STABILITY_POOL,
+  TREASURY_ADDRESS,
+  TREASURY_ADDRESS_V2,
+  TREASURY_ADDRESS_V3,
   UST_ERC20_CONTRACT,
   UST_ERC20_CONTRACT_BLOCK,
 } from "./Constants";
 import { contractsDictType, getBalance } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
-import { TokenRecords, TokenRecord, TokensRecords } from "./TokenRecord";
+import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
 
 /**
  * Calculates the balance of DAI across the following:

@@ -21,7 +21,7 @@ export class TokenRecord {
     this.balance = balance;
   }
 
-  getValue() {
+  getValue(): BigDecimal {
     return this.balance.times(this.rate);
   }
 }
@@ -49,11 +49,11 @@ export class TokenRecords {
 export class TokensRecords {
   tokens: { [key: string]: TokenRecords };
 
-  construct() {
+  construct(): void {
     this.tokens = {};
   }
 
-  addToken(token: string, records: TokenRecords) {
+  addToken(token: string, records: TokenRecords): void {
     this.tokens[token] = records;
   }
 
