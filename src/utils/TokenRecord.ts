@@ -48,6 +48,12 @@ export class TokenRecords {
     this.records.push(element);
   }
 
+  combine(array: TokenRecord[]): void {
+    for (let i = 0; i < array.length; i++) {
+      this.records.push(array[i]);
+    }
+  }
+
   getBalance(): BigDecimal {
     return this.records.reduce((accumulator, obj, _currentIndex, _array) => {
       return accumulator.plus(obj.balance);
