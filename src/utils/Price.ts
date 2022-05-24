@@ -1,17 +1,18 @@
-import {
-  SUSHI_OHMDAI_PAIR,
-  SUSHI_XSUSHI_ETH_PAIR,
-  SUSHI_USDC_ETH_PAIR,
-  SUSHI_CVX_ETH_PAIR,
-  SUSHI_OHMDAI_PAIRV2_BLOCK,
-  SUSHI_OHMDAI_PAIRV2,
-  UNI_FXS_ETH_PAIR,
-  UNI_ETH_WBTC_PAIR,
-  UNI_TRIBE_ETH_PAIR,
-} from "./Constants";
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
+import {
+  SUSHI_CVX_ETH_PAIR,
+  SUSHI_OHMDAI_PAIR,
+  SUSHI_OHMDAI_PAIRV2,
+  SUSHI_OHMDAI_PAIRV2_BLOCK,
+  SUSHI_USDC_ETH_PAIR,
+  SUSHI_XSUSHI_ETH_PAIR,
+  UNI_ETH_WBTC_PAIR,
+  UNI_FXS_ETH_PAIR,
+  UNI_TRIBE_ETH_PAIR,
+} from "./Constants";
 import { toDecimal } from "./Decimals";
 
 const BIG_DECIMAL_1E8 = BigDecimal.fromString("1e8");

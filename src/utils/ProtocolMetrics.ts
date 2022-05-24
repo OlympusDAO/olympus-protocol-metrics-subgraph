@@ -1,119 +1,119 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
-import { OlympusERC20 } from "../../generated/ProtocolMetrics/OlympusERC20";
-import { sOlympusERC20 } from "../../generated/ProtocolMetrics/sOlympusERC20";
-import { sOlympusERC20V2 } from "../../generated/ProtocolMetrics/sOlympusERC20V2";
+import { ethereum } from "@graphprotocol/graph-ts";
+
+import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
-import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
-import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { MasterChef } from "../../generated/ProtocolMetrics/MasterChef";
+import { OlympusERC20 } from "../../generated/ProtocolMetrics/OlympusERC20";
+import { OlympusStakingV1 } from "../../generated/ProtocolMetrics/OlympusStakingV1";
 import { OlympusStakingV2 } from "../../generated/ProtocolMetrics/OlympusStakingV2";
 import {
   OlympusStakingV3,
   StakeCall,
 } from "../../generated/ProtocolMetrics/OlympusStakingV3";
-import { OlympusStakingV1 } from "../../generated/ProtocolMetrics/OlympusStakingV1";
-import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator";
-import { StabilityPool } from "../../generated/ProtocolMetrics/StabilityPool";
 import { RariAllocator } from "../../generated/ProtocolMetrics/RariAllocator";
-import { Distributor } from "../../generated/sOlympusERC20V1/Distributor";
-import { ethereum } from "@graphprotocol/graph-ts";
-
+import { sOlympusERC20 } from "../../generated/ProtocolMetrics/sOlympusERC20";
+import { sOlympusERC20V2 } from "../../generated/ProtocolMetrics/sOlympusERC20V2";
+import { StabilityPool } from "../../generated/ProtocolMetrics/StabilityPool";
+import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
+import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
+import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
 import { ProtocolMetric } from "../../generated/schema";
+import { Distributor } from "../../generated/sOlympusERC20V1/Distributor";
+import { updateBondDiscounts } from "./BondDiscounts";
 import {
   ADAI_ERC20_CONTRACT,
+  BONDS_DEPOSIT,
   CONVEX_ALLOCATOR1,
   CONVEX_ALLOCATOR2,
+  CONVEX_ALLOCATOR3,
+  CONVEX_CVX_ALLOCATOR,
+  CVX_ERC20_CONTRACT,
+  CVX_ERC20_CONTRACT_BLOCK,
+  DAO_WALLET,
+  DISTRIBUTOR_CONTRACT,
+  DISTRIBUTOR_CONTRACT_BLOCK,
+  DISTRIBUTOR_CONTRACT_BLOCK_V2,
+  DISTRIBUTOR_CONTRACT_V2,
   ERC20DAI_CONTRACT,
   ERC20FRAX_CONTRACT,
+  FXS_ERC20_CONTRACT,
   LUSD_ERC20_CONTRACT,
-  OHMDAI_ONSEN_ID,
+  MIGRATION_CONTRACT,
   OHM_ERC20_CONTRACT,
+  OHMDAI_ONSEN_ID,
+  OHMLUSD_ONSEN_ID,
+  OHMV2_ERC20_CONTRACT,
+  OHMV2_ERC20_CONTRACT_BLOCK,
   ONSEN_ALLOCATOR,
+  RARI_ALLOCATOR,
+  RARI_ALLOCATOR_BLOCK,
   SOHM_ERC20_CONTRACT,
   SOHM_ERC20_CONTRACTV2,
   SOHM_ERC20_CONTRACTV2_BLOCK,
+  SOHM_ERC20_CONTRACTV3,
+  SOHM_ERC20_CONTRACTV3_BLOCK,
+  STABILITY_POOL,
   STAKING_CONTRACT_V1,
   STAKING_CONTRACT_V2,
   STAKING_CONTRACT_V2_BLOCK,
+  STAKING_CONTRACT_V3,
+  STAKING_CONTRACT_V3_BLOCK,
+  SUSHI_CVX_ETH_PAIR,
   SUSHI_MASTERCHEF,
   SUSHI_OHMDAI_PAIR,
+  SUSHI_OHMDAI_PAIRV2,
+  SUSHI_OHMDAI_PAIRV2_BLOCK,
   SUSHI_OHMETH_PAIR,
+  SUSHI_OHMETH_PAIR_BLOCK,
+  SUSHI_OHMETH_PAIR_BLOCKV2,
+  SUSHI_OHMETH_PAIRV2,
   SUSHI_OHMLUSD_PAIR,
+  SUSHI_OHMLUSD_PAIR_V2,
+  SUSHI_OHMLUSD_PAIR_V2_BLOCK,
+  SUSHI_USDC_ETH_PAIR,
+  SUSHI_UST_ETH_PAIR,
+  SUSHI_XSUSHI_ETH_PAIR,
   TREASURY_ADDRESS,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V2_BLOCK,
-  SUSHI_OHMETH_PAIR_BLOCK,
+  TREASURY_ADDRESS_V3,
+  TRIBE_ERC20_CONTRACT,
+  UNI_ETH_WBTC_PAIR,
+  UNI_FXS_ETH_PAIR,
+  UNI_FXS_ETH_PAIR_BLOCK,
   UNI_OHMFRAX_PAIR,
   UNI_OHMFRAX_PAIR_BLOCK,
+  UNI_OHMFRAX_PAIR_BLOCKV2,
+  UNI_OHMFRAX_PAIRV2,
   UNI_OHMLUSD_PAIR_BLOCK,
+  UST_ERC20_CONTRACT,
+  VEFXS_ALLOCATOR,
+  VEFXSERC20_BLOCK,
+  VEFXSERC20_CONTRACT,
+  VLCVX_ERC20_CONTRACT,
+  VLCVX_ERC20_CONTRACT_BLOCK,
+  WBTC_ERC20_CONTRACT,
   WETH_ERC20_CONTRACT,
   XSUSI_ERC20_CONTRACT,
-  CVX_ERC20_CONTRACT,
-  CVX_ERC20_CONTRACT_BLOCK,
-  DISTRIBUTOR_CONTRACT_BLOCK,
-  DISTRIBUTOR_CONTRACT,
-  STAKING_CONTRACT_V3_BLOCK,
-  STAKING_CONTRACT_V3,
-  TREASURY_ADDRESS_V3,
-  SOHM_ERC20_CONTRACTV3,
-  SOHM_ERC20_CONTRACTV3_BLOCK,
-  OHMV2_ERC20_CONTRACT_BLOCK,
-  OHMV2_ERC20_CONTRACT,
-  DAO_WALLET,
-  SUSHI_OHMETH_PAIR_BLOCKV2,
-  SUSHI_OHMETH_PAIRV2,
-  SUSHI_OHMDAI_PAIRV2,
-  UNI_OHMFRAX_PAIRV2,
-  SUSHI_OHMDAI_PAIRV2_BLOCK,
-  UNI_OHMFRAX_PAIR_BLOCKV2,
-  MIGRATION_CONTRACT,
-  CONVEX_CVX_ALLOCATOR,
-  VLCVX_ERC20_CONTRACT_BLOCK,
-  VLCVX_ERC20_CONTRACT,
-  FXS_ERC20_CONTRACT,
-  UNI_FXS_ETH_PAIR_BLOCK,
-  VEFXSERC20_CONTRACT,
-  VEFXSERC20_BLOCK,
-  VEFXS_ALLOCATOR,
-  OHMLUSD_ONSEN_ID,
-  CONVEX_ALLOCATOR3,
-  WBTC_ERC20_CONTRACT,
-  UST_ERC20_CONTRACT,
-  DISTRIBUTOR_CONTRACT_BLOCK_V2,
-  DISTRIBUTOR_CONTRACT_V2,
-  BONDS_DEPOSIT,
-  SUSHI_OHMLUSD_PAIR_V2,
-  SUSHI_OHMLUSD_PAIR_V2_BLOCK,
-  STABILITY_POOL,
-  RARI_ALLOCATOR_BLOCK,
-  RARI_ALLOCATOR,
-  SUSHI_USDC_ETH_PAIR,
-  UNI_ETH_WBTC_PAIR,
-  SUSHI_XSUSHI_ETH_PAIR,
-  UNI_FXS_ETH_PAIR,
-  SUSHI_CVX_ETH_PAIR,
-  SUSHI_UST_ETH_PAIR,
-  TRIBE_ERC20_CONTRACT,
 } from "./Constants";
+import { contractsDictType, getBalance, getValue } from "./ContractHelper";
 import { dayFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
 import {
-  getOHMUSDRate,
-  getDiscountedPairUSD,
-  getPairUSD,
-  getXsushiUSDRate,
-  getETHUSDRate,
-  getPairWETH,
-  getCVXUSDRate,
-  getFXSUSDRate,
   getBTCUSDRate,
-  getPairLUSD,
+  getCVXUSDRate,
   getDiscountedPairLUSD,
+  getDiscountedPairUSD,
+  getETHUSDRate,
+  getFXSUSDRate,
+  getOHMUSDRate,
+  getPairLUSD,
+  getPairUSD,
+  getPairWETH,
   getTribeUSDRate,
+  getXsushiUSDRate,
 } from "./Price";
-import { updateBondDiscounts } from "./BondDiscounts";
-import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
-import { contractsDictType, getBalance, getValue } from "./ContractHelper";
 import {
   getDaiBalance,
   getFeiBalance,
