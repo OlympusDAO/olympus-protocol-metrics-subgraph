@@ -55,21 +55,36 @@ export class TokenRecords {
   }
 
   getBalance(): BigDecimal {
-    return this.records.reduce((accumulator, obj, _currentIndex, _array) => {
-      return accumulator.plus(obj.balance);
-    }, BigDecimal.fromString("0"));
+    // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
+    let balance = BigDecimal.fromString("0");
+
+    for (let i = 0; i < this.records.length; i++) {
+      balance = balance.plus(this.records[i].balance);
+    }
+
+    return balance;
   }
 
   getValue(): BigDecimal {
-    return this.records.reduce((accumulator, obj, _currentIndex, _array) => {
-      return accumulator.plus(obj.getValue());
-    }, BigDecimal.fromString("0"));
+    // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
+    let value = BigDecimal.fromString("0");
+
+    for (let i = 0; i < this.records.length; i++) {
+      value = value.plus(this.records[i].getValue());
+    }
+
+    return value;
   }
 
   toString(): string {
-    return this.records.reduce((previousValue, currentValue, _currentIndex, _array) => {
-      return previousValue + "\n" + currentValue.toString();
-    }, "");
+    // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
+    let stringValue = "";
+
+    for (let i = 0; i < this.records.length; i++) {
+      stringValue = stringValue + "\n" + this.records[i].toString();
+    }
+
+    return stringValue;
   }
 }
 
@@ -85,14 +100,24 @@ export class TokensRecords {
   }
 
   getValue(): BigDecimal {
-    return this.tokens.reduce((previousValue, currentValue, _currentIndex, _array) => {
-      return previousValue.plus(currentValue.getValue());
-    }, BigDecimal.fromString("0"));
+    // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
+    let value = BigDecimal.fromString("0");
+
+    for (let i = 0; i < this.tokens.length; i++) {
+      value = value.plus(this.tokens[i].getValue());
+    }
+
+    return value;
   }
 
   toString(): string {
-    return this.tokens.reduce((previousValue, currentValue, _currentIndex, _array) => {
-      return previousValue + "\n" + currentValue.toString();
-    }, "");
+    // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
+    let stringValue = "";
+
+    for (let i = 0; i < this.tokens.length; i++) {
+      stringValue = stringValue + "\n" + this.tokens[i].toString();
+    }
+
+    return stringValue;
   }
 }
