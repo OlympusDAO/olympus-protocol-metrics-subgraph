@@ -24,6 +24,17 @@ export class TokenRecord {
   getValue(): BigDecimal {
     return this.balance.times(this.rate);
   }
+
+  toString(): string {
+    return `{\n` +
+      `name: ${this.name},\n` +
+      `source: ${this.source},\n` +
+      `sourceAddress: ${ this.sourceAddress },\n` +
+      `rate: ${this.rate.toString()},\n` +
+      `balance: ${this.balance.toString()},` +
+      `value: ${this.getValue().toString()}\n` +
+    `}\n`;
+  }
 }
 
 export class TokenRecords {
@@ -33,33 +44,49 @@ export class TokenRecords {
     this.records = records;
   }
 
+  push(element: TokenRecord): void {
+    this.records.push(element);
+  }
+
   getBalance(): BigDecimal {
-    return this.records.reduce((accumulator, obj) => {
+    return this.records.reduce((accumulator, obj, _currentIndex, _array) => {
       return accumulator.plus(obj.balance);
     }, BigDecimal.fromString("0"));
   }
 
   getValue(): BigDecimal {
-    return this.records.reduce((accumulator, obj) => {
+    return this.records.reduce((accumulator, obj, _currentIndex, _array) => {
       return accumulator.plus(obj.getValue());
     }, BigDecimal.fromString("0"));
+  }
+
+  toString(): string {
+    return this.records.reduce((previousValue, currentValue, _currentIndex, _array) => {
+      return previousValue + "\n" + currentValue.toString();
+    }, "");
   }
 }
 
 export class TokensRecords {
-  tokens: Map<string, TokenRecords>;
+  tokens: Array<TokenRecords>;
 
   construct(): void {
-    this.tokens = new Map<string, TokenRecords>();
+    this.tokens = new Array<TokenRecords>();
   }
 
   addToken(token: string, records: TokenRecords): void {
-    this.tokens[token] = records;
+    this.tokens.push(records);
   }
 
   getValue(): BigDecimal {
-    return Object.values(this.tokens).reduce((accumulator, obj) => {
-      return accumulator.plus(obj.getValue());
+    return this.tokens.reduce((previousValue, currentValue, _currentIndex, _array) => {
+      return previousValue.plus(currentValue.getValue());
     }, BigDecimal.fromString("0"));
+  }
+
+  toString(): string {
+    return this.tokens.reduce((previousValue, currentValue, _currentIndex, _array) => {
+      return previousValue + "\n" + currentValue.toString();
+    }, "");
   }
 }

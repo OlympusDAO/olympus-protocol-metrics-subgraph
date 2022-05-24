@@ -127,7 +127,7 @@ export function getBalance(
   contract: ERC20,
   address: string,
   currentBlockNumber: BigInt,
-  minimumBlockNumber?: BigInt
+  minimumBlockNumber: BigInt = BigInt.fromString("0")
 ): BigInt {
   // No minimum, return the balance
   if (!minimumBlockNumber)
