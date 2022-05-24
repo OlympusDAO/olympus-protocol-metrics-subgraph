@@ -124,7 +124,7 @@ import {
 } from "./TokenStablecoins";
 
 export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
-  let dayTimestamp = dayFromTimestamp(timestamp);
+  const dayTimestamp = dayFromTimestamp(timestamp);
 
   let protocolMetric = ProtocolMetric.load(dayTimestamp);
   if (protocolMetric == null) {
@@ -169,13 +169,13 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
 }
 
 function getOHMMarketcap(blockNumber: BigInt): BigDecimal {
-  //Used to calculate current marketcap
-  let marketCap = getOHMUSDRate(blockNumber).times(
+  // Used to calculate current marketcap
+  const marketCap = getOHMUSDRate(blockNumber).times(
     getCriculatingSupply(blockNumber, getTotalSupply(blockNumber))
   );
   log.debug("Market Cap current: {}", [marketCap.toString()]);
 
-  //Used to calculate ciculating MarketCap of OHM v1 if v2 is already deployed
+  // Used to calculate ciculating MarketCap of OHM v1 if v2 is already deployed
   // if(blockNumber.gt(BigInt.fromString(OHMV2_ERC20_CONTRACT_BLOCK))){
   //     let block = BigInt.fromI32(1)
   //     let v1MarketCap = getOHMUSDRate(block).times(getCriculatingSupply(block, getTotalSupply(block)))
@@ -235,13 +235,13 @@ function getCriculatingSupply(
 function getSohmSupply(blockNumber: BigInt): BigDecimal {
   let sohm_supply = BigDecimal.fromString("0");
 
-  let sohm_contract_v1 = sOlympusERC20.bind(
+  const sohm_contract_v1 = sOlympusERC20.bind(
     Address.fromString(SOHM_ERC20_CONTRACT)
   );
   sohm_supply = toDecimal(sohm_contract_v1.circulatingSupply(), 9);
 
   if (blockNumber.gt(BigInt.fromString(SOHM_ERC20_CONTRACTV2_BLOCK))) {
-    let sohm_contract_v2 = sOlympusERC20V2.bind(
+    const sohm_contract_v2 = sOlympusERC20V2.bind(
       Address.fromString(SOHM_ERC20_CONTRACTV2)
     );
     sohm_supply = sohm_supply.plus(
@@ -250,7 +250,7 @@ function getSohmSupply(blockNumber: BigInt): BigDecimal {
   }
 
   if (blockNumber.gt(BigInt.fromString(SOHM_ERC20_CONTRACTV3_BLOCK))) {
-    let sohm_contract_v3 = sOlympusERC20V2.bind(
+    const sohm_contract_v3 = sOlympusERC20V2.bind(
       Address.fromString(SOHM_ERC20_CONTRACTV3)
     );
     sohm_supply = toDecimal(sohm_contract_v3.circulatingSupply(), 9);
@@ -372,7 +372,7 @@ function getTribeBalance(
  * @returns BigDecimal
  */
 function getVestingAssets(): BigDecimal {
-  //Cross chain assets that can not be tracked right now
+  // Cross chain assets that can not be tracked right now
   // pklima
   // butterfly
   // Vsta
@@ -488,26 +488,26 @@ function getVlCVXBalance(
 
 function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const contracts = bindContracts();
-  let wethERC20 = ERC20.bind(Address.fromString(WETH_ERC20_CONTRACT));
-  let wbtcERC20 = ERC20.bind(Address.fromString(WBTC_ERC20_CONTRACT));
+  const wethERC20 = ERC20.bind(Address.fromString(WETH_ERC20_CONTRACT));
+  const wbtcERC20 = ERC20.bind(Address.fromString(WBTC_ERC20_CONTRACT));
 
-  let ohmdaiPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIR));
-  let ohmdaiPairV2 = UniswapV2Pair.bind(
+  const ohmdaiPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIR));
+  const ohmdaiPairV2 = UniswapV2Pair.bind(
     Address.fromString(SUSHI_OHMDAI_PAIRV2)
   );
-  let ohmdaiOnsenMC = MasterChef.bind(Address.fromString(SUSHI_MASTERCHEF));
-  let ohmfraxPair = UniswapV2Pair.bind(Address.fromString(UNI_OHMFRAX_PAIR));
-  let ohmfraxPairV2 = UniswapV2Pair.bind(
+  const ohmdaiOnsenMC = MasterChef.bind(Address.fromString(SUSHI_MASTERCHEF));
+  const ohmfraxPair = UniswapV2Pair.bind(Address.fromString(UNI_OHMFRAX_PAIR));
+  const ohmfraxPairV2 = UniswapV2Pair.bind(
     Address.fromString(UNI_OHMFRAX_PAIRV2)
   );
 
-  let ohmlusdPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMLUSD_PAIR));
-  let ohmlusdPairv2 = UniswapV2Pair.bind(
+  const ohmlusdPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMLUSD_PAIR));
+  const ohmlusdPairv2 = UniswapV2Pair.bind(
     Address.fromString(SUSHI_OHMLUSD_PAIR_V2)
   );
 
-  let ohmethPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMETH_PAIR));
-  let ohmethPairv2 = UniswapV2Pair.bind(
+  const ohmethPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMETH_PAIR));
+  const ohmethPairv2 = UniswapV2Pair.bind(
     Address.fromString(SUSHI_OHMETH_PAIRV2)
   );
 
@@ -536,7 +536,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
 
   const xSushiBalance = getXSushiBalance(contracts, blockNumber);
   const xSushiValue = getValue(xSushiBalance, 18, getXsushiUSDRate());
-  console.debug("xSushiValue {}", [xSushiValue.toString()]);
+  log.debug("xSushiValue {}", [xSushiValue.toString()]);
   volatile_value = volatile_value.plus(xSushiValue);
 
   const cvxBalance = getCVXBalance(contracts, blockNumber);
@@ -556,9 +556,9 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const cvxVlCvxValue = cvxValue.plus(vlCvxValue);
 
   let fxs_value = BigDecimal.fromString("0");
-  let fxsERC20 = ERC20.bind(Address.fromString(FXS_ERC20_CONTRACT));
+  const fxsERC20 = ERC20.bind(Address.fromString(FXS_ERC20_CONTRACT));
   if (blockNumber.gt(BigInt.fromString(UNI_FXS_ETH_PAIR_BLOCK))) {
-    let fxsbalance = fxsERC20
+    const fxsbalance = fxsERC20
       .balanceOf(Address.fromString(TREASURY_ADDRESS_V2))
       .plus(fxsERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)));
     fxs_value = toDecimal(fxsbalance, 18).times(getFXSUSDRate());
@@ -567,36 +567,36 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   }
 
   let vefxs_value = BigDecimal.fromString("0");
-  let veFXS = VeFXS.bind(Address.fromString(VEFXSERC20_CONTRACT));
+  const veFXS = VeFXS.bind(Address.fromString(VEFXSERC20_CONTRACT));
   if (blockNumber.gt(BigInt.fromString(VEFXSERC20_BLOCK))) {
-    let vefxsbalance = veFXS.locked(Address.fromString(VEFXS_ALLOCATOR)).value0;
+    const vefxsbalance = veFXS.locked(Address.fromString(VEFXS_ALLOCATOR)).value0;
     vefxs_value = toDecimal(vefxsbalance, 18).times(getFXSUSDRate());
     log.debug("vefxs_value {}", [vefxs_value.toString()]);
     volatile_value = volatile_value.plus(vefxs_value);
   }
 
-  let wethBalance = wethERC20
+  const wethBalance = wethERC20
     .balanceOf(Address.fromString(treasury_address))
     .plus(wethERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)));
-  let weth_value = toDecimal(wethBalance, 18).times(getETHUSDRate());
+  const weth_value = toDecimal(wethBalance, 18).times(getETHUSDRate());
 
-  let wbtcBalance = wbtcERC20
+  const wbtcBalance = wbtcERC20
     .balanceOf(Address.fromString(treasury_address))
     .plus(wbtcERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)));
-  let wbtc_value = toDecimal(wbtcBalance, 8).times(getBTCUSDRate());
+  const wbtc_value = toDecimal(wbtcBalance, 8).times(getBTCUSDRate());
 
-  //OHMDAI
-  let ohmdaiSushiBalance = ohmdaiPair
+  // OHMDAI
+  const ohmdaiSushiBalance = ohmdaiPair
     .balanceOf(Address.fromString(treasury_address))
     .plus(ohmdaiPair.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)));
-  let ohmdaiOnsenBalance = ohmdaiOnsenMC.userInfo(
+  const ohmdaiOnsenBalance = ohmdaiOnsenMC.userInfo(
     BigInt.fromI32(OHMDAI_ONSEN_ID),
     Address.fromString(ONSEN_ALLOCATOR)
   ).value0;
-  let ohmdaiBalance = ohmdaiSushiBalance.plus(ohmdaiOnsenBalance);
-  let ohmdaiTotalLP = toDecimal(ohmdaiPair.totalSupply(), 18);
+  const ohmdaiBalance = ohmdaiSushiBalance.plus(ohmdaiOnsenBalance);
+  const ohmdaiTotalLP = toDecimal(ohmdaiPair.totalSupply(), 18);
 
-  //OHMDAIv2
+  // OHMDAIv2
   let ohmdaiSushiBalancev2 = BigInt.fromI32(0);
   let ohmdai_valuev2 = BigDecimal.fromString("0");
   let ohmdai_rfvv2 = BigDecimal.fromString("0");
@@ -638,7 +638,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   log.debug("ohmdai_value {}", [ohmdai_value.toString()]);
 
   if (blockNumber.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))) {
-    let ohmdai_v2value = getPairUSD(
+    const ohmdai_v2value = getPairUSD(
       ohmdaiSushiBalancev2,
       SUSHI_OHMDAI_PAIRV2,
       blockNumber
@@ -654,7 +654,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     );
   }
 
-  //OHMFRAX
+  // OHMFRAX
   let ohmfraxBalance = BigInt.fromI32(0);
   let ohmfrax_value = BigDecimal.fromString("0");
   let ohmfrax_rfv = BigDecimal.fromString("0");
@@ -703,7 +703,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     }
   }
 
-  //OHMLUSD
+  // OHMLUSD
   let ohmlusdBalance = BigInt.fromI32(0);
   let ohmlusd_value = BigDecimal.fromString("0");
   let ohmlusd_rfv = BigDecimal.fromString("0");
@@ -714,7 +714,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
       .balanceOf(Address.fromString(treasury_address))
       .plus(ohmlusdPair.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)));
 
-    let ohmlusdOnsenBalance = ohmdaiOnsenMC.userInfo(
+    const ohmlusdOnsenBalance = ohmdaiOnsenMC.userInfo(
       BigInt.fromI32(OHMLUSD_ONSEN_ID),
       Address.fromString(ONSEN_ALLOCATOR)
     ).value0;
@@ -742,7 +742,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     );
     log.debug("ohmlusdBalance {}", [ohmlusdBalance.toString()]);
 
-    let ohmlusdOnsenBalance = ohmdaiOnsenMC.userInfo(
+    const ohmlusdOnsenBalance = ohmdaiOnsenMC.userInfo(
       BigInt.fromI32(OHMLUSD_ONSEN_ID),
       Address.fromString(ONSEN_ALLOCATOR)
     ).value0;
@@ -769,7 +769,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     }
   }
 
-  //OHMETH
+  // OHMETH
   let ohmethBalance = BigInt.fromI32(0);
   let ohmeth_value = BigDecimal.fromString("0");
   let ohmeth_rfv = BigDecimal.fromString("0");
@@ -820,34 +820,34 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const stableValueRecords = getStableValue(contracts, blockNumber);
   const stableValueDecimal = stableValueRecords.getValue();
 
-  let lpValue = ohmdai_value
+  const lpValue = ohmdai_value
     .plus(ohmfrax_value)
     .plus(ohmlusd_value)
     .plus(ohmeth_value);
-  let rfvLpValue = ohmdai_rfv
+  const rfvLpValue = ohmdai_rfv
     .plus(ohmfrax_rfv)
     .plus(ohmlusd_rfv)
     .plus(ohmeth_rfv);
 
-  let mv = stableValueDecimal
+  const mv = stableValueDecimal
     .plus(lpValue)
     .plus(weth_value)
     .plus(wbtc_value)
     .plus(volatile_value);
-  let rfv = stableValueDecimal.plus(rfvLpValue);
+  const rfv = stableValueDecimal.plus(rfvLpValue);
 
-  let treasuryStableBacking = stableValueDecimal;
-  let treasuryVolatileBacking = volatile_value
+  const treasuryStableBacking = stableValueDecimal;
+  const treasuryVolatileBacking = volatile_value
     .plus(weth_value)
     .plus(wbtc_value);
-  let treasuryTotalBacking = treasuryStableBacking
+  const treasuryTotalBacking = treasuryStableBacking
     .minus(vesting_assets)
     .plus(treasuryVolatileBacking)
     .plus(lpValue.div(BigDecimal.fromString("2")))
     .minus(cvxVlCvxValue)
     .minus(fxs_value)
     .minus(getCriculatingSupply(blockNumber, getTotalSupply(blockNumber)));
-  let treasuryLPValue = lpValue;
+  const treasuryLPValue = lpValue;
 
   log.debug("Treasury Market Value {}", [mv.toString()]);
   log.debug("Treasury RFV {}", [rfv.toString()]);
@@ -961,10 +961,10 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
 function getNextOHMRebase(blockNumber: BigInt): BigDecimal {
   let next_distribution = BigDecimal.fromString("0");
 
-  let staking_contract_v1 = OlympusStakingV1.bind(
+  const staking_contract_v1 = OlympusStakingV1.bind(
     Address.fromString(STAKING_CONTRACT_V1)
   );
-  let response = staking_contract_v1.try_ohmToDistributeNextEpoch();
+  const response = staking_contract_v1.try_ohmToDistributeNextEpoch();
   if (response.reverted == false) {
     next_distribution = toDecimal(response.value, 9);
     log.debug("next_distribution v1 {}", [next_distribution.toString()]);
@@ -973,19 +973,19 @@ function getNextOHMRebase(blockNumber: BigInt): BigDecimal {
   }
 
   if (blockNumber.gt(BigInt.fromString(STAKING_CONTRACT_V2_BLOCK))) {
-    let staking_contract_v2 = OlympusStakingV2.bind(
+    const staking_contract_v2 = OlympusStakingV2.bind(
       Address.fromString(STAKING_CONTRACT_V2)
     );
-    let distribution_v2 = toDecimal(staking_contract_v2.epoch().value3, 9);
+    const distribution_v2 = toDecimal(staking_contract_v2.epoch().value3, 9);
     log.debug("next_distribution v2 {}", [distribution_v2.toString()]);
     next_distribution = next_distribution.plus(distribution_v2);
   }
 
   if (blockNumber.gt(BigInt.fromString(STAKING_CONTRACT_V3_BLOCK))) {
-    let staking_contract_v3 = OlympusStakingV3.bind(
+    const staking_contract_v3 = OlympusStakingV3.bind(
       Address.fromString(STAKING_CONTRACT_V3)
     );
-    let distribution_v3 = toDecimal(staking_contract_v3.epoch().value3, 9);
+    const distribution_v3 = toDecimal(staking_contract_v3.epoch().value3, 9);
     log.debug("next_distribution v3 {}", [distribution_v3.toString()]);
     next_distribution = next_distribution.plus(distribution_v3);
   }
@@ -999,15 +999,15 @@ function getAPY_Rebase(
   sOHM: BigDecimal,
   distributedOHM: BigDecimal
 ): BigDecimal[] {
-  let nextEpochRebase = distributedOHM
+  const nextEpochRebase = distributedOHM
     .div(sOHM)
     .times(BigDecimal.fromString("100"));
 
-  let nextEpochRebase_number = Number.parseFloat(nextEpochRebase.toString());
-  let currentAPY =
+  const nextEpochRebase_number = Number.parseFloat(nextEpochRebase.toString());
+  const currentAPY =
     (Math.pow(nextEpochRebase_number / 100 + 1, 365 * 3) - 1) * 100;
 
-  let currentAPYdecimal = BigDecimal.fromString(currentAPY.toString());
+  const currentAPYdecimal = BigDecimal.fromString(currentAPY.toString());
 
   log.debug("next_rebase {}", [nextEpochRebase.toString()]);
   log.debug("current_apy total {}", [currentAPYdecimal.toString()]);
@@ -1039,26 +1039,26 @@ function getRunway(
     log.debug("Runway RFV", [rfv.toString()]);
     log.debug("Runway totalSupply", [totalSupply.toString()]);
 
-    let treasury_runway = Number.parseFloat(rfv.div(totalSupply).toString());
+    const treasury_runway = Number.parseFloat(rfv.div(totalSupply).toString());
 
-    let runway2dot5k_num =
+    const runway2dot5k_num =
       Math.log(treasury_runway) / Math.log(1 + 0.0029438) / 3;
-    let runway5k_num = Math.log(treasury_runway) / Math.log(1 + 0.003579) / 3;
-    let runway7dot5k_num =
+    const runway5k_num = Math.log(treasury_runway) / Math.log(1 + 0.003579) / 3;
+    const runway7dot5k_num =
       Math.log(treasury_runway) / Math.log(1 + 0.0039507) / 3;
-    let runway10k_num =
+    const runway10k_num =
       Math.log(treasury_runway) / Math.log(1 + 0.00421449) / 3;
-    let runway20k_num =
+    const runway20k_num =
       Math.log(treasury_runway) / Math.log(1 + 0.00485037) / 3;
-    let runway50k_num =
+    const runway50k_num =
       Math.log(treasury_runway) / Math.log(1 + 0.00569158) / 3;
-    let runway70k_num =
+    const runway70k_num =
       Math.log(treasury_runway) / Math.log(1 + 0.00600065) / 3;
-    let runway100k_num =
+    const runway100k_num =
       Math.log(treasury_runway) / Math.log(1 + 0.00632839) / 3;
     let nextEpochRebase_number = Number.parseFloat(rebase.toString()) / 100;
     if (block.number.toI32() > DISTRIBUTOR_CONTRACT_BLOCK) {
-      let distributorContract = Distributor.bind(
+      const distributorContract = Distributor.bind(
         Address.fromString(DISTRIBUTOR_CONTRACT)
       );
       nextEpochRebase_number = Number.parseFloat(
@@ -1069,7 +1069,7 @@ function getRunway(
       );
     }
     if (block.number.toI32() > DISTRIBUTOR_CONTRACT_BLOCK_V2) {
-      let distributorContract_v2 = Distributor.bind(
+      const distributorContract_v2 = Distributor.bind(
         Address.fromString(DISTRIBUTOR_CONTRACT_V2)
       );
       nextEpochRebase_number = Number.parseFloat(
@@ -1081,7 +1081,7 @@ function getRunway(
     }
     log.debug("Runway rebase", [nextEpochRebase_number.toString()]);
 
-    let runwayCurrent_num =
+    const runwayCurrent_num =
       Math.log(treasury_runway) / Math.log(1 + nextEpochRebase_number) / 3;
 
     runway2dot5k = BigDecimal.fromString(runway2dot5k_num.toString());
@@ -1109,30 +1109,30 @@ function getRunway(
 }
 
 export function updateProtocolMetrics(block: ethereum.Block): void {
-  let blockNumber = block.number;
+  const blockNumber = block.number;
 
-  let pm = loadOrCreateProtocolMetric(block.timestamp);
+  const pm = loadOrCreateProtocolMetric(block.timestamp);
 
-  //Total Supply
+  // Total Supply
   pm.totalSupply = getTotalSupply(blockNumber);
 
-  //Circ Supply
+  // Circ Supply
   pm.ohmCirculatingSupply = getCriculatingSupply(blockNumber, pm.totalSupply);
 
-  //sOhm Supply
+  // sOhm Supply
   pm.sOhmCirculatingSupply = getSohmSupply(blockNumber);
 
-  //OHM Price
+  // OHM Price
   pm.ohmPrice = getOHMUSDRate(block.number);
 
-  //OHM Market Cap
+  // OHM Market Cap
   pm.marketCap = getOHMMarketcap(block.number);
 
-  //Total Value Locked
+  // Total Value Locked
   pm.totalValueLocked = pm.sOhmCirculatingSupply.times(pm.ohmPrice);
 
-  //Treasury RFV and MV
-  let mv_rfv = getMV_RFV(blockNumber);
+  // Treasury RFV and MV
+  const mv_rfv = getMV_RFV(blockNumber);
   pm.treasuryMarketValue = mv_rfv[0];
   pm.treasuryRiskFreeValue = mv_rfv[1];
   pm.treasuryDaiRiskFreeValue = mv_rfv[2];
@@ -1159,15 +1159,15 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
 
   // Rebase rewards, APY, rebase
   pm.nextDistributedOhm = getNextOHMRebase(blockNumber);
-  let apy_rebase = getAPY_Rebase(
+  const apy_rebase = getAPY_Rebase(
     pm.sOhmCirculatingSupply,
     pm.nextDistributedOhm
   );
   pm.currentAPY = apy_rebase[0];
   pm.nextEpochRebase = apy_rebase[1];
 
-  //Runway
-  let runways = getRunway(
+  // Runway
+  const runways = getRunway(
     pm.totalSupply,
     pm.treasuryRiskFreeValue,
     pm.nextEpochRebase,

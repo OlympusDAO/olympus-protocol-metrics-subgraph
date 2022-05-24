@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt, Address } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, Address, log } from "@graphprotocol/graph-ts";
 import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { RariAllocator } from "../../generated/ProtocolMetrics/RariAllocator";
@@ -181,7 +181,7 @@ export function getFraxAllocatedInConvexBalance(
 
   const sources = [];
 
-  //Multiplied by 10e9 for consistency
+  // Multiplied by 10e9 for consistency
   // TODO determine if the multiplier is correct
 
   if (blockNumber.gt(BigInt.fromString(CONVEX_ALLOCATOR1_BLOCK))) {
@@ -464,6 +464,6 @@ export function getStableValue(
   records.addToken("LUSD", getLUSDBalance(contracts, blockNumber));
   records.addToken("FEI", getFeiBalance(contracts, blockNumber));
 
-  console.debug("Stablecoin tokens: {}", [records.toString()]);
+  log.debug("Stablecoin tokens: {}", [records.toString()]);
   return records;
 }
