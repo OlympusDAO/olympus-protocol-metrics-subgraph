@@ -25,7 +25,7 @@
   "parserOptions": {
     "ecmaVersion": 2018
   },
-  "plugins": ["@typescript-eslint", "simple-import-sort/imports"],
+  "plugins": ["@typescript-eslint", "simple-import-sort"],
   "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   "rules": {
     "curly": ["warn", "multi-line", "consistent"],
@@ -34,7 +34,7 @@
     "no-shadow": "warn",
     "prefer-const": "warn",
     "spaced-comment": ["warn", "always", { "line": { "markers": ["/ <reference"] } }],
-    "simple-import-sort/sort": "warn",
+    "simple-import-sort/imports": "warn",
     "@typescript-eslint/ban-types": "off",
     "@typescript-eslint/ban-ts-ignore": "off",
     "@typescript-eslint/explicit-function-return-type": ["warn", { "allowExpressions": true }],
