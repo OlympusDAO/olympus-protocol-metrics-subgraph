@@ -47,10 +47,10 @@ export class TokenRecords {
 }
 
 export class TokensRecords {
-  tokens: { [key: string]: TokenRecords };
+  tokens: Map<string, TokenRecords>;
 
   construct(): void {
-    this.tokens = {};
+    this.tokens = new Map<string, TokenRecords>();
   }
 
   addToken(token: string, records: TokenRecords): void {

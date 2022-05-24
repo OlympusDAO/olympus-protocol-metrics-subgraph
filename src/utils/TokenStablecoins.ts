@@ -31,7 +31,7 @@ import {
   UST_ERC20_CONTRACT,
   UST_ERC20_CONTRACT_BLOCK,
 } from "./Constants";
-import { contractsDictType, getBalance } from "./ContractHelper";
+import { getBalance, getConvexAllocator, getERC20, getRariAllocator, getStabilityPool } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
 
@@ -49,13 +49,11 @@ import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
  * @returns BigInt representing the balance
  */
 export function getDaiBalance(
-  contracts: contractsDictType,
+  daiERC20: ERC20,
+  aDaiERC20: ERC20,
+  rariAllocator: RariAllocator,
   blockNumber: BigInt
 ): TokenRecords {
-  const daiERC20 = contracts[ERC20DAI_CONTRACT] as ERC20;
-  const aDaiERC20 = contracts[ADAI_ERC20_CONTRACT] as ERC20;
-  const rariAllocator = contracts[RARI_ALLOCATOR] as RariAllocator;
-
   const sources = [
     new TokenRecord(
       "DAI",
@@ -129,11 +127,9 @@ export function getDaiBalance(
  * @returns BigInt representing the balance
  */
 export function getFeiBalance(
-  contracts: contractsDictType,
+  feiERC20: ERC20,
   blockNumber: BigInt
 ): TokenRecords {
-  const feiERC20 = contracts[FEI_ERC20_CONTRACT] as ERC20;
-
   const sources = [
     new TokenRecord(
       "FEI",
@@ -172,14 +168,12 @@ export function getFeiBalance(
  * @returns BigInt representing the balance
  */
 export function getFraxAllocatedInConvexBalance(
-  contracts: contractsDictType,
+  allocator1: ConvexAllocator,
+  allocator2: ConvexAllocator,
+  allocator3: ConvexAllocator,
   blockNumber: BigInt
 ): TokenRecords {
   // TODO add to mv and mvrfv?
-  const allocator1 = contracts[CONVEX_ALLOCATOR1] as ConvexAllocator;
-  const allocator2 = contracts[CONVEX_ALLOCATOR2] as ConvexAllocator;
-  const allocator3 = contracts[CONVEX_ALLOCATOR3] as ConvexAllocator;
-
   const sources = [];
 
   // Multiplied by 10e9 for consistency
@@ -251,11 +245,9 @@ export function getFraxAllocatedInConvexBalance(
  * @returns BigInt representing the balance
  */
 export function getFraxBalance(
-  contracts: contractsDictType,
+  fraxERC20: ERC20,
   blockNumber: BigInt
 ): TokenRecords {
-  const fraxERC20 = contracts[ERC20FRAX_CONTRACT] as ERC20;
-
   const sources = [
     new TokenRecord(
       "FRAX",
@@ -278,7 +270,7 @@ export function getFraxBalance(
       BigDecimal.fromString("1"),
       toDecimal(getBalance(fraxERC20, TREASURY_ADDRESS_V3, blockNumber), 18)
     ),
-    ...getFraxAllocatedInConvexBalance(contracts, blockNumber).records,
+    ...getFraxAllocatedInConvexBalance(getConvexAllocator(CONVEX_ALLOCATOR1), getConvexAllocator(CONVEX_ALLOCATOR2), getConvexAllocator(CONVEX_ALLOCATOR3), blockNumber).records,
   ];
 
   return new TokenRecords(sources);
@@ -296,12 +288,10 @@ export function getFraxBalance(
  * @returns BigInt representing the balance
  */
 export function getLUSDBalance(
-  contracts: contractsDictType,
+  lusdERC20: ERC20,
+  stabilityPoolContract: StabilityPool,
   blockNumber: BigInt
 ): TokenRecords {
-  const lusdERC20 = contracts[LUSD_ERC20_CONTRACT] as ERC20;
-  const stabilityPoolContract = contracts[STABILITY_POOL] as StabilityPool;
-
   const sources = [
     new TokenRecord(
       "LUSD",
@@ -381,11 +371,9 @@ export function getLUSDBalance(
  * @returns BigInt representing the balance
  */
 export function getUSTBalance(
-  contracts: contractsDictType,
+  ustERC20: ERC20,
   blockNumber: BigInt
 ): TokenRecords {
-  const ustERC20 = contracts[UST_ERC20_CONTRACT] as ERC20;
-
   const sources = [
     new TokenRecord(
       "UST",
@@ -454,16 +442,15 @@ export function getUSTBalance(
  * @returns BigDecimal representing the balance
  */
 export function getStableValue(
-  contracts: contractsDictType,
   blockNumber: BigInt
 ): TokensRecords {
   const records = new TokensRecords();
 
-  records.addToken("DAI", getDaiBalance(contracts, blockNumber));
-  records.addToken("FRAX", getFraxBalance(contracts, blockNumber));
-  records.addToken("UST", getUSTBalance(contracts, blockNumber));
-  records.addToken("LUSD", getLUSDBalance(contracts, blockNumber));
-  records.addToken("FEI", getFeiBalance(contracts, blockNumber));
+  records.addToken("DAI", getDaiBalance(getERC20(ERC20DAI_CONTRACT), getERC20(ADAI_ERC20_CONTRACT), getRariAllocator(RARI_ALLOCATOR), blockNumber));
+  records.addToken("FRAX", getFraxBalance(getERC20(ERC20FRAX_CONTRACT), blockNumber));
+  records.addToken("UST", getUSTBalance(getERC20(UST_ERC20_CONTRACT), blockNumber));
+  records.addToken("LUSD", getLUSDBalance(getERC20(LUSD_ERC20_CONTRACT), getStabilityPool(STABILITY_POOL), blockNumber));
+  records.addToken("FEI", getFeiBalance(getERC20(FEI_ERC20_CONTRACT), blockNumber));
 
   log.debug("Stablecoin tokens: {}", [records.toString()]);
   return records;

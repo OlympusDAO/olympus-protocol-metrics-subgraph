@@ -10,17 +10,107 @@ import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
 import { toDecimal } from "./Decimals";
 
-export type contractsDictType = {
-  [key: string]:
-    | ERC20
-    | UniswapV2Pair
-    | RariAllocator
-    | MasterChef
-    | VeFXS
-    | ConvexAllocator
-    | UniswapV3Pair
-    | StabilityPool;
-};
+/**
+ * The Graph recommends only binding a contract once
+ * AssemblyScript doesn't like union types, so we have
+ * to statically-type these contract maps.
+ */
+const contractsERC20 = new Map<string, ERC20>();
+const contractsUniswapV2Pair = new Map<string, UniswapV2Pair>();
+const contractsUniswapV3Pair = new Map<string, UniswapV3Pair>();
+const contractsRariAllocator = new Map<string, RariAllocator>();
+const contractsMasterChef = new Map<string, MasterChef>();
+const contractsVeFXS = new Map<string, VeFXS>();
+const contractsConvexAllocator = new Map<string, ConvexAllocator>();
+const contractsStabilityPool = new Map<string, StabilityPool>();
+
+export function getERC20(contractAddress: string): ERC20 {
+  let contract = contractsERC20.get(contractAddress);
+
+  if (!contract) {
+    contract = ERC20.bind(Address.fromString(contractAddress));
+    contractsERC20.set(contractAddress, contract);
+  }
+
+  return contract;
+}
+
+export function getUniswapV2Pair(contractAddress: string): UniswapV2Pair {
+  let contract = contractsUniswapV2Pair.get(contractAddress);
+
+  if (!contract) {
+    contract = UniswapV2Pair.bind(Address.fromString(contractAddress));
+    contractsUniswapV2Pair.set(contractAddress, contract);
+  }
+
+  return contract;
+}
+
+export function getUniswapV3Pair(contractAddress: string): UniswapV3Pair {
+  let contract = contractsUniswapV3Pair.get(contractAddress);
+
+  if (!contract) {
+    contract = UniswapV3Pair.bind(Address.fromString(contractAddress));
+    contractsUniswapV3Pair.set(contractAddress, contract);
+  }
+
+  return contract;
+}
+
+export function getMasterChef(contractAddress: string): MasterChef {
+  let contract = contractsMasterChef.get(contractAddress);
+
+  if (!contract) {
+    contract = MasterChef.bind(Address.fromString(contractAddress));
+    contractsMasterChef.set(contractAddress, contract);
+  }
+
+  return contract;
+}
+
+export function getRariAllocator(contractAddress: string): RariAllocator {
+  let contract = contractsRariAllocator.get(contractAddress);
+
+  if (!contract) {
+    contract = RariAllocator.bind(Address.fromString(contractAddress));
+    contractsRariAllocator.set(contractAddress, contract);
+  }
+
+  return contract;
+}
+
+export function getVeFXS(contractAddress: string): VeFXS {
+  let contract = contractsVeFXS.get(contractAddress);
+
+  if (!contract) {
+    contract = VeFXS.bind(Address.fromString(contractAddress));
+    contractsVeFXS.set(contractAddress, contract);
+  }
+
+  return contract;
+}
+
+export function getConvexAllocator(contractAddress: string): ConvexAllocator {
+  let contract = contractsConvexAllocator.get(contractAddress);
+
+  if (!contract) {
+    contract = ConvexAllocator.bind(Address.fromString(contractAddress));
+    contractsConvexAllocator.set(contractAddress, contract);
+  }
+
+  return contract;
+}
+
+export function getStabilityPool(contractAddress: string): StabilityPool {
+  let contract = contractsStabilityPool.get(contractAddress);
+
+  if (!contract) {
+    contract = StabilityPool.bind(Address.fromString(contractAddress));
+    contractsStabilityPool.set(contractAddress, contract);
+  }
+
+  return contract;
+}
 
 /**
  * Helper method to simplify getting the balance from an ERC20 contract.
