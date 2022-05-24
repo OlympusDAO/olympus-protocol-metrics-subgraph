@@ -1,3 +1,4 @@
+// Inspired by: https://github.com/CosmWasm/cosmwasm/pull/118/files
 {
   "env": {
     "es6": true
