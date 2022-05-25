@@ -208,24 +208,25 @@ export function getStabilityPool(
  * @param minimumBlockNumber The minimum block number for the balance to apply.
  * @returns BigInt
  */
-export function getBalance(
-  contract: ERC20,
-  address: string,
-  currentBlockNumber: BigInt,
-  minimumBlockNumber: BigInt = BigInt.fromString("0"),
-): BigInt {
-  // No minimum, return the balance
-  if (!minimumBlockNumber) {
-    return contract.balanceOf(Address.fromString(address));
-  }
+export function getBalance(contract: ERC20, address: string, currentBlockNumber: BigInt): BigInt {
+  const callResult = contract.try_name();
+  log.debug("Getting ERC20 balance in contract {} for wallet {} at block number {}", [
+    callResult.reverted ? "N/A" : callResult.value,
+    address,
+    currentBlockNumber.toString(),
+  ]);
 
-  // Minimum set and passed, return the balance
-  if (currentBlockNumber > minimumBlockNumber) {
-    return contract.balanceOf(Address.fromString(address));
-  }
+  if (!contractExistsAtBlock(address, currentBlockNumber)) return BigInt.fromString("0");
 
-  // Minimum set and not passed, return 0
-  return BigInt.fromString("0");
+  // const balanceResult = contract.try_balanceOf(Address.fromString(address));
+  // if (balanceResult.reverted) {
+  //   log.error("balanceOf function was reverted on contract {}", [callResult.value]);
+  //   return BigInt.fromString("0");
+  // }
+
+  // log.debug("Got balance: {}", [balanceResult.value.toString()]);
+  // return balanceResult.value;
+  return contract.balanceOf(Address.fromString(address));
 }
 
 /**

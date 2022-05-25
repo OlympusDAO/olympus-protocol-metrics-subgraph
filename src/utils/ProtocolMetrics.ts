@@ -20,7 +20,6 @@ import {
   BONDS_DEPOSIT,
   CONVEX_CVX_ALLOCATOR,
   CVX_ERC20_CONTRACT,
-  CVX_ERC20_CONTRACT_BLOCK,
   DAO_WALLET,
   DISTRIBUTOR_CONTRACT,
   DISTRIBUTOR_CONTRACT_BLOCK,
@@ -39,7 +38,6 @@ import {
   OHMV2_ERC20_CONTRACT_BLOCK,
   ONSEN_ALLOCATOR,
   RARI_ALLOCATOR,
-  RARI_ALLOCATOR_BLOCK,
   SOHM_ERC20_CONTRACT,
   SOHM_ERC20_CONTRACTV2,
   SOHM_ERC20_CONTRACTV2_BLOCK,
@@ -78,7 +76,6 @@ import {
   VEFXSERC20_BLOCK,
   VEFXSERC20_CONTRACT,
   VLCVX_ERC20_CONTRACT,
-  VLCVX_ERC20_CONTRACT_BLOCK,
   WBTC_ERC20_CONTRACT,
   WETH_ERC20_CONTRACT,
   XSUSI_ERC20_CONTRACT,
@@ -256,6 +253,7 @@ function getTribeBalance(
 ): BigInt {
   let tribeBalance = BigInt.fromI32(0);
 
+  // TODO contract call reverted occurring somewhere in this function
   if (tribeERC20) {
     // Treasury V1
     tribeBalance = tribeBalance.plus(getBalance(tribeERC20, TREASURY_ADDRESS, blockNumber));
@@ -266,7 +264,9 @@ function getTribeBalance(
   }
 
   if (rariAllocator) {
+    log.debug("before rari", []);
     tribeBalance = rariAllocator.amountAllocated(BigInt.fromI32(4));
+    log.debug("after rari", []);
   }
 
   return tribeBalance;
@@ -324,30 +324,9 @@ function getCVXBalance(cvxERC20: ERC20, blockNumber: BigInt): BigInt {
   let cvxBalance = BigInt.fromString("0");
 
   if (cvxERC20) {
-    cvxBalance = cvxBalance.plus(
-      getBalance(
-        cvxERC20,
-        TREASURY_ADDRESS,
-        blockNumber,
-        BigInt.fromString(CVX_ERC20_CONTRACT_BLOCK),
-      ),
-    );
-    cvxBalance = cvxBalance.plus(
-      getBalance(
-        cvxERC20,
-        TREASURY_ADDRESS_V2,
-        blockNumber,
-        BigInt.fromString(CVX_ERC20_CONTRACT_BLOCK),
-      ),
-    );
-    cvxBalance = cvxBalance.plus(
-      getBalance(
-        cvxERC20,
-        TREASURY_ADDRESS_V3,
-        blockNumber,
-        BigInt.fromString(CVX_ERC20_CONTRACT_BLOCK),
-      ),
-    );
+    cvxBalance = cvxBalance.plus(getBalance(cvxERC20, TREASURY_ADDRESS, blockNumber));
+    cvxBalance = cvxBalance.plus(getBalance(cvxERC20, TREASURY_ADDRESS_V2, blockNumber));
+    cvxBalance = cvxBalance.plus(getBalance(cvxERC20, TREASURY_ADDRESS_V3, blockNumber));
   }
 
   log.debug("CVXbalance {}", [cvxBalance.toString()]);
@@ -366,14 +345,7 @@ function getVlCVXBalance(vlERC20: ERC20, blockNumber: BigInt): BigInt {
   let vlCvxBalance = BigInt.fromString("0");
 
   if (vlERC20) {
-    vlCvxBalance = vlCvxBalance.plus(
-      getBalance(
-        vlERC20,
-        CONVEX_CVX_ALLOCATOR,
-        blockNumber,
-        BigInt.fromString(VLCVX_ERC20_CONTRACT_BLOCK),
-      ),
-    );
+    vlCvxBalance = vlCvxBalance.plus(getBalance(vlERC20, CONVEX_CVX_ALLOCATOR, blockNumber));
   }
 
   log.debug("vlCVXbalance {}", [vlCvxBalance.toString()]);
