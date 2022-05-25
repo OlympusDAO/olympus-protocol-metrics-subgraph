@@ -8,6 +8,7 @@ import { StabilityPool } from "../../generated/ProtocolMetrics/StabilityPool";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
+import { CONTRACT_STARTING_BLOCK_MAP, RARI_ALLOCATOR_BLOCK } from "./Constants";
 import { toDecimal } from "./Decimals";
 
 /**
@@ -24,7 +25,34 @@ const contractsVeFXS = new Map<string, VeFXS>();
 const contractsConvexAllocator = new Map<string, ConvexAllocator>();
 const contractsStabilityPool = new Map<string, StabilityPool>();
 
-export function getERC20(contractAddress: string): ERC20 {
+/**
+ * Indicates whether a contract exists at a given block number.
+ *
+ * This will check `CONTRACT_STARTING_BLOCK_MAP` for the presence
+ * of the contract address at the given block number.
+ *
+ * If no starting block is defined, it is assumed that the
+ * contract is present prior to the starting block of this subgraph
+ * (currentl 14000000).
+ *
+ * @param contractAddress
+ * @param blockNumber
+ */
+function contractExistsAtBlock(contractAddress: string, blockNumber: BigInt): boolean {
+  const startingBlock: string = CONTRACT_STARTING_BLOCK_MAP.get(contractAddress);
+
+  // Assuming the starting block is much earlier
+  if (!startingBlock) return false;
+
+  // Current block is before the starting block
+  if (blockNumber < BigInt.fromString(startingBlock)) return false;
+
+  return true;
+}
+
+export function getERC20(contractAddress: string, currentBlockNumber: BigInt): ERC20 {
+  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
+
   let contract = contractsERC20.get(contractAddress);
 
   if (!contract) {
@@ -35,7 +63,12 @@ export function getERC20(contractAddress: string): ERC20 {
   return contract;
 }
 
-export function getUniswapV2Pair(contractAddress: string): UniswapV2Pair {
+export function getUniswapV2Pair(
+  contractAddress: string,
+  currentBlockNumber: BigInt,
+): UniswapV2Pair {
+  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
+
   let contract = contractsUniswapV2Pair.get(contractAddress);
 
   if (!contract) {
@@ -46,7 +79,12 @@ export function getUniswapV2Pair(contractAddress: string): UniswapV2Pair {
   return contract;
 }
 
-export function getUniswapV3Pair(contractAddress: string): UniswapV3Pair {
+export function getUniswapV3Pair(
+  contractAddress: string,
+  currentBlockNumber: BigInt,
+): UniswapV3Pair {
+  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
+
   let contract = contractsUniswapV3Pair.get(contractAddress);
 
   if (!contract) {
@@ -57,7 +95,9 @@ export function getUniswapV3Pair(contractAddress: string): UniswapV3Pair {
   return contract;
 }
 
-export function getMasterChef(contractAddress: string): MasterChef {
+export function getMasterChef(contractAddress: string, currentBlockNumber: BigInt): MasterChef {
+  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
+
   let contract = contractsMasterChef.get(contractAddress);
 
   if (!contract) {
@@ -68,7 +108,12 @@ export function getMasterChef(contractAddress: string): MasterChef {
   return contract;
 }
 
-export function getRariAllocator(contractAddress: string): RariAllocator {
+export function getRariAllocator(
+  contractAddress: string,
+  currentBlockNumber: BigInt,
+): RariAllocator {
+  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
+
   let contract = contractsRariAllocator.get(contractAddress);
 
   if (!contract) {
@@ -79,7 +124,9 @@ export function getRariAllocator(contractAddress: string): RariAllocator {
   return contract;
 }
 
-export function getVeFXS(contractAddress: string): VeFXS {
+export function getVeFXS(contractAddress: string, currentBlockNumber: BigInt): VeFXS {
+  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
+
   let contract = contractsVeFXS.get(contractAddress);
 
   if (!contract) {
@@ -90,7 +137,12 @@ export function getVeFXS(contractAddress: string): VeFXS {
   return contract;
 }
 
-export function getConvexAllocator(contractAddress: string): ConvexAllocator {
+export function getConvexAllocator(
+  contractAddress: string,
+  currentBlockNumber: BigInt,
+): ConvexAllocator {
+  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
+
   let contract = contractsConvexAllocator.get(contractAddress);
 
   if (!contract) {
@@ -101,7 +153,12 @@ export function getConvexAllocator(contractAddress: string): ConvexAllocator {
   return contract;
 }
 
-export function getStabilityPool(contractAddress: string): StabilityPool {
+export function getStabilityPool(
+  contractAddress: string,
+  currentBlockNumber: BigInt,
+): StabilityPool {
+  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
+
   let contract = contractsStabilityPool.get(contractAddress);
 
   if (!contract) {
@@ -127,15 +184,17 @@ export function getBalance(
   contract: ERC20,
   address: string,
   currentBlockNumber: BigInt,
-  minimumBlockNumber: BigInt = BigInt.fromString("0")
+  minimumBlockNumber: BigInt = BigInt.fromString("0"),
 ): BigInt {
   // No minimum, return the balance
-  if (!minimumBlockNumber)
-    {return contract.balanceOf(Address.fromString(address));}
+  if (!minimumBlockNumber) {
+    return contract.balanceOf(Address.fromString(address));
+  }
 
   // Minimum set and passed, return the balance
-  if (currentBlockNumber > minimumBlockNumber)
-    {return contract.balanceOf(Address.fromString(address));}
+  if (currentBlockNumber > minimumBlockNumber) {
+    return contract.balanceOf(Address.fromString(address));
+  }
 
   // Minimum set and not passed, return 0
   return BigInt.fromString("0");
@@ -149,10 +208,6 @@ export function getBalance(
  * @param rate The conversion rate
  * @returns BigDecimal representing the value
  */
-export function getValue(
-  balance: BigInt,
-  decimals: number,
-  rate: BigDecimal
-): BigDecimal {
+export function getValue(balance: BigInt, decimals: number, rate: BigDecimal): BigDecimal {
   return toDecimal(balance, decimals).times(rate);
 }
