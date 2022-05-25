@@ -1,12 +1,12 @@
-//Tokens definition
-export const DAIBOND_TOKEN: string = "DAI";
-export const OHMDAILPBOND_TOKEN: string = "OHM-DAI";
-export const OHMFRAXLPBOND_TOKEN: string = "OHM-FRAX";
-export const FRAXBOND_TOKEN: string = "FRAX";
-export const ETHBOND_TOKEN: string = "WETH";
-export const LUSDBOND_TOKEN: string = "LUSD";
-export const OHMLUSDLPBOND_TOKEN: string = "OHM-LUSD";
-export const OHMETHLPBOND_TOKEN: string = "OHM-WETH";
+// Tokens definition
+export const DAIBOND_TOKEN = "DAI";
+export const OHMDAILPBOND_TOKEN = "OHM-DAI";
+export const OHMFRAXLPBOND_TOKEN = "OHM-FRAX";
+export const FRAXBOND_TOKEN = "FRAX";
+export const ETHBOND_TOKEN = "WETH";
+export const LUSDBOND_TOKEN = "LUSD";
+export const OHMLUSDLPBOND_TOKEN = "OHM-LUSD";
+export const OHMETHLPBOND_TOKEN = "OHM-WETH";
 
 export const MIGRATION_CONTRACT = "0x184f3fad8618a6f458c16bae63f70c426fe784b3";
 
