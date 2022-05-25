@@ -8,7 +8,7 @@ import { StabilityPool } from "../../generated/ProtocolMetrics/StabilityPool";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
-import { CONTRACT_STARTING_BLOCK_MAP, RARI_ALLOCATOR_BLOCK } from "./Constants";
+import { CONTRACT_STARTING_BLOCK_MAP } from "./Constants";
 import { toDecimal } from "./Decimals";
 
 /**
@@ -39,20 +39,20 @@ const contractsStabilityPool = new Map<string, StabilityPool>();
  * @param blockNumber
  */
 function contractExistsAtBlock(contractAddress: string, blockNumber: BigInt): boolean {
-  const startingBlock: string = CONTRACT_STARTING_BLOCK_MAP.get(contractAddress);
-  log.debug("Starting block for contract {}: {}", [contractAddress, startingBlock]);
+  log.debug("Checking for starting block of contract {}", [contractAddress]);
 
   // Assuming the starting block is much earlier
-  if (!startingBlock) {
-    log.debug("No starting block defined for contract {}. Assuming it is prior.", [
-      contractAddress,
-    ]);
+  if (!CONTRACT_STARTING_BLOCK_MAP.has(contractAddress)) {
+    log.debug("No starting block defined for contract {}. Assuming it is prior", [contractAddress]);
     return true;
   }
 
+  const startingBlock: string = CONTRACT_STARTING_BLOCK_MAP.get(contractAddress);
+  log.debug("Starting block for contract {}: {}", [contractAddress, startingBlock]);
+
   // Current block is before the starting block
   if (blockNumber < BigInt.fromString(startingBlock)) {
-    log.debug("Current block is before the starting block. Skipping.", []);
+    log.debug("Current block is before the starting block. Skipping", []);
     return false;
   }
 
@@ -60,65 +60,72 @@ function contractExistsAtBlock(contractAddress: string, blockNumber: BigInt): bo
 }
 
 export function getERC20(contractAddress: string, currentBlockNumber: BigInt): ERC20 {
+  log.debug("Fetching ERC20 contract for address {}", [contractAddress]);
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
-  let contract = contractsERC20.get(contractAddress);
-
-  if (!contract) {
+  if (!contractsERC20.has(contractAddress)) {
     log.debug("Binding ERC20 contract for address {}. Block number {}", [
       contractAddress,
       currentBlockNumber.toString(),
     ]);
-    contract = ERC20.bind(Address.fromString(contractAddress));
+    const contract = ERC20.bind(Address.fromString(contractAddress));
     contractsERC20.set(contractAddress, contract);
   }
 
-  return contract;
+  return contractsERC20.get(contractAddress);
 }
 
 export function getUniswapV2Pair(
   contractAddress: string,
   currentBlockNumber: BigInt,
 ): UniswapV2Pair {
+  log.debug("Fetching UniswapV2Pair contract for address {}", [contractAddress]);
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
-  let contract = contractsUniswapV2Pair.get(contractAddress);
-
-  if (!contract) {
-    contract = UniswapV2Pair.bind(Address.fromString(contractAddress));
+  if (!contractsUniswapV2Pair.has(contractAddress)) {
+    log.debug("Binding UniswapV2Pair contract for address {}. Block number {}", [
+      contractAddress,
+      currentBlockNumber.toString(),
+    ]);
+    const contract = UniswapV2Pair.bind(Address.fromString(contractAddress));
     contractsUniswapV2Pair.set(contractAddress, contract);
   }
 
-  return contract;
+  return contractsUniswapV2Pair.get(contractAddress);
 }
 
 export function getUniswapV3Pair(
   contractAddress: string,
   currentBlockNumber: BigInt,
 ): UniswapV3Pair {
+  log.debug("Fetching UniswapV3Pair contract for address {}", [contractAddress]);
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
-  let contract = contractsUniswapV3Pair.get(contractAddress);
-
-  if (!contract) {
-    contract = UniswapV3Pair.bind(Address.fromString(contractAddress));
+  if (!contractsUniswapV3Pair.has(contractAddress)) {
+    log.debug("Binding UniswapV3Pair contract for address {}. Block number {}", [
+      contractAddress,
+      currentBlockNumber.toString(),
+    ]);
+    const contract = UniswapV3Pair.bind(Address.fromString(contractAddress));
     contractsUniswapV3Pair.set(contractAddress, contract);
   }
 
-  return contract;
+  return contractsUniswapV3Pair.get(contractAddress);
 }
 
 export function getMasterChef(contractAddress: string, currentBlockNumber: BigInt): MasterChef {
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
-  let contract = contractsMasterChef.get(contractAddress);
-
-  if (!contract) {
-    contract = MasterChef.bind(Address.fromString(contractAddress));
+  if (!contractsMasterChef.has(contractAddress)) {
+    log.debug("Binding MasterChef contract for address {}. Block number {}", [
+      contractAddress,
+      currentBlockNumber.toString(),
+    ]);
+    const contract = MasterChef.bind(Address.fromString(contractAddress));
     contractsMasterChef.set(contractAddress, contract);
   }
 
-  return contract;
+  return contractsMasterChef.get(contractAddress);
 }
 
 export function getRariAllocator(
@@ -127,27 +134,31 @@ export function getRariAllocator(
 ): RariAllocator {
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
-  let contract = contractsRariAllocator.get(contractAddress);
-
-  if (!contract) {
-    contract = RariAllocator.bind(Address.fromString(contractAddress));
+  if (!contractsRariAllocator.has(contractAddress)) {
+    log.debug("Binding RariAllocator contract for address {}. Block number {}", [
+      contractAddress,
+      currentBlockNumber.toString(),
+    ]);
+    const contract = RariAllocator.bind(Address.fromString(contractAddress));
     contractsRariAllocator.set(contractAddress, contract);
   }
 
-  return contract;
+  return contractsRariAllocator.get(contractAddress);
 }
 
 export function getVeFXS(contractAddress: string, currentBlockNumber: BigInt): VeFXS {
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
-  let contract = contractsVeFXS.get(contractAddress);
-
-  if (!contract) {
-    contract = VeFXS.bind(Address.fromString(contractAddress));
+  if (!contractsVeFXS.has(contractAddress)) {
+    log.debug("Binding VeFXS contract for address {}. Block number {}", [
+      contractAddress,
+      currentBlockNumber.toString(),
+    ]);
+    const contract = VeFXS.bind(Address.fromString(contractAddress));
     contractsVeFXS.set(contractAddress, contract);
   }
 
-  return contract;
+  return contractsVeFXS.get(contractAddress);
 }
 
 export function getConvexAllocator(
@@ -156,14 +167,16 @@ export function getConvexAllocator(
 ): ConvexAllocator {
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
-  let contract = contractsConvexAllocator.get(contractAddress);
-
-  if (!contract) {
-    contract = ConvexAllocator.bind(Address.fromString(contractAddress));
+  if (!contractsConvexAllocator.has(contractAddress)) {
+    log.debug("Binding ConvexAllocator contract for address {}. Block number {}", [
+      contractAddress,
+      currentBlockNumber.toString(),
+    ]);
+    const contract = ConvexAllocator.bind(Address.fromString(contractAddress));
     contractsConvexAllocator.set(contractAddress, contract);
   }
 
-  return contract;
+  return contractsConvexAllocator.get(contractAddress);
 }
 
 export function getStabilityPool(
@@ -172,14 +185,16 @@ export function getStabilityPool(
 ): StabilityPool {
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
-  let contract = contractsStabilityPool.get(contractAddress);
-
-  if (!contract) {
-    contract = StabilityPool.bind(Address.fromString(contractAddress));
+  if (!contractsStabilityPool.has(contractAddress)) {
+    log.debug("Binding StabilityPool contract for address {}. Block number {}", [
+      contractAddress,
+      currentBlockNumber.toString(),
+    ]);
+    const contract = StabilityPool.bind(Address.fromString(contractAddress));
     contractsStabilityPool.set(contractAddress, contract);
   }
 
-  return contract;
+  return contractsStabilityPool.get(contractAddress);
 }
 
 /**

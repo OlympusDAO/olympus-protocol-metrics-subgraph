@@ -40,9 +40,7 @@ export function getBTCUSDRate(): BigDecimal {
   const reserve0 = reserves.value0.toBigDecimal();
   const reserve1 = reserves.value1.toBigDecimal();
 
-  const btcRate = getETHUSDRate().div(
-    reserve0.div(reserve1).times(BIG_DECIMAL_1E10)
-  );
+  const btcRate = getETHUSDRate().div(reserve0.div(reserve1).times(BIG_DECIMAL_1E10));
   log.debug("BTC rate {}", [btcRate.toString()]);
 
   return btcRate;
@@ -81,15 +79,10 @@ export function getXsushiUSDRate(): BigDecimal {
 export function getTribeUSDRate(): BigDecimal {
   const pair = UniswapV3Pair.bind(Address.fromString(UNI_TRIBE_ETH_PAIR));
 
-  let priceETH = pair
-    .slot0()
-    .value0.times(pair.slot0().value0)
-    .toBigDecimal();
+  let priceETH = pair.slot0().value0.times(pair.slot0().value0).toBigDecimal();
   log.debug("tribe priceETH {}", [priceETH.toString()]);
 
-  const priceDiv = BigInt.fromI32(2)
-    .pow(192)
-    .toBigDecimal();
+  const priceDiv = BigInt.fromI32(2).pow(192).toBigDecimal();
   priceETH = priceETH.div(priceDiv);
 
   const priceUSD = priceETH.times(getETHUSDRate());
@@ -102,15 +95,10 @@ export function getTribeUSDRate(): BigDecimal {
 export function getFXSUSDRate(): BigDecimal {
   const pair = UniswapV3Pair.bind(Address.fromString(UNI_FXS_ETH_PAIR));
 
-  let priceETH = pair
-    .slot0()
-    .value0.times(pair.slot0().value0)
-    .toBigDecimal();
+  let priceETH = pair.slot0().value0.times(pair.slot0().value0).toBigDecimal();
   log.debug("fxs priceETH {}", [priceETH.toString()]);
 
-  const priceDiv = BigInt.fromI32(2)
-    .pow(192)
-    .toBigDecimal();
+  const priceDiv = BigInt.fromI32(2).pow(192).toBigDecimal();
   priceETH = priceETH.div(priceDiv);
 
   const priceUSD = priceETH.times(getETHUSDRate());
@@ -158,10 +146,7 @@ export function getCVXUSDRate(): BigDecimal {
  *
  * This blog also helps illustrate it: https://olympusdao.medium.com/a-primer-on-oly-bonds-9763f125c124
  */
-export function getDiscountedPairUSD(
-  lp_amount: BigInt,
-  pair_adress: string
-): BigDecimal {
+export function getDiscountedPairUSD(lp_amount: BigInt, pair_adress: string): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(pair_adress));
 
   const total_lp = pair.totalSupply();
@@ -178,10 +163,7 @@ export function getDiscountedPairUSD(
   return result;
 }
 
-export function getDiscountedPairLUSD(
-  lp_amount: BigInt,
-  pair_adress: string
-): BigDecimal {
+export function getDiscountedPairLUSD(lp_amount: BigInt, pair_adress: string): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(pair_adress));
 
   const total_lp = pair.totalSupply();
@@ -199,11 +181,7 @@ export function getDiscountedPairLUSD(
 }
 
 // Percentage of LP supply *
-export function getPairUSD(
-  lp_amount: BigInt,
-  pair_adress: string,
-  block: BigInt
-): BigDecimal {
+export function getPairUSD(lp_amount: BigInt, pair_adress: string, block: BigInt): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(pair_adress));
   const total_lp = pair.totalSupply();
   const lp_token_0 = pair.getReserves().value0;
@@ -215,11 +193,7 @@ export function getPairUSD(
   return ownedLP.times(total_lp_usd);
 }
 
-export function getPairLUSD(
-  lp_amount: BigInt,
-  pair_adress: string,
-  block: BigInt
-): BigDecimal {
+export function getPairLUSD(lp_amount: BigInt, pair_adress: string, block: BigInt): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(pair_adress));
   const total_lp = pair.totalSupply();
   const lp_token_0 = pair.getReserves().value0;
@@ -231,11 +205,7 @@ export function getPairLUSD(
   return ownedLP.times(total_lp_usd);
 }
 
-export function getPairWETH(
-  lp_amount: BigInt,
-  pair_adress: string,
-  block: BigInt
-): BigDecimal {
+export function getPairWETH(lp_amount: BigInt, pair_adress: string, block: BigInt): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(pair_adress));
   const total_lp = pair.totalSupply();
   const lp_token_0 = pair.getReserves().value0;

@@ -444,6 +444,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     blockNumber,
   );
   const tribeValue = getValue(tribeBalance, 18, getTribeUSDRate());
+  log.debug("tribeValue {}", [tribeValue.toString()]);
   volatile_value = volatile_value.plus(tribeValue);
 
   const vlCvxBalance = getVlCVXBalance(getERC20(VLCVX_ERC20_CONTRACT, blockNumber), blockNumber);
