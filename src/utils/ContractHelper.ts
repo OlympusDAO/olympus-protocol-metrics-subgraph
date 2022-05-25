@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
@@ -33,19 +33,28 @@ const contractsStabilityPool = new Map<string, StabilityPool>();
  *
  * If no starting block is defined, it is assumed that the
  * contract is present prior to the starting block of this subgraph
- * (currentl 14000000).
+ * (currently 14000000).
  *
  * @param contractAddress
  * @param blockNumber
  */
 function contractExistsAtBlock(contractAddress: string, blockNumber: BigInt): boolean {
   const startingBlock: string = CONTRACT_STARTING_BLOCK_MAP.get(contractAddress);
+  log.debug("Starting block for contract {}: {}", [contractAddress, startingBlock]);
 
   // Assuming the starting block is much earlier
-  if (!startingBlock) return false;
+  if (!startingBlock) {
+    log.debug("No starting block defined for contract {}. Assuming it is prior.", [
+      contractAddress,
+    ]);
+    return true;
+  }
 
   // Current block is before the starting block
-  if (blockNumber < BigInt.fromString(startingBlock)) return false;
+  if (blockNumber < BigInt.fromString(startingBlock)) {
+    log.debug("Current block is before the starting block. Skipping.", []);
+    return false;
+  }
 
   return true;
 }
@@ -56,6 +65,10 @@ export function getERC20(contractAddress: string, currentBlockNumber: BigInt): E
   let contract = contractsERC20.get(contractAddress);
 
   if (!contract) {
+    log.debug("Binding ERC20 contract for address {}. Block number {}", [
+      contractAddress,
+      currentBlockNumber.toString(),
+    ]);
     contract = ERC20.bind(Address.fromString(contractAddress));
     contractsERC20.set(contractAddress, contract);
   }
