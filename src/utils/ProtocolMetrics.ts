@@ -7,18 +7,15 @@ import { OlympusERC20 } from "../../generated/ProtocolMetrics/OlympusERC20";
 import { OlympusStakingV1 } from "../../generated/ProtocolMetrics/OlympusStakingV1";
 import { OlympusStakingV2 } from "../../generated/ProtocolMetrics/OlympusStakingV2";
 import { OlympusStakingV3, StakeCall } from "../../generated/ProtocolMetrics/OlympusStakingV3";
-import { RariAllocator } from "../../generated/ProtocolMetrics/RariAllocator";
 import { sOlympusERC20 } from "../../generated/ProtocolMetrics/sOlympusERC20";
 import { sOlympusERC20V2 } from "../../generated/ProtocolMetrics/sOlympusERC20V2";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
-import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
 import { ProtocolMetric } from "../../generated/schema";
 import { Distributor } from "../../generated/sOlympusERC20V1/Distributor";
 import { updateBondDiscounts } from "./BondDiscounts";
 import {
   ADAI_ERC20_CONTRACT,
   BONDS_DEPOSIT,
-  CONVEX_CVX_ALLOCATOR,
   CVX_ERC20_CONTRACT,
   DAO_WALLET,
   DISTRIBUTOR_CONTRACT,
@@ -28,7 +25,6 @@ import {
   ERC20DAI_CONTRACT,
   ERC20FRAX_CONTRACT,
   FEI_ERC20_CONTRACT,
-  FXS_ERC20_CONTRACT,
   LUSD_ERC20_CONTRACT,
   MIGRATION_CONTRACT,
   OHM_ERC20_CONTRACT,
@@ -64,44 +60,30 @@ import {
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V2_BLOCK,
   TREASURY_ADDRESS_V3,
-  TRIBE_ERC20_CONTRACT,
-  UNI_FXS_ETH_PAIR_BLOCK,
   UNI_OHMFRAX_PAIR,
   UNI_OHMFRAX_PAIR_BLOCK,
   UNI_OHMFRAX_PAIR_BLOCKV2,
   UNI_OHMFRAX_PAIRV2,
   UNI_OHMLUSD_PAIR_BLOCK,
   UST_ERC20_CONTRACT,
-  VEFXS_ALLOCATOR,
-  VEFXSERC20_BLOCK,
   VEFXSERC20_CONTRACT,
   VLCVX_ERC20_CONTRACT,
   WBTC_ERC20_CONTRACT,
   WETH_ERC20_CONTRACT,
   XSUSI_ERC20_CONTRACT,
 } from "./Constants";
-import {
-  getBalance,
-  getERC20,
-  getRariAllocator,
-  getStabilityPool,
-  getValue,
-} from "./ContractHelper";
+import { getERC20, getRariAllocator, getStabilityPool, getVeFXS } from "./ContractHelper";
 import { dayFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
 import {
   getBTCUSDRate,
-  getCVXUSDRate,
   getDiscountedPairLUSD,
   getDiscountedPairUSD,
   getETHUSDRate,
-  getFXSUSDRate,
   getOHMUSDRate,
   getPairLUSD,
   getPairUSD,
   getPairWETH,
-  getTribeUSDRate,
-  getXsushiUSDRate,
 } from "./Price";
 import {
   getDaiBalance,
@@ -111,6 +93,14 @@ import {
   getStableValue,
   getUSTBalance,
 } from "./TokenStablecoins";
+import {
+  getCVXBalance,
+  getVeFXSBalance,
+  getVestingAssets,
+  getVlCVXBalance,
+  getVolatileValue,
+  getXSushiBalance,
+} from "./TokenVolatile";
 
 export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
   const dayTimestamp = dayFromTimestamp(timestamp);
@@ -235,129 +225,6 @@ function getSohmSupply(blockNumber: BigInt): BigDecimal {
   return sohm_supply;
 }
 
-/**
- * Calculates the balance of TRIBE across the following:
- * - treasury address V1
- * - treasury address V2
- * - treasury address V3
- * - Rari allocator
- *
- * @param contracts object with bound contracts
- * @param blockNumber current block number
- * @returns BigInt representing the balance
- */
-function getTribeBalance(
-  rariAllocator: RariAllocator,
-  tribeERC20: ERC20,
-  blockNumber: BigInt,
-): BigInt {
-  log.debug("Calculating TRIBE balance", []);
-  log.debug("TRIBE ERC20 is present: {}", [tribeERC20 ? "true" : "false"]);
-  log.debug("Rari Allocator is present: {}", [rariAllocator ? "true" : "false"]);
-  let tribeBalance = BigInt.fromI32(0);
-
-  // TODO contract call reverted occurring somewhere in this function
-  if (tribeERC20) {
-    // Treasury V1
-    tribeBalance = tribeBalance.plus(getBalance(tribeERC20, TREASURY_ADDRESS, blockNumber));
-    log.debug("After Treasury V1 {}", [tribeBalance.toString()]);
-    // Treasury V2
-    tribeBalance = tribeBalance.plus(getBalance(tribeERC20, TREASURY_ADDRESS_V2, blockNumber));
-    log.debug("After Treasury V2 {}", [tribeBalance.toString()]);
-    // Treasury V3
-    tribeBalance = tribeBalance.plus(getBalance(tribeERC20, TREASURY_ADDRESS_V3, blockNumber));
-    log.debug("After Treasury V3 {}", [tribeBalance.toString()]);
-  }
-
-  if (rariAllocator) {
-    tribeBalance = rariAllocator.amountAllocated(BigInt.fromI32(4));
-    log.debug("After Rari Allocator {}", [tribeBalance.toString()]);
-  }
-
-  log.debug("TRIBE Balance: {}", [tribeBalance.toString()]);
-  return tribeBalance;
-}
-
-/**
- * Returns the value of vesting assets in the treasury
- *
- * @returns BigDecimal
- */
-function getVestingAssets(): BigDecimal {
-  // Cross chain assets that can not be tracked right now
-  // pklima
-  // butterfly
-  // Vsta
-  // PhantomDAO
-  // Lobis
-  // TODO remove hard-coded number
-  return BigDecimal.fromString("32500000");
-}
-
-/**
- * Returns the balance of xSUSHI tokens in the following:
- * - treasury address V1
- * - treasury address V2
- * - treasury address V3
- *
- * @param contracts object with bound contracts
- * @param blockNumber the current block number
- * @returns BigInt representing the balance
- */
-function getXSushiBalance(xSushiERC20: ERC20, blockNumber: BigInt): BigInt {
-  let xSushiBalance = BigInt.fromString("0");
-
-  if (xSushiERC20) {
-    xSushiBalance = xSushiBalance.plus(getBalance(xSushiERC20, TREASURY_ADDRESS, blockNumber));
-    xSushiBalance = xSushiBalance.plus(getBalance(xSushiERC20, TREASURY_ADDRESS_V2, blockNumber));
-    xSushiBalance = xSushiBalance.plus(getBalance(xSushiERC20, TREASURY_ADDRESS_V3, blockNumber));
-  }
-
-  return xSushiBalance;
-}
-
-/**
- * Returns the balance of CVX tokens in the following:
- * - treasury address V1
- * - treasury address V2
- * - treasury address V3
- *
- * @param contracts object with bound contracts
- * @param blockNumber the current block number
- * @returns BigInt representing the balance
- */
-function getCVXBalance(cvxERC20: ERC20, blockNumber: BigInt): BigInt {
-  let cvxBalance = BigInt.fromString("0");
-
-  if (cvxERC20) {
-    cvxBalance = cvxBalance.plus(getBalance(cvxERC20, TREASURY_ADDRESS, blockNumber));
-    cvxBalance = cvxBalance.plus(getBalance(cvxERC20, TREASURY_ADDRESS_V2, blockNumber));
-    cvxBalance = cvxBalance.plus(getBalance(cvxERC20, TREASURY_ADDRESS_V3, blockNumber));
-  }
-
-  log.debug("CVXbalance {}", [cvxBalance.toString()]);
-  return cvxBalance;
-}
-
-/**
- * Returns the balance of vlCVX tokens in the following:
- * - CVX allocator
- *
- * @param contracts object with bound contracts
- * @param blockNumber the current block number
- * @returns BigInt representing the balance
- */
-function getVlCVXBalance(vlERC20: ERC20, blockNumber: BigInt): BigInt {
-  let vlCvxBalance = BigInt.fromString("0");
-
-  if (vlERC20) {
-    vlCvxBalance = vlCvxBalance.plus(getBalance(vlERC20, CONVEX_CVX_ALLOCATOR, blockNumber));
-  }
-
-  log.debug("vlCVXbalance {}", [vlCvxBalance.toString()]);
-  return vlCvxBalance;
-}
-
 function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const wethERC20 = ERC20.bind(Address.fromString(WETH_ERC20_CONTRACT));
   const wbtcERC20 = ERC20.bind(Address.fromString(WBTC_ERC20_CONTRACT));
@@ -402,55 +269,8 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   // TODO add balancer
   // TODO add uniswap v3
 
-  const vesting_assets = getVestingAssets();
-
-  let volatile_value = vesting_assets;
-
-  const xSushiBalance = getXSushiBalance(getERC20(XSUSI_ERC20_CONTRACT, blockNumber), blockNumber);
-  const xSushiValue = getValue(xSushiBalance, 18, getXsushiUSDRate());
-  log.debug("xSushiValue {}", [xSushiValue.toString()]);
-  volatile_value = volatile_value.plus(xSushiValue);
-
-  const cvxBalance = getCVXBalance(getERC20(CVX_ERC20_CONTRACT, blockNumber), blockNumber);
-  const cvxValue = getValue(cvxBalance, 18, getCVXUSDRate());
-  log.debug("cvxValue {}", [cvxValue.toString()]);
-  volatile_value = volatile_value.plus(cvxValue);
-
-  const tribeBalance = getTribeBalance(
-    getRariAllocator(RARI_ALLOCATOR, blockNumber),
-    getERC20(TRIBE_ERC20_CONTRACT, blockNumber),
-    blockNumber,
-  );
-  const tribeValue = getValue(tribeBalance, 18, getTribeUSDRate());
-  log.debug("tribeValue {}", [tribeValue.toString()]);
-  volatile_value = volatile_value.plus(tribeValue);
-
-  const vlCvxBalance = getVlCVXBalance(getERC20(VLCVX_ERC20_CONTRACT, blockNumber), blockNumber);
-  const vlCvxValue = getValue(vlCvxBalance, 18, getCVXUSDRate());
-  log.debug("vlCvxValue {}", [vlCvxValue.toString()]);
-  volatile_value = volatile_value.plus(vlCvxValue);
-
-  const cvxVlCvxValue = cvxValue.plus(vlCvxValue);
-
-  let fxs_value = BigDecimal.fromString("0");
-  const fxsERC20 = ERC20.bind(Address.fromString(FXS_ERC20_CONTRACT));
-  if (blockNumber.gt(BigInt.fromString(UNI_FXS_ETH_PAIR_BLOCK))) {
-    const fxsbalance = fxsERC20
-      .balanceOf(Address.fromString(TREASURY_ADDRESS_V2))
-      .plus(fxsERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)));
-    fxs_value = toDecimal(fxsbalance, 18).times(getFXSUSDRate());
-    log.debug("fxs_value {}", [fxs_value.toString()]);
-    volatile_value = volatile_value.plus(fxs_value);
-  }
-
-  let vefxs_value = BigDecimal.fromString("0");
-  const veFXS = VeFXS.bind(Address.fromString(VEFXSERC20_CONTRACT));
-  if (blockNumber.gt(BigInt.fromString(VEFXSERC20_BLOCK))) {
-    const vefxsbalance = veFXS.locked(Address.fromString(VEFXS_ALLOCATOR)).value0;
-    vefxs_value = toDecimal(vefxsbalance, 18).times(getFXSUSDRate());
-    log.debug("vefxs_value {}", [vefxs_value.toString()]);
-    volatile_value = volatile_value.plus(vefxs_value);
-  }
+  const volatile_records = getVolatileValue(blockNumber);
+  const volatile_value = volatile_records.getValue();
 
   const wethBalance = wethERC20
     .balanceOf(Address.fromString(treasury_address))
@@ -652,14 +472,20 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     .plus(volatile_value);
   const rfv = stableValueDecimal.plus(rfvLpValue);
 
+  const CVXBalance = getCVXBalance(getERC20(CVX_ERC20_CONTRACT, blockNumber), blockNumber);
+  const vlCvxBalance = getVlCVXBalance(getERC20(VLCVX_ERC20_CONTRACT, blockNumber), blockNumber);
+  const cvxVlCvxValue = CVXBalance.getValue().plus(vlCvxBalance.getValue());
+  const veFXSBalance = getVeFXSBalance(getVeFXS(VEFXSERC20_CONTRACT, blockNumber), blockNumber);
+  const xSushiBalance = getXSushiBalance(getERC20(XSUSI_ERC20_CONTRACT, blockNumber), blockNumber);
+  const xSushiValue = xSushiBalance.getValue();
+
   const treasuryStableBacking = stableValueDecimal;
   const treasuryVolatileBacking = volatile_value.plus(weth_value).plus(wbtc_value);
   const treasuryTotalBacking = treasuryStableBacking
-    .minus(vesting_assets)
+    .minus(getVestingAssets().getValue())
     .plus(treasuryVolatileBacking)
     .plus(lpValue.div(BigDecimal.fromString("2")))
-    .minus(cvxVlCvxValue)
-    .minus(fxs_value)
+    .minus(veFXSBalance.getValue()) // FXS but not veFXS, as it is not liquid
     .minus(getCriculatingSupply(blockNumber, getTotalSupply(blockNumber)));
   const treasuryLPValue = lpValue;
 

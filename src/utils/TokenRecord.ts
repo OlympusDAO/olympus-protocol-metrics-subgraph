@@ -1,5 +1,10 @@
 import { BigDecimal } from "@graphprotocol/graph-ts";
 
+/**
+ * Represents the balance of a single token from a single source.
+ *
+ * e.g. DAI in the treasury V3 wallet
+ */
 export class TokenRecord {
   name: string;
   source: string;
@@ -51,6 +56,12 @@ export class TokenRecord {
   }
 }
 
+/**
+ * Represents related token balances.
+ *
+ * e.g. DAI in treasury wallet v1,
+ * DAI in treasury wallet v2
+ */
 export class TokenRecords {
   records: TokenRecord[];
 
@@ -102,6 +113,18 @@ export class TokenRecords {
   }
 }
 
+/**
+ * Represents balances of different tokens.
+ *
+ * e.g.
+ * DAI:
+ * - treasury wallet v1,
+ * - treasury wallet v2
+ *
+ * FEI:
+ * - treasury wallet v1,
+ * - treasury wallet v2
+ */
 export class TokensRecords {
   tokens: Array<TokenRecords>;
 
