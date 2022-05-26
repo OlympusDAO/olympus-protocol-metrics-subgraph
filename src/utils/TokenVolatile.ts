@@ -62,7 +62,7 @@ export function getVestingAssets(): TokenRecords {
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
-export function getXSushiBalance(xSushiERC20: ERC20, blockNumber: BigInt): TokenRecords {
+export function getXSushiBalance(xSushiERC20: ERC20 | null, blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords([]);
   const xSushiRate = getXsushiUSDRate();
 
@@ -109,7 +109,7 @@ export function getXSushiBalance(xSushiERC20: ERC20, blockNumber: BigInt): Token
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
-export function getCVXBalance(cvxERC20: ERC20, blockNumber: BigInt): TokenRecords {
+export function getCVXBalance(cvxERC20: ERC20 | null, blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords([]);
   const cvxRate = getCVXUSDRate();
 
@@ -154,7 +154,7 @@ export function getCVXBalance(cvxERC20: ERC20, blockNumber: BigInt): TokenRecord
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
-export function getVlCVXBalance(vlERC20: ERC20, blockNumber: BigInt): TokenRecords {
+export function getVlCVXBalance(vlERC20: ERC20 | null, blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords([]);
   const cvxRate = getCVXUSDRate();
 
@@ -176,10 +176,13 @@ export function getVlCVXBalance(vlERC20: ERC20, blockNumber: BigInt): TokenRecor
 export function getCVXVlCVXBalance(blockNumber: BigInt): TokensRecords {
   const records = new TokensRecords();
 
-  records.addToken("CVX", getCVXBalance(getERC20(CVX_ERC20_CONTRACT, blockNumber), blockNumber));
+  records.addToken(
+    "CVX",
+    getCVXBalance(getERC20("CVX", CVX_ERC20_CONTRACT, blockNumber), blockNumber),
+  );
   records.addToken(
     "vlCVX",
-    getVlCVXBalance(getERC20(VLCVX_ERC20_CONTRACT, blockNumber), blockNumber),
+    getVlCVXBalance(getERC20("vlCVX", VLCVX_ERC20_CONTRACT, blockNumber), blockNumber),
   );
 
   log.info("CVX/vlCVX tokens: {}", [records.toString()]);
@@ -196,7 +199,7 @@ export function getCVXVlCVXBalance(blockNumber: BigInt): TokensRecords {
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
-function getFXSBalance(fxsERC20: ERC20, blockNumber: BigInt): TokenRecords {
+function getFXSBalance(fxsERC20: ERC20 | null, blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords([]);
   const fxsRate = getFXSUSDRate();
 
@@ -241,7 +244,7 @@ function getFXSBalance(fxsERC20: ERC20, blockNumber: BigInt): TokenRecords {
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
-export function getVeFXSBalance(veFXS: VeFXS, _blockNumber: BigInt): TokenRecords {
+export function getVeFXSBalance(veFXS: VeFXS | null, _blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords([]);
   const cvxRate = getCVXUSDRate();
 
@@ -277,8 +280,8 @@ export function getVeFXSRecords(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 function getTribeBalance(
-  rariAllocator: RariAllocator,
-  tribeERC20: ERC20,
+  rariAllocator: RariAllocator | null,
+  tribeERC20: ERC20 | null,
   blockNumber: BigInt,
 ): TokenRecords {
   log.debug("Calculating TRIBE balance", []);
@@ -343,7 +346,7 @@ function getTribeBalance(
  * @param blockNumber current block number
  * @returns TokenRecords object
  */
-export function getWETHBalance(wethERC20: ERC20, blockNumber: BigInt): TokenRecords {
+export function getWETHBalance(wethERC20: ERC20 | null, blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords([]);
   const wethRate = getETHUSDRate();
 
@@ -390,7 +393,7 @@ export function getWETHBalance(wethERC20: ERC20, blockNumber: BigInt): TokenReco
  * @param blockNumber current block number
  * @returns TokenRecords object
  */
-export function getWBTCBalance(wbtcERC20: ERC20, blockNumber: BigInt): TokenRecords {
+export function getWBTCBalance(wbtcERC20: ERC20 | null, blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords([]);
   const wbtcRate = getBTCUSDRate();
 
@@ -445,6 +448,7 @@ export function getWBTCBalance(wbtcERC20: ERC20, blockNumber: BigInt): TokenReco
  * @returns TokensRecords object
  */
 export function getVolatileValue(blockNumber: BigInt, liquidOnly: boolean): TokensRecords {
+  if (liquidOnly) log.debug("liquidOnly is true, so skipping illiquid assets", []);
   const records = new TokensRecords();
 
   if (!liquidOnly) {
@@ -453,14 +457,20 @@ export function getVolatileValue(blockNumber: BigInt, liquidOnly: boolean): Toke
 
   records.addToken(
     "xSUSHI",
-    getXSushiBalance(getERC20(XSUSI_ERC20_CONTRACT, blockNumber), blockNumber),
+    getXSushiBalance(getERC20("xSUSHI", XSUSI_ERC20_CONTRACT, blockNumber), blockNumber),
   );
-  records.addToken("CVX", getCVXBalance(getERC20(CVX_ERC20_CONTRACT, blockNumber), blockNumber));
+  records.addToken(
+    "CVX",
+    getCVXBalance(getERC20("CVX", CVX_ERC20_CONTRACT, blockNumber), blockNumber),
+  );
   records.addToken(
     "vlCVX",
-    getVlCVXBalance(getERC20(VLCVX_ERC20_CONTRACT, blockNumber), blockNumber),
+    getVlCVXBalance(getERC20("vlCVX", VLCVX_ERC20_CONTRACT, blockNumber), blockNumber),
   );
-  records.addToken("FXS", getFXSBalance(getERC20(FXS_ERC20_CONTRACT, blockNumber), blockNumber));
+  records.addToken(
+    "FXS",
+    getFXSBalance(getERC20("FXS", FXS_ERC20_CONTRACT, blockNumber), blockNumber),
+  );
 
   if (!liquidOnly) {
     records.addToken("veFXS", getVeFXSRecords(blockNumber));
@@ -470,7 +480,7 @@ export function getVolatileValue(blockNumber: BigInt, liquidOnly: boolean): Toke
     "TRIBE",
     getTribeBalance(
       getRariAllocator(RARI_ALLOCATOR, blockNumber),
-      getERC20(TRIBE_ERC20_CONTRACT, blockNumber),
+      getERC20("TRIBE", TRIBE_ERC20_CONTRACT, blockNumber),
       blockNumber,
     ),
   );

@@ -49,9 +49,9 @@ import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
  * @returns TokenRecords object
  */
 export function getDaiBalance(
-  daiERC20: ERC20,
-  aDaiERC20: ERC20,
-  rariAllocator: RariAllocator,
+  daiERC20: ERC20 | null,
+  aDaiERC20: ERC20 | null,
+  rariAllocator: RariAllocator | null,
   blockNumber: BigInt,
 ): TokenRecords {
   const records = new TokenRecords([]);
@@ -135,7 +135,7 @@ export function getDaiBalance(
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
-export function getFeiBalance(feiERC20: ERC20, blockNumber: BigInt): TokenRecords {
+export function getFeiBalance(feiERC20: ERC20 | null, blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords([]);
 
   if (feiERC20) {
@@ -184,9 +184,9 @@ export function getFeiBalance(feiERC20: ERC20, blockNumber: BigInt): TokenRecord
  * @returns TokenRecords object
  */
 export function getFraxAllocatedInConvexBalance(
-  allocator1: ConvexAllocator,
-  allocator2: ConvexAllocator,
-  allocator3: ConvexAllocator,
+  allocator1: ConvexAllocator | null,
+  allocator2: ConvexAllocator | null,
+  allocator3: ConvexAllocator | null,
   blockNumber: BigInt,
 ): TokenRecords {
   // TODO add to mv and mvrfv?
@@ -245,7 +245,7 @@ export function getFraxAllocatedInConvexBalance(
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
-export function getFraxBalance(fraxERC20: ERC20, blockNumber: BigInt): TokenRecords {
+export function getFraxBalance(fraxERC20: ERC20 | null, blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords([]);
 
   if (fraxERC20) {
@@ -303,8 +303,8 @@ export function getFraxBalance(fraxERC20: ERC20, blockNumber: BigInt): TokenReco
  * @returns TokenRecords object
  */
 export function getLUSDBalance(
-  lusdERC20: ERC20,
-  stabilityPoolContract: StabilityPool,
+  lusdERC20: ERC20 | null,
+  stabilityPoolContract: StabilityPool | null,
   blockNumber: BigInt,
 ): TokenRecords {
   const records = new TokenRecords([]);
@@ -364,7 +364,7 @@ export function getLUSDBalance(
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
-export function getUSTBalance(ustERC20: ERC20, blockNumber: BigInt): TokenRecords {
+export function getUSTBalance(ustERC20: ERC20 | null, blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords([]);
 
   if (ustERC20) {
@@ -421,23 +421,32 @@ export function getStableValue(blockNumber: BigInt): TokensRecords {
   records.addToken(
     "DAI",
     getDaiBalance(
-      getERC20(ERC20DAI_CONTRACT, blockNumber),
-      getERC20(ADAI_ERC20_CONTRACT, blockNumber),
+      getERC20("DAI", ERC20DAI_CONTRACT, blockNumber),
+      getERC20("aDAI", ADAI_ERC20_CONTRACT, blockNumber),
       getRariAllocator(RARI_ALLOCATOR, blockNumber),
       blockNumber,
     ),
   );
-  records.addToken("FRAX", getFraxBalance(getERC20(ERC20FRAX_CONTRACT, blockNumber), blockNumber));
+  records.addToken(
+    "FRAX",
+    getFraxBalance(getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber), blockNumber),
+  );
   records.addToken(
     "LUSD",
     getLUSDBalance(
-      getERC20(LUSD_ERC20_CONTRACT, blockNumber),
+      getERC20("LUSD", LUSD_ERC20_CONTRACT, blockNumber),
       getStabilityPool(STABILITY_POOL, blockNumber),
       blockNumber,
     ),
   );
-  records.addToken("UST", getUSTBalance(getERC20(UST_ERC20_CONTRACT, blockNumber), blockNumber));
-  records.addToken("FEI", getFeiBalance(getERC20(FEI_ERC20_CONTRACT, blockNumber), blockNumber));
+  records.addToken(
+    "UST",
+    getUSTBalance(getERC20("UST", UST_ERC20_CONTRACT, blockNumber), blockNumber),
+  );
+  records.addToken(
+    "FEI",
+    getFeiBalance(getERC20("FEI", FEI_ERC20_CONTRACT, blockNumber), blockNumber),
+  );
 
   log.info("Stablecoin tokens: {}", [records.toString()]);
   return records;

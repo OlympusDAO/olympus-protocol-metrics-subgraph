@@ -22,9 +22,15 @@ export function getTreasuryVolatileBacking(
   log.debug("Starting to calculate treasury volatile backing", []);
   const records = getVolatileValue(blockNumber, liquidOnly);
 
-  records.addToken("wETH", getWETHBalance(getERC20(WETH_ERC20_CONTRACT, blockNumber), blockNumber));
+  records.addToken(
+    "wETH",
+    getWETHBalance(getERC20("wETH", WETH_ERC20_CONTRACT, blockNumber), blockNumber),
+  );
   log.debug("After wETH: {}", [records.getValue().toString()]);
-  records.addToken("wBTC", getWBTCBalance(getERC20(WBTC_ERC20_CONTRACT, blockNumber), blockNumber));
+  records.addToken(
+    "wBTC",
+    getWBTCBalance(getERC20("wBTC", WBTC_ERC20_CONTRACT, blockNumber), blockNumber),
+  );
   log.debug("After wBTC: {}", [records.getValue().toString()]);
 
   log.info("Treasury volatile backing: {}", [records.toString()]);
@@ -83,8 +89,8 @@ export function getTreasuryTotalBacking(
         "OHM",
         "N/A",
         "0x0",
-        BigDecimal.fromString("1"),
-        ohmCirculatingSupply.times(BigDecimal.fromString("-1")), // Subtracted
+        BigDecimal.fromString("-1"),
+        ohmCirculatingSupply, // Subtracted
       ),
     ]),
   );

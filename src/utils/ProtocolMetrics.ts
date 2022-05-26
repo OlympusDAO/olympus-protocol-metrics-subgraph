@@ -240,21 +240,21 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   }
 
   const daiTokens = getDaiBalance(
-    getERC20(ERC20DAI_CONTRACT, blockNumber),
-    getERC20(ADAI_ERC20_CONTRACT, blockNumber),
+    getERC20("DAI", ERC20DAI_CONTRACT, blockNumber),
+    getERC20("aDAI", ADAI_ERC20_CONTRACT, blockNumber),
     getRariAllocator(RARI_ALLOCATOR, blockNumber),
     blockNumber,
   );
   const daiBalance = daiTokens.getBalance();
-  const fraxTokens = getFraxBalance(getERC20(ERC20FRAX_CONTRACT, blockNumber), blockNumber);
+  const fraxTokens = getFraxBalance(getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber), blockNumber);
   const fraxBalance = fraxTokens.getBalance();
   const lusdTokens = getLUSDBalance(
-    getERC20(LUSD_ERC20_CONTRACT, blockNumber),
+    getERC20("LUSD", LUSD_ERC20_CONTRACT, blockNumber),
     getStabilityPool(STABILITY_POOL, blockNumber),
     blockNumber,
   );
   const lusdBalance = lusdTokens.getBalance();
-  const ustTokens = getUSTBalance(getERC20(UST_ERC20_CONTRACT, blockNumber), blockNumber);
+  const ustTokens = getUSTBalance(getERC20("UST", UST_ERC20_CONTRACT, blockNumber), blockNumber);
   const ustBalance = ustTokens.getValue();
 
   // TODO add balancer
@@ -263,10 +263,16 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const volatile_records = getVolatileValue(blockNumber, false);
   const volatile_value = volatile_records.getValue();
 
-  const wethBalance = getWETHBalance(getERC20(WETH_ERC20_CONTRACT, blockNumber), blockNumber);
+  const wethBalance = getWETHBalance(
+    getERC20("wETH", WETH_ERC20_CONTRACT, blockNumber),
+    blockNumber,
+  );
   const weth_value = wethBalance.getValue();
 
-  const wbtcBalance = getWBTCBalance(getERC20(WBTC_ERC20_CONTRACT, blockNumber), blockNumber);
+  const wbtcBalance = getWBTCBalance(
+    getERC20("wBTC", WBTC_ERC20_CONTRACT, blockNumber),
+    blockNumber,
+  );
   const wbtc_value = wbtcBalance.getValue();
 
   // OHMDAI
@@ -463,7 +469,10 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const rfv = stableValueDecimal.plus(rfvLpValue);
 
   const cvxVlCvxValue = getCVXVlCVXBalance(blockNumber).getValue();
-  const xSushiBalance = getXSushiBalance(getERC20(XSUSI_ERC20_CONTRACT, blockNumber), blockNumber);
+  const xSushiBalance = getXSushiBalance(
+    getERC20("xSUSHI", XSUSI_ERC20_CONTRACT, blockNumber),
+    blockNumber,
+  );
   const xSushiValue = xSushiBalance.getValue();
 
   const treasuryStableBackingRecords = getTreasuryStableBacking(blockNumber);

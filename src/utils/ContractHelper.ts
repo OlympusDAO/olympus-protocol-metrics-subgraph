@@ -47,7 +47,7 @@ function contractExistsAtBlock(contractAddress: string, blockNumber: BigInt): bo
     return true;
   }
 
-  const startingBlock: string = CONTRACT_STARTING_BLOCK_MAP.get(contractAddress);
+  const startingBlock: string = CONTRACT_STARTING_BLOCK_MAP.get(contractAddress) || "N/A";
   log.debug("Starting block for contract {}: {}", [contractAddress, startingBlock]);
 
   // Current block is before the starting block
@@ -59,8 +59,12 @@ function contractExistsAtBlock(contractAddress: string, blockNumber: BigInt): bo
   return true;
 }
 
-export function getERC20(contractAddress: string, currentBlockNumber: BigInt): ERC20 {
-  log.debug("Fetching ERC20 contract for address {}", [contractAddress]);
+export function getERC20(
+  contractName: string,
+  contractAddress: string,
+  currentBlockNumber: BigInt,
+): ERC20 | null {
+  log.debug("Fetching ERC20 contract {} for address {}", [contractName, contractAddress]);
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
   if (!contractsERC20.has(contractAddress)) {
@@ -72,13 +76,13 @@ export function getERC20(contractAddress: string, currentBlockNumber: BigInt): E
     contractsERC20.set(contractAddress, contract);
   }
 
-  return contractsERC20.get(contractAddress);
+  return contractsERC20.get(contractAddress) || null;
 }
 
 export function getUniswapV2Pair(
   contractAddress: string,
   currentBlockNumber: BigInt,
-): UniswapV2Pair {
+): UniswapV2Pair | null {
   log.debug("Fetching UniswapV2Pair contract for address {}", [contractAddress]);
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
@@ -91,13 +95,13 @@ export function getUniswapV2Pair(
     contractsUniswapV2Pair.set(contractAddress, contract);
   }
 
-  return contractsUniswapV2Pair.get(contractAddress);
+  return contractsUniswapV2Pair.get(contractAddress) || null;
 }
 
 export function getUniswapV3Pair(
   contractAddress: string,
   currentBlockNumber: BigInt,
-): UniswapV3Pair {
+): UniswapV3Pair | null {
   log.debug("Fetching UniswapV3Pair contract for address {}", [contractAddress]);
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
@@ -110,10 +114,13 @@ export function getUniswapV3Pair(
     contractsUniswapV3Pair.set(contractAddress, contract);
   }
 
-  return contractsUniswapV3Pair.get(contractAddress);
+  return contractsUniswapV3Pair.get(contractAddress) || null;
 }
 
-export function getMasterChef(contractAddress: string, currentBlockNumber: BigInt): MasterChef {
+export function getMasterChef(
+  contractAddress: string,
+  currentBlockNumber: BigInt,
+): MasterChef | null {
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
   if (!contractsMasterChef.has(contractAddress)) {
@@ -125,13 +132,13 @@ export function getMasterChef(contractAddress: string, currentBlockNumber: BigIn
     contractsMasterChef.set(contractAddress, contract);
   }
 
-  return contractsMasterChef.get(contractAddress);
+  return contractsMasterChef.get(contractAddress) || null;
 }
 
 export function getRariAllocator(
   contractAddress: string,
   currentBlockNumber: BigInt,
-): RariAllocator {
+): RariAllocator | null {
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
   if (!contractsRariAllocator.has(contractAddress)) {
@@ -143,10 +150,10 @@ export function getRariAllocator(
     contractsRariAllocator.set(contractAddress, contract);
   }
 
-  return contractsRariAllocator.get(contractAddress);
+  return contractsRariAllocator.get(contractAddress) || null;
 }
 
-export function getVeFXS(contractAddress: string, currentBlockNumber: BigInt): VeFXS {
+export function getVeFXS(contractAddress: string, currentBlockNumber: BigInt): VeFXS | null {
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
   if (!contractsVeFXS.has(contractAddress)) {
@@ -158,13 +165,13 @@ export function getVeFXS(contractAddress: string, currentBlockNumber: BigInt): V
     contractsVeFXS.set(contractAddress, contract);
   }
 
-  return contractsVeFXS.get(contractAddress);
+  return contractsVeFXS.get(contractAddress) || null;
 }
 
 export function getConvexAllocator(
   contractAddress: string,
   currentBlockNumber: BigInt,
-): ConvexAllocator {
+): ConvexAllocator | null {
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
   if (!contractsConvexAllocator.has(contractAddress)) {
@@ -176,13 +183,13 @@ export function getConvexAllocator(
     contractsConvexAllocator.set(contractAddress, contract);
   }
 
-  return contractsConvexAllocator.get(contractAddress);
+  return contractsConvexAllocator.get(contractAddress) || null;
 }
 
 export function getStabilityPool(
   contractAddress: string,
   currentBlockNumber: BigInt,
-): StabilityPool {
+): StabilityPool | null {
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
   if (!contractsStabilityPool.has(contractAddress)) {
@@ -194,7 +201,7 @@ export function getStabilityPool(
     contractsStabilityPool.set(contractAddress, contract);
   }
 
-  return contractsStabilityPool.get(contractAddress);
+  return contractsStabilityPool.get(contractAddress) || null;
 }
 
 /**
@@ -208,15 +215,25 @@ export function getStabilityPool(
  * @param minimumBlockNumber The minimum block number for the balance to apply.
  * @returns BigInt
  */
-export function getBalance(contract: ERC20, address: string, currentBlockNumber: BigInt): BigInt {
+export function getBalance(
+  contract: ERC20 | null,
+  address: string,
+  currentBlockNumber: BigInt,
+): BigInt {
+  if (!contract) {
+    log.info("Contract for address {} does not exist at block {}", [
+      address,
+      currentBlockNumber.toString(),
+    ]);
+    return BigInt.fromString("0");
+  }
+
   const callResult = contract.try_name();
   log.debug("Getting ERC20 balance in contract {} for wallet {} at block number {}", [
     callResult.reverted ? "N/A" : callResult.value,
     address,
     currentBlockNumber.toString(),
   ]);
-
-  if (!contractExistsAtBlock(address, currentBlockNumber)) return BigInt.fromString("0");
 
   // const balanceResult = contract.try_balanceOf(Address.fromString(address));
   // if (balanceResult.reverted) {
