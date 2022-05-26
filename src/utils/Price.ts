@@ -77,19 +77,17 @@ export function getXsushiUSDRate(): BigDecimal {
 }
 
 export function getTribeUSDRate(): BigDecimal {
-  const pair = UniswapV3Pair.bind(Address.fromString(UNI_TRIBE_ETH_PAIR));
+  // TODO check that contract exists at block
+  const pair = UniswapV2Pair.bind(Address.fromString(UNI_TRIBE_ETH_PAIR));
 
-  let priceETH = pair.slot0().value0.times(pair.slot0().value0).toBigDecimal();
-  log.debug("tribe priceETH {}", [priceETH.toString()]);
+  const reserves = pair.getReserves();
+  const reserve0 = reserves.value0.toBigDecimal();
+  const reserve1 = reserves.value1.toBigDecimal();
 
-  const priceDiv = BigInt.fromI32(2).pow(192).toBigDecimal();
-  priceETH = priceETH.div(priceDiv);
+  const tribeRate = reserve1.div(reserve0).times(getETHUSDRate());
+  log.debug("TRIBE rate {}", [tribeRate.toString()]);
 
-  const priceUSD = priceETH.times(getETHUSDRate());
-
-  log.debug("tribe rate {}", [priceUSD.toString()]);
-
-  return priceUSD;
+  return tribeRate;
 }
 
 export function getFXSUSDRate(): BigDecimal {

@@ -251,24 +251,30 @@ function getTribeBalance(
   tribeERC20: ERC20,
   blockNumber: BigInt,
 ): BigInt {
+  log.debug("Calculating TRIBE balance", []);
+  log.debug("TRIBE ERC20 is present: {}", [tribeERC20 ? "true" : "false"]);
+  log.debug("Rari Allocator is present: {}", [rariAllocator ? "true" : "false"]);
   let tribeBalance = BigInt.fromI32(0);
 
   // TODO contract call reverted occurring somewhere in this function
   if (tribeERC20) {
     // Treasury V1
     tribeBalance = tribeBalance.plus(getBalance(tribeERC20, TREASURY_ADDRESS, blockNumber));
+    log.debug("After Treasury V1 {}", [tribeBalance.toString()]);
     // Treasury V2
     tribeBalance = tribeBalance.plus(getBalance(tribeERC20, TREASURY_ADDRESS_V2, blockNumber));
+    log.debug("After Treasury V2 {}", [tribeBalance.toString()]);
     // Treasury V3
     tribeBalance = tribeBalance.plus(getBalance(tribeERC20, TREASURY_ADDRESS_V3, blockNumber));
+    log.debug("After Treasury V3 {}", [tribeBalance.toString()]);
   }
 
   if (rariAllocator) {
-    log.debug("before rari", []);
     tribeBalance = rariAllocator.amountAllocated(BigInt.fromI32(4));
-    log.debug("after rari", []);
+    log.debug("After Rari Allocator {}", [tribeBalance.toString()]);
   }
 
+  log.debug("TRIBE Balance: {}", [tribeBalance.toString()]);
   return tribeBalance;
 }
 
