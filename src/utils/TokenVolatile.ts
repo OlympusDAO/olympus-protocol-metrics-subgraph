@@ -27,7 +27,13 @@ import {
   getTribeUSDRate,
   getXsushiUSDRate,
 } from "./Price";
-import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
+import {
+  TokenRecord,
+  TokenRecordOperation,
+  TokenRecordOperator,
+  TokenRecords,
+  TokensRecords,
+} from "./TokenRecord";
 
 /**
  * Returns the value of vesting assets in the treasury
@@ -173,6 +179,28 @@ export function getVlCVXBalance(vlERC20: ERC20, blockNumber: BigInt): TokenRecor
   return records;
 }
 
+export function getCVXVlCVXBalance(blockNumber: BigInt): TokensRecords {
+  const records = new TokensRecords();
+
+  records.addToken(
+    "CVX",
+    new TokenRecordOperation(
+      TokenRecordOperator.ADD,
+      getCVXBalance(getERC20(CVX_ERC20_CONTRACT, blockNumber), blockNumber),
+    ),
+  );
+  records.addToken(
+    "vlCVX",
+    new TokenRecordOperation(
+      TokenRecordOperator.ADD,
+      getVlCVXBalance(getERC20(VLCVX_ERC20_CONTRACT, blockNumber), blockNumber),
+    ),
+  );
+
+  log.info("CVX/vlCVX tokens: {}", [records.toString()]);
+  return records;
+}
+
 /**
  * Returns the balance of FXS tokens in the following:
  * - treasury address V1
@@ -245,6 +273,10 @@ export function getVeFXSBalance(veFXS: VeFXS, _blockNumber: BigInt): TokenRecord
   }
 
   return records;
+}
+
+export function getVeFXSRecords(blockNumber: BigInt): TokenRecords {
+  return getVeFXSBalance(getVeFXS(VEFXSERC20_CONTRACT, blockNumber), blockNumber);
 }
 
 /**
@@ -420,36 +452,71 @@ export function getWBTCBalance(wbtcERC20: ERC20, blockNumber: BigInt): TokenReco
  * - veFXS
  * - TRIBE
  *
+ * If `liquidOnly` is specified, then the following are excluded as they are locked:
+ * - Vesting assets
+ * - veFXS
+ *
  * @param blockNumber the current block number
  * @returns TokensRecords object
  */
-export function getVolatileValue(blockNumber: BigInt): TokensRecords {
+export function getVolatileValue(blockNumber: BigInt, liquidOnly: boolean): TokensRecords {
   const records = new TokensRecords();
 
-  records.addToken("Vesting Assets", getVestingAssets());
+  if (!liquidOnly) {
+    records.addToken(
+      "Vesting Assets",
+      new TokenRecordOperation(TokenRecordOperator.ADD, getVestingAssets()),
+    );
+  }
+
   records.addToken(
     "xSUSHI",
-    getXSushiBalance(getERC20(XSUSI_ERC20_CONTRACT, blockNumber), blockNumber),
+    new TokenRecordOperation(
+      TokenRecordOperator.ADD,
+      getXSushiBalance(getERC20(XSUSI_ERC20_CONTRACT, blockNumber), blockNumber),
+    ),
   );
-  records.addToken("CVX", getCVXBalance(getERC20(CVX_ERC20_CONTRACT, blockNumber), blockNumber));
+  records.addToken(
+    "CVX",
+    new TokenRecordOperation(
+      TokenRecordOperator.ADD,
+      getCVXBalance(getERC20(CVX_ERC20_CONTRACT, blockNumber), blockNumber),
+    ),
+  );
   records.addToken(
     "vlCVX",
-    getVlCVXBalance(getERC20(VLCVX_ERC20_CONTRACT, blockNumber), blockNumber),
-  );
-  records.addToken("FXS", getFXSBalance(getERC20(FXS_ERC20_CONTRACT, blockNumber), blockNumber));
-  records.addToken(
-    "veFXS",
-    getVeFXSBalance(getVeFXS(VEFXSERC20_CONTRACT, blockNumber), blockNumber),
+    new TokenRecordOperation(
+      TokenRecordOperator.ADD,
+      getVlCVXBalance(getERC20(VLCVX_ERC20_CONTRACT, blockNumber), blockNumber),
+    ),
   );
   records.addToken(
-    "TRIBE",
-    getTribeBalance(
-      getRariAllocator(RARI_ALLOCATOR, blockNumber),
-      getERC20(TRIBE_ERC20_CONTRACT, blockNumber),
-      blockNumber,
+    "FXS",
+    new TokenRecordOperation(
+      TokenRecordOperator.ADD,
+      getFXSBalance(getERC20(FXS_ERC20_CONTRACT, blockNumber), blockNumber),
     ),
   );
 
-  log.debug("Volatile tokens: {}", [records.toString()]);
+  if (!liquidOnly) {
+    records.addToken(
+      "veFXS",
+      new TokenRecordOperation(TokenRecordOperator.ADD, getVeFXSRecords(blockNumber)),
+    );
+  }
+
+  records.addToken(
+    "TRIBE",
+    new TokenRecordOperation(
+      TokenRecordOperator.ADD,
+      getTribeBalance(
+        getRariAllocator(RARI_ALLOCATOR, blockNumber),
+        getERC20(TRIBE_ERC20_CONTRACT, blockNumber),
+        blockNumber,
+      ),
+    ),
+  );
+
+  log.info("Volatile tokens: {}", [records.toString()]);
   return records;
 }

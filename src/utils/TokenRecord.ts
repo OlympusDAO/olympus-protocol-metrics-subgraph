@@ -132,6 +132,45 @@ export class TokenRecords {
   }
 }
 
+export enum TokenRecordOperator {
+  ADD = 1,
+  SUBTRACT = 2,
+}
+
+export class TokenRecordOperation {
+  records: TokenRecords;
+  operator: TokenRecordOperator;
+
+  constructor(operator: TokenRecordOperator, records: TokenRecords) {
+    this.operator = operator;
+    this.records = records;
+  }
+
+  getValue(): BigDecimal {
+    if (this.operator === TokenRecordOperator.SUBTRACT) {
+      return BigDecimal.fromString("-1").times(this.records.getValue());
+    }
+
+    return this.records.getValue();
+  }
+
+  toString(): string {
+    return (
+      "{\n" +
+      '"operator": ' +
+      (this.operator === TokenRecordOperator.SUBTRACT ? '"-"' : '"+"') +
+      ",\n" +
+      '"records": ' +
+      this.records.toString() +
+      ",\n" +
+      '"total value": "' +
+      this.records.getValue().toString() +
+      '",\n' +
+      "}\n"
+    );
+  }
+}
+
 /**
  * Represents balances of different tokens.
  *
@@ -146,14 +185,23 @@ export class TokenRecords {
  */
 export class TokensRecords {
   // TODO shift this back to Map. Has issues with current version of graph-ts.
-  tokens: Array<TokenRecords>;
+  tokens: Array<TokenRecordOperation>;
 
   constructor() {
-    this.tokens = new Array<TokenRecords>();
+    this.tokens = new Array<TokenRecordOperation>();
   }
 
-  addToken(token: string, records: TokenRecords): void {
+  addToken(token: string, records: TokenRecordOperation): void {
     this.tokens.push(records);
+  }
+
+  combine(records: TokensRecords): void {
+    const inTokens = records.tokens;
+
+    for (let i = 0; i < inTokens.length; i++) {
+      const currentValue: TokenRecordOperation = inTokens[i];
+      this.tokens.push(currentValue);
+    }
   }
 
   getValue(): BigDecimal {
@@ -161,7 +209,7 @@ export class TokensRecords {
     let value = BigDecimal.fromString("0");
 
     for (let i = 0; i < this.tokens.length; i++) {
-      const currentValue: TokenRecords = this.tokens[i];
+      const currentValue: TokenRecordOperation = this.tokens[i];
       value = value.plus(currentValue.getValue());
     }
 
@@ -185,6 +233,8 @@ export class TokensRecords {
       stringValue = stringValue + "\n" + this.tokens[i].toString();
       stringValue = stringValue + "\n,";
     }
+
+    stringValue = stringValue + '"Total Value": "' + this.toString() + '"\n';
 
     stringValue = stringValue + "}";
 

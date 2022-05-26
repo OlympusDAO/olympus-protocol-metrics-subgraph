@@ -15,7 +15,6 @@ import { updateBondDiscounts } from "./BondDiscounts";
 import {
   ADAI_ERC20_CONTRACT,
   BONDS_DEPOSIT,
-  CVX_ERC20_CONTRACT,
   DAO_WALLET,
   DISTRIBUTOR_CONTRACT,
   DISTRIBUTOR_CONTRACT_BLOCK,
@@ -65,13 +64,11 @@ import {
   UNI_OHMFRAX_PAIRV2,
   UNI_OHMLUSD_PAIR_BLOCK,
   UST_ERC20_CONTRACT,
-  VEFXSERC20_CONTRACT,
-  VLCVX_ERC20_CONTRACT,
   WBTC_ERC20_CONTRACT,
   WETH_ERC20_CONTRACT,
   XSUSI_ERC20_CONTRACT,
 } from "./Constants";
-import { getERC20, getRariAllocator, getStabilityPool, getVeFXS } from "./ContractHelper";
+import { getERC20, getRariAllocator, getStabilityPool } from "./ContractHelper";
 import { dayFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
 import {
@@ -91,16 +88,17 @@ import {
   getUSTBalance,
 } from "./TokenStablecoins";
 import {
-  getCVXBalance,
-  getVeFXSBalance,
-  getVestingAssets,
-  getVlCVXBalance,
+  getCVXVlCVXBalance,
   getVolatileValue,
   getWBTCBalance,
   getWETHBalance,
   getXSushiBalance,
 } from "./TokenVolatile";
-import { getTreasuryVolatileBacking } from "./TreasuryCalculations";
+import {
+  getTreasuryStableBacking,
+  getTreasuryTotalBacking,
+  getTreasuryVolatileBacking,
+} from "./TreasuryCalculations";
 
 export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
   const dayTimestamp = dayFromTimestamp(timestamp);
@@ -266,7 +264,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   // TODO add balancer
   // TODO add uniswap v3
 
-  const volatile_records = getVolatileValue(blockNumber);
+  const volatile_records = getVolatileValue(blockNumber, false);
   const volatile_value = volatile_records.getValue();
 
   const wethBalance = getWETHBalance(getERC20(WETH_ERC20_CONTRACT, blockNumber), blockNumber);
@@ -455,7 +453,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const stableValueRecords = getStableValue(blockNumber);
   const stableValueDecimal = stableValueRecords.getValue();
 
-  const treasuryVolatileBackingRecords = getTreasuryVolatileBacking(blockNumber);
+  const treasuryVolatileBackingRecords = getTreasuryVolatileBacking(blockNumber, false);
   const treasuryVolatileBacking = treasuryVolatileBackingRecords.getValue();
 
   const lpValue = ohmdai_value.plus(ohmfrax_value).plus(ohmlusd_value).plus(ohmeth_value);
@@ -468,20 +466,18 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     .plus(volatile_value);
   const rfv = stableValueDecimal.plus(rfvLpValue);
 
-  const CVXBalance = getCVXBalance(getERC20(CVX_ERC20_CONTRACT, blockNumber), blockNumber);
-  const vlCvxBalance = getVlCVXBalance(getERC20(VLCVX_ERC20_CONTRACT, blockNumber), blockNumber);
-  const cvxVlCvxValue = CVXBalance.getValue().plus(vlCvxBalance.getValue());
-  const veFXSBalance = getVeFXSBalance(getVeFXS(VEFXSERC20_CONTRACT, blockNumber), blockNumber);
+  const cvxVlCvxValue = getCVXVlCVXBalance(blockNumber).getValue();
   const xSushiBalance = getXSushiBalance(getERC20(XSUSI_ERC20_CONTRACT, blockNumber), blockNumber);
   const xSushiValue = xSushiBalance.getValue();
 
-  const treasuryStableBacking = stableValueDecimal;
-  const treasuryTotalBacking = treasuryStableBacking
-    .minus(getVestingAssets().getValue())
-    .plus(treasuryVolatileBacking)
-    .plus(lpValue.div(BigDecimal.fromString("2")))
-    .minus(veFXSBalance.getValue()) // FXS but not veFXS, as it is not liquid
-    .minus(getCriculatingSupply(blockNumber, getTotalSupply(blockNumber)));
+  const treasuryStableBackingRecords = getTreasuryStableBacking(blockNumber);
+  const treasuryStableBacking = treasuryStableBackingRecords.getValue();
+  const treasuryTotalBackingRecords = getTreasuryTotalBacking(
+    blockNumber,
+    lpValue.div(BigDecimal.fromString("2")),
+    getCriculatingSupply(blockNumber, getTotalSupply(blockNumber)),
+  );
+  const treasuryTotalBacking = treasuryTotalBackingRecords.getValue();
   const treasuryLPValue = lpValue;
 
   log.debug("Treasury Market Value {}", [mv.toString()]);
