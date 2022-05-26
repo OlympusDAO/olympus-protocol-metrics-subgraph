@@ -734,6 +734,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   // Clear the prices for the new block
   // TODO this should be cleaner
   clearPriceCache();
+  log.info("Starting protocol metrics for block {}", [blockNumber.toString()]);
 
   const pm = loadOrCreateProtocolMetric(block.timestamp);
 
