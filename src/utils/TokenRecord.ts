@@ -12,7 +12,7 @@ export class TokenRecord {
     source: string,
     sourceAddress: string,
     rate: BigDecimal,
-    balance: BigDecimal
+    balance: BigDecimal,
   ) {
     this.name = name;
     this.source = source;
@@ -26,14 +26,28 @@ export class TokenRecord {
   }
 
   toString(): string {
-    return `{\n` +
-      `name: ${this.name},\n` +
-      `source: ${this.source},\n` +
-      `sourceAddress: ${ this.sourceAddress },\n` +
-      `rate: ${this.rate.toString()},\n` +
-      `balance: ${this.balance.toString()},` +
-      `value: ${this.getValue().toString()}\n` +
-    `}\n`;
+    return (
+      "{\n" +
+      "name: " +
+      this.name +
+      ",\n" +
+      "source: " +
+      this.source +
+      ",\n" +
+      "sourceAddress: " +
+      this.sourceAddress +
+      ",\n" +
+      "rate: " +
+      this.rate.toString() +
+      ",\n" +
+      "balance: " +
+      this.balance.toString() +
+      ",\n" +
+      "value: " +
+      this.getValue().toString() +
+      "\n" +
+      "}\n"
+    );
   }
 }
 
