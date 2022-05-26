@@ -195,7 +195,7 @@ export class TokensRecords {
       stringValue = stringValue + "\n,";
     }
 
-    stringValue = stringValue + '"Total Value": "' + this.toString() + '"\n';
+    stringValue = stringValue + '"Total Value": "' + this.getValue().toString() + '"\n';
 
     stringValue = stringValue + "}";
 
