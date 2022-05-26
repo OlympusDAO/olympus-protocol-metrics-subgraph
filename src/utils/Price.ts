@@ -20,7 +20,13 @@ const BIG_DECIMAL_1E9 = BigDecimal.fromString("1e9");
 const BIG_DECIMAL_1E10 = BigDecimal.fromString("1e10");
 const BIG_DECIMAL_1E12 = BigDecimal.fromString("1e12");
 
+const priceCache: Map<string, BigDecimal> = new Map<string, BigDecimal>();
+
 export function getETHUSDRate(): BigDecimal {
+  if (priceCache.has(SUSHI_USDC_ETH_PAIR)) {
+    return priceCache.get(SUSHI_USDC_ETH_PAIR);
+  }
+
   const pair = UniswapV2Pair.bind(Address.fromString(SUSHI_USDC_ETH_PAIR));
 
   const reserves = pair.getReserves();
@@ -30,11 +36,16 @@ export function getETHUSDRate(): BigDecimal {
   const ethRate = reserve0.div(reserve1).times(BIG_DECIMAL_1E12);
   log.debug("ETH rate {}", [ethRate.toString()]);
 
+  priceCache.set(SUSHI_USDC_ETH_PAIR, ethRate);
+
   return ethRate;
 }
 
-// TODO add price caching
 export function getBTCUSDRate(): BigDecimal {
+  if (priceCache.has(UNI_ETH_WBTC_PAIR)) {
+    return priceCache.get(UNI_ETH_WBTC_PAIR);
+  }
+
   const pair = UniswapV2Pair.bind(Address.fromString(UNI_ETH_WBTC_PAIR));
 
   const reserves = pair.getReserves();
@@ -44,16 +55,22 @@ export function getBTCUSDRate(): BigDecimal {
   const btcRate = getETHUSDRate().div(reserve0.div(reserve1).times(BIG_DECIMAL_1E10));
   log.debug("BTC rate {}", [btcRate.toString()]);
 
+  priceCache.set(UNI_ETH_WBTC_PAIR, btcRate);
+
   return btcRate;
 }
 
 export function getOHMUSDRate(block: BigInt): BigDecimal {
-  let pair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIR));
-
+  let contractAddress = SUSHI_OHMDAI_PAIR;
   if (block.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))) {
-    pair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIRV2));
+    contractAddress = SUSHI_OHMDAI_PAIRV2;
   }
 
+  if (priceCache.has(contractAddress)) {
+    return priceCache.get(contractAddress);
+  }
+
+  const pair = UniswapV2Pair.bind(Address.fromString(contractAddress));
   const reserves = pair.getReserves();
   const reserve0 = reserves.value0.toBigDecimal();
   const reserve1 = reserves.value1.toBigDecimal();
@@ -61,10 +78,16 @@ export function getOHMUSDRate(block: BigInt): BigDecimal {
   const ohmRate = reserve1.div(reserve0).div(BIG_DECIMAL_1E9);
   log.debug("OHM rate {}", [ohmRate.toString()]);
 
+  priceCache.set(contractAddress, ohmRate);
+
   return ohmRate;
 }
 
 export function getXsushiUSDRate(): BigDecimal {
+  if (priceCache.has(SUSHI_XSUSHI_ETH_PAIR)) {
+    return priceCache.get(SUSHI_XSUSHI_ETH_PAIR);
+  }
+
   const pair = UniswapV2Pair.bind(Address.fromString(SUSHI_XSUSHI_ETH_PAIR));
 
   const reserves = pair.getReserves();
@@ -74,10 +97,16 @@ export function getXsushiUSDRate(): BigDecimal {
   const xsushiRate = reserve1.div(reserve0).times(getETHUSDRate());
   log.debug("xsushiRate rate {}", [xsushiRate.toString()]);
 
+  priceCache.set(SUSHI_XSUSHI_ETH_PAIR, xsushiRate);
+
   return xsushiRate;
 }
 
 export function getTribeUSDRate(): BigDecimal {
+  if (priceCache.has(UNI_TRIBE_ETH_PAIR)) {
+    return priceCache.get(UNI_TRIBE_ETH_PAIR);
+  }
+
   // TODO check that contract exists at block
   const pair = UniswapV2Pair.bind(Address.fromString(UNI_TRIBE_ETH_PAIR));
 
@@ -88,10 +117,16 @@ export function getTribeUSDRate(): BigDecimal {
   const tribeRate = reserve1.div(reserve0).times(getETHUSDRate());
   log.debug("TRIBE rate {}", [tribeRate.toString()]);
 
+  priceCache.set(UNI_TRIBE_ETH_PAIR, tribeRate);
+
   return tribeRate;
 }
 
 export function getFXSUSDRate(): BigDecimal {
+  if (priceCache.has(UNI_FXS_ETH_PAIR)) {
+    return priceCache.get(UNI_FXS_ETH_PAIR);
+  }
+
   const pair = UniswapV3Pair.bind(Address.fromString(UNI_FXS_ETH_PAIR));
 
   let priceETH = pair.slot0().value0.times(pair.slot0().value0).toBigDecimal();
@@ -104,20 +139,28 @@ export function getFXSUSDRate(): BigDecimal {
 
   log.debug("fxs rate {}", [priceUSD.toString()]);
 
+  priceCache.set(UNI_FXS_ETH_PAIR, priceUSD);
+
   return priceUSD;
 }
 
 export function getCVXUSDRate(): BigDecimal {
+  if (priceCache.has(SUSHI_CVX_ETH_PAIR)) {
+    return priceCache.get(SUSHI_CVX_ETH_PAIR);
+  }
+
   const pair = UniswapV2Pair.bind(Address.fromString(SUSHI_CVX_ETH_PAIR));
 
   const reserves = pair.getReserves();
   const reserve0 = reserves.value0.toBigDecimal();
   const reserve1 = reserves.value1.toBigDecimal();
 
-  const xsushiRate = reserve1.div(reserve0).times(getETHUSDRate());
-  log.debug("cvx rate {}", [xsushiRate.toString()]);
+  const cvxRate = reserve1.div(reserve0).times(getETHUSDRate());
+  log.debug("cvx rate {}", [cvxRate.toString()]);
 
-  return xsushiRate;
+  priceCache.set(SUSHI_CVX_ETH_PAIR, cvxRate);
+
+  return cvxRate;
 }
 
 /**
