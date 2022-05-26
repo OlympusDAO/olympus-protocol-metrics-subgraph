@@ -22,7 +22,6 @@ import {
   DISTRIBUTOR_CONTRACT_V2,
   ERC20DAI_CONTRACT,
   ERC20FRAX_CONTRACT,
-  FEI_ERC20_CONTRACT,
   LUSD_ERC20_CONTRACT,
   MIGRATION_CONTRACT,
   OHM_ERC20_CONTRACT,
@@ -81,7 +80,6 @@ import {
 } from "./Price";
 import {
   getDaiBalance,
-  getFeiBalance,
   getFraxBalance,
   getLUSDBalance,
   getStableValue,
@@ -256,8 +254,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     blockNumber,
   );
   const lusdBalance = lusdTokens.getBalance();
-  const feiTokens = getFeiBalance(getERC20(FEI_ERC20_CONTRACT, blockNumber), blockNumber);
-  const feiBalance = feiTokens.getBalance();
   const ustTokens = getUSTBalance(getERC20(UST_ERC20_CONTRACT, blockNumber), blockNumber);
   const ustBalance = ustTokens.getValue();
 
