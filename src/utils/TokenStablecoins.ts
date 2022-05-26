@@ -412,9 +412,8 @@ export function getUSTBalance(ustERC20: ERC20, blockNumber: BigInt): TokenRecord
  *
  * TODO: lookup stablecoin price
  *
- * @param contracts object with bound contracts
  * @param blockNumber the current block number
- * @returns BigDecimal representing the balance
+ * @returns TokensRecords representing the components of the stablecoin value
  */
 export function getStableValue(blockNumber: BigInt): TokensRecords {
   const records = new TokensRecords();
@@ -429,7 +428,6 @@ export function getStableValue(blockNumber: BigInt): TokensRecords {
     ),
   );
   records.addToken("FRAX", getFraxBalance(getERC20(ERC20FRAX_CONTRACT, blockNumber), blockNumber));
-  records.addToken("UST", getUSTBalance(getERC20(UST_ERC20_CONTRACT, blockNumber), blockNumber));
   records.addToken(
     "LUSD",
     getLUSDBalance(
@@ -438,6 +436,7 @@ export function getStableValue(blockNumber: BigInt): TokensRecords {
       blockNumber,
     ),
   );
+  records.addToken("UST", getUSTBalance(getERC20(UST_ERC20_CONTRACT, blockNumber), blockNumber));
   records.addToken("FEI", getFeiBalance(getERC20(FEI_ERC20_CONTRACT, blockNumber), blockNumber));
 
   log.debug("Stablecoin tokens: {}", [records.toString()]);
