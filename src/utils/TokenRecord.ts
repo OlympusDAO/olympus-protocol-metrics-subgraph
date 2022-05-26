@@ -103,11 +103,13 @@ export class TokenRecords {
 
   toString(): string {
     // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
-    let stringValue = "";
+    let stringValue = "[";
 
     for (let i = 0; i < this.records.length; i++) {
-      stringValue = stringValue + "\n" + this.records[i].toString();
+      stringValue = stringValue + this.records[i].toString() + ",\n";
     }
+
+    stringValue = stringValue + "]";
 
     return stringValue;
   }
