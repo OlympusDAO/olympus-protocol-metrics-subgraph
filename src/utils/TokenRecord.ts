@@ -30,6 +30,11 @@ export class TokenRecord {
     return this.balance.times(this.rate);
   }
 
+  /**
+   * Returns a JSON-like dictionary in string format.
+   *
+   * @returns
+   */
   toString(): string {
     return (
       "{\n" +
@@ -101,6 +106,18 @@ export class TokenRecords {
     return value;
   }
 
+  /**
+   * Returns a JSON-like string representation of the TokenRecords
+   *
+   * e.g.
+   * [
+   *    TokenRecord.toString(),
+   *    TokenRecord.toString(),
+   *    TokenRecord.toString(),
+   * ]
+   *
+   * @returns
+   */
   toString(): string {
     // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
     let stringValue = "[";
@@ -128,34 +145,50 @@ export class TokenRecords {
  * - treasury wallet v2
  */
 export class TokensRecords {
-  tokens: Array<TokenRecords>;
+  tokens: Map<string, TokenRecords>;
 
   construct(): void {
-    this.tokens = new Array<TokenRecords>();
+    this.tokens = new Map<string, TokenRecords>();
   }
 
   addToken(token: string, records: TokenRecords): void {
-    this.tokens.push(records);
+    this.tokens.set(token, records);
   }
 
   getValue(): BigDecimal {
     // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
     let value = BigDecimal.fromString("0");
 
-    for (let i = 0; i < this.tokens.length; i++) {
-      value = value.plus(this.tokens[i].getValue());
+    for (let i = 0; i < this.tokens.size; i++) {
+      const currentValue = this.tokens.get(this.tokens.keys()[i]);
+      value = value.plus(currentValue.getValue());
     }
 
     return value;
   }
 
+  /**
+   * Returns a string representation in a JSON format.
+   *
+   * e.g.
+   * {
+   *    "DAI": TokenRecords.toString()
+   * }
+   * @returns
+   */
   toString(): string {
     // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
-    let stringValue = "";
+    let stringValue = "{";
 
-    for (let i = 0; i < this.tokens.length; i++) {
-      stringValue = stringValue + "\n" + this.tokens[i].toString();
+    for (let i = 0; i < this.tokens.size; i++) {
+      const currentKey = this.tokens.keys()[i];
+
+      stringValue = stringValue + '\n"' + currentKey + '":\n';
+      stringValue = stringValue + this.tokens.get(currentKey).toString();
+      stringValue = stringValue + "\n,";
     }
+
+    stringValue = stringValue + "}";
 
     return stringValue;
   }
