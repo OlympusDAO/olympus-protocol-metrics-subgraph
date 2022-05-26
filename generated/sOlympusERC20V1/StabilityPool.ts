@@ -588,6 +588,26 @@ export class StabilityPool__depositSnapshotsResult {
     map.set("value4", ethereum.Value.fromUnsignedBigInt(this.value4));
     return map;
   }
+
+  getS(): BigInt {
+    return this.value0;
+  }
+
+  getP(): BigInt {
+    return this.value1;
+  }
+
+  getG(): BigInt {
+    return this.value2;
+  }
+
+  getScale(): BigInt {
+    return this.value3;
+  }
+
+  getEpoch(): BigInt {
+    return this.value4;
+  }
 }
 
 export class StabilityPool__depositsResult {
@@ -604,6 +624,14 @@ export class StabilityPool__depositsResult {
     map.set("value0", ethereum.Value.fromUnsignedBigInt(this.value0));
     map.set("value1", ethereum.Value.fromAddress(this.value1));
     return map;
+  }
+
+  getInitialValue(): BigInt {
+    return this.value0;
+  }
+
+  getFrontEndTag(): Address {
+    return this.value1;
   }
 }
 
@@ -637,6 +665,26 @@ export class StabilityPool__frontEndSnapshotsResult {
     map.set("value4", ethereum.Value.fromUnsignedBigInt(this.value4));
     return map;
   }
+
+  getS(): BigInt {
+    return this.value0;
+  }
+
+  getP(): BigInt {
+    return this.value1;
+  }
+
+  getG(): BigInt {
+    return this.value2;
+  }
+
+  getScale(): BigInt {
+    return this.value3;
+  }
+
+  getEpoch(): BigInt {
+    return this.value4;
+  }
 }
 
 export class StabilityPool__frontEndsResult {
@@ -653,6 +701,14 @@ export class StabilityPool__frontEndsResult {
     map.set("value0", ethereum.Value.fromUnsignedBigInt(this.value0));
     map.set("value1", ethereum.Value.fromBoolean(this.value1));
     return map;
+  }
+
+  getKickbackRate(): BigInt {
+    return this.value0;
+  }
+
+  getRegistered(): boolean {
+    return this.value1;
   }
 }
 

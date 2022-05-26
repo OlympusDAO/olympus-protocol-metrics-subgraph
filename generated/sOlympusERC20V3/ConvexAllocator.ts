@@ -92,6 +92,34 @@ export class ConvexAllocator__tokenInfoResult {
     map.set("value6", ethereum.Value.fromUnsignedBigInt(this.value6));
     return map;
   }
+
+  getUnderlying(): Address {
+    return this.value0;
+  }
+
+  getCurveToken(): Address {
+    return this.value1;
+  }
+
+  getIndex(): BigInt {
+    return this.value2;
+  }
+
+  getDeployed(): BigInt {
+    return this.value3;
+  }
+
+  getLimit(): BigInt {
+    return this.value4;
+  }
+
+  getNewLimit(): BigInt {
+    return this.value5;
+  }
+
+  getLimitChangeTimelockEnd(): BigInt {
+    return this.value6;
+  }
 }
 
 export class ConvexAllocator extends ethereum.SmartContract {

@@ -84,6 +84,26 @@ export class OHMDAIBondV2__bondInfoResult {
     map.set("value4", ethereum.Value.fromUnsignedBigInt(this.value4));
     return map;
   }
+
+  getValueRemaining(): BigInt {
+    return this.value0;
+  }
+
+  getPayoutRemaining(): BigInt {
+    return this.value1;
+  }
+
+  getLastBlock(): BigInt {
+    return this.value2;
+  }
+
+  getVestingPeriod(): BigInt {
+    return this.value3;
+  }
+
+  getPricePaid(): BigInt {
+    return this.value4;
+  }
 }
 
 export class OHMDAIBondV2 extends ethereum.SmartContract {

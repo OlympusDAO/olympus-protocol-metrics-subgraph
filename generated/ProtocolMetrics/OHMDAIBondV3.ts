@@ -150,6 +150,18 @@ export class OHMDAIBondV3__adjustmentResult {
     map.set("value2", ethereum.Value.fromUnsignedBigInt(this.value2));
     return map;
   }
+
+  getAdd(): boolean {
+    return this.value0;
+  }
+
+  getRate(): BigInt {
+    return this.value1;
+  }
+
+  getTarget(): BigInt {
+    return this.value2;
+  }
 }
 
 export class OHMDAIBondV3__bondInfoResult {
@@ -182,6 +194,26 @@ export class OHMDAIBondV3__bondInfoResult {
     map.set("value4", ethereum.Value.fromUnsignedBigInt(this.value4));
     return map;
   }
+
+  getValueRemaining(): BigInt {
+    return this.value0;
+  }
+
+  getPayoutRemaining(): BigInt {
+    return this.value1;
+  }
+
+  getVestingPeriod(): BigInt {
+    return this.value2;
+  }
+
+  getLastBlock(): BigInt {
+    return this.value3;
+  }
+
+  getPricePaid(): BigInt {
+    return this.value4;
+  }
 }
 
 export class OHMDAIBondV3__termsResult {
@@ -213,6 +245,26 @@ export class OHMDAIBondV3__termsResult {
     map.set("value3", ethereum.Value.fromUnsignedBigInt(this.value3));
     map.set("value4", ethereum.Value.fromUnsignedBigInt(this.value4));
     return map;
+  }
+
+  getControlVariable(): BigInt {
+    return this.value0;
+  }
+
+  getVestingTerm(): BigInt {
+    return this.value1;
+  }
+
+  getMinimumPrice(): BigInt {
+    return this.value2;
+  }
+
+  getMaxPayout(): BigInt {
+    return this.value3;
+  }
+
+  getFee(): BigInt {
+    return this.value4;
   }
 }
 

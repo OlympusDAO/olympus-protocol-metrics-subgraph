@@ -50,6 +50,18 @@ export class Distributor__adjustmentsResult {
     map.set("value2", ethereum.Value.fromUnsignedBigInt(this.value2));
     return map;
   }
+
+  getAdd(): boolean {
+    return this.value0;
+  }
+
+  getRate(): BigInt {
+    return this.value1;
+  }
+
+  getTarget(): BigInt {
+    return this.value2;
+  }
 }
 
 export class Distributor__infoResult {
@@ -66,6 +78,14 @@ export class Distributor__infoResult {
     map.set("value0", ethereum.Value.fromUnsignedBigInt(this.value0));
     map.set("value1", ethereum.Value.fromAddress(this.value1));
     return map;
+  }
+
+  getRate(): BigInt {
+    return this.value0;
+  }
+
+  getRecipient(): Address {
+    return this.value1;
   }
 }
 

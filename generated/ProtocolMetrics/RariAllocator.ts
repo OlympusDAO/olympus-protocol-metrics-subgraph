@@ -368,7 +368,9 @@ export class ConstructorCall__Inputs {
   }
 
   get fuseData(): ConstructorCallFuseDataStruct {
-    return this._call.inputValues[0].value.toTuple() as ConstructorCallFuseDataStruct;
+    return changetype<ConstructorCallFuseDataStruct>(
+      this._call.inputValues[0].value.toTuple()
+    );
   }
 }
 
@@ -382,11 +384,11 @@ export class ConstructorCall__Outputs {
 
 export class ConstructorCallFuseDataStruct extends ethereum.Tuple {
   get base(): ConstructorCallFuseDataBaseStruct {
-    return this[0].toTuple() as ConstructorCallFuseDataBaseStruct;
+    return changetype<ConstructorCallFuseDataBaseStruct>(this[0].toTuple());
   }
 
   get spec(): ConstructorCallFuseDataSpecStruct {
-    return this[1].toTuple() as ConstructorCallFuseDataSpecStruct;
+    return changetype<ConstructorCallFuseDataSpecStruct>(this[1].toTuple());
   }
 }
 
@@ -548,7 +550,9 @@ export class FDataAddCall__Inputs {
   }
 
   get data(): FDataAddCallDataStruct {
-    return this._call.inputValues[0].value.toTuple() as FDataAddCallDataStruct;
+    return changetype<FDataAddCallDataStruct>(
+      this._call.inputValues[0].value.toTuple()
+    );
   }
 }
 

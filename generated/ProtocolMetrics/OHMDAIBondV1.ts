@@ -53,6 +53,22 @@ export class OHMDAIBondV1__depositorInfoResult {
     map.set("value3", ethereum.Value.fromUnsignedBigInt(this.value3));
     return map;
   }
+
+  getPrincipleValue(): BigInt {
+    return this.value0;
+  }
+
+  getPayoutRemaining(): BigInt {
+    return this.value1;
+  }
+
+  getLastBlock(): BigInt {
+    return this.value2;
+  }
+
+  getVestingPeriod(): BigInt {
+    return this.value3;
+  }
 }
 
 export class OHMDAIBondV1__getDepositorInfoResult {
@@ -75,6 +91,22 @@ export class OHMDAIBondV1__getDepositorInfoResult {
     map.set("value2", ethereum.Value.fromUnsignedBigInt(this.value2));
     map.set("value3", ethereum.Value.fromUnsignedBigInt(this.value3));
     return map;
+  }
+
+  get_principleValue(): BigInt {
+    return this.value0;
+  }
+
+  get_payoutRemaining(): BigInt {
+    return this.value1;
+  }
+
+  get_lastBlock(): BigInt {
+    return this.value2;
+  }
+
+  get_vestingPeriod(): BigInt {
+    return this.value3;
   }
 }
 

@@ -131,6 +131,22 @@ export class MasterChef__poolInfoResult {
     map.set("value3", ethereum.Value.fromUnsignedBigInt(this.value3));
     return map;
   }
+
+  getLpToken(): Address {
+    return this.value0;
+  }
+
+  getAllocPoint(): BigInt {
+    return this.value1;
+  }
+
+  getLastRewardBlock(): BigInt {
+    return this.value2;
+  }
+
+  getAccSushiPerShare(): BigInt {
+    return this.value3;
+  }
 }
 
 export class MasterChef__userInfoResult {
@@ -147,6 +163,14 @@ export class MasterChef__userInfoResult {
     map.set("value0", ethereum.Value.fromUnsignedBigInt(this.value0));
     map.set("value1", ethereum.Value.fromUnsignedBigInt(this.value1));
     return map;
+  }
+
+  getAmount(): BigInt {
+    return this.value0;
+  }
+
+  getRewardDebt(): BigInt {
+    return this.value1;
   }
 }
 

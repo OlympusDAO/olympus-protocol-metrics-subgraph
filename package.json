@@ -11,8 +11,8 @@
     "run-local": "docker-compose -f docker/docker-compose.yml up --build"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "^0.21.0",
-    "@graphprotocol/graph-ts": "^0.20.0"
+    "@graphprotocol/graph-cli": "^0.30.0",
+    "@graphprotocol/graph-ts": "^0.27.0"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.26.0",

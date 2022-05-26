@@ -76,7 +76,7 @@ export function getERC20(
     contractsERC20.set(contractAddress, contract);
   }
 
-  return contractsERC20.get(contractAddress) || null;
+  return contractsERC20.get(contractAddress);
 }
 
 export function getUniswapV2Pair(
@@ -95,7 +95,7 @@ export function getUniswapV2Pair(
     contractsUniswapV2Pair.set(contractAddress, contract);
   }
 
-  return contractsUniswapV2Pair.get(contractAddress) || null;
+  return contractsUniswapV2Pair.get(contractAddress);
 }
 
 export function getUniswapV3Pair(
@@ -114,7 +114,7 @@ export function getUniswapV3Pair(
     contractsUniswapV3Pair.set(contractAddress, contract);
   }
 
-  return contractsUniswapV3Pair.get(contractAddress) || null;
+  return contractsUniswapV3Pair.get(contractAddress);
 }
 
 export function getMasterChef(
@@ -132,7 +132,7 @@ export function getMasterChef(
     contractsMasterChef.set(contractAddress, contract);
   }
 
-  return contractsMasterChef.get(contractAddress) || null;
+  return contractsMasterChef.get(contractAddress);
 }
 
 export function getRariAllocator(
@@ -150,7 +150,7 @@ export function getRariAllocator(
     contractsRariAllocator.set(contractAddress, contract);
   }
 
-  return contractsRariAllocator.get(contractAddress) || null;
+  return contractsRariAllocator.get(contractAddress);
 }
 
 export function getVeFXS(contractAddress: string, currentBlockNumber: BigInt): VeFXS | null {
@@ -165,7 +165,7 @@ export function getVeFXS(contractAddress: string, currentBlockNumber: BigInt): V
     contractsVeFXS.set(contractAddress, contract);
   }
 
-  return contractsVeFXS.get(contractAddress) || null;
+  return contractsVeFXS.get(contractAddress);
 }
 
 export function getConvexAllocator(
@@ -183,7 +183,7 @@ export function getConvexAllocator(
     contractsConvexAllocator.set(contractAddress, contract);
   }
 
-  return contractsConvexAllocator.get(contractAddress) || null;
+  return contractsConvexAllocator.get(contractAddress);
 }
 
 export function getStabilityPool(
@@ -201,7 +201,7 @@ export function getStabilityPool(
     contractsStabilityPool.set(contractAddress, contract);
   }
 
-  return contractsStabilityPool.get(contractAddress) || null;
+  return contractsStabilityPool.get(contractAddress);
 }
 
 /**

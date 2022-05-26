@@ -166,6 +166,34 @@ export class sOlympusERC20V3__rebasesResult {
     map.set("value6", ethereum.Value.fromUnsignedBigInt(this.value6));
     return map;
   }
+
+  getEpoch(): BigInt {
+    return this.value0;
+  }
+
+  getRebase(): BigInt {
+    return this.value1;
+  }
+
+  getTotalStakedBefore(): BigInt {
+    return this.value2;
+  }
+
+  getTotalStakedAfter(): BigInt {
+    return this.value3;
+  }
+
+  getAmountRebased(): BigInt {
+    return this.value4;
+  }
+
+  getIndex(): BigInt {
+    return this.value5;
+  }
+
+  getBlockNumberOccured(): BigInt {
+    return this.value6;
+  }
 }
 
 export class sOlympusERC20V3 extends ethereum.SmartContract {

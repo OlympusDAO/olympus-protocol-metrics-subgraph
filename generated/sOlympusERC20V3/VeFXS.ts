@@ -143,6 +143,14 @@ export class VeFXS__lockedResult {
     map.set("value1", ethereum.Value.fromUnsignedBigInt(this.value1));
     return map;
   }
+
+  getAmount(): BigInt {
+    return this.value0;
+  }
+
+  getEnd(): BigInt {
+    return this.value1;
+  }
 }
 
 export class VeFXS__point_historyResult {
@@ -175,6 +183,26 @@ export class VeFXS__point_historyResult {
     map.set("value4", ethereum.Value.fromUnsignedBigInt(this.value4));
     return map;
   }
+
+  getBias(): BigInt {
+    return this.value0;
+  }
+
+  getSlope(): BigInt {
+    return this.value1;
+  }
+
+  getTs(): BigInt {
+    return this.value2;
+  }
+
+  getBlk(): BigInt {
+    return this.value3;
+  }
+
+  getFxs_amt(): BigInt {
+    return this.value4;
+  }
 }
 
 export class VeFXS__user_point_historyResult {
@@ -206,6 +234,26 @@ export class VeFXS__user_point_historyResult {
     map.set("value3", ethereum.Value.fromUnsignedBigInt(this.value3));
     map.set("value4", ethereum.Value.fromUnsignedBigInt(this.value4));
     return map;
+  }
+
+  getBias(): BigInt {
+    return this.value0;
+  }
+
+  getSlope(): BigInt {
+    return this.value1;
+  }
+
+  getTs(): BigInt {
+    return this.value2;
+  }
+
+  getBlk(): BigInt {
+    return this.value3;
+  }
+
+  getFxs_amt(): BigInt {
+    return this.value4;
   }
 }
 
