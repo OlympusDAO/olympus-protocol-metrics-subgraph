@@ -175,6 +175,20 @@ function getTotalSupply(blockNumber: BigInt): BigDecimal {
   return total_supply;
 }
 
+/**
+ * - total supply (OHM V1 or V2, depending on the block)
+ * - OHM:
+ *  - subtract: DAO wallet
+ *  - subtract: migration contract
+ * - OHM V2:
+ *  - subtract: DAO wallet
+ *  - subtract: migration contract
+ *  - subtract: bonds deposit
+ *
+ * @param blockNumber
+ * @param total_supply
+ * @returns
+ */
 function getCriculatingSupply(blockNumber: BigInt, total_supply: BigDecimal): BigDecimal {
   let ohm_contract = OlympusERC20.bind(Address.fromString(OHM_ERC20_CONTRACT));
   let circ_supply = total_supply.minus(
