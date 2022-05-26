@@ -19,7 +19,14 @@ import {
 } from "./Constants";
 import { getBalance, getERC20, getRariAllocator, getVeFXS } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
-import { getCVXUSDRate, getFXSUSDRate, getTribeUSDRate, getXsushiUSDRate } from "./Price";
+import {
+  getBTCUSDRate,
+  getCVXUSDRate,
+  getETHUSDRate,
+  getFXSUSDRate,
+  getTribeUSDRate,
+  getXsushiUSDRate,
+} from "./Price";
 import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
 
 /**
@@ -302,6 +309,100 @@ function getTribeBalance(
         RARI_ALLOCATOR,
         tribeRate,
         toDecimal(rariAllocator.amountAllocated(BigInt.fromI32(4)), 18),
+      ),
+    );
+  }
+
+  return records;
+}
+
+/**
+ * Calculates the balance of wETH across the following:
+ * - treasury address V1
+ * - treasury address V2
+ * - treasury address V3
+ *
+ * @param wethERC20 bound contract
+ * @param blockNumber current block number
+ * @returns TokenRecords object
+ */
+export function getWETHBalance(wethERC20: ERC20, blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords([]);
+  const wethRate = getETHUSDRate();
+
+  if (wethERC20) {
+    records.push(
+      new TokenRecord(
+        "wETH",
+        "Treasury Wallet",
+        TREASURY_ADDRESS,
+        wethRate,
+        toDecimal(getBalance(wethERC20, TREASURY_ADDRESS, blockNumber), 18),
+      ),
+    );
+    records.push(
+      new TokenRecord(
+        "wETH",
+        "Treasury Wallet V2",
+        TREASURY_ADDRESS_V2,
+        wethRate,
+        toDecimal(getBalance(wethERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
+      ),
+    );
+    records.push(
+      new TokenRecord(
+        "wETH",
+        "Treasury Wallet V3",
+        TREASURY_ADDRESS_V3,
+        wethRate,
+        toDecimal(getBalance(wethERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
+      ),
+    );
+  }
+
+  return records;
+}
+
+/**
+ * Calculates the balance of wBTC across the following:
+ * - treasury address V1
+ * - treasury address V2
+ * - treasury address V3
+ *
+ * @param wbtcERC20 bound contract
+ * @param blockNumber current block number
+ * @returns TokenRecords object
+ */
+export function getWBTCBalance(wbtcERC20: ERC20, blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords([]);
+  const wbtcRate = getBTCUSDRate();
+
+  if (wbtcERC20) {
+    records.push(
+      new TokenRecord(
+        "wBTC",
+        "Treasury Wallet",
+        TREASURY_ADDRESS,
+        wbtcRate,
+        toDecimal(getBalance(wbtcERC20, TREASURY_ADDRESS, blockNumber), 18),
+      ),
+    );
+    records.push(
+      new TokenRecord(
+        "wBTC",
+        "Treasury Wallet V2",
+        TREASURY_ADDRESS_V2,
+        wbtcRate,
+        toDecimal(getBalance(wbtcERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
+      ),
+    );
+    records.push(
+      new TokenRecord(
+        "wBTC",
+        "Treasury Wallet V3",
+        TREASURY_ADDRESS_V3,
+        wbtcRate,
+        toDecimal(getBalance(wbtcERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
       ),
     );
   }

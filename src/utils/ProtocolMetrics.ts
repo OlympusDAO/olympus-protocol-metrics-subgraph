@@ -99,6 +99,8 @@ import {
   getVestingAssets,
   getVlCVXBalance,
   getVolatileValue,
+  getWBTCBalance,
+  getWETHBalance,
   getXSushiBalance,
 } from "./TokenVolatile";
 
@@ -272,15 +274,11 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const volatile_records = getVolatileValue(blockNumber);
   const volatile_value = volatile_records.getValue();
 
-  const wethBalance = wethERC20
-    .balanceOf(Address.fromString(treasury_address))
-    .plus(wethERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)));
-  const weth_value = toDecimal(wethBalance, 18).times(getETHUSDRate());
+  const wethBalance = getWETHBalance(getERC20(WETH_ERC20_CONTRACT, blockNumber), blockNumber);
+  const weth_value = wethBalance.getValue();
 
-  const wbtcBalance = wbtcERC20
-    .balanceOf(Address.fromString(treasury_address))
-    .plus(wbtcERC20.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)));
-  const wbtc_value = toDecimal(wbtcBalance, 8).times(getBTCUSDRate());
+  const wbtcBalance = getWBTCBalance(getERC20(WBTC_ERC20_CONTRACT, blockNumber), blockNumber);
+  const wbtc_value = wbtcBalance.getValue();
 
   // OHMDAI
   const ohmdaiSushiBalance = ohmdaiPair
