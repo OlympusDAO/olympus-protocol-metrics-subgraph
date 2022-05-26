@@ -21,6 +21,9 @@ const BIG_DECIMAL_1E10 = BigDecimal.fromString("1e10");
 const BIG_DECIMAL_1E12 = BigDecimal.fromString("1e12");
 
 const priceCache: Map<string, BigDecimal> = new Map<string, BigDecimal>();
+export function clearPriceCache(): void {
+  priceCache.clear();
+}
 
 export function getETHUSDRate(): BigDecimal {
   if (priceCache.has(SUSHI_USDC_ETH_PAIR)) {

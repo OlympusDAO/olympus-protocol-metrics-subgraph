@@ -71,6 +71,7 @@ import { getERC20, getRariAllocator, getStabilityPool } from "./ContractHelper";
 import { dayFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
 import {
+  clearPriceCache,
   getDiscountedPairLUSD,
   getDiscountedPairUSD,
   getOHMUSDRate,
@@ -730,6 +731,9 @@ function getRunway(
 
 export function updateProtocolMetrics(block: ethereum.Block): void {
   const blockNumber = block.number;
+  // Clear the prices for the new block
+  // TODO this should be cleaner
+  clearPriceCache();
 
   const pm = loadOrCreateProtocolMetric(block.timestamp);
 
