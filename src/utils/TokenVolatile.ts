@@ -185,7 +185,7 @@ export function getCVXVlCVXBalance(blockNumber: BigInt): TokensRecords {
     getVlCVXBalance(getERC20("vlCVX", VLCVX_ERC20_CONTRACT, blockNumber), blockNumber),
   );
 
-  log.info("CVX/vlCVX tokens: {}", [records.toString()]);
+  // log.info("CVX/vlCVX tokens: {}", [records.toString()]);
   return records;
 }
 
@@ -485,6 +485,6 @@ export function getVolatileValue(blockNumber: BigInt, liquidOnly: boolean): Toke
     ),
   );
 
-  log.info("Volatile tokens: {}", [records.toString()]);
+  // log.info("Volatile tokens: {}", [records.toString()]);
   return records;
 }

@@ -448,6 +448,6 @@ export function getStableValue(blockNumber: BigInt): TokensRecords {
     getFeiBalance(getERC20("FEI", FEI_ERC20_CONTRACT, blockNumber), blockNumber),
   );
 
-  log.info("Stablecoin tokens: {}", [records.toString()]);
+  // log.info("Stablecoin tokens: {}", [records.toString()]);
   return records;
 }
