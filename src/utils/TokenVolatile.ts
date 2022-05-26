@@ -27,13 +27,7 @@ import {
   getTribeUSDRate,
   getXsushiUSDRate,
 } from "./Price";
-import {
-  TokenRecord,
-  TokenRecordOperation,
-  TokenRecordOperator,
-  TokenRecords,
-  TokensRecords,
-} from "./TokenRecord";
+import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
 
 /**
  * Returns the value of vesting assets in the treasury
@@ -182,19 +176,10 @@ export function getVlCVXBalance(vlERC20: ERC20, blockNumber: BigInt): TokenRecor
 export function getCVXVlCVXBalance(blockNumber: BigInt): TokensRecords {
   const records = new TokensRecords();
 
-  records.addToken(
-    "CVX",
-    new TokenRecordOperation(
-      TokenRecordOperator.ADD,
-      getCVXBalance(getERC20(CVX_ERC20_CONTRACT, blockNumber), blockNumber),
-    ),
-  );
+  records.addToken("CVX", getCVXBalance(getERC20(CVX_ERC20_CONTRACT, blockNumber), blockNumber));
   records.addToken(
     "vlCVX",
-    new TokenRecordOperation(
-      TokenRecordOperator.ADD,
-      getVlCVXBalance(getERC20(VLCVX_ERC20_CONTRACT, blockNumber), blockNumber),
-    ),
+    getVlCVXBalance(getERC20(VLCVX_ERC20_CONTRACT, blockNumber), blockNumber),
   );
 
   log.info("CVX/vlCVX tokens: {}", [records.toString()]);
@@ -463,57 +448,30 @@ export function getVolatileValue(blockNumber: BigInt, liquidOnly: boolean): Toke
   const records = new TokensRecords();
 
   if (!liquidOnly) {
-    records.addToken(
-      "Vesting Assets",
-      new TokenRecordOperation(TokenRecordOperator.ADD, getVestingAssets()),
-    );
+    records.addToken("Vesting Assets", getVestingAssets());
   }
 
   records.addToken(
     "xSUSHI",
-    new TokenRecordOperation(
-      TokenRecordOperator.ADD,
-      getXSushiBalance(getERC20(XSUSI_ERC20_CONTRACT, blockNumber), blockNumber),
-    ),
+    getXSushiBalance(getERC20(XSUSI_ERC20_CONTRACT, blockNumber), blockNumber),
   );
-  records.addToken(
-    "CVX",
-    new TokenRecordOperation(
-      TokenRecordOperator.ADD,
-      getCVXBalance(getERC20(CVX_ERC20_CONTRACT, blockNumber), blockNumber),
-    ),
-  );
+  records.addToken("CVX", getCVXBalance(getERC20(CVX_ERC20_CONTRACT, blockNumber), blockNumber));
   records.addToken(
     "vlCVX",
-    new TokenRecordOperation(
-      TokenRecordOperator.ADD,
-      getVlCVXBalance(getERC20(VLCVX_ERC20_CONTRACT, blockNumber), blockNumber),
-    ),
+    getVlCVXBalance(getERC20(VLCVX_ERC20_CONTRACT, blockNumber), blockNumber),
   );
-  records.addToken(
-    "FXS",
-    new TokenRecordOperation(
-      TokenRecordOperator.ADD,
-      getFXSBalance(getERC20(FXS_ERC20_CONTRACT, blockNumber), blockNumber),
-    ),
-  );
+  records.addToken("FXS", getFXSBalance(getERC20(FXS_ERC20_CONTRACT, blockNumber), blockNumber));
 
   if (!liquidOnly) {
-    records.addToken(
-      "veFXS",
-      new TokenRecordOperation(TokenRecordOperator.ADD, getVeFXSRecords(blockNumber)),
-    );
+    records.addToken("veFXS", getVeFXSRecords(blockNumber));
   }
 
   records.addToken(
     "TRIBE",
-    new TokenRecordOperation(
-      TokenRecordOperator.ADD,
-      getTribeBalance(
-        getRariAllocator(RARI_ALLOCATOR, blockNumber),
-        getERC20(TRIBE_ERC20_CONTRACT, blockNumber),
-        blockNumber,
-      ),
+    getTribeBalance(
+      getRariAllocator(RARI_ALLOCATOR, blockNumber),
+      getERC20(TRIBE_ERC20_CONTRACT, blockNumber),
+      blockNumber,
     ),
   );
 

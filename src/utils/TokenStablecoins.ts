@@ -31,13 +31,7 @@ import {
   getStabilityPool,
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
-import {
-  TokenRecord,
-  TokenRecordOperation,
-  TokenRecordOperator,
-  TokenRecords,
-  TokensRecords,
-} from "./TokenRecord";
+import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
 
 /**
  * Calculates the balance of DAI across the following:
@@ -426,48 +420,24 @@ export function getStableValue(blockNumber: BigInt): TokensRecords {
 
   records.addToken(
     "DAI",
-    new TokenRecordOperation(
-      TokenRecordOperator.ADD,
-      getDaiBalance(
-        getERC20(ERC20DAI_CONTRACT, blockNumber),
-        getERC20(ADAI_ERC20_CONTRACT, blockNumber),
-        getRariAllocator(RARI_ALLOCATOR, blockNumber),
-        blockNumber,
-      ),
+    getDaiBalance(
+      getERC20(ERC20DAI_CONTRACT, blockNumber),
+      getERC20(ADAI_ERC20_CONTRACT, blockNumber),
+      getRariAllocator(RARI_ALLOCATOR, blockNumber),
+      blockNumber,
     ),
   );
-  records.addToken(
-    "FRAX",
-    new TokenRecordOperation(
-      TokenRecordOperator.ADD,
-      getFraxBalance(getERC20(ERC20FRAX_CONTRACT, blockNumber), blockNumber),
-    ),
-  );
+  records.addToken("FRAX", getFraxBalance(getERC20(ERC20FRAX_CONTRACT, blockNumber), blockNumber));
   records.addToken(
     "LUSD",
-    new TokenRecordOperation(
-      TokenRecordOperator.ADD,
-      getLUSDBalance(
-        getERC20(LUSD_ERC20_CONTRACT, blockNumber),
-        getStabilityPool(STABILITY_POOL, blockNumber),
-        blockNumber,
-      ),
+    getLUSDBalance(
+      getERC20(LUSD_ERC20_CONTRACT, blockNumber),
+      getStabilityPool(STABILITY_POOL, blockNumber),
+      blockNumber,
     ),
   );
-  records.addToken(
-    "UST",
-    new TokenRecordOperation(
-      TokenRecordOperator.ADD,
-      getUSTBalance(getERC20(UST_ERC20_CONTRACT, blockNumber), blockNumber),
-    ),
-  );
-  records.addToken(
-    "FEI",
-    new TokenRecordOperation(
-      TokenRecordOperator.ADD,
-      getFeiBalance(getERC20(FEI_ERC20_CONTRACT, blockNumber), blockNumber),
-    ),
-  );
+  records.addToken("UST", getUSTBalance(getERC20(UST_ERC20_CONTRACT, blockNumber), blockNumber));
+  records.addToken("FEI", getFeiBalance(getERC20(FEI_ERC20_CONTRACT, blockNumber), blockNumber));
 
   log.info("Stablecoin tokens: {}", [records.toString()]);
   return records;
