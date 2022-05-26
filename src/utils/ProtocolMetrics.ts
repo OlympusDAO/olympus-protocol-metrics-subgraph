@@ -1,7 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { ethereum } from "@graphprotocol/graph-ts";
 
-import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { MasterChef } from "../../generated/ProtocolMetrics/MasterChef";
 import { OlympusERC20 } from "../../generated/ProtocolMetrics/OlympusERC20";
 import { OlympusStakingV1 } from "../../generated/ProtocolMetrics/OlympusStakingV1";
@@ -76,10 +75,8 @@ import { getERC20, getRariAllocator, getStabilityPool, getVeFXS } from "./Contra
 import { dayFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
 import {
-  getBTCUSDRate,
   getDiscountedPairLUSD,
   getDiscountedPairUSD,
-  getETHUSDRate,
   getOHMUSDRate,
   getPairLUSD,
   getPairUSD,
@@ -103,6 +100,7 @@ import {
   getWETHBalance,
   getXSushiBalance,
 } from "./TokenVolatile";
+import { getTreasuryVolatileBacking } from "./TreasuryCalculations";
 
 export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
   const dayTimestamp = dayFromTimestamp(timestamp);
@@ -228,9 +226,6 @@ function getSohmSupply(blockNumber: BigInt): BigDecimal {
 }
 
 function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
-  const wethERC20 = ERC20.bind(Address.fromString(WETH_ERC20_CONTRACT));
-  const wbtcERC20 = ERC20.bind(Address.fromString(WBTC_ERC20_CONTRACT));
-
   const ohmdaiPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIR));
   const ohmdaiPairV2 = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIRV2));
   const ohmdaiOnsenMC = MasterChef.bind(Address.fromString(SUSHI_MASTERCHEF));
@@ -460,6 +455,9 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const stableValueRecords = getStableValue(blockNumber);
   const stableValueDecimal = stableValueRecords.getValue();
 
+  const treasuryVolatileBackingRecords = getTreasuryVolatileBacking(blockNumber);
+  const treasuryVolatileBacking = treasuryVolatileBackingRecords.getValue();
+
   const lpValue = ohmdai_value.plus(ohmfrax_value).plus(ohmlusd_value).plus(ohmeth_value);
   const rfvLpValue = ohmdai_rfv.plus(ohmfrax_rfv).plus(ohmlusd_rfv).plus(ohmeth_rfv);
 
@@ -478,7 +476,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const xSushiValue = xSushiBalance.getValue();
 
   const treasuryStableBacking = stableValueDecimal;
-  const treasuryVolatileBacking = volatile_value.plus(weth_value).plus(wbtc_value);
   const treasuryTotalBacking = treasuryStableBacking
     .minus(getVestingAssets().getValue())
     .plus(treasuryVolatileBacking)
