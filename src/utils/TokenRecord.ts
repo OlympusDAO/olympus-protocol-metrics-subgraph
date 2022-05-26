@@ -38,24 +38,24 @@ export class TokenRecord {
   toString(): string {
     return (
       "{\n" +
-      "name: " +
+      'name: "' +
       this.name +
-      ",\n" +
-      "source: " +
+      '",\n' +
+      'source: "' +
       this.source +
-      ",\n" +
-      "sourceAddress: " +
+      '",\n' +
+      'sourceAddress: "' +
       this.sourceAddress +
-      ",\n" +
-      "rate: " +
+      '",\n' +
+      'rate: "' +
       this.rate.toString() +
-      ",\n" +
-      "balance: " +
+      '",\n' +
+      'balance: "' +
       this.balance.toString() +
-      ",\n" +
-      "value: " +
+      '",\n' +
+      'value: "' +
       this.getValue().toString() +
-      "\n" +
+      '"\n' +
       "}\n"
     );
   }
