@@ -145,22 +145,23 @@ export class TokenRecords {
  * - treasury wallet v2
  */
 export class TokensRecords {
-  tokens: Map<string, TokenRecords>;
+  // TODO shift this back to Map. Has issues with current version of graph-ts.
+  tokens: Array<TokenRecords>;
 
-  construct(): void {
-    this.tokens = new Map<string, TokenRecords>();
+  constructor() {
+    this.tokens = new Array<TokenRecords>();
   }
 
   addToken(token: string, records: TokenRecords): void {
-    this.tokens.set(token, records);
+    this.tokens.push(records);
   }
 
   getValue(): BigDecimal {
     // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
     let value = BigDecimal.fromString("0");
 
-    for (let i = 0; i < this.tokens.size; i++) {
-      const currentValue = this.tokens.get(this.tokens.keys()[i]);
+    for (let i = 0; i < this.tokens.length; i++) {
+      const currentValue: TokenRecords = this.tokens[i];
       value = value.plus(currentValue.getValue());
     }
 
@@ -180,11 +181,8 @@ export class TokensRecords {
     // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
     let stringValue = "{";
 
-    for (let i = 0; i < this.tokens.size; i++) {
-      const currentKey = this.tokens.keys()[i];
-
-      stringValue = stringValue + '\n"' + currentKey + '":\n';
-      stringValue = stringValue + this.tokens.get(currentKey).toString();
+    for (let i = 0; i < this.tokens.length; i++) {
+      stringValue = stringValue + "\n" + this.tokens[i].toString();
       stringValue = stringValue + "\n,";
     }
 
