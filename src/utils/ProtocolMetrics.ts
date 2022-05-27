@@ -1,7 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { ethereum } from "@graphprotocol/graph-ts";
 
-import { MasterChef } from "../../generated/ProtocolMetrics/MasterChef";
 import { OlympusStakingV1 } from "../../generated/ProtocolMetrics/OlympusStakingV1";
 import { OlympusStakingV2 } from "../../generated/ProtocolMetrics/OlympusStakingV2";
 import { OlympusStakingV3, StakeCall } from "../../generated/ProtocolMetrics/OlympusStakingV3";
@@ -14,39 +13,31 @@ import {
   DISTRIBUTOR_CONTRACT_BLOCK,
   DISTRIBUTOR_CONTRACT_BLOCK_V2,
   DISTRIBUTOR_CONTRACT_V2,
-  LUSD_ERC20_CONTRACT,
-  OHMLUSD_ONSEN_ID,
-  ONSEN_ALLOCATOR,
-  STABILITY_POOL,
   STAKING_CONTRACT_V1,
   STAKING_CONTRACT_V2,
   STAKING_CONTRACT_V2_BLOCK,
   STAKING_CONTRACT_V3,
   STAKING_CONTRACT_V3_BLOCK,
-  SUSHI_MASTERCHEF,
   SUSHI_OHMETH_PAIR,
   SUSHI_OHMETH_PAIR_BLOCK,
   SUSHI_OHMETH_PAIR_BLOCKV2,
   SUSHI_OHMETH_PAIRV2,
-  SUSHI_OHMLUSD_PAIR,
-  SUSHI_OHMLUSD_PAIR_V2,
-  SUSHI_OHMLUSD_PAIR_V2_BLOCK,
   TREASURY_ADDRESS,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V2_BLOCK,
   TREASURY_ADDRESS_V3,
-  UNI_OHMLUSD_PAIR_BLOCK,
   UST_ERC20_CONTRACT,
   WBTC_ERC20_CONTRACT,
   WETH_ERC20_CONTRACT,
   XSUSI_ERC20_CONTRACT,
 } from "./Constants";
-import { getERC20, getStabilityPool } from "./ContractHelper";
+import { getERC20 } from "./ContractHelper";
 import { dayFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
 import {
   getOhmDaiProtocolOwnedLiquidity,
   getOhmFraxProtocolOwnedLiquidity,
+  getOhmLusdProtocolOwnedLiquidity,
 } from "./LiquidityCalculations";
 import {
   getCirculatingSupply,
@@ -61,7 +52,6 @@ import {
   getDaiRiskFreeValue,
   getFraxMarketValue,
   getFraxRiskFreeValue,
-  getLUSDBalance,
   getLusdMarketValue,
   getLusdRiskFreeValue,
   getStableValue,
@@ -126,10 +116,6 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
 }
 
 function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
-  const ohmdaiOnsenMC = MasterChef.bind(Address.fromString(SUSHI_MASTERCHEF));
-  const ohmlusdPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMLUSD_PAIR));
-  const ohmlusdPairv2 = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMLUSD_PAIR_V2));
-
   const ohmethPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMETH_PAIR));
   const ohmethPairv2 = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMETH_PAIRV2));
 
@@ -138,12 +124,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     treasury_address = TREASURY_ADDRESS_V2;
   }
 
-  const lusdTokens = getLUSDBalance(
-    getERC20("LUSD", LUSD_ERC20_CONTRACT, blockNumber),
-    getStabilityPool(STABILITY_POOL, blockNumber),
-    blockNumber,
-  );
-  const lusdBalance = lusdTokens.getBalance();
   const ustTokens = getUSTBalance(getERC20("UST", UST_ERC20_CONTRACT, blockNumber), blockNumber);
   const ustBalance = ustTokens.getValue();
 
@@ -170,53 +150,13 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const ohmDaiMarket = getDaiMarketValue(blockNumber);
   const ohmDaiRiskFreeValue = getDaiRiskFreeValue(blockNumber);
 
-  // OHMFRAX
+  // OHM-FRAX Liquidity
   const ohmFraxPOL = getOhmFraxProtocolOwnedLiquidity(blockNumber);
   const ohmFraxMarket = getFraxMarketValue(blockNumber);
   const ohmFraxRiskFreeValue = getFraxRiskFreeValue(blockNumber);
 
-  // OHMLUSD
-  let ohmlusdBalance = BigInt.fromI32(0);
-  let ohmlusdTotalLP = BigDecimal.fromString("0");
-  let ohmlusdPOL = BigDecimal.fromString("0");
-  if (blockNumber.gt(BigInt.fromString(UNI_OHMLUSD_PAIR_BLOCK))) {
-    ohmlusdBalance = ohmlusdPair
-      .balanceOf(Address.fromString(treasury_address))
-      .plus(ohmlusdPair.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)));
-
-    const ohmlusdOnsenBalance = ohmdaiOnsenMC.userInfo(
-      BigInt.fromI32(OHMLUSD_ONSEN_ID),
-      Address.fromString(ONSEN_ALLOCATOR),
-    ).value0;
-    ohmlusdBalance = ohmlusdBalance.plus(ohmlusdOnsenBalance);
-
-    ohmlusdTotalLP = toDecimal(ohmlusdPair.totalSupply(), 18);
-    if (ohmlusdTotalLP.gt(BigDecimal.fromString("0")) && ohmlusdBalance.gt(BigInt.fromI32(0))) {
-      ohmlusdPOL = toDecimal(ohmlusdBalance, 18)
-        .div(ohmlusdTotalLP)
-        .times(BigDecimal.fromString("100"));
-    }
-  }
-
-  if (blockNumber.gt(BigInt.fromString(SUSHI_OHMLUSD_PAIR_V2_BLOCK))) {
-    ohmlusdBalance = ohmlusdPairv2.balanceOf(Address.fromString(TREASURY_ADDRESS_V3));
-    log.debug("ohmlusdBalance {}", [ohmlusdBalance.toString()]);
-
-    const ohmlusdOnsenBalance = ohmdaiOnsenMC.userInfo(
-      BigInt.fromI32(OHMLUSD_ONSEN_ID),
-      Address.fromString(ONSEN_ALLOCATOR),
-    ).value0;
-    ohmlusdBalance = ohmlusdBalance.plus(ohmlusdOnsenBalance);
-    log.debug("ohmlusdOnsenBalance {}", [ohmlusdOnsenBalance.toString()]);
-
-    ohmlusdTotalLP = toDecimal(ohmlusdPairv2.totalSupply(), 18);
-    if (ohmlusdTotalLP.gt(BigDecimal.fromString("0")) && ohmlusdBalance.gt(BigInt.fromI32(0))) {
-      ohmlusdPOL = toDecimal(ohmlusdBalance, 18)
-        .div(ohmlusdTotalLP)
-        .times(BigDecimal.fromString("100"));
-    }
-  }
-
+  // OHM-LUSD Liquidity
+  const ohmLusdPOL = getOhmLusdProtocolOwnedLiquidity(blockNumber);
   const ohmLusdMarket = getLusdMarketValue(blockNumber);
   const ohmLusdRiskFreeValue = getLusdRiskFreeValue(blockNumber);
 
@@ -305,9 +245,8 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   log.debug("Treasury RFV {}", [rfv.toString()]);
   log.debug("Treasury xSushi value {}", [xSushiValue.toString()]);
   log.debug("Treasury WETH value {}", [weth_value.toString()]);
-  log.debug("Treasury LUSD value {}", [lusdBalance.toString()]);
-  log.debug("Treasury OHM-DAI RFV {}", [ohmDaiRiskFreeValue.toString()]);
-  log.debug("Treasury OHM-FRAX RFV {}", [ohmFraxRiskFreeValue.toString()]);
+  log.debug("Treasury OHM-DAI RFV {}", [ohmDaiRiskFreeValue.getValue().toString()]);
+  log.debug("Treasury OHM-FRAX RFV {}", [ohmFraxRiskFreeValue.getValue().toString()]);
   return [
     mv,
     rfv,
@@ -324,7 +263,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     // POL
     ohmDaiPOL,
     ohmFraxPOL,
-    ohmlusdPOL,
+    ohmLusdPOL,
     ohmethPOL,
     volatile_value,
     wbtc_value,

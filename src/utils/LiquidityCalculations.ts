@@ -3,11 +3,11 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import {
   getContractName,
   OHMDAI_ONSEN_ID,
+  OHMLUSD_ONSEN_ID,
   ONSEN_ALLOCATOR,
   SUSHI_MASTERCHEF,
   SUSHI_OHMDAI_PAIR,
   SUSHI_OHMDAI_PAIRV2,
-  SUSHI_OHMDAI_PAIRV2_BLOCK,
   SUSHI_OHMLUSD_PAIR,
   SUSHI_OHMLUSD_PAIR_V2,
   TREASURY_ADDRESS,
@@ -131,11 +131,13 @@ export function getOhmDaiLiquidityV2Balance(blockNumber: BigInt, riskFree: boole
 }
 
 /**
- * Returns the protocol-owned liquidity for the current version of the OHM-DAI liquidity pair.
+ * Returns the protocol-owned liquidity for the latest OHM-DAI liquidity pair.
  *
  * This currently includes:
  * - OHM-DAI V1
  * - OHM-DAI V2
+ *
+ * The latest pair is the one with both a non-zero total supply and balance.
  *
  * The value returned corresponds to the percentage, e.g. 80% will return 80 (not 0.8)
  *
@@ -143,28 +145,22 @@ export function getOhmDaiLiquidityV2Balance(blockNumber: BigInt, riskFree: boole
  * @returns BigDecimal representing the percentage of protocol-owned liquidity
  */
 export function getOhmDaiProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal {
-  let balance = BigDecimal.fromString("0");
-  let totalSupply = BigDecimal.fromString("1");
   const v1Pair = getUniswapV2Pair(SUSHI_OHMDAI_PAIR, blockNumber);
   const v2Pair = getUniswapV2Pair(SUSHI_OHMDAI_PAIRV2, blockNumber);
+  const v1Balance = getOhmDaiLiquidityBalance(blockNumber, false).getBalance();
+  const v2Balance = getOhmDaiLiquidityV2Balance(blockNumber, false).getBalance();
+  const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
+  const v2TotalSupply: BigInt = v2Pair ? v2Pair.totalSupply() : BigInt.fromString("-1");
 
-  if (v2Pair) {
-    balance = getOhmDaiLiquidityV2Balance(blockNumber, false).getBalance();
-    totalSupply = toDecimal(v2Pair.totalSupply(), 18);
-  } else if (v1Pair) {
-    balance = getOhmDaiLiquidityBalance(blockNumber, false).getBalance();
-    totalSupply = toDecimal(v1Pair.totalSupply(), 18);
-  } else {
-    throw new Error(
-      "Expected one of the contracts " +
-        SUSHI_OHMDAI_PAIR +
-        " and " +
-        SUSHI_OHMDAI_PAIRV2 +
-        " to be available.",
-    );
+  if (v2Balance.gt(BigDecimal.zero()) && v2TotalSupply.gt(BigInt.zero())) {
+    return v2Balance.div(toDecimal(v2TotalSupply, 18)).times(BigDecimal.fromString("100"));
   }
 
-  return balance.div(totalSupply).times(BigDecimal.fromString("100"));
+  if (v1Balance.gt(BigDecimal.zero()) && v1TotalSupply.gt(BigInt.zero())) {
+    return v1Balance.div(toDecimal(v1TotalSupply, 18)).times(BigDecimal.fromString("100"));
+  }
+
+  return BigDecimal.zero();
 }
 
 /**
@@ -230,11 +226,13 @@ export function getOhmFraxLiquidityV2Balance(blockNumber: BigInt, riskFree: bool
 }
 
 /**
- * Returns the protocol-owned liquidity for the current version of the OHM-FRAX liquidity pair.
+ * Returns the protocol-owned liquidity for the latest OHM-FRAX liquidity pair.
  *
  * This currently includes:
  * - OHM-FRAX V1
  * - OHM-FRAX V2
+ *
+ * The latest pair is the one with both a non-zero total supply and balance.
  *
  * The value returned corresponds to the percentage, e.g. 80% will return 80 (not 0.8)
  *
@@ -242,28 +240,22 @@ export function getOhmFraxLiquidityV2Balance(blockNumber: BigInt, riskFree: bool
  * @returns BigDecimal representing the percentage of protocol-owned liquidity
  */
 export function getOhmFraxProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal {
-  let balance = BigDecimal.fromString("0");
-  let totalSupply = BigDecimal.fromString("1");
   const v1Pair = getUniswapV2Pair(UNI_OHMFRAX_PAIR, blockNumber);
   const v2Pair = getUniswapV2Pair(UNI_OHMFRAX_PAIRV2, blockNumber);
+  const v1Balance = getOhmFraxLiquidityBalance(blockNumber, false).getBalance();
+  const v2Balance = getOhmFraxLiquidityV2Balance(blockNumber, false).getBalance();
+  const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
+  const v2TotalSupply: BigInt = v2Pair ? v2Pair.totalSupply() : BigInt.fromString("-1");
 
-  if (v2Pair) {
-    balance = getOhmFraxLiquidityV2Balance(blockNumber, false).getBalance();
-    totalSupply = toDecimal(v2Pair.totalSupply(), 18);
-  } else if (v1Pair) {
-    balance = getOhmFraxLiquidityBalance(blockNumber, false).getBalance();
-    totalSupply = toDecimal(v1Pair.totalSupply(), 18);
-  } else {
-    throw new Error(
-      "Expected one of the contracts " +
-        UNI_OHMFRAX_PAIR +
-        " and " +
-        UNI_OHMFRAX_PAIRV2 +
-        " to be available.",
-    );
+  if (v2Balance.gt(BigDecimal.zero()) && v2TotalSupply.gt(BigInt.zero())) {
+    return v2Balance.div(toDecimal(v2TotalSupply, 18)).times(BigDecimal.fromString("100"));
   }
 
-  return balance.div(totalSupply).times(BigDecimal.fromString("100"));
+  if (v1Balance.gt(BigDecimal.zero()) && v1TotalSupply.gt(BigInt.zero())) {
+    return v1Balance.div(toDecimal(v1TotalSupply, 18)).times(BigDecimal.fromString("100"));
+  }
+
+  return BigDecimal.zero();
 }
 
 /**
@@ -346,4 +338,37 @@ export function getOhmLusdLiquidityV2Balance(blockNumber: BigInt, riskFree: bool
   );
 
   return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
+}
+
+/**
+ * Returns the protocol-owned liquidity for the latest OHM-LUSD liquidity pair.
+ *
+ * This currently includes:
+ * - OHM-LUSD V1
+ * - OHM-LUSD V2
+ *
+ * The latest pair is the one with both a non-zero total supply and balance.
+ *
+ * The value returned corresponds to the percentage, e.g. 80% will return 80 (not 0.8)
+ *
+ * @param blockNumber
+ * @returns BigDecimal representing the percentage of protocol-owned liquidity
+ */
+export function getOhmLusdProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal {
+  const v1Pair = getUniswapV2Pair(SUSHI_OHMLUSD_PAIR, blockNumber);
+  const v2Pair = getUniswapV2Pair(SUSHI_OHMLUSD_PAIR_V2, blockNumber);
+  const v1Balance = getOhmLusdLiquidityBalance(blockNumber, false).getBalance();
+  const v2Balance = getOhmLusdLiquidityV2Balance(blockNumber, false).getBalance();
+  const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
+  const v2TotalSupply: BigInt = v2Pair ? v2Pair.totalSupply() : BigInt.fromString("-1");
+
+  if (v2Balance.gt(BigDecimal.zero()) && v2TotalSupply.gt(BigInt.zero())) {
+    return v2Balance.div(toDecimal(v2TotalSupply, 18)).times(BigDecimal.fromString("100"));
+  }
+
+  if (v1Balance.gt(BigDecimal.zero()) && v1TotalSupply.gt(BigInt.zero())) {
+    return v1Balance.div(toDecimal(v1TotalSupply, 18)).times(BigDecimal.fromString("100"));
+  }
+
+  return BigDecimal.zero();
 }
