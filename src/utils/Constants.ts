@@ -239,8 +239,8 @@ CONTRACT_NAME_MAP.set(BONDING_CALCULATOR, "Bonding Calculator");
 CONTRACT_NAME_MAP.set(ONSEN_ALLOCATOR, "Onsen Allocator");
 CONTRACT_NAME_MAP.set(VEFXS_ALLOCATOR, "VeFXS Allocator");
 
-export const getContractName = (contractAddress: string, defaultName = "Unknown"): string => {
-  if (!CONTRACT_NAME_MAP.has(contractAddress)) return defaultName;
+export const getContractName = (contractAddress: string): string => {
+  if (!CONTRACT_NAME_MAP.has(contractAddress)) return "Unknown";
 
   return CONTRACT_NAME_MAP.get(contractAddress);
 };
