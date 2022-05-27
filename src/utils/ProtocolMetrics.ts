@@ -2,20 +2,15 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { ethereum } from "@graphprotocol/graph-ts";
 
 import { MasterChef } from "../../generated/ProtocolMetrics/MasterChef";
-import { OlympusERC20 } from "../../generated/ProtocolMetrics/OlympusERC20";
 import { OlympusStakingV1 } from "../../generated/ProtocolMetrics/OlympusStakingV1";
 import { OlympusStakingV2 } from "../../generated/ProtocolMetrics/OlympusStakingV2";
 import { OlympusStakingV3, StakeCall } from "../../generated/ProtocolMetrics/OlympusStakingV3";
-import { sOlympusERC20 } from "../../generated/ProtocolMetrics/sOlympusERC20";
-import { sOlympusERC20V2 } from "../../generated/ProtocolMetrics/sOlympusERC20V2";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { ProtocolMetric } from "../../generated/schema";
 import { Distributor } from "../../generated/sOlympusERC20V1/Distributor";
 import { updateBondDiscounts } from "./BondDiscounts";
 import {
   ADAI_ERC20_CONTRACT,
-  BONDS_DEPOSIT,
-  DAO_WALLET,
   DISTRIBUTOR_CONTRACT,
   DISTRIBUTOR_CONTRACT_BLOCK,
   DISTRIBUTOR_CONTRACT_BLOCK_V2,
@@ -23,19 +18,10 @@ import {
   ERC20DAI_CONTRACT,
   ERC20FRAX_CONTRACT,
   LUSD_ERC20_CONTRACT,
-  MIGRATION_CONTRACT,
-  OHM_ERC20_CONTRACT,
   OHMDAI_ONSEN_ID,
   OHMLUSD_ONSEN_ID,
-  OHMV2_ERC20_CONTRACT,
-  OHMV2_ERC20_CONTRACT_BLOCK,
   ONSEN_ALLOCATOR,
   RARI_ALLOCATOR,
-  SOHM_ERC20_CONTRACT,
-  SOHM_ERC20_CONTRACTV2,
-  SOHM_ERC20_CONTRACTV2_BLOCK,
-  SOHM_ERC20_CONTRACTV3,
-  SOHM_ERC20_CONTRACTV3_BLOCK,
   STABILITY_POOL,
   STAKING_CONTRACT_V1,
   STAKING_CONTRACT_V2,
@@ -70,6 +56,12 @@ import {
 import { getERC20, getRariAllocator, getStabilityPool } from "./ContractHelper";
 import { dayFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
+import {
+  getCirculatingSupply,
+  getOhmMarketcap,
+  getSOhmCirculatingSupply,
+  getTotalSupply,
+} from "./OhmCalculations";
 import {
   clearPriceCache,
   getDiscountedPairLUSD,
@@ -142,98 +134,6 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
     protocolMetric.save();
   }
   return protocolMetric as ProtocolMetric;
-}
-
-function getOHMMarketcap(blockNumber: BigInt): BigDecimal {
-  // Used to calculate current marketcap
-  const marketCap = getOHMUSDRate(blockNumber).times(
-    getCriculatingSupply(blockNumber, getTotalSupply(blockNumber)),
-  );
-  log.debug("Market Cap current: {}", [marketCap.toString()]);
-
-  // Used to calculate ciculating MarketCap of OHM v1 if v2 is already deployed
-  // if(blockNumber.gt(BigInt.fromString(OHMV2_ERC20_CONTRACT_BLOCK))){
-  //     let block = BigInt.fromI32(1)
-  //     let v1MarketCap = getOHMUSDRate(block).times(getCriculatingSupply(block, getTotalSupply(block)))
-  //     marketCap = marketCap.plus(v1MarketCap)
-  //     log.debug("Market Cap v1: {}", [v1MarketCap.toString()])
-  // }
-
-  log.debug("Market Cap total: {}", [marketCap.toString()]);
-
-  return marketCap;
-}
-
-function getTotalSupply(blockNumber: BigInt): BigDecimal {
-  let ohm_contract = OlympusERC20.bind(Address.fromString(OHM_ERC20_CONTRACT));
-  let total_supply = toDecimal(ohm_contract.totalSupply(), 9);
-  if (blockNumber.gt(BigInt.fromString(OHMV2_ERC20_CONTRACT_BLOCK))) {
-    ohm_contract = OlympusERC20.bind(Address.fromString(OHMV2_ERC20_CONTRACT));
-    total_supply = toDecimal(ohm_contract.totalSupply(), 9);
-  }
-
-  log.debug("Total Supply {}", [total_supply.toString()]);
-  return total_supply;
-}
-
-/**
- * - total supply (OHM V1 or V2, depending on the block)
- * - OHM:
- *  - subtract: DAO wallet
- *  - subtract: migration contract
- * - OHM V2:
- *  - subtract: DAO wallet
- *  - subtract: migration contract
- *  - subtract: bonds deposit
- *
- * @param blockNumber
- * @param total_supply
- * @returns
- */
-function getCriculatingSupply(blockNumber: BigInt, total_supply: BigDecimal): BigDecimal {
-  let ohm_contract = OlympusERC20.bind(Address.fromString(OHM_ERC20_CONTRACT));
-  let circ_supply = total_supply.minus(
-    toDecimal(ohm_contract.balanceOf(Address.fromString(DAO_WALLET)), 9),
-  );
-  circ_supply = circ_supply.minus(
-    toDecimal(ohm_contract.balanceOf(Address.fromString(MIGRATION_CONTRACT)), 9),
-  );
-
-  if (blockNumber.gt(BigInt.fromString(OHMV2_ERC20_CONTRACT_BLOCK))) {
-    ohm_contract = OlympusERC20.bind(Address.fromString(OHMV2_ERC20_CONTRACT));
-    circ_supply = total_supply.minus(
-      toDecimal(ohm_contract.balanceOf(Address.fromString(DAO_WALLET)), 9),
-    );
-    circ_supply = circ_supply.minus(
-      toDecimal(ohm_contract.balanceOf(Address.fromString(MIGRATION_CONTRACT)), 9),
-    );
-    circ_supply = circ_supply.minus(
-      toDecimal(ohm_contract.balanceOf(Address.fromString(BONDS_DEPOSIT)), 9),
-    );
-  }
-
-  log.debug("Circulating Supply {}", [circ_supply.toString()]);
-  return circ_supply;
-}
-
-function getSohmSupply(blockNumber: BigInt): BigDecimal {
-  let sohm_supply = BigDecimal.fromString("0");
-
-  const sohm_contract_v1 = sOlympusERC20.bind(Address.fromString(SOHM_ERC20_CONTRACT));
-  sohm_supply = toDecimal(sohm_contract_v1.circulatingSupply(), 9);
-
-  if (blockNumber.gt(BigInt.fromString(SOHM_ERC20_CONTRACTV2_BLOCK))) {
-    const sohm_contract_v2 = sOlympusERC20V2.bind(Address.fromString(SOHM_ERC20_CONTRACTV2));
-    sohm_supply = sohm_supply.plus(toDecimal(sohm_contract_v2.circulatingSupply(), 9));
-  }
-
-  if (blockNumber.gt(BigInt.fromString(SOHM_ERC20_CONTRACTV3_BLOCK))) {
-    const sohm_contract_v3 = sOlympusERC20V2.bind(Address.fromString(SOHM_ERC20_CONTRACTV3));
-    sohm_supply = toDecimal(sohm_contract_v3.circulatingSupply(), 9);
-  }
-
-  log.debug("sOHM Supply {}", [sohm_supply.toString()]);
-  return sohm_supply;
 }
 
 function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
@@ -495,7 +395,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const treasuryTotalBackingRecords = getTreasuryTotalBacking(
     blockNumber,
     lpValue.div(BigDecimal.fromString("2")),
-    getCriculatingSupply(blockNumber, getTotalSupply(blockNumber)),
+    getCirculatingSupply(blockNumber, getTotalSupply(blockNumber)),
   );
   const treasuryTotalBacking = treasuryTotalBackingRecords.getValue();
   const treasuryLPValue = lpValue;
@@ -541,41 +441,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
    * wbtc_value = wBTC (treasury v3 & treasury v3)
    *
    * treasuryVolatileBacking = vesting_assets + xSushi_value + cvx_value + fxs_value + veFXS (veFXS allocator) + weth_value + wbtc_value
-   */
-
-  /**
-   * Treasury total backing
-   *
-   * vesting_assets = 32500000
-   *
-   * convexrfv = (convex allocator 1 total value deployed + convex allocator 2 total value deployed + convex allocator 3 total value deployed)
-   *
-   * fraxBalance = FRAX (treasury v2 & treasury v3) + convexrfv
-   *
-   * lusdBalance = LUSD (treasury v2 & treasury v3) + LUSD stability pool deposits
-   *
-   * ustBalance = UST (treasury v3 & treasury v3)
-   *
-   * treasuryStableBacking = daiBalance + fraxBalance + lusdBalance + ustBalance
-   *
-   * getPairUSD = (LP amount / LP supply) * (OHM value + USD value)
-   *
-   * ohmdai_value = getPairUSD(ohmDaiBalance) + getPairUSD(ohmdaiSushiBalancev2)
-   *
-   * lpValue = ohmdai_value + ohmfrax_value + ohmlusd_value + ohmeth_value
-   *
-   * getCriculatingSupply (of OHM V2) = (contract total supply - DAO wallet balance - migration contract balance - bonds deposit balance)
-   *
-   * treasuryTotalBacking = treasuryStableBacking - vesting_assets + treasuryVolatileBacking + (lpValue / 2) - cvx_value - fxs_value - getCriculatingSupply
-   *
-   * Clarity needed:
-   * - CVX should not be subtracted.
-   * - vlCVX should not be subtracted (locked only for 3 months)
-   * - why substract getCriculatingSupply or include it at all?
-   * - why subtract fxs_value? It's not locked
-   * - why isn't veFXS subtracted from treasuryVolatileBacking? Since it's locked
-   * - include FEI balance?
-   * - include TRIBE balance?
    */
   return [
     mv,
@@ -742,16 +607,16 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.totalSupply = getTotalSupply(blockNumber);
 
   // Circ Supply
-  pm.ohmCirculatingSupply = getCriculatingSupply(blockNumber, pm.totalSupply);
+  pm.ohmCirculatingSupply = getCirculatingSupply(blockNumber, pm.totalSupply);
 
   // sOhm Supply
-  pm.sOhmCirculatingSupply = getSohmSupply(blockNumber);
+  pm.sOhmCirculatingSupply = getSOhmCirculatingSupply(blockNumber);
 
   // OHM Price
   pm.ohmPrice = getOHMUSDRate(block.number);
 
   // OHM Market Cap
-  pm.marketCap = getOHMMarketcap(block.number);
+  pm.marketCap = getOhmMarketcap(block.number);
 
   // Total Value Locked
   pm.totalValueLocked = pm.sOhmCirculatingSupply.times(pm.ohmPrice);

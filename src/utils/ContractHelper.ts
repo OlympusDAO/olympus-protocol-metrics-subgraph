@@ -4,6 +4,9 @@ import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { MasterChef } from "../../generated/ProtocolMetrics/MasterChef";
 import { RariAllocator } from "../../generated/ProtocolMetrics/RariAllocator";
+import { sOlympusERC20 } from "../../generated/ProtocolMetrics/sOlympusERC20";
+import { sOlympusERC20V2 } from "../../generated/ProtocolMetrics/sOlympusERC20V2";
+import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
 import { StabilityPool } from "../../generated/ProtocolMetrics/StabilityPool";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
@@ -17,6 +20,9 @@ import { toDecimal } from "./Decimals";
  * to statically-type these contract maps.
  */
 const contractsERC20 = new Map<string, ERC20>();
+const contractsSOlympusERC20 = new Map<string, sOlympusERC20>();
+const contractsSOlympusERC20V2 = new Map<string, sOlympusERC20V2>();
+const contractsSOlympusERC20V3 = new Map<string, sOlympusERC20V3>();
 const contractsUniswapV2Pair = new Map<string, UniswapV2Pair>();
 const contractsUniswapV3Pair = new Map<string, UniswapV3Pair>();
 const contractsRariAllocator = new Map<string, RariAllocator>();
@@ -77,6 +83,66 @@ export function getERC20(
   }
 
   return contractsERC20.get(contractAddress);
+}
+
+export function getSOlympusERC20(
+  contractName: string,
+  contractAddress: string,
+  currentBlockNumber: BigInt,
+): sOlympusERC20 | null {
+  log.debug("Fetching sOlympusERC20 contract {} for address {}", [contractName, contractAddress]);
+  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
+
+  if (!contractsSOlympusERC20.has(contractAddress)) {
+    log.debug("Binding sOlympusERC20 contract for address {}. Block number {}", [
+      contractAddress,
+      currentBlockNumber.toString(),
+    ]);
+    const contract = sOlympusERC20.bind(Address.fromString(contractAddress));
+    contractsSOlympusERC20.set(contractAddress, contract);
+  }
+
+  return contractsSOlympusERC20.get(contractAddress);
+}
+
+export function getSOlympusERC20V2(
+  contractName: string,
+  contractAddress: string,
+  currentBlockNumber: BigInt,
+): sOlympusERC20V2 | null {
+  log.debug("Fetching sOlympusERC20V2 contract {} for address {}", [contractName, contractAddress]);
+  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
+
+  if (!contractsSOlympusERC20V2.has(contractAddress)) {
+    log.debug("Binding sOlympusERC20V2 contract for address {}. Block number {}", [
+      contractAddress,
+      currentBlockNumber.toString(),
+    ]);
+    const contract = sOlympusERC20V2.bind(Address.fromString(contractAddress));
+    contractsSOlympusERC20V2.set(contractAddress, contract);
+  }
+
+  return contractsSOlympusERC20V2.get(contractAddress);
+}
+
+export function getSOlympusERC20V3(
+  contractName: string,
+  contractAddress: string,
+  currentBlockNumber: BigInt,
+): sOlympusERC20V3 | null {
+  log.debug("Fetching sOlympusERC20V3 contract {} for address {}", [contractName, contractAddress]);
+  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
+
+  if (!contractsSOlympusERC20V3.has(contractAddress)) {
+    log.debug("Binding sOlympusERC20V3 contract for address {}. Block number {}", [
+      contractAddress,
+      currentBlockNumber.toString(),
+    ]);
+    const contract = sOlympusERC20V3.bind(Address.fromString(contractAddress));
+    contractsSOlympusERC20V3.set(contractAddress, contract);
+  }
+
+  return contractsSOlympusERC20V3.get(contractAddress);
 }
 
 export function getUniswapV2Pair(
