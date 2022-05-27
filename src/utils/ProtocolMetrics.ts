@@ -19,13 +19,13 @@ import {
   STAKING_CONTRACT_V3_BLOCK,
   UST_ERC20_CONTRACT,
   WBTC_ERC20_CONTRACT,
-  WETH_ERC20_CONTRACT,
   XSUSI_ERC20_CONTRACT,
 } from "./Constants";
 import { getERC20 } from "./ContractHelper";
 import { dayFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
 import {
+  getLiquidityPoolValue,
   getOhmDaiProtocolOwnedLiquidity,
   getOhmEthProtocolOwnedLiquidity,
   getOhmFraxProtocolOwnedLiquidity,
@@ -46,7 +46,6 @@ import {
   getFraxRiskFreeValue,
   getLusdMarketValue,
   getLusdRiskFreeValue,
-  getStableValue,
   getUSTBalance,
 } from "./TokenStablecoins";
 import {
@@ -55,10 +54,11 @@ import {
   getEthRiskFreeValue,
   getVolatileValue,
   getWBTCBalance,
-  getWETHBalance,
   getXSushiBalance,
 } from "./TokenVolatile";
 import {
+  getMarketValue,
+  getRiskFreeValue,
   getTreasuryStableBacking,
   getTreasuryTotalBacking,
   getTreasuryVolatileBacking,
@@ -111,25 +111,16 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
 
 function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const ustTokens = getUSTBalance(getERC20("UST", UST_ERC20_CONTRACT, blockNumber), blockNumber);
-  const ustBalance = ustTokens.getValue();
 
   // TODO add balancer
   // TODO add uniswap v3
 
-  const volatile_records = getVolatileValue(blockNumber, false);
-  const volatile_value = volatile_records.getValue();
-
-  const wethBalance = getWETHBalance(
-    getERC20("wETH", WETH_ERC20_CONTRACT, blockNumber),
-    blockNumber,
-  );
-  const weth_value = wethBalance.getValue();
+  const volatileRecords = getVolatileValue(blockNumber, false);
 
   const wbtcBalance = getWBTCBalance(
     getERC20("wBTC", WBTC_ERC20_CONTRACT, blockNumber),
     blockNumber,
   );
-  const wbtc_value = wbtcBalance.getValue();
 
   // OHM-DAI Liquidity
   const ohmDaiPOL = getOhmDaiProtocolOwnedLiquidity(blockNumber);
@@ -151,76 +142,56 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const ohmEthMarket = getEthMarketValue(blockNumber);
   const ohmEthRiskFreeValue = getEthRiskFreeValue(blockNumber);
 
-  const stableValueRecords = getStableValue(blockNumber);
-  const stableValueDecimal = stableValueRecords.getValue();
-
   const treasuryVolatileBackingRecords = getTreasuryVolatileBacking(blockNumber, false);
-  const treasuryVolatileBacking = treasuryVolatileBackingRecords.getValue();
 
-  const lpValue = ohmDaiMarket
-    .getValue()
-    .plus(ohmFraxMarket.getValue())
-    .plus(ohmLusdMarket.getValue())
-    .plus(ohmEthMarket.getValue());
-  const rfvLpValue = ohmDaiRiskFreeValue
-    .getValue()
-    .plus(ohmFraxRiskFreeValue.getValue())
-    .plus(ohmLusdRiskFreeValue.getValue())
-    .plus(ohmEthRiskFreeValue.getValue());
+  const lpValue = getLiquidityPoolValue(blockNumber, false);
 
-  const mv = stableValueDecimal
-    .plus(lpValue)
-    .plus(weth_value)
-    .plus(wbtc_value)
-    .plus(volatile_value);
-  const rfv = stableValueDecimal.plus(rfvLpValue);
+  const marketValueBalance = getMarketValue(blockNumber);
 
-  const cvxVlCvxValue = getCVXVlCVXBalance(blockNumber).getValue();
+  const riskFreeValueBalance = getRiskFreeValue(blockNumber);
+
+  const cvxVlCvxValue = getCVXVlCVXBalance(blockNumber);
   const xSushiBalance = getXSushiBalance(
     getERC20("xSUSHI", XSUSI_ERC20_CONTRACT, blockNumber),
     blockNumber,
   );
-  const xSushiValue = xSushiBalance.getValue();
 
   const treasuryStableBackingRecords = getTreasuryStableBacking(blockNumber);
-  const treasuryStableBacking = treasuryStableBackingRecords.getValue();
   const treasuryTotalBackingRecords = getTreasuryTotalBacking(
     blockNumber,
-    lpValue.div(BigDecimal.fromString("2")),
+    lpValue.getValue().div(BigDecimal.fromString("2")),
     getCirculatingSupply(blockNumber, getTotalSupply(blockNumber)),
   );
   const treasuryTotalBacking = treasuryTotalBackingRecords.getValue();
-  const treasuryLPValue = lpValue;
 
-  log.debug("Treasury Market Value {}", [mv.toString()]);
-  log.debug("Treasury RFV {}", [rfv.toString()]);
-  log.debug("Treasury xSushi value {}", [xSushiValue.toString()]);
-  log.debug("Treasury WETH value {}", [weth_value.toString()]);
+  log.debug("Treasury Market Value {}", [marketValueBalance.toString()]);
+  log.debug("Treasury RFV {}", [riskFreeValueBalance.toString()]);
+  log.debug("Treasury Total Backing {}", [treasuryTotalBacking.toString()]);
   return [
-    mv,
-    rfv,
+    marketValueBalance.getValue(),
+    riskFreeValueBalance.getValue(),
     ohmDaiRiskFreeValue.getValue(),
     ohmFraxRiskFreeValue.getValue(),
     ohmDaiMarket.getValue(),
     ohmFraxMarket.getValue(),
-    xSushiValue,
+    xSushiBalance.getValue(),
     ohmEthRiskFreeValue.getValue(),
     ohmEthMarket.getValue(),
     ohmLusdRiskFreeValue.getValue(),
     ohmLusdMarket.getValue(),
-    cvxVlCvxValue,
+    cvxVlCvxValue.getValue(),
     // POL
     ohmDaiPOL,
     ohmFraxPOL,
     ohmLusdPOL,
     ohmEthPOL,
-    volatile_value,
-    wbtc_value,
-    ustBalance,
-    treasuryStableBacking,
-    treasuryVolatileBacking,
-    treasuryTotalBacking,
-    treasuryLPValue,
+    volatileRecords.getValue(),
+    wbtcBalance.getValue(),
+    ustTokens.getValue(),
+    treasuryStableBackingRecords.getValue(),
+    treasuryVolatileBackingRecords.getValue(),
+    treasuryTotalBackingRecords.getValue(),
+    lpValue.getValue(),
   ];
 }
 

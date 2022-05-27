@@ -5,6 +5,7 @@ import { getERC20 } from "./ContractHelper";
 import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
 import { getStableValue } from "./TokenStablecoins";
 import { getVolatileValue, getWBTCBalance, getWETHBalance } from "./TokenVolatile";
+import { getLiquidityPoolValue } from "./LiquidityCalculations";
 
 /**
  * Returns the value of the volatile backing
@@ -91,5 +92,56 @@ export function getTreasuryTotalBacking(
   );
 
   log.info("Treasury total backing at block {}: {}", [blockNumber.toString(), records.toString()]);
+  return records;
+}
+
+/**
+ * Returns the market value, which is composed of:
+ * - stable value (getStableValue)
+ * - liquidity pool value (getLiquidityPoolValue)
+ * - volatile value (getVolatileValue)
+ * - wETH value
+ * - wBTC value
+ *
+ * @param blockNumber
+ * @returns
+ */
+export function getMarketValue(blockNumber: BigInt): TokensRecords {
+  // TODO check that ETH and stables aren't being double-counted
+  const records = new TokensRecords();
+
+  records.combine(getStableValue(blockNumber));
+  records.combine(getLiquidityPoolValue(blockNumber, false));
+  records.combine(getVolatileValue(blockNumber, false));
+
+  const wethBalance = getWETHBalance(
+    getERC20("wETH", WETH_ERC20_CONTRACT, blockNumber),
+    blockNumber,
+  );
+  records.addToken("wETH", wethBalance);
+
+  const wbtcBalance = getWBTCBalance(
+    getERC20("wBTC", WBTC_ERC20_CONTRACT, blockNumber),
+    blockNumber,
+  );
+  records.addToken("wBTC", wbtcBalance);
+
+  return records;
+}
+
+/**
+ * Returns the risk-free value, which is composed of:
+ * - stable value (getStableValue)
+ * - risk-free value of liquidity pools (getLiquidityPoolValue)
+ *
+ * @param blockNumber
+ * @returns
+ */
+export function getRiskFreeValue(blockNumber: BigInt): TokensRecords {
+  const records = new TokensRecords();
+
+  records.combine(getStableValue(blockNumber));
+  records.combine(getLiquidityPoolValue(blockNumber, true));
+
   return records;
 }

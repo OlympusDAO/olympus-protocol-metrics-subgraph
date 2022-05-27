@@ -27,7 +27,16 @@ import {
 import { toDecimal } from "./Decimals";
 import { LiquidityBalances } from "./LiquidityBalance";
 import { getDiscountedPairUSD, getPairUSD } from "./Price";
-import { TokenRecord, TokenRecords } from "./TokenRecord";
+import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
+import {
+  getDaiMarketValue,
+  getDaiRiskFreeValue,
+  getFraxMarketValue,
+  getFraxRiskFreeValue,
+  getLusdMarketValue,
+  getLusdRiskFreeValue,
+} from "./TokenStablecoins";
+import { getEthMarketValue, getEthRiskFreeValue } from "./TokenVolatile";
 
 function getLiquidityBalance(
   liquidityBalance: LiquidityBalances,
@@ -468,4 +477,27 @@ export function getOhmEthProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal
   }
 
   return BigDecimal.zero();
+}
+
+// TODO Add FEI liquidity
+/**
+ * Returns the total market value (tokens and liquidity pools) for the following pairs:
+ * - DAI
+ * - FRAX
+ * - LUSD
+ * - ETH
+ *
+ * @param blockNumber
+ * @param riskFree If `riskFree` is true, the risk-free value will be returned
+ * @returns TokensRecords object
+ */
+export function getLiquidityPoolValue(blockNumber: BigInt, riskFree: boolean): TokensRecords {
+  const records = new TokensRecords();
+
+  records.combine(riskFree ? getDaiRiskFreeValue(blockNumber) : getDaiMarketValue(blockNumber));
+  records.combine(riskFree ? getFraxRiskFreeValue(blockNumber) : getFraxMarketValue(blockNumber));
+  records.combine(riskFree ? getLusdRiskFreeValue(blockNumber) : getLusdMarketValue(blockNumber));
+  records.combine(riskFree ? getEthRiskFreeValue(blockNumber) : getEthMarketValue(blockNumber));
+
+  return records;
 }
