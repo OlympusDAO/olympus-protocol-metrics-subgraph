@@ -10,18 +10,15 @@ import { ProtocolMetric } from "../../generated/schema";
 import { Distributor } from "../../generated/sOlympusERC20V1/Distributor";
 import { updateBondDiscounts } from "./BondDiscounts";
 import {
-  ADAI_ERC20_CONTRACT,
   DISTRIBUTOR_CONTRACT,
   DISTRIBUTOR_CONTRACT_BLOCK,
   DISTRIBUTOR_CONTRACT_BLOCK_V2,
   DISTRIBUTOR_CONTRACT_V2,
-  ERC20DAI_CONTRACT,
   ERC20FRAX_CONTRACT,
   LUSD_ERC20_CONTRACT,
   OHMDAI_ONSEN_ID,
   OHMLUSD_ONSEN_ID,
   ONSEN_ALLOCATOR,
-  RARI_ALLOCATOR,
   STABILITY_POOL,
   STAKING_CONTRACT_V1,
   STAKING_CONTRACT_V2,
@@ -53,7 +50,7 @@ import {
   WETH_ERC20_CONTRACT,
   XSUSI_ERC20_CONTRACT,
 } from "./Constants";
-import { getERC20, getRariAllocator, getStabilityPool } from "./ContractHelper";
+import { getERC20, getStabilityPool } from "./ContractHelper";
 import { dayFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
 import {
@@ -73,7 +70,6 @@ import {
   getPairWETH,
 } from "./Price";
 import {
-  getDaiBalance,
   getDaiMarketValue,
   getDaiRiskFreeValue,
   getFraxBalance,
@@ -157,13 +153,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     treasury_address = TREASURY_ADDRESS_V2;
   }
 
-  const daiTokens = getDaiBalance(
-    getERC20("DAI", ERC20DAI_CONTRACT, blockNumber),
-    getERC20("aDAI", ADAI_ERC20_CONTRACT, blockNumber),
-    getRariAllocator(RARI_ALLOCATOR, blockNumber),
-    blockNumber,
-  );
-  const daiBalance = daiTokens.getBalance();
   const fraxTokens = getFraxBalance(getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber), blockNumber);
   const fraxBalance = fraxTokens.getBalance();
   const lusdTokens = getLUSDBalance(
@@ -395,7 +384,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
 
   log.debug("Treasury Market Value {}", [mv.toString()]);
   log.debug("Treasury RFV {}", [rfv.toString()]);
-  log.debug("Treasury DAI value {}", [daiBalance.toString()]);
   log.debug("Treasury xSushi value {}", [xSushiValue.toString()]);
   log.debug("Treasury WETH value {}", [weth_value.toString()]);
   log.debug("Treasury LUSD value {}", [lusdBalance.toString()]);
@@ -403,20 +391,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   log.debug("Treasury Frax value {}", [fraxBalance.toString()]);
   log.debug("Treasury OHM-FRAX RFV {}", [ohmfrax_rfv.toString()]);
   log.debug("Treasury OHM-LUSD RFV {}", [ohmlusd_rfv.toString()]);
-
-  /**
-   * DAI risk-free value
-   *
-   * ohmDaiBalance = Sushi OHM-DAI pair (treasury v2 & treasury v3) + onsen allocator balance
-   *
-   * ohmdaiSushiBalancev2 = Sushi OHM-DAI pair v2 (treasury v3)
-   *
-   * daiBalance = DAI (treasury v3 & treasury v3) + aDAI (Aave) + aDAI (Aave v2)
-   *
-   * getDiscountedPairUSD = (LP amount / LP supply) * (2 * sqrt(DAI quantity * OHM quantity))
-   *
-   * = getDiscountedPairUSD(ohmDaiBalance) + getDiscountedPairUSD(ohmdaiSushiBalancev2) + daiBalance
-   */
   return [
     mv,
     rfv,
