@@ -61,6 +61,7 @@ import {
   getOhmMarketcap,
   getSOhmCirculatingSupply,
   getTotalSupply,
+  getTotalValueLocked,
 } from "./OhmCalculations";
 import {
   clearPriceCache,
@@ -424,24 +425,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
    *
    * = getDiscountedPairUSD(ohmDaiBalance) + getDiscountedPairUSD(ohmdaiSushiBalancev2) + daiBalance
    */
-
-  /**
-   * Treasury volatile backing
-   *
-   * vesting_assets = 32500000
-   *
-   * xSushi_value = xSUSHI (treasury v2 & treasury v3)
-   *
-   * cvx_value = CVX (treasury v2 & treasury v3) + vlCVX (Convex allocator)
-   *
-   * fxs_value = FXS (treasury v2 & treasury v3)
-   *
-   * weth_value = wETH (treasury v2 & treasury v3)
-   *
-   * wbtc_value = wBTC (treasury v3 & treasury v3)
-   *
-   * treasuryVolatileBacking = vesting_assets + xSushi_value + cvx_value + fxs_value + veFXS (veFXS allocator) + weth_value + wbtc_value
-   */
   return [
     mv,
     rfv,
@@ -619,7 +602,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.marketCap = getOhmMarketcap(block.number);
 
   // Total Value Locked
-  pm.totalValueLocked = pm.sOhmCirculatingSupply.times(pm.ohmPrice);
+  pm.totalValueLocked = getTotalValueLocked(block.number);
 
   // Treasury RFV and MV
   const mv_rfv = getMV_RFV(blockNumber);

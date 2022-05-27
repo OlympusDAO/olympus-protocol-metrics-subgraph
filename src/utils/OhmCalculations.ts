@@ -140,3 +140,15 @@ export function getSOhmCirculatingSupply(blockNumber: BigInt): BigDecimal {
 
   return sOhmSupply;
 }
+
+/**
+ * Returns the total value locked (TVL) into the protocol, which is calculated as the
+ * circulating supply of sOHM (sOHM being a staked token is locked) multiplied by the
+ * OHM-USD price.
+ *
+ * @param blockNumber the current block number
+ * @returns BigDecimal representing the TVL at the current block
+ */
+export function getTotalValueLocked(blockNumber: BigInt): BigDecimal {
+  return getSOhmCirculatingSupply(blockNumber).times(getOHMUSDRate(blockNumber));
+}

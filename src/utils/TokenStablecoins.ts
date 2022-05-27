@@ -96,9 +96,6 @@ export function getDaiBalance(
         toDecimal(getBalance(aDaiERC20, AAVE_ALLOCATOR, blockNumber), 18),
       ),
     );
-  }
-
-  if (aDaiERC20) {
     records.push(
       new TokenRecord(
         "DAI",

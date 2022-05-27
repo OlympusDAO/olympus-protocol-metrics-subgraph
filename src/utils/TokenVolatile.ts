@@ -444,6 +444,8 @@ export function getWBTCBalance(wbtcERC20: ERC20 | null, blockNumber: BigInt): To
  * - Vesting assets
  * - veFXS
  *
+ * vlCVX is only locked for 3 months at a time, so is considered liquid.
+ *
  * @param blockNumber the current block number
  * @returns TokensRecords object
  */
