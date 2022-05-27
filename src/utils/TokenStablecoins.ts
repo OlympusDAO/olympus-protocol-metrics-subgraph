@@ -37,6 +37,8 @@ import {
   getOhmDaiLiquidityV2Balance,
   getOhmFraxLiquidityBalance,
   getOhmFraxLiquidityV2Balance,
+  getOhmLusdLiquidityBalance,
+  getOhmLusdLiquidityV2Balance,
 } from "./LiquidityCalculations";
 import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
 
@@ -558,6 +560,62 @@ export function getFraxMarketValue(blockNumber: BigInt): TokensRecords {
   records.addToken("OHM-FRAX V1", getOhmFraxLiquidityBalance(blockNumber, false));
 
   records.addToken("OHM-FRAX V2", getOhmFraxLiquidityV2Balance(blockNumber, false));
+
+  return records;
+}
+
+/**
+ * Returns the LUSD risk-free value, which is defined as:
+ * - Balance of LUSD
+ * - Discounted value of OHM-LUSD pair (where OHM = $1)
+ * - Discounted value of OHM-LUSD pair V2 (where OHM = $1)
+ *
+ * @param blockNumber the current block number
+ * @returns TokensRecords representing the components of the risk-free value
+ */
+export function getLusdRiskFreeValue(blockNumber: BigInt): TokensRecords {
+  const records = new TokensRecords();
+
+  records.addToken(
+    "LUSD",
+    getLUSDBalance(
+      getERC20("LUSD", LUSD_ERC20_CONTRACT, blockNumber),
+      getStabilityPool(STABILITY_POOL, blockNumber),
+      blockNumber,
+    ),
+  );
+
+  records.addToken("OHM-LUSD V1", getOhmLusdLiquidityBalance(blockNumber, true));
+
+  records.addToken("OHM-LUSD V2", getOhmLusdLiquidityV2Balance(blockNumber, true));
+
+  return records;
+}
+
+/**
+ * Returns the LUSD market value, which is defined as:
+ * - Balance of LUSD
+ * - Value of OHM-LUSD pair
+ * - Value of OHM-LUSD pair V2
+ *
+ * @param blockNumber the current block number
+ * @returns TokensRecords representing the components of the market value
+ */
+export function getLusdMarketValue(blockNumber: BigInt): TokensRecords {
+  const records = new TokensRecords();
+
+  records.addToken(
+    "LUSD",
+    getLUSDBalance(
+      getERC20("LUSD", LUSD_ERC20_CONTRACT, blockNumber),
+      getStabilityPool(STABILITY_POOL, blockNumber),
+      blockNumber,
+    ),
+  );
+
+  records.addToken("OHM-LUSD V1", getOhmLusdLiquidityBalance(blockNumber, false));
+
+  records.addToken("OHM-LUSD V2", getOhmLusdLiquidityV2Balance(blockNumber, false));
 
   return records;
 }

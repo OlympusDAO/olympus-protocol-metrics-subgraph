@@ -74,6 +74,8 @@ import {
   getFraxMarketValue,
   getFraxRiskFreeValue,
   getLUSDBalance,
+  getLusdMarketValue,
+  getLusdRiskFreeValue,
   getStableValue,
   getUSTBalance,
 } from "./TokenStablecoins";
@@ -217,8 +219,8 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
       .times(BigDecimal.fromString("100"));
   }
 
-  const ohmdai_market = getDaiMarketValue(blockNumber);
-  const ohmdai_rfv = getDaiRiskFreeValue(blockNumber);
+  const ohmDaiMarket = getDaiMarketValue(blockNumber);
+  const ohmDaiRiskFreeValue = getDaiRiskFreeValue(blockNumber);
 
   // OHMFRAX
   let ohmfraxBalance = BigInt.fromI32(0);
@@ -244,12 +246,10 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   }
 
   const ohmFraxMarket = getFraxMarketValue(blockNumber);
-  const ohmfrax_rfv = getFraxRiskFreeValue(blockNumber);
+  const ohmFraxRiskFreeValue = getFraxRiskFreeValue(blockNumber);
 
   // OHMLUSD
   let ohmlusdBalance = BigInt.fromI32(0);
-  let ohmlusd_value = BigDecimal.fromString("0");
-  let ohmlusd_rfv = BigDecimal.fromString("0");
   let ohmlusdTotalLP = BigDecimal.fromString("0");
   let ohmlusdPOL = BigDecimal.fromString("0");
   if (blockNumber.gt(BigInt.fromString(UNI_OHMLUSD_PAIR_BLOCK))) {
@@ -263,11 +263,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     ).value0;
     ohmlusdBalance = ohmlusdBalance.plus(ohmlusdOnsenBalance);
 
-    ohmlusd_value = getPairUSD(ohmlusdBalance, SUSHI_OHMLUSD_PAIR, blockNumber);
-
-    log.debug("ohmlusd_value {}", [ohmlusd_value.toString()]);
-
-    ohmlusd_rfv = getDiscountedPairUSD(ohmlusdBalance, SUSHI_OHMLUSD_PAIR);
     ohmlusdTotalLP = toDecimal(ohmlusdPair.totalSupply(), 18);
     if (ohmlusdTotalLP.gt(BigDecimal.fromString("0")) && ohmlusdBalance.gt(BigInt.fromI32(0))) {
       ohmlusdPOL = toDecimal(ohmlusdBalance, 18)
@@ -287,11 +282,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     ohmlusdBalance = ohmlusdBalance.plus(ohmlusdOnsenBalance);
     log.debug("ohmlusdOnsenBalance {}", [ohmlusdOnsenBalance.toString()]);
 
-    ohmlusd_value = getPairLUSD(ohmlusdBalance, SUSHI_OHMLUSD_PAIR_V2, blockNumber);
-
-    log.debug("ohmlusd_value {}", [ohmlusd_value.toString()]);
-
-    ohmlusd_rfv = getDiscountedPairLUSD(ohmlusdBalance, SUSHI_OHMLUSD_PAIR_V2);
     ohmlusdTotalLP = toDecimal(ohmlusdPairv2.totalSupply(), 18);
     if (ohmlusdTotalLP.gt(BigDecimal.fromString("0")) && ohmlusdBalance.gt(BigInt.fromI32(0))) {
       ohmlusdPOL = toDecimal(ohmlusdBalance, 18)
@@ -299,6 +289,9 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
         .times(BigDecimal.fromString("100"));
     }
   }
+
+  const ohmLusdMarket = getLusdMarketValue(blockNumber);
+  const ohmLusdRiskFreeValue = getLusdRiskFreeValue(blockNumber);
 
   // OHMETH
   let ohmethBalance = BigInt.fromI32(0);
@@ -346,15 +339,15 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const treasuryVolatileBackingRecords = getTreasuryVolatileBacking(blockNumber, false);
   const treasuryVolatileBacking = treasuryVolatileBackingRecords.getValue();
 
-  const lpValue = ohmdai_market
+  const lpValue = ohmDaiMarket
     .getValue()
     .plus(ohmFraxMarket.getValue())
-    .plus(ohmlusd_value)
+    .plus(ohmLusdMarket.getValue())
     .plus(ohmeth_value);
-  const rfvLpValue = ohmdai_rfv
+  const rfvLpValue = ohmDaiRiskFreeValue
     .getValue()
-    .plus(ohmfrax_rfv.getValue())
-    .plus(ohmlusd_rfv)
+    .plus(ohmFraxRiskFreeValue.getValue())
+    .plus(ohmLusdRiskFreeValue.getValue())
     .plus(ohmeth_rfv);
 
   const mv = stableValueDecimal
@@ -386,21 +379,20 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   log.debug("Treasury xSushi value {}", [xSushiValue.toString()]);
   log.debug("Treasury WETH value {}", [weth_value.toString()]);
   log.debug("Treasury LUSD value {}", [lusdBalance.toString()]);
-  log.debug("Treasury OHM-DAI RFV {}", [ohmdai_rfv.toString()]);
-  log.debug("Treasury OHM-FRAX RFV {}", [ohmfrax_rfv.toString()]);
-  log.debug("Treasury OHM-LUSD RFV {}", [ohmlusd_rfv.toString()]);
+  log.debug("Treasury OHM-DAI RFV {}", [ohmDaiRiskFreeValue.toString()]);
+  log.debug("Treasury OHM-FRAX RFV {}", [ohmFraxRiskFreeValue.toString()]);
   return [
     mv,
     rfv,
-    ohmdai_rfv.getValue(),
-    ohmfrax_rfv.getValue(),
-    ohmdai_market.getValue(),
+    ohmDaiRiskFreeValue.getValue(),
+    ohmFraxRiskFreeValue.getValue(),
+    ohmDaiMarket.getValue(),
     ohmFraxMarket.getValue(),
     xSushiValue,
     ohmeth_rfv.plus(weth_value),
     ohmeth_value.plus(weth_value),
-    ohmlusd_rfv.plus(lusdBalance),
-    ohmlusd_value.plus(lusdBalance),
+    ohmLusdRiskFreeValue.getValue(),
+    ohmLusdMarket.getValue(),
     cvxVlCvxValue,
     // POL
     ohmdaiPOL, // TODO include V2 liquidity?

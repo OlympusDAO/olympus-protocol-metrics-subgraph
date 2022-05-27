@@ -7,6 +7,8 @@ import {
   SUSHI_MASTERCHEF,
   SUSHI_OHMDAI_PAIR,
   SUSHI_OHMDAI_PAIRV2,
+  SUSHI_OHMLUSD_PAIR,
+  SUSHI_OHMLUSD_PAIR_V2,
   TREASURY_ADDRESS,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
@@ -184,6 +186,88 @@ export function getOhmFraxLiquidityV2Balance(blockNumber: BigInt, riskFree: bool
   liquidityBalance.addBalance(
     TREASURY_ADDRESS_V3,
     getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
+  );
+
+  return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
+}
+
+/**
+ * Returns the balance of the OHM-LUSD liquidity pair.
+ *
+ * This includes:
+ * - OHM-LUSD in the treasury wallet
+ * - OHM-LUSD in the treasury wallet V2
+ * - OHM-LUSD in the treasury wallet V3
+ * - OHM-LUSD in the Onsen allocator
+ *
+ * @param blockNumber the current block number
+ * @param riskFree whether the price of the LP is part of risk-free value
+ * @returns TokenRecords object
+ */
+export function getOhmLusdLiquidityBalance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
+  const liquidityBalance = new LiquidityBalances(SUSHI_OHMLUSD_PAIR);
+  const ohmLusdLiquidityPair = getUniswapV2Pair(SUSHI_OHMLUSD_PAIR, blockNumber);
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS,
+    getUniswapV2PairBalance(ohmLusdLiquidityPair, TREASURY_ADDRESS, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS_V2,
+    getUniswapV2PairBalance(ohmLusdLiquidityPair, TREASURY_ADDRESS_V2, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS_V3,
+    getUniswapV2PairBalance(ohmLusdLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    ONSEN_ALLOCATOR,
+    getMasterChefBalance(
+      getMasterChef(SUSHI_MASTERCHEF, blockNumber),
+      ONSEN_ALLOCATOR,
+      OHMDAI_ONSEN_ID,
+      blockNumber,
+    ),
+  );
+
+  return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
+}
+
+/**
+ * Returns the balance of the OHM-LUSD liquidity pair V2.
+ *
+ * This includes:
+ * - OHM-LUSD in the treasury wallet
+ * - OHM-LUSD in the treasury wallet V2
+ * - OHM-LUSD in the treasury wallet V3
+ * - OHM-LUSD in the Onsen allocator
+ *
+ * @param blockNumber the current block number
+ * @param riskFree whether the price of the LP is part of risk-free value
+ * @returns TokenRecords object
+ */
+export function getOhmLusdLiquidityV2Balance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
+  const liquidityBalance = new LiquidityBalances(SUSHI_OHMLUSD_PAIR_V2);
+  const ohmFraxLiquidityPair = getUniswapV2Pair(SUSHI_OHMLUSD_PAIR_V2, blockNumber);
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS,
+    getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS_V2,
+    getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS_V2, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS_V3,
+    getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    ONSEN_ALLOCATOR,
+    getMasterChefBalance(
+      getMasterChef(SUSHI_MASTERCHEF, blockNumber),
+      ONSEN_ALLOCATOR,
+      OHMDAI_ONSEN_ID,
+      blockNumber,
+    ),
   );
 
   return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
