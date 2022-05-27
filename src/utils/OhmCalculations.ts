@@ -12,8 +12,8 @@ import {
   SOHM_ERC20_CONTRACTV3,
 } from "./Constants";
 import {
-  getERC20Balance,
   getERC20,
+  getERC20Balance,
   getSOlympusERC20,
   getSOlympusERC20V2,
   getSOlympusERC20V3,

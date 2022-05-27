@@ -18,9 +18,9 @@ import {
   getUniswapV2PairBalance,
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
+import { LiquidityBalances } from "./LiquidityBalance";
 import { getDiscountedPairUSD, getPairUSD } from "./Price";
 import { TokenRecord, TokenRecords } from "./TokenRecord";
-import { LiquidityBalances } from "./LiquidityBalance";
 
 function getLiquidityBalance(
   liquidityBalance: LiquidityBalances,
