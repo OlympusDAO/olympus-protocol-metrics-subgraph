@@ -12,7 +12,7 @@ import {
   SOHM_ERC20_CONTRACTV3,
 } from "./Constants";
 import {
-  getBalance,
+  getERC20Balance,
   getERC20,
   getSOlympusERC20,
   getSOlympusERC20V2,
@@ -82,15 +82,15 @@ export function getCirculatingSupply(blockNumber: BigInt, totalSupply: BigDecima
   let circulatingSupply = totalSupply;
 
   circulatingSupply = circulatingSupply.minus(
-    toDecimal(getBalance(ohmContract, DAO_WALLET, blockNumber), 9),
+    toDecimal(getERC20Balance(ohmContract, DAO_WALLET, blockNumber), 9),
   );
   circulatingSupply = circulatingSupply.minus(
-    toDecimal(getBalance(ohmContract, MIGRATION_CONTRACT, blockNumber), 9),
+    toDecimal(getERC20Balance(ohmContract, MIGRATION_CONTRACT, blockNumber), 9),
   );
 
   if (isV2Contract) {
     circulatingSupply = circulatingSupply.minus(
-      toDecimal(getBalance(ohmContract, BONDS_DEPOSIT, blockNumber), 9),
+      toDecimal(getERC20Balance(ohmContract, BONDS_DEPOSIT, blockNumber), 9),
     );
   }
 

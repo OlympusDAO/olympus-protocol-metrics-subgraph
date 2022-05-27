@@ -24,7 +24,7 @@ import {
   UST_ERC20_CONTRACT,
 } from "./Constants";
 import {
-  getBalance,
+  getERC20Balance,
   getConvexAllocator,
   getERC20,
   getRariAllocator,
@@ -63,7 +63,7 @@ export function getDaiBalance(
         "Treasury Wallet",
         TREASURY_ADDRESS,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(daiERC20, TREASURY_ADDRESS, blockNumber), 18),
+        toDecimal(getERC20Balance(daiERC20, TREASURY_ADDRESS, blockNumber), 18),
       ),
     );
     records.push(
@@ -72,7 +72,7 @@ export function getDaiBalance(
         "Treasury Wallet V2",
         TREASURY_ADDRESS_V2,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(daiERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
+        toDecimal(getERC20Balance(daiERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
       ),
     );
     records.push(
@@ -81,7 +81,7 @@ export function getDaiBalance(
         "Treasury Wallet V3",
         TREASURY_ADDRESS_V3,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(daiERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
+        toDecimal(getERC20Balance(daiERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
       ),
     );
   }
@@ -93,7 +93,7 @@ export function getDaiBalance(
         "Aave Allocator",
         AAVE_ALLOCATOR,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(aDaiERC20, AAVE_ALLOCATOR, blockNumber), 18),
+        toDecimal(getERC20Balance(aDaiERC20, AAVE_ALLOCATOR, blockNumber), 18),
       ),
     );
     records.push(
@@ -102,7 +102,7 @@ export function getDaiBalance(
         "Aave Allocator V2",
         AAVE_ALLOCATOR_V2,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(aDaiERC20, AAVE_ALLOCATOR_V2, blockNumber), 18),
+        toDecimal(getERC20Balance(aDaiERC20, AAVE_ALLOCATOR_V2, blockNumber), 18),
       ),
     );
   }
@@ -142,7 +142,7 @@ export function getFeiBalance(feiERC20: ERC20 | null, blockNumber: BigInt): Toke
         "Treasury Wallet",
         TREASURY_ADDRESS,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(feiERC20, TREASURY_ADDRESS, blockNumber), 18),
+        toDecimal(getERC20Balance(feiERC20, TREASURY_ADDRESS, blockNumber), 18),
       ),
     );
     records.push(
@@ -151,7 +151,7 @@ export function getFeiBalance(feiERC20: ERC20 | null, blockNumber: BigInt): Toke
         "Treasury Wallet V2",
         TREASURY_ADDRESS_V2,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(feiERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
+        toDecimal(getERC20Balance(feiERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
       ),
     );
     records.push(
@@ -160,7 +160,7 @@ export function getFeiBalance(feiERC20: ERC20 | null, blockNumber: BigInt): Toke
         "Treasury Wallet V3",
         TREASURY_ADDRESS_V3,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(feiERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
+        toDecimal(getERC20Balance(feiERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
       ),
     );
   }
@@ -252,7 +252,7 @@ export function getFraxBalance(fraxERC20: ERC20 | null, blockNumber: BigInt): To
         "Treasury Wallet",
         TREASURY_ADDRESS,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(fraxERC20, TREASURY_ADDRESS, blockNumber), 18),
+        toDecimal(getERC20Balance(fraxERC20, TREASURY_ADDRESS, blockNumber), 18),
       ),
     );
     records.push(
@@ -261,7 +261,7 @@ export function getFraxBalance(fraxERC20: ERC20 | null, blockNumber: BigInt): To
         "Treasury Wallet V2",
         TREASURY_ADDRESS_V2,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(fraxERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
+        toDecimal(getERC20Balance(fraxERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
       ),
     );
     records.push(
@@ -270,7 +270,7 @@ export function getFraxBalance(fraxERC20: ERC20 | null, blockNumber: BigInt): To
         "Treasury Wallet V3",
         TREASURY_ADDRESS_V3,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(fraxERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
+        toDecimal(getERC20Balance(fraxERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
       ),
     );
   }
@@ -313,7 +313,7 @@ export function getLUSDBalance(
         "Treasury Wallet",
         TREASURY_ADDRESS,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(lusdERC20, TREASURY_ADDRESS, blockNumber), 18),
+        toDecimal(getERC20Balance(lusdERC20, TREASURY_ADDRESS, blockNumber), 18),
       ),
     );
     records.push(
@@ -322,7 +322,7 @@ export function getLUSDBalance(
         "Treasury Wallet V2",
         TREASURY_ADDRESS_V2,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(lusdERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
+        toDecimal(getERC20Balance(lusdERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
       ),
     );
     records.push(
@@ -331,7 +331,7 @@ export function getLUSDBalance(
         "Treasury Wallet V3",
         TREASURY_ADDRESS_V3,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(lusdERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
+        toDecimal(getERC20Balance(lusdERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
       ),
     );
   }
@@ -371,7 +371,7 @@ export function getUSTBalance(ustERC20: ERC20 | null, blockNumber: BigInt): Toke
         "Treasury Wallet",
         TREASURY_ADDRESS,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(ustERC20, TREASURY_ADDRESS, blockNumber), 18),
+        toDecimal(getERC20Balance(ustERC20, TREASURY_ADDRESS, blockNumber), 18),
       ),
     );
     records.push(
@@ -380,7 +380,7 @@ export function getUSTBalance(ustERC20: ERC20 | null, blockNumber: BigInt): Toke
         "Treasury Wallet V2",
         TREASURY_ADDRESS_V2,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(ustERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
+        toDecimal(getERC20Balance(ustERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
       ),
     );
     records.push(
@@ -389,7 +389,7 @@ export function getUSTBalance(ustERC20: ERC20 | null, blockNumber: BigInt): Toke
         "Treasury Wallet V3",
         TREASURY_ADDRESS_V3,
         BigDecimal.fromString("1"),
-        toDecimal(getBalance(ustERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
+        toDecimal(getERC20Balance(ustERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
       ),
     );
   }

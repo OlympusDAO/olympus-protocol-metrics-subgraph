@@ -17,7 +17,7 @@ import {
   VLCVX_ERC20_CONTRACT,
   XSUSI_ERC20_CONTRACT,
 } from "./Constants";
-import { getBalance, getERC20, getRariAllocator, getVeFXS } from "./ContractHelper";
+import { getERC20Balance, getERC20, getRariAllocator, getVeFXS } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import {
   getBTCUSDRate,
@@ -73,7 +73,7 @@ export function getXSushiBalance(xSushiERC20: ERC20 | null, blockNumber: BigInt)
         "Treasury Wallet",
         TREASURY_ADDRESS,
         xSushiRate,
-        toDecimal(getBalance(xSushiERC20, TREASURY_ADDRESS, blockNumber), 18),
+        toDecimal(getERC20Balance(xSushiERC20, TREASURY_ADDRESS, blockNumber), 18),
       ),
     );
     records.push(
@@ -82,7 +82,7 @@ export function getXSushiBalance(xSushiERC20: ERC20 | null, blockNumber: BigInt)
         "Treasury Wallet V2",
         TREASURY_ADDRESS_V2,
         xSushiRate,
-        toDecimal(getBalance(xSushiERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
+        toDecimal(getERC20Balance(xSushiERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
       ),
     );
     records.push(
@@ -91,7 +91,7 @@ export function getXSushiBalance(xSushiERC20: ERC20 | null, blockNumber: BigInt)
         "Treasury Wallet V3",
         TREASURY_ADDRESS_V3,
         xSushiRate,
-        toDecimal(getBalance(xSushiERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
+        toDecimal(getERC20Balance(xSushiERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
       ),
     );
   }
@@ -120,7 +120,7 @@ export function getCVXBalance(cvxERC20: ERC20 | null, blockNumber: BigInt): Toke
         "Treasury Wallet",
         TREASURY_ADDRESS,
         cvxRate,
-        toDecimal(getBalance(cvxERC20, TREASURY_ADDRESS, blockNumber), 18),
+        toDecimal(getERC20Balance(cvxERC20, TREASURY_ADDRESS, blockNumber), 18),
       ),
     );
     records.push(
@@ -129,7 +129,7 @@ export function getCVXBalance(cvxERC20: ERC20 | null, blockNumber: BigInt): Toke
         "Treasury Wallet V2",
         TREASURY_ADDRESS_V2,
         cvxRate,
-        toDecimal(getBalance(cvxERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
+        toDecimal(getERC20Balance(cvxERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
       ),
     );
     records.push(
@@ -138,7 +138,7 @@ export function getCVXBalance(cvxERC20: ERC20 | null, blockNumber: BigInt): Toke
         "Treasury Wallet V3",
         TREASURY_ADDRESS_V3,
         cvxRate,
-        toDecimal(getBalance(cvxERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
+        toDecimal(getERC20Balance(cvxERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
       ),
     );
   }
@@ -165,7 +165,7 @@ export function getVlCVXBalance(vlERC20: ERC20 | null, blockNumber: BigInt): Tok
         "Convex Allocator",
         CONVEX_CVX_ALLOCATOR,
         cvxRate,
-        toDecimal(getBalance(vlERC20, CONVEX_CVX_ALLOCATOR, blockNumber), 18),
+        toDecimal(getERC20Balance(vlERC20, CONVEX_CVX_ALLOCATOR, blockNumber), 18),
       ),
     );
   }
@@ -210,7 +210,7 @@ function getFXSBalance(fxsERC20: ERC20 | null, blockNumber: BigInt): TokenRecord
         "Treasury Wallet",
         TREASURY_ADDRESS,
         fxsRate,
-        toDecimal(getBalance(fxsERC20, TREASURY_ADDRESS, blockNumber), 18),
+        toDecimal(getERC20Balance(fxsERC20, TREASURY_ADDRESS, blockNumber), 18),
       ),
     );
     records.push(
@@ -219,7 +219,7 @@ function getFXSBalance(fxsERC20: ERC20 | null, blockNumber: BigInt): TokenRecord
         "Treasury Wallet V2",
         TREASURY_ADDRESS_V2,
         fxsRate,
-        toDecimal(getBalance(fxsERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
+        toDecimal(getERC20Balance(fxsERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
       ),
     );
     records.push(
@@ -228,7 +228,7 @@ function getFXSBalance(fxsERC20: ERC20 | null, blockNumber: BigInt): TokenRecord
         "Treasury Wallet V3",
         TREASURY_ADDRESS_V3,
         fxsRate,
-        toDecimal(getBalance(fxsERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
+        toDecimal(getERC20Balance(fxsERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
       ),
     );
   }
@@ -298,7 +298,7 @@ function getTribeBalance(
         "Treasury Wallet",
         TREASURY_ADDRESS,
         tribeRate,
-        toDecimal(getBalance(tribeERC20, TREASURY_ADDRESS, blockNumber), 18),
+        toDecimal(getERC20Balance(tribeERC20, TREASURY_ADDRESS, blockNumber), 18),
       ),
     );
     records.push(
@@ -307,7 +307,7 @@ function getTribeBalance(
         "Treasury Wallet V2",
         TREASURY_ADDRESS_V2,
         tribeRate,
-        toDecimal(getBalance(tribeERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
+        toDecimal(getERC20Balance(tribeERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
       ),
     );
     records.push(
@@ -316,7 +316,7 @@ function getTribeBalance(
         "Treasury Wallet V3",
         TREASURY_ADDRESS_V3,
         tribeRate,
-        toDecimal(getBalance(tribeERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
+        toDecimal(getERC20Balance(tribeERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
       ),
     );
   }
@@ -357,7 +357,7 @@ export function getWETHBalance(wethERC20: ERC20 | null, blockNumber: BigInt): To
         "Treasury Wallet",
         TREASURY_ADDRESS,
         wethRate,
-        toDecimal(getBalance(wethERC20, TREASURY_ADDRESS, blockNumber), 18),
+        toDecimal(getERC20Balance(wethERC20, TREASURY_ADDRESS, blockNumber), 18),
       ),
     );
     records.push(
@@ -366,7 +366,7 @@ export function getWETHBalance(wethERC20: ERC20 | null, blockNumber: BigInt): To
         "Treasury Wallet V2",
         TREASURY_ADDRESS_V2,
         wethRate,
-        toDecimal(getBalance(wethERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
+        toDecimal(getERC20Balance(wethERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
       ),
     );
     records.push(
@@ -375,7 +375,7 @@ export function getWETHBalance(wethERC20: ERC20 | null, blockNumber: BigInt): To
         "Treasury Wallet V3",
         TREASURY_ADDRESS_V3,
         wethRate,
-        toDecimal(getBalance(wethERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
+        toDecimal(getERC20Balance(wethERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
       ),
     );
   }
@@ -404,7 +404,7 @@ export function getWBTCBalance(wbtcERC20: ERC20 | null, blockNumber: BigInt): To
         "Treasury Wallet",
         TREASURY_ADDRESS,
         wbtcRate,
-        toDecimal(getBalance(wbtcERC20, TREASURY_ADDRESS, blockNumber), 18),
+        toDecimal(getERC20Balance(wbtcERC20, TREASURY_ADDRESS, blockNumber), 18),
       ),
     );
     records.push(
@@ -413,7 +413,7 @@ export function getWBTCBalance(wbtcERC20: ERC20 | null, blockNumber: BigInt): To
         "Treasury Wallet V2",
         TREASURY_ADDRESS_V2,
         wbtcRate,
-        toDecimal(getBalance(wbtcERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
+        toDecimal(getERC20Balance(wbtcERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
       ),
     );
     records.push(
@@ -422,7 +422,7 @@ export function getWBTCBalance(wbtcERC20: ERC20 | null, blockNumber: BigInt): To
         "Treasury Wallet V3",
         TREASURY_ADDRESS_V3,
         wbtcRate,
-        toDecimal(getBalance(wbtcERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
+        toDecimal(getERC20Balance(wbtcERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
       ),
     );
   }

@@ -281,7 +281,7 @@ export function getStabilityPool(
  * @param minimumBlockNumber The minimum block number for the balance to apply.
  * @returns BigInt
  */
-export function getBalance(
+export function getERC20Balance(
   contract: ERC20 | null,
   address: string,
   currentBlockNumber: BigInt,
