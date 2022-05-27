@@ -301,14 +301,6 @@ export function getERC20Balance(
     currentBlockNumber.toString(),
   ]);
 
-  // const balanceResult = contract.try_balanceOf(Address.fromString(address));
-  // if (balanceResult.reverted) {
-  //   log.error("balanceOf function was reverted on contract {}", [callResult.value]);
-  //   return BigInt.fromString("0");
-  // }
-
-  // log.debug("Got balance: {}", [balanceResult.value.toString()]);
-  // return balanceResult.value;
   return contract.balanceOf(Address.fromString(address));
 }
 
