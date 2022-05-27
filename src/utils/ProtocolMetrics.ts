@@ -15,7 +15,6 @@ import {
   DISTRIBUTOR_CONTRACT_BLOCK_V2,
   DISTRIBUTOR_CONTRACT_V2,
   LUSD_ERC20_CONTRACT,
-  OHMDAI_ONSEN_ID,
   OHMLUSD_ONSEN_ID,
   ONSEN_ALLOCATOR,
   STABILITY_POOL,
@@ -25,9 +24,6 @@ import {
   STAKING_CONTRACT_V3,
   STAKING_CONTRACT_V3_BLOCK,
   SUSHI_MASTERCHEF,
-  SUSHI_OHMDAI_PAIR,
-  SUSHI_OHMDAI_PAIRV2,
-  SUSHI_OHMDAI_PAIRV2_BLOCK,
   SUSHI_OHMETH_PAIR,
   SUSHI_OHMETH_PAIR_BLOCK,
   SUSHI_OHMETH_PAIR_BLOCKV2,
@@ -52,6 +48,7 @@ import {
 import { getERC20, getStabilityPool } from "./ContractHelper";
 import { dayFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
+import { getOhmDaiProtocolOwnedLiquidity } from "./LiquidityCalculations";
 import {
   getCirculatingSupply,
   getOhmMarketcap,
@@ -59,15 +56,7 @@ import {
   getTotalSupply,
   getTotalValueLocked,
 } from "./OhmCalculations";
-import {
-  clearPriceCache,
-  getDiscountedPairLUSD,
-  getDiscountedPairUSD,
-  getOHMUSDRate,
-  getPairLUSD,
-  getPairUSD,
-  getPairWETH,
-} from "./Price";
+import { clearPriceCache, getDiscountedPairUSD, getOHMUSDRate, getPairWETH } from "./Price";
 import {
   getDaiMarketValue,
   getDaiRiskFreeValue,
@@ -138,8 +127,6 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
 }
 
 function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
-  const ohmdaiPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIR));
-  const ohmdaiPairV2 = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMDAI_PAIRV2));
   const ohmdaiOnsenMC = MasterChef.bind(Address.fromString(SUSHI_MASTERCHEF));
   const ohmfraxPair = UniswapV2Pair.bind(Address.fromString(UNI_OHMFRAX_PAIR));
   const ohmfraxPairV2 = UniswapV2Pair.bind(Address.fromString(UNI_OHMFRAX_PAIRV2));
@@ -183,41 +170,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const wbtc_value = wbtcBalance.getValue();
 
   // OHMDAI
-  const ohmdaiSushiBalance = ohmdaiPair
-    .balanceOf(Address.fromString(treasury_address))
-    .plus(ohmdaiPair.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)));
-  const ohmdaiOnsenBalance = ohmdaiOnsenMC.userInfo(
-    BigInt.fromI32(OHMDAI_ONSEN_ID),
-    Address.fromString(ONSEN_ALLOCATOR),
-  ).value0;
-  const ohmdaiBalance = ohmdaiSushiBalance.plus(ohmdaiOnsenBalance);
-  const ohmdaiTotalLP = toDecimal(ohmdaiPair.totalSupply(), 18);
-
-  // OHMDAIv2
-  let ohmdaiSushiBalancev2 = BigInt.fromI32(0);
-  let ohmdaiTotalLPv2 = BigDecimal.fromString("0");
-  let ohmdaiPOLv2 = BigDecimal.fromString("0");
-  if (blockNumber.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))) {
-    ohmdaiSushiBalancev2 = ohmdaiPairV2.balanceOf(Address.fromString(TREASURY_ADDRESS_V3));
-    ohmdaiTotalLPv2 = toDecimal(ohmdaiPairV2.totalSupply(), 18);
-    if (
-      ohmdaiTotalLPv2.gt(BigDecimal.fromString("0")) &&
-      ohmdaiSushiBalancev2.gt(BigInt.fromI32(0))
-    ) {
-      ohmdaiPOLv2 = toDecimal(ohmdaiSushiBalancev2, 18)
-        .div(ohmdaiTotalLPv2)
-        .times(BigDecimal.fromString("100"));
-    }
-  }
-
-  let ohmdaiPOL = toDecimal(ohmdaiBalance, 18)
-    .div(ohmdaiTotalLP)
-    .times(BigDecimal.fromString("100"));
-  if (blockNumber.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))) {
-    ohmdaiPOL = toDecimal(ohmdaiSushiBalancev2, 18)
-      .div(ohmdaiTotalLPv2)
-      .times(BigDecimal.fromString("100"));
-  }
+  const ohmdaiPOL = getOhmDaiProtocolOwnedLiquidity(blockNumber);
 
   const ohmDaiMarket = getDaiMarketValue(blockNumber);
   const ohmDaiRiskFreeValue = getDaiRiskFreeValue(blockNumber);
@@ -395,7 +348,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     ohmLusdMarket.getValue(),
     cvxVlCvxValue,
     // POL
-    ohmdaiPOL, // TODO include V2 liquidity?
+    ohmdaiPOL,
     ohmfraxPOL,
     ohmlusdPOL,
     ohmethPOL,

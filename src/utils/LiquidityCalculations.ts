@@ -1,4 +1,4 @@
-import { BigInt } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 import {
   getContractName,
@@ -7,6 +7,7 @@ import {
   SUSHI_MASTERCHEF,
   SUSHI_OHMDAI_PAIR,
   SUSHI_OHMDAI_PAIRV2,
+  SUSHI_OHMDAI_PAIRV2_BLOCK,
   SUSHI_OHMLUSD_PAIR,
   SUSHI_OHMLUSD_PAIR_V2,
   TREASURY_ADDRESS,
@@ -127,6 +128,43 @@ export function getOhmDaiLiquidityV2Balance(blockNumber: BigInt, riskFree: boole
   );
 
   return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
+}
+
+/**
+ * Returns the protocol-owned liquidity for the current version of the OHM-DAI liquidity pair.
+ *
+ * This currently includes:
+ * - OHM-DAI V1
+ * - OHM-DAI V2
+ *
+ * The value returned corresponds to the percentage, e.g. 80% will return 80 (not 0.8)
+ *
+ * @param blockNumber
+ * @returns BigDecmail representing the percentage of protocol-owned liquidity
+ */
+export function getOhmDaiProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal {
+  let balance = BigDecimal.fromString("0");
+  let totalSupply = BigDecimal.fromString("1");
+  const v1Pair = getUniswapV2Pair(SUSHI_OHMLUSD_PAIR, blockNumber);
+  const v2Pair = getUniswapV2Pair(SUSHI_OHMLUSD_PAIR_V2, blockNumber);
+
+  if (v2Pair) {
+    balance = getOhmDaiLiquidityV2Balance(blockNumber, false).getBalance();
+    totalSupply = toDecimal(v2Pair.totalSupply(), 18);
+  } else if (v1Pair) {
+    balance = getOhmDaiLiquidityBalance(blockNumber, false).getBalance();
+    totalSupply = toDecimal(v1Pair.totalSupply(), 18);
+  } else {
+    throw new Error(
+      "Expected one of the contracts " +
+        SUSHI_OHMLUSD_PAIR +
+        " and " +
+        SUSHI_OHMLUSD_PAIR_V2 +
+        " to be available.",
+    );
+  }
+
+  return balance.div(totalSupply).times(BigDecimal.fromString("100"));
 }
 
 /**
