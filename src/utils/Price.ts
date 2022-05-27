@@ -13,6 +13,7 @@ import {
   UNI_FXS_ETH_PAIR,
   UNI_TRIBE_ETH_PAIR,
 } from "./Constants";
+import { getUniswapV2Pair } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 
 const BIG_DECIMAL_1E8 = BigDecimal.fromString("1e8");
@@ -191,15 +192,26 @@ export function getCVXUSDRate(): BigDecimal {
  *
  * This blog also helps illustrate it: https://olympusdao.medium.com/a-primer-on-oly-bonds-9763f125c124
  */
-export function getDiscountedPairUSD(lp_amount: BigInt, pair_adress: string): BigDecimal {
-  const pair = UniswapV2Pair.bind(Address.fromString(pair_adress));
+export function getDiscountedPairUSD(
+  lpBalance: BigInt,
+  pairAddress: string,
+  blockNumber: BigInt,
+): BigDecimal {
+  const pair = getUniswapV2Pair(pairAddress, blockNumber);
+  if (!pair) {
+    log.debug(
+      "Cannot determine discounted value at block {} as the contract {} does not exist yet. Returning 0.",
+      [blockNumber.toString(), pairAddress],
+    );
+    return BigDecimal.zero();
+  }
 
   const total_lp = pair.totalSupply();
   const lp_token_1 = toDecimal(pair.getReserves().value0, 9);
   const lp_token_2 = toDecimal(pair.getReserves().value1, 18);
   const kLast = lp_token_1.times(lp_token_2).truncate(0).digits;
 
-  const part1 = toDecimal(lp_amount, 18).div(toDecimal(total_lp, 18));
+  const part1 = toDecimal(lpBalance, 18).div(toDecimal(total_lp, 18));
   const two = BigInt.fromI32(2);
 
   const sqrt = kLast.sqrt();
@@ -208,6 +220,7 @@ export function getDiscountedPairUSD(lp_amount: BigInt, pair_adress: string): Bi
   return result;
 }
 
+// TODO unused?
 export function getDiscountedPairLUSD(lp_amount: BigInt, pair_adress: string): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(pair_adress));
 
@@ -226,18 +239,31 @@ export function getDiscountedPairLUSD(lp_amount: BigInt, pair_adress: string): B
 }
 
 // Percentage of LP supply *
-export function getPairUSD(lp_amount: BigInt, pair_adress: string, block: BigInt): BigDecimal {
-  const pair = UniswapV2Pair.bind(Address.fromString(pair_adress));
+export function getPairUSD(
+  lpBalance: BigInt,
+  pairAddress: string,
+  blockNumber: BigInt,
+): BigDecimal {
+  const pair = getUniswapV2Pair(pairAddress, blockNumber);
+  if (!pair) {
+    log.debug(
+      "Cannot determine discounted value at block {} as the contract {} does not exist yet. Returning 0.",
+      [blockNumber.toString(), pairAddress],
+    );
+    return BigDecimal.zero();
+  }
+
   const total_lp = pair.totalSupply();
   const lp_token_0 = pair.getReserves().value0;
   const lp_token_1 = pair.getReserves().value1;
-  const ownedLP = toDecimal(lp_amount, 18).div(toDecimal(total_lp, 18));
-  const ohm_value = toDecimal(lp_token_0, 9).times(getOHMUSDRate(block));
+  const ownedLP = toDecimal(lpBalance, 18).div(toDecimal(total_lp, 18));
+  const ohm_value = toDecimal(lp_token_0, 9).times(getOHMUSDRate(blockNumber));
   const total_lp_usd = ohm_value.plus(toDecimal(lp_token_1, 18));
 
   return ownedLP.times(total_lp_usd);
 }
 
+// TODO unused?
 export function getPairLUSD(lp_amount: BigInt, pair_adress: string, block: BigInt): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(pair_adress));
   const total_lp = pair.totalSupply();
@@ -250,6 +276,7 @@ export function getPairLUSD(lp_amount: BigInt, pair_adress: string, block: BigIn
   return ownedLP.times(total_lp_usd);
 }
 
+// TODO unused?
 export function getPairWETH(lp_amount: BigInt, pair_adress: string, block: BigInt): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(pair_adress));
   const total_lp = pair.totalSupply();

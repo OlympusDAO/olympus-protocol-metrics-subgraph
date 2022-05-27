@@ -46,7 +46,11 @@ function getLiquidityBalance(
   const records = new TokenRecords([]);
   const contractName = getContractName(liquidityBalance.contract);
   const price = riskFree
-    ? getDiscountedPairUSD(liquidityBalance.getTotalBalance(), liquidityBalance.contract)
+    ? getDiscountedPairUSD(
+        liquidityBalance.getTotalBalance(),
+        liquidityBalance.contract,
+        blockNumber,
+      )
     : getPairUSD(liquidityBalance.getTotalBalance(), liquidityBalance.contract, blockNumber);
 
   const addresses = liquidityBalance.getAddresses();
