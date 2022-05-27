@@ -20,6 +20,38 @@ import {
 import { toDecimal } from "./Decimals";
 import { getDiscountedPairUSD, getPairUSD } from "./Price";
 import { TokenRecord, TokenRecords } from "./TokenRecord";
+import { LiquidityBalances } from "./LiquidityBalance";
+
+function getLiquidityBalance(
+  liquidityBalance: LiquidityBalances,
+  blockNumber: BigInt,
+  riskFree: boolean,
+): TokenRecords {
+  const records = new TokenRecords([]);
+  const contractName = getContractName(liquidityBalance.contract);
+  const price = riskFree
+    ? getDiscountedPairUSD(liquidityBalance.getTotalBalance(), liquidityBalance.contract)
+    : getPairUSD(liquidityBalance.getTotalBalance(), liquidityBalance.contract, blockNumber);
+
+  const addresses = liquidityBalance.getAddresses();
+  for (let i = 0; i < addresses.length; i++) {
+    const address = addresses[i];
+    const balance = liquidityBalance.getBalance(address);
+    if (!balance) continue;
+
+    records.push(
+      new TokenRecord(
+        contractName,
+        getContractName(address),
+        address,
+        price,
+        toDecimal(balance, 18),
+      ),
+    );
+  }
+
+  return records;
+}
 
 /**
  * Returns the balance of the OHM-DAI liquidity pair.
@@ -35,75 +67,31 @@ import { TokenRecord, TokenRecords } from "./TokenRecord";
  * @returns TokenRecords object
  */
 export function getOhmDaiLiquidityBalance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
-  const records = new TokenRecords([]);
-  const contractName = getContractName(SUSHI_OHMDAI_PAIR);
-  const treasuryV1Balance = getUniswapV2PairBalance(
-    getUniswapV2Pair(SUSHI_OHMDAI_PAIR, blockNumber),
+  const liquidityBalance = new LiquidityBalances(SUSHI_OHMDAI_PAIR);
+  const ohmDaiLiquidityPair = getUniswapV2Pair(SUSHI_OHMDAI_PAIR, blockNumber);
+  liquidityBalance.addBalance(
     TREASURY_ADDRESS,
-    blockNumber,
+    getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS, blockNumber),
   );
-  const treasuryV2Balance = getUniswapV2PairBalance(
-    getUniswapV2Pair(SUSHI_OHMDAI_PAIR, blockNumber),
+  liquidityBalance.addBalance(
     TREASURY_ADDRESS_V2,
-    blockNumber,
+    getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS_V2, blockNumber),
   );
-  const treasuryV3Balance = getUniswapV2PairBalance(
-    getUniswapV2Pair(SUSHI_OHMDAI_PAIR, blockNumber),
+  liquidityBalance.addBalance(
     TREASURY_ADDRESS_V3,
-    blockNumber,
+    getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
   );
-  const onsenBalance = getMasterChefBalance(
-    getMasterChef(SUSHI_MASTERCHEF, blockNumber),
+  liquidityBalance.addBalance(
     ONSEN_ALLOCATOR,
-    OHMDAI_ONSEN_ID,
-    blockNumber,
-  );
-  const treasuryTotalBalance = treasuryV1Balance
-    .plus(treasuryV2Balance)
-    .plus(treasuryV3Balance)
-    .plus(onsenBalance);
-  const price = riskFree
-    ? getDiscountedPairUSD(treasuryTotalBalance, SUSHI_OHMDAI_PAIR)
-    : getPairUSD(treasuryTotalBalance, SUSHI_OHMDAI_PAIR, blockNumber);
-
-  records.push(
-    new TokenRecord(
-      contractName,
-      getContractName(TREASURY_ADDRESS),
-      TREASURY_ADDRESS,
-      price,
-      toDecimal(treasuryV1Balance, 18),
-    ),
-  );
-  records.push(
-    new TokenRecord(
-      contractName,
-      getContractName(TREASURY_ADDRESS_V2),
-      TREASURY_ADDRESS_V2,
-      price,
-      toDecimal(treasuryV2Balance, 18),
-    ),
-  );
-  records.push(
-    new TokenRecord(
-      contractName,
-      getContractName(TREASURY_ADDRESS_V3),
-      TREASURY_ADDRESS_V3,
-      price,
-      toDecimal(treasuryV3Balance, 18),
-    ),
-  );
-  records.push(
-    new TokenRecord(
-      contractName,
-      getContractName(ONSEN_ALLOCATOR),
+    getMasterChefBalance(
+      getMasterChef(SUSHI_MASTERCHEF, blockNumber),
       ONSEN_ALLOCATOR,
-      price,
-      toDecimal(onsenBalance, 18),
+      OHMDAI_ONSEN_ID,
+      blockNumber,
     ),
   );
 
-  return records;
+  return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
 }
 
 /**
@@ -119,57 +107,20 @@ export function getOhmDaiLiquidityBalance(blockNumber: BigInt, riskFree: boolean
  * @returns TokenRecords object
  */
 export function getOhmDaiLiquidityV2Balance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
-  const records = new TokenRecords([]);
-  const contractName = getContractName(SUSHI_OHMDAI_PAIRV2);
-
-  // We need to calculate the balances first, so that we can calculate the price of the pair.
-  const treasuryV1Balance = getUniswapV2PairBalance(
-    getUniswapV2Pair(SUSHI_OHMDAI_PAIRV2, blockNumber),
+  const liquidityBalance = new LiquidityBalances(SUSHI_OHMDAI_PAIRV2);
+  const ohmDaiLiquidityPair = getUniswapV2Pair(SUSHI_OHMDAI_PAIRV2, blockNumber);
+  liquidityBalance.addBalance(
     TREASURY_ADDRESS,
-    blockNumber,
+    getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS, blockNumber),
   );
-  const treasuryV2Balance = getUniswapV2PairBalance(
-    getUniswapV2Pair(SUSHI_OHMDAI_PAIRV2, blockNumber),
+  liquidityBalance.addBalance(
     TREASURY_ADDRESS_V2,
-    blockNumber,
+    getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS_V2, blockNumber),
   );
-  const treasuryV3Balance = getUniswapV2PairBalance(
-    getUniswapV2Pair(SUSHI_OHMDAI_PAIRV2, blockNumber),
+  liquidityBalance.addBalance(
     TREASURY_ADDRESS_V3,
-    blockNumber,
-  );
-  const treasuryTotalBalance = treasuryV1Balance.plus(treasuryV2Balance).plus(treasuryV3Balance);
-  const price = riskFree
-    ? getDiscountedPairUSD(treasuryTotalBalance, SUSHI_OHMDAI_PAIRV2)
-    : getPairUSD(treasuryTotalBalance, SUSHI_OHMDAI_PAIRV2, blockNumber);
-
-  records.push(
-    new TokenRecord(
-      contractName,
-      getContractName(TREASURY_ADDRESS),
-      TREASURY_ADDRESS,
-      price,
-      toDecimal(treasuryV1Balance, 18),
-    ),
-  );
-  records.push(
-    new TokenRecord(
-      contractName,
-      getContractName(TREASURY_ADDRESS_V2),
-      TREASURY_ADDRESS_V2,
-      price,
-      toDecimal(treasuryV2Balance, 18),
-    ),
-  );
-  records.push(
-    new TokenRecord(
-      contractName,
-      getContractName(TREASURY_ADDRESS_V3),
-      TREASURY_ADDRESS_V3,
-      price,
-      toDecimal(treasuryV3Balance, 18),
-    ),
+    getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
   );
 
-  return records;
+  return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
 }
