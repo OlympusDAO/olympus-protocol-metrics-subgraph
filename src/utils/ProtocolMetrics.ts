@@ -169,9 +169,8 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   );
   const wbtc_value = wbtcBalance.getValue();
 
-  // OHMDAI
+  // OHM-DAI Liquidity
   const ohmdaiPOL = getOhmDaiProtocolOwnedLiquidity(blockNumber);
-
   const ohmDaiMarket = getDaiMarketValue(blockNumber);
   const ohmDaiRiskFreeValue = getDaiRiskFreeValue(blockNumber);
 

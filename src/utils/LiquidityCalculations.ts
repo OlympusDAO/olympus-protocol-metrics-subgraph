@@ -140,13 +140,13 @@ export function getOhmDaiLiquidityV2Balance(blockNumber: BigInt, riskFree: boole
  * The value returned corresponds to the percentage, e.g. 80% will return 80 (not 0.8)
  *
  * @param blockNumber
- * @returns BigDecmail representing the percentage of protocol-owned liquidity
+ * @returns BigDecimal representing the percentage of protocol-owned liquidity
  */
 export function getOhmDaiProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal {
   let balance = BigDecimal.fromString("0");
   let totalSupply = BigDecimal.fromString("1");
-  const v1Pair = getUniswapV2Pair(SUSHI_OHMLUSD_PAIR, blockNumber);
-  const v2Pair = getUniswapV2Pair(SUSHI_OHMLUSD_PAIR_V2, blockNumber);
+  const v1Pair = getUniswapV2Pair(SUSHI_OHMDAI_PAIR, blockNumber);
+  const v2Pair = getUniswapV2Pair(SUSHI_OHMDAI_PAIRV2, blockNumber);
 
   if (v2Pair) {
     balance = getOhmDaiLiquidityV2Balance(blockNumber, false).getBalance();
@@ -157,9 +157,9 @@ export function getOhmDaiProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal
   } else {
     throw new Error(
       "Expected one of the contracts " +
-        SUSHI_OHMLUSD_PAIR +
+        SUSHI_OHMDAI_PAIR +
         " and " +
-        SUSHI_OHMLUSD_PAIR_V2 +
+        SUSHI_OHMDAI_PAIRV2 +
         " to be available.",
     );
   }
