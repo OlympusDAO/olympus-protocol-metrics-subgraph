@@ -35,10 +35,6 @@ import {
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V2_BLOCK,
   TREASURY_ADDRESS_V3,
-  UNI_OHMFRAX_PAIR,
-  UNI_OHMFRAX_PAIR_BLOCK,
-  UNI_OHMFRAX_PAIR_BLOCKV2,
-  UNI_OHMFRAX_PAIRV2,
   UNI_OHMLUSD_PAIR_BLOCK,
   UST_ERC20_CONTRACT,
   WBTC_ERC20_CONTRACT,
@@ -48,7 +44,10 @@ import {
 import { getERC20, getStabilityPool } from "./ContractHelper";
 import { dayFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
-import { getOhmDaiProtocolOwnedLiquidity } from "./LiquidityCalculations";
+import {
+  getOhmDaiProtocolOwnedLiquidity,
+  getOhmFraxProtocolOwnedLiquidity,
+} from "./LiquidityCalculations";
 import {
   getCirculatingSupply,
   getOhmMarketcap,
@@ -128,9 +127,6 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
 
 function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const ohmdaiOnsenMC = MasterChef.bind(Address.fromString(SUSHI_MASTERCHEF));
-  const ohmfraxPair = UniswapV2Pair.bind(Address.fromString(UNI_OHMFRAX_PAIR));
-  const ohmfraxPairV2 = UniswapV2Pair.bind(Address.fromString(UNI_OHMFRAX_PAIRV2));
-
   const ohmlusdPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMLUSD_PAIR));
   const ohmlusdPairv2 = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMLUSD_PAIR_V2));
 
@@ -170,33 +166,12 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const wbtc_value = wbtcBalance.getValue();
 
   // OHM-DAI Liquidity
-  const ohmdaiPOL = getOhmDaiProtocolOwnedLiquidity(blockNumber);
+  const ohmDaiPOL = getOhmDaiProtocolOwnedLiquidity(blockNumber);
   const ohmDaiMarket = getDaiMarketValue(blockNumber);
   const ohmDaiRiskFreeValue = getDaiRiskFreeValue(blockNumber);
 
   // OHMFRAX
-  let ohmfraxBalance = BigInt.fromI32(0);
-  let ohmfraxTotalLP = BigDecimal.fromString("0");
-  let ohmfraxPOL = BigDecimal.fromString("0");
-  if (blockNumber.gt(BigInt.fromString(UNI_OHMFRAX_PAIR_BLOCK))) {
-    ohmfraxBalance = ohmfraxPair.balanceOf(Address.fromString(treasury_address));
-    ohmfraxTotalLP = toDecimal(ohmfraxPair.totalSupply(), 18);
-    if (ohmfraxTotalLP.gt(BigDecimal.fromString("0")) && ohmfraxBalance.gt(BigInt.fromI32(0))) {
-      ohmfraxPOL = ohmfraxPOL.plus(
-        toDecimal(ohmfraxBalance, 18).div(ohmfraxTotalLP).times(BigDecimal.fromString("100")),
-      );
-    }
-  }
-  if (blockNumber.gt(BigInt.fromString(UNI_OHMFRAX_PAIR_BLOCKV2))) {
-    ohmfraxBalance = ohmfraxPairV2.balanceOf(Address.fromString(TREASURY_ADDRESS_V3));
-    ohmfraxTotalLP = toDecimal(ohmfraxPairV2.totalSupply(), 18);
-    if (ohmfraxTotalLP.gt(BigDecimal.fromString("0")) && ohmfraxBalance.gt(BigInt.fromI32(0))) {
-      ohmfraxPOL = ohmfraxPOL.plus(
-        toDecimal(ohmfraxBalance, 18).div(ohmfraxTotalLP).times(BigDecimal.fromString("100")),
-      );
-    }
-  }
-
+  const ohmFraxPOL = getOhmFraxProtocolOwnedLiquidity(blockNumber);
   const ohmFraxMarket = getFraxMarketValue(blockNumber);
   const ohmFraxRiskFreeValue = getFraxRiskFreeValue(blockNumber);
 
@@ -347,8 +322,8 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     ohmLusdMarket.getValue(),
     cvxVlCvxValue,
     // POL
-    ohmdaiPOL,
-    ohmfraxPOL,
+    ohmDaiPOL,
+    ohmFraxPOL,
     ohmlusdPOL,
     ohmethPOL,
     volatile_value,

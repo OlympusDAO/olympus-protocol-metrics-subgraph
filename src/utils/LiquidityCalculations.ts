@@ -230,6 +230,43 @@ export function getOhmFraxLiquidityV2Balance(blockNumber: BigInt, riskFree: bool
 }
 
 /**
+ * Returns the protocol-owned liquidity for the current version of the OHM-FRAX liquidity pair.
+ *
+ * This currently includes:
+ * - OHM-FRAX V1
+ * - OHM-FRAX V2
+ *
+ * The value returned corresponds to the percentage, e.g. 80% will return 80 (not 0.8)
+ *
+ * @param blockNumber
+ * @returns BigDecimal representing the percentage of protocol-owned liquidity
+ */
+export function getOhmFraxProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal {
+  let balance = BigDecimal.fromString("0");
+  let totalSupply = BigDecimal.fromString("1");
+  const v1Pair = getUniswapV2Pair(UNI_OHMFRAX_PAIR, blockNumber);
+  const v2Pair = getUniswapV2Pair(UNI_OHMFRAX_PAIRV2, blockNumber);
+
+  if (v2Pair) {
+    balance = getOhmFraxLiquidityV2Balance(blockNumber, false).getBalance();
+    totalSupply = toDecimal(v2Pair.totalSupply(), 18);
+  } else if (v1Pair) {
+    balance = getOhmFraxLiquidityBalance(blockNumber, false).getBalance();
+    totalSupply = toDecimal(v1Pair.totalSupply(), 18);
+  } else {
+    throw new Error(
+      "Expected one of the contracts " +
+        UNI_OHMFRAX_PAIR +
+        " and " +
+        UNI_OHMFRAX_PAIRV2 +
+        " to be available.",
+    );
+  }
+
+  return balance.div(totalSupply).times(BigDecimal.fromString("100"));
+}
+
+/**
  * Returns the balance of the OHM-LUSD liquidity pair.
  *
  * This includes:
