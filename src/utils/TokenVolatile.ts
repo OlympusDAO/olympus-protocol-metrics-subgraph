@@ -16,10 +16,12 @@ import {
   VEFXS_ALLOCATOR,
   VEFXSERC20_CONTRACT,
   VLCVX_ERC20_CONTRACT,
+  WETH_ERC20_CONTRACT,
   XSUSI_ERC20_CONTRACT,
 } from "./Constants";
 import { getERC20, getERC20Balance, getRariAllocator, getVeFXS } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
+import { getOhmEthLiquidityBalance, getOhmEthLiquidityV2Balance } from "./LiquidityCalculations";
 import {
   getBTCUSDRate,
   getCVXUSDRate,
@@ -489,5 +491,53 @@ export function getVolatileValue(blockNumber: BigInt, liquidOnly: boolean): Toke
   );
 
   log.info("Volatile tokens: {}", [records.toString()]);
+  return records;
+}
+
+/**
+ * Returns the ETH risk-free value, which is defined as:
+ * - Balance of ETH
+ * - Discounted value of OHM-ETH pair (where OHM = $1)
+ * - Discounted value of OHM-ETH pair V2 (where OHM = $1)
+ *
+ * @param blockNumber the current block number
+ * @returns TokensRecords representing the components of the risk-free value
+ */
+export function getEthRiskFreeValue(blockNumber: BigInt): TokensRecords {
+  const records = new TokensRecords();
+
+  records.addToken(
+    "ETH",
+    getWETHBalance(getERC20("wETH", WETH_ERC20_CONTRACT, blockNumber), blockNumber),
+  );
+
+  records.addToken("OHM-ETH V1", getOhmEthLiquidityBalance(blockNumber, true));
+
+  records.addToken("OHM-ETH V2", getOhmEthLiquidityV2Balance(blockNumber, true));
+
+  return records;
+}
+
+/**
+ * Returns the ETH market value, which is defined as:
+ * - Balance of ETH
+ * - Value of OHM-ETH pair
+ * - Value of OHM-ETH pair V2
+ *
+ * @param blockNumber the current block number
+ * @returns TokensRecords representing the components of the market value
+ */
+export function getEthMarketValue(blockNumber: BigInt): TokensRecords {
+  const records = new TokensRecords();
+
+  records.addToken(
+    "ETH",
+    getWETHBalance(getERC20("wETH", WETH_ERC20_CONTRACT, blockNumber), blockNumber),
+  );
+
+  records.addToken("OHM-ETH V1", getOhmEthLiquidityBalance(blockNumber, false));
+
+  records.addToken("OHM-ETH V2", getOhmEthLiquidityV2Balance(blockNumber, false));
+
   return records;
 }

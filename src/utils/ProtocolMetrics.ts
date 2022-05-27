@@ -4,7 +4,6 @@ import { ethereum } from "@graphprotocol/graph-ts";
 import { OlympusStakingV1 } from "../../generated/ProtocolMetrics/OlympusStakingV1";
 import { OlympusStakingV2 } from "../../generated/ProtocolMetrics/OlympusStakingV2";
 import { OlympusStakingV3, StakeCall } from "../../generated/ProtocolMetrics/OlympusStakingV3";
-import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { ProtocolMetric } from "../../generated/schema";
 import { Distributor } from "../../generated/sOlympusERC20V1/Distributor";
 import { updateBondDiscounts } from "./BondDiscounts";
@@ -18,14 +17,6 @@ import {
   STAKING_CONTRACT_V2_BLOCK,
   STAKING_CONTRACT_V3,
   STAKING_CONTRACT_V3_BLOCK,
-  SUSHI_OHMETH_PAIR,
-  SUSHI_OHMETH_PAIR_BLOCK,
-  SUSHI_OHMETH_PAIR_BLOCKV2,
-  SUSHI_OHMETH_PAIRV2,
-  TREASURY_ADDRESS,
-  TREASURY_ADDRESS_V2,
-  TREASURY_ADDRESS_V2_BLOCK,
-  TREASURY_ADDRESS_V3,
   UST_ERC20_CONTRACT,
   WBTC_ERC20_CONTRACT,
   WETH_ERC20_CONTRACT,
@@ -36,6 +27,7 @@ import { dayFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
 import {
   getOhmDaiProtocolOwnedLiquidity,
+  getOhmEthProtocolOwnedLiquidity,
   getOhmFraxProtocolOwnedLiquidity,
   getOhmLusdProtocolOwnedLiquidity,
 } from "./LiquidityCalculations";
@@ -46,7 +38,7 @@ import {
   getTotalSupply,
   getTotalValueLocked,
 } from "./OhmCalculations";
-import { clearPriceCache, getDiscountedPairUSD, getOHMUSDRate, getPairWETH } from "./Price";
+import { clearPriceCache, getOHMUSDRate } from "./Price";
 import {
   getDaiMarketValue,
   getDaiRiskFreeValue,
@@ -59,6 +51,8 @@ import {
 } from "./TokenStablecoins";
 import {
   getCVXVlCVXBalance,
+  getEthMarketValue,
+  getEthRiskFreeValue,
   getVolatileValue,
   getWBTCBalance,
   getWETHBalance,
@@ -116,14 +110,6 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
 }
 
 function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
-  const ohmethPair = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMETH_PAIR));
-  const ohmethPairv2 = UniswapV2Pair.bind(Address.fromString(SUSHI_OHMETH_PAIRV2));
-
-  let treasury_address = TREASURY_ADDRESS;
-  if (blockNumber.gt(BigInt.fromString(TREASURY_ADDRESS_V2_BLOCK))) {
-    treasury_address = TREASURY_ADDRESS_V2;
-  }
-
   const ustTokens = getUSTBalance(getERC20("UST", UST_ERC20_CONTRACT, blockNumber), blockNumber);
   const ustBalance = ustTokens.getValue();
 
@@ -160,45 +146,10 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const ohmLusdMarket = getLusdMarketValue(blockNumber);
   const ohmLusdRiskFreeValue = getLusdRiskFreeValue(blockNumber);
 
-  // OHMETH
-  let ohmethBalance = BigInt.fromI32(0);
-  let ohmeth_value = BigDecimal.fromString("0");
-  let ohmeth_rfv = BigDecimal.fromString("0");
-  let ohmethTotalLP = BigDecimal.fromString("0");
-  let ohmethPOL = BigDecimal.fromString("0");
-  if (blockNumber.gt(BigInt.fromString(SUSHI_OHMETH_PAIR_BLOCK))) {
-    ohmethBalance = ohmethPair
-      .balanceOf(Address.fromString(treasury_address))
-      .plus(ohmethPair.balanceOf(Address.fromString(TREASURY_ADDRESS_V3)));
-    log.debug("ohmethBalance {}", [ohmethBalance.toString()]);
-
-    ohmeth_value = getPairWETH(ohmethBalance, SUSHI_OHMETH_PAIR, blockNumber);
-    log.debug("ohmeth_value {}", [ohmeth_value.toString()]);
-
-    ohmeth_rfv = getDiscountedPairUSD(ohmethBalance, SUSHI_OHMETH_PAIR);
-    ohmethTotalLP = toDecimal(ohmethPair.totalSupply(), 18);
-    if (ohmethTotalLP.gt(BigDecimal.fromString("0")) && ohmethBalance.gt(BigInt.fromI32(0))) {
-      ohmethPOL = toDecimal(ohmethBalance, 18)
-        .div(ohmethTotalLP)
-        .times(BigDecimal.fromString("100"));
-    }
-  }
-
-  if (blockNumber.gt(BigInt.fromString(SUSHI_OHMETH_PAIR_BLOCKV2))) {
-    ohmethBalance = ohmethPairv2.balanceOf(Address.fromString(TREASURY_ADDRESS_V3));
-    log.debug("ohmethBalance {}", [ohmethBalance.toString()]);
-
-    ohmeth_value = getPairWETH(ohmethBalance, SUSHI_OHMETH_PAIRV2, blockNumber);
-    log.debug("ohmeth_value {}", [ohmeth_value.toString()]);
-
-    ohmeth_rfv = getDiscountedPairUSD(ohmethBalance, SUSHI_OHMETH_PAIRV2);
-    ohmethTotalLP = toDecimal(ohmethPairv2.totalSupply(), 18);
-    if (ohmethTotalLP.gt(BigDecimal.fromString("0")) && ohmethBalance.gt(BigInt.fromI32(0))) {
-      ohmethPOL = toDecimal(ohmethBalance, 18)
-        .div(ohmethTotalLP)
-        .times(BigDecimal.fromString("100"));
-    }
-  }
+  // OHM-ETH Liquidity
+  const ohmEthPOL = getOhmEthProtocolOwnedLiquidity(blockNumber);
+  const ohmEthMarket = getEthMarketValue(blockNumber);
+  const ohmEthRiskFreeValue = getEthRiskFreeValue(blockNumber);
 
   const stableValueRecords = getStableValue(blockNumber);
   const stableValueDecimal = stableValueRecords.getValue();
@@ -210,12 +161,12 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     .getValue()
     .plus(ohmFraxMarket.getValue())
     .plus(ohmLusdMarket.getValue())
-    .plus(ohmeth_value);
+    .plus(ohmEthMarket.getValue());
   const rfvLpValue = ohmDaiRiskFreeValue
     .getValue()
     .plus(ohmFraxRiskFreeValue.getValue())
     .plus(ohmLusdRiskFreeValue.getValue())
-    .plus(ohmeth_rfv);
+    .plus(ohmEthRiskFreeValue.getValue());
 
   const mv = stableValueDecimal
     .plus(lpValue)
@@ -245,8 +196,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   log.debug("Treasury RFV {}", [rfv.toString()]);
   log.debug("Treasury xSushi value {}", [xSushiValue.toString()]);
   log.debug("Treasury WETH value {}", [weth_value.toString()]);
-  log.debug("Treasury OHM-DAI RFV {}", [ohmDaiRiskFreeValue.getValue().toString()]);
-  log.debug("Treasury OHM-FRAX RFV {}", [ohmFraxRiskFreeValue.getValue().toString()]);
   return [
     mv,
     rfv,
@@ -255,8 +204,8 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     ohmDaiMarket.getValue(),
     ohmFraxMarket.getValue(),
     xSushiValue,
-    ohmeth_rfv.plus(weth_value),
-    ohmeth_value.plus(weth_value),
+    ohmEthRiskFreeValue.getValue(),
+    ohmEthMarket.getValue(),
     ohmLusdRiskFreeValue.getValue(),
     ohmLusdMarket.getValue(),
     cvxVlCvxValue,
@@ -264,7 +213,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     ohmDaiPOL,
     ohmFraxPOL,
     ohmLusdPOL,
-    ohmethPOL,
+    ohmEthPOL,
     volatile_value,
     wbtc_value,
     ustBalance,

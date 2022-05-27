@@ -8,6 +8,8 @@ import {
   SUSHI_MASTERCHEF,
   SUSHI_OHMDAI_PAIR,
   SUSHI_OHMDAI_PAIRV2,
+  SUSHI_OHMETH_PAIR,
+  SUSHI_OHMETH_PAIRV2,
   SUSHI_OHMLUSD_PAIR,
   SUSHI_OHMLUSD_PAIR_V2,
   TREASURY_ADDRESS,
@@ -359,6 +361,101 @@ export function getOhmLusdProtocolOwnedLiquidity(blockNumber: BigInt): BigDecima
   const v2Pair = getUniswapV2Pair(SUSHI_OHMLUSD_PAIR_V2, blockNumber);
   const v1Balance = getOhmLusdLiquidityBalance(blockNumber, false).getBalance();
   const v2Balance = getOhmLusdLiquidityV2Balance(blockNumber, false).getBalance();
+  const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
+  const v2TotalSupply: BigInt = v2Pair ? v2Pair.totalSupply() : BigInt.fromString("-1");
+
+  if (v2Balance.gt(BigDecimal.zero()) && v2TotalSupply.gt(BigInt.zero())) {
+    return v2Balance.div(toDecimal(v2TotalSupply, 18)).times(BigDecimal.fromString("100"));
+  }
+
+  if (v1Balance.gt(BigDecimal.zero()) && v1TotalSupply.gt(BigInt.zero())) {
+    return v1Balance.div(toDecimal(v1TotalSupply, 18)).times(BigDecimal.fromString("100"));
+  }
+
+  return BigDecimal.zero();
+}
+
+/**
+ * Returns the balance of the OHM-ETH liquidity pair.
+ *
+ * This includes:
+ * - OHM-ETH in the treasury wallet
+ * - OHM-ETH in the treasury wallet V2
+ * - OHM-ETH in the treasury wallet V3
+ *
+ * @param blockNumber the current block number
+ * @param riskFree whether the price of the LP is part of risk-free value
+ * @returns TokenRecords object
+ */
+export function getOhmEthLiquidityBalance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
+  const liquidityBalance = new LiquidityBalances(SUSHI_OHMETH_PAIR);
+  const ohmEthLiquidityPair = getUniswapV2Pair(SUSHI_OHMETH_PAIR, blockNumber);
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS,
+    getUniswapV2PairBalance(ohmEthLiquidityPair, TREASURY_ADDRESS, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS_V2,
+    getUniswapV2PairBalance(ohmEthLiquidityPair, TREASURY_ADDRESS_V2, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS_V3,
+    getUniswapV2PairBalance(ohmEthLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
+  );
+
+  return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
+}
+
+/**
+ * Returns the balance of the OHM-ETH liquidity pair V2.
+ *
+ * This includes:
+ * - OHM-ETH in the treasury wallet
+ * - OHM-ETH in the treasury wallet V2
+ * - OHM-ETH in the treasury wallet V3
+ *
+ * @param blockNumber the current block number
+ * @param riskFree whether the price of the LP is part of risk-free value
+ * @returns TokenRecords object
+ */
+export function getOhmEthLiquidityV2Balance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
+  const liquidityBalance = new LiquidityBalances(SUSHI_OHMETH_PAIRV2);
+  const ohmEthLiquidityPair = getUniswapV2Pair(SUSHI_OHMETH_PAIRV2, blockNumber);
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS,
+    getUniswapV2PairBalance(ohmEthLiquidityPair, TREASURY_ADDRESS, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS_V2,
+    getUniswapV2PairBalance(ohmEthLiquidityPair, TREASURY_ADDRESS_V2, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS_V3,
+    getUniswapV2PairBalance(ohmEthLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
+  );
+
+  return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
+}
+
+/**
+ * Returns the protocol-owned liquidity for the latest OHM-ETH liquidity pair.
+ *
+ * This currently includes:
+ * - OHM-ETH V1
+ * - OHM-ETH V2
+ *
+ * The latest pair is the one with both a non-zero total supply and balance.
+ *
+ * The value returned corresponds to the percentage, e.g. 80% will return 80 (not 0.8)
+ *
+ * @param blockNumber
+ * @returns BigDecimal representing the percentage of protocol-owned liquidity
+ */
+export function getOhmEthProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal {
+  const v1Pair = getUniswapV2Pair(SUSHI_OHMETH_PAIR, blockNumber);
+  const v2Pair = getUniswapV2Pair(SUSHI_OHMETH_PAIRV2, blockNumber);
+  const v1Balance = getOhmEthLiquidityBalance(blockNumber, false).getBalance();
+  const v2Balance = getOhmEthLiquidityV2Balance(blockNumber, false).getBalance();
   const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
   const v2TotalSupply: BigInt = v2Pair ? v2Pair.totalSupply() : BigInt.fromString("-1");
 
