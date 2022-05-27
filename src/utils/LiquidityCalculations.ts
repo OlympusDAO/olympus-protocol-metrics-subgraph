@@ -299,7 +299,7 @@ export function getOhmLusdLiquidityBalance(blockNumber: BigInt, riskFree: boolea
     getMasterChefBalance(
       getMasterChef(SUSHI_MASTERCHEF, blockNumber),
       ONSEN_ALLOCATOR,
-      OHMDAI_ONSEN_ID,
+      OHMLUSD_ONSEN_ID,
       blockNumber,
     ),
   );
@@ -340,7 +340,7 @@ export function getOhmLusdLiquidityV2Balance(blockNumber: BigInt, riskFree: bool
     getMasterChefBalance(
       getMasterChef(SUSHI_MASTERCHEF, blockNumber),
       ONSEN_ALLOCATOR,
-      OHMDAI_ONSEN_ID,
+      OHMLUSD_ONSEN_ID,
       blockNumber,
     ),
   );
