@@ -32,7 +32,12 @@ import {
   getStabilityPool,
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
-import { getOhmDaiLiquidityBalance, getOhmDaiLiquidityV2Balance } from "./LiquidityCalculations";
+import {
+  getOhmDaiLiquidityBalance,
+  getOhmDaiLiquidityV2Balance,
+  getOhmFraxLiquidityBalance,
+  getOhmFraxLiquidityV2Balance,
+} from "./LiquidityCalculations";
 import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
 
 /**
@@ -505,6 +510,54 @@ export function getDaiMarketValue(blockNumber: BigInt): TokensRecords {
   records.addToken("OHM-DAI V1", getOhmDaiLiquidityBalance(blockNumber, false));
 
   records.addToken("OHM-DAI V2", getOhmDaiLiquidityV2Balance(blockNumber, false));
+
+  return records;
+}
+
+/**
+ * Returns the FRAX risk-free value, which is defined as:
+ * - Balance of FRAX
+ * - Discounted value of OHM-FRAX pair (where OHM = $1)
+ * - Discounted value of OHM-FRAX pair V2 (where OHM = $1)
+ *
+ * @param blockNumber the current block number
+ * @returns TokensRecords representing the components of the risk-free value
+ */
+export function getFraxRiskFreeValue(blockNumber: BigInt): TokensRecords {
+  const records = new TokensRecords();
+
+  records.addToken(
+    "FRAX",
+    getFraxBalance(getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber), blockNumber),
+  );
+
+  records.addToken("OHM-FRAX V1", getOhmFraxLiquidityBalance(blockNumber, true));
+
+  records.addToken("OHM-FRAX V2", getOhmFraxLiquidityV2Balance(blockNumber, true));
+
+  return records;
+}
+
+/**
+ * Returns the FRAX market value, which is defined as:
+ * - Balance of FRAX
+ * - Value of OHM-FRAX pair
+ * - Value of OHM-FRAX pair V2
+ *
+ * @param blockNumber the current block number
+ * @returns TokensRecords representing the components of the market value
+ */
+export function getFraxMarketValue(blockNumber: BigInt): TokensRecords {
+  const records = new TokensRecords();
+
+  records.addToken(
+    "FRAX",
+    getFraxBalance(getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber), blockNumber),
+  );
+
+  records.addToken("OHM-FRAX V1", getOhmFraxLiquidityBalance(blockNumber, false));
+
+  records.addToken("OHM-FRAX V2", getOhmFraxLiquidityV2Balance(blockNumber, false));
 
   return records;
 }

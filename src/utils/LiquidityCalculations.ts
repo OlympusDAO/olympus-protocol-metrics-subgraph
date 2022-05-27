@@ -10,6 +10,8 @@ import {
   TREASURY_ADDRESS,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
+  UNI_OHMFRAX_PAIR,
+  UNI_OHMFRAX_PAIRV2,
 } from "./Constants";
 import {
   getMasterChef,
@@ -120,6 +122,68 @@ export function getOhmDaiLiquidityV2Balance(blockNumber: BigInt, riskFree: boole
   liquidityBalance.addBalance(
     TREASURY_ADDRESS_V3,
     getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
+  );
+
+  return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
+}
+
+/**
+ * Returns the balance of the OHM-FRAX liquidity pair.
+ *
+ * This includes:
+ * - OHM-FRAX in the treasury wallet
+ * - OHM-FRAX in the treasury wallet V2
+ * - OHM-FRAX in the treasury wallet V3
+ *
+ * @param blockNumber the current block number
+ * @param riskFree whether the price of the LP is part of risk-free value
+ * @returns TokenRecords object
+ */
+export function getOhmFraxLiquidityBalance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
+  const liquidityBalance = new LiquidityBalances(UNI_OHMFRAX_PAIR);
+  const ohmFraxLiquidityPair = getUniswapV2Pair(UNI_OHMFRAX_PAIR, blockNumber);
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS,
+    getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS_V2,
+    getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS_V2, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS_V3,
+    getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
+  );
+
+  return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
+}
+
+/**
+ * Returns the balance of the OHM-FRAX liquidity pair V2.
+ *
+ * This includes:
+ * - OHM-FRAX in the treasury wallet
+ * - OHM-FRAX in the treasury wallet V2
+ * - OHM-FRAX in the treasury wallet V3
+ *
+ * @param blockNumber the current block number
+ * @param riskFree whether the price of the LP is part of risk-free value
+ * @returns TokenRecords object
+ */
+export function getOhmFraxLiquidityV2Balance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
+  const liquidityBalance = new LiquidityBalances(UNI_OHMFRAX_PAIRV2);
+  const ohmFraxLiquidityPair = getUniswapV2Pair(UNI_OHMFRAX_PAIRV2, blockNumber);
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS,
+    getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS_V2,
+    getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS_V2, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS_V3,
+    getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
   );
 
   return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);

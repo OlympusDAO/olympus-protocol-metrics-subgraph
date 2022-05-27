@@ -14,7 +14,6 @@ import {
   DISTRIBUTOR_CONTRACT_BLOCK,
   DISTRIBUTOR_CONTRACT_BLOCK_V2,
   DISTRIBUTOR_CONTRACT_V2,
-  ERC20FRAX_CONTRACT,
   LUSD_ERC20_CONTRACT,
   OHMDAI_ONSEN_ID,
   OHMLUSD_ONSEN_ID,
@@ -72,7 +71,8 @@ import {
 import {
   getDaiMarketValue,
   getDaiRiskFreeValue,
-  getFraxBalance,
+  getFraxMarketValue,
+  getFraxRiskFreeValue,
   getLUSDBalance,
   getStableValue,
   getUSTBalance,
@@ -153,8 +153,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     treasury_address = TREASURY_ADDRESS_V2;
   }
 
-  const fraxTokens = getFraxBalance(getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber), blockNumber);
-  const fraxBalance = fraxTokens.getBalance();
   const lusdTokens = getLUSDBalance(
     getERC20("LUSD", LUSD_ERC20_CONTRACT, blockNumber),
     getStabilityPool(STABILITY_POOL, blockNumber),
@@ -224,14 +222,10 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
 
   // OHMFRAX
   let ohmfraxBalance = BigInt.fromI32(0);
-  let ohmfrax_value = BigDecimal.fromString("0");
-  let ohmfrax_rfv = BigDecimal.fromString("0");
   let ohmfraxTotalLP = BigDecimal.fromString("0");
   let ohmfraxPOL = BigDecimal.fromString("0");
   if (blockNumber.gt(BigInt.fromString(UNI_OHMFRAX_PAIR_BLOCK))) {
     ohmfraxBalance = ohmfraxPair.balanceOf(Address.fromString(treasury_address));
-    ohmfrax_value = getPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIR, blockNumber);
-    ohmfrax_rfv = ohmfrax_rfv.plus(getDiscountedPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIR));
     ohmfraxTotalLP = toDecimal(ohmfraxPair.totalSupply(), 18);
     if (ohmfraxTotalLP.gt(BigDecimal.fromString("0")) && ohmfraxBalance.gt(BigInt.fromI32(0))) {
       ohmfraxPOL = ohmfraxPOL.plus(
@@ -241,8 +235,6 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   }
   if (blockNumber.gt(BigInt.fromString(UNI_OHMFRAX_PAIR_BLOCKV2))) {
     ohmfraxBalance = ohmfraxPairV2.balanceOf(Address.fromString(TREASURY_ADDRESS_V3));
-    ohmfrax_value = ohmfrax_rfv.plus(getPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIRV2, blockNumber));
-    ohmfrax_rfv = ohmfrax_rfv.plus(getDiscountedPairUSD(ohmfraxBalance, UNI_OHMFRAX_PAIRV2));
     ohmfraxTotalLP = toDecimal(ohmfraxPairV2.totalSupply(), 18);
     if (ohmfraxTotalLP.gt(BigDecimal.fromString("0")) && ohmfraxBalance.gt(BigInt.fromI32(0))) {
       ohmfraxPOL = ohmfraxPOL.plus(
@@ -250,6 +242,9 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
       );
     }
   }
+
+  const ohmFraxMarket = getFraxMarketValue(blockNumber);
+  const ohmfrax_rfv = getFraxRiskFreeValue(blockNumber);
 
   // OHMLUSD
   let ohmlusdBalance = BigInt.fromI32(0);
@@ -353,10 +348,14 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
 
   const lpValue = ohmdai_market
     .getValue()
-    .plus(ohmfrax_value)
+    .plus(ohmFraxMarket.getValue())
     .plus(ohmlusd_value)
     .plus(ohmeth_value);
-  const rfvLpValue = ohmdai_rfv.getValue().plus(ohmfrax_rfv).plus(ohmlusd_rfv).plus(ohmeth_rfv);
+  const rfvLpValue = ohmdai_rfv
+    .getValue()
+    .plus(ohmfrax_rfv.getValue())
+    .plus(ohmlusd_rfv)
+    .plus(ohmeth_rfv);
 
   const mv = stableValueDecimal
     .plus(lpValue)
@@ -388,18 +387,15 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   log.debug("Treasury WETH value {}", [weth_value.toString()]);
   log.debug("Treasury LUSD value {}", [lusdBalance.toString()]);
   log.debug("Treasury OHM-DAI RFV {}", [ohmdai_rfv.toString()]);
-  log.debug("Treasury Frax value {}", [fraxBalance.toString()]);
   log.debug("Treasury OHM-FRAX RFV {}", [ohmfrax_rfv.toString()]);
   log.debug("Treasury OHM-LUSD RFV {}", [ohmlusd_rfv.toString()]);
   return [
     mv,
     rfv,
     ohmdai_rfv.getValue(),
-    // treasuryFraxRiskFreeValue = FRAX RFV * FRAX
-    ohmfrax_rfv.plus(fraxBalance),
+    ohmfrax_rfv.getValue(),
     ohmdai_market.getValue(),
-    // treasuryFraxMarketValue = FRAX LP * FRAX
-    ohmfrax_value.plus(fraxBalance),
+    ohmFraxMarket.getValue(),
     xSushiValue,
     ohmeth_rfv.plus(weth_value),
     ohmeth_value.plus(weth_value),
