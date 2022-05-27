@@ -1,6 +1,7 @@
-import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { BigInt } from "@graphprotocol/graph-ts";
 
 import {
+  getContractName,
   OHMDAI_ONSEN_ID,
   ONSEN_ALLOCATOR,
   SUSHI_MASTERCHEF,
@@ -35,6 +36,7 @@ import { TokenRecord, TokenRecords } from "./TokenRecord";
  */
 export function getOhmDaiLiquidityBalance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
   const records = new TokenRecords([]);
+  const contractName = getContractName(SUSHI_OHMDAI_PAIR);
   const treasuryV1Balance = getUniswapV2PairBalance(
     getUniswapV2Pair(SUSHI_OHMDAI_PAIR, blockNumber),
     TREASURY_ADDRESS,
@@ -66,8 +68,8 @@ export function getOhmDaiLiquidityBalance(blockNumber: BigInt, riskFree: boolean
 
   records.push(
     new TokenRecord(
-      "OHM-DAI Liquidity Pool",
-      "Treasury Wallet V1",
+      contractName,
+      getContractName(TREASURY_ADDRESS),
       TREASURY_ADDRESS,
       price,
       toDecimal(treasuryV1Balance, 18),
@@ -75,8 +77,8 @@ export function getOhmDaiLiquidityBalance(blockNumber: BigInt, riskFree: boolean
   );
   records.push(
     new TokenRecord(
-      "OHM-DAI Liquidity Pool",
-      "Treasury Wallet V2",
+      contractName,
+      getContractName(TREASURY_ADDRESS_V2),
       TREASURY_ADDRESS_V2,
       price,
       toDecimal(treasuryV2Balance, 18),
@@ -84,8 +86,8 @@ export function getOhmDaiLiquidityBalance(blockNumber: BigInt, riskFree: boolean
   );
   records.push(
     new TokenRecord(
-      "OHM-DAI Liquidity Pool",
-      "Treasury Wallet V3",
+      contractName,
+      getContractName(TREASURY_ADDRESS_V3),
       TREASURY_ADDRESS_V3,
       price,
       toDecimal(treasuryV3Balance, 18),
@@ -93,8 +95,8 @@ export function getOhmDaiLiquidityBalance(blockNumber: BigInt, riskFree: boolean
   );
   records.push(
     new TokenRecord(
-      "OHM-DAI Liquidity Pool",
-      "Onsen Allocator",
+      contractName,
+      getContractName(ONSEN_ALLOCATOR),
       ONSEN_ALLOCATOR,
       price,
       toDecimal(onsenBalance, 18),
@@ -118,6 +120,7 @@ export function getOhmDaiLiquidityBalance(blockNumber: BigInt, riskFree: boolean
  */
 export function getOhmDaiLiquidityV2Balance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
   const records = new TokenRecords([]);
+  const contractName = getContractName(SUSHI_OHMDAI_PAIRV2);
 
   // We need to calculate the balances first, so that we can calculate the price of the pair.
   const treasuryV1Balance = getUniswapV2PairBalance(
@@ -142,8 +145,8 @@ export function getOhmDaiLiquidityV2Balance(blockNumber: BigInt, riskFree: boole
 
   records.push(
     new TokenRecord(
-      "OHM-DAI Liquidity Pool",
-      "Treasury Wallet V1",
+      contractName,
+      getContractName(TREASURY_ADDRESS),
       TREASURY_ADDRESS,
       price,
       toDecimal(treasuryV1Balance, 18),
@@ -151,8 +154,8 @@ export function getOhmDaiLiquidityV2Balance(blockNumber: BigInt, riskFree: boole
   );
   records.push(
     new TokenRecord(
-      "OHM-DAI Liquidity Pool",
-      "Treasury Wallet V2",
+      contractName,
+      getContractName(TREASURY_ADDRESS_V2),
       TREASURY_ADDRESS_V2,
       price,
       toDecimal(treasuryV2Balance, 18),
@@ -160,8 +163,8 @@ export function getOhmDaiLiquidityV2Balance(blockNumber: BigInt, riskFree: boole
   );
   records.push(
     new TokenRecord(
-      "OHM-DAI Liquidity Pool",
-      "Treasury Wallet V3",
+      contractName,
+      getContractName(TREASURY_ADDRESS_V3),
       TREASURY_ADDRESS_V3,
       price,
       toDecimal(treasuryV3Balance, 18),

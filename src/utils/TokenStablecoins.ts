@@ -14,6 +14,7 @@ import {
   ERC20DAI_CONTRACT,
   ERC20FRAX_CONTRACT,
   FEI_ERC20_CONTRACT,
+  getContractName,
   LUSD_ALLOCATOR,
   LUSD_ERC20_CONTRACT,
   RARI_ALLOCATOR,
@@ -24,15 +25,15 @@ import {
   UST_ERC20_CONTRACT,
 } from "./Constants";
 import {
-  getERC20Balance,
   getConvexAllocator,
   getERC20,
+  getERC20Balance,
   getRariAllocator,
   getStabilityPool,
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
-import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
 import { getOhmDaiLiquidityBalance, getOhmDaiLiquidityV2Balance } from "./LiquidityCalculations";
+import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
 
 /**
  * Calculates the balance of DAI across the following:
@@ -61,7 +62,7 @@ export function getDaiBalance(
     records.push(
       new TokenRecord(
         "DAI",
-        "Treasury Wallet",
+        getContractName(TREASURY_ADDRESS),
         TREASURY_ADDRESS,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(daiERC20, TREASURY_ADDRESS, blockNumber), 18),
@@ -70,7 +71,7 @@ export function getDaiBalance(
     records.push(
       new TokenRecord(
         "DAI",
-        "Treasury Wallet V2",
+        getContractName(TREASURY_ADDRESS_V2),
         TREASURY_ADDRESS_V2,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(daiERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
@@ -79,7 +80,7 @@ export function getDaiBalance(
     records.push(
       new TokenRecord(
         "DAI",
-        "Treasury Wallet V3",
+        getContractName(TREASURY_ADDRESS_V3),
         TREASURY_ADDRESS_V3,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(daiERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
@@ -140,7 +141,7 @@ export function getFeiBalance(feiERC20: ERC20 | null, blockNumber: BigInt): Toke
     records.push(
       new TokenRecord(
         "FEI",
-        "Treasury Wallet",
+        getContractName(TREASURY_ADDRESS),
         TREASURY_ADDRESS,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(feiERC20, TREASURY_ADDRESS, blockNumber), 18),
@@ -149,7 +150,7 @@ export function getFeiBalance(feiERC20: ERC20 | null, blockNumber: BigInt): Toke
     records.push(
       new TokenRecord(
         "FEI",
-        "Treasury Wallet V2",
+        getContractName(TREASURY_ADDRESS_V2),
         TREASURY_ADDRESS_V2,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(feiERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
@@ -158,7 +159,7 @@ export function getFeiBalance(feiERC20: ERC20 | null, blockNumber: BigInt): Toke
     records.push(
       new TokenRecord(
         "FEI",
-        "Treasury Wallet V3",
+        getContractName(TREASURY_ADDRESS_V3),
         TREASURY_ADDRESS_V3,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(feiERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
@@ -250,7 +251,7 @@ export function getFraxBalance(fraxERC20: ERC20 | null, blockNumber: BigInt): To
     records.push(
       new TokenRecord(
         "FRAX",
-        "Treasury Wallet",
+        getContractName(TREASURY_ADDRESS),
         TREASURY_ADDRESS,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(fraxERC20, TREASURY_ADDRESS, blockNumber), 18),
@@ -259,7 +260,7 @@ export function getFraxBalance(fraxERC20: ERC20 | null, blockNumber: BigInt): To
     records.push(
       new TokenRecord(
         "FRAX",
-        "Treasury Wallet V2",
+        getContractName(TREASURY_ADDRESS_V2),
         TREASURY_ADDRESS_V2,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(fraxERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
@@ -268,7 +269,7 @@ export function getFraxBalance(fraxERC20: ERC20 | null, blockNumber: BigInt): To
     records.push(
       new TokenRecord(
         "FRAX",
-        "Treasury Wallet V3",
+        getContractName(TREASURY_ADDRESS_V3),
         TREASURY_ADDRESS_V3,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(fraxERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
@@ -311,7 +312,7 @@ export function getLUSDBalance(
     records.push(
       new TokenRecord(
         "LUSD",
-        "Treasury Wallet",
+        getContractName(TREASURY_ADDRESS),
         TREASURY_ADDRESS,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(lusdERC20, TREASURY_ADDRESS, blockNumber), 18),
@@ -320,7 +321,7 @@ export function getLUSDBalance(
     records.push(
       new TokenRecord(
         "LUSD",
-        "Treasury Wallet V2",
+        getContractName(TREASURY_ADDRESS_V2),
         TREASURY_ADDRESS_V2,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(lusdERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
@@ -329,7 +330,7 @@ export function getLUSDBalance(
     records.push(
       new TokenRecord(
         "LUSD",
-        "Treasury Wallet V3",
+        getContractName(TREASURY_ADDRESS_V3),
         TREASURY_ADDRESS_V3,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(lusdERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
@@ -369,7 +370,7 @@ export function getUSTBalance(ustERC20: ERC20 | null, blockNumber: BigInt): Toke
     records.push(
       new TokenRecord(
         "UST",
-        "Treasury Wallet",
+        getContractName(TREASURY_ADDRESS),
         TREASURY_ADDRESS,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(ustERC20, TREASURY_ADDRESS, blockNumber), 18),
@@ -378,7 +379,7 @@ export function getUSTBalance(ustERC20: ERC20 | null, blockNumber: BigInt): Toke
     records.push(
       new TokenRecord(
         "UST",
-        "Treasury Wallet V2",
+        getContractName(TREASURY_ADDRESS_V2),
         TREASURY_ADDRESS_V2,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(ustERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
@@ -387,7 +388,7 @@ export function getUSTBalance(ustERC20: ERC20 | null, blockNumber: BigInt): Toke
     records.push(
       new TokenRecord(
         "UST",
-        "Treasury Wallet V3",
+        getContractName(TREASURY_ADDRESS_V3),
         TREASURY_ADDRESS_V3,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(ustERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
