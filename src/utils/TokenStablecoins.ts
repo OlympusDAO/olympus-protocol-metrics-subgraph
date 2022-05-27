@@ -32,6 +32,7 @@ import {
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
+import { getOhmDaiLiquidityBalance, getOhmDaiLiquidityV2Balance } from "./LiquidityCalculations";
 
 /**
  * Calculates the balance of DAI across the following:
@@ -446,5 +447,63 @@ export function getStableValue(blockNumber: BigInt): TokensRecords {
   );
 
   log.info("Stablecoin tokens: {}", [records.toString()]);
+  return records;
+}
+
+/**
+ * Returns the DAI risk-free value, which is defined as:
+ * - Balance of DAI
+ * - Discounted value of OHM-DAI pair (where OHM = $1)
+ * - Discounted value of OHM-DAI pair V2 (where OHM = $1)
+ *
+ * @param blockNumber the current block number
+ * @returns TokensRecords representing the components of the risk-free value
+ */
+export function getDaiRiskFreeValue(blockNumber: BigInt): TokensRecords {
+  const records = new TokensRecords();
+
+  records.addToken(
+    "DAI",
+    getDaiBalance(
+      getERC20("DAI", ERC20DAI_CONTRACT, blockNumber),
+      getERC20("aDAI", ADAI_ERC20_CONTRACT, blockNumber),
+      getRariAllocator(RARI_ALLOCATOR, blockNumber),
+      blockNumber,
+    ),
+  );
+
+  records.addToken("OHM-DAI V1", getOhmDaiLiquidityBalance(blockNumber, true));
+
+  records.addToken("OHM-DAI V2", getOhmDaiLiquidityV2Balance(blockNumber, true));
+
+  return records;
+}
+
+/**
+ * Returns the DAI market value, which is defined as:
+ * - Balance of DAI
+ * - Value of OHM-DAI pair
+ * - Value of OHM-DAI pair V2
+ *
+ * @param blockNumber the current block number
+ * @returns TokensRecords representing the components of the market value
+ */
+export function getDaiMarketValue(blockNumber: BigInt): TokensRecords {
+  const records = new TokensRecords();
+
+  records.addToken(
+    "DAI",
+    getDaiBalance(
+      getERC20("DAI", ERC20DAI_CONTRACT, blockNumber),
+      getERC20("aDAI", ADAI_ERC20_CONTRACT, blockNumber),
+      getRariAllocator(RARI_ALLOCATOR, blockNumber),
+      blockNumber,
+    ),
+  );
+
+  records.addToken("OHM-DAI V1", getOhmDaiLiquidityBalance(blockNumber, false));
+
+  records.addToken("OHM-DAI V2", getOhmDaiLiquidityV2Balance(blockNumber, false));
+
   return records;
 }

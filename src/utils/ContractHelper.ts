@@ -305,6 +305,68 @@ export function getERC20Balance(
 }
 
 /**
+ * Helper method to simplify getting the balance from an UniswapV2Pair contract.
+ *
+ * Returns 0 if the minimum block number has not passed.
+ *
+ * @param contract The bound UniswapV2Pair contract.
+ * @param address The address of the holder.
+ * @param currentBlockNumber The current block number.
+ * @param minimumBlockNumber The minimum block number for the balance to apply.
+ * @returns BigInt
+ */
+export function getUniswapV2PairBalance(
+  contract: UniswapV2Pair | null,
+  address: string,
+  currentBlockNumber: BigInt,
+): BigInt {
+  if (!contract) {
+    log.info("Contract for address {} does not exist at block {}", [
+      address,
+      currentBlockNumber.toString(),
+    ]);
+    return BigInt.fromString("0");
+  }
+
+  const callResult = contract.try_name();
+  log.debug("Getting UniswapV2Pair balance in contract {} for wallet {} at block number {}", [
+    callResult.reverted ? "N/A" : callResult.value,
+    address,
+    currentBlockNumber.toString(),
+  ]);
+
+  return contract.balanceOf(Address.fromString(address));
+}
+
+/**
+ * Helper method to simplify getting the balance from a MasterChef contract.
+ *
+ * Returns 0 if the minimum block number has not passed.
+ *
+ * @param contract The bound MasterChef contract.
+ * @param address The address of the holder.
+ * @param onsenId The onsen ID to use.
+ * @param currentBlockNumber The current block number.
+ * @returns BigInt
+ */
+export function getMasterChefBalance(
+  contract: MasterChef | null,
+  address: string,
+  onsenId: i32,
+  currentBlockNumber: BigInt,
+): BigInt {
+  if (!contract) {
+    log.info("Contract for address {} does not exist at block {}", [
+      address,
+      currentBlockNumber.toString(),
+    ]);
+    return BigInt.fromString("0");
+  }
+
+  return contract.userInfo(BigInt.fromI32(onsenId), Address.fromString(address)).value0;
+}
+
+/**
  * Determines the value of a given balance.
  *
  * @param balance Balance of a token

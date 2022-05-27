@@ -74,6 +74,8 @@ import {
 } from "./Price";
 import {
   getDaiBalance,
+  getDaiMarketValue,
+  getDaiRiskFreeValue,
   getFraxBalance,
   getLUSDBalance,
   getStableValue,
@@ -204,14 +206,10 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
 
   // OHMDAIv2
   let ohmdaiSushiBalancev2 = BigInt.fromI32(0);
-  let ohmdai_valuev2 = BigDecimal.fromString("0");
-  let ohmdai_rfvv2 = BigDecimal.fromString("0");
   let ohmdaiTotalLPv2 = BigDecimal.fromString("0");
   let ohmdaiPOLv2 = BigDecimal.fromString("0");
   if (blockNumber.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))) {
     ohmdaiSushiBalancev2 = ohmdaiPairV2.balanceOf(Address.fromString(TREASURY_ADDRESS_V3));
-    ohmdai_valuev2 = getPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2, blockNumber);
-    ohmdai_rfvv2 = getDiscountedPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2);
     ohmdaiTotalLPv2 = toDecimal(ohmdaiPairV2.totalSupply(), 18);
     if (
       ohmdaiTotalLPv2.gt(BigDecimal.fromString("0")) &&
@@ -231,19 +229,9 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
       .div(ohmdaiTotalLPv2)
       .times(BigDecimal.fromString("100"));
   }
-  let ohmdai_value = getPairUSD(ohmdaiBalance, SUSHI_OHMDAI_PAIR, blockNumber);
-  log.debug("ohmdai_value {}", [ohmdai_value.toString()]);
 
-  if (blockNumber.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))) {
-    const ohmdai_v2value = getPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2, blockNumber);
-    log.debug("ohmdai_v2value {}", [ohmdai_v2value.toString()]);
-    ohmdai_value = ohmdai_value.plus(ohmdai_v2value);
-  }
-
-  let ohmdai_rfv = getDiscountedPairUSD(ohmdaiBalance, SUSHI_OHMDAI_PAIR);
-  if (blockNumber.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))) {
-    ohmdai_rfv = ohmdai_rfv.plus(getDiscountedPairUSD(ohmdaiSushiBalancev2, SUSHI_OHMDAI_PAIRV2));
-  }
+  const ohmdai_market = getDaiMarketValue(blockNumber);
+  const ohmdai_rfv = getDaiRiskFreeValue(blockNumber);
 
   // OHMFRAX
   let ohmfraxBalance = BigInt.fromI32(0);
@@ -374,8 +362,12 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   const treasuryVolatileBackingRecords = getTreasuryVolatileBacking(blockNumber, false);
   const treasuryVolatileBacking = treasuryVolatileBackingRecords.getValue();
 
-  const lpValue = ohmdai_value.plus(ohmfrax_value).plus(ohmlusd_value).plus(ohmeth_value);
-  const rfvLpValue = ohmdai_rfv.plus(ohmfrax_rfv).plus(ohmlusd_rfv).plus(ohmeth_rfv);
+  const lpValue = ohmdai_market
+    .getValue()
+    .plus(ohmfrax_value)
+    .plus(ohmlusd_value)
+    .plus(ohmeth_value);
+  const rfvLpValue = ohmdai_rfv.getValue().plus(ohmfrax_rfv).plus(ohmlusd_rfv).plus(ohmeth_rfv);
 
   const mv = stableValueDecimal
     .plus(lpValue)
@@ -428,12 +420,10 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   return [
     mv,
     rfv,
-    // treasuryDaiRiskFreeValue = DAI RFV * DAI + aDAI
-    ohmdai_rfv.plus(daiBalance),
+    ohmdai_rfv.getValue(),
     // treasuryFraxRiskFreeValue = FRAX RFV * FRAX
     ohmfrax_rfv.plus(fraxBalance),
-    // treasuryDaiMarketValue = DAI LP * DAI + aDAI
-    ohmdai_value.plus(daiBalance),
+    ohmdai_market.getValue(),
     // treasuryFraxMarketValue = FRAX LP * FRAX
     ohmfrax_value.plus(fraxBalance),
     xSushiValue,
@@ -443,7 +433,7 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
     ohmlusd_value.plus(lusdBalance),
     cvxVlCvxValue,
     // POL
-    ohmdaiPOL,
+    ohmdaiPOL, // TODO include V2 liquidity?
     ohmfraxPOL,
     ohmlusdPOL,
     ohmethPOL,
