@@ -193,7 +193,7 @@ export function getFraxAllocatedInConvexBalance(
   allocator1: ConvexAllocator | null,
   allocator2: ConvexAllocator | null,
   allocator3: ConvexAllocator | null,
-  blockNumber: BigInt,
+  _blockNumber: BigInt,
 ): TokenRecords {
   // TODO add to mv and mvrfv?
   // Multiplied by 10e9 for consistency

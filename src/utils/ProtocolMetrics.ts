@@ -157,16 +157,11 @@ function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
   );
 
   const treasuryStableBackingRecords = getTreasuryStableBacking(blockNumber);
-  const treasuryTotalBackingRecords = getTreasuryTotalBacking(
-    blockNumber,
-    lpValue.getValue().div(BigDecimal.fromString("2")),
-    getCirculatingSupply(blockNumber, getTotalSupply(blockNumber)),
-  );
-  const treasuryTotalBacking = treasuryTotalBackingRecords.getValue();
+  const treasuryTotalBackingRecords = getTreasuryTotalBacking(blockNumber);
 
   log.debug("Treasury Market Value {}", [marketValueBalance.toString()]);
   log.debug("Treasury RFV {}", [riskFreeValueBalance.toString()]);
-  log.debug("Treasury Total Backing {}", [treasuryTotalBacking.toString()]);
+  log.debug("Treasury Total Backing {}", [treasuryTotalBackingRecords.toString()]);
   return [
     marketValueBalance.getValue(),
     riskFreeValueBalance.getValue(),

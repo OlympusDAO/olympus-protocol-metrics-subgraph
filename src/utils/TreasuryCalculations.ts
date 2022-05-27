@@ -2,10 +2,11 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { WBTC_ERC20_CONTRACT, WETH_ERC20_CONTRACT } from "./Constants";
 import { getERC20 } from "./ContractHelper";
+import { getLiquidityPoolValue } from "./LiquidityCalculations";
+import { getCirculatingSupply, getTotalSupply } from "./OhmCalculations";
 import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
 import { getStableValue } from "./TokenStablecoins";
 import { getVolatileValue, getWBTCBalance, getWETHBalance } from "./TokenVolatile";
-import { getLiquidityPoolValue } from "./LiquidityCalculations";
 
 /**
  * Returns the value of the volatile backing
@@ -56,28 +57,33 @@ export function getTreasuryStableBacking(blockNumber: BigInt): TokensRecords {
  * Returns the value of the total (liquid) backing
  * - add: getTreasuryStableBacking
  * - add: getTreasuryVolatileBacking (liquid only)
- * - add: LP value
- * - subtract: OHM circulating supply
+ * - add: getLiquidityPoolValue / 2
+ * - subtract: quantity of OHM circulating supply (not value)
  *
  * @param blockNumber the current block number
  * @returns TokensRecords object
  */
-export function getTreasuryTotalBacking(
-  blockNumber: BigInt,
-  lpValue: BigDecimal,
-  ohmCirculatingSupply: BigDecimal,
-): TokensRecords {
+export function getTreasuryTotalBacking(blockNumber: BigInt): TokensRecords {
   const records = new TokensRecords();
 
   records.combine(getTreasuryStableBacking(blockNumber));
   records.combine(getTreasuryVolatileBacking(blockNumber, true));
+
+  const liquidityPoolValue = getLiquidityPoolValue(blockNumber, false);
   records.addToken(
     "LP Placeholder",
     new TokenRecords([
-      new TokenRecord("LP Placeholder", "N/A", "0x0", BigDecimal.fromString("1"), lpValue),
+      new TokenRecord(
+        "LP Placeholder",
+        "N/A",
+        "0x0",
+        BigDecimal.fromString("0.5"),
+        liquidityPoolValue.getValue(),
+      ),
     ]),
   );
   // TODO previous implementation was the number of OHM, not the value. Keep as-is?
+  const ohmCirculatingSupply = getCirculatingSupply(blockNumber, getTotalSupply(blockNumber));
   records.addToken(
     "OHM Circulating Supply",
     new TokenRecords([
