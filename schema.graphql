@@ -35,29 +35,52 @@ type ProtocolMetric @entity {
   totalSupply: BigDecimal!
   ohmPrice: BigDecimal!
   marketCap: BigDecimal!
+  marketCapComponents: [String!]!
   totalValueLocked: BigDecimal!
   treasuryRiskFreeValue: BigDecimal!
+  treasuryRiskFreeValueComponents: [String!]!
   treasuryMarketValue: BigDecimal!
+  treasuryMarketValueComponents: [String!]!
   nextEpochRebase: BigDecimal!
   nextDistributedOhm: BigDecimal!
   treasuryDaiRiskFreeValue: BigDecimal!
-  treasuryDaiRiskFreeComponents: String!
+  treasuryDaiRiskFreeValueComponents: [String!]!
   treasuryFraxRiskFreeValue: BigDecimal!
+  treasuryFraxRiskFreeValueComponents: [String!]!
   treasuryLusdRiskFreeValue: BigDecimal!
+  treasuryLusdRiskFreeValueComponents: [String!]!
+  # treasuryFeiRiskFreeValue: BigDecimal!
+  # treasuryFeiRiskFreeValueComponents: [String!]!
   treasuryWETHRiskFreeValue: BigDecimal!
+  treasuryWETHRiskFreeValueComponents: [String!]!
   treasuryDaiMarketValue: BigDecimal!
+  treasuryDaiMarketValueComponents: [String!]!
   treasuryFraxMarketValue: BigDecimal!
+  treasuryFraxMarketValueComponents: [String!]!
   treasuryLusdMarketValue: BigDecimal!
+  treasuryLusdMarketValueComponents: [String!]!
   treasuryUstMarketValue: BigDecimal!
+  treasuryUstMarketValueComponents: [String!]!
   treasuryXsushiMarketValue: BigDecimal!
+  treasuryXsushiMarketValueComponents: [String!]!
   treasuryWETHMarketValue: BigDecimal!
+  treasuryWETHMarketValueComponents: [String!]!
   treasuryWBTCMarketValue: BigDecimal!
+  treasuryWBTCMarketValueComponents: [String!]!
   treasuryCVXMarketValue: BigDecimal!
+  treasuryCVXMarketValueComponents: [String!]!
+  treasuryFXSMarketValue: BigDecimal!
+  treasuryFXSMarketValueComponents: [String!]!
   treasuryOtherMarketValue: BigDecimal!
+  treasuryOtherMarketValueComponents: [String!]!
   treasuryLPValue: BigDecimal!
+  treasuryLPValueComponents: [String!]!
   treasuryStableBacking: BigDecimal!
+  treasuryStableBackingComponents: [String!]!
   treasuryVolatileBacking: BigDecimal!
+  treasuryVolatileBackingComponents: [String!]!
   treasuryTotalBacking: BigDecimal!
+  treasuryTotalBackingComponents: [String!]!
   currentAPY: BigDecimal!
   runway2dot5k: BigDecimal
   runway5k: BigDecimal
@@ -85,31 +108,3 @@ type BondDiscount @entity {
   lusd_discount: BigDecimal!
   ohmlusd_discount: BigDecimal!
 }
-
-# type TokenRecord @entity {
-#   id: ID!
-#   name: String!
-#   source: String!
-#   sourceAddress: String!
-#   rate: BigDecimal!
-#   balance: BigDecimal!
-#   value: BigDecimal!
-# }
-
-# type TokenRecords @entity {
-#   id: ID!
-#   records: [TokenRecord!]
-#   balance: BigDecimal!
-#   value: BigDecimal!
-# }
-
-# type TokenRecordsKeyValuePair @entity {
-#   id: ID!
-#   key: String!
-#   value: TokenRecords!
-# }
-
-# type TokenRecordsWrapper @entity {
-#   id: ID!
-#   tokens: String!
-# }

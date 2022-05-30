@@ -15,3 +15,5 @@ A set of Docker containers is pre-configured to enable local testing of the subg
 3. Create the subgraph in the local graph node: `yarn create-local` (after every restart of the graph node stack)
 4. Deploy the subgraph: `yarn deploy-local --version-label 0.1.0`
 5. Access the GraphQL query interface: http://localhost:8000/subgraphs/name/olympus/graphql
+
+TODO note about reasons for schema design with \*components

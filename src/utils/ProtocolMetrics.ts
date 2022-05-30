@@ -76,34 +76,53 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
     protocolMetric.totalSupply = BigDecimal.fromString("0");
     protocolMetric.ohmPrice = BigDecimal.fromString("0");
     protocolMetric.marketCap = BigDecimal.fromString("0");
+    protocolMetric.marketCapComponents = new Array<string>();
     protocolMetric.totalValueLocked = BigDecimal.fromString("0");
     protocolMetric.treasuryRiskFreeValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryRiskFreeValueComponents = new Array<string>();
     protocolMetric.treasuryMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryMarketValueComponents = new Array<string>();
     protocolMetric.nextEpochRebase = BigDecimal.fromString("0");
     protocolMetric.nextDistributedOhm = BigDecimal.fromString("0");
     protocolMetric.currentAPY = BigDecimal.fromString("0");
     protocolMetric.treasuryDaiRiskFreeValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryDaiRiskFreeComponents = "";
+    protocolMetric.treasuryDaiRiskFreeValueComponents = new Array<string>();
     protocolMetric.treasuryFraxRiskFreeValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryFraxRiskFreeValueComponents = new Array<string>();
     protocolMetric.treasuryLusdRiskFreeValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryLusdRiskFreeValueComponents = new Array<string>();
     protocolMetric.treasuryDaiMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryDaiMarketValueComponents = new Array<string>();
     protocolMetric.treasuryFraxMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryFraxMarketValueComponents = new Array<string>();
     protocolMetric.treasuryLusdMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryLusdMarketValueComponents = new Array<string>();
     protocolMetric.treasuryUstMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryUstMarketValueComponents = new Array<string>();
     protocolMetric.treasuryXsushiMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryXsushiMarketValueComponents = new Array<string>();
     protocolMetric.treasuryWETHRiskFreeValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryWETHRiskFreeValueComponents = new Array<string>();
     protocolMetric.treasuryWETHMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryWETHMarketValueComponents = new Array<string>();
     protocolMetric.treasuryWBTCMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryWBTCMarketValueComponents = new Array<string>();
     protocolMetric.treasuryCVXMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryCVXMarketValueComponents = new Array<string>();
     protocolMetric.treasuryOtherMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryOtherMarketValueComponents = new Array<string>();
     protocolMetric.treasuryOhmDaiPOL = BigDecimal.fromString("0");
     protocolMetric.treasuryOhmFraxPOL = BigDecimal.fromString("0");
     protocolMetric.treasuryOhmLusdPOL = BigDecimal.fromString("0");
     protocolMetric.treasuryOhmEthPOL = BigDecimal.fromString("0");
     protocolMetric.treasuryStableBacking = BigDecimal.fromString("0");
+    protocolMetric.treasuryStableBackingComponents = new Array<string>();
     protocolMetric.treasuryLPValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryLPValueComponents = new Array<string>();
     protocolMetric.treasuryVolatileBacking = BigDecimal.fromString("0");
+    protocolMetric.treasuryVolatileBackingComponents = new Array<string>();
     protocolMetric.treasuryTotalBacking = BigDecimal.fromString("0");
+    protocolMetric.treasuryTotalBackingComponents = new Array<string>();
 
     protocolMetric.save();
   }
@@ -258,40 +277,92 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.totalValueLocked = getTotalValueLocked(block.number);
 
   // Treasury RFV and MV
-  pm.treasuryMarketValue = getMarketValue(blockNumber).getValue();
-  pm.treasuryRiskFreeValue = getRiskFreeValue(blockNumber).getValue();
+  const marketValue = getMarketValue(blockNumber);
+  pm.treasuryMarketValue = marketValue.getValue();
+  pm.treasuryMarketValueComponents = marketValue.toStringArray(true);
+
+  const riskFreeValue = getRiskFreeValue(blockNumber);
+  pm.treasuryRiskFreeValue = riskFreeValue.getValue();
+  pm.treasuryRiskFreeValueComponents = riskFreeValue.toStringArray(true);
+
   const treasuryDaiRiskFree = getDaiRiskFreeValue(blockNumber);
   pm.treasuryDaiRiskFreeValue = treasuryDaiRiskFree.getValue();
-  pm.treasuryDaiRiskFreeComponents = treasuryDaiRiskFree.toString();
-  pm.treasuryFraxRiskFreeValue = getFraxRiskFreeValue(blockNumber).getValue();
-  pm.treasuryDaiMarketValue = getDaiMarketValue(blockNumber).getValue();
-  pm.treasuryFraxMarketValue = getFraxMarketValue(blockNumber).getValue();
-  pm.treasuryXsushiMarketValue = getXSushiBalance(
+  pm.treasuryDaiRiskFreeValueComponents = treasuryDaiRiskFree.toStringArray(true);
+
+  const fraxRiskFreeValue = getFraxRiskFreeValue(blockNumber);
+  pm.treasuryFraxRiskFreeValue = fraxRiskFreeValue.getValue();
+  pm.treasuryFraxRiskFreeValueComponents = fraxRiskFreeValue.toStringArray(true);
+
+  const daiMarketValue = getDaiMarketValue(blockNumber);
+  pm.treasuryDaiMarketValue = daiMarketValue.getValue();
+  pm.treasuryDaiMarketValueComponents = daiMarketValue.toStringArray(true);
+
+  const fraxMarketValue = getFraxMarketValue(blockNumber);
+  pm.treasuryFraxMarketValue = fraxMarketValue.getValue();
+  pm.treasuryFraxMarketValueComponents = fraxMarketValue.toStringArray(true);
+
+  const xSushiValue = getXSushiBalance(
     getERC20("xSUSHI", XSUSI_ERC20_CONTRACT, blockNumber),
     blockNumber,
-  ).getValue();
-  pm.treasuryWETHRiskFreeValue = getEthRiskFreeValue(blockNumber).getValue();
-  pm.treasuryWETHMarketValue = getEthMarketValue(blockNumber).getValue();
-  pm.treasuryLusdRiskFreeValue = getLusdRiskFreeValue(blockNumber).getValue();
-  pm.treasuryLusdMarketValue = getLusdMarketValue(blockNumber).getValue();
-  pm.treasuryCVXMarketValue = getCVXVlCVXBalance(blockNumber).getValue();
+  );
+  pm.treasuryXsushiMarketValue = xSushiValue.getValue();
+  pm.treasuryXsushiMarketValueComponents = xSushiValue.toStringArray(true);
+
+  const ethRiskFreeValue = getEthRiskFreeValue(blockNumber);
+  pm.treasuryWETHRiskFreeValue = ethRiskFreeValue.getValue();
+  pm.treasuryWETHRiskFreeValueComponents = ethRiskFreeValue.toStringArray(true);
+
+  const ethMarketValue = getEthMarketValue(blockNumber);
+  pm.treasuryWETHMarketValue = ethMarketValue.getValue();
+  pm.treasuryWETHMarketValueComponents = ethMarketValue.toStringArray(true);
+
+  const lusdRiskFreeValue = getLusdRiskFreeValue(blockNumber);
+  pm.treasuryLusdRiskFreeValue = lusdRiskFreeValue.getValue();
+  pm.treasuryLusdRiskFreeValueComponents = lusdRiskFreeValue.toStringArray(true);
+
+  const lusdMarketValue = getLusdMarketValue(blockNumber);
+  pm.treasuryLusdMarketValue = lusdMarketValue.getValue();
+  pm.treasuryLusdMarketValueComponents = lusdMarketValue.toStringArray(true);
+
+  const cvxValue = getCVXVlCVXBalance(blockNumber);
+  pm.treasuryCVXMarketValue = cvxValue.getValue();
+  pm.treasuryCVXMarketValueComponents = cvxValue.toStringArray(true);
+
   pm.treasuryOhmDaiPOL = getOhmDaiProtocolOwnedLiquidity(blockNumber);
   pm.treasuryOhmFraxPOL = getOhmFraxProtocolOwnedLiquidity(blockNumber);
   pm.treasuryOhmLusdPOL = getOhmLusdProtocolOwnedLiquidity(blockNumber);
   pm.treasuryOhmEthPOL = getOhmEthProtocolOwnedLiquidity(blockNumber);
-  pm.treasuryOtherMarketValue = getVolatileValue(blockNumber, false).getValue();
-  pm.treasuryWBTCMarketValue = getWBTCBalance(
+
+  const treasuryOtherMarketValue = getVolatileValue(blockNumber, false);
+  pm.treasuryOtherMarketValue = treasuryOtherMarketValue.getValue();
+  pm.treasuryOtherMarketValueComponents = treasuryOtherMarketValue.toStringArray(true);
+
+  const wbtcMarketValue = getWBTCBalance(
     getERC20("wBTC", WBTC_ERC20_CONTRACT, blockNumber),
     blockNumber,
-  ).getValue();
-  pm.treasuryUstMarketValue = getUSTBalance(
-    getERC20("UST", UST_ERC20_CONTRACT, blockNumber),
-    blockNumber,
-  ).getValue();
-  pm.treasuryStableBacking = getTreasuryStableBacking(blockNumber).getValue();
-  pm.treasuryVolatileBacking = getTreasuryVolatileBacking(blockNumber, false).getValue();
-  pm.treasuryTotalBacking = getTreasuryTotalBacking(blockNumber).getValue();
-  pm.treasuryLPValue = getLiquidityPoolValue(blockNumber, false).getValue();
+  );
+  pm.treasuryWBTCMarketValue = wbtcMarketValue.getValue();
+  pm.treasuryWBTCMarketValueComponents = wbtcMarketValue.toStringArray(true);
+
+  const ustValue = getUSTBalance(getERC20("UST", UST_ERC20_CONTRACT, blockNumber), blockNumber);
+  pm.treasuryUstMarketValue = ustValue.getValue();
+  pm.treasuryUstMarketValueComponents = ustValue.toStringArray(true);
+
+  const stableBacking = getTreasuryStableBacking(blockNumber);
+  pm.treasuryStableBacking = stableBacking.getValue();
+  pm.treasuryStableBackingComponents = stableBacking.toStringArray(true);
+
+  const volatileBacking = getTreasuryVolatileBacking(blockNumber, false);
+  pm.treasuryVolatileBacking = volatileBacking.getValue();
+  pm.treasuryVolatileBackingComponents = volatileBacking.toStringArray(true);
+
+  const totalBacking = getTreasuryTotalBacking(blockNumber);
+  pm.treasuryTotalBacking = totalBacking.getValue();
+  pm.treasuryTotalBackingComponents = totalBacking.toStringArray(true);
+
+  const liquidityPoolValue = getLiquidityPoolValue(blockNumber, false);
+  pm.treasuryLPValue = liquidityPoolValue.getValue();
+  pm.treasuryLPValueComponents = liquidityPoolValue.toStringArray(true);
 
   // Rebase rewards, APY, rebase
   pm.nextDistributedOhm = getNextOHMRebase(blockNumber);
