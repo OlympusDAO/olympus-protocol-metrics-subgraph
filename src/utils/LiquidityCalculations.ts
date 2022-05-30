@@ -38,20 +38,41 @@ import {
 } from "./TokenStablecoins";
 import { getEthMarketValue, getEthRiskFreeValue } from "./TokenVolatile";
 
-function getLiquidityBalance(
+/**
+ * Creates TokenRecords for the giving liquidity records.
+ *
+ * The chief objective of this function is to determine
+ * the correct price of the liquidity pool balance.
+ *
+ * If {riskFree} is true, {getDiscountedPairUSD} is used
+ * to determine the value of the pool when OHM = $1.
+ *
+ * Otherwise, the value of the non-OHM token is determined.
+ *
+ * @param liquidityBalance
+ * @param blockNumber
+ * @param riskFree
+ * @returns
+ */
+function getLiquidityTokenRecords(
   liquidityBalance: LiquidityBalances,
   blockNumber: BigInt,
   riskFree: boolean,
 ): TokenRecords {
   const records = new TokenRecords();
   const contractName = getContractName(liquidityBalance.contract);
-  const price = riskFree
+  const lpValue = riskFree
     ? getDiscountedPairUSD(
         liquidityBalance.getTotalBalance(),
         liquidityBalance.contract,
         blockNumber,
       )
     : getPairUSD(liquidityBalance.getTotalBalance(), liquidityBalance.contract, blockNumber);
+
+  // The number returned above is the value of the balance of LP, so we need to get the individual unit price
+  const lpUnitPrice: BigDecimal = liquidityBalance.getTotalBalance().equals(BigInt.zero())
+    ? BigDecimal.zero()
+    : lpValue.div(toDecimal(liquidityBalance.getTotalBalance(), 18));
 
   const addresses = liquidityBalance.getAddresses();
   for (let i = 0; i < addresses.length; i++) {
@@ -64,7 +85,7 @@ function getLiquidityBalance(
         contractName,
         getContractName(address),
         address,
-        price,
+        lpUnitPrice,
         toDecimal(balance, 18),
       ),
     );
@@ -111,7 +132,7 @@ export function getOhmDaiLiquidityBalance(blockNumber: BigInt, riskFree: boolean
     ),
   );
 
-  return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
+  return getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree);
 }
 
 /**
@@ -142,7 +163,7 @@ export function getOhmDaiLiquidityV2Balance(blockNumber: BigInt, riskFree: boole
     getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
   );
 
-  return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
+  return getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree);
 }
 
 /**
@@ -206,7 +227,7 @@ export function getOhmFraxLiquidityBalance(blockNumber: BigInt, riskFree: boolea
     getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
   );
 
-  return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
+  return getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree);
 }
 
 /**
@@ -237,7 +258,7 @@ export function getOhmFraxLiquidityV2Balance(blockNumber: BigInt, riskFree: bool
     getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
   );
 
-  return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
+  return getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree);
 }
 
 /**
@@ -311,7 +332,7 @@ export function getOhmLusdLiquidityBalance(blockNumber: BigInt, riskFree: boolea
     ),
   );
 
-  return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
+  return getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree);
 }
 
 /**
@@ -352,7 +373,7 @@ export function getOhmLusdLiquidityV2Balance(blockNumber: BigInt, riskFree: bool
     ),
   );
 
-  return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
+  return getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree);
 }
 
 /**
@@ -416,7 +437,7 @@ export function getOhmEthLiquidityBalance(blockNumber: BigInt, riskFree: boolean
     getUniswapV2PairBalance(ohmEthLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
   );
 
-  return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
+  return getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree);
 }
 
 /**
@@ -447,7 +468,7 @@ export function getOhmEthLiquidityV2Balance(blockNumber: BigInt, riskFree: boole
     getUniswapV2PairBalance(ohmEthLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
   );
 
-  return getLiquidityBalance(liquidityBalance, blockNumber, riskFree);
+  return getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree);
 }
 
 /**

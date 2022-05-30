@@ -38,7 +38,7 @@ import {
   getTotalSupply,
   getTotalValueLocked,
 } from "./OhmCalculations";
-import { clearPriceCache, getOHMUSDRate } from "./Price";
+import { getOHMUSDRate } from "./Price";
 import {
   getDaiMarketValue,
   getDaiRiskFreeValue,
@@ -251,9 +251,6 @@ function getRunway(
 
 export function updateProtocolMetrics(block: ethereum.Block): void {
   const blockNumber = block.number;
-  // Clear the prices for the new block
-  // TODO this should be cleaner
-  clearPriceCache();
   log.info("Starting protocol metrics for block {}", [blockNumber.toString()]);
 
   const pm = loadOrCreateProtocolMetric(block.timestamp);
