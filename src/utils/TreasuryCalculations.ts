@@ -1,10 +1,10 @@
-import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 import { WBTC_ERC20_CONTRACT, WETH_ERC20_CONTRACT } from "./Constants";
 import { getERC20 } from "./ContractHelper";
 import { getLiquidityPoolValue } from "./LiquidityCalculations";
 import { getCirculatingSupply, getTotalSupply } from "./OhmCalculations";
-import { TokenRecord, TokenRecords, TokenRecordsWrapper } from "./TokenRecord";
+import { TokenRecord, TokenRecords } from "./TokenRecord";
 import { getStableValue } from "./TokenStablecoins";
 import { getVolatileValue, getWBTCBalance, getWETHBalance } from "./TokenVolatile";
 
@@ -15,27 +15,14 @@ import { getVolatileValue, getWBTCBalance, getWETHBalance } from "./TokenVolatil
  * - wBTC
  *
  * @param blockNumber the current block number
- * @returns TokensRecords object
+ * @returns TokenRecords object
  */
-export function getTreasuryVolatileBacking(
-  blockNumber: BigInt,
-  liquidOnly: boolean,
-): TokenRecordsWrapper {
+export function getTreasuryVolatileBacking(blockNumber: BigInt, liquidOnly: boolean): TokenRecords {
   const records = getVolatileValue(blockNumber, liquidOnly);
 
-  records.addToken(
-    "wETH",
-    getWETHBalance(getERC20("wETH", WETH_ERC20_CONTRACT, blockNumber), blockNumber),
-  );
-  records.addToken(
-    "wBTC",
-    getWBTCBalance(getERC20("wBTC", WBTC_ERC20_CONTRACT, blockNumber), blockNumber),
-  );
+  records.combine(getWETHBalance(getERC20("wETH", WETH_ERC20_CONTRACT, blockNumber), blockNumber));
+  records.combine(getWBTCBalance(getERC20("wBTC", WBTC_ERC20_CONTRACT, blockNumber), blockNumber));
 
-  log.info("Treasury volatile backing at block {}: {}", [
-    blockNumber.toString(),
-    records.toString(),
-  ]);
   return records;
 }
 
@@ -44,12 +31,11 @@ export function getTreasuryVolatileBacking(
  * - getStableValue
  *
  * @param blockNumber the current block number
- * @returns TokensRecords object
+ * @returns TokenRecords object
  */
-export function getTreasuryStableBacking(blockNumber: BigInt): TokenRecordsWrapper {
+export function getTreasuryStableBacking(blockNumber: BigInt): TokenRecords {
   const records = getStableValue(blockNumber);
 
-  log.info("Treasury stable backing at block {}: {}", [blockNumber.toString(), records.toString()]);
   return records;
 }
 
@@ -61,43 +47,36 @@ export function getTreasuryStableBacking(blockNumber: BigInt): TokenRecordsWrapp
  * - subtract: quantity of OHM circulating supply (not value)
  *
  * @param blockNumber the current block number
- * @returns TokensRecords object
+ * @returns TokenRecords object
  */
-export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecordsWrapper {
-  const records = new TokenRecordsWrapper();
+export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords();
 
   records.combine(getTreasuryStableBacking(blockNumber));
   records.combine(getTreasuryVolatileBacking(blockNumber, true));
 
   const liquidityPoolValue = getLiquidityPoolValue(blockNumber, false);
-  records.addToken(
-    "LP Placeholder",
-    new TokenRecords([
-      new TokenRecord(
-        "LP Placeholder",
-        "N/A",
-        "0x0",
-        BigDecimal.fromString("0.5"),
-        liquidityPoolValue.getValue(),
-      ),
-    ]),
+  records.push(
+    new TokenRecord(
+      "Liquidity Pools/2",
+      "N/A",
+      "0x0",
+      BigDecimal.fromString("0.5"),
+      liquidityPoolValue.getValue(),
+    ),
   );
   // TODO previous implementation was the number of OHM, not the value. Keep as-is?
   const ohmCirculatingSupply = getCirculatingSupply(blockNumber, getTotalSupply(blockNumber));
-  records.addToken(
-    "OHM Circulating Supply",
-    new TokenRecords([
-      new TokenRecord(
-        "OHM",
-        "N/A",
-        "0x0",
-        BigDecimal.fromString("-1"),
-        ohmCirculatingSupply, // Subtracted
-      ),
-    ]),
+  records.push(
+    new TokenRecord(
+      "OHM Circulating Supply",
+      "N/A",
+      "0x0",
+      BigDecimal.fromString("-1"),
+      ohmCirculatingSupply, // Subtracted
+    ),
   );
 
-  log.info("Treasury total backing at block {}: {}", [blockNumber.toString(), records.toString()]);
   return records;
 }
 
@@ -112,9 +91,9 @@ export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecordsWrappe
  * @param blockNumber
  * @returns
  */
-export function getMarketValue(blockNumber: BigInt): TokenRecordsWrapper {
+export function getMarketValue(blockNumber: BigInt): TokenRecords {
   // TODO check that ETH and stables aren't being double-counted
-  const records = new TokenRecordsWrapper();
+  const records = new TokenRecords();
 
   records.combine(getStableValue(blockNumber));
   records.combine(getLiquidityPoolValue(blockNumber, false));
@@ -124,13 +103,13 @@ export function getMarketValue(blockNumber: BigInt): TokenRecordsWrapper {
     getERC20("wETH", WETH_ERC20_CONTRACT, blockNumber),
     blockNumber,
   );
-  records.addToken("wETH", wethBalance);
+  records.combine(wethBalance);
 
   const wbtcBalance = getWBTCBalance(
     getERC20("wBTC", WBTC_ERC20_CONTRACT, blockNumber),
     blockNumber,
   );
-  records.addToken("wBTC", wbtcBalance);
+  records.combine(wbtcBalance);
 
   return records;
 }
@@ -143,8 +122,8 @@ export function getMarketValue(blockNumber: BigInt): TokenRecordsWrapper {
  * @param blockNumber
  * @returns
  */
-export function getRiskFreeValue(blockNumber: BigInt): TokenRecordsWrapper {
-  const records = new TokenRecordsWrapper();
+export function getRiskFreeValue(blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords();
 
   records.combine(getStableValue(blockNumber));
   records.combine(getLiquidityPoolValue(blockNumber, true));

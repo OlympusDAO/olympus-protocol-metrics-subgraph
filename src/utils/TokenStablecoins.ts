@@ -40,7 +40,7 @@ import {
   getOhmLusdLiquidityBalance,
   getOhmLusdLiquidityV2Balance,
 } from "./LiquidityCalculations";
-import { TokenRecord, TokenRecords, TokenRecordsWrapper } from "./TokenRecord";
+import { TokenRecord, TokenRecords } from "./TokenRecord";
 
 /**
  * Calculates the balance of DAI across the following:
@@ -63,7 +63,7 @@ export function getDaiBalance(
   rariAllocator: RariAllocator | null,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = new TokenRecords([]);
+  const records = new TokenRecords();
 
   if (daiERC20) {
     records.push(
@@ -142,7 +142,7 @@ export function getDaiBalance(
  * @returns TokenRecords object
  */
 export function getFeiBalance(feiERC20: ERC20 | null, blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords([]);
+  const records = new TokenRecords();
 
   if (feiERC20) {
     records.push(
@@ -199,7 +199,7 @@ export function getFraxAllocatedInConvexBalance(
   // Multiplied by 10e9 for consistency
   // TODO determine if the multiplier is correct
 
-  const records = new TokenRecords([]);
+  const records = new TokenRecords();
 
   if (allocator1) {
     records.push(
@@ -252,7 +252,7 @@ export function getFraxAllocatedInConvexBalance(
  * @returns TokenRecords object
  */
 export function getFraxBalance(fraxERC20: ERC20 | null, blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords([]);
+  const records = new TokenRecords();
 
   if (fraxERC20) {
     records.push(
@@ -290,7 +290,7 @@ export function getFraxBalance(fraxERC20: ERC20 | null, blockNumber: BigInt): To
       getConvexAllocator(CONVEX_ALLOCATOR2, blockNumber),
       getConvexAllocator(CONVEX_ALLOCATOR3, blockNumber),
       blockNumber,
-    ).records,
+    ),
   );
 
   return records;
@@ -313,7 +313,7 @@ export function getLUSDBalance(
   stabilityPoolContract: StabilityPool | null,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = new TokenRecords([]);
+  const records = new TokenRecords();
 
   if (lusdERC20) {
     records.push(
@@ -371,7 +371,7 @@ export function getLUSDBalance(
  * @returns TokenRecords object
  */
 export function getUSTBalance(ustERC20: ERC20 | null, blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords([]);
+  const records = new TokenRecords();
 
   if (ustERC20) {
     records.push(
@@ -419,13 +419,12 @@ export function getUSTBalance(ustERC20: ERC20 | null, blockNumber: BigInt): Toke
  * TODO: lookup stablecoin price
  *
  * @param blockNumber the current block number
- * @returns TokensRecords representing the components of the stablecoin value
+ * @returns TokenRecords representing the components of the stablecoin value
  */
-export function getStableValue(blockNumber: BigInt): TokenRecordsWrapper {
-  const records = new TokenRecordsWrapper();
+export function getStableValue(blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords();
 
-  records.addToken(
-    "DAI",
+  records.combine(
     getDaiBalance(
       getERC20("DAI", ERC20DAI_CONTRACT, blockNumber),
       getERC20("aDAI", ADAI_ERC20_CONTRACT, blockNumber),
@@ -433,28 +432,17 @@ export function getStableValue(blockNumber: BigInt): TokenRecordsWrapper {
       blockNumber,
     ),
   );
-  records.addToken(
-    "FRAX",
-    getFraxBalance(getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber), blockNumber),
-  );
-  records.addToken(
-    "LUSD",
+  records.combine(getFraxBalance(getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber), blockNumber));
+  records.combine(
     getLUSDBalance(
       getERC20("LUSD", LUSD_ERC20_CONTRACT, blockNumber),
       getStabilityPool(STABILITY_POOL, blockNumber),
       blockNumber,
     ),
   );
-  records.addToken(
-    "UST",
-    getUSTBalance(getERC20("UST", UST_ERC20_CONTRACT, blockNumber), blockNumber),
-  );
-  records.addToken(
-    "FEI",
-    getFeiBalance(getERC20("FEI", FEI_ERC20_CONTRACT, blockNumber), blockNumber),
-  );
+  records.combine(getUSTBalance(getERC20("UST", UST_ERC20_CONTRACT, blockNumber), blockNumber));
+  records.combine(getFeiBalance(getERC20("FEI", FEI_ERC20_CONTRACT, blockNumber), blockNumber));
 
-  log.info("Stablecoin tokens: {}", [records.toString()]);
   return records;
 }
 
@@ -465,13 +453,12 @@ export function getStableValue(blockNumber: BigInt): TokenRecordsWrapper {
  * - Discounted value of OHM-DAI pair V2 (where OHM = $1)
  *
  * @param blockNumber the current block number
- * @returns TokensRecords representing the components of the risk-free value
+ * @returns TokenRecords representing the components of the risk-free value
  */
-export function getDaiRiskFreeValue(blockNumber: BigInt): TokenRecordsWrapper {
-  const records = new TokenRecordsWrapper();
+export function getDaiRiskFreeValue(blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords();
 
-  records.addToken(
-    "DAI",
+  records.combine(
     getDaiBalance(
       getERC20("DAI", ERC20DAI_CONTRACT, blockNumber),
       getERC20("aDAI", ADAI_ERC20_CONTRACT, blockNumber),
@@ -480,9 +467,9 @@ export function getDaiRiskFreeValue(blockNumber: BigInt): TokenRecordsWrapper {
     ),
   );
 
-  records.addToken("OHM-DAI V1", getOhmDaiLiquidityBalance(blockNumber, true));
+  records.combine(getOhmDaiLiquidityBalance(blockNumber, true));
 
-  records.addToken("OHM-DAI V2", getOhmDaiLiquidityV2Balance(blockNumber, true));
+  records.combine(getOhmDaiLiquidityV2Balance(blockNumber, true));
 
   return records;
 }
@@ -494,13 +481,12 @@ export function getDaiRiskFreeValue(blockNumber: BigInt): TokenRecordsWrapper {
  * - Value of OHM-DAI pair V2
  *
  * @param blockNumber the current block number
- * @returns TokensRecords representing the components of the market value
+ * @returns TokenRecords representing the components of the market value
  */
-export function getDaiMarketValue(blockNumber: BigInt): TokenRecordsWrapper {
-  const records = new TokenRecordsWrapper();
+export function getDaiMarketValue(blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords();
 
-  records.addToken(
-    "DAI",
+  records.combine(
     getDaiBalance(
       getERC20("DAI", ERC20DAI_CONTRACT, blockNumber),
       getERC20("aDAI", ADAI_ERC20_CONTRACT, blockNumber),
@@ -509,9 +495,9 @@ export function getDaiMarketValue(blockNumber: BigInt): TokenRecordsWrapper {
     ),
   );
 
-  records.addToken("OHM-DAI V1", getOhmDaiLiquidityBalance(blockNumber, false));
+  records.combine(getOhmDaiLiquidityBalance(blockNumber, false));
 
-  records.addToken("OHM-DAI V2", getOhmDaiLiquidityV2Balance(blockNumber, false));
+  records.combine(getOhmDaiLiquidityV2Balance(blockNumber, false));
 
   return records;
 }
@@ -523,19 +509,16 @@ export function getDaiMarketValue(blockNumber: BigInt): TokenRecordsWrapper {
  * - Discounted value of OHM-FRAX pair V2 (where OHM = $1)
  *
  * @param blockNumber the current block number
- * @returns TokensRecords representing the components of the risk-free value
+ * @returns TokenRecords representing the components of the risk-free value
  */
-export function getFraxRiskFreeValue(blockNumber: BigInt): TokenRecordsWrapper {
-  const records = new TokenRecordsWrapper();
+export function getFraxRiskFreeValue(blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords();
 
-  records.addToken(
-    "FRAX",
-    getFraxBalance(getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber), blockNumber),
-  );
+  records.combine(getFraxBalance(getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber), blockNumber));
 
-  records.addToken("OHM-FRAX V1", getOhmFraxLiquidityBalance(blockNumber, true));
+  records.combine(getOhmFraxLiquidityBalance(blockNumber, true));
 
-  records.addToken("OHM-FRAX V2", getOhmFraxLiquidityV2Balance(blockNumber, true));
+  records.combine(getOhmFraxLiquidityV2Balance(blockNumber, true));
 
   return records;
 }
@@ -547,19 +530,16 @@ export function getFraxRiskFreeValue(blockNumber: BigInt): TokenRecordsWrapper {
  * - Value of OHM-FRAX pair V2
  *
  * @param blockNumber the current block number
- * @returns TokensRecords representing the components of the market value
+ * @returns TokenRecords representing the components of the market value
  */
-export function getFraxMarketValue(blockNumber: BigInt): TokenRecordsWrapper {
-  const records = new TokenRecordsWrapper();
+export function getFraxMarketValue(blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords();
 
-  records.addToken(
-    "FRAX",
-    getFraxBalance(getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber), blockNumber),
-  );
+  records.combine(getFraxBalance(getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber), blockNumber));
 
-  records.addToken("OHM-FRAX V1", getOhmFraxLiquidityBalance(blockNumber, false));
+  records.combine(getOhmFraxLiquidityBalance(blockNumber, false));
 
-  records.addToken("OHM-FRAX V2", getOhmFraxLiquidityV2Balance(blockNumber, false));
+  records.combine(getOhmFraxLiquidityV2Balance(blockNumber, false));
 
   return records;
 }
@@ -571,13 +551,12 @@ export function getFraxMarketValue(blockNumber: BigInt): TokenRecordsWrapper {
  * - Discounted value of OHM-LUSD pair V2 (where OHM = $1)
  *
  * @param blockNumber the current block number
- * @returns TokensRecords representing the components of the risk-free value
+ * @returns TokenRecords representing the components of the risk-free value
  */
-export function getLusdRiskFreeValue(blockNumber: BigInt): TokenRecordsWrapper {
-  const records = new TokenRecordsWrapper();
+export function getLusdRiskFreeValue(blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords();
 
-  records.addToken(
-    "LUSD",
+  records.combine(
     getLUSDBalance(
       getERC20("LUSD", LUSD_ERC20_CONTRACT, blockNumber),
       getStabilityPool(STABILITY_POOL, blockNumber),
@@ -585,9 +564,9 @@ export function getLusdRiskFreeValue(blockNumber: BigInt): TokenRecordsWrapper {
     ),
   );
 
-  records.addToken("OHM-LUSD V1", getOhmLusdLiquidityBalance(blockNumber, true));
+  records.combine(getOhmLusdLiquidityBalance(blockNumber, true));
 
-  records.addToken("OHM-LUSD V2", getOhmLusdLiquidityV2Balance(blockNumber, true));
+  records.combine(getOhmLusdLiquidityV2Balance(blockNumber, true));
 
   return records;
 }
@@ -599,13 +578,12 @@ export function getLusdRiskFreeValue(blockNumber: BigInt): TokenRecordsWrapper {
  * - Value of OHM-LUSD pair V2
  *
  * @param blockNumber the current block number
- * @returns TokensRecords representing the components of the market value
+ * @returns TokenRecords representing the components of the market value
  */
-export function getLusdMarketValue(blockNumber: BigInt): TokenRecordsWrapper {
-  const records = new TokenRecordsWrapper();
+export function getLusdMarketValue(blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords();
 
-  records.addToken(
-    "LUSD",
+  records.combine(
     getLUSDBalance(
       getERC20("LUSD", LUSD_ERC20_CONTRACT, blockNumber),
       getStabilityPool(STABILITY_POOL, blockNumber),
@@ -613,9 +591,9 @@ export function getLusdMarketValue(blockNumber: BigInt): TokenRecordsWrapper {
     ),
   );
 
-  records.addToken("OHM-LUSD V1", getOhmLusdLiquidityBalance(blockNumber, false));
+  records.combine(getOhmLusdLiquidityBalance(blockNumber, false));
 
-  records.addToken("OHM-LUSD V2", getOhmLusdLiquidityV2Balance(blockNumber, false));
+  records.combine(getOhmLusdLiquidityV2Balance(blockNumber, false));
 
   return records;
 }

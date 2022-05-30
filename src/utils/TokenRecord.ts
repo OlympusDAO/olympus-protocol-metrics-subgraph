@@ -1,4 +1,4 @@
-import { BigDecimal, log } from "@graphprotocol/graph-ts";
+import { BigDecimal } from "@graphprotocol/graph-ts";
 import { JSONEncoder } from "assemblyscript-json";
 
 /**
@@ -38,7 +38,11 @@ export class TokenRecord {
    */
   toString(): string {
     const encoder = new JSONEncoder();
+    this.encode(encoder);
+    return encoder.toString();
+  }
 
+  encode(encoder: JSONEncoder): void {
     encoder.pushObject(null);
     encoder.setString("name", this.name);
     encoder.setString("source", this.source);
@@ -47,8 +51,6 @@ export class TokenRecord {
     encoder.setString("balance", this.balance.toString());
     encoder.setString("value", this.getValue().toString());
     encoder.popObject();
-
-    return encoder.toString();
   }
 }
 
@@ -61,15 +63,17 @@ export class TokenRecord {
 export class TokenRecords {
   records: TokenRecord[];
 
-  constructor(records: TokenRecord[]) {
-    this.records = records;
+  constructor() {
+    this.records = new Array<TokenRecord>();
   }
 
   push(element: TokenRecord): void {
     this.records.push(element);
   }
 
-  combine(array: TokenRecord[]): void {
+  combine(records: TokenRecords): void {
+    const array = records.records;
+
     for (let i = 0; i < array.length; i++) {
       this.records.push(array[i]);
     }
@@ -111,7 +115,33 @@ export class TokenRecords {
    */
   toString(): string {
     const encoder = new JSONEncoder();
+    this.encode(encoder);
+    return encoder.toString();
+  }
 
+  /**
+   * Returns an array containing stringified output
+   * of TokenRecord.
+   *
+   * @returns Array<string>
+   */
+  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
+  toStringArray(singleQuote: boolean = false): Array<string> {
+    const array = new Array<string>();
+
+    for (let i = 0; i < this.records.length; i++) {
+      let record = this.records[i].toString();
+      if (singleQuote) {
+        record = record.replaceAll('"', "'");
+      }
+
+      array.push(record);
+    }
+
+    return array;
+  }
+
+  encode(encoder: JSONEncoder): void {
     encoder.pushObject(null);
     encoder.pushArray("records");
 
@@ -124,86 +154,5 @@ export class TokenRecords {
     encoder.setString("balance", this.getBalance().toString());
     encoder.setString("value", this.getValue().toString());
     encoder.popObject();
-
-    return encoder.toString();
-  }
-}
-
-/**
- * Represents balances of different tokens.
- *
- * e.g.
- * DAI:
- * - treasury wallet v1,
- * - treasury wallet v2
- *
- * FEI:
- * - treasury wallet v1,
- * - treasury wallet v2
- */
-export class TokenRecordsWrapper {
-  tokens: Map<string, TokenRecords>;
-
-  constructor() {
-    this.tokens = new Map<string, TokenRecords>();
-  }
-
-  addToken(token: string, records: TokenRecords): void {
-    this.tokens.set(token, records);
-  }
-
-  combine(records: TokenRecordsWrapper): void {
-    const inTokens = records.tokens;
-
-    for (let i = 0; i < inTokens.size; i++) {
-      // TODO consider adding merging of records
-      const currentKey = inTokens.keys()[i];
-      const currentValue: TokenRecords = inTokens.get(currentKey);
-      this.tokens.set(currentKey, currentValue);
-    }
-  }
-
-  getValue(): BigDecimal {
-    // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
-    let value = BigDecimal.fromString("0");
-
-    for (let i = 0; i < this.tokens.size; i++) {
-      const currentKey = this.tokens.keys()[i];
-      const currentValue: TokenRecords = this.tokens.get(currentKey);
-      value = value.plus(currentValue.getValue());
-    }
-
-    return value;
-  }
-
-  /**
-   * Returns a string representation in a JSON format.
-   *
-   * e.g.
-   * {
-   *    "DAI": TokenRecords.toString()
-   * }
-   * @returns
-   */
-  toString(): string {
-    const encoder = new JSONEncoder();
-
-    encoder.pushObject(null);
-
-    for (let i = 0; i < this.tokens.size; i++) {
-      const currentKey = this.tokens.keys()[i];
-      const currentValue: TokenRecords = this.tokens.get(currentKey);
-
-      encoder.pushObject(currentKey);
-      encoder.setString("records", currentValue.toString());
-      encoder.setString("value", this.getValue().toString());
-      encoder.popObject();
-    }
-
-    encoder.popObject();
-
-    log.debug("{}", [encoder.toString()]);
-
-    return encoder.toString();
   }
 }
