@@ -83,6 +83,7 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
     protocolMetric.nextDistributedOhm = BigDecimal.fromString("0");
     protocolMetric.currentAPY = BigDecimal.fromString("0");
     protocolMetric.treasuryDaiRiskFreeValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryDaiRiskFreeComponents = "";
     protocolMetric.treasuryFraxRiskFreeValue = BigDecimal.fromString("0");
     protocolMetric.treasuryLusdRiskFreeValue = BigDecimal.fromString("0");
     protocolMetric.treasuryDaiMarketValue = BigDecimal.fromString("0");
@@ -259,7 +260,9 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   // Treasury RFV and MV
   pm.treasuryMarketValue = getMarketValue(blockNumber).getValue();
   pm.treasuryRiskFreeValue = getRiskFreeValue(blockNumber).getValue();
-  pm.treasuryDaiRiskFreeValue = getDaiRiskFreeValue(blockNumber).getValue();
+  const treasuryDaiRiskFree = getDaiRiskFreeValue(blockNumber);
+  pm.treasuryDaiRiskFreeValue = treasuryDaiRiskFree.getValue();
+  pm.treasuryDaiRiskFreeComponents = treasuryDaiRiskFree.toString();
   pm.treasuryFraxRiskFreeValue = getFraxRiskFreeValue(blockNumber).getValue();
   pm.treasuryDaiMarketValue = getDaiMarketValue(blockNumber).getValue();
   pm.treasuryFraxMarketValue = getFraxMarketValue(blockNumber).getValue();

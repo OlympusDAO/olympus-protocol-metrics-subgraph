@@ -1,4 +1,5 @@
-import { BigDecimal } from "@graphprotocol/graph-ts";
+import { BigDecimal, log } from "@graphprotocol/graph-ts";
+import { JSONEncoder } from "assemblyscript-json";
 
 /**
  * Represents the balance of a single token from a single source.
@@ -36,28 +37,18 @@ export class TokenRecord {
    * @returns
    */
   toString(): string {
-    return (
-      "{\n" +
-      'name: "' +
-      this.name +
-      '",\n' +
-      'source: "' +
-      this.source +
-      '",\n' +
-      'sourceAddress: "' +
-      this.sourceAddress +
-      '",\n' +
-      'rate: "' +
-      this.rate.toString() +
-      '",\n' +
-      'balance: "' +
-      this.balance.toString() +
-      '",\n' +
-      'value: "' +
-      this.getValue().toString() +
-      '"\n' +
-      "}\n"
-    );
+    const encoder = new JSONEncoder();
+
+    encoder.pushObject(null);
+    encoder.setString("name", this.name);
+    encoder.setString("source", this.source);
+    encoder.setString("sourceAddress", this.sourceAddress);
+    encoder.setString("rate", this.rate.toString());
+    encoder.setString("balance", this.balance.toString());
+    encoder.setString("value", this.getValue().toString());
+    encoder.popObject();
+
+    return encoder.toString();
   }
 }
 
@@ -119,16 +110,22 @@ export class TokenRecords {
    * @returns
    */
   toString(): string {
-    // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
-    let stringValue = "[";
+    const encoder = new JSONEncoder();
+
+    encoder.pushObject(null);
+    encoder.pushArray("records");
 
     for (let i = 0; i < this.records.length; i++) {
-      stringValue = stringValue + this.records[i].toString() + ",\n";
+      encoder.setString(null, this.records[i].toString());
     }
 
-    stringValue = stringValue + "]";
+    encoder.popArray();
 
-    return stringValue;
+    encoder.setString("balance", this.getBalance().toString());
+    encoder.setString("value", this.getValue().toString());
+    encoder.popObject();
+
+    return encoder.toString();
   }
 }
 
@@ -145,7 +142,6 @@ export class TokenRecords {
  * - treasury wallet v2
  */
 export class TokenRecordsWrapper {
-  // TODO shift this back to Map. Has issues with current version of graph-ts.
   tokens: Map<string, TokenRecords>;
 
   constructor() {
@@ -190,21 +186,24 @@ export class TokenRecordsWrapper {
    * @returns
    */
   toString(): string {
-    // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
-    let stringValue = "{";
+    const encoder = new JSONEncoder();
+
+    encoder.pushObject(null);
 
     for (let i = 0; i < this.tokens.size; i++) {
       const currentKey = this.tokens.keys()[i];
       const currentValue: TokenRecords = this.tokens.get(currentKey);
 
-      stringValue = stringValue + '\n"' + currentKey + '": ' + currentValue.toString();
-      stringValue = stringValue + "\n,";
+      encoder.pushObject(currentKey);
+      encoder.setString("records", currentValue.toString());
+      encoder.setString("value", this.getValue().toString());
+      encoder.popObject();
     }
 
-    stringValue = stringValue + '"Total Value": "' + this.getValue().toString() + '"\n';
+    encoder.popObject();
 
-    stringValue = stringValue + "}";
+    log.debug("{}", [encoder.toString()]);
 
-    return stringValue;
+    return encoder.toString();
   }
 }

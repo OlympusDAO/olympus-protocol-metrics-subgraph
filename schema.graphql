@@ -41,6 +41,7 @@ type ProtocolMetric @entity {
   nextEpochRebase: BigDecimal!
   nextDistributedOhm: BigDecimal!
   treasuryDaiRiskFreeValue: BigDecimal!
+  treasuryDaiRiskFreeComponents: String!
   treasuryFraxRiskFreeValue: BigDecimal!
   treasuryLusdRiskFreeValue: BigDecimal!
   treasuryWETHRiskFreeValue: BigDecimal!
@@ -84,3 +85,31 @@ type BondDiscount @entity {
   lusd_discount: BigDecimal!
   ohmlusd_discount: BigDecimal!
 }
+
+# type TokenRecord @entity {
+#   id: ID!
+#   name: String!
+#   source: String!
+#   sourceAddress: String!
+#   rate: BigDecimal!
+#   balance: BigDecimal!
+#   value: BigDecimal!
+# }
+
+# type TokenRecords @entity {
+#   id: ID!
+#   records: [TokenRecord!]
+#   balance: BigDecimal!
+#   value: BigDecimal!
+# }
+
+# type TokenRecordsKeyValuePair @entity {
+#   id: ID!
+#   key: String!
+#   value: TokenRecords!
+# }
+
+# type TokenRecordsWrapper @entity {
+#   id: ID!
+#   tokens: String!
+# }
