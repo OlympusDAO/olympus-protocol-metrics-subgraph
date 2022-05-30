@@ -109,87 +109,6 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
   return protocolMetric as ProtocolMetric;
 }
 
-function getMV_RFV(blockNumber: BigInt): BigDecimal[] {
-  const ustTokens = getUSTBalance(getERC20("UST", UST_ERC20_CONTRACT, blockNumber), blockNumber);
-
-  // TODO add balancer
-  // TODO add uniswap v3
-
-  const volatileRecords = getVolatileValue(blockNumber, false);
-
-  const wbtcBalance = getWBTCBalance(
-    getERC20("wBTC", WBTC_ERC20_CONTRACT, blockNumber),
-    blockNumber,
-  );
-
-  // OHM-DAI Liquidity
-  const ohmDaiPOL = getOhmDaiProtocolOwnedLiquidity(blockNumber);
-  const ohmDaiMarket = getDaiMarketValue(blockNumber);
-  const ohmDaiRiskFreeValue = getDaiRiskFreeValue(blockNumber);
-
-  // OHM-FRAX Liquidity
-  const ohmFraxPOL = getOhmFraxProtocolOwnedLiquidity(blockNumber);
-  const ohmFraxMarket = getFraxMarketValue(blockNumber);
-  const ohmFraxRiskFreeValue = getFraxRiskFreeValue(blockNumber);
-
-  // OHM-LUSD Liquidity
-  const ohmLusdPOL = getOhmLusdProtocolOwnedLiquidity(blockNumber);
-  const ohmLusdMarket = getLusdMarketValue(blockNumber);
-  const ohmLusdRiskFreeValue = getLusdRiskFreeValue(blockNumber);
-
-  // OHM-ETH Liquidity
-  const ohmEthPOL = getOhmEthProtocolOwnedLiquidity(blockNumber);
-  const ohmEthMarket = getEthMarketValue(blockNumber);
-  const ohmEthRiskFreeValue = getEthRiskFreeValue(blockNumber);
-
-  const treasuryVolatileBackingRecords = getTreasuryVolatileBacking(blockNumber, false);
-
-  const lpValue = getLiquidityPoolValue(blockNumber, false);
-
-  const marketValueBalance = getMarketValue(blockNumber);
-
-  const riskFreeValueBalance = getRiskFreeValue(blockNumber);
-
-  const cvxVlCvxValue = getCVXVlCVXBalance(blockNumber);
-  const xSushiBalance = getXSushiBalance(
-    getERC20("xSUSHI", XSUSI_ERC20_CONTRACT, blockNumber),
-    blockNumber,
-  );
-
-  const treasuryStableBackingRecords = getTreasuryStableBacking(blockNumber);
-  const treasuryTotalBackingRecords = getTreasuryTotalBacking(blockNumber);
-
-  log.debug("Treasury Market Value {}", [marketValueBalance.toString()]);
-  log.debug("Treasury RFV {}", [riskFreeValueBalance.toString()]);
-  log.debug("Treasury Total Backing {}", [treasuryTotalBackingRecords.toString()]);
-  return [
-    marketValueBalance.getValue(),
-    riskFreeValueBalance.getValue(),
-    ohmDaiRiskFreeValue.getValue(),
-    ohmFraxRiskFreeValue.getValue(),
-    ohmDaiMarket.getValue(),
-    ohmFraxMarket.getValue(),
-    xSushiBalance.getValue(),
-    ohmEthRiskFreeValue.getValue(),
-    ohmEthMarket.getValue(),
-    ohmLusdRiskFreeValue.getValue(),
-    ohmLusdMarket.getValue(),
-    cvxVlCvxValue.getValue(),
-    // POL
-    ohmDaiPOL,
-    ohmFraxPOL,
-    ohmLusdPOL,
-    ohmEthPOL,
-    volatileRecords.getValue(),
-    wbtcBalance.getValue(),
-    ustTokens.getValue(),
-    treasuryStableBackingRecords.getValue(),
-    treasuryVolatileBackingRecords.getValue(),
-    treasuryTotalBackingRecords.getValue(),
-    lpValue.getValue(),
-  ];
-}
-
 function getNextOHMRebase(blockNumber: BigInt): BigDecimal {
   let next_distribution = BigDecimal.fromString("0");
 
@@ -338,30 +257,38 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.totalValueLocked = getTotalValueLocked(block.number);
 
   // Treasury RFV and MV
-  const mv_rfv = getMV_RFV(blockNumber);
-  pm.treasuryMarketValue = mv_rfv[0];
-  pm.treasuryRiskFreeValue = mv_rfv[1];
-  pm.treasuryDaiRiskFreeValue = mv_rfv[2];
-  pm.treasuryFraxRiskFreeValue = mv_rfv[3];
-  pm.treasuryDaiMarketValue = mv_rfv[4];
-  pm.treasuryFraxMarketValue = mv_rfv[5];
-  pm.treasuryXsushiMarketValue = mv_rfv[6];
-  pm.treasuryWETHRiskFreeValue = mv_rfv[7];
-  pm.treasuryWETHMarketValue = mv_rfv[8];
-  pm.treasuryLusdRiskFreeValue = mv_rfv[9];
-  pm.treasuryLusdMarketValue = mv_rfv[10];
-  pm.treasuryCVXMarketValue = mv_rfv[11];
-  pm.treasuryOhmDaiPOL = mv_rfv[12];
-  pm.treasuryOhmFraxPOL = mv_rfv[13];
-  pm.treasuryOhmLusdPOL = mv_rfv[14];
-  pm.treasuryOhmEthPOL = mv_rfv[15];
-  pm.treasuryOtherMarketValue = mv_rfv[16];
-  pm.treasuryWBTCMarketValue = mv_rfv[17];
-  pm.treasuryUstMarketValue = mv_rfv[18];
-  pm.treasuryStableBacking = mv_rfv[19];
-  pm.treasuryVolatileBacking = mv_rfv[20];
-  pm.treasuryTotalBacking = mv_rfv[21];
-  pm.treasuryLPValue = mv_rfv[22];
+  pm.treasuryMarketValue = getMarketValue(blockNumber).getValue();
+  pm.treasuryRiskFreeValue = getRiskFreeValue(blockNumber).getValue();
+  pm.treasuryDaiRiskFreeValue = getDaiRiskFreeValue(blockNumber).getValue();
+  pm.treasuryFraxRiskFreeValue = getFraxRiskFreeValue(blockNumber).getValue();
+  pm.treasuryDaiMarketValue = getDaiMarketValue(blockNumber).getValue();
+  pm.treasuryFraxMarketValue = getFraxMarketValue(blockNumber).getValue();
+  pm.treasuryXsushiMarketValue = getXSushiBalance(
+    getERC20("xSUSHI", XSUSI_ERC20_CONTRACT, blockNumber),
+    blockNumber,
+  ).getValue();
+  pm.treasuryWETHRiskFreeValue = getEthRiskFreeValue(blockNumber).getValue();
+  pm.treasuryWETHMarketValue = getEthMarketValue(blockNumber).getValue();
+  pm.treasuryLusdRiskFreeValue = getLusdRiskFreeValue(blockNumber).getValue();
+  pm.treasuryLusdMarketValue = getLusdMarketValue(blockNumber).getValue();
+  pm.treasuryCVXMarketValue = getCVXVlCVXBalance(blockNumber).getValue();
+  pm.treasuryOhmDaiPOL = getOhmDaiProtocolOwnedLiquidity(blockNumber);
+  pm.treasuryOhmFraxPOL = getOhmFraxProtocolOwnedLiquidity(blockNumber);
+  pm.treasuryOhmLusdPOL = getOhmLusdProtocolOwnedLiquidity(blockNumber);
+  pm.treasuryOhmEthPOL = getOhmEthProtocolOwnedLiquidity(blockNumber);
+  pm.treasuryOtherMarketValue = getVolatileValue(blockNumber, false).getValue();
+  pm.treasuryWBTCMarketValue = getWBTCBalance(
+    getERC20("wBTC", WBTC_ERC20_CONTRACT, blockNumber),
+    blockNumber,
+  ).getValue();
+  pm.treasuryUstMarketValue = getUSTBalance(
+    getERC20("UST", UST_ERC20_CONTRACT, blockNumber),
+    blockNumber,
+  ).getValue();
+  pm.treasuryStableBacking = getTreasuryStableBacking(blockNumber).getValue();
+  pm.treasuryVolatileBacking = getTreasuryVolatileBacking(blockNumber, false).getValue();
+  pm.treasuryTotalBacking = getTreasuryTotalBacking(blockNumber).getValue();
+  pm.treasuryLPValue = getLiquidityPoolValue(blockNumber, false).getValue();
 
   // Rebase rewards, APY, rebase
   pm.nextDistributedOhm = getNextOHMRebase(blockNumber);
