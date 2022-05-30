@@ -146,22 +146,24 @@ export class TokenRecords {
  */
 export class TokensRecords {
   // TODO shift this back to Map. Has issues with current version of graph-ts.
-  tokens: Array<TokenRecords>;
+  tokens: Map<string, TokenRecords>;
 
   constructor() {
-    this.tokens = new Array<TokenRecords>();
+    this.tokens = new Map<string, TokenRecords>();
   }
 
   addToken(token: string, records: TokenRecords): void {
-    this.tokens.push(records);
+    this.tokens.set(token, records);
   }
 
   combine(records: TokensRecords): void {
     const inTokens = records.tokens;
 
-    for (let i = 0; i < inTokens.length; i++) {
-      const currentValue: TokenRecords = inTokens[i];
-      this.tokens.push(currentValue);
+    for (let i = 0; i < inTokens.size; i++) {
+      // TODO consider adding merging of records
+      const currentKey = inTokens.keys()[i];
+      const currentValue: TokenRecords = inTokens.get(currentKey);
+      this.tokens.set(currentKey, currentValue);
     }
   }
 
@@ -169,8 +171,9 @@ export class TokensRecords {
     // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
     let value = BigDecimal.fromString("0");
 
-    for (let i = 0; i < this.tokens.length; i++) {
-      const currentValue: TokenRecords = this.tokens[i];
+    for (let i = 0; i < this.tokens.size; i++) {
+      const currentKey = this.tokens.keys()[i];
+      const currentValue: TokenRecords = this.tokens.get(currentKey);
       value = value.plus(currentValue.getValue());
     }
 
@@ -190,8 +193,11 @@ export class TokensRecords {
     // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
     let stringValue = "{";
 
-    for (let i = 0; i < this.tokens.length; i++) {
-      stringValue = stringValue + "\n" + this.tokens[i].toString();
+    for (let i = 0; i < this.tokens.size; i++) {
+      const currentKey = this.tokens.keys()[i];
+      const currentValue: TokenRecords = this.tokens.get(currentKey);
+
+      stringValue = stringValue + '\n"' + currentKey + '": ' + currentValue.toString();
       stringValue = stringValue + "\n,";
     }
 
