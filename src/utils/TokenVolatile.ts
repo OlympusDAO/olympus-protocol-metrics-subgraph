@@ -30,7 +30,7 @@ import {
   getTribeUSDRate,
   getXsushiUSDRate,
 } from "./Price";
-import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
+import { TokenRecord, TokenRecords, TokenRecordsWrapper } from "./TokenRecord";
 
 /**
  * Returns the value of vesting assets in the treasury
@@ -176,8 +176,8 @@ export function getVlCVXBalance(vlERC20: ERC20 | null, blockNumber: BigInt): Tok
   return records;
 }
 
-export function getCVXVlCVXBalance(blockNumber: BigInt): TokensRecords {
-  const records = new TokensRecords();
+export function getCVXVlCVXBalance(blockNumber: BigInt): TokenRecordsWrapper {
+  const records = new TokenRecordsWrapper();
 
   records.addToken(
     "CVX",
@@ -452,9 +452,9 @@ export function getWBTCBalance(wbtcERC20: ERC20 | null, blockNumber: BigInt): To
  * @param blockNumber the current block number
  * @returns TokensRecords object
  */
-export function getVolatileValue(blockNumber: BigInt, liquidOnly: boolean): TokensRecords {
+export function getVolatileValue(blockNumber: BigInt, liquidOnly: boolean): TokenRecordsWrapper {
   if (liquidOnly) log.debug("liquidOnly is true, so skipping illiquid assets", []);
-  const records = new TokensRecords();
+  const records = new TokenRecordsWrapper();
 
   if (!liquidOnly) {
     records.addToken("Vesting Assets", getVestingAssets());
@@ -503,8 +503,8 @@ export function getVolatileValue(blockNumber: BigInt, liquidOnly: boolean): Toke
  * @param blockNumber the current block number
  * @returns TokensRecords representing the components of the risk-free value
  */
-export function getEthRiskFreeValue(blockNumber: BigInt): TokensRecords {
-  const records = new TokensRecords();
+export function getEthRiskFreeValue(blockNumber: BigInt): TokenRecordsWrapper {
+  const records = new TokenRecordsWrapper();
 
   records.addToken(
     "ETH",
@@ -527,8 +527,8 @@ export function getEthRiskFreeValue(blockNumber: BigInt): TokensRecords {
  * @param blockNumber the current block number
  * @returns TokensRecords representing the components of the market value
  */
-export function getEthMarketValue(blockNumber: BigInt): TokensRecords {
-  const records = new TokensRecords();
+export function getEthMarketValue(blockNumber: BigInt): TokenRecordsWrapper {
+  const records = new TokenRecordsWrapper();
 
   records.addToken(
     "ETH",

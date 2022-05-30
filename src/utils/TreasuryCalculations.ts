@@ -4,7 +4,7 @@ import { WBTC_ERC20_CONTRACT, WETH_ERC20_CONTRACT } from "./Constants";
 import { getERC20 } from "./ContractHelper";
 import { getLiquidityPoolValue } from "./LiquidityCalculations";
 import { getCirculatingSupply, getTotalSupply } from "./OhmCalculations";
-import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
+import { TokenRecord, TokenRecords, TokenRecordsWrapper } from "./TokenRecord";
 import { getStableValue } from "./TokenStablecoins";
 import { getVolatileValue, getWBTCBalance, getWETHBalance } from "./TokenVolatile";
 
@@ -20,7 +20,7 @@ import { getVolatileValue, getWBTCBalance, getWETHBalance } from "./TokenVolatil
 export function getTreasuryVolatileBacking(
   blockNumber: BigInt,
   liquidOnly: boolean,
-): TokensRecords {
+): TokenRecordsWrapper {
   const records = getVolatileValue(blockNumber, liquidOnly);
 
   records.addToken(
@@ -46,7 +46,7 @@ export function getTreasuryVolatileBacking(
  * @param blockNumber the current block number
  * @returns TokensRecords object
  */
-export function getTreasuryStableBacking(blockNumber: BigInt): TokensRecords {
+export function getTreasuryStableBacking(blockNumber: BigInt): TokenRecordsWrapper {
   const records = getStableValue(blockNumber);
 
   log.info("Treasury stable backing at block {}: {}", [blockNumber.toString(), records.toString()]);
@@ -63,8 +63,8 @@ export function getTreasuryStableBacking(blockNumber: BigInt): TokensRecords {
  * @param blockNumber the current block number
  * @returns TokensRecords object
  */
-export function getTreasuryTotalBacking(blockNumber: BigInt): TokensRecords {
-  const records = new TokensRecords();
+export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecordsWrapper {
+  const records = new TokenRecordsWrapper();
 
   records.combine(getTreasuryStableBacking(blockNumber));
   records.combine(getTreasuryVolatileBacking(blockNumber, true));
@@ -112,9 +112,9 @@ export function getTreasuryTotalBacking(blockNumber: BigInt): TokensRecords {
  * @param blockNumber
  * @returns
  */
-export function getMarketValue(blockNumber: BigInt): TokensRecords {
+export function getMarketValue(blockNumber: BigInt): TokenRecordsWrapper {
   // TODO check that ETH and stables aren't being double-counted
-  const records = new TokensRecords();
+  const records = new TokenRecordsWrapper();
 
   records.combine(getStableValue(blockNumber));
   records.combine(getLiquidityPoolValue(blockNumber, false));
@@ -143,8 +143,8 @@ export function getMarketValue(blockNumber: BigInt): TokensRecords {
  * @param blockNumber
  * @returns
  */
-export function getRiskFreeValue(blockNumber: BigInt): TokensRecords {
-  const records = new TokensRecords();
+export function getRiskFreeValue(blockNumber: BigInt): TokenRecordsWrapper {
+  const records = new TokenRecordsWrapper();
 
   records.combine(getStableValue(blockNumber));
   records.combine(getLiquidityPoolValue(blockNumber, true));

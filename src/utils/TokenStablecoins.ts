@@ -40,7 +40,7 @@ import {
   getOhmLusdLiquidityBalance,
   getOhmLusdLiquidityV2Balance,
 } from "./LiquidityCalculations";
-import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
+import { TokenRecord, TokenRecords, TokenRecordsWrapper } from "./TokenRecord";
 
 /**
  * Calculates the balance of DAI across the following:
@@ -421,8 +421,8 @@ export function getUSTBalance(ustERC20: ERC20 | null, blockNumber: BigInt): Toke
  * @param blockNumber the current block number
  * @returns TokensRecords representing the components of the stablecoin value
  */
-export function getStableValue(blockNumber: BigInt): TokensRecords {
-  const records = new TokensRecords();
+export function getStableValue(blockNumber: BigInt): TokenRecordsWrapper {
+  const records = new TokenRecordsWrapper();
 
   records.addToken(
     "DAI",
@@ -467,8 +467,8 @@ export function getStableValue(blockNumber: BigInt): TokensRecords {
  * @param blockNumber the current block number
  * @returns TokensRecords representing the components of the risk-free value
  */
-export function getDaiRiskFreeValue(blockNumber: BigInt): TokensRecords {
-  const records = new TokensRecords();
+export function getDaiRiskFreeValue(blockNumber: BigInt): TokenRecordsWrapper {
+  const records = new TokenRecordsWrapper();
 
   records.addToken(
     "DAI",
@@ -496,8 +496,8 @@ export function getDaiRiskFreeValue(blockNumber: BigInt): TokensRecords {
  * @param blockNumber the current block number
  * @returns TokensRecords representing the components of the market value
  */
-export function getDaiMarketValue(blockNumber: BigInt): TokensRecords {
-  const records = new TokensRecords();
+export function getDaiMarketValue(blockNumber: BigInt): TokenRecordsWrapper {
+  const records = new TokenRecordsWrapper();
 
   records.addToken(
     "DAI",
@@ -525,8 +525,8 @@ export function getDaiMarketValue(blockNumber: BigInt): TokensRecords {
  * @param blockNumber the current block number
  * @returns TokensRecords representing the components of the risk-free value
  */
-export function getFraxRiskFreeValue(blockNumber: BigInt): TokensRecords {
-  const records = new TokensRecords();
+export function getFraxRiskFreeValue(blockNumber: BigInt): TokenRecordsWrapper {
+  const records = new TokenRecordsWrapper();
 
   records.addToken(
     "FRAX",
@@ -549,8 +549,8 @@ export function getFraxRiskFreeValue(blockNumber: BigInt): TokensRecords {
  * @param blockNumber the current block number
  * @returns TokensRecords representing the components of the market value
  */
-export function getFraxMarketValue(blockNumber: BigInt): TokensRecords {
-  const records = new TokensRecords();
+export function getFraxMarketValue(blockNumber: BigInt): TokenRecordsWrapper {
+  const records = new TokenRecordsWrapper();
 
   records.addToken(
     "FRAX",
@@ -573,8 +573,8 @@ export function getFraxMarketValue(blockNumber: BigInt): TokensRecords {
  * @param blockNumber the current block number
  * @returns TokensRecords representing the components of the risk-free value
  */
-export function getLusdRiskFreeValue(blockNumber: BigInt): TokensRecords {
-  const records = new TokensRecords();
+export function getLusdRiskFreeValue(blockNumber: BigInt): TokenRecordsWrapper {
+  const records = new TokenRecordsWrapper();
 
   records.addToken(
     "LUSD",
@@ -601,8 +601,8 @@ export function getLusdRiskFreeValue(blockNumber: BigInt): TokensRecords {
  * @param blockNumber the current block number
  * @returns TokensRecords representing the components of the market value
  */
-export function getLusdMarketValue(blockNumber: BigInt): TokensRecords {
-  const records = new TokensRecords();
+export function getLusdMarketValue(blockNumber: BigInt): TokenRecordsWrapper {
+  const records = new TokenRecordsWrapper();
 
   records.addToken(
     "LUSD",

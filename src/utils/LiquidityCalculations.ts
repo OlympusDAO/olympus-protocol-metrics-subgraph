@@ -27,7 +27,7 @@ import {
 import { toDecimal } from "./Decimals";
 import { LiquidityBalances } from "./LiquidityBalance";
 import { getDiscountedPairUSD, getPairUSD } from "./Price";
-import { TokenRecord, TokenRecords, TokensRecords } from "./TokenRecord";
+import { TokenRecord, TokenRecords, TokenRecordsWrapper } from "./TokenRecord";
 import {
   getDaiMarketValue,
   getDaiRiskFreeValue,
@@ -495,8 +495,8 @@ export function getOhmEthProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal
  * @param riskFree If `riskFree` is true, the risk-free value will be returned
  * @returns TokensRecords object
  */
-export function getLiquidityPoolValue(blockNumber: BigInt, riskFree: boolean): TokensRecords {
-  const records = new TokensRecords();
+export function getLiquidityPoolValue(blockNumber: BigInt, riskFree: boolean): TokenRecordsWrapper {
+  const records = new TokenRecordsWrapper();
 
   records.combine(riskFree ? getDaiRiskFreeValue(blockNumber) : getDaiMarketValue(blockNumber));
   records.combine(riskFree ? getFraxRiskFreeValue(blockNumber) : getFraxMarketValue(blockNumber));

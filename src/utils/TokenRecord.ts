@@ -144,7 +144,7 @@ export class TokenRecords {
  * - treasury wallet v1,
  * - treasury wallet v2
  */
-export class TokensRecords {
+export class TokenRecordsWrapper {
   // TODO shift this back to Map. Has issues with current version of graph-ts.
   tokens: Map<string, TokenRecords>;
 
@@ -156,7 +156,7 @@ export class TokensRecords {
     this.tokens.set(token, records);
   }
 
-  combine(records: TokensRecords): void {
+  combine(records: TokenRecordsWrapper): void {
     const inTokens = records.tokens;
 
     for (let i = 0; i < inTokens.size; i++) {
