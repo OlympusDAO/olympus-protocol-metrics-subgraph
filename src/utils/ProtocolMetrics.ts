@@ -144,7 +144,7 @@ function getNextOHMRebase(blockNumber: BigInt): BigDecimal {
 function getAPY_Rebase(sOHM: BigDecimal, distributedOHM: BigDecimal): BigDecimal[] {
   const nextEpochRebase = distributedOHM.div(sOHM).times(BigDecimal.fromString("100"));
 
-  const nextEpochRebase_number = Number.parseFloat(nextEpochRebase.toString());
+  const nextEpochRebase_number = parseFloat(nextEpochRebase.toString());
   const currentAPY = (Math.pow(nextEpochRebase_number / 100 + 1, 365 * 3) - 1) * 100;
 
   const currentAPYdecimal = BigDecimal.fromString(currentAPY.toString());
@@ -179,7 +179,7 @@ function getRunway(
     log.debug("Runway RFV", [rfv.toString()]);
     log.debug("Runway totalSupply", [totalSupply.toString()]);
 
-    const treasury_runway = Number.parseFloat(rfv.div(totalSupply).toString());
+    const treasury_runway = parseFloat(rfv.div(totalSupply).toString());
 
     const runway2dot5k_num = Math.log(treasury_runway) / Math.log(1 + 0.0029438) / 3;
     const runway5k_num = Math.log(treasury_runway) / Math.log(1 + 0.003579) / 3;
@@ -189,16 +189,16 @@ function getRunway(
     const runway50k_num = Math.log(treasury_runway) / Math.log(1 + 0.00569158) / 3;
     const runway70k_num = Math.log(treasury_runway) / Math.log(1 + 0.00600065) / 3;
     const runway100k_num = Math.log(treasury_runway) / Math.log(1 + 0.00632839) / 3;
-    let nextEpochRebase_number = Number.parseFloat(rebase.toString()) / 100;
+    let nextEpochRebase_number = parseFloat(rebase.toString()) / 100;
     if (block.number.toI32() > DISTRIBUTOR_CONTRACT_BLOCK) {
       const distributorContract = Distributor.bind(Address.fromString(DISTRIBUTOR_CONTRACT));
-      nextEpochRebase_number = Number.parseFloat(
+      nextEpochRebase_number = parseFloat(
         toDecimal(distributorContract.info(BigInt.fromI32(4)).value0, 6).toString(),
       );
     }
     if (block.number.toI32() > DISTRIBUTOR_CONTRACT_BLOCK_V2) {
       const distributorContract_v2 = Distributor.bind(Address.fromString(DISTRIBUTOR_CONTRACT_V2));
-      nextEpochRebase_number = Number.parseFloat(
+      nextEpochRebase_number = parseFloat(
         toDecimal(distributorContract_v2.info(BigInt.fromI32(0)).value0, 6).toString(),
       );
     }
