@@ -646,24 +646,6 @@ export class ProtocolMetric extends Entity {
     this.set("treasuryCVXMarketValueComponents", Value.fromStringArray(value));
   }
 
-  get treasuryFXSMarketValue(): BigDecimal {
-    let value = this.get("treasuryFXSMarketValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryFXSMarketValue(value: BigDecimal) {
-    this.set("treasuryFXSMarketValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryFXSMarketValueComponents(): Array<string> {
-    let value = this.get("treasuryFXSMarketValueComponents");
-    return value!.toStringArray();
-  }
-
-  set treasuryFXSMarketValueComponents(value: Array<string>) {
-    this.set("treasuryFXSMarketValueComponents", Value.fromStringArray(value));
-  }
-
   get treasuryOtherMarketValue(): BigDecimal {
     let value = this.get("treasuryOtherMarketValue");
     return value!.toBigDecimal();

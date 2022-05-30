@@ -69,8 +69,8 @@ type ProtocolMetric @entity {
   treasuryWBTCMarketValueComponents: [String!]!
   treasuryCVXMarketValue: BigDecimal!
   treasuryCVXMarketValueComponents: [String!]!
-  treasuryFXSMarketValue: BigDecimal!
-  treasuryFXSMarketValueComponents: [String!]!
+  # treasuryFXSMarketValue: BigDecimal!
+  # treasuryFXSMarketValueComponents: [String!]!
   treasuryOtherMarketValue: BigDecimal!
   treasuryOtherMarketValueComponents: [String!]!
   treasuryLPValue: BigDecimal!
