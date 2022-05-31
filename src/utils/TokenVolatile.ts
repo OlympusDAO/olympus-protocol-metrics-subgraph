@@ -254,7 +254,7 @@ function getFXSBalance(fxsERC20: ERC20 | null, blockNumber: BigInt): TokenRecord
  */
 export function getVeFXSBalance(veFXS: VeFXS | null, _blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords();
-  const cvxRate = getCVXUSDRate();
+  const fxsRate = getFXSUSDRate();
 
   if (veFXS) {
     records.push(
@@ -262,7 +262,7 @@ export function getVeFXSBalance(veFXS: VeFXS | null, _blockNumber: BigInt): Toke
         "veFXS",
         "veFXS Allocator",
         VEFXS_ALLOCATOR,
-        cvxRate,
+        fxsRate,
         toDecimal(veFXS.locked(Address.fromString(VEFXS_ALLOCATOR)).value0, 18),
       ),
     );
