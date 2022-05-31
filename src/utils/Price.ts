@@ -55,10 +55,10 @@ export function getOHMUSDRate(block: BigInt): BigDecimal {
 
   const pair = UniswapV2Pair.bind(Address.fromString(contractAddress));
   const reserves = pair.getReserves();
-  const reserve0 = reserves.value0.toBigDecimal();
-  const reserve1 = reserves.value1.toBigDecimal();
+  const ohmReserves = reserves.value0.toBigDecimal();
+  const daiReserves = reserves.value1.toBigDecimal();
 
-  const ohmRate = reserve1.div(reserve0).div(BIG_DECIMAL_1E9);
+  const ohmRate = daiReserves.div(ohmReserves).div(BIG_DECIMAL_1E9);
   log.debug("OHM rate {}", [ohmRate.toString()]);
 
   return ohmRate;
@@ -82,10 +82,12 @@ export function getTribeUSDRate(): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(UNI_TRIBE_ETH_PAIR));
 
   const reserves = pair.getReserves();
-  const reserve0 = reserves.value0.toBigDecimal();
-  const reserve1 = reserves.value1.toBigDecimal();
+  const ethReserves = reserves.value0.toBigDecimal();
+  const tribeReserves = reserves.value1.toBigDecimal();
 
-  const tribeRate = reserve1.div(reserve0).times(getETHUSDRate());
+  // Note: the pair is ETH-TRIBE, unlike other pairs
+  // As a result, the formula is reversed
+  const tribeRate = ethReserves.div(tribeReserves).times(getETHUSDRate());
   log.debug("TRIBE rate {}", [tribeRate.toString()]);
 
   return tribeRate;
