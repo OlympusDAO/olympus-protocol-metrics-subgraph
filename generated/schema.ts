@@ -343,15 +343,6 @@ export class ProtocolMetric extends Entity {
     this.set("marketCap", Value.fromBigDecimal(value));
   }
 
-  get marketCapComponents(): Array<string> {
-    let value = this.get("marketCapComponents");
-    return value!.toStringArray();
-  }
-
-  set marketCapComponents(value: Array<string>) {
-    this.set("marketCapComponents", Value.fromStringArray(value));
-  }
-
   get totalValueLocked(): BigDecimal {
     let value = this.get("totalValueLocked");
     return value!.toBigDecimal();
@@ -478,6 +469,27 @@ export class ProtocolMetric extends Entity {
     );
   }
 
+  get treasuryFeiRiskFreeValue(): BigDecimal {
+    let value = this.get("treasuryFeiRiskFreeValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryFeiRiskFreeValue(value: BigDecimal) {
+    this.set("treasuryFeiRiskFreeValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryFeiRiskFreeValueComponents(): Array<string> {
+    let value = this.get("treasuryFeiRiskFreeValueComponents");
+    return value!.toStringArray();
+  }
+
+  set treasuryFeiRiskFreeValueComponents(value: Array<string>) {
+    this.set(
+      "treasuryFeiRiskFreeValueComponents",
+      Value.fromStringArray(value)
+    );
+  }
+
   get treasuryWETHRiskFreeValue(): BigDecimal {
     let value = this.get("treasuryWETHRiskFreeValue");
     return value!.toBigDecimal();
@@ -551,6 +563,24 @@ export class ProtocolMetric extends Entity {
 
   set treasuryLusdMarketValueComponents(value: Array<string>) {
     this.set("treasuryLusdMarketValueComponents", Value.fromStringArray(value));
+  }
+
+  get treasuryFeiMarketValue(): BigDecimal {
+    let value = this.get("treasuryFeiMarketValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryFeiMarketValue(value: BigDecimal) {
+    this.set("treasuryFeiMarketValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryFeiMarketValueComponents(): Array<string> {
+    let value = this.get("treasuryFeiMarketValueComponents");
+    return value!.toStringArray();
+  }
+
+  set treasuryFeiMarketValueComponents(value: Array<string>) {
+    this.set("treasuryFeiMarketValueComponents", Value.fromStringArray(value));
   }
 
   get treasuryUstMarketValue(): BigDecimal {
@@ -644,6 +674,24 @@ export class ProtocolMetric extends Entity {
 
   set treasuryCVXMarketValueComponents(value: Array<string>) {
     this.set("treasuryCVXMarketValueComponents", Value.fromStringArray(value));
+  }
+
+  get treasuryFXSMarketValue(): BigDecimal {
+    let value = this.get("treasuryFXSMarketValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryFXSMarketValue(value: BigDecimal) {
+    this.set("treasuryFXSMarketValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryFXSMarketValueComponents(): Array<string> {
+    let value = this.get("treasuryFXSMarketValueComponents");
+    return value!.toStringArray();
+  }
+
+  set treasuryFXSMarketValueComponents(value: Array<string>) {
+    this.set("treasuryFXSMarketValueComponents", Value.fromStringArray(value));
   }
 
   get treasuryOtherMarketValue(): BigDecimal {

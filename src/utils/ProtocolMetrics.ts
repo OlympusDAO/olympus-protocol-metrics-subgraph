@@ -41,17 +41,15 @@ import {
 import { getOHMUSDRate } from "./Price";
 import {
   getDaiMarketValue,
-  getDaiRiskFreeValue,
+  getFeiMarketValue,
   getFraxMarketValue,
-  getFraxRiskFreeValue,
   getLusdMarketValue,
-  getLusdRiskFreeValue,
   getUSTBalance,
 } from "./TokenStablecoins";
 import {
-  getCVXVlCVXBalance,
+  getCVXTotalBalance,
   getEthMarketValue,
-  getEthRiskFreeValue,
+  getFXSTotalBalance,
   getVolatileValue,
   getWBTCBalance,
   getXSushiBalance,
@@ -76,7 +74,6 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
     protocolMetric.totalSupply = BigDecimal.fromString("0");
     protocolMetric.ohmPrice = BigDecimal.fromString("0");
     protocolMetric.marketCap = BigDecimal.fromString("0");
-    protocolMetric.marketCapComponents = new Array<string>();
     protocolMetric.totalValueLocked = BigDecimal.fromString("0");
     protocolMetric.treasuryRiskFreeValue = BigDecimal.fromString("0");
     protocolMetric.treasuryRiskFreeValueComponents = new Array<string>();
@@ -91,12 +88,16 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
     protocolMetric.treasuryFraxRiskFreeValueComponents = new Array<string>();
     protocolMetric.treasuryLusdRiskFreeValue = BigDecimal.fromString("0");
     protocolMetric.treasuryLusdRiskFreeValueComponents = new Array<string>();
+    protocolMetric.treasuryFeiRiskFreeValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryFeiRiskFreeValueComponents = new Array<string>();
     protocolMetric.treasuryDaiMarketValue = BigDecimal.fromString("0");
     protocolMetric.treasuryDaiMarketValueComponents = new Array<string>();
     protocolMetric.treasuryFraxMarketValue = BigDecimal.fromString("0");
     protocolMetric.treasuryFraxMarketValueComponents = new Array<string>();
     protocolMetric.treasuryLusdMarketValue = BigDecimal.fromString("0");
     protocolMetric.treasuryLusdMarketValueComponents = new Array<string>();
+    protocolMetric.treasuryFeiMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryFeiMarketValueComponents = new Array<string>();
     protocolMetric.treasuryUstMarketValue = BigDecimal.fromString("0");
     protocolMetric.treasuryUstMarketValueComponents = new Array<string>();
     protocolMetric.treasuryXsushiMarketValue = BigDecimal.fromString("0");
@@ -109,6 +110,8 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
     protocolMetric.treasuryWBTCMarketValueComponents = new Array<string>();
     protocolMetric.treasuryCVXMarketValue = BigDecimal.fromString("0");
     protocolMetric.treasuryCVXMarketValueComponents = new Array<string>();
+    protocolMetric.treasuryFXSMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryFXSMarketValueComponents = new Array<string>();
     protocolMetric.treasuryOtherMarketValue = BigDecimal.fromString("0");
     protocolMetric.treasuryOtherMarketValueComponents = new Array<string>();
     protocolMetric.treasuryOhmDaiPOL = BigDecimal.fromString("0");
@@ -282,11 +285,11 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryRiskFreeValue = riskFreeValue.getValue();
   pm.treasuryRiskFreeValueComponents = riskFreeValue.toStringArray(true);
 
-  const treasuryDaiRiskFree = getDaiRiskFreeValue(blockNumber);
+  const treasuryDaiRiskFree = getDaiMarketValue(blockNumber, true);
   pm.treasuryDaiRiskFreeValue = treasuryDaiRiskFree.getValue();
   pm.treasuryDaiRiskFreeValueComponents = treasuryDaiRiskFree.toStringArray(true);
 
-  const fraxRiskFreeValue = getFraxRiskFreeValue(blockNumber);
+  const fraxRiskFreeValue = getFraxMarketValue(blockNumber, true);
   pm.treasuryFraxRiskFreeValue = fraxRiskFreeValue.getValue();
   pm.treasuryFraxRiskFreeValueComponents = fraxRiskFreeValue.toStringArray(true);
 
@@ -298,6 +301,14 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryFraxMarketValue = fraxMarketValue.getValue();
   pm.treasuryFraxMarketValueComponents = fraxMarketValue.toStringArray(true);
 
+  const feiMarketValue = getFeiMarketValue(blockNumber);
+  pm.treasuryFeiMarketValue = feiMarketValue.getValue();
+  pm.treasuryFeiMarketValueComponents = feiMarketValue.toStringArray(true);
+
+  const feiRiskFreeValue = getFeiMarketValue(blockNumber, true);
+  pm.treasuryFeiRiskFreeValue = feiRiskFreeValue.getValue();
+  pm.treasuryFeiRiskFreeValueComponents = feiRiskFreeValue.toStringArray(true);
+
   const xSushiValue = getXSushiBalance(
     getERC20("xSUSHI", XSUSI_ERC20_CONTRACT, blockNumber),
     blockNumber,
@@ -305,7 +316,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryXsushiMarketValue = xSushiValue.getValue();
   pm.treasuryXsushiMarketValueComponents = xSushiValue.toStringArray(true);
 
-  const ethRiskFreeValue = getEthRiskFreeValue(blockNumber);
+  const ethRiskFreeValue = getEthMarketValue(blockNumber, true);
   pm.treasuryWETHRiskFreeValue = ethRiskFreeValue.getValue();
   pm.treasuryWETHRiskFreeValueComponents = ethRiskFreeValue.toStringArray(true);
 
@@ -313,7 +324,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryWETHMarketValue = ethMarketValue.getValue();
   pm.treasuryWETHMarketValueComponents = ethMarketValue.toStringArray(true);
 
-  const lusdRiskFreeValue = getLusdRiskFreeValue(blockNumber);
+  const lusdRiskFreeValue = getLusdMarketValue(blockNumber, true);
   pm.treasuryLusdRiskFreeValue = lusdRiskFreeValue.getValue();
   pm.treasuryLusdRiskFreeValueComponents = lusdRiskFreeValue.toStringArray(true);
 
@@ -321,7 +332,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryLusdMarketValue = lusdMarketValue.getValue();
   pm.treasuryLusdMarketValueComponents = lusdMarketValue.toStringArray(true);
 
-  const cvxValue = getCVXVlCVXBalance(blockNumber);
+  const cvxValue = getCVXTotalBalance(blockNumber);
   pm.treasuryCVXMarketValue = cvxValue.getValue();
   pm.treasuryCVXMarketValueComponents = cvxValue.toStringArray(true);
 
@@ -329,6 +340,10 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryOhmFraxPOL = getOhmFraxProtocolOwnedLiquidity(blockNumber);
   pm.treasuryOhmLusdPOL = getOhmLusdProtocolOwnedLiquidity(blockNumber);
   pm.treasuryOhmEthPOL = getOhmEthProtocolOwnedLiquidity(blockNumber);
+
+  const fxsValue = getFXSTotalBalance(blockNumber);
+  pm.treasuryFXSMarketValue = fxsValue.getValue();
+  pm.treasuryFXSMarketValueComponents = fxsValue.toStringArray(true);
 
   const treasuryOtherMarketValue = getVolatileValue(blockNumber, false);
   pm.treasuryOtherMarketValue = treasuryOtherMarketValue.getValue();

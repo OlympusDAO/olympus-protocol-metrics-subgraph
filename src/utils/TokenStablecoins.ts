@@ -447,43 +447,20 @@ export function getStableValue(blockNumber: BigInt): TokenRecords {
 }
 
 /**
- * Returns the DAI risk-free value, which is defined as:
- * - Balance of DAI
- * - Discounted value of OHM-DAI pair (where OHM = $1)
- * - Discounted value of OHM-DAI pair V2 (where OHM = $1)
- *
- * @param blockNumber the current block number
- * @returns TokenRecords representing the components of the risk-free value
- */
-export function getDaiRiskFreeValue(blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords();
-
-  records.combine(
-    getDaiBalance(
-      getERC20("DAI", ERC20DAI_CONTRACT, blockNumber),
-      getERC20("aDAI", ADAI_ERC20_CONTRACT, blockNumber),
-      getRariAllocator(RARI_ALLOCATOR, blockNumber),
-      blockNumber,
-    ),
-  );
-
-  records.combine(getOhmDaiLiquidityBalance(blockNumber, true));
-
-  records.combine(getOhmDaiLiquidityV2Balance(blockNumber, true));
-
-  return records;
-}
-
-/**
  * Returns the DAI market value, which is defined as:
  * - Balance of DAI
  * - Value of OHM-DAI pair
  * - Value of OHM-DAI pair V2
  *
+ * If {riskFree} is true, the discounted value of OHM-DAI pairs (where OHM = $1)
+ * is calculated.
+ *
  * @param blockNumber the current block number
+ * @param riskFree true if calculating the risk-free value
  * @returns TokenRecords representing the components of the market value
  */
-export function getDaiMarketValue(blockNumber: BigInt): TokenRecords {
+// eslint-disable-next-line @typescript-eslint/no-inferrable-types
+export function getDaiMarketValue(blockNumber: BigInt, riskFree: boolean = false): TokenRecords {
   const records = new TokenRecords();
 
   records.combine(
@@ -495,30 +472,9 @@ export function getDaiMarketValue(blockNumber: BigInt): TokenRecords {
     ),
   );
 
-  records.combine(getOhmDaiLiquidityBalance(blockNumber, false));
+  records.combine(getOhmDaiLiquidityBalance(blockNumber, riskFree));
 
-  records.combine(getOhmDaiLiquidityV2Balance(blockNumber, false));
-
-  return records;
-}
-
-/**
- * Returns the FRAX risk-free value, which is defined as:
- * - Balance of FRAX
- * - Discounted value of OHM-FRAX pair (where OHM = $1)
- * - Discounted value of OHM-FRAX pair V2 (where OHM = $1)
- *
- * @param blockNumber the current block number
- * @returns TokenRecords representing the components of the risk-free value
- */
-export function getFraxRiskFreeValue(blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords();
-
-  records.combine(getFraxBalance(getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber), blockNumber));
-
-  records.combine(getOhmFraxLiquidityBalance(blockNumber, true));
-
-  records.combine(getOhmFraxLiquidityV2Balance(blockNumber, true));
+  records.combine(getOhmDaiLiquidityV2Balance(blockNumber, riskFree));
 
   return records;
 }
@@ -529,44 +485,22 @@ export function getFraxRiskFreeValue(blockNumber: BigInt): TokenRecords {
  * - Value of OHM-FRAX pair
  * - Value of OHM-FRAX pair V2
  *
+ * If {riskFree} is true, the discounted value of OHM-DAI pairs (where OHM = $1)
+ * is calculated.
+ *
  * @param blockNumber the current block number
+ * @param riskFree true if calculating the risk-free value
  * @returns TokenRecords representing the components of the market value
  */
-export function getFraxMarketValue(blockNumber: BigInt): TokenRecords {
+// eslint-disable-next-line @typescript-eslint/no-inferrable-types
+export function getFraxMarketValue(blockNumber: BigInt, riskFree: boolean = false): TokenRecords {
   const records = new TokenRecords();
 
   records.combine(getFraxBalance(getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber), blockNumber));
 
-  records.combine(getOhmFraxLiquidityBalance(blockNumber, false));
+  records.combine(getOhmFraxLiquidityBalance(blockNumber, riskFree));
 
-  records.combine(getOhmFraxLiquidityV2Balance(blockNumber, false));
-
-  return records;
-}
-
-/**
- * Returns the LUSD risk-free value, which is defined as:
- * - Balance of LUSD
- * - Discounted value of OHM-LUSD pair (where OHM = $1)
- * - Discounted value of OHM-LUSD pair V2 (where OHM = $1)
- *
- * @param blockNumber the current block number
- * @returns TokenRecords representing the components of the risk-free value
- */
-export function getLusdRiskFreeValue(blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords();
-
-  records.combine(
-    getLUSDBalance(
-      getERC20("LUSD", LUSD_ERC20_CONTRACT, blockNumber),
-      getStabilityPool(STABILITY_POOL, blockNumber),
-      blockNumber,
-    ),
-  );
-
-  records.combine(getOhmLusdLiquidityBalance(blockNumber, true));
-
-  records.combine(getOhmLusdLiquidityV2Balance(blockNumber, true));
+  records.combine(getOhmFraxLiquidityV2Balance(blockNumber, riskFree));
 
   return records;
 }
@@ -577,10 +511,15 @@ export function getLusdRiskFreeValue(blockNumber: BigInt): TokenRecords {
  * - Value of OHM-LUSD pair
  * - Value of OHM-LUSD pair V2
  *
+ * If {riskFree} is true, the discounted value of OHM-DAI pairs (where OHM = $1)
+ * is calculated.
+ *
  * @param blockNumber the current block number
+ * @param riskFree true if calculating the risk-free value
  * @returns TokenRecords representing the components of the market value
  */
-export function getLusdMarketValue(blockNumber: BigInt): TokenRecords {
+// eslint-disable-next-line @typescript-eslint/no-inferrable-types
+export function getLusdMarketValue(blockNumber: BigInt, riskFree: boolean = false): TokenRecords {
   const records = new TokenRecords();
 
   records.combine(
@@ -591,9 +530,29 @@ export function getLusdMarketValue(blockNumber: BigInt): TokenRecords {
     ),
   );
 
-  records.combine(getOhmLusdLiquidityBalance(blockNumber, false));
+  records.combine(getOhmLusdLiquidityBalance(blockNumber, riskFree));
 
-  records.combine(getOhmLusdLiquidityV2Balance(blockNumber, false));
+  records.combine(getOhmLusdLiquidityV2Balance(blockNumber, riskFree));
+
+  return records;
+}
+
+/**
+ * Returns the FEI market value, which is defined as:
+ * - Balance of FEI
+ *
+ * If {riskFree} is true, the discounted value of OHM-DAI pairs (where OHM = $1)
+ * is calculated.
+ *
+ * @param blockNumber the current block number
+ * @param riskFree true if calculating the risk-free value
+ * @returns TokenRecords representing the components of the market value
+ */
+// eslint-disable-next-line @typescript-eslint/no-inferrable-types
+export function getFeiMarketValue(blockNumber: BigInt, riskFree: boolean = false): TokenRecords {
+  const records = new TokenRecords();
+
+  records.combine(getFeiBalance(getERC20("FEI", FEI_ERC20_CONTRACT, blockNumber), blockNumber));
 
   return records;
 }

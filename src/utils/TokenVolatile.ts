@@ -178,7 +178,15 @@ export function getVlCVXBalance(vlERC20: ERC20 | null, blockNumber: BigInt): Tok
   return records;
 }
 
-export function getCVXVlCVXBalance(blockNumber: BigInt): TokenRecords {
+/**
+ * Returns the balance of CVX tokens:
+ * - CVX
+ * - vlCVX
+ *
+ * @param blockNumber the current block number
+ * @returns TokenRecords object
+ */
+export function getCVXTotalBalance(blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords();
 
   records.combine(getCVXBalance(getERC20("CVX", CVX_ERC20_CONTRACT, blockNumber), blockNumber));
@@ -265,6 +273,23 @@ export function getVeFXSBalance(veFXS: VeFXS | null, _blockNumber: BigInt): Toke
 
 export function getVeFXSRecords(blockNumber: BigInt): TokenRecords {
   return getVeFXSBalance(getVeFXS(VEFXSERC20_CONTRACT, blockNumber), blockNumber);
+}
+
+/**
+ * Returns the balance of FXS tokens:
+ * - FXS
+ * - veFXS
+ *
+ * @param blockNumber the current block number
+ * @returns TokenRecords object
+ */
+export function getFXSTotalBalance(blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords();
+
+  records.combine(getFXSBalance(getERC20("FXS", FXS_ERC20_CONTRACT, blockNumber), blockNumber));
+  records.combine(getVeFXSRecords(blockNumber));
+
+  return records;
 }
 
 /**
@@ -482,43 +507,27 @@ export function getVolatileValue(blockNumber: BigInt, liquidOnly: boolean): Toke
 }
 
 /**
- * Returns the ETH risk-free value, which is defined as:
- * - Balance of ETH
- * - Discounted value of OHM-ETH pair (where OHM = $1)
- * - Discounted value of OHM-ETH pair V2 (where OHM = $1)
- *
- * @param blockNumber the current block number
- * @returns TokenRecords representing the components of the risk-free value
- */
-export function getEthRiskFreeValue(blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords();
-
-  records.combine(getWETHBalance(getERC20("wETH", WETH_ERC20_CONTRACT, blockNumber), blockNumber));
-
-  records.combine(getOhmEthLiquidityBalance(blockNumber, true));
-
-  records.combine(getOhmEthLiquidityV2Balance(blockNumber, true));
-
-  return records;
-}
-
-/**
  * Returns the ETH market value, which is defined as:
  * - Balance of ETH
  * - Value of OHM-ETH pair
  * - Value of OHM-ETH pair V2
  *
+ * If {riskFree} is true, the discounted value of OHM-DAI pairs (where OHM = $1)
+ * is calculated.
+ *
  * @param blockNumber the current block number
+ * @param riskFree true if calculating the risk-free value
  * @returns TokenRecords representing the components of the market value
  */
-export function getEthMarketValue(blockNumber: BigInt): TokenRecords {
+// eslint-disable-next-line @typescript-eslint/no-inferrable-types
+export function getEthMarketValue(blockNumber: BigInt, riskFree: boolean = false): TokenRecords {
   const records = new TokenRecords();
 
   records.combine(getWETHBalance(getERC20("wETH", WETH_ERC20_CONTRACT, blockNumber), blockNumber));
 
-  records.combine(getOhmEthLiquidityBalance(blockNumber, false));
+  records.combine(getOhmEthLiquidityBalance(blockNumber, riskFree));
 
-  records.combine(getOhmEthLiquidityV2Balance(blockNumber, false));
+  records.combine(getOhmEthLiquidityV2Balance(blockNumber, riskFree));
 
   return records;
 }

@@ -28,15 +28,8 @@ import { toDecimal } from "./Decimals";
 import { LiquidityBalances } from "./LiquidityBalance";
 import { getDiscountedPairUSD, getPairUSD } from "./Price";
 import { TokenRecord, TokenRecords } from "./TokenRecord";
-import {
-  getDaiMarketValue,
-  getDaiRiskFreeValue,
-  getFraxMarketValue,
-  getFraxRiskFreeValue,
-  getLusdMarketValue,
-  getLusdRiskFreeValue,
-} from "./TokenStablecoins";
-import { getEthMarketValue, getEthRiskFreeValue } from "./TokenVolatile";
+import { getDaiMarketValue, getFraxMarketValue, getLusdMarketValue } from "./TokenStablecoins";
+import { getEthMarketValue } from "./TokenVolatile";
 
 /**
  * Creates TokenRecords for the giving liquidity records.
@@ -504,9 +497,8 @@ export function getOhmEthProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal
   return BigDecimal.zero();
 }
 
-// TODO Add FEI, UST liquidity
 /**
- * Returns the total market value (tokens and liquidity pools) for the following pairs:
+ * Returns the value of liquidity pools for the following pairs:
  * - DAI
  * - FRAX
  * - LUSD
@@ -519,10 +511,16 @@ export function getOhmEthProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal
 export function getLiquidityPoolValue(blockNumber: BigInt, riskFree: boolean): TokenRecords {
   const records = new TokenRecords();
 
-  records.combine(riskFree ? getDaiRiskFreeValue(blockNumber) : getDaiMarketValue(blockNumber));
-  records.combine(riskFree ? getFraxRiskFreeValue(blockNumber) : getFraxMarketValue(blockNumber));
-  records.combine(riskFree ? getLusdRiskFreeValue(blockNumber) : getLusdMarketValue(blockNumber));
-  records.combine(riskFree ? getEthRiskFreeValue(blockNumber) : getEthMarketValue(blockNumber));
+  records.combine(getOhmDaiLiquidityBalance(blockNumber, riskFree));
+  records.combine(getOhmDaiLiquidityV2Balance(blockNumber, riskFree));
+  records.combine(getOhmFraxLiquidityBalance(blockNumber, riskFree));
+  records.combine(getOhmFraxLiquidityV2Balance(blockNumber, riskFree));
+  records.combine(getOhmLusdLiquidityBalance(blockNumber, riskFree));
+  records.combine(getOhmLusdLiquidityV2Balance(blockNumber, riskFree));
+  // No FEI pools
+  // No UST pools
+  records.combine(getOhmEthLiquidityBalance(blockNumber, riskFree));
+  records.combine(getOhmEthLiquidityV2Balance(blockNumber, riskFree));
 
   return records;
 }

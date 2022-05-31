@@ -48,8 +48,8 @@ type ProtocolMetric @entity {
   treasuryFraxRiskFreeValueComponents: [String!]!
   treasuryLusdRiskFreeValue: BigDecimal!
   treasuryLusdRiskFreeValueComponents: [String!]!
-  # treasuryFeiRiskFreeValue: BigDecimal!
-  # treasuryFeiRiskFreeValueComponents: [String!]!
+  treasuryFeiRiskFreeValue: BigDecimal!
+  treasuryFeiRiskFreeValueComponents: [String!]!
   treasuryWETHRiskFreeValue: BigDecimal!
   treasuryWETHRiskFreeValueComponents: [String!]!
   treasuryDaiMarketValue: BigDecimal!
@@ -58,6 +58,8 @@ type ProtocolMetric @entity {
   treasuryFraxMarketValueComponents: [String!]!
   treasuryLusdMarketValue: BigDecimal!
   treasuryLusdMarketValueComponents: [String!]!
+  treasuryFeiMarketValue: BigDecimal!
+  treasuryFeiMarketValueComponents: [String!]!
   treasuryUstMarketValue: BigDecimal!
   treasuryUstMarketValueComponents: [String!]!
   treasuryXsushiMarketValue: BigDecimal!
@@ -68,8 +70,8 @@ type ProtocolMetric @entity {
   treasuryWBTCMarketValueComponents: [String!]!
   treasuryCVXMarketValue: BigDecimal!
   treasuryCVXMarketValueComponents: [String!]!
-  # treasuryFXSMarketValue: BigDecimal!
-  # treasuryFXSMarketValueComponents: [String!]!
+  treasuryFXSMarketValue: BigDecimal!
+  treasuryFXSMarketValueComponents: [String!]!
   treasuryOtherMarketValue: BigDecimal!
   treasuryOtherMarketValueComponents: [String!]!
   treasuryLPValue: BigDecimal!
