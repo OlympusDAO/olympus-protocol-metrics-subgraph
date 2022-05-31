@@ -17,11 +17,7 @@ import {
   STAKING_CONTRACT_V2_BLOCK,
   STAKING_CONTRACT_V3,
   STAKING_CONTRACT_V3_BLOCK,
-  UST_ERC20_CONTRACT,
-  WBTC_ERC20_CONTRACT,
-  XSUSI_ERC20_CONTRACT,
 } from "./Constants";
-import { getERC20 } from "./ContractHelper";
 import { dayFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
 import {
@@ -309,10 +305,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryFeiRiskFreeValue = feiRiskFreeValue.getValue();
   pm.treasuryFeiRiskFreeValueComponents = feiRiskFreeValue.toStringArray(true);
 
-  const xSushiValue = getXSushiBalance(
-    getERC20("xSUSHI", XSUSI_ERC20_CONTRACT, blockNumber),
-    blockNumber,
-  );
+  const xSushiValue = getXSushiBalance(blockNumber);
   pm.treasuryXsushiMarketValue = xSushiValue.getValue();
   pm.treasuryXsushiMarketValueComponents = xSushiValue.toStringArray(true);
 
@@ -349,14 +342,11 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryOtherMarketValue = treasuryOtherMarketValue.getValue();
   pm.treasuryOtherMarketValueComponents = treasuryOtherMarketValue.toStringArray(true);
 
-  const wbtcMarketValue = getWBTCBalance(
-    getERC20("wBTC", WBTC_ERC20_CONTRACT, blockNumber),
-    blockNumber,
-  );
+  const wbtcMarketValue = getWBTCBalance(blockNumber);
   pm.treasuryWBTCMarketValue = wbtcMarketValue.getValue();
   pm.treasuryWBTCMarketValueComponents = wbtcMarketValue.toStringArray(true);
 
-  const ustValue = getUSTBalance(getERC20("UST", UST_ERC20_CONTRACT, blockNumber), blockNumber);
+  const ustValue = getUSTBalance(blockNumber);
   pm.treasuryUstMarketValue = ustValue.getValue();
   pm.treasuryUstMarketValueComponents = ustValue.toStringArray(true);
 

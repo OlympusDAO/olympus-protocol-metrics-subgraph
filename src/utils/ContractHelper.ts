@@ -11,8 +11,9 @@ import { StabilityPool } from "../../generated/ProtocolMetrics/StabilityPool";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
-import { CONTRACT_STARTING_BLOCK_MAP } from "./Constants";
+import { CONTRACT_STARTING_BLOCK_MAP, getContractName, WALLET_ADDRESSES } from "./Constants";
 import { toDecimal } from "./Decimals";
+import { TokenRecord, TokenRecords } from "./TokenRecord";
 
 /**
  * The Graph recommends only binding a contract once
@@ -376,4 +377,58 @@ export function getMasterChefBalance(
  */
 export function getValue(balance: BigInt, decimals: number, rate: BigDecimal): BigDecimal {
   return toDecimal(balance, decimals).times(rate);
+}
+
+/**
+ * Fetches the balance of the given ERC20 token from the
+ * specified wallet.
+ *
+ * @param tokenName The name of the token
+ * @param walletAddress The wallet address to determine the balance from
+ * @param contract ERC20 contract
+ * @param rate the unit price/rate of the token
+ * @param blockNumber the current block number
+ * @returns TokenRecord object
+ */
+export function getERC20TokenRecordFromWallet(
+  tokenName: string,
+  walletAddress: string,
+  contract: ERC20 | null,
+  rate: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecord {
+  return new TokenRecord(
+    tokenName,
+    getContractName(walletAddress),
+    walletAddress,
+    rate,
+    toDecimal(getERC20Balance(contract, walletAddress, blockNumber), 18),
+  );
+}
+
+/**
+ * Fetches the balances of the given ERC20 token from
+ * the wallets defined in {WALLET_ADDRESSES}.
+ *
+ * @param tokenName The name of the token
+ * @param contract ERC20 contract
+ * @param rate the unit price/rate of the token
+ * @param blockNumber the current block number
+ * @returns TokenRecords object
+ */
+export function getERC20TokenRecordsFromWallets(
+  tokenName: string,
+  contract: ERC20 | null,
+  rate: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = new TokenRecords();
+
+  for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
+    records.push(
+      getERC20TokenRecordFromWallet(tokenName, WALLET_ADDRESSES[i], contract, rate, blockNumber),
+    );
+  }
+
+  return records;
 }

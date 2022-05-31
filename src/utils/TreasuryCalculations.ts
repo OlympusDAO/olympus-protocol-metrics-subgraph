@@ -1,7 +1,5 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
-import { WBTC_ERC20_CONTRACT, WETH_ERC20_CONTRACT } from "./Constants";
-import { getERC20 } from "./ContractHelper";
 import { getLiquidityPoolValue } from "./LiquidityCalculations";
 import { getCirculatingSupply, getTotalSupply } from "./OhmCalculations";
 import { TokenRecord, TokenRecords } from "./TokenRecord";
@@ -20,8 +18,8 @@ import { getVolatileValue, getWBTCBalance, getWETHBalance } from "./TokenVolatil
 export function getTreasuryVolatileBacking(blockNumber: BigInt, liquidOnly: boolean): TokenRecords {
   const records = getVolatileValue(blockNumber, liquidOnly);
 
-  records.combine(getWETHBalance(getERC20("wETH", WETH_ERC20_CONTRACT, blockNumber), blockNumber));
-  records.combine(getWBTCBalance(getERC20("wBTC", WBTC_ERC20_CONTRACT, blockNumber), blockNumber));
+  records.combine(getWETHBalance(blockNumber));
+  records.combine(getWBTCBalance(blockNumber));
 
   return records;
 }
@@ -94,16 +92,10 @@ export function getMarketValue(blockNumber: BigInt): TokenRecords {
   records.combine(getLiquidityPoolValue(blockNumber, false));
   records.combine(getVolatileValue(blockNumber, false));
 
-  const wethBalance = getWETHBalance(
-    getERC20("wETH", WETH_ERC20_CONTRACT, blockNumber),
-    blockNumber,
-  );
+  const wethBalance = getWETHBalance(blockNumber);
   records.combine(wethBalance);
 
-  const wbtcBalance = getWBTCBalance(
-    getERC20("wBTC", WBTC_ERC20_CONTRACT, blockNumber),
-    blockNumber,
-  );
+  const wbtcBalance = getWBTCBalance(blockNumber);
   records.combine(wbtcBalance);
 
   return records;

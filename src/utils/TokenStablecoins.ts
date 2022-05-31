@@ -1,9 +1,6 @@
-import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator";
-import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
-import { RariAllocator } from "../../generated/ProtocolMetrics/RariAllocator";
-import { StabilityPool } from "../../generated/ProtocolMetrics/StabilityPool";
 import {
   AAVE_ALLOCATOR,
   AAVE_ALLOCATOR_V2,
@@ -19,15 +16,13 @@ import {
   LUSD_ERC20_CONTRACT,
   RARI_ALLOCATOR,
   STABILITY_POOL,
-  TREASURY_ADDRESS,
-  TREASURY_ADDRESS_V2,
-  TREASURY_ADDRESS_V3,
   UST_ERC20_CONTRACT,
 } from "./Constants";
 import {
   getConvexAllocator,
   getERC20,
   getERC20Balance,
+  getERC20TokenRecordsFromWallets,
   getRariAllocator,
   getStabilityPool,
 } from "./ContractHelper";
@@ -44,62 +39,30 @@ import { TokenRecord, TokenRecords } from "./TokenRecord";
 
 /**
  * Calculates the balance of DAI across the following:
- * - treasury address V1
- * - treasury address V2
- * - treasury address V3
+ * - all wallets, using {getERC20TokenRecordsFromWallets}.
  * - Aave allocator
  * - Aave allocator v2
  * - Rari allocator
  *
- * @param daiERC20 ERC20 contract for DAI
- * @param aDaiERC20 ERC20 contract for Aave aDAI
- * @param rariAllocator RariAllocator contract
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
-export function getDaiBalance(
-  daiERC20: ERC20 | null,
-  aDaiERC20: ERC20 | null,
-  rariAllocator: RariAllocator | null,
-  blockNumber: BigInt,
-): TokenRecords {
-  const records = new TokenRecords();
-
-  if (daiERC20) {
-    records.push(
-      new TokenRecord(
-        "DAI",
-        getContractName(TREASURY_ADDRESS),
-        TREASURY_ADDRESS,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(daiERC20, TREASURY_ADDRESS, blockNumber), 18),
-      ),
-    );
-    records.push(
-      new TokenRecord(
-        "DAI",
-        getContractName(TREASURY_ADDRESS_V2),
-        TREASURY_ADDRESS_V2,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(daiERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
-      ),
-    );
-    records.push(
-      new TokenRecord(
-        "DAI",
-        getContractName(TREASURY_ADDRESS_V3),
-        TREASURY_ADDRESS_V3,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(daiERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
-      ),
-    );
-  }
+export function getDaiBalance(blockNumber: BigInt): TokenRecords {
+  const daiERC20 = getERC20("DAI", ERC20DAI_CONTRACT, blockNumber);
+  const aDaiERC20 = getERC20("aDAI", ADAI_ERC20_CONTRACT, blockNumber);
+  const rariAllocator = getRariAllocator(RARI_ALLOCATOR, blockNumber);
+  const records = getERC20TokenRecordsFromWallets(
+    "DAI",
+    daiERC20,
+    BigDecimal.fromString("1"),
+    blockNumber,
+  );
 
   if (aDaiERC20) {
     records.push(
       new TokenRecord(
         "DAI",
-        "Aave Allocator",
+        getContractName(AAVE_ALLOCATOR),
         AAVE_ALLOCATOR,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(aDaiERC20, AAVE_ALLOCATOR, blockNumber), 18),
@@ -108,7 +71,7 @@ export function getDaiBalance(
     records.push(
       new TokenRecord(
         "DAI",
-        "Aave Allocator V2",
+        getContractName(AAVE_ALLOCATOR_V2),
         AAVE_ALLOCATOR_V2,
         BigDecimal.fromString("1"),
         toDecimal(getERC20Balance(aDaiERC20, AAVE_ALLOCATOR_V2, blockNumber), 18),
@@ -120,7 +83,7 @@ export function getDaiBalance(
     records.push(
       new TokenRecord(
         "DAI",
-        "Rari Allocator",
+        getContractName(RARI_ALLOCATOR),
         RARI_ALLOCATOR,
         BigDecimal.fromString("1"),
         toDecimal(rariAllocator.amountAllocated(BigInt.fromI32(3)), 18),
@@ -133,48 +96,15 @@ export function getDaiBalance(
 
 /**
  * Calculates the balance of FEI across the following:
- * - treasury address V1
- * - treasury address V2
- * - treasury address V3
+ * - all wallets, using {getERC20TokenRecordsFromWallets}.
  *
- * @param feiERC20 ERC20 contract
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
-export function getFeiBalance(feiERC20: ERC20 | null, blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords();
+export function getFeiBalance(blockNumber: BigInt): TokenRecords {
+  const feiERC20 = getERC20("FEI", FEI_ERC20_CONTRACT, blockNumber);
 
-  if (feiERC20) {
-    records.push(
-      new TokenRecord(
-        "FEI",
-        getContractName(TREASURY_ADDRESS),
-        TREASURY_ADDRESS,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(feiERC20, TREASURY_ADDRESS, blockNumber), 18),
-      ),
-    );
-    records.push(
-      new TokenRecord(
-        "FEI",
-        getContractName(TREASURY_ADDRESS_V2),
-        TREASURY_ADDRESS_V2,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(feiERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
-      ),
-    );
-    records.push(
-      new TokenRecord(
-        "FEI",
-        getContractName(TREASURY_ADDRESS_V3),
-        TREASURY_ADDRESS_V3,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(feiERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
-      ),
-    );
-  }
-
-  return records;
+  return getERC20TokenRecordsFromWallets("FEI", feiERC20, BigDecimal.fromString("1"), blockNumber);
 }
 
 /**
@@ -242,47 +172,21 @@ export function getFraxAllocatedInConvexBalance(
 
 /**
  * Calculates the balance of FRAX across the following:
- * - treasury address V1
- * - treasury address V2
- * - treasury address V3
+ * - all wallets, using {getERC20TokenRecordsFromWallets}.
  * - Convex allocators
  *
- * @param fraxERC20 ERC20 contract
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
-export function getFraxBalance(fraxERC20: ERC20 | null, blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords();
+export function getFraxBalance(blockNumber: BigInt): TokenRecords {
+  const fraxERC20 = getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber);
 
-  if (fraxERC20) {
-    records.push(
-      new TokenRecord(
-        "FRAX",
-        getContractName(TREASURY_ADDRESS),
-        TREASURY_ADDRESS,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(fraxERC20, TREASURY_ADDRESS, blockNumber), 18),
-      ),
-    );
-    records.push(
-      new TokenRecord(
-        "FRAX",
-        getContractName(TREASURY_ADDRESS_V2),
-        TREASURY_ADDRESS_V2,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(fraxERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
-      ),
-    );
-    records.push(
-      new TokenRecord(
-        "FRAX",
-        getContractName(TREASURY_ADDRESS_V3),
-        TREASURY_ADDRESS_V3,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(fraxERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
-      ),
-    );
-  }
+  const records = getERC20TokenRecordsFromWallets(
+    "FRAX",
+    fraxERC20,
+    BigDecimal.fromString("1"),
+    blockNumber,
+  );
 
   records.combine(
     getFraxAllocatedInConvexBalance(
@@ -298,58 +202,27 @@ export function getFraxBalance(fraxERC20: ERC20 | null, blockNumber: BigInt): To
 
 /**
  * Returns the balance of LUSD tokens in the following:
- * - treasury address V1
- * - treasury address V2
- * - treasury address V3
+ * - all wallets, using {getERC20TokenRecordsFromWallets}.
  * - LUSD allocator
  *
- * @param lusdERC20 ERC20 contract for LUSD
- * @param stabilityPoolContract StabilityPool contract
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
-export function getLUSDBalance(
-  lusdERC20: ERC20 | null,
-  stabilityPoolContract: StabilityPool | null,
-  blockNumber: BigInt,
-): TokenRecords {
-  const records = new TokenRecords();
-
-  if (lusdERC20) {
-    records.push(
-      new TokenRecord(
-        "LUSD",
-        getContractName(TREASURY_ADDRESS),
-        TREASURY_ADDRESS,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(lusdERC20, TREASURY_ADDRESS, blockNumber), 18),
-      ),
-    );
-    records.push(
-      new TokenRecord(
-        "LUSD",
-        getContractName(TREASURY_ADDRESS_V2),
-        TREASURY_ADDRESS_V2,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(lusdERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
-      ),
-    );
-    records.push(
-      new TokenRecord(
-        "LUSD",
-        getContractName(TREASURY_ADDRESS_V3),
-        TREASURY_ADDRESS_V3,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(lusdERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
-      ),
-    );
-  }
+export function getLUSDBalance(blockNumber: BigInt): TokenRecords {
+  const lusdERC20 = getERC20("LUSD", LUSD_ERC20_CONTRACT, blockNumber);
+  const stabilityPoolContract = getStabilityPool(STABILITY_POOL, blockNumber);
+  const records = getERC20TokenRecordsFromWallets(
+    "LUSD",
+    lusdERC20,
+    BigDecimal.fromString("1"),
+    blockNumber,
+  );
 
   if (stabilityPoolContract) {
     records.push(
       new TokenRecord(
         "LUSD",
-        "LUSD Allocator",
+        getContractName(LUSD_ALLOCATOR),
         LUSD_ALLOCATOR,
         BigDecimal.fromString("1"),
         toDecimal(stabilityPoolContract.deposits(Address.fromString(LUSD_ALLOCATOR)).value0, 18),
@@ -362,48 +235,15 @@ export function getLUSDBalance(
 
 /**
  * Returns the balance of UST tokens in the following:
- * - treasury address V1
- * - treasury address V2
- * - treasury address V3
+ * - all wallets, using {getERC20TokenRecordsFromWallets}.
  *
- * @param ustERC20 ERC20 contract
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
-export function getUSTBalance(ustERC20: ERC20 | null, blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords();
+export function getUSTBalance(blockNumber: BigInt): TokenRecords {
+  const ustERC20 = getERC20("UST", UST_ERC20_CONTRACT, blockNumber);
 
-  if (ustERC20) {
-    records.push(
-      new TokenRecord(
-        "UST",
-        getContractName(TREASURY_ADDRESS),
-        TREASURY_ADDRESS,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(ustERC20, TREASURY_ADDRESS, blockNumber), 18),
-      ),
-    );
-    records.push(
-      new TokenRecord(
-        "UST",
-        getContractName(TREASURY_ADDRESS_V2),
-        TREASURY_ADDRESS_V2,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(ustERC20, TREASURY_ADDRESS_V2, blockNumber), 18),
-      ),
-    );
-    records.push(
-      new TokenRecord(
-        "UST",
-        getContractName(TREASURY_ADDRESS_V3),
-        TREASURY_ADDRESS_V3,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(ustERC20, TREASURY_ADDRESS_V3, blockNumber), 18),
-      ),
-    );
-  }
-
-  return records;
+  return getERC20TokenRecordsFromWallets("UST", ustERC20, BigDecimal.fromString("1"), blockNumber);
 }
 
 /**
@@ -424,24 +264,11 @@ export function getUSTBalance(ustERC20: ERC20 | null, blockNumber: BigInt): Toke
 export function getStableValue(blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords();
 
-  records.combine(
-    getDaiBalance(
-      getERC20("DAI", ERC20DAI_CONTRACT, blockNumber),
-      getERC20("aDAI", ADAI_ERC20_CONTRACT, blockNumber),
-      getRariAllocator(RARI_ALLOCATOR, blockNumber),
-      blockNumber,
-    ),
-  );
-  records.combine(getFraxBalance(getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber), blockNumber));
-  records.combine(
-    getLUSDBalance(
-      getERC20("LUSD", LUSD_ERC20_CONTRACT, blockNumber),
-      getStabilityPool(STABILITY_POOL, blockNumber),
-      blockNumber,
-    ),
-  );
-  records.combine(getUSTBalance(getERC20("UST", UST_ERC20_CONTRACT, blockNumber), blockNumber));
-  records.combine(getFeiBalance(getERC20("FEI", FEI_ERC20_CONTRACT, blockNumber), blockNumber));
+  records.combine(getDaiBalance(blockNumber));
+  records.combine(getFraxBalance(blockNumber));
+  records.combine(getLUSDBalance(blockNumber));
+  records.combine(getUSTBalance(blockNumber));
+  records.combine(getFeiBalance(blockNumber));
 
   return records;
 }
@@ -463,14 +290,7 @@ export function getStableValue(blockNumber: BigInt): TokenRecords {
 export function getDaiMarketValue(blockNumber: BigInt, riskFree: boolean = false): TokenRecords {
   const records = new TokenRecords();
 
-  records.combine(
-    getDaiBalance(
-      getERC20("DAI", ERC20DAI_CONTRACT, blockNumber),
-      getERC20("aDAI", ADAI_ERC20_CONTRACT, blockNumber),
-      getRariAllocator(RARI_ALLOCATOR, blockNumber),
-      blockNumber,
-    ),
-  );
+  records.combine(getDaiBalance(blockNumber));
 
   records.combine(getOhmDaiLiquidityBalance(blockNumber, riskFree));
 
@@ -496,7 +316,7 @@ export function getDaiMarketValue(blockNumber: BigInt, riskFree: boolean = false
 export function getFraxMarketValue(blockNumber: BigInt, riskFree: boolean = false): TokenRecords {
   const records = new TokenRecords();
 
-  records.combine(getFraxBalance(getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber), blockNumber));
+  records.combine(getFraxBalance(blockNumber));
 
   records.combine(getOhmFraxLiquidityBalance(blockNumber, riskFree));
 
@@ -522,13 +342,7 @@ export function getFraxMarketValue(blockNumber: BigInt, riskFree: boolean = fals
 export function getLusdMarketValue(blockNumber: BigInt, riskFree: boolean = false): TokenRecords {
   const records = new TokenRecords();
 
-  records.combine(
-    getLUSDBalance(
-      getERC20("LUSD", LUSD_ERC20_CONTRACT, blockNumber),
-      getStabilityPool(STABILITY_POOL, blockNumber),
-      blockNumber,
-    ),
-  );
+  records.combine(getLUSDBalance(blockNumber));
 
   records.combine(getOhmLusdLiquidityBalance(blockNumber, riskFree));
 
@@ -552,7 +366,7 @@ export function getLusdMarketValue(blockNumber: BigInt, riskFree: boolean = fals
 export function getFeiMarketValue(blockNumber: BigInt, riskFree: boolean = false): TokenRecords {
   const records = new TokenRecords();
 
-  records.combine(getFeiBalance(getERC20("FEI", FEI_ERC20_CONTRACT, blockNumber), blockNumber));
+  records.combine(getFeiBalance(blockNumber));
 
   return records;
 }

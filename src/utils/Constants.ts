@@ -142,6 +142,20 @@ export const STABILITY_POOL = "0x66017d22b0f8556afdd19fc67041899eb65a21bb";
 export const RARI_ALLOCATOR = "0x061C8610A784b8A1599De5B1157631e35180d818";
 export const RARI_ALLOCATOR_BLOCK = "14550000";
 
+export const UNKNOWN_WALLET = "0xe06efa3d9ee6923240ee1195a16ddd96b5cce8f7";
+
+/**
+ * This set of wallet addresses is common across many tokens,
+ * and can be used for balance lookups.
+ */
+export const WALLET_ADDRESSES = [
+  TREASURY_ADDRESS,
+  TREASURY_ADDRESS_V2,
+  TREASURY_ADDRESS_V3,
+  CONVEX_CVX_ALLOCATOR,
+  UNKNOWN_WALLET,
+];
+
 export const CONTRACT_STARTING_BLOCK_MAP = new Map<string, string>();
 CONTRACT_STARTING_BLOCK_MAP.set(SUSHI_OHMDAI_PAIRV2, SUSHI_OHMDAI_PAIRV2_BLOCK);
 CONTRACT_STARTING_BLOCK_MAP.set(UNI_OHMFRAX_PAIR, UNI_OHMFRAX_PAIR_BLOCK);
@@ -238,6 +252,10 @@ CONTRACT_NAME_MAP.set(DISTRIBUTOR_CONTRACT_V2, "Distributor V2");
 CONTRACT_NAME_MAP.set(BONDING_CALCULATOR, "Bonding Calculator");
 CONTRACT_NAME_MAP.set(ONSEN_ALLOCATOR, "Onsen Allocator");
 CONTRACT_NAME_MAP.set(VEFXS_ALLOCATOR, "VeFXS Allocator");
+CONTRACT_NAME_MAP.set(UNKNOWN_WALLET, "Unknown Wallet");
+CONTRACT_NAME_MAP.set(CONVEX_CVX_ALLOCATOR, "Convex Allocator");
+CONTRACT_NAME_MAP.set(RARI_ALLOCATOR, "Rari Allocator");
+CONTRACT_NAME_MAP.set(LUSD_ALLOCATOR, "LUSD Allocator");
 
 export const getContractName = (contractAddress: string): string => {
   if (!CONTRACT_NAME_MAP.has(contractAddress)) return "Unknown";
