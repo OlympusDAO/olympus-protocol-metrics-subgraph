@@ -402,7 +402,10 @@ export function getERC20TokenRecordFromWallet(
     getContractName(walletAddress),
     walletAddress,
     rate,
-    toDecimal(getERC20Balance(contract, walletAddress, blockNumber), 18),
+    toDecimal(
+      getERC20Balance(contract, walletAddress, blockNumber),
+      contract ? contract.decimals() : 18,
+    ),
   );
 }
 

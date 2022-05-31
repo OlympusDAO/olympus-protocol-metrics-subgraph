@@ -154,6 +154,7 @@ export const WALLET_ADDRESSES = [
   TREASURY_ADDRESS_V3,
   CONVEX_CVX_ALLOCATOR,
   UNKNOWN_WALLET,
+  RARI_ALLOCATOR,
 ];
 
 export const CONTRACT_STARTING_BLOCK_MAP = new Map<string, string>();
