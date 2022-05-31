@@ -422,6 +422,7 @@ export function getWBTCBalance(wbtcERC20: ERC20 | null, blockNumber: BigInt): To
   const records = new TokenRecords();
   const wbtcRate = getBTCUSDRate();
 
+  // TODO fix wBTC balance 0.000000002002006349
   if (wbtcERC20) {
     records.push(
       new TokenRecord(
@@ -531,3 +532,11 @@ export function getEthMarketValue(blockNumber: BigInt, riskFree: boolean = false
 
   return records;
 }
+
+// TODO add CRV
+// TODO find additional sources of FXS (25,641)
+// TODO add FPIS
+// TODO add ALCX
+// TODO add BCT
+// TODO check ETH in liquity
+// TODO add KLIMA/sKLIMA
