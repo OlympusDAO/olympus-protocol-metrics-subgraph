@@ -1,4 +1,4 @@
-import { BigDecimal } from "@graphprotocol/graph-ts";
+import { BigDecimal, log } from "@graphprotocol/graph-ts";
 import { JSONEncoder } from "assemblyscript-json";
 
 /**
@@ -27,14 +27,35 @@ export class TokenRecord {
     this.balance = balance;
   }
 
+  /**
+   * Returns the value of the TokenRecord, defined as:
+   *
+   * {rate} * {balance}
+   *
+   * @returns BigDecimal
+   */
   getValue(): BigDecimal {
     return this.balance.times(this.rate);
   }
 
   /**
+   * Returns an ID representing the TokenRecord, defined by:
+   * - name
+   * - source
+   *
+   * This can be used to uniquely identify a record in
+   * order to avoid duplicates.
+   *
+   * @returns string
+   */
+  getId(): string {
+    return this.name + "-" + this.source;
+  }
+
+  /**
    * Returns a JSON-like dictionary in string format.
    *
-   * @returns
+   * @returns string
    */
   toString(): string {
     const encoder = new JSONEncoder();
@@ -61,30 +82,54 @@ export class TokenRecord {
  * DAI in treasury wallet v2
  */
 export class TokenRecords {
-  records: TokenRecord[];
+  records: Map<string, TokenRecord>;
 
   constructor() {
-    this.records = new Array<TokenRecord>();
+    this.records = new Map<string, TokenRecord>();
   }
 
+  /**
+   * Adds the given TokenRecord to the group.
+   *
+   * If there is an existing TokenRecord with the same ID,
+   * it will be replaced.
+   *
+   * @param element TokenRecord to add
+   */
   push(element: TokenRecord): void {
-    this.records.push(element);
+    if (this.records.has(element.getId())) {
+      log.warning("Existing record being replaced: {}", [element.getId()]);
+    }
+
+    this.records.set(element.getId(), element);
   }
 
+  /**
+   * Combines a TokenRecords object with the recipient.
+   *
+   * As with {push}, any existing TokenRecord objects with
+   * the same ID will be replaced.
+   *
+   * @param records TokenRecords to add
+   */
   combine(records: TokenRecords): void {
-    const array = records.records;
+    const inRecordsMap = records.records;
 
-    for (let i = 0; i < array.length; i++) {
-      this.records.push(array[i]);
+    for (let i = 0; i < inRecordsMap.keys().length; i++) {
+      const currentKey: string = inRecordsMap.keys()[i];
+      const currentValue: TokenRecord = inRecordsMap.get(currentKey);
+
+      this.push(currentValue);
     }
   }
 
   getBalance(): BigDecimal {
     // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
     let balance = BigDecimal.fromString("0");
+    const values = this.records.values();
 
-    for (let i = 0; i < this.records.length; i++) {
-      balance = balance.plus(this.records[i].balance);
+    for (let i = 0; i < values.length; i++) {
+      balance = balance.plus(values[i].balance);
     }
 
     return balance;
@@ -93,9 +138,10 @@ export class TokenRecords {
   getValue(): BigDecimal {
     // NOTE: asc spits a TS2304 error with the callback function if using `reduce`
     let value = BigDecimal.fromString("0");
+    const values = this.records.values();
 
-    for (let i = 0; i < this.records.length; i++) {
-      value = value.plus(this.records[i].getValue());
+    for (let i = 0; i < values.length; i++) {
+      value = value.plus(values[i].getValue());
     }
 
     return value;
@@ -119,6 +165,10 @@ export class TokenRecords {
     return encoder.toString();
   }
 
+  protected getSortedRecords(): Array<TokenRecord> {
+    return this.records.values().sort((a, b) => (a.name > b.name ? 1 : -1));
+  }
+
   /**
    * Returns an array containing stringified output
    * of TokenRecord.
@@ -130,7 +180,7 @@ export class TokenRecords {
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   toStringArray(singleQuote: boolean = false): Array<string> {
     const array = new Array<string>();
-    const sortedRecords = this.records.sort((a, b) => (a.name > b.name ? 1 : -1));
+    const sortedRecords = this.getSortedRecords();
 
     for (let i = 0; i < sortedRecords.length; i++) {
       let record = sortedRecords[i].toString();
@@ -146,11 +196,13 @@ export class TokenRecords {
   }
 
   encode(encoder: JSONEncoder): void {
+    const sortedRecords = this.getSortedRecords();
+
     encoder.pushObject(null);
     encoder.pushArray("records");
 
-    for (let i = 0; i < this.records.length; i++) {
-      encoder.setString(null, this.records[i].toString());
+    for (let i = 0; i < sortedRecords.length; i++) {
+      encoder.setString(null, sortedRecords[i].toString());
     }
 
     encoder.popArray();
