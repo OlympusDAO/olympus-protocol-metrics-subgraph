@@ -123,14 +123,18 @@ export class TokenRecords {
    * Returns an array containing stringified output
    * of TokenRecord.
    *
-   * @returns Array<string>
+   * @param singleQuote If true, replaces double quotes with single quotes,
+   * so they are not subsequently escaped. Defaults to false.
+   * @returns Array of string representations of TokenRecord, sorted by TokenRecord.name
    */
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   toStringArray(singleQuote: boolean = false): Array<string> {
     const array = new Array<string>();
+    const sortedRecords = this.records.sort((a, b) => (a.name > b.name ? 1 : -1));
 
-    for (let i = 0; i < this.records.length; i++) {
-      let record = this.records[i].toString();
+    for (let i = 0; i < sortedRecords.length; i++) {
+      let record = sortedRecords[i].toString();
+
       if (singleQuote) {
         record = record.replaceAll('"', "'");
       }
