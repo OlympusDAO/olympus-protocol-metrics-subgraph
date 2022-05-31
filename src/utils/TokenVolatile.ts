@@ -308,3 +308,4 @@ export function getEthMarketValue(blockNumber: BigInt, riskFree: boolean = false
 // TODO add BCT
 // TODO check ETH in liquity
 // TODO add KLIMA/sKLIMA
+// TODO add method to iterate through volatile tokens and fetch balances
