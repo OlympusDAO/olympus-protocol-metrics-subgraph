@@ -35,7 +35,6 @@ type ProtocolMetric @entity {
   totalSupply: BigDecimal!
   ohmPrice: BigDecimal!
   marketCap: BigDecimal!
-  marketCapComponents: [String!]!
   totalValueLocked: BigDecimal!
   treasuryRiskFreeValue: BigDecimal!
   treasuryRiskFreeValueComponents: [String!]!
