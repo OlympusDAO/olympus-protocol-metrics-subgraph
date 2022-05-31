@@ -12,6 +12,7 @@ export class TokenRecord {
   sourceAddress: string;
   rate: BigDecimal;
   balance: BigDecimal;
+  multiplier: BigDecimal;
 
   constructor(
     name: string,
@@ -19,23 +20,29 @@ export class TokenRecord {
     sourceAddress: string,
     rate: BigDecimal,
     balance: BigDecimal,
+    multiplier: BigDecimal = BigDecimal.fromString("1"),
   ) {
     this.name = name;
     this.source = source;
     this.sourceAddress = sourceAddress;
     this.rate = rate;
     this.balance = balance;
+    this.multiplier = multiplier;
+  }
+
+  setMultiplier(multiplier: BigDecimal): void {
+    this.multiplier = multiplier;
   }
 
   /**
    * Returns the value of the TokenRecord, defined as:
    *
-   * {rate} * {balance}
+   * {rate} * {balance} * {multiplier}
    *
    * @returns BigDecimal
    */
   getValue(): BigDecimal {
-    return this.balance.times(this.rate);
+    return this.balance.times(this.rate).times(this.multiplier);
   }
 
   /**
@@ -70,6 +77,7 @@ export class TokenRecord {
     encoder.setString("sourceAddress", this.sourceAddress);
     encoder.setString("rate", this.rate.toString());
     encoder.setString("balance", this.balance.toString());
+    encoder.setString("multiplier", this.multiplier.toString());
     encoder.setString("value", this.getValue().toString());
     encoder.popObject();
   }
@@ -120,6 +128,18 @@ export class TokenRecords {
       const currentValue: TokenRecord = inRecordsMap.get(currentKey);
 
       this.push(currentValue);
+    }
+  }
+
+  /**
+   * Applies the given multiplier to all child TokenRecord objects.
+   *
+   * @param multiplier the multiplier to apply
+   */
+  setMultiplier(multiplier: BigDecimal): void {
+    for (let i = 0; i < this.records.values().length; i++) {
+      const currentValue: TokenRecord = this.records.values()[i];
+      currentValue.setMultiplier(multiplier);
     }
   }
 

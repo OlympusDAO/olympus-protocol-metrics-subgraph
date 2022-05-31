@@ -43,7 +43,7 @@ export function getTreasuryStableBacking(blockNumber: BigInt): TokenRecords {
  * Returns the value of the total (liquid) backing
  * - add: getTreasuryStableBacking
  * - add: getTreasuryVolatileBacking (liquid only)
- * - add: getLiquidityPoolValue / 2
+ * - add: getLiquidityPoolValue / 2 (as half of the LP is OHM)
  * - subtract: quantity of OHM circulating supply (not value)
  *
  * @param blockNumber the current block number
@@ -56,15 +56,9 @@ export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecords {
   records.combine(getTreasuryVolatileBacking(blockNumber, true));
 
   const liquidityPoolValue = getLiquidityPoolValue(blockNumber, false);
-  records.push(
-    new TokenRecord(
-      "Liquidity Pools/2",
-      "N/A",
-      "0x0",
-      BigDecimal.fromString("0.5"),
-      liquidityPoolValue.getValue(),
-    ),
-  );
+  liquidityPoolValue.setMultiplier(BigDecimal.fromString("0.5"));
+  records.combine(liquidityPoolValue);
+
   // TODO previous implementation was the number of OHM, not the value. Keep as-is?
   const ohmCirculatingSupply = getCirculatingSupply(blockNumber, getTotalSupply(blockNumber));
   records.push(
@@ -72,8 +66,9 @@ export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecords {
       "OHM Circulating Supply",
       "N/A",
       "0x0",
-      BigDecimal.fromString("-1"),
-      ohmCirculatingSupply, // Subtracted
+      BigDecimal.fromString("1"),
+      ohmCirculatingSupply,
+      BigDecimal.fromString("-1"), // Subtracted
     ),
   );
 

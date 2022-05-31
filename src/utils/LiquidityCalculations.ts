@@ -504,7 +504,7 @@ export function getOhmEthProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal
   return BigDecimal.zero();
 }
 
-// TODO Add FEI liquidity
+// TODO Add FEI, UST liquidity
 /**
  * Returns the total market value (tokens and liquidity pools) for the following pairs:
  * - DAI
