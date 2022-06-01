@@ -82,10 +82,15 @@ function getUSDRateUniswapV2(contractAddress: string, pairAddress: string): BigD
 
   // Determine orientation of the pair
   // We assume that one of the pair of ETH
-  const token0 = pair.token0().toHexString();
+  const token0 = pair.token0();
   // Get the number of tokens denominated in ETH
-  const ethBalance =
-    token0 === ERC20_WETH ? token0Reserves.div(token1Reserves) : token1Reserves.div(token0Reserves);
+  /**
+   * Note: token0.toHexString() ostensibly returns the contract address,
+   * but it does not equal {ERC20_WETH} even after trimming.
+   */
+  const ethBalance = token0.equals(Address.fromString(ERC20_WETH))
+    ? token0Reserves.div(token1Reserves)
+    : token1Reserves.div(token0Reserves);
   return ethBalance.times(getETHUSDRate());
 }
 
