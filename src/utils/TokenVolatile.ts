@@ -211,7 +211,7 @@ export function getWBTCBalance(blockNumber: BigInt): TokenRecords {
   const wbtcERC20 = getERC20("wBTC", ERC20_WBTC, blockNumber);
   const wbtcRate = getBTCUSDRate();
 
-  return getERC20TokenRecordsFromWallets("wTC", wbtcERC20, wbtcRate, blockNumber);
+  return getERC20TokenRecordsFromWallets("wBTC", wbtcERC20, wbtcRate, blockNumber);
 }
 
 /**
