@@ -1,12 +1,8 @@
-import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
-import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator";
 import {
   AAVE_ALLOCATOR,
   AAVE_ALLOCATOR_V2,
-  CONVEX_ALLOCATOR1,
-  CONVEX_ALLOCATOR2,
-  CONVEX_ALLOCATOR3,
   ERC20_ADAI,
   ERC20_DAI,
   ERC20_FEI,
@@ -14,19 +10,14 @@ import {
   ERC20_LUSD,
   ERC20_UST,
   getContractName,
-  LUSD_ALLOCATOR,
-  RARI_ALLOCATOR,
-  STABILITY_POOL,
 } from "./Constants";
 import {
-  getConvexAllocator,
   getConvexAllocatorRecords,
   getERC20,
   getERC20Balance,
   getERC20TokenRecordsFromWallets,
-  getRariAllocator,
-  getRariAllocatorBalance,
-  getStabilityPool,
+  getLiquityStabilityPoolRecords,
+  getRariAllocatorRecords,
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import {
@@ -52,7 +43,6 @@ import { TokenRecord, TokenRecords } from "./TokenRecord";
 export function getDaiBalance(blockNumber: BigInt): TokenRecords {
   const daiERC20 = getERC20("DAI", ERC20_DAI, blockNumber);
   const aDaiERC20 = getERC20("aDAI", ERC20_ADAI, blockNumber);
-  const rariAllocator = getRariAllocator(RARI_ALLOCATOR, blockNumber);
   const records = getERC20TokenRecordsFromWallets(
     "DAI",
     daiERC20,
@@ -81,17 +71,7 @@ export function getDaiBalance(blockNumber: BigInt): TokenRecords {
     );
   }
 
-  if (rariAllocator) {
-    records.push(
-      new TokenRecord(
-        "DAI",
-        getContractName(RARI_ALLOCATOR),
-        RARI_ALLOCATOR,
-        BigDecimal.fromString("1"),
-        getRariAllocatorBalance(ERC20_DAI, blockNumber),
-      ),
-    );
-  }
+  records.combine(getRariAllocatorRecords(ERC20_DAI, BigDecimal.fromString("1"), blockNumber));
 
   return records;
 }
@@ -142,7 +122,6 @@ export function getFraxBalance(blockNumber: BigInt): TokenRecords {
  */
 export function getLUSDBalance(blockNumber: BigInt): TokenRecords {
   const lusdERC20 = getERC20("LUSD", ERC20_LUSD, blockNumber);
-  const stabilityPoolContract = getStabilityPool(STABILITY_POOL, blockNumber);
   const records = getERC20TokenRecordsFromWallets(
     "LUSD",
     lusdERC20,
@@ -150,17 +129,7 @@ export function getLUSDBalance(blockNumber: BigInt): TokenRecords {
     blockNumber,
   );
 
-  if (stabilityPoolContract) {
-    records.push(
-      new TokenRecord(
-        "LUSD",
-        getContractName(LUSD_ALLOCATOR),
-        LUSD_ALLOCATOR,
-        BigDecimal.fromString("1"),
-        toDecimal(stabilityPoolContract.deposits(Address.fromString(LUSD_ALLOCATOR)).value0, 18),
-      ),
-    );
-  }
+  records.combine(getLiquityStabilityPoolRecords(ERC20_LUSD, blockNumber));
 
   return records;
 }

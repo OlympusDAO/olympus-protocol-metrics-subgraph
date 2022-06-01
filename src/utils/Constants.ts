@@ -209,6 +209,23 @@ export const getRariAllocatorId = (contractAddress: string): i32 => {
   return ALLOCATOR_RARI_ID.get(contractAddress);
 };
 
+export const ALLOCATOR_LIQUITY_STABILITY_POOLS = [STABILITY_POOL];
+
+const ALLOCATOR_LIQUITY_TOKEN_ALLOCATOR_MAP = new Map<string, string>();
+ALLOCATOR_LIQUITY_TOKEN_ALLOCATOR_MAP.set(ERC20_LUSD, LUSD_ALLOCATOR);
+
+/**
+ * Returns the Liquity allocator address for the given ERC20 contract.
+ *
+ * @param contractAddress the contract address to look up
+ * @returns Address for the corresponding allocator, or null
+ */
+export const getLiquityAllocator = (contractAddress: string): string | null => {
+  if (!ALLOCATOR_LIQUITY_TOKEN_ALLOCATOR_MAP.has(contractAddress)) return null;
+
+  return ALLOCATOR_LIQUITY_TOKEN_ALLOCATOR_MAP.get(contractAddress);
+};
+
 export const CONTRACT_STARTING_BLOCK_MAP = new Map<string, string>();
 CONTRACT_STARTING_BLOCK_MAP.set(SUSHI_OHMDAI_PAIRV2, SUSHI_OHMDAI_PAIRV2_BLOCK);
 CONTRACT_STARTING_BLOCK_MAP.set(UNI_OHMFRAX_PAIR, UNI_OHMFRAX_PAIR_BLOCK);

@@ -2,22 +2,23 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import {
   ERC20_CVX,
-  ERC20_FXS,
-  getContractName,
-  RARI_ALLOCATOR,
-  ERC20_TRIBE,
-  VEFXS_ALLOCATOR,
-  ERC20_FXS_VE,
   ERC20_CVX_VL,
+  ERC20_FXS,
+  ERC20_FXS_VE,
+  ERC20_TRIBE,
   ERC20_WBTC,
   ERC20_WETH,
   ERC20_XSUSHI,
+  getContractName,
+  RARI_ALLOCATOR,
+  VEFXS_ALLOCATOR,
 } from "./Constants";
 import {
   getERC20,
   getERC20TokenRecordsFromWallets,
   getRariAllocator,
   getRariAllocatorBalance,
+  getRariAllocatorRecords,
   getVeFXS,
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
@@ -187,23 +188,11 @@ export function getFXSTotalBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 function getTribeBalance(blockNumber: BigInt): TokenRecords {
-  const rariAllocator = getRariAllocator(RARI_ALLOCATOR, blockNumber);
   const tribeERC20 = getERC20("TRIBE", ERC20_TRIBE, blockNumber);
   const tribeRate = getTribeUSDRate();
 
   const records = getERC20TokenRecordsFromWallets("TRIBE", tribeERC20, tribeRate, blockNumber);
-
-  if (rariAllocator) {
-    records.push(
-      new TokenRecord(
-        "TRIBE",
-        getContractName(RARI_ALLOCATOR),
-        RARI_ALLOCATOR,
-        tribeRate,
-        getRariAllocatorBalance(ERC20_TRIBE, blockNumber),
-      ),
-    );
-  }
+  records.combine(getRariAllocatorRecords(ERC20_TRIBE, tribeRate, blockNumber));
 
   return records;
 }

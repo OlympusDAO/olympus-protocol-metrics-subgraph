@@ -13,10 +13,12 @@ import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
 import {
   ALLOCATOR_CONVEX_FRAX_CONTRACTS,
+  ALLOCATOR_LIQUITY_STABILITY_POOLS,
   ALLOCATOR_RARI_ID_NOT_FOUND,
   CONTRACT_STARTING_BLOCK_MAP,
   ERC20_FRAX,
   getContractName,
+  getLiquityAllocator,
   getRariAllocatorId,
   RARI_ALLOCATOR,
   WALLET_ADDRESSES,
@@ -456,7 +458,7 @@ export function getERC20TokenRecordsFromWallets(
  * @param blockNumber the current block number
  * @returns BigDecimal
  */
-export function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): BigDecimal {
+function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): BigDecimal | null {
   const rariAllocatorId = getRariAllocatorId(contractAddress);
   const rariAllocator = getRariAllocator(RARI_ALLOCATOR, blockNumber);
   const contract = getERC20(getContractName(contractAddress), contractAddress, blockNumber);
@@ -472,6 +474,37 @@ export function getRariAllocatorBalance(contractAddress: string, blockNumber: Bi
 }
 
 /**
+ * Returns the balance of {contractAddress} in the Rari Allocator.
+ *
+ * @param contractAddress ERC20 contract to find the balance of
+ * @param price
+ * @param blockNumber the current block number
+ * @returns TokenRecords object
+ */
+export function getRariAllocatorRecords(
+  contractAddress: string,
+  price: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = new TokenRecords();
+
+  const balance = getRariAllocatorBalance(contractAddress, blockNumber);
+  if (!balance) return records;
+
+  records.push(
+    new TokenRecord(
+      getContractName(contractAddress),
+      getContractName(RARI_ALLOCATOR),
+      RARI_ALLOCATOR,
+      price,
+      balance,
+    ),
+  );
+
+  return records;
+}
+
+/**
  * Gets the balance of the given token in the Convex Allocator.
  *
  * FRAX is the only supported token.
@@ -481,7 +514,7 @@ export function getRariAllocatorBalance(contractAddress: string, blockNumber: Bi
  * @param blockNumber the current block
  * @returns BigDecimal or null
  */
-export function getConvexAllocatorBalance(
+function getConvexAllocatorBalance(
   tokenAddress: string,
   allocatorAddress: string,
   blockNumber: BigInt,
@@ -517,6 +550,63 @@ export function getConvexAllocatorRecords(tokenAddress: string, blockNumber: Big
         getContractName(tokenAddress),
         getContractName(allocatorAddress),
         allocatorAddress,
+        BigDecimal.fromString("1"),
+        balance,
+      ),
+    );
+  }
+
+  return records;
+}
+
+/**
+ * Returns the balance (deposits) from the LUSD allocator ({walletAddress})
+ * into the specified Liquity stability pool ({poolAddress}).
+ *
+ * @param allocatorAddress allocator address
+ * @param poolAddress stability pool address
+ * @param blockNumber the current block number
+ * @returns BigDecimal or null
+ */
+function getLiquityStabilityPoolBalance(
+  allocatorAddress: string | null,
+  poolAddress: string,
+  blockNumber: BigInt,
+): BigDecimal | null {
+  const pool = getStabilityPool(poolAddress, blockNumber);
+
+  if (!pool || !allocatorAddress) return null;
+
+  return toDecimal(pool.deposits(Address.fromString(allocatorAddress)).value0, 18);
+}
+
+/**
+ * Returns the balance of {tokenAddress} in the Liquity stability pools.
+ *
+ * @param tokenAddress
+ * @param blockNumber
+ * @returns
+ */
+export function getLiquityStabilityPoolRecords(
+  tokenAddress: string,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = new TokenRecords();
+
+  const liquityAllocator = getLiquityAllocator(tokenAddress);
+  if (!liquityAllocator) return records;
+
+  for (let i = 0; i < ALLOCATOR_LIQUITY_STABILITY_POOLS.length; i++) {
+    const poolAddress = ALLOCATOR_LIQUITY_STABILITY_POOLS[i];
+    const balance = getLiquityStabilityPoolBalance(liquityAllocator, poolAddress, blockNumber);
+
+    if (!balance) continue;
+
+    records.push(
+      new TokenRecord(
+        getContractName(tokenAddress),
+        getContractName(poolAddress),
+        poolAddress,
         BigDecimal.fromString("1"),
         balance,
       ),
