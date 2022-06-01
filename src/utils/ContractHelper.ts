@@ -569,13 +569,12 @@ export function getConvexAllocatorRecords(tokenAddress: string, blockNumber: Big
  * @returns BigDecimal or null
  */
 function getLiquityStabilityPoolBalance(
-  allocatorAddress: string | null,
+  allocatorAddress: string,
   poolAddress: string,
   blockNumber: BigInt,
 ): BigDecimal | null {
   const pool = getStabilityPool(poolAddress, blockNumber);
-
-  if (!pool || !allocatorAddress) return null;
+  if (!pool) return null;
 
   return toDecimal(pool.deposits(Address.fromString(allocatorAddress)).value0, 18);
 }
@@ -598,7 +597,7 @@ export function getLiquityStabilityPoolRecords(
 
   for (let i = 0; i < ALLOCATOR_LIQUITY_STABILITY_POOLS.length; i++) {
     const poolAddress = ALLOCATOR_LIQUITY_STABILITY_POOLS[i];
-    const balance = getLiquityStabilityPoolBalance(liquityAllocator, poolAddress, blockNumber);
+    const balance = getLiquityStabilityPoolBalance(liquityAllocator!, poolAddress, blockNumber);
 
     if (!balance) continue;
 
