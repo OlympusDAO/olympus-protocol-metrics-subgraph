@@ -20,6 +20,7 @@ import {
 } from "./Constants";
 import {
   getConvexAllocator,
+  getConvexAllocatorRecords,
   getERC20,
   getERC20Balance,
   getERC20TokenRecordsFromWallets,
@@ -110,69 +111,6 @@ export function getFeiBalance(blockNumber: BigInt): TokenRecords {
 
 /**
  * Calculates the balance of FRAX across the following:
- * - Convex allocator 1
- * - Convex allocator 2
- * - Convex allocator 3
- *
- * @param allocator1 Convex allocator
- * @param allocator2 Convex allocator
- * @param allocator3 Convex allocator
- * @param blockNumber current block number
- * @returns TokenRecords object
- */
-export function getFraxAllocatedInConvexBalance(
-  allocator1: ConvexAllocator | null,
-  allocator2: ConvexAllocator | null,
-  allocator3: ConvexAllocator | null,
-  _blockNumber: BigInt,
-): TokenRecords {
-  // TODO add to mv and mvrfv?
-  // Multiplied by 10e9 for consistency
-  // TODO determine if the multiplier is correct
-
-  const records = new TokenRecords();
-
-  if (allocator1) {
-    records.push(
-      new TokenRecord(
-        "FRAX",
-        "Convex Allocator 1",
-        CONVEX_ALLOCATOR1,
-        BigDecimal.fromString("1"),
-        toDecimal(allocator1.totalValueDeployed().times(BigInt.fromString("1000000000")), 18),
-      ),
-    );
-  }
-
-  if (allocator2) {
-    records.push(
-      new TokenRecord(
-        "FRAX",
-        "Convex Allocator 2",
-        CONVEX_ALLOCATOR2,
-        BigDecimal.fromString("1"),
-        toDecimal(allocator2.totalValueDeployed().times(BigInt.fromString("1000000000")), 18),
-      ),
-    );
-  }
-
-  if (allocator3) {
-    records.push(
-      new TokenRecord(
-        "FRAX",
-        "Convex Allocator 3",
-        CONVEX_ALLOCATOR3,
-        BigDecimal.fromString("1"),
-        toDecimal(allocator3.totalValueDeployed().times(BigInt.fromString("1000000000")), 18),
-      ),
-    );
-  }
-
-  return records;
-}
-
-/**
- * Calculates the balance of FRAX across the following:
  * - all wallets, using {getERC20TokenRecordsFromWallets}.
  * - Convex allocators
  *
@@ -189,14 +127,7 @@ export function getFraxBalance(blockNumber: BigInt): TokenRecords {
     blockNumber,
   );
 
-  records.combine(
-    getFraxAllocatedInConvexBalance(
-      getConvexAllocator(CONVEX_ALLOCATOR1, blockNumber),
-      getConvexAllocator(CONVEX_ALLOCATOR2, blockNumber),
-      getConvexAllocator(CONVEX_ALLOCATOR3, blockNumber),
-      blockNumber,
-    ),
-  );
+  records.combine(getConvexAllocatorRecords(ERC20_FRAX, blockNumber));
 
   return records;
 }

@@ -12,8 +12,10 @@ import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
 import {
+  ALLOCATOR_CONVEX_FRAX_CONTRACTS,
   ALLOCATOR_RARI_ID_NOT_FOUND,
   CONTRACT_STARTING_BLOCK_MAP,
+  ERC20_FRAX,
   getContractName,
   getRariAllocatorId,
   RARI_ALLOCATOR,
@@ -467,4 +469,59 @@ export function getRariAllocatorBalance(contractAddress: string, blockNumber: Bi
     rariAllocator.amountAllocated(BigInt.fromI32(rariAllocatorId)),
     contract.decimals(),
   );
+}
+
+/**
+ * Gets the balance of the given token in the Convex Allocator.
+ *
+ * FRAX is the only supported token.
+ *
+ * @param tokenAddress the token to look for
+ * @param allocatorAddress the allocator to use
+ * @param blockNumber the current block
+ * @returns BigDecimal or null
+ */
+export function getConvexAllocatorBalance(
+  tokenAddress: string,
+  allocatorAddress: string,
+  blockNumber: BigInt,
+): BigDecimal | null {
+  // FRAX only
+  if (tokenAddress !== ERC20_FRAX) return null;
+
+  // Allocator must exist
+  const allocator = getConvexAllocator(allocatorAddress, blockNumber);
+  if (!allocator) return null;
+
+  return toDecimal(allocator.totalValueDeployed().times(BigInt.fromString("1000000000")), 18);
+}
+
+/**
+ * Returns records for the given token in the Convex Allocator.
+ *
+ * @param tokenAddress the token to look for
+ * @param blockNumber the current block
+ * @returns TokenRecords object
+ */
+export function getConvexAllocatorRecords(tokenAddress: string, blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords();
+
+  for (let i = 0; i < ALLOCATOR_CONVEX_FRAX_CONTRACTS.length; i++) {
+    const allocatorAddress = ALLOCATOR_CONVEX_FRAX_CONTRACTS[i];
+    const balance = getConvexAllocatorBalance(tokenAddress, allocatorAddress, blockNumber);
+
+    if (!balance) continue;
+
+    records.push(
+      new TokenRecord(
+        getContractName(tokenAddress),
+        getContractName(allocatorAddress),
+        allocatorAddress,
+        BigDecimal.fromString("1"),
+        balance,
+      ),
+    );
+  }
+
+  return records;
 }

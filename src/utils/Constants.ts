@@ -180,6 +180,12 @@ export const WALLET_ADDRESSES = [
   AAVE_ALLOCATOR_V2,
 ];
 
+export const ALLOCATOR_CONVEX_FRAX_CONTRACTS = [
+  CONVEX_ALLOCATOR1,
+  CONVEX_ALLOCATOR2,
+  CONVEX_ALLOCATOR3,
+];
+
 /**
  * The Rari Allocator contract ({RARI_ALLOCATOR}) has a function
  * amountAllocated() that returns the balance of an ERC20 token.
