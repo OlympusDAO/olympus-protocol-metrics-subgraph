@@ -3,6 +3,12 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import {
+  ERC20_STABLE_TOKENS,
+  ERC20_WBTC,
+  ERC20_WETH,
+  getPairHandler,
+  PAIR_HANDLER_UNISWAP_V2,
+  PAIR_HANDLER_UNISWAP_V3,
   PAIR_UNISWAP_V2_CVX_ETH,
   PAIR_UNISWAP_V2_ETH_WBTC,
   PAIR_UNISWAP_V2_OHM_DAI,
@@ -34,8 +40,6 @@ export function getETHUSDRate(): BigDecimal {
   return ethRate;
 }
 
-// TODO arbitrary price lookup for a given token
-
 export function getBTCUSDRate(): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_ETH_WBTC));
 
@@ -66,62 +70,65 @@ export function getOHMUSDRate(block: BigInt): BigDecimal {
   return ohmRate;
 }
 
-export function getXsushiUSDRate(): BigDecimal {
-  const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_XSUSHI_ETH));
+function getUSDRateUniswapV2(contractAddress: string, pairAddress: string): BigDecimal {
+  if (contractAddress === ERC20_WETH) return getETHUSDRate();
+  if (contractAddress === ERC20_WBTC) return getBTCUSDRate();
 
-  const reserves = pair.getReserves();
-  const reserve0 = reserves.value0.toBigDecimal();
-  const reserve1 = reserves.value1.toBigDecimal();
+  // TODO handle pairs at different blocks
+  const pair = UniswapV2Pair.bind(Address.fromString(pairAddress));
 
-  const xsushiRate = reserve1.div(reserve0).times(getETHUSDRate());
-  log.debug("xsushiRate rate {}", [xsushiRate.toString()]);
+  const token0Reserves = pair.getReserves().value0.toBigDecimal();
+  const token1Reserves = pair.getReserves().value1.toBigDecimal();
 
-  return xsushiRate;
+  // Determine orientation of the pair
+  // We assume that one of the pair of ETH
+  const token0 = pair.token0().toHexString();
+  // Get the number of tokens denominated in ETH
+  const ethBalance =
+    token0 === ERC20_WETH ? token1Reserves.div(token0Reserves) : token0Reserves.div(token1Reserves);
+  return ethBalance.times(getETHUSDRate());
 }
 
-export function getTribeUSDRate(): BigDecimal {
-  // TODO check that contract exists at block
-  const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_TRIBE_ETH));
-
-  const reserves = pair.getReserves();
-  const ethReserves = reserves.value0.toBigDecimal();
-  const tribeReserves = reserves.value1.toBigDecimal();
-
-  // Note: the pair is ETH-TRIBE, unlike other pairs
-  // As a result, the formula is reversed
-  const tribeRate = ethReserves.div(tribeReserves).times(getETHUSDRate());
-  log.debug("TRIBE rate {}", [tribeRate.toString()]);
-
-  return tribeRate;
-}
-
-export function getFXSUSDRate(): BigDecimal {
-  const pair = UniswapV3Pair.bind(Address.fromString(PAIR_UNISWAP_V3_FXS_ETH));
+function getUSDRateUniswapV3(contractAddress: string, pairAddress: string): BigDecimal {
+  // TODO add support for swapped pair
+  const pair = UniswapV3Pair.bind(Address.fromString(pairAddress));
 
   let priceETH = pair.slot0().value0.times(pair.slot0().value0).toBigDecimal();
-  log.debug("fxs priceETH {}", [priceETH.toString()]);
-
   const priceDiv = BigInt.fromI32(2).pow(192).toBigDecimal();
   priceETH = priceETH.div(priceDiv);
-
   const priceUSD = priceETH.times(getETHUSDRate());
-
-  log.debug("fxs rate {}", [priceUSD.toString()]);
 
   return priceUSD;
 }
 
-export function getCVXUSDRate(): BigDecimal {
-  const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_CVX_ETH));
+/**
+ * Determines the USD value of the given token.
+ *
+ * This is achieved using the prices in liquidity pool pairs.
+ *
+ * @param contractAddress the token to look for
+ * @returns BigDecimal or 0
+ */
+export function getUSDRate(contractAddress: string): BigDecimal {
+  // Handle stablecoins
+  // TODO add support for dynamic price lookup for stablecoins
+  if (ERC20_STABLE_TOKENS.includes(contractAddress)) {
+    return BigDecimal.fromString("1");
+  }
 
-  const reserves = pair.getReserves();
-  const reserve0 = reserves.value0.toBigDecimal();
-  const reserve1 = reserves.value1.toBigDecimal();
+  // Look for the pair
+  const pairHandler = getPairHandler(contractAddress);
+  if (!pairHandler) return BigDecimal.zero();
 
-  const cvxRate = reserve1.div(reserve0).times(getETHUSDRate());
-  log.debug("cvx rate {}", [cvxRate.toString()]);
+  if (pairHandler.getHandler() === PAIR_HANDLER_UNISWAP_V2) {
+    return getUSDRateUniswapV2(contractAddress, pairHandler.getPair());
+  }
 
-  return cvxRate;
+  if (pairHandler.getHandler() === PAIR_HANDLER_UNISWAP_V3) {
+    return getUSDRateUniswapV3(contractAddress, pairHandler.getPair());
+  }
+
+  return BigDecimal.zero();
 }
 
 /**

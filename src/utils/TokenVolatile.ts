@@ -19,14 +19,7 @@ import {
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getOhmEthLiquidityBalance, getOhmEthLiquidityV2Balance } from "./LiquidityCalculations";
-import {
-  getBTCUSDRate,
-  getCVXUSDRate,
-  getETHUSDRate,
-  getFXSUSDRate,
-  getTribeUSDRate,
-  getXsushiUSDRate,
-} from "./Price";
+import { getBTCUSDRate, getETHUSDRate, getUSDRate } from "./Price";
 import { TokenRecord, TokenRecords } from "./TokenRecord";
 
 /**
@@ -63,7 +56,7 @@ export function getVestingAssets(): TokenRecords {
  */
 export function getXSushiBalance(blockNumber: BigInt): TokenRecords {
   const xSushiERC20 = getERC20("xSUSHI", ERC20_XSUSHI, blockNumber);
-  const xSushiRate = getXsushiUSDRate();
+  const xSushiRate = getUSDRate(ERC20_XSUSHI);
   return getERC20TokenRecordsFromWallets("xSUSHI", xSushiERC20, xSushiRate, blockNumber);
 }
 
@@ -76,7 +69,7 @@ export function getXSushiBalance(blockNumber: BigInt): TokenRecords {
  */
 export function getCVXBalance(blockNumber: BigInt): TokenRecords {
   const cvxERC20 = getERC20("CVX", ERC20_CVX, blockNumber);
-  const cvxRate = getCVXUSDRate();
+  const cvxRate = getUSDRate(ERC20_CVX);
 
   return getERC20TokenRecordsFromWallets("CVX", cvxERC20, cvxRate, blockNumber);
 }
@@ -90,7 +83,7 @@ export function getCVXBalance(blockNumber: BigInt): TokenRecords {
  */
 export function getVlCVXBalance(blockNumber: BigInt): TokenRecords {
   const vlCvxERC20 = getERC20("vlCVX", ERC20_CVX_VL, blockNumber);
-  const cvxRate = getCVXUSDRate();
+  const cvxRate = getUSDRate(ERC20_CVX_VL);
 
   return getERC20TokenRecordsFromWallets("vlCVX", vlCvxERC20, cvxRate, blockNumber);
 }
@@ -121,7 +114,7 @@ export function getCVXTotalBalance(blockNumber: BigInt): TokenRecords {
  */
 function getFXSBalance(blockNumber: BigInt): TokenRecords {
   const fxsERC20 = getERC20("FXS", ERC20_FXS, blockNumber);
-  const fxsRate = getFXSUSDRate();
+  const fxsRate = getUSDRate(ERC20_FXS);
 
   return getERC20TokenRecordsFromWallets("FXS", fxsERC20, fxsRate, blockNumber);
 }
@@ -137,7 +130,7 @@ function getFXSBalance(blockNumber: BigInt): TokenRecords {
 export function getVeFXSBalance(blockNumber: BigInt): TokenRecords {
   const veFXS = getVeFXS(ERC20_FXS_VE, blockNumber);
   const records = new TokenRecords();
-  const fxsRate = getFXSUSDRate();
+  const fxsRate = getUSDRate(ERC20_FXS);
 
   if (veFXS) {
     records.push(
@@ -185,7 +178,7 @@ export function getFXSTotalBalance(blockNumber: BigInt): TokenRecords {
  */
 function getTribeBalance(blockNumber: BigInt): TokenRecords {
   const tribeERC20 = getERC20("TRIBE", ERC20_TRIBE, blockNumber);
-  const tribeRate = getTribeUSDRate();
+  const tribeRate = getUSDRate(ERC20_TRIBE);
 
   const records = getERC20TokenRecordsFromWallets("TRIBE", tribeERC20, tribeRate, blockNumber);
   records.combine(getRariAllocatorRecords(ERC20_TRIBE, tribeRate, blockNumber));
