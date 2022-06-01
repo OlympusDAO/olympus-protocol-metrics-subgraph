@@ -4,19 +4,19 @@ import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator
 import {
   AAVE_ALLOCATOR,
   AAVE_ALLOCATOR_V2,
-  ERC20_ADAI,
   CONVEX_ALLOCATOR1,
   CONVEX_ALLOCATOR2,
   CONVEX_ALLOCATOR3,
+  ERC20_ADAI,
   ERC20_DAI,
-  ERC20_FRAX,
   ERC20_FEI,
+  ERC20_FRAX,
+  ERC20_LUSD,
+  ERC20_UST,
   getContractName,
   LUSD_ALLOCATOR,
-  ERC20_LUSD,
   RARI_ALLOCATOR,
   STABILITY_POOL,
-  ERC20_UST,
 } from "./Constants";
 import {
   getConvexAllocator,
