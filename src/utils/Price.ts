@@ -85,7 +85,7 @@ function getUSDRateUniswapV2(contractAddress: string, pairAddress: string): BigD
   const token0 = pair.token0().toHexString();
   // Get the number of tokens denominated in ETH
   const ethBalance =
-    token0 === ERC20_WETH ? token1Reserves.div(token0Reserves) : token0Reserves.div(token1Reserves);
+    token0 === ERC20_WETH ? token0Reserves.div(token1Reserves) : token1Reserves.div(token0Reserves);
   return ethBalance.times(getETHUSDRate());
 }
 
