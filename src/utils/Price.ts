@@ -3,15 +3,15 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import {
-  SUSHI_CVX_ETH_PAIR,
-  SUSHI_OHMDAI_PAIR,
-  SUSHI_OHMDAI_PAIRV2,
-  SUSHI_OHMDAI_PAIRV2_BLOCK,
-  SUSHI_USDC_ETH_PAIR,
-  SUSHI_XSUSHI_ETH_PAIR,
-  UNI_ETH_WBTC_PAIR,
-  UNI_FXS_ETH_PAIR,
-  UNI_TRIBE_ETH_PAIR,
+  PAIR_UNISWAP_V2_CVX_ETH,
+  PAIR_UNISWAP_V2_ETH_WBTC,
+  PAIR_UNISWAP_V2_OHM_DAI,
+  PAIR_UNISWAP_V2_OHM_DAI_V2,
+  PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
+  PAIR_UNISWAP_V2_TRIBE_ETH,
+  PAIR_UNISWAP_V2_USDC_ETH,
+  PAIR_UNISWAP_V2_XSUSHI_ETH,
+  PAIR_UNISWAP_V3_FXS_ETH,
 } from "./Constants";
 import { getUniswapV2Pair } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
@@ -22,7 +22,7 @@ const BIG_DECIMAL_1E10 = BigDecimal.fromString("1e10");
 const BIG_DECIMAL_1E12 = BigDecimal.fromString("1e12");
 
 export function getETHUSDRate(): BigDecimal {
-  const pair = UniswapV2Pair.bind(Address.fromString(SUSHI_USDC_ETH_PAIR));
+  const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_USDC_ETH));
 
   const reserves = pair.getReserves();
   const reserve0 = reserves.value0.toBigDecimal();
@@ -37,7 +37,7 @@ export function getETHUSDRate(): BigDecimal {
 // TODO arbitrary price lookup for a given token
 
 export function getBTCUSDRate(): BigDecimal {
-  const pair = UniswapV2Pair.bind(Address.fromString(UNI_ETH_WBTC_PAIR));
+  const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_ETH_WBTC));
 
   const reserves = pair.getReserves();
   const reserve0 = reserves.value0.toBigDecimal();
@@ -50,9 +50,9 @@ export function getBTCUSDRate(): BigDecimal {
 }
 
 export function getOHMUSDRate(block: BigInt): BigDecimal {
-  let contractAddress = SUSHI_OHMDAI_PAIR;
-  if (block.gt(BigInt.fromString(SUSHI_OHMDAI_PAIRV2_BLOCK))) {
-    contractAddress = SUSHI_OHMDAI_PAIRV2;
+  let contractAddress = PAIR_UNISWAP_V2_OHM_DAI;
+  if (block.gt(BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK))) {
+    contractAddress = PAIR_UNISWAP_V2_OHM_DAI_V2;
   }
 
   const pair = UniswapV2Pair.bind(Address.fromString(contractAddress));
@@ -67,7 +67,7 @@ export function getOHMUSDRate(block: BigInt): BigDecimal {
 }
 
 export function getXsushiUSDRate(): BigDecimal {
-  const pair = UniswapV2Pair.bind(Address.fromString(SUSHI_XSUSHI_ETH_PAIR));
+  const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_XSUSHI_ETH));
 
   const reserves = pair.getReserves();
   const reserve0 = reserves.value0.toBigDecimal();
@@ -81,7 +81,7 @@ export function getXsushiUSDRate(): BigDecimal {
 
 export function getTribeUSDRate(): BigDecimal {
   // TODO check that contract exists at block
-  const pair = UniswapV2Pair.bind(Address.fromString(UNI_TRIBE_ETH_PAIR));
+  const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_TRIBE_ETH));
 
   const reserves = pair.getReserves();
   const ethReserves = reserves.value0.toBigDecimal();
@@ -96,7 +96,7 @@ export function getTribeUSDRate(): BigDecimal {
 }
 
 export function getFXSUSDRate(): BigDecimal {
-  const pair = UniswapV3Pair.bind(Address.fromString(UNI_FXS_ETH_PAIR));
+  const pair = UniswapV3Pair.bind(Address.fromString(PAIR_UNISWAP_V3_FXS_ETH));
 
   let priceETH = pair.slot0().value0.times(pair.slot0().value0).toBigDecimal();
   log.debug("fxs priceETH {}", [priceETH.toString()]);
@@ -112,7 +112,7 @@ export function getFXSUSDRate(): BigDecimal {
 }
 
 export function getCVXUSDRate(): BigDecimal {
-  const pair = UniswapV2Pair.bind(Address.fromString(SUSHI_CVX_ETH_PAIR));
+  const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_CVX_ETH));
 
   const reserves = pair.getReserves();
   const reserve0 = reserves.value0.toBigDecimal();

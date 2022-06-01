@@ -1,6 +1,6 @@
 import { DepositBondPrincipleCall, RedeemBondCall } from "../generated/OHMDAIBondV1/OHMDAIBondV1";
 import { toDecimal } from "./utils/Decimals";
-import { OHMDAILPBOND_TOKEN, SUSHI_OHMDAI_PAIR } from "./utils/Constants";
+import { OHMDAILPBOND_TOKEN, PAIR_UNISWAP_V2_OHM_DAI } from "./utils/Constants";
 import { loadOrCreateToken } from "./utils/Tokens";
 import { createDailyBondRecord } from "./utils/DailyBond";
 import { getPairUSD } from "./utils/Price";
@@ -13,6 +13,6 @@ export function handleDeposit(call: DepositBondPrincipleCall): void {
     call.block.timestamp,
     token,
     amount,
-    getPairUSD(call.inputs.amountToDeposit_, SUSHI_OHMDAI_PAIR, call.block.number),
+    getPairUSD(call.inputs.amountToDeposit_, PAIR_UNISWAP_V2_OHM_DAI, call.block.number),
   );
 }

@@ -6,17 +6,17 @@ import {
   OHMLUSD_ONSEN_ID,
   ONSEN_ALLOCATOR,
   SUSHI_MASTERCHEF,
-  SUSHI_OHMDAI_PAIR,
-  SUSHI_OHMDAI_PAIRV2,
-  SUSHI_OHMETH_PAIR,
-  SUSHI_OHMETH_PAIRV2,
-  SUSHI_OHMLUSD_PAIR,
-  SUSHI_OHMLUSD_PAIR_V2,
+  PAIR_UNISWAP_V2_OHM_DAI,
+  PAIR_UNISWAP_V2_OHM_DAI_V2,
+  PAIR_UNISWAP_V2_OHM_ETH,
+  PAIR_UNISWAP_V2_OHM_ETH_V2,
+  PAIR_UNISWAP_V2_OHM_LUSD,
+  PAIR_UNISWAP_V2_OHM_LUSD_V2,
   TREASURY_ADDRESS,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
-  UNI_OHMFRAX_PAIR,
-  UNI_OHMFRAX_PAIRV2,
+  PAIR_UNISWAP_V2_OHM_FRAX,
+  PAIR_UNISWAP_V2_OHM_FRAX_V2,
 } from "./Constants";
 import {
   getMasterChef,
@@ -101,8 +101,8 @@ function getLiquidityTokenRecords(
  * @returns TokenRecords object
  */
 export function getOhmDaiLiquidityBalance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
-  const liquidityBalance = new LiquidityBalances(SUSHI_OHMDAI_PAIR);
-  const ohmDaiLiquidityPair = getUniswapV2Pair(SUSHI_OHMDAI_PAIR, blockNumber);
+  const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_DAI);
+  const ohmDaiLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_DAI, blockNumber);
   liquidityBalance.addBalance(
     TREASURY_ADDRESS,
     getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS, blockNumber),
@@ -141,8 +141,8 @@ export function getOhmDaiLiquidityBalance(blockNumber: BigInt, riskFree: boolean
  * @returns TokenRecords object
  */
 export function getOhmDaiLiquidityV2Balance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
-  const liquidityBalance = new LiquidityBalances(SUSHI_OHMDAI_PAIRV2);
-  const ohmDaiLiquidityPair = getUniswapV2Pair(SUSHI_OHMDAI_PAIRV2, blockNumber);
+  const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_DAI_V2);
+  const ohmDaiLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_DAI_V2, blockNumber);
   liquidityBalance.addBalance(
     TREASURY_ADDRESS,
     getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS, blockNumber),
@@ -174,8 +174,8 @@ export function getOhmDaiLiquidityV2Balance(blockNumber: BigInt, riskFree: boole
  * @returns BigDecimal representing the percentage of protocol-owned liquidity
  */
 export function getOhmDaiProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal {
-  const v1Pair = getUniswapV2Pair(SUSHI_OHMDAI_PAIR, blockNumber);
-  const v2Pair = getUniswapV2Pair(SUSHI_OHMDAI_PAIRV2, blockNumber);
+  const v1Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_DAI, blockNumber);
+  const v2Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_DAI_V2, blockNumber);
   const v1Balance = getOhmDaiLiquidityBalance(blockNumber, false).getBalance();
   const v2Balance = getOhmDaiLiquidityV2Balance(blockNumber, false).getBalance();
   const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
@@ -205,8 +205,8 @@ export function getOhmDaiProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal
  * @returns TokenRecords object
  */
 export function getOhmFraxLiquidityBalance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
-  const liquidityBalance = new LiquidityBalances(UNI_OHMFRAX_PAIR);
-  const ohmFraxLiquidityPair = getUniswapV2Pair(UNI_OHMFRAX_PAIR, blockNumber);
+  const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_FRAX);
+  const ohmFraxLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_FRAX, blockNumber);
   liquidityBalance.addBalance(
     TREASURY_ADDRESS,
     getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS, blockNumber),
@@ -236,8 +236,8 @@ export function getOhmFraxLiquidityBalance(blockNumber: BigInt, riskFree: boolea
  * @returns TokenRecords object
  */
 export function getOhmFraxLiquidityV2Balance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
-  const liquidityBalance = new LiquidityBalances(UNI_OHMFRAX_PAIRV2);
-  const ohmFraxLiquidityPair = getUniswapV2Pair(UNI_OHMFRAX_PAIRV2, blockNumber);
+  const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_FRAX_V2);
+  const ohmFraxLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_FRAX_V2, blockNumber);
   liquidityBalance.addBalance(
     TREASURY_ADDRESS,
     getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS, blockNumber),
@@ -269,8 +269,8 @@ export function getOhmFraxLiquidityV2Balance(blockNumber: BigInt, riskFree: bool
  * @returns BigDecimal representing the percentage of protocol-owned liquidity
  */
 export function getOhmFraxProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal {
-  const v1Pair = getUniswapV2Pair(UNI_OHMFRAX_PAIR, blockNumber);
-  const v2Pair = getUniswapV2Pair(UNI_OHMFRAX_PAIRV2, blockNumber);
+  const v1Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_FRAX, blockNumber);
+  const v2Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_FRAX_V2, blockNumber);
   const v1Balance = getOhmFraxLiquidityBalance(blockNumber, false).getBalance();
   const v2Balance = getOhmFraxLiquidityV2Balance(blockNumber, false).getBalance();
   const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
@@ -301,8 +301,8 @@ export function getOhmFraxProtocolOwnedLiquidity(blockNumber: BigInt): BigDecima
  * @returns TokenRecords object
  */
 export function getOhmLusdLiquidityBalance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
-  const liquidityBalance = new LiquidityBalances(SUSHI_OHMLUSD_PAIR);
-  const ohmLusdLiquidityPair = getUniswapV2Pair(SUSHI_OHMLUSD_PAIR, blockNumber);
+  const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_LUSD);
+  const ohmLusdLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_LUSD, blockNumber);
   liquidityBalance.addBalance(
     TREASURY_ADDRESS,
     getUniswapV2PairBalance(ohmLusdLiquidityPair, TREASURY_ADDRESS, blockNumber),
@@ -342,8 +342,8 @@ export function getOhmLusdLiquidityBalance(blockNumber: BigInt, riskFree: boolea
  * @returns TokenRecords object
  */
 export function getOhmLusdLiquidityV2Balance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
-  const liquidityBalance = new LiquidityBalances(SUSHI_OHMLUSD_PAIR_V2);
-  const ohmFraxLiquidityPair = getUniswapV2Pair(SUSHI_OHMLUSD_PAIR_V2, blockNumber);
+  const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_LUSD_V2);
+  const ohmFraxLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_LUSD_V2, blockNumber);
   liquidityBalance.addBalance(
     TREASURY_ADDRESS,
     getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS, blockNumber),
@@ -384,8 +384,8 @@ export function getOhmLusdLiquidityV2Balance(blockNumber: BigInt, riskFree: bool
  * @returns BigDecimal representing the percentage of protocol-owned liquidity
  */
 export function getOhmLusdProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal {
-  const v1Pair = getUniswapV2Pair(SUSHI_OHMLUSD_PAIR, blockNumber);
-  const v2Pair = getUniswapV2Pair(SUSHI_OHMLUSD_PAIR_V2, blockNumber);
+  const v1Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_LUSD, blockNumber);
+  const v2Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_LUSD_V2, blockNumber);
   const v1Balance = getOhmLusdLiquidityBalance(blockNumber, false).getBalance();
   const v2Balance = getOhmLusdLiquidityV2Balance(blockNumber, false).getBalance();
   const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
@@ -415,8 +415,8 @@ export function getOhmLusdProtocolOwnedLiquidity(blockNumber: BigInt): BigDecima
  * @returns TokenRecords object
  */
 export function getOhmEthLiquidityBalance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
-  const liquidityBalance = new LiquidityBalances(SUSHI_OHMETH_PAIR);
-  const ohmEthLiquidityPair = getUniswapV2Pair(SUSHI_OHMETH_PAIR, blockNumber);
+  const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_ETH);
+  const ohmEthLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_ETH, blockNumber);
   liquidityBalance.addBalance(
     TREASURY_ADDRESS,
     getUniswapV2PairBalance(ohmEthLiquidityPair, TREASURY_ADDRESS, blockNumber),
@@ -446,8 +446,8 @@ export function getOhmEthLiquidityBalance(blockNumber: BigInt, riskFree: boolean
  * @returns TokenRecords object
  */
 export function getOhmEthLiquidityV2Balance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
-  const liquidityBalance = new LiquidityBalances(SUSHI_OHMETH_PAIRV2);
-  const ohmEthLiquidityPair = getUniswapV2Pair(SUSHI_OHMETH_PAIRV2, blockNumber);
+  const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_ETH_V2);
+  const ohmEthLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_ETH_V2, blockNumber);
   liquidityBalance.addBalance(
     TREASURY_ADDRESS,
     getUniswapV2PairBalance(ohmEthLiquidityPair, TREASURY_ADDRESS, blockNumber),
@@ -479,8 +479,8 @@ export function getOhmEthLiquidityV2Balance(blockNumber: BigInt, riskFree: boole
  * @returns BigDecimal representing the percentage of protocol-owned liquidity
  */
 export function getOhmEthProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal {
-  const v1Pair = getUniswapV2Pair(SUSHI_OHMETH_PAIR, blockNumber);
-  const v2Pair = getUniswapV2Pair(SUSHI_OHMETH_PAIRV2, blockNumber);
+  const v1Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_ETH, blockNumber);
+  const v2Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_ETH_V2, blockNumber);
   const v1Balance = getOhmEthLiquidityBalance(blockNumber, false).getBalance();
   const v2Balance = getOhmEthLiquidityV2Balance(blockNumber, false).getBalance();
   const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
