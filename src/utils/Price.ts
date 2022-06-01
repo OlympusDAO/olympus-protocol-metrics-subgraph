@@ -34,6 +34,8 @@ export function getETHUSDRate(): BigDecimal {
   return ethRate;
 }
 
+// TODO arbitrary price lookup for a given token
+
 export function getBTCUSDRate(): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(UNI_ETH_WBTC_PAIR));
 

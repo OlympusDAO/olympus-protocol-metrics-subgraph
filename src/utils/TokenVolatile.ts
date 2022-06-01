@@ -9,15 +9,11 @@ import {
   ERC20_WBTC,
   ERC20_WETH,
   ERC20_XSUSHI,
-  getContractName,
-  RARI_ALLOCATOR,
   VEFXS_ALLOCATOR,
 } from "./Constants";
 import {
   getERC20,
   getERC20TokenRecordsFromWallets,
-  getRariAllocator,
-  getRariAllocatorBalance,
   getRariAllocatorRecords,
   getVeFXS,
 } from "./ContractHelper";
