@@ -17,6 +17,7 @@ import {
   getERC20,
   getERC20TokenRecordsFromWallets,
   getRariAllocator,
+  getRariAllocatorBalance,
   getVeFXS,
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
@@ -199,7 +200,7 @@ function getTribeBalance(blockNumber: BigInt): TokenRecords {
         getContractName(RARI_ALLOCATOR),
         RARI_ALLOCATOR,
         tribeRate,
-        toDecimal(rariAllocator.amountAllocated(BigInt.fromI32(4)), 18),
+        getRariAllocatorBalance(ERC20_TRIBE, blockNumber),
       ),
     );
   }

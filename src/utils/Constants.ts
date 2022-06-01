@@ -176,7 +176,32 @@ export const WALLET_ADDRESSES = [
   TREASURY_ADDRESS_V3,
   TREASURY_ADDRESS,
   UNKNOWN_WALLET,
+  AAVE_ALLOCATOR,
+  AAVE_ALLOCATOR_V2,
 ];
+
+/**
+ * The Rari Allocator contract ({RARI_ALLOCATOR}) has a function
+ * amountAllocated() that returns the balance of an ERC20 token.
+ *
+ * This map records the ID for a given token.
+ */
+const ALLOCATOR_RARI_ID = new Map<string, i32>();
+ALLOCATOR_RARI_ID.set(ERC20_DAI, 3);
+ALLOCATOR_RARI_ID.set(ERC20_TRIBE, 4);
+
+export const ALLOCATOR_RARI_ID_NOT_FOUND = -1;
+/**
+ * Returns the ID of a given contract in the Rari Allocator.
+ *
+ * @param contractAddress the contract address to look up
+ * @returns a number or {ALLOCATOR_RARI_ID_NOT_FOUND} if not found
+ */
+export const getRariAllocatorId = (contractAddress: string): i32 => {
+  if (!ALLOCATOR_RARI_ID.has(contractAddress)) return ALLOCATOR_RARI_ID_NOT_FOUND;
+
+  return ALLOCATOR_RARI_ID.get(contractAddress);
+};
 
 export const CONTRACT_STARTING_BLOCK_MAP = new Map<string, string>();
 CONTRACT_STARTING_BLOCK_MAP.set(SUSHI_OHMDAI_PAIRV2, SUSHI_OHMDAI_PAIRV2_BLOCK);

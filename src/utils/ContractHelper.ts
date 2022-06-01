@@ -11,7 +11,14 @@ import { StabilityPool } from "../../generated/ProtocolMetrics/StabilityPool";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
-import { CONTRACT_STARTING_BLOCK_MAP, getContractName, WALLET_ADDRESSES } from "./Constants";
+import {
+  ALLOCATOR_RARI_ID_NOT_FOUND,
+  CONTRACT_STARTING_BLOCK_MAP,
+  getContractName,
+  getRariAllocatorId,
+  RARI_ALLOCATOR,
+  WALLET_ADDRESSES,
+} from "./Constants";
 import { toDecimal } from "./Decimals";
 import { TokenRecord, TokenRecords } from "./TokenRecord";
 
@@ -32,6 +39,7 @@ const contractsVeFXS = new Map<string, VeFXS>();
 const contractsConvexAllocator = new Map<string, ConvexAllocator>();
 const contractsStabilityPool = new Map<string, StabilityPool>();
 
+// TODO shift to constants
 /**
  * Indicates whether a contract exists at a given block number.
  *
@@ -434,4 +442,29 @@ export function getERC20TokenRecordsFromWallets(
   }
 
   return records;
+}
+
+/**
+ * Returns the balance for a given contract in the Rari Allocator.
+ *
+ * If the contract does not have an entry in the Rari Allocator,
+ * 0 is returned.
+ *
+ * @param contractAddress the contract to look up
+ * @param blockNumber the current block number
+ * @returns BigDecimal
+ */
+export function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): BigDecimal {
+  const rariAllocatorId = getRariAllocatorId(contractAddress);
+  const rariAllocator = getRariAllocator(RARI_ALLOCATOR, blockNumber);
+  const contract = getERC20(getContractName(contractAddress), contractAddress, blockNumber);
+
+  if (rariAllocatorId === ALLOCATOR_RARI_ID_NOT_FOUND || !rariAllocator || !contract) {
+    return BigDecimal.zero();
+  }
+
+  return toDecimal(
+    rariAllocator.amountAllocated(BigInt.fromI32(rariAllocatorId)),
+    contract.decimals(),
+  );
 }

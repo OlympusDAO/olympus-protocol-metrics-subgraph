@@ -24,6 +24,7 @@ import {
   getERC20Balance,
   getERC20TokenRecordsFromWallets,
   getRariAllocator,
+  getRariAllocatorBalance,
   getStabilityPool,
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
@@ -86,7 +87,7 @@ export function getDaiBalance(blockNumber: BigInt): TokenRecords {
         getContractName(RARI_ALLOCATOR),
         RARI_ALLOCATOR,
         BigDecimal.fromString("1"),
-        toDecimal(rariAllocator.amountAllocated(BigInt.fromI32(3)), 18),
+        getRariAllocatorBalance(ERC20_DAI, blockNumber),
       ),
     );
   }
