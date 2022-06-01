@@ -1,17 +1,17 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import {
-  CVX_ERC20_CONTRACT,
-  FXS_ERC20_CONTRACT,
+  ERC20_CVX,
+  ERC20_FXS,
   getContractName,
   RARI_ALLOCATOR,
-  TRIBE_ERC20_CONTRACT,
+  ERC20_TRIBE,
   VEFXS_ALLOCATOR,
-  VEFXSERC20_CONTRACT,
-  VLCVX_ERC20_CONTRACT,
-  WBTC_ERC20_CONTRACT,
-  WETH_ERC20_CONTRACT,
-  XSUSI_ERC20_CONTRACT,
+  ERC20_FXS_VE,
+  ERC20_CVX_VL,
+  ERC20_WBTC,
+  ERC20_WETH,
+  ERC20_XSUSHI,
 } from "./Constants";
 import {
   getERC20,
@@ -64,7 +64,7 @@ export function getVestingAssets(): TokenRecords {
  * @returns TokenRecords object
  */
 export function getXSushiBalance(blockNumber: BigInt): TokenRecords {
-  const xSushiERC20 = getERC20("xSUSHI", XSUSI_ERC20_CONTRACT, blockNumber);
+  const xSushiERC20 = getERC20("xSUSHI", ERC20_XSUSHI, blockNumber);
   const xSushiRate = getXsushiUSDRate();
   return getERC20TokenRecordsFromWallets("xSUSHI", xSushiERC20, xSushiRate, blockNumber);
 }
@@ -77,7 +77,7 @@ export function getXSushiBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getCVXBalance(blockNumber: BigInt): TokenRecords {
-  const cvxERC20 = getERC20("CVX", CVX_ERC20_CONTRACT, blockNumber);
+  const cvxERC20 = getERC20("CVX", ERC20_CVX, blockNumber);
   const cvxRate = getCVXUSDRate();
 
   return getERC20TokenRecordsFromWallets("CVX", cvxERC20, cvxRate, blockNumber);
@@ -91,7 +91,7 @@ export function getCVXBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getVlCVXBalance(blockNumber: BigInt): TokenRecords {
-  const vlCvxERC20 = getERC20("vlCVX", VLCVX_ERC20_CONTRACT, blockNumber);
+  const vlCvxERC20 = getERC20("vlCVX", ERC20_CVX_VL, blockNumber);
   const cvxRate = getCVXUSDRate();
 
   return getERC20TokenRecordsFromWallets("vlCVX", vlCvxERC20, cvxRate, blockNumber);
@@ -122,7 +122,7 @@ export function getCVXTotalBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 function getFXSBalance(blockNumber: BigInt): TokenRecords {
-  const fxsERC20 = getERC20("FXS", FXS_ERC20_CONTRACT, blockNumber);
+  const fxsERC20 = getERC20("FXS", ERC20_FXS, blockNumber);
   const fxsRate = getFXSUSDRate();
 
   return getERC20TokenRecordsFromWallets("FXS", fxsERC20, fxsRate, blockNumber);
@@ -137,7 +137,7 @@ function getFXSBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getVeFXSBalance(blockNumber: BigInt): TokenRecords {
-  const veFXS = getVeFXS(VEFXSERC20_CONTRACT, blockNumber);
+  const veFXS = getVeFXS(ERC20_FXS_VE, blockNumber);
   const records = new TokenRecords();
   const fxsRate = getFXSUSDRate();
 
@@ -187,7 +187,7 @@ export function getFXSTotalBalance(blockNumber: BigInt): TokenRecords {
  */
 function getTribeBalance(blockNumber: BigInt): TokenRecords {
   const rariAllocator = getRariAllocator(RARI_ALLOCATOR, blockNumber);
-  const tribeERC20 = getERC20("TRIBE", TRIBE_ERC20_CONTRACT, blockNumber);
+  const tribeERC20 = getERC20("TRIBE", ERC20_TRIBE, blockNumber);
   const tribeRate = getTribeUSDRate();
 
   const records = getERC20TokenRecordsFromWallets("TRIBE", tribeERC20, tribeRate, blockNumber);
@@ -215,7 +215,7 @@ function getTribeBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getWETHBalance(blockNumber: BigInt): TokenRecords {
-  const wethERC20 = getERC20("wETH", WETH_ERC20_CONTRACT, blockNumber);
+  const wethERC20 = getERC20("wETH", ERC20_WETH, blockNumber);
   const wethRate = getETHUSDRate();
 
   return getERC20TokenRecordsFromWallets("wETH", wethERC20, wethRate, blockNumber);
@@ -229,7 +229,7 @@ export function getWETHBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getWBTCBalance(blockNumber: BigInt): TokenRecords {
-  const wbtcERC20 = getERC20("wBTC", WBTC_ERC20_CONTRACT, blockNumber);
+  const wbtcERC20 = getERC20("wBTC", ERC20_WBTC, blockNumber);
   const wbtcRate = getBTCUSDRate();
 
   return getERC20TokenRecordsFromWallets("wTC", wbtcERC20, wbtcRate, blockNumber);

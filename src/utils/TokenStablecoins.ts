@@ -4,19 +4,19 @@ import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator
 import {
   AAVE_ALLOCATOR,
   AAVE_ALLOCATOR_V2,
-  ADAI_ERC20_CONTRACT,
+  ERC20_ADAI,
   CONVEX_ALLOCATOR1,
   CONVEX_ALLOCATOR2,
   CONVEX_ALLOCATOR3,
-  ERC20DAI_CONTRACT,
-  ERC20FRAX_CONTRACT,
-  FEI_ERC20_CONTRACT,
+  ERC20_DAI,
+  ERC20_FRAX,
+  ERC20_FEI,
   getContractName,
   LUSD_ALLOCATOR,
-  LUSD_ERC20_CONTRACT,
+  ERC20_LUSD,
   RARI_ALLOCATOR,
   STABILITY_POOL,
-  UST_ERC20_CONTRACT,
+  ERC20_UST,
 } from "./Constants";
 import {
   getConvexAllocator,
@@ -48,8 +48,8 @@ import { TokenRecord, TokenRecords } from "./TokenRecord";
  * @returns TokenRecords object
  */
 export function getDaiBalance(blockNumber: BigInt): TokenRecords {
-  const daiERC20 = getERC20("DAI", ERC20DAI_CONTRACT, blockNumber);
-  const aDaiERC20 = getERC20("aDAI", ADAI_ERC20_CONTRACT, blockNumber);
+  const daiERC20 = getERC20("DAI", ERC20_DAI, blockNumber);
+  const aDaiERC20 = getERC20("aDAI", ERC20_ADAI, blockNumber);
   const rariAllocator = getRariAllocator(RARI_ALLOCATOR, blockNumber);
   const records = getERC20TokenRecordsFromWallets(
     "DAI",
@@ -102,7 +102,7 @@ export function getDaiBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getFeiBalance(blockNumber: BigInt): TokenRecords {
-  const feiERC20 = getERC20("FEI", FEI_ERC20_CONTRACT, blockNumber);
+  const feiERC20 = getERC20("FEI", ERC20_FEI, blockNumber);
 
   return getERC20TokenRecordsFromWallets("FEI", feiERC20, BigDecimal.fromString("1"), blockNumber);
 }
@@ -179,7 +179,7 @@ export function getFraxAllocatedInConvexBalance(
  * @returns TokenRecords object
  */
 export function getFraxBalance(blockNumber: BigInt): TokenRecords {
-  const fraxERC20 = getERC20("FRAX", ERC20FRAX_CONTRACT, blockNumber);
+  const fraxERC20 = getERC20("FRAX", ERC20_FRAX, blockNumber);
 
   const records = getERC20TokenRecordsFromWallets(
     "FRAX",
@@ -209,7 +209,7 @@ export function getFraxBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getLUSDBalance(blockNumber: BigInt): TokenRecords {
-  const lusdERC20 = getERC20("LUSD", LUSD_ERC20_CONTRACT, blockNumber);
+  const lusdERC20 = getERC20("LUSD", ERC20_LUSD, blockNumber);
   const stabilityPoolContract = getStabilityPool(STABILITY_POOL, blockNumber);
   const records = getERC20TokenRecordsFromWallets(
     "LUSD",
@@ -241,7 +241,7 @@ export function getLUSDBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getUSTBalance(blockNumber: BigInt): TokenRecords {
-  const ustERC20 = getERC20("UST", UST_ERC20_CONTRACT, blockNumber);
+  const ustERC20 = getERC20("UST", ERC20_UST, blockNumber);
 
   return getERC20TokenRecordsFromWallets("UST", ustERC20, BigDecimal.fromString("1"), blockNumber);
 }

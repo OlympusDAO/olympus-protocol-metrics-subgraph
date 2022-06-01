@@ -4,12 +4,12 @@ import {
   BONDS_DEPOSIT,
   DAO_WALLET,
   MIGRATION_CONTRACT,
-  OHM_ERC20_CONTRACT,
-  OHMV2_ERC20_CONTRACT,
-  OHMV2_ERC20_CONTRACT_BLOCK,
-  SOHM_ERC20_CONTRACT,
-  SOHM_ERC20_CONTRACTV2,
-  SOHM_ERC20_CONTRACTV3,
+  ERC20_OHM,
+  ERC20_OHM_V2,
+  ERC20_OHM_V2_BLOCK,
+  ERC20_SOHM,
+  ERC20_SOHM_V2,
+  ERC20_SOHM_V3,
 } from "./Constants";
 import {
   getERC20,
@@ -29,9 +29,9 @@ import { getOHMUSDRate } from "./Price";
  * @returns BigDecimal representing the total supply at the time of the block
  */
 export function getTotalSupply(blockNumber: BigInt): BigDecimal {
-  const ohmContractAddress = blockNumber.gt(BigInt.fromString(OHMV2_ERC20_CONTRACT_BLOCK))
-    ? OHMV2_ERC20_CONTRACT
-    : OHM_ERC20_CONTRACT;
+  const ohmContractAddress = blockNumber.gt(BigInt.fromString(ERC20_OHM_V2_BLOCK))
+    ? ERC20_OHM_V2
+    : ERC20_OHM;
 
   const ohmContract = getERC20("OHM", ohmContractAddress, blockNumber);
 
@@ -66,8 +66,8 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
  * @returns BigDecimal representing the total supply at the time of the block
  */
 export function getCirculatingSupply(blockNumber: BigInt, totalSupply: BigDecimal): BigDecimal {
-  const isV2Contract = blockNumber.gt(BigInt.fromString(OHMV2_ERC20_CONTRACT_BLOCK));
-  const ohmContractAddress = isV2Contract ? OHMV2_ERC20_CONTRACT : OHM_ERC20_CONTRACT;
+  const isV2Contract = blockNumber.gt(BigInt.fromString(ERC20_OHM_V2_BLOCK));
+  const ohmContractAddress = isV2Contract ? ERC20_OHM_V2 : ERC20_OHM;
 
   const ohmContract = getERC20("OHM", ohmContractAddress, blockNumber);
 
@@ -121,9 +121,9 @@ export function getOhmMarketcap(blockNumber: BigInt): BigDecimal {
  * @returns BigDecimal representing the total circulating supply at the current block
  */
 export function getSOhmCirculatingSupply(blockNumber: BigInt): BigDecimal {
-  const contractV1 = getSOlympusERC20("sOHM", SOHM_ERC20_CONTRACT, blockNumber);
-  const contractV2 = getSOlympusERC20V2("sOHM V2", SOHM_ERC20_CONTRACTV2, blockNumber);
-  const contractV3 = getSOlympusERC20V3("sOHM V3", SOHM_ERC20_CONTRACTV3, blockNumber);
+  const contractV1 = getSOlympusERC20("sOHM", ERC20_SOHM, blockNumber);
+  const contractV2 = getSOlympusERC20V2("sOHM V2", ERC20_SOHM_V2, blockNumber);
+  const contractV3 = getSOlympusERC20V3("sOHM V3", ERC20_SOHM_V3, blockNumber);
   let sOhmSupply = BigDecimal.fromString("0");
 
   if (contractV1) {
