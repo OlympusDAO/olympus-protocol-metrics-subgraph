@@ -7,20 +7,15 @@ import {
   ERC20_WBTC,
   ERC20_WETH,
   getPairHandler,
-  PAIR_HANDLER_UNISWAP_V2,
-  PAIR_HANDLER_UNISWAP_V3,
-  PAIR_UNISWAP_V2_CVX_ETH,
   PAIR_UNISWAP_V2_ETH_WBTC,
   PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
-  PAIR_UNISWAP_V2_TRIBE_ETH,
   PAIR_UNISWAP_V2_USDC_ETH,
-  PAIR_UNISWAP_V2_XSUSHI_ETH,
-  PAIR_UNISWAP_V3_FXS_ETH,
 } from "./Constants";
 import { getUniswapV2Pair } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
+import { PairHandlerTypes } from "./PairHandler";
 
 const BIG_DECIMAL_1E8 = BigDecimal.fromString("1e8");
 const BIG_DECIMAL_1E9 = BigDecimal.fromString("1e9");
@@ -70,6 +65,13 @@ export function getOHMUSDRate(block: BigInt): BigDecimal {
   return ohmRate;
 }
 
+/**
+ * Returns the USD rate of the token represented by {contractAddress}
+ *
+ * @param contractAddress
+ * @param pairAddress
+ * @returns
+ */
 function getUSDRateUniswapV2(contractAddress: string, pairAddress: string): BigDecimal {
   if (contractAddress === ERC20_WETH) return getETHUSDRate();
   if (contractAddress === ERC20_WBTC) return getBTCUSDRate();
@@ -111,6 +113,11 @@ function getUSDRateUniswapV3(contractAddress: string, pairAddress: string): BigD
  *
  * This is achieved using the prices in liquidity pool pairs.
  *
+ * If no pair handler is found, an error will be thrown. This is so
+ * that indexing fails in a noticeable manner. The alternative
+ * was to return 0, which would be non-obvious and would require
+ * parsing the component metrics to identify problems.
+ *
  * @param contractAddress the token to look for
  * @returns BigDecimal or 0
  */
@@ -123,17 +130,24 @@ export function getUSDRate(contractAddress: string): BigDecimal {
 
   // Look for the pair
   const pairHandler = getPairHandler(contractAddress);
-  if (!pairHandler) return BigDecimal.zero();
+  if (!pairHandler) {
+    throw new Error("Unable to find liquidity pool handler for contract: " + contractAddress);
+  }
 
-  if (pairHandler.getHandler() === PAIR_HANDLER_UNISWAP_V2) {
+  if (pairHandler.getHandler() === PairHandlerTypes.UniswapV2) {
     return getUSDRateUniswapV2(contractAddress, pairHandler.getPair());
   }
 
-  if (pairHandler.getHandler() === PAIR_HANDLER_UNISWAP_V3) {
+  if (pairHandler.getHandler() === PairHandlerTypes.UniswapV3) {
     return getUSDRateUniswapV3(contractAddress, pairHandler.getPair());
   }
 
-  return BigDecimal.zero();
+  throw new Error(
+    "Unsupported liquidity pool handler type (" +
+      pairHandler.getHandler().toString() +
+      ") for contract: " +
+      contractAddress,
+  );
 }
 
 /**
@@ -166,6 +180,7 @@ export function getDiscountedPairUSD(
   pairAddress: string,
   blockNumber: BigInt,
 ): BigDecimal {
+  // TODO assumes that the pair is Uniswap V2. What about V3 or balancer?
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
     log.debug(

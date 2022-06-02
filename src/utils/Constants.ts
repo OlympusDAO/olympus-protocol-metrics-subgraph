@@ -1,4 +1,4 @@
-import { PairHandler } from "./PairHandler";
+import { PairHandler, PairHandlerTypes } from "./PairHandler";
 
 // Tokens definition
 export const DAIBOND_TOKEN = "DAI";
@@ -167,27 +167,33 @@ export const PAIR_UNISWAP_V2_XSUSHI_ETH = "0x36e2fcccc59e5747ff63a03ea2e5c0c2c14
 export const PAIR_UNISWAP_V3_FXS_ETH = "0xcd8286b48936cdac20518247dbd310ab681a9fbf";
 export const PAIR_UNISWAP_V3_FXS_ETH_BLOCK = "13509100";
 
-export const PAIR_HANDLER_UNISWAP_V2 = "UniswapV2";
-export const PAIR_HANDLER_UNISWAP_V3 = "UniswapV3";
-
 const PAIR_HANDLER = new Map<string, PairHandler>();
-PAIR_HANDLER.set(ERC20_CVX, new PairHandler(PAIR_HANDLER_UNISWAP_V2, PAIR_UNISWAP_V2_CVX_ETH));
-PAIR_HANDLER.set(ERC20_CVX_VL, new PairHandler(PAIR_HANDLER_UNISWAP_V2, PAIR_UNISWAP_V2_CVX_ETH));
-PAIR_HANDLER.set(ERC20_FXS, new PairHandler(PAIR_HANDLER_UNISWAP_V3, PAIR_UNISWAP_V3_FXS_ETH));
-PAIR_HANDLER.set(ERC20_FXS_VE, new PairHandler(PAIR_HANDLER_UNISWAP_V3, PAIR_UNISWAP_V3_FXS_ETH));
-PAIR_HANDLER.set(ERC20_TRIBE, new PairHandler(PAIR_HANDLER_UNISWAP_V2, PAIR_UNISWAP_V2_TRIBE_ETH));
-PAIR_HANDLER.set(ERC20_WBTC, new PairHandler(PAIR_HANDLER_UNISWAP_V2, PAIR_UNISWAP_V2_ETH_WBTC));
-PAIR_HANDLER.set(ERC20_WETH, new PairHandler(PAIR_HANDLER_UNISWAP_V2, PAIR_UNISWAP_V2_USDC_ETH));
+PAIR_HANDLER.set(ERC20_CVX, new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH));
+PAIR_HANDLER.set(
+  ERC20_CVX_VL,
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH),
+);
+PAIR_HANDLER.set(ERC20_FXS, new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FXS_ETH));
+PAIR_HANDLER.set(
+  ERC20_FXS_VE,
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FXS_ETH),
+);
+PAIR_HANDLER.set(
+  ERC20_TRIBE,
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_TRIBE_ETH),
+);
+PAIR_HANDLER.set(ERC20_WBTC, new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_ETH_WBTC));
+PAIR_HANDLER.set(ERC20_WETH, new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_USDC_ETH));
 PAIR_HANDLER.set(
   ERC20_XSUSHI,
-  new PairHandler(PAIR_HANDLER_UNISWAP_V2, PAIR_UNISWAP_V2_XSUSHI_ETH),
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_XSUSHI_ETH),
 );
 
 /**
  * Returns the handler for a liquidity pair.
  *
  * @param contractAddress the contract address to look up
- * @returns a PairHandler or null
+ * @returns a {PairHandler} or null
  */
 export const getPairHandler = (contractAddress: string): PairHandler | null => {
   if (!PAIR_HANDLER.has(contractAddress)) return null;
