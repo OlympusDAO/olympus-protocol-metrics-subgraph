@@ -74,7 +74,7 @@ function getLiquidityTokenRecords(
   for (let i = 0; i < addresses.length; i++) {
     const address = addresses[i];
     const balance = liquidityBalance.getBalance(address);
-    if (!balance) continue;
+    if (!balance || balance.equals(BigInt.zero())) continue;
 
     records.push(
       new TokenRecord(

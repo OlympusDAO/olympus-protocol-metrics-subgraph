@@ -673,8 +673,7 @@ export function getLiquityStabilityPoolRecords(
   for (let i = 0; i < ALLOCATOR_LIQUITY_STABILITY_POOLS.length; i++) {
     const poolAddress = ALLOCATOR_LIQUITY_STABILITY_POOLS[i];
     const balance = getLiquityStabilityPoolBalance(liquityAllocator!, poolAddress, blockNumber);
-
-    if (!balance) continue;
+    if (!balance || balance.equals(BigDecimal.zero())) continue;
 
     records.push(
       new TokenRecord(
