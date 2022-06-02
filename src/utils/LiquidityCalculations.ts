@@ -163,7 +163,31 @@ export function getLiquidityBalances(
  * @returns TokenRecords object
  */
 export function getOhmDaiLiquidityBalance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
-  return getLiquidityBalances(ERC20_DAI, riskFree, blockNumber);
+  const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_DAI);
+  const ohmDaiLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_DAI, blockNumber);
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS,
+    getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS_V2,
+    getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS_V2, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    TREASURY_ADDRESS_V3,
+    getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
+  );
+  liquidityBalance.addBalance(
+    ONSEN_ALLOCATOR,
+    getMasterChefBalance(
+      getMasterChef(SUSHI_MASTERCHEF, blockNumber),
+      ONSEN_ALLOCATOR,
+      OHMDAI_ONSEN_ID,
+      blockNumber,
+    ),
+  );
+
+  return getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree);
 }
 
 /**
