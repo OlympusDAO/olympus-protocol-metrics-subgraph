@@ -223,10 +223,9 @@ export function getStableValue(blockNumber: BigInt): TokenRecords {
 }
 
 /**
- * Returns the DAI market value, which is defined as:
- * - Balance of DAI
- * - Value of OHM-DAI pair
- * - Value of OHM-DAI pair V2
+ * Returns the DAI/aDAI market value, which is defined as:
+ * - Token balances
+ * - Liquidity pairs
  *
  * If {riskFree} is true, the discounted value of OHM-DAI pairs (where OHM = $1)
  * is calculated.
@@ -237,7 +236,12 @@ export function getStableValue(blockNumber: BigInt): TokenRecords {
  */
 // eslint-disable-next-line @typescript-eslint/no-inferrable-types
 export function getDaiMarketValue(blockNumber: BigInt, riskFree: boolean = false): TokenRecords {
-  return getStablecoinBalance(ERC20_DAI, true, riskFree, blockNumber);
+  const records = new TokenRecords();
+
+  records.combine(getStablecoinBalance(ERC20_DAI, true, riskFree, blockNumber));
+  records.combine(getStablecoinBalance(ERC20_ADAI, true, riskFree, blockNumber));
+
+  return records;
 }
 
 /**
