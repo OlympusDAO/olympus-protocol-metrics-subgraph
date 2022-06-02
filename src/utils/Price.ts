@@ -24,6 +24,13 @@ const BIG_DECIMAL_1E12 = BigDecimal.fromString("1e12");
 
 export function getETHUSDRate(): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_USDC_ETH));
+  if (!pair) {
+    throw new Error(
+      "Cannot determine discounted value as the contract " +
+        PAIR_UNISWAP_V2_USDC_ETH +
+        " does not exist yet.",
+    );
+  }
 
   const reserves = pair.getReserves();
   const reserve0 = reserves.value0.toBigDecimal();
@@ -37,6 +44,13 @@ export function getETHUSDRate(): BigDecimal {
 
 export function getBTCUSDRate(): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_ETH_WBTC));
+  if (!pair) {
+    throw new Error(
+      "Cannot determine discounted value as the contract " +
+        PAIR_UNISWAP_V2_ETH_WBTC +
+        " does not exist yet.",
+    );
+  }
 
   const reserves = pair.getReserves();
   const reserve0 = reserves.value0.toBigDecimal();
@@ -55,6 +69,14 @@ export function getOHMUSDRate(block: BigInt): BigDecimal {
   }
 
   const pair = UniswapV2Pair.bind(Address.fromString(contractAddress));
+  if (!pair) {
+    throw new Error(
+      "Cannot determine discounted value as the contract " +
+        contractAddress +
+        " does not exist yet.",
+    );
+  }
+
   const reserves = pair.getReserves();
   const ohmReserves = reserves.value0.toBigDecimal();
   const daiReserves = reserves.value1.toBigDecimal();
@@ -78,6 +100,11 @@ function getUSDRateUniswapV2(contractAddress: string, pairAddress: string): BigD
 
   // TODO handle pairs at different blocks
   const pair = UniswapV2Pair.bind(Address.fromString(pairAddress));
+  if (!pair) {
+    throw new Error(
+      "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
+    );
+  }
 
   const token0Reserves = pair.getReserves().value0.toBigDecimal();
   const token1Reserves = pair.getReserves().value1.toBigDecimal();
@@ -99,6 +126,11 @@ function getUSDRateUniswapV2(contractAddress: string, pairAddress: string): BigD
 function getUSDRateUniswapV3(contractAddress: string, pairAddress: string): BigDecimal {
   // TODO add support for swapped pair
   const pair = UniswapV3Pair.bind(Address.fromString(pairAddress));
+  if (!pair) {
+    throw new Error(
+      "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
+    );
+  }
 
   let priceETH = pair.slot0().value0.times(pair.slot0().value0).toBigDecimal();
   const priceDiv = BigInt.fromI32(2).pow(192).toBigDecimal();
@@ -183,11 +215,9 @@ export function getDiscountedPairUSD(
   // TODO assumes that the pair is Uniswap V2. What about V3 or balancer?
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
-    log.debug(
-      "Cannot determine discounted value at block {} as the contract {} does not exist yet. Returning 0.",
-      [blockNumber.toString(), pairAddress],
+    throw new Error(
+      "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
     );
-    return BigDecimal.zero();
   }
 
   const total_lp = pair.totalSupply();
@@ -207,6 +237,11 @@ export function getDiscountedPairUSD(
 // TODO unused?
 export function getDiscountedPairLUSD(lp_amount: BigInt, pair_adress: string): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(pair_adress));
+  if (!pair) {
+    throw new Error(
+      "Cannot determine discounted value as the contract " + pair_adress + " does not exist yet.",
+    );
+  }
 
   const total_lp = pair.totalSupply();
   const lp_token_1 = toDecimal(pair.getReserves().value0, 18);
@@ -240,11 +275,9 @@ export function getPairUSD(
 ): BigDecimal {
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
-    log.debug(
-      "Cannot determine discounted value at block {} as the contract {} does not exist yet. Returning 0.",
-      [blockNumber.toString(), pairAddress],
+    throw new Error(
+      "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
     );
-    return BigDecimal.zero();
   }
 
   const ohmReserves = pair.getReserves().value0;
@@ -264,6 +297,12 @@ export function getPairUSD(
 // TODO unused?
 export function getPairLUSD(lp_amount: BigInt, pair_adress: string, block: BigInt): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(pair_adress));
+  if (!pair) {
+    throw new Error(
+      "Cannot determine discounted value as the contract " + pair_adress + " does not exist yet.",
+    );
+  }
+
   const total_lp = pair.totalSupply();
   const lp_token_0 = pair.getReserves().value0;
   const lp_token_1 = pair.getReserves().value1;
@@ -277,6 +316,12 @@ export function getPairLUSD(lp_amount: BigInt, pair_adress: string, block: BigIn
 // TODO unused?
 export function getPairWETH(lp_amount: BigInt, pair_adress: string, block: BigInt): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(pair_adress));
+  if (!pair) {
+    throw new Error(
+      "Cannot determine discounted value as the contract " + pair_adress + " does not exist yet.",
+    );
+  }
+
   const total_lp = pair.totalSupply();
   const lp_token_0 = pair.getReserves().value0;
   const lp_token_1 = pair.getReserves().value1;

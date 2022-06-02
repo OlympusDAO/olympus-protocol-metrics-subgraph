@@ -18,6 +18,7 @@ import {
   getERC20Balance,
   getERC20TokenRecordsFromWallets,
   getLiquityStabilityPoolRecords,
+  getOnsenAllocatorRecords,
   getRariAllocatorRecords,
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
@@ -57,6 +58,9 @@ export function getStablecoinBalance(
 
   // Liquity Stability Pool
   records.combine(getLiquityStabilityPoolRecords(contractAddress, blockNumber));
+
+  // Onsen Allocator
+  records.combine(getOnsenAllocatorRecords(contractAddress, rate, blockNumber));
 
   // Liquidity pools
   if (includeLiquidity) {

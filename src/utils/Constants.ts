@@ -1,3 +1,5 @@
+import { log } from "@graphprotocol/graph-ts";
+
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 
 // Tokens definition
@@ -206,12 +208,20 @@ PAIR_HANDLER.set(ERC20_XSUSHI, [
  * @returns a {PairHandler} or null
  */
 export const getPairHandler = (contractAddress: string): PairHandler | null => {
-  if (!PAIR_HANDLER.has(contractAddress)) return null;
+  if (!PAIR_HANDLER.has(contractAddress)) {
+    log.debug("No pair handler for contract {}", [contractAddress]);
+    return null;
+  }
 
   const handlers = PAIR_HANDLER.get(contractAddress);
-  if (!handlers.length) return null;
+  if (!handlers.length) {
+    log.debug("Empty pair handlers for contract {}", [contractAddress]);
+    return null;
+  }
 
-  return handlers.pop();
+  const handler = handlers[0];
+  log.debug("Found handler pair: {}", [handler.getPair()]);
+  return handler;
 };
 
 /**
@@ -365,7 +375,7 @@ CONTRACT_NAME_MAP.set(DAIBOND_CONTRACTS2, "DAI Bond 2");
 CONTRACT_NAME_MAP.set(DAIBOND_CONTRACTS3, "DAI Bond 3");
 CONTRACT_NAME_MAP.set(DISTRIBUTOR_CONTRACT_V2, "Distributor V2");
 CONTRACT_NAME_MAP.set(DISTRIBUTOR_CONTRACT, "Distributor");
-CONTRACT_NAME_MAP.set(ERC20_ADAI, "DAI");
+CONTRACT_NAME_MAP.set(ERC20_ADAI, "aDAI");
 CONTRACT_NAME_MAP.set(ERC20_CVX_VL, "vlCVX");
 CONTRACT_NAME_MAP.set(ERC20_CVX, "CVX");
 CONTRACT_NAME_MAP.set(ERC20_DAI, "DAI");

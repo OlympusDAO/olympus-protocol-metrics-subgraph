@@ -22,6 +22,7 @@ import {
   getLiquityAllocator,
   getOnsenAllocatorId,
   getRariAllocatorId,
+  ONSEN_ALLOCATOR,
   RARI_ALLOCATOR,
   SUSHI_MASTERCHEF,
   WALLET_ADDRESSES,
@@ -362,13 +363,13 @@ export function getUniswapV2PairBalance(
  * @param contract The bound MasterChef/Onsen contract.
  * @param allocatorAddress The address of the allocator.
  * @param blockNumber The current block number.
- * @returns BigInt or null
+ * @returns BigDecimal or null
  */
 export function getOnsenBalance(
   tokenAddress: string,
   allocatorAddress: string,
   blockNumber: BigInt,
-): BigInt | null {
+): BigDecimal | null {
   const contract = getMasterChef(SUSHI_MASTERCHEF, blockNumber);
   if (!contract) {
     log.info("Contract for address {} does not exist at block {}", [
@@ -384,7 +385,10 @@ export function getOnsenBalance(
     return null;
   }
 
-  return contract.userInfo(BigInt.fromI32(onsenId), Address.fromString(allocatorAddress)).value0;
+  return toDecimal(
+    contract.userInfo(BigInt.fromI32(onsenId), Address.fromString(allocatorAddress)).value0,
+    18,
+  );
 }
 
 /**
@@ -532,6 +536,37 @@ export function getRariAllocatorRecords(
       getContractName(contractAddress),
       getContractName(RARI_ALLOCATOR),
       RARI_ALLOCATOR,
+      price,
+      balance,
+    ),
+  );
+
+  return records;
+}
+
+/**
+ * Returns the balance of {contractAddress} in the Onsen Allocator.
+ *
+ * @param tokenAddress ERC20 contract to find the balance of
+ * @param price
+ * @param blockNumber the current block number
+ * @returns TokenRecords object
+ */
+export function getOnsenAllocatorRecords(
+  tokenAddress: string,
+  price: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = new TokenRecords();
+
+  const balance = getOnsenBalance(tokenAddress, ONSEN_ALLOCATOR, blockNumber);
+  if (!balance) return records;
+
+  records.push(
+    new TokenRecord(
+      getContractName(tokenAddress),
+      getContractName(ONSEN_ALLOCATOR),
+      ONSEN_ALLOCATOR,
       price,
       balance,
     ),

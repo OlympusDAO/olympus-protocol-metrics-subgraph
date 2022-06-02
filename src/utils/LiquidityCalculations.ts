@@ -1,12 +1,9 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import {
-  ERC20_DAI,
   ERC20_STABLE_TOKENS,
   ERC20_VOLATILE_TOKENS,
-  ERC20_WETH,
   getContractName,
-  getPairHandler,
   getPairHandlers,
   OHMDAI_ONSEN_ID,
   OHMLUSD_ONSEN_ID,
@@ -28,7 +25,6 @@ import {
 import {
   getMasterChef,
   getMasterChefBalance,
-  getOnsenBalance,
   getUniswapV2Pair,
   getUniswapV2PairBalance,
 } from "./ContractHelper";
@@ -128,22 +124,14 @@ export function getLiquidityBalances(
           getUniswapV2PairBalance(liquidityPair, currentWallet, blockNumber),
         );
       }
+
+      records.combine(getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree));
     } else if (pairHandler.getHandler() === PairHandlerTypes.UniswapV3) {
       // TODO add support for Uniswap V3
       log.error("UniswapV3 not yet supported", []);
     } else {
       throw new Error("Unsupported liquidity pair type: " + pairHandler.getHandler().toString());
     }
-
-    records.combine(getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree));
-  }
-
-  // Onsen
-  const onsenBalance = getOnsenBalance(tokenAddress, ONSEN_ALLOCATOR, blockNumber);
-  if (onsenBalance) {
-    const liquidityBalance = new LiquidityBalances(SUSHI_MASTERCHEF);
-    liquidityBalance.addBalance(ONSEN_ALLOCATOR, onsenBalance);
-    records.combine(getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree));
   }
 
   return records;
