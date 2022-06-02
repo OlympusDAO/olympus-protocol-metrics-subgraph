@@ -8,6 +8,7 @@ import {
   ERC20_FEI,
   ERC20_FRAX,
   ERC20_LUSD,
+  ERC20_STABLE_TOKENS,
   ERC20_UST,
   getContractName,
 } from "./Constants";
@@ -28,7 +29,59 @@ import {
   getOhmLusdLiquidityBalance,
   getOhmLusdLiquidityV2Balance,
 } from "./LiquidityCalculations";
+import { getUSDRate } from "./Price";
 import { TokenRecord, TokenRecords } from "./TokenRecord";
+
+/**
+ * Returns the token records for a given stablecoin. This includes:
+ * - Wallets
+ * - Allocators
+ * - Liquidity pools
+ *
+ * @param contractAddress the address of the ERC20 contract
+ * @param blockNumber the current block
+ * @returns TokenRecords object
+ */
+export function getStablecoinBalance(contractAddress: string, blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords();
+  const contractName = getContractName(contractAddress);
+  const contract = getERC20(contractName, contractAddress, blockNumber);
+  const rate = getUSDRate(contractAddress);
+  // TODO add flags for exclusion of liquidity, riskfree value, etc
+
+  // Wallets
+  records.combine(getERC20TokenRecordsFromWallets(contractName, contract, rate, blockNumber));
+
+  // Rari Allocator
+  records.combine(getRariAllocatorRecords(contractAddress, rate, blockNumber));
+
+  // Convex Allocator
+  records.combine(getConvexAllocatorRecords(contractAddress, blockNumber));
+
+  // Liquity Stability Pool
+  records.combine(getLiquityStabilityPoolRecords(contractAddress, blockNumber));
+
+  // Liquidity pools
+  // TODO add liquidity pools
+
+  return records;
+}
+
+/**
+ * Gets the balances for all stablecoins, using {getStablecoinBalance}.
+ *
+ * @param blockNumber the current block
+ * @returns TokenRecords object
+ */
+export function getStablecoinBalances(blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords();
+
+  for (let i = 0; i < ERC20_STABLE_TOKENS.length; i++) {
+    records.combine(getStablecoinBalance(ERC20_STABLE_TOKENS[i], blockNumber));
+  }
+
+  return records;
+}
 
 /**
  * Calculates the balance of DAI across the following:

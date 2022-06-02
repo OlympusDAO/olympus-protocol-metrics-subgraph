@@ -590,6 +590,7 @@ export function getLiquityStabilityPoolRecords(
   tokenAddress: string,
   blockNumber: BigInt,
 ): TokenRecords {
+  // TODO assumes a USD rate of $1
   const records = new TokenRecords();
 
   const liquityAllocator = getLiquityAllocator(tokenAddress);

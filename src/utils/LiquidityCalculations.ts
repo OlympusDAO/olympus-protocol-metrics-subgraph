@@ -5,18 +5,18 @@ import {
   OHMDAI_ONSEN_ID,
   OHMLUSD_ONSEN_ID,
   ONSEN_ALLOCATOR,
-  SUSHI_MASTERCHEF,
   PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_ETH,
   PAIR_UNISWAP_V2_OHM_ETH_V2,
+  PAIR_UNISWAP_V2_OHM_FRAX,
+  PAIR_UNISWAP_V2_OHM_FRAX_V2,
   PAIR_UNISWAP_V2_OHM_LUSD,
   PAIR_UNISWAP_V2_OHM_LUSD_V2,
+  SUSHI_MASTERCHEF,
   TREASURY_ADDRESS,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
-  PAIR_UNISWAP_V2_OHM_FRAX,
-  PAIR_UNISWAP_V2_OHM_FRAX_V2,
 } from "./Constants";
 import {
   getMasterChef,
@@ -28,8 +28,6 @@ import { toDecimal } from "./Decimals";
 import { LiquidityBalances } from "./LiquidityBalance";
 import { getDiscountedPairUSD, getPairUSD } from "./Price";
 import { TokenRecord, TokenRecords } from "./TokenRecord";
-import { getDaiMarketValue, getFraxMarketValue, getLusdMarketValue } from "./TokenStablecoins";
-import { getEthMarketValue } from "./TokenVolatile";
 
 /**
  * Creates TokenRecords for the giving liquidity records.
