@@ -172,9 +172,17 @@ PAIR_HANDLER.set(ERC20_CVX, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UN
 PAIR_HANDLER.set(ERC20_CVX_VL, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH),
 ]);
+PAIR_HANDLER.set(ERC20_DAI, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI),
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI_V2),
+]);
 PAIR_HANDLER.set(ERC20_FXS, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FXS_ETH)]);
 PAIR_HANDLER.set(ERC20_FXS_VE, [
   new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FXS_ETH),
+]);
+PAIR_HANDLER.set(ERC20_LUSD, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_LUSD),
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_LUSD_V2),
 ]);
 PAIR_HANDLER.set(ERC20_TRIBE, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_TRIBE_ETH),
@@ -184,6 +192,8 @@ PAIR_HANDLER.set(ERC20_WBTC, [
 ]);
 PAIR_HANDLER.set(ERC20_WETH, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_USDC_ETH),
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_ETH),
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_ETH_V2),
 ]);
 PAIR_HANDLER.set(ERC20_XSUSHI, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_XSUSHI_ETH),
