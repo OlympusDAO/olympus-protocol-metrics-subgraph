@@ -167,36 +167,51 @@ export const PAIR_UNISWAP_V2_XSUSHI_ETH = "0x36e2fcccc59e5747ff63a03ea2e5c0c2c14
 export const PAIR_UNISWAP_V3_FXS_ETH = "0xcd8286b48936cdac20518247dbd310ab681a9fbf";
 export const PAIR_UNISWAP_V3_FXS_ETH_BLOCK = "13509100";
 
-const PAIR_HANDLER = new Map<string, PairHandler>();
-PAIR_HANDLER.set(ERC20_CVX, new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH));
-PAIR_HANDLER.set(
-  ERC20_CVX_VL,
+const PAIR_HANDLER = new Map<string, PairHandler[]>();
+PAIR_HANDLER.set(ERC20_CVX, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH)]);
+PAIR_HANDLER.set(ERC20_CVX_VL, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH),
-);
-PAIR_HANDLER.set(ERC20_FXS, new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FXS_ETH));
-PAIR_HANDLER.set(
-  ERC20_FXS_VE,
+]);
+PAIR_HANDLER.set(ERC20_FXS, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FXS_ETH)]);
+PAIR_HANDLER.set(ERC20_FXS_VE, [
   new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FXS_ETH),
-);
-PAIR_HANDLER.set(
-  ERC20_TRIBE,
+]);
+PAIR_HANDLER.set(ERC20_TRIBE, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_TRIBE_ETH),
-);
-PAIR_HANDLER.set(ERC20_WBTC, new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_ETH_WBTC));
-PAIR_HANDLER.set(ERC20_WETH, new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_USDC_ETH));
-PAIR_HANDLER.set(
-  ERC20_XSUSHI,
+]);
+PAIR_HANDLER.set(ERC20_WBTC, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_ETH_WBTC),
+]);
+PAIR_HANDLER.set(ERC20_WETH, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_USDC_ETH),
+]);
+PAIR_HANDLER.set(ERC20_XSUSHI, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_XSUSHI_ETH),
-);
+]);
 
 /**
- * Returns the handler for a liquidity pair.
+ * Returns the first handler for a liquidity pair.
  *
  * @param contractAddress the contract address to look up
  * @returns a {PairHandler} or null
  */
 export const getPairHandler = (contractAddress: string): PairHandler | null => {
   if (!PAIR_HANDLER.has(contractAddress)) return null;
+
+  const handlers = PAIR_HANDLER.get(contractAddress);
+  if (!handlers.length) return null;
+
+  return handlers.pop();
+};
+
+/**
+ * Returns the handlers for a liquidity pair.
+ *
+ * @param contractAddress the contract address to look up
+ * @returns Array of PairHandlers
+ */
+export const getPairHandlers = (contractAddress: string): PairHandler[] => {
+  if (!PAIR_HANDLER.has(contractAddress)) return [];
 
   return PAIR_HANDLER.get(contractAddress);
 };
@@ -222,6 +237,24 @@ export const ALLOCATOR_CONVEX_FRAX_CONTRACTS = [
   CONVEX_ALLOCATOR2,
   CONVEX_ALLOCATOR3,
 ];
+
+const ALLOCATOR_ONSEN_ID = new Map<string, i32>();
+ALLOCATOR_ONSEN_ID.set(ERC20_DAI, OHMDAI_ONSEN_ID);
+ALLOCATOR_ONSEN_ID.set(ERC20_LUSD, OHMLUSD_ONSEN_ID);
+
+export const ALLOCATOR_ONSEN_ID_NOT_FOUND = -1;
+
+/**
+ * Returns the ID of a given contract in the Onsen Allocator.
+ *
+ * @param contractAddress the contract address to look up
+ * @returns a number or {ALLOCATOR_ONSEN_ID_NOT_FOUND} if not found
+ */
+export const getOnsenAllocatorId = (contractAddress: string): i32 => {
+  if (!ALLOCATOR_ONSEN_ID.has(contractAddress)) return ALLOCATOR_ONSEN_ID_NOT_FOUND;
+
+  return ALLOCATOR_ONSEN_ID.get(contractAddress);
+};
 
 /**
  * The Rari Allocator contract ({RARI_ALLOCATOR}) has a function

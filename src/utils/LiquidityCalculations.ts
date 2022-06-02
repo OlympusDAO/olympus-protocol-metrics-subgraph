@@ -1,7 +1,13 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import {
+  ERC20_DAI,
+  ERC20_STABLE_TOKENS,
+  ERC20_VOLATILE_TOKENS,
+  ERC20_WETH,
   getContractName,
+  getPairHandler,
+  getPairHandlers,
   OHMDAI_ONSEN_ID,
   OHMLUSD_ONSEN_ID,
   ONSEN_ALLOCATOR,
@@ -17,15 +23,18 @@ import {
   TREASURY_ADDRESS,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
+  WALLET_ADDRESSES,
 } from "./Constants";
 import {
   getMasterChef,
   getMasterChefBalance,
+  getOnsenBalance,
   getUniswapV2Pair,
   getUniswapV2PairBalance,
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { LiquidityBalances } from "./LiquidityBalance";
+import { PairHandlerTypes } from "./PairHandler";
 import { getDiscountedPairUSD, getPairUSD } from "./Price";
 import { TokenRecord, TokenRecords } from "./TokenRecord";
 
@@ -86,6 +95,61 @@ function getLiquidityTokenRecords(
 }
 
 /**
+ * Returns the TokenRecords representing the liquidity for {tokenAddress}.
+ *
+ * @param tokenAddress the address of the ERC20 token
+ * @param riskFree whether the value is risk-free or not
+ * @param blockNumber current block number
+ * @returns TokenRecords object
+ */
+export function getLiquidityBalances(
+  tokenAddress: string,
+  riskFree: boolean,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = new TokenRecords();
+
+  // Uniswap
+  // Get the appropriate pair
+  const pairHandlers = getPairHandlers(tokenAddress);
+  for (let j = 0; j < pairHandlers.length; j++) {
+    const pairHandler = pairHandlers[j];
+    const liquidityBalance = new LiquidityBalances(pairHandler.getPair());
+    if (pairHandler.getHandler() === PairHandlerTypes.UniswapV2) {
+      const liquidityPair = getUniswapV2Pair(pairHandler.getPair(), blockNumber);
+
+      // Across the different sources, determine the total balance of liquidity pools
+      // Uniswap LPs in wallets
+      for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
+        const currentWallet = WALLET_ADDRESSES[i];
+
+        liquidityBalance.addBalance(
+          currentWallet,
+          getUniswapV2PairBalance(liquidityPair, currentWallet, blockNumber),
+        );
+      }
+    } else if (pairHandler.getHandler() === PairHandlerTypes.UniswapV3) {
+      // TODO add support for Uniswap V3
+      log.error("UniswapV3 not yet supported", []);
+    } else {
+      throw new Error("Unsupported liquidity pair type: " + pairHandler.getHandler().toString());
+    }
+
+    records.combine(getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree));
+  }
+
+  // Onsen
+  const onsenBalance = getOnsenBalance(tokenAddress, ONSEN_ALLOCATOR, blockNumber);
+  if (onsenBalance) {
+    const liquidityBalance = new LiquidityBalances(SUSHI_MASTERCHEF);
+    liquidityBalance.addBalance(ONSEN_ALLOCATOR, onsenBalance);
+    records.combine(getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree));
+  }
+
+  return records;
+}
+
+/**
  * Returns the balance of the OHM-DAI liquidity pair.
  *
  * This includes:
@@ -99,31 +163,7 @@ function getLiquidityTokenRecords(
  * @returns TokenRecords object
  */
 export function getOhmDaiLiquidityBalance(blockNumber: BigInt, riskFree: boolean): TokenRecords {
-  const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_DAI);
-  const ohmDaiLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_DAI, blockNumber);
-  liquidityBalance.addBalance(
-    TREASURY_ADDRESS,
-    getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS, blockNumber),
-  );
-  liquidityBalance.addBalance(
-    TREASURY_ADDRESS_V2,
-    getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS_V2, blockNumber),
-  );
-  liquidityBalance.addBalance(
-    TREASURY_ADDRESS_V3,
-    getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
-  );
-  liquidityBalance.addBalance(
-    ONSEN_ALLOCATOR,
-    getMasterChefBalance(
-      getMasterChef(SUSHI_MASTERCHEF, blockNumber),
-      ONSEN_ALLOCATOR,
-      OHMDAI_ONSEN_ID,
-      blockNumber,
-    ),
-  );
-
-  return getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree);
+  return getLiquidityBalances(ERC20_DAI, riskFree, blockNumber);
 }
 
 /**
@@ -496,11 +536,7 @@ export function getOhmEthProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal
 }
 
 /**
- * Returns the value of liquidity pools for the following pairs:
- * - DAI
- * - FRAX
- * - LUSD
- * - ETH
+ * Returns the value of liquidity pools for volatile and stable tokens.
  *
  * @param blockNumber
  * @param riskFree If `riskFree` is true, the risk-free value will be returned
@@ -509,16 +545,13 @@ export function getOhmEthProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal
 export function getLiquidityPoolValue(blockNumber: BigInt, riskFree: boolean): TokenRecords {
   const records = new TokenRecords();
 
-  records.combine(getOhmDaiLiquidityBalance(blockNumber, riskFree));
-  records.combine(getOhmDaiLiquidityV2Balance(blockNumber, riskFree));
-  records.combine(getOhmFraxLiquidityBalance(blockNumber, riskFree));
-  records.combine(getOhmFraxLiquidityV2Balance(blockNumber, riskFree));
-  records.combine(getOhmLusdLiquidityBalance(blockNumber, riskFree));
-  records.combine(getOhmLusdLiquidityV2Balance(blockNumber, riskFree));
-  // No FEI pools
-  // No UST pools
-  records.combine(getOhmEthLiquidityBalance(blockNumber, riskFree));
-  records.combine(getOhmEthLiquidityV2Balance(blockNumber, riskFree));
+  for (let i = 0; i < ERC20_STABLE_TOKENS.length; i++) {
+    records.combine(getLiquidityBalances(ERC20_STABLE_TOKENS[i], riskFree, blockNumber));
+  }
+
+  for (let i = 0; i < ERC20_VOLATILE_TOKENS.length; i++) {
+    records.combine(getLiquidityBalances(ERC20_VOLATILE_TOKENS[i], riskFree, blockNumber));
+  }
 
   return records;
 }

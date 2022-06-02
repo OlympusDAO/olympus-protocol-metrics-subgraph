@@ -14,13 +14,16 @@ import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
 import {
   ALLOCATOR_CONVEX_FRAX_CONTRACTS,
   ALLOCATOR_LIQUITY_STABILITY_POOLS,
+  ALLOCATOR_ONSEN_ID_NOT_FOUND,
   ALLOCATOR_RARI_ID_NOT_FOUND,
   CONTRACT_STARTING_BLOCK_MAP,
   ERC20_FRAX,
   getContractName,
   getLiquityAllocator,
+  getOnsenAllocatorId,
   getRariAllocatorId,
   RARI_ALLOCATOR,
+  SUSHI_MASTERCHEF,
   WALLET_ADDRESSES,
 } from "./Constants";
 import { toDecimal } from "./Decimals";
@@ -349,6 +352,39 @@ export function getUniswapV2PairBalance(
   ]);
 
   return contract.balanceOf(Address.fromString(address));
+}
+
+/**
+ * Helper method to simplify getting the balance from a MasterChef/Onsen contract.
+ *
+ * Returns 0 if the minimum block number has not passed or there is no matching Onsen ID.
+ *
+ * @param contract The bound MasterChef/Onsen contract.
+ * @param allocatorAddress The address of the allocator.
+ * @param blockNumber The current block number.
+ * @returns BigInt or null
+ */
+export function getOnsenBalance(
+  tokenAddress: string,
+  allocatorAddress: string,
+  blockNumber: BigInt,
+): BigInt | null {
+  const contract = getMasterChef(SUSHI_MASTERCHEF, blockNumber);
+  if (!contract) {
+    log.info("Contract for address {} does not exist at block {}", [
+      allocatorAddress,
+      blockNumber.toString(),
+    ]);
+    return null;
+  }
+
+  const onsenId = getOnsenAllocatorId(tokenAddress);
+  if (onsenId === ALLOCATOR_ONSEN_ID_NOT_FOUND) {
+    log.debug("No Onsen ID found for token {}. Skipping.", [tokenAddress]);
+    return null;
+  }
+
+  return contract.userInfo(BigInt.fromI32(onsenId), Address.fromString(allocatorAddress)).value0;
 }
 
 /**
