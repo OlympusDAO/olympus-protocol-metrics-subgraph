@@ -118,11 +118,10 @@ export function getLiquidityBalances(
       // Uniswap LPs in wallets
       for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
         const currentWallet = WALLET_ADDRESSES[i];
+        const balance = getUniswapV2PairBalance(liquidityPair, currentWallet, blockNumber);
+        if (!balance || balance.equals(BigInt.zero())) continue;
 
-        liquidityBalance.addBalance(
-          currentWallet,
-          getUniswapV2PairBalance(liquidityPair, currentWallet, blockNumber),
-        );
+        liquidityBalance.addBalance(currentWallet, balance);
       }
 
       records.combine(getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree));

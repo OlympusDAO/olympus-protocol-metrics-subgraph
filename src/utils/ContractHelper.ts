@@ -440,7 +440,7 @@ export function getValue(balance: BigInt, decimals: number, rate: BigDecimal): B
  * @param contract ERC20 contract
  * @param rate the unit price/rate of the token
  * @param blockNumber the current block number
- * @returns TokenRecord object
+ * @returns TokenRecord object or null
  */
 export function getERC20TokenRecordFromWallet(
   tokenName: string,
@@ -448,17 +448,14 @@ export function getERC20TokenRecordFromWallet(
   contract: ERC20 | null,
   rate: BigDecimal,
   blockNumber: BigInt,
-): TokenRecord {
-  return new TokenRecord(
-    tokenName,
-    getContractName(walletAddress),
-    walletAddress,
-    rate,
-    toDecimal(
-      getERC20Balance(contract, walletAddress, blockNumber),
-      contract ? contract.decimals() : 18,
-    ),
+): TokenRecord | null {
+  const balance = toDecimal(
+    getERC20Balance(contract, walletAddress, blockNumber),
+    contract ? contract.decimals() : 18,
   );
+  if (!balance || balance.equals(BigDecimal.zero())) return null;
+
+  return new TokenRecord(tokenName, getContractName(walletAddress), walletAddress, rate, balance);
 }
 
 /**
@@ -480,9 +477,16 @@ export function getERC20TokenRecordsFromWallets(
   const records = new TokenRecords();
 
   for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
-    records.push(
-      getERC20TokenRecordFromWallet(tokenName, WALLET_ADDRESSES[i], contract, rate, blockNumber),
+    const record = getERC20TokenRecordFromWallet(
+      tokenName,
+      WALLET_ADDRESSES[i],
+      contract,
+      rate,
+      blockNumber,
     );
+    if (!record) continue;
+
+    records.push(record);
   }
 
   return records;
@@ -492,11 +496,11 @@ export function getERC20TokenRecordsFromWallets(
  * Returns the balance for a given contract in the Rari Allocator.
  *
  * If the contract does not have an entry in the Rari Allocator,
- * 0 is returned.
+ * null is returned.
  *
  * @param contractAddress the contract to look up
  * @param blockNumber the current block number
- * @returns BigDecimal
+ * @returns BigDecimal or null
  */
 function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): BigDecimal | null {
   const rariAllocatorId = getRariAllocatorId(contractAddress);
@@ -504,7 +508,7 @@ function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
   const contract = getERC20(getContractName(contractAddress), contractAddress, blockNumber);
 
   if (rariAllocatorId === ALLOCATOR_RARI_ID_NOT_FOUND || !rariAllocator || !contract) {
-    return BigDecimal.zero();
+    return null;
   }
 
   return toDecimal(
@@ -529,7 +533,7 @@ export function getRariAllocatorRecords(
   const records = new TokenRecords();
 
   const balance = getRariAllocatorBalance(contractAddress, blockNumber);
-  if (!balance) return records;
+  if (!balance || balance.equals(BigDecimal.zero())) return records;
 
   records.push(
     new TokenRecord(
@@ -560,7 +564,7 @@ export function getOnsenAllocatorRecords(
   const records = new TokenRecords();
 
   const balance = getOnsenBalance(tokenAddress, ONSEN_ALLOCATOR, blockNumber);
-  if (!balance) return records;
+  if (!balance || balance.equals(BigDecimal.zero())) return records;
 
   records.push(
     new TokenRecord(
@@ -613,8 +617,7 @@ export function getConvexAllocatorRecords(tokenAddress: string, blockNumber: Big
   for (let i = 0; i < ALLOCATOR_CONVEX_FRAX_CONTRACTS.length; i++) {
     const allocatorAddress = ALLOCATOR_CONVEX_FRAX_CONTRACTS[i];
     const balance = getConvexAllocatorBalance(tokenAddress, allocatorAddress, blockNumber);
-
-    if (!balance) continue;
+    if (!balance || balance.equals(BigDecimal.zero())) continue;
 
     records.push(
       new TokenRecord(

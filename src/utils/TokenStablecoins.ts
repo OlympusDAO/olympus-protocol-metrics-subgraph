@@ -1,8 +1,6 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { BigInt } from "@graphprotocol/graph-ts";
 
 import {
-  AAVE_ALLOCATOR,
-  AAVE_ALLOCATOR_V2,
   ERC20_ADAI,
   ERC20_DAI,
   ERC20_FEI,
@@ -15,16 +13,14 @@ import {
 import {
   getConvexAllocatorRecords,
   getERC20,
-  getERC20Balance,
   getERC20TokenRecordsFromWallets,
   getLiquityStabilityPoolRecords,
   getOnsenAllocatorRecords,
   getRariAllocatorRecords,
 } from "./ContractHelper";
-import { toDecimal } from "./Decimals";
 import { getLiquidityBalances } from "./LiquidityCalculations";
 import { getUSDRate } from "./Price";
-import { TokenRecord, TokenRecords } from "./TokenRecord";
+import { TokenRecords } from "./TokenRecord";
 
 /**
  * Returns the token records for a given stablecoin. This includes:
@@ -93,7 +89,7 @@ export function getStablecoinBalances(
 }
 
 /**
- * Calculates the balance of DAI across the following:
+ * Calculates the balance of DAI/aDAI across the following:
  * - all wallets, using {getERC20TokenRecordsFromWallets}.
  * - Aave allocator
  * - Aave allocator v2
@@ -103,37 +99,10 @@ export function getStablecoinBalances(
  * @returns TokenRecords object
  */
 export function getDaiBalance(blockNumber: BigInt): TokenRecords {
-  const daiERC20 = getERC20("DAI", ERC20_DAI, blockNumber);
-  const aDaiERC20 = getERC20("aDAI", ERC20_ADAI, blockNumber);
-  const records = getERC20TokenRecordsFromWallets(
-    "DAI",
-    daiERC20,
-    BigDecimal.fromString("1"),
-    blockNumber,
-  );
+  const records = new TokenRecords();
 
-  if (aDaiERC20) {
-    records.push(
-      new TokenRecord(
-        "DAI",
-        getContractName(AAVE_ALLOCATOR),
-        AAVE_ALLOCATOR,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(aDaiERC20, AAVE_ALLOCATOR, blockNumber), 18),
-      ),
-    );
-    records.push(
-      new TokenRecord(
-        "DAI",
-        getContractName(AAVE_ALLOCATOR_V2),
-        AAVE_ALLOCATOR_V2,
-        BigDecimal.fromString("1"),
-        toDecimal(getERC20Balance(aDaiERC20, AAVE_ALLOCATOR_V2, blockNumber), 18),
-      ),
-    );
-  }
-
-  records.combine(getRariAllocatorRecords(ERC20_DAI, BigDecimal.fromString("1"), blockNumber));
+  records.combine(getStablecoinBalance(ERC20_DAI, false, false, blockNumber));
+  records.combine(getStablecoinBalance(ERC20_ADAI, false, false, blockNumber));
 
   return records;
 }
@@ -146,9 +115,7 @@ export function getDaiBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getFeiBalance(blockNumber: BigInt): TokenRecords {
-  const feiERC20 = getERC20("FEI", ERC20_FEI, blockNumber);
-
-  return getERC20TokenRecordsFromWallets("FEI", feiERC20, BigDecimal.fromString("1"), blockNumber);
+  return getStablecoinBalance(ERC20_FEI, false, false, blockNumber);
 }
 
 /**
@@ -160,18 +127,7 @@ export function getFeiBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getFraxBalance(blockNumber: BigInt): TokenRecords {
-  const fraxERC20 = getERC20("FRAX", ERC20_FRAX, blockNumber);
-
-  const records = getERC20TokenRecordsFromWallets(
-    "FRAX",
-    fraxERC20,
-    BigDecimal.fromString("1"),
-    blockNumber,
-  );
-
-  records.combine(getConvexAllocatorRecords(ERC20_FRAX, blockNumber));
-
-  return records;
+  return getStablecoinBalance(ERC20_FRAX, false, false, blockNumber);
 }
 
 /**
@@ -183,17 +139,7 @@ export function getFraxBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getLUSDBalance(blockNumber: BigInt): TokenRecords {
-  const lusdERC20 = getERC20("LUSD", ERC20_LUSD, blockNumber);
-  const records = getERC20TokenRecordsFromWallets(
-    "LUSD",
-    lusdERC20,
-    BigDecimal.fromString("1"),
-    blockNumber,
-  );
-
-  records.combine(getLiquityStabilityPoolRecords(ERC20_LUSD, blockNumber));
-
-  return records;
+  return getStablecoinBalance(ERC20_LUSD, false, false, blockNumber);
 }
 
 /**
@@ -204,9 +150,7 @@ export function getLUSDBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getUSTBalance(blockNumber: BigInt): TokenRecords {
-  const ustERC20 = getERC20("UST", ERC20_UST, blockNumber);
-
-  return getERC20TokenRecordsFromWallets("UST", ustERC20, BigDecimal.fromString("1"), blockNumber);
+  return getStablecoinBalance(ERC20_UST, false, false, blockNumber);
 }
 
 /**
