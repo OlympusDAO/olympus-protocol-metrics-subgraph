@@ -17,3 +17,8 @@ A set of Docker containers is pre-configured to enable local testing of the subg
 5. Access the GraphQL query interface: http://localhost:8000/subgraphs/name/olympus/graphql
 
 TODO note about reasons for schema design with \*components
+
+## Deployment (Testing)
+
+1. Update the `SUBGRAPH_VERSION` variable in the `.subgraph-version` file.
+2. Run `yarn deploy-studio`
