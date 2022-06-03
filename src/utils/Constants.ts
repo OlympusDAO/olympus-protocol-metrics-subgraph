@@ -143,6 +143,7 @@ export const ERC20_VOLATILE_TOKENS = [
   ERC20_WETH,
   ERC20_XSUSHI,
 ];
+export const ERC20_VOLATILE_ILLIQUID_TOKENS = [ERC20_FXS_VE];
 
 // Liquidity Pools
 export const PAIR_UNISWAP_V2_CVX_ETH = "0x05767d9ef41dc40689678ffca0608878fb3de906";

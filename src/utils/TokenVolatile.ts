@@ -1,25 +1,28 @@
-import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import {
   ERC20_CVX,
   ERC20_CVX_VL,
   ERC20_FXS,
   ERC20_FXS_VE,
-  ERC20_TRIBE,
+  ERC20_VOLATILE_ILLIQUID_TOKENS,
+  ERC20_VOLATILE_TOKENS,
   ERC20_WBTC,
   ERC20_WETH,
   ERC20_XSUSHI,
-  VEFXS_ALLOCATOR,
+  getContractName,
 } from "./Constants";
 import {
+  getConvexAllocatorRecords,
   getERC20,
   getERC20TokenRecordsFromWallets,
+  getLiquityStabilityPoolRecords,
+  getOnsenAllocatorRecords,
   getRariAllocatorRecords,
-  getVeFXS,
+  getVeFXSAllocatorRecords,
 } from "./ContractHelper";
-import { toDecimal } from "./Decimals";
-import { getOhmEthLiquidityBalance, getOhmEthLiquidityV2Balance } from "./LiquidityCalculations";
-import { getBTCUSDRate, getETHUSDRate, getUSDRate } from "./Price";
+import { getLiquidityBalances } from "./LiquidityCalculations";
+import { getUSDRate } from "./Price";
 import { TokenRecord, TokenRecords } from "./TokenRecord";
 
 /**
@@ -48,44 +51,117 @@ export function getVestingAssets(): TokenRecords {
 }
 
 /**
+ * Returns the token records for a given volatile token. This includes:
+ * - Wallets
+ * - Allocators
+ * - Liquidity pools
+ *
+ * @param contractAddress the address of the ERC20 contract
+ * @param blockNumber the current block
+ * @returns TokenRecords object
+ */
+export function getVolatileTokenBalance(
+  contractAddress: string,
+  includeLiquidity: boolean,
+  riskFree: boolean,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = new TokenRecords();
+  const contractName = getContractName(contractAddress);
+  const contract = getERC20(contractName, contractAddress, blockNumber);
+  const rate = getUSDRate(contractAddress);
+
+  // Wallets
+  records.combine(getERC20TokenRecordsFromWallets(contractName, contract, rate, blockNumber));
+
+  // Rari Allocator
+  records.combine(getRariAllocatorRecords(contractAddress, rate, blockNumber));
+
+  // Convex Allocator
+  records.combine(getConvexAllocatorRecords(contractAddress, blockNumber));
+
+  // Liquity Stability Pool
+  records.combine(getLiquityStabilityPoolRecords(contractAddress, blockNumber));
+
+  // Onsen Allocator
+  records.combine(getOnsenAllocatorRecords(contractAddress, rate, blockNumber));
+
+  // VeFXS Allocator
+  records.combine(getVeFXSAllocatorRecords(contractAddress, blockNumber));
+
+  // Liquidity pools
+  if (includeLiquidity) {
+    records.combine(getLiquidityBalances(contractAddress, riskFree, blockNumber));
+  }
+
+  return records;
+}
+
+/**
+ * Gets the balances for all volatile tokens, using {getVolatileTokenBalance}.
+ *
+ * @param blockNumber the current block
+ * @returns TokenRecords object
+ */
+export function getVolatileTokenBalances(
+  liquidOnly: boolean,
+  includeLiquidity: boolean,
+  riskFree: boolean,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = new TokenRecords();
+
+  for (let i = 0; i < ERC20_VOLATILE_TOKENS.length; i++) {
+    const currentTokenAddress = ERC20_VOLATILE_TOKENS[i];
+    if (liquidOnly && ERC20_VOLATILE_ILLIQUID_TOKENS.includes(currentTokenAddress)) {
+      log.debug("liquidOnly is true, so skipping illiquid asset: {}", [currentTokenAddress]);
+      continue;
+    }
+
+    records.combine(
+      getVolatileTokenBalance(currentTokenAddress, includeLiquidity, riskFree, blockNumber),
+    );
+  }
+
+  // We add vesting assets manually for now
+  if (!liquidOnly) {
+    records.combine(getVestingAssets());
+  }
+
+  return records;
+}
+
+/**
  * Returns the balance of xSUSHI tokens from all wallets, using
- * {getERC20TokenRecordsFromWallets}.
+ * {getVolatileTokenBalance}.
  *
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
 export function getXSushiBalance(blockNumber: BigInt): TokenRecords {
-  const xSushiERC20 = getERC20("xSUSHI", ERC20_XSUSHI, blockNumber);
-  const xSushiRate = getUSDRate(ERC20_XSUSHI);
-  return getERC20TokenRecordsFromWallets("xSUSHI", xSushiERC20, xSushiRate, blockNumber);
+  return getVolatileTokenBalance(ERC20_XSUSHI, false, false, blockNumber);
 }
 
 /**
  * Returns the balance of CVX tokens from all wallets, using
- * {getERC20TokenRecordsFromWallets}.
+ * {getVolatileTokenBalance}.
  *
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
 export function getCVXBalance(blockNumber: BigInt): TokenRecords {
-  const cvxERC20 = getERC20("CVX", ERC20_CVX, blockNumber);
-  const cvxRate = getUSDRate(ERC20_CVX);
-
-  return getERC20TokenRecordsFromWallets("CVX", cvxERC20, cvxRate, blockNumber);
+  return getVolatileTokenBalance(ERC20_CVX, false, false, blockNumber);
 }
 
 /**
  * Returns the balance of vlCVX tokens from all wallets, using
- * {getERC20TokenRecordsFromWallets}.
+ * {getVolatileTokenBalance}.
  *
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
 export function getVlCVXBalance(blockNumber: BigInt): TokenRecords {
-  const vlCvxERC20 = getERC20("vlCVX", ERC20_CVX_VL, blockNumber);
-  const cvxRate = getUSDRate(ERC20_CVX_VL);
-
-  return getERC20TokenRecordsFromWallets("vlCVX", vlCvxERC20, cvxRate, blockNumber);
+  return getVolatileTokenBalance(ERC20_CVX_VL, false, false, blockNumber);
 }
 
 /**
@@ -113,10 +189,7 @@ export function getCVXTotalBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 function getFXSBalance(blockNumber: BigInt): TokenRecords {
-  const fxsERC20 = getERC20("FXS", ERC20_FXS, blockNumber);
-  const fxsRate = getUSDRate(ERC20_FXS);
-
-  return getERC20TokenRecordsFromWallets("FXS", fxsERC20, fxsRate, blockNumber);
+  return getVolatileTokenBalance(ERC20_FXS, false, false, blockNumber);
 }
 
 /**
@@ -128,27 +201,7 @@ function getFXSBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getVeFXSBalance(blockNumber: BigInt): TokenRecords {
-  const veFXS = getVeFXS(ERC20_FXS_VE, blockNumber);
-  const records = new TokenRecords();
-  const fxsRate = getUSDRate(ERC20_FXS);
-
-  if (veFXS) {
-    records.push(
-      new TokenRecord(
-        "veFXS",
-        "veFXS Allocator",
-        VEFXS_ALLOCATOR,
-        fxsRate,
-        toDecimal(veFXS.locked(Address.fromString(VEFXS_ALLOCATOR)).value0, 18),
-      ),
-    );
-  }
-
-  return records;
-}
-
-export function getVeFXSRecords(blockNumber: BigInt): TokenRecords {
-  return getVeFXSBalance(blockNumber);
+  return getVolatileTokenBalance(ERC20_FXS_VE, false, false, blockNumber);
 }
 
 /**
@@ -163,25 +216,7 @@ export function getFXSTotalBalance(blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords();
 
   records.combine(getFXSBalance(blockNumber));
-  records.combine(getVeFXSRecords(blockNumber));
-
-  return records;
-}
-
-/**
- * Calculates the balance of TRIBE across the following:
- * - all wallets, using {getERC20TokenRecordsFromWallets}.
- * - Rari allocator
- *
- * @param blockNumber current block number
- * @returns TokenRecords object
- */
-function getTribeBalance(blockNumber: BigInt): TokenRecords {
-  const tribeERC20 = getERC20("TRIBE", ERC20_TRIBE, blockNumber);
-  const tribeRate = getUSDRate(ERC20_TRIBE);
-
-  const records = getERC20TokenRecordsFromWallets("TRIBE", tribeERC20, tribeRate, blockNumber);
-  records.combine(getRariAllocatorRecords(ERC20_TRIBE, tribeRate, blockNumber));
+  records.combine(getVeFXSBalance(blockNumber));
 
   return records;
 }
@@ -194,10 +229,7 @@ function getTribeBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getWETHBalance(blockNumber: BigInt): TokenRecords {
-  const wethERC20 = getERC20("wETH", ERC20_WETH, blockNumber);
-  const wethRate = getETHUSDRate();
-
-  return getERC20TokenRecordsFromWallets("wETH", wethERC20, wethRate, blockNumber);
+  return getVolatileTokenBalance(ERC20_WETH, false, false, blockNumber);
 }
 
 /**
@@ -208,14 +240,11 @@ export function getWETHBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getWBTCBalance(blockNumber: BigInt): TokenRecords {
-  const wbtcERC20 = getERC20("wBTC", ERC20_WBTC, blockNumber);
-  const wbtcRate = getBTCUSDRate();
-
-  return getERC20TokenRecordsFromWallets("wBTC", wbtcERC20, wbtcRate, blockNumber);
+  return getVolatileTokenBalance(ERC20_WBTC, false, false, blockNumber);
 }
 
 /**
- * Returns the value of volatile assets:
+ * Returns the value of all volatile assets:
  * - Vesting assets
  * - xSUSHI
  * - CVX
@@ -234,25 +263,7 @@ export function getWBTCBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getVolatileValue(blockNumber: BigInt, liquidOnly: boolean): TokenRecords {
-  if (liquidOnly) log.debug("liquidOnly is true, so skipping illiquid assets", []);
-  const records = new TokenRecords();
-
-  if (!liquidOnly) {
-    records.combine(getVestingAssets());
-  }
-
-  records.combine(getXSushiBalance(blockNumber));
-  records.combine(getCVXBalance(blockNumber));
-  records.combine(getVlCVXBalance(blockNumber));
-  records.combine(getFXSBalance(blockNumber));
-
-  if (!liquidOnly) {
-    records.combine(getVeFXSRecords(blockNumber));
-  }
-
-  records.combine(getTribeBalance(blockNumber));
-
-  return records;
+  return getVolatileTokenBalances(liquidOnly, true, false, blockNumber);
 }
 
 /**
@@ -270,15 +281,7 @@ export function getVolatileValue(blockNumber: BigInt, liquidOnly: boolean): Toke
  */
 // eslint-disable-next-line @typescript-eslint/no-inferrable-types
 export function getEthMarketValue(blockNumber: BigInt, riskFree: boolean = false): TokenRecords {
-  const records = new TokenRecords();
-
-  records.combine(getWETHBalance(blockNumber));
-
-  records.combine(getOhmEthLiquidityBalance(blockNumber, riskFree));
-
-  records.combine(getOhmEthLiquidityV2Balance(blockNumber, riskFree));
-
-  return records;
+  return getVolatileTokenBalance(ERC20_WETH, true, riskFree, blockNumber);
 }
 
 // TODO add CRV

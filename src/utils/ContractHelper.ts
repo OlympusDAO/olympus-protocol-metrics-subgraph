@@ -18,6 +18,8 @@ import {
   ALLOCATOR_RARI_ID_NOT_FOUND,
   CONTRACT_STARTING_BLOCK_MAP,
   ERC20_FRAX,
+  ERC20_FXS,
+  ERC20_FXS_VE,
   getContractName,
   getLiquityAllocator,
   getOnsenAllocatorId,
@@ -25,9 +27,11 @@ import {
   ONSEN_ALLOCATOR,
   RARI_ALLOCATOR,
   SUSHI_MASTERCHEF,
+  VEFXS_ALLOCATOR,
   WALLET_ADDRESSES,
 } from "./Constants";
 import { toDecimal } from "./Decimals";
+import { getUSDRate } from "./Price";
 import { TokenRecord, TokenRecords } from "./TokenRecord";
 
 /**
@@ -634,7 +638,7 @@ export function getConvexAllocatorRecords(tokenAddress: string, blockNumber: Big
 }
 
 /**
- * Returns the balance (deposits) from the LUSD allocator ({walletAddress})
+ * Returns the balance (deposits) from the LUSD allocator ({allocatorAddress})
  * into the specified Liquity stability pool ({poolAddress}).
  *
  * @param allocatorAddress allocator address
@@ -685,6 +689,52 @@ export function getLiquityStabilityPoolRecords(
       ),
     );
   }
+
+  return records;
+}
+
+/**
+ * Returns the balance of {tokenAddress} in the given
+ * VeFXS allocator {allocatorAddress}.
+ *
+ * Only VeFXS {ERC20_FXS_VE} is supported.
+ *
+ * @param tokenAddress token address to look up
+ * @param allocatorAddress allocator address
+ * @param blockNumber the current block
+ * @returns BigDecimal or null
+ */
+function getVeFXSAllocatorBalance(
+  tokenAddress: string,
+  allocatorAddress: string,
+  blockNumber: BigInt,
+): BigDecimal | null {
+  // Only VeFXS supported
+  if (tokenAddress !== ERC20_FXS_VE) return null;
+
+  const contract = getVeFXS(tokenAddress, blockNumber);
+  if (!contract) return null;
+
+  return toDecimal(contract.locked(Address.fromString(allocatorAddress)).value0, 18);
+}
+
+export function getVeFXSAllocatorRecords(tokenAddress: string, blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords();
+
+  const balance = getVeFXSAllocatorBalance(tokenAddress, VEFXS_ALLOCATOR, blockNumber);
+  if (!balance || balance.equals(BigDecimal.zero())) return records;
+
+  const fxsRate = getUSDRate(ERC20_FXS);
+
+  records.push(
+    new TokenRecord(
+      getContractName(tokenAddress),
+      getContractName(VEFXS_ALLOCATOR),
+      VEFXS_ALLOCATOR,
+      fxsRate,
+      balance,
+    ),
+  );
 
   return records;
 }

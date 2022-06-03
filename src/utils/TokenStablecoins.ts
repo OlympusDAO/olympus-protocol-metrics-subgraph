@@ -17,6 +17,7 @@ import {
   getLiquityStabilityPoolRecords,
   getOnsenAllocatorRecords,
   getRariAllocatorRecords,
+  getVeFXSAllocatorRecords,
 } from "./ContractHelper";
 import { getLiquidityBalances } from "./LiquidityCalculations";
 import { getUSDRate } from "./Price";
@@ -57,6 +58,9 @@ export function getStablecoinBalance(
 
   // Onsen Allocator
   records.combine(getOnsenAllocatorRecords(contractAddress, rate, blockNumber));
+
+  // VeFXS Allocator
+  records.combine(getVeFXSAllocatorRecords(contractAddress, blockNumber));
 
   // Liquidity pools
   if (includeLiquidity) {
@@ -157,7 +161,6 @@ export function getUSTBalance(blockNumber: BigInt): TokenRecords {
  * Returns the value of USD-pegged stablecoins, excluding any liquidity pools.
  *
  * This currently (incorrectly) assumes that the value of each stablecoin is $1.
- *
  *
  * @param blockNumber the current block number
  * @returns TokenRecords representing the components of the stablecoin value
