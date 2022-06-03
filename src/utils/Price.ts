@@ -3,6 +3,7 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import {
+  ERC20_OHM_V2,
   ERC20_STABLE_TOKENS,
   ERC20_WBTC,
   ERC20_WETH,
@@ -87,14 +88,90 @@ export function getOHMUSDRate(block: BigInt): BigDecimal {
   return ohmRate;
 }
 
+// eslint-disable-next-line no-shadow
+enum PairTokenBaseOrientation {
+  TOKEN0,
+  TOKEN1,
+  UNKNOWN,
+}
+
 /**
- * Returns the USD rate of the token represented by {contractAddress}
+ * Determines whether token0 or token1 of a pair is the base (wETH/OHM) token.
+ *
+ * @param token0
+ * @param token1
+ * @returns
+ */
+function getBaseTokenOrientation(token0: Address, token1: Address): PairTokenBaseOrientation {
+  /**
+   * Note: token0.toHexString() ostensibly returns the contract address,
+   * but it does not equal {ERC20_WETH} even after trimming. So we use Address.
+   */
+  const wethAddress = Address.fromString(ERC20_WETH);
+  const ohmAddress = Address.fromString(ERC20_OHM_V2);
+
+  if (token0.equals(wethAddress) || token0.equals(ohmAddress)) {
+    return PairTokenBaseOrientation.TOKEN0;
+  }
+
+  if (token1.equals(wethAddress) || token1.equals(ohmAddress)) {
+    return PairTokenBaseOrientation.TOKEN1;
+  }
+
+  return PairTokenBaseOrientation.UNKNOWN;
+}
+
+/**
+ * Gets the USD value of the base token, as identified by {orientation}.
+ *
+ * This enables pairs to have ETH or OHM as the base token.
+ *
+ * @param token0
+ * @param token1
+ * @param orientation
+ * @param blockNumber
+ * @returns
+ */
+function getBaseTokenUSDRate(
+  token0: Address,
+  token1: Address,
+  orientation: PairTokenBaseOrientation,
+  blockNumber: BigInt,
+): BigDecimal {
+  if (orientation === PairTokenBaseOrientation.UNKNOWN) {
+    throw new Error(
+      "Unsure how to deal with unknown token base orientation for tokens " +
+        token0.toHexString() +
+        ", " +
+        token1.toHexString(),
+    );
+  }
+
+  const baseToken = orientation === PairTokenBaseOrientation.TOKEN0 ? token0 : token1;
+
+  const ohmAddress = Address.fromString(ERC20_OHM_V2);
+  if (baseToken.equals(ohmAddress)) return getOHMUSDRate(blockNumber);
+
+  // Otherwise, ETH
+  return getETHUSDRate();
+}
+
+/**
+ * Returns the USD rate of the token represented by {contractAddress},
+ * given the UniswapV2 pair {pairAddress}.
+ *
+ * This will dynamically determine which of the pair tokens is the base
+ * token (wETH or OHM).
  *
  * @param contractAddress
  * @param pairAddress
  * @returns
  */
-function getUSDRateUniswapV2(contractAddress: string, pairAddress: string): BigDecimal {
+function getUSDRateUniswapV2(
+  contractAddress: string,
+  pairAddress: string,
+  blockNumber: BigInt,
+): BigDecimal {
   if (contractAddress === ERC20_WETH) return getETHUSDRate();
   if (contractAddress === ERC20_WBTC) return getBTCUSDRate();
 
@@ -106,21 +183,27 @@ function getUSDRateUniswapV2(contractAddress: string, pairAddress: string): BigD
     );
   }
 
+  // Determine orientation of the pair
+  const token0 = pair.token0();
+  const token1 = pair.token1();
+  const baseTokenOrientation = getBaseTokenOrientation(token0, token1);
+  if (baseTokenOrientation === PairTokenBaseOrientation.UNKNOWN) {
+    throw new Error(
+      "Unsure how to deal with unknown token base orientation for pair " + pairAddress,
+    );
+  }
+
   const token0Reserves = pair.getReserves().value0.toBigDecimal();
   const token1Reserves = pair.getReserves().value1.toBigDecimal();
+  // Get the number of tokens denominated in ETH/OHM
+  const baseTokenNumerator =
+    baseTokenOrientation === PairTokenBaseOrientation.TOKEN0
+      ? token0Reserves.div(token1Reserves)
+      : token1Reserves.div(token0Reserves);
 
-  // Determine orientation of the pair
-  // We assume that one of the pair of ETH
-  const token0 = pair.token0();
-  // Get the number of tokens denominated in ETH
-  /**
-   * Note: token0.toHexString() ostensibly returns the contract address,
-   * but it does not equal {ERC20_WETH} even after trimming.
-   */
-  const ethBalance = token0.equals(Address.fromString(ERC20_WETH))
-    ? token0Reserves.div(token1Reserves)
-    : token1Reserves.div(token0Reserves);
-  return ethBalance.times(getETHUSDRate());
+  return baseTokenNumerator.times(
+    getBaseTokenUSDRate(token0, token1, baseTokenOrientation, blockNumber),
+  );
 }
 
 function getUSDRateUniswapV3(contractAddress: string, pairAddress: string): BigDecimal {
@@ -153,7 +236,7 @@ function getUSDRateUniswapV3(contractAddress: string, pairAddress: string): BigD
  * @param contractAddress the token to look for
  * @returns BigDecimal or 0
  */
-export function getUSDRate(contractAddress: string): BigDecimal {
+export function getUSDRate(contractAddress: string, blockNumber: BigInt): BigDecimal {
   // Handle stablecoins
   // TODO add support for dynamic price lookup for stablecoins
   if (ERC20_STABLE_TOKENS.includes(contractAddress)) {
@@ -167,7 +250,7 @@ export function getUSDRate(contractAddress: string): BigDecimal {
   }
 
   if (pairHandler.getHandler() === PairHandlerTypes.UniswapV2) {
-    return getUSDRateUniswapV2(contractAddress, pairHandler.getPair());
+    return getUSDRateUniswapV2(contractAddress, pairHandler.getPair(), blockNumber);
   }
 
   if (pairHandler.getHandler() === PairHandlerTypes.UniswapV3) {

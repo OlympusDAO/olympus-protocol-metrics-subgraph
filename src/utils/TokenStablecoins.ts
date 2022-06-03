@@ -42,7 +42,7 @@ export function getStablecoinBalance(
   const records = new TokenRecords();
   const contractName = getContractName(contractAddress);
   const contract = getERC20(contractName, contractAddress, blockNumber);
-  const rate = getUSDRate(contractAddress);
+  const rate = getUSDRate(contractAddress, blockNumber);
 
   // Wallets
   records.combine(getERC20TokenRecordsFromWallets(contractName, contract, rate, blockNumber));

@@ -724,7 +724,7 @@ export function getVeFXSAllocatorRecords(tokenAddress: string, blockNumber: BigI
   const balance = getVeFXSAllocatorBalance(tokenAddress, VEFXS_ALLOCATOR, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
 
-  const fxsRate = getUSDRate(ERC20_FXS);
+  const fxsRate = getUSDRate(ERC20_FXS, blockNumber);
 
   records.push(
     new TokenRecord(
