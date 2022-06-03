@@ -31,7 +31,7 @@ import {
 import { toDecimal } from "./Decimals";
 import { LiquidityBalances } from "./LiquidityBalance";
 import { PairHandlerTypes } from "./PairHandler";
-import { getDiscountedPairUSD, getPairUSD } from "./Price";
+import { getOhmUSDPairRiskFreeValue, getOhmUSDPairValue } from "./Price";
 import { TokenRecord, TokenRecords } from "./TokenRecord";
 
 /**
@@ -40,7 +40,7 @@ import { TokenRecord, TokenRecords } from "./TokenRecord";
  * The chief objective of this function is to determine
  * the correct price of the liquidity pool balance.
  *
- * If {riskFree} is true, {getDiscountedPairUSD} is used
+ * If {riskFree} is true, {getOhmUSDPairRiskFreeValue} is used
  * to determine the value of the pool when OHM = $1.
  *
  * Otherwise, the value of the non-OHM token is determined.
@@ -58,12 +58,16 @@ function getLiquidityTokenRecords(
   const records = new TokenRecords();
   const contractName = getContractName(liquidityBalance.contract);
   const lpValue = riskFree
-    ? getDiscountedPairUSD(
+    ? getOhmUSDPairRiskFreeValue(
         liquidityBalance.getTotalBalance(),
         liquidityBalance.contract,
         blockNumber,
       )
-    : getPairUSD(liquidityBalance.getTotalBalance(), liquidityBalance.contract, blockNumber);
+    : getOhmUSDPairValue(
+        liquidityBalance.getTotalBalance(),
+        liquidityBalance.contract,
+        blockNumber,
+      );
 
   // The number returned above is the value of the balance of LP, so we need to get the individual unit price
   const lpUnitPrice: BigDecimal = liquidityBalance.getTotalBalance().equals(BigInt.zero())

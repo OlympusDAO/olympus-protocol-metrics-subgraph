@@ -3,7 +3,7 @@ import { toDecimal } from "./utils/Decimals";
 import { OHMDAILPBOND_TOKEN, PAIR_UNISWAP_V2_OHM_DAI } from "./utils/Constants";
 import { loadOrCreateToken } from "./utils/Tokens";
 import { createDailyBondRecord } from "./utils/DailyBond";
-import { getPairUSD } from "./utils/Price";
+import { getOhmUSDPairValue } from "./utils/Price";
 
 export function handleDeposit(call: DepositBondPrincipleCall): void {
   let token = loadOrCreateToken(OHMDAILPBOND_TOKEN);
@@ -13,6 +13,6 @@ export function handleDeposit(call: DepositBondPrincipleCall): void {
     call.block.timestamp,
     token,
     amount,
-    getPairUSD(call.inputs.amountToDeposit_, PAIR_UNISWAP_V2_OHM_DAI, call.block.number),
+    getOhmUSDPairValue(call.inputs.amountToDeposit_, PAIR_UNISWAP_V2_OHM_DAI, call.block.number),
   );
 }

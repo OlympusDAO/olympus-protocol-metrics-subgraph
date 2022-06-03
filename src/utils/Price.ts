@@ -207,7 +207,7 @@ export function getUSDRate(contractAddress: string): BigDecimal {
  *
  * This blog also helps illustrate it: https://olympusdao.medium.com/a-primer-on-oly-bonds-9763f125c124
  */
-export function getDiscountedPairUSD(
+export function getOhmUSDPairRiskFreeValue(
   lpBalance: BigInt,
   pairAddress: string,
   blockNumber: BigInt,
@@ -234,30 +234,6 @@ export function getDiscountedPairUSD(
   return result;
 }
 
-// TODO unused?
-export function getDiscountedPairLUSD(lp_amount: BigInt, pair_adress: string): BigDecimal {
-  const pair = UniswapV2Pair.bind(Address.fromString(pair_adress));
-  if (!pair) {
-    throw new Error(
-      "Cannot determine discounted value as the contract " + pair_adress + " does not exist yet.",
-    );
-  }
-
-  const total_lp = pair.totalSupply();
-  const lp_token_1 = toDecimal(pair.getReserves().value0, 18);
-  const lp_token_2 = toDecimal(pair.getReserves().value1, 9);
-  const kLast = lp_token_1.times(lp_token_2).truncate(0).digits;
-
-  const part1 = toDecimal(lp_amount, 18).div(toDecimal(total_lp, 18));
-  const two = BigInt.fromI32(2);
-
-  const sqrt = kLast.sqrt();
-  const part2 = toDecimal(two.times(sqrt), 0);
-  const result = part1.times(part2);
-  return result;
-}
-
-// Percentage of LP supply *
 /**
  * Determines the value of the given balance
  * of a liquidity pool between a token and USD
@@ -268,7 +244,7 @@ export function getDiscountedPairLUSD(lp_amount: BigInt, pair_adress: string): B
  * @param blockNumber
  * @returns
  */
-export function getPairUSD(
+export function getOhmUSDPairValue(
   lpBalance: BigInt,
   pairAddress: string,
   blockNumber: BigInt,
@@ -292,25 +268,6 @@ export function getPairUSD(
   const lpValue = ohmValue.plus(toDecimal(secondTokenReserves, 18));
 
   return poolPercentageOwned.times(lpValue);
-}
-
-// TODO unused?
-export function getPairLUSD(lp_amount: BigInt, pair_adress: string, block: BigInt): BigDecimal {
-  const pair = UniswapV2Pair.bind(Address.fromString(pair_adress));
-  if (!pair) {
-    throw new Error(
-      "Cannot determine discounted value as the contract " + pair_adress + " does not exist yet.",
-    );
-  }
-
-  const total_lp = pair.totalSupply();
-  const lp_token_0 = pair.getReserves().value0;
-  const lp_token_1 = pair.getReserves().value1;
-  const ownedLP = toDecimal(lp_amount, 18).div(toDecimal(total_lp, 18));
-  const ohm_value = toDecimal(lp_token_1, 9).times(getOHMUSDRate(block));
-  const total_lp_usd = ohm_value.plus(toDecimal(lp_token_0, 18));
-
-  return ownedLP.times(total_lp_usd);
 }
 
 // TODO unused?
