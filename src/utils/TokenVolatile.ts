@@ -92,7 +92,8 @@ export function getVolatileTokenBalance(
 
   // Liquidity pools
   if (includeLiquidity) {
-    records.combine(getLiquidityBalances(contractAddress, riskFree, blockNumber));
+    // Single-sided, otherwise we're counting non-token value
+    records.combine(getLiquidityBalances(contractAddress, riskFree, true, blockNumber));
   }
 
   return records;
@@ -292,6 +293,4 @@ export function getEthMarketValue(blockNumber: BigInt, riskFree: boolean = false
 // TODO add FPIS
 // TODO add ALCX
 // TODO add BCT
-// TODO check ETH in liquity
 // TODO add KLIMA/sKLIMA
-// TODO add method to iterate through volatile tokens and fetch balances

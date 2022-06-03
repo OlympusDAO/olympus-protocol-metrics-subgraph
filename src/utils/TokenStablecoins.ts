@@ -64,7 +64,8 @@ export function getStablecoinBalance(
 
   // Liquidity pools
   if (includeLiquidity) {
-    records.combine(getLiquidityBalances(contractAddress, riskFree, blockNumber));
+    // Single-sided, otherwise we're counting non-token value
+    records.combine(getLiquidityBalances(contractAddress, riskFree, true, blockNumber));
   }
 
   return records;

@@ -44,10 +44,7 @@ export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecords {
 
   records.combine(getTreasuryStableBacking(blockNumber));
   records.combine(getTreasuryVolatileBacking(blockNumber, true));
-
-  const liquidityPoolValue = getLiquidityPoolValue(blockNumber, false);
-  liquidityPoolValue.setMultiplier(BigDecimal.fromString("0.5"));
-  records.combine(liquidityPoolValue);
+  records.combine(getLiquidityPoolValue(false, true, blockNumber));
 
   // TODO previous implementation was the number of OHM, not the value. Keep as-is?
   const ohmCirculatingSupply = getCirculatingSupply(blockNumber, getTotalSupply(blockNumber));
@@ -79,7 +76,7 @@ export function getMarketValue(blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords();
 
   records.combine(getStableValue(blockNumber));
-  records.combine(getLiquidityPoolValue(blockNumber, false));
+  records.combine(getLiquidityPoolValue(false, false, blockNumber));
   records.combine(getVolatileValue(blockNumber, false, true));
 
   return records;
@@ -97,7 +94,7 @@ export function getRiskFreeValue(blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords();
 
   records.combine(getStableValue(blockNumber));
-  records.combine(getLiquidityPoolValue(blockNumber, true));
+  records.combine(getLiquidityPoolValue(true, true, blockNumber));
 
   return records;
 }

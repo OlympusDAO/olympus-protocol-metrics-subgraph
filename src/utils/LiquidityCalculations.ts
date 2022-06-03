@@ -95,12 +95,14 @@ function getLiquidityTokenRecords(
  *
  * @param tokenAddress the address of the ERC20 token
  * @param riskFree whether the value is risk-free or not
+ * @param singleSidedValue should be true if only the value of a single side of the LP is desired
  * @param blockNumber current block number
  * @returns TokenRecords object
  */
 export function getLiquidityBalances(
   tokenAddress: string,
   riskFree: boolean,
+  singleSidedValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
   const records = new TokenRecords();
@@ -131,6 +133,11 @@ export function getLiquidityBalances(
     } else {
       throw new Error("Unsupported liquidity pair type: " + pairHandler.getHandler().toString());
     }
+  }
+
+  // If the singleSidedValue is desired, we can halve the value of the LP and return that.
+  if (singleSidedValue) {
+    records.setMultiplier(BigDecimal.fromString("0.5"));
   }
 
   return records;
@@ -549,19 +556,28 @@ export function getOhmEthProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal
 /**
  * Returns the value of liquidity pools for volatile and stable tokens.
  *
- * @param blockNumber
  * @param riskFree If `riskFree` is true, the risk-free value will be returned
+ * @param singleSidedValue should be true if only the value of a single side of the LP is desired
+ * @param blockNumber
  * @returns TokenRecords object
  */
-export function getLiquidityPoolValue(blockNumber: BigInt, riskFree: boolean): TokenRecords {
+export function getLiquidityPoolValue(
+  riskFree: boolean,
+  singleSidedValue: boolean,
+  blockNumber: BigInt,
+): TokenRecords {
   const records = new TokenRecords();
 
   for (let i = 0; i < ERC20_STABLE_TOKENS.length; i++) {
-    records.combine(getLiquidityBalances(ERC20_STABLE_TOKENS[i], riskFree, blockNumber));
+    records.combine(
+      getLiquidityBalances(ERC20_STABLE_TOKENS[i], riskFree, singleSidedValue, blockNumber),
+    );
   }
 
   for (let i = 0; i < ERC20_VOLATILE_TOKENS.length; i++) {
-    records.combine(getLiquidityBalances(ERC20_VOLATILE_TOKENS[i], riskFree, blockNumber));
+    records.combine(
+      getLiquidityBalances(ERC20_VOLATILE_TOKENS[i], riskFree, singleSidedValue, blockNumber),
+    );
   }
 
   return records;

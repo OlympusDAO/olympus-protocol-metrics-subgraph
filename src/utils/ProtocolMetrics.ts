@@ -362,7 +362,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryTotalBacking = totalBacking.getValue();
   pm.treasuryTotalBackingComponents = totalBacking.toStringArray(true);
 
-  const liquidityPoolValue = getLiquidityPoolValue(blockNumber, false);
+  const liquidityPoolValue = getLiquidityPoolValue(false, true, blockNumber);
   pm.treasuryLPValue = liquidityPoolValue.getValue();
   pm.treasuryLPValueComponents = liquidityPoolValue.toStringArray(true);
 
