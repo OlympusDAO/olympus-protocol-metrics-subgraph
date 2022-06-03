@@ -5,6 +5,7 @@ import {
   ERC20_CVX_VL,
   ERC20_FXS,
   ERC20_FXS_VE,
+  ERC20_VOLATILE_BLUE_CHIP_TOKENS,
   ERC20_VOLATILE_ILLIQUID_TOKENS,
   ERC20_VOLATILE_TOKENS,
   ERC20_WBTC,
@@ -106,6 +107,7 @@ export function getVolatileTokenBalance(
 export function getVolatileTokenBalances(
   liquidOnly: boolean,
   includeLiquidity: boolean,
+  includeBlueChip: boolean,
   riskFree: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
@@ -115,6 +117,11 @@ export function getVolatileTokenBalances(
     const currentTokenAddress = ERC20_VOLATILE_TOKENS[i];
     if (liquidOnly && ERC20_VOLATILE_ILLIQUID_TOKENS.includes(currentTokenAddress)) {
       log.debug("liquidOnly is true, so skipping illiquid asset: {}", [currentTokenAddress]);
+      continue;
+    }
+
+    if (!includeBlueChip && ERC20_VOLATILE_BLUE_CHIP_TOKENS.includes(currentTokenAddress)) {
+      log.debug("includeBlueChip is false, so skipping blue chip asset: {}", [currentTokenAddress]);
       continue;
     }
 
@@ -244,26 +251,23 @@ export function getWBTCBalance(blockNumber: BigInt): TokenRecords {
 }
 
 /**
- * Returns the value of all volatile assets:
- * - Vesting assets
- * - xSUSHI
- * - CVX
- * - vlCVX
- * - FXS
- * - veFXS
- * - TRIBE
+ * Returns the value of all volatile assets., except those in {ERC20_VOLATILE_BLUE_CHIP_TOKENS}.
  *
  * If `liquidOnly` is specified, then the following are excluded as they are locked:
  * - Vesting assets
- * - veFXS
+ * - Any token in {ERC20_VOLATILE_ILLIQUID_TOKENS}
  *
- * vlCVX is only locked for 3 months at a time, so is considered liquid.
- *
+ * @param liquidOnly if true, skips illiquid assets
+ * @param includeBlueChip if true, includes blue chip assets ({ERC20_VOLATILE_BLUE_CHIP_TOKENS})
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
-export function getVolatileValue(blockNumber: BigInt, liquidOnly: boolean): TokenRecords {
-  return getVolatileTokenBalances(liquidOnly, true, false, blockNumber);
+export function getVolatileValue(
+  blockNumber: BigInt,
+  liquidOnly: boolean,
+  includeBlueChip: boolean,
+): TokenRecords {
+  return getVolatileTokenBalances(liquidOnly, includeBlueChip, true, false, blockNumber);
 }
 
 /**

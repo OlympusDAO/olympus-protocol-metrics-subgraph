@@ -338,7 +338,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryFXSMarketValue = fxsValue.getValue();
   pm.treasuryFXSMarketValueComponents = fxsValue.toStringArray(true);
 
-  const treasuryOtherMarketValue = getVolatileValue(blockNumber, false);
+  const treasuryOtherMarketValue = getVolatileValue(blockNumber, false, false);
   pm.treasuryOtherMarketValue = treasuryOtherMarketValue.getValue();
   pm.treasuryOtherMarketValueComponents = treasuryOtherMarketValue.toStringArray(true);
 

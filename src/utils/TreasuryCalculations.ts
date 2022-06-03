@@ -4,24 +4,16 @@ import { getLiquidityPoolValue } from "./LiquidityCalculations";
 import { getCirculatingSupply, getTotalSupply } from "./OhmCalculations";
 import { TokenRecord, TokenRecords } from "./TokenRecord";
 import { getStableValue } from "./TokenStablecoins";
-import { getVolatileValue, getWBTCBalance, getWETHBalance } from "./TokenVolatile";
+import { getVolatileValue } from "./TokenVolatile";
 
 /**
- * Returns the value of the volatile backing
- * - getVolatileValue
- * - wETH
- * - wBTC
+ * Returns the value of all volatile tokens, including LPs.
  *
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
 export function getTreasuryVolatileBacking(blockNumber: BigInt, liquidOnly: boolean): TokenRecords {
-  const records = getVolatileValue(blockNumber, liquidOnly);
-
-  records.combine(getWETHBalance(blockNumber));
-  records.combine(getWBTCBalance(blockNumber));
-
-  return records;
+  return getVolatileValue(blockNumber, liquidOnly, true);
 }
 
 /**
@@ -78,8 +70,6 @@ export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecords {
  * - stable value (getStableValue)
  * - liquidity pool value (getLiquidityPoolValue)
  * - volatile value (getVolatileValue)
- * - wETH value
- * - wBTC value
  *
  * @param blockNumber
  * @returns
@@ -90,13 +80,7 @@ export function getMarketValue(blockNumber: BigInt): TokenRecords {
 
   records.combine(getStableValue(blockNumber));
   records.combine(getLiquidityPoolValue(blockNumber, false));
-  records.combine(getVolatileValue(blockNumber, false));
-
-  const wethBalance = getWETHBalance(blockNumber);
-  records.combine(wethBalance);
-
-  const wbtcBalance = getWBTCBalance(blockNumber);
-  records.combine(wbtcBalance);
+  records.combine(getVolatileValue(blockNumber, false, true));
 
   return records;
 }
