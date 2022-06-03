@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import {
   ERC20_STABLE_TOKENS,
@@ -23,6 +23,7 @@ import {
   WALLET_ADDRESSES,
 } from "./Constants";
 import {
+  getERC20,
   getMasterChef,
   getMasterChefBalance,
   getUniswapV2Pair,
@@ -31,7 +32,7 @@ import {
 import { toDecimal } from "./Decimals";
 import { LiquidityBalances } from "./LiquidityBalance";
 import { PairHandlerTypes } from "./PairHandler";
-import { getOhmUSDPairRiskFreeValue, getOhmUSDPairValue } from "./Price";
+import { getOhmUSDPairRiskFreeValue, getOhmUSDPairValue, getUniswapV2PairValue } from "./Price";
 import { TokenRecord, TokenRecords } from "./TokenRecord";
 
 /**
@@ -57,13 +58,14 @@ function getLiquidityTokenRecords(
 ): TokenRecords {
   const records = new TokenRecords();
   const contractName = getContractName(liquidityBalance.contract);
+  // TODO this assumes that the other side of the LP is OHM, which is not always correct (ETH!)
   const lpValue = riskFree
     ? getOhmUSDPairRiskFreeValue(
         liquidityBalance.getTotalBalance(),
         liquidityBalance.contract,
         blockNumber,
       )
-    : getOhmUSDPairValue(
+    : getUniswapV2PairValue(
         liquidityBalance.getTotalBalance(),
         liquidityBalance.contract,
         blockNumber,
@@ -132,6 +134,11 @@ export function getLiquidityBalances(
 
       records.combine(getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree));
     } else if (pairHandler.getHandler() === PairHandlerTypes.UniswapV3) {
+      const contractOne = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+      const balanceOne = contractOne
+        ? contractOne.balanceOf(Address.fromString(pairHandler.getPair()))
+        : null;
+      log.info("token0 reserves: {}", [balanceOne ? balanceOne.toString() : "null"]);
       // TODO add support for Uniswap V3
       log.error("UniswapV3 not yet supported", []);
     } else {

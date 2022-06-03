@@ -3,18 +3,21 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import {
+  ERC20_OHM,
   ERC20_OHM_V2,
   ERC20_STABLE_TOKENS,
   ERC20_WBTC,
   ERC20_WETH,
+  getContractName,
   getPairHandler,
   PAIR_UNISWAP_V2_ETH_WBTC,
   PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
+  PAIR_UNISWAP_V2_OHM_ETH_V2,
   PAIR_UNISWAP_V2_USDC_ETH,
 } from "./Constants";
-import { getUniswapV2Pair } from "./ContractHelper";
+import { getERC20, getUniswapV2Pair } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { PairHandlerTypes } from "./PairHandler";
 
@@ -108,13 +111,14 @@ function getBaseTokenOrientation(token0: Address, token1: Address): PairTokenBas
    * but it does not equal {ERC20_WETH} even after trimming. So we use Address.
    */
   const wethAddress = Address.fromString(ERC20_WETH);
-  const ohmAddress = Address.fromString(ERC20_OHM_V2);
+  const ohmV1Address = Address.fromString(ERC20_OHM);
+  const ohmV2Address = Address.fromString(ERC20_OHM_V2);
 
-  if (token0.equals(wethAddress) || token0.equals(ohmAddress)) {
+  if (token0.equals(wethAddress) || token0.equals(ohmV1Address) || token0.equals(ohmV2Address)) {
     return PairTokenBaseOrientation.TOKEN0;
   }
 
-  if (token1.equals(wethAddress) || token1.equals(ohmAddress)) {
+  if (token1.equals(wethAddress) || token0.equals(ohmV1Address) || token1.equals(ohmV2Address)) {
     return PairTokenBaseOrientation.TOKEN1;
   }
 
@@ -149,10 +153,15 @@ function getBaseTokenUSDRate(
 
   const baseToken = orientation === PairTokenBaseOrientation.TOKEN0 ? token0 : token1;
 
-  const ohmAddress = Address.fromString(ERC20_OHM_V2);
-  if (baseToken.equals(ohmAddress)) return getOHMUSDRate(blockNumber);
+  const ohmV1Address = Address.fromString(ERC20_OHM);
+  const ohmV2Address = Address.fromString(ERC20_OHM_V2);
+  if (baseToken.equals(ohmV1Address) || baseToken.equals(ohmV2Address)) {
+    log.debug("Returning OHM", []);
+    return getOHMUSDRate(blockNumber);
+  }
 
   // Otherwise, ETH
+  log.debug("Returning ETH", []);
   return getETHUSDRate();
 }
 
@@ -162,6 +171,16 @@ function getBaseTokenUSDRate(
  *
  * This will dynamically determine which of the pair tokens is the base
  * token (wETH or OHM).
+ *
+ * After the base token has been determined, the following formula is used
+ * to determine the USD rate of the other token.
+ *
+ * e.g. taking the ETH-TRIBE pair:
+ * TRIBE balance = 40,537.42936106
+ * ETH balance = 4.99923661
+ *
+ * (ETH balance / TRIBE balance) * (ETH price) = TRIBE price
+ * (4.99923661 / 40537.42936106) * 2000 = 0.24
  *
  * @param contractAddress
  * @param pairAddress
@@ -193,13 +212,46 @@ function getUSDRateUniswapV2(
     );
   }
 
-  const token0Reserves = pair.getReserves().value0.toBigDecimal();
-  const token1Reserves = pair.getReserves().value1.toBigDecimal();
+  if (pairAddress === PAIR_UNISWAP_V2_OHM_ETH_V2) {
+    log.info("Base token orientation for pair {} is {}", [
+      pairAddress,
+      baseTokenOrientation === PairTokenBaseOrientation.TOKEN0 ? "0" : "1",
+    ]);
+  }
+
+  const token0Contract = getERC20(
+    getContractName(token0.toHexString()),
+    token0.toHexString(),
+    blockNumber,
+  );
+  if (!token0Contract) {
+    throw new Error("Unable to find ERC20 contract for " + token0.toHexString());
+  }
+
+  const token1Contract = getERC20(
+    getContractName(token1.toHexString()),
+    token1.toHexString(),
+    blockNumber,
+  );
+  if (!token1Contract) {
+    throw new Error("Unable to find ERC20 contract for " + token1.toHexString());
+  }
+
+  const token0Reserves = toDecimal(pair.getReserves().value0, token0Contract.decimals());
+  const token1Reserves = toDecimal(pair.getReserves().value1, token1Contract.decimals());
   // Get the number of tokens denominated in ETH/OHM
   const baseTokenNumerator =
     baseTokenOrientation === PairTokenBaseOrientation.TOKEN0
       ? token0Reserves.div(token1Reserves)
       : token1Reserves.div(token0Reserves);
+  if (pairAddress === PAIR_UNISWAP_V2_OHM_ETH_V2) {
+    log.info("pair {} token0Reserves: {}, token1Reserves: {}, baseTokenNumerator: {}", [
+      pairAddress,
+      token0Reserves.toString(),
+      token1Reserves.toString(),
+      baseTokenNumerator.toString(),
+    ]);
+  }
 
   return baseTokenNumerator.times(
     getBaseTokenUSDRate(token0, token1, baseTokenOrientation, blockNumber),
@@ -315,6 +367,75 @@ export function getOhmUSDPairRiskFreeValue(
   const part2 = toDecimal(two.times(sqrt), 0);
   const result = part1.times(part2);
   return result;
+}
+
+/**
+ * Determines the value of the given balance
+ * of a liquidity pool.
+ *
+ * @param lpBalance
+ * @param pairAddress
+ * @param blockNumber
+ * @returns
+ */
+export function getUniswapV2PairValue(
+  lpBalance: BigInt,
+  pairAddress: string,
+  blockNumber: BigInt,
+): BigDecimal {
+  const pair = getUniswapV2Pair(pairAddress, blockNumber);
+  if (!pair) {
+    throw new Error(
+      "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
+    );
+  }
+
+  // Determine token0 value
+  const token0 = pair.token0().toHexString();
+  const token0Reserves = pair.getReserves().value0;
+  const token0Contract = getERC20(getContractName(token0), token0, blockNumber);
+  if (!token0Contract) {
+    throw new Error("Unable to find ERC20 contract for " + token0);
+  }
+
+  const token0Rate = getUSDRateUniswapV2(token0, pairAddress, blockNumber);
+  const token0Value = toDecimal(token0Reserves, token0Contract.decimals()).times(token0Rate);
+  if (pairAddress === PAIR_UNISWAP_V2_OHM_ETH_V2) {
+    log.info("pair {}, token0: contract {}, rate {}, value {}, decimals {}", [
+      pairAddress,
+      token0,
+      token0Rate.toString(),
+      token0Value.toString(),
+      token0Contract.decimals().toString(),
+    ]);
+  }
+
+  // Determine token1 value
+  const token1 = pair.token1().toHexString();
+  const token1Reserves = pair.getReserves().value1;
+  const token1Contract = getERC20(getContractName(token1), token1, blockNumber);
+  if (!token1Contract) {
+    throw new Error("Unable to find ERC20 contract for " + token1);
+  }
+
+  const token1Rate = getUSDRateUniswapV2(token1, pairAddress, blockNumber);
+  const token1Value = toDecimal(token1Reserves, token1Contract.decimals()).times(token1Rate);
+  if (pairAddress === PAIR_UNISWAP_V2_OHM_ETH_V2) {
+    log.info("pair {}, token1: contract {}, rate {}, value {}, decimals {}", [
+      pairAddress,
+      token1,
+      token1Rate.toString(),
+      token1Value.toString(),
+      token1Contract.decimals().toString(),
+    ]);
+  }
+
+  const lpValue = token0Value.plus(token1Value);
+
+  const poolTotalSupply = toDecimal(pair.totalSupply(), 18);
+  const poolPercentageOwned = toDecimal(lpBalance, 18).div(poolTotalSupply);
+
+  return poolPercentageOwned.times(lpValue);
 }
 
 /**
