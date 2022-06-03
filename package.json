@@ -5,13 +5,11 @@
     "codegen": "graph codegen",
     "build": "graph build",
     "deploy": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ olympus",
-    "predeploy-studio": "yarn subgraph-version:get",
-    "deploy-studio": "graph deploy --studio olympus-protocol-metrics --version-label $SUBGRAPH_VERSION",
+    "deploy-studio": "source .subgraph-version && graph deploy --studio olympus-protocol-metrics --version-label $SUBGRAPH_VERSION",
     "create-local": "graph create --node http://localhost:8020/ olympus",
     "remove-local": "graph remove --node http://localhost:8020/ olympus",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 olympus",
-    "run-local": "docker-compose -f docker/docker-compose.yml up --build",
-    "subgraph-version:get": "source .subgraph-version && echo Subgraph version will be $SUBGRAPH_VERSION"
+    "run-local": "docker-compose -f docker/docker-compose.yml up --build"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "^0.30.0",
