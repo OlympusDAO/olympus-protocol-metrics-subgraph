@@ -34,7 +34,7 @@ import {
   getTotalSupply,
   getTotalValueLocked,
 } from "./OhmCalculations";
-import { getOHMUSDRate } from "./Price";
+import { getBaseOHMUSDRate } from "./Price";
 import {
   getDaiMarketValue,
   getFeiMarketValue,
@@ -264,7 +264,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.sOhmCirculatingSupply = getSOhmCirculatingSupply(blockNumber);
 
   // OHM Price
-  pm.ohmPrice = getOHMUSDRate(block.number);
+  pm.ohmPrice = getBaseOHMUSDRate(block.number);
 
   // OHM Market Cap
   pm.marketCap = getOhmMarketcap(block.number);
