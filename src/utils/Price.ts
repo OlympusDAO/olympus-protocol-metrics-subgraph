@@ -236,7 +236,7 @@ export function getOhmUSDPairRiskFreeValue(
 
 /**
  * Determines the value of the given balance
- * of a liquidity pool between a token and USD
+ * of a liquidity pool between OHM and a USD
  * stablecoin.
  *
  * @param lpBalance
