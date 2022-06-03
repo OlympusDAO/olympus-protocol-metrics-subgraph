@@ -26,6 +26,26 @@ const BIG_DECIMAL_1E9 = BigDecimal.fromString("1e9");
 const BIG_DECIMAL_1E10 = BigDecimal.fromString("1e10");
 const BIG_DECIMAL_1E12 = BigDecimal.fromString("1e12");
 
+/**
+ * One of the base price lookup functions. This has a hard-coded
+ * liquidity pool that it uses to determine the price of ETH,
+ * relative to the USD.
+ *
+ * It uses the following basis of liquidity pools:
+ *
+ * # token1 * price1 = # token2 * price2
+ *
+ * In the case of a USDC-ETH pair, we know the following:
+ * - # USDC (using getReserves())
+ * - # ETH (using getReserves())
+ * - price of USDC (1)
+ *
+ * Therefore the price of ETH is:
+ *
+ * # USDC * 1 / # ETH = price ETH
+ *
+ * @returns Price of ETH in USD
+ */
 export function getETHUSDRate(): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_USDC_ETH));
   if (!pair) {
@@ -37,15 +57,16 @@ export function getETHUSDRate(): BigDecimal {
   }
 
   const reserves = pair.getReserves();
-  const reserve0 = reserves.value0.toBigDecimal();
-  const reserve1 = reserves.value1.toBigDecimal();
+  const usdReserves = reserves.value0.toBigDecimal();
+  const ethReserves = reserves.value1.toBigDecimal();
 
-  const ethRate = reserve0.div(reserve1).times(BIG_DECIMAL_1E12);
+  const ethRate = usdReserves.div(ethReserves).times(BIG_DECIMAL_1E12);
   log.debug("ETH rate {}", [ethRate.toString()]);
 
   return ethRate;
 }
 
+// TODO remove?
 export function getBTCUSDRate(): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_ETH_WBTC));
   if (!pair) {
@@ -66,6 +87,26 @@ export function getBTCUSDRate(): BigDecimal {
   return btcRate;
 }
 
+/**
+ * One of the base price lookup functions. This has a hard-coded
+ * liquidity pool that it uses to determine the price of OHM,
+ * relative to the USD.
+ *
+ * It uses the following basis of liquidity pools:
+ *
+ * # token1 * price1 = # token2 * price2
+ *
+ * In the case of a DAU-OHM pair, we know the following:
+ * - # DAI (using getReserves())
+ * - # OHM (using getReserves())
+ * - price of OHM (1)
+ *
+ * Therefore the price of OHM is:
+ *
+ * # DAI * 1 / # OHM = price OHM
+ *
+ * @returns Price of OHM in USD
+ */
 export function getOHMUSDRate(block: BigInt): BigDecimal {
   let contractAddress = PAIR_UNISWAP_V2_OHM_DAI;
   if (block.gt(BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK))) {
