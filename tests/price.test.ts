@@ -25,6 +25,7 @@ import {
   getOhmUSDPairRiskFreeValue,
   getUniswapV2PairBalanceValue,
   getUniswapV2PairValue,
+  getUniswapV3PairValue,
   getUSDRate,
   PairTokenBaseOrientation,
 } from "../src/utils/Price";
@@ -44,6 +45,8 @@ const OHM_USD_DECIMALS = 18;
 const OHM_USD_TOTAL_SUPPLY = BigInt.fromString("132978245612511289049");
 
 const FXS_ETH_SLOT0_VALUE0 = BigInt.fromString("4408826845265778408963222405");
+const FXS_ETH_BALANCE_FXS = BigInt.fromString("58490501064965941270938");
+const FXS_ETH_BALANCE_ETH = BigInt.fromString("50384750611936405873");
 
 const OHM_V2_DECIMALS = 9;
 const USDC_DECIMALS = 6;
@@ -145,6 +148,7 @@ const getFxsUsdRate = (): BigDecimal => {
 
 const mockFxsEthRate = (): void => {
   const contractAddress = Address.fromString(PAIR_UNISWAP_V3_FXS_ETH);
+  // slot0
   createMockedFunction(
     contractAddress,
     "slot0",
@@ -158,6 +162,30 @@ const mockFxsEthRate = (): void => {
     ethereum.Value.fromI32(0),
     ethereum.Value.fromBoolean(true),
   ]);
+
+  // Tokens
+  createMockedFunction(contractAddress, "token0", "token0():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(ERC20_FXS)),
+  ]);
+  createMockedFunction(contractAddress, "token1", "token1():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(ERC20_WETH)),
+  ]);
+
+  // Token decimals
+  createMockedFunction(Address.fromString(ERC20_FXS), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+  createMockedFunction(Address.fromString(ERC20_WETH), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+
+  // Balance
+  createMockedFunction(Address.fromString(ERC20_FXS), "balanceOf", "balanceOf(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(contractAddress)])
+    .returns([ethereum.Value.fromUnsignedBigInt(FXS_ETH_BALANCE_FXS)]);
+  createMockedFunction(Address.fromString(ERC20_WETH), "balanceOf", "balanceOf(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(contractAddress)])
+    .returns([ethereum.Value.fromUnsignedBigInt(FXS_ETH_BALANCE_ETH)]);
 };
 
 /**
@@ -459,6 +487,7 @@ describe("get USD rate", () => {
 
     const tribeUsdRate = getUSDRate(ERC20_TRIBE, OHM_USD_RESERVE_BLOCK);
     const calculatedRate = getTribeUsdRate();
+    log.debug("difference: {}", [tribeUsdRate.minus(calculatedRate).toString()]);
 
     // There is a loss of precision, so we need to ensure that the value is close, but not equal
     assert.assertTrue(
@@ -472,6 +501,7 @@ describe("get USD rate", () => {
 
     const fxsUsdRate = getUSDRate(ERC20_FXS, OHM_USD_RESERVE_BLOCK);
     const calculatedRate = getFxsUsdRate();
+    log.debug("difference: {}", [fxsUsdRate.minus(calculatedRate).toString()]);
 
     // There is a loss of precision, so we need to ensure that the value is close, but not equal
     assert.assertTrue(
@@ -537,6 +567,7 @@ describe("UniswapV2 pair value", () => {
 
       const pairValue = getUniswapV2PairValue(PAIR_UNISWAP_V2_OHM_ETH_V2, ETH_USD_RESERVE_BLOCK);
       const calculatedValue = getOhmEthPairValue();
+      log.debug("difference: {}", [pairValue.minus(calculatedValue).toString()]);
 
       // There is a loss of precision, so we need to ensure that the value is close, but not equal
       assert.assertTrue(
@@ -560,6 +591,8 @@ describe("UniswapV2 pair value", () => {
       const calculatedValue = getOhmEthPairValue().times(
         toDecimal(lpBalance, 18).div(toDecimal(OHM_ETH_TOTAL_SUPPLY, 18)),
       );
+      log.debug("difference: {}", [balanceValue.minus(calculatedValue).toString()]);
+
       // There is a loss of precision, so we need to ensure that the value is close, but not equal
       assert.assertTrue(
         balanceValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
@@ -593,12 +626,57 @@ describe("UniswapV2 risk-free pair value", () => {
           ),
         );
       log.debug("calculated risk-free value: {}", [calculatedValue.toString()]);
+      log.debug("difference: {}", [pairValue.minus(calculatedValue).toString()]);
 
       // There is a loss of precision, so we need to ensure that the value is close, but not equal
       assert.assertTrue(
         pairValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
       );
     });
+  });
+});
+
+describe("UniswapV3 pair value", () => {
+  describe("FXS-ETH", () => {
+    test("pair value is correct", () => {
+      mockFxsEthRate();
+      mockEthUsdRate();
+
+      const pairValue = getUniswapV3PairValue(PAIR_UNISWAP_V3_FXS_ETH, ETH_USD_RESERVE_BLOCK);
+      // # ETH * p ETH + # FXS * p FXS
+      const calculatedValue = toDecimal(FXS_ETH_BALANCE_FXS, ERC20_STANDARD_DECIMALS)
+        .times(getFxsUsdRate())
+        .plus(toDecimal(FXS_ETH_BALANCE_ETH, ERC20_STANDARD_DECIMALS).times(getEthUsdRate()));
+      log.debug("calculated value: {}", [calculatedValue.toString()]);
+      log.debug("difference: {}", [pairValue.minus(calculatedValue).toString()]);
+
+      // There is a loss of precision, so we need to ensure that the value is close, but not equal
+      assert.assertTrue(
+        pairValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
+      );
+    });
+
+    // test("pair balance value is correct", () => {
+    //   mockOhmEthPair();
+    //   mockUsdOhmRate();
+    //   mockEthUsdRate();
+
+    //   const lpBalance = BigInt.fromString("1000000000000000000");
+    //   const balanceValue = getUniswapV2PairBalanceValue(
+    //     lpBalance,
+    //     PAIR_UNISWAP_V2_OHM_ETH_V2,
+    //     ETH_USD_RESERVE_BLOCK,
+    //   );
+
+    //   // (balance / total supply) * pair value
+    //   const calculatedValue = getOhmEthPairValue().times(
+    //     toDecimal(lpBalance, 18).div(toDecimal(OHM_ETH_TOTAL_SUPPLY, 18)),
+    //   );
+    //   // There is a loss of precision, so we need to ensure that the value is close, but not equal
+    //   assert.assertTrue(
+    //     balanceValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
+    //   );
+    // });
   });
 });
 
