@@ -19,7 +19,7 @@ import {
   getSOlympusERC20V3,
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
-import { getBaseUsdOhmRate } from "./Price";
+import { getBaseOhmUsdRate } from "./Price";
 
 /**
  * Returns the total supply of the latest version of the OHM contract
@@ -107,7 +107,7 @@ export function getCirculatingSupply(blockNumber: BigInt, totalSupply: BigDecima
  * @returns BigDecimal representing the market cap at the current block
  */
 export function getOhmMarketcap(blockNumber: BigInt): BigDecimal {
-  return getBaseUsdOhmRate(blockNumber).times(
+  return getBaseOhmUsdRate(blockNumber).times(
     getCirculatingSupply(blockNumber, getTotalSupply(blockNumber)),
   );
 }
@@ -150,5 +150,5 @@ export function getSOhmCirculatingSupply(blockNumber: BigInt): BigDecimal {
  * @returns BigDecimal representing the TVL at the current block
  */
 export function getTotalValueLocked(blockNumber: BigInt): BigDecimal {
-  return getSOhmCirculatingSupply(blockNumber).times(getBaseUsdOhmRate(blockNumber));
+  return getSOhmCirculatingSupply(blockNumber).times(getBaseOhmUsdRate(blockNumber));
 }

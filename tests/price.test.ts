@@ -21,7 +21,7 @@ import { toDecimal } from "../src/utils/Decimals";
 import {
   getBaseEthUsdRate,
   getBaseTokenOrientation,
-  getBaseUsdOhmRate,
+  getBaseOhmUsdRate,
   PairTokenBaseOrientation,
 } from "../src/utils/Price";
 
@@ -50,7 +50,7 @@ const mockEthUsdRate = (): void => {
   ]);
 };
 
-const getUsdOhmRate = (): BigDecimal => {
+const getOhmUsdRate = (): BigDecimal => {
   return toDecimal(OHM_USD_RESERVE_USD, 18).div(toDecimal(OHM_USD_RESERVE_OHM, 9));
 };
 
@@ -96,10 +96,10 @@ describe("OHM-USD rate", () => {
     mockUsdOhmRate();
 
     assert.stringEquals(
-      getBaseUsdOhmRate(
+      getBaseOhmUsdRate(
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
       ).toString(),
-      getUsdOhmRate().toString(),
+      getOhmUsdRate().toString(),
     );
   });
 
@@ -114,7 +114,7 @@ describe("OHM-USD rate", () => {
         "getReserves():(uint112,uint112,uint32)",
       ).returns([]);
 
-      getBaseUsdOhmRate(
+      getBaseOhmUsdRate(
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
       );
     },

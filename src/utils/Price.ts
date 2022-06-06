@@ -89,8 +89,8 @@ export function getBTCUSDRate(): BigDecimal {
 
 /**
  * One of the base price lookup functions. This has a hard-coded
- * liquidity pool that it uses to determine the price of USD,
- * relative to the OHM.
+ * liquidity pool that it uses to determine the price of OHM,
+ * relative to USD.
  *
  * It uses the following basis of liquidity pools:
  *
@@ -105,9 +105,9 @@ export function getBTCUSDRate(): BigDecimal {
  *
  * number of DAI * 1 / number of OHM = price of OHM
  *
- * @returns Price of USD in OHM
+ * @returns Price of OHM in USD
  */
-export function getBaseUsdOhmRate(block: BigInt): BigDecimal {
+export function getBaseOhmUsdRate(block: BigInt): BigDecimal {
   let contractAddress = PAIR_UNISWAP_V2_OHM_DAI;
   if (block.gt(BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK))) {
     contractAddress = PAIR_UNISWAP_V2_OHM_DAI_V2;
@@ -202,7 +202,7 @@ export function getBaseTokenUSDRate(
   const ohmV2Address = Address.fromString(ERC20_OHM_V2);
   if (baseToken.equals(ohmV1Address) || baseToken.equals(ohmV2Address)) {
     log.debug("Returning OHM", []);
-    return getBaseUsdOhmRate(blockNumber);
+    return getBaseOhmUsdRate(blockNumber);
   }
 
   // Otherwise, ETH
@@ -515,7 +515,7 @@ export function getOhmUSDPairValue(
   const poolTotalSupply = toDecimal(pair.totalSupply(), 18);
   const poolPercentageOwned = toDecimal(lpBalance, 18).div(poolTotalSupply);
 
-  const ohmValue = toDecimal(ohmReserves, 9).times(getBaseUsdOhmRate(blockNumber));
+  const ohmValue = toDecimal(ohmReserves, 9).times(getBaseOhmUsdRate(blockNumber));
 
   // Total value in USD is ohmValue + balance of USD stablecoin
   // TODO support for price lookup
@@ -537,7 +537,7 @@ export function getPairWETH(lp_amount: BigInt, pair_adress: string, block: BigIn
   const lp_token_0 = pair.getReserves().value0;
   const lp_token_1 = pair.getReserves().value1;
   const ownedLP = toDecimal(lp_amount, 18).div(toDecimal(total_lp, 18));
-  const ohm_value = toDecimal(lp_token_0, 9).times(getBaseUsdOhmRate(block));
+  const ohm_value = toDecimal(lp_token_0, 9).times(getBaseOhmUsdRate(block));
   const eth_value = toDecimal(lp_token_1, 18).times(getBaseEthUsdRate());
   const total_lp_usd = ohm_value.plus(eth_value);
 

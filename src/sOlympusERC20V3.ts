@@ -10,7 +10,7 @@ import {
   STAKING_CONTRACT_V3,
 } from "./utils/Constants";
 import { toDecimal } from "./utils/Decimals";
-import { getBaseUsdOhmRate } from "./utils/Price";
+import { getBaseOhmUsdRate } from "./utils/Price";
 import { updateProtocolMetrics } from "./utils/ProtocolMetrics";
 
 export function rebaseFunction(call: RebaseCall): void {
@@ -28,7 +28,7 @@ export function rebaseFunction(call: RebaseCall): void {
     rebase.contract = STAKING_CONTRACT_V3;
     rebase.percentage = rebase.amount.div(rebase.stakedOhms);
     rebase.timestamp = call.block.timestamp;
-    rebase.value = rebase.amount.times(getBaseUsdOhmRate(call.block.number));
+    rebase.value = rebase.amount.times(getBaseOhmUsdRate(call.block.number));
     rebase.save();
 
     createDailyStakingReward(rebase.timestamp, rebase.amount, call.block.number);
