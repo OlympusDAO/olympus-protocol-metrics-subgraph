@@ -303,9 +303,10 @@ function getUSDRateUniswapV2(
     ]);
   }
 
-  return baseTokenNumerator.times(
-    getBaseTokenUSDRate(token0, token1, baseTokenOrientation, blockNumber),
-  );
+  const baseTokenUsdRate = getBaseTokenUSDRate(token0, token1, baseTokenOrientation, blockNumber);
+  log.debug("baseTokenUsdRate = {}", [baseTokenUsdRate.toString()]);
+
+  return baseTokenNumerator.times(baseTokenUsdRate);
 }
 
 function getUSDRateUniswapV3(contractAddress: string, pairAddress: string): BigDecimal {
@@ -343,6 +344,11 @@ export function getUSDRate(contractAddress: string, blockNumber: BigInt): BigDec
   // TODO add support for dynamic price lookup for stablecoins
   if (ERC20_STABLE_TOKENS.includes(contractAddress)) {
     return BigDecimal.fromString("1");
+  }
+
+  // Handle OHM V1 and V2
+  if ([ERC20_OHM, ERC20_OHM_V2].includes(contractAddress)) {
+    return getBaseOhmUsdRate(blockNumber);
   }
 
   // Look for the pair
