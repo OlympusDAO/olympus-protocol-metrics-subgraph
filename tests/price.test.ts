@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import {
@@ -11,6 +11,7 @@ import {
   ERC20_WETH,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
+  PAIR_UNISWAP_V2_OHM_ETH_V2,
   PAIR_UNISWAP_V2_TRIBE_ETH,
   PAIR_UNISWAP_V2_USDC_ETH,
   PAIR_UNISWAP_V3_FXS_ETH,
@@ -21,6 +22,7 @@ import {
   getBaseOhmUsdRate,
   getBaseTokenOrientation,
   getBaseTokenUSDRate,
+  getUniswapV2PairValue,
   getUSDRate,
   PairTokenBaseOrientation,
 } from "../src/utils/Price";
@@ -466,4 +468,56 @@ describe("get USD rate", () => {
   });
 });
 
-// TODO getUniswapV2PairValue
+describe("get UniswapV2 pair value", () => {
+  test("OHM-ETH value is correct", () => {
+    const ohmReserves = BigInt.fromString("375628431674251");
+    const ethReserves = BigInt.fromString("3697970940599119381327");
+
+    // Pair
+    const pairAddress = Address.fromString(PAIR_UNISWAP_V2_OHM_ETH_V2);
+    createMockedFunction(pairAddress, "token0", "token0():(address)").returns([
+      ethereum.Value.fromAddress(Address.fromString(ERC20_OHM_V2)),
+    ]);
+    createMockedFunction(pairAddress, "token1", "token1():(address)").returns([
+      ethereum.Value.fromAddress(Address.fromString(ERC20_WETH)),
+    ]);
+    // Decimals
+    createMockedFunction(
+      Address.fromString(ERC20_OHM_V2),
+      "decimals",
+      "decimals():(uint8)",
+    ).returns([ethereum.Value.fromI32(OHM_V2_DECIMALS)]);
+    createMockedFunction(Address.fromString(ERC20_WETH), "decimals", "decimals():(uint8)").returns([
+      ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+    ]);
+    // Reserves
+    createMockedFunction(
+      pairAddress,
+      "getReserves",
+      "getReserves():(uint112,uint112,uint32)",
+    ).returns([
+      ethereum.Value.fromUnsignedBigInt(ohmReserves),
+      ethereum.Value.fromUnsignedBigInt(ethReserves),
+      ethereum.Value.fromUnsignedBigInt(ETH_USD_RESERVE_BLOCK),
+    ]);
+    // OHM price
+    mockUsdOhmRate();
+
+    // ETH price
+    mockEthUsdRate();
+
+    const pairValue = getUniswapV2PairValue(PAIR_UNISWAP_V2_OHM_ETH_V2, ETH_USD_RESERVE_BLOCK);
+    // token0 * price0 + token1 * price1
+    const calculatedValue = toDecimal(ohmReserves, OHM_V2_DECIMALS)
+      .times(getOhmUsdRate())
+      .plus(toDecimal(ethReserves, ERC20_STANDARD_DECIMALS).times(getEthUsdRate()));
+
+    // There is a loss of precision, so we need to ensure that the value is close, but not equal
+    assert.assertTrue(
+      pairValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
+    );
+  });
+});
+
+// TODO uniswap v2 pair balance value
+// TODO uniswap v3 pair value

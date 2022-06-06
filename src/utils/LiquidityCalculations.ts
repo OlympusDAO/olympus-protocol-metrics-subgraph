@@ -32,7 +32,11 @@ import {
 import { toDecimal } from "./Decimals";
 import { LiquidityBalances } from "./LiquidityBalance";
 import { PairHandlerTypes } from "./PairHandler";
-import { getOhmUSDPairRiskFreeValue, getOhmUSDPairValue, getUniswapV2PairValue } from "./Price";
+import {
+  getOhmUSDPairRiskFreeValue,
+  getOhmUSDPairValue,
+  getUniswapV2PairBalanceValue,
+} from "./Price";
 import { TokenRecord, TokenRecords } from "./TokenRecord";
 
 /**
@@ -65,7 +69,7 @@ function getLiquidityTokenRecords(
         liquidityBalance.contract,
         blockNumber,
       )
-    : getUniswapV2PairValue(
+    : getUniswapV2PairBalanceValue(
         liquidityBalance.getTotalBalance(),
         liquidityBalance.contract,
         blockNumber,
