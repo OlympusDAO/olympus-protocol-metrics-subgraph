@@ -6,7 +6,7 @@ Used in the dashboard https://app.olympusdao.finance/ and the Olympus Playground
 
 Deployed at https://thegraph.com/hosted-service/subgraph/drondin/olympus-protocol-metrics
 
-## Local Testing
+## Local Deployment
 
 A set of Docker containers is pre-configured to enable local testing of the subgraph.
 
@@ -17,6 +17,11 @@ A set of Docker containers is pre-configured to enable local testing of the subg
 5. Access the GraphQL query interface: http://localhost:8000/subgraphs/name/olympus/graphql
 
 TODO note about reasons for schema design with \*components
+
+## Testing
+
+The `matchstick-as` package is used to perform testing on the subgraph code. The syntax is close to that of
+`jest`. See this page for examples: <https://github.com/LimeChain/demo-subgraph>
 
 ## Deployment (Testing)
 
