@@ -3,6 +3,7 @@ import { assert, createMockedFunction, describe, test } from "matchstick-as/asse
 
 import {
   ERC20_DAI,
+  ERC20_FXS,
   ERC20_OHM,
   ERC20_OHM_V2,
   ERC20_TRIBE,
@@ -12,6 +13,7 @@ import {
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
   PAIR_UNISWAP_V2_TRIBE_ETH,
   PAIR_UNISWAP_V2_USDC_ETH,
+  PAIR_UNISWAP_V3_FXS_ETH,
 } from "../src/utils/Constants";
 import { toDecimal } from "../src/utils/Decimals";
 import {
@@ -34,6 +36,8 @@ const ETH_USD_RESERVE_BLOCK = BigInt.fromString("1654504965");
 const OHM_USD_RESERVE_USD = BigInt.fromString("18867842715859452534935831");
 const OHM_USD_RESERVE_OHM = BigInt.fromString("994866147276819");
 const OHM_USD_RESERVE_BLOCK = BigInt.fromString("1654504965");
+
+const FXS_ETH_SLOT0_VALUE0 = BigInt.fromString("4408826845265778408963222405");
 
 const OHM_V2_DECIMALS = 9;
 const USDC_DECIMALS = 6;
@@ -116,6 +120,37 @@ const mockTribeEthRate = (): void => {
   ]);
   createMockedFunction(Address.fromString(ERC20_WETH), "decimals", "decimals():(uint8)").returns([
     ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
+/**
+ * FXS in ETH * price ETH / 2^192 = price FXS (in USD)
+ *
+ *
+ *
+ * @returns
+ */
+const getFxsUsdRate = (): BigDecimal => {
+  return FXS_ETH_SLOT0_VALUE0.times(FXS_ETH_SLOT0_VALUE0)
+    .toBigDecimal()
+    .times(getEthUsdRate())
+    .div(BigInt.fromString("2").pow(192).toBigDecimal());
+};
+
+const mockFxsEthRate = (): void => {
+  const contractAddress = Address.fromString(PAIR_UNISWAP_V3_FXS_ETH);
+  createMockedFunction(
+    contractAddress,
+    "slot0",
+    "slot0():(uint160,int24,uint16,uint16,uint16,uint8,bool)",
+  ).returns([
+    ethereum.Value.fromUnsignedBigInt(FXS_ETH_SLOT0_VALUE0),
+    ethereum.Value.fromI32(-57778),
+    ethereum.Value.fromI32(1),
+    ethereum.Value.fromI32(2),
+    ethereum.Value.fromI32(2),
+    ethereum.Value.fromI32(0),
+    ethereum.Value.fromBoolean(true),
   ]);
 };
 
@@ -417,5 +452,18 @@ describe("get USD rate", () => {
     );
   });
 
-  // TODO Uniswap V3
+  test("FXS (UniswapV3) returns correct value", () => {
+    mockEthUsdRate();
+    mockFxsEthRate();
+
+    const fxsUsdRate = getUSDRate(ERC20_FXS, OHM_USD_RESERVE_BLOCK);
+    const calculatedRate = getFxsUsdRate();
+
+    // There is a loss of precision, so we need to ensure that the value is close, but not equal
+    assert.assertTrue(
+      fxsUsdRate.minus(calculatedRate).lt(BigDecimal.fromString("0.000000000000000001")),
+    );
+  });
 });
+
+// TODO getUniswapV2PairValue
