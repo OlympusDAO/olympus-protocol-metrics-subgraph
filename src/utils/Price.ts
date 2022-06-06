@@ -223,6 +223,8 @@ function getBaseTokenUSDRate(
  * (ETH balance / TRIBE balance) * (ETH price) = TRIBE price
  * (4.99923661 / 40537.42936106) * 2000 = 0.24
  *
+ * TODO: mention p1 * q1 = p2 * q2
+ *
  * @param contractAddress
  * @param pairAddress
  * @returns
@@ -234,6 +236,9 @@ function getUSDRateUniswapV2(
 ): BigDecimal {
   if (contractAddress === ERC20_WETH) return getBaseETHUSDRate();
   if (contractAddress === ERC20_WBTC) return getBTCUSDRate();
+
+  // TODO check if we are ready to lookup using one of the base (OHM/ETH) rates
+  // TODO handle OHM v1 rates?
 
   // TODO handle pairs at different blocks
   const pair = UniswapV2Pair.bind(Address.fromString(pairAddress));
