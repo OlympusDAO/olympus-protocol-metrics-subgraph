@@ -8,12 +8,22 @@ import {
 } from "matchstick-as/assembly/index";
 
 import {
+  ERC20_DAI,
+  ERC20_OHM,
+  ERC20_OHM_V2,
+  ERC20_TRIBE,
+  ERC20_WETH,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
   PAIR_UNISWAP_V2_USDC_ETH,
 } from "../src/utils/Constants";
 import { toDecimal } from "../src/utils/Decimals";
-import { getBaseEthUsdRate, getBaseUsdOhmRate } from "../src/utils/Price";
+import {
+  getBaseEthUsdRate,
+  getBaseTokenOrientation,
+  getBaseUsdOhmRate,
+  PairTokenBaseOrientation,
+} from "../src/utils/Price";
 
 const ETH_USD_RESERVE_USD = BigInt.fromString("51366826766840");
 const ETH_USD_RESERVE_ETH = BigInt.fromString("27063460795012214253805");
@@ -110,4 +120,78 @@ describe("OHM-USD rate", () => {
     },
     true,
   );
+});
+
+describe("base token", () => {
+  test("token0 == OHM V1", () => {
+    const ohmV1Address = Address.fromString(ERC20_OHM);
+    const daiAddress = Address.fromString(ERC20_DAI);
+
+    assert.assertTrue(
+      getBaseTokenOrientation(ohmV1Address, daiAddress) === PairTokenBaseOrientation.TOKEN0,
+    );
+  });
+
+  test("token0 == OHM V2", () => {
+    const ohmV2Address = Address.fromString(ERC20_OHM_V2);
+    const daiAddress = Address.fromString(ERC20_DAI);
+
+    assert.assertTrue(
+      getBaseTokenOrientation(ohmV2Address, daiAddress) === PairTokenBaseOrientation.TOKEN0,
+    );
+  });
+
+  test("token0 == ETH", () => {
+    const wethAddress = Address.fromString(ERC20_WETH);
+    const daiAddress = Address.fromString(ERC20_DAI);
+
+    assert.assertTrue(
+      getBaseTokenOrientation(wethAddress, daiAddress) === PairTokenBaseOrientation.TOKEN0,
+    );
+  });
+
+  test("token1 == OHM V1", () => {
+    const ohmV1Address = Address.fromString(ERC20_OHM);
+    const daiAddress = Address.fromString(ERC20_DAI);
+
+    assert.assertTrue(
+      getBaseTokenOrientation(daiAddress, ohmV1Address) === PairTokenBaseOrientation.TOKEN1,
+    );
+  });
+
+  test("token1 == OHM V2", () => {
+    const ohmV2Address = Address.fromString(ERC20_OHM_V2);
+    const daiAddress = Address.fromString(ERC20_DAI);
+
+    assert.assertTrue(
+      getBaseTokenOrientation(daiAddress, ohmV2Address) === PairTokenBaseOrientation.TOKEN1,
+    );
+  });
+
+  test("token1 == ETH", () => {
+    const wethAddress = Address.fromString(ERC20_WETH);
+    const daiAddress = Address.fromString(ERC20_DAI);
+
+    assert.assertTrue(
+      getBaseTokenOrientation(daiAddress, wethAddress) === PairTokenBaseOrientation.TOKEN1,
+    );
+  });
+
+  test("token0-token1 non-base pair", () => {
+    const daiAddress = Address.fromString(ERC20_DAI);
+    const tribeAddress = Address.fromString(ERC20_TRIBE);
+
+    assert.assertTrue(
+      getBaseTokenOrientation(tribeAddress, daiAddress) === PairTokenBaseOrientation.UNKNOWN,
+    );
+  });
+
+  test("token1-token0 non-base pair", () => {
+    const daiAddress = Address.fromString(ERC20_DAI);
+    const tribeAddress = Address.fromString(ERC20_TRIBE);
+
+    assert.assertTrue(
+      getBaseTokenOrientation(daiAddress, tribeAddress) === PairTokenBaseOrientation.UNKNOWN,
+    );
+  });
 });

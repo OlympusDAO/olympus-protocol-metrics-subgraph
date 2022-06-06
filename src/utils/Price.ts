@@ -133,7 +133,7 @@ export function getBaseUsdOhmRate(block: BigInt): BigDecimal {
 }
 
 // eslint-disable-next-line no-shadow
-enum PairTokenBaseOrientation {
+export enum PairTokenBaseOrientation {
   TOKEN0,
   TOKEN1,
   UNKNOWN,
@@ -146,7 +146,10 @@ enum PairTokenBaseOrientation {
  * @param token1
  * @returns
  */
-function getBaseTokenOrientation(token0: Address, token1: Address): PairTokenBaseOrientation {
+export function getBaseTokenOrientation(
+  token0: Address,
+  token1: Address,
+): PairTokenBaseOrientation {
   /**
    * Note: token0.toHexString() ostensibly returns the contract address,
    * but it does not equal {ERC20_WETH} even after trimming. So we use Address.
@@ -154,12 +157,13 @@ function getBaseTokenOrientation(token0: Address, token1: Address): PairTokenBas
   const wethAddress = Address.fromString(ERC20_WETH);
   const ohmV1Address = Address.fromString(ERC20_OHM);
   const ohmV2Address = Address.fromString(ERC20_OHM_V2);
+  // TODO what if the pair is OHM-ETH or ETH-OHM?
 
   if (token0.equals(wethAddress) || token0.equals(ohmV1Address) || token0.equals(ohmV2Address)) {
     return PairTokenBaseOrientation.TOKEN0;
   }
 
-  if (token1.equals(wethAddress) || token0.equals(ohmV1Address) || token1.equals(ohmV2Address)) {
+  if (token1.equals(wethAddress) || token1.equals(ohmV1Address) || token1.equals(ohmV2Address)) {
     return PairTokenBaseOrientation.TOKEN1;
   }
 
@@ -177,7 +181,7 @@ function getBaseTokenOrientation(token0: Address, token1: Address): PairTokenBas
  * @param blockNumber
  * @returns
  */
-function getBaseTokenUSDRate(
+export function getBaseTokenUSDRate(
   token0: Address,
   token1: Address,
   orientation: PairTokenBaseOrientation,
