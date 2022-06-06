@@ -32,11 +32,7 @@ import {
 import { toDecimal } from "./Decimals";
 import { LiquidityBalances } from "./LiquidityBalance";
 import { PairHandlerTypes } from "./PairHandler";
-import {
-  getOhmUSDPairRiskFreeValue,
-  getOhmUSDPairValue,
-  getUniswapV2PairBalanceValue,
-} from "./Price";
+import { getOhmUSDPairRiskFreeValue, getUniswapV2PairBalanceValue } from "./Price";
 import { TokenRecord, TokenRecords } from "./TokenRecord";
 
 /**
@@ -62,6 +58,7 @@ function getLiquidityTokenRecords(
 ): TokenRecords {
   const records = new TokenRecords();
   const contractName = getContractName(liquidityBalance.contract);
+  // TODO handle uniswap V3
   // TODO this assumes that the other side of the LP is OHM, which is not always correct (ETH!)
   const lpValue = riskFree
     ? getOhmUSDPairRiskFreeValue(

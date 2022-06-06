@@ -6,7 +6,6 @@ import {
   ERC20_OHM,
   ERC20_OHM_V2,
   ERC20_STABLE_TOKENS,
-  ERC20_WBTC,
   ERC20_WETH,
   getContractName,
   getPairHandler,
@@ -14,7 +13,6 @@ import {
   PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
-  PAIR_UNISWAP_V2_OHM_ETH_V2,
   PAIR_UNISWAP_V2_USDC_ETH,
 } from "./Constants";
 import { getERC20, getUniswapV2Pair } from "./ContractHelper";
