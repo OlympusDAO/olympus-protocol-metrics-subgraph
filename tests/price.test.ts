@@ -1,5 +1,11 @@
-import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts";
-import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
+import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
+import {
+  assert,
+  beforeAll,
+  createMockedFunction,
+  describe,
+  test,
+} from "matchstick-as/assembly/index";
 
 import {
   PAIR_UNISWAP_V2_OHM_DAI_V2,
@@ -7,31 +13,55 @@ import {
   PAIR_UNISWAP_V2_USDC_ETH,
 } from "../src/utils/Constants";
 import { toDecimal } from "../src/utils/Decimals";
-import { getBaseETHUSDRate, getBaseOHMUSDRate } from "../src/utils/Price";
+import { getBaseEthUsdRate, getBaseUsdOhmRate } from "../src/utils/Price";
+
+const ETH_USD_RESERVE_USD = BigInt.fromString("51366826766840");
+const ETH_USD_RESERVE_ETH = BigInt.fromString("27063460795012214253805");
+const ETH_USD_RESERVE_BLOCK = BigInt.fromString("1654504965");
+
+const OHM_USD_RESERVE_USD = BigInt.fromString("18867842715859452534935831");
+const OHM_USD_RESERVE_OHM = BigInt.fromString("994866147276819");
+const OHM_USD_RESERVE_BLOCK = BigInt.fromString("1654504965");
+
+const getEthUsdRate = (): BigDecimal => {
+  return toDecimal(ETH_USD_RESERVE_USD, 6).div(toDecimal(ETH_USD_RESERVE_ETH, 18));
+};
+
+const mockEthUsdRate = (): void => {
+  const contractAddress = Address.fromString(PAIR_UNISWAP_V2_USDC_ETH);
+  createMockedFunction(
+    contractAddress,
+    "getReserves",
+    "getReserves():(uint112,uint112,uint32)",
+  ).returns([
+    ethereum.Value.fromUnsignedBigInt(ETH_USD_RESERVE_USD),
+    ethereum.Value.fromUnsignedBigInt(ETH_USD_RESERVE_ETH),
+    ethereum.Value.fromUnsignedBigInt(ETH_USD_RESERVE_BLOCK),
+  ]);
+};
+
+const getUsdOhmRate = (): BigDecimal => {
+  return toDecimal(OHM_USD_RESERVE_USD, 18).div(toDecimal(OHM_USD_RESERVE_OHM, 9));
+};
+
+const mockUsdOhmRate = (): void => {
+  const contractAddress = Address.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2);
+  createMockedFunction(
+    contractAddress,
+    "getReserves",
+    "getReserves():(uint112,uint112,uint32)",
+  ).returns([
+    ethereum.Value.fromUnsignedBigInt(OHM_USD_RESERVE_OHM),
+    ethereum.Value.fromUnsignedBigInt(OHM_USD_RESERVE_USD),
+    ethereum.Value.fromUnsignedBigInt(OHM_USD_RESERVE_BLOCK),
+  ]);
+};
 
 describe("ETH-USD rate", () => {
   test("rate calculation is correct", () => {
-    const contractAddress = Address.fromString(PAIR_UNISWAP_V2_USDC_ETH);
+    mockEthUsdRate();
 
-    const usdReserve = BigInt.fromString("51366826766840");
-    const ethReserve = BigInt.fromString("27063460795012214253805");
-    // Real values from the LP contract
-    createMockedFunction(
-      contractAddress,
-      "getReserves",
-      "getReserves():(uint112,uint112,uint32)",
-    ).returns([
-      ethereum.Value.fromUnsignedBigInt(usdReserve),
-      ethereum.Value.fromUnsignedBigInt(ethReserve),
-      ethereum.Value.fromUnsignedBigInt(BigInt.fromString("1654504965")),
-    ]);
-
-    // We expect the rate to be calculated as USD/ETH (value0/value1)
-    const usd = toDecimal(usdReserve, 6);
-    const eth = toDecimal(ethReserve, 18);
-    const rate = usd.div(eth);
-
-    assert.stringEquals(getBaseETHUSDRate().toString(), rate.toString());
+    assert.stringEquals(getBaseEthUsdRate().toString(), getEthUsdRate().toString());
   });
 
   test(
@@ -45,7 +75,7 @@ describe("ETH-USD rate", () => {
         "getReserves():(uint112,uint112,uint32)",
       ).returns([]);
 
-      getBaseETHUSDRate();
+      getBaseEthUsdRate();
     },
     true,
   );
@@ -53,31 +83,13 @@ describe("ETH-USD rate", () => {
 
 describe("OHM-USD rate", () => {
   test("rate calculation is correct", () => {
-    const contractAddress = Address.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2);
-
-    const ohmReserve = BigInt.fromString("994866147276819");
-    const usdReserve = BigInt.fromString("18867842715859452534935831");
-    // Real values from the LP contract
-    createMockedFunction(
-      contractAddress,
-      "getReserves",
-      "getReserves():(uint112,uint112,uint32)",
-    ).returns([
-      ethereum.Value.fromUnsignedBigInt(ohmReserve),
-      ethereum.Value.fromUnsignedBigInt(usdReserve),
-      ethereum.Value.fromUnsignedBigInt(BigInt.fromString("1654504965")),
-    ]);
-
-    // We expect the rate to be calculated as USD/OHM (value1/value0)
-    const ohm = toDecimal(ohmReserve, 9);
-    const usd = toDecimal(usdReserve, 18);
-    const rate = usd.div(ohm);
+    mockUsdOhmRate();
 
     assert.stringEquals(
-      getBaseOHMUSDRate(
+      getBaseUsdOhmRate(
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
       ).toString(),
-      rate.toString(),
+      getUsdOhmRate().toString(),
     );
   });
 
@@ -92,7 +104,7 @@ describe("OHM-USD rate", () => {
         "getReserves():(uint112,uint112,uint32)",
       ).returns([]);
 
-      getBaseOHMUSDRate(
+      getBaseUsdOhmRate(
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
       );
     },
