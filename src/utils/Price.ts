@@ -64,27 +64,6 @@ export function getBaseEthUsdRate(): BigDecimal {
   return ethRate;
 }
 
-// TODO remove?
-export function getBTCUSDRate(): BigDecimal {
-  const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_ETH_WBTC));
-  if (!pair) {
-    throw new Error(
-      "Cannot determine discounted value as the contract " +
-        PAIR_UNISWAP_V2_ETH_WBTC +
-        " does not exist yet.",
-    );
-  }
-
-  const reserves = pair.getReserves();
-  const reserve0 = reserves.value0.toBigDecimal();
-  const reserve1 = reserves.value1.toBigDecimal();
-
-  const btcRate = getBaseEthUsdRate().div(reserve0.div(reserve1).times(BIG_DECIMAL_1E10));
-  log.debug("BTC rate {}", [btcRate.toString()]);
-
-  return btcRate;
-}
-
 /**
  * One of the base price lookup functions. This has a hard-coded
  * liquidity pool that it uses to determine the price of OHM,
@@ -527,24 +506,4 @@ export function getOhmUSDPairValue(
   const lpValue = ohmValue.plus(toDecimal(secondTokenReserves, 18));
 
   return poolPercentageOwned.times(lpValue);
-}
-
-// TODO unused?
-export function getPairWETH(lp_amount: BigInt, pair_adress: string, block: BigInt): BigDecimal {
-  const pair = UniswapV2Pair.bind(Address.fromString(pair_adress));
-  if (!pair) {
-    throw new Error(
-      "Cannot determine discounted value as the contract " + pair_adress + " does not exist yet.",
-    );
-  }
-
-  const total_lp = pair.totalSupply();
-  const lp_token_0 = pair.getReserves().value0;
-  const lp_token_1 = pair.getReserves().value1;
-  const ownedLP = toDecimal(lp_amount, 18).div(toDecimal(total_lp, 18));
-  const ohm_value = toDecimal(lp_token_0, 9).times(getBaseOhmUsdRate(block));
-  const eth_value = toDecimal(lp_token_1, 18).times(getBaseEthUsdRate());
-  const total_lp_usd = ohm_value.plus(eth_value);
-
-  return ownedLP.times(total_lp_usd);
 }
