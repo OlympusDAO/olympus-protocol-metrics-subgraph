@@ -20,8 +20,9 @@ import {
 import { toDecimal } from "../src/utils/Decimals";
 import {
   getBaseEthUsdRate,
-  getBaseTokenOrientation,
   getBaseOhmUsdRate,
+  getBaseTokenOrientation,
+  getBaseTokenUSDRate,
   PairTokenBaseOrientation,
 } from "../src/utils/Price";
 
@@ -192,6 +193,92 @@ describe("base token", () => {
 
     assert.assertTrue(
       getBaseTokenOrientation(daiAddress, tribeAddress) === PairTokenBaseOrientation.UNKNOWN,
+    );
+  });
+});
+
+describe("base token USD rate", () => {
+  test("token0 == OHM V1, token1 == TRIBE", () => {
+    mockUsdOhmRate();
+
+    assert.stringEquals(
+      getBaseTokenUSDRate(
+        Address.fromString(ERC20_OHM),
+        Address.fromString(ERC20_TRIBE),
+        PairTokenBaseOrientation.TOKEN0,
+        OHM_USD_RESERVE_BLOCK,
+      ).toString(),
+      getOhmUsdRate().toString(),
+    );
+  });
+
+  test("token0 == OHM V2, token1 == TRIBE", () => {
+    mockUsdOhmRate();
+
+    assert.stringEquals(
+      getBaseTokenUSDRate(
+        Address.fromString(ERC20_OHM_V2),
+        Address.fromString(ERC20_TRIBE),
+        PairTokenBaseOrientation.TOKEN0,
+        OHM_USD_RESERVE_BLOCK,
+      ).toString(),
+      getOhmUsdRate().toString(),
+    );
+  });
+
+  test("token0 == ETH, token1 == TRIBE", () => {
+    mockEthUsdRate();
+
+    assert.stringEquals(
+      getBaseTokenUSDRate(
+        Address.fromString(ERC20_WETH),
+        Address.fromString(ERC20_TRIBE),
+        PairTokenBaseOrientation.TOKEN0,
+        OHM_USD_RESERVE_BLOCK,
+      ).toString(),
+      getEthUsdRate().toString(),
+    );
+  });
+
+  test("token0 == TRIBE, token0 == OHM V1", () => {
+    mockUsdOhmRate();
+
+    assert.stringEquals(
+      getBaseTokenUSDRate(
+        Address.fromString(ERC20_TRIBE),
+        Address.fromString(ERC20_OHM),
+        PairTokenBaseOrientation.TOKEN1,
+        OHM_USD_RESERVE_BLOCK,
+      ).toString(),
+      getOhmUsdRate().toString(),
+    );
+  });
+
+  test("token0 == TRIBE, token1 == OHM V2", () => {
+    mockUsdOhmRate();
+
+    assert.stringEquals(
+      getBaseTokenUSDRate(
+        Address.fromString(ERC20_TRIBE),
+        Address.fromString(ERC20_OHM_V2),
+        PairTokenBaseOrientation.TOKEN1,
+        OHM_USD_RESERVE_BLOCK,
+      ).toString(),
+      getOhmUsdRate().toString(),
+    );
+  });
+
+  test("token0 == TRIBE, token1 == ETH", () => {
+    mockEthUsdRate();
+
+    assert.stringEquals(
+      getBaseTokenUSDRate(
+        Address.fromString(ERC20_TRIBE),
+        Address.fromString(ERC20_WETH),
+        PairTokenBaseOrientation.TOKEN1,
+        OHM_USD_RESERVE_BLOCK,
+      ).toString(),
+      getEthUsdRate().toString(),
     );
   });
 });
