@@ -33,20 +33,20 @@ const BIG_DECIMAL_1E12 = BigDecimal.fromString("1e12");
  *
  * It uses the following basis of liquidity pools:
  *
- * # token1 * price1 = # token2 * price2
+ * number of token1 * price of token1 = number of token2 * price of token2
  *
  * In the case of a USDC-ETH pair, we know the following:
- * - # USDC (using getReserves())
- * - # ETH (using getReserves())
+ * - number of USDC (using getReserves())
+ * - number of ETH (using getReserves())
  * - price of USDC (1)
  *
  * Therefore the price of ETH is:
  *
- * # USDC * 1 / # ETH = price ETH
+ * number of USDC * 1 / number of ETH = price of ETH
  *
  * @returns Price of ETH in USD
  */
-export function getBaseETHUSDRate(): BigDecimal {
+export function getBaseEthUsdRate(): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_USDC_ETH));
   if (!pair) {
     throw new Error(
@@ -81,7 +81,7 @@ export function getBTCUSDRate(): BigDecimal {
   const reserve0 = reserves.value0.toBigDecimal();
   const reserve1 = reserves.value1.toBigDecimal();
 
-  const btcRate = getBaseETHUSDRate().div(reserve0.div(reserve1).times(BIG_DECIMAL_1E10));
+  const btcRate = getBaseEthUsdRate().div(reserve0.div(reserve1).times(BIG_DECIMAL_1E10));
   log.debug("BTC rate {}", [btcRate.toString()]);
 
   return btcRate;
@@ -89,25 +89,25 @@ export function getBTCUSDRate(): BigDecimal {
 
 /**
  * One of the base price lookup functions. This has a hard-coded
- * liquidity pool that it uses to determine the price of OHM,
- * relative to the USD.
+ * liquidity pool that it uses to determine the price of USD,
+ * relative to the OHM.
  *
  * It uses the following basis of liquidity pools:
  *
- * # token1 * price1 = # token2 * price2
+ * number of token1 * price of token1 = number of token2 * price of token2
  *
- * In the case of a DAU-OHM pair, we know the following:
- * - # DAI (using getReserves())
- * - # OHM (using getReserves())
- * - price of OHM (1)
+ * In the case of a DAI-OHM pair, we know the following:
+ * - number of DAI (using getReserves())
+ * - number of OHM (using getReserves())
+ * - price of DAI (1)
  *
  * Therefore the price of OHM is:
  *
- * # DAI * 1 / # OHM = price OHM
+ * number of DAI * 1 / number of OHM = price of OHM
  *
- * @returns Price of OHM in USD
+ * @returns Price of USD in OHM
  */
-export function getBaseOHMUSDRate(block: BigInt): BigDecimal {
+export function getBaseUsdOhmRate(block: BigInt): BigDecimal {
   let contractAddress = PAIR_UNISWAP_V2_OHM_DAI;
   if (block.gt(BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK))) {
     contractAddress = PAIR_UNISWAP_V2_OHM_DAI_V2;
@@ -198,12 +198,12 @@ function getBaseTokenUSDRate(
   const ohmV2Address = Address.fromString(ERC20_OHM_V2);
   if (baseToken.equals(ohmV1Address) || baseToken.equals(ohmV2Address)) {
     log.debug("Returning OHM", []);
-    return getBaseOHMUSDRate(blockNumber);
+    return getBaseUsdOhmRate(blockNumber);
   }
 
   // Otherwise, ETH
   log.debug("Returning ETH", []);
-  return getBaseETHUSDRate();
+  return getBaseEthUsdRate();
 }
 
 /**
@@ -234,7 +234,7 @@ function getUSDRateUniswapV2(
   pairAddress: string,
   blockNumber: BigInt,
 ): BigDecimal {
-  if (contractAddress === ERC20_WETH) return getBaseETHUSDRate();
+  if (contractAddress === ERC20_WETH) return getBaseEthUsdRate();
   if (contractAddress === ERC20_WBTC) return getBTCUSDRate();
 
   // TODO check if we are ready to lookup using one of the base (OHM/ETH) rates
@@ -316,7 +316,7 @@ function getUSDRateUniswapV3(contractAddress: string, pairAddress: string): BigD
   let priceETH = pair.slot0().value0.times(pair.slot0().value0).toBigDecimal();
   const priceDiv = BigInt.fromI32(2).pow(192).toBigDecimal();
   priceETH = priceETH.div(priceDiv);
-  const priceUSD = priceETH.times(getBaseETHUSDRate());
+  const priceUSD = priceETH.times(getBaseEthUsdRate());
 
   return priceUSD;
 }
@@ -511,7 +511,7 @@ export function getOhmUSDPairValue(
   const poolTotalSupply = toDecimal(pair.totalSupply(), 18);
   const poolPercentageOwned = toDecimal(lpBalance, 18).div(poolTotalSupply);
 
-  const ohmValue = toDecimal(ohmReserves, 9).times(getBaseOHMUSDRate(blockNumber));
+  const ohmValue = toDecimal(ohmReserves, 9).times(getBaseUsdOhmRate(blockNumber));
 
   // Total value in USD is ohmValue + balance of USD stablecoin
   // TODO support for price lookup
@@ -533,8 +533,8 @@ export function getPairWETH(lp_amount: BigInt, pair_adress: string, block: BigIn
   const lp_token_0 = pair.getReserves().value0;
   const lp_token_1 = pair.getReserves().value1;
   const ownedLP = toDecimal(lp_amount, 18).div(toDecimal(total_lp, 18));
-  const ohm_value = toDecimal(lp_token_0, 9).times(getBaseOHMUSDRate(block));
-  const eth_value = toDecimal(lp_token_1, 18).times(getBaseETHUSDRate());
+  const ohm_value = toDecimal(lp_token_0, 9).times(getBaseUsdOhmRate(block));
+  const eth_value = toDecimal(lp_token_1, 18).times(getBaseEthUsdRate());
   const total_lp_usd = ohm_value.plus(eth_value);
 
   return ownedLP.times(total_lp_usd);

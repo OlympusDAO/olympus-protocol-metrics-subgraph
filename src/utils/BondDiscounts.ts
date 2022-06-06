@@ -44,7 +44,7 @@ import {
 } from "./Constants";
 import { hourFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
-import { getBaseOHMUSDRate } from "./Price";
+import { getBaseUsdOhmRate } from "./Price";
 
 export function loadOrCreateBondDiscount(timestamp: BigInt): BondDiscount {
   let hourTimestamp = hourFromTimestamp(timestamp);
@@ -67,7 +67,7 @@ export function loadOrCreateBondDiscount(timestamp: BigInt): BondDiscount {
 
 export function updateBondDiscounts(blockNumber: BigInt): void {
   let bd = loadOrCreateBondDiscount(blockNumber);
-  let ohmRate = getBaseOHMUSDRate(blockNumber);
+  let ohmRate = getBaseUsdOhmRate(blockNumber);
 
   //OHMDAI
   if (blockNumber.gt(BigInt.fromString(OHMDAISLPBOND_CONTRACT1_BLOCK))) {
