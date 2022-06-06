@@ -398,6 +398,8 @@ export function getOhmUSDPairRiskFreeValue(
   blockNumber: BigInt,
 ): BigDecimal {
   // TODO assumes that the pair is Uniswap V2. What about V3 or balancer?
+  // TODO assumes part of the pair is a stablecoin
+  // TODO abstract out for ANY pair
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
     throw new Error(
@@ -416,6 +418,7 @@ export function getOhmUSDPairRiskFreeValue(
   const sqrt = kLast.sqrt();
   const part2 = toDecimal(two.times(sqrt), 0);
   const result = part1.times(part2);
+  log.debug("OHM-DAI risk-free value is {}", [result.toString()]);
   return result;
 }
 

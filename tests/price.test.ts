@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import {
@@ -22,6 +22,7 @@ import {
   getBaseOhmUsdRate,
   getBaseTokenOrientation,
   getBaseTokenUSDRate,
+  getOhmUSDPairRiskFreeValue,
   getUniswapV2PairBalanceValue,
   getUniswapV2PairValue,
   getUSDRate,
@@ -39,6 +40,8 @@ const ETH_USD_RESERVE_BLOCK = BigInt.fromString("1654504965");
 const OHM_USD_RESERVE_USD = BigInt.fromString("18867842715859452534935831");
 const OHM_USD_RESERVE_OHM = BigInt.fromString("994866147276819");
 const OHM_USD_RESERVE_BLOCK = BigInt.fromString("1654504965");
+const OHM_USD_DECIMALS = 18;
+const OHM_USD_TOTAL_SUPPLY = BigInt.fromString("132978245612511289049");
 
 const FXS_ETH_SLOT0_VALUE0 = BigInt.fromString("4408826845265778408963222405");
 
@@ -176,6 +179,14 @@ const mockUsdOhmRate = (): void => {
     ethereum.Value.fromUnsignedBigInt(OHM_USD_RESERVE_OHM),
     ethereum.Value.fromUnsignedBigInt(OHM_USD_RESERVE_USD),
     ethereum.Value.fromUnsignedBigInt(OHM_USD_RESERVE_BLOCK),
+  ]);
+  // Decimals
+  createMockedFunction(contractAddress, "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(OHM_USD_DECIMALS),
+  ]);
+  // Total supply
+  createMockedFunction(contractAddress, "totalSupply", "totalSupply():(uint256)").returns([
+    ethereum.Value.fromUnsignedBigInt(OHM_USD_TOTAL_SUPPLY),
   ]);
 
   // Token addresses
@@ -552,6 +563,40 @@ describe("UniswapV2 pair value", () => {
       // There is a loss of precision, so we need to ensure that the value is close, but not equal
       assert.assertTrue(
         balanceValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
+      );
+    });
+  });
+});
+
+describe("UniswapV2 risk-free pair value", () => {
+  describe("OHM-DAI", () => {
+    test("risk-free pair value is correct", () => {
+      mockUsdOhmRate();
+
+      const lpBalance = BigInt.fromString("1000000000000000000");
+      const pairValue = getOhmUSDPairRiskFreeValue(
+        lpBalance,
+        PAIR_UNISWAP_V2_OHM_DAI_V2,
+        OHM_USD_RESERVE_BLOCK,
+      );
+      // (# LP tokens / LP total supply) * (2) * sqrt(# DAI * # OHM)
+      const calculatedValue = toDecimal(lpBalance, 18)
+        .div(toDecimal(OHM_USD_TOTAL_SUPPLY, 18))
+        .times(BigDecimal.fromString("2"))
+        .times(
+          toDecimal(
+            toDecimal(OHM_USD_RESERVE_USD, ERC20_STANDARD_DECIMALS)
+              .times(toDecimal(OHM_USD_RESERVE_OHM, OHM_V2_DECIMALS))
+              .truncate(0)
+              .digits.sqrt(),
+            0,
+          ),
+        );
+      log.debug("calculated risk-free value: {}", [calculatedValue.toString()]);
+
+      // There is a loss of precision, so we need to ensure that the value is close, but not equal
+      assert.assertTrue(
+        pairValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
       );
     });
   });
