@@ -23,7 +23,7 @@ import {
   getBaseTokenOrientation,
   getBaseTokenUSDRate,
   getOhmUSDPairRiskFreeValue,
-  getUniswapV2PairBalanceValue,
+  getUniswapV2PairValue,
   getUniswapV2PairTotalValue,
   getUniswapV3PairTotalValue,
   getUSDRate,
@@ -584,7 +584,7 @@ describe("UniswapV2 pair value", () => {
       mockEthUsdRate();
 
       const lpBalance = BigInt.fromString("1000000000000000000");
-      const balanceValue = getUniswapV2PairBalanceValue(
+      const balanceValue = getUniswapV2PairValue(
         lpBalance,
         PAIR_UNISWAP_V2_OHM_ETH_V2,
         ETH_USD_RESERVE_BLOCK,
