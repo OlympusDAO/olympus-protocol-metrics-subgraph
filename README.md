@@ -27,3 +27,23 @@ The `matchstick-as` package is used to perform testing on the subgraph code. The
 
 1. Update the `SUBGRAPH_VERSION` variable in the `.subgraph-version` file.
 2. Run `yarn deploy-studio`
+
+## Tokens
+
+Tokens are defined and mapped in the `src/utils/Constants.ts` file.
+
+To add a new token:
+
+- Define a constant value with the address of the ERC20 contract
+- Define a constant value with the address of the Uniswap V2 or V3 liquidity pool
+- Add the token to either the `ERC20_STABLE_TOKENS` or `ERC20_VOLATILE_TOKENS` array (as appropriate).
+- Add a mapping under `PAIR_HANDLER` between the ERC20 contract and the liquidity pool contract
+
+## Wallets
+
+Tokens are defined and mapped in the `src/utils/Constants.ts` file.
+
+To add a new wallet:
+
+- Define a constant value with the address of the wallet
+- Add the constant to the `WALLET_ADDRESSES` array

@@ -243,5 +243,3 @@ export function getLusdMarketValue(blockNumber: BigInt, riskFree: boolean = fals
 export function getFeiMarketValue(blockNumber: BigInt, riskFree: boolean = false): TokenRecords {
   return getStablecoinBalance(ERC20_FEI, true, riskFree, blockNumber);
 }
-
-// TODO add USDC
