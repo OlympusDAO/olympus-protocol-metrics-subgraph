@@ -32,6 +32,7 @@ import {
   ETH_USD_RESERVE_BLOCK,
   FXS_ETH_BALANCE_ETH,
   FXS_ETH_BALANCE_FXS,
+  FXS_ETH_SLOT0_VALUE0,
   getEthUsdRate,
   getFxsUsdRate,
   getOhmEthPairValue,
@@ -311,17 +312,32 @@ describe("get USD rate", () => {
     );
   });
 
-  test("FXS (UniswapV3) returns correct value", () => {
+  test("FXS (UniswapV3) returns correct value for FXS", () => {
     mockEthUsdRate();
     mockFxsEthRate();
 
     const fxsUsdRate = getUSDRate(ERC20_FXS, OHM_USD_RESERVE_BLOCK);
-    const calculatedRate = getFxsUsdRate();
-    log.debug("difference: {}", [fxsUsdRate.minus(calculatedRate).toString()]);
+    const calculatedRate = BigDecimal.fromString("5.877414538282582611"); // 5.87741453828258261098431099338906
 
     // There is a loss of precision, so we need to ensure that the value is close, but not equal
     assert.assertTrue(
-      fxsUsdRate.minus(calculatedRate).lt(BigDecimal.fromString("0.000000000000000001")),
+      fxsUsdRate.minus(calculatedRate).lt(BigDecimal.fromString("0.000000000000000001")) &&
+        fxsUsdRate.minus(calculatedRate).gt(BigDecimal.fromString("-0.000000000000000001")),
+    );
+  });
+
+  test("FXS (UniswapV3) returns correct value for ETH", () => {
+    mockEthUsdRate();
+    mockFxsEthRate();
+
+    const ethUsdRate = getUSDRate(ERC20_WETH, OHM_USD_RESERVE_BLOCK);
+    const calculatedRate = BigDecimal.fromString("1898.013973745253121667");
+    log.debug("difference: {}", [ethUsdRate.minus(calculatedRate).toString()]);
+
+    // There is a loss of precision, so we need to ensure that the value is close, but not equal
+    assert.assertTrue(
+      ethUsdRate.minus(calculatedRate).lt(BigDecimal.fromString("0.000000000000000001")) &&
+        ethUsdRate.minus(calculatedRate).gt(BigDecimal.fromString("-0.000000000000000001")),
     );
   });
 });

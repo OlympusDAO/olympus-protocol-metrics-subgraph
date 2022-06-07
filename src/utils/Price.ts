@@ -214,6 +214,7 @@ function getUSDRateUniswapV2(
   pairAddress: string,
   blockNumber: BigInt,
 ): BigDecimal {
+  log.debug("getUSDRateUniswapV2: contract {}, pair {}", [contractAddress, pairAddress]);
   if (Address.fromString(contractAddress).equals(Address.fromString(ERC20_WETH))) {
     log.debug("Returning base ETH-USD rate", []);
     return getBaseEthUsdRate();
@@ -280,6 +281,7 @@ function getUSDRateUniswapV2(
 }
 
 function getUSDRateUniswapV3(contractAddress: string, pairAddress: string): BigDecimal {
+  log.debug("getUSDRateUniswapV3: contract {}, pair {}", [contractAddress, pairAddress]);
   // TODO add support for swapped pair
   const pair = UniswapV3Pair.bind(Address.fromString(pairAddress));
   if (!pair) {
@@ -441,7 +443,10 @@ export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: Big
     token1Contract.balanceOf(Address.fromString(pairAddress)),
     token1Contract.decimals(),
   );
-  const token1Rate = getUSDRateUniswapV3(token1, pairAddress);
+  // Cheating, a little bit
+  const token1Rate = Address.fromString(token1).equals(Address.fromString(ERC20_WETH))
+    ? getBaseEthUsdRate()
+    : getUSDRateUniswapV3(token1, pairAddress);
   const token1Value = token1Reserves.times(token1Rate);
   log.debug("token1: reserves = {}, rate = {}, value: {}", [
     token1Reserves.toString(),
