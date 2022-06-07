@@ -289,6 +289,9 @@ function getUSDRateUniswapV3(contractAddress: string, pairAddress: string): BigD
     );
   }
 
+  // slot0 = "The current price of the pool as a sqrt(token1/token0) Q64.96 value"
+  // Source: https://docs.uniswap.org/protocol/reference/core/interfaces/pool/IUniswapV3PoolState#slot0
+  // https://docs.uniswap.org/sdk/guides/fetching-prices
   let priceETH = pair.slot0().value0.times(pair.slot0().value0).toBigDecimal();
   const priceDiv = BigInt.fromI32(2).pow(192).toBigDecimal();
   priceETH = priceETH.div(priceDiv);
@@ -452,6 +455,39 @@ export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: Big
   return pairValue;
 }
 
+/**
+ * Determines the value of the given balance of a liquidity pool.
+ *
+ * This is equivalent to: pair total value * ({pair balance} / total supply of pair)
+ *
+ * Note: unsure how to implement this, as there doesn't appear to be a way to obtain the
+ * total supply of the pair from the contract. Can (FXS|WETH).balanceOf(pairAddress) be used
+ * to determine/approximate this?
+ *
+ * @param lpBalance
+ * @param pairAddress
+ * @param blockNumber
+ * @returns
+ */
+// export function getUniswapV3PairValue(
+//   lpBalance: BigInt,
+//   pairAddress: string,
+//   blockNumber: BigInt,
+// ): BigDecimal {
+//   const pair = getUniswapV3Pair(pairAddress, blockNumber);
+//   if (!pair) {
+//     throw new Error(
+//       "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
+//     );
+//   }
+
+//   const lpValue = getUniswapV3PairTotalValue(pairAddress, blockNumber);
+//   const poolTotalSupply = toDecimal(pair.totalSupply(), 18);
+//   const poolPercentageOwned = toDecimal(lpBalance, 18).div(poolTotalSupply);
+
+//   return poolPercentageOwned.times(lpValue);
+// }
+
 export function getUniswapV2PairTotalValue(pairAddress: string, blockNumber: BigInt): BigDecimal {
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
@@ -506,7 +542,7 @@ export function getUniswapV2PairTotalValue(pairAddress: string, blockNumber: Big
  * @param blockNumber
  * @returns
  */
-export function getUniswapV2PairBalanceValue(
+export function getUniswapV2PairValue(
   lpBalance: BigInt,
   pairAddress: string,
   blockNumber: BigInt,
