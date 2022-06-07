@@ -32,7 +32,6 @@ import {
   ETH_USD_RESERVE_BLOCK,
   FXS_ETH_BALANCE_ETH,
   FXS_ETH_BALANCE_FXS,
-  FXS_ETH_SLOT0_VALUE0,
   getEthUsdRate,
   getFxsUsdRate,
   getOhmEthPairValue,
