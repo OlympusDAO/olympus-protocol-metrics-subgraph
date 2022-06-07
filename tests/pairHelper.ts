@@ -183,15 +183,6 @@ export const getOhmUsdRate = (): BigDecimal => {
   return toDecimal(OHM_USD_RESERVE_USD, 18).div(toDecimal(OHM_USD_RESERVE_OHM, 9));
 };
 
-// (token0 * price0 + token1 * price1)
-export const getOhmUsdV2PairTotalValue = (): BigDecimal => {
-  return toDecimal(OHM_USD_RESERVE_OHM, OHM_V2_DECIMALS)
-    .times(getOhmUsdRate())
-    .plus(
-      toDecimal(OHM_USD_RESERVE_USD, ERC20_STANDARD_DECIMALS).times(BigDecimal.fromString("1")),
-    );
-};
-
 export const mockUsdOhmV2Rate = (): void => {
   const contractAddress = Address.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2);
   createMockedFunction(

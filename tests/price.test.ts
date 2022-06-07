@@ -422,8 +422,10 @@ describe("UniswapV3 pair value", () => {
       log.debug("difference: {}", [pairValue.minus(calculatedValue).toString()]);
 
       // There is a loss of precision, so we need to ensure that the value is close, but not equal
+      // TODO improve assertion
       assert.assertTrue(
-        pairValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
+        pairValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")) &&
+          pairValue.minus(calculatedValue).gt(BigDecimal.fromString("-0.000000000000000001")),
       );
     });
 
