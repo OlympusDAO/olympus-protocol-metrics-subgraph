@@ -24,8 +24,8 @@ import {
   getBaseTokenUSDRate,
   getOhmUSDPairRiskFreeValue,
   getUniswapV2PairBalanceValue,
-  getUniswapV2PairValue,
-  getUniswapV3PairValue,
+  getUniswapV2PairTotalValue,
+  getUniswapV3PairTotalValue,
   getUSDRate,
   PairTokenBaseOrientation,
 } from "../src/utils/Price";
@@ -565,7 +565,10 @@ describe("UniswapV2 pair value", () => {
       mockUsdOhmRate();
       mockEthUsdRate();
 
-      const pairValue = getUniswapV2PairValue(PAIR_UNISWAP_V2_OHM_ETH_V2, ETH_USD_RESERVE_BLOCK);
+      const pairValue = getUniswapV2PairTotalValue(
+        PAIR_UNISWAP_V2_OHM_ETH_V2,
+        ETH_USD_RESERVE_BLOCK,
+      );
       const calculatedValue = getOhmEthPairValue();
       log.debug("difference: {}", [pairValue.minus(calculatedValue).toString()]);
 
@@ -642,7 +645,7 @@ describe("UniswapV3 pair value", () => {
       mockFxsEthRate();
       mockEthUsdRate();
 
-      const pairValue = getUniswapV3PairValue(PAIR_UNISWAP_V3_FXS_ETH, ETH_USD_RESERVE_BLOCK);
+      const pairValue = getUniswapV3PairTotalValue(PAIR_UNISWAP_V3_FXS_ETH, ETH_USD_RESERVE_BLOCK);
       // # ETH * p ETH + # FXS * p FXS
       const calculatedValue = toDecimal(FXS_ETH_BALANCE_FXS, ERC20_STANDARD_DECIMALS)
         .times(getFxsUsdRate())

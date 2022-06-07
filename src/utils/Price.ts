@@ -399,7 +399,7 @@ export function getOhmUSDPairRiskFreeValue(
   return result;
 }
 
-export function getUniswapV3PairValue(pairAddress: string, blockNumber: BigInt): BigDecimal {
+export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: BigInt): BigDecimal {
   const pair = getUniswapV3Pair(pairAddress, blockNumber);
   if (!pair) {
     throw new Error(
@@ -452,7 +452,7 @@ export function getUniswapV3PairValue(pairAddress: string, blockNumber: BigInt):
   return pairValue;
 }
 
-export function getUniswapV2PairValue(pairAddress: string, blockNumber: BigInt): BigDecimal {
+export function getUniswapV2PairTotalValue(pairAddress: string, blockNumber: BigInt): BigDecimal {
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
     throw new Error(
@@ -518,7 +518,7 @@ export function getUniswapV2PairBalanceValue(
     );
   }
 
-  const lpValue = getUniswapV2PairValue(pairAddress, blockNumber);
+  const lpValue = getUniswapV2PairTotalValue(pairAddress, blockNumber);
   const poolTotalSupply = toDecimal(pair.totalSupply(), 18);
   const poolPercentageOwned = toDecimal(lpBalance, 18).div(poolTotalSupply);
 
