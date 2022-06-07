@@ -311,6 +311,15 @@ describe("get USD rate", () => {
     );
   });
 
+  test(
+    "ERC20 without liquidity pool mapping returns error",
+    () => {
+      // BOTTO
+      getUSDRate("0x9dfad1b7102d46b1b197b90095b5c4e9f5845bba", OHM_USD_RESERVE_BLOCK);
+    },
+    true,
+  );
+
   test("FXS (UniswapV3) returns correct value for FXS", () => {
     mockEthUsdRate();
     mockFxsEthRate();
