@@ -41,7 +41,7 @@ import {
   mockFxsEthRate,
   mockOhmEthPair,
   mockTribeEthRate,
-  mockUsdOhmRate,
+  mockUsdOhmV2Rate,
   OHM_ETH_TOTAL_SUPPLY,
   OHM_USD_RESERVE_BLOCK,
   OHM_USD_RESERVE_OHM,
@@ -76,7 +76,7 @@ describe("ETH-USD rate", () => {
 
 describe("OHM-USD rate", () => {
   test("rate calculation is correct", () => {
-    mockUsdOhmRate();
+    mockUsdOhmV2Rate();
 
     assert.stringEquals(
       getBaseOhmUsdRate(
@@ -181,7 +181,7 @@ describe("base token", () => {
 
 describe("base token USD rate", () => {
   test("token0 == OHM V1, token1 == TRIBE", () => {
-    mockUsdOhmRate();
+    mockUsdOhmV2Rate();
 
     assert.stringEquals(
       getBaseTokenUSDRate(
@@ -195,7 +195,7 @@ describe("base token USD rate", () => {
   });
 
   test("token0 == OHM V2, token1 == TRIBE", () => {
-    mockUsdOhmRate();
+    mockUsdOhmV2Rate();
 
     assert.stringEquals(
       getBaseTokenUSDRate(
@@ -223,7 +223,7 @@ describe("base token USD rate", () => {
   });
 
   test("token0 == TRIBE, token0 == OHM V1", () => {
-    mockUsdOhmRate();
+    mockUsdOhmV2Rate();
 
     assert.stringEquals(
       getBaseTokenUSDRate(
@@ -237,7 +237,7 @@ describe("base token USD rate", () => {
   });
 
   test("token0 == TRIBE, token1 == OHM V2", () => {
-    mockUsdOhmRate();
+    mockUsdOhmV2Rate();
 
     assert.stringEquals(
       getBaseTokenUSDRate(
@@ -280,7 +280,7 @@ describe("get USD rate", () => {
   });
 
   test("OHM V1 returns correct value", () => {
-    mockUsdOhmRate();
+    mockUsdOhmV2Rate();
 
     assert.stringEquals(
       getUSDRate(ERC20_OHM, OHM_USD_RESERVE_BLOCK).toString(),
@@ -289,7 +289,7 @@ describe("get USD rate", () => {
   });
 
   test("OHM V2 returns correct value", () => {
-    mockUsdOhmRate();
+    mockUsdOhmV2Rate();
 
     assert.stringEquals(
       getUSDRate(ERC20_OHM_V2, OHM_USD_RESERVE_BLOCK).toString(),
@@ -330,7 +330,7 @@ describe("UniswapV2 pair value", () => {
   describe("OHM-ETH", () => {
     test("pair value is correct", () => {
       mockOhmEthPair();
-      mockUsdOhmRate();
+      mockUsdOhmV2Rate();
       mockEthUsdRate();
 
       const pairValue = getUniswapV2PairTotalValue(
@@ -348,7 +348,7 @@ describe("UniswapV2 pair value", () => {
 
     test("pair balance value is correct", () => {
       mockOhmEthPair();
-      mockUsdOhmRate();
+      mockUsdOhmV2Rate();
       mockEthUsdRate();
 
       const lpBalance = BigInt.fromString("1000000000000000000");
@@ -375,7 +375,7 @@ describe("UniswapV2 pair value", () => {
 describe("UniswapV2 risk-free pair value", () => {
   describe("OHM-DAI", () => {
     test("risk-free pair value is correct", () => {
-      mockUsdOhmRate();
+      mockUsdOhmV2Rate();
 
       const lpBalance = BigInt.fromString("1000000000000000000");
       const pairValue = getOhmUSDPairRiskFreeValue(
@@ -452,3 +452,4 @@ describe("UniswapV3 pair value", () => {
 });
 
 // TODO uniswap v3 pair value
+// TODO risk-free value

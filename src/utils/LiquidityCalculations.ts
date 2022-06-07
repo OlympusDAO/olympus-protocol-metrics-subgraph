@@ -71,11 +71,16 @@ function getLiquidityTokenRecords(
         liquidityBalance.contract,
         blockNumber,
       );
+  log.debug("LP value for balance {} is {}", [
+    liquidityBalance.getTotalBalance().toString(),
+    lpValue.toString(),
+  ]);
 
   // The number returned above is the value of the balance of LP, so we need to get the individual unit price
   const lpUnitPrice: BigDecimal = liquidityBalance.getTotalBalance().equals(BigInt.zero())
     ? BigDecimal.zero()
     : lpValue.div(toDecimal(liquidityBalance.getTotalBalance(), 18));
+  log.debug("Unit price: {}", [lpUnitPrice.toString()]);
 
   const addresses = liquidityBalance.getAddresses();
   for (let i = 0; i < addresses.length; i++) {
@@ -113,6 +118,7 @@ export function getLiquidityBalances(
   blockNumber: BigInt,
 ): TokenRecords {
   const records = new TokenRecords();
+  log.debug("Determining liquidity balance for token {}", [tokenAddress]);
 
   // Uniswap
   // Get the appropriate pair
@@ -130,6 +136,7 @@ export function getLiquidityBalances(
         const balance = getUniswapV2PairBalance(liquidityPair, currentWallet, blockNumber);
         if (!balance || balance.equals(BigInt.zero())) continue;
 
+        log.debug("Found balance {} in wallet {}", [toDecimal(balance).toString(), currentWallet]);
         liquidityBalance.addBalance(currentWallet, balance);
       }
 

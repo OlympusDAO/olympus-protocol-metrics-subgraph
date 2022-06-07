@@ -530,7 +530,9 @@ export function getUniswapV2PairTotalValue(pairAddress: string, blockNumber: Big
     token1Value.toString(),
   ]);
 
-  return token0Value.plus(token1Value);
+  const totalValue = token0Value.plus(token1Value);
+  log.debug("Total value of pair {} is {}", [pairAddress, totalValue.toString()]);
+  return totalValue;
 }
 
 /**

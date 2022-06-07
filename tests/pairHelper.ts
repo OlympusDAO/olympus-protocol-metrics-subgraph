@@ -1,7 +1,8 @@
-import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { createMockedFunction } from "matchstick-as";
 
 import {
+  ERC20_DAI,
   ERC20_FXS,
   ERC20_OHM_V2,
   ERC20_TRIBE,
@@ -182,7 +183,16 @@ export const getOhmUsdRate = (): BigDecimal => {
   return toDecimal(OHM_USD_RESERVE_USD, 18).div(toDecimal(OHM_USD_RESERVE_OHM, 9));
 };
 
-export const mockUsdOhmRate = (): void => {
+// (token0 * price0 + token1 * price1)
+export const getOhmUsdV2PairTotalValue = (): BigDecimal => {
+  return toDecimal(OHM_USD_RESERVE_OHM, OHM_V2_DECIMALS)
+    .times(getOhmUsdRate())
+    .plus(
+      toDecimal(OHM_USD_RESERVE_USD, ERC20_STANDARD_DECIMALS).times(BigDecimal.fromString("1")),
+    );
+};
+
+export const mockUsdOhmV2Rate = (): void => {
   const contractAddress = Address.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2);
   createMockedFunction(
     contractAddress,
@@ -217,6 +227,50 @@ export const mockUsdOhmRate = (): void => {
   createMockedFunction(Address.fromString(ERC20_WETH), "decimals", "decimals():(uint8)").returns([
     ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
   ]);
+};
+
+export const mockUniswapV2Pair = (
+  token0Address: string,
+  token1Address: string,
+  token0Decimals: i32,
+  token1Decimals: i32,
+  token0Reserves: BigInt,
+  token1Reserves: BigInt,
+  totalSupply: BigInt,
+  pairAddress: string,
+  pairDecimals: i32,
+  block: BigInt = OHM_USD_RESERVE_BLOCK,
+): void => {
+  const pair = Address.fromString(pairAddress);
+  createMockedFunction(pair, "getReserves", "getReserves():(uint112,uint112,uint32)").returns([
+    ethereum.Value.fromUnsignedBigInt(token0Reserves),
+    ethereum.Value.fromUnsignedBigInt(token1Reserves),
+    ethereum.Value.fromUnsignedBigInt(block),
+  ]);
+  // Decimals
+  createMockedFunction(pair, "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(pairDecimals),
+  ]);
+  // Total supply
+  createMockedFunction(pair, "totalSupply", "totalSupply():(uint256)").returns([
+    ethereum.Value.fromUnsignedBigInt(totalSupply),
+  ]);
+
+  // Token addresses
+  createMockedFunction(pair, "token0", "token0():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(token0Address)),
+  ]);
+  createMockedFunction(pair, "token1", "token1():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(token1Address)),
+  ]);
+
+  // Token decimals
+  createMockedFunction(Address.fromString(token0Address), "decimals", "decimals():(uint8)").returns(
+    [ethereum.Value.fromI32(token0Decimals)],
+  );
+  createMockedFunction(Address.fromString(token1Address), "decimals", "decimals():(uint8)").returns(
+    [ethereum.Value.fromI32(token1Decimals)],
+  );
 };
 
 export const OHM_ETH_RESERVES_OHM = BigInt.fromString("375628431674251");
