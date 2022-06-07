@@ -315,9 +315,8 @@ export function getERC20Balance(
     return BigInt.fromString("0");
   }
 
-  const callResult = contract.try_name();
   log.debug("Getting ERC20 balance in contract {} for wallet {} at block number {}", [
-    callResult.reverted ? "N/A" : callResult.value,
+    contract._address.toHexString(),
     address,
     currentBlockNumber.toString(),
   ]);
@@ -349,9 +348,8 @@ export function getUniswapV2PairBalance(
     return BigInt.fromString("0");
   }
 
-  const callResult = contract.try_name();
   log.debug("Getting UniswapV2Pair balance in contract {} for wallet {} at block number {}", [
-    callResult.reverted ? "N/A" : callResult.value,
+    contract._address.toHexString(),
     address,
     currentBlockNumber.toString(),
   ]);

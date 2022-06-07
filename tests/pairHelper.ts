@@ -207,7 +207,7 @@ export const mockUsdOhmRate = (): void => {
     ethereum.Value.fromAddress(Address.fromString(ERC20_OHM_V2)),
   ]);
   createMockedFunction(contractAddress, "token1", "token1():(address)").returns([
-    ethereum.Value.fromAddress(Address.fromString(ERC20_USDC)),
+    ethereum.Value.fromAddress(Address.fromString(ERC20_DAI)),
   ]);
 
   // Token decimals
