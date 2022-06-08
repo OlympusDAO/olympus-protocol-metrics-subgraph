@@ -11,9 +11,9 @@ import {
   getContractName,
 } from "./Constants";
 import {
-  getFraxConvexAllocatorRecords,
   getERC20,
   getERC20TokenRecordsFromWallets,
+  getFraxConvexAllocatorRecords,
   getLiquityStabilityPoolRecords,
   getOnsenAllocatorRecords,
   getRariAllocatorRecords,
