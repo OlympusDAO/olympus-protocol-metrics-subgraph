@@ -37,51 +37,51 @@ type ProtocolMetric @entity {
   marketCap: BigDecimal!
   totalValueLocked: BigDecimal!
   treasuryRiskFreeValue: BigDecimal!
-  treasuryRiskFreeValueComponents: [String!]!
+  treasuryRiskFreeValueComponents: TokenRecords!
   treasuryMarketValue: BigDecimal!
-  treasuryMarketValueComponents: [String!]!
+  treasuryMarketValueComponents: TokenRecords!
   nextEpochRebase: BigDecimal!
   nextDistributedOhm: BigDecimal!
   treasuryDaiRiskFreeValue: BigDecimal!
-  treasuryDaiRiskFreeValueComponents: [String!]!
+  treasuryDaiRiskFreeValueComponents: TokenRecords!
   treasuryFraxRiskFreeValue: BigDecimal!
-  treasuryFraxRiskFreeValueComponents: [String!]!
+  treasuryFraxRiskFreeValueComponents: TokenRecords!
   treasuryLusdRiskFreeValue: BigDecimal!
-  treasuryLusdRiskFreeValueComponents: [String!]!
+  treasuryLusdRiskFreeValueComponents: TokenRecords!
   treasuryFeiRiskFreeValue: BigDecimal!
-  treasuryFeiRiskFreeValueComponents: [String!]!
+  treasuryFeiRiskFreeValueComponents: TokenRecords!
   treasuryWETHRiskFreeValue: BigDecimal!
-  treasuryWETHRiskFreeValueComponents: [String!]!
+  treasuryWETHRiskFreeValueComponents: TokenRecords!
   treasuryDaiMarketValue: BigDecimal!
-  treasuryDaiMarketValueComponents: [String!]!
+  treasuryDaiMarketValueComponents: TokenRecords!
   treasuryFraxMarketValue: BigDecimal!
-  treasuryFraxMarketValueComponents: [String!]!
+  treasuryFraxMarketValueComponents: TokenRecords!
   treasuryLusdMarketValue: BigDecimal!
-  treasuryLusdMarketValueComponents: [String!]!
+  treasuryLusdMarketValueComponents: TokenRecords!
   treasuryFeiMarketValue: BigDecimal!
-  treasuryFeiMarketValueComponents: [String!]!
+  treasuryFeiMarketValueComponents: TokenRecords!
   treasuryUstMarketValue: BigDecimal!
-  treasuryUstMarketValueComponents: [String!]!
+  treasuryUstMarketValueComponents: TokenRecords!
   treasuryXsushiMarketValue: BigDecimal!
-  treasuryXsushiMarketValueComponents: [String!]!
+  treasuryXsushiMarketValueComponents: TokenRecords!
   treasuryWETHMarketValue: BigDecimal!
-  treasuryWETHMarketValueComponents: [String!]!
+  treasuryWETHMarketValueComponents: TokenRecords!
   treasuryWBTCMarketValue: BigDecimal!
-  treasuryWBTCMarketValueComponents: [String!]!
+  treasuryWBTCMarketValueComponents: TokenRecords!
   treasuryCVXMarketValue: BigDecimal!
-  treasuryCVXMarketValueComponents: [String!]!
+  treasuryCVXMarketValueComponents: TokenRecords!
   treasuryFXSMarketValue: BigDecimal!
-  treasuryFXSMarketValueComponents: [String!]!
+  treasuryFXSMarketValueComponents: TokenRecords!
   treasuryOtherMarketValue: BigDecimal!
-  treasuryOtherMarketValueComponents: [String!]!
+  treasuryOtherMarketValueComponents: TokenRecords!
   treasuryLPValue: BigDecimal!
-  treasuryLPValueComponents: [String!]!
+  treasuryLPValueComponents: TokenRecords!
   treasuryStableBacking: BigDecimal!
-  treasuryStableBackingComponents: [String!]!
+  treasuryStableBackingComponents: TokenRecords!
   treasuryVolatileBacking: BigDecimal!
-  treasuryVolatileBackingComponents: [String!]!
+  treasuryVolatileBackingComponents: TokenRecords!
   treasuryTotalBacking: BigDecimal!
-  treasuryTotalBackingComponents: [String!]!
+  treasuryTotalBackingComponents: TokenRecords!
   currentAPY: BigDecimal!
   runway2dot5k: BigDecimal
   runway5k: BigDecimal
