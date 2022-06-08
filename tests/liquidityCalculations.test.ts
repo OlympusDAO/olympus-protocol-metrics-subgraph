@@ -3,7 +3,7 @@ import { assert, describe, test } from "matchstick-as/assembly/index";
 
 import {
   ERC20_DAI,
-  ERC20_OHM,
+  ERC20_OHM_V1,
   PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   TREASURY_ADDRESS_V2,
@@ -24,7 +24,7 @@ describe("liquidity balances", () => {
 
       // OHM-DAI V1
       mockUniswapV2Pair(
-        ERC20_OHM,
+        ERC20_OHM_V1,
         ERC20_DAI,
         9,
         18,
@@ -74,7 +74,7 @@ describe("liquidity balances", () => {
 
       // OHM-DAI V1
       mockUniswapV2Pair(
-        ERC20_OHM,
+        ERC20_OHM_V1,
         ERC20_DAI,
         9,
         18,
@@ -127,7 +127,7 @@ describe("liquidity balances", () => {
 
       // OHM-DAI V1
       mockUniswapV2Pair(
-        ERC20_OHM,
+        ERC20_OHM_V1,
         ERC20_DAI,
         9,
         18,

@@ -5,7 +5,7 @@ import { Rebase } from "../generated/schema";
 import { Address, BigInt } from "@graphprotocol/graph-ts";
 import {
   ERC20_OHM_V2,
-  ERC20_OHM,
+  ERC20_OHM_V1,
   STAKING_CONTRACT_V2,
   STAKING_CONTRACT_V3,
 } from "./utils/Constants";

@@ -3,7 +3,7 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import {
-  ERC20_OHM,
+  ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_STABLE_TOKENS,
   ERC20_WETH,
@@ -131,7 +131,7 @@ export function getBaseTokenOrientation(
    * but it does not equal {ERC20_WETH} even after trimming. So we use Address.
    */
   const wethAddress = Address.fromString(ERC20_WETH);
-  const ohmV1Address = Address.fromString(ERC20_OHM);
+  const ohmV1Address = Address.fromString(ERC20_OHM_V1);
   const ohmV2Address = Address.fromString(ERC20_OHM_V2);
   // TODO what if the pair is OHM-ETH or ETH-OHM?
 
@@ -174,7 +174,7 @@ export function getBaseTokenUSDRate(
 
   const baseToken = orientation === PairTokenBaseOrientation.TOKEN0 ? token0 : token1;
 
-  const ohmV1Address = Address.fromString(ERC20_OHM);
+  const ohmV1Address = Address.fromString(ERC20_OHM_V1);
   const ohmV2Address = Address.fromString(ERC20_OHM_V2);
   if (baseToken.equals(ohmV1Address) || baseToken.equals(ohmV2Address)) {
     log.debug("Returning OHM", []);
@@ -220,7 +220,7 @@ function getUSDRateUniswapV2(
     return getBaseEthUsdRate();
   }
   if (
-    Address.fromString(contractAddress).equals(Address.fromString(ERC20_OHM)) ||
+    Address.fromString(contractAddress).equals(Address.fromString(ERC20_OHM_V1)) ||
     Address.fromString(contractAddress).equals(Address.fromString(ERC20_OHM_V2))
   ) {
     log.debug("Returning base OHM-USD rate", []);
@@ -322,7 +322,7 @@ export function getUSDRate(contractAddress: string, blockNumber: BigInt): BigDec
   }
 
   // Handle OHM V1 and V2
-  if ([ERC20_OHM, ERC20_OHM_V2].includes(contractAddress)) {
+  if ([ERC20_OHM_V1, ERC20_OHM_V2].includes(contractAddress)) {
     return getBaseOhmUsdRate(blockNumber);
   }
 

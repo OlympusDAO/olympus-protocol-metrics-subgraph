@@ -4,10 +4,10 @@ import {
   BONDS_DEPOSIT,
   DAO_WALLET,
   MIGRATION_CONTRACT,
-  ERC20_OHM,
+  ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_OHM_V2_BLOCK,
-  ERC20_SOHM,
+  ERC20_SOHM_V1,
   ERC20_SOHM_V2,
   ERC20_SOHM_V3,
 } from "./Constants";
@@ -31,7 +31,7 @@ import { getBaseOhmUsdRate } from "./Price";
 export function getTotalSupply(blockNumber: BigInt): BigDecimal {
   const ohmContractAddress = blockNumber.gt(BigInt.fromString(ERC20_OHM_V2_BLOCK))
     ? ERC20_OHM_V2
-    : ERC20_OHM;
+    : ERC20_OHM_V1;
 
   const ohmContract = getERC20("OHM", ohmContractAddress, blockNumber);
 
@@ -67,7 +67,7 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
  */
 export function getCirculatingSupply(blockNumber: BigInt, totalSupply: BigDecimal): BigDecimal {
   const isV2Contract = blockNumber.gt(BigInt.fromString(ERC20_OHM_V2_BLOCK));
-  const ohmContractAddress = isV2Contract ? ERC20_OHM_V2 : ERC20_OHM;
+  const ohmContractAddress = isV2Contract ? ERC20_OHM_V2 : ERC20_OHM_V1;
 
   const ohmContract = getERC20("OHM", ohmContractAddress, blockNumber);
 
@@ -121,7 +121,7 @@ export function getOhmMarketcap(blockNumber: BigInt): BigDecimal {
  * @returns BigDecimal representing the total circulating supply at the current block
  */
 export function getSOhmCirculatingSupply(blockNumber: BigInt): BigDecimal {
-  const contractV1 = getSOlympusERC20("sOHM", ERC20_SOHM, blockNumber);
+  const contractV1 = getSOlympusERC20("sOHM", ERC20_SOHM_V1, blockNumber);
   const contractV2 = getSOlympusERC20V2("sOHM V2", ERC20_SOHM_V2, blockNumber);
   const contractV3 = getSOlympusERC20V3("sOHM V3", ERC20_SOHM_V3, blockNumber);
   let sOhmSupply = BigDecimal.fromString("0");

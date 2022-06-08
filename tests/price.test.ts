@@ -4,7 +4,7 @@ import { assert, createMockedFunction, describe, test } from "matchstick-as/asse
 import {
   ERC20_DAI,
   ERC20_FXS,
-  ERC20_OHM,
+  ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_TRIBE,
   ERC20_WETH,
@@ -107,7 +107,7 @@ describe("OHM-USD rate", () => {
 
 describe("base token", () => {
   test("token0 == OHM V1", () => {
-    const ohmV1Address = Address.fromString(ERC20_OHM);
+    const ohmV1Address = Address.fromString(ERC20_OHM_V1);
     const daiAddress = Address.fromString(ERC20_DAI);
 
     assert.assertTrue(
@@ -134,7 +134,7 @@ describe("base token", () => {
   });
 
   test("token1 == OHM V1", () => {
-    const ohmV1Address = Address.fromString(ERC20_OHM);
+    const ohmV1Address = Address.fromString(ERC20_OHM_V1);
     const daiAddress = Address.fromString(ERC20_DAI);
 
     assert.assertTrue(
@@ -185,7 +185,7 @@ describe("base token USD rate", () => {
 
     assert.stringEquals(
       getBaseTokenUSDRate(
-        Address.fromString(ERC20_OHM),
+        Address.fromString(ERC20_OHM_V1),
         Address.fromString(ERC20_TRIBE),
         PairTokenBaseOrientation.TOKEN0,
         OHM_USD_RESERVE_BLOCK,
@@ -228,7 +228,7 @@ describe("base token USD rate", () => {
     assert.stringEquals(
       getBaseTokenUSDRate(
         Address.fromString(ERC20_TRIBE),
-        Address.fromString(ERC20_OHM),
+        Address.fromString(ERC20_OHM_V1),
         PairTokenBaseOrientation.TOKEN1,
         OHM_USD_RESERVE_BLOCK,
       ).toString(),
@@ -283,7 +283,7 @@ describe("get USD rate", () => {
     mockUsdOhmV2Rate();
 
     assert.stringEquals(
-      getUSDRate(ERC20_OHM, OHM_USD_RESERVE_BLOCK).toString(),
+      getUSDRate(ERC20_OHM_V1, OHM_USD_RESERVE_BLOCK).toString(),
       getOhmUsdRate().toString(),
     );
   });

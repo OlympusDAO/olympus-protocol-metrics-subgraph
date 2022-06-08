@@ -2,7 +2,7 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import {
   ERC20_CVX,
-  ERC20_CVX_VL,
+  ERC20_CVX_VL_V1,
   ERC20_FXS,
   ERC20_FXS_VE,
   ERC20_VOLATILE_BLUE_CHIP_TOKENS,
@@ -169,7 +169,7 @@ export function getCVXBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getVlCVXBalance(blockNumber: BigInt): TokenRecords {
-  return getVolatileTokenBalance(ERC20_CVX_VL, false, false, blockNumber);
+  return getVolatileTokenBalance(ERC20_CVX_VL_V1, false, false, blockNumber);
 }
 
 /**
