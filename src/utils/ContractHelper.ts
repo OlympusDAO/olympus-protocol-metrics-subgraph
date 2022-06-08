@@ -11,6 +11,7 @@ import { StabilityPool } from "../../generated/ProtocolMetrics/StabilityPool";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
+import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
   ALLOCATOR_CONVEX_FRAX_CONTRACTS,
   ALLOCATOR_LIQUITY_STABILITY_POOLS,
@@ -32,7 +33,7 @@ import {
 } from "./Constants";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
-import { TokenRecord, TokenRecords } from "./TokenRecord";
+import { newTokenRecord, newTokenRecords, pushTokenRecord } from "./TokenRecordHelper";
 
 /**
  * The Graph recommends only binding a contract once
@@ -457,7 +458,7 @@ export function getERC20TokenRecordFromWallet(
   );
   if (!balance || balance.equals(BigDecimal.zero())) return null;
 
-  return new TokenRecord(tokenName, getContractName(walletAddress), walletAddress, rate, balance);
+  return newTokenRecord(tokenName, getContractName(walletAddress), walletAddress, rate, balance);
 }
 
 /**
@@ -476,7 +477,7 @@ export function getERC20TokenRecordsFromWallets(
   rate: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords(tokenName);
 
   for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
     const record = getERC20TokenRecordFromWallet(
@@ -488,7 +489,7 @@ export function getERC20TokenRecordsFromWallets(
     );
     if (!record) continue;
 
-    records.push(record);
+    pushTokenRecord(records, record);
   }
 
   return records;
@@ -532,13 +533,14 @@ export function getRariAllocatorRecords(
   price: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords("Rari Allocator");
 
   const balance = getRariAllocatorBalance(contractAddress, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
 
-  records.push(
-    new TokenRecord(
+  pushTokenRecord(
+    records,
+    newTokenRecord(
       getContractName(contractAddress),
       getContractName(RARI_ALLOCATOR),
       RARI_ALLOCATOR,
@@ -563,13 +565,14 @@ export function getOnsenAllocatorRecords(
   price: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords("Onsen Allocator");
 
   const balance = getOnsenBalance(tokenAddress, ONSEN_ALLOCATOR, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
 
-  records.push(
-    new TokenRecord(
+  pushTokenRecord(
+    records,
+    newTokenRecord(
       getContractName(tokenAddress),
       getContractName(ONSEN_ALLOCATOR),
       ONSEN_ALLOCATOR,
@@ -617,15 +620,16 @@ export function getFraxConvexAllocatorRecords(
   tokenAddress: string,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords("Frax Convex Allocator");
 
   for (let i = 0; i < ALLOCATOR_CONVEX_FRAX_CONTRACTS.length; i++) {
     const allocatorAddress = ALLOCATOR_CONVEX_FRAX_CONTRACTS[i];
     const balance = getFraxConvexAllocatorBalance(tokenAddress, allocatorAddress, blockNumber);
     if (!balance || balance.equals(BigDecimal.zero())) continue;
 
-    records.push(
-      new TokenRecord(
+    pushTokenRecord(
+      records,
+      newTokenRecord(
         getContractName(tokenAddress),
         getContractName(allocatorAddress),
         allocatorAddress,
@@ -670,7 +674,7 @@ export function getLiquityStabilityPoolRecords(
   blockNumber: BigInt,
 ): TokenRecords {
   // TODO assumes a USD rate of $1
-  const records = new TokenRecords();
+  const records = newTokenRecords("Liquity Stability Pool");
 
   const liquityAllocator = getLiquityAllocator(tokenAddress);
   if (!liquityAllocator) return records;
@@ -680,8 +684,9 @@ export function getLiquityStabilityPoolRecords(
     const balance = getLiquityStabilityPoolBalance(liquityAllocator!, poolAddress, blockNumber);
     if (!balance || balance.equals(BigDecimal.zero())) continue;
 
-    records.push(
-      new TokenRecord(
+    pushTokenRecord(
+      records,
+      newTokenRecord(
         getContractName(tokenAddress),
         getContractName(poolAddress),
         poolAddress,
@@ -720,15 +725,16 @@ function getVeFXSAllocatorBalance(
 }
 
 export function getVeFXSAllocatorRecords(tokenAddress: string, blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords("VeFXS Allocator");
 
   const balance = getVeFXSAllocatorBalance(tokenAddress, VEFXS_ALLOCATOR, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
 
   const fxsRate = getUSDRate(ERC20_FXS, blockNumber);
 
-  records.push(
-    new TokenRecord(
+  pushTokenRecord(
+    records,
+    newTokenRecord(
       getContractName(tokenAddress),
       getContractName(VEFXS_ALLOCATOR),
       VEFXS_ALLOCATOR,

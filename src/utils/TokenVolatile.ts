@@ -1,5 +1,6 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
+import { TokenRecords } from "../../generated/schema";
 import {
   ERC20_CVX,
   ERC20_CVX_VL_V1,
@@ -24,7 +25,12 @@ import {
 } from "./ContractHelper";
 import { getLiquidityBalances } from "./LiquidityCalculations";
 import { getUSDRate } from "./Price";
-import { TokenRecord, TokenRecords } from "./TokenRecord";
+import {
+  combineTokenRecords,
+  newTokenRecord,
+  newTokenRecords,
+  pushTokenRecord,
+} from "./TokenRecordHelper";
 
 /**
  * Returns the value of vesting assets in the treasury
@@ -39,15 +45,15 @@ export function getVestingAssets(): TokenRecords {
   // PhantomDAO
   // Lobis
   // TODO remove hard-coded number
-  const record = new TokenRecord(
+  const record = newTokenRecord(
     "Vesting Assets",
     "No source",
     "0x0",
     BigDecimal.fromString("1"),
     BigDecimal.fromString("32500000"),
   );
-  const records = new TokenRecords();
-  records.push(record);
+  const records = newTokenRecords("Vesting assets");
+  pushTokenRecord(records, record);
   return records;
 }
 
@@ -67,33 +73,39 @@ export function getVolatileTokenBalance(
   riskFree: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords("Volatile token balance");
   const contractName = getContractName(contractAddress);
   const contract = getERC20(contractName, contractAddress, blockNumber);
   const rate = getUSDRate(contractAddress, blockNumber);
 
   // Wallets
-  records.combine(getERC20TokenRecordsFromWallets(contractName, contract, rate, blockNumber));
+  combineTokenRecords(
+    records,
+    getERC20TokenRecordsFromWallets(contractName, contract, rate, blockNumber),
+  );
 
   // Rari Allocator
-  records.combine(getRariAllocatorRecords(contractAddress, rate, blockNumber));
+  combineTokenRecords(records, getRariAllocatorRecords(contractAddress, rate, blockNumber));
 
   // Convex Allocator
-  records.combine(getFraxConvexAllocatorRecords(contractAddress, blockNumber));
+  combineTokenRecords(records, getFraxConvexAllocatorRecords(contractAddress, blockNumber));
 
   // Liquity Stability Pool
-  records.combine(getLiquityStabilityPoolRecords(contractAddress, blockNumber));
+  combineTokenRecords(records, getLiquityStabilityPoolRecords(contractAddress, blockNumber));
 
   // Onsen Allocator
-  records.combine(getOnsenAllocatorRecords(contractAddress, rate, blockNumber));
+  combineTokenRecords(records, getOnsenAllocatorRecords(contractAddress, rate, blockNumber));
 
   // VeFXS Allocator
-  records.combine(getVeFXSAllocatorRecords(contractAddress, blockNumber));
+  combineTokenRecords(records, getVeFXSAllocatorRecords(contractAddress, blockNumber));
 
   // Liquidity pools
   if (includeLiquidity) {
     // Single-sided, otherwise we're counting non-token value
-    records.combine(getLiquidityBalances(contractAddress, riskFree, true, blockNumber));
+    combineTokenRecords(
+      records,
+      getLiquidityBalances(contractAddress, riskFree, true, blockNumber),
+    );
   }
 
   return records;
@@ -112,7 +124,7 @@ export function getVolatileTokenBalances(
   riskFree: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords("Volatile token balances");
 
   for (let i = 0; i < ERC20_VOLATILE_TOKENS.length; i++) {
     const currentTokenAddress = ERC20_VOLATILE_TOKENS[i];
@@ -126,14 +138,15 @@ export function getVolatileTokenBalances(
       continue;
     }
 
-    records.combine(
+    combineTokenRecords(
+      records,
       getVolatileTokenBalance(currentTokenAddress, includeLiquidity, riskFree, blockNumber),
     );
   }
 
   // We add vesting assets manually for now
   if (!liquidOnly) {
-    records.combine(getVestingAssets());
+    combineTokenRecords(records, getVestingAssets());
   }
 
   return records;
@@ -181,10 +194,10 @@ export function getVlCVXBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getCVXTotalBalance(blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords();
+  const records = new TokenRecords("CVX total balance");
 
-  records.combine(getCVXBalance(blockNumber));
-  records.combine(getVlCVXBalance(blockNumber));
+  combineTokenRecords(records, getCVXBalance(blockNumber));
+  combineTokenRecords(records, getVlCVXBalance(blockNumber));
 
   return records;
 }
@@ -221,10 +234,10 @@ export function getVeFXSBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getFXSTotalBalance(blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords("FXS total balance");
 
-  records.combine(getFXSBalance(blockNumber));
-  records.combine(getVeFXSBalance(blockNumber));
+  combineTokenRecords(records, getFXSBalance(blockNumber));
+  combineTokenRecords(records, getVeFXSBalance(blockNumber));
 
   return records;
 }

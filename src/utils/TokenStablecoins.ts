@@ -1,5 +1,6 @@
 import { BigInt } from "@graphprotocol/graph-ts";
 
+import { TokenRecords } from "../../generated/schema";
 import {
   ERC20_ADAI,
   ERC20_DAI,
@@ -21,7 +22,7 @@ import {
 } from "./ContractHelper";
 import { getLiquidityBalances } from "./LiquidityCalculations";
 import { getUSDRate } from "./Price";
-import { TokenRecords } from "./TokenRecord";
+import { combineTokenRecords, newTokenRecords } from "./TokenRecordHelper";
 
 /**
  * Returns the token records for a given stablecoin. This includes:
@@ -39,33 +40,39 @@ export function getStablecoinBalance(
   riskFree: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords("Stablecoins");
   const contractName = getContractName(contractAddress);
   const contract = getERC20(contractName, contractAddress, blockNumber);
   const rate = getUSDRate(contractAddress, blockNumber);
 
   // Wallets
-  records.combine(getERC20TokenRecordsFromWallets(contractName, contract, rate, blockNumber));
+  combineTokenRecords(
+    records,
+    getERC20TokenRecordsFromWallets(contractName, contract, rate, blockNumber),
+  );
 
   // Rari Allocator
-  records.combine(getRariAllocatorRecords(contractAddress, rate, blockNumber));
+  combineTokenRecords(records, getRariAllocatorRecords(contractAddress, rate, blockNumber));
 
   // Convex Allocator
-  records.combine(getFraxConvexAllocatorRecords(contractAddress, blockNumber));
+  combineTokenRecords(records, getFraxConvexAllocatorRecords(contractAddress, blockNumber));
 
   // Liquity Stability Pool
-  records.combine(getLiquityStabilityPoolRecords(contractAddress, blockNumber));
+  combineTokenRecords(records, getLiquityStabilityPoolRecords(contractAddress, blockNumber));
 
   // Onsen Allocator
-  records.combine(getOnsenAllocatorRecords(contractAddress, rate, blockNumber));
+  combineTokenRecords(records, getOnsenAllocatorRecords(contractAddress, rate, blockNumber));
 
   // VeFXS Allocator
-  records.combine(getVeFXSAllocatorRecords(contractAddress, blockNumber));
+  combineTokenRecords(records, getVeFXSAllocatorRecords(contractAddress, blockNumber));
 
   // Liquidity pools
   if (includeLiquidity) {
     // Single-sided, otherwise we're counting non-token value
-    records.combine(getLiquidityBalances(contractAddress, riskFree, true, blockNumber));
+    combineTokenRecords(
+      records,
+      getLiquidityBalances(contractAddress, riskFree, true, blockNumber),
+    );
   }
 
   return records;
@@ -82,10 +89,11 @@ export function getStablecoinBalances(
   riskFree: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords("Stablecoin balances");
 
   for (let i = 0; i < ERC20_STABLE_TOKENS.length; i++) {
-    records.combine(
+    combineTokenRecords(
+      records,
       getStablecoinBalance(ERC20_STABLE_TOKENS[i], includeLiquidity, riskFree, blockNumber),
     );
   }
@@ -104,10 +112,10 @@ export function getStablecoinBalances(
  * @returns TokenRecords object
  */
 export function getDaiBalance(blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords("DAI balance");
 
-  records.combine(getStablecoinBalance(ERC20_DAI, false, false, blockNumber));
-  records.combine(getStablecoinBalance(ERC20_ADAI, false, false, blockNumber));
+  combineTokenRecords(records, getStablecoinBalance(ERC20_DAI, false, false, blockNumber));
+  combineTokenRecords(records, getStablecoinBalance(ERC20_ADAI, false, false, blockNumber));
 
   return records;
 }
@@ -184,10 +192,10 @@ export function getStableValue(blockNumber: BigInt): TokenRecords {
  */
 // eslint-disable-next-line @typescript-eslint/no-inferrable-types
 export function getDaiMarketValue(blockNumber: BigInt, riskFree: boolean = false): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords("DAI market value");
 
-  records.combine(getStablecoinBalance(ERC20_DAI, true, riskFree, blockNumber));
-  records.combine(getStablecoinBalance(ERC20_ADAI, true, riskFree, blockNumber));
+  combineTokenRecords(records, getStablecoinBalance(ERC20_DAI, true, riskFree, blockNumber));
+  combineTokenRecords(records, getStablecoinBalance(ERC20_ADAI, true, riskFree, blockNumber));
 
   return records;
 }

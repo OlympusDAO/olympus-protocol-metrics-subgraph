@@ -1,5 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
+import { TokenRecords } from "../../generated/schema";
 import {
   ERC20_STABLE_TOKENS,
   ERC20_VOLATILE_TOKENS,
@@ -33,7 +34,14 @@ import { toDecimal } from "./Decimals";
 import { LiquidityBalances } from "./LiquidityBalance";
 import { PairHandlerTypes } from "./PairHandler";
 import { getOhmUSDPairRiskFreeValue, getUniswapV2PairValue } from "./Price";
-import { TokenRecord, TokenRecords } from "./TokenRecord";
+import {
+  combineTokenRecords,
+  getTokenRecordsBalance,
+  newTokenRecord,
+  newTokenRecords,
+  pushTokenRecord,
+  setTokenRecordsMultiplier,
+} from "./TokenRecordHelper";
 
 /**
  * Creates TokenRecords for the giving liquidity records.
@@ -56,7 +64,7 @@ function getLiquidityTokenRecords(
   blockNumber: BigInt,
   riskFree: boolean,
 ): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords("Liquidity");
   const contractName = getContractName(liquidityBalance.contract);
   // TODO handle uniswap V3
   // TODO this assumes that the other side of the LP is OHM, which is not always correct (ETH!)
@@ -88,8 +96,9 @@ function getLiquidityTokenRecords(
     const balance = liquidityBalance.getBalance(address);
     if (!balance || balance.equals(BigInt.zero())) continue;
 
-    records.push(
-      new TokenRecord(
+    pushTokenRecord(
+      records,
+      newTokenRecord(
         contractName,
         getContractName(address),
         address,
@@ -117,7 +126,7 @@ export function getLiquidityBalances(
   singleSidedValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords("Liquidity");
   log.debug("Determining liquidity balance for token {}", [tokenAddress]);
 
   // Uniswap
@@ -140,7 +149,10 @@ export function getLiquidityBalances(
         liquidityBalance.addBalance(currentWallet, balance);
       }
 
-      records.combine(getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree));
+      combineTokenRecords(
+        records,
+        getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree),
+      );
     } else if (pairHandler.getHandler() === PairHandlerTypes.UniswapV3) {
       const contractOne = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
       const balanceOne = contractOne
@@ -156,7 +168,7 @@ export function getLiquidityBalances(
 
   // If the singleSidedValue is desired, we can halve the value of the LP and return that.
   if (singleSidedValue) {
-    records.setMultiplier(BigDecimal.fromString("0.5"));
+    setTokenRecordsMultiplier(records, BigDecimal.fromString("0.5"));
   }
 
   return records;
@@ -251,8 +263,8 @@ export function getOhmDaiLiquidityV2Balance(blockNumber: BigInt, riskFree: boole
 export function getOhmDaiProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal {
   const v1Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_DAI, blockNumber);
   const v2Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_DAI_V2, blockNumber);
-  const v1Balance = getOhmDaiLiquidityBalance(blockNumber, false).getBalance();
-  const v2Balance = getOhmDaiLiquidityV2Balance(blockNumber, false).getBalance();
+  const v1Balance = getTokenRecordsBalance(getOhmDaiLiquidityBalance(blockNumber, false));
+  const v2Balance = getTokenRecordsBalance(getOhmDaiLiquidityV2Balance(blockNumber, false));
   const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
   const v2TotalSupply: BigInt = v2Pair ? v2Pair.totalSupply() : BigInt.fromString("-1");
 
@@ -346,8 +358,8 @@ export function getOhmFraxLiquidityV2Balance(blockNumber: BigInt, riskFree: bool
 export function getOhmFraxProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal {
   const v1Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_FRAX, blockNumber);
   const v2Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_FRAX_V2, blockNumber);
-  const v1Balance = getOhmFraxLiquidityBalance(blockNumber, false).getBalance();
-  const v2Balance = getOhmFraxLiquidityV2Balance(blockNumber, false).getBalance();
+  const v1Balance = getTokenRecordsBalance(getOhmFraxLiquidityBalance(blockNumber, false));
+  const v2Balance = getTokenRecordsBalance(getOhmFraxLiquidityV2Balance(blockNumber, false));
   const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
   const v2TotalSupply: BigInt = v2Pair ? v2Pair.totalSupply() : BigInt.fromString("-1");
 
@@ -461,8 +473,8 @@ export function getOhmLusdLiquidityV2Balance(blockNumber: BigInt, riskFree: bool
 export function getOhmLusdProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal {
   const v1Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_LUSD, blockNumber);
   const v2Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_LUSD_V2, blockNumber);
-  const v1Balance = getOhmLusdLiquidityBalance(blockNumber, false).getBalance();
-  const v2Balance = getOhmLusdLiquidityV2Balance(blockNumber, false).getBalance();
+  const v1Balance = getTokenRecordsBalance(getOhmLusdLiquidityBalance(blockNumber, false));
+  const v2Balance = getTokenRecordsBalance(getOhmLusdLiquidityV2Balance(blockNumber, false));
   const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
   const v2TotalSupply: BigInt = v2Pair ? v2Pair.totalSupply() : BigInt.fromString("-1");
 
@@ -556,8 +568,8 @@ export function getOhmEthLiquidityV2Balance(blockNumber: BigInt, riskFree: boole
 export function getOhmEthProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal {
   const v1Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_ETH, blockNumber);
   const v2Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_ETH_V2, blockNumber);
-  const v1Balance = getOhmEthLiquidityBalance(blockNumber, false).getBalance();
-  const v2Balance = getOhmEthLiquidityV2Balance(blockNumber, false).getBalance();
+  const v1Balance = getTokenRecordsBalance(getOhmEthLiquidityBalance(blockNumber, false));
+  const v2Balance = getTokenRecordsBalance(getOhmEthLiquidityV2Balance(blockNumber, false));
   const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
   const v2TotalSupply: BigInt = v2Pair ? v2Pair.totalSupply() : BigInt.fromString("-1");
 
@@ -585,16 +597,18 @@ export function getLiquidityPoolValue(
   singleSidedValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords("Liquidity Pool Value");
 
   for (let i = 0; i < ERC20_STABLE_TOKENS.length; i++) {
-    records.combine(
+    combineTokenRecords(
+      records,
       getLiquidityBalances(ERC20_STABLE_TOKENS[i], riskFree, singleSidedValue, blockNumber),
     );
   }
 
   for (let i = 0; i < ERC20_VOLATILE_TOKENS.length; i++) {
-    records.combine(
+    combineTokenRecords(
+      records,
       getLiquidityBalances(ERC20_VOLATILE_TOKENS[i], riskFree, singleSidedValue, blockNumber),
     );
   }

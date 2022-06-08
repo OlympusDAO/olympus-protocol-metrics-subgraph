@@ -1,8 +1,14 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
+import { TokenRecords } from "../../generated/schema";
 import { getLiquidityPoolValue } from "./LiquidityCalculations";
 import { getCirculatingSupply, getTotalSupply } from "./OhmCalculations";
-import { TokenRecord, TokenRecords } from "./TokenRecord";
+import {
+  combineTokenRecords,
+  newTokenRecord,
+  newTokenRecords,
+  pushTokenRecord,
+} from "./TokenRecordHelper";
 import { getStableValue } from "./TokenStablecoins";
 import { getVolatileValue } from "./TokenVolatile";
 
@@ -40,16 +46,17 @@ export function getTreasuryStableBacking(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords("Treasury total backing");
 
-  records.combine(getTreasuryStableBacking(blockNumber));
-  records.combine(getTreasuryVolatileBacking(blockNumber, true));
-  records.combine(getLiquidityPoolValue(false, true, blockNumber));
+  combineTokenRecords(records, getTreasuryStableBacking(blockNumber));
+  combineTokenRecords(records, getTreasuryVolatileBacking(blockNumber, true));
+  combineTokenRecords(records, getLiquidityPoolValue(false, true, blockNumber));
 
   // TODO previous implementation was the number of OHM, not the value. Keep as-is?
   const ohmCirculatingSupply = getCirculatingSupply(blockNumber, getTotalSupply(blockNumber));
-  records.push(
-    new TokenRecord(
+  pushTokenRecord(
+    records,
+    newTokenRecord(
       "OHM Circulating Supply",
       "N/A",
       "0x0",
@@ -73,11 +80,11 @@ export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecords {
  */
 export function getMarketValue(blockNumber: BigInt): TokenRecords {
   // TODO check that ETH and stables aren't being double-counted
-  const records = new TokenRecords();
+  const records = newTokenRecords("Market value");
 
-  records.combine(getStableValue(blockNumber));
-  records.combine(getLiquidityPoolValue(false, false, blockNumber));
-  records.combine(getVolatileValue(blockNumber, false, true));
+  combineTokenRecords(records, getStableValue(blockNumber));
+  combineTokenRecords(records, getLiquidityPoolValue(false, false, blockNumber));
+  combineTokenRecords(records, getVolatileValue(blockNumber, false, true));
 
   return records;
 }
@@ -91,10 +98,10 @@ export function getMarketValue(blockNumber: BigInt): TokenRecords {
  * @returns
  */
 export function getRiskFreeValue(blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords();
+  const records = newTokenRecords("Risk-free value");
 
-  records.combine(getStableValue(blockNumber));
-  records.combine(getLiquidityPoolValue(true, true, blockNumber));
+  combineTokenRecords(records, getStableValue(blockNumber));
+  combineTokenRecords(records, getLiquidityPoolValue(true, true, blockNumber));
 
   return records;
 }
