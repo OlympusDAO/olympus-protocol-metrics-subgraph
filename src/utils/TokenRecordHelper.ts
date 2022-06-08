@@ -4,25 +4,25 @@ import { TokenRecord, TokenRecords } from "../../generated/schema";
 
 // TokenRecord
 
-export const getTokenRecordValue = (record: TokenRecord): BigDecimal => {
+export function getTokenRecordValue(record: TokenRecord): BigDecimal {
   return record.balance.times(record.rate).times(record.multiplier);
-};
+}
 
-export const setTokenRecordMultiplier = (record: TokenRecord, multiplier: BigDecimal): void => {
+export function setTokenRecordMultiplier(record: TokenRecord, multiplier: BigDecimal): void {
   record.multiplier = multiplier;
   record.value = getTokenRecordValue(record);
 
   record.save();
-};
+}
 
-export const newTokenRecord = (
+export function newTokenRecord(
   name: string,
   source: string,
   sourceAddress: string,
   rate: BigDecimal,
   balance: BigDecimal,
   multiplier: BigDecimal = BigDecimal.fromString("1"),
-): TokenRecord => {
+): TokenRecord {
   const record = new TokenRecord(name + "-" + source);
   record.name = name;
   record.source = source;
@@ -35,47 +35,61 @@ export const newTokenRecord = (
   record.save();
 
   return record;
-};
+}
 
 // TokenRecords
 
-export const getTokenRecordsBalance = (records: TokenRecords): BigDecimal => {
+export function getTokenRecordsBalance(records: TokenRecords): BigDecimal {
   let totalBalance = BigDecimal.fromString("0");
   const idValues = records.records;
 
   for (let i = 0; i < idValues.length; i++) {
-    const idValue = idValues[i];
-    const record = TokenRecord.load(idValue);
-    if (!record) continue;
+    const recordId = idValues[i];
+    const recordValue = TokenRecord.load(recordId);
+    if (!recordValue) {
+      throw new Error(
+        "setTokenRecordsMultiplier: Unexpected null value for id " +
+          recordId +
+          " in TokenRecords " +
+          records.id,
+      );
+    }
 
-    totalBalance = totalBalance.plus(record.balance);
+    totalBalance = totalBalance.plus(recordValue.balance);
   }
 
   return totalBalance;
-};
+}
 
-export const getTokenRecordsValue = (records: TokenRecords): BigDecimal => {
+export function getTokenRecordsValue(records: TokenRecords): BigDecimal {
   let totalValue = BigDecimal.fromString("0");
   const idValues = records.records;
 
   for (let i = 0; i < idValues.length; i++) {
-    const idValue = idValues[i];
-    const record = TokenRecord.load(idValue);
-    if (!record) continue;
+    const recordId = idValues[i];
+    const recordValue = TokenRecord.load(recordId);
+    if (!recordValue) {
+      throw new Error(
+        "setTokenRecordsMultiplier: Unexpected null value for id " +
+          recordId +
+          " in TokenRecords " +
+          records.id,
+      );
+    }
 
-    totalValue = totalValue.plus(record.value);
+    totalValue = totalValue.plus(recordValue.value);
   }
 
   return totalValue;
-};
+}
 
-export const pushTokenRecord = (
+export function pushTokenRecord(
   records: TokenRecords,
   record: TokenRecord,
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   update: boolean = true,
-): void => {
-  const newArray = records.records;
+): void {
+  const newArray = records.records || [];
   newArray.push(record.id);
   records.records = newArray;
 
@@ -85,13 +99,20 @@ export const pushTokenRecord = (
   }
 
   records.save();
-};
+}
 
-export const combineTokenRecords = (records1: TokenRecords, records2: TokenRecords): void => {
+export function combineTokenRecords(records1: TokenRecords, records2: TokenRecords): void {
   for (let i = 0; i < records2.records.length; i++) {
     const records2Id = records2.records[i];
     const records2Value = TokenRecord.load(records2Id);
-    if (!records2Value) continue;
+    if (!records2Value) {
+      throw new Error(
+        "combineTokenRecords: Unexpected null value for id " +
+          records2Id +
+          " in TokenRecords " +
+          records2.id,
+      );
+    }
 
     pushTokenRecord(records1, records2Value, false);
   }
@@ -100,13 +121,20 @@ export const combineTokenRecords = (records1: TokenRecords, records2: TokenRecor
   records1.value = getTokenRecordsValue(records1);
 
   records1.save();
-};
+}
 
-export const setTokenRecordsMultiplier = (records: TokenRecords, multiplier: BigDecimal): void => {
+export function setTokenRecordsMultiplier(records: TokenRecords, multiplier: BigDecimal): void {
   for (let i = 0; i < records.records.length; i++) {
     const recordId = records.records[i];
     const recordValue = TokenRecord.load(recordId);
-    if (!recordValue) continue;
+    if (!recordValue) {
+      throw new Error(
+        "setTokenRecordsMultiplier: Unexpected null value for id " +
+          recordId +
+          " in TokenRecords " +
+          records.id,
+      );
+    }
 
     setTokenRecordMultiplier(recordValue, multiplier);
   }
@@ -115,19 +143,21 @@ export const setTokenRecordsMultiplier = (records: TokenRecords, multiplier: Big
   records.value = getTokenRecordsValue(records);
 
   records.save();
-};
+}
 
-export const sortTokenRecords = (records: TokenRecords): void => {
+export function sortTokenRecords(records: TokenRecords): void {
   // We sort by ID anyway ({name}-{source}), so we can just use the ID array
   records.records = records.records.sort((a, b) => (a > b ? 1 : -1));
 
   records.save();
-};
+}
 
-export const newTokenRecords = (id: string): TokenRecords => {
+export function newTokenRecords(id: string): TokenRecords {
   const records = new TokenRecords(id);
   records.records = [];
+  records.balance = BigDecimal.fromString("0");
+  records.value = BigDecimal.fromString("0");
   records.save();
 
   return records;
-};
+}

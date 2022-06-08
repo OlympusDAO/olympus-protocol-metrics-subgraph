@@ -1,4 +1,4 @@
-import { BigInt } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecords } from "../../generated/schema";
 import {
@@ -40,8 +40,9 @@ export function getStablecoinBalance(
   riskFree: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords("Stablecoins");
   const contractName = getContractName(contractAddress);
+  log.info("Calculating stablecoin balance for {}", [contractName]);
+  const records = newTokenRecords("Stablecoins");
   const contract = getERC20(contractName, contractAddress, blockNumber);
   const rate = getUSDRate(contractAddress, blockNumber);
 
@@ -75,6 +76,7 @@ export function getStablecoinBalance(
     );
   }
 
+  log.info("Stablecoin token value: {}", [records.value.toString()]);
   return records;
 }
 
@@ -89,6 +91,7 @@ export function getStablecoinBalances(
   riskFree: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
+  log.info("Calculating stablecoin value", []);
   const records = newTokenRecords("Stablecoin balances");
 
   for (let i = 0; i < ERC20_STABLE_TOKENS.length; i++) {
@@ -98,6 +101,7 @@ export function getStablecoinBalances(
     );
   }
 
+  log.info("Stablecoin value: {}", [records.value.toString()]);
   return records;
 }
 
@@ -192,11 +196,13 @@ export function getStableValue(blockNumber: BigInt): TokenRecords {
  */
 // eslint-disable-next-line @typescript-eslint/no-inferrable-types
 export function getDaiMarketValue(blockNumber: BigInt, riskFree: boolean = false): TokenRecords {
+  log.info("Calculating DAI market value", []);
   const records = newTokenRecords("DAI market value");
 
   combineTokenRecords(records, getStablecoinBalance(ERC20_DAI, true, riskFree, blockNumber));
   combineTokenRecords(records, getStablecoinBalance(ERC20_ADAI, true, riskFree, blockNumber));
 
+  log.info("DAI market value: {}", [records.value.toString()]);
   return records;
 }
 

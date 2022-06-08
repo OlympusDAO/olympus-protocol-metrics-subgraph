@@ -275,59 +275,59 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
 
   // Treasury RFV and MV
   const marketValue = getMarketValue(blockNumber);
-  pm.treasuryMarketValue = getTokenRecordsValue(marketValue);
+  pm.treasuryMarketValue = marketValue.value;
   pm.treasuryMarketValueComponents = marketValue.id;
 
   const riskFreeValue = getRiskFreeValue(blockNumber);
-  pm.treasuryRiskFreeValue = getTokenRecordsValue(riskFreeValue);
+  pm.treasuryRiskFreeValue = riskFreeValue.value;
   pm.treasuryRiskFreeValueComponents = riskFreeValue.id;
 
   const treasuryDaiRiskFree = getDaiMarketValue(blockNumber, true);
-  pm.treasuryDaiRiskFreeValue = getTokenRecordsValue(treasuryDaiRiskFree);
+  pm.treasuryDaiRiskFreeValue = treasuryDaiRiskFree.value;
   pm.treasuryDaiRiskFreeValueComponents = treasuryDaiRiskFree.id;
 
   const fraxRiskFreeValue = getFraxMarketValue(blockNumber, true);
-  pm.treasuryFraxRiskFreeValue = getTokenRecordsValue(fraxRiskFreeValue);
+  pm.treasuryFraxRiskFreeValue = fraxRiskFreeValue.value;
   pm.treasuryFraxRiskFreeValueComponents = fraxRiskFreeValue.id;
 
   const daiMarketValue = getDaiMarketValue(blockNumber);
-  pm.treasuryDaiMarketValue = getTokenRecordsValue(daiMarketValue);
+  pm.treasuryDaiMarketValue = daiMarketValue.value;
   pm.treasuryDaiMarketValueComponents = daiMarketValue.id;
 
   const fraxMarketValue = getFraxMarketValue(blockNumber);
-  pm.treasuryFraxMarketValue = getTokenRecordsValue(fraxMarketValue);
+  pm.treasuryFraxMarketValue = fraxMarketValue.value;
   pm.treasuryFraxMarketValueComponents = fraxMarketValue.id;
 
   const feiMarketValue = getFeiMarketValue(blockNumber);
-  pm.treasuryFeiMarketValue = getTokenRecordsValue(feiMarketValue);
+  pm.treasuryFeiMarketValue = feiMarketValue.value;
   pm.treasuryFeiMarketValueComponents = feiMarketValue.id;
 
   const feiRiskFreeValue = getFeiMarketValue(blockNumber, true);
-  pm.treasuryFeiRiskFreeValue = getTokenRecordsValue(feiRiskFreeValue);
+  pm.treasuryFeiRiskFreeValue = feiRiskFreeValue.value;
   pm.treasuryFeiRiskFreeValueComponents = feiRiskFreeValue.id;
 
   const xSushiValue = getXSushiBalance(blockNumber);
-  pm.treasuryXsushiMarketValue = getTokenRecordsValue(xSushiValue);
+  pm.treasuryXsushiMarketValue = xSushiValue.value;
   pm.treasuryXsushiMarketValueComponents = xSushiValue.id;
 
   const ethRiskFreeValue = getEthMarketValue(blockNumber, true);
-  pm.treasuryWETHRiskFreeValue = getTokenRecordsValue(ethRiskFreeValue);
+  pm.treasuryWETHRiskFreeValue = ethRiskFreeValue.value;
   pm.treasuryWETHRiskFreeValueComponents = ethRiskFreeValue.id;
 
   const ethMarketValue = getEthMarketValue(blockNumber);
-  pm.treasuryWETHMarketValue = getTokenRecordsValue(ethMarketValue);
+  pm.treasuryWETHMarketValue = ethMarketValue.value;
   pm.treasuryWETHMarketValueComponents = ethMarketValue.id;
 
   const lusdRiskFreeValue = getLusdMarketValue(blockNumber, true);
-  pm.treasuryLusdRiskFreeValue = getTokenRecordsValue(lusdRiskFreeValue);
+  pm.treasuryLusdRiskFreeValue = lusdRiskFreeValue.value;
   pm.treasuryLusdRiskFreeValueComponents = lusdRiskFreeValue.id;
 
   const lusdMarketValue = getLusdMarketValue(blockNumber);
-  pm.treasuryLusdMarketValue = getTokenRecordsValue(lusdMarketValue);
+  pm.treasuryLusdMarketValue = lusdMarketValue.value;
   pm.treasuryLusdMarketValueComponents = lusdMarketValue.id;
 
   const cvxValue = getCVXTotalBalance(blockNumber);
-  pm.treasuryCVXMarketValue = getTokenRecordsValue(cvxValue);
+  pm.treasuryCVXMarketValue = cvxValue.value;
   pm.treasuryCVXMarketValueComponents = cvxValue.id;
 
   pm.treasuryOhmDaiPOL = getOhmDaiProtocolOwnedLiquidity(blockNumber);
@@ -336,35 +336,35 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryOhmEthPOL = getOhmEthProtocolOwnedLiquidity(blockNumber);
 
   const fxsValue = getFXSTotalBalance(blockNumber);
-  pm.treasuryFXSMarketValue = getTokenRecordsValue(fxsValue);
+  pm.treasuryFXSMarketValue = fxsValue.value;
   pm.treasuryFXSMarketValueComponents = fxsValue.id;
 
   const treasuryOtherMarketValue = getVolatileValue(blockNumber, false, false);
-  pm.treasuryOtherMarketValue = getTokenRecordsValue(treasuryOtherMarketValue);
+  pm.treasuryOtherMarketValue = treasuryOtherMarketValue.value;
   pm.treasuryOtherMarketValueComponents = treasuryOtherMarketValue.id;
 
   const wbtcMarketValue = getWBTCBalance(blockNumber);
-  pm.treasuryWBTCMarketValue = getTokenRecordsValue(wbtcMarketValue);
+  pm.treasuryWBTCMarketValue = wbtcMarketValue.value;
   pm.treasuryWBTCMarketValueComponents = wbtcMarketValue.id;
 
   const ustValue = getUSTBalance(blockNumber);
-  pm.treasuryUstMarketValue = getTokenRecordsValue(ustValue);
+  pm.treasuryUstMarketValue = ustValue.value;
   pm.treasuryUstMarketValueComponents = ustValue.id;
 
   const stableBacking = getTreasuryStableBacking(blockNumber);
-  pm.treasuryStableBacking = getTokenRecordsValue(stableBacking);
+  pm.treasuryStableBacking = stableBacking.value;
   pm.treasuryStableBackingComponents = stableBacking.id;
 
   const volatileBacking = getTreasuryVolatileBacking(blockNumber, false);
-  pm.treasuryVolatileBacking = getTokenRecordsValue(volatileBacking);
+  pm.treasuryVolatileBacking = volatileBacking.value;
   pm.treasuryVolatileBackingComponents = volatileBacking.id;
 
   const totalBacking = getTreasuryTotalBacking(blockNumber);
-  pm.treasuryTotalBacking = getTokenRecordsValue(totalBacking);
+  pm.treasuryTotalBacking = totalBacking.value;
   pm.treasuryTotalBackingComponents = totalBacking.id;
 
   const liquidityPoolValue = getLiquidityPoolValue(false, true, blockNumber);
-  pm.treasuryLPValue = getTokenRecordsValue(liquidityPoolValue);
+  pm.treasuryLPValue = liquidityPoolValue.value;
   pm.treasuryLPValueComponents = liquidityPoolValue.id;
 
   // Rebase rewards, APY, rebase

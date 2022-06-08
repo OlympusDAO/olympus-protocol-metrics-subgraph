@@ -73,8 +73,9 @@ export function getVolatileTokenBalance(
   riskFree: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords("Volatile token balance");
   const contractName = getContractName(contractAddress);
+  log.info("Calculating volatile token balance for {}", [contractName]);
+  const records = newTokenRecords("Volatile token balance");
   const contract = getERC20(contractName, contractAddress, blockNumber);
   const rate = getUSDRate(contractAddress, blockNumber);
 
@@ -108,6 +109,7 @@ export function getVolatileTokenBalance(
     );
   }
 
+  log.info("Volatile token value: {}", [records.value.toString()]);
   return records;
 }
 
@@ -124,6 +126,7 @@ export function getVolatileTokenBalances(
   riskFree: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
+  log.info("Calculating volatile token value", []);
   const records = newTokenRecords("Volatile token balances");
 
   for (let i = 0; i < ERC20_VOLATILE_TOKENS.length; i++) {
@@ -149,6 +152,7 @@ export function getVolatileTokenBalances(
     combineTokenRecords(records, getVestingAssets());
   }
 
+  log.info("Volatile token value: {}", [records.value.toString()]);
   return records;
 }
 
@@ -194,7 +198,7 @@ export function getVlCVXBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getCVXTotalBalance(blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords("CVX total balance");
+  const records = newTokenRecords("CVX total balance");
 
   combineTokenRecords(records, getCVXBalance(blockNumber));
   combineTokenRecords(records, getVlCVXBalance(blockNumber));

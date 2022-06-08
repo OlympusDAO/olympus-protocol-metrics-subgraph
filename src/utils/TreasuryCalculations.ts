@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecords } from "../../generated/schema";
 import { getLiquidityPoolValue } from "./LiquidityCalculations";
@@ -79,6 +79,7 @@ export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecords {
  * @returns
  */
 export function getMarketValue(blockNumber: BigInt): TokenRecords {
+  log.info("Calculating market value", []);
   // TODO check that ETH and stables aren't being double-counted
   const records = newTokenRecords("Market value");
 
@@ -86,6 +87,7 @@ export function getMarketValue(blockNumber: BigInt): TokenRecords {
   combineTokenRecords(records, getLiquidityPoolValue(false, false, blockNumber));
   combineTokenRecords(records, getVolatileValue(blockNumber, false, true));
 
+  log.info("Market value: {}", [records.value.toString()]);
   return records;
 }
 
@@ -98,10 +100,12 @@ export function getMarketValue(blockNumber: BigInt): TokenRecords {
  * @returns
  */
 export function getRiskFreeValue(blockNumber: BigInt): TokenRecords {
+  log.info("Calculating risk-free value", []);
   const records = newTokenRecords("Risk-free value");
 
   combineTokenRecords(records, getStableValue(blockNumber));
   combineTokenRecords(records, getLiquidityPoolValue(true, true, blockNumber));
 
+  log.info("Risk-free value: {}", [records.value.toString()]);
   return records;
 }

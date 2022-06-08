@@ -597,6 +597,7 @@ export function getLiquidityPoolValue(
   singleSidedValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
+  log.info("Calculating liquidity pool value", []);
   const records = newTokenRecords("Liquidity Pool Value");
 
   for (let i = 0; i < ERC20_STABLE_TOKENS.length; i++) {
@@ -613,5 +614,6 @@ export function getLiquidityPoolValue(
     );
   }
 
+  log.info("Liquidity pool value: {}", [records.value.toString()]);
   return records;
 }
