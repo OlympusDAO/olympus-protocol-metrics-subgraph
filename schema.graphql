@@ -109,3 +109,21 @@ type BondDiscount @entity {
   lusd_discount: BigDecimal!
   ohmlusd_discount: BigDecimal!
 }
+
+type TokenRecord @entity {
+  id: ID!
+  name: String!
+  source: String!
+  sourceAddress: String!
+  rate: BigDecimal!
+  balance: BigDecimal!
+  multiplier: BigDecimal!
+  value: BigDecimal! # Calculated
+}
+
+type TokenRecords @entity {
+  id: ID!
+  records: [TokenRecord!]!
+  balance: BigDecimal! # Calculated
+  value: BigDecimal! # Calculated
+}

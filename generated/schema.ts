@@ -1089,3 +1089,157 @@ export class BondDiscount extends Entity {
     this.set("ohmlusd_discount", Value.fromBigDecimal(value));
   }
 }
+
+export class TokenRecord extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save TokenRecord entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type TokenRecord must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("TokenRecord", id.toString(), this);
+    }
+  }
+
+  static load(id: string): TokenRecord | null {
+    return changetype<TokenRecord | null>(store.get("TokenRecord", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get name(): string {
+    let value = this.get("name");
+    return value!.toString();
+  }
+
+  set name(value: string) {
+    this.set("name", Value.fromString(value));
+  }
+
+  get source(): string {
+    let value = this.get("source");
+    return value!.toString();
+  }
+
+  set source(value: string) {
+    this.set("source", Value.fromString(value));
+  }
+
+  get sourceAddress(): string {
+    let value = this.get("sourceAddress");
+    return value!.toString();
+  }
+
+  set sourceAddress(value: string) {
+    this.set("sourceAddress", Value.fromString(value));
+  }
+
+  get rate(): BigDecimal {
+    let value = this.get("rate");
+    return value!.toBigDecimal();
+  }
+
+  set rate(value: BigDecimal) {
+    this.set("rate", Value.fromBigDecimal(value));
+  }
+
+  get balance(): BigDecimal {
+    let value = this.get("balance");
+    return value!.toBigDecimal();
+  }
+
+  set balance(value: BigDecimal) {
+    this.set("balance", Value.fromBigDecimal(value));
+  }
+
+  get multiplier(): BigDecimal {
+    let value = this.get("multiplier");
+    return value!.toBigDecimal();
+  }
+
+  set multiplier(value: BigDecimal) {
+    this.set("multiplier", Value.fromBigDecimal(value));
+  }
+
+  get value(): BigDecimal {
+    let value = this.get("value");
+    return value!.toBigDecimal();
+  }
+
+  set value(value: BigDecimal) {
+    this.set("value", Value.fromBigDecimal(value));
+  }
+}
+
+export class TokenRecords extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get("id");
+    assert(id != null, "Cannot save TokenRecords entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type TokenRecords must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("TokenRecords", id.toString(), this);
+    }
+  }
+
+  static load(id: string): TokenRecords | null {
+    return changetype<TokenRecords | null>(store.get("TokenRecords", id));
+  }
+
+  get id(): string {
+    let value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get records(): Array<string> {
+    let value = this.get("records");
+    return value!.toStringArray();
+  }
+
+  set records(value: Array<string>) {
+    this.set("records", Value.fromStringArray(value));
+  }
+
+  get balance(): BigDecimal {
+    let value = this.get("balance");
+    return value!.toBigDecimal();
+  }
+
+  set balance(value: BigDecimal) {
+    this.set("balance", Value.fromBigDecimal(value));
+  }
+
+  get value(): BigDecimal {
+    let value = this.get("value");
+    return value!.toBigDecimal();
+  }
+
+  set value(value: BigDecimal) {
+    this.set("value", Value.fromBigDecimal(value));
+  }
+}
