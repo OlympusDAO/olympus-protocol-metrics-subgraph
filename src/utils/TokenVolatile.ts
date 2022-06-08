@@ -14,7 +14,7 @@ import {
   getContractName,
 } from "./Constants";
 import {
-  getConvexAllocatorRecords,
+  getFraxConvexAllocatorRecords,
   getERC20,
   getERC20TokenRecordsFromWallets,
   getLiquityStabilityPoolRecords,
@@ -79,7 +79,7 @@ export function getVolatileTokenBalance(
   records.combine(getRariAllocatorRecords(contractAddress, rate, blockNumber));
 
   // Convex Allocator
-  records.combine(getConvexAllocatorRecords(contractAddress, blockNumber));
+  records.combine(getFraxConvexAllocatorRecords(contractAddress, blockNumber));
 
   // Liquity Stability Pool
   records.combine(getLiquityStabilityPoolRecords(contractAddress, blockNumber));

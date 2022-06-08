@@ -591,7 +591,7 @@ export function getOnsenAllocatorRecords(
  * @param blockNumber the current block
  * @returns BigDecimal or null
  */
-function getConvexAllocatorBalance(
+function getFraxConvexAllocatorBalance(
   tokenAddress: string,
   allocatorAddress: string,
   blockNumber: BigInt,
@@ -613,12 +613,15 @@ function getConvexAllocatorBalance(
  * @param blockNumber the current block
  * @returns TokenRecords object
  */
-export function getConvexAllocatorRecords(tokenAddress: string, blockNumber: BigInt): TokenRecords {
+export function getFraxConvexAllocatorRecords(
+  tokenAddress: string,
+  blockNumber: BigInt,
+): TokenRecords {
   const records = new TokenRecords();
 
   for (let i = 0; i < ALLOCATOR_CONVEX_FRAX_CONTRACTS.length; i++) {
     const allocatorAddress = ALLOCATOR_CONVEX_FRAX_CONTRACTS[i];
-    const balance = getConvexAllocatorBalance(tokenAddress, allocatorAddress, blockNumber);
+    const balance = getFraxConvexAllocatorBalance(tokenAddress, allocatorAddress, blockNumber);
     if (!balance || balance.equals(BigDecimal.zero())) continue;
 
     records.push(
