@@ -62,10 +62,10 @@ describe("liquidity balances", () => {
       // Balance stays the same
       assert.stringEquals(
         expectedBalanceV2.plus(expectedBalanceV3).toString(),
-        records.getBalance().toString(),
+        records.balance.toString(),
       );
       // Value multiplied by 0.5 due to being single-sided
-      assert.stringEquals(pairValue.toString(), records.getValue().toString());
+      assert.stringEquals(pairValue.toString(), records.value.toString());
     });
 
     test("applies a multiplier when singleSidedValue is true", () => {
@@ -112,12 +112,12 @@ describe("liquidity balances", () => {
       // Balance stays the same
       assert.stringEquals(
         expectedBalanceV2.plus(expectedBalanceV3).toString(),
-        records.getBalance().toString(),
+        records.balance.toString(),
       );
       // Value multiplied by 0.5 due to being single-sided
       assert.stringEquals(
         pairValue.times(BigDecimal.fromString("0.5")).toString(),
-        records.getValue().toString(),
+        records.value.toString(),
       );
     });
 
@@ -165,10 +165,10 @@ describe("liquidity balances", () => {
       // Balance stays the same
       assert.stringEquals(
         expectedBalanceV2.plus(expectedBalanceV3).toString(),
-        records.getBalance().toString(),
+        records.balance.toString(),
       );
       // Value is the risk-free value
-      assert.stringEquals(pairValue.toString(), records.getValue().toString());
+      assert.stringEquals(pairValue.toString(), records.value.toString());
     });
   });
 });
