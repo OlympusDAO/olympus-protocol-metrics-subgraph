@@ -40,6 +40,14 @@ export const OHM_V2_DECIMALS = 9;
 export const USDC_DECIMALS = 6;
 export const ERC20_STANDARD_DECIMALS = 18;
 
+export const getERC20UsdRate = (
+  token0Reserve: BigInt,
+  token1Reserve: BigInt,
+  token0Rate: BigDecimal,
+): BigDecimal => {
+  return toDecimal(token0Reserve, 18).times(token0Rate).div(toDecimal(token1Reserve, 18));
+};
+
 /**
  * 1898.01397375
  *

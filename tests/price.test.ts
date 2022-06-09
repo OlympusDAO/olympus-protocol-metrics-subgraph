@@ -3,19 +3,22 @@ import { assert, createMockedFunction, describe, test } from "matchstick-as/asse
 
 import {
   ERC20_DAI,
+  ERC20_FRAX,
   ERC20_FXS,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
+  ERC20_SYN,
   ERC20_TRIBE,
   ERC20_WETH,
   NATIVE_ETH,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
   PAIR_UNISWAP_V2_OHM_ETH_V2,
+  PAIR_UNISWAP_V2_SYN_FRAX,
   PAIR_UNISWAP_V2_USDC_ETH,
   PAIR_UNISWAP_V3_FXS_ETH,
 } from "../src/utils/Constants";
-import { toDecimal } from "../src/utils/Decimals";
+import { DEFAULT_DECIMALS, toDecimal } from "../src/utils/Decimals";
 import {
   getBaseEthUsdRate,
   getBaseOhmUsdRate,
@@ -33,6 +36,7 @@ import {
   ETH_USD_RESERVE_BLOCK,
   FXS_ETH_BALANCE_ETH,
   FXS_ETH_BALANCE_FXS,
+  getERC20UsdRate,
   getEthUsdRate,
   getFxsUsdRate,
   getOhmEthPairValue,
@@ -42,6 +46,7 @@ import {
   mockFxsEthRate,
   mockOhmEthPair,
   mockTribeEthRate,
+  mockUniswapV2Pair,
   mockUsdOhmV2Rate,
   OHM_ETH_TOTAL_SUPPLY,
   OHM_USD_RESERVE_BLOCK,
@@ -136,46 +141,47 @@ describe("base token", () => {
 
   test("token1 == OHM V1", () => {
     const ohmV1Address = Address.fromString(ERC20_OHM_V1);
-    const daiAddress = Address.fromString(ERC20_DAI);
+    const fxsAddress = Address.fromString(ERC20_FXS);
 
     assert.assertTrue(
-      getBaseTokenOrientation(daiAddress, ohmV1Address) === PairTokenBaseOrientation.TOKEN1,
+      getBaseTokenOrientation(fxsAddress, ohmV1Address) === PairTokenBaseOrientation.TOKEN1,
     );
   });
 
   test("token1 == OHM V2", () => {
     const ohmV2Address = Address.fromString(ERC20_OHM_V2);
-    const daiAddress = Address.fromString(ERC20_DAI);
+    const fxsAddress = Address.fromString(ERC20_FXS);
 
     assert.assertTrue(
-      getBaseTokenOrientation(daiAddress, ohmV2Address) === PairTokenBaseOrientation.TOKEN1,
+      getBaseTokenOrientation(fxsAddress, ohmV2Address) === PairTokenBaseOrientation.TOKEN1,
     );
   });
 
   test("token1 == ETH", () => {
     const wethAddress = Address.fromString(ERC20_WETH);
-    const daiAddress = Address.fromString(ERC20_DAI);
+    const fxsAddress = Address.fromString(ERC20_FXS);
 
+    // Matches DAI for token0
     assert.assertTrue(
-      getBaseTokenOrientation(daiAddress, wethAddress) === PairTokenBaseOrientation.TOKEN1,
+      getBaseTokenOrientation(fxsAddress, wethAddress) === PairTokenBaseOrientation.TOKEN1,
     );
   });
 
   test("token0-token1 non-base pair", () => {
-    const daiAddress = Address.fromString(ERC20_DAI);
+    const fxsAddress = Address.fromString(ERC20_FXS);
     const tribeAddress = Address.fromString(ERC20_TRIBE);
 
     assert.assertTrue(
-      getBaseTokenOrientation(tribeAddress, daiAddress) === PairTokenBaseOrientation.UNKNOWN,
+      getBaseTokenOrientation(tribeAddress, fxsAddress) === PairTokenBaseOrientation.UNKNOWN,
     );
   });
 
   test("token1-token0 non-base pair", () => {
-    const daiAddress = Address.fromString(ERC20_DAI);
+    const fxsAddress = Address.fromString(ERC20_FXS);
     const tribeAddress = Address.fromString(ERC20_TRIBE);
 
     assert.assertTrue(
-      getBaseTokenOrientation(daiAddress, tribeAddress) === PairTokenBaseOrientation.UNKNOWN,
+      getBaseTokenOrientation(fxsAddress, tribeAddress) === PairTokenBaseOrientation.UNKNOWN,
     );
   });
 });
@@ -304,6 +310,33 @@ describe("get USD rate", () => {
     assert.stringEquals(
       getUSDRate(ERC20_OHM_V2, OHM_USD_RESERVE_BLOCK).toString(),
       getOhmUsdRate().toString(),
+    );
+  });
+
+  test("SYN (UniswapV2 with FRAX pair) returns correct value", () => {
+    const synReserve = BigInt.fromString("9206045749798035188572518");
+    const fraxReserve = BigInt.fromString("9400621025789582788346605");
+    mockUniswapV2Pair(
+      ERC20_SYN,
+      ERC20_FRAX,
+      DEFAULT_DECIMALS,
+      DEFAULT_DECIMALS,
+      synReserve,
+      fraxReserve,
+      BigInt.fromString("9117929467985260492733795"),
+      PAIR_UNISWAP_V2_SYN_FRAX,
+      18,
+    );
+
+    const synUsdRate = getUSDRate(ERC20_SYN, OHM_USD_RESERVE_BLOCK);
+    log.debug("SYN USD rate {}", [synUsdRate.toString()]);
+    const calculatedRate = getERC20UsdRate(fraxReserve, synReserve, BigDecimal.fromString("1"));
+    log.debug("difference: {}", [synUsdRate.minus(calculatedRate).toString()]);
+
+    // There is a loss of precision, so we need to ensure that the value is close, but not equal
+    assert.assertTrue(
+      synUsdRate.minus(calculatedRate).lt(BigDecimal.fromString("0.000000000000000001")) &&
+        synUsdRate.minus(calculatedRate).gt(BigDecimal.fromString("-0.000000000000000001")),
     );
   });
 

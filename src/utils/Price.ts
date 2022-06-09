@@ -136,11 +136,21 @@ export function getBaseTokenOrientation(
   const ohmV2Address = Address.fromString(ERC20_OHM_V2);
   // TODO what if the pair is OHM-ETH or ETH-OHM?
 
-  if (token0.equals(wethAddress) || token0.equals(ohmV1Address) || token0.equals(ohmV2Address)) {
+  if (
+    token0.equals(wethAddress) ||
+    token0.equals(ohmV1Address) ||
+    token0.equals(ohmV2Address) ||
+    ERC20_STABLE_TOKENS.includes(token0.toHexString())
+  ) {
     return PairTokenBaseOrientation.TOKEN0;
   }
 
-  if (token1.equals(wethAddress) || token1.equals(ohmV1Address) || token1.equals(ohmV2Address)) {
+  if (
+    token1.equals(wethAddress) ||
+    token1.equals(ohmV1Address) ||
+    token1.equals(ohmV2Address) ||
+    ERC20_STABLE_TOKENS.includes(token1.toHexString())
+  ) {
     return PairTokenBaseOrientation.TOKEN1;
   }
 
@@ -182,9 +192,13 @@ export function getBaseTokenUSDRate(
     return getBaseOhmUsdRate(blockNumber);
   }
 
-  // Otherwise, ETH
-  log.debug("Returning ETH", []);
-  return getBaseEthUsdRate();
+  if (baseToken.equals(Address.fromString(ERC20_WETH))) {
+    log.debug("Returning ETH", []);
+    return getBaseEthUsdRate();
+  }
+
+  // Otherwise, USD
+  return BigDecimal.fromString("1");
 }
 
 /**
