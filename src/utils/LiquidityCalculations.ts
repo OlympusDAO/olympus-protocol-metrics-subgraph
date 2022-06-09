@@ -1,7 +1,8 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecords } from "../../generated/schema";
+import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
+  ERC20_OHM_V2,
   ERC20_STABLE_TOKENS,
   ERC20_VOLATILE_TOKENS,
   getContractName,
@@ -33,7 +34,7 @@ import {
 import { toDecimal } from "./Decimals";
 import { LiquidityBalances } from "./LiquidityBalance";
 import { PairHandlerTypes } from "./PairHandler";
-import { getOhmUSDPairRiskFreeValue, getUniswapV2PairValue } from "./Price";
+import { getBaseOhmUsdRate, getOhmUSDPairRiskFreeValue, getUniswapV2PairValue } from "./Price";
 import {
   combineTokenRecords,
   getTokenRecordsBalance,
@@ -112,6 +113,56 @@ function getLiquidityTokenRecords(
 }
 
 /**
+ * Returns the value of the Curve OHM-ETH pair.
+ *
+ * This comes with some caveats:
+ * - Without access to the Curve LP contract (waiting), it is not
+ * possible to access the balances function.
+ * - As a result, the balance of OHM V2 in {pairAddress} is determined
+ * using the ERC20 contract.
+ * - The Graph API does not allow for determining the balance of
+ * non-ERC20/native ETH, so the value of OHM V2 is multiplied by 2
+ * to determine the value.
+ *
+ * As we do not have any Curve pools apart from OHM-ETH, this
+ * function has also not been abstracted to work with other pairs.
+ *
+ * @param pairAddress the address of the Curve pair
+ * @param blockNumber the current block number
+ * @returns a TokenRecord object
+ */
+export function getCurveOhmEthPairValue(pairAddress: string, blockNumber: BigInt): TokenRecord {
+  // NOTE: This only covers the OHM-ETH pair for the moment
+  // Get the balance of OHM in the contract address
+  const ohmContract = getERC20(getContractName(ERC20_OHM_V2), ERC20_OHM_V2, blockNumber);
+  if (!ohmContract) {
+    throw new Error("Unable to bind ERC20 contract for OHM V2 " + ERC20_OHM_V2);
+  }
+
+  // Calculate the value of OHM in the contract
+  const ohmBalance = toDecimal(
+    ohmContract.balanceOf(Address.fromString(pairAddress)),
+    ohmContract.decimals(),
+  );
+  const ohmRate = getBaseOhmUsdRate(blockNumber);
+  const ohmValue = ohmBalance.times(ohmRate);
+
+  // Due to a limitation in the Graph API, we cannot determine the balance of (non-ERC20) ETH.
+  // We know that OHM value = ETH value, so we can multiply the OHM value * 2 to get the total.
+  const pairValue = ohmValue.times(BigDecimal.fromString("2"));
+
+  // We also can't calculate the circulating supply of the LP without access to the contract,
+  // so we set the balance to 1.
+  return newTokenRecord(
+    "Curve OHM-ETH Liquidity Pool",
+    getContractName(pairAddress),
+    pairAddress,
+    pairValue,
+    BigDecimal.fromString("1"),
+  );
+}
+
+/**
  * Returns the TokenRecords representing the liquidity for {tokenAddress}.
  *
  * @param tokenAddress the address of the ERC20 token
@@ -134,6 +185,7 @@ export function getLiquidityBalances(
   const pairHandlers = getPairHandlers(tokenAddress);
   for (let j = 0; j < pairHandlers.length; j++) {
     const pairHandler = pairHandlers[j];
+    log.debug("Working with pair {}", [pairHandler.getPair()]);
     const liquidityBalance = new LiquidityBalances(pairHandler.getPair());
     if (pairHandler.getHandler() === PairHandlerTypes.UniswapV2) {
       const liquidityPair = getUniswapV2Pair(pairHandler.getPair(), blockNumber);
@@ -161,6 +213,8 @@ export function getLiquidityBalances(
       log.info("token0 reserves: {}", [balanceOne ? balanceOne.toString() : "null"]);
       // TODO add support for Uniswap V3
       log.error("UniswapV3 not yet supported", []);
+    } else if (pairHandler.getHandler() === PairHandlerTypes.Curve) {
+      pushTokenRecord(records, getCurveOhmEthPairValue(pairHandler.getPair(), blockNumber));
     } else {
       throw new Error("Unsupported liquidity pair type: " + pairHandler.getHandler().toString());
     }

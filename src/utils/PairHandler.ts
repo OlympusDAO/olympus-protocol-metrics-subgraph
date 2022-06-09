@@ -2,6 +2,7 @@
 export const enum PairHandlerTypes {
   UniswapV2,
   UniswapV3,
+  Curve,
 }
 
 /**

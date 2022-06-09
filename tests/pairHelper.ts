@@ -8,6 +8,8 @@ import {
   ERC20_TRIBE,
   ERC20_USDC,
   ERC20_WETH,
+  NATIVE_ETH,
+  PAIR_CURVE_OHM_ETH,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_ETH_V2,
   PAIR_UNISWAP_V2_TRIBE_ETH,
@@ -310,4 +312,19 @@ export const getOhmEthPairValue = (): BigDecimal => {
   return toDecimal(OHM_ETH_RESERVES_OHM, OHM_V2_DECIMALS)
     .times(getOhmUsdRate())
     .plus(toDecimal(OHM_ETH_RESERVES_ETH, ERC20_STANDARD_DECIMALS).times(getEthUsdRate()));
+};
+
+export const mockCurveOhmEthPair = (ohmBalance: BigInt): void => {
+  // Balance
+  createMockedFunction(
+    Address.fromString(ERC20_OHM_V2),
+    "balanceOf",
+    "balanceOf(address):(uint256)",
+  )
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(PAIR_CURVE_OHM_ETH))])
+    .returns([ethereum.Value.fromUnsignedBigInt(ohmBalance)]);
+
+  createMockedFunction(Address.fromString(ERC20_OHM_V2), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(OHM_V2_DECIMALS),
+  ]);
 };
