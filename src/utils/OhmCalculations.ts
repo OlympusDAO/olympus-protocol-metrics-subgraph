@@ -2,14 +2,15 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import {
   BONDS_DEPOSIT,
+  BONDS_INVERSE_DEPOSIT,
   DAO_WALLET,
-  MIGRATION_CONTRACT,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_OHM_V2_BLOCK,
   ERC20_SOHM_V1,
   ERC20_SOHM_V2,
   ERC20_SOHM_V3,
+  MIGRATION_CONTRACT,
 } from "./Constants";
 import {
   getERC20,
@@ -60,6 +61,7 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
  * - subtract: OHM V2 in DAO wallet
  * - subtract: OHM V2 in migration contract
  * - subtract: OHM V2 in bonds deposit
+ * - subtract: OHM V2 in inverse bonds deposit
  *
  * @param blockNumber the current block number
  * @param totalSupply the total supply of OHM
@@ -91,6 +93,10 @@ export function getCirculatingSupply(blockNumber: BigInt, totalSupply: BigDecima
   if (isV2Contract) {
     circulatingSupply = circulatingSupply.minus(
       toDecimal(getERC20Balance(ohmContract, BONDS_DEPOSIT, blockNumber), 9),
+    );
+
+    circulatingSupply = circulatingSupply.minus(
+      toDecimal(getERC20Balance(ohmContract, BONDS_INVERSE_DEPOSIT, blockNumber), 9),
     );
   }
 
