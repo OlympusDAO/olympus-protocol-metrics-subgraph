@@ -35,7 +35,6 @@ import {
   getTotalValueLocked,
 } from "./OhmCalculations";
 import { getBaseOhmUsdRate } from "./Price";
-import { getTokenRecordsValue } from "./TokenRecordHelper";
 import {
   getDaiMarketValue,
   getFeiMarketValue,
