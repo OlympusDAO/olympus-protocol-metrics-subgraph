@@ -126,6 +126,7 @@ export const ERC20_STABLE_TOKENS = [
 ];
 
 // Volatile tokens
+export const NATIVE_ETH = "-999999";
 export const ERC20_CRV = "0xd533a949740bb3306d119cc777fa900ba034cd52";
 export const ERC20_CRV_3POOL = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490";
 export const ERC20_CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";

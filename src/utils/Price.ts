@@ -9,6 +9,7 @@ import {
   ERC20_WETH,
   getContractName,
   getPairHandler,
+  NATIVE_ETH,
   PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
@@ -324,6 +325,11 @@ export function getUSDRate(contractAddress: string, blockNumber: BigInt): BigDec
   // Handle OHM V1 and V2
   if ([ERC20_OHM_V1, ERC20_OHM_V2].includes(contractAddress)) {
     return getBaseOhmUsdRate(blockNumber);
+  }
+
+  // Handle native ETH
+  if (contractAddress == NATIVE_ETH) {
+    return getBaseEthUsdRate();
   }
 
   // Look for the pair

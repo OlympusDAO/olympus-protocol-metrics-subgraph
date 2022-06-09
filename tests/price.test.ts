@@ -8,6 +8,7 @@ import {
   ERC20_OHM_V2,
   ERC20_TRIBE,
   ERC20_WETH,
+  NATIVE_ETH,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
   PAIR_UNISWAP_V2_OHM_ETH_V2,
@@ -271,6 +272,15 @@ describe("get USD rate", () => {
   });
 
   test("ETH returns correct value", () => {
+    mockEthUsdRate();
+
+    assert.stringEquals(
+      getUSDRate(NATIVE_ETH, OHM_USD_RESERVE_BLOCK).toString(),
+      getEthUsdRate().toString(),
+    );
+  });
+
+  test("wETH returns correct value", () => {
     mockEthUsdRate();
 
     assert.stringEquals(
