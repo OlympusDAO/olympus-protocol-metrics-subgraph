@@ -120,7 +120,7 @@ export const ERC20_STABLE_TOKENS = [
   ERC20_FEI,
   ERC20_FRAX,
   ERC20_LUSD,
-  ERC20_UST,
+  // ERC20_UST,
   ERC20_USDC,
 ];
 
