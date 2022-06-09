@@ -163,11 +163,14 @@ export function getLUSDBalance(blockNumber: BigInt): TokenRecords {
  * Returns the balance of UST tokens in the following:
  * - all wallets, using {getERC20TokenRecordsFromWallets}.
  *
+ * NOTE: this is currently set to 0, due to issues with the price of UST.
+ *
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
 export function getUSTBalance(blockNumber: BigInt): TokenRecords {
-  return getStablecoinBalance(ERC20_UST, false, false, blockNumber);
+  return newTokenRecords("UST");
+  //  return getStablecoinBalance(ERC20_UST, false, false, blockNumber);
 }
 
 /**
