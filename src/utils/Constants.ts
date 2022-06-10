@@ -153,6 +153,7 @@ export const ERC20_TRIBE = "0xc7283b66Eb1EB5FB86327f08e1B5816b0720212B";
 export const ERC20_WBTC = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
 export const ERC20_WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 export const ERC20_XSUSHI = "0x8798249c2e607446efb7ad49ec89dd1865ff4272";
+export const ERC20_FRAX_3CRV = "0xd632f22692fac7611d2aa1c0d552930d43caed3b";
 export const NATIVE_ETH = "-999999";
 
 export const ERC20_VOLATILE_TOKENS = [
