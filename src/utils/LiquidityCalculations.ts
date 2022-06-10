@@ -698,7 +698,7 @@ export function getOhmEthProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal
 }
 
 /**
- * Returns the value of liquidity pools for volatile and stable tokens.
+ * Returns the value of owned liquidity pools.
  *
  * @param riskFree If `riskFree` is true, the risk-free value will be returned
  * @param singleSidedValue should be true if only the value of a single side of the LP is desired
@@ -711,22 +711,7 @@ export function getLiquidityPoolValue(
   blockNumber: BigInt,
 ): TokenRecords {
   log.info("Calculating liquidity pool value", []);
-  const records = newTokenRecords("Liquidity Pool Value");
-
-  for (let i = 0; i < ERC20_STABLE_TOKENS.length; i++) {
-    combineTokenRecords(
-      records,
-      getLiquidityBalances(ERC20_STABLE_TOKENS[i], riskFree, singleSidedValue, blockNumber),
-    );
-  }
-
-  for (let i = 0; i < ERC20_VOLATILE_TOKENS.length; i++) {
-    combineTokenRecords(
-      records,
-      getLiquidityBalances(ERC20_VOLATILE_TOKENS[i], riskFree, singleSidedValue, blockNumber),
-    );
-  }
-
+  const records = getLiquidityBalances(null, riskFree, singleSidedValue, blockNumber);
   log.info("Liquidity pool value: {}", [records.value.toString()]);
   return records;
 }

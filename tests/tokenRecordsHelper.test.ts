@@ -103,7 +103,7 @@ describe("combine", () => {
 });
 
 describe("multiplier", () => {
-  test("records updated", () => {
+  test("push, records updated", () => {
     const records1 = newTokenRecords("test");
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
@@ -126,6 +126,40 @@ describe("multiplier", () => {
     const recordsUpdated = TokenRecords.load(records1.id);
     // 10 * 5 * 0.25 + 2 * 3 * 0.25
     assert.stringEquals("14", recordsUpdated ? recordsUpdated.value.toString() : "");
+  });
+
+  test("combine, records updated", () => {
+    const records1 = newTokenRecords("test");
+    const record1 = createTokenRecord();
+    const record2 = newTokenRecord(
+      "name2",
+      "source2",
+      "sourceAdd2",
+      BigDecimal.fromString("10"),
+      BigDecimal.fromString("5"),
+    );
+
+    const records2 = newTokenRecords("test");
+    pushTokenRecord(records2, record1);
+    pushTokenRecord(records2, record2);
+    setTokenRecordsMultiplier(records2, BigDecimal.fromString("0.25"));
+
+    combineTokenRecords(records1, records2);
+
+    // 10 * 5 * 0.25 + 2 * 3 * 0.25
+    assert.stringEquals("14", records1.value.toString());
+
+    // Individual values are consistent
+    let totalValue = BigDecimal.fromString("0");
+    for (let i = 0; i < records1.records.length; i++) {
+      const currentId = records1.records[i];
+      const currentRecord = TokenRecord.load(currentId);
+      if (!currentRecord) continue;
+
+      totalValue = totalValue.plus(currentRecord.value);
+    }
+
+    assert.stringEquals(records1.value.toString(), totalValue.toString());
   });
 });
 
