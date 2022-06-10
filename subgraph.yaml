@@ -652,6 +652,8 @@ dataSources:
           file: ./abis/StabilityPool.json
         - name: RariAllocator
           file: ./abis/RariAllocator.json
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
       callHandlers:
         - function: stake(address,uint256,bool,bool)
           handler: handleMetrics
