@@ -4,8 +4,6 @@ import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
   BALANCER_VAULT,
   ERC20_OHM_V2,
-  ERC20_STABLE_TOKENS,
-  ERC20_VOLATILE_TOKENS,
   getContractName,
   getLiquidityPairTokens,
   LIQUIDITY_OWNED,
@@ -133,12 +131,15 @@ function getLiquidityTokenRecords(
  * function has also not been abstracted to work with other pairs.
  *
  * @param pairAddress the address of the Curve pair
+ * @param tokenAddress restrict results to match the specified token
+ * @param excludeOhmValue true if the value of OHM in the LP should be excluded
  * @param blockNumber the current block number
  * @returns a TokenRecord object
  */
 export function getCurveOhmEthPairValue(
   pairAddress: string,
   tokenAddress: string | null,
+  excludeOhmValue: boolean,
   blockNumber: BigInt,
 ): TokenRecord | null {
   // If we are restricting by token and tokenAddress does not match either side of the pair
@@ -174,16 +175,27 @@ export function getCurveOhmEthPairValue(
     pairAddress,
     pairValue,
     BigDecimal.fromString("1"),
+    excludeOhmValue ? BigDecimal.fromString("0.5") : BigDecimal.fromString("1"),
   );
 }
 
+/**
+ * Returns the records for the specified Curve LP.
+ *
+ * @param pairAddress the address of the Curve pair
+ * @param tokenAddress restrict results to match the specified token
+ * @param excludeOhmValue true if the value of OHM in the LP should be excluded
+ * @param blockNumber the current block number
+ * @returns
+ */
 export function getCurvePairRecords(
   pairAddress: string,
   tokenAddress: string | null,
+  excludeOhmValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
   const records = newTokenRecords("Curve Liquidity Pools");
-  const record = getCurveOhmEthPairValue(pairAddress, tokenAddress, blockNumber);
+  const record = getCurveOhmEthPairValue(pairAddress, tokenAddress, excludeOhmValue, blockNumber);
   if (record) {
     pushTokenRecord(records, record);
   }
@@ -207,7 +219,7 @@ export function getCurvePairRecords(
  *
  * @param tokenAddress the address of the ERC20 token
  * @param riskFree whether the value is risk-free or not
- * @param singleSidedValue should be true if only the value of a single side of the LP is desired
+ * @param excludeOhmValue true if the value of OHM in the LP should be excluded
  * @param blockNumber current block number
  * @param ownedLiquidityPairs set this to override the array of owned liquidity pairs
  * @returns TokenRecords object
@@ -215,11 +227,10 @@ export function getCurvePairRecords(
 export function getLiquidityBalances(
   tokenAddress: string | null,
   riskFree: boolean,
-  singleSidedValue: boolean,
+  excludeOhmValue: boolean,
   blockNumber: BigInt,
   ownedLiquidityPairs: PairHandler[] = LIQUIDITY_OWNED,
 ): TokenRecords {
-  // TODO rename singleSidedValue to excludeOhmValue or combine with riskFreeValue
   const records = newTokenRecords("Liquidity");
 
   for (let j = 0; j < ownedLiquidityPairs.length; j++) {
@@ -248,7 +259,8 @@ export function getLiquidityBalances(
       const currentTokenRecords = getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree);
 
       // If the singleSidedValue is desired, we can halve the value of the LP and return that.
-      if (singleSidedValue) {
+      // TODO integrate excludeOhmValue into calculations
+      if (excludeOhmValue) {
         setTokenRecordsMultiplier(currentTokenRecords, BigDecimal.fromString("0.5"));
       }
 
@@ -258,11 +270,12 @@ export function getLiquidityBalances(
       const currentTokenRecords = getCurvePairRecords(
         pairHandler.getPair(),
         tokenAddress,
+        excludeOhmValue,
         blockNumber,
       );
 
       // If the singleSidedValue is desired, we can halve the value of the LP and return that.
-      if (singleSidedValue) {
+      if (excludeOhmValue) {
         setTokenRecordsMultiplier(currentTokenRecords, BigDecimal.fromString("0.5"));
       }
 
@@ -274,7 +287,7 @@ export function getLiquidityBalances(
         getBalancerRecords(
           BALANCER_VAULT,
           pairHandler.getPair(),
-          singleSidedValue,
+          excludeOhmValue,
           blockNumber,
           tokenAddress,
         ),

@@ -199,4 +199,22 @@ describe("Curve", () => {
     const expectedValue = ohmBalance.times(getOhmUsdRate()).times(BigDecimal.fromString("2"));
     assert.stringEquals(expectedValue.toString(), records.value.toString());
   });
+
+  test("OHM-ETH pair value, exclude OHM value", () => {
+    mockEthUsdRate();
+    mockUsdOhmV2Rate();
+
+    // Mock balance
+    const ohmBalance = BigDecimal.fromString("100");
+    mockCurveOhmEthPair(toBigInt(ohmBalance, OHM_V2_DECIMALS));
+    // 100 OHM @ ~19
+    // 1 ETH @ ~1898
+
+    const records = getLiquidityBalances(NATIVE_ETH, false, true, OHM_USD_RESERVE_BLOCK);
+
+    // Total value = OHM rate * OHM balance + ETH rate * ETH balance
+    // ETH value = 0.5 * total value
+    const expectedValue = ohmBalance.times(getOhmUsdRate());
+    assert.stringEquals(expectedValue.toString(), records.value.toString());
+  });
 });
