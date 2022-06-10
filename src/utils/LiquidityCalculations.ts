@@ -2,6 +2,7 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
+  BALANCER_VAULT,
   ERC20_OHM_V2,
   ERC20_STABLE_TOKENS,
   ERC20_VOLATILE_TOKENS,
@@ -33,6 +34,7 @@ import {
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { LiquidityBalances } from "./LiquidityBalance";
+import { getBalancerRecords } from "./LiquidityBalancer";
 import { PairHandlerTypes } from "./PairHandler";
 import { getBaseOhmUsdRate, getOhmUSDPairRiskFreeValue, getUniswapV2PairValue } from "./Price";
 import {
@@ -41,6 +43,7 @@ import {
   newTokenRecord,
   newTokenRecords,
   pushTokenRecord,
+  setTokenRecordMultiplier,
   setTokenRecordsMultiplier,
 } from "./TokenRecordHelper";
 
@@ -201,10 +204,14 @@ export function getLiquidityBalances(
         liquidityBalance.addBalance(currentWallet, balance);
       }
 
-      combineTokenRecords(
-        records,
-        getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree),
-      );
+      const currentTokenRecords = getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree);
+
+      // If the singleSidedValue is desired, we can halve the value of the LP and return that.
+      if (singleSidedValue) {
+        setTokenRecordsMultiplier(currentTokenRecords, BigDecimal.fromString("0.5"));
+      }
+
+      combineTokenRecords(records, currentTokenRecords);
     } else if (pairHandler.getHandler() === PairHandlerTypes.UniswapV3) {
       const contractOne = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
       const balanceOne = contractOne
@@ -214,15 +221,24 @@ export function getLiquidityBalances(
       // TODO add support for Uniswap V3
       log.error("UniswapV3 not yet supported", []);
     } else if (pairHandler.getHandler() === PairHandlerTypes.Curve) {
-      pushTokenRecord(records, getCurveOhmEthPairValue(pairHandler.getPair(), blockNumber));
+      // TODO support risk-free value of Curve
+      const currentTokenRecord = getCurveOhmEthPairValue(pairHandler.getPair(), blockNumber);
+
+      // If the singleSidedValue is desired, we can halve the value of the LP and return that.
+      if (singleSidedValue) {
+        setTokenRecordMultiplier(currentTokenRecord, BigDecimal.fromString("0.5"));
+      }
+
+      pushTokenRecord(records, currentTokenRecord);
+    } else if (pairHandler.getHandler() === PairHandlerTypes.Balancer) {
+      // TODO support risk-free value of Balancer
+      combineTokenRecords(
+        records,
+        getBalancerRecords(BALANCER_VAULT, pairHandler.getPair(), singleSidedValue, blockNumber),
+      );
     } else {
       throw new Error("Unsupported liquidity pair type: " + pairHandler.getHandler().toString());
     }
-  }
-
-  // If the singleSidedValue is desired, we can halve the value of the LP and return that.
-  if (singleSidedValue) {
-    setTokenRecordsMultiplier(records, BigDecimal.fromString("0.5"));
   }
 
   return records;
