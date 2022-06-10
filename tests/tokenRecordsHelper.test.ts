@@ -1,7 +1,7 @@
 import { BigDecimal } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
-import { TokenRecord } from "../generated/schema";
+import { TokenRecord, TokenRecords } from "../generated/schema";
 import {
   combineTokenRecords,
   getTokenRecordsBalance,
@@ -122,6 +122,10 @@ describe("multiplier", () => {
     const record2Updated = TokenRecord.load(record2.id);
     assert.stringEquals("0.25", record1Updated ? record1Updated.multiplier.toString() : "");
     assert.stringEquals("0.25", record2Updated ? record2Updated.multiplier.toString() : "");
+
+    const recordsUpdated = TokenRecords.load(records1.id);
+    // 10 * 5 * 0.25 + 2 * 3 * 0.25
+    assert.stringEquals("14", recordsUpdated ? recordsUpdated.value.toString() : "");
   });
 });
 

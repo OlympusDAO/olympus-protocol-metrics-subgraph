@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts
 
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
 import { TokenRecords } from "../../generated/schema";
-import { ERC20_OHM_V2, getContractName } from "./Constants";
+import { ERC20_OHM_V2, getContractName, getLiquidityPairTokens } from "./Constants";
 import { getERC20 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
@@ -17,9 +17,14 @@ export function getBalancerRecords(
   poolId: string,
   singleSidedValue: boolean,
   blockNumber: BigInt,
+  tokenAddress: string | null = null,
 ): TokenRecords {
   log.debug("Calculating value of Balancer Pool {} for id {}", [vaultAddress, poolId]);
   const records = newTokenRecords("Balancer Pool");
+  if (tokenAddress && !getLiquidityPairTokens(poolId).includes(tokenAddress)) {
+    log.debug("tokenAddress specified and not found in balancer pool. Skipping.", []);
+    return records;
+  }
 
   const vault = getBalancerVault(vaultAddress, blockNumber);
   // Fetch the token balances for the specified pool

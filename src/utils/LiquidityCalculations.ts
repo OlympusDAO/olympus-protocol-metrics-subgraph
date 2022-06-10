@@ -7,7 +7,8 @@ import {
   ERC20_STABLE_TOKENS,
   ERC20_VOLATILE_TOKENS,
   getContractName,
-  getPairHandlers,
+  getLiquidityPairTokens,
+  LIQUIDITY_OWNED,
   OHMDAI_ONSEN_ID,
   OHMLUSD_ONSEN_ID,
   ONSEN_ALLOCATOR,
@@ -35,7 +36,7 @@ import {
 import { toDecimal } from "./Decimals";
 import { LiquidityBalances } from "./LiquidityBalance";
 import { getBalancerRecords } from "./LiquidityBalancer";
-import { PairHandlerTypes } from "./PairHandler";
+import { PairHandler, PairHandlerTypes } from "./PairHandler";
 import { getBaseOhmUsdRate, getOhmUSDPairRiskFreeValue, getUniswapV2PairValue } from "./Price";
 import {
   combineTokenRecords,
@@ -43,7 +44,6 @@ import {
   newTokenRecord,
   newTokenRecords,
   pushTokenRecord,
-  setTokenRecordMultiplier,
   setTokenRecordsMultiplier,
 } from "./TokenRecordHelper";
 
@@ -72,7 +72,9 @@ function getLiquidityTokenRecords(
   const contractName = getContractName(liquidityBalance.contract);
   // TODO handle uniswap V3
   // TODO this assumes that the other side of the LP is OHM, which is not always correct (ETH!)
-  const lpValue = riskFree
+  const lpValue = liquidityBalance.getTotalBalance().equals(BigInt.zero())
+    ? BigDecimal.zero()
+    : riskFree
     ? getOhmUSDPairRiskFreeValue(
         liquidityBalance.getTotalBalance(),
         liquidityBalance.contract,
@@ -134,7 +136,17 @@ function getLiquidityTokenRecords(
  * @param blockNumber the current block number
  * @returns a TokenRecord object
  */
-export function getCurveOhmEthPairValue(pairAddress: string, blockNumber: BigInt): TokenRecord {
+export function getCurveOhmEthPairValue(
+  pairAddress: string,
+  tokenAddress: string | null,
+  blockNumber: BigInt,
+): TokenRecord | null {
+  // If we are restricting by token and tokenAddress does not match either side of the pair
+  if (tokenAddress && !getLiquidityPairTokens(pairAddress).includes(tokenAddress)) {
+    log.debug("Skipping Curve that does not match specified token address {}", [tokenAddress]);
+    return null;
+  }
+
   // NOTE: This only covers the OHM-ETH pair for the moment
   // Get the balance of OHM in the contract address
   const ohmContract = getERC20(getContractName(ERC20_OHM_V2), ERC20_OHM_V2, blockNumber);
@@ -165,39 +177,68 @@ export function getCurveOhmEthPairValue(pairAddress: string, blockNumber: BigInt
   );
 }
 
+export function getCurvePairRecords(
+  pairAddress: string,
+  tokenAddress: string | null,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = newTokenRecords("Curve Liquidity Pools");
+  const record = getCurveOhmEthPairValue(pairAddress, tokenAddress, blockNumber);
+  if (record) {
+    pushTokenRecord(records, record);
+  }
+
+  return records;
+}
+
 /**
- * Returns the TokenRecords representing the liquidity for {tokenAddress}.
+ * Returns the TokenRecords representing the liquidity owned by the treasury.
+ *
+ * By default, all liquidity pairs in {LIQUIDITY_OWNED} will be iterated, unless
+ * overridden by the {ownedLiquidityPairs} parameter.
+ *
+ * If {tokenAddress} is specified, the results will be limited to
+ * liquidity pools in which {tokenAddress} is included.
+ *
+ * This currently supports the following LPs:
+ * - Uniswap V2
+ * - Curve
+ * - Balancer
  *
  * @param tokenAddress the address of the ERC20 token
  * @param riskFree whether the value is risk-free or not
  * @param singleSidedValue should be true if only the value of a single side of the LP is desired
  * @param blockNumber current block number
+ * @param ownedLiquidityPairs set this to override the array of owned liquidity pairs
  * @returns TokenRecords object
  */
 export function getLiquidityBalances(
-  tokenAddress: string,
+  tokenAddress: string | null,
   riskFree: boolean,
   singleSidedValue: boolean,
   blockNumber: BigInt,
+  ownedLiquidityPairs: PairHandler[] = LIQUIDITY_OWNED,
 ): TokenRecords {
+  // TODO rename singleSidedValue to excludeOhmValue or combine with riskFreeValue
   const records = newTokenRecords("Liquidity");
-  log.debug("Determining liquidity balance for token {}", [tokenAddress]);
 
-  // Uniswap
-  // Get the appropriate pair
-  const pairHandlers = getPairHandlers(tokenAddress);
-  for (let j = 0; j < pairHandlers.length; j++) {
-    const pairHandler = pairHandlers[j];
+  for (let j = 0; j < ownedLiquidityPairs.length; j++) {
+    const pairHandler = ownedLiquidityPairs[j];
     log.debug("Working with pair {}", [pairHandler.getPair()]);
-    const liquidityBalance = new LiquidityBalances(pairHandler.getPair());
     if (pairHandler.getHandler() === PairHandlerTypes.UniswapV2) {
       const liquidityPair = getUniswapV2Pair(pairHandler.getPair(), blockNumber);
+      const liquidityBalance = new LiquidityBalances(pairHandler.getPair());
 
       // Across the different sources, determine the total balance of liquidity pools
       // Uniswap LPs in wallets
       for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
         const currentWallet = WALLET_ADDRESSES[i];
-        const balance = getUniswapV2PairBalance(liquidityPair, currentWallet, blockNumber);
+        const balance = getUniswapV2PairBalance(
+          liquidityPair,
+          currentWallet,
+          blockNumber,
+          tokenAddress,
+        );
         if (!balance || balance.equals(BigInt.zero())) continue;
 
         log.debug("Found balance {} in wallet {}", [toDecimal(balance).toString(), currentWallet]);
@@ -212,29 +253,31 @@ export function getLiquidityBalances(
       }
 
       combineTokenRecords(records, currentTokenRecords);
-    } else if (pairHandler.getHandler() === PairHandlerTypes.UniswapV3) {
-      const contractOne = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
-      const balanceOne = contractOne
-        ? contractOne.balanceOf(Address.fromString(pairHandler.getPair()))
-        : null;
-      log.info("token0 reserves: {}", [balanceOne ? balanceOne.toString() : "null"]);
-      // TODO add support for Uniswap V3
-      log.error("UniswapV3 not yet supported", []);
     } else if (pairHandler.getHandler() === PairHandlerTypes.Curve) {
       // TODO support risk-free value of Curve
-      const currentTokenRecord = getCurveOhmEthPairValue(pairHandler.getPair(), blockNumber);
+      const currentTokenRecords = getCurvePairRecords(
+        pairHandler.getPair(),
+        tokenAddress,
+        blockNumber,
+      );
 
       // If the singleSidedValue is desired, we can halve the value of the LP and return that.
       if (singleSidedValue) {
-        setTokenRecordMultiplier(currentTokenRecord, BigDecimal.fromString("0.5"));
+        setTokenRecordsMultiplier(currentTokenRecords, BigDecimal.fromString("0.5"));
       }
 
-      pushTokenRecord(records, currentTokenRecord);
+      combineTokenRecords(records, currentTokenRecords);
     } else if (pairHandler.getHandler() === PairHandlerTypes.Balancer) {
       // TODO support risk-free value of Balancer
       combineTokenRecords(
         records,
-        getBalancerRecords(BALANCER_VAULT, pairHandler.getPair(), singleSidedValue, blockNumber),
+        getBalancerRecords(
+          BALANCER_VAULT,
+          pairHandler.getPair(),
+          singleSidedValue,
+          blockNumber,
+          tokenAddress,
+        ),
       );
     } else {
       throw new Error("Unsupported liquidity pair type: " + pairHandler.getHandler().toString());

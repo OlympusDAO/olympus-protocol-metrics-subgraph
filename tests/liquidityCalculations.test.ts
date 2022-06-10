@@ -13,6 +13,7 @@ import {
 } from "../src/utils/Constants";
 import { toBigInt } from "../src/utils/Decimals";
 import { getLiquidityBalances } from "../src/utils/LiquidityCalculations";
+import { PairHandler, PairHandlerTypes } from "../src/utils/PairHandler";
 import { getOhmUSDPairRiskFreeValue, getUniswapV2PairValue } from "../src/utils/Price";
 import {
   getOhmUsdRate,
@@ -24,6 +25,12 @@ import {
   OHM_V2_DECIMALS,
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
+
+// Limits the search to the OHM-DAI pairs, otherwise other pairs will be iterated over
+const pairArrayOverride: PairHandler[] = [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI),
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI_V2),
+];
 
 describe("UniswapV2", () => {
   test("generates TokenRecords for the given token", () => {
@@ -50,7 +57,13 @@ describe("UniswapV2", () => {
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V2, toBigInt(expectedBalanceV2));
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
-    const records = getLiquidityBalances(ERC20_DAI, false, false, OHM_USD_RESERVE_BLOCK);
+    const records = getLiquidityBalances(
+      ERC20_DAI,
+      false,
+      false,
+      OHM_USD_RESERVE_BLOCK,
+      pairArrayOverride,
+    );
     // We can call this because we are testing that the single-sided value is returned
     // Separate tests are there for the pair value verification
     const pairValue = getUniswapV2PairValue(
@@ -92,7 +105,13 @@ describe("UniswapV2", () => {
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V2, toBigInt(expectedBalanceV2));
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
-    const records = getLiquidityBalances(ERC20_DAI, false, true, OHM_USD_RESERVE_BLOCK);
+    const records = getLiquidityBalances(
+      ERC20_DAI,
+      false,
+      true,
+      OHM_USD_RESERVE_BLOCK,
+      pairArrayOverride,
+    );
     // We can call this because we are testing that the single-sided value is returned
     // Separate tests are there for the pair value verification
     const pairValue = getUniswapV2PairValue(
@@ -137,7 +156,13 @@ describe("UniswapV2", () => {
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V2, toBigInt(expectedBalanceV2));
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
-    const records = getLiquidityBalances(ERC20_DAI, true, false, OHM_USD_RESERVE_BLOCK);
+    const records = getLiquidityBalances(
+      ERC20_DAI,
+      true,
+      false,
+      OHM_USD_RESERVE_BLOCK,
+      pairArrayOverride,
+    );
     // We can call this because we are testing that the risk-free value is returned
     // Separate tests are there for the risk-free value verification
     const pairValue = getOhmUSDPairRiskFreeValue(

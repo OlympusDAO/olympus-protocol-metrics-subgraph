@@ -22,6 +22,7 @@ import {
   ERC20_FXS,
   ERC20_FXS_VE,
   getContractName,
+  getLiquidityPairTokens,
   getLiquityAllocator,
   getOnsenAllocatorId,
   getRariAllocatorId,
@@ -332,23 +333,34 @@ export function getERC20Balance(
 /**
  * Helper method to simplify getting the balance from an UniswapV2Pair contract.
  *
- * Returns 0 if the minimum block number has not passed.
+ * Returns 0 if {currentBlockNumber} has not passed.
  *
  * @param contract The bound UniswapV2Pair contract.
  * @param address The address of the holder.
  * @param currentBlockNumber The current block number.
- * @param minimumBlockNumber The minimum block number for the balance to apply.
+ * @param tokenAddress Optional token address to filter the LP by.
  * @returns BigInt
  */
 export function getUniswapV2PairBalance(
   contract: UniswapV2Pair | null,
   address: string,
   currentBlockNumber: BigInt,
+  tokenAddress: string | null = null,
 ): BigInt {
   if (!contract) {
     log.info("Contract for address {} does not exist at block {}", [
       address,
       currentBlockNumber.toString(),
+    ]);
+    return BigInt.fromString("0");
+  }
+
+  if (
+    tokenAddress &&
+    !getLiquidityPairTokens(contract._address.toHexString()).includes(tokenAddress)
+  ) {
+    log.debug("Skipping UniswapV2Pair that does not match specified token address {}", [
+      tokenAddress,
     ]);
     return BigInt.fromString("0");
   }

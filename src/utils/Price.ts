@@ -479,40 +479,8 @@ export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: Big
   return pairValue;
 }
 
-/**
- * Determines the value of the given balance of a liquidity pool.
- *
- * This is equivalent to: pair total value * ({pair balance} / total supply of pair)
- *
- * Note: unsure how to implement this, as there doesn't appear to be a way to obtain the
- * total supply of the pair from the contract. Can (FXS|WETH).balanceOf(pairAddress) be used
- * to determine/approximate this?
- *
- * @param lpBalance
- * @param pairAddress
- * @param blockNumber
- * @returns
- */
-// export function getUniswapV3PairValue(
-//   lpBalance: BigInt,
-//   pairAddress: string,
-//   blockNumber: BigInt,
-// ): BigDecimal {
-//   const pair = getUniswapV3Pair(pairAddress, blockNumber);
-//   if (!pair) {
-//     throw new Error(
-//       "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
-//     );
-//   }
-
-//   const lpValue = getUniswapV3PairTotalValue(pairAddress, blockNumber);
-//   const poolTotalSupply = toDecimal(pair.totalSupply(), 18);
-//   const poolPercentageOwned = toDecimal(lpBalance, 18).div(poolTotalSupply);
-
-//   return poolPercentageOwned.times(lpValue);
-// }
-
 export function getUniswapV2PairTotalValue(pairAddress: string, blockNumber: BigInt): BigDecimal {
+  log.info("Calculating total value of pair {}", [pairAddress]);
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
     throw new Error(
@@ -555,7 +523,7 @@ export function getUniswapV2PairTotalValue(pairAddress: string, blockNumber: Big
   ]);
 
   const totalValue = token0Value.plus(token1Value);
-  log.debug("Total value of pair {} is {}", [pairAddress, totalValue.toString()]);
+  log.info("Total value of pair {} is {}", [pairAddress, totalValue.toString()]);
   return totalValue;
 }
 
@@ -583,8 +551,13 @@ export function getUniswapV2PairValue(
   const lpValue = getUniswapV2PairTotalValue(pairAddress, blockNumber);
   const poolTotalSupply = toDecimal(pair.totalSupply(), 18);
   const poolPercentageOwned = toDecimal(lpBalance, 18).div(poolTotalSupply);
-
-  return poolPercentageOwned.times(lpValue);
+  const balanceValue = poolPercentageOwned.times(lpValue);
+  log.info("Value for pair {} and balance {} is {}", [
+    pairAddress,
+    lpBalance.toString(),
+    balanceValue.toString(),
+  ]);
+  return balanceValue;
 }
 
 /**

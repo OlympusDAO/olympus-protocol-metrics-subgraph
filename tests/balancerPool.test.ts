@@ -5,6 +5,7 @@ import {
   BALANCER_VAULT,
   ERC20_DAI,
   ERC20_OHM_V2,
+  ERC20_USDC,
   ERC20_WETH,
   POOL_BALANCER_OHM_DAI_WETH_ID,
 } from "../src/utils/Constants";
@@ -102,6 +103,70 @@ describe("get balancer records", () => {
       .plus(BALANCE_DAI)
       .plus(BALANCE_WETH.times(getEthUsdRate()));
     assert.stringEquals(expectedValue.toString(), records.value.toString());
+  });
+
+  test("OHM-DAI-ETH pool with matching tokenAddress", () => {
+    // Mock the balancer
+    mockBalancerVault(
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      ERC20_OHM_V2,
+      ERC20_DAI,
+      ERC20_WETH,
+      BALANCE_OHM,
+      BALANCE_DAI,
+      BALANCE_WETH,
+      OHM_V2_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+    );
+    // Mock price lookup
+    mockEthUsdRate();
+    mockUsdOhmV2Rate();
+
+    const records = getBalancerRecords(
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      false,
+      OHM_USD_RESERVE_BLOCK,
+      ERC20_DAI,
+    );
+
+    // OHM * rate + DAI * rate + WETH * rate
+    const expectedValue = BALANCE_OHM.times(getOhmUsdRate())
+      .plus(BALANCE_DAI)
+      .plus(BALANCE_WETH.times(getEthUsdRate()));
+    assert.stringEquals(expectedValue.toString(), records.value.toString());
+  });
+
+  test("OHM-DAI-ETH pool with different tokenAddress", () => {
+    // Mock the balancer
+    mockBalancerVault(
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      ERC20_OHM_V2,
+      ERC20_DAI,
+      ERC20_WETH,
+      BALANCE_OHM,
+      BALANCE_DAI,
+      BALANCE_WETH,
+      OHM_V2_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+    );
+    // Mock price lookup
+    mockEthUsdRate();
+    mockUsdOhmV2Rate();
+
+    const records = getBalancerRecords(
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      false,
+      OHM_USD_RESERVE_BLOCK,
+      ERC20_USDC,
+    );
+
+    assert.stringEquals("0", records.value.toString());
   });
 
   test("OHM-DAI-ETH pool single-sided value", () => {

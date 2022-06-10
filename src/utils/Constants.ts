@@ -219,80 +219,86 @@ export const PAIR_UNISWAP_V3_FXS_ETH_BLOCK = "13509100";
 export const POOL_BALANCER_OHM_DAI_WETH_ID =
   "0xc45d42f801105e861e86658648e3678ad7aa70f900010000000000000000011e"; // Pool ID, not a contract address
 
-const PAIR_HANDLER = new Map<string, PairHandler[]>();
-PAIR_HANDLER.set(ERC20_ALCX, [
+/**
+ * Maps an ERC20 token with an array of liquidity pairs that can be used for price lookup.
+ */
+const LIQUIDITY_POOL_TOKEN_LOOKUP = new Map<string, PairHandler[]>();
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_ALCX, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_ALCX_ETH),
 ]);
-PAIR_HANDLER.set(ERC20_CRV, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CRV_ETH)]);
-PAIR_HANDLER.set(ERC20_CRV_3POOL, [
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CRV, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CRV_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CRV_3POOL, [
   new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_3CRV_USD),
 ]);
-PAIR_HANDLER.set(ERC20_CVX, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH)]);
-PAIR_HANDLER.set(ERC20_CVX_CRV, [
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_CRV, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_CRV_ETH),
 ]);
-PAIR_HANDLER.set(ERC20_FOX, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_FOX_ETH)]);
-PAIR_HANDLER.set(ERC20_FPIS, [
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FOX, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_FOX_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FPIS, [
   new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FPIS_FRAX),
 ]);
-PAIR_HANDLER.set(ERC20_CVX_FXS, [new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_FXS_CVX_FXS)]);
-PAIR_HANDLER.set(ERC20_CVX_VL_V1, [
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_FXS, [
+  new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_FXS_CVX_FXS),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_VL_V1, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH),
 ]);
-PAIR_HANDLER.set(ERC20_CVX_VL_V2, [
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_VL_V2, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH),
 ]); // TODO is this correct?
-PAIR_HANDLER.set(ERC20_DAI, [
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_DAI, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI),
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI_V2),
 ]);
-PAIR_HANDLER.set(ERC20_FXS, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FXS_ETH)]);
-PAIR_HANDLER.set(ERC20_FXS_VE, [
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FXS, [
   new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FXS_ETH),
 ]);
-PAIR_HANDLER.set(ERC20_KP3R, [
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FXS_VE, [
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FXS_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_KP3R, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_KP3R_ETH),
 ]);
-PAIR_HANDLER.set(ERC20_LUSD, [
-  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_LUSD),
-  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_LUSD_V2),
-]);
-PAIR_HANDLER.set(ERC20_SYN, [
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_SYN, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_SYN_FRAX),
 ]);
-PAIR_HANDLER.set(ERC20_THOR, [
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_THOR, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_THOR_ETH),
 ]);
-PAIR_HANDLER.set(ERC20_TRIBE, [
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_TRIBE, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_TRIBE_ETH),
 ]);
-PAIR_HANDLER.set(ERC20_WBTC, [
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_WBTC, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_ETH_WBTC),
 ]);
-PAIR_HANDLER.set(ERC20_WETH, [
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_WETH, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_USDC_ETH),
-  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_ETH),
-  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_ETH_V2),
-  new PairHandler(PairHandlerTypes.Balancer, POOL_BALANCER_OHM_DAI_WETH_ID),
 ]);
-PAIR_HANDLER.set(ERC20_XSUSHI, [
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_XSUSHI, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_XSUSHI_ETH),
 ]);
-PAIR_HANDLER.set(NATIVE_ETH, [new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_OHM_ETH)]);
 
 /**
- * Returns the first handler for a liquidity pair.
+ * Returns the first handler for a liquidity pair. These pairs
+ * are commonly used for price lookup.
  *
  * @param contractAddress the contract address to look up
  * @returns a {PairHandler} or null
  */
 export const getPairHandler = (contractAddress: string): PairHandler | null => {
-  if (!PAIR_HANDLER.has(contractAddress)) {
+  if (!LIQUIDITY_POOL_TOKEN_LOOKUP.has(contractAddress)) {
     log.debug("No pair handler for contract {}", [contractAddress]);
     return null;
   }
 
-  const handlers = PAIR_HANDLER.get(contractAddress);
+  const handlers = LIQUIDITY_POOL_TOKEN_LOOKUP.get(contractAddress);
   if (!handlers.length) {
     log.debug("Empty pair handlers for contract {}", [contractAddress]);
     return null;
@@ -304,15 +310,46 @@ export const getPairHandler = (contractAddress: string): PairHandler | null => {
 };
 
 /**
- * Returns the handlers for a liquidity pair.
+ * Returns the handlers for an ERC20 token.
  *
  * @param contractAddress the contract address to look up
  * @returns Array of PairHandlers
  */
 export const getPairHandlers = (contractAddress: string): PairHandler[] => {
-  if (!PAIR_HANDLER.has(contractAddress)) return [];
+  if (!LIQUIDITY_POOL_TOKEN_LOOKUP.has(contractAddress)) return [];
 
-  return PAIR_HANDLER.get(contractAddress);
+  return LIQUIDITY_POOL_TOKEN_LOOKUP.get(contractAddress);
+};
+
+/**
+ * Array of liquidity pairs that Olympus has added
+ * liquidity to.
+ */
+export const LIQUIDITY_OWNED = [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI),
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI_V2),
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_LUSD),
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_LUSD_V2),
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_ETH),
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_ETH_V2),
+  new PairHandler(PairHandlerTypes.Balancer, POOL_BALANCER_OHM_DAI_WETH_ID),
+  new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_OHM_ETH),
+];
+
+export const LIQUIDITY_PAIR_TOKENS = new Map<string, string[]>();
+LIQUIDITY_PAIR_TOKENS.set(PAIR_UNISWAP_V2_OHM_DAI, [ERC20_DAI, ERC20_OHM_V1]);
+LIQUIDITY_PAIR_TOKENS.set(PAIR_UNISWAP_V2_OHM_DAI_V2, [ERC20_DAI, ERC20_OHM_V2]);
+LIQUIDITY_PAIR_TOKENS.set(PAIR_UNISWAP_V2_OHM_LUSD, [ERC20_LUSD, ERC20_OHM_V1]);
+LIQUIDITY_PAIR_TOKENS.set(PAIR_UNISWAP_V2_OHM_LUSD_V2, [ERC20_LUSD, ERC20_OHM_V2]);
+LIQUIDITY_PAIR_TOKENS.set(PAIR_UNISWAP_V2_OHM_ETH, [ERC20_WETH, ERC20_OHM_V1]);
+LIQUIDITY_PAIR_TOKENS.set(PAIR_UNISWAP_V2_OHM_ETH_V2, [ERC20_WETH, ERC20_OHM_V2]);
+LIQUIDITY_PAIR_TOKENS.set(POOL_BALANCER_OHM_DAI_WETH_ID, [ERC20_WETH, ERC20_OHM_V2, ERC20_DAI]);
+LIQUIDITY_PAIR_TOKENS.set(PAIR_CURVE_OHM_ETH, [ERC20_OHM_V2, NATIVE_ETH]);
+
+export const getLiquidityPairTokens = (pairAddress: string): string[] => {
+  if (!LIQUIDITY_PAIR_TOKENS.has(pairAddress)) return [];
+
+  return LIQUIDITY_PAIR_TOKENS.get(pairAddress);
 };
 
 // Wallets
