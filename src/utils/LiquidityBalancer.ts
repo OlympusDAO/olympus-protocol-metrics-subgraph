@@ -15,7 +15,7 @@ export function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): Ba
 export function getBalancerRecords(
   vaultAddress: string,
   poolId: string,
-  singleSidedValue: boolean,
+  excludeOhmValue: boolean,
   blockNumber: BigInt,
   tokenAddress: string | null = null,
 ): TokenRecords {
@@ -34,11 +34,11 @@ export function getBalancerRecords(
 
   // Total value is sum of (rate * balance) for all tokens
   let totalValue = BigDecimal.zero();
+  // Non-OHM value of the pool
+  let nonOhmValue = BigDecimal.zero();
 
   for (let i = 0; i < addresses.length; i++) {
     const currentAddress = addresses[i].toHexString();
-    // If singleSidedValue is true and the currentAddress is OHM, skip
-    if (singleSidedValue && currentAddress == ERC20_OHM_V2) continue;
 
     const currentContract = getERC20(getContractName(currentAddress), currentAddress, blockNumber);
     if (!currentContract) {
@@ -57,7 +57,16 @@ export function getBalancerRecords(
     ]);
 
     totalValue = totalValue.plus(value);
+
+    // Calculate the non-OHM value
+    if (currentAddress != ERC20_OHM_V2) {
+      nonOhmValue = nonOhmValue.plus(value);
+    }
   }
+
+  // Calculate multiplier
+  const multiplier = excludeOhmValue ? nonOhmValue.div(totalValue) : BigDecimal.fromString("1");
+  log.debug("Multiplier: {}", [multiplier.toString()]);
 
   // We don't know the overall supply of the balancer pool, so fudge a balance of 1
   pushTokenRecord(
@@ -68,6 +77,7 @@ export function getBalancerRecords(
       vaultAddress,
       totalValue,
       BigDecimal.fromString("1"),
+      multiplier,
     ),
   );
 
