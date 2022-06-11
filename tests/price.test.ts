@@ -3,6 +3,7 @@ import { assert, createMockedFunction, describe, test } from "matchstick-as/asse
 
 import {
   ERC20_DAI,
+  ERC20_FPIS,
   ERC20_FRAX,
   ERC20_FXS,
   ERC20_OHM_V1,
@@ -16,6 +17,7 @@ import {
   PAIR_UNISWAP_V2_OHM_ETH_V2,
   PAIR_UNISWAP_V2_SYN_FRAX,
   PAIR_UNISWAP_V2_USDC_ETH,
+  PAIR_UNISWAP_V3_FPIS_FRAX,
   PAIR_UNISWAP_V3_FXS_ETH,
 } from "../src/utils/Constants";
 import { DEFAULT_DECIMALS, toDecimal } from "../src/utils/Decimals";
@@ -45,6 +47,7 @@ import {
   mockEthUsdRate,
   mockFxsEthRate,
   mockOhmEthPair,
+  mockRateUniswapV3,
   mockTribeEthRate,
   mockUniswapV2Pair,
   mockUsdOhmV2Rate,
@@ -389,6 +392,28 @@ describe("get USD rate", () => {
     assert.assertTrue(
       ethUsdRate.minus(calculatedRate).lt(BigDecimal.fromString("0.000000000000000001")) &&
         ethUsdRate.minus(calculatedRate).gt(BigDecimal.fromString("-0.000000000000000001")),
+    );
+  });
+
+  test("FPIS (UniswapV3) returns correct rate", () => {
+    const FPIS_SLOT0 = "74413935457348545615865577209";
+    mockRateUniswapV3(
+      PAIR_UNISWAP_V3_FPIS_FRAX,
+      BigInt.fromString(FPIS_SLOT0),
+      ERC20_FRAX,
+      ERC20_FPIS,
+      ERC20_STANDARD_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+      BigInt.zero(),
+      BigInt.zero(),
+    );
+
+    const calculatedRate = BigDecimal.fromString("1.13357594387");
+
+    // There is a loss of precision, so we need to ensure that the value is close, but not equal
+    assert.stringEquals(
+      calculatedRate.toString(),
+      getUSDRate(ERC20_FPIS, OHM_USD_RESERVE_BLOCK).toString(),
     );
   });
 });

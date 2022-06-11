@@ -295,13 +295,26 @@ function getUSDRateUniswapV2(
   return baseTokenNumerator.times(baseTokenUsdRate);
 }
 
-function getUSDRateUniswapV3(contractAddress: string, pairAddress: string): BigDecimal {
+function getUSDRateUniswapV3(
+  contractAddress: string,
+  pairAddress: string,
+  blockNumber: BigInt,
+): BigDecimal {
   log.debug("getUSDRateUniswapV3: contract {}, pair {}", [contractAddress, pairAddress]);
-  // TODO add support for swapped pair
   const pair = UniswapV3Pair.bind(Address.fromString(pairAddress));
   if (!pair) {
     throw new Error(
       "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
+    );
+  }
+
+  // Determine pair orientation
+  const token0 = pair.token0();
+  const token1 = pair.token1();
+  const baseTokenOrientation = getBaseTokenOrientation(token0, token1);
+  if (baseTokenOrientation === PairTokenBaseOrientation.UNKNOWN) {
+    throw new Error(
+      "Unsure how to deal with unknown token base orientation for pair " + pairAddress,
     );
   }
 
@@ -311,9 +324,16 @@ function getUSDRateUniswapV3(contractAddress: string, pairAddress: string): BigD
   let priceETH = pair.slot0().value0.times(pair.slot0().value0).toBigDecimal();
   const priceDiv = BigInt.fromI32(2).pow(192).toBigDecimal();
   priceETH = priceETH.div(priceDiv);
-  const priceUSD = priceETH.times(getBaseEthUsdRate());
 
-  return priceUSD;
+  // Get the number of tokens denominated in ETH/OHM/USD
+  const baseTokenNumerator =
+    baseTokenOrientation === PairTokenBaseOrientation.TOKEN0
+      ? BigDecimal.fromString("1").div(priceETH)
+      : priceETH;
+
+  const baseTokenUsdRate = getBaseTokenUSDRate(token0, token1, baseTokenOrientation, blockNumber);
+
+  return baseTokenNumerator.times(baseTokenUsdRate);
 }
 
 /**
@@ -357,7 +377,7 @@ export function getUSDRate(contractAddress: string, blockNumber: BigInt): BigDec
   }
 
   if (pairHandler.getHandler() === PairHandlerTypes.UniswapV3) {
-    return getUSDRateUniswapV3(contractAddress, pairHandler.getPair());
+    return getUSDRateUniswapV3(contractAddress, pairHandler.getPair(), blockNumber);
   }
 
   throw new Error(
@@ -443,7 +463,7 @@ export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: Big
     token0Contract.balanceOf(Address.fromString(pairAddress)),
     token0Contract.decimals(),
   );
-  const token0Rate = getUSDRateUniswapV3(token0, pairAddress);
+  const token0Rate = getUSDRateUniswapV3(token0, pairAddress, blockNumber);
   const token0Value = token0Reserves.times(token0Rate);
   log.debug("token0: reserves = {}, rate = {}, value: {}", [
     token0Reserves.toString(),
@@ -466,7 +486,7 @@ export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: Big
   // Cheating, a little bit
   const token1Rate = Address.fromString(token1).equals(Address.fromString(ERC20_WETH))
     ? getBaseEthUsdRate()
-    : getUSDRateUniswapV3(token1, pairAddress);
+    : getUSDRateUniswapV3(token1, pairAddress, blockNumber);
   const token1Value = token1Reserves.times(token1Rate);
   log.debug("token1: reserves = {}, rate = {}, value: {}", [
     token1Reserves.toString(),

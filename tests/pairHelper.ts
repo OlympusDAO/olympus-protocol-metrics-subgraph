@@ -127,29 +127,41 @@ export const mockTribeEthRate = (): void => {
   ]);
 };
 
+export const getUsdRateUniswapV3 = (slot0Value: BigInt, usdRate: BigDecimal): BigDecimal => {
+  return slot0Value
+    .times(slot0Value)
+    .toBigDecimal()
+    .times(usdRate)
+    .div(BigInt.fromString("2").pow(192).toBigDecimal());
+};
+
 /**
  * FXS in ETH * price ETH / 2^192 = price FXS (in USD)
- *
- *
  *
  * @returns
  */
 export const getFxsUsdRate = (): BigDecimal => {
-  return FXS_ETH_SLOT0_VALUE0.times(FXS_ETH_SLOT0_VALUE0)
-    .toBigDecimal()
-    .times(getEthUsdRate())
-    .div(BigInt.fromString("2").pow(192).toBigDecimal());
+  return getUsdRateUniswapV3(FXS_ETH_SLOT0_VALUE0, getEthUsdRate());
 };
 
-export const mockFxsEthRate = (): void => {
-  const contractAddress = Address.fromString(PAIR_UNISWAP_V3_FXS_ETH);
+export const mockRateUniswapV3 = (
+  pairAddress: string,
+  slot0Value: BigInt,
+  token0Address: string,
+  token1Address: string,
+  token0Decimals: i32,
+  token1Decimals: i32,
+  token0Balance: BigInt,
+  token1Balance: BigInt,
+): void => {
+  const contractAddress = Address.fromString(pairAddress);
   // slot0
   createMockedFunction(
     contractAddress,
     "slot0",
     "slot0():(uint160,int24,uint16,uint16,uint16,uint8,bool)",
   ).returns([
-    ethereum.Value.fromUnsignedBigInt(FXS_ETH_SLOT0_VALUE0),
+    ethereum.Value.fromUnsignedBigInt(slot0Value),
     ethereum.Value.fromI32(-57778),
     ethereum.Value.fromI32(1),
     ethereum.Value.fromI32(2),
@@ -160,27 +172,48 @@ export const mockFxsEthRate = (): void => {
 
   // Tokens
   createMockedFunction(contractAddress, "token0", "token0():(address)").returns([
-    ethereum.Value.fromAddress(Address.fromString(ERC20_FXS)),
+    ethereum.Value.fromAddress(Address.fromString(token0Address)),
   ]);
   createMockedFunction(contractAddress, "token1", "token1():(address)").returns([
-    ethereum.Value.fromAddress(Address.fromString(ERC20_WETH)),
+    ethereum.Value.fromAddress(Address.fromString(token1Address)),
   ]);
 
   // Token decimals
-  createMockedFunction(Address.fromString(ERC20_FXS), "decimals", "decimals():(uint8)").returns([
-    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
-  ]);
-  createMockedFunction(Address.fromString(ERC20_WETH), "decimals", "decimals():(uint8)").returns([
-    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
-  ]);
+  createMockedFunction(Address.fromString(token0Address), "decimals", "decimals():(uint8)").returns(
+    [ethereum.Value.fromI32(token0Decimals)],
+  );
+  createMockedFunction(Address.fromString(token1Address), "decimals", "decimals():(uint8)").returns(
+    [ethereum.Value.fromI32(token1Decimals)],
+  );
 
   // Balance
-  createMockedFunction(Address.fromString(ERC20_FXS), "balanceOf", "balanceOf(address):(uint256)")
+  createMockedFunction(
+    Address.fromString(token0Address),
+    "balanceOf",
+    "balanceOf(address):(uint256)",
+  )
     .withArgs([ethereum.Value.fromAddress(contractAddress)])
-    .returns([ethereum.Value.fromUnsignedBigInt(FXS_ETH_BALANCE_FXS)]);
-  createMockedFunction(Address.fromString(ERC20_WETH), "balanceOf", "balanceOf(address):(uint256)")
+    .returns([ethereum.Value.fromUnsignedBigInt(token0Balance)]);
+  createMockedFunction(
+    Address.fromString(token1Address),
+    "balanceOf",
+    "balanceOf(address):(uint256)",
+  )
     .withArgs([ethereum.Value.fromAddress(contractAddress)])
-    .returns([ethereum.Value.fromUnsignedBigInt(FXS_ETH_BALANCE_ETH)]);
+    .returns([ethereum.Value.fromUnsignedBigInt(token1Balance)]);
+};
+
+export const mockFxsEthRate = (): void => {
+  mockRateUniswapV3(
+    PAIR_UNISWAP_V3_FXS_ETH,
+    FXS_ETH_SLOT0_VALUE0,
+    ERC20_FXS,
+    ERC20_WETH,
+    ERC20_STANDARD_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    FXS_ETH_BALANCE_FXS,
+    FXS_ETH_BALANCE_ETH,
+  );
 };
 
 /**
