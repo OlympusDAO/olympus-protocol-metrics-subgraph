@@ -40,7 +40,9 @@ export function getTreasuryStableBacking(blockNumber: BigInt): TokenRecords {
  * - add: getTreasuryStableBacking
  * - add: getTreasuryVolatileBacking (liquid only)
  * - add: getLiquidityPoolValue / 2 (as half of the LP is OHM)
- * - subtract: quantity of OHM circulating supply (not value)
+ *
+ * NOTE: previously, this value subtracted the quantity of OHM circulating supply
+ * (assuming 1 OHM = $1), which has since been changed (June 2022).
  *
  * @param blockNumber the current block number
  * @returns TokenRecords object
@@ -51,21 +53,6 @@ export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecords {
   combineTokenRecords(records, getTreasuryStableBacking(blockNumber));
   combineTokenRecords(records, getTreasuryVolatileBacking(blockNumber, true));
   combineTokenRecords(records, getLiquidityPoolValue(false, true, blockNumber));
-
-  // TODO previous implementation was the number of OHM, not the value. Keep as-is?
-  const ohmCirculatingSupply = getCirculatingSupply(blockNumber, getTotalSupply(blockNumber));
-  pushTokenRecord(
-    records,
-    newTokenRecord(
-      "OHM Circulating Supply",
-      "N/A",
-      "0x0",
-      BigDecimal.fromString("1"),
-      ohmCirculatingSupply,
-      blockNumber,
-      BigDecimal.fromString("-1"), // Subtracted
-    ),
-  );
 
   return records;
 }
