@@ -1,6 +1,7 @@
 import { Address, BigDecimal, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
+import { TokenRecord } from "../generated/schema";
 import {
   BALANCER_VAULT,
   ERC20_DAI,
@@ -198,5 +199,13 @@ describe("get balancer records", () => {
     // DAI * rate + WETH * rate (OHM excluded)
     const expectedValue = BALANCE_DAI.plus(BALANCE_WETH.times(getEthUsdRate()));
     assert.stringEquals(expectedValue.toString(), records.value.toString());
+    // The value should be determined by adjusting the multiplier
+    // (DAI * rate + WETH * rate) / (OHM * rate + DAI * rate + WETH * rate)
+    const totalValue = BALANCE_OHM.times(getOhmUsdRate())
+      .plus(BALANCE_DAI)
+      .plus(BALANCE_WETH.times(getEthUsdRate()));
+    const expectedMultiplier = expectedValue.div(totalValue);
+    const record = TokenRecord.load(records.records[0]);
+    assert.stringEquals(expectedMultiplier.toString(), record ? record.multiplier.toString() : "");
   });
 });
