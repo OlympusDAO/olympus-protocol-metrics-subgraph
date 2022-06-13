@@ -408,12 +408,13 @@ describe("get USD rate", () => {
       BigInt.zero(),
     );
 
-    const calculatedRate = BigDecimal.fromString("1.13357594387");
+    const expectedRate = BigDecimal.fromString("1.13357594386");
 
-    // There is a loss of precision, so we need to ensure that the value is close, but not equal
+    // The calculated rate has greater precision than what is expected (through manual calculations),
+    // so we trim the calculated rate to 11 decimal places.
     assert.stringEquals(
-      calculatedRate.toString(),
-      getUSDRate(ERC20_FPIS, OHM_USD_RESERVE_BLOCK).toString(),
+      expectedRate.toString(),
+      getUSDRate(ERC20_FPIS, OHM_USD_RESERVE_BLOCK).toString().substring(0, 13),
     );
   });
 });
