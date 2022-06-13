@@ -8,7 +8,6 @@ import {
   ERC20_FRAX,
   ERC20_LUSD,
   ERC20_STABLE_TOKENS,
-  ERC20_UST,
   getContractName,
 } from "./Constants";
 import {
