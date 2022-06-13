@@ -82,6 +82,7 @@ type ProtocolMetric @entity {
   treasuryVolatileBackingComponents: TokenRecords!
   treasuryTotalBacking: BigDecimal!
   treasuryTotalBackingComponents: TokenRecords!
+  treasuryTotalBackingPerOhm: BigDecimal!
   currentAPY: BigDecimal!
   runway2dot5k: BigDecimal
   runway5k: BigDecimal

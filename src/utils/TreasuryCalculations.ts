@@ -71,6 +71,21 @@ export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecords {
 }
 
 /**
+ * Returns the total backing per OHM, equal to:
+ *
+ * total backing / OHM circulating supply
+ * {getTreasuryTotalBacking} / {getCirculatingSupply}
+ *
+ * @param blockNumber
+ * @returns
+ */
+export function getTreasuryTotalBackingPerOhm(blockNumber: BigInt): BigDecimal {
+  return getTreasuryTotalBacking(blockNumber).value.div(
+    getCirculatingSupply(blockNumber, getTotalSupply(blockNumber)),
+  );
+}
+
+/**
  * Returns the market value, which is composed of:
  * - stable value (getStableValue)
  * - liquidity pool value (getLiquidityPoolValue)

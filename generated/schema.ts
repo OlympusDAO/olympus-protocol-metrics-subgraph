@@ -766,6 +766,15 @@ export class ProtocolMetric extends Entity {
     this.set("treasuryTotalBackingComponents", Value.fromString(value));
   }
 
+  get treasuryTotalBackingPerOhm(): BigDecimal {
+    let value = this.get("treasuryTotalBackingPerOhm");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryTotalBackingPerOhm(value: BigDecimal) {
+    this.set("treasuryTotalBackingPerOhm", Value.fromBigDecimal(value));
+  }
+
   get currentAPY(): BigDecimal {
     let value = this.get("currentAPY");
     return value!.toBigDecimal();
