@@ -53,6 +53,7 @@ import {
 import {
   getMarketValue,
   getRiskFreeValue,
+  getTreasuryFloatingBackingPerOhm,
   getTreasuryLiquidBackingPerOhm,
   getTreasuryStableBacking,
   getTreasuryTotalBacking,
@@ -124,6 +125,7 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
     protocolMetric.treasuryTotalBacking = BigDecimal.fromString("0");
     protocolMetric.treasuryTotalBackingComponents = "-1";
     protocolMetric.treasuryLiquidBackingPerOhm = BigDecimal.fromString("0");
+    protocolMetric.treasuryFloatingBackingPerOhm = BigDecimal.fromString("0");
 
     protocolMetric.save();
   }
@@ -366,6 +368,9 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
 
   const liquidBackingPerOhm = getTreasuryLiquidBackingPerOhm(blockNumber);
   pm.treasuryLiquidBackingPerOhm = liquidBackingPerOhm;
+
+  const floatingBackingPerOhm = getTreasuryFloatingBackingPerOhm(blockNumber);
+  pm.treasuryFloatingBackingPerOhm = floatingBackingPerOhm;
 
   const liquidityPoolValue = getLiquidityPoolValue(false, true, blockNumber);
   pm.treasuryLPValue = liquidityPoolValue.value;
