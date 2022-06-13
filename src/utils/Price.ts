@@ -117,6 +117,27 @@ export enum PairTokenBaseOrientation {
 }
 
 /**
+ * Determines if the given string array loosely includes the given value.
+ *
+ * This is used as Array.includes() uses strict equality, and the strings
+ * provided by {Address} are not always the same.
+ *
+ * This also ensures that when comparison is performed, both strings
+ * are lowercase.
+ *
+ * @param array the array to iterate over
+ * @param value the value to check against
+ * @returns
+ */
+function arrayIncludesLoose(array: string[], value: string): boolean {
+  for (let i = 0; i < array.length; i++) {
+    if (array[i].toLowerCase() == value.toLowerCase()) return true;
+  }
+
+  return false;
+}
+
+/**
  * Determines whether token0 or token1 of a pair is the base (wETH/OHM) token.
  *
  * @param token0
@@ -127,6 +148,16 @@ export function getBaseTokenOrientation(
   token0: Address,
   token1: Address,
 ): PairTokenBaseOrientation {
+  // As we are ultimately trying to get to a USD-denominated rate,
+  // check for USD stablecoins first
+  if (arrayIncludesLoose(ERC20_STABLE_TOKENS, token0.toHexString())) {
+    return PairTokenBaseOrientation.TOKEN0;
+  }
+
+  if (arrayIncludesLoose(ERC20_STABLE_TOKENS, token1.toHexString())) {
+    return PairTokenBaseOrientation.TOKEN1;
+  }
+
   /**
    * Note: token0.toHexString() ostensibly returns the contract address,
    * but it does not equal {ERC20_WETH} even after trimming. So we use Address.
@@ -136,21 +167,12 @@ export function getBaseTokenOrientation(
   const ohmV2Address = Address.fromString(ERC20_OHM_V2);
   // TODO what if the pair is OHM-ETH or ETH-OHM?
 
-  if (
-    token0.equals(wethAddress) ||
-    token0.equals(ohmV1Address) ||
-    token0.equals(ohmV2Address) ||
-    ERC20_STABLE_TOKENS.includes(token0.toHexString())
-  ) {
+  // Now check secondary base tokens: OHM and ETH
+  if (token0.equals(wethAddress) || token0.equals(ohmV1Address) || token0.equals(ohmV2Address)) {
     return PairTokenBaseOrientation.TOKEN0;
   }
 
-  if (
-    token1.equals(wethAddress) ||
-    token1.equals(ohmV1Address) ||
-    token1.equals(ohmV2Address) ||
-    ERC20_STABLE_TOKENS.includes(token1.toHexString())
-  ) {
+  if (token1.equals(wethAddress) || token1.equals(ohmV1Address) || token1.equals(ohmV2Address)) {
     return PairTokenBaseOrientation.TOKEN1;
   }
 
@@ -317,6 +339,7 @@ function getUSDRateUniswapV3(
       "Unsure how to deal with unknown token base orientation for pair " + pairAddress,
     );
   }
+  log.debug("Token orientation is {}", [baseTokenOrientation.toString()]);
 
   // slot0 = "The current price of the pool as a sqrt(token1/token0) Q64.96 value"
   // Source: https://docs.uniswap.org/protocol/reference/core/interfaces/pool/IUniswapV3PoolState#slot0
@@ -331,9 +354,30 @@ function getUSDRateUniswapV3(
       ? BigDecimal.fromString("1").div(priceETH)
       : priceETH;
 
+  // Multiply by difference in decimals
+  const token0Contract = getERC20(
+    getContractName(token0.toHexString()),
+    token0.toHexString(),
+    blockNumber,
+  );
+  const token1Contract = getERC20(
+    getContractName(token0.toHexString()),
+    token1.toHexString(),
+    blockNumber,
+  );
+  if (!token0Contract) throw new Error("Unable to obtain ERC20 for token " + token0.toHexString());
+  if (!token1Contract) throw new Error("Unable to obtain ERC20 for token " + token1.toHexString());
+
+  // If there is a difference between the decimal places of the two tokens, adjust for that
+  const decimalDifference: u8 = u8(token0Contract.decimals()) - u8(token1Contract.decimals());
+  const adjustedNumerator = BigInt.fromI32(10)
+    .pow(decimalDifference)
+    .toBigDecimal()
+    .times(baseTokenNumerator);
+
   const baseTokenUsdRate = getBaseTokenUSDRate(token0, token1, baseTokenOrientation, blockNumber);
 
-  return baseTokenNumerator.times(baseTokenUsdRate);
+  return adjustedNumerator.times(baseTokenUsdRate);
 }
 
 /**
@@ -352,17 +396,20 @@ function getUSDRateUniswapV3(
 export function getUSDRate(contractAddress: string, blockNumber: BigInt): BigDecimal {
   // Handle stablecoins
   // TODO add support for dynamic price lookup for stablecoins
-  if (ERC20_STABLE_TOKENS.includes(contractAddress)) {
+  if (arrayIncludesLoose(ERC20_STABLE_TOKENS, contractAddress)) {
+    log.debug("Contract address {} is a stablecoin. Returning 1.", [contractAddress]);
     return BigDecimal.fromString("1");
   }
 
   // Handle OHM V1 and V2
-  if ([ERC20_OHM_V1, ERC20_OHM_V2].includes(contractAddress)) {
+  if (arrayIncludesLoose([ERC20_OHM_V1, ERC20_OHM_V2], contractAddress)) {
+    log.debug("Contract address {} is OHM. Returning OHM rate.", [contractAddress]);
     return getBaseOhmUsdRate(blockNumber);
   }
 
   // Handle native ETH
   if (contractAddress == NATIVE_ETH) {
+    log.debug("Contract address {} is native ETH. Returning wETH rate.", [contractAddress]);
     return getBaseEthUsdRate();
   }
 

@@ -2,6 +2,7 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import {
+  ERC20_CRV_3POOL,
   ERC20_DAI,
   ERC20_FPIS,
   ERC20_FRAX,
@@ -10,6 +11,7 @@ import {
   ERC20_OHM_V2,
   ERC20_SYN,
   ERC20_TRIBE,
+  ERC20_USDC,
   ERC20_WETH,
   NATIVE_ETH,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
@@ -17,6 +19,7 @@ import {
   PAIR_UNISWAP_V2_OHM_ETH_V2,
   PAIR_UNISWAP_V2_SYN_FRAX,
   PAIR_UNISWAP_V2_USDC_ETH,
+  PAIR_UNISWAP_V3_3CRV_USD,
   PAIR_UNISWAP_V3_FPIS_FRAX,
   PAIR_UNISWAP_V3_FXS_ETH,
 } from "../src/utils/Constants";
@@ -57,6 +60,7 @@ import {
   OHM_USD_RESERVE_USD,
   OHM_USD_TOTAL_SUPPLY,
   OHM_V2_DECIMALS,
+  USDC_DECIMALS,
 } from "./pairHelper";
 
 describe("ETH-USD rate", () => {
@@ -116,57 +120,75 @@ describe("OHM-USD rate", () => {
 
 describe("base token", () => {
   test("token0 == OHM V1", () => {
-    const ohmV1Address = Address.fromString(ERC20_OHM_V1);
-    const daiAddress = Address.fromString(ERC20_DAI);
+    const token0Address = Address.fromString(ERC20_OHM_V1);
+    const token1Address = Address.fromString(ERC20_TRIBE);
 
     assert.assertTrue(
-      getBaseTokenOrientation(ohmV1Address, daiAddress) === PairTokenBaseOrientation.TOKEN0,
+      getBaseTokenOrientation(token0Address, token1Address) === PairTokenBaseOrientation.TOKEN0,
     );
   });
 
   test("token0 == OHM V2", () => {
-    const ohmV2Address = Address.fromString(ERC20_OHM_V2);
-    const daiAddress = Address.fromString(ERC20_DAI);
+    const token0Address = Address.fromString(ERC20_OHM_V2);
+    const token1Address = Address.fromString(ERC20_TRIBE);
 
     assert.assertTrue(
-      getBaseTokenOrientation(ohmV2Address, daiAddress) === PairTokenBaseOrientation.TOKEN0,
+      getBaseTokenOrientation(token0Address, token1Address) === PairTokenBaseOrientation.TOKEN0,
     );
   });
 
   test("token0 == ETH", () => {
-    const wethAddress = Address.fromString(ERC20_WETH);
-    const daiAddress = Address.fromString(ERC20_DAI);
+    const token0Address = Address.fromString(ERC20_WETH);
+    const token1Address = Address.fromString(ERC20_TRIBE);
 
     assert.assertTrue(
-      getBaseTokenOrientation(wethAddress, daiAddress) === PairTokenBaseOrientation.TOKEN0,
+      getBaseTokenOrientation(token0Address, token1Address) === PairTokenBaseOrientation.TOKEN0,
     );
   });
 
   test("token1 == OHM V1", () => {
-    const ohmV1Address = Address.fromString(ERC20_OHM_V1);
-    const fxsAddress = Address.fromString(ERC20_FXS);
+    const token0Address = Address.fromString(ERC20_OHM_V1);
+    const token1Address = Address.fromString(ERC20_FXS);
 
     assert.assertTrue(
-      getBaseTokenOrientation(fxsAddress, ohmV1Address) === PairTokenBaseOrientation.TOKEN1,
+      getBaseTokenOrientation(token1Address, token0Address) === PairTokenBaseOrientation.TOKEN1,
     );
   });
 
   test("token1 == OHM V2", () => {
-    const ohmV2Address = Address.fromString(ERC20_OHM_V2);
-    const fxsAddress = Address.fromString(ERC20_FXS);
+    const token0Address = Address.fromString(ERC20_OHM_V2);
+    const token1Address = Address.fromString(ERC20_FXS);
 
     assert.assertTrue(
-      getBaseTokenOrientation(fxsAddress, ohmV2Address) === PairTokenBaseOrientation.TOKEN1,
+      getBaseTokenOrientation(token1Address, token0Address) === PairTokenBaseOrientation.TOKEN1,
     );
   });
 
   test("token1 == ETH", () => {
-    const wethAddress = Address.fromString(ERC20_WETH);
-    const fxsAddress = Address.fromString(ERC20_FXS);
+    const token0Address = Address.fromString(ERC20_WETH);
+    const token1Address = Address.fromString(ERC20_FXS);
 
     // Matches DAI for token0
     assert.assertTrue(
-      getBaseTokenOrientation(fxsAddress, wethAddress) === PairTokenBaseOrientation.TOKEN1,
+      getBaseTokenOrientation(token1Address, token0Address) === PairTokenBaseOrientation.TOKEN1,
+    );
+  });
+
+  test("token0 == USDC, token1 == WETH", () => {
+    const token0Address = Address.fromString(ERC20_USDC);
+    const token1Address = Address.fromString(ERC20_WETH);
+
+    assert.assertTrue(
+      getBaseTokenOrientation(token0Address, token1Address) === PairTokenBaseOrientation.TOKEN0,
+    );
+  });
+
+  test("token0 == WETH, token1 == USDC", () => {
+    const token0Address = Address.fromString(ERC20_WETH);
+    const token1Address = Address.fromString(ERC20_USDC);
+
+    assert.assertTrue(
+      getBaseTokenOrientation(token0Address, token1Address) === PairTokenBaseOrientation.TOKEN1,
     );
   });
 
@@ -276,8 +298,12 @@ describe("base token USD rate", () => {
 });
 
 describe("get USD rate", () => {
-  test("stablecoin returns 1", () => {
+  test("DAI returns 1", () => {
     assert.stringEquals(getUSDRate(ERC20_DAI, OHM_USD_RESERVE_BLOCK).toString(), "1");
+  });
+
+  test("FRAX returns 1", () => {
+    assert.stringEquals(getUSDRate(ERC20_FRAX, OHM_USD_RESERVE_BLOCK).toString(), "1");
   });
 
   test("ETH returns correct value", () => {
@@ -417,6 +443,29 @@ describe("get USD rate", () => {
       getUSDRate(ERC20_FPIS, OHM_USD_RESERVE_BLOCK).toString().substring(0, 13),
     );
   });
+});
+
+test("3CRV (UniswapV3) returns correct rate", () => {
+  const CRV_SLOT0 = "79902581118842652024896";
+  mockRateUniswapV3(
+    PAIR_UNISWAP_V3_3CRV_USD,
+    BigInt.fromString(CRV_SLOT0),
+    ERC20_CRV_3POOL,
+    ERC20_USDC,
+    ERC20_STANDARD_DECIMALS,
+    USDC_DECIMALS,
+    BigInt.zero(),
+    BigInt.zero(),
+  );
+
+  const expectedRate = BigDecimal.fromString("1.017097179333821703508152585419657");
+
+  // The calculated rate has greater precision than what is expected (through manual calculations),
+  // so we trim the calculated rate to 11 decimal places.
+  assert.stringEquals(
+    expectedRate.toString(),
+    getUSDRate(ERC20_CRV_3POOL, OHM_USD_RESERVE_BLOCK).toString(),
+  );
 });
 
 describe("UniswapV2 pair value", () => {
