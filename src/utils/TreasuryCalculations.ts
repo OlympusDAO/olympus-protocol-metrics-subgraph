@@ -61,7 +61,7 @@ export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecords {
  * @param blockNumber
  * @returns
  */
-export function getTreasuryTotalBackingPerOhm(blockNumber: BigInt): BigDecimal {
+export function getTreasuryLiquidBackingPerOhm(blockNumber: BigInt): BigDecimal {
   return getTreasuryTotalBacking(blockNumber).value.div(
     getCirculatingSupply(blockNumber, getTotalSupply(blockNumber)),
   );
