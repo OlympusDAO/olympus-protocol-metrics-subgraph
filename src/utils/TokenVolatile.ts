@@ -310,9 +310,3 @@ export function getVolatileValue(
 export function getEthMarketValue(blockNumber: BigInt, riskFree: boolean = false): TokenRecords {
   return getVolatileTokenBalance(ERC20_WETH, true, riskFree, blockNumber);
 }
-
-// TODO add CRV
-// TODO add FPIS
-// TODO add ALCX
-// TODO add BCT
-// TODO add KLIMA/sKLIMA

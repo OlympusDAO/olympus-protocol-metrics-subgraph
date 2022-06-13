@@ -3,12 +3,7 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { TokenRecords } from "../../generated/schema";
 import { getLiquidityPoolValue } from "./LiquidityCalculations";
 import { getCirculatingSupply, getTotalSupply } from "./OhmCalculations";
-import {
-  combineTokenRecords,
-  newTokenRecord,
-  newTokenRecords,
-  pushTokenRecord,
-} from "./TokenRecordHelper";
+import { combineTokenRecords, newTokenRecords } from "./TokenRecordHelper";
 import { getStablecoinBalances, getStableValue } from "./TokenStablecoins";
 import { getVolatileValue } from "./TokenVolatile";
 
@@ -39,7 +34,7 @@ export function getTreasuryStableBacking(blockNumber: BigInt): TokenRecords {
  * Returns the value of the total (liquid) backing
  * - add: getTreasuryStableBacking
  * - add: getTreasuryVolatileBacking (liquid only)
- * - add: getLiquidityPoolValue / 2 (as half of the LP is OHM)
+ * - add: getLiquidityPoolValue (excluding OHM)
  *
  * NOTE: previously, this value subtracted the quantity of OHM circulating supply
  * (assuming 1 OHM = $1), which has since been changed (June 2022).
