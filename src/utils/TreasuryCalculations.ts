@@ -9,11 +9,12 @@ import {
   newTokenRecords,
   pushTokenRecord,
 } from "./TokenRecordHelper";
-import { getStableValue } from "./TokenStablecoins";
+import { getStablecoinBalances, getStableValue } from "./TokenStablecoins";
 import { getVolatileValue } from "./TokenVolatile";
 
 /**
- * Returns the value of all volatile tokens, including LPs.
+ * Returns the value of all volatile tokens, including LPs and blue
+ * chip tokens.
  *
  * @param blockNumber the current block number
  * @returns TokenRecords object
@@ -23,14 +24,13 @@ export function getTreasuryVolatileBacking(blockNumber: BigInt, liquidOnly: bool
 }
 
 /**
- * Returns the value of the stable backing
- * - getStableValue
+ * Returns the value of the stable backing, including liquidity.
  *
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
 export function getTreasuryStableBacking(blockNumber: BigInt): TokenRecords {
-  const records = getStableValue(blockNumber);
+  const records = getStablecoinBalances(true, false, blockNumber);
 
   return records;
 }

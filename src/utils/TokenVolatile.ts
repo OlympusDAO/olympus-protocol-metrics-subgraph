@@ -269,7 +269,7 @@ export function getWBTCBalance(blockNumber: BigInt): TokenRecords {
 }
 
 /**
- * Returns the value of all volatile assets., except those in {ERC20_VOLATILE_BLUE_CHIP_TOKENS}.
+ * Returns the value of all volatile assets and liquidity, except those in {ERC20_VOLATILE_BLUE_CHIP_TOKENS}.
  *
  * If `liquidOnly` is specified, then the following are excluded as they are locked:
  * - Vesting assets
@@ -285,7 +285,7 @@ export function getVolatileValue(
   liquidOnly: boolean,
   includeBlueChip: boolean,
 ): TokenRecords {
-  return getVolatileTokenBalances(liquidOnly, includeBlueChip, true, false, blockNumber);
+  return getVolatileTokenBalances(liquidOnly, true, includeBlueChip, false, blockNumber);
 }
 
 /**

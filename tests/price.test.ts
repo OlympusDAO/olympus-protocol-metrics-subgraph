@@ -6,6 +6,7 @@ import {
   ERC20_DAI,
   ERC20_FPIS,
   ERC20_FRAX,
+  ERC20_FRAX_3CRV,
   ERC20_FXS,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
@@ -304,6 +305,10 @@ describe("get USD rate", () => {
 
   test("FRAX returns 1", () => {
     assert.stringEquals(getUSDRate(ERC20_FRAX, OHM_USD_RESERVE_BLOCK).toString(), "1");
+  });
+
+  test("FRAX3CRV returns 1", () => {
+    assert.stringEquals(getUSDRate(ERC20_FRAX_3CRV, OHM_USD_RESERVE_BLOCK).toString(), "1");
   });
 
   test("ETH returns correct value", () => {
