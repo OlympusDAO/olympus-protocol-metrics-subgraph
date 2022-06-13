@@ -91,7 +91,10 @@ export function pushTokenRecord(
   update: boolean = true,
 ): void {
   const newArray = records.records || [];
-  newArray.push(record.id);
+  // Don't allow duplicates
+  if (!newArray.includes(record.id)) {
+    newArray.push(record.id);
+  }
   records.records = newArray;
 
   if (update) {

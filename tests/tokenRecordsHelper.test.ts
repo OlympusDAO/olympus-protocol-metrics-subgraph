@@ -9,6 +9,7 @@ import {
   newTokenRecord,
   newTokenRecords,
   pushTokenRecord,
+  setTokenRecordMultiplier,
   setTokenRecordsMultiplier,
   sortTokenRecords,
 } from "../src/utils/TokenRecordHelper";
@@ -63,6 +64,21 @@ describe("push", () => {
     pushTokenRecord(records, record2);
 
     assert.i32Equals(2, records.records.length);
+  });
+
+  test("multiple, same id", () => {
+    const records = newTokenRecords("test", BigInt.fromString("1"));
+    const record1 = createTokenRecord();
+    const record2 = createTokenRecord();
+    setTokenRecordMultiplier(record2, BigDecimal.fromString("2")); // Same id, different value
+
+    pushTokenRecord(records, record1);
+    pushTokenRecord(records, record2);
+
+    assert.i32Equals(1, records.records.length);
+    // record2 will overwrite record1
+    const fetchedRecord = TokenRecord.load(records.records[0]);
+    assert.stringEquals("2", fetchedRecord ? fetchedRecord.multiplier.toString() : "");
   });
 });
 
