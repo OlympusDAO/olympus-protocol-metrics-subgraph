@@ -91,7 +91,10 @@ export function getStablecoinBalances(
   riskFree: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  log.info("Calculating stablecoin value", []);
+  log.info("Calculating stablecoin value. Liquidity? {}. Risk-Free Value? {}.", [
+    includeLiquidity ? "true" : "false",
+    riskFree ? "true" : "false",
+  ]);
   const records = newTokenRecords("Stablecoin balances", blockNumber);
 
   for (let i = 0; i < ERC20_STABLE_TOKENS.length; i++) {
