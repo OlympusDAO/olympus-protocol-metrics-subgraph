@@ -1,6 +1,7 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator";
+import { ConvexBaseRewardPool } from "../../generated/ProtocolMetrics/ConvexBaseRewardPool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { MasterChef } from "../../generated/ProtocolMetrics/MasterChef";
 import { RariAllocator } from "../../generated/ProtocolMetrics/RariAllocator";
@@ -18,6 +19,8 @@ import {
   ALLOCATOR_ONSEN_ID_NOT_FOUND,
   ALLOCATOR_RARI_ID_NOT_FOUND,
   CONTRACT_STARTING_BLOCK_MAP,
+  CONVEX_STAKING_CONTRACTS,
+  CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
   ERC20_FRAX,
   ERC20_FXS,
   ERC20_FXS_VE,
@@ -663,6 +666,75 @@ export function getFraxConvexAllocatorRecords(
         blockNumber,
       ),
     );
+  }
+
+  return records;
+}
+
+export function getConvexStakedBalance(
+  tokenAddress: string,
+  allocatorAddress: string,
+  stakingAddress: string,
+  blockNumber: BigInt,
+): BigDecimal | null {
+  // Unsupported
+  if (tokenAddress == NATIVE_ETH) return null;
+
+  // Check if tokenAddress is the same as that on the staking contract
+  const stakingContract = ConvexBaseRewardPool.bind(Address.fromString(stakingAddress));
+  if (!stakingContract.stakingToken().equals(Address.fromString(tokenAddress))) return null;
+
+  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  if (!tokenContract) {
+    throw new Error("Unable to bind with ERC20 contract " + tokenAddress);
+  }
+
+  // Get balance
+  const balance = stakingContract.balanceOf(Address.fromString(allocatorAddress));
+  return toDecimal(balance, tokenContract.decimals());
+}
+
+/**
+ * Returns the details of the specified token staked in Convex
+ * from the Convex allocator contracts.
+ *
+ * @param tokenAddress
+ * @param blockNumber
+ */
+export function getConvexStakedRecords(tokenAddress: string, blockNumber: BigInt): TokenRecords {
+  const records = newTokenRecords(
+    "Staked Convex Allocator-" + getContractName(tokenAddress),
+    blockNumber,
+  );
+
+  // Loop through allocators
+  for (let i = 0; i < ALLOCATOR_CONVEX_FRAX_CONTRACTS.length; i++) {
+    const allocatorAddress = ALLOCATOR_CONVEX_FRAX_CONTRACTS[i];
+
+    // Look through staking contracts
+    for (let j = 0; j < CONVEX_STAKING_CONTRACTS.length; j++) {
+      const stakingAddress = CONVEX_STAKING_CONTRACTS[j];
+
+      const balance = getConvexStakedBalance(
+        tokenAddress,
+        allocatorAddress,
+        stakingAddress,
+        blockNumber,
+      );
+      if (!balance) continue;
+
+      pushTokenRecord(
+        records,
+        newTokenRecord(
+          getContractName(tokenAddress),
+          getContractName(allocatorAddress),
+          allocatorAddress,
+          getUSDRate(tokenAddress, blockNumber),
+          balance,
+          blockNumber,
+        ),
+      );
+    }
   }
 
   return records;

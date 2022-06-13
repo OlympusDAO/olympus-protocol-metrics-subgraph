@@ -83,6 +83,8 @@ dataSources:
           file: ./abis/RariAllocator.json
         - name: BalancerVault
           file: ./abis/BalancerVault.json
+        - name: ConvexBaseRewardPool
+          file: ./abis/ConvexBaseRewardPool.json
       callHandlers:
         - function: rebase(uint256)
           handler: rebaseFunction
@@ -165,6 +167,8 @@ dataSources:
           file: ./abis/RariAllocator.json
         - name: BalancerVault
           file: ./abis/BalancerVault.json
+        - name: ConvexBaseRewardPool
+          file: ./abis/ConvexBaseRewardPool.json
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
@@ -247,6 +251,8 @@ dataSources:
           file: ./abis/RariAllocator.json
         - name: BalancerVault
           file: ./abis/BalancerVault.json
+        - name: ConvexBaseRewardPool
+          file: ./abis/ConvexBaseRewardPool.json
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
@@ -660,6 +666,8 @@ dataSources:
           file: ./abis/RariAllocator.json
         - name: BalancerVault
           file: ./abis/BalancerVault.json
+        - name: ConvexBaseRewardPool
+          file: ./abis/ConvexBaseRewardPool.json
       callHandlers:
         - function: stake(address,uint256,bool,bool)
           handler: handleMetrics

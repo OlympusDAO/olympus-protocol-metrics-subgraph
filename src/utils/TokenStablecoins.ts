@@ -12,6 +12,7 @@ import {
   getContractName,
 } from "./Constants";
 import {
+  getConvexStakedRecords,
   getERC20,
   getERC20TokenRecordsFromWallets,
   getFraxConvexAllocatorRecords,
@@ -55,8 +56,11 @@ export function getStablecoinBalance(
   // Rari Allocator
   combineTokenRecords(records, getRariAllocatorRecords(contractAddress, rate, blockNumber));
 
-  // Convex Allocator
+  // FRAX Convex Allocator
   combineTokenRecords(records, getFraxConvexAllocatorRecords(contractAddress, blockNumber));
+
+  // Staked Convex tokens
+  combineTokenRecords(records, getConvexStakedRecords(contractAddress, blockNumber));
 
   // Liquity Stability Pool
   combineTokenRecords(records, getLiquityStabilityPoolRecords(contractAddress, blockNumber));
