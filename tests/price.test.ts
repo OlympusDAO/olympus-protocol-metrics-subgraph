@@ -47,6 +47,7 @@ import {
   getFxsUsdRate,
   getOhmEthPairValue,
   getOhmUsdRate,
+  getPairValue,
   getTribeUsdRate,
   mockEthUsdRate,
   mockFxsEthRate,
@@ -474,48 +475,73 @@ test("3CRV (UniswapV3) returns correct rate", () => {
 });
 
 describe("UniswapV2 pair value", () => {
-  describe("OHM-ETH", () => {
-    test("pair value is correct", () => {
-      mockOhmEthPair();
-      mockUsdOhmV2Rate();
-      mockEthUsdRate();
+  test("OHM-DAI pair value is correct", () => {
+    const token0Reserves = BigInt.fromString("1233838296976506");
+    const token1Reserves = BigInt.fromString("15258719216508026301937394");
+    mockUniswapV2Pair(
+      ERC20_OHM_V2,
+      ERC20_DAI,
+      OHM_V2_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+      token0Reserves,
+      token1Reserves,
+      BigInt.fromString("133005392717808439119"),
+      PAIR_UNISWAP_V2_OHM_DAI_V2,
+      ERC20_STANDARD_DECIMALS,
+    );
 
-      const pairValue = getUniswapV2PairTotalValue(
-        PAIR_UNISWAP_V2_OHM_ETH_V2,
-        ETH_USD_RESERVE_BLOCK,
-      );
-      const calculatedValue = getOhmEthPairValue();
-      log.debug("difference: {}", [pairValue.minus(calculatedValue).toString()]);
+    const pairValue = getUniswapV2PairTotalValue(PAIR_UNISWAP_V2_OHM_DAI_V2, ETH_USD_RESERVE_BLOCK);
+    // 12.36687113
+    const ohmRate = toDecimal(token1Reserves, ERC20_STANDARD_DECIMALS).div(
+      toDecimal(token0Reserves, OHM_V2_DECIMALS),
+    );
+    const calculatedValue = getPairValue(
+      toDecimal(token0Reserves, OHM_V2_DECIMALS),
+      toDecimal(token1Reserves, ERC20_STANDARD_DECIMALS),
+      ohmRate,
+      BigDecimal.fromString("1"),
+    );
 
-      // There is a loss of precision, so we need to ensure that the value is close, but not equal
-      assert.assertTrue(
-        pairValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
-      );
-    });
+    assert.stringEquals(calculatedValue.toString(), pairValue.toString());
+  });
 
-    test("pair balance value is correct", () => {
-      mockOhmEthPair();
-      mockUsdOhmV2Rate();
-      mockEthUsdRate();
+  test("OHM-ETH pair value is correct", () => {
+    mockOhmEthPair();
+    mockUsdOhmV2Rate();
+    mockEthUsdRate();
 
-      const lpBalance = BigInt.fromString("1000000000000000000");
-      const balanceValue = getUniswapV2PairValue(
-        lpBalance,
-        PAIR_UNISWAP_V2_OHM_ETH_V2,
-        ETH_USD_RESERVE_BLOCK,
-      );
+    const pairValue = getUniswapV2PairTotalValue(PAIR_UNISWAP_V2_OHM_ETH_V2, ETH_USD_RESERVE_BLOCK);
+    const calculatedValue = getOhmEthPairValue();
+    log.debug("difference: {}", [pairValue.minus(calculatedValue).toString()]);
 
-      // (balance / total supply) * pair value
-      const calculatedValue = getOhmEthPairValue().times(
-        toDecimal(lpBalance, 18).div(toDecimal(OHM_ETH_TOTAL_SUPPLY, 18)),
-      );
-      log.debug("difference: {}", [balanceValue.minus(calculatedValue).toString()]);
+    // There is a loss of precision, so we need to ensure that the value is close, but not equal
+    assert.assertTrue(
+      pairValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
+    );
+  });
 
-      // There is a loss of precision, so we need to ensure that the value is close, but not equal
-      assert.assertTrue(
-        balanceValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
-      );
-    });
+  test("OHM-ETH pair balance value is correct", () => {
+    mockOhmEthPair();
+    mockUsdOhmV2Rate();
+    mockEthUsdRate();
+
+    const lpBalance = BigInt.fromString("1000000000000000000");
+    const balanceValue = getUniswapV2PairValue(
+      lpBalance,
+      PAIR_UNISWAP_V2_OHM_ETH_V2,
+      ETH_USD_RESERVE_BLOCK,
+    );
+
+    // (balance / total supply) * pair value
+    const calculatedValue = getOhmEthPairValue().times(
+      toDecimal(lpBalance, 18).div(toDecimal(OHM_ETH_TOTAL_SUPPLY, 18)),
+    );
+    log.debug("difference: {}", [balanceValue.minus(calculatedValue).toString()]);
+
+    // There is a loss of precision, so we need to ensure that the value is close, but not equal
+    assert.assertTrue(
+      balanceValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
+    );
   });
 });
 

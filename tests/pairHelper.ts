@@ -347,6 +347,15 @@ export const mockOhmEthPair = (): void => {
   ]);
 };
 
+export const getPairValue = (
+  token0Reserves: BigDecimal,
+  token1Reserves: BigDecimal,
+  token0Rate: BigDecimal,
+  token1Rate: BigDecimal,
+): BigDecimal => {
+  return token0Reserves.times(token0Rate).plus(token1Reserves.times(token1Rate));
+};
+
 // (token0 * price0 + token1 * price1) * (balance / total supply)
 export const getOhmEthPairValue = (): BigDecimal => {
   return toDecimal(OHM_ETH_RESERVES_OHM, OHM_V2_DECIMALS)

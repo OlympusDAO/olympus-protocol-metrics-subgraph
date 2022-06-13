@@ -263,6 +263,10 @@ function getUSDRateUniswapV2(
     log.debug("Returning base OHM-USD rate", []);
     return getBaseOhmUsdRate(blockNumber);
   }
+  if (arrayIncludesLoose(ERC20_STABLE_TOKENS, contractAddress)) {
+    log.debug("Returning stablecoin rate of 1", []);
+    return BigDecimal.fromString("1");
+  }
 
   // TODO check if we are ready to lookup using one of the base (OHM/ETH) rates
   // TODO handle OHM v1 rates?
