@@ -1,4 +1,4 @@
-import { BigDecimal } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 import { TokenRecord, TokenRecords } from "../../generated/schema";
 
@@ -21,9 +21,10 @@ export function newTokenRecord(
   sourceAddress: string,
   rate: BigDecimal,
   balance: BigDecimal,
+  blockNumber: BigInt,
   multiplier: BigDecimal = BigDecimal.fromString("1"),
 ): TokenRecord {
-  const record = new TokenRecord(name + "-" + source);
+  const record = new TokenRecord(name + "-" + source + "-" + blockNumber.toString());
   record.name = name;
   record.source = source;
   record.sourceAddress = sourceAddress;
@@ -152,8 +153,8 @@ export function sortTokenRecords(records: TokenRecords): void {
   records.save();
 }
 
-export function newTokenRecords(id: string): TokenRecords {
-  const records = new TokenRecords(id);
+export function newTokenRecords(id: string, blockNumber: BigInt): TokenRecords {
+  const records = new TokenRecords(id + "-" + blockNumber.toString());
   records.records = [];
   records.balance = BigDecimal.fromString("0");
   records.value = BigDecimal.fromString("0");

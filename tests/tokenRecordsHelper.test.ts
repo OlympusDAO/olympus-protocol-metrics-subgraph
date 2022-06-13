@@ -1,4 +1,4 @@
-import { BigDecimal } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
 import { TokenRecord, TokenRecords } from "../generated/schema";
@@ -20,12 +20,13 @@ const createTokenRecord = (): TokenRecord => {
     "address",
     BigDecimal.fromString("2"),
     BigDecimal.fromString("3"),
+    BigInt.fromString("1"),
   );
 };
 
 describe("constructor", () => {
   test("id not null", () => {
-    const records = newTokenRecords("test");
+    const records = newTokenRecords("test", BigInt.fromString("1"));
 
     assert.assertNotNull(records.id);
     assert.assertNotNull(records.records);
@@ -34,7 +35,7 @@ describe("constructor", () => {
 
 describe("push", () => {
   test("single", () => {
-    const records = newTokenRecords("test");
+    const records = newTokenRecords("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
 
     pushTokenRecord(records, record1);
@@ -47,7 +48,7 @@ describe("push", () => {
   });
 
   test("multiple", () => {
-    const records = newTokenRecords("test");
+    const records = newTokenRecords("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "name2",
@@ -55,6 +56,7 @@ describe("push", () => {
       "sourceAdd2",
       BigDecimal.fromString("10"),
       BigDecimal.fromString("5"),
+      BigInt.fromString("1"),
     );
 
     pushTokenRecord(records, record1);
@@ -66,17 +68,18 @@ describe("push", () => {
 
 describe("combine", () => {
   test("non-empty", () => {
-    const records1 = newTokenRecords("test");
+    const records1 = newTokenRecords("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     pushTokenRecord(records1, record1);
 
-    const records2 = newTokenRecords("test");
+    const records2 = newTokenRecords("test", BigInt.fromString("1"));
     const record2 = newTokenRecord(
       "name2",
       "source2",
       "sourceAdd2",
       BigDecimal.fromString("10"),
       BigDecimal.fromString("5"),
+      BigInt.fromString("1"),
     );
     pushTokenRecord(records2, record2);
 
@@ -90,11 +93,11 @@ describe("combine", () => {
   });
 
   test("empty", () => {
-    const records1 = newTokenRecords("test");
+    const records1 = newTokenRecords("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     pushTokenRecord(records1, record1);
 
-    const records2 = newTokenRecords("test");
+    const records2 = newTokenRecords("test", BigInt.fromString("1"));
 
     combineTokenRecords(records1, records2);
 
@@ -104,7 +107,7 @@ describe("combine", () => {
 
 describe("multiplier", () => {
   test("push, records updated", () => {
-    const records1 = newTokenRecords("test");
+    const records1 = newTokenRecords("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "name2",
@@ -112,6 +115,7 @@ describe("multiplier", () => {
       "sourceAdd2",
       BigDecimal.fromString("10"),
       BigDecimal.fromString("5"),
+      BigInt.fromString("1"),
     );
     pushTokenRecord(records1, record1);
     pushTokenRecord(records1, record2);
@@ -129,7 +133,7 @@ describe("multiplier", () => {
   });
 
   test("combine, records updated", () => {
-    const records1 = newTokenRecords("test");
+    const records1 = newTokenRecords("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "name2",
@@ -137,9 +141,10 @@ describe("multiplier", () => {
       "sourceAdd2",
       BigDecimal.fromString("10"),
       BigDecimal.fromString("5"),
+      BigInt.fromString("1"),
     );
 
-    const records2 = newTokenRecords("test");
+    const records2 = newTokenRecords("test", BigInt.fromString("1"));
     pushTokenRecord(records2, record1);
     pushTokenRecord(records2, record2);
     setTokenRecordsMultiplier(records2, BigDecimal.fromString("0.25"));
@@ -165,7 +170,7 @@ describe("multiplier", () => {
 
 describe("balance", () => {
   test("records updated", () => {
-    const records1 = newTokenRecords("test");
+    const records1 = newTokenRecords("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "name2",
@@ -173,6 +178,7 @@ describe("balance", () => {
       "sourceAdd2",
       BigDecimal.fromString("10"),
       BigDecimal.fromString("5"),
+      BigInt.fromString("1"),
     );
     pushTokenRecord(records1, record1);
     pushTokenRecord(records1, record2);
@@ -184,7 +190,7 @@ describe("balance", () => {
 
 describe("value", () => {
   test("correct", () => {
-    const records1 = newTokenRecords("test");
+    const records1 = newTokenRecords("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "name2",
@@ -192,6 +198,7 @@ describe("value", () => {
       "sourceAdd2",
       BigDecimal.fromString("10"),
       BigDecimal.fromString("5"),
+      BigInt.fromString("1"),
     );
     pushTokenRecord(records1, record1);
     pushTokenRecord(records1, record2);
@@ -203,7 +210,7 @@ describe("value", () => {
 
 describe("sorted records", () => {
   test("correct", () => {
-    const records1 = newTokenRecords("test");
+    const records1 = newTokenRecords("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "name2",
@@ -211,12 +218,13 @@ describe("sorted records", () => {
       "sourceAdd2",
       BigDecimal.fromString("10"),
       BigDecimal.fromString("5"),
+      BigInt.fromString("1"),
     );
     pushTokenRecord(records1, record2); // name2 before name
     pushTokenRecord(records1, record1);
 
     sortTokenRecords(records1);
-    assert.stringEquals("name-source", records1.records[0]);
-    assert.stringEquals("name2-source2", records1.records[1]);
+    assert.stringEquals("name-source-1", records1.records[0]);
+    assert.stringEquals("name2-source2-1", records1.records[1]);
   });
 });

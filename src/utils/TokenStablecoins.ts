@@ -42,7 +42,7 @@ export function getStablecoinBalance(
 ): TokenRecords {
   const contractName = getContractName(contractAddress);
   log.info("Calculating stablecoin balance for {}", [contractName]);
-  const records = newTokenRecords("Stablecoins");
+  const records = newTokenRecords("Stablecoins", blockNumber);
   const contract = getERC20(contractName, contractAddress, blockNumber);
   const rate = getUSDRate(contractAddress, blockNumber);
 
@@ -92,7 +92,7 @@ export function getStablecoinBalances(
   blockNumber: BigInt,
 ): TokenRecords {
   log.info("Calculating stablecoin value", []);
-  const records = newTokenRecords("Stablecoin balances");
+  const records = newTokenRecords("Stablecoin balances", blockNumber);
 
   for (let i = 0; i < ERC20_STABLE_TOKENS.length; i++) {
     combineTokenRecords(
@@ -116,7 +116,7 @@ export function getStablecoinBalances(
  * @returns TokenRecords object
  */
 export function getDaiBalance(blockNumber: BigInt): TokenRecords {
-  const records = newTokenRecords("DAI balance");
+  const records = newTokenRecords("DAI balance", blockNumber);
 
   combineTokenRecords(records, getStablecoinBalance(ERC20_DAI, false, false, blockNumber));
   combineTokenRecords(records, getStablecoinBalance(ERC20_ADAI, false, false, blockNumber));
@@ -169,7 +169,7 @@ export function getLUSDBalance(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getUSTBalance(blockNumber: BigInt): TokenRecords {
-  return newTokenRecords("UST");
+  return newTokenRecords("UST", blockNumber);
   //  return getStablecoinBalance(ERC20_UST, false, false, blockNumber);
 }
 
@@ -200,7 +200,7 @@ export function getStableValue(blockNumber: BigInt): TokenRecords {
 // eslint-disable-next-line @typescript-eslint/no-inferrable-types
 export function getDaiMarketValue(blockNumber: BigInt, riskFree: boolean = false): TokenRecords {
   log.info("Calculating DAI market value", []);
-  const records = newTokenRecords("DAI market value");
+  const records = newTokenRecords("DAI market value", blockNumber);
 
   combineTokenRecords(records, getStablecoinBalance(ERC20_DAI, true, riskFree, blockNumber));
   combineTokenRecords(records, getStablecoinBalance(ERC20_ADAI, true, riskFree, blockNumber));

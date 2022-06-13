@@ -66,7 +66,7 @@ function getLiquidityTokenRecords(
   blockNumber: BigInt,
   riskFree: boolean,
 ): TokenRecords {
-  const records = newTokenRecords("Liquidity");
+  const records = newTokenRecords("Liquidity", blockNumber);
   const contractName = getContractName(liquidityBalance.contract);
   // TODO handle uniswap V3
   // TODO this assumes that the other side of the LP is OHM, which is not always correct (ETH!)
@@ -108,6 +108,7 @@ function getLiquidityTokenRecords(
         address,
         lpUnitPrice,
         toDecimal(balance, 18),
+        blockNumber,
       ),
     );
   }
@@ -175,6 +176,7 @@ export function getCurveOhmEthPairValue(
     pairAddress,
     pairValue,
     BigDecimal.fromString("1"),
+    blockNumber,
     excludeOhmValue ? BigDecimal.fromString("0.5") : BigDecimal.fromString("1"),
   );
 }
@@ -194,7 +196,7 @@ export function getCurvePairRecords(
   excludeOhmValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords("Curve Liquidity Pools");
+  const records = newTokenRecords("Curve Liquidity Pools", blockNumber);
   const record = getCurveOhmEthPairValue(pairAddress, tokenAddress, excludeOhmValue, blockNumber);
   if (record) {
     pushTokenRecord(records, record);
@@ -231,7 +233,7 @@ export function getLiquidityBalances(
   blockNumber: BigInt,
   ownedLiquidityPairs: PairHandler[] = LIQUIDITY_OWNED,
 ): TokenRecords {
-  const records = newTokenRecords("Liquidity");
+  const records = newTokenRecords("Liquidity", blockNumber);
 
   for (let j = 0; j < ownedLiquidityPairs.length; j++) {
     const pairHandler = ownedLiquidityPairs[j];

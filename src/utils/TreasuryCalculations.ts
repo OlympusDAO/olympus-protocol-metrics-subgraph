@@ -46,7 +46,7 @@ export function getTreasuryStableBacking(blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecords {
-  const records = newTokenRecords("Treasury total backing");
+  const records = newTokenRecords("Treasury total backing", blockNumber);
 
   combineTokenRecords(records, getTreasuryStableBacking(blockNumber));
   combineTokenRecords(records, getTreasuryVolatileBacking(blockNumber, true));
@@ -62,6 +62,7 @@ export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecords {
       "0x0",
       BigDecimal.fromString("1"),
       ohmCirculatingSupply,
+      blockNumber,
       BigDecimal.fromString("-1"), // Subtracted
     ),
   );
@@ -81,7 +82,7 @@ export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecords {
 export function getMarketValue(blockNumber: BigInt): TokenRecords {
   log.info("Calculating market value", []);
   // TODO check that ETH and stables aren't being double-counted
-  const records = newTokenRecords("Market value");
+  const records = newTokenRecords("Market value", blockNumber);
 
   combineTokenRecords(records, getStableValue(blockNumber));
   combineTokenRecords(records, getLiquidityPoolValue(false, false, blockNumber));
@@ -101,7 +102,7 @@ export function getMarketValue(blockNumber: BigInt): TokenRecords {
  */
 export function getRiskFreeValue(blockNumber: BigInt): TokenRecords {
   log.info("Calculating risk-free value", []);
-  const records = newTokenRecords("Risk-free value");
+  const records = newTokenRecords("Risk-free value", blockNumber);
 
   combineTokenRecords(records, getStableValue(blockNumber));
   combineTokenRecords(records, getLiquidityPoolValue(true, true, blockNumber));

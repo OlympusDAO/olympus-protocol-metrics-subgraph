@@ -20,7 +20,7 @@ export function getBalancerRecords(
   tokenAddress: string | null = null,
 ): TokenRecords {
   log.debug("Calculating value of Balancer Pool {} for id {}", [vaultAddress, poolId]);
-  const records = newTokenRecords("Balancer Pool");
+  const records = newTokenRecords("Balancer Pool", blockNumber);
   if (tokenAddress && !getLiquidityPairTokens(poolId).includes(tokenAddress)) {
     log.debug("tokenAddress specified and not found in balancer pool. Skipping.", []);
     return records;
@@ -77,6 +77,7 @@ export function getBalancerRecords(
       vaultAddress,
       totalValue,
       BigDecimal.fromString("1"),
+      blockNumber,
       multiplier,
     ),
   );

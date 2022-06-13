@@ -1,4 +1,4 @@
-import { BigDecimal } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
 import { TokenRecord } from "../generated/schema";
@@ -15,6 +15,7 @@ const createTokenRecord = (): TokenRecord => {
     "address",
     BigDecimal.fromString("2"),
     BigDecimal.fromString("3"),
+    BigInt.fromString("1"),
   );
 };
 
@@ -22,7 +23,7 @@ describe("constructor", () => {
   test("basic values", () => {
     const record = createTokenRecord();
 
-    assert.stringEquals("name-source", record.id);
+    assert.stringEquals("name-source-1", record.id);
     assert.stringEquals("name", record.name);
     assert.stringEquals("source", record.source);
     assert.stringEquals("address", record.sourceAddress);
@@ -38,6 +39,7 @@ describe("constructor", () => {
       "address",
       BigDecimal.fromString("2"),
       BigDecimal.fromString("3"),
+      BigInt.fromString("1"),
       BigDecimal.fromString("0.25"),
     );
 
@@ -73,6 +75,7 @@ describe("value", () => {
       "address",
       BigDecimal.fromString("2"),
       BigDecimal.fromString("3"),
+      BigInt.fromString("1"),
     );
 
     // 2 * 3 * 1
@@ -86,6 +89,7 @@ describe("value", () => {
       "address",
       BigDecimal.fromString("2"),
       BigDecimal.fromString("3"),
+      BigInt.fromString("1"),
       BigDecimal.fromString("0.25"),
     );
 
