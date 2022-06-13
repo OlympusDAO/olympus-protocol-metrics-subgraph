@@ -714,17 +714,17 @@ export function getOhmEthProtocolOwnedLiquidity(blockNumber: BigInt): BigDecimal
  * Returns the value of owned liquidity pools.
  *
  * @param riskFree If `riskFree` is true, the risk-free value will be returned
- * @param singleSidedValue should be true if only the value of a single side of the LP is desired
+ * @param excludeOhmValue should be true if only the non-OHM value of the LP is desired
  * @param blockNumber
  * @returns TokenRecords object
  */
 export function getLiquidityPoolValue(
   riskFree: boolean,
-  singleSidedValue: boolean,
+  excludeOhmValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
   log.info("Calculating liquidity pool value", []);
-  const records = getLiquidityBalances(null, riskFree, singleSidedValue, blockNumber);
+  const records = getLiquidityBalances(null, riskFree, excludeOhmValue, blockNumber);
   log.info("Liquidity pool value: {}", [records.value.toString()]);
   return records;
 }
