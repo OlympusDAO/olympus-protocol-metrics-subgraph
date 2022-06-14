@@ -14,7 +14,6 @@ import {
   getConvexStakedRecords,
   getERC20,
   getERC20TokenRecordsFromWallets,
-  getFraxConvexAllocatorRecords,
   getLiquityStabilityPoolRecords,
   getOnsenAllocatorRecords,
   getRariAllocatorRecords,
@@ -54,9 +53,6 @@ export function getStablecoinBalance(
 
   // Rari Allocator
   combineTokenRecords(records, getRariAllocatorRecords(contractAddress, rate, blockNumber));
-
-  // FRAX Convex Allocator
-  combineTokenRecords(records, getFraxConvexAllocatorRecords(contractAddress, blockNumber));
 
   // Staked Convex tokens
   combineTokenRecords(records, getConvexStakedRecords(contractAddress, blockNumber));

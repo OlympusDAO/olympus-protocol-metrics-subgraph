@@ -14,11 +14,11 @@ import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
 import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
-  ALLOCATOR_CONVEX_FRAX_CONTRACTS,
   ALLOCATOR_LIQUITY_STABILITY_POOLS,
   ALLOCATOR_ONSEN_ID_NOT_FOUND,
   ALLOCATOR_RARI_ID_NOT_FOUND,
   CONTRACT_STARTING_BLOCK_MAP,
+  CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
   ERC20_FRAX,
   ERC20_FXS,
@@ -614,66 +614,6 @@ export function getOnsenAllocatorRecords(
   return records;
 }
 
-/**
- * Gets the balance of the given token in the Convex Allocator.
- *
- * FRAX is the only supported token.
- *
- * @param tokenAddress the token to look for
- * @param allocatorAddress the allocator to use
- * @param blockNumber the current block
- * @returns BigDecimal or null
- */
-function getFraxConvexAllocatorBalance(
-  tokenAddress: string,
-  allocatorAddress: string,
-  blockNumber: BigInt,
-): BigDecimal | null {
-  // FRAX only
-  if (tokenAddress !== ERC20_FRAX) return null;
-
-  // Allocator must exist
-  const allocator = getConvexAllocator(allocatorAddress, blockNumber);
-  if (!allocator) return null;
-
-  return toDecimal(allocator.totalValueDeployed().times(BigInt.fromString("1000000000")), 18);
-}
-
-/**
- * Returns records for the given token in the Convex Allocator.
- *
- * @param tokenAddress the token to look for
- * @param blockNumber the current block
- * @returns TokenRecords object
- */
-export function getFraxConvexAllocatorRecords(
-  tokenAddress: string,
-  blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords("Frax Convex Allocator", blockNumber);
-
-  for (let i = 0; i < ALLOCATOR_CONVEX_FRAX_CONTRACTS.length; i++) {
-    const allocatorAddress = ALLOCATOR_CONVEX_FRAX_CONTRACTS[i];
-    const balance = getFraxConvexAllocatorBalance(tokenAddress, allocatorAddress, blockNumber);
-    if (!balance || balance.equals(BigDecimal.zero())) continue;
-
-    pushTokenRecord(
-      records,
-      newTokenRecord(
-        getContractName(tokenAddress),
-        tokenAddress,
-        getContractName(allocatorAddress),
-        allocatorAddress,
-        BigDecimal.fromString("1"),
-        balance,
-        blockNumber,
-      ),
-    );
-  }
-
-  return records;
-}
-
 export function getConvexStakedBalance(
   tokenAddress: string,
   allocatorAddress: string,
@@ -701,8 +641,16 @@ export function getConvexStakedBalance(
  * Returns the details of the specified token staked in Convex
  * from the Convex allocator contracts.
  *
- * @param tokenAddress
- * @param blockNumber
+ * Previously, the `totalValueDeployed` function on the Convex allocator contracts
+ * was called to return a value, but no details of the tokens. The value was also
+ * close, but not accurate.
+ *
+ * The implementation has shifted to instead check Convex staking contracts for a
+ * staked balance from {CONVEX_ALLOCATORS}. The staking contract has a function
+ * that returns the staked token, making this easier.
+ *
+ * @param tokenAddress the token address to look for
+ * @param blockNumber the current block
  */
 export function getConvexStakedRecords(tokenAddress: string, blockNumber: BigInt): TokenRecords {
   const records = newTokenRecords(
@@ -711,8 +659,8 @@ export function getConvexStakedRecords(tokenAddress: string, blockNumber: BigInt
   );
 
   // Loop through allocators
-  for (let i = 0; i < ALLOCATOR_CONVEX_FRAX_CONTRACTS.length; i++) {
-    const allocatorAddress = ALLOCATOR_CONVEX_FRAX_CONTRACTS[i];
+  for (let i = 0; i < CONVEX_ALLOCATORS.length; i++) {
+    const allocatorAddress = CONVEX_ALLOCATORS[i];
 
     // Look through staking contracts
     for (let j = 0; j < CONVEX_STAKING_CONTRACTS.length; j++) {

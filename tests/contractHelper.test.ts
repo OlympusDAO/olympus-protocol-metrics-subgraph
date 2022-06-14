@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import {
-  ALLOCATOR_CONVEX_FRAX_CONTRACTS,
+  CONVEX_ALLOCATORS,
   CONVEX_ALLOCATOR1,
   CONVEX_ALLOCATOR2,
   CONVEX_ALLOCATOR3,
@@ -41,10 +41,10 @@ const mockConvexStakedBalance = (
 };
 
 export const mockConvexStakedBalanceZero = (): void => {
-  for (let i = 0; i < ALLOCATOR_CONVEX_FRAX_CONTRACTS.length; i++) {
+  for (let i = 0; i < CONVEX_ALLOCATORS.length; i++) {
     mockConvexStakedBalance(
       ERC20_CVX_FRAX_3CRV,
-      ALLOCATOR_CONVEX_FRAX_CONTRACTS[i],
+      CONVEX_ALLOCATORS[i],
       CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
       BigInt.zero(),
     );
