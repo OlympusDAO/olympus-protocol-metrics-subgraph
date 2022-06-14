@@ -748,6 +748,24 @@ export class ProtocolMetric extends Entity {
     this.set("treasuryVolatileBackingComponents", Value.fromString(value));
   }
 
+  get treasuryLiquidBacking(): BigDecimal {
+    let value = this.get("treasuryLiquidBacking");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryLiquidBacking(value: BigDecimal) {
+    this.set("treasuryLiquidBacking", Value.fromBigDecimal(value));
+  }
+
+  get treasuryLiquidBackingComponents(): string {
+    let value = this.get("treasuryLiquidBackingComponents");
+    return value!.toString();
+  }
+
+  set treasuryLiquidBackingComponents(value: string) {
+    this.set("treasuryLiquidBackingComponents", Value.fromString(value));
+  }
+
   get treasuryTotalBacking(): BigDecimal {
     let value = this.get("treasuryTotalBacking");
     return value!.toBigDecimal();
@@ -766,22 +784,28 @@ export class ProtocolMetric extends Entity {
     this.set("treasuryTotalBackingComponents", Value.fromString(value));
   }
 
-  get treasuryLiquidBackingPerOhm(): BigDecimal {
-    let value = this.get("treasuryLiquidBackingPerOhm");
+  get treasuryLiquidBackingPerOhmCirculating(): BigDecimal {
+    let value = this.get("treasuryLiquidBackingPerOhmCirculating");
     return value!.toBigDecimal();
   }
 
-  set treasuryLiquidBackingPerOhm(value: BigDecimal) {
-    this.set("treasuryLiquidBackingPerOhm", Value.fromBigDecimal(value));
+  set treasuryLiquidBackingPerOhmCirculating(value: BigDecimal) {
+    this.set(
+      "treasuryLiquidBackingPerOhmCirculating",
+      Value.fromBigDecimal(value)
+    );
   }
 
-  get treasuryFloatingBackingPerOhm(): BigDecimal {
-    let value = this.get("treasuryFloatingBackingPerOhm");
+  get treasuryLiquidBackingPerOhmFloating(): BigDecimal {
+    let value = this.get("treasuryLiquidBackingPerOhmFloating");
     return value!.toBigDecimal();
   }
 
-  set treasuryFloatingBackingPerOhm(value: BigDecimal) {
-    this.set("treasuryFloatingBackingPerOhm", Value.fromBigDecimal(value));
+  set treasuryLiquidBackingPerOhmFloating(value: BigDecimal) {
+    this.set(
+      "treasuryLiquidBackingPerOhmFloating",
+      Value.fromBigDecimal(value)
+    );
   }
 
   get currentAPY(): BigDecimal {

@@ -31,52 +31,56 @@ export function getTreasuryStableBacking(blockNumber: BigInt): TokenRecords {
 }
 
 /**
- * Returns the value of the total (liquid) backing
+ * Returns the value of the total backing
  * - add: getTreasuryStableBacking
- * - add: getTreasuryVolatileBacking (liquid only)
+ * - add: getTreasuryVolatileBacking
  * - add: getLiquidityPoolValue (excluding OHM)
+ *
+ * The {liquidOnly} parameter should be true when obtaining
+ * liquid backing, which restricts to liquid (non-locked) assets.
  *
  * NOTE: previously, this value subtracted the quantity of OHM circulating supply
  * (assuming 1 OHM = $1), which has since been changed (June 2022).
  *
+ * @param liquidOnly if true, returns the value of liquid assets only
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
-export function getTreasuryTotalBacking(blockNumber: BigInt): TokenRecords {
+export function getTreasuryTotalBacking(liquidOnly: boolean, blockNumber: BigInt): TokenRecords {
   const records = newTokenRecords("Treasury total backing", blockNumber);
 
   combineTokenRecords(records, getTreasuryStableBacking(blockNumber));
-  combineTokenRecords(records, getTreasuryVolatileBacking(blockNumber, true));
+  combineTokenRecords(records, getTreasuryVolatileBacking(blockNumber, liquidOnly));
   combineTokenRecords(records, getLiquidityPoolValue(false, true, blockNumber));
 
   return records;
 }
 
 /**
- * Returns the liquid backing per OHM, equal to:
+ * Returns the liquid backing per circulating OHM, equal to:
  *
- * total backing / OHM circulating supply
+ * liquid backing / OHM circulating supply
  * {getTreasuryTotalBacking} / {getCirculatingSupply}
  *
  * @param blockNumber
  * @returns
  */
-export function getTreasuryLiquidBackingPerOhm(blockNumber: BigInt): BigDecimal {
-  return getTreasuryTotalBacking(blockNumber).value.div(
+export function getTreasuryLiquidBackingPerOhmCirculating(blockNumber: BigInt): BigDecimal {
+  return getTreasuryTotalBacking(true, blockNumber).value.div(
     getCirculatingSupply(blockNumber, getTotalSupply(blockNumber)),
   );
 }
 
 /**
- * Returns the floating backing per OHM, equal to:
+ * Returns the liquid backing per floating OHM, equal to:
  *
- * total backing / (OHM circulating supply + OHM in LPs)
+ * liquid backing / (OHM circulating supply + OHM in LPs)
  * {getTreasuryTotalBacking} / {getCirculatingSupply}
  *
  * @param blockNumber
  * @returns
  */
-export function getTreasuryFloatingBackingPerOhm(blockNumber: BigInt): BigDecimal {
+export function getTreasuryLiquidBackingPerOhmFloating(blockNumber: BigInt): BigDecimal {
   return BigDecimal.zero();
 }
 

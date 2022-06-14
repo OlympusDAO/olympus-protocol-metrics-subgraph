@@ -53,8 +53,8 @@ import {
 import {
   getMarketValue,
   getRiskFreeValue,
-  getTreasuryFloatingBackingPerOhm,
-  getTreasuryLiquidBackingPerOhm,
+  getTreasuryLiquidBackingPerOhmCirculating,
+  getTreasuryLiquidBackingPerOhmFloating,
   getTreasuryStableBacking,
   getTreasuryTotalBacking,
   getTreasuryVolatileBacking,
@@ -124,8 +124,10 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
     protocolMetric.treasuryVolatileBackingComponents = "-1";
     protocolMetric.treasuryTotalBacking = BigDecimal.fromString("0");
     protocolMetric.treasuryTotalBackingComponents = "-1";
-    protocolMetric.treasuryLiquidBackingPerOhm = BigDecimal.fromString("0");
-    protocolMetric.treasuryFloatingBackingPerOhm = BigDecimal.fromString("0");
+    protocolMetric.treasuryLiquidBacking = BigDecimal.fromString("0");
+    protocolMetric.treasuryLiquidBackingComponents = "-1";
+    protocolMetric.treasuryLiquidBackingPerOhmCirculating = BigDecimal.fromString("0");
+    protocolMetric.treasuryLiquidBackingPerOhmFloating = BigDecimal.fromString("0");
 
     protocolMetric.save();
   }
@@ -362,15 +364,18 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryVolatileBacking = volatileBacking.value;
   pm.treasuryVolatileBackingComponents = volatileBacking.id;
 
-  const totalBacking = getTreasuryTotalBacking(blockNumber);
+  const totalBacking = getTreasuryTotalBacking(false, blockNumber);
   pm.treasuryTotalBacking = totalBacking.value;
   pm.treasuryTotalBackingComponents = totalBacking.id;
 
-  const liquidBackingPerOhm = getTreasuryLiquidBackingPerOhm(blockNumber);
-  pm.treasuryLiquidBackingPerOhm = liquidBackingPerOhm;
+  const liquidBacking = getTreasuryTotalBacking(true, blockNumber);
+  pm.treasuryLiquidBacking = liquidBacking.value;
+  pm.treasuryLiquidBackingComponents = liquidBacking.id;
 
-  const floatingBackingPerOhm = getTreasuryFloatingBackingPerOhm(blockNumber);
-  pm.treasuryFloatingBackingPerOhm = floatingBackingPerOhm;
+  pm.treasuryLiquidBackingPerOhmCirculating =
+    getTreasuryLiquidBackingPerOhmCirculating(blockNumber);
+
+  pm.treasuryLiquidBackingPerOhmFloating = getTreasuryLiquidBackingPerOhmFloating(blockNumber);
 
   const liquidityPoolValue = getLiquidityPoolValue(false, true, blockNumber);
   pm.treasuryLPValue = liquidityPoolValue.value;
