@@ -31,6 +31,7 @@ type ProtocolMetric @entity {
   id: ID!
   timestamp: BigInt!
   ohmCirculatingSupply: BigDecimal!
+  ohmFloatingSupply: BigDecimal!
   sOhmCirculatingSupply: BigDecimal!
   totalSupply: BigDecimal!
   ohmPrice: BigDecimal!

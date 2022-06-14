@@ -307,6 +307,15 @@ export class ProtocolMetric extends Entity {
     this.set("ohmCirculatingSupply", Value.fromBigDecimal(value));
   }
 
+  get ohmFloatingSupply(): BigDecimal {
+    let value = this.get("ohmFloatingSupply");
+    return value!.toBigDecimal();
+  }
+
+  set ohmFloatingSupply(value: BigDecimal) {
+    this.set("ohmFloatingSupply", Value.fromBigDecimal(value));
+  }
+
   get sOhmCirculatingSupply(): BigDecimal {
     let value = this.get("sOhmCirculatingSupply");
     return value!.toBigDecimal();

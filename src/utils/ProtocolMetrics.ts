@@ -29,6 +29,7 @@ import {
 } from "./LiquidityCalculations";
 import {
   getCirculatingSupply,
+  getFloatingSupply,
   getOhmMarketcap,
   getSOhmCirculatingSupply,
   getTotalSupply,
@@ -68,6 +69,7 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
     protocolMetric = new ProtocolMetric(dayTimestamp);
     protocolMetric.timestamp = timestamp;
     protocolMetric.ohmCirculatingSupply = BigDecimal.fromString("0");
+    protocolMetric.ohmFloatingSupply = BigDecimal.fromString("0");
     protocolMetric.sOhmCirculatingSupply = BigDecimal.fromString("0");
     protocolMetric.totalSupply = BigDecimal.fromString("0");
     protocolMetric.ohmPrice = BigDecimal.fromString("0");
@@ -265,6 +267,9 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
 
   // Circ Supply
   pm.ohmCirculatingSupply = getCirculatingSupply(blockNumber, pm.totalSupply);
+
+  // Floating supply
+  pm.ohmFloatingSupply = getFloatingSupply(pm.totalSupply, blockNumber);
 
   // sOhm Supply
   pm.sOhmCirculatingSupply = getSOhmCirculatingSupply(blockNumber);

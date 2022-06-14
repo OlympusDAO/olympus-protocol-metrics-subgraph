@@ -145,14 +145,14 @@ function getLiquiditySupply(blockNumber: BigInt): BigDecimal {
 /**
  * The floating supply of OHM is defined as:
  * - circulating supply
- * - plus the quantity of OHM in liquidity pools
+ * - minus the quantity of OHM in liquidity pools
  *
  * @param totalSupply
  * @param blockNumber
  * @returns
  */
 export function getFloatingSupply(totalSupply: BigDecimal, blockNumber: BigInt): BigDecimal {
-  return getCirculatingSupply(blockNumber, totalSupply).plus(getLiquiditySupply(blockNumber));
+  return getCirculatingSupply(blockNumber, totalSupply).minus(getLiquiditySupply(blockNumber));
 }
 
 /**
