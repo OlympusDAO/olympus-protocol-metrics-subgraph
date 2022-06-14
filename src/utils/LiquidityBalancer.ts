@@ -73,6 +73,7 @@ export function getBalancerRecords(
     records,
     newTokenRecord(
       getContractName(poolId),
+      poolId,
       getContractName(vaultAddress),
       vaultAddress,
       totalValue,

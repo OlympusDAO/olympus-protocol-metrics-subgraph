@@ -16,17 +16,19 @@ export function setTokenRecordMultiplier(record: TokenRecord, multiplier: BigDec
 }
 
 export function newTokenRecord(
-  name: string,
-  source: string,
+  tokenName: string,
+  tokenAddress: string,
+  sourceName: string,
   sourceAddress: string,
   rate: BigDecimal,
   balance: BigDecimal,
   blockNumber: BigInt,
   multiplier: BigDecimal = BigDecimal.fromString("1"),
 ): TokenRecord {
-  const record = new TokenRecord(name + "-" + source + "-" + blockNumber.toString());
-  record.name = name;
-  record.source = source;
+  const record = new TokenRecord(tokenName + "-" + sourceName + "-" + blockNumber.toString());
+  record.token = tokenName;
+  record.tokenAddress = tokenAddress;
+  record.source = sourceName;
   record.sourceAddress = sourceAddress;
   record.rate = rate;
   record.balance = balance;

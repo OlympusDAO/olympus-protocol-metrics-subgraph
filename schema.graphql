@@ -114,7 +114,8 @@ type BondDiscount @entity {
 
 type TokenRecord @entity {
   id: ID!
-  name: String!
+  token: String!
+  tokenAddress: String!
   source: String!
   sourceAddress: String!
   rate: BigDecimal!

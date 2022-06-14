@@ -104,6 +104,7 @@ function getLiquidityTokenRecords(
       records,
       newTokenRecord(
         contractName,
+        liquidityBalance.contract,
         getContractName(address),
         address,
         lpUnitPrice,
@@ -172,6 +173,7 @@ export function getCurveOhmEthPairValue(
   // so we set the balance to 1.
   return newTokenRecord(
     "Curve OHM-ETH Liquidity Pool",
+    "N/A",
     getContractName(pairAddress),
     pairAddress,
     pairValue,

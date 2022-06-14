@@ -48,6 +48,7 @@ export function getVestingAssets(blockNumber: BigInt): TokenRecords {
   // TODO remove hard-coded number
   const record = newTokenRecord(
     "Vesting Assets",
+    "N/A",
     "No source",
     "0x0",
     BigDecimal.fromString("1"),

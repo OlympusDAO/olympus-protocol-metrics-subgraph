@@ -478,6 +478,7 @@ export function getERC20TokenRecordFromWallet(
 
   return newTokenRecord(
     tokenName,
+    contract ? contract._address.toHexString() : "N/A",
     getContractName(walletAddress),
     walletAddress,
     rate,
@@ -548,25 +549,26 @@ function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
 /**
  * Returns the balance of {contractAddress} in the Rari Allocator.
  *
- * @param contractAddress ERC20 contract to find the balance of
+ * @param tokenAddress ERC20 contract to find the balance of
  * @param price
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
 export function getRariAllocatorRecords(
-  contractAddress: string,
+  tokenAddress: string,
   price: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
   const records = newTokenRecords("Rari Allocator", blockNumber);
 
-  const balance = getRariAllocatorBalance(contractAddress, blockNumber);
+  const balance = getRariAllocatorBalance(tokenAddress, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
 
   pushTokenRecord(
     records,
     newTokenRecord(
-      getContractName(contractAddress),
+      getContractName(tokenAddress),
+      tokenAddress,
       getContractName(RARI_ALLOCATOR),
       RARI_ALLOCATOR,
       price,
@@ -600,6 +602,7 @@ export function getOnsenAllocatorRecords(
     records,
     newTokenRecord(
       getContractName(tokenAddress),
+      tokenAddress,
       getContractName(ONSEN_ALLOCATOR),
       ONSEN_ALLOCATOR,
       price,
@@ -658,6 +661,7 @@ export function getFraxConvexAllocatorRecords(
       records,
       newTokenRecord(
         getContractName(tokenAddress),
+        tokenAddress,
         getContractName(allocatorAddress),
         allocatorAddress,
         BigDecimal.fromString("1"),
@@ -726,6 +730,7 @@ export function getConvexStakedRecords(tokenAddress: string, blockNumber: BigInt
         records,
         newTokenRecord(
           getContractName(tokenAddress),
+          tokenAddress,
           getContractName(allocatorAddress),
           allocatorAddress,
           getUSDRate(tokenAddress, blockNumber),
@@ -785,6 +790,7 @@ export function getLiquityStabilityPoolRecords(
       records,
       newTokenRecord(
         getContractName(tokenAddress),
+        tokenAddress,
         getContractName(poolAddress),
         poolAddress,
         BigDecimal.fromString("1"),
@@ -834,6 +840,7 @@ export function getVeFXSAllocatorRecords(tokenAddress: string, blockNumber: BigI
     records,
     newTokenRecord(
       getContractName(tokenAddress),
+      tokenAddress,
       getContractName(VEFXS_ALLOCATOR),
       VEFXS_ALLOCATOR,
       fxsRate,

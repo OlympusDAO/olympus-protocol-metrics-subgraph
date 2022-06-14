@@ -1118,13 +1118,22 @@ export class TokenRecord extends Entity {
     this.set("id", Value.fromString(value));
   }
 
-  get name(): string {
-    let value = this.get("name");
+  get token(): string {
+    let value = this.get("token");
     return value!.toString();
   }
 
-  set name(value: string) {
-    this.set("name", Value.fromString(value));
+  set token(value: string) {
+    this.set("token", Value.fromString(value));
+  }
+
+  get tokenAddress(): string {
+    let value = this.get("tokenAddress");
+    return value!.toString();
+  }
+
+  set tokenAddress(value: string) {
+    this.set("tokenAddress", Value.fromString(value));
   }
 
   get source(): string {

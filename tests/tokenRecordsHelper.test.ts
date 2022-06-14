@@ -17,6 +17,7 @@ import {
 const createTokenRecord = (): TokenRecord => {
   return newTokenRecord(
     "name",
+    "tokenAddress",
     "source",
     "address",
     BigDecimal.fromString("2"),
@@ -53,6 +54,7 @@ describe("push", () => {
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "name2",
+      "tokenAddress2",
       "source2",
       "sourceAdd2",
       BigDecimal.fromString("10"),
@@ -91,6 +93,7 @@ describe("combine", () => {
     const records2 = newTokenRecords("test", BigInt.fromString("1"));
     const record2 = newTokenRecord(
       "name2",
+      "tokenAddress2",
       "source2",
       "sourceAdd2",
       BigDecimal.fromString("10"),
@@ -127,6 +130,7 @@ describe("multiplier", () => {
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "name2",
+      "tokenAddress2",
       "source2",
       "sourceAdd2",
       BigDecimal.fromString("10"),
@@ -153,6 +157,7 @@ describe("multiplier", () => {
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "name2",
+      "tokenAddres2",
       "source2",
       "sourceAdd2",
       BigDecimal.fromString("10"),
@@ -190,6 +195,7 @@ describe("balance", () => {
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "name2",
+      "tokenAddress2",
       "source2",
       "sourceAdd2",
       BigDecimal.fromString("10"),
@@ -210,6 +216,7 @@ describe("value", () => {
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "name2",
+      "tokenAddress2",
       "source2",
       "sourceAdd2",
       BigDecimal.fromString("10"),
@@ -230,6 +237,7 @@ describe("sorted records", () => {
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "name2",
+      "tokenAddress2",
       "source2",
       "sourceAdd2",
       BigDecimal.fromString("10"),
