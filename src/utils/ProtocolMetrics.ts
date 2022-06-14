@@ -69,7 +69,9 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
     protocolMetric = new ProtocolMetric(dayTimestamp);
     protocolMetric.timestamp = timestamp;
     protocolMetric.ohmCirculatingSupply = BigDecimal.fromString("0");
+    protocolMetric.ohmCirculatingSupplyBreakdown = "-1";
     protocolMetric.ohmFloatingSupply = BigDecimal.fromString("0");
+    protocolMetric.ohmFloatingSupplyBreakdown = "-1";
     protocolMetric.sOhmCirculatingSupply = BigDecimal.fromString("0");
     protocolMetric.totalSupply = BigDecimal.fromString("0");
     protocolMetric.ohmPrice = BigDecimal.fromString("0");
@@ -266,10 +268,14 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.totalSupply = getTotalSupply(blockNumber);
 
   // Circ Supply
-  pm.ohmCirculatingSupply = getCirculatingSupply(blockNumber, pm.totalSupply);
+  const ohmCirculatingSupply = getCirculatingSupply(blockNumber, pm.totalSupply);
+  pm.ohmCirculatingSupply = ohmCirculatingSupply.value;
+  pm.ohmCirculatingSupplyBreakdown = ohmCirculatingSupply.id;
 
   // Floating supply
-  pm.ohmFloatingSupply = getFloatingSupply(pm.totalSupply, blockNumber);
+  const ohmFloatingSupply = getFloatingSupply(pm.totalSupply, blockNumber);
+  pm.ohmFloatingSupply = ohmFloatingSupply.value;
+  pm.ohmFloatingSupplyBreakdown = ohmFloatingSupply.id;
 
   // sOhm Supply
   pm.sOhmCirculatingSupply = getSOhmCirculatingSupply(blockNumber);

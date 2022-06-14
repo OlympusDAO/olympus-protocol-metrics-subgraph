@@ -67,7 +67,7 @@ export function getTreasuryTotalBacking(liquidOnly: boolean, blockNumber: BigInt
  */
 export function getTreasuryLiquidBackingPerOhmCirculating(blockNumber: BigInt): BigDecimal {
   return getTreasuryTotalBacking(true, blockNumber).value.div(
-    getCirculatingSupply(blockNumber, getTotalSupply(blockNumber)),
+    getCirculatingSupply(blockNumber, getTotalSupply(blockNumber)).value,
   );
 }
 
@@ -82,7 +82,7 @@ export function getTreasuryLiquidBackingPerOhmCirculating(blockNumber: BigInt): 
  */
 export function getTreasuryLiquidBackingPerOhmFloating(blockNumber: BigInt): BigDecimal {
   return getTreasuryTotalBacking(true, blockNumber).value.div(
-    getFloatingSupply(getTotalSupply(blockNumber), blockNumber),
+    getFloatingSupply(getTotalSupply(blockNumber), blockNumber).value,
   );
 }
 

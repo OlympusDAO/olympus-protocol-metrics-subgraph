@@ -19,7 +19,7 @@ import {
   PAIR_UNISWAP_V2_OHM_LUSD,
   PAIR_UNISWAP_V2_OHM_LUSD_V2,
   SUSHI_MASTERCHEF,
-  TREASURY_ADDRESS,
+  TREASURY_ADDRESS_V1,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
   WALLET_ADDRESSES,
@@ -326,8 +326,8 @@ export function getOhmDaiLiquidityBalance(blockNumber: BigInt, riskFree: boolean
   const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_DAI);
   const ohmDaiLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_DAI, blockNumber);
   liquidityBalance.addBalance(
-    TREASURY_ADDRESS,
-    getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS, blockNumber),
+    TREASURY_ADDRESS_V1,
+    getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS_V1, blockNumber),
   );
   liquidityBalance.addBalance(
     TREASURY_ADDRESS_V2,
@@ -366,8 +366,8 @@ export function getOhmDaiLiquidityV2Balance(blockNumber: BigInt, riskFree: boole
   const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_DAI_V2);
   const ohmDaiLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_DAI_V2, blockNumber);
   liquidityBalance.addBalance(
-    TREASURY_ADDRESS,
-    getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS, blockNumber),
+    TREASURY_ADDRESS_V1,
+    getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS_V1, blockNumber),
   );
   liquidityBalance.addBalance(
     TREASURY_ADDRESS_V2,
@@ -430,8 +430,8 @@ export function getOhmFraxLiquidityBalance(blockNumber: BigInt, riskFree: boolea
   const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_FRAX);
   const ohmFraxLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_FRAX, blockNumber);
   liquidityBalance.addBalance(
-    TREASURY_ADDRESS,
-    getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS, blockNumber),
+    TREASURY_ADDRESS_V1,
+    getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS_V1, blockNumber),
   );
   liquidityBalance.addBalance(
     TREASURY_ADDRESS_V2,
@@ -461,8 +461,8 @@ export function getOhmFraxLiquidityV2Balance(blockNumber: BigInt, riskFree: bool
   const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_FRAX_V2);
   const ohmFraxLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_FRAX_V2, blockNumber);
   liquidityBalance.addBalance(
-    TREASURY_ADDRESS,
-    getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS, blockNumber),
+    TREASURY_ADDRESS_V1,
+    getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS_V1, blockNumber),
   );
   liquidityBalance.addBalance(
     TREASURY_ADDRESS_V2,
@@ -526,8 +526,8 @@ export function getOhmLusdLiquidityBalance(blockNumber: BigInt, riskFree: boolea
   const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_LUSD);
   const ohmLusdLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_LUSD, blockNumber);
   liquidityBalance.addBalance(
-    TREASURY_ADDRESS,
-    getUniswapV2PairBalance(ohmLusdLiquidityPair, TREASURY_ADDRESS, blockNumber),
+    TREASURY_ADDRESS_V1,
+    getUniswapV2PairBalance(ohmLusdLiquidityPair, TREASURY_ADDRESS_V1, blockNumber),
   );
   liquidityBalance.addBalance(
     TREASURY_ADDRESS_V2,
@@ -567,8 +567,8 @@ export function getOhmLusdLiquidityV2Balance(blockNumber: BigInt, riskFree: bool
   const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_LUSD_V2);
   const ohmFraxLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_LUSD_V2, blockNumber);
   liquidityBalance.addBalance(
-    TREASURY_ADDRESS,
-    getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS, blockNumber),
+    TREASURY_ADDRESS_V1,
+    getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS_V1, blockNumber),
   );
   liquidityBalance.addBalance(
     TREASURY_ADDRESS_V2,
@@ -640,8 +640,8 @@ export function getOhmEthLiquidityBalance(blockNumber: BigInt, riskFree: boolean
   const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_ETH);
   const ohmEthLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_ETH, blockNumber);
   liquidityBalance.addBalance(
-    TREASURY_ADDRESS,
-    getUniswapV2PairBalance(ohmEthLiquidityPair, TREASURY_ADDRESS, blockNumber),
+    TREASURY_ADDRESS_V1,
+    getUniswapV2PairBalance(ohmEthLiquidityPair, TREASURY_ADDRESS_V1, blockNumber),
   );
   liquidityBalance.addBalance(
     TREASURY_ADDRESS_V2,
@@ -671,8 +671,8 @@ export function getOhmEthLiquidityV2Balance(blockNumber: BigInt, riskFree: boole
   const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_ETH_V2);
   const ohmEthLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_ETH_V2, blockNumber);
   liquidityBalance.addBalance(
-    TREASURY_ADDRESS,
-    getUniswapV2PairBalance(ohmEthLiquidityPair, TREASURY_ADDRESS, blockNumber),
+    TREASURY_ADDRESS_V1,
+    getUniswapV2PairBalance(ohmEthLiquidityPair, TREASURY_ADDRESS_V1, blockNumber),
   );
   liquidityBalance.addBalance(
     TREASURY_ADDRESS_V2,

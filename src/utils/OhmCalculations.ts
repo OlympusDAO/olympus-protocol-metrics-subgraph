@@ -1,5 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
+import { TokenRecords } from "../../generated/schema";
 import {
   BONDS_DEPOSIT,
   BONDS_INVERSE_DEPOSIT,
@@ -13,6 +14,9 @@ import {
   getContractName,
   LIQUIDITY_OWNED,
   MIGRATION_CONTRACT,
+  TREASURY_ADDRESS_V1,
+  TREASURY_ADDRESS_V2,
+  TREASURY_ADDRESS_V3,
 } from "./Constants";
 import {
   getERC20,
@@ -23,6 +27,13 @@ import {
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getBaseOhmUsdRate } from "./Price";
+import {
+  combineTokenRecords,
+  newTokenRecord,
+  newTokenRecords,
+  pushTokenRecord,
+  setTokenRecordsMultiplier,
+} from "./TokenRecordHelper";
 
 /**
  * Returns the total supply of the latest version of the OHM contract
@@ -53,56 +64,77 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
  * Returns the circulating supply of the latest version of the OHM contract
  * at the given block number.
  *
- * Prior to the block `OHMV2_ERC20_CONTRACT_BLOCK` (13782589), circulating supply is defined as:
- * - OHM V1 total supply
- * - subtract: OHM V1 in DAO wallet
- * - subtract: OHM V1 in migration contract
- *
- * Afterwards, circulating supply is defined as:
- * - OHM V2 total supply
- * - subtract: OHM V2 in DAO wallet
- * - subtract: OHM V2 in migration contract
- * - subtract: OHM V2 in bonds deposit
- * - subtract: OHM V2 in inverse bonds deposit
+ * Circulating supply is defined as:
+ * - OHM total supply
+ * - subtract: OHM in DAO wallet
+ * - subtract: OHM in migration contract
+ * - subtract: OHM in bonds deposit
+ * - subtract: OHM in inverse bonds deposit
+ * - subtract: OHM in treasury wallets
  *
  * @param blockNumber the current block number
  * @param totalSupply the total supply of OHM
  * @returns BigDecimal representing the total supply at the time of the block
  */
-export function getCirculatingSupply(blockNumber: BigInt, totalSupply: BigDecimal): BigDecimal {
+export function getCirculatingSupply(blockNumber: BigInt, totalSupply: BigDecimal): TokenRecords {
   const isV2Contract = blockNumber.gt(BigInt.fromString(ERC20_OHM_V2_BLOCK));
   const ohmContractAddress = isV2Contract ? ERC20_OHM_V2 : ERC20_OHM_V1;
 
   const ohmContract = getERC20("OHM", ohmContractAddress, blockNumber);
+  const records = newTokenRecords("OHM Circulating Supply", blockNumber);
 
   if (!ohmContract) {
     log.error(
       "Expected to be able to bind to OHM contract at address {} for block {}, but it was not found.",
       [ohmContractAddress, blockNumber.toString()],
     );
-    return BigDecimal.fromString("0");
+    return records;
   }
 
-  let circulatingSupply = totalSupply;
-
-  circulatingSupply = circulatingSupply.minus(
-    toDecimal(getERC20Balance(ohmContract, DAO_WALLET, blockNumber), 9),
+  // Total supply
+  pushTokenRecord(
+    records,
+    newTokenRecord(
+      getContractName(ohmContractAddress),
+      ohmContractAddress,
+      "OHM Total Supply",
+      "N/A",
+      BigDecimal.fromString("1"),
+      totalSupply,
+      blockNumber,
+    ),
   );
-  circulatingSupply = circulatingSupply.minus(
-    toDecimal(getERC20Balance(ohmContract, MIGRATION_CONTRACT, blockNumber), 9),
-  );
 
-  if (isV2Contract) {
-    circulatingSupply = circulatingSupply.minus(
-      toDecimal(getERC20Balance(ohmContract, BONDS_DEPOSIT, blockNumber), 9),
-    );
+  const wallets = [
+    DAO_WALLET,
+    MIGRATION_CONTRACT,
+    BONDS_DEPOSIT,
+    BONDS_INVERSE_DEPOSIT,
+    TREASURY_ADDRESS_V1,
+    TREASURY_ADDRESS_V2,
+    TREASURY_ADDRESS_V3,
+  ];
+  for (let i = 0; i < wallets.length; i++) {
+    const currentWallet = wallets[i];
+    const balance = getERC20Balance(ohmContract, currentWallet, blockNumber);
+    if (balance.equals(BigInt.zero())) continue;
 
-    circulatingSupply = circulatingSupply.minus(
-      toDecimal(getERC20Balance(ohmContract, BONDS_INVERSE_DEPOSIT, blockNumber), 9),
+    pushTokenRecord(
+      records,
+      newTokenRecord(
+        getContractName(ohmContractAddress),
+        ohmContractAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        BigDecimal.fromString("1"),
+        toDecimal(balance, 9),
+        blockNumber,
+        BigDecimal.fromString("-1"), // Subtract
+      ),
     );
   }
 
-  return circulatingSupply;
+  return records;
 }
 
 /**
@@ -111,8 +143,8 @@ export function getCirculatingSupply(blockNumber: BigInt, totalSupply: BigDecima
  * @param blockNumber
  * @returns
  */
-function getLiquiditySupply(blockNumber: BigInt): BigDecimal {
-  let liquiditySupply = BigDecimal.zero();
+function getLiquiditySupply(blockNumber: BigInt): TokenRecords {
+  const records = newTokenRecords("OHM Liquidity Supply", blockNumber);
 
   for (let i = 0; i < LIQUIDITY_OWNED.length; i++) {
     const pairHandler = LIQUIDITY_OWNED[i];
@@ -129,8 +161,23 @@ function getLiquiditySupply(blockNumber: BigInt): BigDecimal {
 
       const decimals = ohmToken.decimals();
       const balance = ohmToken.balanceOf(Address.fromString(pairAddress));
+      if (balance.equals(BigInt.zero())) continue;
+
       const balanceDecimal = toDecimal(balance, decimals);
-      liquiditySupply = liquiditySupply.plus(balanceDecimal);
+
+      pushTokenRecord(
+        records,
+        newTokenRecord(
+          getContractName(ohmTokenAddress),
+          ohmTokenAddress,
+          getContractName(pairAddress),
+          pairAddress,
+          BigDecimal.fromString("1"),
+          balanceDecimal,
+          blockNumber,
+        ),
+      );
+
       log.debug("Reserves of {} {} in pair {}", [
         balanceDecimal.toString(),
         getContractName(ohmTokenAddress),
@@ -139,7 +186,7 @@ function getLiquiditySupply(blockNumber: BigInt): BigDecimal {
     }
   }
 
-  return liquiditySupply;
+  return records;
 }
 
 /**
@@ -151,8 +198,18 @@ function getLiquiditySupply(blockNumber: BigInt): BigDecimal {
  * @param blockNumber
  * @returns
  */
-export function getFloatingSupply(totalSupply: BigDecimal, blockNumber: BigInt): BigDecimal {
-  return getCirculatingSupply(blockNumber, totalSupply).minus(getLiquiditySupply(blockNumber));
+export function getFloatingSupply(totalSupply: BigDecimal, blockNumber: BigInt): TokenRecords {
+  const records = newTokenRecords("OHM Floating Supply", blockNumber);
+
+  // Circulating supply
+  combineTokenRecords(records, getCirculatingSupply(blockNumber, totalSupply));
+
+  // Liquidity supply
+  const liquiditySupply = getLiquiditySupply(blockNumber);
+  setTokenRecordsMultiplier(liquiditySupply, BigDecimal.fromString("-1")); // Subtracted
+  combineTokenRecords(records, liquiditySupply);
+
+  return records;
 }
 
 /**
@@ -166,7 +223,7 @@ export function getFloatingSupply(totalSupply: BigDecimal, blockNumber: BigInt):
  */
 export function getOhmMarketcap(blockNumber: BigInt): BigDecimal {
   return getBaseOhmUsdRate(blockNumber).times(
-    getCirculatingSupply(blockNumber, getTotalSupply(blockNumber)),
+    getCirculatingSupply(blockNumber, getTotalSupply(blockNumber)).value,
   );
 }
 
