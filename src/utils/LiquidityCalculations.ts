@@ -1,9 +1,8 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
+import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
 import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
-  BALANCER_VAULT,
-  ERC20_OHM_V2,
   getContractName,
   getLiquidityPairTokens,
   LIQUIDITY_OWNED,
@@ -35,7 +34,7 @@ import { toDecimal } from "./Decimals";
 import { LiquidityBalances } from "./LiquidityBalance";
 import { getBalancerRecords } from "./LiquidityBalancer";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
-import { getBaseOhmUsdRate, getOhmUSDPairRiskFreeValue, getUniswapV2PairValue } from "./Price";
+import { getOhmUSDPairRiskFreeValue, getUniswapV2PairValue, getUSDRate } from "./Price";
 import {
   combineTokenRecords,
   getTokenRecordsBalance,
@@ -118,73 +117,129 @@ function getLiquidityTokenRecords(
 }
 
 /**
- * Returns the value of the Curve OHM-ETH pair.
+ * Returns the total value of the given Curve pair.
  *
- * This comes with some caveats:
- * - Without access to the Curve LP contract (waiting), it is not
- * possible to access the balances function.
- * - As a result, the balance of OHM V2 in {pairAddress} is determined
- * using the ERC20 contract.
- * - The Graph API does not allow for determining the balance of
- * non-ERC20/native ETH, so the value of OHM V2 is multiplied by 2
- * to determine the value.
- *
- * As we do not have any Curve pools apart from OHM-ETH, this
- * function has also not been abstracted to work with other pairs.
- *
- * @param pairAddress the address of the Curve pair
- * @param tokenAddress restrict results to match the specified token
- * @param excludeOhmValue true if the value of OHM in the LP should be excluded
- * @param blockNumber the current block number
- * @returns a TokenRecord object
+ * @param pairAddress
+ * @param blockNumber
+ * @returns
  */
-export function getCurveOhmEthPairValue(
+export function getCurvePairTotalValue(pairAddress: string, blockNumber: BigInt): BigDecimal {
+  // Obtain both tokens
+  const pair = CurvePool.bind(Address.fromString(pairAddress));
+  const token0: string = pair.coins(BigInt.fromI32(0)).toHexString();
+  const token0Balance = pair.balances(BigInt.fromI32(0));
+  const token0Contract = getERC20(getContractName(token0), token0, blockNumber);
+  if (!token0Contract) {
+    throw new Error("Unable to fetch ERC20 at address " + token0 + " for Curve pool");
+  }
+  const token0BalanceDecimal = toDecimal(token0Balance, token0Contract.decimals());
+
+  const token1: string = pair.coins(BigInt.fromI32(1)).toHexString();
+  const token1Balance = pair.balances(BigInt.fromI32(1));
+  const token1Contract = getERC20(getContractName(token1), token1, blockNumber);
+  if (!token1Contract) {
+    throw new Error("Unable to fetch ERC20 at address " + token1 + " for Curve pool");
+  }
+  const token1BalanceDecimal = toDecimal(token1Balance, token1Contract.decimals());
+
+  // token0 balance * token0 rate + token1 balance * token1 rate
+  return token0BalanceDecimal
+    .times(getUSDRate(token0, blockNumber))
+    .plus(token1BalanceDecimal.times(getUSDRate(token1, blockNumber)));
+}
+
+/**
+ * Returns the TokenRecord for the Curve pair's token
+ * at the given {walletAddress}.
+ *
+ * @param pairAddress Curve pair address
+ * @param pairRate the unit rate of the pair
+ * @param walletAddress the wallet to look up the balance
+ * @param excludeOhmValue true if the value of OHM should be excluded
+ * @param blockNumber the current block number
+ * @returns
+ */
+export function getCurvePairRecord(
   pairAddress: string,
-  tokenAddress: string | null,
+  pairRate: BigDecimal,
+  walletAddress: string,
   excludeOhmValue: boolean,
   blockNumber: BigInt,
-): TokenRecord | null {
-  // If we are restricting by token and tokenAddress does not match either side of the pair
-  if (tokenAddress && !getLiquidityPairTokens(pairAddress).includes(tokenAddress)) {
-    log.debug("Skipping Curve that does not match specified token address {}", [tokenAddress]);
-    return null;
+): TokenRecord {
+  const pair = CurvePool.bind(Address.fromString(pairAddress));
+  const pairTokenAddress = pair.token().toHexString();
+  const pairToken = getERC20(getContractName(pairTokenAddress), pairTokenAddress, blockNumber);
+  if (!pairToken) {
+    throw new Error("Unable to bind to ERC20 contract for Curve pair token " + pairTokenAddress);
   }
 
-  // NOTE: This only covers the OHM-ETH pair for the moment
-  // Get the balance of OHM in the contract address
-  const ohmContract = getERC20(getContractName(ERC20_OHM_V2), ERC20_OHM_V2, blockNumber);
-  if (!ohmContract) {
-    throw new Error("Unable to bind ERC20 contract for OHM V2 " + ERC20_OHM_V2);
-  }
+  // Get the balance of the pair's token in walletAddress
+  const pairTokenBalance = pairToken.balanceOf(Address.fromString(walletAddress));
+  const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
 
-  // Calculate the value of OHM in the contract
-  const ohmBalance = toDecimal(
-    ohmContract.balanceOf(Address.fromString(pairAddress)),
-    ohmContract.decimals(),
-  );
-  const ohmRate = getBaseOhmUsdRate(blockNumber);
-  const ohmValue = ohmBalance.times(ohmRate);
-
-  // Due to a limitation in the Graph API, we cannot determine the balance of (non-ERC20) ETH.
-  // We know that OHM value = ETH value, so we can multiply the OHM value * 2 to get the total.
-  const pairValue = ohmValue.times(BigDecimal.fromString("2"));
-
-  // We also can't calculate the circulating supply of the LP without access to the contract,
-  // so we set the balance to 1.
   return newTokenRecord(
-    "Curve OHM-ETH Liquidity Pool",
-    "N/A",
-    getContractName(pairAddress),
-    pairAddress,
-    pairValue,
-    BigDecimal.fromString("1"),
+    getContractName(pairTokenAddress),
+    pairTokenAddress,
+    getContractName(walletAddress),
+    walletAddress,
+    pairRate,
+    pairTokenBalanceDecimal,
     blockNumber,
     excludeOhmValue ? BigDecimal.fromString("0.5") : BigDecimal.fromString("1"),
   );
 }
 
+function getCurvePairToken(pairAddress: string): string {
+  const pair = CurvePool.bind(Address.fromString(pairAddress));
+
+  return pair.token().toHexString();
+}
+
+/**
+ * Calculates the unit rate of the given Curve pair.
+ *
+ * Each Curve pair has an associated token. The total supply
+ * of that token is determined and divides the value to
+ * give the unit rate.
+ *
+ * @param pairAddress Curve pair address
+ * @param totalValue total value of the Curve pair
+ * @param blockNumber current block
+ * @returns
+ */
+function getCurvePairUnitRate(
+  pairAddress: string,
+  totalValue: BigDecimal,
+  blockNumber: BigInt,
+): BigDecimal {
+  const pairTokenAddress = getCurvePairToken(pairAddress);
+  const pairTokenContract = getERC20(
+    getContractName(pairTokenAddress),
+    pairTokenAddress,
+    blockNumber,
+  );
+  if (!pairTokenContract) {
+    throw new Error("Unable to bind to ERC20 contract for Curve pair token " + pairTokenAddress);
+  }
+
+  const totalSupply = toDecimal(pairTokenContract.totalSupply(), pairTokenContract.decimals());
+  const unitRate = totalValue.div(totalSupply);
+  log.info("Unit rate of Curve LP {} is {} for total supply {}", [
+    pairAddress,
+    unitRate.toString(),
+    totalSupply.toString(),
+  ]);
+  return unitRate;
+}
+
 /**
  * Returns the records for the specified Curve LP.
+ *
+ * This function does the following:
+ * - Calculates the total value of the LP
+ * - Calculates the unit rate of the LP
+ * - Iterates through {WALLET_ADDRESSES} and adds records
+ * for the balance of the LP's token
  *
  * @param pairAddress the address of the Curve pair
  * @param tokenAddress restrict results to match the specified token
@@ -198,10 +253,27 @@ export function getCurvePairRecords(
   excludeOhmValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords("Curve Liquidity Pools", blockNumber);
-  const record = getCurveOhmEthPairValue(pairAddress, tokenAddress, excludeOhmValue, blockNumber);
-  if (record) {
-    pushTokenRecord(records, record);
+  const records = newTokenRecords(getContractName(pairAddress), blockNumber);
+  // If we are restricting by token and tokenAddress does not match either side of the pair
+  if (tokenAddress && !getLiquidityPairTokens(pairAddress).includes(tokenAddress)) {
+    log.debug("Skipping Curve pair that does not match specified token address {}", [tokenAddress]);
+    return records;
+  }
+
+  // Calculate total value of the LP
+  const totalValue = getCurvePairTotalValue(pairAddress, blockNumber);
+  log.info("Total value of Curve LP {} is {}", [pairAddress, totalValue.toString()]);
+
+  // Calculate the unit rate of the LP
+  const unitRate = getCurvePairUnitRate(pairAddress, totalValue, blockNumber);
+
+  for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
+    const walletAddress = WALLET_ADDRESSES[i];
+
+    pushTokenRecord(
+      records,
+      getCurvePairRecord(pairAddress, unitRate, walletAddress, excludeOhmValue, blockNumber),
+    );
   }
 
   return records;
@@ -262,8 +334,6 @@ export function getLiquidityBalances(
 
       const currentTokenRecords = getLiquidityTokenRecords(liquidityBalance, blockNumber, riskFree);
 
-      // If the singleSidedValue is desired, we can halve the value of the LP and return that.
-      // TODO integrate excludeOhmValue into calculations
       if (excludeOhmValue) {
         setTokenRecordsMultiplier(currentTokenRecords, BigDecimal.fromString("0.5"));
       }

@@ -160,8 +160,11 @@ function getLiquiditySupply(blockNumber: BigInt): TokenRecords {
       }
 
       const decimals = ohmToken.decimals();
+      // This obtains the total amount of OHM in the LP
       const balance = ohmToken.balanceOf(Address.fromString(pairAddress));
       if (balance.equals(BigInt.zero())) continue;
+
+      // TODO We need to calculate Olympus' ownership of the LP
 
       const balanceDecimal = toDecimal(balance, decimals);
 

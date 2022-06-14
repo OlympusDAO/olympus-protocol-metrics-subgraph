@@ -363,17 +363,58 @@ export const getOhmEthPairValue = (): BigDecimal => {
     .plus(toDecimal(OHM_ETH_RESERVES_ETH, ERC20_STANDARD_DECIMALS).times(getEthUsdRate()));
 };
 
-export const mockCurveOhmEthPair = (ohmBalance: BigInt): void => {
-  // Balance
-  createMockedFunction(
-    Address.fromString(ERC20_OHM_V2),
-    "balanceOf",
-    "balanceOf(address):(uint256)",
-  )
-    .withArgs([ethereum.Value.fromAddress(Address.fromString(PAIR_CURVE_OHM_ETH))])
-    .returns([ethereum.Value.fromUnsignedBigInt(ohmBalance)]);
+export const mockERC20TotalSupply = (
+  token: string,
+  tokenDecimals: i32,
+  totalSupply: BigInt,
+): void => {
+  const tokenAddress = Address.fromString(token);
 
-  createMockedFunction(Address.fromString(ERC20_OHM_V2), "decimals", "decimals():(uint8)").returns([
-    ethereum.Value.fromI32(OHM_V2_DECIMALS),
+  // Total supply
+  createMockedFunction(tokenAddress, "totalSupply", "totalSupply():(uint256)").returns([
+    ethereum.Value.fromUnsignedBigInt(totalSupply),
+  ]);
+
+  // Token decimals
+  createMockedFunction(tokenAddress, "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(tokenDecimals),
+  ]);
+};
+
+export const mockCurvePairTotalValue = (
+  pairAddress: string,
+  pairToken: string,
+  token0: string,
+  token1: string,
+  token0Balance: BigInt,
+  token1Balance: BigInt,
+  token0Decimals: i32,
+  token1Decimals: i32,
+): void => {
+  const pair = Address.fromString(pairAddress);
+  // Token lookup
+  createMockedFunction(pair, "coins", "coins(uint256):(address)")
+    .withArgs([ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(0))])
+    .returns([ethereum.Value.fromAddress(Address.fromString(token0))]);
+  createMockedFunction(pair, "coins", "coins(uint256):(address)")
+    .withArgs([ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(1))])
+    .returns([ethereum.Value.fromAddress(Address.fromString(token1))]);
+  // Token balance
+  createMockedFunction(pair, "balances", "balances(uint256):(uint256)")
+    .withArgs([ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(0))])
+    .returns([ethereum.Value.fromUnsignedBigInt(token0Balance)]);
+  createMockedFunction(pair, "balances", "balances(uint256):(uint256)")
+    .withArgs([ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(1))])
+    .returns([ethereum.Value.fromUnsignedBigInt(token1Balance)]);
+  // Token decimals
+  createMockedFunction(pair, "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(token0Decimals),
+  ]);
+  createMockedFunction(pair, "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(token1Decimals),
+  ]);
+  // Pair token
+  createMockedFunction(pair, "token", "token():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(pairToken)),
   ]);
 };
