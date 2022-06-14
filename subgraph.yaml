@@ -85,6 +85,8 @@ dataSources:
           file: ./abis/BalancerVault.json
         - name: ConvexBaseRewardPool
           file: ./abis/ConvexBaseRewardPool.json
+        - name: CurvePool
+          file: ./abis/CurvePool.json
       callHandlers:
         - function: rebase(uint256)
           handler: rebaseFunction
@@ -169,6 +171,8 @@ dataSources:
           file: ./abis/BalancerVault.json
         - name: ConvexBaseRewardPool
           file: ./abis/ConvexBaseRewardPool.json
+        - name: CurvePool
+          file: ./abis/CurvePool.json
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
@@ -253,6 +257,8 @@ dataSources:
           file: ./abis/BalancerVault.json
         - name: ConvexBaseRewardPool
           file: ./abis/ConvexBaseRewardPool.json
+        - name: CurvePool
+          file: ./abis/CurvePool.json
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
@@ -668,6 +674,8 @@ dataSources:
           file: ./abis/BalancerVault.json
         - name: ConvexBaseRewardPool
           file: ./abis/ConvexBaseRewardPool.json
+        - name: CurvePool
+          file: ./abis/CurvePool.json
       callHandlers:
         - function: stake(address,uint256,bool,bool)
           handler: handleMetrics
