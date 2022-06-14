@@ -315,7 +315,7 @@ export const getPairHandler = (contractAddress: string): PairHandler | null => {
   }
 
   const handler = handlers[0];
-  log.debug("Found handler pair: {}", [handler.getPair()]);
+  log.debug("Found handler pair: {}", [handler.getContract()]);
   return handler;
 };
 
@@ -336,7 +336,7 @@ export const getPairHandlers = (contractAddress: string): PairHandler[] => {
  * liquidity to.
  */
 export const LIQUIDITY_OWNED = [
-  new PairHandler(PairHandlerTypes.Balancer, POOL_BALANCER_OHM_DAI_WETH_ID),
+  new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_OHM_DAI_WETH_ID),
   new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_OHM_ETH),
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI_V2),
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI),

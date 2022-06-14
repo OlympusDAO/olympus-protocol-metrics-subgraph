@@ -423,17 +423,17 @@ export function getUSDRate(contractAddress: string, blockNumber: BigInt): BigDec
     throw new Error("Unable to find liquidity pool handler for contract: " + contractAddress);
   }
 
-  if (pairHandler.getHandler() === PairHandlerTypes.UniswapV2) {
-    return getUSDRateUniswapV2(contractAddress, pairHandler.getPair(), blockNumber);
+  if (pairHandler.getType() === PairHandlerTypes.UniswapV2) {
+    return getUSDRateUniswapV2(contractAddress, pairHandler.getContract(), blockNumber);
   }
 
-  if (pairHandler.getHandler() === PairHandlerTypes.UniswapV3) {
-    return getUSDRateUniswapV3(contractAddress, pairHandler.getPair(), blockNumber);
+  if (pairHandler.getType() === PairHandlerTypes.UniswapV3) {
+    return getUSDRateUniswapV3(contractAddress, pairHandler.getContract(), blockNumber);
   }
 
   throw new Error(
     "Unsupported liquidity pool handler type (" +
-      pairHandler.getHandler().toString() +
+      pairHandler.getType().toString() +
       ") for contract: " +
       contractAddress,
   );

@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import {
   BONDS_DEPOSIT,
@@ -10,6 +10,8 @@ import {
   ERC20_SOHM_V1,
   ERC20_SOHM_V2,
   ERC20_SOHM_V3,
+  getContractName,
+  LIQUIDITY_OWNED,
   MIGRATION_CONTRACT,
 } from "./Constants";
 import {
@@ -101,6 +103,56 @@ export function getCirculatingSupply(blockNumber: BigInt, totalSupply: BigDecima
   }
 
   return circulatingSupply;
+}
+
+/**
+ * Returns the quantity of OHM in liquidity pools
+ *
+ * @param blockNumber
+ * @returns
+ */
+function getLiquiditySupply(blockNumber: BigInt): BigDecimal {
+  let liquiditySupply = BigDecimal.zero();
+
+  for (let i = 0; i < LIQUIDITY_OWNED.length; i++) {
+    const pairHandler = LIQUIDITY_OWNED[i];
+    const pairAddress = pairHandler.getContract();
+
+    // We can just query the balance of the OHM token(s) in the pair address
+    const ohmTokens = [ERC20_OHM_V1, ERC20_OHM_V2];
+    for (let j = 0; j < ohmTokens.length; j++) {
+      const ohmTokenAddress = ohmTokens[j];
+      const ohmToken = getERC20(getContractName(ohmTokenAddress), ohmTokenAddress, blockNumber);
+      if (!ohmToken) {
+        throw new Error("Unable to bind ERC20 contract for OHM with address " + ohmTokenAddress);
+      }
+
+      const decimals = ohmToken.decimals();
+      const balance = ohmToken.balanceOf(Address.fromString(pairAddress));
+      const balanceDecimal = toDecimal(balance, decimals);
+      liquiditySupply = liquiditySupply.plus(balanceDecimal);
+      log.debug("Reserves of {} {} in pair {}", [
+        balanceDecimal.toString(),
+        getContractName(ohmTokenAddress),
+        getContractName(pairAddress),
+      ]);
+    }
+  }
+
+  return liquiditySupply;
+}
+
+/**
+ * The floating supply of OHM is defined as:
+ * - circulating supply
+ * - plus the quantity of OHM in liquidity pools
+ *
+ * @param totalSupply
+ * @param blockNumber
+ * @returns
+ */
+export function getFloatingSupply(totalSupply: BigDecimal, blockNumber: BigInt): BigDecimal {
+  return getCirculatingSupply(blockNumber, totalSupply).plus(getLiquiditySupply(blockNumber));
 }
 
 /**

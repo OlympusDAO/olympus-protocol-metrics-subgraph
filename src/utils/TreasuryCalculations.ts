@@ -2,7 +2,7 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecords } from "../../generated/schema";
 import { getLiquidityPoolValue } from "./LiquidityCalculations";
-import { getCirculatingSupply, getTotalSupply } from "./OhmCalculations";
+import { getCirculatingSupply, getFloatingSupply, getTotalSupply } from "./OhmCalculations";
 import { combineTokenRecords, newTokenRecords } from "./TokenRecordHelper";
 import { getStablecoinBalances, getStableValue } from "./TokenStablecoins";
 import { getVolatileValue } from "./TokenVolatile";
@@ -74,14 +74,16 @@ export function getTreasuryLiquidBackingPerOhmCirculating(blockNumber: BigInt): 
 /**
  * Returns the liquid backing per floating OHM, equal to:
  *
- * liquid backing / (OHM circulating supply + OHM in LPs)
- * {getTreasuryTotalBacking} / {getCirculatingSupply}
+ * liquid backing / OHM floating supply
+ * {getTreasuryTotalBacking} / {getFloatingSupply}
  *
  * @param blockNumber
  * @returns
  */
 export function getTreasuryLiquidBackingPerOhmFloating(blockNumber: BigInt): BigDecimal {
-  return BigDecimal.zero();
+  return getTreasuryTotalBacking(true, blockNumber).value.div(
+    getFloatingSupply(getTotalSupply(blockNumber), blockNumber),
+  );
 }
 
 /**

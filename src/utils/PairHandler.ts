@@ -13,26 +13,32 @@ export const enum PairHandlerTypes {
  * @module PairHandler
  */
 export class PairHandler {
-  protected handler: PairHandlerTypes;
-  protected pair: string;
+  protected type: PairHandlerTypes;
+  protected contract: string;
+  protected pool: string | null;
 
   /**
    * Creates a new mapping.
    *
    * @constructor
-   * @param handler The type of the liquidity pair
-   * @param pair The liquidity pair address
+   * @param type The type of the liquidity pair
+   * @param contract The liquidity pair/vault address
    */
-  constructor(handler: PairHandlerTypes, pair: string) {
-    this.handler = handler;
-    this.pair = pair;
+  constructor(type: PairHandlerTypes, contract: string, pool: string | null = null) {
+    this.type = type;
+    this.contract = contract;
+    this.pool = pool;
   }
 
-  getHandler(): PairHandlerTypes {
-    return this.handler;
+  getType(): PairHandlerTypes {
+    return this.type;
   }
 
-  getPair(): string {
-    return this.pair;
+  getContract(): string {
+    return this.contract;
+  }
+
+  getPool(): string | null {
+    return this.pool;
   }
 }

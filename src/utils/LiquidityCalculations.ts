@@ -239,10 +239,10 @@ export function getLiquidityBalances(
 
   for (let j = 0; j < ownedLiquidityPairs.length; j++) {
     const pairHandler = ownedLiquidityPairs[j];
-    log.debug("Working with pair {}", [pairHandler.getPair()]);
-    if (pairHandler.getHandler() === PairHandlerTypes.UniswapV2) {
-      const liquidityPair = getUniswapV2Pair(pairHandler.getPair(), blockNumber);
-      const liquidityBalance = new LiquidityBalances(pairHandler.getPair());
+    log.debug("Working with pair {}", [pairHandler.getContract()]);
+    if (pairHandler.getType() === PairHandlerTypes.UniswapV2) {
+      const liquidityPair = getUniswapV2Pair(pairHandler.getContract(), blockNumber);
+      const liquidityBalance = new LiquidityBalances(pairHandler.getContract());
 
       // Across the different sources, determine the total balance of liquidity pools
       // Uniswap LPs in wallets
@@ -269,10 +269,10 @@ export function getLiquidityBalances(
       }
 
       combineTokenRecords(records, currentTokenRecords);
-    } else if (pairHandler.getHandler() === PairHandlerTypes.Curve) {
+    } else if (pairHandler.getType() === PairHandlerTypes.Curve) {
       // TODO support risk-free value of Curve
       const currentTokenRecords = getCurvePairRecords(
-        pairHandler.getPair(),
+        pairHandler.getContract(),
         tokenAddress,
         excludeOhmValue,
         blockNumber,
@@ -284,20 +284,25 @@ export function getLiquidityBalances(
       }
 
       combineTokenRecords(records, currentTokenRecords);
-    } else if (pairHandler.getHandler() === PairHandlerTypes.Balancer) {
+    } else if (pairHandler.getType() === PairHandlerTypes.Balancer) {
+      const balancerPoolIdNullable: string | null = pairHandler.getPool();
+      if (balancerPoolIdNullable == null) throw new Error("Balancer pair does not have a pool id");
+
+      // Workaround for AssemblyScript not liking nulls
+      const balancerPoolId: string = balancerPoolIdNullable ? balancerPoolIdNullable : "";
       // TODO support risk-free value of Balancer
       combineTokenRecords(
         records,
         getBalancerRecords(
-          BALANCER_VAULT,
-          pairHandler.getPair(),
+          pairHandler.getContract(),
+          balancerPoolId,
           excludeOhmValue,
           blockNumber,
           tokenAddress,
         ),
       );
     } else {
-      throw new Error("Unsupported liquidity pair type: " + pairHandler.getHandler().toString());
+      throw new Error("Unsupported liquidity pair type: " + pairHandler.getType().toString());
     }
   }
 
