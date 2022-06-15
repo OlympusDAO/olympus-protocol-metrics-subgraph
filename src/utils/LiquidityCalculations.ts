@@ -31,8 +31,8 @@ import { toDecimal } from "./Decimals";
 import { LiquidityBalances } from "./LiquidityBalance";
 import { getBalancerRecords } from "./LiquidityBalancer";
 import { getCurvePairRecords } from "./LiquidityCurve";
+import { getOhmUSDPairRiskFreeValue, getUniswapV2PairValue } from "./LiquidityUniswapV2";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
-import { getOhmUSDPairRiskFreeValue, getUniswapV2PairValue } from "./Price";
 import {
   combineTokenRecords,
   getTokenRecordsBalance,

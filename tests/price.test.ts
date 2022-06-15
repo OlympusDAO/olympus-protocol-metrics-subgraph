@@ -17,51 +17,33 @@ import {
   NATIVE_ETH,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
-  PAIR_UNISWAP_V2_OHM_ETH_V2,
   PAIR_UNISWAP_V2_SYN_FRAX,
   PAIR_UNISWAP_V2_USDC_ETH,
   PAIR_UNISWAP_V3_3CRV_USD,
   PAIR_UNISWAP_V3_FPIS_FRAX,
-  PAIR_UNISWAP_V3_FXS_ETH,
 } from "../src/utils/Constants";
-import { DEFAULT_DECIMALS, toDecimal } from "../src/utils/Decimals";
+import { DEFAULT_DECIMALS } from "../src/utils/Decimals";
 import {
   getBaseEthUsdRate,
   getBaseOhmUsdRate,
   getBaseTokenOrientation,
   getBaseTokenUSDRate,
-  getOhmUSDPairRiskFreeValue,
-  getUniswapV2PairTotalValue,
-  getUniswapV2PairValue,
-  getUniswapV3PairTotalValue,
   getUSDRate,
   PairTokenBaseOrientation,
 } from "../src/utils/Price";
 import {
   ERC20_STANDARD_DECIMALS,
-  ETH_USD_RESERVE_BLOCK,
-  FXS_ETH_BALANCE_ETH,
-  FXS_ETH_BALANCE_FXS,
   getERC20UsdRate,
   getEthUsdRate,
-  getFxsUsdRate,
-  getOhmEthPairValue,
   getOhmUsdRate,
-  getPairValue,
   getTribeUsdRate,
   mockEthUsdRate,
   mockFxsEthRate,
-  mockOhmEthPair,
   mockRateUniswapV3,
   mockTribeEthRate,
   mockUniswapV2Pair,
   mockUsdOhmV2Rate,
-  OHM_ETH_TOTAL_SUPPLY,
   OHM_USD_RESERVE_BLOCK,
-  OHM_USD_RESERVE_OHM,
-  OHM_USD_RESERVE_USD,
-  OHM_USD_TOTAL_SUPPLY,
-  OHM_V2_DECIMALS,
   USDC_DECIMALS,
 } from "./pairHelper";
 
@@ -540,156 +522,6 @@ describe("get USD rate", () => {
   //   assert.stringEquals(
   //     unitRate.toString(),
   //     getUSDRate(ERC20_CVX_OHMETH, OHM_USD_RESERVE_BLOCK).toString(),
-  //   );
-  // });
-});
-
-describe("UniswapV2 pair value", () => {
-  test("OHM-DAI pair value is correct", () => {
-    const token0Reserves = BigInt.fromString("1233838296976506");
-    const token1Reserves = BigInt.fromString("15258719216508026301937394");
-    mockUniswapV2Pair(
-      ERC20_OHM_V2,
-      ERC20_DAI,
-      OHM_V2_DECIMALS,
-      ERC20_STANDARD_DECIMALS,
-      token0Reserves,
-      token1Reserves,
-      BigInt.fromString("133005392717808439119"),
-      PAIR_UNISWAP_V2_OHM_DAI_V2,
-      ERC20_STANDARD_DECIMALS,
-    );
-
-    const pairValue = getUniswapV2PairTotalValue(PAIR_UNISWAP_V2_OHM_DAI_V2, ETH_USD_RESERVE_BLOCK);
-    // 12.36687113
-    const ohmRate = toDecimal(token1Reserves, ERC20_STANDARD_DECIMALS).div(
-      toDecimal(token0Reserves, OHM_V2_DECIMALS),
-    );
-    const calculatedValue = getPairValue(
-      toDecimal(token0Reserves, OHM_V2_DECIMALS),
-      toDecimal(token1Reserves, ERC20_STANDARD_DECIMALS),
-      ohmRate,
-      BigDecimal.fromString("1"),
-    );
-
-    assert.stringEquals(calculatedValue.toString(), pairValue.toString());
-  });
-
-  test("OHM-ETH pair value is correct", () => {
-    mockOhmEthPair();
-    mockUsdOhmV2Rate();
-    mockEthUsdRate();
-
-    const pairValue = getUniswapV2PairTotalValue(PAIR_UNISWAP_V2_OHM_ETH_V2, ETH_USD_RESERVE_BLOCK);
-    const calculatedValue = getOhmEthPairValue();
-    log.debug("difference: {}", [pairValue.minus(calculatedValue).toString()]);
-
-    // There is a loss of precision, so we need to ensure that the value is close, but not equal
-    assert.assertTrue(
-      pairValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
-    );
-  });
-
-  test("OHM-ETH pair balance value is correct", () => {
-    mockOhmEthPair();
-    mockUsdOhmV2Rate();
-    mockEthUsdRate();
-
-    const lpBalance = BigInt.fromString("1000000000000000000");
-    const balanceValue = getUniswapV2PairValue(
-      lpBalance,
-      PAIR_UNISWAP_V2_OHM_ETH_V2,
-      ETH_USD_RESERVE_BLOCK,
-    );
-
-    // (balance / total supply) * pair value
-    const calculatedValue = getOhmEthPairValue().times(
-      toDecimal(lpBalance, 18).div(toDecimal(OHM_ETH_TOTAL_SUPPLY, 18)),
-    );
-    log.debug("difference: {}", [balanceValue.minus(calculatedValue).toString()]);
-
-    // There is a loss of precision, so we need to ensure that the value is close, but not equal
-    assert.assertTrue(
-      balanceValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
-    );
-  });
-});
-
-describe("UniswapV2 risk-free pair value", () => {
-  describe("OHM-DAI", () => {
-    test("risk-free pair value is correct", () => {
-      mockUsdOhmV2Rate();
-
-      const lpBalance = BigInt.fromString("1000000000000000000");
-      const pairValue = getOhmUSDPairRiskFreeValue(
-        lpBalance,
-        PAIR_UNISWAP_V2_OHM_DAI_V2,
-        OHM_USD_RESERVE_BLOCK,
-      );
-      // (# LP tokens / LP total supply) * (2) * sqrt(# DAI * # OHM)
-      const calculatedValue = toDecimal(lpBalance, 18)
-        .div(toDecimal(OHM_USD_TOTAL_SUPPLY, 18))
-        .times(BigDecimal.fromString("2"))
-        .times(
-          toDecimal(
-            toDecimal(OHM_USD_RESERVE_USD, ERC20_STANDARD_DECIMALS)
-              .times(toDecimal(OHM_USD_RESERVE_OHM, OHM_V2_DECIMALS))
-              .truncate(0)
-              .digits.sqrt(),
-            0,
-          ),
-        );
-      log.debug("calculated risk-free value: {}", [calculatedValue.toString()]);
-      log.debug("difference: {}", [pairValue.minus(calculatedValue).toString()]);
-
-      // There is a loss of precision, so we need to ensure that the value is close, but not equal
-      assert.assertTrue(
-        pairValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
-      );
-    });
-  });
-});
-
-describe("UniswapV3 pair value", () => {
-  test("FXS-ETH pair value is correct", () => {
-    mockFxsEthRate();
-    mockEthUsdRate();
-
-    const pairValue = getUniswapV3PairTotalValue(PAIR_UNISWAP_V3_FXS_ETH, ETH_USD_RESERVE_BLOCK);
-    // # ETH * p ETH + # FXS * p FXS
-    const calculatedValue = toDecimal(FXS_ETH_BALANCE_FXS, ERC20_STANDARD_DECIMALS)
-      .times(getFxsUsdRate())
-      .plus(toDecimal(FXS_ETH_BALANCE_ETH, ERC20_STANDARD_DECIMALS).times(getEthUsdRate()));
-    log.debug("calculated value: {}", [calculatedValue.toString()]);
-    log.debug("difference: {}", [pairValue.minus(calculatedValue).toString()]);
-
-    // There is a loss of precision, so we need to ensure that the value is close, but not equal
-    // TODO improve assertion
-    assert.assertTrue(
-      pairValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")) &&
-        pairValue.minus(calculatedValue).gt(BigDecimal.fromString("-0.000000000000000001")),
-    );
-  });
-
-  // test("pair balance value is correct", () => {
-  //   mockOhmEthPair();
-  //   mockUsdOhmRate();
-  //   mockEthUsdRate();
-
-  //   const lpBalance = BigInt.fromString("1000000000000000000");
-  //   const balanceValue = getUniswapV2PairBalanceValue(
-  //     lpBalance,
-  //     PAIR_UNISWAP_V2_OHM_ETH_V2,
-  //     ETH_USD_RESERVE_BLOCK,
-  //   );
-
-  //   // (balance / total supply) * pair value
-  //   const calculatedValue = getOhmEthPairValue().times(
-  //     toDecimal(lpBalance, 18).div(toDecimal(OHM_ETH_TOTAL_SUPPLY, 18)),
-  //   );
-  //   // There is a loss of precision, so we need to ensure that the value is close, but not equal
-  //   assert.assertTrue(
-  //     balanceValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
   //   );
   // });
 });
