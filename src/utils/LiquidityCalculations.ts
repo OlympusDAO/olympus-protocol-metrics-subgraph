@@ -5,6 +5,7 @@ import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
   getContractName,
   getLiquidityPairTokens,
+  getStakedToken,
   LIQUIDITY_OWNED,
   OHMDAI_ONSEN_ID,
   OHMLUSD_ONSEN_ID,
@@ -119,6 +120,8 @@ function getLiquidityTokenRecords(
 /**
  * Returns the total value of the given Curve pair.
  *
+ * Calculated as: token0 balance * toke0 rate + token1 balance * token rate
+ *
  * @param pairAddress
  * @param blockNumber
  * @returns
@@ -165,7 +168,7 @@ export function getCurvePairRecord(
   walletAddress: string,
   excludeOhmValue: boolean,
   blockNumber: BigInt,
-): TokenRecord {
+): TokenRecord | null {
   const pair = CurvePool.bind(Address.fromString(pairAddress));
   const pairTokenAddress = pair.token().toHexString();
   const pairToken = getERC20(getContractName(pairTokenAddress), pairTokenAddress, blockNumber);
@@ -173,17 +176,66 @@ export function getCurvePairRecord(
     throw new Error("Unable to bind to ERC20 contract for Curve pair token " + pairTokenAddress);
   }
 
+  let tokenBalanceDecimal = BigDecimal.zero();
+  let finalTokenAddress = pairTokenAddress;
+
   // Get the balance of the pair's token in walletAddress
   const pairTokenBalance = pairToken.balanceOf(Address.fromString(walletAddress));
-  const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
+  if (pairTokenBalance.equals(BigInt.zero())) {
+    const stakedTokenAddressNullable = getStakedToken(pairTokenAddress);
+    // If there's no balance and no staked token, exit
+    if (!stakedTokenAddressNullable) {
+      log.debug("Curve pair balance for token {} ({}) was 0, and no staked token was found.", [
+        getContractName(pairTokenAddress),
+        pairTokenAddress,
+      ]);
+      return null;
+    }
+
+    const stakedTokenAddress = stakedTokenAddressNullable ? stakedTokenAddressNullable : "";
+    const stakedPairToken = getERC20(
+      getContractName(stakedTokenAddress),
+      stakedTokenAddress,
+      blockNumber,
+    );
+    if (!stakedPairToken) {
+      throw new Error(
+        "Unable to bind to ERC20 contract for Curve pair token " + stakedTokenAddress,
+      );
+    }
+
+    const stakedTokenBalance = stakedPairToken.balanceOf(Address.fromString(walletAddress));
+    if (stakedTokenBalance.equals(BigInt.zero())) {
+      log.debug("Curve pair balance for staked token {} ({}) was 0.", [
+        getContractName(stakedTokenAddress),
+        stakedTokenAddress,
+      ]);
+      return null;
+    }
+
+    tokenBalanceDecimal = toDecimal(stakedTokenBalance, stakedPairToken.decimals());
+    finalTokenAddress = stakedTokenAddress;
+    log.info("Curve pair balance for staked token {} ({}) was {}", [
+      getContractName(stakedTokenAddress),
+      stakedTokenAddress,
+      tokenBalanceDecimal.toString(),
+    ]);
+  } else {
+    tokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
+    log.info("Curve pair balance for token {} ({}) was {}", [
+      getContractName(pairTokenAddress),
+      pairTokenAddress,
+      tokenBalanceDecimal.toString(),
+    ]);
+  }
 
   return newTokenRecord(
-    getContractName(pairTokenAddress),
-    pairTokenAddress,
+    getContractName(finalTokenAddress),
+    finalTokenAddress,
     getContractName(walletAddress),
     walletAddress,
     pairRate,
-    pairTokenBalanceDecimal,
+    tokenBalanceDecimal,
     blockNumber,
     excludeOhmValue ? BigDecimal.fromString("0.5") : BigDecimal.fromString("1"),
   );
@@ -269,11 +321,16 @@ export function getCurvePairRecords(
 
   for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
     const walletAddress = WALLET_ADDRESSES[i];
-
-    pushTokenRecord(
-      records,
-      getCurvePairRecord(pairAddress, unitRate, walletAddress, excludeOhmValue, blockNumber),
+    const record = getCurvePairRecord(
+      pairAddress,
+      unitRate,
+      walletAddress,
+      excludeOhmValue,
+      blockNumber,
     );
+    if (!record) continue;
+
+    pushTokenRecord(records, record);
   }
 
   return records;
@@ -803,7 +860,10 @@ export function getLiquidityPoolValue(
   blockNumber: BigInt,
 ): TokenRecords {
   log.info("Calculating liquidity pool value", []);
-  const records = getLiquidityBalances(null, riskFree, excludeOhmValue, blockNumber);
+  const records = newTokenRecords("Liquidity Pool Value", blockNumber);
+
+  combineTokenRecords(records, getLiquidityBalances(null, riskFree, excludeOhmValue, blockNumber));
+
   log.info("Liquidity pool value: {}", [records.value.toString()]);
   return records;
 }

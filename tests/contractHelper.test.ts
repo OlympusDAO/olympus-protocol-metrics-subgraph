@@ -6,8 +6,10 @@ import {
   CONVEX_ALLOCATOR2,
   CONVEX_ALLOCATOR3,
   CONVEX_ALLOCATORS,
+  CONVEX_STAKING_CONTRACTS,
   CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
   ERC20_CVX_FRAX_3CRV,
+  ERC20_CVX_OHMETH,
   ERC20_FRAX_3CRV,
   NATIVE_ETH,
 } from "../src/utils/Constants";
@@ -42,12 +44,20 @@ const mockConvexStakedBalance = (
 
 export const mockConvexStakedBalanceZero = (): void => {
   for (let i = 0; i < CONVEX_ALLOCATORS.length; i++) {
-    mockConvexStakedBalance(
-      ERC20_CVX_FRAX_3CRV,
-      CONVEX_ALLOCATORS[i],
-      CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
-      BigInt.zero(),
-    );
+    for (let j = 0; j < CONVEX_STAKING_CONTRACTS.length; j++) {
+      mockConvexStakedBalance(
+        ERC20_CVX_FRAX_3CRV,
+        CONVEX_ALLOCATORS[i],
+        CONVEX_STAKING_CONTRACTS[j],
+        BigInt.zero(),
+      );
+      mockConvexStakedBalance(
+        ERC20_CVX_OHMETH,
+        CONVEX_ALLOCATORS[i],
+        CONVEX_STAKING_CONTRACTS[j],
+        BigInt.zero(),
+      );
+    }
   }
 };
 
@@ -97,18 +107,7 @@ describe("Staked Convex", () => {
   });
 
   test("cvxFRAX3CRV token records", () => {
-    mockConvexStakedBalance(
-      ERC20_CVX_FRAX_3CRV,
-      CONVEX_ALLOCATOR1,
-      CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
-      toBigInt(BigDecimal.fromString("0"), ERC20_STANDARD_DECIMALS),
-    );
-    mockConvexStakedBalance(
-      ERC20_CVX_FRAX_3CRV,
-      CONVEX_ALLOCATOR2,
-      CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
-      toBigInt(BigDecimal.fromString("0"), ERC20_STANDARD_DECIMALS),
-    );
+    mockConvexStakedBalanceZero();
     mockConvexStakedBalance(
       ERC20_CVX_FRAX_3CRV,
       CONVEX_ALLOCATOR3,

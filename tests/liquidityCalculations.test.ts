@@ -3,10 +3,12 @@ import { assert, describe, test } from "matchstick-as/assembly/index";
 
 import {
   ERC20_CRV_OHMETH,
+  ERC20_CVX_OHMETH,
   ERC20_DAI,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_WETH,
+  getContractName,
   NATIVE_ETH,
   PAIR_CURVE_OHM_ETH,
   PAIR_UNISWAP_V2_OHM_DAI,
@@ -239,9 +241,15 @@ describe("Curve", () => {
       ERC20_STANDARD_DECIMALS,
       toBigInt(crvTotalSupply, ERC20_STANDARD_DECIMALS),
     );
+    mockERC20TotalSupply(
+      ERC20_CVX_OHMETH,
+      ERC20_STANDARD_DECIMALS,
+      toBigInt(crvTotalSupply, ERC20_STANDARD_DECIMALS),
+    );
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
     mockZeroWalletBalances(ERC20_CRV_OHMETH, WALLET_ADDRESSES);
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, WALLET_ADDRESSES);
     mockWalletBalance(
       ERC20_CRV_OHMETH,
       TREASURY_ADDRESS_V3,
@@ -284,9 +292,15 @@ describe("Curve", () => {
       ERC20_STANDARD_DECIMALS,
       toBigInt(crvTotalSupply, ERC20_STANDARD_DECIMALS),
     );
+    mockERC20TotalSupply(
+      ERC20_CVX_OHMETH,
+      ERC20_STANDARD_DECIMALS,
+      toBigInt(crvTotalSupply, ERC20_STANDARD_DECIMALS),
+    );
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
     mockZeroWalletBalances(ERC20_CRV_OHMETH, WALLET_ADDRESSES);
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, WALLET_ADDRESSES);
     mockWalletBalance(
       ERC20_CRV_OHMETH,
       TREASURY_ADDRESS_V3,
@@ -307,5 +321,58 @@ describe("Curve", () => {
       .times(totalValueExpected)
       .times(BigDecimal.fromString("0.5"));
     assert.stringEquals(expectedValue.toString(), records.value.toString());
+  });
+
+  test("staked OHM-ETH pair value is correct", () => {
+    mockEthUsdRate();
+    mockUsdOhmV2Rate();
+
+    // Mock total value
+    const ohmReserves = BigDecimal.fromString("100");
+    const wethReserves = BigDecimal.fromString("105");
+    mockCurvePairTotalValue(
+      PAIR_CURVE_OHM_ETH,
+      ERC20_CRV_OHMETH,
+      ERC20_OHM_V2,
+      ERC20_WETH,
+      toBigInt(ohmReserves, OHM_V2_DECIMALS),
+      toBigInt(wethReserves, ERC20_STANDARD_DECIMALS),
+      OHM_V2_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+    );
+    // Total supply
+    const crvTotalSupply = BigDecimal.fromString("20");
+    mockERC20TotalSupply(
+      ERC20_CRV_OHMETH,
+      ERC20_STANDARD_DECIMALS,
+      toBigInt(crvTotalSupply, ERC20_STANDARD_DECIMALS),
+    );
+    mockERC20TotalSupply(
+      ERC20_CVX_OHMETH,
+      ERC20_STANDARD_DECIMALS,
+      toBigInt(crvTotalSupply, ERC20_STANDARD_DECIMALS),
+    );
+    // Mock balance
+    const crvBalance = BigDecimal.fromString("10");
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, WALLET_ADDRESSES);
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, WALLET_ADDRESSES);
+    mockWalletBalance(
+      ERC20_CVX_OHMETH,
+      TREASURY_ADDRESS_V3,
+      toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
+    ); // Balance for the staked Curve token
+
+    const records = getLiquidityBalances(NATIVE_ETH, false, false, OHM_USD_RESERVE_BLOCK);
+
+    const totalValueExpected = getPairValue(
+      ohmReserves,
+      wethReserves,
+      getOhmUsdRate(),
+      getEthUsdRate(),
+    );
+    const expectedValue = crvBalance.div(crvTotalSupply).times(totalValueExpected);
+    assert.stringEquals(expectedValue.toString(), records.value.toString());
+    assert.assertTrue(records.records[0].includes(getContractName(ERC20_CVX_OHMETH)) == true); // cvxOHMETH should be mentioned in the id
+    assert.i32Equals(records.records.length, 1);
   });
 });

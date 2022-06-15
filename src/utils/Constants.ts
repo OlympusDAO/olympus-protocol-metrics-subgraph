@@ -41,6 +41,7 @@ export const ONSEN_ALLOCATOR = "0x0316508a1b5abf1CAe42912Dc2C8B9774b682fFC";
 export const SUSHI_MASTERCHEF = "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd";
 export const VEFXS_ALLOCATOR = "0xde7b85f52577b113181921a7aa8fc0c22e309475";
 export const CONVEX_STAKING_FRAX_3CRV_REWARD_POOL = "0xB900EF131301B307dB5eFcbed9DBb50A3e209B2e";
+export const CONVEX_STAKING_OHM_ETH_REWARD_POOL = "0xd683C7051a28fA150EB3F4BD92263865D4a67778";
 
 export const OHMDAISLPBOND_CONTRACT1 = "0xd27001d1aaed5f002c722ad729de88a91239ff29";
 export const OHMDAISLPBOND_CONTRACT1_BLOCK = "12154429";
@@ -137,11 +138,12 @@ export const ERC20_STABLE_TOKENS = [
 export const ERC20_ALCX = "0xdbdb4d16eda451d0503b854cf79d55697f90c8df";
 export const ERC20_CRV = "0xd533a949740bb3306d119cc777fa900ba034cd52";
 export const ERC20_CRV_3POOL = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490";
-export const ERC20_CRV_OHMETH = "0x3660BD168494d61ffDac21E403d0F6356cF90fD7";
+export const ERC20_CRV_OHMETH = "0x3660bd168494d61ffdac21e403d0f6356cf90fd7";
 export const ERC20_CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
 export const ERC20_CVX_BLOCK = "12460000";
 export const ERC20_CVX_CRV = "0x62b9c7356a2dc64a1969e19c23e4f579f9810aa7";
 export const ERC20_CVX_FXS = "0xfeef77d3f69374f66429c91d732a244f074bdf74";
+export const ERC20_CVX_OHMETH = "0x9bb0daf4361e1b84f5a44914595c46f07e9d12a4"; // Staked ERC20_CRV_OHMETH
 export const ERC20_CVX_VL_V1 = "0xd18140b4b819b895a3dba5442f959fa44994af50";
 export const ERC20_CVX_VL_V1_BLOCK = "13153663";
 export const ERC20_CVX_VL_V2 = "0x72a19342e8F1838460eBFCCEf09F6585e32db86E";
@@ -167,6 +169,7 @@ export const ERC20_VOLATILE_TOKENS = [
   ERC20_CRV,
   ERC20_CVX_CRV,
   // ERC20_CVX_FXS, // Needs Curve liquidity pool for price lookup
+  // ERC20_CVX_OHMETH,
   ERC20_CVX_VL_V1,
   ERC20_CVX_VL_V2,
   ERC20_CVX,
@@ -187,10 +190,28 @@ export const ERC20_VOLATILE_TOKENS = [
 export const ERC20_VOLATILE_ILLIQUID_TOKENS = [ERC20_FXS_VE];
 export const ERC20_VOLATILE_BLUE_CHIP_TOKENS = [ERC20_WBTC, ERC20_WETH];
 
+const STAKED_TOKENS = new Map<string, string>();
+STAKED_TOKENS.set(ERC20_CRV_OHMETH, ERC20_CVX_OHMETH);
+
+/**
+ * Gets the staked version of the given token.
+ *
+ * @param contractAddress
+ * @returns contract address for the staked token, or null
+ */
+export const getStakedToken = (contractAddress: string): string | null => {
+  if (!STAKED_TOKENS.has(contractAddress)) return null;
+
+  return STAKED_TOKENS.get(contractAddress);
+};
+
 /**
  * Convex staking contracts (reward pools).
  */
-export const CONVEX_STAKING_CONTRACTS = [CONVEX_STAKING_FRAX_3CRV_REWARD_POOL];
+export const CONVEX_STAKING_CONTRACTS = [
+  CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
+  CONVEX_STAKING_OHM_ETH_REWARD_POOL,
+];
 
 // Liquidity Pools
 export const PAIR_CURVE_FXS_CVX_FXS = "0xd658a338613198204dca1143ac3f01a722b5d94a";
@@ -243,12 +264,18 @@ LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CRV, [
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CRV_3POOL, [
   new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_3CRV_USD),
 ]);
+// LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CRV_OHMETH, [
+//   new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_OHM_ETH),
+// ]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH),
 ]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_CRV, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_CRV_ETH),
 ]);
+// LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_OHMETH, [
+//   new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_OHM_ETH),
+// ]); // Priced the same as the non-staked version, ERC20_CRV_OHMETH
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FOX, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_FOX_ETH),
 ]);
@@ -390,7 +417,12 @@ export const WALLET_ADDRESSES = [
   VEFXS_ALLOCATOR,
 ];
 
-export const CONVEX_ALLOCATORS = [CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3];
+export const CONVEX_ALLOCATORS = [
+  CONVEX_ALLOCATOR1,
+  CONVEX_ALLOCATOR2,
+  CONVEX_ALLOCATOR3,
+  DAO_WALLET,
+];
 
 const ALLOCATOR_ONSEN_ID = new Map<string, i32>();
 ALLOCATOR_ONSEN_ID.set(ERC20_DAI, OHMDAI_ONSEN_ID);
@@ -525,6 +557,7 @@ CONTRACT_NAME_MAP.set(ERC20_CRV_3POOL, "Curve 3Pool");
 CONTRACT_NAME_MAP.set(ERC20_CRV_OHMETH, "Curve OHM-ETH");
 CONTRACT_NAME_MAP.set(ERC20_CRV, "CRV");
 CONTRACT_NAME_MAP.set(ERC20_CVX_CRV, "cvxCRV");
+CONTRACT_NAME_MAP.set(ERC20_CVX_OHMETH, "cvxOHMETH");
 CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_3CRV, "cvxFRAX3CRV");
 CONTRACT_NAME_MAP.set(ERC20_CVX_FXS, "cvxFXS");
 CONTRACT_NAME_MAP.set(ERC20_CVX_VL_V1, "vlCVX V1");

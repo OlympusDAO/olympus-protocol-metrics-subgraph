@@ -315,7 +315,7 @@ export function getERC20Balance(
   currentBlockNumber: BigInt,
 ): BigInt {
   if (!contract) {
-    log.info("Contract for address {} does not exist at block {}", [
+    log.debug("Contract for address {} does not exist at block {}", [
       address,
       currentBlockNumber.toString(),
     ]);
@@ -349,7 +349,7 @@ export function getUniswapV2PairBalance(
   tokenAddress: string | null = null,
 ): BigInt {
   if (!contract) {
-    log.info("Contract for address {} does not exist at block {}", [
+    log.debug("Contract for address {} does not exist at block {}", [
       address,
       currentBlockNumber.toString(),
     ]);
@@ -392,7 +392,7 @@ export function getOnsenBalance(
 ): BigDecimal | null {
   const contract = getMasterChef(SUSHI_MASTERCHEF, blockNumber);
   if (!contract) {
-    log.info("Contract for address {} does not exist at block {}", [
+    log.debug("Contract for address {} does not exist at block {}", [
       allocatorAddress,
       blockNumber.toString(),
     ]);
@@ -429,7 +429,7 @@ export function getMasterChefBalance(
   currentBlockNumber: BigInt,
 ): BigInt {
   if (!contract) {
-    log.info("Contract for address {} does not exist at block {}", [
+    log.debug("Contract for address {} does not exist at block {}", [
       address,
       currentBlockNumber.toString(),
     ]);
