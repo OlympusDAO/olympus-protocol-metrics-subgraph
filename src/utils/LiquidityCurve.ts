@@ -2,6 +2,7 @@ import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { log } from "matchstick-as";
 
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
+import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
   CONVEX_STAKING_CONTRACTS,
@@ -15,6 +16,8 @@ import { getConvexStakedBalance, getERC20 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
 import { newTokenRecord, newTokenRecords, pushTokenRecord } from "./TokenRecordHelper";
+
+// ### Balances ###
 
 /**
  * Returns the total value of the given Curve pair.
@@ -165,6 +168,20 @@ function getCurvePairToken(pairAddress: string): string {
   return pair.token().toHexString();
 }
 
+function getCurvePairTokenContract(pairAddress: string, blockNumber: BigInt): ERC20 {
+  const pairTokenAddress = getCurvePairToken(pairAddress);
+  const pairTokenContract = getERC20(
+    getContractName(pairTokenAddress),
+    pairTokenAddress,
+    blockNumber,
+  );
+  if (!pairTokenContract) {
+    throw new Error("Unable to bind to ERC20 contract for Curve pair token " + pairTokenAddress);
+  }
+
+  return pairTokenContract;
+}
+
 /**
  * Calculates the unit rate of the given Curve pair.
  *
@@ -182,15 +199,7 @@ function getCurvePairUnitRate(
   totalValue: BigDecimal,
   blockNumber: BigInt,
 ): BigDecimal {
-  const pairTokenAddress = getCurvePairToken(pairAddress);
-  const pairTokenContract = getERC20(
-    getContractName(pairTokenAddress),
-    pairTokenAddress,
-    blockNumber,
-  );
-  if (!pairTokenContract) {
-    throw new Error("Unable to bind to ERC20 contract for Curve pair token " + pairTokenAddress);
-  }
+  const pairTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
 
   const totalSupply = toDecimal(pairTokenContract.totalSupply(), pairTokenContract.decimals());
   const unitRate = totalValue.div(totalSupply);
@@ -275,6 +284,96 @@ export function getCurvePairRecords(
         pushTokenRecord(records, stakedRecord);
       }
     }
+  }
+
+  return records;
+}
+
+// ### Token Quantity ###
+function getBigDecimalFromBalance(
+  tokenAddress: string,
+  balance: BigInt,
+  blockNumber: BigInt,
+): BigDecimal {
+  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  if (!tokenContract) {
+    throw new Error("Unable to fetch ERC20 at address " + tokenAddress + " for Curve pool");
+  }
+
+  return toDecimal(balance, tokenContract.decimals());
+}
+
+export function getCurvePairTotalTokenQuantity(
+  pairAddress: string,
+  tokenAddress: string,
+  blockNumber: BigInt,
+): BigDecimal {
+  // Obtain both tokens
+  const pair = CurvePool.bind(Address.fromString(pairAddress));
+  const token0 = pair.coins(BigInt.fromI32(0));
+  const token1 = pair.coins(BigInt.fromI32(1));
+
+  if (token0.equals(Address.fromString(tokenAddress))) {
+    const token0Balance = pair.balances(BigInt.fromI32(0));
+    return getBigDecimalFromBalance(tokenAddress, token0Balance, blockNumber);
+  } else if (token1.equals(Address.fromString(tokenAddress))) {
+    const token1Balance = pair.balances(BigInt.fromI32(1));
+    return getBigDecimalFromBalance(tokenAddress, token1Balance, blockNumber);
+  }
+
+  log.warning("Attempted to obtain quantity of token {} from Curve pair {}, but it was not found", [
+    getContractName(tokenAddress),
+    getContractName(pairAddress),
+  ]);
+  return BigDecimal.zero();
+}
+
+export function getCurvePairTokenQuantity(
+  pairAddress: string,
+  tokenAddress: string,
+  blockNumber: BigInt,
+): TokenRecords {
+  log.info("Calculating quantity of token {} in Curve pool {}", [
+    getContractName(tokenAddress),
+    getContractName(pairAddress),
+  ]);
+  const records = newTokenRecords("Curve Pool Token Quantity", blockNumber);
+  const poolTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
+
+  // Calculate the token quantity for the pool
+  const totalQuantity = getCurvePairTotalTokenQuantity(pairAddress, tokenAddress, blockNumber);
+
+  const poolTokenAddress = poolTokenContract._address.toHexString();
+  const tokenDecimals = poolTokenContract.decimals();
+  log.info("Balancer pool {} has total quantity of {}", [
+    getContractName(poolTokenAddress),
+    totalQuantity.toString(),
+  ]);
+  const poolTokenTotalSupply = toDecimal(poolTokenContract.totalSupply(), tokenDecimals);
+
+  // Grab balances
+  const poolTokenBalances = getCurvePairRecords(pairAddress, null, false, blockNumber);
+
+  for (let i = 0; i < poolTokenBalances.records.length; i++) {
+    const recordId = poolTokenBalances.records[i];
+    const record = TokenRecord.load(recordId);
+    if (!record) {
+      throw new Error("Unable to load TokenRecord with id " + recordId);
+    }
+
+    const tokenBalance = totalQuantity.times(record.balance).div(poolTokenTotalSupply);
+    pushTokenRecord(
+      records,
+      newTokenRecord(
+        getContractName(tokenAddress) + " in " + getContractName(poolTokenAddress),
+        poolTokenAddress,
+        record.source,
+        record.sourceAddress,
+        BigDecimal.fromString("1"),
+        tokenBalance,
+        blockNumber,
+      ),
+    );
   }
 
   return records;

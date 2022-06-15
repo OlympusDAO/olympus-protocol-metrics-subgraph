@@ -15,7 +15,7 @@ import {
   PAIR_UNISWAP_V2_USDC_ETH,
   PAIR_UNISWAP_V3_FXS_ETH,
 } from "../src/utils/Constants";
-import { toDecimal } from "../src/utils/Decimals";
+import { toBigInt, toDecimal } from "../src/utils/Decimals";
 
 export const ETH_TRIBE_RESERVE_TRIBE = BigInt.fromString("40963255589554358793575");
 export const ETH_TRIBE_RESERVE_ETH = BigInt.fromString("4956325030062526848");
@@ -384,6 +384,8 @@ export const mockERC20TotalSupply = (
 export const mockCurvePairTotalValue = (
   pairAddress: string,
   pairToken: string,
+  pairTokenDecimals: i32,
+  pairTokenTotalSupply: BigDecimal,
   token0: string,
   token1: string,
   token0Balance: BigInt,
@@ -407,14 +409,22 @@ export const mockCurvePairTotalValue = (
     .withArgs([ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(1))])
     .returns([ethereum.Value.fromUnsignedBigInt(token1Balance)]);
   // Token decimals
-  createMockedFunction(pair, "decimals", "decimals():(uint8)").returns([
+  createMockedFunction(Address.fromString(token0), "decimals", "decimals():(uint8)").returns([
     ethereum.Value.fromI32(token0Decimals),
   ]);
-  createMockedFunction(pair, "decimals", "decimals():(uint8)").returns([
+  createMockedFunction(Address.fromString(token1), "decimals", "decimals():(uint8)").returns([
     ethereum.Value.fromI32(token1Decimals),
   ]);
   // Pair token
   createMockedFunction(pair, "token", "token():(address)").returns([
     ethereum.Value.fromAddress(Address.fromString(pairToken)),
   ]);
+  createMockedFunction(Address.fromString(pairToken), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(pairTokenDecimals),
+  ]);
+  createMockedFunction(
+    Address.fromString(pairToken),
+    "totalSupply",
+    "totalSupply():(uint256)",
+  ).returns([ethereum.Value.fromUnsignedBigInt(toBigInt(pairTokenTotalSupply, pairTokenDecimals))]);
 };

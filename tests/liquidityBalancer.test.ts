@@ -176,7 +176,7 @@ describe("token quantity", () => {
     assert.stringEquals(ohm.toString(), BALANCE_OHM.toString());
   });
 
-  test("quantity of OHM token in pool", () => {
+  test("balance of OHM token in pool", () => {
     // Mock the balancer
     mockBalancerVault(
       BALANCER_VAULT,
