@@ -1,9 +1,15 @@
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
+import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { TokenRecords } from "../../generated/schema";
-import { ERC20_OHM_V2, getContractName, getLiquidityPairTokens } from "./Constants";
-import { getERC20 } from "./ContractHelper";
+import {
+  ERC20_OHM_V2,
+  getContractName,
+  getLiquidityPairTokens,
+  WALLET_ADDRESSES,
+} from "./Constants";
+import { getERC20, getERC20Balance } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
 import { newTokenRecord, newTokenRecords, pushTokenRecord } from "./TokenRecordHelper";
@@ -12,22 +18,13 @@ export function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): Ba
   return BalancerVault.bind(Address.fromString(vaultAddress));
 }
 
-export function getBalancerRecords(
+function getBalancerPoolTotalValue(
   vaultAddress: string,
   poolId: string,
-  excludeOhmValue: boolean,
+  nonOhmValueOnly: boolean,
   blockNumber: BigInt,
-  tokenAddress: string | null = null,
-): TokenRecords {
-  log.debug("Calculating value of Balancer Pool {} for id {}", [vaultAddress, poolId]);
-  const records = newTokenRecords("Balancer Pool", blockNumber);
-  if (tokenAddress && !getLiquidityPairTokens(poolId).includes(tokenAddress)) {
-    log.debug("tokenAddress specified and not found in balancer pool. Skipping.", []);
-    return records;
-  }
-
+): BigDecimal {
   const vault = getBalancerVault(vaultAddress, blockNumber);
-  // Fetch the token balances for the specified pool
   const poolTokenWrapper = vault.getPoolTokens(Bytes.fromHexString(poolId));
   const addresses: Array<Address> = poolTokenWrapper.getTokens();
   const balances: Array<BigInt> = poolTokenWrapper.getBalances();
@@ -64,24 +61,95 @@ export function getBalancerRecords(
     }
   }
 
+  return nonOhmValueOnly ? nonOhmValue : totalValue;
+}
+
+function getBalancerPoolUnitRate(
+  poolTokenContract: ERC20,
+  totalValue: BigDecimal,
+  _blockNumber: BigInt,
+): BigDecimal {
+  const totalSupply = poolTokenContract.totalSupply();
+  const totalSupplyDecimals = toDecimal(totalSupply, poolTokenContract.decimals());
+
+  return totalValue.div(totalSupplyDecimals);
+}
+
+function getBalancerPoolToken(vaultAddress: string, poolId: string, blockNumber: BigInt): ERC20 {
+  const vault = getBalancerVault(vaultAddress, blockNumber);
+  const poolInfo = vault.getPool(Bytes.fromHexString(poolId));
+  const poolToken = poolInfo.getValue0().toHexString();
+  const poolTokenContract = getERC20(getContractName(poolToken), poolToken, blockNumber);
+  if (!poolTokenContract) {
+    throw new Error("Unable to bind with ERC20 contractn " + poolToken);
+  }
+
+  return poolTokenContract;
+}
+
+export function getBalancerRecords(
+  vaultAddress: string,
+  poolId: string,
+  excludeOhmValue: boolean,
+  blockNumber: BigInt,
+  tokenAddress: string | null = null,
+): TokenRecords {
+  log.info("Calculating value of Balancer Pool {} for id {}", [vaultAddress, poolId]);
+  const records = newTokenRecords("Balancer Pool", blockNumber);
+  if (tokenAddress && !getLiquidityPairTokens(poolId).includes(tokenAddress)) {
+    log.debug("tokenAddress specified and not found in balancer pool. Skipping.", []);
+    return records;
+  }
+
+  const poolTokenContract = getBalancerPoolToken(vaultAddress, poolId, blockNumber);
+
+  // Calculate the value of the pool
+  const totalValue = getBalancerPoolTotalValue(vaultAddress, poolId, false, blockNumber);
+  const nonOhmValue = getBalancerPoolTotalValue(vaultAddress, poolId, true, blockNumber);
+
+  // Calculate the unit rate
+  const unitRate = getBalancerPoolUnitRate(poolTokenContract, totalValue, blockNumber);
+
   // Calculate multiplier
   const multiplier = excludeOhmValue ? nonOhmValue.div(totalValue) : BigDecimal.fromString("1");
-  log.debug("Multiplier: {}", [multiplier.toString()]);
+  const poolTokenAddress = poolTokenContract._address.toHexString();
+  log.info("Balancer pool {} ({}) has total value of {}, non-OHM value of {} and unit rate of {}", [
+    getContractName(poolTokenAddress),
+    poolTokenAddress,
+    totalValue.toString(),
+    nonOhmValue.toString(),
+    unitRate.toString(),
+  ]);
 
-  // We don't know the overall supply of the balancer pool, so fudge a balance of 1
-  pushTokenRecord(
-    records,
-    newTokenRecord(
-      getContractName(poolId),
-      poolId,
-      getContractName(vaultAddress),
-      vaultAddress,
-      totalValue,
-      BigDecimal.fromString("1"),
-      blockNumber,
-      multiplier,
-    ),
-  );
+  const tokenDecimals = poolTokenContract.decimals();
+
+  for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
+    const walletAddress = WALLET_ADDRESSES[i];
+    const balance = toDecimal(
+      getERC20Balance(poolTokenContract, walletAddress, blockNumber),
+      tokenDecimals,
+    );
+    log.info("Balancer pool {} has balance of {} in wallet {}", [
+      getContractName(poolTokenAddress),
+      balance.toString(),
+      getContractName(walletAddress),
+    ]);
+    if (balance.equals(BigDecimal.zero())) continue;
+
+    pushTokenRecord(
+      records,
+      newTokenRecord(
+        getContractName(poolId),
+        poolId,
+        getContractName(walletAddress),
+        walletAddress,
+        unitRate,
+        balance,
+        blockNumber,
+        multiplier,
+      ),
+    );
+  }
 
   return records;
 }
