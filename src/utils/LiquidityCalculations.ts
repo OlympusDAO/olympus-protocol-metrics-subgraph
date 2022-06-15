@@ -4,7 +4,6 @@ import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
 import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
   CONVEX_STAKING_CONTRACTS,
-  CONVEX_STAKING_OHM_ETH_REWARD_POOL,
   DAO_WALLET,
   getContractName,
   getLiquidityPairTokens,
