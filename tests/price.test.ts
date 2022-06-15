@@ -3,8 +3,6 @@ import { assert, createMockedFunction, describe, test } from "matchstick-as/asse
 
 import {
   ERC20_CRV_3POOL,
-  ERC20_CRV_OHMETH,
-  ERC20_CVX_OHMETH,
   ERC20_DAI,
   ERC20_FPIS,
   ERC20_FRAX,
@@ -17,7 +15,6 @@ import {
   ERC20_USDC,
   ERC20_WETH,
   NATIVE_ETH,
-  PAIR_CURVE_OHM_ETH,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
   PAIR_UNISWAP_V2_OHM_ETH_V2,
@@ -27,7 +24,7 @@ import {
   PAIR_UNISWAP_V3_FPIS_FRAX,
   PAIR_UNISWAP_V3_FXS_ETH,
 } from "../src/utils/Constants";
-import { DEFAULT_DECIMALS, toBigInt, toDecimal } from "../src/utils/Decimals";
+import { DEFAULT_DECIMALS, toDecimal } from "../src/utils/Decimals";
 import {
   getBaseEthUsdRate,
   getBaseOhmUsdRate,
@@ -52,8 +49,6 @@ import {
   getOhmUsdRate,
   getPairValue,
   getTribeUsdRate,
-  mockCurvePairTotalValue,
-  mockERC20TotalSupply,
   mockEthUsdRate,
   mockFxsEthRate,
   mockOhmEthPair,
