@@ -14,7 +14,12 @@ import {
   WALLET_ADDRESSES,
 } from "../src/utils/Constants";
 import { toBigInt } from "../src/utils/Decimals";
-import { getBalancerPoolTotalValue, getBalancerRecords } from "../src/utils/LiquidityBalancer";
+import {
+  getBalancerPoolTokenQuantity,
+  getBalancerPoolTotalTokenQuantity,
+  getBalancerPoolTotalValue,
+  getBalancerRecords,
+} from "../src/utils/LiquidityBalancer";
 import {
   ERC20_STANDARD_DECIMALS,
   getEthUsdRate,
@@ -103,7 +108,7 @@ function mockBalancerVault(
   );
 }
 
-describe("get balancer records", () => {
+describe("pool total value", () => {
   test("OHM-DAI-ETH pool total value", () => {
     // Mock the balancer
     mockBalancerVault(
@@ -139,7 +144,80 @@ describe("get balancer records", () => {
       .plus(BALANCE_WETH.times(getEthUsdRate()));
     assert.stringEquals(expectedValue.toString(), totalValue.toString());
   });
+});
 
+describe("token quantity", () => {
+  test("quantity of OHM token in pool", () => {
+    // Mock the balancer
+    mockBalancerVault(
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      ERC20_BALANCER_OHM_DAI_WETH,
+      ERC20_STANDARD_DECIMALS,
+      POOL_TOKEN_TOTAL_SUPPLY,
+      ERC20_OHM_V2,
+      ERC20_DAI,
+      ERC20_WETH,
+      BALANCE_OHM,
+      BALANCE_DAI,
+      BALANCE_WETH,
+      OHM_V2_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+    );
+
+    const ohm = getBalancerPoolTotalTokenQuantity(
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      ERC20_OHM_V2,
+      OHM_USD_RESERVE_BLOCK,
+    );
+
+    assert.stringEquals(ohm.toString(), BALANCE_OHM.toString());
+  });
+
+  test("quantity of OHM token in pool", () => {
+    // Mock the balancer
+    mockBalancerVault(
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      ERC20_BALANCER_OHM_DAI_WETH,
+      ERC20_STANDARD_DECIMALS,
+      POOL_TOKEN_TOTAL_SUPPLY,
+      ERC20_OHM_V2,
+      ERC20_DAI,
+      ERC20_WETH,
+      BALANCE_OHM,
+      BALANCE_DAI,
+      BALANCE_WETH,
+      OHM_V2_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+    );
+
+    // Mock wallet balance
+    const expectedBalance = BigDecimal.fromString("2");
+    mockZeroWalletBalances(ERC20_BALANCER_OHM_DAI_WETH, WALLET_ADDRESSES);
+    mockWalletBalance(
+      ERC20_BALANCER_OHM_DAI_WETH,
+      TREASURY_ADDRESS_V3,
+      toBigInt(expectedBalance, ERC20_STANDARD_DECIMALS),
+    );
+
+    const records = getBalancerPoolTokenQuantity(
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      ERC20_OHM_V2,
+      OHM_USD_RESERVE_BLOCK,
+    );
+
+    // Balance = value as the unit rate is 1
+    assert.stringEquals(records.balance.toString(), expectedBalance.toString());
+    assert.stringEquals(records.value.toString(), expectedBalance.toString());
+  });
+});
+
+describe("get balancer records", () => {
   test("OHM-DAI-ETH pool balance", () => {
     // Mock the balancer
     mockBalancerVault(

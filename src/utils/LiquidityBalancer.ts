@@ -18,6 +18,8 @@ export function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): Ba
   return BalancerVault.bind(Address.fromString(vaultAddress));
 }
 
+// ### Balances for liquidity ###
+
 export function getBalancerPoolTotalValue(
   vaultAddress: string,
   poolId: string,
@@ -94,7 +96,7 @@ export function getBalancerRecords(
   blockNumber: BigInt,
   tokenAddress: string | null = null,
 ): TokenRecords {
-  log.info("Calculating value of Balancer Pool {} for id {}", [vaultAddress, poolId]);
+  log.info("Calculating value of Balancer vault {} for pool id {}", [vaultAddress, poolId]);
   const records = newTokenRecords("Balancer Pool", blockNumber);
   if (tokenAddress && !getLiquidityPairTokens(poolId).includes(tokenAddress)) {
     log.debug("tokenAddress specified and not found in balancer pool. Skipping.", []);
@@ -139,14 +141,125 @@ export function getBalancerRecords(
     pushTokenRecord(
       records,
       newTokenRecord(
-        getContractName(poolId),
-        poolId,
+        getContractName(poolTokenAddress),
+        poolTokenAddress,
         getContractName(walletAddress),
         walletAddress,
         unitRate,
         balance,
         blockNumber,
         multiplier,
+      ),
+    );
+  }
+
+  return records;
+}
+
+// ### Token quantity for floating supply ###
+
+/**
+ * Returns the total quantity of the token {tokenAddress}
+ * in the specified Balancer pool.
+ *
+ * @param vaultAddress Balancer Vault address
+ * @param poolId Balancer Pool ID
+ * @param tokenAddress The ERC20 token to determine the quantity of
+ * @param blockNumber current block number
+ * @returns BigDecimal representing the total quantity of the token
+ */
+export function getBalancerPoolTotalTokenQuantity(
+  vaultAddress: string,
+  poolId: string,
+  tokenAddress: string,
+  blockNumber: BigInt,
+): BigDecimal {
+  const vault = getBalancerVault(vaultAddress, blockNumber);
+  const poolTokenWrapper = vault.getPoolTokens(Bytes.fromHexString(poolId));
+  const addresses: Array<Address> = poolTokenWrapper.getTokens();
+  const balances: Array<BigInt> = poolTokenWrapper.getBalances();
+
+  let tokenQuantity = BigDecimal.zero();
+
+  for (let i = 0; i < addresses.length; i++) {
+    const currentAddress = addresses[i].toHexString();
+    if (!Address.fromString(currentAddress).equals(Address.fromString(tokenAddress))) continue;
+
+    const currentContract = getERC20(getContractName(currentAddress), currentAddress, blockNumber);
+    if (!currentContract) {
+      throw new Error("Unable to bind to ERC20 contract for address " + currentAddress.toString());
+    }
+
+    // Add to the value: rate * balance
+    const currentBalanceDecimal = toDecimal(balances[i], currentContract.decimals());
+    tokenQuantity = tokenQuantity.plus(currentBalanceDecimal);
+  }
+
+  return tokenQuantity;
+}
+
+/**
+ * Returns token records reflecting the quantity of the token {tokenAddress}
+ * in the specified Balancer pool across wallets ({WALLET_ADDRESSES}).
+ *
+ * @param vaultAddress
+ * @param poolId
+ * @param tokenAddress
+ * @param blockNumber
+ * @returns
+ */
+export function getBalancerPoolTokenQuantity(
+  vaultAddress: string,
+  poolId: string,
+  tokenAddress: string,
+  blockNumber: BigInt,
+): TokenRecords {
+  log.info("Calculating quantity of token {} in Balancer vault {} for id {}", [
+    getContractName(tokenAddress),
+    vaultAddress,
+    poolId,
+  ]);
+  const records = newTokenRecords("Balancer Pool Token Quantity", blockNumber);
+  const poolTokenContract = getBalancerPoolToken(vaultAddress, poolId, blockNumber);
+
+  // Calculate the token quantity for the pool
+  const totalQuantity = getBalancerPoolTotalTokenQuantity(
+    vaultAddress,
+    poolId,
+    tokenAddress,
+    blockNumber,
+  );
+
+  const poolTokenAddress = poolTokenContract._address.toHexString();
+  const tokenDecimals = poolTokenContract.decimals();
+  log.info("Balancer pool {} has total quantity of {}", [
+    getContractName(poolTokenAddress),
+    totalQuantity.toString(),
+  ]);
+
+  for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
+    const walletAddress = WALLET_ADDRESSES[i];
+    const balance = toDecimal(
+      getERC20Balance(poolTokenContract, walletAddress, blockNumber),
+      tokenDecimals,
+    );
+    log.info("Balancer pool {} has balance of {} in wallet {}", [
+      getContractName(poolTokenAddress),
+      balance.toString(),
+      getContractName(walletAddress),
+    ]);
+    if (balance.equals(BigDecimal.zero())) continue;
+
+    pushTokenRecord(
+      records,
+      newTokenRecord(
+        getContractName(poolId),
+        poolId,
+        getContractName(walletAddress),
+        walletAddress,
+        BigDecimal.fromString("1"),
+        balance,
+        blockNumber,
       ),
     );
   }
