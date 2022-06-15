@@ -18,7 +18,7 @@ export function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): Ba
   return BalancerVault.bind(Address.fromString(vaultAddress));
 }
 
-function getBalancerPoolTotalValue(
+export function getBalancerPoolTotalValue(
   vaultAddress: string,
   poolId: string,
   nonOhmValueOnly: boolean,
