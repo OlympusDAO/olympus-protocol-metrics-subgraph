@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts
 
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
-import { TokenRecords } from "../../generated/schema";
+import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
   ERC20_OHM_V2,
   getContractName,
@@ -238,28 +238,24 @@ export function getBalancerPoolTokenQuantity(
   ]);
   const poolTokenTotalSupply = toDecimal(poolTokenContract.totalSupply(), tokenDecimals);
 
-  for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
-    const walletAddress = WALLET_ADDRESSES[i];
-    const poolTokenBalance = toDecimal(
-      getERC20Balance(poolTokenContract, walletAddress, blockNumber),
-      tokenDecimals,
-    );
-    log.info("Balancer pool {} has balance of {} in wallet {}", [
-      getContractName(poolTokenAddress),
-      poolTokenBalance.toString(),
-      getContractName(walletAddress),
-    ]);
-    if (poolTokenBalance.equals(BigDecimal.zero())) continue;
+  // Grab balances
+  const poolTokenBalances = getBalancerRecords(vaultAddress, poolId, false, blockNumber);
 
-    const tokenBalance = totalQuantity.times(poolTokenBalance).div(poolTokenTotalSupply);
+  for (let i = 0; i < poolTokenBalances.records.length; i++) {
+    const recordId = poolTokenBalances.records[i];
+    const record = TokenRecord.load(recordId);
+    if (!record) {
+      throw new Error("Unable to load TokenRecord with id " + recordId);
+    }
 
+    const tokenBalance = totalQuantity.times(record.balance).div(poolTokenTotalSupply);
     pushTokenRecord(
       records,
       newTokenRecord(
         getContractName(tokenAddress) + " in " + getContractName(poolTokenAddress),
         poolTokenAddress,
-        getContractName(walletAddress),
-        walletAddress,
+        record.source,
+        record.sourceAddress,
         BigDecimal.fromString("1"),
         tokenBalance,
         blockNumber,
