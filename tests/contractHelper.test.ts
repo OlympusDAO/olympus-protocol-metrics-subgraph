@@ -17,7 +17,7 @@ import { getConvexStakedBalance, getConvexStakedRecords } from "../src/utils/Con
 import { toBigInt } from "../src/utils/Decimals";
 import { ERC20_STANDARD_DECIMALS } from "./pairHelper";
 
-const mockConvexStakedBalance = (
+export const mockConvexStakedBalance = (
   tokenAddress: string,
   allocatorAddress: string,
   stakingAddress: string,
@@ -42,18 +42,18 @@ const mockConvexStakedBalance = (
   ]);
 };
 
-export const mockConvexStakedBalanceZero = (): void => {
-  for (let i = 0; i < CONVEX_ALLOCATORS.length; i++) {
+export const mockConvexStakedBalanceZero = (allocators: string[] = CONVEX_ALLOCATORS): void => {
+  for (let i = 0; i < allocators.length; i++) {
     for (let j = 0; j < CONVEX_STAKING_CONTRACTS.length; j++) {
       mockConvexStakedBalance(
         ERC20_CVX_FRAX_3CRV,
-        CONVEX_ALLOCATORS[i],
+        allocators[i],
         CONVEX_STAKING_CONTRACTS[j],
         BigInt.zero(),
       );
       mockConvexStakedBalance(
         ERC20_CVX_OHMETH,
-        CONVEX_ALLOCATORS[i],
+        allocators[i],
         CONVEX_STAKING_CONTRACTS[j],
         BigInt.zero(),
       );
