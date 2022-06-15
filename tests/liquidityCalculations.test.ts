@@ -2,6 +2,7 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
 import {
+  DAO_WALLET,
   ERC20_CRV_OHMETH,
   ERC20_CVX_OHMETH,
   ERC20_DAI,
@@ -248,8 +249,8 @@ describe("Curve", () => {
     );
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
-    mockZeroWalletBalances(ERC20_CRV_OHMETH, WALLET_ADDRESSES);
-    mockZeroWalletBalances(ERC20_CVX_OHMETH, WALLET_ADDRESSES);
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, WALLET_ADDRESSES.concat([DAO_WALLET]));
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, WALLET_ADDRESSES.concat([DAO_WALLET]));
     mockWalletBalance(
       ERC20_CRV_OHMETH,
       TREASURY_ADDRESS_V3,
@@ -299,8 +300,8 @@ describe("Curve", () => {
     );
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
-    mockZeroWalletBalances(ERC20_CRV_OHMETH, WALLET_ADDRESSES);
-    mockZeroWalletBalances(ERC20_CVX_OHMETH, WALLET_ADDRESSES);
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, WALLET_ADDRESSES.concat([DAO_WALLET]));
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, WALLET_ADDRESSES.concat([DAO_WALLET]));
     mockWalletBalance(
       ERC20_CRV_OHMETH,
       TREASURY_ADDRESS_V3,
@@ -354,8 +355,8 @@ describe("Curve", () => {
     );
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
-    mockZeroWalletBalances(ERC20_CRV_OHMETH, WALLET_ADDRESSES);
-    mockZeroWalletBalances(ERC20_CVX_OHMETH, WALLET_ADDRESSES);
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, WALLET_ADDRESSES.concat([DAO_WALLET]));
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, WALLET_ADDRESSES.concat([DAO_WALLET]));
     mockWalletBalance(
       ERC20_CVX_OHMETH,
       TREASURY_ADDRESS_V3,

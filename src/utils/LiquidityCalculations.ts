@@ -3,6 +3,9 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
 import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
+  CONVEX_STAKING_CONTRACTS,
+  CONVEX_STAKING_OHM_ETH_REWARD_POOL,
+  DAO_WALLET,
   getContractName,
   getLiquidityPairTokens,
   getStakedToken,
@@ -25,6 +28,7 @@ import {
   WALLET_ADDRESSES,
 } from "./Constants";
 import {
+  getConvexStakedBalance,
   getERC20,
   getMasterChef,
   getMasterChefBalance,
@@ -152,10 +156,70 @@ export function getCurvePairTotalValue(pairAddress: string, blockNumber: BigInt)
 }
 
 /**
+ * Creates a token record for a staked Curve pair token.
+ *
+ * If the stakedTokenAddress is null or the balance is 0, null is returned.
+ *
+ * This looks up the balance of {stakedTokenAddress} on {stakingAddress}, instead
+ * of using `balanceOf`, which doesn't work with the Convex contracts.
+ *
+ * @param pairTokenAddress
+ * @param stakedTokenAddress
+ * @param walletAddress
+ * @param stakingAddress
+ * @param pairRate
+ * @param excludeOhmValue
+ * @param blockNumber
+ * @returns
+ */
+function getCurvePairStakedRecord(
+  pairTokenAddress: string,
+  stakedTokenAddress: string | null,
+  walletAddress: string,
+  stakingAddress: string,
+  pairRate: BigDecimal,
+  excludeOhmValue: boolean,
+  blockNumber: BigInt,
+): TokenRecord | null {
+  if (!stakedTokenAddress) {
+    log.debug(
+      "Curve pair balance for token {} ({}) in wallet {} ({}) was 0, and no staked token was found.",
+      [
+        getContractName(pairTokenAddress),
+        pairTokenAddress,
+        getContractName(walletAddress),
+        walletAddress,
+      ],
+    );
+    return null;
+  }
+
+  const stakedTokenAddressNotNull = stakedTokenAddress ? stakedTokenAddress : "";
+  const balance = getConvexStakedBalance(
+    stakedTokenAddressNotNull,
+    walletAddress,
+    stakingAddress,
+    blockNumber,
+  );
+  if (!balance || balance.equals(BigDecimal.zero())) return null;
+
+  return newTokenRecord(
+    getContractName(stakedTokenAddressNotNull),
+    stakedTokenAddressNotNull,
+    getContractName(walletAddress),
+    walletAddress,
+    pairRate,
+    balance,
+    blockNumber,
+    excludeOhmValue ? BigDecimal.fromString("0.5") : BigDecimal.fromString("1"),
+  );
+}
+
+/**
  * Returns the TokenRecord for the Curve pair's token
  * at the given {walletAddress}.
  *
- * @param pairAddress Curve pair address
+ * @param pairTokenAddress token address for the Curve pair
  * @param pairRate the unit rate of the pair
  * @param walletAddress the wallet to look up the balance
  * @param excludeOhmValue true if the value of OHM should be excluded
@@ -163,79 +227,38 @@ export function getCurvePairTotalValue(pairAddress: string, blockNumber: BigInt)
  * @returns
  */
 export function getCurvePairRecord(
-  pairAddress: string,
+  pairTokenAddress: string,
   pairRate: BigDecimal,
   walletAddress: string,
   excludeOhmValue: boolean,
   blockNumber: BigInt,
 ): TokenRecord | null {
-  const pair = CurvePool.bind(Address.fromString(pairAddress));
-  const pairTokenAddress = pair.token().toHexString();
   const pairToken = getERC20(getContractName(pairTokenAddress), pairTokenAddress, blockNumber);
   if (!pairToken) {
     throw new Error("Unable to bind to ERC20 contract for Curve pair token " + pairTokenAddress);
   }
 
-  let tokenBalanceDecimal = BigDecimal.zero();
-  let finalTokenAddress = pairTokenAddress;
-
   // Get the balance of the pair's token in walletAddress
   const pairTokenBalance = pairToken.balanceOf(Address.fromString(walletAddress));
   if (pairTokenBalance.equals(BigInt.zero())) {
-    const stakedTokenAddressNullable = getStakedToken(pairTokenAddress);
-    // If there's no balance and no staked token, exit
-    if (!stakedTokenAddressNullable) {
-      log.debug("Curve pair balance for token {} ({}) was 0, and no staked token was found.", [
-        getContractName(pairTokenAddress),
-        pairTokenAddress,
-      ]);
-      return null;
-    }
-
-    const stakedTokenAddress = stakedTokenAddressNullable ? stakedTokenAddressNullable : "";
-    const stakedPairToken = getERC20(
-      getContractName(stakedTokenAddress),
-      stakedTokenAddress,
-      blockNumber,
-    );
-    if (!stakedPairToken) {
-      throw new Error(
-        "Unable to bind to ERC20 contract for Curve pair token " + stakedTokenAddress,
-      );
-    }
-
-    const stakedTokenBalance = stakedPairToken.balanceOf(Address.fromString(walletAddress));
-    if (stakedTokenBalance.equals(BigInt.zero())) {
-      log.debug("Curve pair balance for staked token {} ({}) was 0.", [
-        getContractName(stakedTokenAddress),
-        stakedTokenAddress,
-      ]);
-      return null;
-    }
-
-    tokenBalanceDecimal = toDecimal(stakedTokenBalance, stakedPairToken.decimals());
-    finalTokenAddress = stakedTokenAddress;
-    log.info("Curve pair balance for staked token {} ({}) was {}", [
-      getContractName(stakedTokenAddress),
-      stakedTokenAddress,
-      tokenBalanceDecimal.toString(),
-    ]);
-  } else {
-    tokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
-    log.info("Curve pair balance for token {} ({}) was {}", [
+    log.debug("Curve pair balance for staked token {} ({}) in wallet {} ({}) was 0", [
       getContractName(pairTokenAddress),
       pairTokenAddress,
-      tokenBalanceDecimal.toString(),
+      getContractName(walletAddress),
+      walletAddress,
     ]);
+    return null;
   }
 
+  const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
+
   return newTokenRecord(
-    getContractName(finalTokenAddress),
-    finalTokenAddress,
+    getContractName(pairTokenAddress),
+    pairTokenAddress,
     getContractName(walletAddress),
     walletAddress,
     pairRate,
-    tokenBalanceDecimal,
+    pairTokenBalanceDecimal,
     blockNumber,
     excludeOhmValue ? BigDecimal.fromString("0.5") : BigDecimal.fromString("1"),
   );
@@ -318,19 +341,45 @@ export function getCurvePairRecords(
 
   // Calculate the unit rate of the LP
   const unitRate = getCurvePairUnitRate(pairAddress, totalValue, blockNumber);
+  // Some Curve tokens are in the DAO wallet, so we add that
+  const wallets = WALLET_ADDRESSES.concat([DAO_WALLET]);
 
-  for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
-    const walletAddress = WALLET_ADDRESSES[i];
+  const pair = CurvePool.bind(Address.fromString(pairAddress));
+  const pairTokenAddress = pair.token().toHexString();
+
+  for (let i = 0; i < wallets.length; i++) {
+    const walletAddress = wallets[i];
+
+    // Normal token first
     const record = getCurvePairRecord(
-      pairAddress,
+      pairTokenAddress,
       unitRate,
       walletAddress,
       excludeOhmValue,
       blockNumber,
     );
-    if (!record) continue;
+    if (record) {
+      pushTokenRecord(records, record);
+    }
 
-    pushTokenRecord(records, record);
+    // Then staked token
+    for (let j = 0; j < CONVEX_STAKING_CONTRACTS.length; j++) {
+      const stakingAddress = CONVEX_STAKING_CONTRACTS[j];
+
+      const stakedRecord = getCurvePairStakedRecord(
+        pairTokenAddress,
+        getStakedToken(pairTokenAddress),
+        walletAddress,
+        stakingAddress,
+        unitRate,
+        excludeOhmValue,
+        blockNumber,
+      );
+
+      if (stakedRecord) {
+        pushTokenRecord(records, stakedRecord);
+      }
+    }
   }
 
   return records;

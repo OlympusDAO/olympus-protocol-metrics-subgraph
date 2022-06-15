@@ -613,6 +613,16 @@ export function getOnsenAllocatorRecords(
   return records;
 }
 
+/**
+ * Determines the balance of a Curve token
+ * staked in Convex from the given allocator.
+ *
+ * @param tokenAddress
+ * @param allocatorAddress
+ * @param stakingAddress
+ * @param blockNumber
+ * @returns
+ */
 export function getConvexStakedBalance(
   tokenAddress: string,
   allocatorAddress: string,
