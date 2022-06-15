@@ -236,29 +236,32 @@ export function getBalancerPoolTokenQuantity(
     getContractName(poolTokenAddress),
     totalQuantity.toString(),
   ]);
+  const poolTokenTotalSupply = toDecimal(poolTokenContract.totalSupply(), tokenDecimals);
 
   for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
     const walletAddress = WALLET_ADDRESSES[i];
-    const balance = toDecimal(
+    const poolTokenBalance = toDecimal(
       getERC20Balance(poolTokenContract, walletAddress, blockNumber),
       tokenDecimals,
     );
     log.info("Balancer pool {} has balance of {} in wallet {}", [
       getContractName(poolTokenAddress),
-      balance.toString(),
+      poolTokenBalance.toString(),
       getContractName(walletAddress),
     ]);
-    if (balance.equals(BigDecimal.zero())) continue;
+    if (poolTokenBalance.equals(BigDecimal.zero())) continue;
+
+    const tokenBalance = totalQuantity.times(poolTokenBalance).div(poolTokenTotalSupply);
 
     pushTokenRecord(
       records,
       newTokenRecord(
-        getContractName(poolId),
-        poolId,
+        getContractName(tokenAddress) + " in " + getContractName(poolTokenAddress),
+        poolTokenAddress,
         getContractName(walletAddress),
         walletAddress,
         BigDecimal.fromString("1"),
-        balance,
+        tokenBalance,
         blockNumber,
       ),
     );

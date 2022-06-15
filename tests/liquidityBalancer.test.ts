@@ -147,7 +147,7 @@ describe("pool total value", () => {
 });
 
 describe("token quantity", () => {
-  test("quantity of OHM token in pool", () => {
+  test("total quantity of OHM token in pool", () => {
     // Mock the balancer
     mockBalancerVault(
       BALANCER_VAULT,
@@ -196,13 +196,17 @@ describe("token quantity", () => {
     );
 
     // Mock wallet balance
-    const expectedBalance = BigDecimal.fromString("2");
+    const expectedWalletBalance = BigDecimal.fromString("2");
     mockZeroWalletBalances(ERC20_BALANCER_OHM_DAI_WETH, WALLET_ADDRESSES);
     mockWalletBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
       TREASURY_ADDRESS_V3,
-      toBigInt(expectedBalance, ERC20_STANDARD_DECIMALS),
+      toBigInt(expectedWalletBalance, ERC20_STANDARD_DECIMALS),
     );
+
+    // total token quantity * balance / total supply
+    const expectedTokenBalance =
+      BALANCE_OHM.times(expectedWalletBalance).div(POOL_TOKEN_TOTAL_SUPPLY);
 
     const records = getBalancerPoolTokenQuantity(
       BALANCER_VAULT,
@@ -212,8 +216,8 @@ describe("token quantity", () => {
     );
 
     // Balance = value as the unit rate is 1
-    assert.stringEquals(records.balance.toString(), expectedBalance.toString());
-    assert.stringEquals(records.value.toString(), expectedBalance.toString());
+    assert.stringEquals(records.balance.toString(), expectedTokenBalance.toString());
+    assert.stringEquals(records.value.toString(), expectedTokenBalance.toString());
   });
 });
 
