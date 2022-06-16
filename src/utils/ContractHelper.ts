@@ -719,6 +719,15 @@ export function getConvexStakedBalance(
 
   // Check if tokenAddress is the same as that on the staking contract
   const stakingContract = ConvexBaseRewardPool.bind(Address.fromString(stakingAddress));
+  const stakingTokenResult = stakingContract.try_stakingToken();
+  if (stakingTokenResult.reverted) {
+    log.warning("Convex staking contract at {} likely doesn't exist at block {}", [
+      stakingAddress,
+      blockNumber.toString(),
+    ]);
+    return null;
+  }
+
   if (!stakingContract.stakingToken().equals(Address.fromString(tokenAddress))) return null;
 
   const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);

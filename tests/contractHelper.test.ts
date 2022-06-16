@@ -72,6 +72,22 @@ describe("Staked Convex", () => {
     assert.assertTrue(calculatedBalance ? false : true);
   });
 
+  test("stakingToken reverts", () => {
+    createMockedFunction(
+      Address.fromString(CONVEX_STAKING_FRAX_3CRV_REWARD_POOL),
+      "stakingToken",
+      "stakingToken():(address)",
+    ).reverts();
+
+    const calculatedBalance = getConvexStakedBalance(
+      ERC20_CVX_FRAX_3CRV,
+      CONVEX_ALLOCATOR3,
+      CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
+      BigInt.fromString("1"),
+    );
+    assert.assertTrue(calculatedBalance === null);
+  });
+
   test("cvxFRAX3CRV balance", () => {
     mockConvexStakedBalance(
       ERC20_CVX_FRAX_3CRV,

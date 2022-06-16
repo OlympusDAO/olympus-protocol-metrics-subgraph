@@ -244,6 +244,15 @@ export function getCurvePairRecords(
     return records;
   }
 
+  const pairTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
+  if (pairTokenContract.totalSupply().equals(BigInt.zero())) {
+    log.debug("Skipping Curve pair {} with total supply of 0 at block {}", [
+      getContractName(pairAddress),
+      blockNumber.toString(),
+    ]);
+    return records;
+  }
+
   // Calculate total value of the LP
   const totalValue = getCurvePairTotalValue(pairAddress, blockNumber);
   log.info("Total value of Curve LP {} is {}", [pairAddress, totalValue.toString()]);
@@ -377,13 +386,6 @@ export function getCurvePairTokenQuantity(
     getContractName(tokenAddress),
   ]);
   const poolTokenTotalSupply = toDecimal(poolTokenContract.totalSupply(), tokenDecimals);
-  if (poolTokenTotalSupply.equals(BigDecimal.zero())) {
-    log.debug("Skipping Curve pair {} with total supply of 0 at block {}", [
-      getContractName(pairAddress),
-      blockNumber.toString(),
-    ]);
-    return records;
-  }
 
   // Grab balances
   const poolTokenBalances = getCurvePairRecords(pairAddress, tokenAddress, false, blockNumber);

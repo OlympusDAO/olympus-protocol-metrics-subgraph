@@ -387,7 +387,11 @@ export function getUniswapV2PairTokenQuantity(
   const records = newTokenRecords("UniswapV2 Pool Token Quantity", blockNumber);
   const poolTokenContract = getUniswapV2Pair(pairAddress, blockNumber);
   if (!poolTokenContract) {
-    throw new Error("Unable to bind with UniswapV2 contract at " + pairAddress);
+    log.warning("UniswapV2 contract at {} likely doesn't exist at block {}", [
+      pairAddress,
+      blockNumber.toString(),
+    ]);
+    return records;
   }
 
   // Calculate the token quantity for the pool

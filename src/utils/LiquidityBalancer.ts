@@ -104,6 +104,13 @@ export function getBalancerRecords(
   }
 
   const poolTokenContract = getBalancerPoolToken(vaultAddress, poolId, blockNumber);
+  if (poolTokenContract.totalSupply().equals(BigInt.zero())) {
+    log.debug("Skipping Balancer pair {} with total supply of 0 at block {}", [
+      getContractName(poolTokenContract._address.toHexString()),
+      blockNumber.toString(),
+    ]);
+    return records;
+  }
 
   // Calculate the value of the pool
   const totalValue = getBalancerPoolTotalValue(vaultAddress, poolId, false, blockNumber);
@@ -237,13 +244,6 @@ export function getBalancerPoolTokenQuantity(
     totalQuantity.toString(),
   ]);
   const poolTokenTotalSupply = toDecimal(poolTokenContract.totalSupply(), tokenDecimals);
-  if (poolTokenTotalSupply.equals(BigDecimal.zero())) {
-    log.debug("Skipping Balancer pair {} with total supply of 0 at block {}", [
-      getContractName(poolTokenAddress),
-      blockNumber.toString(),
-    ]);
-    return records;
-  }
 
   // Grab balances
   const poolTokenBalances = getBalancerRecords(

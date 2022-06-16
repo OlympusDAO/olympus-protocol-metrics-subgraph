@@ -4,7 +4,6 @@ import { assert, createMockedFunction, describe, test } from "matchstick-as/asse
 import { TokenRecord } from "../generated/schema";
 import {
   BALANCER_VAULT,
-  DAO_WALLET,
   ERC20_BALANCER_OHM_DAI_WETH,
   ERC20_DAI,
   ERC20_OHM_V1,
@@ -352,6 +351,47 @@ describe("get balancer records", () => {
     const expectedUnitRate = expectedTotalValue.div(POOL_TOKEN_TOTAL_SUPPLY);
     const expectedValue = expectedBalance.times(expectedUnitRate);
     assert.stringEquals(expectedValue.toString(), records.value.toString());
+  });
+
+  test("OHM-DAI-ETH pool balance before starting block", () => {
+    // Mock the balancer
+    mockBalancerVault(
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      ERC20_BALANCER_OHM_DAI_WETH,
+      ERC20_STANDARD_DECIMALS,
+      BigDecimal.fromString("0"), // total supply is 0 before starting block
+      ERC20_OHM_V2,
+      ERC20_DAI,
+      ERC20_WETH,
+      BALANCE_OHM,
+      BALANCE_DAI,
+      BALANCE_WETH,
+      OHM_V2_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+    );
+    // Mock wallet balance
+    const expectedBalance = BigDecimal.fromString("2");
+    mockZeroWalletBalances(ERC20_BALANCER_OHM_DAI_WETH, WALLET_ADDRESSES);
+    mockWalletBalance(
+      ERC20_BALANCER_OHM_DAI_WETH,
+      TREASURY_ADDRESS_V3,
+      toBigInt(expectedBalance, ERC20_STANDARD_DECIMALS),
+    );
+
+    // Mock price lookup
+    mockEthUsdRate();
+    mockUsdOhmV2Rate();
+
+    const records = getBalancerRecords(
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      false,
+      OHM_USD_RESERVE_BLOCK,
+    );
+
+    assert.stringEquals("0", records.value.toString());
   });
 
   test("OHM-DAI-ETH pool with matching tokenAddress", () => {
