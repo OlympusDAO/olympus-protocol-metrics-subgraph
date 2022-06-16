@@ -218,7 +218,7 @@ function getCurvePairUnitRate(
  * - Calculates the total value of the LP
  * - Calculates the unit rate of the LP
  * - Iterates through {WALLET_ADDRESSES} and adds records
- * for the balance of the LP's token
+ * for the balance of the LP's normal token and staked token
  *
  * @param pairAddress the address of the Curve pair
  * @param tokenAddress restrict results to match the specified token
