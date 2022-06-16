@@ -81,7 +81,7 @@ function getCurvePairStakedRecord(
 ): TokenRecord | null {
   if (!stakedTokenAddress) {
     log.debug(
-      "Curve pair balance for token {} ({}) in wallet {} ({}) was 0, and no staked token was found.",
+      "Curve pair balance for staked token {} ({}) in wallet {} ({}) was 0, and no staked token was found.",
       [
         getContractName(pairTokenAddress),
         pairTokenAddress,
@@ -139,7 +139,7 @@ export function getCurvePairRecord(
   // Get the balance of the pair's token in walletAddress
   const pairTokenBalance = pairToken.balanceOf(Address.fromString(walletAddress));
   if (pairTokenBalance.equals(BigInt.zero())) {
-    log.debug("Curve pair balance for staked token {} ({}) in wallet {} ({}) was 0", [
+    log.debug("Curve pair balance for token {} ({}) in wallet {} ({}) was 0", [
       getContractName(pairTokenAddress),
       pairTokenAddress,
       getContractName(walletAddress),
@@ -373,7 +373,7 @@ export function getCurvePairTokenQuantity(
   const poolTokenTotalSupply = toDecimal(poolTokenContract.totalSupply(), tokenDecimals);
 
   // Grab balances
-  const poolTokenBalances = getCurvePairRecords(pairAddress, null, false, blockNumber);
+  const poolTokenBalances = getCurvePairRecords(pairAddress, tokenAddress, false, blockNumber);
 
   for (let i = 0; i < poolTokenBalances.records.length; i++) {
     const recordId = poolTokenBalances.records[i];

@@ -239,7 +239,7 @@ export function getUniswapV2PairRecord(
   // Get the balance of the pair's token in walletAddress
   const pairTokenBalance = pairToken.balanceOf(Address.fromString(walletAddress));
   if (pairTokenBalance.equals(BigInt.zero())) {
-    log.debug("UniswapV2 pair balance for staked token {} ({}) in wallet {} ({}) was 0", [
+    log.debug("UniswapV2 pair balance for token {} ({}) in wallet {} ({}) was 0", [
       getContractName(pairAddress),
       pairAddress,
       getContractName(walletAddress),
@@ -404,7 +404,7 @@ export function getUniswapV2PairTokenQuantity(
   ]);
 
   // Grab balances
-  const poolTokenBalances = getUniswapV2PairRecords(pairAddress, null, false, blockNumber);
+  const poolTokenBalances = getUniswapV2PairRecords(pairAddress, tokenAddress, false, blockNumber);
 
   for (let i = 0; i < poolTokenBalances.records.length; i++) {
     const recordId = poolTokenBalances.records[i];

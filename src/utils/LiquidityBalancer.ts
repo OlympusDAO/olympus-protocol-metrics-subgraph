@@ -239,7 +239,13 @@ export function getBalancerPoolTokenQuantity(
   const poolTokenTotalSupply = toDecimal(poolTokenContract.totalSupply(), tokenDecimals);
 
   // Grab balances
-  const poolTokenBalances = getBalancerRecords(vaultAddress, poolId, false, blockNumber);
+  const poolTokenBalances = getBalancerRecords(
+    vaultAddress,
+    poolId,
+    false,
+    blockNumber,
+    tokenAddress,
+  );
 
   for (let i = 0; i < poolTokenBalances.records.length; i++) {
     const recordId = poolTokenBalances.records[i];

@@ -75,7 +75,7 @@ describe("Token Quantity", () => {
     );
   });
 
-  test("balance of OHM token in pool", () => {
+  test("balance of OHM V2 token in pool", () => {
     mockUsdOhmV2Rate();
 
     // Mock total value
@@ -116,6 +116,43 @@ describe("Token Quantity", () => {
     // Balance = value as the unit rate is 1
     assert.stringEquals(records.balance.toString(), expectedTokenBalance.toString());
     assert.stringEquals(records.value.toString(), expectedTokenBalance.toString());
+  });
+
+  test("balance of OHM V1 token in OHM V2 pool", () => {
+    mockUsdOhmV2Rate();
+
+    // Mock total value
+    const token0Reserves = BigInt.fromString("1233838296976506");
+    const token1Reserves = BigInt.fromString("15258719216508026301937394");
+    const totalSupply = BigInt.fromString("133005392717808439119");
+    mockUniswapV2Pair(
+      ERC20_OHM_V2,
+      ERC20_DAI,
+      OHM_V2_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+      token0Reserves,
+      token1Reserves,
+      totalSupply,
+      PAIR_UNISWAP_V2_OHM_DAI_V2,
+      ERC20_STANDARD_DECIMALS,
+    );
+
+    // Mock balances
+    const expectedBalanceV3 = BigDecimal.fromString("3");
+    mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_DAI_V2, WALLET_ADDRESSES);
+    mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
+
+    const records = getUniswapV2PairTokenQuantity(
+      PAIR_UNISWAP_V2_OHM_DAI_V2,
+      ERC20_OHM_V1,
+      OHM_USD_RESERVE_BLOCK,
+    );
+
+    // Balance = value as the unit rate is 1
+    assert.stringEquals("0", records.balance.toString());
+    assert.stringEquals("0", records.value.toString());
+    // Should be empty records due to 0 balance of OHM V1
+    assert.i32Equals(0, records.records.length);
   });
 });
 
