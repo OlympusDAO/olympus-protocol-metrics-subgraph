@@ -21,6 +21,7 @@ import {
   getLiquityStabilityPoolRecords,
   getOnsenAllocatorRecords,
   getRariAllocatorRecords,
+  getTokeAllocatorRecords,
   getVeFXSAllocatorRecords,
 } from "./ContractHelper";
 import { getLiquidityBalances } from "./LiquidityCalculations";
@@ -89,6 +90,9 @@ export function getVolatileTokenBalance(
 
   // Rari Allocator
   combineTokenRecords(records, getRariAllocatorRecords(contractAddress, rate, blockNumber));
+
+  // Toke Allocator
+  combineTokenRecords(records, getTokeAllocatorRecords(contractAddress, rate, blockNumber));
 
   // Staked Convex tokens
   combineTokenRecords(records, getConvexStakedRecords(contractAddress, blockNumber));

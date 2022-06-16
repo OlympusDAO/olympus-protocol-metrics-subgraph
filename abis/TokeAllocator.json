@@ -1,0 +1,386 @@
+[
+  { "inputs": [], "stateMutability": "nonpayable", "type": "constructor" },
+  { "inputs": [], "name": "BaseAllocator_AllocatorNotActivated", "type": "error" },
+  { "inputs": [], "name": "BaseAllocator_AllocatorNotOffline", "type": "error" },
+  { "inputs": [], "name": "BaseAllocator_Migrating", "type": "error" },
+  { "inputs": [], "name": "BaseAllocator_NotMigrating", "type": "error" },
+  {
+    "inputs": [{ "internalType": "address", "name": "sender", "type": "address" }],
+    "name": "BaseAllocator_OnlyExtender",
+    "type": "error"
+  },
+  { "inputs": [], "name": "GeneralizedTokemak_ArbitraryCallFailed", "type": "error" },
+  { "inputs": [], "name": "GeneralizedTokemak_MustInitializeTotalWithdraw", "type": "error" },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "tAssetIndex_", "type": "uint256" }],
+    "name": "GeneralizedTokemak_WithdrawalNotReady",
+    "type": "error"
+  },
+  { "inputs": [], "name": "UNAUTHORIZED", "type": "error" },
+  { "anonymous": false, "inputs": [], "name": "AllocatorActivated", "type": "event" },
+  {
+    "anonymous": false,
+    "inputs": [{ "indexed": false, "internalType": "bool", "name": "panic", "type": "bool" }],
+    "name": "AllocatorDeactivated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": false, "internalType": "address", "name": "authority", "type": "address" },
+      { "indexed": false, "internalType": "address", "name": "extender", "type": "address" }
+    ],
+    "name": "AllocatorDeployed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "contract IOlympusAuthority",
+        "name": "authority",
+        "type": "address"
+      }
+    ],
+    "name": "AuthorityUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "EtherReceived",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": false, "internalType": "uint128", "name": "lastLoss", "type": "uint128" },
+      { "indexed": false, "internalType": "uint128", "name": "dloss", "type": "uint128" },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "estimatedTotalAllocated",
+        "type": "uint256"
+      }
+    ],
+    "name": "LossLimitViolated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": false, "internalType": "address", "name": "allocator", "type": "address" }
+    ],
+    "name": "MigrationExecuted",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "activate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "id", "type": "uint256" }],
+    "name": "addId",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "token", "type": "address" },
+      { "internalType": "address", "name": "reactor", "type": "address" }
+    ],
+    "name": "addToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "id", "type": "uint256" }],
+    "name": "amountAllocated",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "authority",
+    "outputs": [{ "internalType": "contract IOlympusAuthority", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "bool", "name": "panic", "type": "bool" }],
+    "name": "deactivate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256[]", "name": "amounts", "type": "uint256[]" }],
+    "name": "deallocate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "target", "type": "address" },
+      { "internalType": "bytes", "name": "data", "type": "bytes" }
+    ],
+    "name": "executeArbitrary",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "extender",
+    "outputs": [{ "internalType": "contract ITreasuryExtender", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "ids",
+    "outputs": [{ "internalType": "uint256[]", "name": "", "type": "uint256[]" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "manager",
+    "outputs": [{ "internalType": "contract IManager", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "mayClaim",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "migrate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "name",
+    "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "nextPayloadData",
+    "outputs": [
+      { "internalType": "uint128", "name": "amount", "type": "uint128" },
+      { "internalType": "uint64", "name": "cycle", "type": "uint64" },
+      { "internalType": "uint64", "name": "v", "type": "uint64" },
+      { "internalType": "bytes32", "name": "r", "type": "bytes32" },
+      { "internalType": "bytes32", "name": "s", "type": "bytes32" }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "prepareMigration",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "reactors",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "rewardTokens",
+    "outputs": [{ "internalType": "contract ERC20[]", "name": "", "type": "address[]" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "rewards",
+    "outputs": [{ "internalType": "contract IRewards", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "contract IOlympusAuthority", "name": "_newAuthority", "type": "address" }
+    ],
+    "name": "setAuthority",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "voting", "type": "address" },
+          { "internalType": "address", "name": "staking", "type": "address" },
+          { "internalType": "address", "name": "rewards", "type": "address" },
+          { "internalType": "address", "name": "manager", "type": "address" }
+        ],
+        "internalType": "struct TokemakData",
+        "name": "tokeData",
+        "type": "tuple"
+      }
+    ],
+    "name": "setTokemakData",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "staking",
+    "outputs": [{ "internalType": "contract IStaking", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "status",
+    "outputs": [{ "internalType": "enum AllocatorStatus", "name": "", "type": "uint8" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "toke",
+    "outputs": [{ "internalType": "contract ERC20", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "scheduleIndex", "type": "uint256" }],
+    "name": "tokeAvailable",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "tokeDeposited",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "name": "tokenIds",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "tokens",
+    "outputs": [{ "internalType": "contract ERC20[]", "name": "", "type": "address[]" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalWithdrawInitialized",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "uint256", "name": "id", "type": "uint256" }],
+    "name": "update",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "uint128", "name": "amount", "type": "uint128" },
+          { "internalType": "uint64", "name": "cycle", "type": "uint64" },
+          { "internalType": "uint64", "name": "v", "type": "uint64" },
+          { "internalType": "bytes32", "name": "r", "type": "bytes32" },
+          { "internalType": "bytes32", "name": "s", "type": "bytes32" }
+        ],
+        "internalType": "struct PayloadData",
+        "name": "data",
+        "type": "tuple"
+      }
+    ],
+    "name": "updateClaimPayload",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "utilityTokens",
+    "outputs": [{ "internalType": "contract ERC20[]", "name": "", "type": "address[]" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "version",
+    "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "account", "type": "address" },
+          { "internalType": "bytes32", "name": "voteSessionKey", "type": "bytes32" },
+          { "internalType": "uint256", "name": "nonce", "type": "uint256" },
+          { "internalType": "uint256", "name": "chainId", "type": "uint256" },
+          { "internalType": "uint256", "name": "totalVotes", "type": "uint256" },
+          {
+            "components": [
+              { "internalType": "bytes32", "name": "reactorKey", "type": "bytes32" },
+              { "internalType": "uint256", "name": "amount", "type": "uint256" }
+            ],
+            "internalType": "struct UserVoteAllocationItem[]",
+            "name": "allocations",
+            "type": "tuple[]"
+          }
+        ],
+        "internalType": "struct UserVotePayload",
+        "name": "payload",
+        "type": "tuple"
+      }
+    ],
+    "name": "vote",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "voting",
+    "outputs": [{ "internalType": "contract ITokemakVoting", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

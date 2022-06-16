@@ -87,6 +87,8 @@ dataSources:
           file: ./abis/ConvexBaseRewardPool.json
         - name: CurvePool
           file: ./abis/CurvePool.json
+        - name: TokeAllocator
+          file: ./abis/TokeAllocator.json
       callHandlers:
         - function: rebase(uint256)
           handler: rebaseFunction
@@ -173,6 +175,8 @@ dataSources:
           file: ./abis/ConvexBaseRewardPool.json
         - name: CurvePool
           file: ./abis/CurvePool.json
+        - name: TokeAllocator
+          file: ./abis/TokeAllocator.json
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
@@ -259,6 +263,8 @@ dataSources:
           file: ./abis/ConvexBaseRewardPool.json
         - name: CurvePool
           file: ./abis/CurvePool.json
+        - name: TokeAllocator
+          file: ./abis/TokeAllocator.json
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
@@ -676,6 +682,8 @@ dataSources:
           file: ./abis/ConvexBaseRewardPool.json
         - name: CurvePool
           file: ./abis/CurvePool.json
+        - name: TokeAllocator
+          file: ./abis/TokeAllocator.json
       callHandlers:
         - function: stake(address,uint256,bool,bool)
           handler: handleMetrics

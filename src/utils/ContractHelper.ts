@@ -9,6 +9,7 @@ import { sOlympusERC20 } from "../../generated/ProtocolMetrics/sOlympusERC20";
 import { sOlympusERC20V2 } from "../../generated/ProtocolMetrics/sOlympusERC20V2";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
 import { StabilityPool } from "../../generated/ProtocolMetrics/StabilityPool";
+import { TokeAllocator } from "../../generated/ProtocolMetrics/TokeAllocator";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
@@ -31,6 +32,7 @@ import {
   ONSEN_ALLOCATOR,
   RARI_ALLOCATOR,
   SUSHI_MASTERCHEF,
+  TOKE_ALLOCATOR,
   VEFXS_ALLOCATOR,
   WALLET_ADDRESSES,
 } from "./Constants";
@@ -50,6 +52,7 @@ const contractsSOlympusERC20V3 = new Map<string, sOlympusERC20V3>();
 const contractsUniswapV2Pair = new Map<string, UniswapV2Pair>();
 const contractsUniswapV3Pair = new Map<string, UniswapV3Pair>();
 const contractsRariAllocator = new Map<string, RariAllocator>();
+const contractsTokeAllocator = new Map<string, TokeAllocator>();
 const contractsMasterChef = new Map<string, MasterChef>();
 const contractsVeFXS = new Map<string, VeFXS>();
 const contractsConvexAllocator = new Map<string, ConvexAllocator>();
@@ -227,6 +230,24 @@ export function getMasterChef(
   }
 
   return contractsMasterChef.get(contractAddress);
+}
+
+export function getTokeAllocator(
+  contractAddress: string,
+  currentBlockNumber: BigInt,
+): TokeAllocator | null {
+  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
+
+  if (!contractsTokeAllocator.has(contractAddress)) {
+    log.debug("Binding TokeAllocator contract for address {}. Block number {}", [
+      contractAddress,
+      currentBlockNumber.toString(),
+    ]);
+    const contract = TokeAllocator.bind(Address.fromString(contractAddress));
+    contractsTokeAllocator.set(contractAddress, contract);
+  }
+
+  return contractsTokeAllocator.get(contractAddress);
 }
 
 export function getRariAllocator(
@@ -518,6 +539,68 @@ export function getERC20TokenRecordsFromWallets(
 }
 
 /**
+ * Returns the balance for a given contract in the Toke Allocator.
+ *
+ * If the contract does not have an entry in the Toke Allocator,
+ * null is returned.
+ *
+ * @param contractAddress the contract to look up
+ * @param blockNumber the current block number
+ * @returns BigDecimal or null
+ */
+function getTokeAllocatorBalance(contractAddress: string, blockNumber: BigInt): BigDecimal | null {
+  const allocatorId = getRariAllocatorId(contractAddress);
+  const tokeAllocator = getTokeAllocator(TOKE_ALLOCATOR, blockNumber);
+  const contract = getERC20(getContractName(contractAddress), contractAddress, blockNumber);
+
+  // No matching allocator id
+  if (allocatorId === ALLOCATOR_RARI_ID_NOT_FOUND || !tokeAllocator || !contract) {
+    return null;
+  }
+
+  // Correct allocator for the id
+  if (!tokeAllocator.ids().includes(BigInt.fromI32(allocatorId))) {
+    return null;
+  }
+
+  return toDecimal(tokeAllocator.tokeDeposited(), contract.decimals());
+}
+
+/**
+ * Returns the balance of {contractAddress} in the Toke Allocator.
+ *
+ * @param tokenAddress ERC20 contract to find the balance of
+ * @param price
+ * @param blockNumber the current block number
+ * @returns TokenRecords object
+ */
+export function getTokeAllocatorRecords(
+  tokenAddress: string,
+  price: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = newTokenRecords("Toke Allocator", blockNumber);
+
+  const balance = getTokeAllocatorBalance(tokenAddress, blockNumber);
+  if (!balance || balance.equals(BigDecimal.zero())) return records;
+
+  pushTokenRecord(
+    records,
+    newTokenRecord(
+      getContractName(tokenAddress),
+      tokenAddress,
+      getContractName(TOKE_ALLOCATOR),
+      TOKE_ALLOCATOR,
+      price,
+      balance,
+      blockNumber,
+    ),
+  );
+
+  return records;
+}
+
+/**
  * Returns the balance for a given contract in the Rari Allocator.
  *
  * If the contract does not have an entry in the Rari Allocator,
@@ -533,6 +616,11 @@ function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
   const contract = getERC20(getContractName(contractAddress), contractAddress, blockNumber);
 
   if (rariAllocatorId === ALLOCATOR_RARI_ID_NOT_FOUND || !rariAllocator || !contract) {
+    return null;
+  }
+
+  // Correct allocator for the id
+  if (!rariAllocator.ids().includes(BigInt.fromI32(rariAllocatorId))) {
     return null;
   }
 
