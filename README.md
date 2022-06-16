@@ -48,6 +48,35 @@ To add a new wallet:
 - Define a constant value with the address of the wallet
 - Add the constant to the `WALLET_ADDRESSES` array
 
+## Price Lookup
+
+Price lookups are mapped in the `src/utils/Constants.ts` file.
+
+To add a new price lookup:
+
+- Define a constant value with the address of the liquidity pool (e.g. `PAIR_UNISWAP_V2_ALCX_ETH`)
+- Add an entry to the `LIQUIDITY_POOL_TOKEN_LOOKUP` constant, which maps the pair type (Balancer, Curve, UniswapV2, UniswapV3) to the liquidity pool address
+
+## Protocol-Owned Liquidity
+
+Protocol-owned liquidity is mapped in the `src/utils/Constants.ts` file.
+
+To add a new liquidity entry:
+
+- Define a constant value with the address of the liquidity pool (e.g. `PAIR_UNISWAP_V2_ALCX_ETH`)
+- Add an entry to the `LIQUIDITY_OWNED` constant, which maps the pool type (Balancer, Curve, UniswapV2, UniswapV3) to the liquidity pool address
+- Add an entry to the `LIQUIDITY_PAIR_TOKENS` constant, which maps the liquidity pool address to the tokens that it is composed of. This could be determined on-chain, but is easier/quicker if done statically.
+
+## Staked Liquidity
+
+Some liquidity tokens (e.g. Curve OHMETH) can be staked in Convex, which in turn emits a staked token (e.g. cvxOHMETH).
+
+To add a new mapping:
+
+- Define a constant value with the address of the staked token
+- Create a mapping between the original token (e.g. `ERC20_CRV_OHMETH`) and the staked token (e.g. `ERC20_CVX_OHMETH`) in the `CONVEX_STAKED_TOKENS` map
+- Add the Convex staking contract to the `CONVEX_STAKING_CONTRACTS` array
+
 ## Debugging
 
 Each metric has a "component" variant that contains the details of the assets that are summed to result in the reported value.
