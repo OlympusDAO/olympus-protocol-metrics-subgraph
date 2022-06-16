@@ -142,7 +142,8 @@ export function getCirculatingSupply(blockNumber: BigInt, totalSupply: BigDecima
 }
 
 /**
- * Returns the quantity of OHM in liquidity pools
+ * Returns the quantity of OHM owned by the treasury in
+ * liquidity pools.
  *
  * @param blockNumber
  * @returns
@@ -192,7 +193,9 @@ function getLiquiditySupply(blockNumber: BigInt): TokenRecords {
 /**
  * The floating supply of OHM is defined as:
  * - circulating supply
- * - minus the quantity of OHM in liquidity pools
+ * - minus the quantity of OHM owned by the treasury in liquidity pools
+ *
+ * Can be compared against: https://dune.com/queries/905861
  *
  * @param totalSupply
  * @param blockNumber
