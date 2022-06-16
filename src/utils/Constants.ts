@@ -385,10 +385,22 @@ LIQUIDITY_PAIR_TOKENS.set(PAIR_UNISWAP_V2_OHM_LUSD_V2, [ERC20_LUSD, ERC20_OHM_V2
 LIQUIDITY_PAIR_TOKENS.set(PAIR_UNISWAP_V2_OHM_LUSD, [ERC20_LUSD, ERC20_OHM_V1]);
 LIQUIDITY_PAIR_TOKENS.set(POOL_BALANCER_OHM_DAI_WETH_ID, [ERC20_WETH, ERC20_OHM_V2, ERC20_DAI]);
 
-export const getLiquidityPairTokens = (pairAddress: string): string[] => {
+const getLiquidityPairTokens = (pairAddress: string): string[] => {
   if (!LIQUIDITY_PAIR_TOKENS.has(pairAddress)) return [];
 
   return LIQUIDITY_PAIR_TOKENS.get(pairAddress);
+};
+
+/**
+ * Determines if {tokenAddress} is contained within the liquidity pair
+ * represented by {pairAddress}.
+ *
+ * @param pairAddress
+ * @param tokenAddress
+ * @returns
+ */
+export const liquidityPairHasToken = (pairAddress: string, tokenAddress: string): bool => {
+  return getLiquidityPairTokens(pairAddress).includes(tokenAddress);
 };
 
 // Wallets

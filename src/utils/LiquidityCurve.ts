@@ -8,8 +8,8 @@ import {
   CONVEX_STAKING_CONTRACTS,
   DAO_WALLET,
   getContractName,
-  getLiquidityPairTokens,
   getStakedToken,
+  liquidityPairHasToken,
   WALLET_ADDRESSES,
 } from "./Constants";
 import { getConvexStakedBalance, getERC20 } from "./ContractHelper";
@@ -234,7 +234,7 @@ export function getCurvePairRecords(
 ): TokenRecords {
   const records = newTokenRecords(getContractName(pairAddress), blockNumber);
   // If we are restricting by token and tokenAddress does not match either side of the pair
-  if (tokenAddress && !getLiquidityPairTokens(pairAddress).includes(tokenAddress)) {
+  if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
     log.debug("Skipping Curve pair that does not match specified token address {}", [tokenAddress]);
     return records;
   }

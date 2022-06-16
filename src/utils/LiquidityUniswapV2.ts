@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { TokenRecord, TokenRecords } from "../../generated/schema";
-import { getContractName, getLiquidityPairTokens, WALLET_ADDRESSES } from "./Constants";
+import { getContractName, liquidityPairHasToken, WALLET_ADDRESSES } from "./Constants";
 import { getERC20, getUniswapV2Pair } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getBaseOhmUsdRate, getUSDRateUniswapV2 } from "./Price";
@@ -285,7 +285,7 @@ export function getUniswapV2PairRecords(
 ): TokenRecords {
   const records = newTokenRecords(getContractName(pairAddress), blockNumber);
   // If we are restricting by token and tokenAddress does not match either side of the pair
-  if (tokenAddress && !getLiquidityPairTokens(pairAddress).includes(tokenAddress)) {
+  if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
     log.debug("Skipping UniswapV2 pair that does not match specified token address {}", [
       tokenAddress,
     ]);

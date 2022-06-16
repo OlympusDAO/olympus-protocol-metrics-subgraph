@@ -6,7 +6,7 @@ import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
   ERC20_OHM_V2,
   getContractName,
-  getLiquidityPairTokens,
+  liquidityPairHasToken,
   WALLET_ADDRESSES,
 } from "./Constants";
 import { getERC20, getERC20Balance } from "./ContractHelper";
@@ -98,7 +98,7 @@ export function getBalancerRecords(
 ): TokenRecords {
   log.info("Calculating value of Balancer vault {} for pool id {}", [vaultAddress, poolId]);
   const records = newTokenRecords("Balancer Pool", blockNumber);
-  if (tokenAddress && !getLiquidityPairTokens(poolId).includes(tokenAddress)) {
+  if (tokenAddress && !liquidityPairHasToken(poolId, tokenAddress)) {
     log.debug("tokenAddress specified and not found in balancer pool. Skipping.", []);
     return records;
   }

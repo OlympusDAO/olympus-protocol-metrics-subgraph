@@ -23,10 +23,10 @@ import {
   ERC20_FXS,
   ERC20_FXS_VE,
   getContractName,
-  getLiquidityPairTokens,
   getLiquityAllocator,
   getOnsenAllocatorId,
   getRariAllocatorId,
+  liquidityPairHasToken,
   NATIVE_ETH,
   ONSEN_ALLOCATOR,
   RARI_ALLOCATOR,
@@ -356,10 +356,7 @@ export function getUniswapV2PairBalance(
     return BigInt.fromString("0");
   }
 
-  if (
-    tokenAddress &&
-    !getLiquidityPairTokens(contract._address.toHexString()).includes(tokenAddress)
-  ) {
+  if (tokenAddress && !liquidityPairHasToken(contract._address.toHexString(), tokenAddress)) {
     log.debug("Skipping UniswapV2Pair that does not match specified token address {}", [
       tokenAddress,
     ]);
