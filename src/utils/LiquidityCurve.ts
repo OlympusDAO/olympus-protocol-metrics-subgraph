@@ -382,6 +382,12 @@ export function getCurvePairTokenQuantity(
       throw new Error("Unable to load TokenRecord with id " + recordId);
     }
 
+    // If the record relates to the DAO wallet (required for some staked tokens), ignore it
+    if (Address.fromString(record.sourceAddress).equals(Address.fromString(DAO_WALLET))) {
+      log.debug("Skipping DAO wallet", []);
+      continue;
+    }
+
     const tokenBalance = totalQuantity.times(record.balance).div(poolTokenTotalSupply);
     pushTokenRecord(
       records,
