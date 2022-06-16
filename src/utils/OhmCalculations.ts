@@ -160,10 +160,11 @@ function getLiquiditySupply(blockNumber: BigInt): TokenRecords {
       const ohmTokenAddress = ohmTokens[j];
 
       if (pairHandler.getType() == PairHandlerTypes.Balancer) {
-        const pairPoolAddress = pairHandler.getPool();
-        if (!pairPoolAddress) {
+        const pairPoolAddressNullable = pairHandler.getPool();
+        if (!pairPoolAddressNullable) {
           throw new Error("Balancer pool address is not set");
         }
+        const pairPoolAddress = pairPoolAddressNullable ? pairPoolAddressNullable : "";
 
         combineTokenRecords(
           records,
@@ -180,7 +181,7 @@ function getLiquiditySupply(blockNumber: BigInt): TokenRecords {
           getUniswapV2PairTokenQuantity(pairAddress, ohmTokenAddress, blockNumber),
         );
       } else {
-        throw new Error("Unsupported pair type: " + pairHandler.getType());
+        throw new Error("Unsupported pair type: " + pairHandler.getType().toString());
       }
     }
   }
