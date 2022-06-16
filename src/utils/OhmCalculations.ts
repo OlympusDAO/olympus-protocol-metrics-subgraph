@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecords } from "../../generated/schema";
 import {
@@ -26,6 +26,10 @@ import {
   getSOlympusERC20V3,
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
+import { getBalancerPoolTokenQuantity } from "./LiquidityBalancer";
+import { getCurvePairTokenQuantity } from "./LiquidityCurve";
+import { getUniswapV2PairTokenQuantity } from "./LiquidityUniswapV2";
+import { PairHandlerTypes } from "./PairHandler";
 import { getBaseOhmUsdRate } from "./Price";
 import {
   combineTokenRecords,
@@ -154,38 +158,30 @@ function getLiquiditySupply(blockNumber: BigInt): TokenRecords {
     const ohmTokens = [ERC20_OHM_V1, ERC20_OHM_V2];
     for (let j = 0; j < ohmTokens.length; j++) {
       const ohmTokenAddress = ohmTokens[j];
-      const ohmToken = getERC20(getContractName(ohmTokenAddress), ohmTokenAddress, blockNumber);
-      if (!ohmToken) {
-        throw new Error("Unable to bind ERC20 contract for OHM with address " + ohmTokenAddress);
+
+      if (pairHandler.getType() == PairHandlerTypes.Balancer) {
+        const pairPoolAddress = pairHandler.getPool();
+        if (!pairPoolAddress) {
+          throw new Error("Balancer pool address is not set");
+        }
+
+        combineTokenRecords(
+          records,
+          getBalancerPoolTokenQuantity(pairAddress, pairPoolAddress, ohmTokenAddress, blockNumber),
+        );
+      } else if (pairHandler.getType() == PairHandlerTypes.Curve) {
+        combineTokenRecords(
+          records,
+          getCurvePairTokenQuantity(pairAddress, ohmTokenAddress, blockNumber),
+        );
+      } else if (pairHandler.getType() == PairHandlerTypes.UniswapV2) {
+        combineTokenRecords(
+          records,
+          getUniswapV2PairTokenQuantity(pairAddress, ohmTokenAddress, blockNumber),
+        );
+      } else {
+        throw new Error("Unsupported pair type: " + pairHandler.getType());
       }
-
-      const decimals = ohmToken.decimals();
-      // This obtains the total amount of OHM in the LP
-      const balance = ohmToken.balanceOf(Address.fromString(pairAddress));
-      if (balance.equals(BigInt.zero())) continue;
-
-      // TODO We need to calculate Olympus' ownership of the LP
-
-      const balanceDecimal = toDecimal(balance, decimals);
-
-      pushTokenRecord(
-        records,
-        newTokenRecord(
-          getContractName(ohmTokenAddress),
-          ohmTokenAddress,
-          getContractName(pairAddress),
-          pairAddress,
-          BigDecimal.fromString("1"),
-          balanceDecimal,
-          blockNumber,
-        ),
-      );
-
-      log.debug("Reserves of {} {} in pair {}", [
-        balanceDecimal.toString(),
-        getContractName(ohmTokenAddress),
-        getContractName(pairAddress),
-      ]);
     }
   }
 

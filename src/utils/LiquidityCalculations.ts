@@ -148,6 +148,7 @@ export function getLiquidityBalances(
     const pairHandler = ownedLiquidityPairs[j];
     log.debug("Working with pair {}", [pairHandler.getContract()]);
     if (pairHandler.getType() === PairHandlerTypes.UniswapV2) {
+      // TODO shift to getUniswapV2PairRecords()
       const liquidityPair = getUniswapV2Pair(pairHandler.getContract(), blockNumber);
       const liquidityBalance = new LiquidityBalances(pairHandler.getContract());
 
