@@ -191,19 +191,19 @@ export const ERC20_VOLATILE_TOKENS = [
 export const ERC20_VOLATILE_ILLIQUID_TOKENS = [ERC20_FXS_VE];
 export const ERC20_VOLATILE_BLUE_CHIP_TOKENS = [ERC20_WBTC, ERC20_WETH];
 
-const STAKED_TOKENS = new Map<string, string>();
-STAKED_TOKENS.set(ERC20_CRV_OHMETH, ERC20_CVX_OHMETH);
+const CONVEX_STAKED_TOKENS = new Map<string, string>();
+CONVEX_STAKED_TOKENS.set(ERC20_CRV_OHMETH, ERC20_CVX_OHMETH);
 
 /**
- * Gets the staked version of the given token.
+ * Gets the staked Convex version of the given token.
  *
  * @param contractAddress
  * @returns contract address for the staked token, or null
  */
-export const getStakedToken = (contractAddress: string): string | null => {
-  if (!STAKED_TOKENS.has(contractAddress)) return null;
+export const getConvexStakedToken = (contractAddress: string): string | null => {
+  if (!CONVEX_STAKED_TOKENS.has(contractAddress)) return null;
 
-  return STAKED_TOKENS.get(contractAddress);
+  return CONVEX_STAKED_TOKENS.get(contractAddress);
 };
 
 /**

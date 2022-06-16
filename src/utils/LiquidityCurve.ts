@@ -8,7 +8,7 @@ import {
   CONVEX_STAKING_CONTRACTS,
   DAO_WALLET,
   getContractName,
-  getStakedToken,
+  getConvexStakedToken,
   liquidityPairHasToken,
   WALLET_ADDRESSES,
 } from "./Constants";
@@ -272,7 +272,7 @@ export function getCurvePairRecords(
 
       const stakedRecord = getCurvePairStakedRecord(
         pairTokenAddress,
-        getStakedToken(pairTokenAddress),
+        getConvexStakedToken(pairTokenAddress),
         walletAddress,
         stakingAddress,
         unitRate,
