@@ -303,6 +303,18 @@ function getBigDecimalFromBalance(
   return toDecimal(balance, tokenContract.decimals());
 }
 
+/**
+ * Calculates the quantity of {tokenAddress}
+ * contained within the pair at {pairAddress}.
+ *
+ * If {tokenAddress} is not present within the pair,
+ * 0 will be returned.
+ *
+ * @param pairAddress address of a Curve pair
+ * @param tokenAddress address of the token to look for
+ * @param blockNumber current block number
+ * @returns BigDecimal representing the quantity, or 0
+ */
 export function getCurvePairTotalTokenQuantity(
   pairAddress: string,
   tokenAddress: string,
@@ -328,6 +340,15 @@ export function getCurvePairTotalTokenQuantity(
   return BigDecimal.zero();
 }
 
+/**
+ * Returns records for the quantity of {tokenAddress}
+ * across {WALLET_ADDRESSES}.
+ *
+ * @param pairAddress
+ * @param tokenAddress
+ * @param blockNumber
+ * @returns
+ */
 export function getCurvePairTokenQuantity(
   pairAddress: string,
   tokenAddress: string,
@@ -345,7 +366,7 @@ export function getCurvePairTokenQuantity(
 
   const poolTokenAddress = poolTokenContract._address.toHexString();
   const tokenDecimals = poolTokenContract.decimals();
-  log.info("Balancer pool {} has total quantity of {}", [
+  log.info("Curve pool {} has total quantity of {}", [
     getContractName(poolTokenAddress),
     totalQuantity.toString(),
   ]);
