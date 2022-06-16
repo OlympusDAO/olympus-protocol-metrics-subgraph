@@ -263,6 +263,48 @@ describe("token quantity", () => {
     // Should be empty records due to 0 balance of OHM V1
     assert.i32Equals(0, records.records.length);
   });
+
+  test("balance of OHM V2 token in OHM V2 pool before starting block", () => {
+    // Mock the balancer
+    mockBalancerVault(
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      ERC20_BALANCER_OHM_DAI_WETH,
+      ERC20_STANDARD_DECIMALS,
+      BigDecimal.fromString("0"), // 0 before starting block
+      ERC20_OHM_V2,
+      ERC20_DAI,
+      ERC20_WETH,
+      BALANCE_OHM,
+      BALANCE_DAI,
+      BALANCE_WETH,
+      OHM_V2_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+    );
+
+    // Mock wallet balance
+    const expectedWalletBalance = BigDecimal.fromString("2");
+    mockZeroWalletBalances(ERC20_BALANCER_OHM_DAI_WETH, WALLET_ADDRESSES);
+    mockWalletBalance(
+      ERC20_BALANCER_OHM_DAI_WETH,
+      TREASURY_ADDRESS_V3,
+      toBigInt(expectedWalletBalance, ERC20_STANDARD_DECIMALS),
+    );
+
+    const records = getBalancerPoolTokenQuantity(
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      ERC20_OHM_V2,
+      OHM_USD_RESERVE_BLOCK,
+    );
+
+    // Balance = value as the unit rate is 1
+    assert.stringEquals("0", records.balance.toString());
+    assert.stringEquals("0", records.value.toString());
+    // Should be empty records due to starting block
+    assert.i32Equals(0, records.records.length);
+  });
 });
 
 describe("get balancer records", () => {

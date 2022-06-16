@@ -199,9 +199,14 @@ function getCurvePairUnitRate(
   totalValue: BigDecimal,
   blockNumber: BigInt,
 ): BigDecimal {
+  log.info("Calculating unit rate for Curve pair {}", [getContractName(pairAddress)]);
   const pairTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
 
   const totalSupply = toDecimal(pairTokenContract.totalSupply(), pairTokenContract.decimals());
+  log.debug("Curve pair {} has total supply of {}", [
+    getContractName(pairAddress),
+    totalSupply.toString(),
+  ]);
   const unitRate = totalValue.div(totalSupply);
   log.info("Unit rate of Curve LP {} is {} for total supply {}", [
     pairAddress,
@@ -366,11 +371,19 @@ export function getCurvePairTokenQuantity(
 
   const poolTokenAddress = poolTokenContract._address.toHexString();
   const tokenDecimals = poolTokenContract.decimals();
-  log.info("Curve pool {} has total quantity of {}", [
+  log.info("Curve pool {} has total quantity {} of token {}", [
     getContractName(poolTokenAddress),
     totalQuantity.toString(),
+    getContractName(tokenAddress),
   ]);
   const poolTokenTotalSupply = toDecimal(poolTokenContract.totalSupply(), tokenDecimals);
+  if (poolTokenTotalSupply.equals(BigDecimal.zero())) {
+    log.debug("Skipping Curve pair {} with total supply of 0 at block {}", [
+      getContractName(pairAddress),
+      blockNumber.toString(),
+    ]);
+    return records;
+  }
 
   // Grab balances
   const poolTokenBalances = getCurvePairRecords(pairAddress, tokenAddress, false, blockNumber);

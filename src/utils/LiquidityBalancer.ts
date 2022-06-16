@@ -237,6 +237,13 @@ export function getBalancerPoolTokenQuantity(
     totalQuantity.toString(),
   ]);
   const poolTokenTotalSupply = toDecimal(poolTokenContract.totalSupply(), tokenDecimals);
+  if (poolTokenTotalSupply.equals(BigDecimal.zero())) {
+    log.debug("Skipping Balancer pair {} with total supply of 0 at block {}", [
+      getContractName(poolTokenAddress),
+      blockNumber.toString(),
+    ]);
+    return records;
+  }
 
   // Grab balances
   const poolTokenBalances = getBalancerRecords(

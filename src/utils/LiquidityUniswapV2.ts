@@ -398,6 +398,14 @@ export function getUniswapV2PairTokenQuantity(
     totalQuantity.toString(),
   ]);
   const poolTokenTotalSupply = toDecimal(poolTokenContract.totalSupply(), tokenDecimals);
+  if (poolTokenTotalSupply.equals(BigDecimal.zero())) {
+    log.debug("Skipping UniswapV2 pair {} with total supply of 0 at block {}", [
+      getContractName(pairAddress),
+      blockNumber.toString(),
+    ]);
+    return records;
+  }
+
   log.info("UniswapV2 pool {} has total supply of {}", [
     getContractName(pairAddress),
     poolTokenTotalSupply.toString(),
