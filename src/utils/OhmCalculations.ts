@@ -1,6 +1,7 @@
-import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecords } from "../../generated/schema";
+import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
+import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
   BONDS_DEPOSIT,
   BONDS_INVERSE_DEPOSIT,
@@ -39,6 +40,9 @@ import {
   setTokenRecordsMultiplier,
 } from "./TokenRecordHelper";
 
+const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
+const MIGRATION_OFFSET = "5838.1668738299";
+
 /**
  * Returns the total supply of the latest version of the OHM contract
  * at the given block number.
@@ -62,6 +66,53 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
   }
 
   return toDecimal(ohmContract.totalSupply(), 9);
+}
+
+/**
+ * From Shadow:
+ * OHMv1 stopped rebasing at index 46.721314322
+ * So we put into the migrator contract the number of OHMv1 tokens times that index as gOHM
+ * When someone migrates OHMv1 to OHMv2, it uses the gOHM from that contract, burns their OHMv1 and gives them either gOHM or unwraps it to sOHMv2
+ * When we migrated the OHMv1 in LP, we didn't use the migrator contract, so it didn't remove the gOHM that had been set aside for it
+ * what you need to do
+ * is from Mar-14-2022 12:38:48 AM onwards
+ * remove 5,838.1668738299 * current index from floating and circulating
+ *
+ * What is implemented:
+ * - If before {MIGRATION_OFFSET_STARTING_BLOCK}, returns null
+ * - Binds with the sOHM V3 contract
+ * - Multiplies index() from sOHM V3 by {MIGRATION_OFFSET}
+ * - Returns a token record with the offset
+ *
+ * @param blockNumber
+ * @returns
+ */
+function getMigrationOffsetRecord(blockNumber: BigInt): TokenRecord | null {
+  if (blockNumber.lt(BigInt.fromString(MIGRATION_OFFSET_STARTING_BLOCK))) {
+    return null;
+  }
+
+  // Bind the sOHM V3 contract to get the index
+  const sOhmContract = sOlympusERC20V3.bind(Address.fromString(ERC20_SOHM_V3));
+  const offset = toDecimal(sOhmContract.index(), sOhmContract.decimals()).times(
+    BigDecimal.fromString(MIGRATION_OFFSET),
+  );
+  log.info("Calculated migration offset at block {} and index {} is {}", [
+    blockNumber.toString(),
+    sOhmContract.index().toString(),
+    offset.toString(),
+  ]);
+
+  return newTokenRecord(
+    getContractName(ERC20_OHM_V2) + " Migration Offset",
+    ERC20_OHM_V2,
+    getContractName(MIGRATION_CONTRACT),
+    MIGRATION_CONTRACT,
+    BigDecimal.fromString("1"),
+    offset,
+    blockNumber,
+    BigDecimal.fromString("-1"), // Will be subtracted
+  );
 }
 
 /**
@@ -136,6 +187,12 @@ export function getCirculatingSupply(blockNumber: BigInt, totalSupply: BigDecima
         BigDecimal.fromString("-1"), // Subtract
       ),
     );
+  }
+
+  // Migration offset
+  const migrationOffsetRecord = getMigrationOffsetRecord(blockNumber);
+  if (migrationOffsetRecord) {
+    pushTokenRecord(records, migrationOffsetRecord);
   }
 
   return records;
