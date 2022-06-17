@@ -43,6 +43,14 @@ export function getStablecoinBalance(
   log.info("Calculating stablecoin balance for {}", [contractName]);
   const records = newTokenRecords("Stablecoins", blockNumber);
   const contract = getERC20(contractName, contractAddress, blockNumber);
+  if (!contract) {
+    log.info("Skipping ERC20 contract {} that returned empty at block {}", [
+      getContractName(contractAddress),
+      blockNumber.toString(),
+    ]);
+    return records;
+  }
+
   const rate = getUSDRate(contractAddress, blockNumber);
 
   // Wallets

@@ -321,6 +321,19 @@ export function getUSDRateUniswapV2(
   return baseTokenNumerator.times(baseTokenUsdRate);
 }
 
+/**
+ * Returns the rate of {contractAddress} in USD,
+ * using a UniswapV3 pool.
+ *
+ * If the specified pool cannot be found, an error will be thrown.
+ * If the pool contract reverts (such as being before the starting block),
+ * a rate of 0 will be returned.
+ *
+ * @param contractAddress
+ * @param pairAddress
+ * @param blockNumber
+ * @returns
+ */
 export function getUSDRateUniswapV3(
   contractAddress: string,
   pairAddress: string,
@@ -332,6 +345,14 @@ export function getUSDRateUniswapV3(
     throw new Error(
       "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
     );
+  }
+
+  if (pair.try_token0().reverted) {
+    log.warning(
+      "getUSDRateUniswapV3: UniswapV3 pair {} ({}) does not exist at block {}. Returning 0",
+      [pairAddress, getContractName(pairAddress), blockNumber.toString()],
+    );
+    return BigDecimal.zero();
   }
 
   // Determine pair orientation
@@ -369,8 +390,20 @@ export function getUSDRateUniswapV3(
     token1.toHexString(),
     blockNumber,
   );
-  if (!token0Contract) throw new Error("Unable to obtain ERC20 for token " + token0.toHexString());
-  if (!token1Contract) throw new Error("Unable to obtain ERC20 for token " + token1.toHexString());
+  if (!token0Contract) {
+    log.warning("Unable to obtain ERC20 for token {} at block {}", [
+      token0.toHexString(),
+      blockNumber.toString(),
+    ]);
+    return BigDecimal.zero();
+  }
+  if (!token1Contract) {
+    log.warning("Unable to obtain ERC20 for token {} at block {}", [
+      token1.toHexString(),
+      blockNumber.toString(),
+    ]);
+    return BigDecimal.zero();
+  }
 
   // If there is a difference between the decimal places of the two tokens, adjust for that
   const decimalDifference: u8 = u8(token0Contract.decimals()) - u8(token1Contract.decimals());

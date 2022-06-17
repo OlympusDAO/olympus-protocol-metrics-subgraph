@@ -43,9 +43,10 @@ export function getOhmUSDPairRiskFreeValue(
   // TODO abstract out for ANY pair
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
-    throw new Error(
-      "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
-    );
+    log.warning("Cannot determine discounted value as the contract {} does not exist yet", [
+      getContractName(pairAddress),
+    ]);
+    return BigDecimal.zero();
   }
 
   const total_lp = pair.totalSupply();
@@ -67,9 +68,10 @@ export function getUniswapV2PairTotalValue(pairAddress: string, blockNumber: Big
   log.info("Calculating total value of pair {}", [pairAddress]);
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
-    throw new Error(
-      "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
-    );
+    log.warning("Cannot determine discounted value as the contract {} does not exist yet", [
+      getContractName(pairAddress),
+    ]);
+    return BigDecimal.zero();
   }
 
   // Determine token0 value
@@ -127,9 +129,10 @@ export function getUniswapV2PairValue(
 ): BigDecimal {
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
-    throw new Error(
-      "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
-    );
+    log.warning("Cannot determine discounted value as the contract {} does not exist yet", [
+      getContractName(pairAddress),
+    ]);
+    return BigDecimal.zero();
   }
 
   const lpValue = getUniswapV2PairTotalValue(pairAddress, blockNumber);
@@ -161,9 +164,10 @@ export function getOhmUSDPairValue(
 ): BigDecimal {
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
-    throw new Error(
-      "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
-    );
+    log.warning("Cannot determine discounted value as the contract {} does not exist yet", [
+      getContractName(pairAddress),
+    ]);
+    return BigDecimal.zero();
   }
 
   const ohmReserves = pair.getReserves().value0;
@@ -198,9 +202,10 @@ export function getUniswapV2PairUnitRate(
 ): BigDecimal {
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
-    throw new Error(
-      "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
-    );
+    log.warning("Cannot determine discounted value as the contract {} does not exist yet", [
+      getContractName(pairAddress),
+    ]);
+    return BigDecimal.zero();
   }
 
   const totalSupply = toDecimal(pair.totalSupply(), pair.decimals());
@@ -348,6 +353,13 @@ export function getUniswapV2PairTotalTokenQuantity(
 ): BigDecimal {
   // Obtain both tokens
   const pair = UniswapV2Pair.bind(Address.fromString(pairAddress));
+  if (!pair) {
+    log.warning("Cannot determine total quantity the contract {} does not exist yet", [
+      getContractName(pairAddress),
+    ]);
+    return BigDecimal.zero();
+  }
+
   const token0 = pair.token0();
   const token1 = pair.token1();
 

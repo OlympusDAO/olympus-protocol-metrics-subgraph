@@ -2,8 +2,6 @@ import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import {
-  CONVEX_ALLOCATOR1,
-  CONVEX_ALLOCATOR2,
   CONVEX_ALLOCATOR3,
   CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,

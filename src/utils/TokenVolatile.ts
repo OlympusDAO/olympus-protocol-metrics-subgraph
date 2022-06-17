@@ -80,6 +80,14 @@ export function getVolatileTokenBalance(
   log.info("Calculating volatile token balance for {}", [contractName]);
   const records = newTokenRecords("Volatile token balance", blockNumber);
   const contract = getERC20(contractName, contractAddress, blockNumber);
+  if (!contract) {
+    log.info("Skipping ERC20 contract {} that returned empty at block {}", [
+      getContractName(contractAddress),
+      blockNumber.toString(),
+    ]);
+    return records;
+  }
+
   const rate = getUSDRate(contractAddress, blockNumber);
 
   // Wallets

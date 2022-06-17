@@ -21,6 +21,7 @@ import {
   PAIR_UNISWAP_V2_USDC_ETH,
   PAIR_UNISWAP_V3_3CRV_USD,
   PAIR_UNISWAP_V3_FPIS_FRAX,
+  PAIR_UNISWAP_V3_FXS_ETH,
 } from "../src/utils/Constants";
 import { DEFAULT_DECIMALS } from "../src/utils/Decimals";
 import {
@@ -407,6 +408,21 @@ describe("get USD rate", () => {
       ethUsdRate.minus(calculatedRate).lt(BigDecimal.fromString("0.000000000000000001")) &&
         ethUsdRate.minus(calculatedRate).gt(BigDecimal.fromString("-0.000000000000000001")),
     );
+  });
+
+  test("FXS (UniswapV3) handles contract revert", () => {
+    mockEthUsdRate();
+    mockFxsEthRate();
+
+    // Mock contract revert
+    createMockedFunction(
+      Address.fromString(PAIR_UNISWAP_V3_FXS_ETH),
+      "token0",
+      "token0():(address)",
+    ).reverts();
+
+    const fxsUsdRate = getUSDRate(ERC20_FXS, OHM_USD_RESERVE_BLOCK);
+    assert.stringEquals("0", fxsUsdRate.toString());
   });
 
   test("FPIS (UniswapV3) returns correct rate", () => {

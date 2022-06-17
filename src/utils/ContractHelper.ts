@@ -487,6 +487,17 @@ export function getERC20TokenRecordFromWallet(
   rate: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecord | null {
+  if (contract) {
+    const callResult = contract.try_balanceOf(Address.fromString(walletAddress));
+    if (callResult.reverted) {
+      log.warning("Contract {} reverted while trying to obtain balance at block {}", [
+        getContractName(contract._address.toHexString()),
+        blockNumber.toString(),
+      ]);
+      return null;
+    }
+  }
+
   const balance = toDecimal(
     getERC20Balance(contract, walletAddress, blockNumber),
     contract ? contract.decimals() : 18,
@@ -558,6 +569,11 @@ function getTokeAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
     return null;
   }
 
+  if (tokeAllocator.try_ids().reverted) {
+    log.warning("Toke Allocator contract reverted at block {}. Skipping", [blockNumber.toString()]);
+    return null;
+  }
+
   // Correct allocator for the id
   if (!tokeAllocator.ids().includes(BigInt.fromI32(allocatorId))) {
     return null;
@@ -616,6 +632,11 @@ function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
   const contract = getERC20(getContractName(contractAddress), contractAddress, blockNumber);
 
   if (rariAllocatorId === ALLOCATOR_RARI_ID_NOT_FOUND || !rariAllocator || !contract) {
+    return null;
+  }
+
+  if (rariAllocator.try_ids().reverted) {
+    log.warning("Rari Allocator contract reverted at block {}. Skipping", [blockNumber.toString()]);
     return null;
   }
 
