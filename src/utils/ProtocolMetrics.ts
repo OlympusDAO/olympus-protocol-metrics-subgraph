@@ -21,11 +21,11 @@ import {
 import { dayFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
 import {
-  getLiquidityPoolValue,
   getOhmDaiProtocolOwnedLiquidity,
   getOhmEthProtocolOwnedLiquidity,
   getOhmFraxProtocolOwnedLiquidity,
   getOhmLusdProtocolOwnedLiquidity,
+  getOwnedLiquidityPoolValue,
 } from "./LiquidityCalculations";
 import {
   getCirculatingSupply,
@@ -54,6 +54,7 @@ import {
 import {
   getMarketValue,
   getRiskFreeValue,
+  getTreasuryLiquidBacking,
   getTreasuryLiquidBackingPerOhmCirculating,
   getTreasuryLiquidBackingPerOhmFloating,
   getTreasuryStableBacking,
@@ -268,12 +269,16 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.totalSupply = getTotalSupply(blockNumber);
 
   // Circ Supply
-  const ohmCirculatingSupply = getCirculatingSupply(blockNumber, pm.totalSupply);
+  const ohmCirculatingSupply = getCirculatingSupply(
+    "OhmCirculatingSupply",
+    blockNumber,
+    pm.totalSupply,
+  );
   pm.ohmCirculatingSupply = ohmCirculatingSupply.value;
   pm.ohmCirculatingSupplyBreakdown = ohmCirculatingSupply.id;
 
   // Floating supply
-  const ohmFloatingSupply = getFloatingSupply(pm.totalSupply, blockNumber);
+  const ohmFloatingSupply = getFloatingSupply("OhmFloatingSupply", pm.totalSupply, blockNumber);
   pm.ohmFloatingSupply = ohmFloatingSupply.value;
   pm.ohmFloatingSupplyBreakdown = ohmFloatingSupply.id;
 
@@ -284,29 +289,29 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.ohmPrice = getBaseOhmUsdRate(block.number);
 
   // OHM Market Cap
-  pm.marketCap = getOhmMarketcap(block.number);
+  pm.marketCap = getOhmMarketcap("OhmMarketCap", block.number);
 
   // Total Value Locked
   pm.totalValueLocked = getTotalValueLocked(block.number);
 
   // Treasury RFV and MV
-  const marketValue = getMarketValue(blockNumber);
+  const marketValue = getMarketValue("MarketValue", blockNumber);
   pm.treasuryMarketValue = marketValue.value;
   pm.treasuryMarketValueComponents = marketValue.id;
 
-  const riskFreeValue = getRiskFreeValue(blockNumber);
+  const riskFreeValue = getRiskFreeValue("RiskFreeValue", blockNumber);
   pm.treasuryRiskFreeValue = riskFreeValue.value;
   pm.treasuryRiskFreeValueComponents = riskFreeValue.id;
 
-  const treasuryDaiRiskFree = getDaiMarketValue(blockNumber, true);
+  const treasuryDaiRiskFree = getDaiMarketValue("DaiRiskFreeValue", blockNumber, true);
   pm.treasuryDaiRiskFreeValue = treasuryDaiRiskFree.value;
   pm.treasuryDaiRiskFreeValueComponents = treasuryDaiRiskFree.id;
 
-  const fraxRiskFreeValue = getFraxMarketValue(blockNumber, true);
+  const fraxRiskFreeValue = getFraxMarketValue("FraxMarketValue", blockNumber, true);
   pm.treasuryFraxRiskFreeValue = fraxRiskFreeValue.value;
   pm.treasuryFraxRiskFreeValueComponents = fraxRiskFreeValue.id;
 
-  const daiMarketValue = getDaiMarketValue(blockNumber);
+  const daiMarketValue = getDaiMarketValue("DaiMarketValue", blockNumber);
   pm.treasuryDaiMarketValue = daiMarketValue.value;
   pm.treasuryDaiMarketValueComponents = daiMarketValue.id;
 
@@ -326,11 +331,11 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryXsushiMarketValue = xSushiValue.value;
   pm.treasuryXsushiMarketValueComponents = xSushiValue.id;
 
-  const ethRiskFreeValue = getEthMarketValue(blockNumber, true);
+  const ethRiskFreeValue = getEthMarketValue("EthRiskFreeValue", blockNumber, true);
   pm.treasuryWETHRiskFreeValue = ethRiskFreeValue.value;
   pm.treasuryWETHRiskFreeValueComponents = ethRiskFreeValue.id;
 
-  const ethMarketValue = getEthMarketValue(blockNumber);
+  const ethMarketValue = getEthMarketValue("EthMarketValue", blockNumber);
   pm.treasuryWETHMarketValue = ethMarketValue.value;
   pm.treasuryWETHMarketValueComponents = ethMarketValue.id;
 
@@ -355,7 +360,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryFXSMarketValue = fxsValue.value;
   pm.treasuryFXSMarketValueComponents = fxsValue.id;
 
-  const treasuryOtherMarketValue = getVolatileValue(blockNumber, false, false);
+  const treasuryOtherMarketValue = getVolatileValue("OtherMarketValue", blockNumber, false, false);
   pm.treasuryOtherMarketValue = treasuryOtherMarketValue.value;
   pm.treasuryOtherMarketValueComponents = treasuryOtherMarketValue.id;
 
@@ -375,11 +380,11 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryVolatileBacking = volatileBacking.value;
   pm.treasuryVolatileBackingComponents = volatileBacking.id;
 
-  const totalBacking = getTreasuryTotalBacking(false, blockNumber);
+  const totalBacking = getTreasuryTotalBacking(blockNumber);
   pm.treasuryTotalBacking = totalBacking.value;
   pm.treasuryTotalBackingComponents = totalBacking.id;
 
-  const liquidBacking = getTreasuryTotalBacking(true, blockNumber);
+  const liquidBacking = getTreasuryLiquidBacking(blockNumber);
   pm.treasuryLiquidBacking = liquidBacking.value;
   pm.treasuryLiquidBackingComponents = liquidBacking.id;
 
@@ -388,7 +393,12 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
 
   pm.treasuryLiquidBackingPerOhmFloating = getTreasuryLiquidBackingPerOhmFloating(blockNumber);
 
-  const liquidityPoolValue = getLiquidityPoolValue(false, true, blockNumber);
+  const liquidityPoolValue = getOwnedLiquidityPoolValue(
+    "LiquidityPoolValue",
+    false,
+    true,
+    blockNumber,
+  );
   pm.treasuryLPValue = liquidityPoolValue.value;
   pm.treasuryLPValueComponents = liquidityPoolValue.id;
 

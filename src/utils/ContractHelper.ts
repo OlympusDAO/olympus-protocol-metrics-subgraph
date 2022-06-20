@@ -32,7 +32,6 @@ import {
   liquidityPairHasToken,
   LUSD_ALLOCATOR,
   NATIVE_ETH,
-  OHMLUSD_ONSEN_ID,
   ONSEN_ALLOCATOR,
   RARI_ALLOCATOR,
   SUSHI_MASTERCHEF,
@@ -489,6 +488,7 @@ export function getValue(balance: BigInt, decimals: number, rate: BigDecimal): B
  * @returns TokenRecord object or null
  */
 export function getERC20TokenRecordFromWallet(
+  metricName: string,
   tokenName: string,
   walletAddress: string,
   contract: ERC20 | null,
@@ -513,6 +513,7 @@ export function getERC20TokenRecordFromWallet(
   if (!balance || balance.equals(BigDecimal.zero())) return null;
 
   return newTokenRecord(
+    metricName,
     tokenName,
     contract ? contract._address.toHexString() : "N/A",
     getContractName(walletAddress),
@@ -534,6 +535,7 @@ export function getERC20TokenRecordFromWallet(
  * @returns TokenRecords object
  */
 export function getERC20TokenRecordsFromWallets(
+  metricName: string,
   tokenName: string,
   contract: ERC20 | null,
   rate: BigDecimal,
@@ -543,6 +545,7 @@ export function getERC20TokenRecordsFromWallets(
 
   for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
     const record = getERC20TokenRecordFromWallet(
+      metricName,
       tokenName,
       WALLET_ADDRESSES[i],
       contract,
@@ -599,6 +602,7 @@ function getTokeAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
  * @returns TokenRecords object
  */
 export function getTokeAllocatorRecords(
+  metricName: string,
   tokenAddress: string,
   price: BigDecimal,
   blockNumber: BigInt,
@@ -611,6 +615,7 @@ export function getTokeAllocatorRecords(
   pushTokenRecord(
     records,
     newTokenRecord(
+      metricName,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(TOKE_ALLOCATOR),
@@ -668,6 +673,7 @@ function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
  * @returns TokenRecords object
  */
 export function getRariAllocatorRecords(
+  metricName: string,
   tokenAddress: string,
   price: BigDecimal,
   blockNumber: BigInt,
@@ -680,6 +686,7 @@ export function getRariAllocatorRecords(
   pushTokenRecord(
     records,
     newTokenRecord(
+      metricName,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(RARI_ALLOCATOR),
@@ -702,6 +709,7 @@ export function getRariAllocatorRecords(
  * @returns TokenRecords object
  */
 export function getOnsenAllocatorRecords(
+  metricName: string,
   tokenAddress: string,
   price: BigDecimal,
   blockNumber: BigInt,
@@ -714,6 +722,7 @@ export function getOnsenAllocatorRecords(
   pushTokenRecord(
     records,
     newTokenRecord(
+      metricName,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(ONSEN_ALLOCATOR),
@@ -784,7 +793,11 @@ export function getConvexStakedBalance(
  * @param tokenAddress the token address to look for
  * @param blockNumber the current block
  */
-export function getConvexStakedRecords(tokenAddress: string, blockNumber: BigInt): TokenRecords {
+export function getConvexStakedRecords(
+  metricName: string,
+  tokenAddress: string,
+  blockNumber: BigInt,
+): TokenRecords {
   const records = newTokenRecords(
     "Staked Convex Allocator-" + getContractName(tokenAddress),
     blockNumber,
@@ -809,6 +822,7 @@ export function getConvexStakedRecords(tokenAddress: string, blockNumber: BigInt
       pushTokenRecord(
         records,
         newTokenRecord(
+          metricName,
           getContractName(tokenAddress),
           tokenAddress,
           getContractName(allocatorAddress),
@@ -917,6 +931,7 @@ export function getLiquityStabilityPoolBalance(
  * @returns
  */
 export function getLiquityStabilityPoolRecords(
+  metricName: string,
   tokenAddress: string,
   rate: BigDecimal,
   blockNumber: BigInt,
@@ -933,6 +948,7 @@ export function getLiquityStabilityPoolRecords(
   pushTokenRecord(
     records,
     newTokenRecord(
+      metricName,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(LUSD_ALLOCATOR),
@@ -971,7 +987,11 @@ function getVeFXSAllocatorBalance(
   return toDecimal(contract.locked(Address.fromString(allocatorAddress)).value0, 18);
 }
 
-export function getVeFXSAllocatorRecords(tokenAddress: string, blockNumber: BigInt): TokenRecords {
+export function getVeFXSAllocatorRecords(
+  metricName: string,
+  tokenAddress: string,
+  blockNumber: BigInt,
+): TokenRecords {
   const records = newTokenRecords("VeFXS Allocator", blockNumber);
 
   const balance = getVeFXSAllocatorBalance(tokenAddress, VEFXS_ALLOCATOR, blockNumber);
@@ -982,6 +1002,7 @@ export function getVeFXSAllocatorRecords(tokenAddress: string, blockNumber: BigI
   pushTokenRecord(
     records,
     newTokenRecord(
+      metricName,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(VEFXS_ALLOCATOR),

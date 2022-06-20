@@ -230,6 +230,7 @@ export function getUniswapV2PairUnitRate(
  * @returns
  */
 export function getUniswapV2PairRecord(
+  metricName: string,
   pairAddress: string,
   pairRate: BigDecimal,
   walletAddress: string,
@@ -256,6 +257,7 @@ export function getUniswapV2PairRecord(
   const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
 
   return newTokenRecord(
+    metricName,
     getContractName(pairAddress),
     pairAddress,
     getContractName(walletAddress),
@@ -283,6 +285,7 @@ export function getUniswapV2PairRecord(
  * @returns
  */
 export function getUniswapV2PairRecords(
+  metricName: string,
   pairAddress: string,
   tokenAddress: string | null,
   excludeOhmValue: boolean,
@@ -307,6 +310,7 @@ export function getUniswapV2PairRecords(
     const walletAddress = WALLET_ADDRESSES[i];
 
     const record = getUniswapV2PairRecord(
+      metricName,
       pairAddress,
       unitRate,
       walletAddress,
@@ -388,6 +392,7 @@ export function getUniswapV2PairTotalTokenQuantity(
  * @returns
  */
 export function getUniswapV2PairTokenQuantity(
+  metricName: string,
   pairAddress: string,
   tokenAddress: string,
   blockNumber: BigInt,
@@ -428,7 +433,13 @@ export function getUniswapV2PairTokenQuantity(
   ]);
 
   // Grab balances
-  const poolTokenBalances = getUniswapV2PairRecords(pairAddress, tokenAddress, false, blockNumber);
+  const poolTokenBalances = getUniswapV2PairRecords(
+    metricName,
+    pairAddress,
+    tokenAddress,
+    false,
+    blockNumber,
+  );
 
   for (let i = 0; i < poolTokenBalances.records.length; i++) {
     const recordId = poolTokenBalances.records[i];
@@ -441,6 +452,7 @@ export function getUniswapV2PairTokenQuantity(
     pushTokenRecord(
       records,
       newTokenRecord(
+        metricName,
         getContractName(tokenAddress) + " in " + getContractName(pairAddress),
         pairAddress,
         record.source,

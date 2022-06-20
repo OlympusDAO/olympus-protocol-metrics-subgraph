@@ -37,8 +37,8 @@ const BALANCE_DAI = BigDecimal.fromString("1932155.145566782258916959");
 const BALANCE_WETH = BigDecimal.fromString("1080.264364629190826870");
 const POOL_TOKEN_TOTAL_SUPPLY = BigDecimal.fromString("100");
 
-function mockBalancerVault(
-  poolAddress: string,
+export function mockBalancerVault(
+  vaultAddress: string,
   poolId: string,
   poolTokenAddress: string,
   poolTokenDecimals: i32,
@@ -55,7 +55,7 @@ function mockBalancerVault(
 ): void {
   // getPoolTokens
   createMockedFunction(
-    Address.fromString(poolAddress),
+    Address.fromString(vaultAddress),
     "getPoolTokens",
     "getPoolTokens(bytes32):(address[],uint256[],uint256)",
   )
@@ -76,7 +76,7 @@ function mockBalancerVault(
 
   // getPool
   createMockedFunction(
-    Address.fromString(poolAddress),
+    Address.fromString(vaultAddress),
     "getPool",
     "getPool(bytes32):(address,uint8)",
   )
@@ -106,6 +106,25 @@ function mockBalancerVault(
   );
   createMockedFunction(Address.fromString(token3Address), "decimals", "decimals():(uint8)").returns(
     [ethereum.Value.fromI32(token3Decimals)],
+  );
+}
+
+export function mockBalanceVaultZero(): void {
+  mockBalancerVault(
+    BALANCER_VAULT,
+    POOL_BALANCER_OHM_DAI_WETH_ID,
+    ERC20_BALANCER_OHM_DAI_WETH,
+    ERC20_STANDARD_DECIMALS,
+    BigDecimal.fromString("0"),
+    ERC20_OHM_V2,
+    ERC20_DAI,
+    ERC20_WETH,
+    BigDecimal.fromString("0"),
+    BigDecimal.fromString("0"),
+    BigDecimal.fromString("0"),
+    ERC20_STANDARD_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
   );
 }
 

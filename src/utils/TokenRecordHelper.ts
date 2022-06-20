@@ -16,6 +16,7 @@ export function setTokenRecordMultiplier(record: TokenRecord, multiplier: BigDec
 }
 
 export function newTokenRecord(
+  metric: string,
   tokenName: string,
   tokenAddress: string,
   sourceName: string,
@@ -25,7 +26,10 @@ export function newTokenRecord(
   blockNumber: BigInt,
   multiplier: BigDecimal = BigDecimal.fromString("1"),
 ): TokenRecord {
-  const record = new TokenRecord(tokenName + "-" + sourceName + "-" + blockNumber.toString());
+  // We need to separate records between metrics, otherwise they get clobbered
+  const record = new TokenRecord(
+    metric + "-" + tokenName + "-" + sourceName + "-" + blockNumber.toString(),
+  );
   record.token = tokenName;
   record.tokenAddress = tokenAddress;
   record.source = sourceName;

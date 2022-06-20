@@ -2,19 +2,29 @@ import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { createMockedFunction } from "matchstick-as";
 
 import {
+  ERC20_CRV_OHMETH,
   ERC20_DAI,
   ERC20_FXS,
+  ERC20_LUSD,
+  ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_TRIBE,
   ERC20_USDC,
   ERC20_WETH,
+  PAIR_CURVE_OHM_ETH,
+  PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
+  PAIR_UNISWAP_V2_OHM_ETH,
   PAIR_UNISWAP_V2_OHM_ETH_V2,
+  PAIR_UNISWAP_V2_OHM_LUSD,
+  PAIR_UNISWAP_V2_OHM_LUSD_V2,
   PAIR_UNISWAP_V2_TRIBE_ETH,
   PAIR_UNISWAP_V2_USDC_ETH,
   PAIR_UNISWAP_V3_FXS_ETH,
+  WALLET_ADDRESSES,
 } from "../src/utils/Constants";
 import { toBigInt, toDecimal } from "../src/utils/Decimals";
+import { mockZeroWalletBalances } from "./walletHelper";
 
 export const ETH_TRIBE_RESERVE_TRIBE = BigInt.fromString("40963255589554358793575");
 export const ETH_TRIBE_RESERVE_ETH = BigInt.fromString("4956325030062526848");
@@ -305,6 +315,87 @@ export const mockUniswapV2Pair = (
   );
 };
 
+export const mockUniswapV2PairsZero = (): void => {
+  // For all entries in LIQUIDITY_OWNED
+  mockUniswapV2Pair(
+    ERC20_OHM_V2,
+    ERC20_DAI,
+    OHM_V2_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    BigInt.fromString("1"),
+    BigInt.fromString("1"),
+    BigInt.fromString("1"),
+    PAIR_UNISWAP_V2_OHM_DAI_V2,
+    ERC20_STANDARD_DECIMALS,
+  );
+  mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_DAI_V2, WALLET_ADDRESSES);
+
+  mockUniswapV2Pair(
+    ERC20_OHM_V1,
+    ERC20_DAI,
+    OHM_V2_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    BigInt.fromString("1"),
+    BigInt.fromString("1"),
+    BigInt.fromString("1"),
+    PAIR_UNISWAP_V2_OHM_DAI,
+    ERC20_STANDARD_DECIMALS,
+  );
+  mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_DAI, WALLET_ADDRESSES);
+
+  mockUniswapV2Pair(
+    ERC20_OHM_V2,
+    ERC20_WETH,
+    OHM_V2_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    BigInt.fromString("1"),
+    BigInt.fromString("1"),
+    BigInt.fromString("1"),
+    PAIR_UNISWAP_V2_OHM_ETH_V2,
+    ERC20_STANDARD_DECIMALS,
+  );
+  mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_ETH_V2, WALLET_ADDRESSES);
+
+  mockUniswapV2Pair(
+    ERC20_OHM_V1,
+    ERC20_WETH,
+    OHM_V2_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    BigInt.fromString("1"),
+    BigInt.fromString("1"),
+    BigInt.fromString("1"),
+    PAIR_UNISWAP_V2_OHM_ETH,
+    ERC20_STANDARD_DECIMALS,
+  );
+  mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_ETH, WALLET_ADDRESSES);
+
+  mockUniswapV2Pair(
+    ERC20_OHM_V2,
+    ERC20_LUSD,
+    OHM_V2_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    BigInt.fromString("1"),
+    BigInt.fromString("1"),
+    BigInt.fromString("1"),
+    PAIR_UNISWAP_V2_OHM_LUSD_V2,
+    ERC20_STANDARD_DECIMALS,
+  );
+  mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_LUSD_V2, WALLET_ADDRESSES);
+
+  mockUniswapV2Pair(
+    ERC20_OHM_V1,
+    ERC20_LUSD,
+    OHM_V2_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    BigInt.fromString("1"),
+    BigInt.fromString("1"),
+    BigInt.fromString("1"),
+    PAIR_UNISWAP_V2_OHM_LUSD,
+    ERC20_STANDARD_DECIMALS,
+  );
+  mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_LUSD, WALLET_ADDRESSES);
+};
+
 export const OHM_ETH_RESERVES_OHM = BigInt.fromString("375628431674251");
 export const OHM_ETH_RESERVES_ETH = BigInt.fromString("3697970940599119381327");
 export const OHM_ETH_TOTAL_SUPPLY = BigInt.fromString("1088609680068180654");
@@ -426,4 +517,21 @@ export const mockCurvePairTotalValue = (
     "totalSupply",
     "totalSupply():(uint256)",
   ).returns([ethereum.Value.fromUnsignedBigInt(toBigInt(pairTokenTotalSupply, pairTokenDecimals))]);
+};
+
+export const mockCurvePairZero = (): void => {
+  mockCurvePairTotalValue(
+    PAIR_CURVE_OHM_ETH,
+    ERC20_CRV_OHMETH,
+    ERC20_STANDARD_DECIMALS,
+    BigDecimal.fromString("1"),
+    ERC20_OHM_V2,
+    ERC20_WETH,
+    BigInt.fromString("0"),
+    BigInt.fromString("0"),
+    OHM_V2_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+  );
+
+  mockZeroWalletBalances(ERC20_CRV_OHMETH, WALLET_ADDRESSES);
 };

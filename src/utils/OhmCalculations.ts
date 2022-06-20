@@ -89,7 +89,7 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
  * @param blockNumber
  * @returns
  */
-function getMigrationOffsetRecord(blockNumber: BigInt): TokenRecord | null {
+function getMigrationOffsetRecord(metricName: string, blockNumber: BigInt): TokenRecord | null {
   if (blockNumber.lt(BigInt.fromString(MIGRATION_OFFSET_STARTING_BLOCK))) {
     return null;
   }
@@ -106,6 +106,7 @@ function getMigrationOffsetRecord(blockNumber: BigInt): TokenRecord | null {
   ]);
 
   return newTokenRecord(
+    metricName,
     getContractName(ERC20_OHM_V2) + " Migration Offset",
     ERC20_OHM_V2,
     getContractName(MIGRATION_CONTRACT),
@@ -133,7 +134,11 @@ function getMigrationOffsetRecord(blockNumber: BigInt): TokenRecord | null {
  * @param totalSupply the total supply of OHM
  * @returns BigDecimal representing the total supply at the time of the block
  */
-export function getCirculatingSupply(blockNumber: BigInt, totalSupply: BigDecimal): TokenRecords {
+export function getCirculatingSupply(
+  metricName: string,
+  blockNumber: BigInt,
+  totalSupply: BigDecimal,
+): TokenRecords {
   const isV2Contract = blockNumber.gt(BigInt.fromString(ERC20_OHM_V2_BLOCK));
   const ohmContractAddress = isV2Contract ? ERC20_OHM_V2 : ERC20_OHM_V1;
 
@@ -152,6 +157,7 @@ export function getCirculatingSupply(blockNumber: BigInt, totalSupply: BigDecima
   pushTokenRecord(
     records,
     newTokenRecord(
+      metricName,
       getContractName(ohmContractAddress),
       ohmContractAddress,
       "OHM Total Supply",
@@ -179,6 +185,7 @@ export function getCirculatingSupply(blockNumber: BigInt, totalSupply: BigDecima
     pushTokenRecord(
       records,
       newTokenRecord(
+        metricName,
         getContractName(ohmContractAddress),
         ohmContractAddress,
         getContractName(currentWallet),
@@ -192,7 +199,7 @@ export function getCirculatingSupply(blockNumber: BigInt, totalSupply: BigDecima
   }
 
   // Migration offset
-  const migrationOffsetRecord = getMigrationOffsetRecord(blockNumber);
+  const migrationOffsetRecord = getMigrationOffsetRecord(metricName, blockNumber);
   if (migrationOffsetRecord) {
     pushTokenRecord(records, migrationOffsetRecord);
   }
@@ -207,7 +214,7 @@ export function getCirculatingSupply(blockNumber: BigInt, totalSupply: BigDecima
  * @param blockNumber
  * @returns
  */
-function getLiquiditySupply(blockNumber: BigInt): TokenRecords {
+function getLiquiditySupply(metricName: string, blockNumber: BigInt): TokenRecords {
   const records = newTokenRecords("OHM Liquidity Supply", blockNumber);
 
   for (let i = 0; i < LIQUIDITY_OWNED.length; i++) {
@@ -228,17 +235,23 @@ function getLiquiditySupply(blockNumber: BigInt): TokenRecords {
 
         combineTokenRecords(
           records,
-          getBalancerPoolTokenQuantity(pairAddress, pairPoolAddress, ohmTokenAddress, blockNumber),
+          getBalancerPoolTokenQuantity(
+            metricName,
+            pairAddress,
+            pairPoolAddress,
+            ohmTokenAddress,
+            blockNumber,
+          ),
         );
       } else if (pairHandler.getType() == PairHandlerTypes.Curve) {
         combineTokenRecords(
           records,
-          getCurvePairTokenQuantity(pairAddress, ohmTokenAddress, blockNumber),
+          getCurvePairTokenQuantity(metricName, pairAddress, ohmTokenAddress, blockNumber),
         );
       } else if (pairHandler.getType() == PairHandlerTypes.UniswapV2) {
         combineTokenRecords(
           records,
-          getUniswapV2PairTokenQuantity(pairAddress, ohmTokenAddress, blockNumber),
+          getUniswapV2PairTokenQuantity(metricName, pairAddress, ohmTokenAddress, blockNumber),
         );
       } else {
         throw new Error("Unsupported pair type: " + pairHandler.getType().toString());
@@ -260,14 +273,18 @@ function getLiquiditySupply(blockNumber: BigInt): TokenRecords {
  * @param blockNumber
  * @returns
  */
-export function getFloatingSupply(totalSupply: BigDecimal, blockNumber: BigInt): TokenRecords {
+export function getFloatingSupply(
+  metricName: string,
+  totalSupply: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecords {
   const records = newTokenRecords("OHM Floating Supply", blockNumber);
 
   // Circulating supply
-  combineTokenRecords(records, getCirculatingSupply(blockNumber, totalSupply));
+  combineTokenRecords(records, getCirculatingSupply(metricName, blockNumber, totalSupply));
 
   // Liquidity supply
-  const liquiditySupply = getLiquiditySupply(blockNumber);
+  const liquiditySupply = getLiquiditySupply(metricName, blockNumber);
   setTokenRecordsMultiplier(liquiditySupply, BigDecimal.fromString("-1")); // Subtracted
   combineTokenRecords(records, liquiditySupply);
 
@@ -283,9 +300,9 @@ export function getFloatingSupply(totalSupply: BigDecimal, blockNumber: BigInt):
  * @param blockNumber the current block number
  * @returns BigDecimal representing the market cap at the current block
  */
-export function getOhmMarketcap(blockNumber: BigInt): BigDecimal {
+export function getOhmMarketcap(metricName: string, blockNumber: BigInt): BigDecimal {
   return getBaseOhmUsdRate(blockNumber).times(
-    getCirculatingSupply(blockNumber, getTotalSupply(blockNumber)).value,
+    getCirculatingSupply(metricName, blockNumber, getTotalSupply(blockNumber)).value,
   );
 }
 

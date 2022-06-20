@@ -9,7 +9,13 @@ describe("native ETH", () => {
   test("getStablecoinBalance does not throw error", () => {
     mockEthUsdRate();
 
-    const records = getStablecoinBalance(NATIVE_ETH, false, false, BigInt.fromString("14000000"));
+    const records = getStablecoinBalance(
+      NATIVE_ETH,
+      false,
+      false,
+      false,
+      BigInt.fromString("14000000"),
+    );
 
     // Native ETH isn't an ERC20 contract, and isn't supported by TheGraph API.
     // The code shouldn't throw any errors/exceptions when it comes across native ETH.

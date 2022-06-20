@@ -90,6 +90,7 @@ function getBalancerPoolToken(vaultAddress: string, poolId: string, blockNumber:
 }
 
 export function getBalancerRecords(
+  metricName: string,
   vaultAddress: string,
   poolId: string,
   excludeOhmValue: boolean,
@@ -121,6 +122,11 @@ export function getBalancerRecords(
 
   // Calculate multiplier
   const multiplier = excludeOhmValue ? nonOhmValue.div(totalValue) : BigDecimal.fromString("1");
+  log.info("getBalancerRecords: applying multiplier of {} based on excludeOhmValue = {}", [
+    multiplier.toString(),
+    excludeOhmValue ? "true" : "false",
+  ]);
+
   const poolTokenAddress = poolTokenContract._address.toHexString();
   log.info("Balancer pool {} ({}) has total value of {}, non-OHM value of {} and unit rate of {}", [
     getContractName(poolTokenAddress),
@@ -148,6 +154,7 @@ export function getBalancerRecords(
     pushTokenRecord(
       records,
       newTokenRecord(
+        metricName,
         getContractName(poolTokenAddress),
         poolTokenAddress,
         getContractName(walletAddress),
@@ -216,6 +223,7 @@ export function getBalancerPoolTotalTokenQuantity(
  * @returns
  */
 export function getBalancerPoolTokenQuantity(
+  metricName: string,
   vaultAddress: string,
   poolId: string,
   tokenAddress: string,
@@ -247,6 +255,7 @@ export function getBalancerPoolTokenQuantity(
 
   // Grab balances
   const poolTokenBalances = getBalancerRecords(
+    metricName,
     vaultAddress,
     poolId,
     false,
@@ -265,6 +274,7 @@ export function getBalancerPoolTokenQuantity(
     pushTokenRecord(
       records,
       newTokenRecord(
+        metricName,
         getContractName(tokenAddress) + " in " + getContractName(poolTokenAddress),
         poolTokenAddress,
         record.source,
