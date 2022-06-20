@@ -11,7 +11,9 @@ import {
   ERC20_OHM_V2_BLOCK,
   ERC20_SOHM_V1,
   ERC20_SOHM_V2,
+  ERC20_SOHM_V2_BLOCK,
   ERC20_SOHM_V3,
+  ERC20_SOHM_V3_BLOCK,
   getContractName,
   LIQUIDITY_OWNED,
   MIGRATION_CONTRACT,
@@ -288,29 +290,32 @@ export function getOhmMarketcap(blockNumber: BigInt): BigDecimal {
 }
 
 /**
- * Returns the circulating supply of sOHM V1, V2 and V3.
- *
- * TODO: clarify whether this is correct. OHM circulating supply is not a total.
+ * Returns the circulating supply of sOHM V1, V2 or V3, depending on the current block.
  *
  * @param blockNumber the current block number
  * @returns BigDecimal representing the total circulating supply at the current block
  */
 export function getSOhmCirculatingSupply(blockNumber: BigInt): BigDecimal {
-  const contractV1 = getSOlympusERC20("sOHM", ERC20_SOHM_V1, blockNumber);
-  const contractV2 = getSOlympusERC20V2("sOHM V2", ERC20_SOHM_V2, blockNumber);
-  const contractV3 = getSOlympusERC20V3("sOHM V3", ERC20_SOHM_V3, blockNumber);
   let sOhmSupply = BigDecimal.fromString("0");
 
-  if (contractV1) {
-    sOhmSupply = sOhmSupply.plus(toDecimal(contractV1.circulatingSupply(), 9));
-  }
-
-  if (contractV2) {
-    sOhmSupply = sOhmSupply.plus(toDecimal(contractV2.circulatingSupply(), 9));
-  }
-
-  if (contractV3) {
+  if (blockNumber.gt(BigInt.fromString(ERC20_SOHM_V3_BLOCK))) {
+    const contractV3 = getSOlympusERC20V3("sOHM V3", ERC20_SOHM_V3, blockNumber);
+    if (!contractV3) {
+      throw new Error("Expected to be able to bind to sOHM V3 at block " + blockNumber.toString());
+    }
     sOhmSupply = sOhmSupply.plus(toDecimal(contractV3.circulatingSupply(), 9));
+  } else if (blockNumber.gt(BigInt.fromString(ERC20_SOHM_V2_BLOCK))) {
+    const contractV2 = getSOlympusERC20V2("sOHM V2", ERC20_SOHM_V2, blockNumber);
+    if (!contractV2) {
+      throw new Error("Expected to be able to bind to sOHM V2 at block " + blockNumber.toString());
+    }
+    sOhmSupply = sOhmSupply.plus(toDecimal(contractV2.circulatingSupply(), 9));
+  } else {
+    const contractV1 = getSOlympusERC20("sOHM", ERC20_SOHM_V1, blockNumber);
+    if (!contractV1) {
+      throw new Error("Expected to be able to bind to sOHM V1 at block " + blockNumber.toString());
+    }
+    sOhmSupply = sOhmSupply.plus(toDecimal(contractV1.circulatingSupply(), 9));
   }
 
   return sOhmSupply;
