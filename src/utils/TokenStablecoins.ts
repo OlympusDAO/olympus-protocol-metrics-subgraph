@@ -66,7 +66,7 @@ export function getStablecoinBalance(
   combineTokenRecords(records, getConvexStakedRecords(contractAddress, blockNumber));
 
   // Liquity Stability Pool
-  combineTokenRecords(records, getLiquityStabilityPoolRecords(contractAddress, blockNumber));
+  combineTokenRecords(records, getLiquityStabilityPoolRecords(contractAddress, rate, blockNumber));
 
   // Onsen Allocator
   combineTokenRecords(records, getOnsenAllocatorRecords(contractAddress, rate, blockNumber));

@@ -77,7 +77,11 @@ export function getVolatileTokenBalance(
   blockNumber: BigInt,
 ): TokenRecords {
   const contractName = getContractName(contractAddress);
-  log.info("Calculating volatile token balance for {}", [contractName]);
+  log.info("Calculating volatile token balance for {} ({}) at block {}", [
+    contractName,
+    contractAddress,
+    blockNumber.toString(),
+  ]);
   const records = newTokenRecords("Volatile token balance", blockNumber);
   const contract = getERC20(contractName, contractAddress, blockNumber);
   if (!contract) {
@@ -106,7 +110,7 @@ export function getVolatileTokenBalance(
   combineTokenRecords(records, getConvexStakedRecords(contractAddress, blockNumber));
 
   // Liquity Stability Pool
-  combineTokenRecords(records, getLiquityStabilityPoolRecords(contractAddress, blockNumber));
+  combineTokenRecords(records, getLiquityStabilityPoolRecords(contractAddress, rate, blockNumber));
 
   // Onsen Allocator
   combineTokenRecords(records, getOnsenAllocatorRecords(contractAddress, rate, blockNumber));

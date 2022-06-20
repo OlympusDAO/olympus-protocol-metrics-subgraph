@@ -3,6 +3,7 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator";
 import { ConvexBaseRewardPool } from "../../generated/ProtocolMetrics/ConvexBaseRewardPool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
+import { LUSDAllocatorV2 } from "../../generated/ProtocolMetrics/LUSDAllocatorV2";
 import { MasterChef } from "../../generated/ProtocolMetrics/MasterChef";
 import { RariAllocator } from "../../generated/ProtocolMetrics/RariAllocator";
 import { sOlympusERC20 } from "../../generated/ProtocolMetrics/sOlympusERC20";
@@ -15,7 +16,6 @@ import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
 import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
-  ALLOCATOR_LIQUITY_STABILITY_POOLS,
   ALLOCATOR_ONSEN_ID_NOT_FOUND,
   ALLOCATOR_RARI_ID_NOT_FOUND,
   CONTRACT_STARTING_BLOCK_MAP,
@@ -23,12 +23,16 @@ import {
   CONVEX_STAKING_CONTRACTS,
   ERC20_FXS,
   ERC20_FXS_VE,
+  ERC20_LQTY,
+  ERC20_LUSD,
+  ERC20_WETH,
   getContractName,
-  getLiquityAllocator,
   getOnsenAllocatorId,
   getRariAllocatorId,
   liquidityPairHasToken,
+  LUSD_ALLOCATOR,
   NATIVE_ETH,
+  OHMLUSD_ONSEN_ID,
   ONSEN_ALLOCATOR,
   RARI_ALLOCATOR,
   SUSHI_MASTERCHEF,
@@ -57,6 +61,7 @@ const contractsMasterChef = new Map<string, MasterChef>();
 const contractsVeFXS = new Map<string, VeFXS>();
 const contractsConvexAllocator = new Map<string, ConvexAllocator>();
 const contractsStabilityPool = new Map<string, StabilityPool>();
+const contractsLUSDAllocator = new Map<string, LUSDAllocatorV2>();
 
 // TODO shift to constants
 /**
@@ -73,20 +78,34 @@ const contractsStabilityPool = new Map<string, StabilityPool>();
  * @param blockNumber
  */
 function contractExistsAtBlock(contractAddress: string, blockNumber: BigInt): boolean {
-  log.debug("Checking for starting block of contract {}", [contractAddress]);
+  log.debug("contractExistsAtBlock: Checking for starting block of contract {} ({}) at block {}", [
+    getContractName(contractAddress),
+    contractAddress,
+    blockNumber.toString(),
+  ]);
 
   // Assuming the starting block is much earlier
   if (!CONTRACT_STARTING_BLOCK_MAP.has(contractAddress)) {
-    log.debug("No starting block defined for contract {}. Assuming it is prior", [contractAddress]);
+    log.debug(
+      "contractExistsAtBlock: No starting block defined for contract {} ({}). Assuming it is prior to the current block {}",
+      [getContractName(contractAddress), contractAddress, blockNumber.toString()],
+    );
     return true;
   }
 
   const startingBlock: string = CONTRACT_STARTING_BLOCK_MAP.get(contractAddress) || "N/A";
-  log.debug("Starting block for contract {}: {}", [contractAddress, startingBlock]);
+  log.debug("contractExistsAtBlock: Starting block for contract {} ({}): {}", [
+    getContractName(contractAddress),
+    contractAddress,
+    startingBlock,
+  ]);
 
   // Current block is before the starting block
   if (blockNumber < BigInt.fromString(startingBlock)) {
-    log.debug("Current block is before the starting block. Skipping", []);
+    log.debug(
+      "contractExistsAtBlock: Current block {} is before the starting block for contract {} ({}). Skipping",
+      [blockNumber.toString(), getContractName(contractAddress), contractAddress],
+    );
     return false;
   }
 
@@ -301,24 +320,6 @@ export function getConvexAllocator(
   return contractsConvexAllocator.get(contractAddress);
 }
 
-export function getStabilityPool(
-  contractAddress: string,
-  currentBlockNumber: BigInt,
-): StabilityPool | null {
-  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
-
-  if (!contractsStabilityPool.has(contractAddress)) {
-    log.debug("Binding StabilityPool contract for address {}. Block number {}", [
-      contractAddress,
-      currentBlockNumber.toString(),
-    ]);
-    const contract = StabilityPool.bind(Address.fromString(contractAddress));
-    contractsStabilityPool.set(contractAddress, contract);
-  }
-
-  return contractsStabilityPool.get(contractAddress);
-}
-
 /**
  * Helper method to simplify getting the balance from an ERC20 contract.
  *
@@ -336,20 +337,27 @@ export function getERC20Balance(
   currentBlockNumber: BigInt,
 ): BigInt {
   if (!contract) {
-    log.debug("Contract for address {} does not exist at block {}", [
+    log.debug("Contract for address {} ({}) does not exist at block {}", [
+      getContractName(address),
       address,
       currentBlockNumber.toString(),
     ]);
     return BigInt.fromString("0");
   }
 
-  log.debug("Getting ERC20 balance in contract {} for wallet {} at block number {}", [
-    contract._address.toHexString(),
-    address,
-    currentBlockNumber.toString(),
-  ]);
-
-  return contract.balanceOf(Address.fromString(address));
+  const balance = contract.balanceOf(Address.fromString(address));
+  log.debug(
+    "getERC20Balance: Found balance {} in ERC20 contract {} ({}) for wallet {} ({}) at block number {}",
+    [
+      balance.toString(),
+      getContractName(contract._address.toHexString()),
+      contract._address.toHexString(),
+      getContractName(address),
+      address,
+      currentBlockNumber.toString(),
+    ],
+  );
+  return balance;
 }
 
 /**
@@ -370,7 +378,7 @@ export function getUniswapV2PairBalance(
   tokenAddress: string | null = null,
 ): BigInt {
   if (!contract) {
-    log.debug("Contract for address {} does not exist at block {}", [
+    log.debug("getUniswapV2PairBalance: Contract for address {} does not exist at block {}", [
       address,
       currentBlockNumber.toString(),
     ]);
@@ -378,17 +386,17 @@ export function getUniswapV2PairBalance(
   }
 
   if (tokenAddress && !liquidityPairHasToken(contract._address.toHexString(), tokenAddress)) {
-    log.debug("Skipping UniswapV2Pair that does not match specified token address {}", [
-      tokenAddress,
-    ]);
+    log.debug(
+      "getUniswapV2PairBalance: Skipping UniswapV2Pair that does not match specified token address {}",
+      [tokenAddress],
+    );
     return BigInt.fromString("0");
   }
 
-  log.debug("Getting UniswapV2Pair balance in contract {} for wallet {} at block number {}", [
-    contract._address.toHexString(),
-    address,
-    currentBlockNumber.toString(),
-  ]);
+  log.debug(
+    "getUniswapV2PairBalance: Getting UniswapV2Pair balance in contract {} for wallet {} at block number {}",
+    [contract._address.toHexString(), address, currentBlockNumber.toString()],
+  );
 
   return contract.balanceOf(Address.fromString(address));
 }
@@ -816,61 +824,124 @@ export function getConvexStakedRecords(tokenAddress: string, blockNumber: BigInt
   return records;
 }
 
+export function getLUSDAllocator(
+  contractAddress: string,
+  currentBlockNumber: BigInt,
+): LUSDAllocatorV2 | null {
+  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
+
+  if (!contractsLUSDAllocator.has(contractAddress)) {
+    log.debug("Binding LiquityAllocator contract for address {}. Block number {}", [
+      contractAddress,
+      currentBlockNumber.toString(),
+    ]);
+    const contract = LUSDAllocatorV2.bind(Address.fromString(contractAddress));
+    contractsLUSDAllocator.set(contractAddress, contract);
+  }
+
+  return contractsLUSDAllocator.get(contractAddress);
+}
+
 /**
- * Returns the balance (deposits) from the LUSD allocator ({allocatorAddress})
- * into the specified Liquity stability pool ({poolAddress}).
+ * Returns the balance of the given token in the Liquity stability pool
+ * through the allocator at {allocatorAddress}
  *
  * @param allocatorAddress allocator address
- * @param poolAddress stability pool address
+ * @param tokenAddress token address
  * @param blockNumber the current block number
  * @returns BigDecimal or null
  */
-function getLiquityStabilityPoolBalance(
+export function getLiquityStabilityPoolBalance(
   allocatorAddress: string,
-  poolAddress: string,
+  tokenAddress: string,
   blockNumber: BigInt,
 ): BigDecimal | null {
-  const pool = getStabilityPool(poolAddress, blockNumber);
-  if (!pool) return null;
+  log.debug(
+    "getLiquityStabilityPoolBalance: determining Liquity stability pool balance for allocator {} ({}) and token {} ({}) at block {}",
+    [
+      getContractName(allocatorAddress),
+      allocatorAddress,
+      getContractName(tokenAddress),
+      tokenAddress,
+      blockNumber.toString(),
+    ],
+  );
+  const allocator = getLUSDAllocator(allocatorAddress, blockNumber);
+  if (!allocator) {
+    log.debug("getLiquityStabilityPoolBalance: no allocator. Skipping.", []);
+    return null;
+  }
 
-  return toDecimal(pool.deposits(Address.fromString(allocatorAddress)).value0, 18);
+  if (tokenAddress == ERC20_LUSD) {
+    const lusdBalance = toDecimal(
+      allocator.amountAllocated(BigInt.fromI32(getRariAllocatorId(ERC20_LUSD))),
+    );
+    log.info("getLiquityStabilityPoolBalance: found LUSD balance of {} at block {}", [
+      lusdBalance.toString(),
+      blockNumber.toString(),
+    ]);
+    return lusdBalance;
+  }
+
+  if (tokenAddress == ERC20_WETH) {
+    const wethBalance = toDecimal(allocator.getETHRewards());
+    log.info("getLiquityStabilityPoolBalance: found wETH balance of {} at block {}", [
+      wethBalance.toString(),
+      blockNumber.toString(),
+    ]);
+    return wethBalance;
+  }
+
+  if (tokenAddress == ERC20_LQTY) {
+    const lqtyBalance = toDecimal(allocator.getLQTYRewards());
+    log.info("getLiquityStabilityPoolBalance: found LQTY balance of {} at block {}", [
+      lqtyBalance.toString(),
+      blockNumber.toString(),
+    ]);
+    return lqtyBalance;
+  }
+
+  log.debug("getLiquityStabilityPoolBalance: no balance for unsupported token {} at block {}", [
+    getContractName(tokenAddress),
+    blockNumber.toString(),
+  ]);
+  return null;
 }
 
 /**
  * Returns the balance of {tokenAddress} in the Liquity stability pools.
  *
  * @param tokenAddress
+ * @param rate
  * @param blockNumber
  * @returns
  */
 export function getLiquityStabilityPoolRecords(
   tokenAddress: string,
+  rate: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  // TODO assumes a USD rate of $1
   const records = newTokenRecords("Liquity Stability Pool", blockNumber);
 
-  const liquityAllocator = getLiquityAllocator(tokenAddress);
-  if (!liquityAllocator) return records;
+  const balance = getLiquityStabilityPoolBalance(LUSD_ALLOCATOR, tokenAddress, blockNumber);
+  if (!balance || balance.equals(BigDecimal.zero())) return records;
 
-  for (let i = 0; i < ALLOCATOR_LIQUITY_STABILITY_POOLS.length; i++) {
-    const poolAddress = ALLOCATOR_LIQUITY_STABILITY_POOLS[i];
-    const balance = getLiquityStabilityPoolBalance(liquityAllocator!, poolAddress, blockNumber);
-    if (!balance || balance.equals(BigDecimal.zero())) continue;
-
-    pushTokenRecord(
-      records,
-      newTokenRecord(
-        getContractName(tokenAddress),
-        tokenAddress,
-        getContractName(poolAddress),
-        poolAddress,
-        BigDecimal.fromString("1"),
-        balance,
-        blockNumber,
-      ),
-    );
-  }
+  log.info(
+    "getLiquityStabilityPoolRecords: Found balance {} of token {} in Liquity allocator at block {}",
+    [balance.toString(), getContractName(tokenAddress), blockNumber.toString()],
+  );
+  pushTokenRecord(
+    records,
+    newTokenRecord(
+      getContractName(tokenAddress),
+      tokenAddress,
+      getContractName(LUSD_ALLOCATOR),
+      LUSD_ALLOCATOR,
+      rate,
+      balance,
+      blockNumber,
+    ),
+  );
 
   return records;
 }
