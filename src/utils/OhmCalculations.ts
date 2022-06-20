@@ -35,6 +35,7 @@ import { getUniswapV2PairTokenQuantity } from "./LiquidityUniswapV2";
 import { PairHandlerTypes } from "./PairHandler";
 import { getBaseOhmUsdRate } from "./Price";
 import {
+  addToMetricName,
   combineTokenRecords,
   newTokenRecord,
   newTokenRecords,
@@ -143,7 +144,7 @@ export function getCirculatingSupply(
   const ohmContractAddress = isV2Contract ? ERC20_OHM_V2 : ERC20_OHM_V1;
 
   const ohmContract = getERC20("OHM", ohmContractAddress, blockNumber);
-  const records = newTokenRecords("OHM Circulating Supply", blockNumber);
+  const records = newTokenRecords(addToMetricName(metricName, "OHMCirculatingSupply"), blockNumber);
 
   if (!ohmContract) {
     log.error(
@@ -215,7 +216,7 @@ export function getCirculatingSupply(
  * @returns
  */
 function getLiquiditySupply(metricName: string, blockNumber: BigInt): TokenRecords {
-  const records = newTokenRecords("OHM Liquidity Supply", blockNumber);
+  const records = newTokenRecords(addToMetricName(metricName, "OHMLiquiditySupply"), blockNumber);
 
   for (let i = 0; i < LIQUIDITY_OWNED.length; i++) {
     const pairHandler = LIQUIDITY_OWNED[i];
@@ -278,7 +279,7 @@ export function getFloatingSupply(
   totalSupply: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords("OHM Floating Supply", blockNumber);
+  const records = newTokenRecords(addToMetricName(metricName, "OHMFloatingSupply"), blockNumber);
 
   // Circulating supply
   combineTokenRecords(records, getCirculatingSupply(metricName, blockNumber, totalSupply));

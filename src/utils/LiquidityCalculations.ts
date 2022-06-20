@@ -34,6 +34,7 @@ import { getCurvePairRecords } from "./LiquidityCurve";
 import { getOhmUSDPairRiskFreeValue, getUniswapV2PairValue } from "./LiquidityUniswapV2";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 import {
+  addToMetricName,
   combineTokenRecords,
   getTokenRecordsBalance,
   newTokenRecord,
@@ -64,7 +65,10 @@ function getLiquidityTokenRecords(
   blockNumber: BigInt,
   riskFree: boolean,
 ): TokenRecords {
-  const records = newTokenRecords("Liquidity", blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, "LiquidityTokenRecords"),
+    blockNumber,
+  );
   const contractName = getContractName(liquidityBalance.contract);
   // TODO handle uniswap V3
   // TODO this assumes that the other side of the LP is OHM, which is not always correct (ETH!)
@@ -145,7 +149,7 @@ export function getLiquidityBalances(
   blockNumber: BigInt,
   ownedLiquidityPairs: PairHandler[] = LIQUIDITY_OWNED,
 ): TokenRecords {
-  const records = newTokenRecords("Liquidity", blockNumber);
+  const records = newTokenRecords(addToMetricName(metricName, "LiquidityBalances"), blockNumber);
 
   for (let j = 0; j < ownedLiquidityPairs.length; j++) {
     const pairHandler = ownedLiquidityPairs[j];
@@ -708,7 +712,10 @@ export function getOwnedLiquidityPoolValue(
   blockNumber: BigInt,
 ): TokenRecords {
   log.info("Calculating liquidity pool value", []);
-  const records = newTokenRecords("Liquidity Pool Value", blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, "OwnedLiquidityPoolValue"),
+    blockNumber,
+  );
 
   combineTokenRecords(
     records,

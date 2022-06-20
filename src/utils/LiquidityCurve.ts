@@ -15,7 +15,12 @@ import {
 import { getConvexStakedBalance, getERC20 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
-import { newTokenRecord, newTokenRecords, pushTokenRecord } from "./TokenRecordHelper";
+import {
+  addToMetricName,
+  newTokenRecord,
+  newTokenRecords,
+  pushTokenRecord,
+} from "./TokenRecordHelper";
 
 // ### Balances ###
 
@@ -253,7 +258,10 @@ export function getCurvePairRecords(
   excludeOhmValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords(getContractName(pairAddress), blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, "CurvePairRecords-" + getContractName(pairAddress)),
+    blockNumber,
+  );
   // If we are restricting by token and tokenAddress does not match either side of the pair
   if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
     log.debug("Skipping Curve pair that does not match specified token address {}", [tokenAddress]);
@@ -391,7 +399,10 @@ export function getCurvePairTokenQuantity(
     getContractName(tokenAddress),
     getContractName(pairAddress),
   ]);
-  const records = newTokenRecords("Curve Pool Token Quantity", blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, "CurvePoolTokenQuantity-" + getContractName(tokenAddress)),
+    blockNumber,
+  );
   const poolTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
 
   // Calculate the token quantity for the pool

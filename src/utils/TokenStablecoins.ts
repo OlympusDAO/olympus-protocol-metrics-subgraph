@@ -21,7 +21,7 @@ import {
 } from "./ContractHelper";
 import { getLiquidityBalances } from "./LiquidityCalculations";
 import { getUSDRate } from "./Price";
-import { combineTokenRecords, newTokenRecords } from "./TokenRecordHelper";
+import { addToMetricName, combineTokenRecords, newTokenRecords } from "./TokenRecordHelper";
 
 /**
  * Returns the token records for a given stablecoin. This includes:
@@ -53,7 +53,10 @@ export function getStablecoinBalance(
       excludeOhmValue ? "true" : "false",
     ],
   );
-  const records = newTokenRecords("Stablecoins", blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, "StablecoinBalance-" + contractName),
+    blockNumber,
+  );
   const contract = getERC20(contractName, contractAddress, blockNumber);
   if (!contract) {
     log.info("Skipping ERC20 contract {} that returned empty at block {}", [
@@ -124,7 +127,7 @@ export function getStablecoinBalances(
     includeLiquidity ? "true" : "false",
     riskFree ? "true" : "false",
   ]);
-  const records = newTokenRecords("Stablecoin balances", blockNumber);
+  const records = newTokenRecords(addToMetricName(metricName, "StablecoinBalances"), blockNumber);
 
   for (let i = 0; i < ERC20_STABLE_TOKENS.length; i++) {
     combineTokenRecords(
@@ -155,7 +158,7 @@ export function getStablecoinBalances(
  * @returns TokenRecords object
  */
 export function getDaiBalance(metricName: string, blockNumber: BigInt): TokenRecords {
-  const records = newTokenRecords("DAI balance", blockNumber);
+  const records = newTokenRecords(addToMetricName(metricName, "DAIBalance"), blockNumber);
 
   combineTokenRecords(
     records,
@@ -265,7 +268,7 @@ export function getDaiMarketValue(
   riskFree: boolean = false,
 ): TokenRecords {
   log.info("Calculating DAI market value", []);
-  const records = newTokenRecords("DAI market value", blockNumber);
+  const records = newTokenRecords(addToMetricName(metricName, "DAIMarketValue"), blockNumber);
 
   combineTokenRecords(
     records,

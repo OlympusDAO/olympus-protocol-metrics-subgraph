@@ -54,11 +54,10 @@ import {
 import {
   getMarketValue,
   getRiskFreeValue,
-  getTreasuryLiquidBacking,
+  getTreasuryBacking,
   getTreasuryLiquidBackingPerOhmCirculating,
   getTreasuryLiquidBackingPerOhmFloating,
   getTreasuryStableBacking,
-  getTreasuryTotalBacking,
   getTreasuryVolatileBacking,
 } from "./TreasuryCalculations";
 
@@ -380,11 +379,11 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryVolatileBacking = volatileBacking.value;
   pm.treasuryVolatileBackingComponents = volatileBacking.id;
 
-  const totalBacking = getTreasuryTotalBacking("TotalBacking", blockNumber);
+  const totalBacking = getTreasuryBacking("TotalBacking", false, blockNumber);
   pm.treasuryTotalBacking = totalBacking.value;
   pm.treasuryTotalBackingComponents = totalBacking.id;
 
-  const liquidBacking = getTreasuryLiquidBacking("LiquidBacking", blockNumber);
+  const liquidBacking = getTreasuryBacking("LiquidBacking", true, blockNumber);
   pm.treasuryLiquidBacking = liquidBacking.value;
   pm.treasuryLiquidBackingComponents = liquidBacking.id;
 

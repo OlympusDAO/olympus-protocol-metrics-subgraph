@@ -41,7 +41,12 @@ import {
 } from "./Constants";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
-import { newTokenRecord, newTokenRecords, pushTokenRecord } from "./TokenRecordHelper";
+import {
+  addToMetricName,
+  newTokenRecord,
+  newTokenRecords,
+  pushTokenRecord,
+} from "./TokenRecordHelper";
 
 /**
  * The Graph recommends only binding a contract once
@@ -541,7 +546,7 @@ export function getERC20TokenRecordsFromWallets(
   rate: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords(tokenName, blockNumber);
+  const records = newTokenRecords(addToMetricName(metricName, tokenName), blockNumber);
 
   for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
     const record = getERC20TokenRecordFromWallet(
@@ -607,7 +612,7 @@ export function getTokeAllocatorRecords(
   price: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords("Toke Allocator", blockNumber);
+  const records = newTokenRecords(addToMetricName(metricName, "TokeAllocator"), blockNumber);
 
   const balance = getTokeAllocatorBalance(tokenAddress, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
@@ -678,7 +683,7 @@ export function getRariAllocatorRecords(
   price: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords("Rari Allocator", blockNumber);
+  const records = newTokenRecords(addToMetricName(metricName, "RariAllocator"), blockNumber);
 
   const balance = getRariAllocatorBalance(tokenAddress, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
@@ -714,7 +719,7 @@ export function getOnsenAllocatorRecords(
   price: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords("Onsen Allocator", blockNumber);
+  const records = newTokenRecords(addToMetricName(metricName, "OnsenAllocator"), blockNumber);
 
   const balance = getOnsenBalance(tokenAddress, ONSEN_ALLOCATOR, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
@@ -799,7 +804,7 @@ export function getConvexStakedRecords(
   blockNumber: BigInt,
 ): TokenRecords {
   const records = newTokenRecords(
-    "Staked Convex Allocator-" + getContractName(tokenAddress),
+    addToMetricName(metricName, "StakedConvexAllocator-" + getContractName(tokenAddress)),
     blockNumber,
   );
 
@@ -936,7 +941,7 @@ export function getLiquityStabilityPoolRecords(
   rate: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords("Liquity Stability Pool", blockNumber);
+  const records = newTokenRecords(addToMetricName(metricName, "LiquityStabilityPool"), blockNumber);
 
   const balance = getLiquityStabilityPoolBalance(LUSD_ALLOCATOR, tokenAddress, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;

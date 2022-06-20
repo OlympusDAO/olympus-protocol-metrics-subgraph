@@ -6,7 +6,12 @@ import { getContractName, liquidityPairHasToken, WALLET_ADDRESSES } from "./Cons
 import { getERC20, getUniswapV2Pair } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getBaseOhmUsdRate, getUSDRateUniswapV2 } from "./Price";
-import { newTokenRecord, newTokenRecords, pushTokenRecord } from "./TokenRecordHelper";
+import {
+  addToMetricName,
+  newTokenRecord,
+  newTokenRecords,
+  pushTokenRecord,
+} from "./TokenRecordHelper";
 
 /**
  * To calculate the risk-free value of an OHM-DAI LP, we assume
@@ -291,7 +296,10 @@ export function getUniswapV2PairRecords(
   excludeOhmValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords(getContractName(pairAddress), blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, "UniswapV2PairRecords-" + getContractName(pairAddress)),
+    blockNumber,
+  );
   // If we are restricting by token and tokenAddress does not match either side of the pair
   if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
     log.debug("Skipping UniswapV2 pair that does not match specified token address {}", [
@@ -401,7 +409,10 @@ export function getUniswapV2PairTokenQuantity(
     getContractName(tokenAddress),
     getContractName(pairAddress),
   ]);
-  const records = newTokenRecords("UniswapV2 Pool Token Quantity", blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, "UniswapV2PoolTokenQuantity"),
+    blockNumber,
+  );
   const poolTokenContract = getUniswapV2Pair(pairAddress, blockNumber);
   if (!poolTokenContract) {
     log.warning("UniswapV2 contract at {} likely doesn't exist at block {}", [

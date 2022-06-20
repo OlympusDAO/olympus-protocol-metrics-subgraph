@@ -12,7 +12,12 @@ import {
 import { getERC20, getERC20Balance } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
-import { newTokenRecord, newTokenRecords, pushTokenRecord } from "./TokenRecordHelper";
+import {
+  addToMetricName,
+  newTokenRecord,
+  newTokenRecords,
+  pushTokenRecord,
+} from "./TokenRecordHelper";
 
 export function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): BalancerVault {
   return BalancerVault.bind(Address.fromString(vaultAddress));
@@ -98,7 +103,7 @@ export function getBalancerRecords(
   tokenAddress: string | null = null,
 ): TokenRecords {
   log.info("Calculating value of Balancer vault {} for pool id {}", [vaultAddress, poolId]);
-  const records = newTokenRecords("Balancer Pool", blockNumber);
+  const records = newTokenRecords(addToMetricName(metricName, "BalancerPool"), blockNumber);
   if (tokenAddress && !liquidityPairHasToken(poolId, tokenAddress)) {
     log.debug("tokenAddress specified and not found in balancer pool. Skipping.", []);
     return records;
@@ -234,7 +239,10 @@ export function getBalancerPoolTokenQuantity(
     vaultAddress,
     poolId,
   ]);
-  const records = newTokenRecords("Balancer Pool Token Quantity", blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, "BalancerPoolTokenQuantity"),
+    blockNumber,
+  );
   const poolTokenContract = getBalancerPoolToken(vaultAddress, poolId, blockNumber);
 
   // Calculate the token quantity for the pool

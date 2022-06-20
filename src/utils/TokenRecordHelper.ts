@@ -171,3 +171,7 @@ export function newTokenRecords(id: string, blockNumber: BigInt): TokenRecords {
 
   return records;
 }
+
+export function addToMetricName(metricName: string, addition: string): string {
+  return metricName + "/" + addition;
+}

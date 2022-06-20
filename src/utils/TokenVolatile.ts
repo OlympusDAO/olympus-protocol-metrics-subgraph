@@ -27,6 +27,7 @@ import {
 import { getLiquidityBalances } from "./LiquidityCalculations";
 import { getUSDRate } from "./Price";
 import {
+  addToMetricName,
   combineTokenRecords,
   newTokenRecord,
   newTokenRecords,
@@ -56,7 +57,7 @@ export function getVestingAssets(metricName: string, blockNumber: BigInt): Token
     BigDecimal.fromString("32500000"),
     blockNumber,
   );
-  const records = newTokenRecords("Vesting assets", blockNumber);
+  const records = newTokenRecords(addToMetricName(metricName, "VestingAssets"), blockNumber);
   pushTokenRecord(records, record);
   return records;
 }
@@ -91,7 +92,10 @@ export function getVolatileTokenBalance(
       excludeOhmValue ? "true" : "false",
     ],
   );
-  const records = newTokenRecords("Volatile token balance", blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, "VolatileTokenBalance-" + contractName),
+    blockNumber,
+  );
   const contract = getERC20(contractName, contractAddress, blockNumber);
   if (!contract) {
     log.info("Skipping ERC20 contract {} that returned empty at block {}", [
@@ -167,7 +171,10 @@ export function getVolatileTokenBalances(
   blockNumber: BigInt,
 ): TokenRecords {
   log.info("Calculating volatile token value", []);
-  const records = newTokenRecords("Volatile token balances", blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, "VolatileTokenBalances"),
+    blockNumber,
+  );
 
   for (let i = 0; i < ERC20_VOLATILE_TOKENS.length; i++) {
     const currentTokenAddress = ERC20_VOLATILE_TOKENS[i];
@@ -245,7 +252,7 @@ export function getVlCVXBalance(metricName: string, blockNumber: BigInt): TokenR
  * @returns TokenRecords object
  */
 export function getCVXTotalBalance(metricName: string, blockNumber: BigInt): TokenRecords {
-  const records = newTokenRecords("CVX total balance", blockNumber);
+  const records = newTokenRecords(addToMetricName(metricName, "CVXTotalBalance"), blockNumber);
 
   combineTokenRecords(records, getCVXBalance(metricName, blockNumber));
   combineTokenRecords(records, getVlCVXBalance(metricName, blockNumber));
@@ -285,7 +292,7 @@ export function getVeFXSBalance(metricName: string, blockNumber: BigInt): TokenR
  * @returns TokenRecords object
  */
 export function getFXSTotalBalance(metricName: string, blockNumber: BigInt): TokenRecords {
-  const records = newTokenRecords("FXS total balance", blockNumber);
+  const records = newTokenRecords(addToMetricName(metricName, "FXSTotalBalance"), blockNumber);
 
   combineTokenRecords(records, getFXSBalance(metricName, blockNumber));
   combineTokenRecords(records, getVeFXSBalance(metricName, blockNumber));
