@@ -24,9 +24,6 @@ import { mockBalancerVault, mockBalanceVaultZero } from "./liquidityBalancer.tes
 import {
   ERC20_STANDARD_DECIMALS,
   ETH_USD_RESERVE_BLOCK,
-  getEthUsdRate,
-  getOhmUsdRate,
-  getPairValue,
   mockCurvePairTotalValue,
   mockCurvePairZero,
   mockERC20TotalSupply,
@@ -83,7 +80,7 @@ describe("getLiquidityPoolValue", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getOwnedLiquidityPoolValue(false, false, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue("metric", false, false, ETH_USD_RESERVE_BLOCK);
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs
@@ -118,7 +115,7 @@ describe("getLiquidityPoolValue", () => {
     mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_DAI_V2, WALLET_ADDRESSES);
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
-    const records = getOwnedLiquidityPoolValue(false, false, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue("metric", false, false, ETH_USD_RESERVE_BLOCK);
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs
@@ -160,7 +157,7 @@ describe("getLiquidityPoolValue", () => {
       toBigInt(expectedWalletBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getOwnedLiquidityPoolValue(false, false, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue("metric", false, false, ETH_USD_RESERVE_BLOCK);
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs

@@ -7,7 +7,6 @@ import {
   ERC20_TRIBE,
   ERC20_WETH,
   LUSD_ALLOCATOR,
-  OHMLUSD_ONSEN_ID,
 } from "../src/utils/Constants";
 import {
   getLiquityStabilityPoolBalance,
@@ -98,7 +97,12 @@ test("LUSD records", () => {
   mockLiquityAllocator(LUSD_BALANCE_INT, WETH_BALANCE_INT, LQTY_BALANCE_INT);
   const rate = BigDecimal.fromString("2");
 
-  const allocatorRecords = getLiquityStabilityPoolRecords(ERC20_LUSD, rate, OHM_USD_RESERVE_BLOCK);
+  const allocatorRecords = getLiquityStabilityPoolRecords(
+    "metric",
+    ERC20_LUSD,
+    rate,
+    OHM_USD_RESERVE_BLOCK,
+  );
 
   assert.stringEquals(
     rate.times(BigDecimal.fromString(LUSD_BALANCE)).toString(),

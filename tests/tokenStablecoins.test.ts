@@ -10,6 +10,7 @@ describe("native ETH", () => {
     mockEthUsdRate();
 
     const records = getStablecoinBalance(
+      "metric",
       NATIVE_ETH,
       false,
       false,

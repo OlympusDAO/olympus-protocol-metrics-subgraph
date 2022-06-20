@@ -10,6 +10,7 @@ import {
 
 const createTokenRecord = (): TokenRecord => {
   return newTokenRecord(
+    "metric",
     "name",
     "tokenAddress",
     "source",
@@ -24,7 +25,7 @@ describe("constructor", () => {
   test("basic values", () => {
     const record = createTokenRecord();
 
-    assert.stringEquals("name-source-1", record.id);
+    assert.stringEquals("metric-name-source-1", record.id);
     assert.stringEquals("name", record.token);
     assert.stringEquals("tokenAddress", record.tokenAddress);
     assert.stringEquals("source", record.source);
@@ -36,6 +37,7 @@ describe("constructor", () => {
 
   test("custom multiplier", () => {
     const record = newTokenRecord(
+      "metric",
       "name",
       "tokenAddress",
       "source",
@@ -73,6 +75,7 @@ describe("multiplier", () => {
 describe("value", () => {
   test("multiplier = 1", () => {
     const record = newTokenRecord(
+      "metric",
       "name",
       "tokenAddress",
       "source",
@@ -88,6 +91,7 @@ describe("value", () => {
 
   test("multiplier = 0.25", () => {
     const record = newTokenRecord(
+      "metric",
       "name",
       "tokenAddress",
       "source",

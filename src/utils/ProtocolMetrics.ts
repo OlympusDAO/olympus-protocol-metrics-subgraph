@@ -315,48 +315,48 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryDaiMarketValue = daiMarketValue.value;
   pm.treasuryDaiMarketValueComponents = daiMarketValue.id;
 
-  const fraxMarketValue = getFraxMarketValue(blockNumber);
+  const fraxMarketValue = getFraxMarketValue("FraxMarketValue", blockNumber);
   pm.treasuryFraxMarketValue = fraxMarketValue.value;
   pm.treasuryFraxMarketValueComponents = fraxMarketValue.id;
 
-  const feiMarketValue = getFeiMarketValue(blockNumber);
+  const feiMarketValue = getFeiMarketValue("FeiMarketValue", blockNumber);
   pm.treasuryFeiMarketValue = feiMarketValue.value;
   pm.treasuryFeiMarketValueComponents = feiMarketValue.id;
 
-  const feiRiskFreeValue = getFeiMarketValue(blockNumber, true);
+  const feiRiskFreeValue = getFeiMarketValue("FeiRiskFreeValue", blockNumber, true);
   pm.treasuryFeiRiskFreeValue = feiRiskFreeValue.value;
   pm.treasuryFeiRiskFreeValueComponents = feiRiskFreeValue.id;
 
-  const xSushiValue = getXSushiBalance(blockNumber);
+  const xSushiValue = getXSushiBalance("XSushiMarketValue", blockNumber);
   pm.treasuryXsushiMarketValue = xSushiValue.value;
   pm.treasuryXsushiMarketValueComponents = xSushiValue.id;
 
-  const ethRiskFreeValue = getEthMarketValue("EthRiskFreeValue", blockNumber, true);
+  const ethRiskFreeValue = getEthMarketValue("wETHRiskFreeValue", blockNumber, true);
   pm.treasuryWETHRiskFreeValue = ethRiskFreeValue.value;
   pm.treasuryWETHRiskFreeValueComponents = ethRiskFreeValue.id;
 
-  const ethMarketValue = getEthMarketValue("EthMarketValue", blockNumber);
+  const ethMarketValue = getEthMarketValue("wETHMarketValue", blockNumber);
   pm.treasuryWETHMarketValue = ethMarketValue.value;
   pm.treasuryWETHMarketValueComponents = ethMarketValue.id;
 
-  const lusdRiskFreeValue = getLusdMarketValue(blockNumber, true);
+  const lusdRiskFreeValue = getLusdMarketValue("LUSDRiskFreeValue", blockNumber, true);
   pm.treasuryLusdRiskFreeValue = lusdRiskFreeValue.value;
   pm.treasuryLusdRiskFreeValueComponents = lusdRiskFreeValue.id;
 
-  const lusdMarketValue = getLusdMarketValue(blockNumber);
+  const lusdMarketValue = getLusdMarketValue("LUSDMarketValue", blockNumber);
   pm.treasuryLusdMarketValue = lusdMarketValue.value;
   pm.treasuryLusdMarketValueComponents = lusdMarketValue.id;
 
-  const cvxValue = getCVXTotalBalance(blockNumber);
+  const cvxValue = getCVXTotalBalance("CVXMarketValue", blockNumber);
   pm.treasuryCVXMarketValue = cvxValue.value;
   pm.treasuryCVXMarketValueComponents = cvxValue.id;
 
-  pm.treasuryOhmDaiPOL = getOhmDaiProtocolOwnedLiquidity(blockNumber);
-  pm.treasuryOhmFraxPOL = getOhmFraxProtocolOwnedLiquidity(blockNumber);
-  pm.treasuryOhmLusdPOL = getOhmLusdProtocolOwnedLiquidity(blockNumber);
-  pm.treasuryOhmEthPOL = getOhmEthProtocolOwnedLiquidity(blockNumber);
+  pm.treasuryOhmDaiPOL = getOhmDaiProtocolOwnedLiquidity("OHM-DAI-POL", blockNumber);
+  pm.treasuryOhmFraxPOL = getOhmFraxProtocolOwnedLiquidity("OHM-FRAX-POL", blockNumber);
+  pm.treasuryOhmLusdPOL = getOhmLusdProtocolOwnedLiquidity("OHM-LUSD-POL", blockNumber);
+  pm.treasuryOhmEthPOL = getOhmEthProtocolOwnedLiquidity("OHM-ETH-POL", blockNumber);
 
-  const fxsValue = getFXSTotalBalance(blockNumber);
+  const fxsValue = getFXSTotalBalance("FXSMarketValue", blockNumber);
   pm.treasuryFXSMarketValue = fxsValue.value;
   pm.treasuryFXSMarketValueComponents = fxsValue.id;
 
@@ -364,34 +364,39 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryOtherMarketValue = treasuryOtherMarketValue.value;
   pm.treasuryOtherMarketValueComponents = treasuryOtherMarketValue.id;
 
-  const wbtcMarketValue = getWBTCBalance(blockNumber);
+  const wbtcMarketValue = getWBTCBalance("wBTCMarketValue", blockNumber);
   pm.treasuryWBTCMarketValue = wbtcMarketValue.value;
   pm.treasuryWBTCMarketValueComponents = wbtcMarketValue.id;
 
-  const ustValue = getUSTBalance(blockNumber);
+  const ustValue = getUSTBalance("USTMarketValue", blockNumber);
   pm.treasuryUstMarketValue = ustValue.value;
   pm.treasuryUstMarketValueComponents = ustValue.id;
 
-  const stableBacking = getTreasuryStableBacking(blockNumber);
+  const stableBacking = getTreasuryStableBacking("StableBacking", blockNumber);
   pm.treasuryStableBacking = stableBacking.value;
   pm.treasuryStableBackingComponents = stableBacking.id;
 
-  const volatileBacking = getTreasuryVolatileBacking(blockNumber, false);
+  const volatileBacking = getTreasuryVolatileBacking("VolatileBacking", blockNumber, false);
   pm.treasuryVolatileBacking = volatileBacking.value;
   pm.treasuryVolatileBackingComponents = volatileBacking.id;
 
-  const totalBacking = getTreasuryTotalBacking(blockNumber);
+  const totalBacking = getTreasuryTotalBacking("TotalBacking", blockNumber);
   pm.treasuryTotalBacking = totalBacking.value;
   pm.treasuryTotalBackingComponents = totalBacking.id;
 
-  const liquidBacking = getTreasuryLiquidBacking(blockNumber);
+  const liquidBacking = getTreasuryLiquidBacking("LiquidBacking", blockNumber);
   pm.treasuryLiquidBacking = liquidBacking.value;
   pm.treasuryLiquidBackingComponents = liquidBacking.id;
 
-  pm.treasuryLiquidBackingPerOhmCirculating =
-    getTreasuryLiquidBackingPerOhmCirculating(blockNumber);
+  pm.treasuryLiquidBackingPerOhmCirculating = getTreasuryLiquidBackingPerOhmCirculating(
+    "LiquidBackingPerOhmCirculating",
+    blockNumber,
+  );
 
-  pm.treasuryLiquidBackingPerOhmFloating = getTreasuryLiquidBackingPerOhmFloating(blockNumber);
+  pm.treasuryLiquidBackingPerOhmFloating = getTreasuryLiquidBackingPerOhmFloating(
+    "LiquidBackingPerOhmFloating",
+    blockNumber,
+  );
 
   const liquidityPoolValue = getOwnedLiquidityPoolValue(
     "LiquidityPoolValue",

@@ -16,6 +16,7 @@ import {
 
 const createTokenRecord = (): TokenRecord => {
   return newTokenRecord(
+    "metric",
     "name",
     "tokenAddress",
     "source",
@@ -53,6 +54,7 @@ describe("push", () => {
     const records = newTokenRecords("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
+      "metric",
       "name2",
       "tokenAddress2",
       "source2",
@@ -92,6 +94,7 @@ describe("combine", () => {
 
     const records2 = newTokenRecords("test", BigInt.fromString("1"));
     const record2 = newTokenRecord(
+      "metric",
       "name2",
       "tokenAddress2",
       "source2",
@@ -129,6 +132,7 @@ describe("multiplier", () => {
     const records1 = newTokenRecords("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
+      "metric",
       "name2",
       "tokenAddress2",
       "source2",
@@ -156,6 +160,7 @@ describe("multiplier", () => {
     const records1 = newTokenRecords("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
+      "metric",
       "name2",
       "tokenAddres2",
       "source2",
@@ -194,6 +199,7 @@ describe("balance", () => {
     const records1 = newTokenRecords("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
+      "metric",
       "name2",
       "tokenAddress2",
       "source2",
@@ -215,6 +221,7 @@ describe("value", () => {
     const records1 = newTokenRecords("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
+      "metric",
       "name2",
       "tokenAddress2",
       "source2",
@@ -236,6 +243,7 @@ describe("sorted records", () => {
     const records1 = newTokenRecords("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
+      "metric",
       "name2",
       "tokenAddress2",
       "source2",
@@ -248,7 +256,7 @@ describe("sorted records", () => {
     pushTokenRecord(records1, record1);
 
     sortTokenRecords(records1);
-    assert.stringEquals("name-source-1", records1.records[0]);
-    assert.stringEquals("name2-source2-1", records1.records[1]);
+    assert.stringEquals("metric-name-source-1", records1.records[0]);
+    assert.stringEquals("metric-name2-source2-1", records1.records[1]);
   });
 });

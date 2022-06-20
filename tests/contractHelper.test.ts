@@ -129,7 +129,7 @@ describe("Staked Convex", () => {
       toBigInt(BigDecimal.fromString("5"), ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getConvexStakedRecords(ERC20_CVX_FRAX_3CRV, BigInt.fromString("1"));
+    const records = getConvexStakedRecords("metric", ERC20_CVX_FRAX_3CRV, BigInt.fromString("1"));
     // 5 * $1
     assert.stringEquals("5", records.value.toString());
   });

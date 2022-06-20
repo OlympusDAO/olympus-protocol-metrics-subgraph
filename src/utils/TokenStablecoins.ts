@@ -213,9 +213,9 @@ export function getLUSDBalance(metricName: string, blockNumber: BigInt): TokenRe
  * @param blockNumber the current block number
  * @returns TokenRecords object
  */
-export function getUSTBalance(blockNumber: BigInt): TokenRecords {
-  return newTokenRecords("UST", blockNumber);
-  //  return getStablecoinBalance(ERC20_UST, false, false, false, blockNumber);
+export function getUSTBalance(metricName: string, blockNumber: BigInt): TokenRecords {
+  return newTokenRecords(metricName, blockNumber);
+  //  return getStablecoinBalance(metricName, ERC20_UST, false, false, false, blockNumber);
 }
 
 /**

@@ -229,6 +229,7 @@ describe("token quantity", () => {
       BALANCE_OHM.times(expectedWalletBalance).div(POOL_TOKEN_TOTAL_SUPPLY);
 
     const records = getBalancerPoolTokenQuantity(
+      "metric",
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
       ERC20_OHM_V2,
@@ -269,6 +270,7 @@ describe("token quantity", () => {
     );
 
     const records = getBalancerPoolTokenQuantity(
+      "metric",
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
       ERC20_OHM_V1,
@@ -311,6 +313,7 @@ describe("token quantity", () => {
     );
 
     const records = getBalancerPoolTokenQuantity(
+      "metric",
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
       ERC20_OHM_V2,
@@ -358,6 +361,7 @@ describe("get balancer records", () => {
     mockUsdOhmV2Rate();
 
     const records = getBalancerRecords(
+      "metric",
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
       false,
@@ -404,6 +408,7 @@ describe("get balancer records", () => {
     mockUsdOhmV2Rate();
 
     const records = getBalancerRecords(
+      "metric",
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
       false,
@@ -446,6 +451,7 @@ describe("get balancer records", () => {
     mockUsdOhmV2Rate();
 
     const records = getBalancerRecords(
+      "metric",
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
       false,
@@ -485,6 +491,7 @@ describe("get balancer records", () => {
     mockUsdOhmV2Rate();
 
     const records = getBalancerRecords(
+      "metric",
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
       false,
@@ -528,6 +535,7 @@ describe("get balancer records", () => {
     mockUsdOhmV2Rate();
 
     const records = getBalancerRecords(
+      "metric",
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
       true,

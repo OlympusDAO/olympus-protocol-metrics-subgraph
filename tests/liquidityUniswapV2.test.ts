@@ -2,7 +2,6 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
 import {
-  DAO_WALLET,
   ERC20_DAI,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
@@ -109,6 +108,7 @@ describe("Token Quantity", () => {
     log.debug("expected OHM balance: {}", [expectedTokenBalance.toString()]);
 
     const records = getUniswapV2PairTokenQuantity(
+      "metric",
       PAIR_UNISWAP_V2_OHM_DAI_V2,
       ERC20_OHM_V2,
       OHM_USD_RESERVE_BLOCK,
@@ -144,6 +144,7 @@ describe("Token Quantity", () => {
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
     const records = getUniswapV2PairTokenQuantity(
+      "metric",
       PAIR_UNISWAP_V2_OHM_DAI_V2,
       ERC20_OHM_V1,
       OHM_USD_RESERVE_BLOCK,
@@ -161,10 +162,8 @@ describe("Token Quantity", () => {
 
     // Mock total value
     const token0Reserves = BigInt.fromString("1233838296976506");
-    const token0ReservesDecimal = toDecimal(token0Reserves, OHM_V2_DECIMALS);
     const token1Reserves = BigInt.fromString("15258719216508026301937394");
     const totalSupply = BigInt.fromString("0"); // total supply is 0 before deployment
-    const totalSupplyDecimal = toDecimal(totalSupply, ERC20_STANDARD_DECIMALS);
     mockUniswapV2Pair(
       ERC20_OHM_V2,
       ERC20_DAI,
@@ -183,6 +182,7 @@ describe("Token Quantity", () => {
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
     const records = getUniswapV2PairTokenQuantity(
+      "metric",
       PAIR_UNISWAP_V2_OHM_DAI_V2,
       ERC20_OHM_V2,
       OHM_USD_RESERVE_BLOCK,
@@ -222,6 +222,7 @@ describe("records", () => {
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
     const records = getLiquidityBalances(
+      "metric",
       ERC20_DAI,
       false,
       false,
@@ -270,6 +271,7 @@ describe("records", () => {
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
     const records = getLiquidityBalances(
+      "metric",
       ERC20_DAI,
       false,
       true,
@@ -321,6 +323,7 @@ describe("records", () => {
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
     const records = getLiquidityBalances(
+      "metric",
       ERC20_DAI,
       true,
       false,

@@ -365,7 +365,8 @@ export function getVolatileValue(
 export function getEthMarketValue(
   metricName: string,
   blockNumber: BigInt,
-  riskFree = false,
+  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
+  riskFree: boolean = false,
 ): TokenRecords {
   return getVolatileTokenBalance(metricName, ERC20_WETH, true, riskFree, true, blockNumber);
 }
