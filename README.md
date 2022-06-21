@@ -28,6 +28,20 @@ The `matchstick-as` package is used to perform testing on the subgraph code. The
 1. Update the `SUBGRAPH_VERSION` variable in the `.subgraph-version` file.
 2. Run `yarn deploy-studio`
 
+## Deployment (Production)
+
+This subgraph is deployed on the Graph Protocol's Hosted Service:
+
+- For historical reasons, as the hosted service was the only option at the time
+- Going forward, the Graph Network does not yet offer multi-chain indexing, so the hosted service will still be required
+
+To deploy, do the following:
+
+1. Obtain the Graph deployment token
+2. Copy the .env.sample file to .env and set the value of the `GRAPH_TOKEN` variable
+3. Run `yarn auth`
+4. Run `yarn deploy`
+
 ## Tokens
 
 Tokens are defined and mapped in the `src/utils/Constants.ts` file.
