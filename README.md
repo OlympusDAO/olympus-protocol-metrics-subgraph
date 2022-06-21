@@ -92,6 +92,12 @@ To add a new price lookup:
 - Define a constant value with the address of the liquidity pool (e.g. `PAIR_UNISWAP_V2_ALCX_ETH`), with `.toLowerCase()` appended
 - Add an entry to the `LIQUIDITY_POOL_TOKEN_LOOKUP` constant, which maps the pair type (Balancer, Curve, UniswapV2, UniswapV3) to the liquidity pool address
 
+Price lookups are performed in the following manner through the `getUSDRate` function:
+
+- If the token is a stablecoin, return a rate of `1`.
+- If the token is one of the base tokens (OHM or ETH), return the respective rate.
+- Otherwise, use `getPairHandler` to find the appropriate liquidity pool that will enable a price lookup into USD.
+
 ### Protocol-Owned Liquidity
 
 Protocol-owned liquidity is mapped in the `src/utils/Constants.ts` file.
