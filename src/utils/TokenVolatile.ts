@@ -110,7 +110,7 @@ export function getVolatileTokenBalance(
   // Wallets
   combineTokenRecords(
     records,
-    getERC20TokenRecordsFromWallets(metricName, contractName, contract, rate, blockNumber),
+    getERC20TokenRecordsFromWallets(metricName, contractAddress, contract, rate, blockNumber),
   );
 
   // Rari Allocator

@@ -21,6 +21,7 @@ import {
   CONTRACT_STARTING_BLOCK_MAP,
   CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
+  ERC20_CVX,
   ERC20_FXS,
   ERC20_FXS_VE,
   ERC20_LQTY,
@@ -137,6 +138,36 @@ export function getERC20(
   }
 
   return contractsERC20.get(contractAddress);
+}
+
+export function getERC20Decimals(contractAddress: string, blockNumber: BigInt): number {
+  const contractName = getContractName(contractAddress);
+  const contract = getERC20(contractName, contractAddress, blockNumber);
+  if (!contract) {
+    throw new Error(
+      "getERC20Decimals: unable to find ERC20 contract for " +
+        contractName +
+        "(" +
+        contractAddress +
+        ") at block " +
+        blockNumber.toString(),
+    );
+  }
+
+  /**
+   * If this isn't implemented, there will be the following error at block 14712001:
+   *
+   * `overflow converting 0x046d6477f18d26592340 to i32`
+   */
+  if (Address.fromString(contractAddress).equals(Address.fromString(ERC20_CVX))) {
+    log.info(
+      "getERC20Decimals: returning hard-coded decimals of 18 for the {} ({}) contract, due to an overflow error",
+      [contractName, contractAddress],
+    );
+    return 18;
+  }
+
+  return contract.decimals();
 }
 
 export function getSOlympusERC20(
@@ -494,33 +525,30 @@ export function getValue(balance: BigInt, decimals: number, rate: BigDecimal): B
  */
 export function getERC20TokenRecordFromWallet(
   metricName: string,
-  tokenName: string,
+  contractAddress: string,
   walletAddress: string,
-  contract: ERC20 | null,
+  contract: ERC20,
   rate: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecord | null {
-  if (contract) {
-    const callResult = contract.try_balanceOf(Address.fromString(walletAddress));
-    if (callResult.reverted) {
-      log.warning("Contract {} reverted while trying to obtain balance at block {}", [
-        getContractName(contract._address.toHexString()),
-        blockNumber.toString(),
-      ]);
-      return null;
-    }
+  const callResult = contract.try_balanceOf(Address.fromString(walletAddress));
+  if (callResult.reverted) {
+    log.warning("Contract {} reverted while trying to obtain balance at block {}", [
+      getContractName(contract._address.toHexString()),
+      blockNumber.toString(),
+    ]);
+    return null;
   }
 
-  const balance = toDecimal(
-    getERC20Balance(contract, walletAddress, blockNumber),
-    contract ? contract.decimals() : 18,
-  );
+  const decimals = getERC20Decimals(contractAddress, blockNumber);
+
+  const balance = toDecimal(getERC20Balance(contract, walletAddress, blockNumber), decimals);
   if (!balance || balance.equals(BigDecimal.zero())) return null;
 
   return newTokenRecord(
     metricName,
-    tokenName,
-    contract ? contract._address.toHexString() : "N/A",
+    getContractName(contractAddress),
+    contractAddress,
     getContractName(walletAddress),
     walletAddress,
     rate,
@@ -541,17 +569,20 @@ export function getERC20TokenRecordFromWallet(
  */
 export function getERC20TokenRecordsFromWallets(
   metricName: string,
-  tokenName: string,
-  contract: ERC20 | null,
+  contractAddress: string,
+  contract: ERC20,
   rate: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, tokenName), blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, getContractName(contractAddress)),
+    blockNumber,
+  );
 
   for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
     const record = getERC20TokenRecordFromWallet(
       metricName,
-      tokenName,
+      contractAddress,
       WALLET_ADDRESSES[i],
       contract,
       rate,

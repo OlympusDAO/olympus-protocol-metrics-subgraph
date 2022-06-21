@@ -15,7 +15,7 @@ import {
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
   PAIR_UNISWAP_V2_USDC_ETH,
 } from "./Constants";
-import { getERC20 } from "./ContractHelper";
+import { getERC20, getERC20Decimals } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { PairHandlerTypes } from "./PairHandler";
 
@@ -253,18 +253,18 @@ export function getUSDRateUniswapV2(
 ): BigDecimal {
   log.debug("getUSDRateUniswapV2: contract {}, pair {}", [contractAddress, pairAddress]);
   if (Address.fromString(contractAddress).equals(Address.fromString(ERC20_WETH))) {
-    log.debug("Returning base ETH-USD rate", []);
+    log.debug("getUSDRateUniswapV2: Returning base ETH-USD rate", []);
     return getBaseEthUsdRate();
   }
   if (
     Address.fromString(contractAddress).equals(Address.fromString(ERC20_OHM_V1)) ||
     Address.fromString(contractAddress).equals(Address.fromString(ERC20_OHM_V2))
   ) {
-    log.debug("Returning base OHM-USD rate", []);
+    log.debug("getUSDRateUniswapV2: Returning base OHM-USD rate", []);
     return getBaseOhmUsdRate(blockNumber);
   }
   if (arrayIncludesLoose(ERC20_STABLE_TOKENS, contractAddress)) {
-    log.debug("Returning stablecoin rate of 1", []);
+    log.debug("getUSDRateUniswapV2: Returning stablecoin rate of 1", []);
     return BigDecimal.fromString("1");
   }
 
@@ -275,40 +275,31 @@ export function getUSDRateUniswapV2(
   const pair = UniswapV2Pair.bind(Address.fromString(pairAddress));
   if (!pair) {
     throw new Error(
-      "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
+      "getUSDRateUniswapV2: Cannot determine discounted value as the contract " +
+        pairAddress +
+        " does not exist yet.",
     );
   }
 
   // Determine orientation of the pair
+  log.debug("getUSDRateUniswapV2: determining pair orientation", []);
   const token0 = pair.token0();
   const token1 = pair.token1();
   const baseTokenOrientation = getBaseTokenOrientation(token0, token1);
   if (baseTokenOrientation === PairTokenBaseOrientation.UNKNOWN) {
     throw new Error(
-      "Unsure how to deal with unknown token base orientation for pair " + pairAddress,
+      "getUSDRateUniswapV2: Unsure how to deal with unknown token base orientation for pair " +
+        pairAddress,
     );
   }
 
-  const token0Contract = getERC20(
-    getContractName(token0.toHexString()),
-    token0.toHexString(),
-    blockNumber,
-  );
-  if (!token0Contract) {
-    throw new Error("Unable to find ERC20 contract for " + token0.toHexString());
-  }
+  log.debug("getUSDRateUniswapV2: getting ERC20 token decimals", []);
+  const token0Decimals = getERC20Decimals(token0.toHexString(), blockNumber);
+  const token1Decimals = getERC20Decimals(token1.toHexString(), blockNumber);
 
-  const token1Contract = getERC20(
-    getContractName(token1.toHexString()),
-    token1.toHexString(),
-    blockNumber,
-  );
-  if (!token1Contract) {
-    throw new Error("Unable to find ERC20 contract for " + token1.toHexString());
-  }
-
-  const token0Reserves = toDecimal(pair.getReserves().value0, token0Contract.decimals());
-  const token1Reserves = toDecimal(pair.getReserves().value1, token1Contract.decimals());
+  log.debug("getUSDRateUniswapV2: getting pair reserves", []);
+  const token0Reserves = toDecimal(pair.getReserves().value0, token0Decimals);
+  const token1Reserves = toDecimal(pair.getReserves().value1, token1Decimals);
   // Get the number of tokens denominated in ETH/OHM
   const baseTokenNumerator =
     baseTokenOrientation === PairTokenBaseOrientation.TOKEN0
@@ -316,7 +307,11 @@ export function getUSDRateUniswapV2(
       : token1Reserves.div(token0Reserves);
 
   const baseTokenUsdRate = getBaseTokenUSDRate(token0, token1, baseTokenOrientation, blockNumber);
-  log.debug("baseTokenUsdRate = {}", [baseTokenUsdRate.toString()]);
+  log.debug("getUSDRateUniswapV2: baseTokenUsdRate for {} ({}) is {}", [
+    getContractName(contractAddress),
+    contractAddress,
+    baseTokenUsdRate.toString(),
+  ]);
 
   return baseTokenNumerator.times(baseTokenUsdRate);
 }
