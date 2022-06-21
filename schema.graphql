@@ -29,7 +29,9 @@ type Token @entity {
 
 type ProtocolMetric @entity {
   id: ID!
+  block: BigInt!
   timestamp: BigInt!
+  timestampISO8901: String!
   ohmCirculatingSupply: BigDecimal!
   ohmCirculatingSupplyBreakdown: TokenRecords!
   ohmFloatingSupply: BigDecimal!

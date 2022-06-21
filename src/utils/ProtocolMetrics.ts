@@ -67,7 +67,9 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
   let protocolMetric = ProtocolMetric.load(dayTimestamp);
   if (protocolMetric == null) {
     protocolMetric = new ProtocolMetric(dayTimestamp);
+    protocolMetric.block = BigInt.fromString("-1");
     protocolMetric.timestamp = timestamp;
+    protocolMetric.timestampISO8901 = "";
     protocolMetric.ohmCirculatingSupply = BigDecimal.fromString("0");
     protocolMetric.ohmCirculatingSupplyBreakdown = "-1";
     protocolMetric.ohmFloatingSupply = BigDecimal.fromString("0");
@@ -263,6 +265,9 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   log.info("Starting protocol metrics for block {}", [blockNumber.toString()]);
 
   const pm = loadOrCreateProtocolMetric(block.timestamp);
+
+  pm.block = blockNumber;
+  pm.timestampISO8901 = new Date(block.timestamp.toI64() * 1000).toISOString();
 
   // Total Supply
   pm.totalSupply = getTotalSupply(blockNumber);

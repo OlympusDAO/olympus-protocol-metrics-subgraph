@@ -289,6 +289,15 @@ export class ProtocolMetric extends Entity {
     this.set("id", Value.fromString(value));
   }
 
+  get block(): BigInt {
+    let value = this.get("block");
+    return value!.toBigInt();
+  }
+
+  set block(value: BigInt) {
+    this.set("block", Value.fromBigInt(value));
+  }
+
   get timestamp(): BigInt {
     let value = this.get("timestamp");
     return value!.toBigInt();
@@ -296,6 +305,15 @@ export class ProtocolMetric extends Entity {
 
   set timestamp(value: BigInt) {
     this.set("timestamp", Value.fromBigInt(value));
+  }
+
+  get timestampISO8901(): string {
+    let value = this.get("timestampISO8901");
+    return value!.toString();
+  }
+
+  set timestampISO8901(value: string) {
+    this.set("timestampISO8901", Value.fromString(value));
   }
 
   get ohmCirculatingSupply(): BigDecimal {
