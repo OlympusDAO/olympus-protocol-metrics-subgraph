@@ -27,7 +27,7 @@ import {
 /**
  * Returns the total value of the given Curve pair.
  *
- * Calculated as: token0 balance * toke0 rate + token1 balance * token rate
+ * Calculated as: token0 balance * token0 rate + token1 balance * token1 rate
  *
  * @param pairAddress
  * @param blockNumber
@@ -66,6 +66,7 @@ export function getCurvePairTotalValue(pairAddress: string, blockNumber: BigInt)
  * This looks up the balance of {stakedTokenAddress} on {stakingAddress}, instead
  * of using `balanceOf`, which doesn't work with the Convex contracts.
  *
+ * @param metricName
  * @param pairTokenAddress
  * @param stakedTokenAddress
  * @param walletAddress
@@ -130,6 +131,7 @@ function getCurvePairStakedRecord(
  * Returns the TokenRecord for the Curve pair's token
  * at the given {walletAddress}.
  *
+ * @param metricName
  * @param pairTokenAddress token address for the Curve pair
  * @param pairRate the unit rate of the pair
  * @param walletAddress the wallet to look up the balance
@@ -245,6 +247,7 @@ function getCurvePairUnitRate(
  * - Iterates through {WALLET_ADDRESSES} and adds records
  * for the balance of the LP's normal token and staked token
  *
+ * @param metricName
  * @param pairAddress the address of the Curve pair
  * @param tokenAddress restrict results to match the specified token
  * @param excludeOhmValue true if the value of OHM in the LP should be excluded
@@ -384,6 +387,7 @@ export function getCurvePairTotalTokenQuantity(
  * Returns records for the quantity of {tokenAddress}
  * across {WALLET_ADDRESSES}.
  *
+ * @param metricName
  * @param pairAddress
  * @param tokenAddress
  * @param blockNumber

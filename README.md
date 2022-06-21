@@ -10,6 +10,16 @@ Deployed at https://thegraph.com/hosted-service/subgraph/drondin/olympus-protoco
 
 Run `yarn`
 
+## Writing AssemblyScript
+
+Note that the Graph Protocol compiles from AssemblyScript to WASM. AssemblyScript is strongly-typed, and is similar to TypeScript. However, there are a number of expected features of TypeScript (e.g. try/catch) that aren't implemented in AssemblyScript. A few suggestions:
+
+- Utilise the linting that has been set up in this repository
+- Build frequently (`yarn build`), as linting does not pick up all problems
+- Variables that are nullable need to be typed accordingly
+- You will run into problems when passing a nullable variable to other functions. Sometimes a null check (`if (!variable)`) will work, but other times requires the use of a temporary variable (`const variableNotNull = variableNullable ? variableNullable : ""`)
+- The Graph Protocol Discord is very helpful to get support. See the `subgraph-development` channel.
+
 ## Testing
 
 The `matchstick-as` package is used to perform testing on the subgraph code. The syntax is close to that of
@@ -30,8 +40,9 @@ A URL for the GraphQL Explorer will be provided.
 
 This subgraph is deployed on the Graph Protocol's Hosted Service:
 
-- For historical reasons, as the hosted service was the only option at the time
-- Going forward, the Graph Network does not yet offer multi-chain indexing, so the hosted service will still be required
+- For historical reasons, as the hosted service was the only option at the time.
+- Going forward, the Graph Network does not yet offer multi-chain indexing, so the hosted service will still be required.
+- Note that indexing takes a significant amount of time (weeks!) at the moment. Investigation is required to look into how to improve the indexing performance.
 
 To deploy, do the following:
 
@@ -134,7 +145,7 @@ There are a number of inter-related components in the metrics:
   ```
 
   - Instead, the `id` of an entity is used. A `TokenRecords` entity is instantiated with a unique `id` (e.g. `TreasuryMarketValue`), and can be loaded (`load(id: string)`) and saved (`save()`) accordingly. The `id` should be passed to the setter to link the `TokenRecords` entity to the `ProtocolMetric`.
-  - Explicit loading and saving of `TokenRecords` and `TokenRecord` objects should not be required, however, as it is all handled through the `TokenRecordsHelper` and `TokenRecordHelper` modules.
+  - Explicit loading and saving of `TokenRecords` and `TokenRecord` objects should not be required, however, as it is all handled through the `TokenRecordHelper` module.
 
 - A `metricName` parameter is passed from the top-level (`ProtocolMetrics` module) down into the different levels of utility functions that index the blockchain data. The `metricName` is used, alongside the block number, to create an `id` that is unique. Not using the `metricName` results in data from one metric (e.g. liquid backing) clobbering that of another metric (e.g. total backing).
 

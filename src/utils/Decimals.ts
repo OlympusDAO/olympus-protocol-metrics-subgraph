@@ -16,14 +16,32 @@ export function pow(base: BigDecimal, exponent: number): BigDecimal {
   return result;
 }
 
+/**
+ * Converts the given BigInt to a BigDecimal.
+ *
+ * If the `decimals` parameter is specified, that will be used instead of `DEFAULT_DECIMALS`.
+ *
+ * @param value
+ * @param decimals
+ * @returns
+ */
 export function toDecimal(value: BigInt, decimals: number = DEFAULT_DECIMALS): BigDecimal {
-  let precision = BigInt.fromI32(10)
+  const precision = BigInt.fromI32(10)
     .pow(<u8>decimals)
     .toBigDecimal();
 
   return value.divDecimal(precision);
 }
 
+/**
+ * Converts the given BigDecimal to a BigInt.
+ *
+ * If the `decimals` parameter is specified, that will be used instead of `DEFAULT_DECIMALS`.
+ *
+ * @param value
+ * @param decimals
+ * @returns
+ */
 export function toBigInt(value: BigDecimal, decimals: number = DEFAULT_DECIMALS): BigInt {
   const multiplier = BigInt.fromI32(10)
     .pow(<u8>decimals)

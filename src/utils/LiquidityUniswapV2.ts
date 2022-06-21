@@ -227,6 +227,7 @@ export function getUniswapV2PairUnitRate(
  * Returns the TokenRecord for the UniswapV2 pair's token
  * at the given {walletAddress}.
  *
+ * @param metricName
  * @param pairAddress token address for the UniswapV2 pair
  * @param pairRate the unit rate of the pair
  * @param walletAddress the wallet to look up the balance
@@ -283,6 +284,7 @@ export function getUniswapV2PairRecord(
  * - Iterates through {WALLET_ADDRESSES} and adds records
  * for the balance of the LP's token
  *
+ * @param metricName
  * @param pairAddress the address of the UniswapV2 pair
  * @param tokenAddress restrict results to match the specified token
  * @param excludeOhmValue true if the value of OHM in the LP should be excluded
@@ -394,6 +396,7 @@ export function getUniswapV2PairTotalTokenQuantity(
  * Returns records for the quantity of {tokenAddress}
  * across {WALLET_ADDRESSES}.
  *
+ * @param metricName
  * @param pairAddress
  * @param tokenAddress
  * @param blockNumber

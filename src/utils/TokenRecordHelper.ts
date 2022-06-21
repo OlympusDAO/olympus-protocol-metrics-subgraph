@@ -4,10 +4,24 @@ import { TokenRecord, TokenRecords } from "../../generated/schema";
 
 // TokenRecord
 
+/**
+ * Returns the value of the given TokenRecord.
+ *
+ * value = balance * rate * multiplier
+ *
+ * @param record
+ * @returns
+ */
 export function getTokenRecordValue(record: TokenRecord): BigDecimal {
   return record.balance.times(record.rate).times(record.multiplier);
 }
 
+/**
+ * Set the multiplier on the TokenRecord and update the value.
+ *
+ * @param record
+ * @param multiplier
+ */
 export function setTokenRecordMultiplier(record: TokenRecord, multiplier: BigDecimal): void {
   record.multiplier = multiplier;
   record.value = getTokenRecordValue(record);
@@ -15,6 +29,23 @@ export function setTokenRecordMultiplier(record: TokenRecord, multiplier: BigDec
   record.save();
 }
 
+/**
+ * Helper function to create a new TokenRecord.
+ *
+ * This function generates an id that should be unique,
+ * and saves the record.
+ *
+ * @param metric
+ * @param tokenName
+ * @param tokenAddress
+ * @param sourceName
+ * @param sourceAddress
+ * @param rate
+ * @param balance
+ * @param blockNumber
+ * @param multiplier
+ * @returns
+ */
 export function newTokenRecord(
   metric: string,
   tokenName: string,
@@ -68,6 +99,12 @@ export function getTokenRecordsBalance(records: TokenRecords): BigDecimal {
   return totalBalance;
 }
 
+/**
+ * Returns the value of all of the TokenRecords.
+ *
+ * @param records
+ * @returns
+ */
 export function getTokenRecordsValue(records: TokenRecords): BigDecimal {
   let totalValue = BigDecimal.fromString("0");
   const idValues = records.records;
@@ -90,6 +127,13 @@ export function getTokenRecordsValue(records: TokenRecords): BigDecimal {
   return totalValue;
 }
 
+/**
+ * Pushes the `record` parameter into the array within `records`.
+ *
+ * @param records TokenRecords to add to
+ * @param record TokenRecord to add
+ * @param update if true, updates the balance and value
+ */
 export function pushTokenRecord(
   records: TokenRecords,
   record: TokenRecord,
@@ -111,6 +155,14 @@ export function pushTokenRecord(
   records.save();
 }
 
+/**
+ * Combines two TokenRecords objects.
+ *
+ * The balance and value will be updated, and {records1} will be saved.
+ *
+ * @param records1 The TokenRecords to add to
+ * @param records2 The TokenRecords to include
+ */
 export function combineTokenRecords(records1: TokenRecords, records2: TokenRecords): void {
   for (let i = 0; i < records2.records.length; i++) {
     const records2Id = records2.records[i];
@@ -133,6 +185,14 @@ export function combineTokenRecords(records1: TokenRecords, records2: TokenRecor
   records1.save();
 }
 
+/**
+ * Sets the multiplier across all contained TokenRecord objects.
+ *
+ * The balance and value are updated, and the records saved.
+ *
+ * @param records
+ * @param multiplier
+ */
 export function setTokenRecordsMultiplier(records: TokenRecords, multiplier: BigDecimal): void {
   for (let i = 0; i < records.records.length; i++) {
     const recordId = records.records[i];
@@ -162,6 +222,13 @@ export function sortTokenRecords(records: TokenRecords): void {
   records.save();
 }
 
+/**
+ * Helper function to create a new TokenRecords object.
+ *
+ * @param id
+ * @param blockNumber
+ * @returns
+ */
 export function newTokenRecords(id: string, blockNumber: BigInt): TokenRecords {
   const records = new TokenRecords(id + "-" + blockNumber.toString());
   records.records = [];
@@ -172,6 +239,13 @@ export function newTokenRecords(id: string, blockNumber: BigInt): TokenRecords {
   return records;
 }
 
+/**
+ * Combines {metricName} with {addition}
+ *
+ * @param metricName \
+ * @param addition
+ * @returns
+ */
 export function addToMetricName(metricName: string, addition: string): string {
   return metricName + "/" + addition;
 }

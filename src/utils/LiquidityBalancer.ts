@@ -25,6 +25,17 @@ export function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): Ba
 
 // ### Balances for liquidity ###
 
+/**
+ * Determines the total value of the specified Balancer pool, specified by {poolId}.
+ *
+ * The value is the sum of rate * balance for all tokens.
+ *
+ * @param vaultAddress The address of the Balancer vault
+ * @param poolId The pool id, as returned by `getPool()` on the allocator contract
+ * @param nonOhmValueOnly Set to true to return the value of non-OHM tokens in the pool
+ * @param blockNumber the current block number
+ * @returns BigDecimal
+ */
 export function getBalancerPoolTotalValue(
   vaultAddress: string,
   poolId: string,
@@ -71,6 +82,16 @@ export function getBalancerPoolTotalValue(
   return nonOhmValueOnly ? nonOhmValue : totalValue;
 }
 
+/**
+ * Determines the unit rate of the given Balancer pool.
+ *
+ * Unit rate = total value / total supply
+ *
+ * @param poolTokenContract
+ * @param totalValue
+ * @param _blockNumber
+ * @returns
+ */
 function getBalancerPoolUnitRate(
   poolTokenContract: ERC20,
   totalValue: BigDecimal,
@@ -94,6 +115,20 @@ function getBalancerPoolToken(vaultAddress: string, poolId: string, blockNumber:
   return poolTokenContract;
 }
 
+/**
+ * Provides TokenRecords representing the Balancer pool identified by {poolId}.
+ *
+ * If {excludeOhmValue} is specified, the `multiplier` of the returned records
+ * will be adjusted to represent the share of the pool that is not OHM.
+ *
+ * @param metricName
+ * @param vaultAddress
+ * @param poolId
+ * @param excludeOhmValue
+ * @param blockNumber
+ * @param tokenAddress
+ * @returns
+ */
 export function getBalancerRecords(
   metricName: string,
   vaultAddress: string,
@@ -221,6 +256,7 @@ export function getBalancerPoolTotalTokenQuantity(
  * Returns token records reflecting the quantity of the token {tokenAddress}
  * in the specified Balancer pool across wallets ({WALLET_ADDRESSES}).
  *
+ * @param metricName
  * @param vaultAddress
  * @param poolId
  * @param tokenAddress

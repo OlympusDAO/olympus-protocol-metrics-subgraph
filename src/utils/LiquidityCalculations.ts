@@ -54,6 +54,7 @@ import {
  *
  * Otherwise, the value of the non-OHM token is determined.
  *
+ * @param metricName
  * @param liquidityBalance
  * @param blockNumber
  * @param riskFree
@@ -134,6 +135,7 @@ function getLiquidityTokenRecords(
  * - Curve
  * - Balancer
  *
+ * @param metricName
  * @param tokenAddress the address of the ERC20 token
  * @param riskFree whether the value is risk-free or not
  * @param excludeOhmValue true if the value of OHM in the LP should be excluded
@@ -236,6 +238,7 @@ export function getLiquidityBalances(
  * - OHM-DAI in the treasury wallet V3
  * - OHM-DAI in the Onsen allocator
  *
+ * @param metricName
  * @param blockNumber the current block number
  * @param riskFree whether the price of the LP is part of risk-free value
  * @returns TokenRecords object
@@ -280,6 +283,7 @@ export function getOhmDaiLiquidityBalance(
  * - OHM-DAI in the treasury wallet V2
  * - OHM-DAI in the treasury wallet V3
  *
+ * @param metricName
  * @param blockNumber the current block number
  * @param riskFree whether the price of the LP is part of risk-free value
  * @returns TokenRecords object
@@ -318,6 +322,7 @@ export function getOhmDaiLiquidityV2Balance(
  *
  * The value returned corresponds to the percentage, e.g. 80% will return 80 (not 0.8)
  *
+ * @param metricName
  * @param blockNumber
  * @returns BigDecimal representing the percentage of protocol-owned liquidity
  */
@@ -355,6 +360,7 @@ export function getOhmDaiProtocolOwnedLiquidity(
  * - OHM-FRAX in the treasury wallet V2
  * - OHM-FRAX in the treasury wallet V3
  *
+ * @param metricName
  * @param blockNumber the current block number
  * @param riskFree whether the price of the LP is part of risk-free value
  * @returns TokenRecords object
@@ -390,6 +396,7 @@ export function getOhmFraxLiquidityBalance(
  * - OHM-FRAX in the treasury wallet V2
  * - OHM-FRAX in the treasury wallet V3
  *
+ * @param metricName
  * @param blockNumber the current block number
  * @param riskFree whether the price of the LP is part of risk-free value
  * @returns TokenRecords object
@@ -428,6 +435,7 @@ export function getOhmFraxLiquidityV2Balance(
  *
  * The value returned corresponds to the percentage, e.g. 80% will return 80 (not 0.8)
  *
+ * @param metricName
  * @param blockNumber
  * @returns BigDecimal representing the percentage of protocol-owned liquidity
  */
@@ -466,6 +474,7 @@ export function getOhmFraxProtocolOwnedLiquidity(
  * - OHM-LUSD in the treasury wallet V3
  * - OHM-LUSD in the Onsen allocator
  *
+ * @param metricName
  * @param blockNumber the current block number
  * @param riskFree whether the price of the LP is part of risk-free value
  * @returns TokenRecords object
@@ -511,6 +520,7 @@ export function getOhmLusdLiquidityBalance(
  * - OHM-LUSD in the treasury wallet V3
  * - OHM-LUSD in the Onsen allocator
  *
+ * @param metricName
  * @param blockNumber the current block number
  * @param riskFree whether the price of the LP is part of risk-free value
  * @returns TokenRecords object
@@ -558,6 +568,7 @@ export function getOhmLusdLiquidityV2Balance(
  *
  * The value returned corresponds to the percentage, e.g. 80% will return 80 (not 0.8)
  *
+ * @param metricName
  * @param blockNumber
  * @returns BigDecimal representing the percentage of protocol-owned liquidity
  */
@@ -595,6 +606,7 @@ export function getOhmLusdProtocolOwnedLiquidity(
  * - OHM-ETH in the treasury wallet V2
  * - OHM-ETH in the treasury wallet V3
  *
+ * @param metricName
  * @param blockNumber the current block number
  * @param riskFree whether the price of the LP is part of risk-free value
  * @returns TokenRecords object
@@ -630,6 +642,7 @@ export function getOhmEthLiquidityBalance(
  * - OHM-ETH in the treasury wallet V2
  * - OHM-ETH in the treasury wallet V3
  *
+ * @param metricName
  * @param blockNumber the current block number
  * @param riskFree whether the price of the LP is part of risk-free value
  * @returns TokenRecords object
@@ -668,6 +681,7 @@ export function getOhmEthLiquidityV2Balance(
  *
  * The value returned corresponds to the percentage, e.g. 80% will return 80 (not 0.8)
  *
+ * @param metricName
  * @param blockNumber
  * @returns BigDecimal representing the percentage of protocol-owned liquidity
  */
@@ -700,6 +714,7 @@ export function getOhmEthProtocolOwnedLiquidity(
 /**
  * Returns the value of owned liquidity pools.
  *
+ * @param metricName
  * @param riskFree If `riskFree` is true, the risk-free value will be returned
  * @param excludeOhmValue should be true if only the non-OHM value of the LP is desired
  * @param blockNumber

@@ -9,7 +9,6 @@ import { RariAllocator } from "../../generated/ProtocolMetrics/RariAllocator";
 import { sOlympusERC20 } from "../../generated/ProtocolMetrics/sOlympusERC20";
 import { sOlympusERC20V2 } from "../../generated/ProtocolMetrics/sOlympusERC20V2";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
-import { StabilityPool } from "../../generated/ProtocolMetrics/StabilityPool";
 import { TokeAllocator } from "../../generated/ProtocolMetrics/TokeAllocator";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
@@ -65,10 +64,8 @@ const contractsTokeAllocator = new Map<string, TokeAllocator>();
 const contractsMasterChef = new Map<string, MasterChef>();
 const contractsVeFXS = new Map<string, VeFXS>();
 const contractsConvexAllocator = new Map<string, ConvexAllocator>();
-const contractsStabilityPool = new Map<string, StabilityPool>();
 const contractsLUSDAllocator = new Map<string, LUSDAllocatorV2>();
 
-// TODO shift to constants
 /**
  * Indicates whether a contract exists at a given block number.
  *
@@ -117,6 +114,16 @@ function contractExistsAtBlock(contractAddress: string, blockNumber: BigInt): bo
   return true;
 }
 
+/**
+ * Binds with an ERC20 contract located at {contractAddress}.
+ *
+ * If the contract does not exist at the current block number, null will be returned.
+ *
+ * @param contractName Name of the contract
+ * @param contractAddress Address of the contract
+ * @param currentBlockNumber block number
+ * @returns ERC20 or null
+ */
 export function getERC20(
   contractName: string,
   contractAddress: string,
@@ -140,6 +147,16 @@ export function getERC20(
   return contractsERC20.get(contractAddress);
 }
 
+/**
+ * Determines the number of decimals of a given ERC20 contract by
+ * calling the `decimals()` function on the contract.
+ *
+ * An error will be thrown if the contract is inaccessible.
+ *
+ * @param contractAddress contract address
+ * @param blockNumber current block number
+ * @returns number representing the decimals
+ */
 export function getERC20Decimals(contractAddress: string, blockNumber: BigInt): number {
   const contractName = getContractName(contractAddress);
   const contract = getERC20(contractName, contractAddress, blockNumber);
@@ -230,6 +247,16 @@ export function getSOlympusERC20V3(
   return contractsSOlympusERC20V3.get(contractAddress);
 }
 
+/**
+ * Binds with a UniswapV2Pair contract.
+ *
+ * If the contract cannot be bound, or it does not exist at the current block number,
+ * null will be returned.
+ *
+ * @param contractAddress contract address
+ * @param currentBlockNumber the current block number
+ * @returns UniswapV2Pair or null
+ */
 export function getUniswapV2Pair(
   contractAddress: string,
   currentBlockNumber: BigInt,
@@ -249,6 +276,16 @@ export function getUniswapV2Pair(
   return contractsUniswapV2Pair.get(contractAddress);
 }
 
+/**
+ * Binds with a UniswapV3Pair contract.
+ *
+ * If the contract cannot be bound, or it does not exist at the current block number,
+ * null will be returned.
+ *
+ * @param contractAddress contract address
+ * @param currentBlockNumber the current block number
+ * @returns UniswapV3Pair or null
+ */
 export function getUniswapV3Pair(
   contractAddress: string,
   currentBlockNumber: BigInt,
@@ -363,7 +400,6 @@ export function getConvexAllocator(
  * @param contract The bound ERC20 contract.
  * @param address The address of the holder.
  * @param currentBlockNumber The current block number.
- * @param minimumBlockNumber The minimum block number for the balance to apply.
  * @returns BigInt
  */
 export function getERC20Balance(
@@ -441,7 +477,7 @@ export function getUniswapV2PairBalance(
  *
  * Returns 0 if the minimum block number has not passed or there is no matching Onsen ID.
  *
- * @param contract The bound MasterChef/Onsen contract.
+ * @param tokenAddress The bound MasterChef/Onsen contract.
  * @param allocatorAddress The address of the allocator.
  * @param blockNumber The current block number.
  * @returns BigDecimal or null
@@ -516,7 +552,8 @@ export function getValue(balance: BigInt, decimals: number, rate: BigDecimal): B
  * Fetches the balance of the given ERC20 token from the
  * specified wallet.
  *
- * @param tokenName The name of the token
+ * @param metricName The name of the current metric, which is used for entity ids
+ * @param contractAddress ERC20 contract address
  * @param walletAddress The wallet address to determine the balance from
  * @param contract ERC20 contract
  * @param rate the unit price/rate of the token
@@ -561,7 +598,8 @@ export function getERC20TokenRecordFromWallet(
  * Fetches the balances of the given ERC20 token from
  * the wallets defined in {WALLET_ADDRESSES}.
  *
- * @param tokenName The name of the token
+ * @param metricName The name of the current metric, which is used for entity ids
+ * @param contractAddress ERC20 contract address
  * @param contract ERC20 contract
  * @param rate the unit price/rate of the token
  * @param blockNumber the current block number
@@ -632,6 +670,7 @@ function getTokeAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
 /**
  * Returns the balance of {contractAddress} in the Toke Allocator.
  *
+ * @param metricName The name of the current metric, which is used for entity ids
  * @param tokenAddress ERC20 contract to find the balance of
  * @param price
  * @param blockNumber the current block number
@@ -703,6 +742,7 @@ function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
 /**
  * Returns the balance of {contractAddress} in the Rari Allocator.
  *
+ * @param metricName The name of the current metric, which is used for entity ids
  * @param tokenAddress ERC20 contract to find the balance of
  * @param price
  * @param blockNumber the current block number
@@ -739,6 +779,7 @@ export function getRariAllocatorRecords(
 /**
  * Returns the balance of {contractAddress} in the Onsen Allocator.
  *
+ * @param metricName The name of the current metric, which is used for entity ids
  * @param tokenAddress ERC20 contract to find the balance of
  * @param price
  * @param blockNumber the current block number
@@ -826,6 +867,7 @@ export function getConvexStakedBalance(
  * staked balance from {CONVEX_ALLOCATORS}. The staking contract has a function
  * that returns the staked token, making this easier.
  *
+ * @param metricName The name of the current metric, which is used for entity ids
  * @param tokenAddress the token address to look for
  * @param blockNumber the current block
  */
@@ -961,6 +1003,7 @@ export function getLiquityStabilityPoolBalance(
 /**
  * Returns the balance of {tokenAddress} in the Liquity stability pools.
  *
+ * @param metricName The name of the current metric, which is used for entity ids
  * @param tokenAddress
  * @param rate
  * @param blockNumber
