@@ -6,6 +6,8 @@ import {
   ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_STABLE_TOKENS,
+  ERC20_UST,
+  ERC20_UST_BLOCK_DEATH,
   ERC20_WETH,
   getContractName,
   getPairHandler,
@@ -426,6 +428,15 @@ export function getUSDRateUniswapV3(
  * @returns BigDecimal or 0
  */
 export function getUSDRate(contractAddress: string, blockNumber: BigInt): BigDecimal {
+  // Value UST at 0 from May 9th onwards
+  if (
+    contractAddress.toLowerCase() == ERC20_UST.toLowerCase() &&
+    blockNumber.gt(BigInt.fromString(ERC20_UST_BLOCK_DEATH))
+  ) {
+    log.debug("Returning $0 for UST after collapse", []);
+    return BigDecimal.fromString("0");
+  }
+
   // Handle stablecoins
   // TODO add support for dynamic price lookup for stablecoins
   if (arrayIncludesLoose(ERC20_STABLE_TOKENS, contractAddress)) {

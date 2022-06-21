@@ -13,6 +13,7 @@ import {
   ERC20_SYN,
   ERC20_TRIBE,
   ERC20_USDC,
+  ERC20_UST,
   ERC20_WETH,
   NATIVE_ETH,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
@@ -293,6 +294,14 @@ describe("get USD rate", () => {
 
   test("FRAX3CRV returns 1", () => {
     assert.stringEquals(getUSDRate(ERC20_FRAX_3CRV, OHM_USD_RESERVE_BLOCK).toString(), "1");
+  });
+
+  test("UST returns 1 before May 9th", () => {
+    assert.stringEquals(getUSDRate(ERC20_UST, BigInt.fromString("14720000")).toString(), "1");
+  });
+
+  test("UST returns 0 after May 9th", () => {
+    assert.stringEquals(getUSDRate(ERC20_UST, BigInt.fromString("14800000")).toString(), "0");
   });
 
   test("ETH returns correct value", () => {

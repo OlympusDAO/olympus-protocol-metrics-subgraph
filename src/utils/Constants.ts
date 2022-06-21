@@ -126,6 +126,7 @@ export const ERC20_LUSD = "0x5f98805a4e8be255a32880fdec7f6728c6568ba0".toLowerCa
 export const ERC20_LUSD_BLOCK = "12178594";
 export const ERC20_USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48".toLowerCase();
 export const ERC20_UST = "0xa693b19d2931d498c5b318df961919bb4aee87a5".toLowerCase();
+export const ERC20_UST_BLOCK_DEATH = "14730000";
 export const ERC20_UST_BLOCK = "13408366";
 export const ERC20_STABLE_TOKENS = [
   ERC20_ADAI,
@@ -135,7 +136,7 @@ export const ERC20_STABLE_TOKENS = [
   ERC20_FRAX,
   ERC20_FRAX_3CRV,
   ERC20_LUSD,
-  // ERC20_UST,
+  ERC20_UST,
   ERC20_USDC,
 ];
 

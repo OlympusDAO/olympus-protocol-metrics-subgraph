@@ -8,6 +8,7 @@ import {
   ERC20_FRAX,
   ERC20_LUSD,
   ERC20_STABLE_TOKENS,
+  ERC20_UST,
   getContractName,
 } from "./Constants";
 import {
@@ -217,8 +218,7 @@ export function getLUSDBalance(metricName: string, blockNumber: BigInt): TokenRe
  * @returns TokenRecords object
  */
 export function getUSTBalance(metricName: string, blockNumber: BigInt): TokenRecords {
-  return newTokenRecords(metricName, blockNumber);
-  //  return getStablecoinBalance(metricName, ERC20_UST, false, false, false, blockNumber);
+  return getStablecoinBalance(metricName, ERC20_UST, false, false, false, blockNumber);
 }
 
 /**
