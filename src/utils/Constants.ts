@@ -12,120 +12,117 @@ export const LUSDBOND_TOKEN = "LUSD";
 export const OHMLUSDLPBOND_TOKEN = "OHM-LUSD";
 export const OHMETHLPBOND_TOKEN = "OHM-WETH";
 
-export const MIGRATION_CONTRACT = "0x184f3fad8618a6f458c16bae63f70c426fe784b3".toLowerCase();
+export const MIGRATION_CONTRACT = "0x184f3fad8618a6f458c16bae63f70c426fe784b3";
 
-export const CROSS_CHAIN_ARBITRUM = "0x012bbf0481b97170577745d2167ee14f63e2ad4c".toLowerCase();
-export const CROSS_CHAIN_FANTOM = "0x2bc001ffeb862d843e0a02a7163c7d4828e5fb10".toLowerCase();
-export const CROSS_CHAIN_POLYGON = "0xe06efa3d9ee6923240ee1195a16ddd96b5cce8f7".toLowerCase();
-export const TREASURY_ADDRESS_V1 = "0x886CE997aa9ee4F8c2282E182aB72A705762399D".toLowerCase();
-export const TREASURY_ADDRESS_V2 = "0x31f8cc382c9898b273eff4e0b7626a6987c846e8".toLowerCase();
+export const CROSS_CHAIN_ARBITRUM = "0x012bbf0481b97170577745d2167ee14f63e2ad4c";
+export const CROSS_CHAIN_FANTOM = "0x2bc001ffeb862d843e0a02a7163c7d4828e5fb10";
+export const CROSS_CHAIN_POLYGON = "0xe06efa3d9ee6923240ee1195a16ddd96b5cce8f7";
+export const TREASURY_ADDRESS_V1 = "0x886CE997aa9ee4F8c2282E182aB72A705762399D";
+export const TREASURY_ADDRESS_V2 = "0x31f8cc382c9898b273eff4e0b7626a6987c846e8";
 export const TREASURY_ADDRESS_V2_BLOCK = "12525281";
-export const TREASURY_ADDRESS_V3 = "0x9A315BdF513367C0377FB36545857d12e85813Ef".toLowerCase();
+export const TREASURY_ADDRESS_V3 = "0x9A315BdF513367C0377FB36545857d12e85813Ef";
 export const TREASURY_ADDRESS_V3_BLOCK = "13805100";
 
-export const AAVE_ALLOCATOR = "0x0e1177e47151Be72e5992E0975000E73Ab5fd9D4".toLowerCase();
-export const AAVE_ALLOCATOR_V2 = "0x0d33c811d0fcc711bcb388dfb3a152de445be66f".toLowerCase();
+export const AAVE_ALLOCATOR = "0x0e1177e47151Be72e5992E0975000E73Ab5fd9D4";
+export const AAVE_ALLOCATOR_V2 = "0x0d33c811d0fcc711bcb388dfb3a152de445be66f";
 export const AAVE_ALLOCATOR_V2_BLOCK = "14375500";
-export const BALANCER_ALLOCATOR = "0xa9b52a2d0ffdbabdb2cb23ebb7cd879cac6618a6".toLowerCase(); // Incorrect?
-export const CONVEX_ALLOCATOR1 = "0x3dF5A355457dB3A4B5C744B8623A7721BF56dF78".toLowerCase();
+export const BALANCER_ALLOCATOR = "0xa9b52a2d0ffdbabdb2cb23ebb7cd879cac6618a6"; // Incorrect?
+export const CONVEX_ALLOCATOR1 = "0x3dF5A355457dB3A4B5C744B8623A7721BF56dF78";
 export const CONVEX_ALLOCATOR1_BLOCK = "13027359";
-export const CONVEX_ALLOCATOR2 = "0x408a9A09d97103022F53300A3A14Ca6c3FF867E8".toLowerCase();
+export const CONVEX_ALLOCATOR2 = "0x408a9A09d97103022F53300A3A14Ca6c3FF867E8";
 export const CONVEX_ALLOCATOR2_BLOCK = "13308077";
-export const CONVEX_ALLOCATOR3 = "0xDbf0683fC4FC8Ac11e64a6817d3285ec4f2Fc42d".toLowerCase();
+export const CONVEX_ALLOCATOR3 = "0xDbf0683fC4FC8Ac11e64a6817d3285ec4f2Fc42d";
 export const CONVEX_ALLOCATOR3_BLOCK = "13920000";
-export const CONVEX_CVX_ALLOCATOR = "0xdfc95aaf0a107daae2b350458ded4b7906e7f728".toLowerCase();
-export const CONVEX_CVX_VL_ALLOCATOR = "0x2d643df5de4e9ba063760d475beaa62821c71681".toLowerCase();
+export const CONVEX_CVX_ALLOCATOR = "0xdfc95aaf0a107daae2b350458ded4b7906e7f728";
+export const CONVEX_CVX_VL_ALLOCATOR = "0x2d643df5de4e9ba063760d475beaa62821c71681";
 export const OHMDAI_ONSEN_ID = 185;
 export const OHMLUSD_ONSEN_ID = 323;
-export const ONSEN_ALLOCATOR = "0x0316508a1b5abf1CAe42912Dc2C8B9774b682fFC".toLowerCase();
-export const SUSHI_MASTERCHEF = "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd".toLowerCase();
-export const VEFXS_ALLOCATOR = "0xde7b85f52577b113181921a7aa8fc0c22e309475".toLowerCase();
-export const CONVEX_STAKING_FRAX_3CRV_REWARD_POOL =
-  "0xB900EF131301B307dB5eFcbed9DBb50A3e209B2e".toLowerCase();
-export const CONVEX_STAKING_OHM_ETH_REWARD_POOL =
-  "0xd683C7051a28fA150EB3F4BD92263865D4a67778".toLowerCase();
+export const ONSEN_ALLOCATOR = "0x0316508a1b5abf1CAe42912Dc2C8B9774b682fFC";
+export const SUSHI_MASTERCHEF = "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd";
+export const VEFXS_ALLOCATOR = "0xde7b85f52577b113181921a7aa8fc0c22e309475";
+export const CONVEX_STAKING_FRAX_3CRV_REWARD_POOL = "0xB900EF131301B307dB5eFcbed9DBb50A3e209B2e";
+export const CONVEX_STAKING_OHM_ETH_REWARD_POOL = "0xd683C7051a28fA150EB3F4BD92263865D4a67778";
 
-export const OHMDAISLPBOND_CONTRACT1 = "0xd27001d1aaed5f002c722ad729de88a91239ff29".toLowerCase();
+export const OHMDAISLPBOND_CONTRACT1 = "0xd27001d1aaed5f002c722ad729de88a91239ff29";
 export const OHMDAISLPBOND_CONTRACT1_BLOCK = "12154429";
-export const OHMDAISLPBOND_CONTRACT2 = "0x13e8484a86327f5882d1340ed0d7643a29548536".toLowerCase();
+export const OHMDAISLPBOND_CONTRACT2 = "0x13e8484a86327f5882d1340ed0d7643a29548536";
 export const OHMDAISLPBOND_CONTRACT2_BLOCK = "12368362";
-export const OHMDAISLPBOND_CONTRACT3 = "0x996668c46fc0b764afda88d83eb58afc933a1626".toLowerCase();
+export const OHMDAISLPBOND_CONTRACT3 = "0x996668c46fc0b764afda88d83eb58afc933a1626";
 export const OHMDAISLPBOND_CONTRACT3_BLOCK = "12525388";
-export const OHMDAISLPBOND_CONTRACT4 = "0x956c43998316b6a2F21f89a1539f73fB5B78c151".toLowerCase();
+export const OHMDAISLPBOND_CONTRACT4 = "0x956c43998316b6a2F21f89a1539f73fB5B78c151";
 export const OHMDAISLPBOND_CONTRACT4_BLOCK = "12659907";
-export const DAIBOND_CONTRACTS1 = "0xa64ed1b66cb2838ef2a198d8345c0ce6967a2a3c".toLowerCase();
+export const DAIBOND_CONTRACTS1 = "0xa64ed1b66cb2838ef2a198d8345c0ce6967a2a3c";
 export const DAIBOND_CONTRACTS1_BLOCK = "12280908";
-export const DAIBOND_CONTRACTS2 = "0xd03056323b7a63e2095ae97fa1ad92e4820ff045".toLowerCase();
+export const DAIBOND_CONTRACTS2 = "0xd03056323b7a63e2095ae97fa1ad92e4820ff045";
 export const DAIBOND_CONTRACTS2_BLOCK = "12525351";
-export const DAIBOND_CONTRACTS3 = "0x575409F8d77c12B05feD8B455815f0e54797381c".toLowerCase();
+export const DAIBOND_CONTRACTS3 = "0x575409F8d77c12B05feD8B455815f0e54797381c";
 export const DAIBOND_CONTRACTS3_BLOCK = "12659928";
-export const OHMFRAXLPBOND_CONTRACT1 = "0x539b6c906244ac34e348bbe77885cdfa994a3776".toLowerCase();
+export const OHMFRAXLPBOND_CONTRACT1 = "0x539b6c906244ac34e348bbe77885cdfa994a3776";
 export const OHMFRAXLPBOND_CONTRACT1_BLOCK = "12621882";
-export const OHMFRAXLPBOND_CONTRACT2 = "0xc20cfff07076858a7e642e396180ec390e5a02f7".toLowerCase();
+export const OHMFRAXLPBOND_CONTRACT2 = "0xc20cfff07076858a7e642e396180ec390e5a02f7";
 export const OHMFRAXLPBOND_CONTRACT2_BLOCK = "12659925";
-export const FRAXBOND_CONTRACT1 = "0x8510c8c2B6891E04864fa196693D44E6B6ec2514".toLowerCase();
+export const FRAXBOND_CONTRACT1 = "0x8510c8c2B6891E04864fa196693D44E6B6ec2514";
 export const FRAXBOND_CONTRACT1_BLOCK = "12666825";
-export const ETHBOND_CONTRACT1 = "0xe6295201cd1ff13ced5f063a5421c39a1d236f1c".toLowerCase();
+export const ETHBOND_CONTRACT1 = "0xe6295201cd1ff13ced5f063a5421c39a1d236f1c";
 export const ETHBOND_CONTRACT1_BLOCK = "12959821";
-export const LUSDBOND_CONTRACT1 = "0x10c0f93f64e3c8d0a1b0f4b87d6155fd9e89d08d".toLowerCase();
+export const LUSDBOND_CONTRACT1 = "0x10c0f93f64e3c8d0a1b0f4b87d6155fd9e89d08d";
 export const LUSDBOND_CONTRACT1_BLOCK = "13264217";
-export const OHMLUSDBOND_CONTRACT1 = "0xfb1776299e7804dd8016303df9c07a65c80f67b6".toLowerCase();
+export const OHMLUSDBOND_CONTRACT1 = "0xfb1776299e7804dd8016303df9c07a65c80f67b6";
 export const OHMLUSDBOND_CONTRACT1_BLOCK = "13348034";
 
-export const CIRCULATING_SUPPLY_CONTRACT =
-  "0x0EFFf9199Aa1Ac3C3E34E957567C1BE8bF295034".toLowerCase();
+export const CIRCULATING_SUPPLY_CONTRACT = "0x0EFFf9199Aa1Ac3C3E34E957567C1BE8bF295034";
 export const CIRCULATING_SUPPLY_CONTRACT_BLOCK = "12236262";
 
-export const STAKING_CONTRACT_V1 = "0x0822f3c03dcc24d200aff33493dc08d0e1f274a2".toLowerCase();
-export const STAKING_CONTRACT_V2 = "0xfd31c7d00ca47653c6ce64af53c1571f9c36566a".toLowerCase();
+export const STAKING_CONTRACT_V1 = "0x0822f3c03dcc24d200aff33493dc08d0e1f274a2";
+export const STAKING_CONTRACT_V2 = "0xfd31c7d00ca47653c6ce64af53c1571f9c36566a";
 export const STAKING_CONTRACT_V2_BLOCK = "12622679";
-export const STAKING_CONTRACT_V3 = "0xB63cac384247597756545b500253ff8E607a8020".toLowerCase();
+export const STAKING_CONTRACT_V3 = "0xB63cac384247597756545b500253ff8E607a8020";
 export const STAKING_CONTRACT_V3_BLOCK = "13804019";
 
-export const BONDING_CALCULATOR = "0xcaaa6a2d4b26067a391e7b7d65c16bb2d5fa571a".toLowerCase();
+export const BONDING_CALCULATOR = "0xcaaa6a2d4b26067a391e7b7d65c16bb2d5fa571a";
 export const BONDING_CALCULATOR_BLOCK = "12525357";
 
-export const DISTRIBUTOR_CONTRACT = "0xC58E923bf8A00E4361FE3f4275226a543D7D3ce6".toLowerCase();
+export const DISTRIBUTOR_CONTRACT = "0xC58E923bf8A00E4361FE3f4275226a543D7D3ce6";
 export const DISTRIBUTOR_CONTRACT_BLOCK = 12800000;
-export const DISTRIBUTOR_CONTRACT_V2 = "0xeeeb97A127a342656191E0313DF33D58D06B2E05".toLowerCase();
+export const DISTRIBUTOR_CONTRACT_V2 = "0xeeeb97A127a342656191E0313DF33D58D06B2E05";
 export const DISTRIBUTOR_CONTRACT_BLOCK_V2 = 13805000;
 
-export const DAO_WALLET = "0x245cc372c84b3645bf0ffe6538620b04a217988b".toLowerCase();
-export const BONDS_DEPOSIT = "0x9025046c6fb25Fb39e720d97a8FD881ED69a1Ef6".toLowerCase();
-export const BONDS_INVERSE_DEPOSIT = "0xBA42BE149e5260EbA4B82418A6306f55D532eA47".toLowerCase();
+export const DAO_WALLET = "0x245cc372c84b3645bf0ffe6538620b04a217988b";
+export const BONDS_DEPOSIT = "0x9025046c6fb25Fb39e720d97a8FD881ED69a1Ef6";
+export const BONDS_INVERSE_DEPOSIT = "0xBA42BE149e5260EbA4B82418A6306f55D532eA47";
 
-export const LUSD_ALLOCATOR = "0x97b3ef4c558ec456d59cb95c65bfb79046e31fca".toLowerCase();
+export const LUSD_ALLOCATOR = "0x97b3ef4c558ec456d59cb95c65bfb79046e31fca";
 export const LUSD_ALLOCATOR_BLOCK = "14397867";
-export const STABILITY_POOL = "0x66017d22b0f8556afdd19fc67041899eb65a21bb".toLowerCase();
+export const STABILITY_POOL = "0x66017d22b0f8556afdd19fc67041899eb65a21bb";
 
-export const RARI_ALLOCATOR = "0x061C8610A784b8A1599De5B1157631e35180d818".toLowerCase();
+export const RARI_ALLOCATOR = "0x061C8610A784b8A1599De5B1157631e35180d818";
 export const RARI_ALLOCATOR_BLOCK = "14550000";
 
-export const TOKE_ALLOCATOR = "0x0483DE8C11eE2f0538a29F0C294246677cbC92F5".toLowerCase();
+export const TOKE_ALLOCATOR = "0x0483DE8C11eE2f0538a29F0C294246677cbC92F5";
 
-export const BALANCER_VAULT = "0xba12222222228d8ba445958a75a0704d566bf2c8".toLowerCase();
+export const BALANCER_VAULT = "0xba12222222228d8ba445958a75a0704d566bf2c8";
 
 // Olympus tokens
-export const ERC20_OHM_V1 = "0x383518188c0c6d7730d91b2c03a03c837814a899".toLowerCase();
-export const ERC20_OHM_V2 = "0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5".toLowerCase();
+export const ERC20_OHM_V1 = "0x383518188c0c6d7730d91b2c03a03c837814a899";
+export const ERC20_OHM_V2 = "0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5";
 export const ERC20_OHM_V2_BLOCK = "13782589";
-export const ERC20_SOHM_V1 = "0x31932e6e45012476ba3a3a4953cba62aee77fbbe".toLowerCase();
-export const ERC20_SOHM_V2 = "0x04f2694c8fcee23e8fd0dfea1d4f5bb8c352111f".toLowerCase();
+export const ERC20_SOHM_V1 = "0x31932e6e45012476ba3a3a4953cba62aee77fbbe";
+export const ERC20_SOHM_V2 = "0x04f2694c8fcee23e8fd0dfea1d4f5bb8c352111f";
 export const ERC20_SOHM_V2_BLOCK = "12622596";
-export const ERC20_SOHM_V3 = "0x04906695D6D12CF5459975d7C3C03356E4Ccd460".toLowerCase();
+export const ERC20_SOHM_V3 = "0x04906695D6D12CF5459975d7C3C03356E4Ccd460";
 export const ERC20_SOHM_V3_BLOCK = "13806000";
 
 // Stablecoin tokens
-export const ERC20_ADAI = "0x028171bca77440897b824ca71d1c56cac55b68a3".toLowerCase();
-export const ERC20_CVX_FRAX_3CRV = "0xbe0f6478e0e4894cfb14f32855603a083a57c7da".toLowerCase(); // Staked version of ERC20_FRAX_3CRV
-export const ERC20_DAI = "0x6b175474e89094c44da98b954eedeac495271d0f".toLowerCase();
-export const ERC20_FEI = "0x956F47F50A910163D8BF957Cf5846D573E7f87CA".toLowerCase();
-export const ERC20_FRAX = "0x853d955acef822db058eb8505911ed77f175b99e".toLowerCase();
-export const ERC20_FRAX_3CRV = "0xd632f22692fac7611d2aa1c0d552930d43caed3b".toLowerCase();
-export const ERC20_LUSD = "0x5f98805a4e8be255a32880fdec7f6728c6568ba0".toLowerCase();
+export const ERC20_ADAI = "0x028171bca77440897b824ca71d1c56cac55b68a3";
+export const ERC20_CVX_FRAX_3CRV = "0xbe0f6478e0e4894cfb14f32855603a083a57c7da"; // Staked version of ERC20_FRAX_3CRV
+export const ERC20_DAI = "0x6b175474e89094c44da98b954eedeac495271d0f";
+export const ERC20_FEI = "0x956F47F50A910163D8BF957Cf5846D573E7f87CA";
+export const ERC20_FRAX = "0x853d955acef822db058eb8505911ed77f175b99e";
+export const ERC20_FRAX_3CRV = "0xd632f22692fac7611d2aa1c0d552930d43caed3b";
+export const ERC20_LUSD = "0x5f98805a4e8be255a32880fdec7f6728c6568ba0";
 export const ERC20_LUSD_BLOCK = "12178594";
-export const ERC20_USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48".toLowerCase();
-export const ERC20_UST = "0xa693b19d2931d498c5b318df961919bb4aee87a5".toLowerCase();
+export const ERC20_USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
+export const ERC20_UST = "0xa693b19d2931d498c5b318df961919bb4aee87a5";
 export const ERC20_UST_BLOCK = "13408366";
 export const ERC20_STABLE_TOKENS = [
   ERC20_ADAI,
@@ -140,37 +137,36 @@ export const ERC20_STABLE_TOKENS = [
 ];
 
 // Volatile tokens
-export const ERC20_ALCX = "0xdbdb4d16eda451d0503b854cf79d55697f90c8df".toLowerCase();
-export const ERC20_CRV = "0xd533a949740bb3306d119cc777fa900ba034cd52".toLowerCase();
-export const ERC20_CRV_3POOL = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490".toLowerCase();
-export const ERC20_CRV_OHMETH = "0x3660bd168494d61ffdac21e403d0f6356cf90fd7".toLowerCase();
-export const ERC20_CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b".toLowerCase();
+export const ERC20_ALCX = "0xdbdb4d16eda451d0503b854cf79d55697f90c8df";
+export const ERC20_CRV = "0xd533a949740bb3306d119cc777fa900ba034cd52";
+export const ERC20_CRV_3POOL = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490";
+export const ERC20_CRV_OHMETH = "0x3660bd168494d61ffdac21e403d0f6356cf90fd7";
+export const ERC20_CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b";
 export const ERC20_CVX_BLOCK = "12460000";
-export const ERC20_CVX_CRV = "0x62b9c7356a2dc64a1969e19c23e4f579f9810aa7".toLowerCase();
-export const ERC20_CVX_FXS = "0xfeef77d3f69374f66429c91d732a244f074bdf74".toLowerCase();
-export const ERC20_CVX_OHMETH = "0x9bb0daf4361e1b84f5a44914595c46f07e9d12a4".toLowerCase(); // Staked ERC20_CRV_OHMETH
-export const ERC20_CVX_VL_V1 = "0xd18140b4b819b895a3dba5442f959fa44994af50".toLowerCase();
+export const ERC20_CVX_CRV = "0x62b9c7356a2dc64a1969e19c23e4f579f9810aa7";
+export const ERC20_CVX_FXS = "0xfeef77d3f69374f66429c91d732a244f074bdf74";
+export const ERC20_CVX_OHMETH = "0x9bb0daf4361e1b84f5a44914595c46f07e9d12a4"; // Staked ERC20_CRV_OHMETH
+export const ERC20_CVX_VL_V1 = "0xd18140b4b819b895a3dba5442f959fa44994af50";
 export const ERC20_CVX_VL_V1_BLOCK = "13153663";
-export const ERC20_CVX_VL_V2 = "0x72a19342e8F1838460eBFCCEf09F6585e32db86E".toLowerCase();
-export const ERC20_FOX = "0xc770eefad204b5180df6a14ee197d99d808ee52d".toLowerCase();
-export const ERC20_FPIS = "0xc2544a32872a91f4a553b404c6950e89de901fdb".toLowerCase();
+export const ERC20_CVX_VL_V2 = "0x72a19342e8F1838460eBFCCEf09F6585e32db86E";
+export const ERC20_FOX = "0xc770eefad204b5180df6a14ee197d99d808ee52d";
+export const ERC20_FPIS = "0xc2544a32872a91f4a553b404c6950e89de901fdb";
 export const ERC20_FPIS_BLOCK = "14482720";
-export const ERC20_FXS = "0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0".toLowerCase();
+export const ERC20_FXS = "0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0";
 export const ERC20_FXS_BLOCK = "11465584";
-export const ERC20_FXS_VE = "0xc8418af6358ffdda74e09ca9cc3fe03ca6adc5b0".toLowerCase();
+export const ERC20_FXS_VE = "0xc8418af6358ffdda74e09ca9cc3fe03ca6adc5b0";
 export const ERC20_FXS_VE_BLOCK = "13833298";
-export const ERC20_KP3R = "0x1ceb5cb57c4d4e2b2433641b95dd330a33185a44".toLowerCase();
-export const ERC20_LQTY = "0x6dea81c8171d0ba574754ef6f8b412f2ed88c54d".toLowerCase();
-export const ERC20_PRIME = "0x43d4a3cd90ddd2f8f4f693170c9c8098163502ad".toLowerCase();
-export const ERC20_SYN = "0x0f2d719407fdbeff09d87557abb7232601fd9f29".toLowerCase();
-export const ERC20_TOKE = "0x2e9d63788249371f1dfc918a52f8d799f4a38c94".toLowerCase();
-export const ERC20_THOR = "0xa5f2211b9b8170f694421f2046281775e8468044".toLowerCase();
-export const ERC20_TRIBE = "0xc7283b66Eb1EB5FB86327f08e1B5816b0720212B".toLowerCase();
-export const ERC20_WBTC = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599".toLowerCase();
-export const ERC20_WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2".toLowerCase();
-export const ERC20_XSUSHI = "0x8798249c2e607446efb7ad49ec89dd1865ff4272".toLowerCase();
-export const ERC20_BALANCER_OHM_DAI_WETH =
-  "0xc45D42f801105e861e86658648e3678aD7aa70f9".toLowerCase(); // Balancer pool token
+export const ERC20_KP3R = "0x1ceb5cb57c4d4e2b2433641b95dd330a33185a44";
+export const ERC20_LQTY = "0x6dea81c8171d0ba574754ef6f8b412f2ed88c54d";
+export const ERC20_PRIME = "0x43d4a3cd90ddd2f8f4f693170c9c8098163502ad";
+export const ERC20_SYN = "0x0f2d719407fdbeff09d87557abb7232601fd9f29";
+export const ERC20_TOKE = "0x2e9d63788249371f1dfc918a52f8d799f4a38c94";
+export const ERC20_THOR = "0xa5f2211b9b8170f694421f2046281775e8468044";
+export const ERC20_TRIBE = "0xc7283b66Eb1EB5FB86327f08e1B5816b0720212B";
+export const ERC20_WBTC = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599";
+export const ERC20_WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+export const ERC20_XSUSHI = "0x8798249c2e607446efb7ad49ec89dd1865ff4272";
+export const ERC20_BALANCER_OHM_DAI_WETH = "0xc45D42f801105e861e86658648e3678aD7aa70f9"; // Balancer pool token
 export const NATIVE_ETH = "-999999";
 
 export const ERC20_VOLATILE_TOKENS = [
@@ -212,10 +208,9 @@ CONVEX_STAKED_TOKENS.set(ERC20_CRV_OHMETH, ERC20_CVX_OHMETH);
  * @returns contract address for the staked token, or null
  */
 export const getConvexStakedToken = (contractAddress: string): string | null => {
-  const contractAddressLower = contractAddress.toLowerCase();
-  if (!CONVEX_STAKED_TOKENS.has(contractAddressLower)) return null;
+  if (!CONVEX_STAKED_TOKENS.has(contractAddress)) return null;
 
-  return CONVEX_STAKED_TOKENS.get(contractAddressLower);
+  return CONVEX_STAKED_TOKENS.get(contractAddress);
 };
 
 /**
@@ -227,48 +222,42 @@ export const CONVEX_STAKING_CONTRACTS = [
 ];
 
 // Liquidity Pools
-export const PAIR_CURVE_FXS_CVX_FXS = "0xd658a338613198204dca1143ac3f01a722b5d94a".toLowerCase();
-export const PAIR_CURVE_OHM_ETH = "0x6ec38b3228251a0C5D491Faf66858e2E23d7728B".toLowerCase();
-export const PAIR_UNISWAP_V2_ALCX_ETH = "0xc3f279090a47e80990fe3a9c30d24cb117ef91a8".toLowerCase();
-export const PAIR_UNISWAP_V2_CRV_ETH = "0x58dc5a51fe44589beb22e8ce67720b5bc5378009".toLowerCase();
-export const PAIR_UNISWAP_V2_CVX_CRV_ETH =
-  "0x4b893b0e9c2fe8bf5d531d0c9c603b1483b4ce30".toLowerCase();
-export const PAIR_UNISWAP_V2_CVX_ETH = "0x05767d9ef41dc40689678ffca0608878fb3de906".toLowerCase();
-export const PAIR_UNISWAP_V2_ETH_WBTC = "0xceff51756c56ceffca006cd410b03ffc46dd3a58".toLowerCase();
-export const PAIR_UNISWAP_V2_FOX_ETH = "0x470e8de2ebaef52014a47cb5e6af86884947f08c".toLowerCase();
-export const PAIR_UNISWAP_V2_KP3R_ETH = "0xaf988aff99d3d0cb870812c325c588d8d8cb7de8".toLowerCase();
-export const PAIR_UNISWAP_V2_OHM_DAI = "0x34d7d7Aaf50AD4944B70B320aCB24C95fa2def7c".toLowerCase();
-export const PAIR_UNISWAP_V2_OHM_DAI_V2 =
-  "0x055475920a8c93cffb64d039a8205f7acc7722d3".toLowerCase();
+export const PAIR_CURVE_FXS_CVX_FXS = "0xd658a338613198204dca1143ac3f01a722b5d94a";
+export const PAIR_CURVE_OHM_ETH = "0x6ec38b3228251a0C5D491Faf66858e2E23d7728B";
+export const PAIR_UNISWAP_V2_ALCX_ETH = "0xc3f279090a47e80990fe3a9c30d24cb117ef91a8";
+export const PAIR_UNISWAP_V2_CRV_ETH = "0x58dc5a51fe44589beb22e8ce67720b5bc5378009";
+export const PAIR_UNISWAP_V2_CVX_CRV_ETH = "0x4b893b0e9c2fe8bf5d531d0c9c603b1483b4ce30";
+export const PAIR_UNISWAP_V2_CVX_ETH = "0x05767d9ef41dc40689678ffca0608878fb3de906";
+export const PAIR_UNISWAP_V2_ETH_WBTC = "0xceff51756c56ceffca006cd410b03ffc46dd3a58";
+export const PAIR_UNISWAP_V2_FOX_ETH = "0x470e8de2ebaef52014a47cb5e6af86884947f08c";
+export const PAIR_UNISWAP_V2_KP3R_ETH = "0xaf988aff99d3d0cb870812c325c588d8d8cb7de8";
+export const PAIR_UNISWAP_V2_OHM_DAI = "0x34d7d7Aaf50AD4944B70B320aCB24C95fa2def7c";
+export const PAIR_UNISWAP_V2_OHM_DAI_V2 = "0x055475920a8c93cffb64d039a8205f7acc7722d3";
 export const PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK = "13827000";
-export const PAIR_UNISWAP_V2_OHM_ETH = "0xfffae4a0f4ac251f4705717cd24cadccc9f33e06".toLowerCase();
+export const PAIR_UNISWAP_V2_OHM_ETH = "0xfffae4a0f4ac251f4705717cd24cadccc9f33e06";
 export const PAIR_UNISWAP_V2_OHM_ETH_BLOCK = "12310798";
-export const PAIR_UNISWAP_V2_OHM_ETH_V2 =
-  "0x69b81152c5a8d35a67b32a4d3772795d96cae4da".toLowerCase();
+export const PAIR_UNISWAP_V2_OHM_ETH_V2 = "0x69b81152c5a8d35a67b32a4d3772795d96cae4da";
 export const PAIR_UNISWAP_V2_OHM_ETH_V2_BLOCK = "13805112";
-export const PAIR_UNISWAP_V2_OHM_FRAX = "0x2dce0dda1c2f98e0f171de8333c3c6fe1bbf4877".toLowerCase();
+export const PAIR_UNISWAP_V2_OHM_FRAX = "0x2dce0dda1c2f98e0f171de8333c3c6fe1bbf4877";
 export const PAIR_UNISWAP_V2_OHM_FRAX_BLOCK = "12563434";
-export const PAIR_UNISWAP_V2_OHM_FRAX_V2 =
-  "0xb612c37688861f1f90761dc7f382c2af3a50cc39".toLowerCase();
+export const PAIR_UNISWAP_V2_OHM_FRAX_V2 = "0xb612c37688861f1f90761dc7f382c2af3a50cc39";
 export const PAIR_UNISWAP_V2_OHM_FRAX_V2_BLOCK = "13824000";
-export const PAIR_UNISWAP_V2_OHM_LUSD = "0xfdf12d1f85b5082877a6e070524f50f6c84faa6b".toLowerCase();
+export const PAIR_UNISWAP_V2_OHM_LUSD = "0xfdf12d1f85b5082877a6e070524f50f6c84faa6b";
 export const PAIR_UNISWAP_V2_OHM_LUSD_BLOCK = "13327921";
-export const PAIR_UNISWAP_V2_OHM_LUSD_V2 =
-  "0x46E4D8A1322B9448905225E52F914094dBd6dDdF".toLowerCase();
+export const PAIR_UNISWAP_V2_OHM_LUSD_V2 = "0x46E4D8A1322B9448905225E52F914094dBd6dDdF";
 export const PAIR_UNISWAP_V2_OHM_LUSD_V2_BLOCK = "14381693";
-export const PAIR_UNISWAP_V2_SYN_FRAX = "0x9fae36a18ef8ac2b43186ade5e2b07403dc742b1".toLowerCase();
-export const PAIR_UNISWAP_V2_THOR_ETH = "0x3d3f13f2529ec3c84b2940155effbf9b39a8f3ec".toLowerCase();
-export const PAIR_UNISWAP_V2_TOKE_ETH = "0xd4e7a6e2d03e4e48dfc27dd3f46df1c176647e38".toLowerCase();
-export const PAIR_UNISWAP_V2_TRIBE_ETH = "0x7ce01885a13c652241ae02ea7369ee8d466802eb".toLowerCase();
-export const PAIR_UNISWAP_V2_USDC_ETH = "0x397ff1542f962076d0bfe58ea045ffa2d347aca0".toLowerCase();
-export const PAIR_UNISWAP_V2_UST_ETH = "0x8B00eE8606CC70c2dce68dea0CEfe632CCA0fB7b".toLowerCase();
-export const PAIR_UNISWAP_V2_XSUSHI_ETH =
-  "0x36e2fcccc59e5747ff63a03ea2e5c0c2c14911e7".toLowerCase();
-export const PAIR_UNISWAP_V3_3CRV_USD = "0x5f7f44c304d016fe8cad589aaadba366528f0ad0".toLowerCase();
-export const PAIR_UNISWAP_V3_FPIS_FRAX = "0x8fe536c7dc019455cce34746755c64bbe2aa163b".toLowerCase();
-export const PAIR_UNISWAP_V3_FXS_ETH = "0xcd8286b48936cdac20518247dbd310ab681a9fbf".toLowerCase();
+export const PAIR_UNISWAP_V2_SYN_FRAX = "0x9fae36a18ef8ac2b43186ade5e2b07403dc742b1";
+export const PAIR_UNISWAP_V2_THOR_ETH = "0x3d3f13f2529ec3c84b2940155effbf9b39a8f3ec";
+export const PAIR_UNISWAP_V2_TOKE_ETH = "0xd4e7a6e2d03e4e48dfc27dd3f46df1c176647e38";
+export const PAIR_UNISWAP_V2_TRIBE_ETH = "0x7ce01885a13c652241ae02ea7369ee8d466802eb";
+export const PAIR_UNISWAP_V2_USDC_ETH = "0x397ff1542f962076d0bfe58ea045ffa2d347aca0";
+export const PAIR_UNISWAP_V2_UST_ETH = "0x8B00eE8606CC70c2dce68dea0CEfe632CCA0fB7b";
+export const PAIR_UNISWAP_V2_XSUSHI_ETH = "0x36e2fcccc59e5747ff63a03ea2e5c0c2c14911e7";
+export const PAIR_UNISWAP_V3_3CRV_USD = "0x5f7f44c304d016fe8cad589aaadba366528f0ad0";
+export const PAIR_UNISWAP_V3_FPIS_FRAX = "0x8fe536c7dc019455cce34746755c64bbe2aa163b";
+export const PAIR_UNISWAP_V3_FXS_ETH = "0xcd8286b48936cdac20518247dbd310ab681a9fbf";
 export const PAIR_UNISWAP_V3_FXS_ETH_BLOCK = "13509100";
-export const PAIR_UNISWAP_V3_LQTY_LUSD = "0xd251dff33e31bb98d5587e5b1004ff01a5a41289".toLowerCase();
+export const PAIR_UNISWAP_V3_LQTY_LUSD = "0xd251dff33e31bb98d5587e5b1004ff01a5a41289";
 export const POOL_BALANCER_OHM_DAI_WETH_ID =
   "0xc45d42f801105e861e86658648e3678ad7aa70f900010000000000000000011e"; // Pool ID, not a contract address
 
@@ -358,15 +347,14 @@ LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_XSUSHI, [
  * @returns a {PairHandler} or null
  */
 export const getPairHandler = (contractAddress: string): PairHandler | null => {
-  const contractAddressLower = contractAddress.toLowerCase();
-  if (!LIQUIDITY_POOL_TOKEN_LOOKUP.has(contractAddressLower)) {
-    log.debug("No pair handler for contract {}", [contractAddressLower]);
+  if (!LIQUIDITY_POOL_TOKEN_LOOKUP.has(contractAddress)) {
+    log.debug("No pair handler for contract {}", [contractAddress]);
     return null;
   }
 
-  const handlers = LIQUIDITY_POOL_TOKEN_LOOKUP.get(contractAddressLower);
+  const handlers = LIQUIDITY_POOL_TOKEN_LOOKUP.get(contractAddress);
   if (!handlers.length) {
-    log.debug("Empty pair handlers for contract {}", [contractAddressLower]);
+    log.debug("Empty pair handlers for contract {}", [contractAddress]);
     return null;
   }
 
@@ -382,10 +370,9 @@ export const getPairHandler = (contractAddress: string): PairHandler | null => {
  * @returns Array of PairHandlers
  */
 export const getPairHandlers = (contractAddress: string): PairHandler[] => {
-  const contractAddressLower = contractAddress.toLowerCase();
-  if (!LIQUIDITY_POOL_TOKEN_LOOKUP.has(contractAddressLower)) return [];
+  if (!LIQUIDITY_POOL_TOKEN_LOOKUP.has(contractAddress)) return [];
 
-  return LIQUIDITY_POOL_TOKEN_LOOKUP.get(contractAddressLower);
+  return LIQUIDITY_POOL_TOKEN_LOOKUP.get(contractAddress);
 };
 
 /**
@@ -414,10 +401,9 @@ LIQUIDITY_PAIR_TOKENS.set(PAIR_UNISWAP_V2_OHM_LUSD, [ERC20_LUSD, ERC20_OHM_V1]);
 LIQUIDITY_PAIR_TOKENS.set(POOL_BALANCER_OHM_DAI_WETH_ID, [ERC20_WETH, ERC20_OHM_V2, ERC20_DAI]);
 
 const getLiquidityPairTokens = (pairAddress: string): string[] => {
-  const pairAddressLower = pairAddress.toLowerCase();
-  if (!LIQUIDITY_PAIR_TOKENS.has(pairAddressLower)) return [];
+  if (!LIQUIDITY_PAIR_TOKENS.has(pairAddress)) return [];
 
-  return LIQUIDITY_PAIR_TOKENS.get(pairAddressLower);
+  return LIQUIDITY_PAIR_TOKENS.get(pairAddress);
 };
 
 /**
@@ -429,7 +415,7 @@ const getLiquidityPairTokens = (pairAddress: string): string[] => {
  * @returns
  */
 export const liquidityPairHasToken = (pairAddress: string, tokenAddress: string): bool => {
-  return getLiquidityPairTokens(pairAddress).includes(tokenAddress.toLowerCase());
+  return getLiquidityPairTokens(pairAddress).includes(tokenAddress);
 };
 
 // Wallets
@@ -479,10 +465,9 @@ export const ALLOCATOR_ONSEN_ID_NOT_FOUND = -1;
  * @returns a number or {ALLOCATOR_ONSEN_ID_NOT_FOUND} if not found
  */
 export const getOnsenAllocatorId = (contractAddress: string): i32 => {
-  const contractAddressLower = contractAddress.toLowerCase();
-  if (!ALLOCATOR_ONSEN_ID.has(contractAddressLower)) return ALLOCATOR_ONSEN_ID_NOT_FOUND;
+  if (!ALLOCATOR_ONSEN_ID.has(contractAddress)) return ALLOCATOR_ONSEN_ID_NOT_FOUND;
 
-  return ALLOCATOR_ONSEN_ID.get(contractAddressLower);
+  return ALLOCATOR_ONSEN_ID.get(contractAddress);
 };
 
 /**
@@ -518,10 +503,26 @@ export const ALLOCATOR_RARI_ID_NOT_FOUND = -1;
  * @returns a number or {ALLOCATOR_RARI_ID_NOT_FOUND} if not found
  */
 export const getRariAllocatorId = (contractAddress: string): i32 => {
-  const contractAddressLower = contractAddress.toLowerCase();
-  if (!ALLOCATOR_RARI_ID.has(contractAddressLower)) return ALLOCATOR_RARI_ID_NOT_FOUND;
+  if (!ALLOCATOR_RARI_ID.has(contractAddress)) return ALLOCATOR_RARI_ID_NOT_FOUND;
 
-  return ALLOCATOR_RARI_ID.get(contractAddressLower);
+  return ALLOCATOR_RARI_ID.get(contractAddress);
+};
+
+export const ALLOCATOR_LIQUITY_STABILITY_POOLS = [STABILITY_POOL];
+
+const ALLOCATOR_LIQUITY_TOKEN_ALLOCATOR_MAP = new Map<string, string>();
+ALLOCATOR_LIQUITY_TOKEN_ALLOCATOR_MAP.set(ERC20_LUSD, LUSD_ALLOCATOR);
+
+/**
+ * Returns the Liquity allocator address for the given ERC20 contract.
+ *
+ * @param contractAddress the contract address to look up
+ * @returns Address for the corresponding allocator, or null
+ */
+export const getLiquityAllocator = (contractAddress: string): string | null => {
+  if (!ALLOCATOR_LIQUITY_TOKEN_ALLOCATOR_MAP.has(contractAddress)) return null;
+
+  return ALLOCATOR_LIQUITY_TOKEN_ALLOCATOR_MAP.get(contractAddress);
 };
 
 export const CONTRACT_STARTING_BLOCK_MAP = new Map<string, string>();
@@ -680,8 +681,7 @@ CONTRACT_NAME_MAP.set(TREASURY_ADDRESS_V3, "Treasury Wallet V3");
 CONTRACT_NAME_MAP.set(VEFXS_ALLOCATOR, "VeFXS Allocator");
 
 export const getContractName = (contractAddress: string): string => {
-  const contractAddressLower = contractAddress.toLowerCase();
-  if (!CONTRACT_NAME_MAP.has(contractAddressLower)) return contractAddressLower;
+  if (!CONTRACT_NAME_MAP.has(contractAddress)) return contractAddress;
 
-  return CONTRACT_NAME_MAP.get(contractAddressLower);
+  return CONTRACT_NAME_MAP.get(contractAddress);
 };

@@ -34,9 +34,9 @@ Tokens are defined and mapped in the `src/utils/Constants.ts` file.
 
 To add a new token:
 
-- Define a constant value with the address of the ERC20 contract, with `.toLowerCase()` appended
+- Define a constant value with the address of the ERC20 contract
 - Define a constant value with the address of the Uniswap V2 or V3 liquidity pool
-- Add the token to either the `ERC20_STABLE_TOKENS` or `ERC20_VOLATILE_TOKENS` array (as appropriate)
+- Add the token to either the `ERC20_STABLE_TOKENS` or `ERC20_VOLATILE_TOKENS` array (as appropriate).
 - Add a mapping under `PAIR_HANDLER` between the ERC20 contract and the liquidity pool contract
 
 ## Wallets
@@ -54,7 +54,7 @@ Price lookups are mapped in the `src/utils/Constants.ts` file.
 
 To add a new price lookup:
 
-- Define a constant value with the address of the liquidity pool (e.g. `PAIR_UNISWAP_V2_ALCX_ETH`), with `.toLowerCase()` appended
+- Define a constant value with the address of the liquidity pool (e.g. `PAIR_UNISWAP_V2_ALCX_ETH`)
 - Add an entry to the `LIQUIDITY_POOL_TOKEN_LOOKUP` constant, which maps the pair type (Balancer, Curve, UniswapV2, UniswapV3) to the liquidity pool address
 
 ## Protocol-Owned Liquidity
@@ -63,7 +63,7 @@ Protocol-owned liquidity is mapped in the `src/utils/Constants.ts` file.
 
 To add a new liquidity entry:
 
-- Define a constant value with the address of the liquidity pool (e.g. `PAIR_UNISWAP_V2_ALCX_ETH`), with `.toLowerCase()` appended
+- Define a constant value with the address of the liquidity pool (e.g. `PAIR_UNISWAP_V2_ALCX_ETH`)
 - Add an entry to the `LIQUIDITY_OWNED` constant, which maps the pool type (Balancer, Curve, UniswapV2, UniswapV3) to the liquidity pool address
 - Add an entry to the `LIQUIDITY_PAIR_TOKENS` constant, which maps the liquidity pool address to the tokens that it is composed of. This could be determined on-chain, but is easier/quicker if done statically.
 
@@ -73,18 +73,9 @@ Some liquidity tokens (e.g. Curve OHMETH) can be staked in Convex, which in turn
 
 To add a new mapping:
 
-- Define a constant value with the address of the staked token, with `.toLowerCase()` appended
+- Define a constant value with the address of the staked token
 - Create a mapping between the original token (e.g. `ERC20_CRV_OHMETH`) and the staked token (e.g. `ERC20_CVX_OHMETH`) in the `CONVEX_STAKED_TOKENS` map
 - Add the Convex staking contract to the `CONVEX_STAKING_CONTRACTS` array
-
-## Contract Addresses
-
-Although Ethereum addresses are not case-sensitive, the mix of uppercase and lowercase letters can create problems when using contract addresses as keys in a map.
-
-To work around this, the following have been implemented:
-
-- At the location where a constant is defined, it is forced into lowercase
-- All functions that access `Map` objects convert the given key into lowercase
 
 ## Debugging
 
