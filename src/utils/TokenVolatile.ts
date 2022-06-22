@@ -78,11 +78,13 @@ export function getVolatileTokenBalance(
   includeLiquidity: boolean,
   riskFree: boolean,
   excludeOhmValue: boolean,
+  restrictToTokenValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
+  // TODO consider changing function signature, as excludeOhmValue and restrictToTokenValue are relevant only if includeLiquidity = true
   const contractName = getContractName(contractAddress);
   log.info(
-    "Calculating volatile token balance for {} ({}) at block number {}: liquidity? {}, risk-free? {}, exclude OHM value? {}",
+    "Calculating volatile token balance for {} ({}) at block number {}: liquidity? {}, risk-free? {}, exclude OHM value? {}, restrictToTokenValue? {}",
     [
       contractName,
       contractAddress,
@@ -90,6 +92,7 @@ export function getVolatileTokenBalance(
       includeLiquidity ? "true" : "false",
       riskFree ? "true" : "false",
       excludeOhmValue ? "true" : "false",
+      restrictToTokenValue ? "true" : "false",
     ],
   );
   const records = newTokenRecords(
@@ -147,13 +150,12 @@ export function getVolatileTokenBalance(
   if (includeLiquidity) {
     combineTokenRecords(
       records,
-      // TODO implement restrictToTokenValue
       getLiquidityBalances(
         metricName,
         contractAddress,
         riskFree,
         excludeOhmValue,
-        false,
+        restrictToTokenValue,
         blockNumber,
       ),
     );
@@ -166,6 +168,13 @@ export function getVolatileTokenBalance(
 /**
  * Gets the balances for all volatile tokens, using {getVolatileTokenBalance}.
  *
+ * @param metricName
+ * @param liquidOnly If true, exclude illiquid assets. This is currently limited to vesting assets.
+ * @param includeLiquidity If true, includes volatile assets in protocol-owned liquidity
+ * @param includeBlueChip If true, includes blue-chip assets (wETH and wBTC)
+ * @param riskFree If true, returns the risk-free value of liquidity pools
+ * @param excludeOhmValue If true, the value of liquidity pools is returned without the value of OHM. This is used to calculate backing.
+ * @param restrictToTokenValue If true, the value of liquidity pools is restricted to a specific token. This is used to calculate the value of specific assets.
  * @param blockNumber the current block
  * @returns TokenRecords object
  */
@@ -176,6 +185,7 @@ export function getVolatileTokenBalances(
   includeBlueChip: boolean,
   riskFree: boolean,
   excludeOhmValue: boolean,
+  restrictToTokenValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
   log.info("Calculating volatile token value", []);
@@ -204,6 +214,7 @@ export function getVolatileTokenBalances(
         includeLiquidity,
         riskFree,
         excludeOhmValue,
+        restrictToTokenValue,
         blockNumber,
       ),
     );
@@ -226,7 +237,7 @@ export function getVolatileTokenBalances(
  * @returns TokenRecords object
  */
 export function getXSushiBalance(metricName: string, blockNumber: BigInt): TokenRecords {
-  return getVolatileTokenBalance(metricName, ERC20_XSUSHI, false, false, false, blockNumber);
+  return getVolatileTokenBalance(metricName, ERC20_XSUSHI, false, false, false, false, blockNumber);
 }
 
 /**
@@ -237,7 +248,7 @@ export function getXSushiBalance(metricName: string, blockNumber: BigInt): Token
  * @returns TokenRecords object
  */
 export function getCVXBalance(metricName: string, blockNumber: BigInt): TokenRecords {
-  return getVolatileTokenBalance(metricName, ERC20_CVX, false, false, false, blockNumber);
+  return getVolatileTokenBalance(metricName, ERC20_CVX, false, false, false, false, blockNumber);
 }
 
 /**
@@ -248,7 +259,15 @@ export function getCVXBalance(metricName: string, blockNumber: BigInt): TokenRec
  * @returns TokenRecords object
  */
 export function getVlCVXBalance(metricName: string, blockNumber: BigInt): TokenRecords {
-  return getVolatileTokenBalance(metricName, ERC20_CVX_VL_V1, false, false, false, blockNumber);
+  return getVolatileTokenBalance(
+    metricName,
+    ERC20_CVX_VL_V1,
+    false,
+    false,
+    false,
+    false,
+    blockNumber,
+  );
 }
 
 /**
@@ -276,7 +295,7 @@ export function getCVXTotalBalance(metricName: string, blockNumber: BigInt): Tok
  * @returns TokenRecords object
  */
 function getFXSBalance(metricName: string, blockNumber: BigInt): TokenRecords {
-  return getVolatileTokenBalance(metricName, ERC20_FXS, false, false, false, blockNumber);
+  return getVolatileTokenBalance(metricName, ERC20_FXS, false, false, false, false, blockNumber);
 }
 
 /**
@@ -288,7 +307,7 @@ function getFXSBalance(metricName: string, blockNumber: BigInt): TokenRecords {
  * @returns TokenRecords object
  */
 export function getVeFXSBalance(metricName: string, blockNumber: BigInt): TokenRecords {
-  return getVolatileTokenBalance(metricName, ERC20_FXS_VE, false, false, false, blockNumber);
+  return getVolatileTokenBalance(metricName, ERC20_FXS_VE, false, false, false, false, blockNumber);
 }
 
 /**
@@ -316,7 +335,7 @@ export function getFXSTotalBalance(metricName: string, blockNumber: BigInt): Tok
  * @returns TokenRecords object
  */
 export function getWETHBalance(metricName: string, blockNumber: BigInt): TokenRecords {
-  return getVolatileTokenBalance(metricName, ERC20_WETH, false, false, false, blockNumber);
+  return getVolatileTokenBalance(metricName, ERC20_WETH, false, false, false, false, blockNumber);
 }
 
 /**
@@ -327,7 +346,7 @@ export function getWETHBalance(metricName: string, blockNumber: BigInt): TokenRe
  * @returns TokenRecords object
  */
 export function getWBTCBalance(metricName: string, blockNumber: BigInt): TokenRecords {
-  return getVolatileTokenBalance(metricName, ERC20_WBTC, false, false, false, blockNumber);
+  return getVolatileTokenBalance(metricName, ERC20_WBTC, false, false, false, false, blockNumber);
 }
 
 /**
@@ -347,18 +366,15 @@ export function getVolatileValue(
   blockNumber: BigInt,
   liquidOnly: boolean,
   includeBlueChip: boolean,
-  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-  riskFree: boolean = false,
-  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-  excludeOhmValue: boolean = true,
 ): TokenRecords {
   return getVolatileTokenBalances(
     metricName,
     liquidOnly,
     true,
     includeBlueChip,
-    riskFree,
-    excludeOhmValue,
+    false,
+    true,
+    true,
     blockNumber,
   );
 }
@@ -383,5 +399,5 @@ export function getEthMarketValue(
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   riskFree: boolean = false,
 ): TokenRecords {
-  return getVolatileTokenBalance(metricName, ERC20_WETH, true, riskFree, true, blockNumber);
+  return getVolatileTokenBalance(metricName, ERC20_WETH, true, riskFree, true, true, blockNumber);
 }
