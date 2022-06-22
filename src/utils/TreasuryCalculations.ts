@@ -5,7 +5,7 @@ import { getOwnedLiquidityPoolValue } from "./LiquidityCalculations";
 import { getCirculatingSupply, getFloatingSupply, getTotalSupply } from "./OhmCalculations";
 import { combineTokenRecords, newTokenRecords } from "./TokenRecordHelper";
 import { getStablecoinBalances, getStableValue } from "./TokenStablecoins";
-import { getVolatileTokenBalances, getVolatileValue } from "./TokenVolatile";
+import { getVolatileTokenBalances } from "./TokenVolatile";
 
 /**
  * Returns the value of all volatile tokens, including LPs and blue
@@ -21,7 +21,16 @@ export function getTreasuryVolatileBacking(
   blockNumber: BigInt,
   liquidOnly: boolean,
 ): TokenRecords {
-  return getVolatileValue(metricName, blockNumber, liquidOnly, true);
+  return getVolatileTokenBalances(
+    metricName,
+    liquidOnly,
+    true,
+    true,
+    false,
+    true,
+    true,
+    blockNumber,
+  );
 }
 
 /**
@@ -58,13 +67,36 @@ export function getTreasuryBacking(
   blockNumber: BigInt,
 ): TokenRecords {
   const records = newTokenRecords(metricName, blockNumber);
+  const includeLiquidity = true;
+  const riskFree = false;
+  const excludeOhmValue = true;
+  const restrictToTokenValue = true;
 
   combineTokenRecords(
     records,
-    getStablecoinBalances(metricName, true, false, true, true, blockNumber),
+    getStablecoinBalances(
+      metricName,
+      includeLiquidity,
+      riskFree,
+      excludeOhmValue,
+      restrictToTokenValue,
+      blockNumber,
+    ),
   );
-  combineTokenRecords(records, getVolatileValue(metricName, blockNumber, liquidOnly, true));
-  combineTokenRecords(records, getOwnedLiquidityPoolValue(metricName, false, true, blockNumber));
+  combineTokenRecords(
+    records,
+    getVolatileTokenBalances(
+      metricName,
+      liquidOnly,
+      includeLiquidity,
+      true,
+      riskFree,
+      excludeOhmValue,
+      restrictToTokenValue,
+      blockNumber,
+    ),
+  );
+  combineTokenRecords(records, getOwnedLiquidityPoolValue(metricName, riskFree, true, blockNumber));
 
   return records;
 }

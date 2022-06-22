@@ -43,6 +43,10 @@ type ProtocolMetric @entity {
   totalValueLocked: BigDecimal!
   treasuryRiskFreeValue: BigDecimal!
   treasuryRiskFreeValueComponents: TokenRecords!
+  treasuryStableValue: BigDecimal!
+  treasuryStableValueComponents: TokenRecords!
+  treasuryVolatileValue: BigDecimal!
+  treasuryVolatileValueComponents: TokenRecords!
   treasuryMarketValue: BigDecimal!
   treasuryMarketValueComponents: TokenRecords!
   nextEpochRebase: BigDecimal!

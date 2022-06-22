@@ -415,6 +415,42 @@ export class ProtocolMetric extends Entity {
     this.set("treasuryRiskFreeValueComponents", Value.fromString(value));
   }
 
+  get treasuryStableValue(): BigDecimal {
+    let value = this.get("treasuryStableValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryStableValue(value: BigDecimal) {
+    this.set("treasuryStableValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryStableValueComponents(): string {
+    let value = this.get("treasuryStableValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryStableValueComponents(value: string) {
+    this.set("treasuryStableValueComponents", Value.fromString(value));
+  }
+
+  get treasuryVolatileValue(): BigDecimal {
+    let value = this.get("treasuryVolatileValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryVolatileValue(value: BigDecimal) {
+    this.set("treasuryVolatileValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryVolatileValueComponents(): string {
+    let value = this.get("treasuryVolatileValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryVolatileValueComponents(value: string) {
+    this.set("treasuryVolatileValueComponents", Value.fromString(value));
+  }
+
   get treasuryMarketValue(): BigDecimal {
     let value = this.get("treasuryMarketValue");
     return value!.toBigDecimal();

@@ -41,6 +41,7 @@ import {
   getFeiMarketValue,
   getFraxMarketValue,
   getLusdMarketValue,
+  getStableValue,
   getUSTBalance,
 } from "./TokenStablecoins";
 import {
@@ -81,6 +82,10 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
     protocolMetric.totalValueLocked = BigDecimal.fromString("0");
     protocolMetric.treasuryRiskFreeValue = BigDecimal.fromString("0");
     protocolMetric.treasuryRiskFreeValueComponents = "-1";
+    protocolMetric.treasuryStableValue = BigDecimal.zero();
+    protocolMetric.treasuryStableValueComponents = "-1";
+    protocolMetric.treasuryVolatileValue = BigDecimal.zero();
+    protocolMetric.treasuryVolatileValueComponents = "-1";
     protocolMetric.treasuryMarketValue = BigDecimal.fromString("0");
     protocolMetric.treasuryMarketValueComponents = "-1";
     protocolMetric.nextEpochRebase = BigDecimal.fromString("0");
@@ -298,6 +303,25 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   // Total Value Locked
   pm.totalValueLocked = getTotalValueLocked(block.number);
 
+  const stableValue = getStableValue("StableValue", blockNumber);
+  pm.treasuryStableValue = stableValue.value;
+  pm.treasuryStableValueComponents = stableValue.id;
+
+  const volatileValue = getVolatileValue("VolatileValue", blockNumber, false, true);
+  pm.treasuryVolatileValue = volatileValue.value;
+  pm.treasuryVolatileValueComponents = volatileValue.id;
+
+  const liquidityPoolValue = getOwnedLiquidityPoolValue(
+    "LiquidityPoolValue",
+    false,
+    true,
+    blockNumber,
+  );
+  pm.treasuryLPValue = liquidityPoolValue.value;
+  pm.treasuryLPValueComponents = liquidityPoolValue.id;
+
+  // stableValue + volatileValue + liquidityPoolValue = marketValue
+
   // Treasury RFV and MV
   const marketValue = getMarketValue("MarketValue", blockNumber);
   pm.treasuryMarketValue = marketValue.value;
@@ -364,6 +388,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryFXSMarketValue = fxsValue.value;
   pm.treasuryFXSMarketValueComponents = fxsValue.id;
 
+  // TODO This probably has some double-counting when combined with the *marketvalue metrics
   const treasuryOtherMarketValue = getVolatileValue("OtherMarketValue", blockNumber, false, false);
   pm.treasuryOtherMarketValue = treasuryOtherMarketValue.value;
   pm.treasuryOtherMarketValueComponents = treasuryOtherMarketValue.id;
@@ -401,15 +426,6 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
     "LiquidBackingPerOhmFloating",
     blockNumber,
   );
-
-  const liquidityPoolValue = getOwnedLiquidityPoolValue(
-    "LiquidityPoolValue",
-    false,
-    true,
-    blockNumber,
-  );
-  pm.treasuryLPValue = liquidityPoolValue.value;
-  pm.treasuryLPValueComponents = liquidityPoolValue.id;
 
   // Rebase rewards, APY, rebase
   pm.nextDistributedOhm = getNextOHMRebase(blockNumber);
