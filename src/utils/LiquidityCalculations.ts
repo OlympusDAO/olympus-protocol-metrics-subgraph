@@ -202,7 +202,7 @@ export function getLiquidityBalances(
         pairHandler.getContract(),
         tokenAddress,
         excludeOhmValue,
-        // restrictToTokenValue,
+        restrictToTokenValue,
         blockNumber,
       );
 

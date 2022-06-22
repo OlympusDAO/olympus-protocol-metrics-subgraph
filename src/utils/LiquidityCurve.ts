@@ -267,13 +267,15 @@ function getCurvePairUnitRate(
  * This function does the following:
  * - Calculates the total value of the LP
  * - Calculates the unit rate of the LP
- * - Iterates through {WALLET_ADDRESSES} and adds records
- * for the balance of the LP's normal token and staked token
+ * - Iterates through {WALLET_ADDRESSES} and adds records for the balance of the LP's normal token and staked token
+ *
+ * If
  *
  * @param metricName
  * @param pairAddress the address of the Curve pair
- * @param tokenAddress restrict pairs to match the specified token
- * @param excludeOhmValue true if the value of OHM in the LP should be excluded
+ * @param tokenAddress restrict pairs to match the specified token (or null)
+ * @param excludeOhmValue true if the value of OHM in the LP should be excluded. This can be used to calculate backing.
+ * @param restrictToTokenValue true if the value should reflect that of {tokenAddress}. This can be used to calculate the value of liquidity for a certain token.
  * @param blockNumber the current block number
  * @returns
  */
@@ -282,6 +284,7 @@ export function getCurvePairRecords(
   pairAddress: string,
   tokenAddress: string | null,
   excludeOhmValue: boolean,
+  restrictToTokenValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
   const records = newTokenRecords(
@@ -308,12 +311,15 @@ export function getCurvePairRecords(
   const includedValue = getCurvePairTotalValue(
     pairAddress,
     excludeOhmValue,
-    false,
+    restrictToTokenValue,
     tokenAddress,
     blockNumber,
   );
   // Calculate multiplier
-  const multiplier = excludeOhmValue ? includedValue.div(totalValue) : BigDecimal.fromString("1");
+  const multiplier =
+    excludeOhmValue || (tokenAddress && restrictToTokenValue)
+      ? includedValue.div(totalValue)
+      : BigDecimal.fromString("1");
   log.info(
     "getCurvePairRecords: applying multiplier of {} based on excludeOhmValue = {} and restrictToTokenValue = {}",
     [multiplier.toString(), excludeOhmValue ? "true" : "false", "false"],
@@ -461,6 +467,7 @@ export function getCurvePairTokenQuantity(
     metricName,
     pairAddress,
     tokenAddress,
+    false,
     false,
     blockNumber,
   );
