@@ -314,7 +314,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   const liquidityPoolValue = getOwnedLiquidityPoolValue(
     "LiquidityPoolValue",
     false,
-    true,
+    false,
     blockNumber,
   );
   pm.treasuryLPValue = liquidityPoolValue.value;
