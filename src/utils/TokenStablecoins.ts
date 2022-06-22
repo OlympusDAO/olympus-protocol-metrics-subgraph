@@ -103,7 +103,14 @@ export function getStablecoinBalance(
   if (includeLiquidity) {
     combineTokenRecords(
       records,
-      getLiquidityBalances(metricName, contractAddress, riskFree, excludeOhmValue, blockNumber),
+      getLiquidityBalances(
+        metricName,
+        contractAddress,
+        riskFree,
+        excludeOhmValue,
+        false,
+        blockNumber,
+      ),
     );
   }
 

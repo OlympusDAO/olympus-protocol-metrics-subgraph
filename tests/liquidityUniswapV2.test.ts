@@ -226,6 +226,7 @@ describe("records", () => {
       ERC20_DAI,
       false,
       false,
+      false,
       OHM_USD_RESERVE_BLOCK,
       pairArrayOverride,
     );
@@ -275,6 +276,7 @@ describe("records", () => {
       ERC20_DAI,
       false,
       true,
+      false,
       OHM_USD_RESERVE_BLOCK,
       pairArrayOverride,
     );
@@ -326,6 +328,7 @@ describe("records", () => {
       "metric",
       ERC20_DAI,
       true,
+      false,
       false,
       OHM_USD_RESERVE_BLOCK,
       pairArrayOverride,

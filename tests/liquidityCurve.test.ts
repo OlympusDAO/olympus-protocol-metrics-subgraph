@@ -352,7 +352,14 @@ describe("Pair Value", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getLiquidityBalances("metric", NATIVE_ETH, false, false, OHM_USD_RESERVE_BLOCK);
+    const records = getLiquidityBalances(
+      "metric",
+      NATIVE_ETH,
+      false,
+      false,
+      false,
+      OHM_USD_RESERVE_BLOCK,
+    );
 
     const totalValueExpected = getPairValue(
       ohmReserves,
@@ -402,7 +409,14 @@ describe("Pair Value", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getLiquidityBalances("metric", NATIVE_ETH, false, false, OHM_USD_RESERVE_BLOCK);
+    const records = getLiquidityBalances(
+      "metric",
+      NATIVE_ETH,
+      false,
+      false,
+      false,
+      OHM_USD_RESERVE_BLOCK,
+    );
 
     assert.stringEquals("0", records.value.toString());
   });
@@ -445,7 +459,14 @@ describe("Pair Value", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getLiquidityBalances("metric", NATIVE_ETH, false, true, OHM_USD_RESERVE_BLOCK);
+    const records = getLiquidityBalances(
+      "metric",
+      NATIVE_ETH,
+      false,
+      true,
+      false,
+      OHM_USD_RESERVE_BLOCK,
+    );
 
     const totalValueExpected = getPairValue(
       ohmReserves,
@@ -500,7 +521,14 @@ describe("Pair Value", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     ); // Balance for the staked Curve token
 
-    const records = getLiquidityBalances("metric", NATIVE_ETH, false, false, OHM_USD_RESERVE_BLOCK);
+    const records = getLiquidityBalances(
+      "metric",
+      NATIVE_ETH,
+      false,
+      false,
+      false,
+      OHM_USD_RESERVE_BLOCK,
+    );
 
     const totalValueExpected = getPairValue(
       ohmReserves,

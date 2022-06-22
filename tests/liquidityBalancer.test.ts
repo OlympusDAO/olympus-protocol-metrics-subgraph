@@ -129,7 +129,7 @@ export function mockBalanceVaultZero(): void {
 }
 
 describe("pool total value", () => {
-  test("OHM-DAI-ETH pool total value", () => {
+  test("OHM-DAI-ETH pool total value, all tokens", () => {
     // Mock the balancer
     mockBalancerVault(
       BALANCER_VAULT,
@@ -155,6 +155,8 @@ describe("pool total value", () => {
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
       false,
+      false,
+      null,
       OHM_USD_RESERVE_BLOCK,
     );
 
@@ -162,6 +164,42 @@ describe("pool total value", () => {
     const expectedValue = BALANCE_OHM.times(getOhmUsdRate())
       .plus(BALANCE_DAI)
       .plus(BALANCE_WETH.times(getEthUsdRate()));
+    assert.stringEquals(expectedValue.toString(), totalValue.toString());
+  });
+
+  test("OHM-DAI-ETH pool total value, only ETH", () => {
+    // Mock the balancer
+    mockBalancerVault(
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      ERC20_BALANCER_OHM_DAI_WETH,
+      ERC20_STANDARD_DECIMALS,
+      POOL_TOKEN_TOTAL_SUPPLY,
+      ERC20_OHM_V2,
+      ERC20_DAI,
+      ERC20_WETH,
+      BALANCE_OHM,
+      BALANCE_DAI,
+      BALANCE_WETH,
+      OHM_V2_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+    );
+    // Mock price lookup
+    mockEthUsdRate();
+    mockUsdOhmV2Rate();
+
+    const totalValue = getBalancerPoolTotalValue(
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      false,
+      true,
+      ERC20_WETH,
+      OHM_USD_RESERVE_BLOCK,
+    );
+
+    // WETH * rate
+    const expectedValue = BALANCE_WETH.times(getEthUsdRate());
     assert.stringEquals(expectedValue.toString(), totalValue.toString());
   });
 });
@@ -329,7 +367,7 @@ describe("token quantity", () => {
 });
 
 describe("get balancer records", () => {
-  test("OHM-DAI-ETH pool balance", () => {
+  test("OHM-DAI-ETH pool balance, all tokens", () => {
     // Mock the balancer
     mockBalancerVault(
       BALANCER_VAULT,
@@ -365,7 +403,9 @@ describe("get balancer records", () => {
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
       false,
+      false,
       OHM_USD_RESERVE_BLOCK,
+      null,
     );
 
     const expectedTotalValue = BALANCE_OHM.times(getOhmUsdRate())
@@ -412,6 +452,7 @@ describe("get balancer records", () => {
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
       false,
+      false,
       OHM_USD_RESERVE_BLOCK,
     );
 
@@ -455,6 +496,7 @@ describe("get balancer records", () => {
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
       false,
+      false,
       OHM_USD_RESERVE_BLOCK,
       ERC20_DAI,
     );
@@ -494,6 +536,7 @@ describe("get balancer records", () => {
       "metric",
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
+      false,
       false,
       OHM_USD_RESERVE_BLOCK,
       ERC20_USDC,
@@ -539,6 +582,7 @@ describe("get balancer records", () => {
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
       true,
+      false,
       OHM_USD_RESERVE_BLOCK,
     );
 

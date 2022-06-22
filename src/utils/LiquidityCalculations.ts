@@ -139,6 +139,7 @@ function getLiquidityTokenRecords(
  * @param tokenAddress the address of the ERC20 token
  * @param riskFree whether the value is risk-free or not
  * @param excludeOhmValue true if the value of OHM in the LP should be excluded
+ * @param restrictToTokenValue true if only the value of {tokenAddress} in the LP should be included
  * @param blockNumber current block number
  * @param ownedLiquidityPairs set this to override the array of owned liquidity pairs
  * @returns TokenRecords object
@@ -148,6 +149,7 @@ export function getLiquidityBalances(
   tokenAddress: string | null,
   riskFree: boolean,
   excludeOhmValue: boolean,
+  restrictToTokenValue: boolean,
   blockNumber: BigInt,
   ownedLiquidityPairs: PairHandler[] = LIQUIDITY_OWNED,
 ): TokenRecords {
@@ -184,7 +186,8 @@ export function getLiquidityBalances(
         riskFree,
       );
 
-      if (excludeOhmValue) {
+      // UniswapV2 only supports a pair, so we can safely apply the multiplier
+      if (excludeOhmValue || (tokenAddress && restrictToTokenValue)) {
         log.info("getLiquidityBalances: setting multiplier to 0.5 for UniswapV2 pair {}", [
           getContractName(pairHandler.getContract()),
         ]);
@@ -199,6 +202,7 @@ export function getLiquidityBalances(
         pairHandler.getContract(),
         tokenAddress,
         excludeOhmValue,
+        // restrictToTokenValue,
         blockNumber,
       );
 
@@ -217,6 +221,7 @@ export function getLiquidityBalances(
           pairHandler.getContract(),
           balancerPoolId,
           excludeOhmValue,
+          restrictToTokenValue,
           blockNumber,
           tokenAddress,
         ),
@@ -734,7 +739,7 @@ export function getOwnedLiquidityPoolValue(
 
   combineTokenRecords(
     records,
-    getLiquidityBalances(metricName, null, riskFree, excludeOhmValue, blockNumber),
+    getLiquidityBalances(metricName, null, riskFree, excludeOhmValue, false, blockNumber),
   );
 
   log.info("Liquidity pool value: {}", [records.value.toString()]);

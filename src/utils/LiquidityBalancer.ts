@@ -32,14 +32,18 @@ export function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): Ba
  *
  * @param vaultAddress The address of the Balancer vault
  * @param poolId The pool id, as returned by `getPool()` on the allocator contract
- * @param nonOhmValueOnly Set to true to return the value of non-OHM tokens in the pool
+ * @param excludeOhmValue If true, the value will exclude OHM. This can be used to calculate backing
+ * @param restrictToToken If true, the value will be restricted to that of the specified token. This can be used to calculate the value of liquidity for a certain token.
+ * @param tokenAddress The tokenAddress to restrict to (or null)
  * @param blockNumber the current block number
  * @returns BigDecimal
  */
 export function getBalancerPoolTotalValue(
   vaultAddress: string,
   poolId: string,
-  nonOhmValueOnly: boolean,
+  excludeOhmValue: boolean,
+  restrictToToken: boolean,
+  tokenAddress: string | null,
   blockNumber: BigInt,
 ): BigDecimal {
   const vault = getBalancerVault(vaultAddress, blockNumber);
@@ -47,10 +51,8 @@ export function getBalancerPoolTotalValue(
   const addresses: Array<Address> = poolTokenWrapper.getTokens();
   const balances: Array<BigInt> = poolTokenWrapper.getBalances();
 
-  // Total value is sum of (rate * balance) for all tokens
+  // Total value is sum of (rate * balance)
   let totalValue = BigDecimal.zero();
-  // Non-OHM value of the pool
-  let nonOhmValue = BigDecimal.zero();
 
   for (let i = 0; i < addresses.length; i++) {
     const currentAddress = addresses[i].toHexString();
@@ -58,6 +60,15 @@ export function getBalancerPoolTotalValue(
     const currentContract = getERC20(getContractName(currentAddress), currentAddress, blockNumber);
     if (!currentContract) {
       throw new Error("Unable to bind to ERC20 contract for address " + currentAddress.toString());
+    }
+
+    if (excludeOhmValue && currentAddress.toLowerCase() == ERC20_OHM_V2.toLowerCase()) {
+      continue;
+    }
+
+    // Skip if the tokens to include is restricted
+    if (tokenAddress && restrictToToken && tokenAddress != currentAddress.toLowerCase()) {
+      continue;
     }
 
     // Add to the value: rate * balance
@@ -72,14 +83,9 @@ export function getBalancerPoolTotalValue(
     ]);
 
     totalValue = totalValue.plus(value);
-
-    // Calculate the non-OHM value
-    if (currentAddress != ERC20_OHM_V2) {
-      nonOhmValue = nonOhmValue.plus(value);
-    }
   }
 
-  return nonOhmValueOnly ? nonOhmValue : totalValue;
+  return totalValue;
 }
 
 /**
@@ -118,15 +124,13 @@ function getBalancerPoolToken(vaultAddress: string, poolId: string, blockNumber:
 /**
  * Provides TokenRecords representing the Balancer pool identified by {poolId}.
  *
- * If {excludeOhmValue} is specified, the `multiplier` of the returned records
- * will be adjusted to represent the share of the pool that is not OHM.
- *
  * @param metricName
- * @param vaultAddress
- * @param poolId
- * @param excludeOhmValue
- * @param blockNumber
- * @param tokenAddress
+ * @param vaultAddress The address of the Balancer Vault
+ * @param poolId The id of the Balancer pool
+ * @param excludeOhmValue If true, the value will exclude that of OHM
+ * @param restrictToTokenValue If true, the value will reflect the portion of the pool made up by {tokenAddress}. Overrides {excludeOhmValue}.
+ * @param blockNumber The current block number
+ * @param tokenAddress If specified, this function will exit if the token is not in the liquidity pool
  * @returns
  */
 export function getBalancerRecords(
@@ -134,6 +138,7 @@ export function getBalancerRecords(
   vaultAddress: string,
   poolId: string,
   excludeOhmValue: boolean,
+  restrictToTokenValue: boolean,
   blockNumber: BigInt,
   tokenAddress: string | null = null,
 ): TokenRecords {
@@ -154,27 +159,51 @@ export function getBalancerRecords(
   }
 
   // Calculate the value of the pool
-  const totalValue = getBalancerPoolTotalValue(vaultAddress, poolId, false, blockNumber);
-  const nonOhmValue = getBalancerPoolTotalValue(vaultAddress, poolId, true, blockNumber);
+  const totalValue = getBalancerPoolTotalValue(
+    vaultAddress,
+    poolId,
+    false,
+    false,
+    null,
+    blockNumber,
+  );
+  const includedValue = getBalancerPoolTotalValue(
+    vaultAddress,
+    poolId,
+    excludeOhmValue,
+    restrictToTokenValue,
+    tokenAddress,
+    blockNumber,
+  );
 
   // Calculate the unit rate
   const unitRate = getBalancerPoolUnitRate(poolTokenContract, totalValue, blockNumber);
 
   // Calculate multiplier
-  const multiplier = excludeOhmValue ? nonOhmValue.div(totalValue) : BigDecimal.fromString("1");
-  log.info("getBalancerRecords: applying multiplier of {} based on excludeOhmValue = {}", [
-    multiplier.toString(),
-    excludeOhmValue ? "true" : "false",
-  ]);
+  const multiplier =
+    excludeOhmValue || restrictToTokenValue
+      ? includedValue.div(totalValue)
+      : BigDecimal.fromString("1");
+  log.info(
+    "getBalancerRecords: applying multiplier of {} based on excludeOhmValue = {} and restrictToTokenValue = {}",
+    [
+      multiplier.toString(),
+      excludeOhmValue ? "true" : "false",
+      restrictToTokenValue ? "true" : "false",
+    ],
+  );
 
   const poolTokenAddress = poolTokenContract._address.toHexString();
-  log.info("Balancer pool {} ({}) has total value of {}, non-OHM value of {} and unit rate of {}", [
-    getContractName(poolTokenAddress),
-    poolTokenAddress,
-    totalValue.toString(),
-    nonOhmValue.toString(),
-    unitRate.toString(),
-  ]);
+  log.info(
+    "Balancer pool {} ({}) has total value of {}, included value of {} and unit rate of {}",
+    [
+      getContractName(poolTokenAddress),
+      poolTokenAddress,
+      totalValue.toString(),
+      includedValue.toString(),
+      unitRate.toString(),
+    ],
+  );
 
   const tokenDecimals = poolTokenContract.decimals();
 
@@ -303,6 +332,7 @@ export function getBalancerPoolTokenQuantity(
     vaultAddress,
     poolId,
     false,
+    false,
     blockNumber,
     tokenAddress,
   );
@@ -323,7 +353,7 @@ export function getBalancerPoolTokenQuantity(
         poolTokenAddress,
         record.source,
         record.sourceAddress,
-        BigDecimal.fromString("1"),
+        BigDecimal.fromString("1"), // Rate of 1, since we're reporting quantity, not value
         tokenBalance,
         blockNumber,
       ),
