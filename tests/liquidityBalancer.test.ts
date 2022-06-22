@@ -202,6 +202,42 @@ describe("pool total value", () => {
     const expectedValue = BALANCE_WETH.times(getEthUsdRate());
     assert.stringEquals(expectedValue.toString(), totalValue.toString());
   });
+
+  test("OHM-DAI-ETH pool total value, only ETH uppercase", () => {
+    // Mock the balancer
+    mockBalancerVault(
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      ERC20_BALANCER_OHM_DAI_WETH,
+      ERC20_STANDARD_DECIMALS,
+      POOL_TOKEN_TOTAL_SUPPLY,
+      ERC20_OHM_V2,
+      ERC20_DAI,
+      ERC20_WETH,
+      BALANCE_OHM,
+      BALANCE_DAI,
+      BALANCE_WETH,
+      OHM_V2_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+    );
+    // Mock price lookup
+    mockEthUsdRate();
+    mockUsdOhmV2Rate();
+
+    const totalValue = getBalancerPoolTotalValue(
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      false,
+      true,
+      ERC20_WETH.toUpperCase(),
+      OHM_USD_RESERVE_BLOCK,
+    );
+
+    // WETH * rate
+    const expectedValue = BALANCE_WETH.times(getEthUsdRate());
+    assert.stringEquals(expectedValue.toString(), totalValue.toString());
+  });
 });
 
 describe("token quantity", () => {

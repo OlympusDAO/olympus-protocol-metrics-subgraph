@@ -147,7 +147,15 @@ export function getVolatileTokenBalance(
   if (includeLiquidity) {
     combineTokenRecords(
       records,
-      getLiquidityBalances(metricName, contractAddress, riskFree, excludeOhmValue, blockNumber),
+      // TODO implement restrictToTokenValue
+      getLiquidityBalances(
+        metricName,
+        contractAddress,
+        riskFree,
+        excludeOhmValue,
+        false,
+        blockNumber,
+      ),
     );
   }
 

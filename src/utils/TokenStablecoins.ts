@@ -108,6 +108,7 @@ export function getStablecoinBalance(
         contractAddress,
         riskFree,
         excludeOhmValue,
+        // TODO implement restrictToTokenValue
         false,
         blockNumber,
       ),

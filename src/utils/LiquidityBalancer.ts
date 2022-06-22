@@ -63,11 +63,19 @@ export function getBalancerPoolTotalValue(
     }
 
     if (excludeOhmValue && currentAddress.toLowerCase() == ERC20_OHM_V2.toLowerCase()) {
+      log.debug("getBalancerPoolTotalValue: Skipping OHM as excludeOhmValue is true", []);
       continue;
     }
 
     // Skip if the tokens to include is restricted
-    if (tokenAddress && restrictToToken && tokenAddress != currentAddress.toLowerCase()) {
+    if (
+      tokenAddress &&
+      restrictToToken &&
+      tokenAddress.toLowerCase() != currentAddress.toLowerCase()
+    ) {
+      log.debug("getBalancerPoolTotalValue: Skipping token {} as restrictToToken is true", [
+        currentAddress,
+      ]);
       continue;
     }
 

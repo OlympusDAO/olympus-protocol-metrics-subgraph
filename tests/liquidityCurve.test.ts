@@ -310,7 +310,79 @@ describe("Pair Value", () => {
     const expectedValue = getPairValue(ohmBalance, wethBalance, getOhmUsdRate(), getEthUsdRate());
     assert.stringEquals(
       expectedValue.toString(),
-      getCurvePairTotalValue(PAIR_CURVE_OHM_ETH, OHM_USD_RESERVE_BLOCK).toString(),
+      getCurvePairTotalValue(
+        PAIR_CURVE_OHM_ETH,
+        false,
+        false,
+        null,
+        OHM_USD_RESERVE_BLOCK,
+      ).toString(),
+    );
+  });
+
+  test("OHM-ETH pair total value, exclude OHM", () => {
+    mockEthUsdRate();
+    mockUsdOhmV2Rate();
+
+    // Mock balance
+    const ohmBalance = BigDecimal.fromString("100");
+    const wethBalance = BigDecimal.fromString("105");
+    mockCurvePairTotalValue(
+      PAIR_CURVE_OHM_ETH,
+      ERC20_CRV_OHMETH,
+      ERC20_STANDARD_DECIMALS,
+      PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY,
+      ERC20_OHM_V2,
+      ERC20_WETH,
+      toBigInt(ohmBalance, OHM_V2_DECIMALS),
+      toBigInt(wethBalance, ERC20_STANDARD_DECIMALS),
+      OHM_V2_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+    );
+
+    const expectedValue = wethBalance.times(getEthUsdRate());
+    assert.stringEquals(
+      expectedValue.toString(),
+      getCurvePairTotalValue(
+        PAIR_CURVE_OHM_ETH,
+        true,
+        false,
+        null,
+        OHM_USD_RESERVE_BLOCK,
+      ).toString(),
+    );
+  });
+
+  test("OHM-ETH pair total value, only ETH", () => {
+    mockEthUsdRate();
+    mockUsdOhmV2Rate();
+
+    // Mock balance
+    const ohmBalance = BigDecimal.fromString("100");
+    const wethBalance = BigDecimal.fromString("105");
+    mockCurvePairTotalValue(
+      PAIR_CURVE_OHM_ETH,
+      ERC20_CRV_OHMETH,
+      ERC20_STANDARD_DECIMALS,
+      PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY,
+      ERC20_OHM_V2,
+      ERC20_WETH,
+      toBigInt(ohmBalance, OHM_V2_DECIMALS),
+      toBigInt(wethBalance, ERC20_STANDARD_DECIMALS),
+      OHM_V2_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+    );
+
+    const expectedValue = wethBalance.times(getEthUsdRate());
+    assert.stringEquals(
+      expectedValue.toString(),
+      getCurvePairTotalValue(
+        PAIR_CURVE_OHM_ETH,
+        false,
+        true,
+        ERC20_WETH,
+        OHM_USD_RESERVE_BLOCK,
+      ).toString(),
     );
   });
 
@@ -426,7 +498,7 @@ describe("Pair Value", () => {
     mockUsdOhmV2Rate();
 
     // Mock balance
-    const ohmReserves = BigDecimal.fromString("100");
+    const ohmReserves = BigDecimal.fromString("1000");
     const wethReserves = BigDecimal.fromString("105");
     mockCurvePairTotalValue(
       PAIR_CURVE_OHM_ETH,
@@ -474,11 +546,12 @@ describe("Pair Value", () => {
       getOhmUsdRate(),
       getEthUsdRate(),
     );
+    const expectedMultiplier = wethReserves.times(getEthUsdRate()).div(totalValueExpected);
     // 0.5 * total value
     const expectedValue = crvBalance
       .div(crvTotalSupply)
       .times(totalValueExpected)
-      .times(BigDecimal.fromString("0.5"));
+      .times(expectedMultiplier);
     assert.stringEquals(expectedValue.toString(), records.value.toString());
   });
 
