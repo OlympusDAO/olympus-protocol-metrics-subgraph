@@ -307,7 +307,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryStableValue = stableValue.value;
   pm.treasuryStableValueComponents = stableValue.id;
 
-  const volatileValue = getVolatileValue("VolatileValue", blockNumber, false, true);
+  const volatileValue = getVolatileValue("VolatileValue", blockNumber, false, true, false);
   pm.treasuryVolatileValue = volatileValue.value;
   pm.treasuryVolatileValueComponents = volatileValue.id;
 
@@ -389,7 +389,13 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryFXSMarketValueComponents = fxsValue.id;
 
   // TODO This probably has some double-counting when combined with the *marketvalue metrics
-  const treasuryOtherMarketValue = getVolatileValue("OtherMarketValue", blockNumber, false, false);
+  const treasuryOtherMarketValue = getVolatileValue(
+    "OtherMarketValue",
+    blockNumber,
+    false,
+    false,
+    true,
+  );
   pm.treasuryOtherMarketValue = treasuryOtherMarketValue.value;
   pm.treasuryOtherMarketValueComponents = treasuryOtherMarketValue.id;
 
