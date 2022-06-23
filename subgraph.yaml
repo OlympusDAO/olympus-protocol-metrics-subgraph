@@ -109,78 +109,14 @@ dataSources:
       entities:
         - sOlympusERC20V2
       abis:
-        - name: OlympusStakingV1
-          file: ./abis/OlympusStakingV1.json
         - name: OlympusStakingV2
           file: ./abis/OlympusStakingV2.json
-        - name: OlympusStakingV3
-          file: ./abis/OlympusStakingV3.json
-        - name: sOlympusERC20
-          file: ./abis/sOlympusERC20.json
         - name: sOlympusERC20V2
           file: ./abis/sOlympusERC20V2.json
-        - name: sOlympusERC20V3
-          file: ./abis/sOlympusERC20V3.json
         - name: OlympusERC20
           file: ./abis/OlympusERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
-        - name: ConvexAllocator
-          file: ./abis/ConvexAllocator.json
-        - name: CirculatingSupply
-          file: ./abis/CirculatingSupply.json
-        - name: BondingCalculator
-          file: ./abis/BondingCalculator.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: MasterChef
-          file: ./abis/MasterChef.json
-        - name: DAIBondV1
-          file: ./abis/DAIBondV1.json
-        - name: DAIBondV2
-          file: ./abis/DAIBondV2.json
-        - name: DAIBondV3
-          file: ./abis/DAIBondV3.json
-        - name: OHMDAIBondV1
-          file: ./abis/OHMDAIBondV1.json
-        - name: OHMDAIBondV2
-          file: ./abis/OHMDAIBondV2.json
-        - name: OHMDAIBondV3
-          file: ./abis/OHMDAIBondV3.json
-        - name: OHMDAIBondV4
-          file: ./abis/OHMDAIBondV4.json
-        - name: OHMFRAXBondV1
-          file: ./abis/OHMFRAXBondV1.json
-        - name: OHMFRAXBondV2
-          file: ./abis/OHMFRAXBondV2.json
-        - name: FRAXBondV1
-          file: ./abis/FRAXBondV1.json
-        - name: ETHBondV1
-          file: ./abis/ETHBondV1.json
-        - name: LUSDBondV1
-          file: ./abis/LUSDBondV1.json
-        - name: OHMLUSDBondV1
-          file: ./abis/OHMLUSDBondV1.json
-        - name: VeFXS
-          file: ./abis/VeFXS.json
-        - name: Distributor
-          file: ./abis/Distributor.json
-        - name: StabilityPool
-          file: ./abis/StabilityPool.json
-        - name: RariAllocator
-          file: ./abis/RariAllocator.json
-        - name: BalancerVault
-          file: ./abis/BalancerVault.json
-        - name: ConvexBaseRewardPool
-          file: ./abis/ConvexBaseRewardPool.json
-        - name: CurvePool
-          file: ./abis/CurvePool.json
-        - name: TokeAllocator
-          file: ./abis/TokeAllocator.json
-        - name: LUSDAllocatorV2
-          file: ./abis/LUSDAllocatorV2.json
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
