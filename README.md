@@ -4,7 +4,7 @@ Gathers data from bonds, liquidity and Olympus treasury.
 
 Used in the dashboard https://app.olympusdao.finance/ and the Olympus Playground.
 
-Deployed at https://thegraph.com/hosted-service/subgraph/drondin/olympus-protocol-metrics
+Deployed at https://thegraph.com/hosted-service/subgraph/olympusdao/olympus-protocol-metrics
 
 ## Initial Setup
 
@@ -31,8 +31,12 @@ To run tests: `yarn test`
 
 ### Deployment (Testing)
 
+1. If necessary, create an account and subgraph in the Subgraph Studio: https://thegraph.com/studio/
+   - The subgraph should be called `olympus-protocol-metrics`
+1. Add the Subgraph Studio deploy key to the `GRAPH_STUDIO_TOKEN` variable in `.env` (using `.env.sample`)
+1. Authenticate using `yarn auth:dev`
 1. Update the `SUBGRAPH_VERSION` variable in the `.subgraph-version` file.
-2. Run `yarn deploy-studio`
+1. Run `yarn deploy:dev`
 
 A URL for the GraphQL Explorer will be provided.
 
@@ -46,10 +50,9 @@ This subgraph is deployed on the Graph Protocol's Hosted Service:
 
 To deploy, do the following:
 
-1. Obtain the Graph deployment token
-2. Copy the .env.sample file to .env and set the value of the `GRAPH_TOKEN` variable
-3. Run `yarn auth`
-4. Run `yarn deploy`
+1. Add the Subgraph Studio deploy key to the `GRAPH_TOKEN` variable in `.env` (using `.env.sample`)
+1. Authenticate using `yarn auth`
+1. Run `yarn deploy`
 
 ### Deployment (Local)
 
