@@ -125,7 +125,7 @@ dataSources:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
       file: ./src/DAIBondV2.ts
-  #DAI Bond Contract V2
+  #DAI Bond Contract V3
   - kind: ethereum/contract
     name: DAIBondV3
     network: mainnet
@@ -163,14 +163,12 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: OHMDAIBondV1
           file: ./abis/OHMDAIBondV1.json
       callHandlers:
         - function: depositBondPrinciple(uint256)
           handler: handleDeposit
-      file: ./src/OHMDAIBondV2.ts
+      file: ./src/OHMDAIBondV1.ts
   #OHM DAI LP Bond Contract V2
   - kind: ethereum/contract
     name: OHMDAIBondV2
@@ -188,8 +186,6 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: OHMDAIBondV2
           file: ./abis/OHMDAIBondV2.json
       callHandlers:
@@ -213,8 +209,6 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: OHMDAIBondV3
           file: ./abis/OHMDAIBondV3.json
       callHandlers:
@@ -238,8 +232,6 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: OHMDAIBondV4
           file: ./abis/OHMDAIBondV4.json
       callHandlers:
@@ -263,8 +255,6 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: OHMFRAXBondV1
           file: ./abis/OHMFRAXBondV1.json
       callHandlers:
@@ -288,8 +278,6 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: OHMFRAXBondV2
           file: ./abis/OHMFRAXBondV2.json
       callHandlers:
@@ -334,8 +322,6 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: ETHBondV1
           file: ./abis/ETHBondV1.json
       callHandlers:
@@ -380,8 +366,6 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: OHMLUSDBondV1
           file: ./abis/LUSDBondV1.json
       callHandlers:
@@ -405,8 +389,6 @@ dataSources:
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: OHMETHBondV1
           file: ./abis/OHMETHBondV1.json
       callHandlers:

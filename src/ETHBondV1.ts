@@ -1,13 +1,13 @@
 import { DepositCall } from "../generated/FRAXBondV1/FRAXBondV1";
-import { toDecimal } from "./utils/Decimals";
 import { ETHBOND_TOKEN } from "./utils/Constants";
-import { loadOrCreateToken } from "./utils/Tokens";
 import { createDailyBondRecord } from "./utils/DailyBond";
+import { toDecimal } from "./utils/Decimals";
 import { getBaseEthUsdRate } from "./utils/Price";
+import { loadOrCreateToken } from "./utils/Tokens";
 
 export function handleDeposit(call: DepositCall): void {
-  let token = loadOrCreateToken(ETHBOND_TOKEN);
-  let amount = toDecimal(call.inputs._amount, 18);
+  const token = loadOrCreateToken(ETHBOND_TOKEN);
+  const amount = toDecimal(call.inputs._amount, 18);
 
   createDailyBondRecord(call.block.timestamp, token, amount, amount.times(getBaseEthUsdRate()));
 }

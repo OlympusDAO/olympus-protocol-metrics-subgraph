@@ -1,11 +1,11 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { ethereum } from "@graphprotocol/graph-ts";
 
+import { Distributor } from "../../generated/ProtocolMetrics/Distributor";
 import { OlympusStakingV1 } from "../../generated/ProtocolMetrics/OlympusStakingV1";
 import { OlympusStakingV2 } from "../../generated/ProtocolMetrics/OlympusStakingV2";
 import { OlympusStakingV3, StakeCall } from "../../generated/ProtocolMetrics/OlympusStakingV3";
 import { ProtocolMetric } from "../../generated/schema";
-import { Distributor } from "../../generated/sOlympusERC20V1/Distributor";
 import { updateBondDiscounts } from "./BondDiscounts";
 import {
   DISTRIBUTOR_CONTRACT,

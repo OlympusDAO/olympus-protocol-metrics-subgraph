@@ -1,4 +1,4 @@
-import { DepositCall, RedeemCall } from "../generated/OHMFRAXBondV1/OHMFRAXBondV1";
+import { DepositCall } from "../generated/OHMFRAXBondV1/OHMFRAXBondV1";
 import { OHMFRAXLPBOND_TOKEN, PAIR_UNISWAP_V2_OHM_FRAX } from "./utils/Constants";
 import { createDailyBondRecord } from "./utils/DailyBond";
 import { toDecimal } from "./utils/Decimals";

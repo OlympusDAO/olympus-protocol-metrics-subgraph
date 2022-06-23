@@ -1,4 +1,4 @@
-import { DepositBondPrincipleCall, RedeemBondCall } from "../generated/OHMDAIBondV1/OHMDAIBondV1";
+import { DepositBondPrincipleCall } from "../generated/OHMDAIBondV1/OHMDAIBondV1";
 import { OHMDAILPBOND_TOKEN, PAIR_UNISWAP_V2_OHM_DAI } from "./utils/Constants";
 import { createDailyBondRecord } from "./utils/DailyBond";
 import { toDecimal } from "./utils/Decimals";
