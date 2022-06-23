@@ -36,6 +36,7 @@ To run tests: `yarn test`
 1. Add the Subgraph Studio deploy key to the `GRAPH_STUDIO_TOKEN` variable in `.env` (using `.env.sample`)
 1. Authenticate using `yarn auth:dev`
 1. Update the `SUBGRAPH_VERSION` variable in the `.subgraph-version` file.
+1. Run `yarn build`
 1. Run `yarn deploy:dev`
 
 A URL for the GraphQL Explorer will be provided.
@@ -52,6 +53,7 @@ To deploy, do the following:
 
 1. Add the Subgraph Studio deploy key to the `GRAPH_TOKEN` variable in `.env` (using `.env.sample`)
 1. Authenticate using `yarn auth`
+1. Run `yarn build`
 1. Run `yarn deploy`
 
 ### Deployment (Local)

@@ -395,7 +395,7 @@ dataSources:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
       file: ./src/OHMETHBondV1.ts
-  # Start syncing protocol metrics every 10 blocks when we are close to present
+  # TODO Start syncing protocol metrics every 10 blocks when we are close to present
   - kind: ethereum/contract
     name: ProtocolMetrics
     network: mainnet
