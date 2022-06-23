@@ -1,18 +1,18 @@
-import { RebaseCall } from "../generated/ProtocolMetrics/sOlympusERC20";
-import { OlympusERC20 } from "../generated/ProtocolMetrics/OlympusERC20";
-import { createDailyStakingReward } from "./utils/DailyStakingReward";
-import { Rebase } from "../generated/schema";
 import { Address, BigInt } from "@graphprotocol/graph-ts";
+
+import { RebaseCall } from "../generated/ProtocolMetrics/sOlympusERC20";
+import { Rebase } from "../generated/schema";
+import { OlympusERC20 } from "../generated/sOlympusERC20V1/OlympusERC20";
 import { ERC20_OHM_V1, STAKING_CONTRACT_V1 } from "./utils/Constants";
+import { createDailyStakingReward } from "./utils/DailyStakingReward";
 import { toDecimal } from "./utils/Decimals";
 import { getBaseOhmUsdRate } from "./utils/Price";
-import { updateProtocolMetrics } from "./utils/ProtocolMetrics";
 
 export function rebaseFunction(call: RebaseCall): void {
-  var rebase = Rebase.load(call.block.timestamp.toString());
+  let rebase = Rebase.load(call.block.timestamp.toString());
 
   if (rebase == null && call.inputs.olyProfit.gt(BigInt.fromI32(0))) {
-    let ohm_contract = OlympusERC20.bind(Address.fromString(ERC20_OHM_V1));
+    const ohm_contract = OlympusERC20.bind(Address.fromString(ERC20_OHM_V1));
 
     rebase = new Rebase(call.block.timestamp.toString());
     rebase.amount = toDecimal(call.inputs.olyProfit, 9);
@@ -27,6 +27,5 @@ export function rebaseFunction(call: RebaseCall): void {
     rebase.save();
 
     createDailyStakingReward(rebase.timestamp, rebase.amount, call.block.number);
-    updateProtocolMetrics(call.block);
   }
 }
