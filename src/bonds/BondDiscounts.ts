@@ -1,18 +1,18 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+
+import { DAIBondV1 } from "../../generated/DAIBondV1/DAIBondV1";
+import { DAIBondV2 } from "../../generated/DAIBondV2/DAIBondV2";
+import { DAIBondV3 } from "../../generated/DAIBondV3/DAIBondV3";
+import { ETHBondV1 } from "../../generated/ETHBondV1/ETHBondV1";
+import { FRAXBondV1 } from "../../generated/FRAXBondV1/FRAXBondV1";
+import { LUSDBondV1 } from "../../generated/LUSDBondV1/LUSDBondV1";
 import { OHMDAIBondV1 } from "../../generated/OHMDAIBondV1/OHMDAIBondV1";
 import { OHMDAIBondV2 } from "../../generated/OHMDAIBondV2/OHMDAIBondV2";
 import { OHMDAIBondV3 } from "../../generated/OHMDAIBondV3/OHMDAIBondV3";
 import { OHMDAIBondV4 } from "../../generated/OHMDAIBondV4/OHMDAIBondV4";
-import { DAIBondV1 } from "../../generated/DAIBondV1/DAIBondV1";
-import { DAIBondV2 } from "../../generated/DAIBondV2/DAIBondV2";
-import { DAIBondV3 } from "../../generated/DAIBondV3/DAIBondV3";
 import { OHMFRAXBondV1 } from "../../generated/OHMFRAXBondV1/OHMFRAXBondV1";
 import { OHMFRAXBondV2 } from "../../generated/OHMFRAXBondV2/OHMFRAXBondV2";
-import { FRAXBondV1 } from "../../generated/FRAXBondV1/FRAXBondV1";
-import { ETHBondV1 } from "../../generated/ETHBondV1/ETHBondV1";
-import { LUSDBondV1 } from "../../generated/LUSDBondV1/LUSDBondV1";
 import { OHMLUSDBondV1 } from "../../generated/OHMLUSDBondV1/OHMLUSDBondV1";
-
 import { BondDiscount } from "../../generated/schema";
 import {
   DAIBOND_CONTRACTS1,
@@ -41,13 +41,13 @@ import {
   OHMFRAXLPBOND_CONTRACT2_BLOCK,
   OHMLUSDBOND_CONTRACT1,
   OHMLUSDBOND_CONTRACT1_BLOCK,
-} from "./Constants";
-import { hourFromTimestamp } from "./Dates";
-import { toDecimal } from "./Decimals";
-import { getBaseOhmUsdRate } from "./Price";
+} from "../utils/Constants";
+import { hourFromTimestamp } from "../utils/Dates";
+import { toDecimal } from "../utils/Decimals";
+import { getBaseOhmUsdRate } from "../utils/Price";
 
 export function loadOrCreateBondDiscount(timestamp: BigInt): BondDiscount {
-  let hourTimestamp = hourFromTimestamp(timestamp);
+  const hourTimestamp = hourFromTimestamp(timestamp);
 
   let bondDiscount = BondDiscount.load(hourTimestamp);
   if (bondDiscount == null) {
@@ -66,25 +66,25 @@ export function loadOrCreateBondDiscount(timestamp: BigInt): BondDiscount {
 }
 
 export function updateBondDiscounts(blockNumber: BigInt): void {
-  let bd = loadOrCreateBondDiscount(blockNumber);
-  let ohmRate = getBaseOhmUsdRate(blockNumber);
+  const bd = loadOrCreateBondDiscount(blockNumber);
+  const ohmRate = getBaseOhmUsdRate(blockNumber);
 
-  //OHMDAI
+  // OHMDAI
   if (blockNumber.gt(BigInt.fromString(OHMDAISLPBOND_CONTRACT1_BLOCK))) {
-    let bond = OHMDAIBondV1.bind(Address.fromString(OHMDAISLPBOND_CONTRACT1));
-    //bd.ohmdai_discount = ohmRate.div(toDecimal(bond.bondPriceInUSD(), 18)).minus(BigDecimal.fromString("1")).times(BigDecimal.fromString("100"))
+    const bond = OHMDAIBondV1.bind(Address.fromString(OHMDAISLPBOND_CONTRACT1));
+    // bd.ohmdai_discount = ohmRate.div(toDecimal(bond.bondPriceInUSD(), 18)).minus(BigDecimal.fromString("1")).times(BigDecimal.fromString("100"))
   }
   if (blockNumber.gt(BigInt.fromString(OHMDAISLPBOND_CONTRACT2_BLOCK))) {
-    let bond = OHMDAIBondV2.bind(Address.fromString(OHMDAISLPBOND_CONTRACT2));
-    //bd.ohmdai_discount = ohmRate.div(toDecimal(bond.bondPriceInUSD(), 18)).minus(BigDecimal.fromString("1")).times(BigDecimal.fromString("100"))
+    const bond = OHMDAIBondV2.bind(Address.fromString(OHMDAISLPBOND_CONTRACT2));
+    // bd.ohmdai_discount = ohmRate.div(toDecimal(bond.bondPriceInUSD(), 18)).minus(BigDecimal.fromString("1")).times(BigDecimal.fromString("100"))
   }
   if (blockNumber.gt(BigInt.fromString(OHMDAISLPBOND_CONTRACT3_BLOCK))) {
-    let bond = OHMDAIBondV3.bind(Address.fromString(OHMDAISLPBOND_CONTRACT3));
-    //bd.ohmdai_discount = ohmRate.div(toDecimal(bond.bondPriceInUSD(), 18)).minus(BigDecimal.fromString("1")).times(BigDecimal.fromString("100"))
+    const bond = OHMDAIBondV3.bind(Address.fromString(OHMDAISLPBOND_CONTRACT3));
+    // bd.ohmdai_discount = ohmRate.div(toDecimal(bond.bondPriceInUSD(), 18)).minus(BigDecimal.fromString("1")).times(BigDecimal.fromString("100"))
   }
   if (blockNumber.gt(BigInt.fromString(OHMDAISLPBOND_CONTRACT4_BLOCK))) {
-    let bond = OHMDAIBondV4.bind(Address.fromString(OHMDAISLPBOND_CONTRACT4));
-    let price_call = bond.try_bondPriceInUSD();
+    const bond = OHMDAIBondV4.bind(Address.fromString(OHMDAISLPBOND_CONTRACT4));
+    const price_call = bond.try_bondPriceInUSD();
     if (price_call.reverted === false && price_call.value.gt(BigInt.fromI32(0))) {
       bd.ohmdai_discount = ohmRate.div(toDecimal(price_call.value, 18));
       bd.ohmdai_discount = bd.ohmdai_discount.minus(BigDecimal.fromString("1"));
@@ -97,14 +97,14 @@ export function updateBondDiscounts(blockNumber: BigInt): void {
     }
   }
 
-  //DAI
+  // DAI
   if (blockNumber.gt(BigInt.fromString(DAIBOND_CONTRACTS1_BLOCK))) {
-    let bond = DAIBondV1.bind(Address.fromString(DAIBOND_CONTRACTS1));
-    //bd.dai_discount = ohmRate.div(toDecimal(bond.bondPriceInUSD(), 18)).minus(BigDecimal.fromString("1")).times(BigDecimal.fromString("100"))
+    const bond = DAIBondV1.bind(Address.fromString(DAIBOND_CONTRACTS1));
+    // bd.dai_discount = ohmRate.div(toDecimal(bond.bondPriceInUSD(), 18)).minus(BigDecimal.fromString("1")).times(BigDecimal.fromString("100"))
   }
   if (blockNumber.gt(BigInt.fromString(DAIBOND_CONTRACTS2_BLOCK))) {
-    let bond = DAIBondV2.bind(Address.fromString(DAIBOND_CONTRACTS2));
-    let price_call = bond.try_bondPriceInUSD();
+    const bond = DAIBondV2.bind(Address.fromString(DAIBOND_CONTRACTS2));
+    const price_call = bond.try_bondPriceInUSD();
     if (price_call.reverted === false && price_call.value.gt(BigInt.fromI32(0))) {
       bd.dai_discount = ohmRate.div(toDecimal(price_call.value, 18));
       bd.dai_discount = bd.dai_discount.minus(BigDecimal.fromString("1"));
@@ -118,8 +118,8 @@ export function updateBondDiscounts(blockNumber: BigInt): void {
   }
 
   if (blockNumber.gt(BigInt.fromString(DAIBOND_CONTRACTS3_BLOCK))) {
-    let bond = DAIBondV3.bind(Address.fromString(DAIBOND_CONTRACTS3));
-    let price_call = bond.try_bondPriceInUSD();
+    const bond = DAIBondV3.bind(Address.fromString(DAIBOND_CONTRACTS3));
+    const price_call = bond.try_bondPriceInUSD();
     if (price_call.reverted === false && price_call.value.gt(BigInt.fromI32(0))) {
       bd.dai_discount = ohmRate.div(toDecimal(price_call.value, 18));
       bd.dai_discount = bd.dai_discount.minus(BigDecimal.fromString("1"));
@@ -132,10 +132,10 @@ export function updateBondDiscounts(blockNumber: BigInt): void {
     }
   }
 
-  //OHMFRAX
+  // OHMFRAX
   if (blockNumber.gt(BigInt.fromString(OHMFRAXLPBOND_CONTRACT1_BLOCK))) {
-    let bond = OHMFRAXBondV1.bind(Address.fromString(OHMFRAXLPBOND_CONTRACT1));
-    let price_call = bond.try_bondPriceInUSD();
+    const bond = OHMFRAXBondV1.bind(Address.fromString(OHMFRAXLPBOND_CONTRACT1));
+    const price_call = bond.try_bondPriceInUSD();
     if (price_call.reverted === false && price_call.value.gt(BigInt.fromI32(0))) {
       bd.ohmfrax_discount = ohmRate.div(toDecimal(price_call.value, 18));
       bd.ohmfrax_discount = bd.ohmfrax_discount.minus(BigDecimal.fromString("1"));
@@ -148,8 +148,8 @@ export function updateBondDiscounts(blockNumber: BigInt): void {
     }
   }
   if (blockNumber.gt(BigInt.fromString(OHMFRAXLPBOND_CONTRACT2_BLOCK))) {
-    let bond = OHMFRAXBondV2.bind(Address.fromString(OHMFRAXLPBOND_CONTRACT2));
-    let price_call = bond.try_bondPriceInUSD();
+    const bond = OHMFRAXBondV2.bind(Address.fromString(OHMFRAXLPBOND_CONTRACT2));
+    const price_call = bond.try_bondPriceInUSD();
     if (price_call.reverted === false && price_call.value.gt(BigInt.fromI32(0))) {
       bd.ohmfrax_discount = ohmRate.div(toDecimal(price_call.value, 18));
       bd.ohmfrax_discount = bd.ohmfrax_discount.minus(BigDecimal.fromString("1"));
@@ -162,10 +162,10 @@ export function updateBondDiscounts(blockNumber: BigInt): void {
     }
   }
 
-  //FRAX
+  // FRAX
   if (blockNumber.gt(BigInt.fromString(FRAXBOND_CONTRACT1_BLOCK))) {
-    let bond = FRAXBondV1.bind(Address.fromString(FRAXBOND_CONTRACT1));
-    let price_call = bond.try_bondPriceInUSD();
+    const bond = FRAXBondV1.bind(Address.fromString(FRAXBOND_CONTRACT1));
+    const price_call = bond.try_bondPriceInUSD();
     if (price_call.reverted === false && price_call.value.gt(BigInt.fromI32(0))) {
       bd.frax_discount = ohmRate.div(toDecimal(price_call.value, 18));
       bd.frax_discount = bd.frax_discount.minus(BigDecimal.fromString("1"));
@@ -178,10 +178,10 @@ export function updateBondDiscounts(blockNumber: BigInt): void {
     }
   }
 
-  //ETH
+  // ETH
   if (blockNumber.gt(BigInt.fromString(ETHBOND_CONTRACT1_BLOCK))) {
-    let bond = ETHBondV1.bind(Address.fromString(ETHBOND_CONTRACT1));
-    let price_call = bond.try_bondPriceInUSD();
+    const bond = ETHBondV1.bind(Address.fromString(ETHBOND_CONTRACT1));
+    const price_call = bond.try_bondPriceInUSD();
     if (price_call.reverted === false && price_call.value.gt(BigInt.fromI32(0))) {
       bd.eth_discount = ohmRate.div(toDecimal(price_call.value, 18));
       bd.eth_discount = bd.eth_discount.minus(BigDecimal.fromString("1"));
@@ -194,10 +194,10 @@ export function updateBondDiscounts(blockNumber: BigInt): void {
     }
   }
 
-  //LUSD
+  // LUSD
   if (blockNumber.gt(BigInt.fromString(LUSDBOND_CONTRACT1_BLOCK))) {
-    let bond = LUSDBondV1.bind(Address.fromString(LUSDBOND_CONTRACT1));
-    let price_call = bond.try_bondPriceInUSD();
+    const bond = LUSDBondV1.bind(Address.fromString(LUSDBOND_CONTRACT1));
+    const price_call = bond.try_bondPriceInUSD();
     if (price_call.reverted === false && price_call.value.gt(BigInt.fromI32(0))) {
       bd.lusd_discount = ohmRate.div(toDecimal(price_call.value, 18));
       bd.lusd_discount = bd.lusd_discount.minus(BigDecimal.fromString("1"));
@@ -210,10 +210,10 @@ export function updateBondDiscounts(blockNumber: BigInt): void {
     }
   }
 
-  //OHMLUSD
+  // OHMLUSD
   if (blockNumber.gt(BigInt.fromString(OHMLUSDBOND_CONTRACT1_BLOCK))) {
-    let bond = OHMLUSDBondV1.bind(Address.fromString(OHMLUSDBOND_CONTRACT1));
-    let price_call = bond.try_bondPriceInUSD();
+    const bond = OHMLUSDBondV1.bind(Address.fromString(OHMLUSDBOND_CONTRACT1));
+    const price_call = bond.try_bondPriceInUSD();
     if (price_call.reverted === false && price_call.value.gt(BigInt.fromI32(0))) {
       bd.ohmlusd_discount = ohmRate.div(toDecimal(price_call.value, 18));
       bd.ohmlusd_discount = bd.ohmlusd_discount.minus(BigDecimal.fromString("1"));

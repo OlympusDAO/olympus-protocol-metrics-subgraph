@@ -1,7 +1,7 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 import { DailyBond, Token } from "../../generated/schema";
-import { dayFromTimestamp } from "./Dates";
+import { dayFromTimestamp } from "../utils/Dates";
 
 export function loadOrCreateDailyBond(timestamp: BigInt, token: Token): DailyBond {
   const day_timestamp = dayFromTimestamp(timestamp);

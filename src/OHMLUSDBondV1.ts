@@ -1,6 +1,6 @@
 import { DepositCall } from "../generated/OHMDAIBondV4/OHMDAIBondV4";
 import { OHMLUSDLPBOND_TOKEN, PAIR_UNISWAP_V2_OHM_LUSD } from "./utils/Constants";
-import { createDailyBondRecord } from "./utils/DailyBond";
+import { createDailyBondRecord } from "./bonds/DailyBond";
 import { toDecimal } from "./utils/Decimals";
 import { getOhmUSDPairValue } from "./utils/LiquidityUniswapV2";
 import { loadOrCreateToken } from "./utils/Tokens";

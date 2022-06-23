@@ -1,6 +1,6 @@
 import { DepositCall } from "../generated/FRAXBondV1/FRAXBondV1";
 import { FRAXBOND_TOKEN } from "./utils/Constants";
-import { createDailyBondRecord } from "./utils/DailyBond";
+import { createDailyBondRecord } from "./bonds/DailyBond";
 import { toDecimal } from "./utils/Decimals";
 import { loadOrCreateToken } from "./utils/Tokens";
 

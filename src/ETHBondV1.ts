@@ -1,6 +1,6 @@
 import { DepositCall } from "../generated/FRAXBondV1/FRAXBondV1";
 import { ETHBOND_TOKEN } from "./utils/Constants";
-import { createDailyBondRecord } from "./utils/DailyBond";
+import { createDailyBondRecord } from "./bonds/DailyBond";
 import { toDecimal } from "./utils/Decimals";
 import { getBaseEthUsdRate } from "./utils/Price";
 import { loadOrCreateToken } from "./utils/Tokens";

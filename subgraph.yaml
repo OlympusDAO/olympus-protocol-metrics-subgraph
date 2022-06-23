@@ -432,8 +432,6 @@ dataSources:
           file: ./abis/ConvexAllocator.json
         - name: CirculatingSupply
           file: ./abis/CirculatingSupply.json
-        - name: BondingCalculator
-          file: ./abis/BondingCalculator.json
         - name: ERC20
           file: ./abis/ERC20.json
         - name: MasterChef
@@ -468,8 +466,6 @@ dataSources:
           file: ./abis/VeFXS.json
         - name: Distributor
           file: ./abis/Distributor.json
-        - name: StabilityPool
-          file: ./abis/StabilityPool.json
         - name: RariAllocator
           file: ./abis/RariAllocator.json
         - name: BalancerVault

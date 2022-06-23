@@ -6,7 +6,7 @@ import { OlympusStakingV1 } from "../../generated/ProtocolMetrics/OlympusStaking
 import { OlympusStakingV2 } from "../../generated/ProtocolMetrics/OlympusStakingV2";
 import { OlympusStakingV3, StakeCall } from "../../generated/ProtocolMetrics/OlympusStakingV3";
 import { ProtocolMetric } from "../../generated/schema";
-import { updateBondDiscounts } from "./BondDiscounts";
+import { updateBondDiscounts } from "../bonds/BondDiscounts";
 import {
   DISTRIBUTOR_CONTRACT,
   DISTRIBUTOR_CONTRACT_BLOCK,
@@ -453,6 +453,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
 
   pm.save();
 
+  // TODO look at whether this can be split into a different metric
   updateBondDiscounts(blockNumber);
 }
 
