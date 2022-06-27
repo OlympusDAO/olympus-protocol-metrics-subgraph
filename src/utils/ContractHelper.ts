@@ -457,10 +457,6 @@ export function getUniswapV2PairBalance(
   }
 
   if (tokenAddress && !liquidityPairHasToken(contract._address.toHexString(), tokenAddress)) {
-    log.debug(
-      "getUniswapV2PairBalance: Skipping UniswapV2Pair that does not match specified token address {}",
-      [tokenAddress],
-    );
     return BigInt.fromString("0");
   }
 

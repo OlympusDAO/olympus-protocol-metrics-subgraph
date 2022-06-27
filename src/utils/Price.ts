@@ -270,17 +270,15 @@ export function getUSDRateUniswapV2(
     return BigDecimal.fromString("1");
   }
 
-  // TODO check if we are ready to lookup using one of the base (OHM/ETH) rates
   // TODO handle OHM v1 rates?
 
-  // TODO handle pairs at different blocks
   const pair = UniswapV2Pair.bind(Address.fromString(pairAddress));
-  if (!pair) {
-    throw new Error(
-      "getUSDRateUniswapV2: Cannot determine discounted value as the contract " +
-        pairAddress +
-        " does not exist yet.",
+  if (pair === null || pair.try_token0().reverted || pair.try_token1().reverted) {
+    log.debug(
+      "getUSDRateUniswapV2: Cannot determine value as the contract ({}) reverted at block {}",
+      [getContractName(pairAddress), blockNumber.toString()],
     );
+    return BigDecimal.zero();
   }
 
   // Determine orientation of the pair

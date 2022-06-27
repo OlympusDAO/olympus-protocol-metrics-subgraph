@@ -19,6 +19,7 @@ import {
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
   PAIR_UNISWAP_V2_SYN_FRAX,
+  PAIR_UNISWAP_V2_TRIBE_ETH,
   PAIR_UNISWAP_V2_USDC_ETH,
   PAIR_UNISWAP_V3_3CRV_USD,
   PAIR_UNISWAP_V3_FPIS_FRAX,
@@ -379,6 +380,38 @@ describe("get USD rate", () => {
     assert.assertTrue(
       tribeUsdRate.minus(calculatedRate).lt(BigDecimal.fromString("0.000000000000000001")),
     );
+  });
+
+  test("TRIBE (UniswapV2) handles contract revert on token1", () => {
+    mockEthUsdRate();
+    mockTribeEthRate();
+
+    // Mock contract revert
+    createMockedFunction(
+      Address.fromString(PAIR_UNISWAP_V2_TRIBE_ETH),
+      "token1",
+      "token1():(address)",
+    ).reverts();
+
+    const tribeUsdRate = getUSDRate(ERC20_TRIBE, OHM_USD_RESERVE_BLOCK);
+
+    assert.stringEquals("0", tribeUsdRate.toString());
+  });
+
+  test("TRIBE (UniswapV2) handles contract revert on token0", () => {
+    mockEthUsdRate();
+    mockTribeEthRate();
+
+    // Mock contract revert
+    createMockedFunction(
+      Address.fromString(PAIR_UNISWAP_V2_TRIBE_ETH),
+      "token0",
+      "token0():(address)",
+    ).reverts();
+
+    const tribeUsdRate = getUSDRate(ERC20_TRIBE, OHM_USD_RESERVE_BLOCK);
+
+    assert.stringEquals("0", tribeUsdRate.toString());
   });
 
   test(

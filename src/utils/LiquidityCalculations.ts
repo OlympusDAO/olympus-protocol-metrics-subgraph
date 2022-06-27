@@ -86,7 +86,7 @@ function getLiquidityTokenRecords(
         liquidityBalance.contract,
         blockNumber,
       );
-  log.debug("LP value for balance {} is {}", [
+  log.debug("getLiquidityTokenRecords: LP value for balance {} is {}", [
     liquidityBalance.getTotalBalance().toString(),
     lpValue.toString(),
   ]);
@@ -95,7 +95,7 @@ function getLiquidityTokenRecords(
   const lpUnitPrice: BigDecimal = liquidityBalance.getTotalBalance().equals(BigInt.zero())
     ? BigDecimal.zero()
     : lpValue.div(toDecimal(liquidityBalance.getTotalBalance(), 18));
-  log.debug("Unit price: {}", [lpUnitPrice.toString()]);
+  log.debug("getLiquidityTokenRecords: Unit price: {}", [lpUnitPrice.toString()]);
 
   const addresses = liquidityBalance.getAddresses();
   for (let i = 0; i < addresses.length; i++) {
