@@ -207,14 +207,35 @@ function getCurvePairRecord(
   );
 }
 
-function getCurvePairToken(pairAddress: string): string {
+/**
+ * Determines the address of the ERC20 token for a Curve liquidity pair.
+ *
+ * If the token cannot be determined (e.g. because it is before the starting block,
+ * causing a revert), null will be returned.
+ *
+ * @param pairAddress address of the Curve pair
+ * @param blockNumber the current block number
+ * @returns address as a string, or null
+ */
+function getCurvePairToken(pairAddress: string, blockNumber: BigInt): string | null {
   const pair = CurvePool.bind(Address.fromString(pairAddress));
+
+  // If the token does not exist at the current block, it will revert
+  if (pair.try_token().reverted) {
+    log.debug(
+      "ERC20 token for Curve pair {} could not be determined at block {} due to contract revert. Skipping",
+      [getContractName(pairAddress), blockNumber.toString()],
+    );
+    return null;
+  }
 
   return pair.token().toHexString();
 }
 
-function getCurvePairTokenContract(pairAddress: string, blockNumber: BigInt): ERC20 {
-  const pairTokenAddress = getCurvePairToken(pairAddress);
+function getCurvePairTokenContract(pairAddress: string, blockNumber: BigInt): ERC20 | null {
+  const pairTokenAddress = getCurvePairToken(pairAddress, blockNumber);
+  if (pairTokenAddress === null) return null;
+
   const pairTokenContract = getERC20(
     getContractName(pairTokenAddress),
     pairTokenAddress,
@@ -246,6 +267,7 @@ function getCurvePairUnitRate(
 ): BigDecimal {
   log.info("Calculating unit rate for Curve pair {}", [getContractName(pairAddress)]);
   const pairTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
+  if (!pairTokenContract) return BigDecimal.zero();
 
   const totalSupply = toDecimal(pairTokenContract.totalSupply(), pairTokenContract.decimals());
   log.debug("Curve pair {} has total supply of {}", [
@@ -298,7 +320,7 @@ export function getCurvePairRecords(
   }
 
   const pairTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
-  if (pairTokenContract.totalSupply().equals(BigInt.zero())) {
+  if (!pairTokenContract || pairTokenContract.totalSupply().equals(BigInt.zero())) {
     log.debug("Skipping Curve pair {} with total supply of 0 at block {}", [
       getContractName(pairAddress),
       blockNumber.toString(),
@@ -449,6 +471,7 @@ export function getCurvePairTokenQuantity(
     blockNumber,
   );
   const poolTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
+  if (!poolTokenContract) return records;
 
   // Calculate the token quantity for the pool
   const totalQuantity = getCurvePairTotalTokenQuantity(pairAddress, tokenAddress, blockNumber);
