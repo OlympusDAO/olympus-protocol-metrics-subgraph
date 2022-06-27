@@ -17,7 +17,7 @@ Note that the Graph Protocol compiles from AssemblyScript to WASM. AssemblyScrip
 - Utilise the linting that has been set up in this repository
 - Build frequently (`yarn build`), as linting does not pick up all problems
 - Variables that are nullable need to be typed accordingly
-- You will run into problems when passing a nullable variable to other functions. Sometimes a null check (`if (!variable)`) will work, but other times requires the use of a temporary variable (`const variableNotNull = variableNullable ? variableNullable : ""`)
+- You may run into a TS2322 compiler error when handling null values. The workaround for this is to use the strict equality operator (`===`), instead of loose equality (`==`) or negation (`!someValue`). e.g. `if (someValue === null)`. This is due to a [limitation in the AssemblyScript compiler.](https://github.com/AssemblyScript/assemblyscript/issues/2223#issuecomment-1069245834)
 - The Graph Protocol Discord is very helpful to get support. See the `subgraph-development` channel.
 
 ## Testing

@@ -120,7 +120,7 @@ function getCurvePairStakedRecord(
   multiplier: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecord | null {
-  if (!stakedTokenAddress) {
+  if (stakedTokenAddress === null) {
     log.debug(
       "Curve pair balance for staked token {} ({}) in wallet {} ({}) was 0, and no staked token was found.",
       [
@@ -133,9 +133,8 @@ function getCurvePairStakedRecord(
     return null;
   }
 
-  const stakedTokenAddressNotNull = stakedTokenAddress ? stakedTokenAddress : "";
   const balance = getConvexStakedBalance(
-    stakedTokenAddressNotNull,
+    stakedTokenAddress,
     walletAddress,
     stakingAddress,
     blockNumber,
@@ -144,8 +143,8 @@ function getCurvePairStakedRecord(
 
   return newTokenRecord(
     metricName,
-    getContractName(stakedTokenAddressNotNull),
-    stakedTokenAddressNotNull,
+    getContractName(stakedTokenAddress),
+    stakedTokenAddress,
     getContractName(walletAddress),
     walletAddress,
     pairRate,

@@ -208,11 +208,9 @@ export function getLiquidityBalances(
 
       combineTokenRecords(records, currentTokenRecords);
     } else if (pairHandler.getType() === PairHandlerTypes.Balancer) {
-      const balancerPoolIdNullable: string | null = pairHandler.getPool();
-      if (balancerPoolIdNullable == null) throw new Error("Balancer pair does not have a pool id");
+      const balancerPoolId = pairHandler.getPool();
+      if (balancerPoolId === null) throw new Error("Balancer pair does not have a pool id");
 
-      // Workaround for AssemblyScript not liking nulls
-      const balancerPoolId: string = balancerPoolIdNullable ? balancerPoolIdNullable : "";
       // TODO support risk-free value of Balancer
       combineTokenRecords(
         records,

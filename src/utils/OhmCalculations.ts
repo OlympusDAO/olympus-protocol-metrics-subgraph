@@ -228,11 +228,10 @@ function getLiquiditySupply(metricName: string, blockNumber: BigInt): TokenRecor
       const ohmTokenAddress = ohmTokens[j];
 
       if (pairHandler.getType() == PairHandlerTypes.Balancer) {
-        const pairPoolAddressNullable = pairHandler.getPool();
-        if (!pairPoolAddressNullable) {
+        const pairPoolAddress = pairHandler.getPool();
+        if (pairPoolAddress === null) {
           throw new Error("Balancer pool address is not set");
         }
-        const pairPoolAddress = pairPoolAddressNullable ? pairPoolAddressNullable : "";
 
         combineTokenRecords(
           records,
