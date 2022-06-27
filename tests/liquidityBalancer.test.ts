@@ -5,12 +5,15 @@ import { TokenRecord } from "../generated/schema";
 import {
   BALANCER_VAULT,
   ERC20_BALANCER_OHM_DAI_WETH,
+  ERC20_BALANCER_WETH_FDT,
   ERC20_DAI,
+  ERC20_FDT,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_USDC,
   ERC20_WETH,
   POOL_BALANCER_OHM_DAI_WETH_ID,
+  POOL_BALANCER_WETH_FDT_ID,
   TREASURY_ADDRESS_V3,
   WALLET_ADDRESSES,
 } from "../src/utils/Constants";
@@ -45,14 +48,23 @@ export function mockBalancerVault(
   poolTokenTotalSupply: BigDecimal,
   token1Address: string,
   token2Address: string,
-  token3Address: string,
+  token3Address: string | null,
   token1Balance: BigDecimal,
   token2Balance: BigDecimal,
-  token3Balance: BigDecimal,
+  token3Balance: BigDecimal | null,
   token1Decimals: i32,
   token2Decimals: i32,
   token3Decimals: i32,
 ): void {
+  const tokenAddressArray = [Address.fromString(token1Address), Address.fromString(token2Address)];
+  if (token3Address !== null) tokenAddressArray.push(Address.fromString(token3Address));
+
+  const tokenBalanceArray = [
+    toBigInt(token1Balance, token1Decimals),
+    toBigInt(token2Balance, token2Decimals),
+  ];
+  if (token3Balance !== null) tokenBalanceArray.push(toBigInt(token3Balance, token3Decimals));
+
   // getPoolTokens
   createMockedFunction(
     Address.fromString(vaultAddress),
@@ -61,16 +73,8 @@ export function mockBalancerVault(
   )
     .withArgs([ethereum.Value.fromFixedBytes(Bytes.fromHexString(poolId))])
     .returns([
-      ethereum.Value.fromAddressArray([
-        Address.fromString(token1Address),
-        Address.fromString(token2Address),
-        Address.fromString(token3Address),
-      ]),
-      ethereum.Value.fromUnsignedBigIntArray([
-        toBigInt(token1Balance, token1Decimals),
-        toBigInt(token2Balance, token2Decimals),
-        toBigInt(token3Balance, token3Decimals),
-      ]),
+      ethereum.Value.fromAddressArray(tokenAddressArray),
+      ethereum.Value.fromUnsignedBigIntArray(tokenBalanceArray),
       ethereum.Value.fromUnsignedBigInt(BigInt.fromString("14936424")),
     ]);
 
@@ -104,9 +108,13 @@ export function mockBalancerVault(
   createMockedFunction(Address.fromString(token2Address), "decimals", "decimals():(uint8)").returns(
     [ethereum.Value.fromI32(token2Decimals)],
   );
-  createMockedFunction(Address.fromString(token3Address), "decimals", "decimals():(uint8)").returns(
-    [ethereum.Value.fromI32(token3Decimals)],
-  );
+  if (token3Address !== null) {
+    createMockedFunction(
+      Address.fromString(token3Address),
+      "decimals",
+      "decimals():(uint8)",
+    ).returns([ethereum.Value.fromI32(token3Decimals)]);
+  }
 }
 
 export function mockBalanceVaultZero(): void {
@@ -119,6 +127,23 @@ export function mockBalanceVaultZero(): void {
     ERC20_OHM_V2,
     ERC20_DAI,
     ERC20_WETH,
+    BigDecimal.fromString("0"),
+    BigDecimal.fromString("0"),
+    BigDecimal.fromString("0"),
+    ERC20_STANDARD_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+  );
+
+  mockBalancerVault(
+    BALANCER_VAULT,
+    POOL_BALANCER_WETH_FDT_ID,
+    ERC20_BALANCER_WETH_FDT,
+    ERC20_STANDARD_DECIMALS,
+    BigDecimal.fromString("0"),
+    ERC20_WETH,
+    ERC20_FDT,
+    null,
     BigDecimal.fromString("0"),
     BigDecimal.fromString("0"),
     BigDecimal.fromString("0"),

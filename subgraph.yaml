@@ -478,6 +478,8 @@ dataSources:
           file: ./abis/TokeAllocator.json
         - name: LUSDAllocatorV2
           file: ./abis/LUSDAllocatorV2.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
       callHandlers:
         - function: stake(address,uint256,bool,bool)
           handler: handleMetrics

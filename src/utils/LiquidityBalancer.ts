@@ -1,5 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
+import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolToken";
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { TokenRecord, TokenRecords } from "../../generated/schema";
@@ -117,16 +118,16 @@ function getBalancerPoolUnitRate(
   return totalValue.div(totalSupplyDecimals);
 }
 
-function getBalancerPoolToken(vaultAddress: string, poolId: string, blockNumber: BigInt): ERC20 {
+export function getBalancerPoolToken(
+  vaultAddress: string,
+  poolId: string,
+  blockNumber: BigInt,
+): BalancerPoolToken {
   const vault = getBalancerVault(vaultAddress, blockNumber);
   const poolInfo = vault.getPool(Bytes.fromHexString(poolId));
   const poolToken = poolInfo.getValue0().toHexString();
-  const poolTokenContract = getERC20(getContractName(poolToken), poolToken, blockNumber);
-  if (!poolTokenContract) {
-    throw new Error("Unable to bind with ERC20 contractn " + poolToken);
-  }
 
-  return poolTokenContract;
+  return BalancerPoolToken.bind(Address.fromString(poolToken));
 }
 
 /**

@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
@@ -19,6 +19,7 @@ import {
 } from "./Constants";
 import { getERC20, getERC20Decimals } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
+import { getBalancerPoolToken, getBalancerVault } from "./LiquidityBalancer";
 import { PairHandlerTypes } from "./PairHandler";
 
 const BIG_DECIMAL_1E8 = BigDecimal.fromString("1e8");
@@ -410,6 +411,79 @@ export function getUSDRateUniswapV3(
   const baseTokenUsdRate = getBaseTokenUSDRate(token0, token1, baseTokenOrientation, blockNumber);
 
   return adjustedNumerator.times(baseTokenUsdRate);
+}
+
+/**
+ * Returns the USD rate for {contractAddress}, using the Balancer pool
+ * as a lookup method.
+ *
+ * It uses the following formula:
+ *
+ * token0Balance * token0Value + token1Balance * token1Value = token0Weight + token1Weight = 1
+ *
+ * Therefore:
+ *
+ * token0Value = (1 - token1Balance * token1Value) / token0Balance
+ *
+ * TODO this is incorrect
+ *
+ * @param contractAddress
+ * @param vaultAddress
+ * @param poolId
+ * @param blockNumber
+ * @returns
+ */
+export function getUSDRateBalancer(
+  contractAddress: string,
+  vaultAddress: string,
+  poolId: string,
+  blockNumber: BigInt,
+): BigDecimal {
+  log.debug("getUSDRateBalancer: contract {}, poolId {}", [contractAddress, poolId]);
+
+  const vault = getBalancerVault(vaultAddress, blockNumber);
+  // Get token balances
+  const poolTokenWrapper = vault.getPoolTokens(Bytes.fromHexString(poolId));
+  const addresses: Array<Address> = poolTokenWrapper.getTokens();
+  const balances: Array<BigInt> = poolTokenWrapper.getBalances();
+
+  // Get token weights
+  const poolToken = getBalancerPoolToken(vaultAddress, poolId, blockNumber);
+  const tokenWeights = poolToken.getNormalizedWeights();
+
+  // Get pair orientation
+  const baseTokenOrientation = getBaseTokenOrientation(addresses[0], addresses[1]);
+  if (baseTokenOrientation === PairTokenBaseOrientation.UNKNOWN) {
+    throw new Error(
+      "getUSDRateBalancer: Unsure how to deal with unknown token base orientation for Balancer pool " +
+        poolId,
+    );
+  }
+
+  const token0 = addresses[0];
+  const token1 = addresses[1];
+
+  const token0Decimals = getERC20Decimals(token0.toHexString(), blockNumber);
+  const token1Decimals = getERC20Decimals(token1.toHexString(), blockNumber);
+
+  const token0Reserves = toDecimal(balances[0], token0Decimals);
+  const token1Reserves = toDecimal(balances[1], token1Decimals);
+
+  const baseTokenUsdRate = getBaseTokenUSDRate(token0, token1, baseTokenOrientation, blockNumber);
+  log.debug("getUSDRateBalancer: baseTokenUsdRate for {} ({}) is {}", [
+    getContractName(contractAddress),
+    contractAddress,
+    baseTokenUsdRate.toString(),
+  ]);
+
+  const baseTokenBalance =
+    baseTokenOrientation === PairTokenBaseOrientation.TOKEN0 ? token0Reserves : token1Reserves;
+  const otherTokenBalance =
+    baseTokenOrientation === PairTokenBaseOrientation.TOKEN0 ? token1Reserves : token0Reserves;
+
+  return BigDecimal.fromString("1")
+    .minus(baseTokenUsdRate.times(baseTokenBalance))
+    .div(otherTokenBalance);
 }
 
 /**
