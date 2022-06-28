@@ -193,7 +193,7 @@ export const ERC20_VOLATILE_TOKENS = [
   ERC20_FXS,
   ERC20_KP3R,
   ERC20_LQTY,
-  // ERC20_PRIME, // Needs liquidity pool for price lookup
+  ERC20_PRIME,
   ERC20_SYN,
   ERC20_THOR,
   ERC20_TOKE,
@@ -277,6 +277,8 @@ export const POOL_BALANCER_OHM_DAI_WETH_ID =
   "0xc45d42f801105e861e86658648e3678ad7aa70f900010000000000000000011e"; // Pool ID, not a contract address
 export const POOL_BALANCER_WETH_FDT_ID =
   "0x2d344a84bac123660b021eebe4eb6f12ba25fe8600020000000000000000018a"; // Pool ID
+export const POOL_BALANCER_D2D_USDC_ID =
+  "0x27c9f71cc31464b906e0006d4fcbc8900f48f15f00020000000000000000010f";
 
 /**
  * Maps an ERC20 token with an array of liquidity pairs that can be used for price lookup.
@@ -324,6 +326,9 @@ LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_VL_V2, [
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_DAI, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI),
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI_V2),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_PRIME, [
+  new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_D2D_USDC_ID),
 ]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FXS, [
   new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FXS_ETH),
