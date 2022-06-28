@@ -1,8 +1,9 @@
-import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import {
+  BALANCER_VAULT,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_STABLE_TOKENS,
@@ -19,6 +20,7 @@ import {
 } from "./Constants";
 import { getERC20, getERC20Decimals } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
+import { getBalancerPoolToken, getBalancerVault } from "./LiquidityBalancer";
 import { PairHandlerTypes } from "./PairHandler";
 
 const BIG_DECIMAL_1E8 = BigDecimal.fromString("1e8");
@@ -413,6 +415,113 @@ export function getUSDRateUniswapV3(
 }
 
 /**
+ * Returns the USD rate for {contractAddress}, using the Balancer pool
+ * as a lookup method.
+ *
+ * The formula for determining the price is here: https://dev.balancer.fi/resources/pool-math/weighted-math#spot-price
+ *
+ * @param contractAddress
+ * @param vaultAddress
+ * @param poolId
+ * @param blockNumber
+ * @returns
+ */
+export function getUSDRateBalancer(
+  contractAddress: string,
+  vaultAddress: string,
+  poolId: string,
+  blockNumber: BigInt,
+): BigDecimal {
+  log.debug("getUSDRateBalancer: contract {}, poolId {}", [contractAddress, poolId]);
+
+  const vault = getBalancerVault(vaultAddress, blockNumber);
+
+  // Get token balances
+  if (vault.try_getPoolTokens(Bytes.fromHexString(poolId)).reverted) {
+    log.warning(
+      "getUSDRateBalancer: Balancer vault contract reverted calling getPoolTokens with pool id {} at block {}. Skipping",
+      [poolId, blockNumber.toString()],
+    );
+    return BigDecimal.zero();
+  }
+  const poolTokenWrapper = vault.getPoolTokens(Bytes.fromHexString(poolId));
+  const addresses: Array<Address> = poolTokenWrapper.getTokens();
+  const balances: Array<BigInt> = poolTokenWrapper.getBalances();
+
+  // Get token weights
+  const poolToken = getBalancerPoolToken(vaultAddress, poolId, blockNumber);
+  if (poolToken === null) {
+    log.warning(
+      "getUSDRateBalancer: Balancer pool token contract reverted with pool id {} at block {}. Skipping",
+      [poolId, blockNumber.toString()],
+    );
+    return BigDecimal.zero();
+  }
+  const tokenWeights = poolToken.getNormalizedWeights();
+
+  // Get pair orientation
+  const token0 = addresses[0];
+  const token1 = addresses[1];
+
+  log.debug("getUSDRateBalancer: determining pair orientation", []);
+  const baseTokenOrientation = getBaseTokenOrientation(token0, token1);
+  if (baseTokenOrientation === PairTokenBaseOrientation.UNKNOWN) {
+    throw new Error(
+      "getUSDRateBalancer: Unsure how to deal with unknown token base orientation for Balancer pool " +
+        poolId,
+    );
+  }
+  log.debug("getUSDRateBalancer: base token is {} ({})", [
+    baseTokenOrientation === PairTokenBaseOrientation.TOKEN0 ? "token0" : "token1",
+    baseTokenOrientation === PairTokenBaseOrientation.TOKEN0
+      ? getContractName(token0.toHexString())
+      : getContractName(token1.toHexString()),
+  ]);
+
+  const token0Decimals = getERC20Decimals(token0.toHexString(), blockNumber);
+  const token1Decimals = getERC20Decimals(token1.toHexString(), blockNumber);
+
+  const token0Reserves = toDecimal(balances[0], token0Decimals);
+  const token1Reserves = toDecimal(balances[1], token1Decimals);
+  // If the reserves are 0, then we can't find out the price
+  if (token0Reserves.equals(BigDecimal.zero()) || token1Reserves.equals(BigDecimal.zero())) {
+    log.debug("getUSDRateBalancer: reserves are 0. Skipping", []);
+    return BigDecimal.zero();
+  }
+
+  const token0Weight = toDecimal(tokenWeights[0], poolToken.decimals());
+  const token1Weight = toDecimal(tokenWeights[1], poolToken.decimals());
+  log.debug("getUSDRateBalancer: token0 weight {}, token1 weight {}", [
+    token0Weight.toString(),
+    token1Weight.toString(),
+  ]);
+
+  const baseTokenUsdRate = getBaseTokenUSDRate(token0, token1, baseTokenOrientation, blockNumber);
+  log.debug("getUSDRateBalancer: baseTokenUsdRate for {} ({}) is {}", [
+    getContractName(contractAddress),
+    contractAddress,
+    baseTokenUsdRate.toString(),
+  ]);
+
+  // Get the non-base token in terms of the base token (since we know the rate)
+  const numerator =
+    baseTokenOrientation === PairTokenBaseOrientation.TOKEN0
+      ? token0Reserves.div(token0Weight)
+      : token1Reserves.div(token1Weight);
+  const denominator =
+    baseTokenOrientation === PairTokenBaseOrientation.TOKEN0
+      ? token1Reserves.div(token1Weight)
+      : token0Reserves.div(token0Weight);
+  const rate = numerator.div(denominator).times(baseTokenUsdRate);
+  log.info("getUSDRateBalancer: numerator {}, denominator {}, USD rate {}", [
+    numerator.toString(),
+    denominator.toString(),
+    rate.toString(),
+  ]);
+  return rate;
+}
+
+/**
  * Determines the USD value of the given token.
  *
  * This is achieved using the prices in liquidity pool pairs.
@@ -431,33 +540,37 @@ export function getUSDRate(contractAddress: string, blockNumber: BigInt): BigDec
     contractAddress.toLowerCase() == ERC20_UST.toLowerCase() &&
     blockNumber.gt(BigInt.fromString(ERC20_UST_BLOCK_DEATH))
   ) {
-    log.debug("Returning $0 for UST after collapse", []);
+    log.debug("getUSDRate: Returning $0 for UST after collapse", []);
     return BigDecimal.fromString("0");
   }
 
   // Handle stablecoins
   // TODO add support for dynamic price lookup for stablecoins
   if (arrayIncludesLoose(ERC20_STABLE_TOKENS, contractAddress)) {
-    log.debug("Contract address {} is a stablecoin. Returning 1.", [contractAddress]);
+    log.debug("getUSDRate: Contract address {} is a stablecoin. Returning 1.", [contractAddress]);
     return BigDecimal.fromString("1");
   }
 
   // Handle OHM V1 and V2
   if (arrayIncludesLoose([ERC20_OHM_V1, ERC20_OHM_V2], contractAddress)) {
-    log.debug("Contract address {} is OHM. Returning OHM rate.", [contractAddress]);
+    log.debug("getUSDRate: Contract address {} is OHM. Returning OHM rate.", [contractAddress]);
     return getBaseOhmUsdRate(blockNumber);
   }
 
   // Handle native ETH
   if (contractAddress == NATIVE_ETH) {
-    log.debug("Contract address {} is native ETH. Returning wETH rate.", [contractAddress]);
+    log.debug("getUSDRate: Contract address {} is native ETH. Returning wETH rate.", [
+      contractAddress,
+    ]);
     return getBaseEthUsdRate();
   }
 
   // Look for the pair
   const pairHandler = getPairHandler(contractAddress);
   if (!pairHandler) {
-    throw new Error("Unable to find liquidity pool handler for contract: " + contractAddress);
+    throw new Error(
+      "getUSDRate: Unable to find liquidity pool handler for contract: " + contractAddress,
+    );
   }
 
   if (pairHandler.getType() === PairHandlerTypes.UniswapV2) {
@@ -468,8 +581,13 @@ export function getUSDRate(contractAddress: string, blockNumber: BigInt): BigDec
     return getUSDRateUniswapV3(contractAddress, pairHandler.getContract(), blockNumber);
   }
 
+  const balancerPoolId = pairHandler.getPool();
+  if (pairHandler.getType() === PairHandlerTypes.Balancer && balancerPoolId !== null) {
+    return getUSDRateBalancer(contractAddress, BALANCER_VAULT, balancerPoolId, blockNumber);
+  }
+
   throw new Error(
-    "Unsupported liquidity pool handler type (" +
+    "getUSDRate: Unsupported liquidity pool handler type (" +
       pairHandler.getType().toString() +
       ") for contract: " +
       contractAddress,

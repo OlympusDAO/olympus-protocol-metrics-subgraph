@@ -153,6 +153,7 @@ export const ERC20_CVX_OHMETH = "0x9bb0daf4361e1b84f5a44914595c46f07e9d12a4".toL
 export const ERC20_CVX_VL_V1 = "0xd18140b4b819b895a3dba5442f959fa44994af50".toLowerCase();
 export const ERC20_CVX_VL_V1_BLOCK = "13153663";
 export const ERC20_CVX_VL_V2 = "0x72a19342e8F1838460eBFCCEf09F6585e32db86E".toLowerCase();
+export const ERC20_FDT = "0xEd1480d12bE41d92F36f5f7bDd88212E381A3677".toLowerCase();
 export const ERC20_FOX = "0xc770eefad204b5180df6a14ee197d99d808ee52d".toLowerCase();
 export const ERC20_FPIS = "0xc2544a32872a91f4a553b404c6950e89de901fdb".toLowerCase();
 export const ERC20_FPIS_BLOCK = "14482720";
@@ -172,6 +173,7 @@ export const ERC20_WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2".toLowerCa
 export const ERC20_XSUSHI = "0x8798249c2e607446efb7ad49ec89dd1865ff4272".toLowerCase();
 export const ERC20_BALANCER_OHM_DAI_WETH =
   "0xc45D42f801105e861e86658648e3678aD7aa70f9".toLowerCase(); // Balancer pool token
+export const ERC20_BALANCER_WETH_FDT = "0x2D344A84BaC123660b021EEbE4eB6F12ba25fe86".toLowerCase();
 export const NATIVE_ETH = "-999999";
 
 export const ERC20_VOLATILE_TOKENS = [
@@ -184,13 +186,14 @@ export const ERC20_VOLATILE_TOKENS = [
   ERC20_CVX_VL_V1,
   ERC20_CVX_VL_V2,
   ERC20_CVX,
+  ERC20_FDT,
   ERC20_FOX,
   ERC20_FPIS,
   ERC20_FXS_VE,
   ERC20_FXS,
   ERC20_KP3R,
   ERC20_LQTY,
-  // ERC20_PRIME, // Needs liquidity pool for price lookup
+  ERC20_PRIME,
   ERC20_SYN,
   ERC20_THOR,
   ERC20_TOKE,
@@ -272,6 +275,10 @@ export const PAIR_UNISWAP_V3_FXS_ETH_BLOCK = "13509100";
 export const PAIR_UNISWAP_V3_LQTY_LUSD = "0xd251dff33e31bb98d5587e5b1004ff01a5a41289".toLowerCase();
 export const POOL_BALANCER_OHM_DAI_WETH_ID =
   "0xc45d42f801105e861e86658648e3678ad7aa70f900010000000000000000011e"; // Pool ID, not a contract address
+export const POOL_BALANCER_WETH_FDT_ID =
+  "0x2d344a84bac123660b021eebe4eb6f12ba25fe8600020000000000000000018a"; // Pool ID
+export const POOL_BALANCER_D2D_USDC_ID =
+  "0x27c9f71cc31464b906e0006d4fcbc8900f48f15f00020000000000000000010f";
 
 /**
  * Maps an ERC20 token with an array of liquidity pairs that can be used for price lookup.
@@ -298,6 +305,9 @@ LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_CRV, [
 // LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_OHMETH, [
 //   new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_OHM_ETH),
 // ]); // Priced the same as the non-staked version, ERC20_CRV_OHMETH
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FDT, [
+  new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_WETH_FDT_ID),
+]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FOX, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_FOX_ETH),
 ]);
@@ -316,6 +326,9 @@ LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_VL_V2, [
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_DAI, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI),
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI_V2),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_PRIME, [
+  new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_D2D_USDC_ID),
 ]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FXS, [
   new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FXS_ETH),
@@ -395,6 +408,7 @@ export const getPairHandlers = (contractAddress: string): PairHandler[] => {
  */
 export const LIQUIDITY_OWNED = [
   new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_OHM_DAI_WETH_ID),
+  new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_WETH_FDT_ID),
   new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_OHM_ETH),
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI_V2),
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI),
@@ -413,6 +427,7 @@ LIQUIDITY_PAIR_TOKENS.set(PAIR_UNISWAP_V2_OHM_ETH, [ERC20_WETH, ERC20_OHM_V1]);
 LIQUIDITY_PAIR_TOKENS.set(PAIR_UNISWAP_V2_OHM_LUSD_V2, [ERC20_LUSD, ERC20_OHM_V2]);
 LIQUIDITY_PAIR_TOKENS.set(PAIR_UNISWAP_V2_OHM_LUSD, [ERC20_LUSD, ERC20_OHM_V1]);
 LIQUIDITY_PAIR_TOKENS.set(POOL_BALANCER_OHM_DAI_WETH_ID, [ERC20_WETH, ERC20_OHM_V2, ERC20_DAI]);
+LIQUIDITY_PAIR_TOKENS.set(POOL_BALANCER_WETH_FDT_ID, [ERC20_WETH, ERC20_FDT]);
 
 const getLiquidityPairTokens = (pairAddress: string): string[] => {
   const pairAddressLower = pairAddress.toLowerCase();
@@ -598,6 +613,7 @@ CONTRACT_NAME_MAP.set(DISTRIBUTOR_CONTRACT, "Distributor");
 CONTRACT_NAME_MAP.set(ERC20_ADAI, "aDAI");
 CONTRACT_NAME_MAP.set(ERC20_ALCX, "ALCX");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_DAI_WETH, "Balancer OHM-DAI-WETH Pool");
+CONTRACT_NAME_MAP.set(ERC20_BALANCER_WETH_FDT, "Balancer WETH-FDT Pool");
 CONTRACT_NAME_MAP.set(ERC20_CRV_3POOL, "Curve 3Pool");
 CONTRACT_NAME_MAP.set(ERC20_CRV_OHMETH, "Curve OHM-ETH");
 CONTRACT_NAME_MAP.set(ERC20_CRV, "CRV");
@@ -609,6 +625,7 @@ CONTRACT_NAME_MAP.set(ERC20_CVX_VL_V1, "vlCVX V1");
 CONTRACT_NAME_MAP.set(ERC20_CVX_VL_V2, "vlCVX V2");
 CONTRACT_NAME_MAP.set(ERC20_CVX, "CVX");
 CONTRACT_NAME_MAP.set(ERC20_DAI, "DAI");
+CONTRACT_NAME_MAP.set(ERC20_FDT, "FDT");
 CONTRACT_NAME_MAP.set(ERC20_FEI, "FEI");
 CONTRACT_NAME_MAP.set(ERC20_FOX, "FOX");
 CONTRACT_NAME_MAP.set(ERC20_FPIS, "FPIS");
@@ -669,6 +686,7 @@ CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_3CRV_USD, "Uniswap V3 3CRV-USDC Liquidity 
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_FPIS_FRAX, "Uniswap V3 FPIS-FRAX Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_FXS_ETH, "Uniswap V3 FXS-ETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_OHM_DAI_WETH_ID, "Balancer OHM-DAI-WETH Pool");
+CONTRACT_NAME_MAP.set(POOL_BALANCER_WETH_FDT_ID, "Balancer WETH-FDT Pool");
 CONTRACT_NAME_MAP.set(RARI_ALLOCATOR, "Rari Allocator");
 CONTRACT_NAME_MAP.set(STABILITY_POOL, "Liquity Stability Pool");
 CONTRACT_NAME_MAP.set(STAKING_CONTRACT_V1, "Staking V1");

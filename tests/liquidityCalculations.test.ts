@@ -3,7 +3,6 @@ import { assert, describe, test } from "matchstick-as/assembly/index";
 
 import { TokenRecord } from "../generated/schema";
 import {
-  BALANCER_VAULT,
   DAO_WALLET,
   ERC20_BALANCER_OHM_DAI_WETH,
   ERC20_CRV_OHMETH,
@@ -13,14 +12,13 @@ import {
   ERC20_WETH,
   PAIR_CURVE_OHM_ETH,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
-  POOL_BALANCER_OHM_DAI_WETH_ID,
   TREASURY_ADDRESS_V3,
   WALLET_ADDRESSES,
 } from "../src/utils/Constants";
 import { toBigInt } from "../src/utils/Decimals";
 import { getOwnedLiquidityPoolValue } from "../src/utils/LiquidityCalculations";
 import { mockConvexStakedBalanceZero } from "./contractHelper.test";
-import { mockBalancerVault, mockBalanceVaultZero } from "./liquidityBalancer.test";
+import { mockBalanceVaultOhmDaiEth, mockBalanceVaultZero } from "./liquidityBalancer.test";
 import {
   ERC20_STANDARD_DECIMALS,
   ETH_USD_RESERVE_BLOCK,
@@ -131,22 +129,7 @@ describe("getLiquidityPoolValue", () => {
     mockCurvePairZero();
 
     // Mock pool
-    mockBalancerVault(
-      BALANCER_VAULT,
-      POOL_BALANCER_OHM_DAI_WETH_ID,
-      ERC20_BALANCER_OHM_DAI_WETH,
-      ERC20_STANDARD_DECIMALS,
-      BigDecimal.fromString("1"),
-      ERC20_OHM_V2,
-      ERC20_DAI,
-      ERC20_WETH,
-      BigDecimal.fromString("1"),
-      BigDecimal.fromString("1"),
-      BigDecimal.fromString("1"),
-      OHM_V2_DECIMALS,
-      ERC20_STANDARD_DECIMALS,
-      ERC20_STANDARD_DECIMALS,
-    );
+    mockBalanceVaultOhmDaiEth();
 
     // Mock wallet balance
     const expectedWalletBalance = BigDecimal.fromString("2");
