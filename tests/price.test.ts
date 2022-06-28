@@ -441,6 +441,17 @@ describe("get USD rate", () => {
     assert.stringEquals(calculatedRate.toString(), usdRate.toString());
   });
 
+  test("FDT (Balancer) handles empty reserves", () => {
+    mockEthUsdRate();
+
+    // Mock the balancer
+    mockBalanceVaultWethFdt(BigDecimal.zero(), BigDecimal.zero());
+
+    const usdRate = getUSDRate(ERC20_FDT, OHM_USD_RESERVE_BLOCK);
+
+    assert.stringEquals("0", usdRate.toString());
+  });
+
   test("FDT (Balancer) handles vault contract revert", () => {
     mockEthUsdRate();
 

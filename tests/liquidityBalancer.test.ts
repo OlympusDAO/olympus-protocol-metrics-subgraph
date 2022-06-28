@@ -207,7 +207,18 @@ export function mockBalanceVaultOhmDaiEth(
   );
 }
 
-export function mockBalanceVaultWethFdt(): void {
+const WETH_FDT_BALANCE_WETH = toDecimal(
+  BigInt.fromString("55282519432649791614"),
+  ERC20_STANDARD_DECIMALS,
+);
+const WETH_FDT_BALANCE_FDT = toDecimal(
+  BigInt.fromString("17066065377014702525776132"),
+  ERC20_STANDARD_DECIMALS,
+);
+export function mockBalanceVaultWethFdt(
+  wethBalance: BigDecimal = WETH_FDT_BALANCE_WETH,
+  fdtBalance: BigDecimal = WETH_FDT_BALANCE_FDT,
+): void {
   mockBalancerVault(
     BALANCER_VAULT,
     POOL_BALANCER_WETH_FDT_ID,
@@ -217,8 +228,8 @@ export function mockBalanceVaultWethFdt(): void {
     ERC20_WETH,
     ERC20_FDT,
     null,
-    toDecimal(BigInt.fromString("55282519432649791614"), ERC20_STANDARD_DECIMALS),
-    toDecimal(BigInt.fromString("17066065377014702525776132"), ERC20_STANDARD_DECIMALS),
+    wethBalance,
+    fdtBalance,
     null,
     ERC20_STANDARD_DECIMALS,
     ERC20_STANDARD_DECIMALS,

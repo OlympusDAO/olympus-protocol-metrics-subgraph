@@ -483,9 +483,18 @@ export function getUSDRateBalancer(
 
   const token0Reserves = toDecimal(balances[0], token0Decimals);
   const token1Reserves = toDecimal(balances[1], token1Decimals);
+  // If the reserves are 0, then we can't find out the price
+  if (token0Reserves.equals(BigDecimal.zero()) || token1Reserves.equals(BigDecimal.zero())) {
+    log.debug("getUSDRateBalancer: reserves are 0. Skipping", []);
+    return BigDecimal.zero();
+  }
 
   const token0Weight = toDecimal(tokenWeights[0], poolToken.decimals());
   const token1Weight = toDecimal(tokenWeights[1], poolToken.decimals());
+  log.debug("getUSDRateBalancer: token0 weight {}, token1 weight {}", [
+    token0Weight.toString(),
+    token1Weight.toString(),
+  ]);
 
   const baseTokenUsdRate = getBaseTokenUSDRate(token0, token1, baseTokenOrientation, blockNumber);
   log.debug("getUSDRateBalancer: baseTokenUsdRate for {} ({}) is {}", [
