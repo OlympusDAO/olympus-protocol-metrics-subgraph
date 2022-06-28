@@ -1,13 +1,18 @@
-import {  DepositCall  } from '../generated/OHMDAIBondV3/OHMDAIBondV3'
-import { toDecimal } from "./utils/Decimals"
-import { OHMDAILPBOND_TOKEN, SUSHI_OHMDAI_PAIR } from './utils/Constants'
-import { loadOrCreateToken } from './utils/Tokens'
-import { createDailyBondRecord } from './utils/DailyBond'
-import { getPairUSD } from './utils/Price'
+import { DepositCall } from "../generated/OHMDAIBondV3/OHMDAIBondV3";
+import { OHMDAILPBOND_TOKEN, PAIR_UNISWAP_V2_OHM_DAI } from "./utils/Constants";
+import { createDailyBondRecord } from "./bonds/DailyBond";
+import { toDecimal } from "./utils/Decimals";
+import { getOhmUSDPairValue } from "./utils/LiquidityUniswapV2";
+import { loadOrCreateToken } from "./utils/Tokens";
 
 export function handleDeposit(call: DepositCall): void {
-  let token = loadOrCreateToken(OHMDAILPBOND_TOKEN)
-  let amount = toDecimal(call.inputs._amount, 18)
+  const token = loadOrCreateToken(OHMDAILPBOND_TOKEN);
+  const amount = toDecimal(call.inputs._amount, 18);
 
-  createDailyBondRecord(call.block.timestamp, token, amount, getPairUSD(call.inputs._amount, SUSHI_OHMDAI_PAIR, call.block.number))
+  createDailyBondRecord(
+    call.block.timestamp,
+    token,
+    amount,
+    getOhmUSDPairValue(call.inputs._amount, PAIR_UNISWAP_V2_OHM_DAI, call.block.number),
+  );
 }

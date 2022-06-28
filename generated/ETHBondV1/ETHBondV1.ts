@@ -196,6 +196,26 @@ export class ETHBondV1__adjustmentResult {
     map.set("value4", ethereum.Value.fromUnsignedBigInt(this.value4));
     return map;
   }
+
+  getAdd(): boolean {
+    return this.value0;
+  }
+
+  getRate(): BigInt {
+    return this.value1;
+  }
+
+  getTarget(): BigInt {
+    return this.value2;
+  }
+
+  getBuffer(): BigInt {
+    return this.value3;
+  }
+
+  getLastBlock(): BigInt {
+    return this.value4;
+  }
 }
 
 export class ETHBondV1__bondInfoResult {
@@ -218,6 +238,22 @@ export class ETHBondV1__bondInfoResult {
     map.set("value2", ethereum.Value.fromUnsignedBigInt(this.value2));
     map.set("value3", ethereum.Value.fromUnsignedBigInt(this.value3));
     return map;
+  }
+
+  getPayout(): BigInt {
+    return this.value0;
+  }
+
+  getVesting(): BigInt {
+    return this.value1;
+  }
+
+  getLastBlock(): BigInt {
+    return this.value2;
+  }
+
+  getPricePaid(): BigInt {
+    return this.value3;
   }
 }
 
@@ -250,6 +286,26 @@ export class ETHBondV1__termsResult {
     map.set("value3", ethereum.Value.fromUnsignedBigInt(this.value3));
     map.set("value4", ethereum.Value.fromUnsignedBigInt(this.value4));
     return map;
+  }
+
+  getControlVariable(): BigInt {
+    return this.value0;
+  }
+
+  getVestingTerm(): BigInt {
+    return this.value1;
+  }
+
+  getMinimumPrice(): BigInt {
+    return this.value2;
+  }
+
+  getMaxPayout(): BigInt {
+    return this.value3;
+  }
+
+  getMaxDebt(): BigInt {
+    return this.value4;
   }
 }
 

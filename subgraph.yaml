@@ -1,4 +1,4 @@
-specVersion: 0.0.2
+specVersion: 0.0.4
 description: Olympus Protocol Metrics Subgraph
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
@@ -9,78 +9,24 @@ dataSources:
     name: sOlympusERC20V1
     network: mainnet
     source:
-      address: '0x31932e6e45012476ba3a3a4953cba62aee77fbbe'
+      address: "0x31932e6e45012476ba3a3a4953cba62aee77fbbe"
       abi: sOlympusERC20
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - sOlympusERC20V1
       abis:
         - name: OlympusStakingV1
           file: ./abis/OlympusStakingV1.json
-        - name: OlympusStakingV2
-          file: ./abis/OlympusStakingV2.json
-        - name: OlympusStakingV3
-          file: ./abis/OlympusStakingV3.json
         - name: sOlympusERC20
           file: ./abis/sOlympusERC20.json
-        - name: sOlympusERC20V2
-          file: ./abis/sOlympusERC20V2.json
-        - name: sOlympusERC20V3
-          file: ./abis/sOlympusERC20V3.json
         - name: OlympusERC20
           file: ./abis/OlympusERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
-        - name: ConvexAllocator
-          file: ./abis/ConvexAllocator.json
-        - name: CirculatingSupply
-          file: ./abis/CirculatingSupply.json
-        - name: BondingCalculator
-          file: ./abis/BondingCalculator.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: MasterChef
-          file: ./abis/MasterChef.json
-        - name: DAIBondV1
-          file: ./abis/DAIBondV1.json
-        - name: DAIBondV2
-          file: ./abis/DAIBondV2.json
-        - name: DAIBondV3
-          file: ./abis/DAIBondV3.json
-        - name: OHMDAIBondV1
-          file: ./abis/OHMDAIBondV1.json
-        - name: OHMDAIBondV2
-          file: ./abis/OHMDAIBondV2.json
-        - name: OHMDAIBondV3
-          file: ./abis/OHMDAIBondV3.json
-        - name: OHMDAIBondV4
-          file: ./abis/OHMDAIBondV4.json
-        - name: OHMFRAXBondV1
-          file: ./abis/OHMFRAXBondV1.json
-        - name: OHMFRAXBondV2
-          file: ./abis/OHMFRAXBondV2.json
-        - name: FRAXBondV1
-          file: ./abis/FRAXBondV1.json
-        - name: ETHBondV1
-          file: ./abis/ETHBondV1.json
-        - name: LUSDBondV1
-          file: ./abis/LUSDBondV1.json
-        - name: OHMLUSDBondV1
-          file: ./abis/OHMLUSDBondV1.json
-        - name: VeFXS
-          file: ./abis/VeFXS.json
-        - name: Distributor
-          file: ./abis/Distributor.json
-        - name: StabilityPool
-          file: ./abis/StabilityPool.json
-        - name: RariAllocator
-          file: ./abis/RariAllocator.json
       callHandlers:
         - function: rebase(uint256)
           handler: rebaseFunction
@@ -89,78 +35,24 @@ dataSources:
     name: sOlympusERC20V2
     network: mainnet
     source:
-      address: '0x04f2694c8fcee23e8fd0dfea1d4f5bb8c352111f'
+      address: "0x04f2694c8fcee23e8fd0dfea1d4f5bb8c352111f"
       abi: sOlympusERC20V2
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - sOlympusERC20V2
       abis:
-        - name: OlympusStakingV1
-          file: ./abis/OlympusStakingV1.json
         - name: OlympusStakingV2
           file: ./abis/OlympusStakingV2.json
-        - name: OlympusStakingV3
-          file: ./abis/OlympusStakingV3.json
-        - name: sOlympusERC20
-          file: ./abis/sOlympusERC20.json
         - name: sOlympusERC20V2
           file: ./abis/sOlympusERC20V2.json
-        - name: sOlympusERC20V3
-          file: ./abis/sOlympusERC20V3.json
         - name: OlympusERC20
           file: ./abis/OlympusERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
-        - name: ConvexAllocator
-          file: ./abis/ConvexAllocator.json
-        - name: CirculatingSupply
-          file: ./abis/CirculatingSupply.json
-        - name: BondingCalculator
-          file: ./abis/BondingCalculator.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: MasterChef
-          file: ./abis/MasterChef.json
-        - name: DAIBondV1
-          file: ./abis/DAIBondV1.json
-        - name: DAIBondV2
-          file: ./abis/DAIBondV2.json
-        - name: DAIBondV3
-          file: ./abis/DAIBondV3.json
-        - name: OHMDAIBondV1
-          file: ./abis/OHMDAIBondV1.json
-        - name: OHMDAIBondV2
-          file: ./abis/OHMDAIBondV2.json
-        - name: OHMDAIBondV3
-          file: ./abis/OHMDAIBondV3.json
-        - name: OHMDAIBondV4
-          file: ./abis/OHMDAIBondV4.json
-        - name: OHMFRAXBondV1
-          file: ./abis/OHMFRAXBondV1.json
-        - name: OHMFRAXBondV2
-          file: ./abis/OHMFRAXBondV2.json
-        - name: FRAXBondV1
-          file: ./abis/FRAXBondV1.json
-        - name: ETHBondV1
-          file: ./abis/ETHBondV1.json
-        - name: LUSDBondV1
-          file: ./abis/LUSDBondV1.json
-        - name: OHMLUSDBondV1
-          file: ./abis/OHMLUSDBondV1.json
-        - name: VeFXS
-          file: ./abis/VeFXS.json
-        - name: Distributor
-          file: ./abis/Distributor.json
-        - name: StabilityPool
-          file: ./abis/StabilityPool.json
-        - name: RariAllocator
-          file: ./abis/RariAllocator.json
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
@@ -169,78 +61,24 @@ dataSources:
     name: sOlympusERC20V3
     network: mainnet
     source:
-      address: '0x04906695D6D12CF5459975d7C3C03356E4Ccd460'
+      address: "0x04906695D6D12CF5459975d7C3C03356E4Ccd460"
       abi: sOlympusERC20V3
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - sOlympusERC20V3
       abis:
-        - name: OlympusStakingV1
-          file: ./abis/OlympusStakingV1.json
-        - name: OlympusStakingV2
-          file: ./abis/OlympusStakingV2.json
         - name: OlympusStakingV3
           file: ./abis/OlympusStakingV3.json
-        - name: sOlympusERC20
-          file: ./abis/sOlympusERC20.json
-        - name: sOlympusERC20V2
-          file: ./abis/sOlympusERC20V2.json
         - name: sOlympusERC20V3
           file: ./abis/sOlympusERC20V3.json
         - name: OlympusERC20
           file: ./abis/OlympusERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
-        - name: ConvexAllocator
-          file: ./abis/ConvexAllocator.json
-        - name: CirculatingSupply
-          file: ./abis/CirculatingSupply.json
-        - name: BondingCalculator
-          file: ./abis/BondingCalculator.json
-        - name: ERC20
-          file: ./abis/ERC20.json
-        - name: MasterChef
-          file: ./abis/MasterChef.json
-        - name: DAIBondV1
-          file: ./abis/DAIBondV1.json
-        - name: DAIBondV2
-          file: ./abis/DAIBondV2.json
-        - name: DAIBondV3
-          file: ./abis/DAIBondV3.json
-        - name: OHMDAIBondV1
-          file: ./abis/OHMDAIBondV1.json
-        - name: OHMDAIBondV2
-          file: ./abis/OHMDAIBondV2.json
-        - name: OHMDAIBondV3
-          file: ./abis/OHMDAIBondV3.json
-        - name: OHMDAIBondV4
-          file: ./abis/OHMDAIBondV4.json
-        - name: OHMFRAXBondV1
-          file: ./abis/OHMFRAXBondV1.json
-        - name: OHMFRAXBondV2
-          file: ./abis/OHMFRAXBondV2.json
-        - name: FRAXBondV1
-          file: ./abis/FRAXBondV1.json
-        - name: ETHBondV1
-          file: ./abis/ETHBondV1.json
-        - name: LUSDBondV1
-          file: ./abis/LUSDBondV1.json
-        - name: OHMLUSDBondV1
-          file: ./abis/OHMLUSDBondV1.json
-        - name: VeFXS
-          file: ./abis/VeFXS.json
-        - name: Distributor
-          file: ./abis/Distributor.json
-        - name: StabilityPool
-          file: ./abis/StabilityPool.json
-        - name: RariAllocator
-          file: ./abis/RariAllocator.json
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
@@ -250,12 +88,12 @@ dataSources:
     name: DAIBondV1
     network: mainnet
     source:
-      address: '0xa64ed1b66cb2838ef2a198d8345c0ce6967a2a3c'
+      address: "0xa64ed1b66cb2838ef2a198d8345c0ce6967a2a3c"
       abi: DAIBondV1
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - DAIBondDeposit
@@ -271,12 +109,12 @@ dataSources:
     name: DAIBondV2
     network: mainnet
     source:
-      address: '0xd03056323b7a63e2095ae97fa1ad92e4820ff045'
+      address: "0xd03056323b7a63e2095ae97fa1ad92e4820ff045"
       abi: DAIBondV2
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - DAIBondDeposit
@@ -287,17 +125,17 @@ dataSources:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
       file: ./src/DAIBondV2.ts
-  #DAI Bond Contract V2
+  #DAI Bond Contract V3
   - kind: ethereum/contract
     name: DAIBondV3
     network: mainnet
     source:
-      address: '0x575409F8d77c12B05feD8B455815f0e54797381c'
+      address: "0x575409F8d77c12B05feD8B455815f0e54797381c"
       abi: DAIBondV3
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - DAIBondDeposit
@@ -313,45 +151,41 @@ dataSources:
     name: OHMDAIBondV1
     network: mainnet
     source:
-      address: '0xd27001d1aAEd5f002C722Ad729de88a91239fF29'
+      address: "0xd27001d1aAEd5f002C722Ad729de88a91239fF29"
       abi: OHMDAIBondV1
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - OHMDAIBondV1
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: OHMDAIBondV1
           file: ./abis/OHMDAIBondV1.json
       callHandlers:
         - function: depositBondPrinciple(uint256)
           handler: handleDeposit
-      file: ./src/OHMDAIBondV2.ts
+      file: ./src/OHMDAIBondV1.ts
   #OHM DAI LP Bond Contract V2
   - kind: ethereum/contract
     name: OHMDAIBondV2
     network: mainnet
     source:
-      address: '0x13e8484a86327f5882d1340ed0d7643a29548536'
+      address: "0x13e8484a86327f5882d1340ed0d7643a29548536"
       abi: OHMDAIBondV2
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - OHMDAIBondV2
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: OHMDAIBondV2
           file: ./abis/OHMDAIBondV2.json
       callHandlers:
@@ -363,20 +197,18 @@ dataSources:
     name: OHMDAIBondV3
     network: mainnet
     source:
-      address: '0x996668c46fc0b764afda88d83eb58afc933a1626'
+      address: "0x996668c46fc0b764afda88d83eb58afc933a1626"
       abi: OHMDAIBondV3
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - OHMDAIBondV3
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: OHMDAIBondV3
           file: ./abis/OHMDAIBondV3.json
       callHandlers:
@@ -388,20 +220,18 @@ dataSources:
     name: OHMDAIBondV4
     network: mainnet
     source:
-      address: '0x956c43998316b6a2F21f89a1539f73fB5B78c151'
+      address: "0x956c43998316b6a2F21f89a1539f73fB5B78c151"
       abi: OHMDAIBondV4
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - OHMDAIBondV4
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: OHMDAIBondV4
           file: ./abis/OHMDAIBondV4.json
       callHandlers:
@@ -413,20 +243,18 @@ dataSources:
     name: OHMFRAXBondV1
     network: mainnet
     source:
-      address: '0x539b6c906244ac34e348bbe77885cdfa994a3776'
+      address: "0x539b6c906244ac34e348bbe77885cdfa994a3776"
       abi: OHMFRAXBondV1
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - OHMFRAXBondV1
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: OHMFRAXBondV1
           file: ./abis/OHMFRAXBondV1.json
       callHandlers:
@@ -438,20 +266,18 @@ dataSources:
     name: OHMFRAXBondV2
     network: mainnet
     source:
-      address: '0xc20cfff07076858a7e642e396180ec390e5a02f7'
+      address: "0xc20cfff07076858a7e642e396180ec390e5a02f7"
       abi: OHMFRAXBondV2
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - OHMFRAXBondV2
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: OHMFRAXBondV2
           file: ./abis/OHMFRAXBondV2.json
       callHandlers:
@@ -463,12 +289,12 @@ dataSources:
     name: FRAXBondV1
     network: mainnet
     source:
-      address: '0x8510c8c2B6891E04864fa196693D44E6B6ec2514'
+      address: "0x8510c8c2B6891E04864fa196693D44E6B6ec2514"
       abi: FRAXBondV1
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - FRAXBondV1
@@ -484,20 +310,18 @@ dataSources:
     name: ETHBondV1
     network: mainnet
     source:
-      address: '0xe6295201cd1ff13ced5f063a5421c39a1d236f1c'
+      address: "0xe6295201cd1ff13ced5f063a5421c39a1d236f1c"
       abi: ETHBondV1
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - ETHBondV1
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: ETHBondV1
           file: ./abis/ETHBondV1.json
       callHandlers:
@@ -509,12 +333,12 @@ dataSources:
     name: LUSDBondV1
     network: mainnet
     source:
-      address: '0x10c0f93f64e3c8d0a1b0f4b87d6155fd9e89d08d'
+      address: "0x10c0f93f64e3c8d0a1b0f4b87d6155fd9e89d08d"
       abi: LUSDBondV1
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - LUSDBondV1
@@ -530,20 +354,18 @@ dataSources:
     name: OHMLUSDBondV1
     network: mainnet
     source:
-      address: '0xfb1776299e7804dd8016303df9c07a65c80f67b6'
+      address: "0xfb1776299e7804dd8016303df9c07a65c80f67b6"
       abi: OHMLUSDBondV1
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - OHMLUSDBondV1
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: OHMLUSDBondV1
           file: ./abis/LUSDBondV1.json
       callHandlers:
@@ -555,37 +377,35 @@ dataSources:
     name: OHMETHBondV1
     network: mainnet
     source:
-      address: '0xB6C9dc843dEc44Aa305217c2BbC58B44438B6E16'
+      address: "0xB6C9dc843dEc44Aa305217c2BbC58B44438B6E16"
       abi: OHMETHBondV1
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - OHMETHBondV1
       abis:
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
-        - name: UniswapV3Pair
-          file: ./abis/UniswapV3Pair.json
         - name: OHMETHBondV1
           file: ./abis/OHMETHBondV1.json
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
       file: ./src/OHMETHBondV1.ts
-  # Start syncing protocol metrics every 10 blocks when we are close to present
+  # TODO Start syncing protocol metrics every 10 blocks when we are close to present
   - kind: ethereum/contract
     name: ProtocolMetrics
     network: mainnet
     source:
-      address: '0xB63cac384247597756545b500253ff8E607a8020'
+      address: "0xB63cac384247597756545b500253ff8E607a8020"
       abi: OlympusStakingV3
-      startBlock: 14200000
+      startBlock: 14000000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.4
+      apiVersion: 0.0.5
       language: wasm/assemblyscript
       entities:
         - ProtocolMetrics
@@ -612,8 +432,6 @@ dataSources:
           file: ./abis/ConvexAllocator.json
         - name: CirculatingSupply
           file: ./abis/CirculatingSupply.json
-        - name: BondingCalculator
-          file: ./abis/BondingCalculator.json
         - name: ERC20
           file: ./abis/ERC20.json
         - name: MasterChef
@@ -648,10 +466,20 @@ dataSources:
           file: ./abis/VeFXS.json
         - name: Distributor
           file: ./abis/Distributor.json
-        - name: StabilityPool
-          file: ./abis/StabilityPool.json
         - name: RariAllocator
           file: ./abis/RariAllocator.json
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
+        - name: ConvexBaseRewardPool
+          file: ./abis/ConvexBaseRewardPool.json
+        - name: CurvePool
+          file: ./abis/CurvePool.json
+        - name: TokeAllocator
+          file: ./abis/TokeAllocator.json
+        - name: LUSDAllocatorV2
+          file: ./abis/LUSDAllocatorV2.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
       callHandlers:
         - function: stake(address,uint256,bool,bool)
           handler: handleMetrics

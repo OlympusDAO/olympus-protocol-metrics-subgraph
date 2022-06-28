@@ -1,12 +1,12 @@
-import {  DepositCall, RedeemCall  } from '../generated/LUSDBondV1/LUSDBondV1'
-import { toDecimal } from "./utils/Decimals"
-import { LUSDBOND_TOKEN } from './utils/Constants'
-import { loadOrCreateToken } from './utils/Tokens'
-import { createDailyBondRecord } from './utils/DailyBond'
+import { DepositCall } from "../generated/LUSDBondV1/LUSDBondV1";
+import { LUSDBOND_TOKEN } from "./utils/Constants";
+import { createDailyBondRecord } from "./bonds/DailyBond";
+import { toDecimal } from "./utils/Decimals";
+import { loadOrCreateToken } from "./utils/Tokens";
 
 export function handleDeposit(call: DepositCall): void {
-  let token = loadOrCreateToken(LUSDBOND_TOKEN)
-  let amount = toDecimal(call.inputs._amount, 18)
+  const token = loadOrCreateToken(LUSDBOND_TOKEN);
+  const amount = toDecimal(call.inputs._amount, 18);
 
-  createDailyBondRecord(call.block.timestamp, token, amount, amount)
+  createDailyBondRecord(call.block.timestamp, token, amount, amount);
 }

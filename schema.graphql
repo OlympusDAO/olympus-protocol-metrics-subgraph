@@ -29,34 +29,72 @@ type Token @entity {
 
 type ProtocolMetric @entity {
   id: ID!
+  block: BigInt!
   timestamp: BigInt!
+  timestampISO8901: String!
   ohmCirculatingSupply: BigDecimal!
+  ohmCirculatingSupplyBreakdown: TokenRecords!
+  ohmFloatingSupply: BigDecimal!
+  ohmFloatingSupplyBreakdown: TokenRecords!
   sOhmCirculatingSupply: BigDecimal!
   totalSupply: BigDecimal!
   ohmPrice: BigDecimal!
   marketCap: BigDecimal!
   totalValueLocked: BigDecimal!
   treasuryRiskFreeValue: BigDecimal!
+  treasuryRiskFreeValueComponents: TokenRecords!
+  treasuryStableValue: BigDecimal!
+  treasuryStableValueComponents: TokenRecords!
+  treasuryVolatileValue: BigDecimal!
+  treasuryVolatileValueComponents: TokenRecords!
   treasuryMarketValue: BigDecimal!
+  treasuryMarketValueComponents: TokenRecords!
   nextEpochRebase: BigDecimal!
   nextDistributedOhm: BigDecimal!
   treasuryDaiRiskFreeValue: BigDecimal!
+  treasuryDaiRiskFreeValueComponents: TokenRecords!
   treasuryFraxRiskFreeValue: BigDecimal!
+  treasuryFraxRiskFreeValueComponents: TokenRecords!
   treasuryLusdRiskFreeValue: BigDecimal!
+  treasuryLusdRiskFreeValueComponents: TokenRecords!
+  treasuryFeiRiskFreeValue: BigDecimal!
+  treasuryFeiRiskFreeValueComponents: TokenRecords!
   treasuryWETHRiskFreeValue: BigDecimal!
+  treasuryWETHRiskFreeValueComponents: TokenRecords!
   treasuryDaiMarketValue: BigDecimal!
+  treasuryDaiMarketValueComponents: TokenRecords!
   treasuryFraxMarketValue: BigDecimal!
+  treasuryFraxMarketValueComponents: TokenRecords!
   treasuryLusdMarketValue: BigDecimal!
+  treasuryLusdMarketValueComponents: TokenRecords!
+  treasuryFeiMarketValue: BigDecimal!
+  treasuryFeiMarketValueComponents: TokenRecords!
   treasuryUstMarketValue: BigDecimal!
+  treasuryUstMarketValueComponents: TokenRecords!
   treasuryXsushiMarketValue: BigDecimal!
+  treasuryXsushiMarketValueComponents: TokenRecords!
   treasuryWETHMarketValue: BigDecimal!
+  treasuryWETHMarketValueComponents: TokenRecords!
   treasuryWBTCMarketValue: BigDecimal!
+  treasuryWBTCMarketValueComponents: TokenRecords!
   treasuryCVXMarketValue: BigDecimal!
+  treasuryCVXMarketValueComponents: TokenRecords!
+  treasuryFXSMarketValue: BigDecimal!
+  treasuryFXSMarketValueComponents: TokenRecords!
   treasuryOtherMarketValue: BigDecimal!
+  treasuryOtherMarketValueComponents: TokenRecords!
   treasuryLPValue: BigDecimal!
+  treasuryLPValueComponents: TokenRecords!
   treasuryStableBacking: BigDecimal!
+  treasuryStableBackingComponents: TokenRecords!
   treasuryVolatileBacking: BigDecimal!
+  treasuryVolatileBackingComponents: TokenRecords!
+  treasuryLiquidBacking: BigDecimal!
+  treasuryLiquidBackingComponents: TokenRecords!
   treasuryTotalBacking: BigDecimal!
+  treasuryTotalBackingComponents: TokenRecords!
+  treasuryLiquidBackingPerOhmCirculating: BigDecimal!
+  treasuryLiquidBackingPerOhmFloating: BigDecimal!
   currentAPY: BigDecimal!
   runway2dot5k: BigDecimal
   runway5k: BigDecimal
@@ -83,4 +121,23 @@ type BondDiscount @entity {
   eth_discount: BigDecimal!
   lusd_discount: BigDecimal!
   ohmlusd_discount: BigDecimal!
+}
+
+type TokenRecord @entity {
+  id: ID!
+  token: String!
+  tokenAddress: String!
+  source: String!
+  sourceAddress: String!
+  rate: BigDecimal!
+  balance: BigDecimal!
+  multiplier: BigDecimal!
+  value: BigDecimal! # Calculated
+}
+
+type TokenRecords @entity {
+  id: ID!
+  records: [TokenRecord!]!
+  balance: BigDecimal! # Calculated
+  value: BigDecimal! # Calculated
 }
