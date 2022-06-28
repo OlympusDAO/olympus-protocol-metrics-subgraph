@@ -450,9 +450,9 @@ export function getUSDRateBalancer(
 
   // Get token weights
   const poolToken = getBalancerPoolToken(vaultAddress, poolId, blockNumber);
-  if (poolToken.try_getNormalizedWeights().reverted) {
+  if (poolToken === null) {
     log.warning(
-      "getUSDRateBalancer: Balancer pool token contract reverted calling getNormalizedWeights with pool id {} at block {}. Skipping",
+      "getUSDRateBalancer: Balancer pool token contract reverted with pool id {} at block {}. Skipping",
       [poolId, blockNumber.toString()],
     );
     return BigDecimal.zero();

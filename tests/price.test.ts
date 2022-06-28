@@ -459,15 +459,17 @@ describe("get USD rate", () => {
     assert.stringEquals("0", usdRate.toString());
   });
 
-  test("FDT (Balancer) handles pool token contract revert", () => {
+  test("FDT (Balancer) handles getPool contract revert", () => {
     mockEthUsdRate();
 
     // Handle revert
     createMockedFunction(
       Address.fromString(ERC20_BALANCER_WETH_FDT),
-      "getNormalizedWeights",
-      "getNormalizedWeights():(uint256[])",
-    ).reverts();
+      "getPool",
+      "getPool(bytes32):(address,uint8)",
+    )
+      .withArgs([ethereum.Value.fromFixedBytes(Bytes.fromHexString(POOL_BALANCER_WETH_FDT_ID))])
+      .reverts();
 
     const usdRate = getUSDRate(ERC20_FDT, OHM_USD_RESERVE_BLOCK);
 
