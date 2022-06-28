@@ -1,7 +1,9 @@
-import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import {
+  BALANCER_VAULT,
+  ERC20_BALANCER_WETH_FDT,
   ERC20_CRV_3POOL,
   ERC20_DAI,
   ERC20_FDT,
@@ -25,6 +27,7 @@ import {
   PAIR_UNISWAP_V3_3CRV_USD,
   PAIR_UNISWAP_V3_FPIS_FRAX,
   PAIR_UNISWAP_V3_FXS_ETH,
+  POOL_BALANCER_WETH_FDT_ID,
 } from "../src/utils/Constants";
 import { DEFAULT_DECIMALS } from "../src/utils/Decimals";
 import {
@@ -436,6 +439,40 @@ describe("get USD rate", () => {
 
     // There is a loss of precision, so we need to ensure that the value is close, but not equal
     assert.stringEquals(calculatedRate.toString(), usdRate.toString());
+  });
+
+  test("FDT (Balancer) handles vault contract revert", () => {
+    mockEthUsdRate();
+
+    // Handle revert
+    createMockedFunction(
+      Address.fromString(BALANCER_VAULT),
+      "getPoolTokens",
+      "getPoolTokens(bytes32):(address[],uint256[],uint256)",
+    )
+      .withArgs([ethereum.Value.fromFixedBytes(Bytes.fromHexString(POOL_BALANCER_WETH_FDT_ID))])
+      .reverts();
+
+    const usdRate = getUSDRate(ERC20_FDT, OHM_USD_RESERVE_BLOCK);
+
+    // Revert, so 0 is returned
+    assert.stringEquals("0", usdRate.toString());
+  });
+
+  test("FDT (Balancer) handles pool token contract revert", () => {
+    mockEthUsdRate();
+
+    // Handle revert
+    createMockedFunction(
+      Address.fromString(ERC20_BALANCER_WETH_FDT),
+      "getNormalizedWeights",
+      "getNormalizedWeights():(uint256[])",
+    ).reverts();
+
+    const usdRate = getUSDRate(ERC20_FDT, OHM_USD_RESERVE_BLOCK);
+
+    // Revert, so 0 is returned
+    assert.stringEquals("0", usdRate.toString());
   });
 
   test("FXS (UniswapV3) returns correct value for FXS", () => {

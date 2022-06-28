@@ -435,13 +435,28 @@ export function getUSDRateBalancer(
   log.debug("getUSDRateBalancer: contract {}, poolId {}", [contractAddress, poolId]);
 
   const vault = getBalancerVault(vaultAddress, blockNumber);
+
   // Get token balances
+  if (vault.try_getPoolTokens(Bytes.fromHexString(poolId)).reverted) {
+    log.warning(
+      "getUSDRateBalancer: Balancer vault contract reverted calling getPoolTokens with pool id {} at block {}. Skipping",
+      [poolId, blockNumber.toString()],
+    );
+    return BigDecimal.zero();
+  }
   const poolTokenWrapper = vault.getPoolTokens(Bytes.fromHexString(poolId));
   const addresses: Array<Address> = poolTokenWrapper.getTokens();
   const balances: Array<BigInt> = poolTokenWrapper.getBalances();
 
   // Get token weights
   const poolToken = getBalancerPoolToken(vaultAddress, poolId, blockNumber);
+  if (poolToken.try_getNormalizedWeights().reverted) {
+    log.warning(
+      "getUSDRateBalancer: Balancer pool token contract reverted calling getNormalizedWeights with pool id {} at block {}. Skipping",
+      [poolId, blockNumber.toString()],
+    );
+    return BigDecimal.zero();
+  }
   const tokenWeights = poolToken.getNormalizedWeights();
 
   // Get pair orientation
