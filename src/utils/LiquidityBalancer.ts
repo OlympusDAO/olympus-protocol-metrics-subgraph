@@ -2,7 +2,6 @@ import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts
 
 import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolToken";
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
-import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
   ERC20_OHM_V2,
@@ -108,7 +107,7 @@ export function getBalancerPoolTotalValue(
  * @returns
  */
 function getBalancerPoolUnitRate(
-  poolTokenContract: ERC20,
+  poolTokenContract: BalancerPoolToken,
   totalValue: BigDecimal,
   _blockNumber: BigInt,
 ): BigDecimal {
@@ -128,6 +127,45 @@ export function getBalancerPoolToken(
   const poolToken = poolInfo.getValue0().toHexString();
 
   return BalancerPoolToken.bind(Address.fromString(poolToken));
+}
+
+/**
+ * Helper method to simplify getting the balance from a BalancerPoolToken contract.
+ *
+ * Returns 0 if the minimum block number has not passed.
+ *
+ * @param contract The bound BalancerPoolToken contract.
+ * @param address The address of the holder.
+ * @param currentBlockNumber The current block number.
+ * @returns BigDecimal
+ */
+export function getBalancerPoolTokenBalance(
+  contract: BalancerPoolToken | null,
+  address: string,
+  currentBlockNumber: BigInt,
+): BigDecimal {
+  if (contract === null) {
+    log.debug(
+      "getBalancerPoolTokenBalance: Contract for address {} ({}) does not exist at block {}",
+      [getContractName(address), address, currentBlockNumber.toString()],
+    );
+    return BigDecimal.zero();
+  }
+
+  const balance = contract.balanceOf(Address.fromString(address));
+  const balanceDecimals = toDecimal(balance, contract.decimals());
+  log.debug(
+    "getBalancerPoolTokenBalance: Found balance {} in ERC20 contract {} ({}) for wallet {} ({}) at block number {}",
+    [
+      balanceDecimals.toString(),
+      getContractName(contract._address.toHexString()),
+      contract._address.toHexString(),
+      getContractName(address),
+      address,
+      currentBlockNumber.toString(),
+    ],
+  );
+  return balanceDecimals;
 }
 
 /**
@@ -214,14 +252,9 @@ export function getBalancerRecords(
     ],
   );
 
-  const tokenDecimals = poolTokenContract.decimals();
-
   for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
     const walletAddress = WALLET_ADDRESSES[i];
-    const balance = toDecimal(
-      getERC20Balance(poolTokenContract, walletAddress, blockNumber),
-      tokenDecimals,
-    );
+    const balance = getBalancerPoolTokenBalance(poolTokenContract, walletAddress, blockNumber);
     log.info("Balancer pool {} has balance of {} in wallet {}", [
       getContractName(poolTokenAddress),
       balance.toString(),

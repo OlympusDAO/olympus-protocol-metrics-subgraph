@@ -304,7 +304,7 @@ LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_CRV, [
 //   new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_OHM_ETH),
 // ]); // Priced the same as the non-staked version, ERC20_CRV_OHMETH
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FDT, [
-  new PairHandler(PairHandlerTypes.Balancer, POOL_BALANCER_WETH_FDT_ID),
+  new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_WETH_FDT_ID),
 ]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FOX, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_FOX_ETH),

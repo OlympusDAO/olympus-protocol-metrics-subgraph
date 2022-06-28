@@ -2,8 +2,6 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import {
-  BALANCER_VAULT,
-  ERC20_BALANCER_WETH_FDT,
   ERC20_CRV_3POOL,
   ERC20_DAI,
   ERC20_FDT,
@@ -27,9 +25,8 @@ import {
   PAIR_UNISWAP_V3_3CRV_USD,
   PAIR_UNISWAP_V3_FPIS_FRAX,
   PAIR_UNISWAP_V3_FXS_ETH,
-  POOL_BALANCER_WETH_FDT_ID,
 } from "../src/utils/Constants";
-import { DEFAULT_DECIMALS, toDecimal } from "../src/utils/Decimals";
+import { DEFAULT_DECIMALS } from "../src/utils/Decimals";
 import {
   getBaseEthUsdRate,
   getBaseOhmUsdRate,
@@ -38,7 +35,7 @@ import {
   getUSDRate,
   PairTokenBaseOrientation,
 } from "../src/utils/Price";
-import { mockBalancerVault } from "./liquidityBalancer.test";
+import { mockBalanceVaultWethFdt } from "./liquidityBalancer.test";
 import {
   ERC20_STANDARD_DECIMALS,
   getERC20UsdRate,
@@ -432,25 +429,10 @@ describe("get USD rate", () => {
     mockEthUsdRate();
 
     // Mock the balancer
-    mockBalancerVault(
-      BALANCER_VAULT,
-      POOL_BALANCER_WETH_FDT_ID,
-      ERC20_BALANCER_WETH_FDT,
-      ERC20_STANDARD_DECIMALS,
-      toDecimal(BigInt.fromString("2669094096479295381363690"), ERC20_STANDARD_DECIMALS),
-      ERC20_WETH,
-      ERC20_FDT,
-      null,
-      toDecimal(BigInt.fromString("55282519432649791614"), ERC20_STANDARD_DECIMALS),
-      toDecimal(BigInt.fromString("17066065377014702525776132"), ERC20_STANDARD_DECIMALS),
-      null,
-      ERC20_STANDARD_DECIMALS,
-      ERC20_STANDARD_DECIMALS,
-      ERC20_STANDARD_DECIMALS,
-    );
+    mockBalanceVaultWethFdt();
 
     const usdRate = getUSDRate(ERC20_FDT, OHM_USD_RESERVE_BLOCK);
-    const calculatedRate = BigDecimal.fromString("0.02");
+    const calculatedRate = BigDecimal.fromString("0.02459313077010308743409892482569878");
 
     // There is a loss of precision, so we need to ensure that the value is close, but not equal
     assert.stringEquals(calculatedRate.toString(), usdRate.toString());
