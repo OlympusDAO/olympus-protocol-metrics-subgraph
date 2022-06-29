@@ -44,7 +44,7 @@ import {
 } from "./TokenRecordHelper";
 
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
-const MIGRATION_OFFSET = "5838.1668738299";
+const MIGRATION_OFFSET = "2013";
 
 /**
  * Returns the total supply of the latest version of the OHM contract
@@ -72,14 +72,19 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
 }
 
 /**
- * From Shadow:
- * OHMv1 stopped rebasing at index 46.721314322
- * So we put into the migrator contract the number of OHMv1 tokens times that index as gOHM
- * When someone migrates OHMv1 to OHMv2, it uses the gOHM from that contract, burns their OHMv1 and gives them either gOHM or unwraps it to sOHMv2
- * When we migrated the OHMv1 in LP, we didn't use the migrator contract, so it didn't remove the gOHM that had been set aside for it
- * what you need to do
- * is from Mar-14-2022 12:38:48 AM onwards
- * remove 5,838.1668738299 * current index from floating and circulating
+ * Returns TokenRecords representing a manual offset in the migration contract.
+ *
+ * Reasoning:
+ * - OHMv1 stopped rebasing at index 46.721314322
+ * - We put into the migrator contract the number of OHMv1 tokens times that index as gOHM
+ * - When someone migrates OHMv1 to OHMv2, it uses the gOHM from that contract, burns their OHMv1 and gives them either gOHM or unwraps it to sOHMv2
+ * - When we migrated the OHMv1 in LP, we didn't use the migrator contract, so it didn't remove the gOHM that had been set aside for it
+ *
+ * This takes effect from Mar-14-2022 12:38:48 AM (block {MIGRATION_OFFSET_STARTING_BLOCK}).
+ *
+ * The initial version of this applied an offset of `5,838.1668738299 * current index`.
+ *
+ * On 29th June 2022, this was adjusted on the advice of the policy team to be: `2013 * current index`.
  *
  * What is implemented:
  * - If before {MIGRATION_OFFSET_STARTING_BLOCK}, returns null
@@ -130,6 +135,7 @@ function getMigrationOffsetRecord(metricName: string, blockNumber: BigInt): Toke
  * - subtract: OHM in bonds deposit
  * - subtract: OHM in inverse bonds deposit
  * - subtract: OHM in treasury wallets
+ * - subtract: migration offset
  *
  * @param blockNumber the current block number
  * @param totalSupply the total supply of OHM
