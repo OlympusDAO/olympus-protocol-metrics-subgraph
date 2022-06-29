@@ -379,6 +379,24 @@ export class ProtocolMetric extends Entity {
     this.set("ohmPrice", Value.fromBigDecimal(value));
   }
 
+  get gOhmPrice(): BigDecimal {
+    let value = this.get("gOhmPrice");
+    return value!.toBigDecimal();
+  }
+
+  set gOhmPrice(value: BigDecimal) {
+    this.set("gOhmPrice", Value.fromBigDecimal(value));
+  }
+
+  get currentIndex(): BigDecimal {
+    let value = this.get("currentIndex");
+    return value!.toBigDecimal();
+  }
+
+  set currentIndex(value: BigDecimal) {
+    this.set("currentIndex", Value.fromBigDecimal(value));
+  }
+
   get marketCap(): BigDecimal {
     let value = this.get("marketCap");
     return value!.toBigDecimal();
