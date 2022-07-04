@@ -44,7 +44,43 @@ import {
 } from "./TokenRecordHelper";
 
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
-const MIGRATION_OFFSET = "5838.1668738299";
+const MIGRATION_OFFSET = "2013";
+
+/**
+ * Returns the current staking index, based on the current block.
+ *
+ * If the current block is after {ERC20_SOHM_V3_BLOCK}, the index from the
+ * sOHM v3 contract is returned.
+ *
+ * Otherwise, the index from the sOHM v2 contract is returned.
+ *
+ * @param blockNumber the current block number
+ * @returns BigDecimal
+ */
+export function getCurrentIndex(blockNumber: BigInt): BigDecimal {
+  if (blockNumber.gt(BigInt.fromString(ERC20_SOHM_V3_BLOCK))) {
+    const contractV3 = getSOlympusERC20V3("sOHM V3", ERC20_SOHM_V3, blockNumber);
+    if (!contractV3) {
+      throw new Error("Expected to be able to bind to sOHM V3 at block " + blockNumber.toString());
+    }
+
+    return toDecimal(contractV3.index(), 9);
+  } else {
+    /**
+     * {ERC20_SOHM_V2_BLOCK} is far before the typical starting block of this subgraph (14,000,000),
+     * so we don't really need to test for it.
+     *
+     * TODO: However, if we do ever push the starting block back before {ERC20_SOHM_V2_BLOCK}, we need
+     * to consider how to determine the index from sOHM V1, as it doesn't have an `index()` function.
+     */
+    const contractV2 = getSOlympusERC20V2("sOHM V2", ERC20_SOHM_V2, blockNumber);
+    if (!contractV2) {
+      throw new Error("Expected to be able to bind to sOHM V2 at block " + blockNumber.toString());
+    }
+
+    return toDecimal(contractV2.index(), 9);
+  }
+}
 
 /**
  * Returns the total supply of the latest version of the OHM contract
@@ -72,14 +108,19 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
 }
 
 /**
- * From Shadow:
- * OHMv1 stopped rebasing at index 46.721314322
- * So we put into the migrator contract the number of OHMv1 tokens times that index as gOHM
- * When someone migrates OHMv1 to OHMv2, it uses the gOHM from that contract, burns their OHMv1 and gives them either gOHM or unwraps it to sOHMv2
- * When we migrated the OHMv1 in LP, we didn't use the migrator contract, so it didn't remove the gOHM that had been set aside for it
- * what you need to do
- * is from Mar-14-2022 12:38:48 AM onwards
- * remove 5,838.1668738299 * current index from floating and circulating
+ * Returns TokenRecords representing a manual offset in the migration contract.
+ *
+ * Reasoning:
+ * - OHMv1 stopped rebasing at index 46.721314322
+ * - We put into the migrator contract the number of OHMv1 tokens times that index as gOHM
+ * - When someone migrates OHMv1 to OHMv2, it uses the gOHM from that contract, burns their OHMv1 and gives them either gOHM or unwraps it to sOHMv2
+ * - When we migrated the OHMv1 in LP, we didn't use the migrator contract, so it didn't remove the gOHM that had been set aside for it
+ *
+ * This takes effect from Mar-14-2022 12:38:48 AM (block {MIGRATION_OFFSET_STARTING_BLOCK}).
+ *
+ * The initial version of this applied an offset of `5,838.1668738299 * current index`.
+ *
+ * On 29th June 2022, this was adjusted on the advice of the policy team to be: `2013 * current index`.
  *
  * What is implemented:
  * - If before {MIGRATION_OFFSET_STARTING_BLOCK}, returns null
@@ -130,6 +171,7 @@ function getMigrationOffsetRecord(metricName: string, blockNumber: BigInt): Toke
  * - subtract: OHM in bonds deposit
  * - subtract: OHM in inverse bonds deposit
  * - subtract: OHM in treasury wallets
+ * - subtract: migration offset
  *
  * @param blockNumber the current block number
  * @param totalSupply the total supply of OHM

@@ -29,6 +29,7 @@ import {
 } from "./LiquidityCalculations";
 import {
   getCirculatingSupply,
+  getCurrentIndex,
   getFloatingSupply,
   getOhmMarketcap,
   getSOhmCirculatingSupply,
@@ -69,76 +70,78 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
   if (protocolMetric == null) {
     protocolMetric = new ProtocolMetric(dayTimestamp);
     protocolMetric.block = BigInt.fromString("-1");
-    protocolMetric.timestamp = timestamp;
-    protocolMetric.timestampISO8901 = "";
+    protocolMetric.currentAPY = BigDecimal.fromString("0");
+    protocolMetric.currentIndex = BigDecimal.fromString("0");
+    protocolMetric.gOhmPrice = BigDecimal.fromString("0");
+    protocolMetric.marketCap = BigDecimal.fromString("0");
+    protocolMetric.nextDistributedOhm = BigDecimal.fromString("0");
+    protocolMetric.nextEpochRebase = BigDecimal.fromString("0");
     protocolMetric.ohmCirculatingSupply = BigDecimal.fromString("0");
     protocolMetric.ohmCirculatingSupplyBreakdown = "-1";
     protocolMetric.ohmFloatingSupply = BigDecimal.fromString("0");
     protocolMetric.ohmFloatingSupplyBreakdown = "-1";
-    protocolMetric.sOhmCirculatingSupply = BigDecimal.fromString("0");
-    protocolMetric.totalSupply = BigDecimal.fromString("0");
     protocolMetric.ohmPrice = BigDecimal.fromString("0");
-    protocolMetric.marketCap = BigDecimal.fromString("0");
+    protocolMetric.sOhmCirculatingSupply = BigDecimal.fromString("0");
+    protocolMetric.timestamp = timestamp;
+    protocolMetric.timestampISO8901 = "";
+    protocolMetric.totalSupply = BigDecimal.fromString("0");
     protocolMetric.totalValueLocked = BigDecimal.fromString("0");
-    protocolMetric.treasuryRiskFreeValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryRiskFreeValueComponents = "-1";
-    protocolMetric.treasuryStableValue = BigDecimal.zero();
-    protocolMetric.treasuryStableValueComponents = "-1";
-    protocolMetric.treasuryVolatileValue = BigDecimal.zero();
-    protocolMetric.treasuryVolatileValueComponents = "-1";
-    protocolMetric.treasuryMarketValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryMarketValueComponents = "-1";
-    protocolMetric.nextEpochRebase = BigDecimal.fromString("0");
-    protocolMetric.nextDistributedOhm = BigDecimal.fromString("0");
-    protocolMetric.currentAPY = BigDecimal.fromString("0");
-    protocolMetric.treasuryDaiRiskFreeValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryDaiRiskFreeValueComponents = "-1";
-    protocolMetric.treasuryFraxRiskFreeValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryFraxRiskFreeValueComponents = "-1";
-    protocolMetric.treasuryLusdRiskFreeValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryLusdRiskFreeValueComponents = "-1";
-    protocolMetric.treasuryFeiRiskFreeValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryFeiRiskFreeValueComponents = "-1";
-    protocolMetric.treasuryDaiMarketValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryDaiMarketValueComponents = "-1";
-    protocolMetric.treasuryFraxMarketValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryFraxMarketValueComponents = "-1";
-    protocolMetric.treasuryLusdMarketValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryLusdMarketValueComponents = "-1";
-    protocolMetric.treasuryFeiMarketValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryFeiMarketValueComponents = "-1";
-    protocolMetric.treasuryUstMarketValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryUstMarketValueComponents = "-1";
-    protocolMetric.treasuryXsushiMarketValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryXsushiMarketValueComponents = "-1";
-    protocolMetric.treasuryWETHRiskFreeValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryWETHRiskFreeValueComponents = "-1";
-    protocolMetric.treasuryWETHMarketValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryWETHMarketValueComponents = "-1";
-    protocolMetric.treasuryWBTCMarketValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryWBTCMarketValueComponents = "-1";
     protocolMetric.treasuryCVXMarketValue = BigDecimal.fromString("0");
     protocolMetric.treasuryCVXMarketValueComponents = "-1";
+    protocolMetric.treasuryDaiMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryDaiMarketValueComponents = "-1";
+    protocolMetric.treasuryDaiRiskFreeValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryDaiRiskFreeValueComponents = "-1";
+    protocolMetric.treasuryFeiMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryFeiMarketValueComponents = "-1";
+    protocolMetric.treasuryFeiRiskFreeValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryFeiRiskFreeValueComponents = "-1";
+    protocolMetric.treasuryFraxMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryFraxMarketValueComponents = "-1";
+    protocolMetric.treasuryFraxRiskFreeValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryFraxRiskFreeValueComponents = "-1";
     protocolMetric.treasuryFXSMarketValue = BigDecimal.fromString("0");
     protocolMetric.treasuryFXSMarketValueComponents = "-1";
-    protocolMetric.treasuryOtherMarketValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryOtherMarketValueComponents = "-1";
-    protocolMetric.treasuryOhmDaiPOL = BigDecimal.fromString("0");
-    protocolMetric.treasuryOhmFraxPOL = BigDecimal.fromString("0");
-    protocolMetric.treasuryOhmLusdPOL = BigDecimal.fromString("0");
-    protocolMetric.treasuryOhmEthPOL = BigDecimal.fromString("0");
-    protocolMetric.treasuryStableBacking = BigDecimal.fromString("0");
-    protocolMetric.treasuryStableBackingComponents = "-1";
-    protocolMetric.treasuryLPValue = BigDecimal.fromString("0");
-    protocolMetric.treasuryLPValueComponents = "-1";
-    protocolMetric.treasuryVolatileBacking = BigDecimal.fromString("0");
-    protocolMetric.treasuryVolatileBackingComponents = "-1";
-    protocolMetric.treasuryTotalBacking = BigDecimal.fromString("0");
-    protocolMetric.treasuryTotalBackingComponents = "-1";
     protocolMetric.treasuryLiquidBacking = BigDecimal.fromString("0");
     protocolMetric.treasuryLiquidBackingComponents = "-1";
     protocolMetric.treasuryLiquidBackingPerOhmCirculating = BigDecimal.fromString("0");
     protocolMetric.treasuryLiquidBackingPerOhmFloating = BigDecimal.fromString("0");
+    protocolMetric.treasuryLPValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryLPValueComponents = "-1";
+    protocolMetric.treasuryLusdMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryLusdMarketValueComponents = "-1";
+    protocolMetric.treasuryLusdRiskFreeValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryLusdRiskFreeValueComponents = "-1";
+    protocolMetric.treasuryMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryMarketValueComponents = "-1";
+    protocolMetric.treasuryOhmDaiPOL = BigDecimal.fromString("0");
+    protocolMetric.treasuryOhmEthPOL = BigDecimal.fromString("0");
+    protocolMetric.treasuryOhmFraxPOL = BigDecimal.fromString("0");
+    protocolMetric.treasuryOhmLusdPOL = BigDecimal.fromString("0");
+    protocolMetric.treasuryOtherMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryOtherMarketValueComponents = "-1";
+    protocolMetric.treasuryRiskFreeValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryRiskFreeValueComponents = "-1";
+    protocolMetric.treasuryStableBacking = BigDecimal.fromString("0");
+    protocolMetric.treasuryStableBackingComponents = "-1";
+    protocolMetric.treasuryStableValue = BigDecimal.zero();
+    protocolMetric.treasuryStableValueComponents = "-1";
+    protocolMetric.treasuryTotalBacking = BigDecimal.fromString("0");
+    protocolMetric.treasuryTotalBackingComponents = "-1";
+    protocolMetric.treasuryUstMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryUstMarketValueComponents = "-1";
+    protocolMetric.treasuryVolatileBacking = BigDecimal.fromString("0");
+    protocolMetric.treasuryVolatileBackingComponents = "-1";
+    protocolMetric.treasuryVolatileValue = BigDecimal.zero();
+    protocolMetric.treasuryVolatileValueComponents = "-1";
+    protocolMetric.treasuryWBTCMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryWBTCMarketValueComponents = "-1";
+    protocolMetric.treasuryWETHMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryWETHMarketValueComponents = "-1";
+    protocolMetric.treasuryWETHRiskFreeValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryWETHRiskFreeValueComponents = "-1";
+    protocolMetric.treasuryXsushiMarketValue = BigDecimal.fromString("0");
+    protocolMetric.treasuryXsushiMarketValueComponents = "-1";
 
     protocolMetric.save();
   }
@@ -296,6 +299,10 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
 
   // OHM Price
   pm.ohmPrice = getBaseOhmUsdRate(block.number);
+
+  pm.currentIndex = getCurrentIndex(block.number);
+
+  pm.gOhmPrice = pm.ohmPrice.times(pm.currentIndex);
 
   // OHM Market Cap
   pm.marketCap = getOhmMarketcap("OhmMarketCap", block.number);

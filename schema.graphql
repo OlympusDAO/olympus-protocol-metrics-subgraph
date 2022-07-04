@@ -30,85 +30,87 @@ type Token @entity {
 type ProtocolMetric @entity {
   id: ID!
   block: BigInt!
-  timestamp: BigInt!
-  timestampISO8901: String!
+  currentAPY: BigDecimal!
+  currentIndex: BigDecimal!
+  gOhmPrice: BigDecimal!
+  marketCap: BigDecimal!
+  nextDistributedOhm: BigDecimal!
+  nextEpochRebase: BigDecimal!
   ohmCirculatingSupply: BigDecimal!
   ohmCirculatingSupplyBreakdown: TokenRecords!
   ohmFloatingSupply: BigDecimal!
   ohmFloatingSupplyBreakdown: TokenRecords!
-  sOhmCirculatingSupply: BigDecimal!
-  totalSupply: BigDecimal!
   ohmPrice: BigDecimal!
-  marketCap: BigDecimal!
-  totalValueLocked: BigDecimal!
-  treasuryRiskFreeValue: BigDecimal!
-  treasuryRiskFreeValueComponents: TokenRecords!
-  treasuryStableValue: BigDecimal!
-  treasuryStableValueComponents: TokenRecords!
-  treasuryVolatileValue: BigDecimal!
-  treasuryVolatileValueComponents: TokenRecords!
-  treasuryMarketValue: BigDecimal!
-  treasuryMarketValueComponents: TokenRecords!
-  nextEpochRebase: BigDecimal!
-  nextDistributedOhm: BigDecimal!
-  treasuryDaiRiskFreeValue: BigDecimal!
-  treasuryDaiRiskFreeValueComponents: TokenRecords!
-  treasuryFraxRiskFreeValue: BigDecimal!
-  treasuryFraxRiskFreeValueComponents: TokenRecords!
-  treasuryLusdRiskFreeValue: BigDecimal!
-  treasuryLusdRiskFreeValueComponents: TokenRecords!
-  treasuryFeiRiskFreeValue: BigDecimal!
-  treasuryFeiRiskFreeValueComponents: TokenRecords!
-  treasuryWETHRiskFreeValue: BigDecimal!
-  treasuryWETHRiskFreeValueComponents: TokenRecords!
-  treasuryDaiMarketValue: BigDecimal!
-  treasuryDaiMarketValueComponents: TokenRecords!
-  treasuryFraxMarketValue: BigDecimal!
-  treasuryFraxMarketValueComponents: TokenRecords!
-  treasuryLusdMarketValue: BigDecimal!
-  treasuryLusdMarketValueComponents: TokenRecords!
-  treasuryFeiMarketValue: BigDecimal!
-  treasuryFeiMarketValueComponents: TokenRecords!
-  treasuryUstMarketValue: BigDecimal!
-  treasuryUstMarketValueComponents: TokenRecords!
-  treasuryXsushiMarketValue: BigDecimal!
-  treasuryXsushiMarketValueComponents: TokenRecords!
-  treasuryWETHMarketValue: BigDecimal!
-  treasuryWETHMarketValueComponents: TokenRecords!
-  treasuryWBTCMarketValue: BigDecimal!
-  treasuryWBTCMarketValueComponents: TokenRecords!
-  treasuryCVXMarketValue: BigDecimal!
-  treasuryCVXMarketValueComponents: TokenRecords!
-  treasuryFXSMarketValue: BigDecimal!
-  treasuryFXSMarketValueComponents: TokenRecords!
-  treasuryOtherMarketValue: BigDecimal!
-  treasuryOtherMarketValueComponents: TokenRecords!
-  treasuryLPValue: BigDecimal!
-  treasuryLPValueComponents: TokenRecords!
-  treasuryStableBacking: BigDecimal!
-  treasuryStableBackingComponents: TokenRecords!
-  treasuryVolatileBacking: BigDecimal!
-  treasuryVolatileBackingComponents: TokenRecords!
-  treasuryLiquidBacking: BigDecimal!
-  treasuryLiquidBackingComponents: TokenRecords!
-  treasuryTotalBacking: BigDecimal!
-  treasuryTotalBackingComponents: TokenRecords!
-  treasuryLiquidBackingPerOhmCirculating: BigDecimal!
-  treasuryLiquidBackingPerOhmFloating: BigDecimal!
-  currentAPY: BigDecimal!
-  runway2dot5k: BigDecimal
-  runway5k: BigDecimal
-  runway7dot5k: BigDecimal
+  runway100k: BigDecimal
   runway10k: BigDecimal
   runway20k: BigDecimal
+  runway2dot5k: BigDecimal
   runway50k: BigDecimal
+  runway5k: BigDecimal
   runway70k: BigDecimal
-  runway100k: BigDecimal
+  runway7dot5k: BigDecimal
   runwayCurrent: BigDecimal
+  sOhmCirculatingSupply: BigDecimal!
+  timestamp: BigInt!
+  timestampISO8901: String!
+  totalSupply: BigDecimal!
+  totalValueLocked: BigDecimal!
+  treasuryCVXMarketValue: BigDecimal!
+  treasuryCVXMarketValueComponents: TokenRecords!
+  treasuryDaiMarketValue: BigDecimal!
+  treasuryDaiMarketValueComponents: TokenRecords!
+  treasuryDaiRiskFreeValue: BigDecimal!
+  treasuryDaiRiskFreeValueComponents: TokenRecords!
+  treasuryFeiMarketValue: BigDecimal!
+  treasuryFeiMarketValueComponents: TokenRecords!
+  treasuryFeiRiskFreeValue: BigDecimal!
+  treasuryFeiRiskFreeValueComponents: TokenRecords!
+  treasuryFraxMarketValue: BigDecimal!
+  treasuryFraxMarketValueComponents: TokenRecords!
+  treasuryFraxRiskFreeValue: BigDecimal!
+  treasuryFraxRiskFreeValueComponents: TokenRecords!
+  treasuryFXSMarketValue: BigDecimal!
+  treasuryFXSMarketValueComponents: TokenRecords!
+  treasuryLiquidBacking: BigDecimal!
+  treasuryLiquidBackingComponents: TokenRecords!
+  treasuryLiquidBackingPerOhmCirculating: BigDecimal!
+  treasuryLiquidBackingPerOhmFloating: BigDecimal!
+  treasuryLPValue: BigDecimal!
+  treasuryLPValueComponents: TokenRecords!
+  treasuryLusdMarketValue: BigDecimal!
+  treasuryLusdMarketValueComponents: TokenRecords!
+  treasuryLusdRiskFreeValue: BigDecimal!
+  treasuryLusdRiskFreeValueComponents: TokenRecords!
+  treasuryMarketValue: BigDecimal!
+  treasuryMarketValueComponents: TokenRecords!
   treasuryOhmDaiPOL: BigDecimal!
+  treasuryOhmEthPOL: BigDecimal!
   treasuryOhmFraxPOL: BigDecimal!
   treasuryOhmLusdPOL: BigDecimal!
-  treasuryOhmEthPOL: BigDecimal!
+  treasuryOtherMarketValue: BigDecimal!
+  treasuryOtherMarketValueComponents: TokenRecords!
+  treasuryRiskFreeValue: BigDecimal!
+  treasuryRiskFreeValueComponents: TokenRecords!
+  treasuryStableBacking: BigDecimal!
+  treasuryStableBackingComponents: TokenRecords!
+  treasuryStableValue: BigDecimal!
+  treasuryStableValueComponents: TokenRecords!
+  treasuryTotalBacking: BigDecimal!
+  treasuryTotalBackingComponents: TokenRecords!
+  treasuryUstMarketValue: BigDecimal!
+  treasuryUstMarketValueComponents: TokenRecords!
+  treasuryVolatileBacking: BigDecimal!
+  treasuryVolatileBackingComponents: TokenRecords!
+  treasuryVolatileValue: BigDecimal!
+  treasuryVolatileValueComponents: TokenRecords!
+  treasuryWBTCMarketValue: BigDecimal!
+  treasuryWBTCMarketValueComponents: TokenRecords!
+  treasuryWETHMarketValue: BigDecimal!
+  treasuryWETHMarketValueComponents: TokenRecords!
+  treasuryWETHRiskFreeValue: BigDecimal!
+  treasuryWETHRiskFreeValueComponents: TokenRecords!
+  treasuryXsushiMarketValue: BigDecimal!
+  treasuryXsushiMarketValueComponents: TokenRecords!
 }
 
 type BondDiscount @entity {
