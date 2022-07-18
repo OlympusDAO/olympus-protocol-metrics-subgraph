@@ -419,6 +419,7 @@ describe("get balancer records", () => {
     mockBalanceVaultOhmDaiEth();
 
     // Mock wallet balance
+    // TODO remove calls to WALLET_ADDRESSES
     const expectedBalance = BigDecimal.fromString("2");
     mockZeroWalletBalances(ERC20_BALANCER_OHM_DAI_WETH, WALLET_ADDRESSES);
     mockWalletBalance(

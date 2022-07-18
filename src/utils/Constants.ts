@@ -453,6 +453,7 @@ export const liquidityPairHasToken = (pairAddress: string, tokenAddress: string)
  * This set of wallet addresses is common across many tokens,
  * and can be used for balance lookups.
  */
+// TODO remove export
 export const WALLET_ADDRESSES = [
   AAVE_ALLOCATOR_V2,
   AAVE_ALLOCATOR,
@@ -484,6 +485,7 @@ export const CONVEX_ALLOCATORS = [
 
 const NON_TREASURY_ASSET_WHITELIST = new Map<string, string[]>();
 NON_TREASURY_ASSET_WHITELIST.set(PAIR_CURVE_OHM_ETH, [DAO_WALLET]);
+NON_TREASURY_ASSET_WHITELIST.set(ERC20_WETH, [DAO_WALLET]);
 
 /**
  * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
@@ -496,8 +498,8 @@ NON_TREASURY_ASSET_WHITELIST.set(PAIR_CURVE_OHM_ETH, [DAO_WALLET]);
  * @returns
  */
 export const getWalletAddressesForContract = (contractAddress: string): string[] => {
-  const nonTreasuryAddresses = NON_TREASURY_ASSET_WHITELIST.has(contractAddress)
-    ? NON_TREASURY_ASSET_WHITELIST.get(contractAddress)
+  const nonTreasuryAddresses = NON_TREASURY_ASSET_WHITELIST.has(contractAddress.toLowerCase())
+    ? NON_TREASURY_ASSET_WHITELIST.get(contractAddress.toLowerCase())
     : [];
   const newAddresses = WALLET_ADDRESSES.slice(0);
 

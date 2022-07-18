@@ -6,7 +6,6 @@ import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
   CONVEX_STAKING_CONTRACTS,
-  DAO_WALLET,
   ERC20_OHM_V2,
   getContractName,
   getConvexStakedToken,
