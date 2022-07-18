@@ -256,7 +256,7 @@ export function getBalancerRecords(
     ],
   );
 
-  const wallets = getWalletAddressesForContract(vaultAddress);
+  const wallets = getWalletAddressesForContract(poolId);
 
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];
