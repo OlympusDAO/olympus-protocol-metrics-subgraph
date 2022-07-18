@@ -485,6 +485,7 @@ export const CONVEX_ALLOCATORS = [
 const NON_TREASURY_ASSET_WHITELIST = new Map<string, string[]>();
 NON_TREASURY_ASSET_WHITELIST.set(PAIR_CURVE_OHM_ETH, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_WETH, [DAO_WALLET]);
+NON_TREASURY_ASSET_WHITELIST.set(ERC20_TRIBE, [DAO_WALLET]);
 
 /**
  * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
