@@ -29,6 +29,7 @@ import {
   getContractName,
   getOnsenAllocatorId,
   getRariAllocatorId,
+  getWalletAddressesForContract,
   liquidityPairHasToken,
   LUSD_ALLOCATOR,
   NATIVE_ETH,
@@ -37,7 +38,6 @@ import {
   SUSHI_MASTERCHEF,
   TOKE_ALLOCATOR,
   VEFXS_ALLOCATOR,
-  WALLET_ADDRESSES,
 } from "./Constants";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
@@ -592,7 +592,7 @@ export function getERC20TokenRecordFromWallet(
 
 /**
  * Fetches the balances of the given ERC20 token from
- * the wallets defined in {WALLET_ADDRESSES}.
+ * the wallets defined in {getWalletAddressesForContract}.
  *
  * @param metricName The name of the current metric, which is used for entity ids
  * @param contractAddress ERC20 contract address
@@ -612,12 +612,13 @@ export function getERC20TokenRecordsFromWallets(
     addToMetricName(metricName, getContractName(contractAddress)),
     blockNumber,
   );
+  const wallets = getWalletAddressesForContract(contractAddress);
 
-  for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
+  for (let i = 0; i < wallets.length; i++) {
     const record = getERC20TokenRecordFromWallet(
       metricName,
       contractAddress,
-      WALLET_ADDRESSES[i],
+      wallets[i],
       contract,
       rate,
       blockNumber,

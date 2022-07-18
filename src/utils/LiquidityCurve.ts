@@ -10,8 +10,8 @@ import {
   ERC20_OHM_V2,
   getContractName,
   getConvexStakedToken,
+  getWalletAddressesForContract,
   liquidityPairHasToken,
-  WALLET_ADDRESSES,
 } from "./Constants";
 import { getConvexStakedBalance, getERC20 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
@@ -288,9 +288,7 @@ function getCurvePairUnitRate(
  * This function does the following:
  * - Calculates the total value of the LP
  * - Calculates the unit rate of the LP
- * - Iterates through {WALLET_ADDRESSES} and adds records for the balance of the LP's normal token and staked token
- *
- * If
+ * - Iterates through {getWalletAddressesForContract} and adds records for the balance of the LP's normal token and staked token
  *
  * @param metricName
  * @param pairAddress the address of the Curve pair
@@ -349,7 +347,8 @@ export function getCurvePairRecords(
   // Calculate the unit rate of the LP
   const unitRate = getCurvePairUnitRate(pairAddress, totalValue, blockNumber);
   // Some Curve tokens are in the DAO wallet, so we add that
-  const wallets = WALLET_ADDRESSES.concat([DAO_WALLET]);
+  const wallets = getWalletAddressesForContract(pairAddress);
+  log.info("wallets = {}", [wallets.toString()]);
 
   const pair = CurvePool.bind(Address.fromString(pairAddress));
   const pairTokenAddress = pair.token().toHexString();
@@ -447,7 +446,7 @@ export function getCurvePairTotalTokenQuantity(
 
 /**
  * Returns records for the quantity of {tokenAddress}
- * across {WALLET_ADDRESSES}.
+ * across {getWalletAddressesForContract}.
  *
  * @param metricName
  * @param pairAddress

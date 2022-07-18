@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { TokenRecord, TokenRecords } from "../../generated/schema";
-import { getContractName, liquidityPairHasToken, WALLET_ADDRESSES } from "./Constants";
+import { getContractName, getWalletAddressesForContract, liquidityPairHasToken } from "./Constants";
 import { getERC20, getUniswapV2Pair } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getBaseOhmUsdRate, getUSDRateUniswapV2 } from "./Price";
@@ -281,7 +281,7 @@ export function getUniswapV2PairRecord(
  * This function does the following:
  * - Calculates the total value of the LP
  * - Calculates the unit rate of the LP
- * - Iterates through {WALLET_ADDRESSES} and adds records
+ * - Iterates through {getWalletAddressesForContract} and adds records
  * for the balance of the LP's token
  *
  * @param metricName
@@ -315,9 +315,10 @@ export function getUniswapV2PairRecords(
 
   // Calculate the unit rate of the LP
   const unitRate = getUniswapV2PairUnitRate(pairAddress, totalValue, blockNumber);
+  const wallets = getWalletAddressesForContract(pairAddress);
 
-  for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
-    const walletAddress = WALLET_ADDRESSES[i];
+  for (let i = 0; i < wallets.length; i++) {
+    const walletAddress = wallets[i];
 
     const record = getUniswapV2PairRecord(
       metricName,
@@ -394,7 +395,7 @@ export function getUniswapV2PairTotalTokenQuantity(
 
 /**
  * Returns records for the quantity of {tokenAddress}
- * across {WALLET_ADDRESSES}.
+ * across {getWalletAddressesForContract}.
  *
  * @param metricName
  * @param pairAddress

@@ -482,6 +482,39 @@ export const CONVEX_ALLOCATORS = [
   DAO_WALLET,
 ];
 
+const NON_TREASURY_ASSET_WHITELIST = new Map<string, string[]>();
+NON_TREASURY_ASSET_WHITELIST.set(PAIR_CURVE_OHM_ETH, [DAO_WALLET]);
+
+/**
+ * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
+ * For this reason, the wallets to be used differ on a per-contract basis.
+ *
+ * This function returns the wallets that should be iterated over for the given
+ * contract, {contractAddress}.
+ *
+ * @param contractAddress
+ * @returns
+ */
+export const getWalletAddressesForContract = (contractAddress: string): string[] => {
+  const nonTreasuryAddresses = NON_TREASURY_ASSET_WHITELIST.has(contractAddress)
+    ? NON_TREASURY_ASSET_WHITELIST.get(contractAddress)
+    : [];
+  const newAddresses = WALLET_ADDRESSES.slice(0);
+
+  // Add the values of nonTreasuryAddresses, but filter duplicates
+  for (let i = 0; i < nonTreasuryAddresses.length; i++) {
+    const currentValue = nonTreasuryAddresses[i];
+
+    if (newAddresses.includes(currentValue)) {
+      continue;
+    }
+
+    newAddresses.push(currentValue);
+  }
+
+  return newAddresses;
+};
+
 const ALLOCATOR_ONSEN_ID = new Map<string, i32>();
 ALLOCATOR_ONSEN_ID.set(ERC20_DAI, OHMDAI_ONSEN_ID);
 ALLOCATOR_ONSEN_ID.set(ERC20_LUSD, OHMLUSD_ONSEN_ID);

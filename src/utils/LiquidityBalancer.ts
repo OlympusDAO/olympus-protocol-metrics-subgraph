@@ -6,10 +6,10 @@ import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
   ERC20_OHM_V2,
   getContractName,
+  getWalletAddressesForContract,
   liquidityPairHasToken,
-  WALLET_ADDRESSES,
 } from "./Constants";
-import { getERC20, getERC20Balance } from "./ContractHelper";
+import { getERC20 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
 import {
@@ -256,8 +256,10 @@ export function getBalancerRecords(
     ],
   );
 
-  for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
-    const walletAddress = WALLET_ADDRESSES[i];
+  const wallets = getWalletAddressesForContract(vaultAddress);
+
+  for (let i = 0; i < wallets.length; i++) {
+    const walletAddress = wallets[i];
     const balance = getBalancerPoolTokenBalance(poolTokenContract, walletAddress, blockNumber);
     log.info("Balancer pool {} has balance of {} in wallet {}", [
       getContractName(poolTokenAddress),
@@ -329,7 +331,7 @@ export function getBalancerPoolTotalTokenQuantity(
 
 /**
  * Returns token records reflecting the quantity of the token {tokenAddress}
- * in the specified Balancer pool across wallets ({WALLET_ADDRESSES}).
+ * in the specified Balancer pool across wallets ({getWalletAddressesForContract}).
  *
  * @param metricName
  * @param vaultAddress
