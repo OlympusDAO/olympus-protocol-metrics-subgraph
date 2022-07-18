@@ -827,29 +827,46 @@ export function getConvexStakedBalance(
   blockNumber: BigInt,
 ): BigDecimal | null {
   // Unsupported
-  if (tokenAddress == NATIVE_ETH) return null;
+  if (tokenAddress == NATIVE_ETH) {
+    log.info("getConvexStakedBalance: native ETH is unsupported", []);
+    return null;
+  }
 
   // Check if tokenAddress is the same as that on the staking contract
   const stakingContract = ConvexBaseRewardPool.bind(Address.fromString(stakingAddress));
   const stakingTokenResult = stakingContract.try_stakingToken();
   if (stakingTokenResult.reverted) {
-    log.warning("Convex staking contract at {} likely doesn't exist at block {}", [
-      stakingAddress,
-      blockNumber.toString(),
-    ]);
+    log.warning(
+      "getConvexStakedBalance: Convex staking contract at {} likely doesn't exist at block {}",
+      [stakingAddress, blockNumber.toString()],
+    );
     return null;
   }
 
-  if (!stakingContract.stakingToken().equals(Address.fromString(tokenAddress))) return null;
+  // Ignore if we're looping through and the staking token doesn't match
+  if (!stakingContract.stakingToken().equals(Address.fromString(tokenAddress))) {
+    return null;
+  }
 
   const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
   if (!tokenContract) {
-    throw new Error("Unable to bind with ERC20 contract " + tokenAddress);
+    throw new Error("getConvexStakedBalance: Unable to bind with ERC20 contract " + tokenAddress);
   }
 
   // Get balance
   const balance = stakingContract.balanceOf(Address.fromString(allocatorAddress));
-  return toDecimal(balance, tokenContract.decimals());
+  const decimalBalance = toDecimal(balance, tokenContract.decimals());
+  log.debug(
+    "getConvexStakedBalance: Balance of {} for staking token {} ({}) and allocator {} ({})",
+    [
+      decimalBalance.toString(),
+      getContractName(tokenAddress),
+      tokenAddress,
+      getContractName(allocatorAddress),
+      allocatorAddress,
+    ],
+  );
+  return decimalBalance;
 }
 
 /**
@@ -892,7 +909,7 @@ export function getConvexStakedRecords(
         stakingAddress,
         blockNumber,
       );
-      if (!balance) continue;
+      if (!balance || balance.equals(BigDecimal.zero())) continue;
 
       pushTokenRecord(
         records,
