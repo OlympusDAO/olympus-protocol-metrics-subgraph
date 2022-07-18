@@ -87,6 +87,66 @@ describe("getLiquidityPoolValue", () => {
     assert.i32Equals(1, records.records.length);
   });
 
+  test("curve pool includes DAO wallet", () => {
+    mockEthUsdRate();
+    mockUsdOhmV2Rate();
+
+    // Mock liquidity pools
+    mockBalanceVaultZero();
+    mockUniswapV2PairsZero();
+
+    // Mock pair
+    const ohmReserves = BigDecimal.fromString("100");
+    const wethReserves = BigDecimal.fromString("105");
+    mockCurvePairTotalValue(
+      PAIR_CURVE_OHM_ETH,
+      ERC20_CRV_OHMETH,
+      ERC20_STANDARD_DECIMALS,
+      PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY,
+      ERC20_OHM_V2,
+      ERC20_WETH,
+      toBigInt(ohmReserves, OHM_V2_DECIMALS),
+      toBigInt(wethReserves, ERC20_STANDARD_DECIMALS),
+      OHM_V2_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+    );
+    // Total supply
+    const crvTotalSupply = BigDecimal.fromString("20");
+    mockERC20TotalSupply(
+      ERC20_CRV_OHMETH,
+      ERC20_STANDARD_DECIMALS,
+      toBigInt(crvTotalSupply, ERC20_STANDARD_DECIMALS),
+    );
+    // Mock balance
+    const crvBalance = BigDecimal.fromString("10");
+    const crvBalanceTwo = BigDecimal.fromString("11");
+    const allocators = WALLET_ADDRESSES.concat([DAO_WALLET]);
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, allocators);
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, allocators);
+    mockConvexStakedBalanceZero(allocators);
+
+    mockWalletBalance(
+      ERC20_CRV_OHMETH,
+      TREASURY_ADDRESS_V3,
+      toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
+    );
+
+    // Mock balance in the DAO wallet, which should be whitelisted
+    mockWalletBalance(
+      ERC20_CRV_OHMETH,
+      DAO_WALLET,
+      toBigInt(crvBalanceTwo, ERC20_STANDARD_DECIMALS),
+    );
+
+    const records = getOwnedLiquidityPoolValue("metric", false, false, ETH_USD_RESERVE_BLOCK);
+
+    const record = TokenRecord.load(records.records[0]);
+    assert.stringEquals("10", record ? record.balance.toString() : "");
+    const recordTwo = TokenRecord.load(records.records[1]);
+    assert.stringEquals("11", recordTwo ? recordTwo.balance.toString() : "");
+    assert.i32Equals(2, records.records.length);
+  });
+
   test("exclude OHM value false, uniswapv2 pool", () => {
     mockUsdOhmV2Rate();
 

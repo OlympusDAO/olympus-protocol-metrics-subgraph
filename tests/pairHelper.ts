@@ -2,6 +2,7 @@ import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { createMockedFunction } from "matchstick-as";
 
 import {
+  CONVEX_ALLOCATORS,
   ERC20_CRV_OHMETH,
   ERC20_DAI,
   ERC20_FXS,
@@ -534,4 +535,5 @@ export const mockCurvePairZero = (): void => {
   );
 
   mockZeroWalletBalances(ERC20_CRV_OHMETH, WALLET_ADDRESSES);
+  mockZeroWalletBalances(ERC20_CRV_OHMETH, CONVEX_ALLOCATORS);
 };
