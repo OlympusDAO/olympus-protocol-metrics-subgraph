@@ -5,12 +5,12 @@ import {
   ERC20_DAI,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
+  getWalletAddressesForContract,
   PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_ETH_V2,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
-  WALLET_ADDRESSES,
 } from "../src/utils/Constants";
 import { toBigInt, toDecimal } from "../src/utils/Decimals";
 import { getLiquidityBalances } from "../src/utils/LiquidityCalculations";
@@ -98,7 +98,10 @@ describe("Token Quantity", () => {
 
     // Mock balances
     const expectedBalanceV3 = BigDecimal.fromString("3");
-    mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_DAI_V2, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      PAIR_UNISWAP_V2_OHM_DAI_V2,
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+    );
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
     // total token quantity * balance / total supply
@@ -140,7 +143,10 @@ describe("Token Quantity", () => {
 
     // Mock balances
     const expectedBalanceV3 = BigDecimal.fromString("3");
-    mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_DAI_V2, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      PAIR_UNISWAP_V2_OHM_DAI_V2,
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+    );
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
     const records = getUniswapV2PairTokenQuantity(
@@ -178,7 +184,10 @@ describe("Token Quantity", () => {
 
     // Mock balances
     const expectedBalanceV3 = BigDecimal.fromString("3");
-    mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_DAI_V2, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      PAIR_UNISWAP_V2_OHM_DAI_V2,
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+    );
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
     const records = getUniswapV2PairTokenQuantity(
@@ -213,11 +222,17 @@ describe("records", () => {
       PAIR_UNISWAP_V2_OHM_DAI,
       18,
     );
-    mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_DAI, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      PAIR_UNISWAP_V2_OHM_DAI,
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+    );
 
     // OHM-DAI V2
     mockUsdOhmV2Rate();
-    mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_DAI_V2, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      PAIR_UNISWAP_V2_OHM_DAI_V2,
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+    );
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V2, toBigInt(expectedBalanceV2));
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
@@ -263,11 +278,17 @@ describe("records", () => {
       PAIR_UNISWAP_V2_OHM_DAI,
       18,
     );
-    mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_DAI, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      PAIR_UNISWAP_V2_OHM_DAI,
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+    );
 
     // OHM-DAI V2
     mockUsdOhmV2Rate();
-    mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_DAI_V2, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      PAIR_UNISWAP_V2_OHM_DAI_V2,
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+    );
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V2, toBigInt(expectedBalanceV2));
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
@@ -316,11 +337,17 @@ describe("records", () => {
       PAIR_UNISWAP_V2_OHM_DAI,
       18,
     );
-    mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_DAI, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      PAIR_UNISWAP_V2_OHM_DAI,
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+    );
 
     // OHM-DAI V2
     mockUsdOhmV2Rate();
-    mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_DAI_V2, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      PAIR_UNISWAP_V2_OHM_DAI_V2,
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+    );
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V2, toBigInt(expectedBalanceV2));
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 

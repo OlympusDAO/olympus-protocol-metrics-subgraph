@@ -12,10 +12,10 @@ import {
   ERC20_OHM_V2,
   ERC20_USDC,
   ERC20_WETH,
+  getWalletAddressesForContract,
   POOL_BALANCER_OHM_DAI_WETH_ID,
   POOL_BALANCER_WETH_FDT_ID,
   TREASURY_ADDRESS_V3,
-  WALLET_ADDRESSES,
 } from "../src/utils/Constants";
 import { toBigInt, toDecimal } from "../src/utils/Decimals";
 import {
@@ -331,7 +331,10 @@ describe("token quantity", () => {
 
     // Mock wallet balance
     const expectedWalletBalance = BigDecimal.fromString("2");
-    mockZeroWalletBalances(ERC20_BALANCER_OHM_DAI_WETH, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      ERC20_BALANCER_OHM_DAI_WETH,
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+    );
     mockWalletBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
       TREASURY_ADDRESS_V3,
@@ -362,7 +365,10 @@ describe("token quantity", () => {
 
     // Mock wallet balance
     const expectedWalletBalance = BigDecimal.fromString("2");
-    mockZeroWalletBalances(ERC20_BALANCER_OHM_DAI_WETH, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      ERC20_BALANCER_OHM_DAI_WETH,
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+    );
     mockWalletBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
       TREASURY_ADDRESS_V3,
@@ -390,7 +396,10 @@ describe("token quantity", () => {
 
     // Mock wallet balance
     const expectedWalletBalance = BigDecimal.fromString("2");
-    mockZeroWalletBalances(ERC20_BALANCER_OHM_DAI_WETH, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      ERC20_BALANCER_OHM_DAI_WETH,
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+    );
     mockWalletBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
       TREASURY_ADDRESS_V3,
@@ -419,9 +428,11 @@ describe("get balancer records", () => {
     mockBalanceVaultOhmDaiEth();
 
     // Mock wallet balance
-    // TODO remove calls to WALLET_ADDRESSES
     const expectedBalance = BigDecimal.fromString("2");
-    mockZeroWalletBalances(ERC20_BALANCER_OHM_DAI_WETH, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      ERC20_BALANCER_OHM_DAI_WETH,
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+    );
     mockWalletBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
       TREASURY_ADDRESS_V3,
@@ -456,7 +467,10 @@ describe("get balancer records", () => {
 
     // Mock wallet balance
     const expectedBalance = BigDecimal.fromString("2");
-    mockZeroWalletBalances(ERC20_BALANCER_OHM_DAI_WETH, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      ERC20_BALANCER_OHM_DAI_WETH,
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+    );
     mockWalletBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
       TREASURY_ADDRESS_V3,
@@ -485,7 +499,10 @@ describe("get balancer records", () => {
 
     // Mock wallet balance
     const expectedBalance = BigDecimal.fromString("2");
-    mockZeroWalletBalances(ERC20_BALANCER_OHM_DAI_WETH, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      ERC20_BALANCER_OHM_DAI_WETH,
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+    );
     mockWalletBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
       TREASURY_ADDRESS_V3,
@@ -541,7 +558,10 @@ describe("get balancer records", () => {
 
     // Mock wallet balance
     const expectedBalance = BigDecimal.fromString("2");
-    mockZeroWalletBalances(ERC20_BALANCER_OHM_DAI_WETH, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      ERC20_BALANCER_OHM_DAI_WETH,
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+    );
     mockWalletBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
       TREASURY_ADDRESS_V3,

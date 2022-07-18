@@ -453,8 +453,7 @@ export const liquidityPairHasToken = (pairAddress: string, tokenAddress: string)
  * This set of wallet addresses is common across many tokens,
  * and can be used for balance lookups.
  */
-// TODO remove export
-export const WALLET_ADDRESSES = [
+const WALLET_ADDRESSES = [
   AAVE_ALLOCATOR_V2,
   AAVE_ALLOCATOR,
   BALANCER_ALLOCATOR,

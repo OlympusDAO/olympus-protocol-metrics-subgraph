@@ -10,10 +10,10 @@ import {
   ERC20_DAI,
   ERC20_OHM_V2,
   ERC20_WETH,
+  getWalletAddressesForContract,
   PAIR_CURVE_OHM_ETH,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   TREASURY_ADDRESS_V3,
-  WALLET_ADDRESSES,
 } from "../src/utils/Constants";
 import { toBigInt } from "../src/utils/Decimals";
 import { getOwnedLiquidityPoolValue } from "../src/utils/LiquidityCalculations";
@@ -68,10 +68,9 @@ describe("getLiquidityPoolValue", () => {
     );
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
-    const allocators = WALLET_ADDRESSES.concat([DAO_WALLET]);
-    mockZeroWalletBalances(ERC20_CRV_OHMETH, allocators);
-    mockZeroWalletBalances(ERC20_CVX_OHMETH, allocators);
-    mockConvexStakedBalanceZero(allocators);
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
     mockWalletBalance(
       ERC20_CRV_OHMETH,
       TREASURY_ADDRESS_V3,
@@ -120,10 +119,9 @@ describe("getLiquidityPoolValue", () => {
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
     const crvBalanceTwo = BigDecimal.fromString("11");
-    const allocators = WALLET_ADDRESSES.concat([DAO_WALLET]);
-    mockZeroWalletBalances(ERC20_CRV_OHMETH, allocators);
-    mockZeroWalletBalances(ERC20_CVX_OHMETH, allocators);
-    mockConvexStakedBalanceZero(allocators);
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
 
     mockWalletBalance(
       ERC20_CRV_OHMETH,
@@ -170,7 +168,10 @@ describe("getLiquidityPoolValue", () => {
 
     // Mock balance
     const expectedBalanceV3 = BigDecimal.fromString("3");
-    mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_DAI_V2, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      PAIR_UNISWAP_V2_OHM_DAI_V2,
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+    );
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
     const records = getOwnedLiquidityPoolValue("metric", false, false, ETH_USD_RESERVE_BLOCK);
@@ -193,7 +194,10 @@ describe("getLiquidityPoolValue", () => {
 
     // Mock wallet balance
     const expectedWalletBalance = BigDecimal.fromString("2");
-    mockZeroWalletBalances(ERC20_BALANCER_OHM_DAI_WETH, WALLET_ADDRESSES);
+    mockZeroWalletBalances(
+      ERC20_BALANCER_OHM_DAI_WETH,
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+    );
     mockWalletBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
       TREASURY_ADDRESS_V3,
