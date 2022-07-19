@@ -482,6 +482,8 @@ dataSources:
           file: ./abis/BalancerPoolToken.json
         - name: TokemakStaking
           file: ./abis/TokemakStaking.json
+        - name: LQTYStaking
+          file: ./abis/LQTYStaking.json
       callHandlers:
         - function: stake(address,uint256,bool,bool)
           handler: handleMetrics

@@ -19,6 +19,7 @@ import {
   getERC20,
   getERC20TokenRecordsFromWallets,
   getLiquityStabilityPoolRecords,
+  getLiquityStakedBalancesFromWallets,
   getOnsenAllocatorRecords,
   getRariAllocatorRecords,
   getTokeAllocatorRecords,
@@ -133,6 +134,12 @@ export function getVolatileTokenBalance(
   combineTokenRecords(
     records,
     getTokeStakedBalancesFromWallets(metricName, contractAddress, rate, blockNumber),
+  );
+
+  // Staked LQTY
+  combineTokenRecords(
+    records,
+    getLiquityStakedBalancesFromWallets(metricName, contractAddress, rate, blockNumber),
   );
 
   // Staked Convex tokens
