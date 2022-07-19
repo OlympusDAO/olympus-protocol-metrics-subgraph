@@ -2,7 +2,7 @@
   "name": "olympus-subgraph",
   "version": "0.1.0",
   "scripts": {
-    "codegen": "graph codegen",
+    "codegen": "graph codegen && yarn eslint --config ./.eslintrc.json --fix",
     "build": "graph build",
     "deploy": "source .subgraph-version && graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --version-label $SUBGRAPH_VERSION olympusdao/olympus-protocol-metrics",
     "deploy:dev": "source .subgraph-version && graph deploy --studio olympus-protocol-metrics --version-label $SUBGRAPH_VERSION",
