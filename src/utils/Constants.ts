@@ -109,6 +109,9 @@ export const TOKE_STAKING = "0x96f98ed74639689c3a11daf38ef86e59f43417d3".toLower
 
 export const BALANCER_VAULT = "0xba12222222228d8ba445958a75a0704d566bf2c8".toLowerCase();
 
+export const CURVE_LIQUIDITY_GAUGE_WETH_FDT =
+  "0xbd0dae90cb4a0e08f1101929c2a01eb165045660".toLowerCase();
+
 // Olympus tokens
 export const ERC20_OHM_V1 = "0x383518188c0c6d7730d91b2c03a03c837814a899".toLowerCase();
 export const ERC20_OHM_V2 = "0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5".toLowerCase();
