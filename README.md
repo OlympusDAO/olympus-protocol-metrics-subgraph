@@ -27,6 +27,12 @@ The `matchstick-as` package is used to perform testing on the subgraph code. The
 
 To run tests: `yarn test`
 
+## Adding Contracts
+
+1. Add the ABI into the `abis/` folder.
+1. Add a reference to the ABI under the respective data source in `subgraph.yaml`
+1. Run `yarn codegen` to generate AssemblyScript files from the new ABI(s)
+
 ## Deployment
 
 ### Deployment (Testing)

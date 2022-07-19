@@ -11,6 +11,7 @@
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 olympus",
     "run-local": "docker-compose -f docker/docker-compose.yml up --build",
     "test": "graph test",
+    "test:clean": "rm -rf tests/.bin/",
     "auth": "source .env && graph auth --product hosted-service $GRAPH_TOKEN",
     "auth:dev": "source .env && graph auth --product subgraph-studio $GRAPH_STUDIO_TOKEN"
   },

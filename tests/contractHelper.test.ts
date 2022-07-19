@@ -12,15 +12,19 @@ import {
   ERC20_CVX_FRAX_3CRV,
   ERC20_CVX_OHMETH,
   ERC20_FRAX_3CRV,
+  ERC20_TOKE,
   ERC20_WETH,
   getWalletAddressesForContract,
   NATIVE_ETH,
+  TOKE_STAKING,
+  TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import {
   getConvexStakedBalance,
   getConvexStakedRecords,
   getERC20,
   getERC20TokenRecordsFromWallets,
+  getTokeStakedBalancesFromWallets,
 } from "../src/utils/ContractHelper";
 import { toBigInt } from "../src/utils/Decimals";
 import { ERC20_STANDARD_DECIMALS } from "./pairHelper";
@@ -67,6 +71,37 @@ export const mockConvexStakedBalanceZero = (allocators: string[] = CONVEX_ALLOCA
         BigInt.zero(),
       );
     }
+  }
+};
+
+export const mockTokeStakedBalance = (
+  tokenAddress: string,
+  walletAddress: string,
+  stakingAddress: string,
+  balance: BigInt,
+): void => {
+  const stakingContractAddress = Address.fromString(stakingAddress);
+  // Returns token
+  createMockedFunction(stakingContractAddress, "tokeToken", "tokeToken():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
+  ]);
+
+  // Returns balance
+  createMockedFunction(stakingContractAddress, "balanceOf", "balanceOf(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(walletAddress))])
+    .returns([ethereum.Value.fromUnsignedBigInt(balance)]);
+
+  // We assume price lookup is handled
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
+export const mockTokeStakedBalanceZero = (wallets: string[]): void => {
+  for (let i = 0; i < wallets.length; i++) {
+    mockTokeStakedBalance(ERC20_TOKE, wallets[i], TOKE_STAKING, BigInt.zero());
   }
 };
 
@@ -197,6 +232,69 @@ describe("get ERC20 token records from wallets", () => {
 
     const record = TokenRecord.load(records.records[0]);
     assert.stringEquals(tokenBalance, record ? record.balance.toString() : "");
+    assert.i32Equals(1, records.records.length);
+  });
+});
+
+describe("get TOKE staked records", () => {
+  test("passed token does not match tokeToken", () => {
+    // There is a balance
+    mockTokeStakedBalance(
+      ERC20_TOKE,
+      TREASURY_ADDRESS_V3,
+      TOKE_STAKING,
+      toBigInt(BigDecimal.fromString("10")),
+    );
+
+    // Ignored as the token does not match the staking contract
+    const records = getTokeStakedBalancesFromWallets(
+      "metric",
+      ERC20_ALCX,
+      BigDecimal.fromString("2"),
+      BigInt.fromString("10"),
+    );
+
+    assert.i32Equals(0, records.records.length);
+  });
+
+  test("staking contract reverts", () => {
+    createMockedFunction(
+      Address.fromString(TOKE_STAKING),
+      "tokeToken",
+      "tokeToken():(address)",
+    ).reverts();
+
+    const records = getTokeStakedBalancesFromWallets(
+      "metric",
+      ERC20_TOKE,
+      BigDecimal.fromString("2"),
+      BigInt.fromString("10"),
+    );
+
+    // Returns no records as the staking contract reverted
+    assert.i32Equals(0, records.records.length);
+  });
+
+  test("staking contract returns balance", () => {
+    mockTokeStakedBalanceZero(getWalletAddressesForContract(ERC20_TOKE));
+    // There is a balance
+    mockTokeStakedBalance(
+      ERC20_TOKE,
+      TREASURY_ADDRESS_V3,
+      TOKE_STAKING,
+      toBigInt(BigDecimal.fromString("10")),
+    );
+
+    const records = getTokeStakedBalancesFromWallets(
+      "metric",
+      ERC20_TOKE,
+      BigDecimal.fromString("2"),
+      BigInt.fromString("10"),
+    );
+
+    const recordOne = TokenRecord.load(records.records[0]);
+    assert.stringEquals("10", recordOne ? recordOne.balance.toString() : "");
+    assert.stringEquals("2", recordOne ? recordOne.rate.toString() : "");
     assert.i32Equals(1, records.records.length);
   });
 });

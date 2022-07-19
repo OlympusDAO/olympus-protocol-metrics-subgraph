@@ -22,6 +22,7 @@ import {
   getOnsenAllocatorRecords,
   getRariAllocatorRecords,
   getTokeAllocatorRecords,
+  getTokeStakedBalancesFromWallets,
   getVeFXSAllocatorRecords,
 } from "./ContractHelper";
 import { getLiquidityBalances } from "./LiquidityCalculations";
@@ -126,6 +127,12 @@ export function getVolatileTokenBalance(
   combineTokenRecords(
     records,
     getTokeAllocatorRecords(metricName, contractAddress, rate, blockNumber),
+  );
+
+  // Staked TOKE
+  combineTokenRecords(
+    records,
+    getTokeStakedBalancesFromWallets(metricName, contractAddress, rate, blockNumber),
   );
 
   // Staked Convex tokens

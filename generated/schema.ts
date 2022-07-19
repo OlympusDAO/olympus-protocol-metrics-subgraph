@@ -298,22 +298,58 @@ export class ProtocolMetric extends Entity {
     this.set("block", Value.fromBigInt(value));
   }
 
-  get timestamp(): BigInt {
-    let value = this.get("timestamp");
-    return value!.toBigInt();
+  get currentAPY(): BigDecimal {
+    let value = this.get("currentAPY");
+    return value!.toBigDecimal();
   }
 
-  set timestamp(value: BigInt) {
-    this.set("timestamp", Value.fromBigInt(value));
+  set currentAPY(value: BigDecimal) {
+    this.set("currentAPY", Value.fromBigDecimal(value));
   }
 
-  get timestampISO8901(): string {
-    let value = this.get("timestampISO8901");
-    return value!.toString();
+  get currentIndex(): BigDecimal {
+    let value = this.get("currentIndex");
+    return value!.toBigDecimal();
   }
 
-  set timestampISO8901(value: string) {
-    this.set("timestampISO8901", Value.fromString(value));
+  set currentIndex(value: BigDecimal) {
+    this.set("currentIndex", Value.fromBigDecimal(value));
+  }
+
+  get gOhmPrice(): BigDecimal {
+    let value = this.get("gOhmPrice");
+    return value!.toBigDecimal();
+  }
+
+  set gOhmPrice(value: BigDecimal) {
+    this.set("gOhmPrice", Value.fromBigDecimal(value));
+  }
+
+  get marketCap(): BigDecimal {
+    let value = this.get("marketCap");
+    return value!.toBigDecimal();
+  }
+
+  set marketCap(value: BigDecimal) {
+    this.set("marketCap", Value.fromBigDecimal(value));
+  }
+
+  get nextDistributedOhm(): BigDecimal {
+    let value = this.get("nextDistributedOhm");
+    return value!.toBigDecimal();
+  }
+
+  set nextDistributedOhm(value: BigDecimal) {
+    this.set("nextDistributedOhm", Value.fromBigDecimal(value));
+  }
+
+  get nextEpochRebase(): BigDecimal {
+    let value = this.get("nextEpochRebase");
+    return value!.toBigDecimal();
+  }
+
+  set nextEpochRebase(value: BigDecimal) {
+    this.set("nextEpochRebase", Value.fromBigDecimal(value));
   }
 
   get ohmCirculatingSupply(): BigDecimal {
@@ -352,24 +388,6 @@ export class ProtocolMetric extends Entity {
     this.set("ohmFloatingSupplyBreakdown", Value.fromString(value));
   }
 
-  get sOhmCirculatingSupply(): BigDecimal {
-    let value = this.get("sOhmCirculatingSupply");
-    return value!.toBigDecimal();
-  }
-
-  set sOhmCirculatingSupply(value: BigDecimal) {
-    this.set("sOhmCirculatingSupply", Value.fromBigDecimal(value));
-  }
-
-  get totalSupply(): BigDecimal {
-    let value = this.get("totalSupply");
-    return value!.toBigDecimal();
-  }
-
-  set totalSupply(value: BigDecimal) {
-    this.set("totalSupply", Value.fromBigDecimal(value));
-  }
-
   get ohmPrice(): BigDecimal {
     let value = this.get("ohmPrice");
     return value!.toBigDecimal();
@@ -379,545 +397,8 @@ export class ProtocolMetric extends Entity {
     this.set("ohmPrice", Value.fromBigDecimal(value));
   }
 
-  get gOhmPrice(): BigDecimal {
-    let value = this.get("gOhmPrice");
-    return value!.toBigDecimal();
-  }
-
-  set gOhmPrice(value: BigDecimal) {
-    this.set("gOhmPrice", Value.fromBigDecimal(value));
-  }
-
-  get currentIndex(): BigDecimal {
-    let value = this.get("currentIndex");
-    return value!.toBigDecimal();
-  }
-
-  set currentIndex(value: BigDecimal) {
-    this.set("currentIndex", Value.fromBigDecimal(value));
-  }
-
-  get marketCap(): BigDecimal {
-    let value = this.get("marketCap");
-    return value!.toBigDecimal();
-  }
-
-  set marketCap(value: BigDecimal) {
-    this.set("marketCap", Value.fromBigDecimal(value));
-  }
-
-  get totalValueLocked(): BigDecimal {
-    let value = this.get("totalValueLocked");
-    return value!.toBigDecimal();
-  }
-
-  set totalValueLocked(value: BigDecimal) {
-    this.set("totalValueLocked", Value.fromBigDecimal(value));
-  }
-
-  get treasuryRiskFreeValue(): BigDecimal {
-    let value = this.get("treasuryRiskFreeValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryRiskFreeValue(value: BigDecimal) {
-    this.set("treasuryRiskFreeValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryRiskFreeValueComponents(): string {
-    let value = this.get("treasuryRiskFreeValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryRiskFreeValueComponents(value: string) {
-    this.set("treasuryRiskFreeValueComponents", Value.fromString(value));
-  }
-
-  get treasuryStableValue(): BigDecimal {
-    let value = this.get("treasuryStableValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryStableValue(value: BigDecimal) {
-    this.set("treasuryStableValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryStableValueComponents(): string {
-    let value = this.get("treasuryStableValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryStableValueComponents(value: string) {
-    this.set("treasuryStableValueComponents", Value.fromString(value));
-  }
-
-  get treasuryVolatileValue(): BigDecimal {
-    let value = this.get("treasuryVolatileValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryVolatileValue(value: BigDecimal) {
-    this.set("treasuryVolatileValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryVolatileValueComponents(): string {
-    let value = this.get("treasuryVolatileValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryVolatileValueComponents(value: string) {
-    this.set("treasuryVolatileValueComponents", Value.fromString(value));
-  }
-
-  get treasuryMarketValue(): BigDecimal {
-    let value = this.get("treasuryMarketValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryMarketValue(value: BigDecimal) {
-    this.set("treasuryMarketValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryMarketValueComponents(): string {
-    let value = this.get("treasuryMarketValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryMarketValueComponents(value: string) {
-    this.set("treasuryMarketValueComponents", Value.fromString(value));
-  }
-
-  get nextEpochRebase(): BigDecimal {
-    let value = this.get("nextEpochRebase");
-    return value!.toBigDecimal();
-  }
-
-  set nextEpochRebase(value: BigDecimal) {
-    this.set("nextEpochRebase", Value.fromBigDecimal(value));
-  }
-
-  get nextDistributedOhm(): BigDecimal {
-    let value = this.get("nextDistributedOhm");
-    return value!.toBigDecimal();
-  }
-
-  set nextDistributedOhm(value: BigDecimal) {
-    this.set("nextDistributedOhm", Value.fromBigDecimal(value));
-  }
-
-  get treasuryDaiRiskFreeValue(): BigDecimal {
-    let value = this.get("treasuryDaiRiskFreeValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryDaiRiskFreeValue(value: BigDecimal) {
-    this.set("treasuryDaiRiskFreeValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryDaiRiskFreeValueComponents(): string {
-    let value = this.get("treasuryDaiRiskFreeValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryDaiRiskFreeValueComponents(value: string) {
-    this.set("treasuryDaiRiskFreeValueComponents", Value.fromString(value));
-  }
-
-  get treasuryFraxRiskFreeValue(): BigDecimal {
-    let value = this.get("treasuryFraxRiskFreeValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryFraxRiskFreeValue(value: BigDecimal) {
-    this.set("treasuryFraxRiskFreeValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryFraxRiskFreeValueComponents(): string {
-    let value = this.get("treasuryFraxRiskFreeValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryFraxRiskFreeValueComponents(value: string) {
-    this.set("treasuryFraxRiskFreeValueComponents", Value.fromString(value));
-  }
-
-  get treasuryLusdRiskFreeValue(): BigDecimal {
-    let value = this.get("treasuryLusdRiskFreeValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryLusdRiskFreeValue(value: BigDecimal) {
-    this.set("treasuryLusdRiskFreeValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryLusdRiskFreeValueComponents(): string {
-    let value = this.get("treasuryLusdRiskFreeValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryLusdRiskFreeValueComponents(value: string) {
-    this.set("treasuryLusdRiskFreeValueComponents", Value.fromString(value));
-  }
-
-  get treasuryFeiRiskFreeValue(): BigDecimal {
-    let value = this.get("treasuryFeiRiskFreeValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryFeiRiskFreeValue(value: BigDecimal) {
-    this.set("treasuryFeiRiskFreeValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryFeiRiskFreeValueComponents(): string {
-    let value = this.get("treasuryFeiRiskFreeValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryFeiRiskFreeValueComponents(value: string) {
-    this.set("treasuryFeiRiskFreeValueComponents", Value.fromString(value));
-  }
-
-  get treasuryWETHRiskFreeValue(): BigDecimal {
-    let value = this.get("treasuryWETHRiskFreeValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryWETHRiskFreeValue(value: BigDecimal) {
-    this.set("treasuryWETHRiskFreeValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryWETHRiskFreeValueComponents(): string {
-    let value = this.get("treasuryWETHRiskFreeValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryWETHRiskFreeValueComponents(value: string) {
-    this.set("treasuryWETHRiskFreeValueComponents", Value.fromString(value));
-  }
-
-  get treasuryDaiMarketValue(): BigDecimal {
-    let value = this.get("treasuryDaiMarketValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryDaiMarketValue(value: BigDecimal) {
-    this.set("treasuryDaiMarketValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryDaiMarketValueComponents(): string {
-    let value = this.get("treasuryDaiMarketValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryDaiMarketValueComponents(value: string) {
-    this.set("treasuryDaiMarketValueComponents", Value.fromString(value));
-  }
-
-  get treasuryFraxMarketValue(): BigDecimal {
-    let value = this.get("treasuryFraxMarketValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryFraxMarketValue(value: BigDecimal) {
-    this.set("treasuryFraxMarketValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryFraxMarketValueComponents(): string {
-    let value = this.get("treasuryFraxMarketValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryFraxMarketValueComponents(value: string) {
-    this.set("treasuryFraxMarketValueComponents", Value.fromString(value));
-  }
-
-  get treasuryLusdMarketValue(): BigDecimal {
-    let value = this.get("treasuryLusdMarketValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryLusdMarketValue(value: BigDecimal) {
-    this.set("treasuryLusdMarketValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryLusdMarketValueComponents(): string {
-    let value = this.get("treasuryLusdMarketValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryLusdMarketValueComponents(value: string) {
-    this.set("treasuryLusdMarketValueComponents", Value.fromString(value));
-  }
-
-  get treasuryFeiMarketValue(): BigDecimal {
-    let value = this.get("treasuryFeiMarketValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryFeiMarketValue(value: BigDecimal) {
-    this.set("treasuryFeiMarketValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryFeiMarketValueComponents(): string {
-    let value = this.get("treasuryFeiMarketValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryFeiMarketValueComponents(value: string) {
-    this.set("treasuryFeiMarketValueComponents", Value.fromString(value));
-  }
-
-  get treasuryUstMarketValue(): BigDecimal {
-    let value = this.get("treasuryUstMarketValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryUstMarketValue(value: BigDecimal) {
-    this.set("treasuryUstMarketValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryUstMarketValueComponents(): string {
-    let value = this.get("treasuryUstMarketValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryUstMarketValueComponents(value: string) {
-    this.set("treasuryUstMarketValueComponents", Value.fromString(value));
-  }
-
-  get treasuryXsushiMarketValue(): BigDecimal {
-    let value = this.get("treasuryXsushiMarketValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryXsushiMarketValue(value: BigDecimal) {
-    this.set("treasuryXsushiMarketValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryXsushiMarketValueComponents(): string {
-    let value = this.get("treasuryXsushiMarketValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryXsushiMarketValueComponents(value: string) {
-    this.set("treasuryXsushiMarketValueComponents", Value.fromString(value));
-  }
-
-  get treasuryWETHMarketValue(): BigDecimal {
-    let value = this.get("treasuryWETHMarketValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryWETHMarketValue(value: BigDecimal) {
-    this.set("treasuryWETHMarketValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryWETHMarketValueComponents(): string {
-    let value = this.get("treasuryWETHMarketValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryWETHMarketValueComponents(value: string) {
-    this.set("treasuryWETHMarketValueComponents", Value.fromString(value));
-  }
-
-  get treasuryWBTCMarketValue(): BigDecimal {
-    let value = this.get("treasuryWBTCMarketValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryWBTCMarketValue(value: BigDecimal) {
-    this.set("treasuryWBTCMarketValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryWBTCMarketValueComponents(): string {
-    let value = this.get("treasuryWBTCMarketValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryWBTCMarketValueComponents(value: string) {
-    this.set("treasuryWBTCMarketValueComponents", Value.fromString(value));
-  }
-
-  get treasuryCVXMarketValue(): BigDecimal {
-    let value = this.get("treasuryCVXMarketValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryCVXMarketValue(value: BigDecimal) {
-    this.set("treasuryCVXMarketValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryCVXMarketValueComponents(): string {
-    let value = this.get("treasuryCVXMarketValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryCVXMarketValueComponents(value: string) {
-    this.set("treasuryCVXMarketValueComponents", Value.fromString(value));
-  }
-
-  get treasuryFXSMarketValue(): BigDecimal {
-    let value = this.get("treasuryFXSMarketValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryFXSMarketValue(value: BigDecimal) {
-    this.set("treasuryFXSMarketValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryFXSMarketValueComponents(): string {
-    let value = this.get("treasuryFXSMarketValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryFXSMarketValueComponents(value: string) {
-    this.set("treasuryFXSMarketValueComponents", Value.fromString(value));
-  }
-
-  get treasuryOtherMarketValue(): BigDecimal {
-    let value = this.get("treasuryOtherMarketValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryOtherMarketValue(value: BigDecimal) {
-    this.set("treasuryOtherMarketValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryOtherMarketValueComponents(): string {
-    let value = this.get("treasuryOtherMarketValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryOtherMarketValueComponents(value: string) {
-    this.set("treasuryOtherMarketValueComponents", Value.fromString(value));
-  }
-
-  get treasuryLPValue(): BigDecimal {
-    let value = this.get("treasuryLPValue");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryLPValue(value: BigDecimal) {
-    this.set("treasuryLPValue", Value.fromBigDecimal(value));
-  }
-
-  get treasuryLPValueComponents(): string {
-    let value = this.get("treasuryLPValueComponents");
-    return value!.toString();
-  }
-
-  set treasuryLPValueComponents(value: string) {
-    this.set("treasuryLPValueComponents", Value.fromString(value));
-  }
-
-  get treasuryStableBacking(): BigDecimal {
-    let value = this.get("treasuryStableBacking");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryStableBacking(value: BigDecimal) {
-    this.set("treasuryStableBacking", Value.fromBigDecimal(value));
-  }
-
-  get treasuryStableBackingComponents(): string {
-    let value = this.get("treasuryStableBackingComponents");
-    return value!.toString();
-  }
-
-  set treasuryStableBackingComponents(value: string) {
-    this.set("treasuryStableBackingComponents", Value.fromString(value));
-  }
-
-  get treasuryVolatileBacking(): BigDecimal {
-    let value = this.get("treasuryVolatileBacking");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryVolatileBacking(value: BigDecimal) {
-    this.set("treasuryVolatileBacking", Value.fromBigDecimal(value));
-  }
-
-  get treasuryVolatileBackingComponents(): string {
-    let value = this.get("treasuryVolatileBackingComponents");
-    return value!.toString();
-  }
-
-  set treasuryVolatileBackingComponents(value: string) {
-    this.set("treasuryVolatileBackingComponents", Value.fromString(value));
-  }
-
-  get treasuryLiquidBacking(): BigDecimal {
-    let value = this.get("treasuryLiquidBacking");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryLiquidBacking(value: BigDecimal) {
-    this.set("treasuryLiquidBacking", Value.fromBigDecimal(value));
-  }
-
-  get treasuryLiquidBackingComponents(): string {
-    let value = this.get("treasuryLiquidBackingComponents");
-    return value!.toString();
-  }
-
-  set treasuryLiquidBackingComponents(value: string) {
-    this.set("treasuryLiquidBackingComponents", Value.fromString(value));
-  }
-
-  get treasuryTotalBacking(): BigDecimal {
-    let value = this.get("treasuryTotalBacking");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryTotalBacking(value: BigDecimal) {
-    this.set("treasuryTotalBacking", Value.fromBigDecimal(value));
-  }
-
-  get treasuryTotalBackingComponents(): string {
-    let value = this.get("treasuryTotalBackingComponents");
-    return value!.toString();
-  }
-
-  set treasuryTotalBackingComponents(value: string) {
-    this.set("treasuryTotalBackingComponents", Value.fromString(value));
-  }
-
-  get treasuryLiquidBackingPerOhmCirculating(): BigDecimal {
-    let value = this.get("treasuryLiquidBackingPerOhmCirculating");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryLiquidBackingPerOhmCirculating(value: BigDecimal) {
-    this.set(
-      "treasuryLiquidBackingPerOhmCirculating",
-      Value.fromBigDecimal(value)
-    );
-  }
-
-  get treasuryLiquidBackingPerOhmFloating(): BigDecimal {
-    let value = this.get("treasuryLiquidBackingPerOhmFloating");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryLiquidBackingPerOhmFloating(value: BigDecimal) {
-    this.set(
-      "treasuryLiquidBackingPerOhmFloating",
-      Value.fromBigDecimal(value)
-    );
-  }
-
-  get currentAPY(): BigDecimal {
-    let value = this.get("currentAPY");
-    return value!.toBigDecimal();
-  }
-
-  set currentAPY(value: BigDecimal) {
-    this.set("currentAPY", Value.fromBigDecimal(value));
-  }
-
-  get runway2dot5k(): BigDecimal | null {
-    let value = this.get("runway2dot5k");
+  get runway100k(): BigDecimal | null {
+    let value = this.get("runway100k");
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -925,45 +406,11 @@ export class ProtocolMetric extends Entity {
     }
   }
 
-  set runway2dot5k(value: BigDecimal | null) {
+  set runway100k(value: BigDecimal | null) {
     if (!value) {
-      this.unset("runway2dot5k");
+      this.unset("runway100k");
     } else {
-      this.set("runway2dot5k", Value.fromBigDecimal(<BigDecimal>value));
-    }
-  }
-
-  get runway5k(): BigDecimal | null {
-    let value = this.get("runway5k");
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toBigDecimal();
-    }
-  }
-
-  set runway5k(value: BigDecimal | null) {
-    if (!value) {
-      this.unset("runway5k");
-    } else {
-      this.set("runway5k", Value.fromBigDecimal(<BigDecimal>value));
-    }
-  }
-
-  get runway7dot5k(): BigDecimal | null {
-    let value = this.get("runway7dot5k");
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toBigDecimal();
-    }
-  }
-
-  set runway7dot5k(value: BigDecimal | null) {
-    if (!value) {
-      this.unset("runway7dot5k");
-    } else {
-      this.set("runway7dot5k", Value.fromBigDecimal(<BigDecimal>value));
+      this.set("runway100k", Value.fromBigDecimal(<BigDecimal>value));
     }
   }
 
@@ -1001,6 +448,23 @@ export class ProtocolMetric extends Entity {
     }
   }
 
+  get runway2dot5k(): BigDecimal | null {
+    let value = this.get("runway2dot5k");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set runway2dot5k(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("runway2dot5k");
+    } else {
+      this.set("runway2dot5k", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
   get runway50k(): BigDecimal | null {
     let value = this.get("runway50k");
     if (!value || value.kind == ValueKind.NULL) {
@@ -1015,6 +479,23 @@ export class ProtocolMetric extends Entity {
       this.unset("runway50k");
     } else {
       this.set("runway50k", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get runway5k(): BigDecimal | null {
+    let value = this.get("runway5k");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set runway5k(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("runway5k");
+    } else {
+      this.set("runway5k", Value.fromBigDecimal(<BigDecimal>value));
     }
   }
 
@@ -1035,8 +516,8 @@ export class ProtocolMetric extends Entity {
     }
   }
 
-  get runway100k(): BigDecimal | null {
-    let value = this.get("runway100k");
+  get runway7dot5k(): BigDecimal | null {
+    let value = this.get("runway7dot5k");
     if (!value || value.kind == ValueKind.NULL) {
       return null;
     } else {
@@ -1044,11 +525,11 @@ export class ProtocolMetric extends Entity {
     }
   }
 
-  set runway100k(value: BigDecimal | null) {
+  set runway7dot5k(value: BigDecimal | null) {
     if (!value) {
-      this.unset("runway100k");
+      this.unset("runway7dot5k");
     } else {
-      this.set("runway100k", Value.fromBigDecimal(<BigDecimal>value));
+      this.set("runway7dot5k", Value.fromBigDecimal(<BigDecimal>value));
     }
   }
 
@@ -1069,6 +550,309 @@ export class ProtocolMetric extends Entity {
     }
   }
 
+  get sOhmCirculatingSupply(): BigDecimal {
+    let value = this.get("sOhmCirculatingSupply");
+    return value!.toBigDecimal();
+  }
+
+  set sOhmCirculatingSupply(value: BigDecimal) {
+    this.set("sOhmCirculatingSupply", Value.fromBigDecimal(value));
+  }
+
+  get timestamp(): BigInt {
+    let value = this.get("timestamp");
+    return value!.toBigInt();
+  }
+
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
+  }
+
+  get timestampISO8901(): string {
+    let value = this.get("timestampISO8901");
+    return value!.toString();
+  }
+
+  set timestampISO8901(value: string) {
+    this.set("timestampISO8901", Value.fromString(value));
+  }
+
+  get totalSupply(): BigDecimal {
+    let value = this.get("totalSupply");
+    return value!.toBigDecimal();
+  }
+
+  set totalSupply(value: BigDecimal) {
+    this.set("totalSupply", Value.fromBigDecimal(value));
+  }
+
+  get totalValueLocked(): BigDecimal {
+    let value = this.get("totalValueLocked");
+    return value!.toBigDecimal();
+  }
+
+  set totalValueLocked(value: BigDecimal) {
+    this.set("totalValueLocked", Value.fromBigDecimal(value));
+  }
+
+  get treasuryCVXMarketValue(): BigDecimal {
+    let value = this.get("treasuryCVXMarketValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryCVXMarketValue(value: BigDecimal) {
+    this.set("treasuryCVXMarketValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryCVXMarketValueComponents(): string {
+    let value = this.get("treasuryCVXMarketValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryCVXMarketValueComponents(value: string) {
+    this.set("treasuryCVXMarketValueComponents", Value.fromString(value));
+  }
+
+  get treasuryDaiMarketValue(): BigDecimal {
+    let value = this.get("treasuryDaiMarketValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryDaiMarketValue(value: BigDecimal) {
+    this.set("treasuryDaiMarketValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryDaiMarketValueComponents(): string {
+    let value = this.get("treasuryDaiMarketValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryDaiMarketValueComponents(value: string) {
+    this.set("treasuryDaiMarketValueComponents", Value.fromString(value));
+  }
+
+  get treasuryDaiRiskFreeValue(): BigDecimal {
+    let value = this.get("treasuryDaiRiskFreeValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryDaiRiskFreeValue(value: BigDecimal) {
+    this.set("treasuryDaiRiskFreeValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryDaiRiskFreeValueComponents(): string {
+    let value = this.get("treasuryDaiRiskFreeValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryDaiRiskFreeValueComponents(value: string) {
+    this.set("treasuryDaiRiskFreeValueComponents", Value.fromString(value));
+  }
+
+  get treasuryFeiMarketValue(): BigDecimal {
+    let value = this.get("treasuryFeiMarketValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryFeiMarketValue(value: BigDecimal) {
+    this.set("treasuryFeiMarketValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryFeiMarketValueComponents(): string {
+    let value = this.get("treasuryFeiMarketValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryFeiMarketValueComponents(value: string) {
+    this.set("treasuryFeiMarketValueComponents", Value.fromString(value));
+  }
+
+  get treasuryFeiRiskFreeValue(): BigDecimal {
+    let value = this.get("treasuryFeiRiskFreeValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryFeiRiskFreeValue(value: BigDecimal) {
+    this.set("treasuryFeiRiskFreeValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryFeiRiskFreeValueComponents(): string {
+    let value = this.get("treasuryFeiRiskFreeValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryFeiRiskFreeValueComponents(value: string) {
+    this.set("treasuryFeiRiskFreeValueComponents", Value.fromString(value));
+  }
+
+  get treasuryFraxMarketValue(): BigDecimal {
+    let value = this.get("treasuryFraxMarketValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryFraxMarketValue(value: BigDecimal) {
+    this.set("treasuryFraxMarketValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryFraxMarketValueComponents(): string {
+    let value = this.get("treasuryFraxMarketValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryFraxMarketValueComponents(value: string) {
+    this.set("treasuryFraxMarketValueComponents", Value.fromString(value));
+  }
+
+  get treasuryFraxRiskFreeValue(): BigDecimal {
+    let value = this.get("treasuryFraxRiskFreeValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryFraxRiskFreeValue(value: BigDecimal) {
+    this.set("treasuryFraxRiskFreeValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryFraxRiskFreeValueComponents(): string {
+    let value = this.get("treasuryFraxRiskFreeValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryFraxRiskFreeValueComponents(value: string) {
+    this.set("treasuryFraxRiskFreeValueComponents", Value.fromString(value));
+  }
+
+  get treasuryFXSMarketValue(): BigDecimal {
+    let value = this.get("treasuryFXSMarketValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryFXSMarketValue(value: BigDecimal) {
+    this.set("treasuryFXSMarketValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryFXSMarketValueComponents(): string {
+    let value = this.get("treasuryFXSMarketValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryFXSMarketValueComponents(value: string) {
+    this.set("treasuryFXSMarketValueComponents", Value.fromString(value));
+  }
+
+  get treasuryLiquidBacking(): BigDecimal {
+    let value = this.get("treasuryLiquidBacking");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryLiquidBacking(value: BigDecimal) {
+    this.set("treasuryLiquidBacking", Value.fromBigDecimal(value));
+  }
+
+  get treasuryLiquidBackingComponents(): string {
+    let value = this.get("treasuryLiquidBackingComponents");
+    return value!.toString();
+  }
+
+  set treasuryLiquidBackingComponents(value: string) {
+    this.set("treasuryLiquidBackingComponents", Value.fromString(value));
+  }
+
+  get treasuryLiquidBackingPerOhmCirculating(): BigDecimal {
+    let value = this.get("treasuryLiquidBackingPerOhmCirculating");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryLiquidBackingPerOhmCirculating(value: BigDecimal) {
+    this.set(
+      "treasuryLiquidBackingPerOhmCirculating",
+      Value.fromBigDecimal(value)
+    );
+  }
+
+  get treasuryLiquidBackingPerOhmFloating(): BigDecimal {
+    let value = this.get("treasuryLiquidBackingPerOhmFloating");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryLiquidBackingPerOhmFloating(value: BigDecimal) {
+    this.set(
+      "treasuryLiquidBackingPerOhmFloating",
+      Value.fromBigDecimal(value)
+    );
+  }
+
+  get treasuryLPValue(): BigDecimal {
+    let value = this.get("treasuryLPValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryLPValue(value: BigDecimal) {
+    this.set("treasuryLPValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryLPValueComponents(): string {
+    let value = this.get("treasuryLPValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryLPValueComponents(value: string) {
+    this.set("treasuryLPValueComponents", Value.fromString(value));
+  }
+
+  get treasuryLusdMarketValue(): BigDecimal {
+    let value = this.get("treasuryLusdMarketValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryLusdMarketValue(value: BigDecimal) {
+    this.set("treasuryLusdMarketValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryLusdMarketValueComponents(): string {
+    let value = this.get("treasuryLusdMarketValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryLusdMarketValueComponents(value: string) {
+    this.set("treasuryLusdMarketValueComponents", Value.fromString(value));
+  }
+
+  get treasuryLusdRiskFreeValue(): BigDecimal {
+    let value = this.get("treasuryLusdRiskFreeValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryLusdRiskFreeValue(value: BigDecimal) {
+    this.set("treasuryLusdRiskFreeValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryLusdRiskFreeValueComponents(): string {
+    let value = this.get("treasuryLusdRiskFreeValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryLusdRiskFreeValueComponents(value: string) {
+    this.set("treasuryLusdRiskFreeValueComponents", Value.fromString(value));
+  }
+
+  get treasuryMarketValue(): BigDecimal {
+    let value = this.get("treasuryMarketValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryMarketValue(value: BigDecimal) {
+    this.set("treasuryMarketValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryMarketValueComponents(): string {
+    let value = this.get("treasuryMarketValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryMarketValueComponents(value: string) {
+    this.set("treasuryMarketValueComponents", Value.fromString(value));
+  }
+
   get treasuryOhmDaiPOL(): BigDecimal {
     let value = this.get("treasuryOhmDaiPOL");
     return value!.toBigDecimal();
@@ -1076,6 +860,15 @@ export class ProtocolMetric extends Entity {
 
   set treasuryOhmDaiPOL(value: BigDecimal) {
     this.set("treasuryOhmDaiPOL", Value.fromBigDecimal(value));
+  }
+
+  get treasuryOhmEthPOL(): BigDecimal {
+    let value = this.get("treasuryOhmEthPOL");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryOhmEthPOL(value: BigDecimal) {
+    this.set("treasuryOhmEthPOL", Value.fromBigDecimal(value));
   }
 
   get treasuryOhmFraxPOL(): BigDecimal {
@@ -1096,13 +889,220 @@ export class ProtocolMetric extends Entity {
     this.set("treasuryOhmLusdPOL", Value.fromBigDecimal(value));
   }
 
-  get treasuryOhmEthPOL(): BigDecimal {
-    let value = this.get("treasuryOhmEthPOL");
+  get treasuryOtherMarketValue(): BigDecimal {
+    let value = this.get("treasuryOtherMarketValue");
     return value!.toBigDecimal();
   }
 
-  set treasuryOhmEthPOL(value: BigDecimal) {
-    this.set("treasuryOhmEthPOL", Value.fromBigDecimal(value));
+  set treasuryOtherMarketValue(value: BigDecimal) {
+    this.set("treasuryOtherMarketValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryOtherMarketValueComponents(): string {
+    let value = this.get("treasuryOtherMarketValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryOtherMarketValueComponents(value: string) {
+    this.set("treasuryOtherMarketValueComponents", Value.fromString(value));
+  }
+
+  get treasuryRiskFreeValue(): BigDecimal {
+    let value = this.get("treasuryRiskFreeValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryRiskFreeValue(value: BigDecimal) {
+    this.set("treasuryRiskFreeValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryRiskFreeValueComponents(): string {
+    let value = this.get("treasuryRiskFreeValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryRiskFreeValueComponents(value: string) {
+    this.set("treasuryRiskFreeValueComponents", Value.fromString(value));
+  }
+
+  get treasuryStableBacking(): BigDecimal {
+    let value = this.get("treasuryStableBacking");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryStableBacking(value: BigDecimal) {
+    this.set("treasuryStableBacking", Value.fromBigDecimal(value));
+  }
+
+  get treasuryStableBackingComponents(): string {
+    let value = this.get("treasuryStableBackingComponents");
+    return value!.toString();
+  }
+
+  set treasuryStableBackingComponents(value: string) {
+    this.set("treasuryStableBackingComponents", Value.fromString(value));
+  }
+
+  get treasuryStableValue(): BigDecimal {
+    let value = this.get("treasuryStableValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryStableValue(value: BigDecimal) {
+    this.set("treasuryStableValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryStableValueComponents(): string {
+    let value = this.get("treasuryStableValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryStableValueComponents(value: string) {
+    this.set("treasuryStableValueComponents", Value.fromString(value));
+  }
+
+  get treasuryTotalBacking(): BigDecimal {
+    let value = this.get("treasuryTotalBacking");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryTotalBacking(value: BigDecimal) {
+    this.set("treasuryTotalBacking", Value.fromBigDecimal(value));
+  }
+
+  get treasuryTotalBackingComponents(): string {
+    let value = this.get("treasuryTotalBackingComponents");
+    return value!.toString();
+  }
+
+  set treasuryTotalBackingComponents(value: string) {
+    this.set("treasuryTotalBackingComponents", Value.fromString(value));
+  }
+
+  get treasuryUstMarketValue(): BigDecimal {
+    let value = this.get("treasuryUstMarketValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryUstMarketValue(value: BigDecimal) {
+    this.set("treasuryUstMarketValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryUstMarketValueComponents(): string {
+    let value = this.get("treasuryUstMarketValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryUstMarketValueComponents(value: string) {
+    this.set("treasuryUstMarketValueComponents", Value.fromString(value));
+  }
+
+  get treasuryVolatileBacking(): BigDecimal {
+    let value = this.get("treasuryVolatileBacking");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryVolatileBacking(value: BigDecimal) {
+    this.set("treasuryVolatileBacking", Value.fromBigDecimal(value));
+  }
+
+  get treasuryVolatileBackingComponents(): string {
+    let value = this.get("treasuryVolatileBackingComponents");
+    return value!.toString();
+  }
+
+  set treasuryVolatileBackingComponents(value: string) {
+    this.set("treasuryVolatileBackingComponents", Value.fromString(value));
+  }
+
+  get treasuryVolatileValue(): BigDecimal {
+    let value = this.get("treasuryVolatileValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryVolatileValue(value: BigDecimal) {
+    this.set("treasuryVolatileValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryVolatileValueComponents(): string {
+    let value = this.get("treasuryVolatileValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryVolatileValueComponents(value: string) {
+    this.set("treasuryVolatileValueComponents", Value.fromString(value));
+  }
+
+  get treasuryWBTCMarketValue(): BigDecimal {
+    let value = this.get("treasuryWBTCMarketValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryWBTCMarketValue(value: BigDecimal) {
+    this.set("treasuryWBTCMarketValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryWBTCMarketValueComponents(): string {
+    let value = this.get("treasuryWBTCMarketValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryWBTCMarketValueComponents(value: string) {
+    this.set("treasuryWBTCMarketValueComponents", Value.fromString(value));
+  }
+
+  get treasuryWETHMarketValue(): BigDecimal {
+    let value = this.get("treasuryWETHMarketValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryWETHMarketValue(value: BigDecimal) {
+    this.set("treasuryWETHMarketValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryWETHMarketValueComponents(): string {
+    let value = this.get("treasuryWETHMarketValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryWETHMarketValueComponents(value: string) {
+    this.set("treasuryWETHMarketValueComponents", Value.fromString(value));
+  }
+
+  get treasuryWETHRiskFreeValue(): BigDecimal {
+    let value = this.get("treasuryWETHRiskFreeValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryWETHRiskFreeValue(value: BigDecimal) {
+    this.set("treasuryWETHRiskFreeValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryWETHRiskFreeValueComponents(): string {
+    let value = this.get("treasuryWETHRiskFreeValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryWETHRiskFreeValueComponents(value: string) {
+    this.set("treasuryWETHRiskFreeValueComponents", Value.fromString(value));
+  }
+
+  get treasuryXsushiMarketValue(): BigDecimal {
+    let value = this.get("treasuryXsushiMarketValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryXsushiMarketValue(value: BigDecimal) {
+    this.set("treasuryXsushiMarketValue", Value.fromBigDecimal(value));
+  }
+
+  get treasuryXsushiMarketValueComponents(): string {
+    let value = this.get("treasuryXsushiMarketValueComponents");
+    return value!.toString();
+  }
+
+  set treasuryXsushiMarketValueComponents(value: string) {
+    this.set("treasuryXsushiMarketValueComponents", Value.fromString(value));
   }
 }
 

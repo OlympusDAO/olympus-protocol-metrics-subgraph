@@ -10,6 +10,7 @@ import { sOlympusERC20 } from "../../generated/ProtocolMetrics/sOlympusERC20";
 import { sOlympusERC20V2 } from "../../generated/ProtocolMetrics/sOlympusERC20V2";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
 import { TokeAllocator } from "../../generated/ProtocolMetrics/TokeAllocator";
+import { TokemakStaking } from "../../generated/ProtocolMetrics/TokemakStaking";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
@@ -37,6 +38,7 @@ import {
   RARI_ALLOCATOR,
   SUSHI_MASTERCHEF,
   TOKE_ALLOCATOR,
+  TOKE_STAKING,
   VEFXS_ALLOCATOR,
 } from "./Constants";
 import { toDecimal } from "./Decimals";
@@ -626,6 +628,109 @@ export function getERC20TokenRecordsFromWallets(
     if (!record) continue;
 
     pushTokenRecord(records, record);
+  }
+
+  return records;
+}
+
+/**
+ * Returns the staked balance of {tokenContract} belonging to {walletAddress}
+ * in the Tokemak staking contract.
+ *
+ * @param stakingContract
+ * @param tokenContract
+ * @param walletAddress
+ * @param blockNumber
+ * @returns
+ */
+function getTokeStakedBalance(
+  stakingContract: TokemakStaking,
+  tokenContract: ERC20,
+  walletAddress: string,
+  _blockNumber: BigInt,
+): BigDecimal {
+  return toDecimal(
+    stakingContract.balanceOf(Address.fromString(walletAddress)),
+    tokenContract.decimals(),
+  );
+}
+
+/**
+ * Returns records for the staked balance of {tokenAddress} across
+ * all wallets that are staked with Tokemak.
+ *
+ * @param metricName
+ * @param tokenAddress
+ * @param rate
+ * @param blockNumber
+ * @returns
+ */
+export function getTokeStakedBalancesFromWallets(
+  metricName: string,
+  tokenAddress: string,
+  rate: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = newTokenRecords(
+    addToMetricName(metricName, getContractName(tokenAddress)),
+    blockNumber,
+  );
+
+  // Check that the token matches
+  const contract = TokemakStaking.bind(Address.fromString(TOKE_STAKING));
+  if (contract.try_tokeToken().reverted) {
+    log.warning(
+      "getTokeStakedBalancesFromWallets: TOKE staking contract reverted at block {}. Skipping",
+      [blockNumber.toString()],
+    );
+    return records;
+  }
+
+  // Ignore if we're looping through and the staking token doesn't match
+  if (!contract.tokeToken().equals(Address.fromString(tokenAddress))) {
+    return records;
+  }
+
+  // Check that the token exists
+  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  if (tokenContract == null) {
+    return records;
+  }
+
+  // Iterate over all relevant wallets
+  const wallets = getWalletAddressesForContract(tokenAddress);
+  for (let i = 0; i < wallets.length; i++) {
+    const currentWallet = wallets[i];
+    const balance = getTokeStakedBalance(contract, tokenContract, currentWallet, blockNumber);
+    if (balance.equals(BigDecimal.zero())) {
+      continue;
+    }
+
+    log.debug(
+      "getTokeStakedBalancesFromWallets: found staked balance {} for token {} ({}) and wallet {} ({}) at block {}",
+      [
+        balance.toString(),
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        blockNumber.toString(),
+      ],
+    );
+
+    pushTokenRecord(
+      records,
+      newTokenRecord(
+        metricName,
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        rate,
+        balance,
+        blockNumber,
+      ),
+    );
   }
 
   return records;
