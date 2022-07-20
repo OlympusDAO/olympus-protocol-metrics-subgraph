@@ -8,8 +8,7 @@ import { getStablecoinBalances, getStableValue } from "./TokenStablecoins";
 import { getVolatileTokenBalances } from "./TokenVolatile";
 
 /**
- * Returns the value of all volatile tokens, including LPs and blue
- * chip tokens.
+ * Returns the value of all volatile tokens, excluding protocol-owned liquidity.
  *
  * As this is a backing metric, the value of OHM is excluded.
  *
@@ -24,7 +23,7 @@ export function getTreasuryVolatileBacking(
   return getVolatileTokenBalances(
     metricName,
     liquidOnly,
-    true,
+    false,
     true,
     false,
     true,
@@ -34,7 +33,7 @@ export function getTreasuryVolatileBacking(
 }
 
 /**
- * Returns the value of the stable backing, including liquidity.
+ * Returns the value of the stable backing, excluding protocol-owned liquidity.
  *
  * As this is a backing metric, the value of OHM is excluded.
  *
@@ -42,7 +41,25 @@ export function getTreasuryVolatileBacking(
  * @returns TokenRecords object
  */
 export function getTreasuryStableBacking(metricName: string, blockNumber: BigInt): TokenRecords {
-  const records = getStablecoinBalances(metricName, true, false, true, true, blockNumber);
+  const records = getStablecoinBalances(metricName, false, false, true, true, blockNumber);
+
+  return records;
+}
+
+/**
+ * Returns the value of the backing of protocol owned liquidity.
+ *
+ * As this is a backing metric, the value of OHM is excluded.
+ *
+ * @param metricName
+ * @param blockNumber
+ * @returns
+ */
+export function getTreasuryProtocolOwnedLiquidityBacking(
+  metricName: string,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = getOwnedLiquidityPoolValue(metricName, false, true, blockNumber);
 
   return records;
 }
