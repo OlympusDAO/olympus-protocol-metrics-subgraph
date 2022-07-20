@@ -27,7 +27,7 @@ The `matchstick-as` package is used to perform testing on the subgraph code. The
 
 To run tests: `yarn test`
 
-If you receive a non-sensical test result (e.g. duplicated test cases, or a test failing that should be passing), try running `yarn test:clean`. The build cache will sometimes get corrupted/broken.
+If you receive a non-sensical test result (e.g. duplicated test cases, or a test failing that should be passing), try running `yarn test:force`. The build cache will sometimes get corrupted/broken.
 
 ## Adding Contracts
 
