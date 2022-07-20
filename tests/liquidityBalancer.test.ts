@@ -3,7 +3,9 @@ import { assert, createMockedFunction, describe, test } from "matchstick-as/asse
 
 import { TokenRecord } from "../generated/schema";
 import {
+  BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
   BALANCER_VAULT,
+  DAO_WALLET,
   ERC20_BALANCER_OHM_DAI_WETH,
   ERC20_BALANCER_WETH_FDT,
   ERC20_DAI,
@@ -24,6 +26,7 @@ import {
   getBalancerPoolTotalValue,
   getBalancerRecords,
 } from "../src/utils/LiquidityBalancer";
+import { mockBalancerGaugeBalance, mockBalancerGaugeBalanceZero } from "./contractHelper.test";
 import {
   ERC20_STANDARD_DECIMALS,
   getEthUsdRate,
@@ -599,5 +602,44 @@ describe("get balancer records", () => {
     // balance * rate * multiplier
     const expectedValue = expectedBalance.times(expectedUnitRate).times(expectedMultiplier);
     assert.stringEquals(expectedValue.toString(), records.value.toString());
+  });
+
+  test("WETH-FDT pool with no balance, with liquidity gauge", () => {
+    mockBalancerGaugeBalanceZero(getWalletAddressesForContract(ERC20_BALANCER_WETH_FDT));
+
+    // Mock the balancer
+    mockBalanceVaultWethFdt();
+
+    // Mock wallet balance for liquidity gauge
+    const expectedBalance = BigDecimal.fromString("2");
+    mockZeroWalletBalances(
+      ERC20_BALANCER_WETH_FDT,
+      getWalletAddressesForContract(ERC20_BALANCER_WETH_FDT),
+    );
+
+    mockBalancerGaugeBalance(
+      ERC20_BALANCER_WETH_FDT,
+      DAO_WALLET,
+      BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+      toBigInt(expectedBalance),
+    );
+
+    // Mock price lookup
+    mockEthUsdRate();
+    mockUsdOhmV2Rate();
+
+    const records = getBalancerRecords(
+      "metric",
+      BALANCER_VAULT,
+      POOL_BALANCER_WETH_FDT_ID,
+      false,
+      false,
+      OHM_USD_RESERVE_BLOCK,
+      null,
+    );
+
+    const recordOne = TokenRecord.load(records.records[0]);
+    assert.stringEquals(expectedBalance.toString(), recordOne ? recordOne.balance.toString() : "");
+    assert.i32Equals(1, records.records.length);
   });
 });

@@ -889,6 +889,17 @@ export function getBalancerGaugeBalanceFromWallets(
     blockNumber,
   );
 
+  log.debug(
+    "getBalancerGaugeBalanceFromWallets: determining wallet balances in liquidity gauge {} ({}) of token {} ({}) at block {}",
+    [
+      getContractName(gaugeContractAddress),
+      gaugeContractAddress,
+      getContractName(tokenAddress),
+      tokenAddress,
+      blockNumber.toString(),
+    ],
+  );
+
   // Check that the token matches
   const contract = BalancerLiquidityGauge.bind(Address.fromString(gaugeContractAddress));
   if (contract.try_lp_token().reverted) {
@@ -901,12 +912,20 @@ export function getBalancerGaugeBalanceFromWallets(
 
   // Ignore if we're looping through and the LP token doesn't match
   if (!contract.lp_token().equals(Address.fromString(tokenAddress))) {
+    log.debug(
+      "getBalancerGaugeBalanceFromWallets: output of lp_token() did not match current token {} ({}) at block {}. Skipping",
+      [getContractName(tokenAddress), tokenAddress, blockNumber.toString()],
+    );
     return records;
   }
 
   // Check that the token exists
   const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
   if (tokenContract == null) {
+    log.debug(
+      "getBalancerGaugeBalanceFromWallets: token {} ({}) does not seem to exist at block {}. Skipping",
+      [getContractName(tokenAddress), tokenAddress, blockNumber.toString()],
+    );
     return records;
   }
 

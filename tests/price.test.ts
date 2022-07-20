@@ -1,5 +1,11 @@
 import { Address, BigDecimal, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts";
-import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
+import {
+  assert,
+  beforeEach,
+  createMockedFunction,
+  describe,
+  test,
+} from "matchstick-as/assembly/index";
 
 import {
   BALANCER_VAULT,
@@ -18,6 +24,7 @@ import {
   ERC20_USDC,
   ERC20_UST,
   ERC20_WETH,
+  getWalletAddressesForContract,
   NATIVE_ETH,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
@@ -38,6 +45,7 @@ import {
   getUSDRate,
   PairTokenBaseOrientation,
 } from "../src/utils/Price";
+import { mockBalancerGaugeBalanceZero } from "./contractHelper.test";
 import { mockBalanceVaultWethFdt } from "./liquidityBalancer.test";
 import {
   ERC20_STANDARD_DECIMALS,
@@ -290,6 +298,10 @@ describe("base token USD rate", () => {
 });
 
 describe("get USD rate", () => {
+  beforeEach(() => {
+    mockBalancerGaugeBalanceZero(getWalletAddressesForContract(ERC20_BALANCER_WETH_FDT));
+  });
+
   test("DAI returns 1", () => {
     assert.stringEquals(getUSDRate(ERC20_DAI, OHM_USD_RESERVE_BLOCK).toString(), "1");
   });
