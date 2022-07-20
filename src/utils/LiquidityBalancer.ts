@@ -6,14 +6,15 @@ import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
   ERC20_OHM_V2,
   getContractName,
+  getWalletAddressesForContract,
   liquidityPairHasToken,
-  WALLET_ADDRESSES,
 } from "./Constants";
-import { getERC20, getERC20Balance } from "./ContractHelper";
+import { getBalancerGaugeBalancesFromWallets, getERC20 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
 import {
   addToMetricName,
+  combineTokenRecords,
   newTokenRecord,
   newTokenRecords,
   pushTokenRecord,
@@ -172,6 +173,48 @@ export function getBalancerPoolTokenBalance(
   return balanceDecimals;
 }
 
+function getBalancerPoolTokenRecords(
+  metricName: string,
+  poolId: string,
+  poolTokenContract: BalancerPoolToken,
+  unitRate: BigDecimal,
+  multiplier: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = newTokenRecords(addToMetricName(metricName, "BalancerPoolToken"), blockNumber);
+
+  const wallets = getWalletAddressesForContract(poolId);
+  const poolTokenAddress = poolTokenContract._address.toHexString();
+
+  for (let i = 0; i < wallets.length; i++) {
+    const walletAddress = wallets[i];
+    const balance = getBalancerPoolTokenBalance(poolTokenContract, walletAddress, blockNumber);
+    log.info("getBalancerPoolTokenRecords: Balancer pool {} has balance of {} in wallet {}", [
+      getContractName(poolTokenAddress),
+      balance.toString(),
+      getContractName(walletAddress),
+    ]);
+    if (balance.equals(BigDecimal.zero())) continue;
+
+    pushTokenRecord(
+      records,
+      newTokenRecord(
+        metricName,
+        getContractName(poolTokenAddress),
+        poolTokenAddress,
+        getContractName(walletAddress),
+        walletAddress,
+        unitRate,
+        balance,
+        blockNumber,
+        multiplier,
+      ),
+    );
+  }
+
+  return records;
+}
+
 /**
  * Provides TokenRecords representing the Balancer pool identified by {poolId}.
  *
@@ -193,16 +236,22 @@ export function getBalancerRecords(
   blockNumber: BigInt,
   tokenAddress: string | null = null,
 ): TokenRecords {
-  log.info("Calculating value of Balancer vault {} for pool id {}", [vaultAddress, poolId]);
+  log.info("getBalancerRecords: Calculating value of Balancer vault {} for pool id {}", [
+    vaultAddress,
+    poolId,
+  ]);
   const records = newTokenRecords(addToMetricName(metricName, "BalancerPool"), blockNumber);
   if (tokenAddress && !liquidityPairHasToken(poolId, tokenAddress)) {
-    log.debug("tokenAddress specified and not found in balancer pool. Skipping.", []);
+    log.debug(
+      "getBalancerRecords: tokenAddress specified and not found in balancer pool. Skipping.",
+      [],
+    );
     return records;
   }
 
   const poolTokenContract = getBalancerPoolToken(vaultAddress, poolId, blockNumber);
   if (poolTokenContract === null || poolTokenContract.totalSupply().equals(BigInt.zero())) {
-    log.debug("Skipping Balancer pool {} with total supply of 0 at block {}", [
+    log.debug("getBalancerRecords: Skipping Balancer pool {} with total supply of 0 at block {}", [
       getContractName(poolId),
       blockNumber.toString(),
     ]);
@@ -246,7 +295,7 @@ export function getBalancerRecords(
 
   const poolTokenAddress = poolTokenContract._address.toHexString();
   log.info(
-    "Balancer pool {} ({}) has total value of {}, included value of {} and unit rate of {}",
+    "getBalancerRecords: Balancer pool {} ({}) has total value of {}, included value of {} and unit rate of {}",
     [
       getContractName(poolTokenAddress),
       poolTokenAddress,
@@ -256,31 +305,24 @@ export function getBalancerRecords(
     ],
   );
 
-  for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
-    const walletAddress = WALLET_ADDRESSES[i];
-    const balance = getBalancerPoolTokenBalance(poolTokenContract, walletAddress, blockNumber);
-    log.info("Balancer pool {} has balance of {} in wallet {}", [
-      getContractName(poolTokenAddress),
-      balance.toString(),
-      getContractName(walletAddress),
-    ]);
-    if (balance.equals(BigDecimal.zero())) continue;
+  // Standard pool tokens
+  combineTokenRecords(
+    records,
+    getBalancerPoolTokenRecords(
+      metricName,
+      poolId,
+      poolTokenContract,
+      unitRate,
+      multiplier,
+      blockNumber,
+    ),
+  );
 
-    pushTokenRecord(
-      records,
-      newTokenRecord(
-        metricName,
-        getContractName(poolTokenAddress),
-        poolTokenAddress,
-        getContractName(walletAddress),
-        walletAddress,
-        unitRate,
-        balance,
-        blockNumber,
-        multiplier,
-      ),
-    );
-  }
+  // Pool tokens deposited in a liquidity gauge
+  combineTokenRecords(
+    records,
+    getBalancerGaugeBalancesFromWallets(metricName, poolTokenAddress, unitRate, blockNumber),
+  );
 
   return records;
 }
@@ -329,7 +371,7 @@ export function getBalancerPoolTotalTokenQuantity(
 
 /**
  * Returns token records reflecting the quantity of the token {tokenAddress}
- * in the specified Balancer pool across wallets ({WALLET_ADDRESSES}).
+ * in the specified Balancer pool across wallets ({getWalletAddressesForContract}).
  *
  * @param metricName
  * @param vaultAddress

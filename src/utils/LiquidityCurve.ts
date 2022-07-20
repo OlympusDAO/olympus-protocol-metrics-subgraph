@@ -6,12 +6,11 @@ import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
   CONVEX_STAKING_CONTRACTS,
-  DAO_WALLET,
   ERC20_OHM_V2,
   getContractName,
   getConvexStakedToken,
+  getWalletAddressesForContract,
   liquidityPairHasToken,
-  WALLET_ADDRESSES,
 } from "./Constants";
 import { getConvexStakedBalance, getERC20 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
@@ -48,7 +47,7 @@ export function getCurvePairTotalValue(
   const pair = CurvePool.bind(Address.fromString(pairAddress));
   let totalValue = BigDecimal.zero();
   log.info(
-    "Calculating value of pair {} with excludeOhmValue = {}, restrictToToken = {}, token = {}",
+    "getCurvePairTotalValue: Calculating value of pair {} with excludeOhmValue = {}, restrictToToken = {}, token = {}",
     [
       getContractName(pairAddress),
       excludeOhmValue ? "true" : "false",
@@ -122,7 +121,7 @@ function getCurvePairStakedRecord(
 ): TokenRecord | null {
   if (stakedTokenAddress === null) {
     log.debug(
-      "Curve pair balance for staked token {} ({}) in wallet {} ({}) was 0, and no staked token was found.",
+      "getCurvePairStakedRecord: Curve pair balance for staked token {} ({}) in wallet {} ({}) was 0, and no staked token was found.",
       [
         getContractName(pairTokenAddress),
         pairTokenAddress,
@@ -182,7 +181,7 @@ function getCurvePairRecord(
   // Get the balance of the pair's token in walletAddress
   const pairTokenBalance = pairToken.balanceOf(Address.fromString(walletAddress));
   if (pairTokenBalance.equals(BigInt.zero())) {
-    log.debug("Curve pair balance for token {} ({}) in wallet {} ({}) was 0", [
+    log.debug("getCurvePairRecord: Curve pair balance for token {} ({}) in wallet {} ({}) was 0", [
       getContractName(pairTokenAddress),
       pairTokenAddress,
       getContractName(walletAddress),
@@ -222,7 +221,7 @@ function getCurvePairToken(pairAddress: string, blockNumber: BigInt): string | n
   // If the token does not exist at the current block, it will revert
   if (pair.try_token().reverted) {
     log.debug(
-      "ERC20 token for Curve pair {} could not be determined at block {} due to contract revert. Skipping",
+      "getCurvePairToken: ERC20 token for Curve pair {} could not be determined at block {} due to contract revert. Skipping",
       [getContractName(pairAddress), blockNumber.toString()],
     );
     return null;
@@ -264,17 +263,19 @@ function getCurvePairUnitRate(
   totalValue: BigDecimal,
   blockNumber: BigInt,
 ): BigDecimal {
-  log.info("Calculating unit rate for Curve pair {}", [getContractName(pairAddress)]);
+  log.info("getCurvePairUnitRate: Calculating unit rate for Curve pair {}", [
+    getContractName(pairAddress),
+  ]);
   const pairTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
   if (!pairTokenContract) return BigDecimal.zero();
 
   const totalSupply = toDecimal(pairTokenContract.totalSupply(), pairTokenContract.decimals());
-  log.debug("Curve pair {} has total supply of {}", [
+  log.debug("getCurvePairUnitRate: Curve pair {} has total supply of {}", [
     getContractName(pairAddress),
     totalSupply.toString(),
   ]);
   const unitRate = totalValue.div(totalSupply);
-  log.info("Unit rate of Curve LP {} is {} for total supply {}", [
+  log.info("getCurvePairUnitRate: Unit rate of Curve LP {} is {} for total supply {}", [
     pairAddress,
     unitRate.toString(),
     totalSupply.toString(),
@@ -288,9 +289,7 @@ function getCurvePairUnitRate(
  * This function does the following:
  * - Calculates the total value of the LP
  * - Calculates the unit rate of the LP
- * - Iterates through {WALLET_ADDRESSES} and adds records for the balance of the LP's normal token and staked token
- *
- * If
+ * - Iterates through {getWalletAddressesForContract} and adds records for the balance of the LP's normal token and staked token
  *
  * @param metricName
  * @param pairAddress the address of the Curve pair
@@ -314,13 +313,16 @@ export function getCurvePairRecords(
   );
   // If we are restricting by token and tokenAddress does not match either side of the pair
   if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
-    log.debug("Skipping Curve pair that does not match specified token address {}", [tokenAddress]);
+    log.debug(
+      "getCurvePairRecords: Skipping Curve pair that does not match specified token address {}",
+      [tokenAddress],
+    );
     return records;
   }
 
   const pairTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
   if (!pairTokenContract || pairTokenContract.totalSupply().equals(BigInt.zero())) {
-    log.debug("Skipping Curve pair {} with total supply of 0 at block {}", [
+    log.debug("getCurvePairRecords: Skipping Curve pair {} with total supply of 0 at block {}", [
       getContractName(pairAddress),
       blockNumber.toString(),
     ]);
@@ -349,7 +351,7 @@ export function getCurvePairRecords(
   // Calculate the unit rate of the LP
   const unitRate = getCurvePairUnitRate(pairAddress, totalValue, blockNumber);
   // Some Curve tokens are in the DAO wallet, so we add that
-  const wallets = WALLET_ADDRESSES.concat([DAO_WALLET]);
+  const wallets = getWalletAddressesForContract(pairAddress);
 
   const pair = CurvePool.bind(Address.fromString(pairAddress));
   const pairTokenAddress = pair.token().toHexString();
@@ -366,7 +368,8 @@ export function getCurvePairRecords(
       multiplier,
       blockNumber,
     );
-    if (record) {
+
+    if (record && !record.balance.equals(BigDecimal.zero())) {
       pushTokenRecord(records, record);
     }
 
@@ -385,7 +388,7 @@ export function getCurvePairRecords(
         blockNumber,
       );
 
-      if (stakedRecord) {
+      if (stakedRecord && !stakedRecord.balance.equals(BigDecimal.zero())) {
         pushTokenRecord(records, stakedRecord);
       }
     }
@@ -438,16 +441,16 @@ export function getCurvePairTotalTokenQuantity(
     return getBigDecimalFromBalance(tokenAddress, token1Balance, blockNumber);
   }
 
-  log.warning("Attempted to obtain quantity of token {} from Curve pair {}, but it was not found", [
-    getContractName(tokenAddress),
-    getContractName(pairAddress),
-  ]);
+  log.warning(
+    "getCurvePairTotalTokenQuantity: Attempted to obtain quantity of token {} from Curve pair {}, but it was not found",
+    [getContractName(tokenAddress), getContractName(pairAddress)],
+  );
   return BigDecimal.zero();
 }
 
 /**
  * Returns records for the quantity of {tokenAddress}
- * across {WALLET_ADDRESSES}.
+ * across {getWalletAddressesForContract}.
  *
  * @param metricName
  * @param pairAddress
@@ -461,7 +464,7 @@ export function getCurvePairTokenQuantity(
   tokenAddress: string,
   blockNumber: BigInt,
 ): TokenRecords {
-  log.info("Calculating quantity of token {} in Curve pool {}", [
+  log.info("getCurvePairTokenQuantity: Calculating quantity of token {} in Curve pool {}", [
     getContractName(tokenAddress),
     getContractName(pairAddress),
   ]);
@@ -477,7 +480,7 @@ export function getCurvePairTokenQuantity(
 
   const poolTokenAddress = poolTokenContract._address.toHexString();
   const tokenDecimals = poolTokenContract.decimals();
-  log.info("Curve pool {} has total quantity {} of token {}", [
+  log.info("getCurvePairTokenQuantity: Curve pool {} has total quantity {} of token {}", [
     getContractName(poolTokenAddress),
     totalQuantity.toString(),
     getContractName(tokenAddress),

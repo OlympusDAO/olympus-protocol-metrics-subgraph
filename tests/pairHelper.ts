@@ -2,6 +2,7 @@ import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { createMockedFunction } from "matchstick-as";
 
 import {
+  CONVEX_ALLOCATORS,
   ERC20_CRV_OHMETH,
   ERC20_DAI,
   ERC20_FXS,
@@ -11,6 +12,7 @@ import {
   ERC20_TRIBE,
   ERC20_USDC,
   ERC20_WETH,
+  getWalletAddressesForContract,
   PAIR_CURVE_OHM_ETH,
   PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
@@ -21,7 +23,6 @@ import {
   PAIR_UNISWAP_V2_TRIBE_ETH,
   PAIR_UNISWAP_V2_USDC_ETH,
   PAIR_UNISWAP_V3_FXS_ETH,
-  WALLET_ADDRESSES,
 } from "../src/utils/Constants";
 import { toBigInt, toDecimal } from "../src/utils/Decimals";
 import { mockZeroWalletBalances } from "./walletHelper";
@@ -328,7 +329,10 @@ export const mockUniswapV2PairsZero = (): void => {
     PAIR_UNISWAP_V2_OHM_DAI_V2,
     ERC20_STANDARD_DECIMALS,
   );
-  mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_DAI_V2, WALLET_ADDRESSES);
+  mockZeroWalletBalances(
+    PAIR_UNISWAP_V2_OHM_DAI_V2,
+    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+  );
 
   mockUniswapV2Pair(
     ERC20_OHM_V1,
@@ -341,7 +345,10 @@ export const mockUniswapV2PairsZero = (): void => {
     PAIR_UNISWAP_V2_OHM_DAI,
     ERC20_STANDARD_DECIMALS,
   );
-  mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_DAI, WALLET_ADDRESSES);
+  mockZeroWalletBalances(
+    PAIR_UNISWAP_V2_OHM_DAI,
+    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI),
+  );
 
   mockUniswapV2Pair(
     ERC20_OHM_V2,
@@ -354,7 +361,10 @@ export const mockUniswapV2PairsZero = (): void => {
     PAIR_UNISWAP_V2_OHM_ETH_V2,
     ERC20_STANDARD_DECIMALS,
   );
-  mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_ETH_V2, WALLET_ADDRESSES);
+  mockZeroWalletBalances(
+    PAIR_UNISWAP_V2_OHM_ETH_V2,
+    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_ETH_V2),
+  );
 
   mockUniswapV2Pair(
     ERC20_OHM_V1,
@@ -367,7 +377,10 @@ export const mockUniswapV2PairsZero = (): void => {
     PAIR_UNISWAP_V2_OHM_ETH,
     ERC20_STANDARD_DECIMALS,
   );
-  mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_ETH, WALLET_ADDRESSES);
+  mockZeroWalletBalances(
+    PAIR_UNISWAP_V2_OHM_ETH,
+    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_ETH),
+  );
 
   mockUniswapV2Pair(
     ERC20_OHM_V2,
@@ -380,7 +393,10 @@ export const mockUniswapV2PairsZero = (): void => {
     PAIR_UNISWAP_V2_OHM_LUSD_V2,
     ERC20_STANDARD_DECIMALS,
   );
-  mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_LUSD_V2, WALLET_ADDRESSES);
+  mockZeroWalletBalances(
+    PAIR_UNISWAP_V2_OHM_LUSD_V2,
+    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_LUSD_V2),
+  );
 
   mockUniswapV2Pair(
     ERC20_OHM_V1,
@@ -393,7 +409,10 @@ export const mockUniswapV2PairsZero = (): void => {
     PAIR_UNISWAP_V2_OHM_LUSD,
     ERC20_STANDARD_DECIMALS,
   );
-  mockZeroWalletBalances(PAIR_UNISWAP_V2_OHM_LUSD, WALLET_ADDRESSES);
+  mockZeroWalletBalances(
+    PAIR_UNISWAP_V2_OHM_LUSD,
+    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_LUSD),
+  );
 };
 
 export const OHM_ETH_RESERVES_OHM = BigInt.fromString("375628431674251");
@@ -533,5 +552,6 @@ export const mockCurvePairZero = (): void => {
     ERC20_STANDARD_DECIMALS,
   );
 
-  mockZeroWalletBalances(ERC20_CRV_OHMETH, WALLET_ADDRESSES);
+  mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+  mockZeroWalletBalances(ERC20_CRV_OHMETH, CONVEX_ALLOCATORS);
 };

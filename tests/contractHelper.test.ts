@@ -1,19 +1,40 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
+import { TokenRecord } from "../generated/schema";
 import {
+  BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
   CONVEX_ALLOCATOR3,
   CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
   CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
+  DAO_WALLET,
+  ERC20_ALCX,
+  ERC20_BALANCER_WETH_FDT,
   ERC20_CVX_FRAX_3CRV,
   ERC20_CVX_OHMETH,
   ERC20_FRAX_3CRV,
+  ERC20_LQTY,
+  ERC20_TOKE,
+  ERC20_WETH,
+  getWalletAddressesForContract,
+  LQTY_STAKING,
   NATIVE_ETH,
+  TOKE_STAKING,
+  TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
-import { getConvexStakedBalance, getConvexStakedRecords } from "../src/utils/ContractHelper";
+import {
+  getBalancerGaugeBalanceFromWallets,
+  getConvexStakedBalance,
+  getConvexStakedRecords,
+  getERC20,
+  getERC20TokenRecordsFromWallets,
+  getLiquityStakedBalancesFromWallets,
+  getTokeStakedBalancesFromWallets,
+} from "../src/utils/ContractHelper";
 import { toBigInt } from "../src/utils/Decimals";
 import { ERC20_STANDARD_DECIMALS } from "./pairHelper";
+import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 
 export const mockConvexStakedBalance = (
   tokenAddress: string,
@@ -56,6 +77,104 @@ export const mockConvexStakedBalanceZero = (allocators: string[] = CONVEX_ALLOCA
         BigInt.zero(),
       );
     }
+  }
+};
+
+export const mockTokeStakedBalance = (
+  tokenAddress: string,
+  walletAddress: string,
+  stakingAddress: string,
+  balance: BigInt,
+): void => {
+  const stakingContractAddress = Address.fromString(stakingAddress);
+  // Returns token
+  createMockedFunction(stakingContractAddress, "tokeToken", "tokeToken():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
+  ]);
+
+  // Returns balance
+  createMockedFunction(stakingContractAddress, "balanceOf", "balanceOf(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(walletAddress))])
+    .returns([ethereum.Value.fromUnsignedBigInt(balance)]);
+
+  // We assume price lookup is handled
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
+export const mockTokeStakedBalanceZero = (wallets: string[]): void => {
+  for (let i = 0; i < wallets.length; i++) {
+    mockTokeStakedBalance(ERC20_TOKE, wallets[i], TOKE_STAKING, BigInt.zero());
+  }
+};
+
+export const mockLiquityStakedBalance = (
+  tokenAddress: string,
+  walletAddress: string,
+  stakingAddress: string,
+  balance: BigInt,
+): void => {
+  const stakingContractAddress = Address.fromString(stakingAddress);
+  // Returns token
+  createMockedFunction(stakingContractAddress, "lqtyToken", "lqtyToken():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
+  ]);
+
+  // Returns balance
+  createMockedFunction(stakingContractAddress, "stakes", "stakes(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(walletAddress))])
+    .returns([ethereum.Value.fromUnsignedBigInt(balance)]);
+
+  // We assume price lookup is handled
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
+export const mockLiquityStakedBalanceZero = (wallets: string[]): void => {
+  for (let i = 0; i < wallets.length; i++) {
+    mockLiquityStakedBalance(ERC20_LQTY, wallets[i], LQTY_STAKING, BigInt.zero());
+  }
+};
+
+export const mockBalancerGaugeBalance = (
+  tokenAddress: string,
+  walletAddress: string,
+  gaugeBalance: string,
+  balance: BigInt,
+): void => {
+  const gaugeContractAddress = Address.fromString(gaugeBalance);
+  // Returns token
+  createMockedFunction(gaugeContractAddress, "lp_token", "lp_token():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
+  ]);
+
+  // Returns balance
+  createMockedFunction(gaugeContractAddress, "balanceOf", "balanceOf(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(walletAddress))])
+    .returns([ethereum.Value.fromUnsignedBigInt(balance)]);
+
+  // We assume price lookup is handled
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
+export const mockBalancerGaugeBalanceZero = (wallets: string[]): void => {
+  for (let i = 0; i < wallets.length; i++) {
+    mockBalancerGaugeBalance(
+      ERC20_BALANCER_WETH_FDT,
+      wallets[i],
+      BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+      BigInt.zero(),
+    );
   }
 };
 
@@ -132,5 +251,252 @@ describe("Staked Convex", () => {
     const records = getConvexStakedRecords("metric", ERC20_CVX_FRAX_3CRV, BigInt.fromString("1"));
     // 5 * $1
     assert.stringEquals("5", records.value.toString());
+  });
+});
+
+describe("get ERC20 token records from wallets", () => {
+  test("excludes token not on whitelist", () => {
+    mockZeroWalletBalances(ERC20_ALCX, getWalletAddressesForContract(ERC20_ALCX));
+
+    // Set balance of the non-whitelist token
+    mockWalletBalance(ERC20_ALCX, DAO_WALLET, toBigInt(BigDecimal.fromString("10")));
+    createMockedFunction(
+      Address.fromString(ERC20_ALCX.toLowerCase()),
+      "decimals",
+      "decimals():(uint8)",
+    ).returns([ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS)]);
+
+    const blockNumber = BigInt.fromString("1");
+    const contract = getERC20("ALCX", ERC20_ALCX, blockNumber);
+    if (!contract) throw new Error("Expected ERC20 contract to be non-null");
+
+    const records = getERC20TokenRecordsFromWallets(
+      "metric",
+      ERC20_ALCX,
+      contract,
+      BigDecimal.fromString("1"),
+      blockNumber,
+    );
+
+    assert.i32Equals(0, records.records.length);
+  });
+
+  test("includes token in DAO wallet on whitelist", () => {
+    mockZeroWalletBalances(ERC20_WETH, getWalletAddressesForContract(ERC20_WETH));
+
+    // Set balance of the whitelist token
+    const tokenBalance = "10";
+    mockWalletBalance(ERC20_WETH, DAO_WALLET, toBigInt(BigDecimal.fromString(tokenBalance)));
+    createMockedFunction(Address.fromString(ERC20_WETH), "decimals", "decimals():(uint8)").returns([
+      ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+    ]);
+
+    const blockNumber = BigInt.fromString("1");
+    const contract = getERC20("wETH", ERC20_WETH, blockNumber);
+    if (!contract) throw new Error("Expected ERC20 contract to be non-null");
+
+    const records = getERC20TokenRecordsFromWallets(
+      "metric",
+      ERC20_WETH,
+      contract,
+      BigDecimal.fromString("1"),
+      blockNumber,
+    );
+
+    const record = TokenRecord.load(records.records[0]);
+    assert.stringEquals(tokenBalance, record ? record.balance.toString() : "");
+    assert.i32Equals(1, records.records.length);
+  });
+});
+
+describe("get TOKE staked records", () => {
+  test("passed token does not match tokeToken", () => {
+    // There is a balance
+    mockTokeStakedBalance(
+      ERC20_TOKE,
+      TREASURY_ADDRESS_V3,
+      TOKE_STAKING,
+      toBigInt(BigDecimal.fromString("10")),
+    );
+
+    // Ignored as the token does not match the staking contract
+    const records = getTokeStakedBalancesFromWallets(
+      "metric",
+      ERC20_ALCX,
+      BigDecimal.fromString("2"),
+      BigInt.fromString("10"),
+    );
+
+    assert.i32Equals(0, records.records.length);
+  });
+
+  test("staking contract reverts", () => {
+    createMockedFunction(
+      Address.fromString(TOKE_STAKING),
+      "tokeToken",
+      "tokeToken():(address)",
+    ).reverts();
+
+    const records = getTokeStakedBalancesFromWallets(
+      "metric",
+      ERC20_TOKE,
+      BigDecimal.fromString("2"),
+      BigInt.fromString("10"),
+    );
+
+    // Returns no records as the staking contract reverted
+    assert.i32Equals(0, records.records.length);
+  });
+
+  test("staking contract returns balance", () => {
+    mockTokeStakedBalanceZero(getWalletAddressesForContract(ERC20_TOKE));
+    // There is a balance
+    mockTokeStakedBalance(
+      ERC20_TOKE,
+      TREASURY_ADDRESS_V3,
+      TOKE_STAKING,
+      toBigInt(BigDecimal.fromString("10")),
+    );
+
+    const records = getTokeStakedBalancesFromWallets(
+      "metric",
+      ERC20_TOKE,
+      BigDecimal.fromString("2"),
+      BigInt.fromString("10"),
+    );
+
+    const recordOne = TokenRecord.load(records.records[0]);
+    assert.stringEquals("10", recordOne ? recordOne.balance.toString() : "");
+    assert.stringEquals("2", recordOne ? recordOne.rate.toString() : "");
+    assert.i32Equals(1, records.records.length);
+  });
+});
+
+describe("get LQTY staked records", () => {
+  test("passed token does not match lqtyToken", () => {
+    // There is a balance
+    mockLiquityStakedBalance(
+      ERC20_LQTY,
+      TREASURY_ADDRESS_V3,
+      LQTY_STAKING,
+      toBigInt(BigDecimal.fromString("10")),
+    );
+
+    // Ignored as the token does not match the staking contract
+    const records = getLiquityStakedBalancesFromWallets(
+      "metric",
+      ERC20_ALCX,
+      BigDecimal.fromString("2"),
+      BigInt.fromString("10"),
+    );
+
+    assert.i32Equals(0, records.records.length);
+  });
+
+  test("staking contract reverts", () => {
+    createMockedFunction(
+      Address.fromString(LQTY_STAKING),
+      "lqtyToken",
+      "lqtyToken():(address)",
+    ).reverts();
+
+    const records = getLiquityStakedBalancesFromWallets(
+      "metric",
+      ERC20_LQTY,
+      BigDecimal.fromString("2"),
+      BigInt.fromString("10"),
+    );
+
+    // Returns no records as the staking contract reverted
+    assert.i32Equals(0, records.records.length);
+  });
+
+  test("staking contract returns balance", () => {
+    mockLiquityStakedBalanceZero(getWalletAddressesForContract(ERC20_LQTY));
+    // There is a balance
+    mockLiquityStakedBalance(
+      ERC20_LQTY,
+      TREASURY_ADDRESS_V3,
+      LQTY_STAKING,
+      toBigInt(BigDecimal.fromString("10")),
+    );
+
+    const records = getLiquityStakedBalancesFromWallets(
+      "metric",
+      ERC20_LQTY,
+      BigDecimal.fromString("2"),
+      BigInt.fromString("10"),
+    );
+
+    const recordOne = TokenRecord.load(records.records[0]);
+    assert.stringEquals("10", recordOne ? recordOne.balance.toString() : "");
+    assert.stringEquals("2", recordOne ? recordOne.rate.toString() : "");
+    assert.i32Equals(1, records.records.length);
+  });
+});
+
+describe("get Balancer liquidity gauge records", () => {
+  test("passed token does not match lpToken", () => {
+    // There is a balance
+    mockBalancerGaugeBalance(
+      ERC20_BALANCER_WETH_FDT,
+      TREASURY_ADDRESS_V3,
+      BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+      toBigInt(BigDecimal.fromString("10")),
+    );
+
+    // Ignored as the token does not match the staking contract
+    const records = getBalancerGaugeBalanceFromWallets(
+      "metric",
+      BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+      ERC20_ALCX,
+      BigDecimal.fromString("2"),
+      BigInt.fromString("10"),
+    );
+
+    assert.i32Equals(0, records.records.length);
+  });
+
+  test("liquidity gauge contract reverts", () => {
+    createMockedFunction(
+      Address.fromString(BALANCER_LIQUIDITY_GAUGE_WETH_FDT),
+      "lp_token",
+      "lp_token():(address)",
+    ).reverts();
+
+    const records = getBalancerGaugeBalanceFromWallets(
+      "metric",
+      BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+      ERC20_BALANCER_WETH_FDT,
+      BigDecimal.fromString("2"),
+      BigInt.fromString("10"),
+    );
+
+    // Returns no records as the staking contract reverted
+    assert.i32Equals(0, records.records.length);
+  });
+
+  test("liquidity gauge contract returns balance", () => {
+    mockBalancerGaugeBalanceZero(getWalletAddressesForContract(ERC20_BALANCER_WETH_FDT));
+    // There is a balance
+    mockBalancerGaugeBalance(
+      ERC20_BALANCER_WETH_FDT,
+      TREASURY_ADDRESS_V3,
+      BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+      toBigInt(BigDecimal.fromString("10")),
+    );
+
+    const records = getBalancerGaugeBalanceFromWallets(
+      "metric",
+      BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+      ERC20_BALANCER_WETH_FDT,
+      BigDecimal.fromString("2"),
+      BigInt.fromString("10"),
+    );
+
+    const recordOne = TokenRecord.load(records.records[0]);
+    assert.stringEquals("10", recordOne ? recordOne.balance.toString() : "");
+    assert.stringEquals("2", recordOne ? recordOne.rate.toString() : "");
+    assert.i32Equals(1, records.records.length);
   });
 });

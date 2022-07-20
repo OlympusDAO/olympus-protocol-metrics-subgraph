@@ -3,6 +3,7 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { TokenRecords } from "../../generated/schema";
 import {
   getContractName,
+  getWalletAddressesForContract,
   LIQUIDITY_OWNED,
   OHMDAI_ONSEN_ID,
   OHMLUSD_ONSEN_ID,
@@ -19,7 +20,6 @@ import {
   TREASURY_ADDRESS_V1,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
-  WALLET_ADDRESSES,
 } from "./Constants";
 import {
   getMasterChef,
@@ -162,11 +162,12 @@ export function getLiquidityBalances(
       // TODO shift to getUniswapV2PairRecords()
       const liquidityPair = getUniswapV2Pair(pairHandler.getContract(), blockNumber);
       const liquidityBalance = new LiquidityBalances(pairHandler.getContract());
+      const wallets = getWalletAddressesForContract(pairHandler.getContract());
 
       // Across the different sources, determine the total balance of liquidity pools
       // Uniswap LPs in wallets
-      for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
-        const currentWallet = WALLET_ADDRESSES[i];
+      for (let i = 0; i < wallets.length; i++) {
+        const currentWallet = wallets[i];
         const balance = getUniswapV2PairBalance(
           liquidityPair,
           currentWallet,

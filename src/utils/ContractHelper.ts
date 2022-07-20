@@ -1,8 +1,10 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
+import { BalancerLiquidityGauge } from "../../generated/ProtocolMetrics/BalancerLiquidityGauge";
 import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator";
 import { ConvexBaseRewardPool } from "../../generated/ProtocolMetrics/ConvexBaseRewardPool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
+import { LQTYStaking } from "../../generated/ProtocolMetrics/LQTYStaking";
 import { LUSDAllocatorV2 } from "../../generated/ProtocolMetrics/LUSDAllocatorV2";
 import { MasterChef } from "../../generated/ProtocolMetrics/MasterChef";
 import { RariAllocator } from "../../generated/ProtocolMetrics/RariAllocator";
@@ -10,6 +12,7 @@ import { sOlympusERC20 } from "../../generated/ProtocolMetrics/sOlympusERC20";
 import { sOlympusERC20V2 } from "../../generated/ProtocolMetrics/sOlympusERC20V2";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
 import { TokeAllocator } from "../../generated/ProtocolMetrics/TokeAllocator";
+import { TokemakStaking } from "../../generated/ProtocolMetrics/TokemakStaking";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
@@ -17,6 +20,7 @@ import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
   ALLOCATOR_ONSEN_ID_NOT_FOUND,
   ALLOCATOR_RARI_ID_NOT_FOUND,
+  BALANCER_LIQUIDITY_GAUGES,
   CONTRACT_STARTING_BLOCK_MAP,
   CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
@@ -29,20 +33,23 @@ import {
   getContractName,
   getOnsenAllocatorId,
   getRariAllocatorId,
+  getWalletAddressesForContract,
   liquidityPairHasToken,
+  LQTY_STAKING,
   LUSD_ALLOCATOR,
   NATIVE_ETH,
   ONSEN_ALLOCATOR,
   RARI_ALLOCATOR,
   SUSHI_MASTERCHEF,
   TOKE_ALLOCATOR,
+  TOKE_STAKING,
   VEFXS_ALLOCATOR,
-  WALLET_ADDRESSES,
 } from "./Constants";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
 import {
   addToMetricName,
+  combineTokenRecords,
   newTokenRecord,
   newTokenRecords,
   pushTokenRecord,
@@ -592,7 +599,7 @@ export function getERC20TokenRecordFromWallet(
 
 /**
  * Fetches the balances of the given ERC20 token from
- * the wallets defined in {WALLET_ADDRESSES}.
+ * the wallets defined in {getWalletAddressesForContract}.
  *
  * @param metricName The name of the current metric, which is used for entity ids
  * @param contractAddress ERC20 contract address
@@ -612,12 +619,13 @@ export function getERC20TokenRecordsFromWallets(
     addToMetricName(metricName, getContractName(contractAddress)),
     blockNumber,
   );
+  const wallets = getWalletAddressesForContract(contractAddress);
 
-  for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
+  for (let i = 0; i < wallets.length; i++) {
     const record = getERC20TokenRecordFromWallet(
       metricName,
       contractAddress,
-      WALLET_ADDRESSES[i],
+      wallets[i],
       contract,
       rate,
       blockNumber,
@@ -625,6 +633,373 @@ export function getERC20TokenRecordsFromWallets(
     if (!record) continue;
 
     pushTokenRecord(records, record);
+  }
+
+  return records;
+}
+
+/**
+ * Returns the staked balance of {tokenContract} belonging to {walletAddress}
+ * in the Tokemak staking contract.
+ *
+ * @param stakingContract
+ * @param tokenContract
+ * @param walletAddress
+ * @param blockNumber
+ * @returns
+ */
+function getTokeStakedBalance(
+  stakingContract: TokemakStaking,
+  tokenContract: ERC20,
+  walletAddress: string,
+  _blockNumber: BigInt,
+): BigDecimal {
+  return toDecimal(
+    stakingContract.balanceOf(Address.fromString(walletAddress)),
+    tokenContract.decimals(),
+  );
+}
+
+/**
+ * Returns records for the staked balance of {tokenAddress} across
+ * all wallets that are staked with Tokemak.
+ *
+ * @param metricName
+ * @param tokenAddress
+ * @param rate
+ * @param blockNumber
+ * @returns
+ */
+export function getTokeStakedBalancesFromWallets(
+  metricName: string,
+  tokenAddress: string,
+  rate: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = newTokenRecords(
+    addToMetricName(metricName, getContractName(tokenAddress)),
+    blockNumber,
+  );
+
+  // Check that the token matches
+  const contract = TokemakStaking.bind(Address.fromString(TOKE_STAKING));
+  if (contract.try_tokeToken().reverted) {
+    log.warning(
+      "getTokeStakedBalancesFromWallets: TOKE staking contract reverted at block {}. Skipping",
+      [blockNumber.toString()],
+    );
+    return records;
+  }
+
+  // Ignore if we're looping through and the staking token doesn't match
+  if (!contract.tokeToken().equals(Address.fromString(tokenAddress))) {
+    return records;
+  }
+
+  // Check that the token exists
+  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  if (tokenContract == null) {
+    return records;
+  }
+
+  // Iterate over all relevant wallets
+  const wallets = getWalletAddressesForContract(tokenAddress);
+  for (let i = 0; i < wallets.length; i++) {
+    const currentWallet = wallets[i];
+    const balance = getTokeStakedBalance(contract, tokenContract, currentWallet, blockNumber);
+    if (balance.equals(BigDecimal.zero())) {
+      continue;
+    }
+
+    log.debug(
+      "getTokeStakedBalancesFromWallets: found staked balance {} for token {} ({}) and wallet {} ({}) at block {}",
+      [
+        balance.toString(),
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        blockNumber.toString(),
+      ],
+    );
+
+    pushTokenRecord(
+      records,
+      newTokenRecord(
+        metricName,
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        rate,
+        balance,
+        blockNumber,
+      ),
+    );
+  }
+
+  return records;
+}
+
+/**
+ * Returns the staked balance of {tokenContract} belonging to {walletAddress}
+ * in the Liquity staking contract.
+ *
+ * @param stakingContract
+ * @param tokenContract
+ * @param walletAddress
+ * @param blockNumber
+ * @returns
+ */
+function getLiquityStakedBalance(
+  stakingContract: LQTYStaking,
+  tokenContract: ERC20,
+  walletAddress: string,
+  _blockNumber: BigInt,
+): BigDecimal {
+  return toDecimal(
+    stakingContract.stakes(Address.fromString(walletAddress)),
+    tokenContract.decimals(),
+  );
+}
+
+/**
+ * Returns records for the staked balance of {tokenAddress} across
+ * all wallets that are staked with Liquity.
+ *
+ * @param metricName
+ * @param tokenAddress
+ * @param rate
+ * @param blockNumber
+ * @returns
+ */
+export function getLiquityStakedBalancesFromWallets(
+  metricName: string,
+  tokenAddress: string,
+  rate: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = newTokenRecords(
+    addToMetricName(metricName, getContractName(tokenAddress)),
+    blockNumber,
+  );
+
+  // Check that the token matches
+  const contract = LQTYStaking.bind(Address.fromString(LQTY_STAKING));
+  if (contract.try_lqtyToken().reverted) {
+    log.warning(
+      "getLiquityStakedBalancesFromWallets: LQTY staking contract reverted at block {}. Skipping",
+      [blockNumber.toString()],
+    );
+    return records;
+  }
+
+  // Ignore if we're looping through and the staking token doesn't match
+  if (!contract.lqtyToken().equals(Address.fromString(tokenAddress))) {
+    return records;
+  }
+
+  // Check that the token exists
+  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  if (tokenContract == null) {
+    return records;
+  }
+
+  // Iterate over all relevant wallets
+  const wallets = getWalletAddressesForContract(tokenAddress);
+  for (let i = 0; i < wallets.length; i++) {
+    const currentWallet = wallets[i];
+    const balance = getLiquityStakedBalance(contract, tokenContract, currentWallet, blockNumber);
+    if (balance.equals(BigDecimal.zero())) {
+      continue;
+    }
+
+    log.debug(
+      "getLiquityStakedBalancesFromWallets: found staked balance {} for token {} ({}) and wallet {} ({}) at block {}",
+      [
+        balance.toString(),
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        blockNumber.toString(),
+      ],
+    );
+
+    pushTokenRecord(
+      records,
+      newTokenRecord(
+        metricName,
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        rate,
+        balance,
+        blockNumber,
+      ),
+    );
+  }
+
+  return records;
+}
+
+/**
+ * Returns the gauge balance of {tokenContract} belonging to {walletAddress}
+ * in a Balancer liquidity gauge.
+ *
+ * @param gaugeContract
+ * @param tokenContract
+ * @param walletAddress
+ * @param blockNumber
+ * @returns
+ */
+function getBalancerGaugeBalance(
+  gaugeContract: BalancerLiquidityGauge,
+  tokenContract: ERC20,
+  walletAddress: string,
+  _blockNumber: BigInt,
+): BigDecimal {
+  return toDecimal(
+    gaugeContract.balanceOf(Address.fromString(walletAddress)),
+    tokenContract.decimals(),
+  );
+}
+
+/**
+ * Returns records for the gauge balance of {tokenAddress} across
+ * all wallets that are deposited in the given Balancer liquidity gauge.
+ *
+ * @param metricName
+ * @param gaugeContractAddress
+ * @param tokenAddress
+ * @param rate
+ * @param blockNumber
+ * @returns
+ */
+export function getBalancerGaugeBalanceFromWallets(
+  metricName: string,
+  gaugeContractAddress: string,
+  tokenAddress: string,
+  rate: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = newTokenRecords(
+    addToMetricName(metricName, getContractName(tokenAddress)),
+    blockNumber,
+  );
+
+  log.debug(
+    "getBalancerGaugeBalanceFromWallets: determining wallet balances in liquidity gauge {} ({}) of token {} ({}) at block {}",
+    [
+      getContractName(gaugeContractAddress),
+      gaugeContractAddress,
+      getContractName(tokenAddress),
+      tokenAddress,
+      blockNumber.toString(),
+    ],
+  );
+
+  // Check that the token matches
+  const contract = BalancerLiquidityGauge.bind(Address.fromString(gaugeContractAddress));
+  if (contract.try_lp_token().reverted) {
+    log.warning(
+      "getBalancerGaugeBalanceFromWallets: Balancer liquidity gauge contract reverted at block {}. Skipping",
+      [blockNumber.toString()],
+    );
+    return records;
+  }
+
+  // Ignore if we're looping through and the LP token doesn't match
+  if (!contract.lp_token().equals(Address.fromString(tokenAddress))) {
+    log.debug(
+      "getBalancerGaugeBalanceFromWallets: output of lp_token() did not match current token {} ({}) at block {}. Skipping",
+      [getContractName(tokenAddress), tokenAddress, blockNumber.toString()],
+    );
+    return records;
+  }
+
+  // Check that the token exists
+  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  if (tokenContract == null) {
+    log.debug(
+      "getBalancerGaugeBalanceFromWallets: token {} ({}) does not seem to exist at block {}. Skipping",
+      [getContractName(tokenAddress), tokenAddress, blockNumber.toString()],
+    );
+    return records;
+  }
+
+  // Iterate over all relevant wallets
+  const wallets = getWalletAddressesForContract(tokenAddress);
+  for (let i = 0; i < wallets.length; i++) {
+    const currentWallet = wallets[i];
+    const balance = getBalancerGaugeBalance(contract, tokenContract, currentWallet, blockNumber);
+    if (balance.equals(BigDecimal.zero())) {
+      continue;
+    }
+
+    log.debug(
+      "getBalancerGaugeBalanceFromWallets: found balance {} for token {} ({}) and wallet {} ({}) at block {}",
+      [
+        balance.toString(),
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        blockNumber.toString(),
+      ],
+    );
+
+    pushTokenRecord(
+      records,
+      newTokenRecord(
+        metricName,
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        rate,
+        balance,
+        blockNumber,
+      ),
+    );
+  }
+
+  return records;
+}
+
+/**
+ * Iterates through all Balancer Liquidity Gauges and returns the
+ * balances.
+ *
+ * @param metricName
+ * @param tokenAddress
+ * @param rate
+ * @param blockNumber
+ * @returns
+ */
+export function getBalancerGaugeBalancesFromWallets(
+  metricName: string,
+  tokenAddress: string,
+  rate: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = newTokenRecords(
+    addToMetricName(metricName, getContractName(tokenAddress)),
+    blockNumber,
+  );
+
+  for (let i = 0; i < BALANCER_LIQUIDITY_GAUGES.length; i++) {
+    combineTokenRecords(
+      records,
+      getBalancerGaugeBalanceFromWallets(
+        metricName,
+        BALANCER_LIQUIDITY_GAUGES[i],
+        tokenAddress,
+        rate,
+        blockNumber,
+      ),
+    );
   }
 
   return records;
@@ -826,29 +1201,46 @@ export function getConvexStakedBalance(
   blockNumber: BigInt,
 ): BigDecimal | null {
   // Unsupported
-  if (tokenAddress == NATIVE_ETH) return null;
+  if (tokenAddress == NATIVE_ETH) {
+    log.info("getConvexStakedBalance: native ETH is unsupported", []);
+    return null;
+  }
 
   // Check if tokenAddress is the same as that on the staking contract
   const stakingContract = ConvexBaseRewardPool.bind(Address.fromString(stakingAddress));
   const stakingTokenResult = stakingContract.try_stakingToken();
   if (stakingTokenResult.reverted) {
-    log.warning("Convex staking contract at {} likely doesn't exist at block {}", [
-      stakingAddress,
-      blockNumber.toString(),
-    ]);
+    log.warning(
+      "getConvexStakedBalance: Convex staking contract at {} likely doesn't exist at block {}",
+      [stakingAddress, blockNumber.toString()],
+    );
     return null;
   }
 
-  if (!stakingContract.stakingToken().equals(Address.fromString(tokenAddress))) return null;
+  // Ignore if we're looping through and the staking token doesn't match
+  if (!stakingContract.stakingToken().equals(Address.fromString(tokenAddress))) {
+    return null;
+  }
 
   const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
   if (!tokenContract) {
-    throw new Error("Unable to bind with ERC20 contract " + tokenAddress);
+    throw new Error("getConvexStakedBalance: Unable to bind with ERC20 contract " + tokenAddress);
   }
 
   // Get balance
   const balance = stakingContract.balanceOf(Address.fromString(allocatorAddress));
-  return toDecimal(balance, tokenContract.decimals());
+  const decimalBalance = toDecimal(balance, tokenContract.decimals());
+  log.debug(
+    "getConvexStakedBalance: Balance of {} for staking token {} ({}) and allocator {} ({})",
+    [
+      decimalBalance.toString(),
+      getContractName(tokenAddress),
+      tokenAddress,
+      getContractName(allocatorAddress),
+      allocatorAddress,
+    ],
+  );
+  return decimalBalance;
 }
 
 /**
@@ -891,7 +1283,7 @@ export function getConvexStakedRecords(
         stakingAddress,
         blockNumber,
       );
-      if (!balance) continue;
+      if (!balance || balance.equals(BigDecimal.zero())) continue;
 
       pushTokenRecord(
         records,

@@ -27,6 +27,14 @@ The `matchstick-as` package is used to perform testing on the subgraph code. The
 
 To run tests: `yarn test`
 
+If you receive a non-sensical test result (e.g. duplicated test cases, or a test failing that should be passing), try running `yarn test:force`. The build cache will sometimes get corrupted/broken.
+
+## Adding Contracts
+
+1. Add the ABI into the `abis/` folder.
+1. Add a reference to the ABI under the respective data source in `subgraph.yaml`
+1. Run `yarn codegen` to generate AssemblyScript files from the new ABI(s)
+
 ## Deployment
 
 ### Deployment (Testing)
@@ -78,6 +86,7 @@ To add a new token:
 - Define a constant value with the address of the Uniswap V2 or V3 liquidity pool
 - Add the token to either the `ERC20_STABLE_TOKENS` or `ERC20_VOLATILE_TOKENS` array (as appropriate)
 - Add a mapping under `PAIR_HANDLER` between the ERC20 contract and the liquidity pool contract
+- If the token is present in any wallets outside of `WALLET_ADDRESSES`, yet should be reported as part of the tresury, add it to {NON_TREASURY_ASSET_WHITELIST}.
 
 ### Wallets
 
@@ -112,6 +121,7 @@ To add a new liquidity entry:
 - Define a constant value with the address of the liquidity pool (e.g. `PAIR_UNISWAP_V2_ALCX_ETH`), with `.toLowerCase()` appended
 - Add an entry to the `LIQUIDITY_OWNED` constant, which maps the pool type (Balancer, Curve, UniswapV2, UniswapV3) to the liquidity pool address
 - Add an entry to the `LIQUIDITY_PAIR_TOKENS` constant, which maps the liquidity pool address to the tokens that it is composed of. This could be determined on-chain, but is easier/quicker if done statically.
+- If the entry is present in any wallets outside of {WALLET_ADDRESSES}, yet should be reported as part of the tresury, add it to `NON_TREASURY_ASSET_WHITELIST`.
 
 ### Staked Liquidity
 

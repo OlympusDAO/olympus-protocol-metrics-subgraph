@@ -19,9 +19,11 @@ import {
   getERC20,
   getERC20TokenRecordsFromWallets,
   getLiquityStabilityPoolRecords,
+  getLiquityStakedBalancesFromWallets,
   getOnsenAllocatorRecords,
   getRariAllocatorRecords,
   getTokeAllocatorRecords,
+  getTokeStakedBalancesFromWallets,
   getVeFXSAllocatorRecords,
 } from "./ContractHelper";
 import { getLiquidityBalances } from "./LiquidityCalculations";
@@ -126,6 +128,18 @@ export function getVolatileTokenBalance(
   combineTokenRecords(
     records,
     getTokeAllocatorRecords(metricName, contractAddress, rate, blockNumber),
+  );
+
+  // Staked TOKE
+  combineTokenRecords(
+    records,
+    getTokeStakedBalancesFromWallets(metricName, contractAddress, rate, blockNumber),
+  );
+
+  // Staked LQTY
+  combineTokenRecords(
+    records,
+    getLiquityStakedBalancesFromWallets(metricName, contractAddress, rate, blockNumber),
   );
 
   // Staked Convex tokens

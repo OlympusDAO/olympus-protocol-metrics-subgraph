@@ -2,7 +2,7 @@
   "name": "olympus-subgraph",
   "version": "0.1.0",
   "scripts": {
-    "codegen": "graph codegen",
+    "codegen": "graph codegen && yarn eslint --config ./.eslintrc.json --fix generated/",
     "build": "graph build",
     "deploy": "source .subgraph-version && graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --version-label $SUBGRAPH_VERSION olympusdao/olympus-protocol-metrics",
     "deploy:dev": "source .subgraph-version && graph deploy --studio olympus-protocol-metrics --version-label $SUBGRAPH_VERSION",
@@ -10,7 +10,8 @@
     "remove-local": "graph remove --node http://localhost:8020/ olympus",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 olympus",
     "run-local": "docker-compose -f docker/docker-compose.yml up --build",
-    "test": "graph test",
+    "test": "graph test --version 0.5.0",
+    "test:force": "yarn test --recompile",
     "auth": "source .env && graph auth --product hosted-service $GRAPH_TOKEN",
     "auth:dev": "source .env && graph auth --product subgraph-studio $GRAPH_STUDIO_TOKEN"
   },
