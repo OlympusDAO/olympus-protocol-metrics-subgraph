@@ -75,6 +75,12 @@ type ProtocolMetric @entity {
   treasuryLiquidBackingComponents: TokenRecords!
   treasuryLiquidBackingPerOhmCirculating: BigDecimal!
   treasuryLiquidBackingPerOhmFloating: BigDecimal!
+  treasuryLiquidBackingStable: BigDecimal!
+  treasuryLiquidBackingStableComponents: TokenRecords!
+  treasuryLiquidBackingVolatile: BigDecimal!
+  treasuryLiquidBackingVolatileComponents: TokenRecords!
+  treasuryLiquidBackingProtocolOwnedLiquidity: BigDecimal!
+  treasuryLiquidBackingProtocolOwnedLiquidityComponents: TokenRecords!
   treasuryLPValue: BigDecimal!
   treasuryLPValueComponents: TokenRecords!
   treasuryLusdMarketValue: BigDecimal!
@@ -89,6 +95,8 @@ type ProtocolMetric @entity {
   treasuryOhmLusdPOL: BigDecimal!
   treasuryOtherMarketValue: BigDecimal!
   treasuryOtherMarketValueComponents: TokenRecords!
+  treasuryProtocolOwnedLiquidityBacking: BigDecimal!
+  treasuryProtocolOwnedLiquidityBackingComponents: TokenRecords!
   treasuryRiskFreeValue: BigDecimal!
   treasuryRiskFreeValueComponents: TokenRecords!
   treasuryStableBacking: BigDecimal!

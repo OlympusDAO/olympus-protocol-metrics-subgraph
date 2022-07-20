@@ -59,6 +59,7 @@ import {
   getTreasuryBacking,
   getTreasuryLiquidBackingPerOhmCirculating,
   getTreasuryLiquidBackingPerOhmFloating,
+  getTreasuryProtocolOwnedLiquidityBacking,
   getTreasuryStableBacking,
   getTreasuryVolatileBacking,
 } from "./TreasuryCalculations";
@@ -106,6 +107,12 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
     protocolMetric.treasuryLiquidBackingComponents = "-1";
     protocolMetric.treasuryLiquidBackingPerOhmCirculating = BigDecimal.fromString("0");
     protocolMetric.treasuryLiquidBackingPerOhmFloating = BigDecimal.fromString("0");
+    protocolMetric.treasuryLiquidBackingProtocolOwnedLiquidity = BigDecimal.fromString("0");
+    protocolMetric.treasuryLiquidBackingProtocolOwnedLiquidityComponents = "-1";
+    protocolMetric.treasuryLiquidBackingStable = BigDecimal.fromString("0");
+    protocolMetric.treasuryLiquidBackingStableComponents = "-1";
+    protocolMetric.treasuryLiquidBackingVolatile = BigDecimal.fromString("0");
+    protocolMetric.treasuryLiquidBackingVolatileComponents = "-1";
     protocolMetric.treasuryLPValue = BigDecimal.fromString("0");
     protocolMetric.treasuryLPValueComponents = "-1";
     protocolMetric.treasuryLusdMarketValue = BigDecimal.fromString("0");
@@ -120,6 +127,8 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
     protocolMetric.treasuryOhmLusdPOL = BigDecimal.fromString("0");
     protocolMetric.treasuryOtherMarketValue = BigDecimal.fromString("0");
     protocolMetric.treasuryOtherMarketValueComponents = "-1";
+    protocolMetric.treasuryProtocolOwnedLiquidityBacking = BigDecimal.fromString("0");
+    protocolMetric.treasuryProtocolOwnedLiquidityBackingComponents = "-1";
     protocolMetric.treasuryRiskFreeValue = BigDecimal.fromString("0");
     protocolMetric.treasuryRiskFreeValueComponents = "-1";
     protocolMetric.treasuryStableBacking = BigDecimal.fromString("0");
@@ -327,6 +336,13 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryLPValue = liquidityPoolValue.value;
   pm.treasuryLPValueComponents = liquidityPoolValue.id;
 
+  const liquidityPoolBacking = getTreasuryProtocolOwnedLiquidityBacking(
+    "LiquidityPoolBacking",
+    blockNumber,
+  );
+  pm.treasuryProtocolOwnedLiquidityBacking = liquidityPoolBacking.value;
+  pm.treasuryProtocolOwnedLiquidityBackingComponents = liquidityPoolBacking.id;
+
   // stableValue + volatileValue + liquidityPoolValue = marketValue
 
   // Treasury RFV and MV
@@ -426,9 +442,29 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryTotalBacking = totalBacking.value;
   pm.treasuryTotalBackingComponents = totalBacking.id;
 
+  // Liquid Backing
   const liquidBacking = getTreasuryBacking("LiquidBacking", true, blockNumber);
   pm.treasuryLiquidBacking = liquidBacking.value;
   pm.treasuryLiquidBackingComponents = liquidBacking.id;
+
+  const liquidBackingStable = getTreasuryStableBacking("LiquidStableBacking", blockNumber);
+  pm.treasuryLiquidBackingStable = liquidBackingStable.value;
+  pm.treasuryLiquidBackingStableComponents = liquidBackingStable.id;
+
+  const liquidBackingVolatile = getTreasuryVolatileBacking(
+    "LiquidVolatileBacking",
+    blockNumber,
+    true,
+  );
+  pm.treasuryLiquidBackingVolatile = liquidBackingVolatile.value;
+  pm.treasuryLiquidBackingVolatileComponents = liquidBackingVolatile.id;
+
+  const liquidBackingPOL = getTreasuryProtocolOwnedLiquidityBacking(
+    "LiquidVolatilePOL",
+    blockNumber,
+  );
+  pm.treasuryLiquidBackingProtocolOwnedLiquidity = liquidBackingPOL.value;
+  pm.treasuryLiquidBackingProtocolOwnedLiquidityComponents = liquidBackingPOL.id;
 
   pm.treasuryLiquidBackingPerOhmCirculating = getTreasuryLiquidBackingPerOhmCirculating(
     "LiquidBackingPerOhmCirculating",

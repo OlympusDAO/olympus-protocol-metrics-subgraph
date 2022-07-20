@@ -780,6 +780,71 @@ export class ProtocolMetric extends Entity {
     );
   }
 
+  get treasuryLiquidBackingStable(): BigDecimal {
+    const value = this.get("treasuryLiquidBackingStable");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryLiquidBackingStable(value: BigDecimal) {
+    this.set("treasuryLiquidBackingStable", Value.fromBigDecimal(value));
+  }
+
+  get treasuryLiquidBackingStableComponents(): string {
+    const value = this.get("treasuryLiquidBackingStableComponents");
+    return value!.toString();
+  }
+
+  set treasuryLiquidBackingStableComponents(value: string) {
+    this.set("treasuryLiquidBackingStableComponents", Value.fromString(value));
+  }
+
+  get treasuryLiquidBackingVolatile(): BigDecimal {
+    const value = this.get("treasuryLiquidBackingVolatile");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryLiquidBackingVolatile(value: BigDecimal) {
+    this.set("treasuryLiquidBackingVolatile", Value.fromBigDecimal(value));
+  }
+
+  get treasuryLiquidBackingVolatileComponents(): string {
+    const value = this.get("treasuryLiquidBackingVolatileComponents");
+    return value!.toString();
+  }
+
+  set treasuryLiquidBackingVolatileComponents(value: string) {
+    this.set(
+      "treasuryLiquidBackingVolatileComponents",
+      Value.fromString(value)
+    );
+  }
+
+  get treasuryLiquidBackingProtocolOwnedLiquidity(): BigDecimal {
+    const value = this.get("treasuryLiquidBackingProtocolOwnedLiquidity");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryLiquidBackingProtocolOwnedLiquidity(value: BigDecimal) {
+    this.set(
+      "treasuryLiquidBackingProtocolOwnedLiquidity",
+      Value.fromBigDecimal(value)
+    );
+  }
+
+  get treasuryLiquidBackingProtocolOwnedLiquidityComponents(): string {
+    const value = this.get(
+      "treasuryLiquidBackingProtocolOwnedLiquidityComponents"
+    );
+    return value!.toString();
+  }
+
+  set treasuryLiquidBackingProtocolOwnedLiquidityComponents(value: string) {
+    this.set(
+      "treasuryLiquidBackingProtocolOwnedLiquidityComponents",
+      Value.fromString(value)
+    );
+  }
+
   get treasuryLPValue(): BigDecimal {
     const value = this.get("treasuryLPValue");
     return value!.toBigDecimal();
@@ -904,6 +969,30 @@ export class ProtocolMetric extends Entity {
 
   set treasuryOtherMarketValueComponents(value: string) {
     this.set("treasuryOtherMarketValueComponents", Value.fromString(value));
+  }
+
+  get treasuryProtocolOwnedLiquidityBacking(): BigDecimal {
+    const value = this.get("treasuryProtocolOwnedLiquidityBacking");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryProtocolOwnedLiquidityBacking(value: BigDecimal) {
+    this.set(
+      "treasuryProtocolOwnedLiquidityBacking",
+      Value.fromBigDecimal(value)
+    );
+  }
+
+  get treasuryProtocolOwnedLiquidityBackingComponents(): string {
+    const value = this.get("treasuryProtocolOwnedLiquidityBackingComponents");
+    return value!.toString();
+  }
+
+  set treasuryProtocolOwnedLiquidityBackingComponents(value: string) {
+    this.set(
+      "treasuryProtocolOwnedLiquidityBackingComponents",
+      Value.fromString(value)
+    );
   }
 
   get treasuryRiskFreeValue(): BigDecimal {
