@@ -3,12 +3,14 @@ import { assert, createMockedFunction, describe, test } from "matchstick-as/asse
 
 import { TokenRecord } from "../generated/schema";
 import {
+  BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
   CONVEX_ALLOCATOR3,
   CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
   CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
   DAO_WALLET,
   ERC20_ALCX,
+  ERC20_BALANCER_WETH_FDT,
   ERC20_CVX_FRAX_3CRV,
   ERC20_CVX_OHMETH,
   ERC20_FRAX_3CRV,
@@ -22,6 +24,7 @@ import {
   TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import {
+  getBalancerGaugeBalanceFromWallets,
   getConvexStakedBalance,
   getConvexStakedRecords,
   getERC20,
@@ -136,6 +139,42 @@ export const mockLiquityStakedBalance = (
 export const mockLiquityStakedBalanceZero = (wallets: string[]): void => {
   for (let i = 0; i < wallets.length; i++) {
     mockLiquityStakedBalance(ERC20_LQTY, wallets[i], LQTY_STAKING, BigInt.zero());
+  }
+};
+
+export const mockBalancerGaugeBalance = (
+  tokenAddress: string,
+  walletAddress: string,
+  gaugeBalance: string,
+  balance: BigInt,
+): void => {
+  const gaugeContractAddress = Address.fromString(gaugeBalance);
+  // Returns token
+  createMockedFunction(gaugeContractAddress, "lp_token", "lp_token():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
+  ]);
+
+  // Returns balance
+  createMockedFunction(gaugeContractAddress, "balanceOf", "balanceOf(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(walletAddress))])
+    .returns([ethereum.Value.fromUnsignedBigInt(balance)]);
+
+  // We assume price lookup is handled
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
+export const mockBalancerGaugeBalanceZero = (wallets: string[]): void => {
+  for (let i = 0; i < wallets.length; i++) {
+    mockBalancerGaugeBalance(
+      ERC20_BALANCER_WETH_FDT,
+      wallets[i],
+      BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+      BigInt.zero(),
+    );
   }
 };
 
@@ -385,6 +424,72 @@ describe("get LQTY staked records", () => {
     const records = getLiquityStakedBalancesFromWallets(
       "metric",
       ERC20_LQTY,
+      BigDecimal.fromString("2"),
+      BigInt.fromString("10"),
+    );
+
+    const recordOne = TokenRecord.load(records.records[0]);
+    assert.stringEquals("10", recordOne ? recordOne.balance.toString() : "");
+    assert.stringEquals("2", recordOne ? recordOne.rate.toString() : "");
+    assert.i32Equals(1, records.records.length);
+  });
+});
+
+describe("get Balancer liquidity gauge records", () => {
+  test("passed token does not match lpToken", () => {
+    // There is a balance
+    mockBalancerGaugeBalance(
+      ERC20_BALANCER_WETH_FDT,
+      TREASURY_ADDRESS_V3,
+      BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+      toBigInt(BigDecimal.fromString("10")),
+    );
+
+    // Ignored as the token does not match the staking contract
+    const records = getBalancerGaugeBalanceFromWallets(
+      "metric",
+      BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+      ERC20_ALCX,
+      BigDecimal.fromString("2"),
+      BigInt.fromString("10"),
+    );
+
+    assert.i32Equals(0, records.records.length);
+  });
+
+  test("liquidity gauge contract reverts", () => {
+    createMockedFunction(
+      Address.fromString(BALANCER_LIQUIDITY_GAUGE_WETH_FDT),
+      "lp_token",
+      "lp_token():(address)",
+    ).reverts();
+
+    const records = getBalancerGaugeBalanceFromWallets(
+      "metric",
+      BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+      ERC20_BALANCER_WETH_FDT,
+      BigDecimal.fromString("2"),
+      BigInt.fromString("10"),
+    );
+
+    // Returns no records as the staking contract reverted
+    assert.i32Equals(0, records.records.length);
+  });
+
+  test("liquidity gauge contract returns balance", () => {
+    mockBalancerGaugeBalanceZero(getWalletAddressesForContract(ERC20_BALANCER_WETH_FDT));
+    // There is a balance
+    mockBalancerGaugeBalance(
+      ERC20_BALANCER_WETH_FDT,
+      TREASURY_ADDRESS_V3,
+      BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+      toBigInt(BigDecimal.fromString("10")),
+    );
+
+    const records = getBalancerGaugeBalanceFromWallets(
+      "metric",
+      BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+      ERC20_BALANCER_WETH_FDT,
       BigDecimal.fromString("2"),
       BigInt.fromString("10"),
     );

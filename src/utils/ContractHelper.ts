@@ -1,5 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
+import { BalancerLiquidityGauge } from "../../generated/ProtocolMetrics/BalancerLiquidityGauge";
 import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator";
 import { ConvexBaseRewardPool } from "../../generated/ProtocolMetrics/ConvexBaseRewardPool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
@@ -19,6 +20,7 @@ import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
   ALLOCATOR_ONSEN_ID_NOT_FOUND,
   ALLOCATOR_RARI_ID_NOT_FOUND,
+  BALANCER_LIQUIDITY_GAUGES,
   CONTRACT_STARTING_BLOCK_MAP,
   CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
@@ -47,6 +49,7 @@ import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
 import {
   addToMetricName,
+  combineTokenRecords,
   newTokenRecord,
   newTokenRecords,
   pushTokenRecord,
@@ -833,6 +836,148 @@ export function getLiquityStakedBalancesFromWallets(
         currentWallet,
         rate,
         balance,
+        blockNumber,
+      ),
+    );
+  }
+
+  return records;
+}
+
+/**
+ * Returns the gauge balance of {tokenContract} belonging to {walletAddress}
+ * in a Balancer liquidity gauge.
+ *
+ * @param gaugeContract
+ * @param tokenContract
+ * @param walletAddress
+ * @param blockNumber
+ * @returns
+ */
+function getBalancerGaugeBalance(
+  gaugeContract: BalancerLiquidityGauge,
+  tokenContract: ERC20,
+  walletAddress: string,
+  _blockNumber: BigInt,
+): BigDecimal {
+  return toDecimal(
+    gaugeContract.balanceOf(Address.fromString(walletAddress)),
+    tokenContract.decimals(),
+  );
+}
+
+/**
+ * Returns records for the gauge balance of {tokenAddress} across
+ * all wallets that are deposited in the given Balancer liquidity gauge.
+ *
+ * @param metricName
+ * @param gaugeContractAddress
+ * @param tokenAddress
+ * @param rate
+ * @param blockNumber
+ * @returns
+ */
+export function getBalancerGaugeBalanceFromWallets(
+  metricName: string,
+  gaugeContractAddress: string,
+  tokenAddress: string,
+  rate: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = newTokenRecords(
+    addToMetricName(metricName, getContractName(tokenAddress)),
+    blockNumber,
+  );
+
+  // Check that the token matches
+  const contract = BalancerLiquidityGauge.bind(Address.fromString(gaugeContractAddress));
+  if (contract.try_lp_token().reverted) {
+    log.warning(
+      "getBalancerGaugeBalanceFromWallets: Balancer liquidity gauge contract reverted at block {}. Skipping",
+      [blockNumber.toString()],
+    );
+    return records;
+  }
+
+  // Ignore if we're looping through and the LP token doesn't match
+  if (!contract.lp_token().equals(Address.fromString(tokenAddress))) {
+    return records;
+  }
+
+  // Check that the token exists
+  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  if (tokenContract == null) {
+    return records;
+  }
+
+  // Iterate over all relevant wallets
+  const wallets = getWalletAddressesForContract(tokenAddress);
+  for (let i = 0; i < wallets.length; i++) {
+    const currentWallet = wallets[i];
+    const balance = getBalancerGaugeBalance(contract, tokenContract, currentWallet, blockNumber);
+    if (balance.equals(BigDecimal.zero())) {
+      continue;
+    }
+
+    log.debug(
+      "getBalancerGaugeBalanceFromWallets: found balance {} for token {} ({}) and wallet {} ({}) at block {}",
+      [
+        balance.toString(),
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        blockNumber.toString(),
+      ],
+    );
+
+    pushTokenRecord(
+      records,
+      newTokenRecord(
+        metricName,
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        rate,
+        balance,
+        blockNumber,
+      ),
+    );
+  }
+
+  return records;
+}
+
+/**
+ * Iterates through all Balancer Liquidity Gauges and returns the
+ * balances.
+ *
+ * @param metricName
+ * @param tokenAddress
+ * @param rate
+ * @param blockNumber
+ * @returns
+ */
+export function getBalancerGaugeBalancesFromWallets(
+  metricName: string,
+  tokenAddress: string,
+  rate: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = newTokenRecords(
+    addToMetricName(metricName, getContractName(tokenAddress)),
+    blockNumber,
+  );
+
+  for (let i = 0; i < BALANCER_LIQUIDITY_GAUGES.length; i++) {
+    combineTokenRecords(
+      records,
+      getBalancerGaugeBalanceFromWallets(
+        metricName,
+        BALANCER_LIQUIDITY_GAUGES[i],
+        tokenAddress,
+        rate,
         blockNumber,
       ),
     );

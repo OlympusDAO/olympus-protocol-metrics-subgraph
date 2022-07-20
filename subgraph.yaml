@@ -484,8 +484,8 @@ dataSources:
           file: ./abis/TokemakStaking.json
         - name: LQTYStaking
           file: ./abis/LQTYStaking.json
-        - name: CurveLiquidityGauge
-          file: ./abis/CurveLiquidityGauge.json
+        - name: BalancerLiquidityGauge
+          file: ./abis/BalancerLiquidityGauge.json
       callHandlers:
         - function: stake(address,uint256,bool,bool)
           handler: handleMetrics

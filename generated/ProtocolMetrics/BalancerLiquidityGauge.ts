@@ -161,7 +161,7 @@ export class RewardDistributorUpdated__Params {
   }
 }
 
-export class CurveLiquidityGauge__reward_dataResultValue0Struct extends ethereum.Tuple {
+export class BalancerLiquidityGauge__reward_dataResultValue0Struct extends ethereum.Tuple {
   get token(): Address {
     return this[0].toAddress();
   }
@@ -187,9 +187,9 @@ export class CurveLiquidityGauge__reward_dataResultValue0Struct extends ethereum
   }
 }
 
-export class CurveLiquidityGauge extends ethereum.SmartContract {
-  static bind(address: Address): CurveLiquidityGauge {
-    return new CurveLiquidityGauge("CurveLiquidityGauge", address);
+export class BalancerLiquidityGauge extends ethereum.SmartContract {
+  static bind(address: Address): BalancerLiquidityGauge {
+    return new BalancerLiquidityGauge("BalancerLiquidityGauge", address);
   }
 
   transferFrom(_from: Address, _to: Address, _value: BigInt): boolean {
@@ -763,21 +763,23 @@ export class CurveLiquidityGauge extends ethereum.SmartContract {
 
   reward_data(
     arg0: Address
-  ): CurveLiquidityGauge__reward_dataResultValue0Struct {
+  ): BalancerLiquidityGauge__reward_dataResultValue0Struct {
     const result = super.call(
       "reward_data",
       "reward_data(address):((address,address,uint256,uint256,uint256,uint256))",
       [ethereum.Value.fromAddress(arg0)]
     );
 
-    return changetype<CurveLiquidityGauge__reward_dataResultValue0Struct>(
+    return changetype<BalancerLiquidityGauge__reward_dataResultValue0Struct>(
       result[0].toTuple()
     );
   }
 
   try_reward_data(
     arg0: Address
-  ): ethereum.CallResult<CurveLiquidityGauge__reward_dataResultValue0Struct> {
+  ): ethereum.CallResult<
+    BalancerLiquidityGauge__reward_dataResultValue0Struct
+  > {
     const result = super.tryCall(
       "reward_data",
       "reward_data(address):((address,address,uint256,uint256,uint256,uint256))",
@@ -788,7 +790,7 @@ export class CurveLiquidityGauge extends ethereum.SmartContract {
     }
     const value = result.value;
     return ethereum.CallResult.fromValue(
-      changetype<CurveLiquidityGauge__reward_dataResultValue0Struct>(
+      changetype<BalancerLiquidityGauge__reward_dataResultValue0Struct>(
         value[0].toTuple()
       )
     );
