@@ -1,6 +1,7 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecords } from "../../generated/schema";
+import { getGOhmCirculatingSupply, getGOhmTotalSupply } from "./GOhmCalculations";
 import { getOwnedLiquidityPoolValue } from "./LiquidityCalculations";
 import { getCirculatingSupply, getFloatingSupply, getTotalSupply } from "./OhmCalculations";
 import { combineTokenRecords, newTokenRecords } from "./TokenRecordHelper";
@@ -116,6 +117,24 @@ export function getTreasuryBacking(
   combineTokenRecords(records, getOwnedLiquidityPoolValue(metricName, riskFree, true, blockNumber));
 
   return records;
+}
+
+/**
+ * Returns the liquid backing per circulating gOHM, equal to:
+ *
+ * liquid backing / gOHM circulating supply
+ * {getTreasuryTotalBacking} / {getGOhmCirculatingSupply}
+ *
+ * @param blockNumber
+ * @returns
+ */
+export function getTreasuryLiquidBackingPerGOhmCirculating(
+  metricName: string,
+  blockNumber: BigInt,
+): BigDecimal {
+  return getTreasuryBacking(metricName, true, blockNumber).value.div(
+    getGOhmCirculatingSupply(metricName, getGOhmTotalSupply(blockNumber), blockNumber).value,
+  );
 }
 
 /**

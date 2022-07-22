@@ -3,9 +3,7 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
 import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
-  BONDS_DEPOSIT,
-  BONDS_INVERSE_DEPOSIT,
-  DAO_WALLET,
+  CIRCULATING_SUPPLY_WALLETS,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_OHM_V2_BLOCK,
@@ -17,9 +15,6 @@ import {
   getContractName,
   LIQUIDITY_OWNED,
   MIGRATION_CONTRACT,
-  TREASURY_ADDRESS_V1,
-  TREASURY_ADDRESS_V2,
-  TREASURY_ADDRESS_V3,
 } from "./Constants";
 import {
   getERC20,
@@ -166,16 +161,12 @@ function getMigrationOffsetRecord(metricName: string, blockNumber: BigInt): Toke
  *
  * Circulating supply is defined as:
  * - OHM total supply
- * - subtract: OHM in DAO wallet
- * - subtract: OHM in migration contract
- * - subtract: OHM in bonds deposit
- * - subtract: OHM in inverse bonds deposit
- * - subtract: OHM in treasury wallets
+ * - subtract: OHM in {CIRCULATING_SUPPLY_WALLETS}
  * - subtract: migration offset
  *
  * @param blockNumber the current block number
  * @param totalSupply the total supply of OHM
- * @returns BigDecimal representing the total supply at the time of the block
+ * @returns BigDecimal representing the circulating supply at the time of the block
  */
 export function getCirculatingSupply(
   metricName: string,
@@ -211,17 +202,8 @@ export function getCirculatingSupply(
     ),
   );
 
-  const wallets = [
-    DAO_WALLET,
-    MIGRATION_CONTRACT,
-    BONDS_DEPOSIT,
-    BONDS_INVERSE_DEPOSIT,
-    TREASURY_ADDRESS_V1,
-    TREASURY_ADDRESS_V2,
-    TREASURY_ADDRESS_V3,
-  ];
-  for (let i = 0; i < wallets.length; i++) {
-    const currentWallet = wallets[i];
+  for (let i = 0; i < CIRCULATING_SUPPLY_WALLETS.length; i++) {
+    const currentWallet = CIRCULATING_SUPPLY_WALLETS[i];
     const balance = getERC20Balance(ohmContract, currentWallet, blockNumber);
     if (balance.equals(BigInt.zero())) continue;
 

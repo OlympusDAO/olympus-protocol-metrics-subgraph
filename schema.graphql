@@ -32,9 +32,9 @@ type ProtocolMetric @entity {
   block: BigInt!
   currentAPY: BigDecimal!
   currentIndex: BigDecimal!
-  gOhmPrice: BigDecimal!
   gOhmCirculatingSupply: BigDecimal!
   gOhmCirculatingSupplyBreakdown: TokenRecords!
+  gOhmPrice: BigDecimal!
   gOhmTotalSupply: BigDecimal!
   marketCap: BigDecimal!
   nextDistributedOhm: BigDecimal!
@@ -79,12 +79,12 @@ type ProtocolMetric @entity {
   treasuryLiquidBackingPerGOhmCirculating: BigDecimal!
   treasuryLiquidBackingPerOhmCirculating: BigDecimal!
   treasuryLiquidBackingPerOhmFloating: BigDecimal!
+  treasuryLiquidBackingProtocolOwnedLiquidity: BigDecimal!
+  treasuryLiquidBackingProtocolOwnedLiquidityComponents: TokenRecords!
   treasuryLiquidBackingStable: BigDecimal!
   treasuryLiquidBackingStableComponents: TokenRecords!
   treasuryLiquidBackingVolatile: BigDecimal!
   treasuryLiquidBackingVolatileComponents: TokenRecords!
-  treasuryLiquidBackingProtocolOwnedLiquidity: BigDecimal!
-  treasuryLiquidBackingProtocolOwnedLiquidityComponents: TokenRecords!
   treasuryLPValue: BigDecimal!
   treasuryLPValueComponents: TokenRecords!
   treasuryLusdMarketValue: BigDecimal!

@@ -315,15 +315,6 @@ export class ProtocolMetric extends Entity {
     this.set("currentIndex", Value.fromBigDecimal(value));
   }
 
-  get gOhmPrice(): BigDecimal {
-    const value = this.get("gOhmPrice");
-    return value!.toBigDecimal();
-  }
-
-  set gOhmPrice(value: BigDecimal) {
-    this.set("gOhmPrice", Value.fromBigDecimal(value));
-  }
-
   get gOhmCirculatingSupply(): BigDecimal {
     const value = this.get("gOhmCirculatingSupply");
     return value!.toBigDecimal();
@@ -340,6 +331,15 @@ export class ProtocolMetric extends Entity {
 
   set gOhmCirculatingSupplyBreakdown(value: string) {
     this.set("gOhmCirculatingSupplyBreakdown", Value.fromString(value));
+  }
+
+  get gOhmPrice(): BigDecimal {
+    const value = this.get("gOhmPrice");
+    return value!.toBigDecimal();
+  }
+
+  set gOhmPrice(value: BigDecimal) {
+    this.set("gOhmPrice", Value.fromBigDecimal(value));
   }
 
   get gOhmTotalSupply(): BigDecimal {
@@ -819,6 +819,32 @@ export class ProtocolMetric extends Entity {
     );
   }
 
+  get treasuryLiquidBackingProtocolOwnedLiquidity(): BigDecimal {
+    const value = this.get("treasuryLiquidBackingProtocolOwnedLiquidity");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryLiquidBackingProtocolOwnedLiquidity(value: BigDecimal) {
+    this.set(
+      "treasuryLiquidBackingProtocolOwnedLiquidity",
+      Value.fromBigDecimal(value)
+    );
+  }
+
+  get treasuryLiquidBackingProtocolOwnedLiquidityComponents(): string {
+    const value = this.get(
+      "treasuryLiquidBackingProtocolOwnedLiquidityComponents"
+    );
+    return value!.toString();
+  }
+
+  set treasuryLiquidBackingProtocolOwnedLiquidityComponents(value: string) {
+    this.set(
+      "treasuryLiquidBackingProtocolOwnedLiquidityComponents",
+      Value.fromString(value)
+    );
+  }
+
   get treasuryLiquidBackingStable(): BigDecimal {
     const value = this.get("treasuryLiquidBackingStable");
     return value!.toBigDecimal();
@@ -854,32 +880,6 @@ export class ProtocolMetric extends Entity {
   set treasuryLiquidBackingVolatileComponents(value: string) {
     this.set(
       "treasuryLiquidBackingVolatileComponents",
-      Value.fromString(value)
-    );
-  }
-
-  get treasuryLiquidBackingProtocolOwnedLiquidity(): BigDecimal {
-    const value = this.get("treasuryLiquidBackingProtocolOwnedLiquidity");
-    return value!.toBigDecimal();
-  }
-
-  set treasuryLiquidBackingProtocolOwnedLiquidity(value: BigDecimal) {
-    this.set(
-      "treasuryLiquidBackingProtocolOwnedLiquidity",
-      Value.fromBigDecimal(value)
-    );
-  }
-
-  get treasuryLiquidBackingProtocolOwnedLiquidityComponents(): string {
-    const value = this.get(
-      "treasuryLiquidBackingProtocolOwnedLiquidityComponents"
-    );
-    return value!.toString();
-  }
-
-  set treasuryLiquidBackingProtocolOwnedLiquidityComponents(value: string) {
-    this.set(
-      "treasuryLiquidBackingProtocolOwnedLiquidityComponents",
       Value.fromString(value)
     );
   }
