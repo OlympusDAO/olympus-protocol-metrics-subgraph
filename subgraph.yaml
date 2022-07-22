@@ -486,6 +486,8 @@ dataSources:
           file: ./abis/LQTYStaking.json
         - name: BalancerLiquidityGauge
           file: ./abis/BalancerLiquidityGauge.json
+        - name: gOHM
+          file: ./abis/gOHM.json
       callHandlers:
         - function: stake(address,uint256,bool,bool)
           handler: handleMetrics
