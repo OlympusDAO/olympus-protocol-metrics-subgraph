@@ -1,13 +1,13 @@
-### July 16
-Add detailed staking and bonding information
+# Subgraph Changelog
 
-### July 17
-Fix getDiscountedPairUSD
-Add aDAI logging
+## 2.0.46 (DATE)
 
-### July 18
-Add xSUSHI to treasury
-Publish MV and RFV by asset
+- Remove gOhmCirculatingSupply, gOhmCirculatingSupplyBreakdown, treasuryLiquidBackingPerGOhmCirculating. Never used and could be misleading
+- Add treasuryLiquidBackingPerGOhm that uses a synthetic calculation for the liquid backing per gOHM (#33)
+- Apply write-off for Rari Fuse (#35)
 
-### Development
-Add holders information
+## 2.0.41 (2022-07-22)
+
+- Add metrics for gOHM circulating and total supply
+- Add metrics liquid backing per gOHM, stable/volatile/POL for liquid backing
+- Add support for gauge deposits of Balancer pools
