@@ -1,9 +1,13 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecords } from "../../generated/schema";
-import { getGOhmCirculatingSupply, getGOhmTotalSupply } from "./GOhmCalculations";
 import { getOwnedLiquidityPoolValue } from "./LiquidityCalculations";
-import { getCirculatingSupply, getFloatingSupply, getTotalSupply } from "./OhmCalculations";
+import {
+  getCirculatingSupply,
+  getCurrentIndex,
+  getFloatingSupply,
+  getTotalSupply,
+} from "./OhmCalculations";
 import { combineTokenRecords, newTokenRecords } from "./TokenRecordHelper";
 import { getStablecoinBalances, getStableValue } from "./TokenStablecoins";
 import { getVolatileTokenBalances } from "./TokenVolatile";
@@ -120,21 +124,20 @@ export function getTreasuryBacking(
 }
 
 /**
- * Returns the liquid backing per circulating gOHM, equal to:
+ * Liquid backing per gOHM is synthetically calculated as:
  *
- * liquid backing / gOHM circulating supply
- * {getTreasuryTotalBacking} / {getGOhmCirculatingSupply}
+ * liquid backing * current index / OHM floating supply
  *
  * @param blockNumber
  * @returns
  */
-export function getTreasuryLiquidBackingPerGOhmCirculating(
+export function getTreasuryLiquidBackingPerGOhm(
   metricName: string,
   blockNumber: BigInt,
 ): BigDecimal {
-  return getTreasuryBacking(metricName, true, blockNumber).value.div(
-    getGOhmCirculatingSupply(metricName, getGOhmTotalSupply(blockNumber), blockNumber).value,
-  );
+  return getTreasuryBacking(metricName, true, blockNumber)
+    .value.times(getCurrentIndex(blockNumber))
+    .div(getFloatingSupply(metricName, getTotalSupply(blockNumber), blockNumber).value);
 }
 
 /**
