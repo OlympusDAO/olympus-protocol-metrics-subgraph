@@ -12,6 +12,7 @@ import {
   ERC20_WETH,
   getWalletAddressesForContract,
   PAIR_CURVE_OHM_ETH,
+  PAIR_FRAXSWAP_OHM_FRAX,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
@@ -19,6 +20,7 @@ import { toBigInt } from "../src/utils/Decimals";
 import { getOwnedLiquidityPoolValue } from "../src/utils/LiquidityCalculations";
 import { mockConvexStakedBalanceZero } from "./contractHelper.test";
 import { mockBalanceVaultOhmDaiEth, mockBalanceVaultZero } from "./liquidityBalancer.test";
+import { mockFraxSwapPairOhmFrax, mockFraxSwapPairZero } from "./liquidityFraxSwap.test";
 import {
   ERC20_STANDARD_DECIMALS,
   ETH_USD_RESERVE_BLOCK,
@@ -40,9 +42,10 @@ describe("getLiquidityPoolValue", () => {
     mockEthUsdRate();
     mockUsdOhmV2Rate();
 
-    // Mock liquidity pools
+    // Mock other liquidity pools
     mockBalanceVaultZero();
     mockUniswapV2PairsZero();
+    mockFraxSwapPairZero();
 
     // Mock pair
     const ohmReserves = BigDecimal.fromString("100");
@@ -86,6 +89,35 @@ describe("getLiquidityPoolValue", () => {
     assert.i32Equals(1, records.records.length);
   });
 
+  test("exclude OHM value false, FraxSwap pool", () => {
+    // Mock other liquidity pools
+    mockBalanceVaultZero();
+    mockUniswapV2PairsZero();
+    mockCurvePairZero();
+
+    mockFraxSwapPairOhmFrax();
+
+    // Mock balance
+    const balance = BigDecimal.fromString("10");
+    mockZeroWalletBalances(
+      PAIR_FRAXSWAP_OHM_FRAX,
+      getWalletAddressesForContract(PAIR_FRAXSWAP_OHM_FRAX),
+    );
+    mockWalletBalance(
+      PAIR_FRAXSWAP_OHM_FRAX,
+      TREASURY_ADDRESS_V3,
+      toBigInt(balance, ERC20_STANDARD_DECIMALS),
+    );
+
+    const records = getOwnedLiquidityPoolValue("metric", false, false, ETH_USD_RESERVE_BLOCK);
+
+    // We already know that the individual pool values are tested
+    // We just want to test the inputs against the outputs
+    const record = TokenRecord.load(records.records[0]);
+    assert.stringEquals("1", record ? record.multiplier.toString() : "");
+    assert.i32Equals(1, records.records.length);
+  });
+
   test("curve pool includes DAO wallet", () => {
     mockEthUsdRate();
     mockUsdOhmV2Rate();
@@ -93,6 +125,7 @@ describe("getLiquidityPoolValue", () => {
     // Mock liquidity pools
     mockBalanceVaultZero();
     mockUniswapV2PairsZero();
+    mockFraxSwapPairZero();
 
     // Mock pair
     const ohmReserves = BigDecimal.fromString("100");
@@ -152,6 +185,7 @@ describe("getLiquidityPoolValue", () => {
     mockBalanceVaultZero();
     mockUniswapV2PairsZero();
     mockCurvePairZero();
+    mockFraxSwapPairZero();
 
     // Mock pair
     mockUniswapV2Pair(
@@ -188,6 +222,7 @@ describe("getLiquidityPoolValue", () => {
     mockBalanceVaultZero();
     mockUniswapV2PairsZero();
     mockCurvePairZero();
+    mockFraxSwapPairZero();
 
     // Mock pool
     mockBalanceVaultOhmDaiEth();

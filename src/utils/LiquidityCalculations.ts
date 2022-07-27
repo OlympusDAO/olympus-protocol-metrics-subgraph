@@ -225,6 +225,8 @@ export function getLiquidityBalances(
           tokenAddress,
         ),
       );
+    } else if (pairHandler.getType() === PairHandlerTypes.FraxSwap) {
+      // TODO
     } else {
       throw new Error("Unsupported liquidity pair type: " + pairHandler.getType().toString());
     }

@@ -277,6 +277,8 @@ function getLiquiditySupply(metricName: string, blockNumber: BigInt): TokenRecor
           records,
           getUniswapV2PairTokenQuantity(metricName, pairAddress, ohmTokenAddress, blockNumber),
         );
+      } else if (pairHandler.getType() == PairHandlerTypes.FraxSwap) {
+        // TODO add FraxSwap
       } else {
         throw new Error("Unsupported pair type: " + pairHandler.getType().toString());
       }
