@@ -315,6 +315,24 @@ export class ProtocolMetric extends Entity {
     this.set("currentIndex", Value.fromBigDecimal(value));
   }
 
+  get gOhmCirculatingSupply(): BigDecimal {
+    const value = this.get("gOhmCirculatingSupply");
+    return value!.toBigDecimal();
+  }
+
+  set gOhmCirculatingSupply(value: BigDecimal) {
+    this.set("gOhmCirculatingSupply", Value.fromBigDecimal(value));
+  }
+
+  get gOhmCirculatingSupplyBreakdown(): string {
+    const value = this.get("gOhmCirculatingSupplyBreakdown");
+    return value!.toString();
+  }
+
+  set gOhmCirculatingSupplyBreakdown(value: string) {
+    this.set("gOhmCirculatingSupplyBreakdown", Value.fromString(value));
+  }
+
   get gOhmPrice(): BigDecimal {
     const value = this.get("gOhmPrice");
     return value!.toBigDecimal();
@@ -772,6 +790,18 @@ export class ProtocolMetric extends Entity {
 
   set treasuryLiquidBackingPerGOhm(value: BigDecimal) {
     this.set("treasuryLiquidBackingPerGOhm", Value.fromBigDecimal(value));
+  }
+
+  get treasuryLiquidBackingPerGOhmCirculating(): BigDecimal {
+    const value = this.get("treasuryLiquidBackingPerGOhmCirculating");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryLiquidBackingPerGOhmCirculating(value: BigDecimal) {
+    this.set(
+      "treasuryLiquidBackingPerGOhmCirculating",
+      Value.fromBigDecimal(value)
+    );
   }
 
   get treasuryLiquidBackingPerOhmCirculating(): BigDecimal {
