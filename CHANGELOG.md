@@ -1,13 +1,7 @@
-### July 16
-Add detailed staking and bonding information
+# Subgraph Changelog
 
-### July 17
-Fix getDiscountedPairUSD
-Add aDAI logging
+## 2.0.41 (2022-07-22)
 
-### July 18
-Add xSUSHI to treasury
-Publish MV and RFV by asset
-
-### Development
-Add holders information
+- Add metrics for gOHM circulating and total supply
+- Add metrics liquid backing per gOHM, stable/volatile/POL for liquid backing
+- Add support for gauge deposits of Balancer pools
