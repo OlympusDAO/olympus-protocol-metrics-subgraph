@@ -1075,11 +1075,17 @@ export function getTokeAllocatorRecords(
   return records;
 }
 
+// Source: https://www.tally.xyz/governance/eip155:1:0x0BEF27FEB58e857046d630B2c03dFb7bae567494/proposal/54737972228715148291831450377954475770670423675395942151334883116464258243647
+const RARI_DEBT_WRITEOFF_BLOCK = "14983058";
+
 /**
  * Returns the balance for a given contract in the Rari Allocator.
  *
  * If the contract does not have an entry in the Rari Allocator,
  * null is returned.
+ *
+ * If the block is after {RARI_DEBT_WRITEOFF_BLOCK} (the block at which the Fuse repay bad debt proposal was defeated),
+ * the amount returned will be 0.
  *
  * @param contractAddress the contract to look up
  * @param blockNumber the current block number
@@ -1095,12 +1101,22 @@ function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
   }
 
   if (rariAllocator.try_ids().reverted) {
-    log.warning("Rari Allocator contract reverted at block {}. Skipping", [blockNumber.toString()]);
+    log.warning("getRariAllocatorBalance: Rari Allocator contract reverted at block {}. Skipping", [
+      blockNumber.toString(),
+    ]);
     return null;
   }
 
   // Correct allocator for the id
   if (!rariAllocator.ids().includes(BigInt.fromI32(rariAllocatorId))) {
+    return null;
+  }
+
+  if (blockNumber.gt(BigInt.fromString(RARI_DEBT_WRITEOFF_BLOCK))) {
+    log.info("getRariAllocatorBalance: Current block {} is after write-off block {}. Skipping", [
+      blockNumber.toString(),
+      RARI_DEBT_WRITEOFF_BLOCK,
+    ]);
     return null;
   }
 
