@@ -20,7 +20,7 @@ import {
 } from "./Constants";
 import { dayFromTimestamp } from "./Dates";
 import { toDecimal } from "./Decimals";
-import { getGOhmCirculatingSupply, getGOhmTotalSupply } from "./GOhmCalculations";
+import { getGOhmTotalSupply } from "./GOhmCalculations";
 import {
   getOhmDaiProtocolOwnedLiquidity,
   getOhmEthProtocolOwnedLiquidity,
@@ -75,8 +75,6 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
     protocolMetric.block = BigInt.fromString("-1");
     protocolMetric.currentAPY = BigDecimal.fromString("0");
     protocolMetric.currentIndex = BigDecimal.fromString("0");
-    protocolMetric.gOhmCirculatingSupply = BigDecimal.fromString("0");
-    protocolMetric.gOhmCirculatingSupplyBreakdown = "-1";
     protocolMetric.gOhmPrice = BigDecimal.fromString("0");
     protocolMetric.gOhmTotalSupply = BigDecimal.fromString("0");
     protocolMetric.marketCap = BigDecimal.fromString("0");
@@ -111,7 +109,6 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
     protocolMetric.treasuryLiquidBacking = BigDecimal.fromString("0");
     protocolMetric.treasuryLiquidBackingComponents = "-1";
     protocolMetric.treasuryLiquidBackingPerGOhm = BigDecimal.fromString("0");
-    protocolMetric.treasuryLiquidBackingPerGOhmCirculating = BigDecimal.fromString("0");
     protocolMetric.treasuryLiquidBackingPerOhmCirculating = BigDecimal.fromString("0");
     protocolMetric.treasuryLiquidBackingPerOhmFloating = BigDecimal.fromString("0");
     protocolMetric.treasuryLiquidBackingProtocolOwnedLiquidity = BigDecimal.fromString("0");
@@ -317,14 +314,6 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   const gOhmTotalSupply = getGOhmTotalSupply(blockNumber);
   pm.gOhmTotalSupply = gOhmTotalSupply;
 
-  const gOhmCirculatingSupply = getGOhmCirculatingSupply(
-    "gOhmCirculatingSupply",
-    gOhmTotalSupply,
-    blockNumber,
-  );
-  pm.gOhmCirculatingSupply = gOhmCirculatingSupply.value;
-  pm.gOhmCirculatingSupplyBreakdown = gOhmCirculatingSupply.id;
-
   // OHM Price
   pm.ohmPrice = getBaseOhmUsdRate(block.number);
 
@@ -485,9 +474,10 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.treasuryLiquidBackingProtocolOwnedLiquidity = liquidBackingPOL.value;
   pm.treasuryLiquidBackingProtocolOwnedLiquidityComponents = liquidBackingPOL.id;
 
-  const liquidBackingPerGOhm = getTreasuryLiquidBackingPerGOhm("LiquidBackingPerGOhm", blockNumber);
-  pm.treasuryLiquidBackingPerGOhm = liquidBackingPerGOhm;
-  pm.treasuryLiquidBackingPerGOhmCirculating = liquidBackingPerGOhm; // Backwards-compatibility
+  pm.treasuryLiquidBackingPerGOhm = getTreasuryLiquidBackingPerGOhm(
+    "LiquidBackingPerGOhm",
+    blockNumber,
+  );
 
   pm.treasuryLiquidBackingPerOhmCirculating = getTreasuryLiquidBackingPerOhmCirculating(
     "LiquidBackingPerOhmCirculating",
