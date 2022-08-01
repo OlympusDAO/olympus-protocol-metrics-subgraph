@@ -356,7 +356,7 @@ describe("get token records", () => {
 
     const records = getLiquidityBalances(
       "metric",
-      PAIR_FRAXSWAP_OHM_FRAX,
+      ERC20_FRAX,
       false,
       false,
       false,
