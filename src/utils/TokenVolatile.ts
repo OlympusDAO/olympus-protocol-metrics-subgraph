@@ -103,20 +103,28 @@ export function getVolatileTokenBalance(
   );
   const contract = getERC20(contractName, contractAddress, blockNumber);
   if (!contract) {
-    log.info("Skipping ERC20 contract {} that returned empty at block {}", [
-      getContractName(contractAddress),
-      blockNumber.toString(),
-    ]);
+    log.info(
+      "getVolatileTokenBalance: Skipping ERC20 contract {} that returned empty at block {}",
+      [getContractName(contractAddress), blockNumber.toString()],
+    );
     return records;
   }
 
   const rate = getUSDRate(contractAddress, blockNumber);
 
   // Wallets
-  combineTokenRecords(
-    records,
-    getERC20TokenRecordsFromWallets(records.id, contractAddress, contract, rate, blockNumber),
-  );
+  // veFXS returns a value through {getVeFXSAllocatorRecords} using locked(), and the balanceOf() function returns the boosted voting power, so we manually skip that
+  if ([ERC20_FXS_VE].includes(contractAddress.toLowerCase())) {
+    log.warning(
+      "getVolatileTokenBalance: skipping ERC20 balance for token contract {} ({}) that is on ignore list",
+      [getContractName(contractAddress), contractAddress],
+    );
+  } else {
+    combineTokenRecords(
+      records,
+      getERC20TokenRecordsFromWallets(records.id, contractAddress, contract, rate, blockNumber),
+    );
+  }
 
   // Rari Allocator
   combineTokenRecords(

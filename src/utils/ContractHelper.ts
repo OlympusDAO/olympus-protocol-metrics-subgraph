@@ -573,10 +573,10 @@ export function getERC20TokenRecordFromWallet(
 ): TokenRecord | null {
   const callResult = contract.try_balanceOf(Address.fromString(walletAddress));
   if (callResult.reverted) {
-    log.warning("Contract {} reverted while trying to obtain balance at block {}", [
-      getContractName(contract._address.toHexString()),
-      blockNumber.toString(),
-    ]);
+    log.warning(
+      "getERC20TokenRecordFromWallet: Contract {} reverted while trying to obtain balance at block {}",
+      [getContractName(contract._address.toHexString()), blockNumber.toString()],
+    );
     return null;
   }
 
@@ -616,7 +616,7 @@ export function getERC20TokenRecordsFromWallets(
   blockNumber: BigInt,
 ): TokenRecords {
   const records = newTokenRecords(
-    addToMetricName(metricName, getContractName(contractAddress)),
+    addToMetricName(metricName, "ERC20/" + getContractName(contractAddress)),
     blockNumber,
   );
   const wallets = getWalletAddressesForContract(contractAddress);
