@@ -243,8 +243,8 @@ export function getBalancerRecords(
   const records = newTokenRecords(addToMetricName(metricName, "BalancerPool"), blockNumber);
   if (tokenAddress && !liquidityPairHasToken(poolId, tokenAddress)) {
     log.debug(
-      "getBalancerRecords: tokenAddress specified and not found in balancer pool. Skipping.",
-      [],
+      "getBalancerRecords: tokenAddress {} ({}) specified and not found in balancer pool. Skipping.",
+      [getContractName(tokenAddress), tokenAddress],
     );
     return records;
   }
