@@ -19,9 +19,12 @@ import {
   getFraxSwapPairTokenQuantityRecords,
   getFraxSwapPairTotalValue,
 } from "../src/utils/LiquidityFraxSwap";
+import { mockBalanceVaultZero } from "./liquidityBalancer.test";
 import {
   ERC20_STANDARD_DECIMALS,
   getOhmUsdRate,
+  mockCurvePairZero,
+  mockUniswapV2PairsZero,
   mockUsdOhmV2Rate,
   OHM_USD_RESERVE_BLOCK,
   OHM_V2_DECIMALS,
@@ -340,6 +343,10 @@ describe("get token records", () => {
   });
 
   test("getLiquidityBalances", () => {
+    mockCurvePairZero();
+    mockBalanceVaultZero();
+    mockUniswapV2PairsZero();
+
     mockFraxSwapPairOhmFrax();
 
     // Mock wallet balance
@@ -356,7 +363,7 @@ describe("get token records", () => {
 
     const records = getLiquidityBalances(
       "metric",
-      ERC20_FRAX,
+      null,
       false,
       false,
       false,

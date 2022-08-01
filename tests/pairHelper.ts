@@ -543,7 +543,7 @@ export const mockCurvePairZero = (): void => {
     PAIR_CURVE_OHM_ETH,
     ERC20_CRV_OHMETH,
     ERC20_STANDARD_DECIMALS,
-    BigDecimal.fromString("1"),
+    BigDecimal.fromString("0"),
     ERC20_OHM_V2,
     ERC20_WETH,
     BigInt.fromString("0"),
