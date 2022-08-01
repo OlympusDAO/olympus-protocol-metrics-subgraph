@@ -104,8 +104,8 @@ export function mockFraxSwapPair(
     "getReserves",
     "getReserves():(uint112,uint112,uint32)",
   ).returns([
-    ethereum.Value.fromUnsignedBigInt(toBigInt(token0Reserves, pairDecimals)),
-    ethereum.Value.fromUnsignedBigInt(toBigInt(token1Reserves, pairDecimals)),
+    ethereum.Value.fromUnsignedBigInt(toBigInt(token0Reserves, token0Decimals)),
+    ethereum.Value.fromUnsignedBigInt(toBigInt(token1Reserves, token1Decimals)),
     ethereum.Value.fromI32(0),
   ]);
 }
@@ -155,6 +155,23 @@ describe("pool total value", () => {
     assert.stringEquals(FRAXSWAP_OHM_FRAX_TOTAL_VALUE.toString(), totalValue.toString());
   });
 
+  test("OHM-FRAX pool total value, only OHM", () => {
+    mockFraxSwapPairOhmFrax();
+    mockUsdOhmV2Rate();
+
+    const totalValue = getFraxSwapPairTotalValue(
+      PAIR_FRAXSWAP_OHM_FRAX,
+      false,
+      true,
+      ERC20_OHM_V2,
+      OHM_USD_RESERVE_BLOCK,
+    );
+
+    // # OHM * rate
+    const expectedValue = FRAXSWAP_OHM_FRAX_TOKEN0_RESERVES.times(getOhmUsdRate());
+    assert.stringEquals(expectedValue.toString(), totalValue.toString());
+  });
+
   test("OHM-FRAX pool total value, only FRAX", () => {
     mockFraxSwapPairOhmFrax();
 
@@ -167,7 +184,7 @@ describe("pool total value", () => {
     );
 
     // # FRAX * 1
-    const expectedValue = FRAXSWAP_OHM_FRAX_TOKEN0_RESERVES;
+    const expectedValue = FRAXSWAP_OHM_FRAX_TOKEN1_RESERVES;
     assert.stringEquals(expectedValue.toString(), totalValue.toString());
   });
 
@@ -183,7 +200,7 @@ describe("pool total value", () => {
     );
 
     // # FRAX * 1
-    const expectedValue = FRAXSWAP_OHM_FRAX_TOKEN0_RESERVES;
+    const expectedValue = FRAXSWAP_OHM_FRAX_TOKEN1_RESERVES;
     assert.stringEquals(expectedValue.toString(), totalValue.toString());
   });
 });
