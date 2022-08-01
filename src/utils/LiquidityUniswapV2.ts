@@ -299,7 +299,7 @@ export function getUniswapV2PairRecords(
   blockNumber: BigInt,
 ): TokenRecords {
   const records = newTokenRecords(
-    addToMetricName(metricName, "UniswapV2PairRecords-" + getContractName(pairAddress)),
+    addToMetricName(metricName, "UniswapV2PairRecords/" + getContractName(pairAddress)),
     blockNumber,
   );
   // If we are restricting by token and tokenAddress does not match either side of the pair
@@ -321,7 +321,7 @@ export function getUniswapV2PairRecords(
     const walletAddress = wallets[i];
 
     const record = getUniswapV2PairRecord(
-      metricName,
+      records.id,
       pairAddress,
       unitRate,
       walletAddress,
@@ -449,7 +449,7 @@ export function getUniswapV2PairTokenQuantity(
 
   // Grab balances
   const poolTokenBalances = getUniswapV2PairRecords(
-    metricName,
+    records.id,
     pairAddress,
     tokenAddress,
     false,
@@ -467,7 +467,7 @@ export function getUniswapV2PairTokenQuantity(
     pushTokenRecord(
       records,
       newTokenRecord(
-        metricName,
+        records.id,
         getContractName(tokenAddress) + " in " + getContractName(pairAddress),
         pairAddress,
         record.source,

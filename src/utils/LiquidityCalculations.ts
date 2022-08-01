@@ -107,7 +107,7 @@ function getLiquidityTokenRecords(
     pushTokenRecord(
       records,
       newTokenRecord(
-        metricName,
+        records.id,
         contractName,
         liquidityBalance.contract,
         getContractName(address),
@@ -185,7 +185,7 @@ export function getLiquidityBalances(
       }
 
       const currentTokenRecords = getLiquidityTokenRecords(
-        metricName,
+        records.id,
         liquidityBalance,
         blockNumber,
         riskFree,
@@ -203,7 +203,7 @@ export function getLiquidityBalances(
     } else if (pairHandler.getType() === PairHandlerTypes.Curve) {
       // TODO support risk-free value of Curve
       const currentTokenRecords = getCurvePairRecords(
-        metricName,
+        records.id,
         pairHandler.getContract(),
         tokenAddress,
         excludeOhmValue,
@@ -220,7 +220,7 @@ export function getLiquidityBalances(
       combineTokenRecords(
         records,
         getBalancerRecords(
-          metricName,
+          records.id,
           pairHandler.getContract(),
           balancerPoolId,
           excludeOhmValue,
@@ -231,7 +231,7 @@ export function getLiquidityBalances(
       );
     } else if (pairHandler.getType() === PairHandlerTypes.FraxSwap) {
       const currentTokenRecords = getFraxSwapPairRecords(
-        metricName,
+        records.id,
         pairHandler.getContract(),
         excludeOhmValue,
         restrictToTokenValue,
@@ -753,7 +753,7 @@ export function getOwnedLiquidityPoolValue(
 
   combineTokenRecords(
     records,
-    getLiquidityBalances(metricName, null, riskFree, excludeOhmValue, false, blockNumber),
+    getLiquidityBalances(records.id, null, riskFree, excludeOhmValue, false, blockNumber),
   );
 
   log.info("Liquidity pool value: {}", [records.value.toString()]);

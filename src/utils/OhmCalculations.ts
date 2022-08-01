@@ -191,7 +191,7 @@ export function getCirculatingSupply(
   pushTokenRecord(
     records,
     newTokenRecord(
-      metricName,
+      records.id,
       getContractName(ohmContractAddress),
       ohmContractAddress,
       "OHM Total Supply",
@@ -210,7 +210,7 @@ export function getCirculatingSupply(
     pushTokenRecord(
       records,
       newTokenRecord(
-        metricName,
+        records.id,
         getContractName(ohmContractAddress),
         ohmContractAddress,
         getContractName(currentWallet),
@@ -260,7 +260,7 @@ function getLiquiditySupply(metricName: string, blockNumber: BigInt): TokenRecor
         combineTokenRecords(
           records,
           getBalancerPoolTokenQuantity(
-            metricName,
+            records.id,
             pairAddress,
             pairPoolAddress,
             ohmTokenAddress,

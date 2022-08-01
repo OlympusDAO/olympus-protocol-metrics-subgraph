@@ -307,10 +307,7 @@ export function getCurvePairRecords(
   restrictToTokenValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords(
-    addToMetricName(metricName, "CurvePairRecords-" + getContractName(pairAddress)),
-    blockNumber,
-  );
+  const records = newTokenRecords(addToMetricName(metricName, "CurvePairRecords"), blockNumber);
   // If we are restricting by token and tokenAddress does not match either side of the pair
   if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
     log.debug(
@@ -361,7 +358,7 @@ export function getCurvePairRecords(
 
     // Normal token first
     const record = getCurvePairRecord(
-      metricName,
+      records.id,
       pairTokenAddress,
       unitRate,
       walletAddress,
@@ -378,7 +375,7 @@ export function getCurvePairRecords(
       const stakingAddress = CONVEX_STAKING_CONTRACTS[j];
 
       const stakedRecord = getCurvePairStakedRecord(
-        metricName,
+        records.id,
         pairTokenAddress,
         getConvexStakedToken(pairTokenAddress),
         walletAddress,

@@ -282,7 +282,7 @@ export function getFraxSwapPairRecords(
     const walletAddress = wallets[i];
 
     const record = getFraxSwapPairTokenRecord(
-      metricName,
+      records.id,
       pairContract,
       unitRate,
       walletAddress,
@@ -382,7 +382,7 @@ export function getFraxSwapPairTokenQuantityRecords(
 
   // Grab balances
   const pairBalanceRecords = getFraxSwapPairRecords(
-    metricName,
+    records.id,
     pairAddress,
     false,
     false,
@@ -401,7 +401,7 @@ export function getFraxSwapPairTokenQuantityRecords(
     pushTokenRecord(
       records,
       newTokenRecord(
-        metricName,
+        records.id,
         getContractName(tokenAddress) + " in " + getContractName(pairAddress),
         pairAddress,
         record.source,

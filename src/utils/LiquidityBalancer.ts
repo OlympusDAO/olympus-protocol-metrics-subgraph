@@ -199,7 +199,7 @@ function getBalancerPoolTokenRecords(
     pushTokenRecord(
       records,
       newTokenRecord(
-        metricName,
+        records.id,
         getContractName(poolTokenAddress),
         poolTokenAddress,
         getContractName(walletAddress),
@@ -240,7 +240,10 @@ export function getBalancerRecords(
     vaultAddress,
     poolId,
   ]);
-  const records = newTokenRecords(addToMetricName(metricName, "BalancerPool"), blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, "BalancerPool/" + poolId),
+    blockNumber,
+  );
   if (tokenAddress && !liquidityPairHasToken(poolId, tokenAddress)) {
     log.debug(
       "getBalancerRecords: tokenAddress {} ({}) specified and not found in balancer pool. Skipping.",
@@ -309,7 +312,7 @@ export function getBalancerRecords(
   combineTokenRecords(
     records,
     getBalancerPoolTokenRecords(
-      metricName,
+      records.id,
       poolId,
       poolTokenContract,
       unitRate,
@@ -439,7 +442,7 @@ export function getBalancerPoolTokenQuantity(
     pushTokenRecord(
       records,
       newTokenRecord(
-        metricName,
+        records.id,
         getContractName(tokenAddress) + " in " + getContractName(poolTokenAddress),
         poolTokenAddress,
         record.source,
