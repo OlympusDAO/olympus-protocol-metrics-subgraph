@@ -1,12 +1,13 @@
 # Subgraph Changelog
 
-## 2.0.48 (DATE)
+## 2.0.55 (DATE)
 
 - Remove gOhmCirculatingSupply, gOhmCirculatingSupplyBreakdown, treasuryLiquidBackingPerGOhmCirculating. Never used and could be misleading
 - Add treasuryLiquidBackingPerGOhm that uses a synthetic calculation for the liquid backing per gOHM (#33)
 - Apply write-off for Rari Fuse (#35)
 - Add support for FraxSwap pairs, starting with OHM-FRAX (#34)
 - Reduce chances of data clobbering by making clear the source of token records
+- Add support for AURA and vlAURA
 
 ## 2.0.41 (2022-07-22)
 
