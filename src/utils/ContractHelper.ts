@@ -712,7 +712,7 @@ export function getTokeStakedBalancesFromWallets(
       "getTokeStakedBalancesFromWallets: found staked balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),
-        getContractName(tokenAddress),
+        getContractName(tokenAddress) + " (Staked)",
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -724,7 +724,7 @@ export function getTokeStakedBalancesFromWallets(
       records,
       newTokenRecord(
         records.id,
-        getContractName(tokenAddress),
+        getContractName(tokenAddress) + " (Staked)",
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -812,7 +812,7 @@ export function getLiquityStakedBalancesFromWallets(
       "getLiquityStakedBalancesFromWallets: found staked balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),
-        getContractName(tokenAddress),
+        getContractName(tokenAddress) + " (Staked)",
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -824,7 +824,7 @@ export function getLiquityStakedBalancesFromWallets(
       records,
       newTokenRecord(
         records.id,
-        getContractName(tokenAddress),
+        getContractName(tokenAddress) + " (Staked)",
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -933,7 +933,7 @@ export function getBalancerGaugeBalanceFromWallets(
       "getBalancerGaugeBalanceFromWallets: found balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),
-        getContractName(tokenAddress),
+        getContractName(tokenAddress) + " (Gauge Deposit)",
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -945,7 +945,7 @@ export function getBalancerGaugeBalanceFromWallets(
       records,
       newTokenRecord(
         records.id,
-        getContractName(tokenAddress),
+        getContractName(tokenAddress) + " (Gauge Deposit)",
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -1302,7 +1302,7 @@ export function getConvexStakedRecords(
         records,
         newTokenRecord(
           records.id,
-          getContractName(tokenAddress),
+          getContractName(tokenAddress) + " (Staked)",
           tokenAddress,
           getContractName(allocatorAddress),
           allocatorAddress,

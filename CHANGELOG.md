@@ -8,6 +8,7 @@
 - Add support for FraxSwap pairs, starting with OHM-FRAX (#34)
 - Reduce chances of data clobbering by making clear the source of token records
 - Add support for AURA and vlAURA
+- Add suffix to tokens that are staked but don't have a different token, so it's clear when looking at asset lists
 
 ## 2.0.41 (2022-07-22)
 
