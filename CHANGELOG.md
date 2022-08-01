@@ -6,6 +6,7 @@
 - Add treasuryLiquidBackingPerGOhm that uses a synthetic calculation for the liquid backing per gOHM (#33)
 - Apply write-off for Rari Fuse (#35)
 - Add support for FraxSwap pairs, starting with OHM-FRAX (#34)
+- Reduce chances of data clobbering by making clear the source of token records
 
 ## 2.0.41 (2022-07-22)
 
