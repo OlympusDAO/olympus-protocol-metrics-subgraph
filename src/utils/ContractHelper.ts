@@ -1289,6 +1289,7 @@ export function getConvexStakedRecords(
     // Look through staking contracts
     for (let j = 0; j < CONVEX_STAKING_CONTRACTS.length; j++) {
       const stakingAddress = CONVEX_STAKING_CONTRACTS[j];
+      const currentMetricName = addToMetricName(records.id, getContractName(stakingAddress));
 
       const balance = getConvexStakedBalance(
         tokenAddress,
@@ -1301,7 +1302,7 @@ export function getConvexStakedRecords(
       pushTokenRecord(
         records,
         newTokenRecord(
-          records.id,
+          currentMetricName,
           getContractName(tokenAddress) + " (Staked)",
           tokenAddress,
           getContractName(allocatorAddress),
@@ -1486,7 +1487,7 @@ export function getVeFXSAllocatorRecords(
     records,
     newTokenRecord(
       records.id,
-      getContractName(tokenAddress),
+      getContractName(tokenAddress) + " (Locked)",
       tokenAddress,
       getContractName(VEFXS_ALLOCATOR),
       VEFXS_ALLOCATOR,
