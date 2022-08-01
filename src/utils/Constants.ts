@@ -254,6 +254,7 @@ export const CONVEX_STAKING_CONTRACTS = [
 // Liquidity Pools
 export const PAIR_CURVE_FXS_CVX_FXS = "0xd658a338613198204dca1143ac3f01a722b5d94a".toLowerCase();
 export const PAIR_CURVE_OHM_ETH = "0x6ec38b3228251a0C5D491Faf66858e2E23d7728B".toLowerCase();
+export const PAIR_FRAXSWAP_OHM_FRAX = "0x38633ed142bcc8128b45ab04a2e4a6e53774699f".toLowerCase();
 export const PAIR_UNISWAP_V2_ALCX_ETH = "0xc3f279090a47e80990fe3a9c30d24cb117ef91a8".toLowerCase();
 export const PAIR_UNISWAP_V2_CRV_ETH = "0x58dc5a51fe44589beb22e8ce67720b5bc5378009".toLowerCase();
 export const PAIR_UNISWAP_V2_CVX_CRV_ETH =
@@ -431,6 +432,7 @@ export const LIQUIDITY_OWNED = [
   new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_OHM_DAI_WETH_ID),
   new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_WETH_FDT_ID),
   new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_OHM_ETH),
+  new PairHandler(PairHandlerTypes.FraxSwap, PAIR_FRAXSWAP_OHM_FRAX),
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI_V2),
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI),
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_ETH_V2),
@@ -441,6 +443,7 @@ export const LIQUIDITY_OWNED = [
 // TODO if extending far into the past, add OHM-FRAX V1 & V2
 
 export const LIQUIDITY_PAIR_TOKENS = new Map<string, string[]>();
+LIQUIDITY_PAIR_TOKENS.set(PAIR_FRAXSWAP_OHM_FRAX, [ERC20_OHM_V2, ERC20_FRAX]);
 LIQUIDITY_PAIR_TOKENS.set(PAIR_CURVE_OHM_ETH, [ERC20_OHM_V2, NATIVE_ETH, ERC20_WETH]);
 LIQUIDITY_PAIR_TOKENS.set(PAIR_UNISWAP_V2_OHM_DAI_V2, [ERC20_DAI, ERC20_OHM_V2]);
 LIQUIDITY_PAIR_TOKENS.set(PAIR_UNISWAP_V2_OHM_DAI, [ERC20_DAI, ERC20_OHM_V1]);
@@ -735,6 +738,7 @@ CONTRACT_NAME_MAP.set(OHMLUSDBOND_CONTRACT1, "OHM-LUSD Bond 1");
 CONTRACT_NAME_MAP.set(ONSEN_ALLOCATOR, "Onsen Allocator");
 CONTRACT_NAME_MAP.set(PAIR_CURVE_FXS_CVX_FXS, "Curve FXS-cvxFXS Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_CURVE_OHM_ETH, "Curve OHM V2-ETH Liquidity Pool");
+CONTRACT_NAME_MAP.set(PAIR_FRAXSWAP_OHM_FRAX, "FraxSwap OHM-FRAX Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_ALCX_ETH, "Uniswap V2 ALCX-ETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_CRV_ETH, "Uniswap V2 CRV-ETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_CVX_CRV_ETH, "Uniswap V2 cvxCRV-ETH Liquidity Pool");

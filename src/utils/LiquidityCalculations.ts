@@ -31,6 +31,7 @@ import { toDecimal } from "./Decimals";
 import { LiquidityBalances } from "./LiquidityBalance";
 import { getBalancerRecords } from "./LiquidityBalancer";
 import { getCurvePairRecords } from "./LiquidityCurve";
+import { getFraxSwapPairRecords } from "./LiquidityFraxSwap";
 import { getOhmUSDPairRiskFreeValue, getUniswapV2PairValue } from "./LiquidityUniswapV2";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 import {
@@ -157,7 +158,10 @@ export function getLiquidityBalances(
 
   for (let j = 0; j < ownedLiquidityPairs.length; j++) {
     const pairHandler = ownedLiquidityPairs[j];
-    log.debug("getLiquidityBalances: Working with pair {}", [pairHandler.getContract()]);
+    log.debug("getLiquidityBalances: Working with pair {} ({})", [
+      getContractName(pairHandler.getContract()),
+      pairHandler.getContract(),
+    ]);
     if (pairHandler.getType() === PairHandlerTypes.UniswapV2) {
       // TODO shift to getUniswapV2PairRecords()
       const liquidityPair = getUniswapV2Pair(pairHandler.getContract(), blockNumber);
@@ -225,6 +229,17 @@ export function getLiquidityBalances(
           tokenAddress,
         ),
       );
+    } else if (pairHandler.getType() === PairHandlerTypes.FraxSwap) {
+      const currentTokenRecords = getFraxSwapPairRecords(
+        metricName,
+        pairHandler.getContract(),
+        excludeOhmValue,
+        restrictToTokenValue,
+        blockNumber,
+        tokenAddress,
+      );
+
+      combineTokenRecords(records, currentTokenRecords);
     } else {
       throw new Error("Unsupported liquidity pair type: " + pairHandler.getType().toString());
     }

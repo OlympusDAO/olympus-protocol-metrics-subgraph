@@ -488,6 +488,8 @@ dataSources:
           file: ./abis/BalancerLiquidityGauge.json
         - name: gOHM
           file: ./abis/gOHM.json
+        - name: FraxSwapPool
+          file: ./abis/FraxSwapPool.json
       callHandlers:
         - function: stake(address,uint256,bool,bool)
           handler: handleMetrics
