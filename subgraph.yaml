@@ -14,7 +14,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - sOlympusERC20V1
@@ -40,7 +40,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - sOlympusERC20V2
@@ -66,7 +66,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - sOlympusERC20V3
@@ -93,7 +93,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - DAIBondDeposit
@@ -114,7 +114,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - DAIBondDeposit
@@ -135,7 +135,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - DAIBondDeposit
@@ -156,7 +156,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - OHMDAIBondV1
@@ -179,7 +179,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - OHMDAIBondV2
@@ -202,7 +202,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - OHMDAIBondV3
@@ -225,7 +225,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - OHMDAIBondV4
@@ -248,7 +248,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - OHMFRAXBondV1
@@ -271,7 +271,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - OHMFRAXBondV2
@@ -294,7 +294,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - FRAXBondV1
@@ -315,7 +315,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - ETHBondV1
@@ -338,7 +338,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - LUSDBondV1
@@ -359,7 +359,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - OHMLUSDBondV1
@@ -382,7 +382,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - OHMETHBondV1
@@ -405,7 +405,7 @@ dataSources:
       startBlock: 15050000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
         - ProtocolMetrics
