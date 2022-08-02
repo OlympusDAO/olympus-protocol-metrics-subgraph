@@ -267,8 +267,6 @@ export const PAIR_UNISWAP_V2_CVX_ETH = "0x05767d9ef41dc40689678ffca0608878fb3de9
 export const PAIR_UNISWAP_V2_ETH_WBTC = "0xceff51756c56ceffca006cd410b03ffc46dd3a58".toLowerCase();
 export const PAIR_UNISWAP_V2_FOX_ETH = "0x470e8de2ebaef52014a47cb5e6af86884947f08c".toLowerCase();
 export const PAIR_UNISWAP_V2_KP3R_ETH = "0xaf988aff99d3d0cb870812c325c588d8d8cb7de8".toLowerCase();
-export const PAIR_UNISWAP_V2_OHM_BTRFLY =
-  "0xe9ab8038ee6dd4fcc7612997fe28d4e22019c4b4".toLowerCase();
 export const PAIR_UNISWAP_V2_OHM_DAI = "0x34d7d7Aaf50AD4944B70B320aCB24C95fa2def7c".toLowerCase();
 export const PAIR_UNISWAP_V2_OHM_DAI_V2 =
   "0x055475920a8c93cffb64d039a8205f7acc7722d3".toLowerCase();
@@ -465,7 +463,6 @@ export const LIQUIDITY_OWNED = [
   new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_WETH_FDT_ID),
   new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_OHM_ETH),
   new PairHandler(PairHandlerTypes.FraxSwap, PAIR_FRAXSWAP_OHM_FRAX),
-  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_BTRFLY),
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI_V2),
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI),
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_ETH_V2),
@@ -786,7 +783,6 @@ CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_CVX_CRV_ETH, "Uniswap V2 cvxCRV-ETH Liquid
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_CVX_ETH, "Uniswap V2 CVX-ETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_FOX_ETH, "Uniswap V2 FOX-ETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_KP3R_ETH, "Uniswap V2 KP3R-ETH Liquidity Pool");
-CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_OHM_BTRFLY, "Uniswap V2 OHM-BTRFLY Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_OHM_DAI_V2, "SushiSwap OHM V2-DAI Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_OHM_DAI, "SushiSwap OHM V1-DAI Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_OHM_ETH_V2, "SushiSwap OHM V2-ETH Liquidity Pool");
