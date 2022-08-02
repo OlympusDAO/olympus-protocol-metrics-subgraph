@@ -99,6 +99,7 @@ describe("ETH-USD rate", () => {
 
 describe("OHM-USD rate", () => {
   test("Sushi OHM-DAI rate calculation is correct", () => {
+    mockEthUsdRate();
     mockUsdOhmV2Rate();
     mockBalanceVaultZero(); // Ensures that the OHM-DAI-ETH Balancer pool is not used for price lookup
 
@@ -111,6 +112,7 @@ describe("OHM-USD rate", () => {
   });
 
   test("Sushi OHM-DAI rate is used when greater than Balancer", () => {
+    mockEthUsdRate();
     mockUsdOhmV2Rate();
     mockBalanceVaultOhmDaiEth(
       BigDecimal.fromString("1"),
@@ -127,7 +129,8 @@ describe("OHM-USD rate", () => {
     );
   });
 
-  test("Balancer OHM-DAI-ETH rate is used when greater than Sushi", () => {
+  test("Balancer OHM-DAI-ETH rate is used when Sushi is empty", () => {
+    mockEthUsdRate();
     mockUsdOhmV2Rate(
       toBigInt(BigDecimal.fromString("1"), 9),
       toBigInt(BigDecimal.fromString("1"), 18),
@@ -141,6 +144,53 @@ describe("OHM-USD rate", () => {
 
     assert.stringEquals(
       calculatedRate.toString(),
+      getBaseOhmUsdRate(
+        BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
+      ).toString(),
+    );
+  });
+
+  test("Balancer OHM-DAI-ETH rate is used when DAI-ETH reserves are greater than Sushi", () => {
+    mockEthUsdRate(); // ETH = 1898.01397375
+    mockUsdOhmV2Rate(
+      toBigInt(BigDecimal.fromString("200000"), 9),
+      toBigInt(BigDecimal.fromString("2000000"), 18),
+    );
+    // OHM_DAI_ETH_BALANCE_DAI < Sushi USD reserves (2,000,000)
+    // OHM_DAI_ETH_BALANCE_WETH * ETH price + OHM_DAI_ETH_BALANCE_DAI > Sushi USD reserves
+    mockBalanceVaultOhmDaiEth();
+
+    // ((1932155.145566782258916959/0.25)/(221499.733846818/0.5)) = 17.44611709
+    const calculatedRate = OHM_DAI_ETH_BALANCE_DAI.div(OHM_DAI_ETH_WEIGHT_DAI).div(
+      OHM_DAI_ETH_BALANCE_OHM.div(OHM_DAI_ETH_WEIGHT_OHM),
+    );
+
+    assert.stringEquals(
+      calculatedRate.toString(),
+      getBaseOhmUsdRate(
+        BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
+      ).toString(),
+    );
+  });
+
+  test("Sushi OHM-DAI is used when Balancer pool reverts", () => {
+    mockEthUsdRate(); // ETH = 1898.01397375
+    mockUsdOhmV2Rate(
+      toBigInt(BigDecimal.fromString("200000"), 9),
+      toBigInt(BigDecimal.fromString("2000000"), 18),
+    );
+
+    // Balancer vault reverts
+    createMockedFunction(
+      Address.fromString(BALANCER_VAULT),
+      "getPoolTokens",
+      "getPoolTokens(bytes32):(address[],uint256[],uint256)",
+    )
+      .withArgs([ethereum.Value.fromFixedBytes(Bytes.fromHexString(POOL_BALANCER_OHM_DAI_WETH_ID))])
+      .reverts();
+
+    assert.stringEquals(
+      getOhmUsdRate().toString(),
       getBaseOhmUsdRate(
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
       ).toString(),
