@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 2.0.65 (2022-08-02)
+## 2.0.67 (2022-08-02)
 
 - Remove gOhmCirculatingSupply, gOhmCirculatingSupplyBreakdown, treasuryLiquidBackingPerGOhmCirculating. Never used and could be misleading
 - Add treasuryLiquidBackingPerGOhm that uses a synthetic calculation for the liquid backing per gOHM (#33)

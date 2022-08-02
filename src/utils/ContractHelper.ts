@@ -724,7 +724,7 @@ export function getTokeStakedBalancesFromWallets(
       records,
       newTokenRecord(
         records.id,
-        getContractName(tokenAddress) + " - Staked",
+        getContractName(tokenAddress) + " - Staked", // Needed to differentiate as there is no token for TOKE
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -824,7 +824,7 @@ export function getLiquityStakedBalancesFromWallets(
       records,
       newTokenRecord(
         records.id,
-        getContractName(tokenAddress) + " - Staked",
+        getContractName(tokenAddress) + " - Staked", // Needed to differentiate as there is no token for LQTY
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -1303,7 +1303,7 @@ export function getConvexStakedRecords(
         records,
         newTokenRecord(
           currentMetricName,
-          getContractName(tokenAddress) + " - Staked",
+          getContractName(tokenAddress),
           tokenAddress,
           getContractName(allocatorAddress),
           allocatorAddress,
