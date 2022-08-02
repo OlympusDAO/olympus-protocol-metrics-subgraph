@@ -34,19 +34,29 @@ import {
   PAIR_UNISWAP_V3_3CRV_USD,
   PAIR_UNISWAP_V3_FPIS_FRAX,
   PAIR_UNISWAP_V3_FXS_ETH,
+  POOL_BALANCER_OHM_DAI_WETH_ID,
   POOL_BALANCER_WETH_FDT_ID,
 } from "../src/utils/Constants";
-import { DEFAULT_DECIMALS } from "../src/utils/Decimals";
+import { DEFAULT_DECIMALS, toBigInt } from "../src/utils/Decimals";
 import {
   getBaseEthUsdRate,
   getBaseOhmUsdRate,
   getBaseTokenOrientation,
   getBaseTokenUSDRate,
   getUSDRate,
+  getUSDRateBalancer,
   PairTokenBaseOrientation,
 } from "../src/utils/Price";
 import { mockBalancerGaugeBalanceZero } from "./contractHelper.test";
-import { mockBalanceVaultWethFdt } from "./liquidityBalancer.test";
+import {
+  mockBalanceVaultOhmDaiEth,
+  mockBalanceVaultWethFdt,
+  mockBalanceVaultZero,
+  OHM_DAI_ETH_BALANCE_DAI,
+  OHM_DAI_ETH_BALANCE_OHM,
+  OHM_DAI_ETH_WEIGHT_DAI,
+  OHM_DAI_ETH_WEIGHT_OHM,
+} from "./liquidityBalancer.test";
 import {
   ERC20_STANDARD_DECIMALS,
   getERC20UsdRate,
@@ -88,14 +98,52 @@ describe("ETH-USD rate", () => {
 });
 
 describe("OHM-USD rate", () => {
-  test("rate calculation is correct", () => {
+  test("Sushi OHM-DAI rate calculation is correct", () => {
     mockUsdOhmV2Rate();
+    mockBalanceVaultZero(); // Ensures that the OHM-DAI-ETH Balancer pool is not used for price lookup
 
     assert.stringEquals(
       getBaseOhmUsdRate(
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
       ).toString(),
       getOhmUsdRate().toString(),
+    );
+  });
+
+  test("Sushi OHM-DAI rate is used when greater than Balancer", () => {
+    mockUsdOhmV2Rate();
+    mockBalanceVaultOhmDaiEth(
+      BigDecimal.fromString("1"),
+      BigDecimal.fromString("0.5"),
+      BigDecimal.fromString("0.25"),
+      BigDecimal.fromString("0.25"),
+    ); // Total value is small, so Sushi OHM-DAI is used
+
+    assert.stringEquals(
+      getBaseOhmUsdRate(
+        BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
+      ).toString(),
+      getOhmUsdRate().toString(),
+    );
+  });
+
+  test("Balancer OHM-DAI-ETH rate is used when greater than Sushi", () => {
+    mockUsdOhmV2Rate(
+      toBigInt(BigDecimal.fromString("1"), 9),
+      toBigInt(BigDecimal.fromString("1"), 18),
+    ); // Total value is small, so Balancer OHM-DAI-ETH is used
+    mockBalanceVaultOhmDaiEth();
+
+    // ((1932155.145566782258916959/0.25)/(221499.733846818/0.5)) = 17.44611709
+    const calculatedRate = OHM_DAI_ETH_BALANCE_DAI.div(OHM_DAI_ETH_WEIGHT_DAI).div(
+      OHM_DAI_ETH_BALANCE_OHM.div(OHM_DAI_ETH_WEIGHT_OHM),
+    );
+
+    assert.stringEquals(
+      calculatedRate.toString(),
+      getBaseOhmUsdRate(
+        BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
+      ).toString(),
     );
   });
 
@@ -439,6 +487,25 @@ describe("get USD rate", () => {
     },
     true,
   );
+
+  test("OHM-DAI-ETH (Balancer) returns correct value", () => {
+    mockEthUsdRate();
+    mockBalanceVaultOhmDaiEth();
+
+    const usdRate = getUSDRateBalancer(
+      ERC20_OHM_V2,
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      OHM_USD_RESERVE_BLOCK,
+    );
+
+    // ((1932155.145566782258916959/0.25)/(221499.733846818/0.5)) = 17.44611709
+    const calculatedRate = OHM_DAI_ETH_BALANCE_DAI.div(OHM_DAI_ETH_WEIGHT_DAI).div(
+      OHM_DAI_ETH_BALANCE_OHM.div(OHM_DAI_ETH_WEIGHT_OHM),
+    );
+
+    assert.stringEquals(calculatedRate.toString(), usdRate.toString());
+  });
 
   test("FDT (Balancer) returns correct value", () => {
     mockEthUsdRate();

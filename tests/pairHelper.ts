@@ -235,15 +235,18 @@ export const getOhmUsdRate = (): BigDecimal => {
   return toDecimal(OHM_USD_RESERVE_USD, 18).div(toDecimal(OHM_USD_RESERVE_OHM, 9));
 };
 
-export const mockUsdOhmV2Rate = (): void => {
+export const mockUsdOhmV2Rate = (
+  ohmReserves: BigInt = OHM_USD_RESERVE_OHM,
+  usdReserves: BigInt = OHM_USD_RESERVE_USD,
+): void => {
   const contractAddress = Address.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2);
   createMockedFunction(
     contractAddress,
     "getReserves",
     "getReserves():(uint112,uint112,uint32)",
   ).returns([
-    ethereum.Value.fromUnsignedBigInt(OHM_USD_RESERVE_OHM),
-    ethereum.Value.fromUnsignedBigInt(OHM_USD_RESERVE_USD),
+    ethereum.Value.fromUnsignedBigInt(ohmReserves),
+    ethereum.Value.fromUnsignedBigInt(usdReserves),
     ethereum.Value.fromUnsignedBigInt(OHM_USD_RESERVE_BLOCK),
   ]);
   // Decimals
