@@ -1,6 +1,6 @@
 import { DepositCall } from "../generated/DAIBondV2/DAIBondV2";
-import { DAIBOND_TOKEN } from "./utils/Constants";
 import { createDailyBondRecord } from "./bonds/DailyBond";
+import { DAIBOND_TOKEN } from "./utils/Constants";
 import { toDecimal } from "./utils/Decimals";
 import { loadOrCreateToken } from "./utils/Tokens";
 

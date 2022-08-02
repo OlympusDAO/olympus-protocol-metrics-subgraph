@@ -1,8 +1,8 @@
 import { DepositCall } from "../generated/FRAXBondV1/FRAXBondV1";
-import { ETHBOND_TOKEN } from "./utils/Constants";
 import { createDailyBondRecord } from "./bonds/DailyBond";
+import { ETHBOND_TOKEN } from "./utils/Constants";
 import { toDecimal } from "./utils/Decimals";
-import { getBaseEthUsdRate } from "./utils/Price";
+import { getBaseEthUsdRate } from "./utils/PriceBase";
 import { loadOrCreateToken } from "./utils/Tokens";
 
 export function handleDeposit(call: DepositCall): void {
