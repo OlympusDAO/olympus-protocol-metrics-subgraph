@@ -198,6 +198,34 @@ describe("OHM-USD rate", () => {
   });
 
   test(
+    "Throws error when no price can be determined",
+    () => {
+      createMockedFunction(
+        Address.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2),
+        "getReserves",
+        "getReserves():(uint112,uint112,uint32)",
+      ).reverts();
+
+      // Balancer vault reverts
+      createMockedFunction(
+        Address.fromString(BALANCER_VAULT),
+        "getPoolTokens",
+        "getPoolTokens(bytes32):(address[],uint256[],uint256)",
+      )
+        .withArgs([
+          ethereum.Value.fromFixedBytes(Bytes.fromHexString(POOL_BALANCER_OHM_DAI_WETH_ID)),
+        ])
+        .reverts();
+
+      // Throws an error
+      getBaseOhmUsdRate(
+        BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
+      );
+    },
+    true,
+  );
+
+  test(
     "should throw an error when the pair cannot be accessed",
     () => {
       // UniswapV2Pair will return null if the pair doesn't exist at the current block
