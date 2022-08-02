@@ -70,7 +70,7 @@ export function getCurvePairTotalValue(
       continue;
     }
 
-    const tokenContract = getERC20(getContractName(token), token, blockNumber);
+    const tokenContract = getERC20(token, blockNumber);
     if (!tokenContract) {
       throw new Error("Unable to fetch ERC20 at address " + token + " for Curve pool");
     }
@@ -173,7 +173,7 @@ function getCurvePairRecord(
   multiplier: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecord | null {
-  const pairToken = getERC20(getContractName(pairTokenAddress), pairTokenAddress, blockNumber);
+  const pairToken = getERC20(pairTokenAddress, blockNumber);
   if (!pairToken) {
     throw new Error("Unable to bind to ERC20 contract for Curve pair token " + pairTokenAddress);
   }
@@ -234,11 +234,7 @@ function getCurvePairTokenContract(pairAddress: string, blockNumber: BigInt): ER
   const pairTokenAddress = getCurvePairToken(pairAddress, blockNumber);
   if (pairTokenAddress === null) return null;
 
-  const pairTokenContract = getERC20(
-    getContractName(pairTokenAddress),
-    pairTokenAddress,
-    blockNumber,
-  );
+  const pairTokenContract = getERC20(pairTokenAddress, blockNumber);
   if (!pairTokenContract) {
     throw new Error("Unable to bind to ERC20 contract for Curve pair token " + pairTokenAddress);
   }
@@ -400,7 +396,7 @@ function getBigDecimalFromBalance(
   balance: BigInt,
   blockNumber: BigInt,
 ): BigDecimal {
-  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  const tokenContract = getERC20(tokenAddress, blockNumber);
   if (!tokenContract) {
     throw new Error("Unable to fetch ERC20 at address " + tokenAddress + " for Curve pool");
   }

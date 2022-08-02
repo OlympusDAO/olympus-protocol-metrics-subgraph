@@ -126,17 +126,15 @@ function contractExistsAtBlock(contractAddress: string, blockNumber: BigInt): bo
  *
  * If the contract does not exist at the current block number, null will be returned.
  *
- * @param contractName Name of the contract
  * @param contractAddress Address of the contract
  * @param currentBlockNumber block number
  * @returns ERC20 or null
  */
-export function getERC20(
-  contractName: string,
-  contractAddress: string,
-  currentBlockNumber: BigInt,
-): ERC20 | null {
-  log.debug("Fetching ERC20 contract {} for address {}", [contractName, contractAddress]);
+export function getERC20(contractAddress: string, currentBlockNumber: BigInt): ERC20 | null {
+  log.debug("Fetching ERC20 contract {} for address {}", [
+    getContractName(contractAddress),
+    contractAddress,
+  ]);
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
   // We can't bind for native (non-ERC20) ETH
@@ -166,7 +164,7 @@ export function getERC20(
  */
 export function getERC20Decimals(contractAddress: string, blockNumber: BigInt): number {
   const contractName = getContractName(contractAddress);
-  const contract = getERC20(contractName, contractAddress, blockNumber);
+  const contract = getERC20(contractAddress, blockNumber);
   if (!contract) {
     throw new Error(
       "getERC20Decimals: unable to find ERC20 contract for " +
@@ -694,7 +692,7 @@ export function getTokeStakedBalancesFromWallets(
   }
 
   // Check that the token exists
-  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  const tokenContract = getERC20(tokenAddress, blockNumber);
   if (tokenContract == null) {
     return records;
   }
@@ -794,7 +792,7 @@ export function getLiquityStakedBalancesFromWallets(
   }
 
   // Check that the token exists
-  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  const tokenContract = getERC20(tokenAddress, blockNumber);
   if (tokenContract == null) {
     return records;
   }
@@ -911,7 +909,7 @@ export function getBalancerGaugeBalanceFromWallets(
   }
 
   // Check that the token exists
-  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  const tokenContract = getERC20(tokenAddress, blockNumber);
   if (tokenContract == null) {
     log.debug(
       "getBalancerGaugeBalanceFromWallets: token {} ({}) does not seem to exist at block {}. Skipping",
@@ -1006,7 +1004,7 @@ export function getBalancerGaugeBalancesFromWallets(
 function getTokeAllocatorBalance(contractAddress: string, blockNumber: BigInt): BigDecimal | null {
   const allocatorId = getRariAllocatorId(contractAddress);
   const tokeAllocator = getTokeAllocator(TOKE_ALLOCATOR, blockNumber);
-  const contract = getERC20(getContractName(contractAddress), contractAddress, blockNumber);
+  const contract = getERC20(contractAddress, blockNumber);
 
   // No matching allocator id
   if (allocatorId === ALLOCATOR_RARI_ID_NOT_FOUND || !tokeAllocator || !contract) {
@@ -1085,7 +1083,7 @@ const RARI_DEBT_WRITEOFF_BLOCK = "14983058";
 function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): BigDecimal | null {
   const rariAllocatorId = getRariAllocatorId(contractAddress);
   const rariAllocator = getRariAllocator(RARI_ALLOCATOR, blockNumber);
-  const contract = getERC20(getContractName(contractAddress), contractAddress, blockNumber);
+  const contract = getERC20(contractAddress, blockNumber);
 
   if (rariAllocatorId === ALLOCATOR_RARI_ID_NOT_FOUND || !rariAllocator || !contract) {
     return null;
@@ -1235,7 +1233,7 @@ export function getConvexStakedBalance(
     return null;
   }
 
-  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  const tokenContract = getERC20(tokenAddress, blockNumber);
   if (!tokenContract) {
     throw new Error("getConvexStakedBalance: Unable to bind with ERC20 contract " + tokenAddress);
   }

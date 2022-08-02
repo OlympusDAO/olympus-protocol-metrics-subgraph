@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { ERC20_WETH, getContractName } from "./Constants";
+import { ERC20_WETH } from "./Constants";
 import { getERC20, getUniswapV3Pair } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getUSDRateUniswapV3 } from "./Price";
@@ -17,7 +17,7 @@ export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: Big
   // Determine token0 value
   const token0 = pair.token0().toHexString();
   log.debug("token0: {}", [token0]);
-  const token0Contract = getERC20(getContractName(token0), token0, blockNumber);
+  const token0Contract = getERC20(token0, blockNumber);
   if (!token0Contract) {
     throw new Error("Unable to find ERC20 contract for " + token0);
   }
@@ -37,7 +37,7 @@ export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: Big
   // Determine token1 value
   const token1 = pair.token1().toHexString();
   log.debug("token1: {}", [token1]);
-  const token1Contract = getERC20(getContractName(token1), token1, blockNumber);
+  const token1Contract = getERC20(token1, blockNumber);
   if (!token1Contract) {
     throw new Error("Unable to find ERC20 contract for " + token1);
   }

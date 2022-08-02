@@ -101,7 +101,7 @@ export function getVolatileTokenBalance(
     addToMetricName(metricName, "VolatileTokenBalance-" + contractName),
     blockNumber,
   );
-  const contract = getERC20(contractName, contractAddress, blockNumber);
+  const contract = getERC20(contractAddress, blockNumber);
   if (!contract) {
     log.info(
       "getVolatileTokenBalance: Skipping ERC20 contract {} that returned empty at block {}",

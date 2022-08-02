@@ -97,7 +97,7 @@ export function getFraxSwapPairTotalValue(
       continue;
     }
 
-    const tokenContract = getERC20(getContractName(token), token, blockNumber);
+    const tokenContract = getERC20(token, blockNumber);
     if (!tokenContract) {
       throw new Error("Unable to fetch ERC20 at address " + token + " for FraxSwap pool");
     }
@@ -304,7 +304,7 @@ function getBigDecimalFromBalance(
   balance: BigInt,
   blockNumber: BigInt,
 ): BigDecimal {
-  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  const tokenContract = getERC20(tokenAddress, blockNumber);
   if (!tokenContract) {
     throw new Error("Unable to fetch ERC20 at address " + tokenAddress + " for FraxSwap pool");
   }

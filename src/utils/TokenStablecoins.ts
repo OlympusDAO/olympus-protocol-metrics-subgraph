@@ -60,7 +60,7 @@ export function getStablecoinBalance(
     addToMetricName(metricName, "StablecoinBalance-" + contractName),
     blockNumber,
   );
-  const contract = getERC20(contractName, contractAddress, blockNumber);
+  const contract = getERC20(contractAddress, blockNumber);
   if (!contract) {
     log.info("getStablecoinBalance: Skipping ERC20 contract {} that returned empty at block {}", [
       getContractName(contractAddress),

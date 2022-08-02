@@ -72,8 +72,8 @@ function getPairHandlerNonOhmValue(
     const reserves = poolContract.getReserves();
     const tokenOrientation = getBaseTokenOrientation(token0, token1);
 
-    const token0Contract = getERC20("", token0.toHexString(), blockNumber);
-    const token1Contract = getERC20("", token1.toHexString(), blockNumber);
+    const token0Contract = getERC20(token0.toHexString(), blockNumber);
+    const token1Contract = getERC20(token1.toHexString(), blockNumber);
     // Can't do anything if the tokens don't exist
     if (!token0Contract || !token1Contract) {
       return null;
@@ -177,7 +177,7 @@ export function getBaseOhmUsdRateUniswapV2(
   const daiReserves = reserves.value1.toBigDecimal();
 
   const ohmRate = daiReserves.div(ohmReserves).div(BIG_DECIMAL_1E9);
-  log.debug("OHM rate {}", [ohmRate.toString()]);
+  log.debug("getBaseOhmUsdRateUniswapV2: OHM rate {}", [ohmRate.toString()]);
 
   return ohmRate;
 }
@@ -241,16 +241,8 @@ export function getUSDRateUniswapV3(
       : priceETH;
 
   // Multiply by difference in decimals
-  const token0Contract = getERC20(
-    getContractName(token0.toHexString()),
-    token0.toHexString(),
-    blockNumber,
-  );
-  const token1Contract = getERC20(
-    getContractName(token0.toHexString()),
-    token1.toHexString(),
-    blockNumber,
-  );
+  const token0Contract = getERC20(token0.toHexString(), blockNumber);
+  const token1Contract = getERC20(token1.toHexString(), blockNumber);
   if (!token0Contract) {
     log.warning("Unable to obtain ERC20 for token {} at block {}", [
       token0.toHexString(),
@@ -395,6 +387,7 @@ export function getUSDRateBalancer(
  * @returns
  */
 export function getBaseOhmUsdRate(blockNumber: BigInt): BigDecimal {
+  log.debug("getBaseOhmUsdRate: determining OHM-USD rate at block {}", [blockNumber.toString()]);
   let largestPairIndex = -1;
   let largestPairValue: BigDecimal | null = null;
 

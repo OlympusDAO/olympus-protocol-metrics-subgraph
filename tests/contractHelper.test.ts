@@ -267,7 +267,7 @@ describe("get ERC20 token records from wallets", () => {
     ).returns([ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS)]);
 
     const blockNumber = BigInt.fromString("1");
-    const contract = getERC20("ALCX", ERC20_ALCX, blockNumber);
+    const contract = getERC20(ERC20_ALCX, blockNumber);
     if (!contract) throw new Error("Expected ERC20 contract to be non-null");
 
     const records = getERC20TokenRecordsFromWallets(
@@ -292,7 +292,7 @@ describe("get ERC20 token records from wallets", () => {
     ]);
 
     const blockNumber = BigInt.fromString("1");
-    const contract = getERC20("wETH", ERC20_WETH, blockNumber);
+    const contract = getERC20(ERC20_WETH, blockNumber);
     if (!contract) throw new Error("Expected ERC20 contract to be non-null");
 
     const records = getERC20TokenRecordsFromWallets(

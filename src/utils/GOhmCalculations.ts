@@ -13,7 +13,7 @@ import { toDecimal } from "./Decimals";
  * @returns BigDecimal presenting the total supply at {blockNumber}
  */
 export function getGOhmTotalSupply(blockNumber: BigInt): BigDecimal {
-  const contract = getERC20("gOHM", ERC20_GOHM, blockNumber);
+  const contract = getERC20(ERC20_GOHM, blockNumber);
 
   if (!contract) {
     log.error(

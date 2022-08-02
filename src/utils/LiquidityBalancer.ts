@@ -58,7 +58,7 @@ export function getBalancerPoolTotalValue(
   for (let i = 0; i < addresses.length; i++) {
     const currentAddress = addresses[i].toHexString();
 
-    const currentContract = getERC20(getContractName(currentAddress), currentAddress, blockNumber);
+    const currentContract = getERC20(currentAddress, blockNumber);
     if (!currentContract) {
       throw new Error("Unable to bind to ERC20 contract for address " + currentAddress.toString());
     }
@@ -359,7 +359,7 @@ export function getBalancerPoolTotalTokenQuantity(
     const currentAddress = addresses[i].toHexString();
     if (!Address.fromString(currentAddress).equals(Address.fromString(tokenAddress))) continue;
 
-    const currentContract = getERC20(getContractName(currentAddress), currentAddress, blockNumber);
+    const currentContract = getERC20(currentAddress, blockNumber);
     if (!currentContract) {
       throw new Error("Unable to bind to ERC20 contract for address " + currentAddress.toString());
     }
