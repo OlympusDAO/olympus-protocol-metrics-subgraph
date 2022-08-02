@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 2.0.63 (2022-08-02)
+## 2.0.65 (2022-08-02)
 
 - Remove gOhmCirculatingSupply, gOhmCirculatingSupplyBreakdown, treasuryLiquidBackingPerGOhmCirculating. Never used and could be misleading
 - Add treasuryLiquidBackingPerGOhm that uses a synthetic calculation for the liquid backing per gOHM (#33)
@@ -10,6 +10,8 @@
 - Add support for AURA and vlAURA
 - Add suffix to tokens that are staked but don't have a different token, so it's clear when looking at asset lists
 - Address duplication of reported veFXS balance
+- Upgrade to graph-cli 0.33.0
+- Rename token labels so that non- and staked/locked versions are grouped together
 
 ## 2.0.41 (2022-07-22)
 
