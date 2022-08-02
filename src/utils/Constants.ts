@@ -308,6 +308,12 @@ export const POOL_BALANCER_D2D_USDC_ID =
 export const POOL_BALANCER_AURA_WETH_ID =
   "0xc29562b045d80fd77c69bec09541f5c16fe20d9d000200000000000000000251";
 
+const pairHandlerAuraWEth = new PairHandler(
+  PairHandlerTypes.Balancer,
+  BALANCER_VAULT,
+  POOL_BALANCER_AURA_WETH_ID,
+);
+
 /**
  * Maps an ERC20 token with an array of liquidity pairs that can be used for price lookup.
  */
@@ -315,12 +321,8 @@ const LIQUIDITY_POOL_TOKEN_LOOKUP = new Map<string, PairHandler[]>();
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_ALCX, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_ALCX_ETH),
 ]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA, [
-  new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_AURA_WETH_ID),
-]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA_VL, [
-  new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_AURA_WETH_ID),
-]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA, [pairHandlerAuraWEth]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA_VL, [pairHandlerAuraWEth]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CRV, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CRV_ETH),
 ]);
@@ -397,6 +399,31 @@ LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_WETH, [
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_XSUSHI, [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_XSUSHI_ETH),
 ]);
+
+/**
+ * OHM price lookup
+ */
+const pairHandlerBalancerOhmDaiEth = new PairHandler(
+  PairHandlerTypes.Balancer,
+  BALANCER_VAULT,
+  POOL_BALANCER_OHM_DAI_WETH_ID,
+);
+
+const pairHandlerUniswapV2OhmDai = new PairHandler(
+  PairHandlerTypes.UniswapV2,
+  PAIR_UNISWAP_V2_OHM_DAI,
+);
+
+const pairHandlerUniswapV2OhmDaiV2 = new PairHandler(
+  PairHandlerTypes.UniswapV2,
+  PAIR_UNISWAP_V2_OHM_DAI_V2,
+);
+
+export const OHM_PRICE_PAIRS = [
+  pairHandlerUniswapV2OhmDai,
+  pairHandlerUniswapV2OhmDaiV2,
+  pairHandlerBalancerOhmDaiEth,
+];
 
 /**
  * Returns the first handler for a liquidity pair. These pairs

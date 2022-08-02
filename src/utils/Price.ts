@@ -13,6 +13,7 @@ import {
   getContractName,
   getPairHandler,
   NATIVE_ETH,
+  OHM_PRICE_PAIRS,
   PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
@@ -21,7 +22,7 @@ import {
 import { getERC20, getERC20Decimals } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getBalancerPoolToken, getBalancerVault } from "./LiquidityBalancer";
-import { PairHandlerTypes } from "./PairHandler";
+import { PairHandler, PairHandlerTypes } from "./PairHandler";
 
 const BIG_DECIMAL_1E8 = BigDecimal.fromString("1e8");
 const BIG_DECIMAL_1E9 = BigDecimal.fromString("1e9");
@@ -68,6 +69,13 @@ export function getBaseEthUsdRate(): BigDecimal {
   return ethRate;
 }
 
+function getPairHandlerNonOhmValue(
+  pairHandler: PairHandler,
+  blockNumber: BigInt,
+): BigDecimal | null {
+  return null;
+}
+
 /**
  * One of the base price lookup functions. This has a hard-coded
  * liquidity pool that it uses to determine the price of OHM,
@@ -88,18 +96,17 @@ export function getBaseEthUsdRate(): BigDecimal {
  *
  * @returns Price of OHM in USD
  */
-export function getBaseOhmUsdRate(block: BigInt): BigDecimal {
-  let contractAddress = PAIR_UNISWAP_V2_OHM_DAI;
-  if (block.gt(BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK))) {
-    contractAddress = PAIR_UNISWAP_V2_OHM_DAI_V2;
-  }
-
+export function getBaseOhmUsdRateUniswapV2(
+  contractAddress: string,
+  blockNumber: BigInt,
+): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(contractAddress));
   if (!pair) {
     throw new Error(
       "Cannot determine discounted value as the contract " +
         contractAddress +
-        " does not exist yet.",
+        " does not exist at block " +
+        blockNumber.toString(),
     );
   }
 
@@ -111,6 +118,69 @@ export function getBaseOhmUsdRate(block: BigInt): BigDecimal {
   log.debug("OHM rate {}", [ohmRate.toString()]);
 
   return ohmRate;
+}
+
+/**
+ * Determines the price for OHM denominated in USD.
+ *
+ * The sources for the price are defined in {OHM_PRICE_PAIRS}.
+ * The pair with the greatest non-OHM reserves will be used.
+ *
+ * @param blockNumber
+ * @returns
+ */
+export function getBaseOhmUsdRate(blockNumber: BigInt): BigDecimal {
+  let largestPairIndex = -1;
+  let largestPairValue: BigDecimal | null = null;
+
+  // Iterate through and find the pair with the largest non-OHM value
+  for (let i = 0; i < OHM_PRICE_PAIRS.length; i++) {
+    const pairTotalValue = getPairHandlerNonOhmValue(OHM_PRICE_PAIRS[i], blockNumber);
+    // No value is returned if the pair is not (yet) valid
+    if (!pairTotalValue) {
+      continue;
+    }
+
+    // If there is an existing largest value, but pairTotalValue is less than that, do nothing
+    if (largestPairValue && pairTotalValue <= largestPairValue) {
+      continue;
+    }
+
+    largestPairIndex = i;
+    largestPairValue = pairTotalValue;
+  }
+
+  if (largestPairIndex < 0) {
+    throw new Error(
+      "getBaseOhmUsdRate: Unable to find liquidity pool suitable for determining the OHM price at block " +
+        blockNumber.toString(),
+    );
+  }
+
+  const pairHandler = OHM_PRICE_PAIRS[largestPairIndex];
+  const pairHandlerBalancerPool = pairHandler.getPool();
+
+  if (pairHandler.getType() === PairHandlerTypes.UniswapV2) {
+    return getBaseOhmUsdRateUniswapV2(pairHandler.getContract(), blockNumber);
+  } else if (
+    pairHandler.getType() === PairHandlerTypes.Balancer &&
+    pairHandlerBalancerPool !== null
+  ) {
+    // TODO implement balancer lookup
+    // TODO consider moving to a new file in order to isolate and reduce inter-dependencies
+    // return getUSDRateBalancer(
+    //   ERC20_OHM_V2,
+    //   pairHandler.getContract(),
+    //   pairHandlerBalancerPool,
+    //   blockNumber,
+    // );
+  }
+
+  throw new Error(
+    `getBaseOhmUsdRate: pair handler type ${pairHandler.getType()} with contract ${getContractName(
+      pairHandler.getContract(),
+    )} (${pairHandler.getContract()}) is unsupported`,
+  );
 }
 
 // eslint-disable-next-line no-shadow
