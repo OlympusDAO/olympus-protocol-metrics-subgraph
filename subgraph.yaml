@@ -27,6 +27,10 @@ dataSources:
           file: ./abis/OlympusERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
+        - name: ERC20
+          file: ./abis/ERC20.json
       callHandlers:
         - function: rebase(uint256)
           handler: rebaseFunction
@@ -53,6 +57,10 @@ dataSources:
           file: ./abis/OlympusERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
+        - name: ERC20
+          file: ./abis/ERC20.json
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
@@ -79,6 +87,10 @@ dataSources:
           file: ./abis/OlympusERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
+        - name: ERC20
+          file: ./abis/ERC20.json
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
