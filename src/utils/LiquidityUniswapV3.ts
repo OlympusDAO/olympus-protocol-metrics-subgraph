@@ -3,7 +3,8 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { ERC20_WETH, getContractName } from "./Constants";
 import { getERC20, getUniswapV3Pair } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
-import { getBaseEthUsdRate, getUSDRateUniswapV3 } from "./Price";
+import { getUSDRateUniswapV3 } from "./Price";
+import { getBaseEthUsdRate } from "./PriceBase";
 
 export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: BigInt): BigDecimal {
   const pair = getUniswapV3Pair(pairAddress, blockNumber);

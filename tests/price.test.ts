@@ -30,7 +30,6 @@ import {
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
   PAIR_UNISWAP_V2_SYN_FRAX,
   PAIR_UNISWAP_V2_TRIBE_ETH,
-  PAIR_UNISWAP_V2_USDC_ETH,
   PAIR_UNISWAP_V3_3CRV_USD,
   PAIR_UNISWAP_V3_FPIS_FRAX,
   PAIR_UNISWAP_V3_FXS_ETH,
@@ -38,15 +37,7 @@ import {
   POOL_BALANCER_WETH_FDT_ID,
 } from "../src/utils/Constants";
 import { DEFAULT_DECIMALS, toBigInt } from "../src/utils/Decimals";
-import {
-  getBaseEthUsdRate,
-  getBaseOhmUsdRate,
-  getBaseTokenOrientation,
-  getBaseTokenUSDRate,
-  getUSDRate,
-  getUSDRateBalancer,
-  PairTokenBaseOrientation,
-} from "../src/utils/Price";
+import { getBaseOhmUsdRate, getUSDRate, getUSDRateBalancer } from "../src/utils/Price";
 import { mockBalancerGaugeBalanceZero } from "./contractHelper.test";
 import {
   mockBalanceVaultOhmDaiEth,
@@ -72,30 +63,6 @@ import {
   OHM_USD_RESERVE_BLOCK,
   USDC_DECIMALS,
 } from "./pairHelper";
-
-describe("ETH-USD rate", () => {
-  test("rate calculation is correct", () => {
-    mockEthUsdRate();
-
-    assert.stringEquals(getBaseEthUsdRate().toString(), getEthUsdRate().toString());
-  });
-
-  test(
-    "should throw an error when the pair cannot be accessed",
-    () => {
-      // UniswapV2Pair will return null if the pair doesn't exist at the current block
-      const contractAddress = Address.fromString(PAIR_UNISWAP_V2_USDC_ETH);
-      createMockedFunction(
-        contractAddress,
-        "getReserves",
-        "getReserves():(uint112,uint112,uint32)",
-      ).returns([]);
-
-      getBaseEthUsdRate();
-    },
-    true,
-  );
-});
 
 describe("OHM-USD rate", () => {
   test("Sushi OHM-DAI rate calculation is correct", () => {
@@ -174,11 +141,7 @@ describe("OHM-USD rate", () => {
   });
 
   test("Sushi OHM-DAI is used when Balancer pool reverts", () => {
-    mockEthUsdRate(); // ETH = 1898.01397375
-    mockUsdOhmV2Rate(
-      toBigInt(BigDecimal.fromString("200000"), 9),
-      toBigInt(BigDecimal.fromString("2000000"), 18),
-    );
+    mockUsdOhmV2Rate();
 
     // Balancer vault reverts
     createMockedFunction(
@@ -190,7 +153,7 @@ describe("OHM-USD rate", () => {
       .reverts();
 
     assert.stringEquals(
-      getOhmUsdRate().toString(),
+      getOhmUsdRate().toString(), // OHM-DAI rate is used
       getBaseOhmUsdRate(
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
       ).toString(),
@@ -242,185 +205,6 @@ describe("OHM-USD rate", () => {
     },
     true,
   );
-});
-
-describe("base token", () => {
-  test("token0 == OHM V1", () => {
-    const token0Address = Address.fromString(ERC20_OHM_V1);
-    const token1Address = Address.fromString(ERC20_TRIBE);
-
-    assert.assertTrue(
-      getBaseTokenOrientation(token0Address, token1Address) === PairTokenBaseOrientation.TOKEN0,
-    );
-  });
-
-  test("token0 == OHM V2", () => {
-    const token0Address = Address.fromString(ERC20_OHM_V2);
-    const token1Address = Address.fromString(ERC20_TRIBE);
-
-    assert.assertTrue(
-      getBaseTokenOrientation(token0Address, token1Address) === PairTokenBaseOrientation.TOKEN0,
-    );
-  });
-
-  test("token0 == ETH", () => {
-    const token0Address = Address.fromString(ERC20_WETH);
-    const token1Address = Address.fromString(ERC20_TRIBE);
-
-    assert.assertTrue(
-      getBaseTokenOrientation(token0Address, token1Address) === PairTokenBaseOrientation.TOKEN0,
-    );
-  });
-
-  test("token1 == OHM V1", () => {
-    const token0Address = Address.fromString(ERC20_OHM_V1);
-    const token1Address = Address.fromString(ERC20_FXS);
-
-    assert.assertTrue(
-      getBaseTokenOrientation(token1Address, token0Address) === PairTokenBaseOrientation.TOKEN1,
-    );
-  });
-
-  test("token1 == OHM V2", () => {
-    const token0Address = Address.fromString(ERC20_OHM_V2);
-    const token1Address = Address.fromString(ERC20_FXS);
-
-    assert.assertTrue(
-      getBaseTokenOrientation(token1Address, token0Address) === PairTokenBaseOrientation.TOKEN1,
-    );
-  });
-
-  test("token1 == ETH", () => {
-    const token0Address = Address.fromString(ERC20_WETH);
-    const token1Address = Address.fromString(ERC20_FXS);
-
-    // Matches DAI for token0
-    assert.assertTrue(
-      getBaseTokenOrientation(token1Address, token0Address) === PairTokenBaseOrientation.TOKEN1,
-    );
-  });
-
-  test("token0 == USDC, token1 == WETH", () => {
-    const token0Address = Address.fromString(ERC20_USDC);
-    const token1Address = Address.fromString(ERC20_WETH);
-
-    assert.assertTrue(
-      getBaseTokenOrientation(token0Address, token1Address) === PairTokenBaseOrientation.TOKEN0,
-    );
-  });
-
-  test("token0 == WETH, token1 == USDC", () => {
-    const token0Address = Address.fromString(ERC20_WETH);
-    const token1Address = Address.fromString(ERC20_USDC);
-
-    assert.assertTrue(
-      getBaseTokenOrientation(token0Address, token1Address) === PairTokenBaseOrientation.TOKEN1,
-    );
-  });
-
-  test("token0-token1 non-base pair", () => {
-    const fxsAddress = Address.fromString(ERC20_FXS);
-    const tribeAddress = Address.fromString(ERC20_TRIBE);
-
-    assert.assertTrue(
-      getBaseTokenOrientation(tribeAddress, fxsAddress) === PairTokenBaseOrientation.UNKNOWN,
-    );
-  });
-
-  test("token1-token0 non-base pair", () => {
-    const fxsAddress = Address.fromString(ERC20_FXS);
-    const tribeAddress = Address.fromString(ERC20_TRIBE);
-
-    assert.assertTrue(
-      getBaseTokenOrientation(fxsAddress, tribeAddress) === PairTokenBaseOrientation.UNKNOWN,
-    );
-  });
-});
-
-describe("base token USD rate", () => {
-  test("token0 == OHM V1, token1 == TRIBE", () => {
-    mockUsdOhmV2Rate();
-
-    assert.stringEquals(
-      getBaseTokenUSDRate(
-        Address.fromString(ERC20_OHM_V1),
-        Address.fromString(ERC20_TRIBE),
-        PairTokenBaseOrientation.TOKEN0,
-        OHM_USD_RESERVE_BLOCK,
-      ).toString(),
-      getOhmUsdRate().toString(),
-    );
-  });
-
-  test("token0 == OHM V2, token1 == TRIBE", () => {
-    mockUsdOhmV2Rate();
-
-    assert.stringEquals(
-      getBaseTokenUSDRate(
-        Address.fromString(ERC20_OHM_V2),
-        Address.fromString(ERC20_TRIBE),
-        PairTokenBaseOrientation.TOKEN0,
-        OHM_USD_RESERVE_BLOCK,
-      ).toString(),
-      getOhmUsdRate().toString(),
-    );
-  });
-
-  test("token0 == ETH, token1 == TRIBE", () => {
-    mockEthUsdRate();
-
-    assert.stringEquals(
-      getBaseTokenUSDRate(
-        Address.fromString(ERC20_WETH),
-        Address.fromString(ERC20_TRIBE),
-        PairTokenBaseOrientation.TOKEN0,
-        OHM_USD_RESERVE_BLOCK,
-      ).toString(),
-      getEthUsdRate().toString(),
-    );
-  });
-
-  test("token0 == TRIBE, token0 == OHM V1", () => {
-    mockUsdOhmV2Rate();
-
-    assert.stringEquals(
-      getBaseTokenUSDRate(
-        Address.fromString(ERC20_TRIBE),
-        Address.fromString(ERC20_OHM_V1),
-        PairTokenBaseOrientation.TOKEN1,
-        OHM_USD_RESERVE_BLOCK,
-      ).toString(),
-      getOhmUsdRate().toString(),
-    );
-  });
-
-  test("token0 == TRIBE, token1 == OHM V2", () => {
-    mockUsdOhmV2Rate();
-
-    assert.stringEquals(
-      getBaseTokenUSDRate(
-        Address.fromString(ERC20_TRIBE),
-        Address.fromString(ERC20_OHM_V2),
-        PairTokenBaseOrientation.TOKEN1,
-        OHM_USD_RESERVE_BLOCK,
-      ).toString(),
-      getOhmUsdRate().toString(),
-    );
-  });
-
-  test("token0 == TRIBE, token1 == ETH", () => {
-    mockEthUsdRate();
-
-    assert.stringEquals(
-      getBaseTokenUSDRate(
-        Address.fromString(ERC20_TRIBE),
-        Address.fromString(ERC20_WETH),
-        PairTokenBaseOrientation.TOKEN1,
-        OHM_USD_RESERVE_BLOCK,
-      ).toString(),
-      getEthUsdRate().toString(),
-    );
-  });
 });
 
 describe("get USD rate", () => {

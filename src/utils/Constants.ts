@@ -409,21 +409,12 @@ const pairHandlerBalancerOhmDaiEth = new PairHandler(
   POOL_BALANCER_OHM_DAI_WETH_ID,
 );
 
-const pairHandlerUniswapV2OhmDai = new PairHandler(
-  PairHandlerTypes.UniswapV2,
-  PAIR_UNISWAP_V2_OHM_DAI,
-);
-
 const pairHandlerUniswapV2OhmDaiV2 = new PairHandler(
   PairHandlerTypes.UniswapV2,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
 );
 
-export const OHM_PRICE_PAIRS = [
-  pairHandlerUniswapV2OhmDai,
-  pairHandlerUniswapV2OhmDaiV2,
-  pairHandlerBalancerOhmDaiEth,
-];
+export const OHM_PRICE_PAIRS = [pairHandlerUniswapV2OhmDaiV2, pairHandlerBalancerOhmDaiEth];
 
 /**
  * Returns the first handler for a liquidity pair. These pairs

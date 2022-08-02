@@ -159,6 +159,7 @@ describe("pool total value", () => {
   });
 
   test("OHM-FRAX pool total value, only OHM", () => {
+    mockBalanceVaultZero();
     mockFraxSwapPairOhmFrax();
     mockUsdOhmV2Rate();
 
@@ -176,6 +177,8 @@ describe("pool total value", () => {
   });
 
   test("OHM-FRAX pool total value, only FRAX", () => {
+    mockBalanceVaultZero();
+    mockUsdOhmV2Rate();
     mockFraxSwapPairOhmFrax();
 
     const totalValue = getFraxSwapPairTotalValue(
@@ -192,6 +195,8 @@ describe("pool total value", () => {
   });
 
   test("OHM-FRAX pool total value, only FRAX uppercase", () => {
+    mockBalanceVaultZero();
+    mockUsdOhmV2Rate();
     mockFraxSwapPairOhmFrax();
 
     const totalValue = getFraxSwapPairTotalValue(
@@ -315,6 +320,8 @@ describe("token quantity", () => {
 
 describe("get token records", () => {
   test("OHM-FRAX pool balance, all tokens", () => {
+    mockBalanceVaultZero();
+    mockUsdOhmV2Rate();
     mockFraxSwapPairOhmFrax();
 
     // Mock wallet balance

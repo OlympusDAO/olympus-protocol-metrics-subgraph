@@ -12,6 +12,7 @@
 - Address duplication of reported veFXS balance
 - Upgrade to graph-cli 0.33.0
 - Rename token labels so that non- and staked/locked versions are grouped together
+- Dynamically choose the liquidity pool to determine the price of OHM in USD based on which has higher reserves (#23)
 
 ## 2.0.41 (2022-07-22)
 
