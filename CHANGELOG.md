@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 2.0.67 (2022-08-02)
+## 2.0.70 (2022-08-03)
 
 - Remove gOhmCirculatingSupply, gOhmCirculatingSupplyBreakdown, treasuryLiquidBackingPerGOhmCirculating. Never used and could be misleading
 - Add treasuryLiquidBackingPerGOhm that uses a synthetic calculation for the liquid backing per gOHM (#33)
@@ -13,6 +13,7 @@
 - Upgrade to graph-cli 0.33.0
 - Rename token labels so that non- and staked/locked versions are grouped together
 - Dynamically choose the liquidity pool to determine the price of OHM in USD based on which has higher reserves (#23)
+- Add support for OHM-BTRFLY protocol-owned liquidity (#41)
 
 ## 2.0.41 (2022-07-22)
 
