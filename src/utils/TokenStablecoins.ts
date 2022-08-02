@@ -45,7 +45,7 @@ export function getStablecoinBalance(
 ): TokenRecords {
   const contractName = getContractName(contractAddress);
   log.info(
-    "Calculating stablecoin balance for {} ({}) at block number {}: liquidity? {}, risk-free? {}, exclude OHM value? {}, restrictToTokenValue? {}",
+    "getStablecoinBalance: Calculating stablecoin balance for {} ({}) at block number {}: liquidity? {}, risk-free? {}, exclude OHM value? {}, restrictToTokenValue? {}",
     [
       contractName,
       contractAddress,
@@ -62,7 +62,7 @@ export function getStablecoinBalance(
   );
   const contract = getERC20(contractName, contractAddress, blockNumber);
   if (!contract) {
-    log.info("Skipping ERC20 contract {} that returned empty at block {}", [
+    log.info("getStablecoinBalance: Skipping ERC20 contract {} that returned empty at block {}", [
       getContractName(contractAddress),
       blockNumber.toString(),
     ]);
@@ -116,7 +116,7 @@ export function getStablecoinBalance(
     );
   }
 
-  log.info("Stablecoin token value: {}", [records.value.toString()]);
+  log.info("getStablecoinBalance: Stablecoin token value: {}", [records.value.toString()]);
   return records;
 }
 
@@ -134,10 +134,10 @@ export function getStablecoinBalances(
   restrictToTokenValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  log.info("Calculating stablecoin value. Liquidity? {}. Risk-Free Value? {}.", [
-    includeLiquidity ? "true" : "false",
-    riskFree ? "true" : "false",
-  ]);
+  log.info(
+    "getStablecoinBalances: Calculating stablecoin value. Liquidity? {}. Risk-Free Value? {}.",
+    [includeLiquidity ? "true" : "false", riskFree ? "true" : "false"],
+  );
   const records = newTokenRecords(addToMetricName(metricName, "StablecoinBalances"), blockNumber);
 
   for (let i = 0; i < ERC20_STABLE_TOKENS.length; i++) {
@@ -155,7 +155,7 @@ export function getStablecoinBalances(
     );
   }
 
-  log.info("Stablecoin value: {}", [records.value.toString()]);
+  log.info("getStablecoinBalances: Stablecoin value: {}", [records.value.toString()]);
   return records;
 }
 
@@ -263,7 +263,7 @@ export function getDaiMarketValue(
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   riskFree: boolean = false,
 ): TokenRecords {
-  log.info("Calculating DAI market value", []);
+  log.info("getDaiMarketValue: Calculating DAI market value", []);
   const records = newTokenRecords(addToMetricName(metricName, "DAIMarketValue"), blockNumber);
 
   combineTokenRecords(
@@ -275,7 +275,7 @@ export function getDaiMarketValue(
     getStablecoinBalance(records.id, ERC20_ADAI, true, riskFree, false, true, blockNumber),
   );
 
-  log.info("DAI market value: {}", [records.value.toString()]);
+  log.info("getDaiMarketValue: DAI market value: {}", [records.value.toString()]);
   return records;
 }
 
