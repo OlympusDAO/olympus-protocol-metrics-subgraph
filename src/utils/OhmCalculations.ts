@@ -26,6 +26,7 @@ import {
 import { toDecimal } from "./Decimals";
 import { getBalancerPoolTokenQuantity } from "./LiquidityBalancer";
 import { getCurvePairTokenQuantity } from "./LiquidityCurve";
+import { getFraxSwapPairTokenQuantityRecords } from "./LiquidityFraxSwap";
 import { getUniswapV2PairTokenQuantity } from "./LiquidityUniswapV2";
 import { PairHandlerTypes } from "./PairHandler";
 import { getBaseOhmUsdRate } from "./Price";
@@ -89,7 +90,7 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
     ? ERC20_OHM_V2
     : ERC20_OHM_V1;
 
-  const ohmContract = getERC20("OHM", ohmContractAddress, blockNumber);
+  const ohmContract = getERC20(ohmContractAddress, blockNumber);
 
   if (!ohmContract) {
     log.error(
@@ -176,7 +177,7 @@ export function getCirculatingSupply(
   const isV2Contract = blockNumber.gt(BigInt.fromString(ERC20_OHM_V2_BLOCK));
   const ohmContractAddress = isV2Contract ? ERC20_OHM_V2 : ERC20_OHM_V1;
 
-  const ohmContract = getERC20("OHM", ohmContractAddress, blockNumber);
+  const ohmContract = getERC20(ohmContractAddress, blockNumber);
   const records = newTokenRecords(addToMetricName(metricName, "OHMCirculatingSupply"), blockNumber);
 
   if (!ohmContract) {
@@ -191,7 +192,7 @@ export function getCirculatingSupply(
   pushTokenRecord(
     records,
     newTokenRecord(
-      metricName,
+      records.id,
       getContractName(ohmContractAddress),
       ohmContractAddress,
       "OHM Total Supply",
@@ -210,7 +211,7 @@ export function getCirculatingSupply(
     pushTokenRecord(
       records,
       newTokenRecord(
-        metricName,
+        records.id,
         getContractName(ohmContractAddress),
         ohmContractAddress,
         getContractName(currentWallet),
@@ -240,7 +241,8 @@ export function getCirculatingSupply(
  * @returns
  */
 function getLiquiditySupply(metricName: string, blockNumber: BigInt): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "OHMLiquiditySupply"), blockNumber);
+  const currentMetricName = addToMetricName(metricName, "OHMLiquiditySupply");
+  const records = newTokenRecords(currentMetricName, blockNumber);
 
   for (let i = 0; i < LIQUIDITY_OWNED.length; i++) {
     const pairHandler = LIQUIDITY_OWNED[i];
@@ -260,7 +262,7 @@ function getLiquiditySupply(metricName: string, blockNumber: BigInt): TokenRecor
         combineTokenRecords(
           records,
           getBalancerPoolTokenQuantity(
-            metricName,
+            currentMetricName,
             pairAddress,
             pairPoolAddress,
             ohmTokenAddress,
@@ -270,12 +272,27 @@ function getLiquiditySupply(metricName: string, blockNumber: BigInt): TokenRecor
       } else if (pairHandler.getType() == PairHandlerTypes.Curve) {
         combineTokenRecords(
           records,
-          getCurvePairTokenQuantity(metricName, pairAddress, ohmTokenAddress, blockNumber),
+          getCurvePairTokenQuantity(currentMetricName, pairAddress, ohmTokenAddress, blockNumber),
         );
       } else if (pairHandler.getType() == PairHandlerTypes.UniswapV2) {
         combineTokenRecords(
           records,
-          getUniswapV2PairTokenQuantity(metricName, pairAddress, ohmTokenAddress, blockNumber),
+          getUniswapV2PairTokenQuantity(
+            currentMetricName,
+            pairAddress,
+            ohmTokenAddress,
+            blockNumber,
+          ),
+        );
+      } else if (pairHandler.getType() == PairHandlerTypes.FraxSwap) {
+        combineTokenRecords(
+          records,
+          getFraxSwapPairTokenQuantityRecords(
+            currentMetricName,
+            pairAddress,
+            ohmTokenAddress,
+            blockNumber,
+          ),
         );
       } else {
         throw new Error("Unsupported pair type: " + pairHandler.getType().toString());

@@ -126,17 +126,15 @@ function contractExistsAtBlock(contractAddress: string, blockNumber: BigInt): bo
  *
  * If the contract does not exist at the current block number, null will be returned.
  *
- * @param contractName Name of the contract
  * @param contractAddress Address of the contract
  * @param currentBlockNumber block number
  * @returns ERC20 or null
  */
-export function getERC20(
-  contractName: string,
-  contractAddress: string,
-  currentBlockNumber: BigInt,
-): ERC20 | null {
-  log.debug("Fetching ERC20 contract {} for address {}", [contractName, contractAddress]);
+export function getERC20(contractAddress: string, currentBlockNumber: BigInt): ERC20 | null {
+  log.debug("Fetching ERC20 contract {} for address {}", [
+    getContractName(contractAddress),
+    contractAddress,
+  ]);
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
   // We can't bind for native (non-ERC20) ETH
@@ -166,7 +164,7 @@ export function getERC20(
  */
 export function getERC20Decimals(contractAddress: string, blockNumber: BigInt): number {
   const contractName = getContractName(contractAddress);
-  const contract = getERC20(contractName, contractAddress, blockNumber);
+  const contract = getERC20(contractAddress, blockNumber);
   if (!contract) {
     throw new Error(
       "getERC20Decimals: unable to find ERC20 contract for " +
@@ -573,10 +571,10 @@ export function getERC20TokenRecordFromWallet(
 ): TokenRecord | null {
   const callResult = contract.try_balanceOf(Address.fromString(walletAddress));
   if (callResult.reverted) {
-    log.warning("Contract {} reverted while trying to obtain balance at block {}", [
-      getContractName(contract._address.toHexString()),
-      blockNumber.toString(),
-    ]);
+    log.warning(
+      "getERC20TokenRecordFromWallet: Contract {} reverted while trying to obtain balance at block {}",
+      [getContractName(contract._address.toHexString()), blockNumber.toString()],
+    );
     return null;
   }
 
@@ -616,14 +614,14 @@ export function getERC20TokenRecordsFromWallets(
   blockNumber: BigInt,
 ): TokenRecords {
   const records = newTokenRecords(
-    addToMetricName(metricName, getContractName(contractAddress)),
+    addToMetricName(metricName, "ERC20/" + getContractName(contractAddress)),
     blockNumber,
   );
   const wallets = getWalletAddressesForContract(contractAddress);
 
   for (let i = 0; i < wallets.length; i++) {
     const record = getERC20TokenRecordFromWallet(
-      metricName,
+      records.id,
       contractAddress,
       wallets[i],
       contract,
@@ -676,10 +674,7 @@ export function getTokeStakedBalancesFromWallets(
   rate: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords(
-    addToMetricName(metricName, getContractName(tokenAddress)),
-    blockNumber,
-  );
+  const records = newTokenRecords(addToMetricName(metricName, "TokeStaked"), blockNumber);
 
   // Check that the token matches
   const contract = TokemakStaking.bind(Address.fromString(TOKE_STAKING));
@@ -697,7 +692,7 @@ export function getTokeStakedBalancesFromWallets(
   }
 
   // Check that the token exists
-  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  const tokenContract = getERC20(tokenAddress, blockNumber);
   if (tokenContract == null) {
     return records;
   }
@@ -715,7 +710,7 @@ export function getTokeStakedBalancesFromWallets(
       "getTokeStakedBalancesFromWallets: found staked balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),
-        getContractName(tokenAddress),
+        getContractName(tokenAddress) + " - Staked",
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -726,8 +721,8 @@ export function getTokeStakedBalancesFromWallets(
     pushTokenRecord(
       records,
       newTokenRecord(
-        metricName,
-        getContractName(tokenAddress),
+        records.id,
+        getContractName(tokenAddress) + " - Staked", // Needed to differentiate as there is no token for TOKE
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -779,10 +774,7 @@ export function getLiquityStakedBalancesFromWallets(
   rate: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords(
-    addToMetricName(metricName, getContractName(tokenAddress)),
-    blockNumber,
-  );
+  const records = newTokenRecords(addToMetricName(metricName, "LiquityStaked"), blockNumber);
 
   // Check that the token matches
   const contract = LQTYStaking.bind(Address.fromString(LQTY_STAKING));
@@ -800,7 +792,7 @@ export function getLiquityStakedBalancesFromWallets(
   }
 
   // Check that the token exists
-  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  const tokenContract = getERC20(tokenAddress, blockNumber);
   if (tokenContract == null) {
     return records;
   }
@@ -818,7 +810,7 @@ export function getLiquityStakedBalancesFromWallets(
       "getLiquityStakedBalancesFromWallets: found staked balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),
-        getContractName(tokenAddress),
+        getContractName(tokenAddress) + " - Staked",
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -829,8 +821,8 @@ export function getLiquityStakedBalancesFromWallets(
     pushTokenRecord(
       records,
       newTokenRecord(
-        metricName,
-        getContractName(tokenAddress),
+        records.id,
+        getContractName(tokenAddress) + " - Staked", // Needed to differentiate as there is no token for LQTY
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -884,10 +876,7 @@ export function getBalancerGaugeBalanceFromWallets(
   rate: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords(
-    addToMetricName(metricName, getContractName(tokenAddress)),
-    blockNumber,
-  );
+  const records = newTokenRecords(metricName, blockNumber);
 
   log.debug(
     "getBalancerGaugeBalanceFromWallets: determining wallet balances in liquidity gauge {} ({}) of token {} ({}) at block {}",
@@ -920,7 +909,7 @@ export function getBalancerGaugeBalanceFromWallets(
   }
 
   // Check that the token exists
-  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  const tokenContract = getERC20(tokenAddress, blockNumber);
   if (tokenContract == null) {
     log.debug(
       "getBalancerGaugeBalanceFromWallets: token {} ({}) does not seem to exist at block {}. Skipping",
@@ -942,7 +931,7 @@ export function getBalancerGaugeBalanceFromWallets(
       "getBalancerGaugeBalanceFromWallets: found balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),
-        getContractName(tokenAddress),
+        getContractName(tokenAddress) + " - Gauge Deposit",
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -953,8 +942,8 @@ export function getBalancerGaugeBalanceFromWallets(
     pushTokenRecord(
       records,
       newTokenRecord(
-        metricName,
-        getContractName(tokenAddress),
+        records.id,
+        getContractName(tokenAddress) + " - Gauge Deposit",
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -984,16 +973,13 @@ export function getBalancerGaugeBalancesFromWallets(
   rate: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords(
-    addToMetricName(metricName, getContractName(tokenAddress)),
-    blockNumber,
-  );
+  const records = newTokenRecords(addToMetricName(metricName, "BalancerGauge"), blockNumber);
 
   for (let i = 0; i < BALANCER_LIQUIDITY_GAUGES.length; i++) {
     combineTokenRecords(
       records,
       getBalancerGaugeBalanceFromWallets(
-        metricName,
+        records.id,
         BALANCER_LIQUIDITY_GAUGES[i],
         tokenAddress,
         rate,
@@ -1018,7 +1004,7 @@ export function getBalancerGaugeBalancesFromWallets(
 function getTokeAllocatorBalance(contractAddress: string, blockNumber: BigInt): BigDecimal | null {
   const allocatorId = getRariAllocatorId(contractAddress);
   const tokeAllocator = getTokeAllocator(TOKE_ALLOCATOR, blockNumber);
-  const contract = getERC20(getContractName(contractAddress), contractAddress, blockNumber);
+  const contract = getERC20(contractAddress, blockNumber);
 
   // No matching allocator id
   if (allocatorId === ALLOCATOR_RARI_ID_NOT_FOUND || !tokeAllocator || !contract) {
@@ -1053,7 +1039,10 @@ export function getTokeAllocatorRecords(
   price: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "TokeAllocator"), blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, getContractName(TOKE_ALLOCATOR)),
+    blockNumber,
+  );
 
   const balance = getTokeAllocatorBalance(tokenAddress, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
@@ -1061,7 +1050,7 @@ export function getTokeAllocatorRecords(
   pushTokenRecord(
     records,
     newTokenRecord(
-      metricName,
+      records.id,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(TOKE_ALLOCATOR),
@@ -1075,11 +1064,17 @@ export function getTokeAllocatorRecords(
   return records;
 }
 
+// Source: https://www.tally.xyz/governance/eip155:1:0x0BEF27FEB58e857046d630B2c03dFb7bae567494/proposal/54737972228715148291831450377954475770670423675395942151334883116464258243647
+const RARI_DEBT_WRITEOFF_BLOCK = "14983058";
+
 /**
  * Returns the balance for a given contract in the Rari Allocator.
  *
  * If the contract does not have an entry in the Rari Allocator,
  * null is returned.
+ *
+ * If the block is after {RARI_DEBT_WRITEOFF_BLOCK} (the block at which the Fuse repay bad debt proposal was defeated),
+ * the amount returned will be 0.
  *
  * @param contractAddress the contract to look up
  * @param blockNumber the current block number
@@ -1088,19 +1083,29 @@ export function getTokeAllocatorRecords(
 function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): BigDecimal | null {
   const rariAllocatorId = getRariAllocatorId(contractAddress);
   const rariAllocator = getRariAllocator(RARI_ALLOCATOR, blockNumber);
-  const contract = getERC20(getContractName(contractAddress), contractAddress, blockNumber);
+  const contract = getERC20(contractAddress, blockNumber);
 
   if (rariAllocatorId === ALLOCATOR_RARI_ID_NOT_FOUND || !rariAllocator || !contract) {
     return null;
   }
 
   if (rariAllocator.try_ids().reverted) {
-    log.warning("Rari Allocator contract reverted at block {}. Skipping", [blockNumber.toString()]);
+    log.warning("getRariAllocatorBalance: Rari Allocator contract reverted at block {}. Skipping", [
+      blockNumber.toString(),
+    ]);
     return null;
   }
 
   // Correct allocator for the id
   if (!rariAllocator.ids().includes(BigInt.fromI32(rariAllocatorId))) {
+    return null;
+  }
+
+  if (blockNumber.gt(BigInt.fromString(RARI_DEBT_WRITEOFF_BLOCK))) {
+    log.info("getRariAllocatorBalance: Current block {} is after write-off block {}. Skipping", [
+      blockNumber.toString(),
+      RARI_DEBT_WRITEOFF_BLOCK,
+    ]);
     return null;
   }
 
@@ -1125,7 +1130,10 @@ export function getRariAllocatorRecords(
   price: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "RariAllocator"), blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, getContractName(RARI_ALLOCATOR)),
+    blockNumber,
+  );
 
   const balance = getRariAllocatorBalance(tokenAddress, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
@@ -1133,7 +1141,7 @@ export function getRariAllocatorRecords(
   pushTokenRecord(
     records,
     newTokenRecord(
-      metricName,
+      records.id,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(RARI_ALLOCATOR),
@@ -1162,7 +1170,10 @@ export function getOnsenAllocatorRecords(
   price: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "OnsenAllocator"), blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, getContractName(ONSEN_ALLOCATOR)),
+    blockNumber,
+  );
 
   const balance = getOnsenBalance(tokenAddress, ONSEN_ALLOCATOR, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
@@ -1170,7 +1181,7 @@ export function getOnsenAllocatorRecords(
   pushTokenRecord(
     records,
     newTokenRecord(
-      metricName,
+      records.id,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(ONSEN_ALLOCATOR),
@@ -1222,7 +1233,7 @@ export function getConvexStakedBalance(
     return null;
   }
 
-  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  const tokenContract = getERC20(tokenAddress, blockNumber);
   if (!tokenContract) {
     throw new Error("getConvexStakedBalance: Unable to bind with ERC20 contract " + tokenAddress);
   }
@@ -1265,7 +1276,7 @@ export function getConvexStakedRecords(
   blockNumber: BigInt,
 ): TokenRecords {
   const records = newTokenRecords(
-    addToMetricName(metricName, "StakedConvexAllocator-" + getContractName(tokenAddress)),
+    addToMetricName(metricName, "StakedConvexAllocator"),
     blockNumber,
   );
 
@@ -1276,6 +1287,7 @@ export function getConvexStakedRecords(
     // Look through staking contracts
     for (let j = 0; j < CONVEX_STAKING_CONTRACTS.length; j++) {
       const stakingAddress = CONVEX_STAKING_CONTRACTS[j];
+      const currentMetricName = addToMetricName(records.id, getContractName(stakingAddress));
 
       const balance = getConvexStakedBalance(
         tokenAddress,
@@ -1288,7 +1300,7 @@ export function getConvexStakedRecords(
       pushTokenRecord(
         records,
         newTokenRecord(
-          metricName,
+          currentMetricName,
           getContractName(tokenAddress),
           tokenAddress,
           getContractName(allocatorAddress),
@@ -1415,7 +1427,7 @@ export function getLiquityStabilityPoolRecords(
   pushTokenRecord(
     records,
     newTokenRecord(
-      metricName,
+      records.id,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(LUSD_ALLOCATOR),
@@ -1459,7 +1471,10 @@ export function getVeFXSAllocatorRecords(
   tokenAddress: string,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords("VeFXS Allocator", blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, getContractName(VEFXS_ALLOCATOR)),
+    blockNumber,
+  );
 
   const balance = getVeFXSAllocatorBalance(tokenAddress, VEFXS_ALLOCATOR, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
@@ -1469,7 +1484,7 @@ export function getVeFXSAllocatorRecords(
   pushTokenRecord(
     records,
     newTokenRecord(
-      metricName,
+      records.id,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(VEFXS_ALLOCATOR),

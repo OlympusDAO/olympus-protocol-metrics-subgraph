@@ -1,6 +1,6 @@
 import { DepositCall } from "../generated/LUSDBondV1/LUSDBondV1";
-import { LUSDBOND_TOKEN } from "./utils/Constants";
 import { createDailyBondRecord } from "./bonds/DailyBond";
+import { LUSDBOND_TOKEN } from "./utils/Constants";
 import { toDecimal } from "./utils/Decimals";
 import { loadOrCreateToken } from "./utils/Tokens";
 

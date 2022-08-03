@@ -38,13 +38,13 @@ import {
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 
-const OHM_DAI_ETH_BALANCE_OHM = BigDecimal.fromString("221499.733846818");
-const OHM_DAI_ETH_BALANCE_DAI = BigDecimal.fromString("1932155.145566782258916959");
-const OHM_DAI_ETH_BALANCE_WETH = BigDecimal.fromString("1080.264364629190826870");
-const OHM_DAI_ETH_TOKEN_TOTAL_SUPPLY = BigDecimal.fromString("100");
-const OHM_DAI_ETH_WEIGHT_OHM = BigDecimal.fromString("0.5");
-const OHM_DAI_ETH_WEIGHT_DAI = BigDecimal.fromString("0.25");
-const OHM_DAI_ETH_WEIGHT_WETH = BigDecimal.fromString("0.25");
+export const OHM_DAI_ETH_BALANCE_OHM = BigDecimal.fromString("221499.733846818");
+export const OHM_DAI_ETH_BALANCE_DAI = BigDecimal.fromString("1932155.145566782258916959");
+export const OHM_DAI_ETH_BALANCE_WETH = BigDecimal.fromString("1080.264364629190826870");
+export const OHM_DAI_ETH_TOKEN_TOTAL_SUPPLY = BigDecimal.fromString("100");
+export const OHM_DAI_ETH_WEIGHT_OHM = BigDecimal.fromString("0.5");
+export const OHM_DAI_ETH_WEIGHT_DAI = BigDecimal.fromString("0.25");
+export const OHM_DAI_ETH_WEIGHT_WETH = BigDecimal.fromString("0.25");
 
 export function mockBalancerVault(
   vaultAddress: string,

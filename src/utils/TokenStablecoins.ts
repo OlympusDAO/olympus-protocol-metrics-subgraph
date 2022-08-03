@@ -45,7 +45,7 @@ export function getStablecoinBalance(
 ): TokenRecords {
   const contractName = getContractName(contractAddress);
   log.info(
-    "Calculating stablecoin balance for {} ({}) at block number {}: liquidity? {}, risk-free? {}, exclude OHM value? {}, restrictToTokenValue? {}",
+    "getStablecoinBalance: Calculating stablecoin balance for {} ({}) at block number {}: liquidity? {}, risk-free? {}, exclude OHM value? {}, restrictToTokenValue? {}",
     [
       contractName,
       contractAddress,
@@ -60,9 +60,9 @@ export function getStablecoinBalance(
     addToMetricName(metricName, "StablecoinBalance-" + contractName),
     blockNumber,
   );
-  const contract = getERC20(contractName, contractAddress, blockNumber);
+  const contract = getERC20(contractAddress, blockNumber);
   if (!contract) {
-    log.info("Skipping ERC20 contract {} that returned empty at block {}", [
+    log.info("getStablecoinBalance: Skipping ERC20 contract {} that returned empty at block {}", [
       getContractName(contractAddress),
       blockNumber.toString(),
     ]);
@@ -74,39 +74,39 @@ export function getStablecoinBalance(
   // Wallets
   combineTokenRecords(
     records,
-    getERC20TokenRecordsFromWallets(metricName, contractAddress, contract, rate, blockNumber),
+    getERC20TokenRecordsFromWallets(records.id, contractAddress, contract, rate, blockNumber),
   );
 
   // Rari Allocator
   combineTokenRecords(
     records,
-    getRariAllocatorRecords(metricName, contractAddress, rate, blockNumber),
+    getRariAllocatorRecords(records.id, contractAddress, rate, blockNumber),
   );
 
   // Staked Convex tokens
-  combineTokenRecords(records, getConvexStakedRecords(metricName, contractAddress, blockNumber));
+  combineTokenRecords(records, getConvexStakedRecords(records.id, contractAddress, blockNumber));
 
   // Liquity Stability Pool
   combineTokenRecords(
     records,
-    getLiquityStabilityPoolRecords(metricName, contractAddress, rate, blockNumber),
+    getLiquityStabilityPoolRecords(records.id, contractAddress, rate, blockNumber),
   );
 
   // Onsen Allocator
   combineTokenRecords(
     records,
-    getOnsenAllocatorRecords(metricName, contractAddress, rate, blockNumber),
+    getOnsenAllocatorRecords(records.id, contractAddress, rate, blockNumber),
   );
 
   // VeFXS Allocator
-  combineTokenRecords(records, getVeFXSAllocatorRecords(metricName, contractAddress, blockNumber));
+  combineTokenRecords(records, getVeFXSAllocatorRecords(records.id, contractAddress, blockNumber));
 
   // Liquidity pools
   if (includeLiquidity) {
     combineTokenRecords(
       records,
       getLiquidityBalances(
-        metricName,
+        records.id,
         contractAddress,
         riskFree,
         excludeOhmValue,
@@ -116,7 +116,7 @@ export function getStablecoinBalance(
     );
   }
 
-  log.info("Stablecoin token value: {}", [records.value.toString()]);
+  log.info("getStablecoinBalance: Stablecoin token value: {}", [records.value.toString()]);
   return records;
 }
 
@@ -134,17 +134,17 @@ export function getStablecoinBalances(
   restrictToTokenValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  log.info("Calculating stablecoin value. Liquidity? {}. Risk-Free Value? {}.", [
-    includeLiquidity ? "true" : "false",
-    riskFree ? "true" : "false",
-  ]);
+  log.info(
+    "getStablecoinBalances: Calculating stablecoin value. Liquidity? {}. Risk-Free Value? {}.",
+    [includeLiquidity ? "true" : "false", riskFree ? "true" : "false"],
+  );
   const records = newTokenRecords(addToMetricName(metricName, "StablecoinBalances"), blockNumber);
 
   for (let i = 0; i < ERC20_STABLE_TOKENS.length; i++) {
     combineTokenRecords(
       records,
       getStablecoinBalance(
-        metricName,
+        records.id,
         ERC20_STABLE_TOKENS[i],
         includeLiquidity,
         riskFree,
@@ -155,7 +155,7 @@ export function getStablecoinBalances(
     );
   }
 
-  log.info("Stablecoin value: {}", [records.value.toString()]);
+  log.info("getStablecoinBalances: Stablecoin value: {}", [records.value.toString()]);
   return records;
 }
 
@@ -174,11 +174,11 @@ export function getDaiBalance(metricName: string, blockNumber: BigInt): TokenRec
 
   combineTokenRecords(
     records,
-    getStablecoinBalance(metricName, ERC20_DAI, false, false, false, false, blockNumber),
+    getStablecoinBalance(records.id, ERC20_DAI, false, false, false, false, blockNumber),
   );
   combineTokenRecords(
     records,
-    getStablecoinBalance(metricName, ERC20_ADAI, false, false, false, false, blockNumber),
+    getStablecoinBalance(records.id, ERC20_ADAI, false, false, false, false, blockNumber),
   );
 
   return records;
@@ -263,19 +263,19 @@ export function getDaiMarketValue(
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   riskFree: boolean = false,
 ): TokenRecords {
-  log.info("Calculating DAI market value", []);
+  log.info("getDaiMarketValue: Calculating DAI market value", []);
   const records = newTokenRecords(addToMetricName(metricName, "DAIMarketValue"), blockNumber);
 
   combineTokenRecords(
     records,
-    getStablecoinBalance(metricName, ERC20_DAI, true, riskFree, false, true, blockNumber),
+    getStablecoinBalance(records.id, ERC20_DAI, true, riskFree, false, true, blockNumber),
   );
   combineTokenRecords(
     records,
-    getStablecoinBalance(metricName, ERC20_ADAI, true, riskFree, false, true, blockNumber),
+    getStablecoinBalance(records.id, ERC20_ADAI, true, riskFree, false, true, blockNumber),
   );
 
-  log.info("DAI market value: {}", [records.value.toString()]);
+  log.info("getDaiMarketValue: DAI market value: {}", [records.value.toString()]);
   return records;
 }
 

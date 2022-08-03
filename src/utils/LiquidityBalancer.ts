@@ -58,7 +58,7 @@ export function getBalancerPoolTotalValue(
   for (let i = 0; i < addresses.length; i++) {
     const currentAddress = addresses[i].toHexString();
 
-    const currentContract = getERC20(getContractName(currentAddress), currentAddress, blockNumber);
+    const currentContract = getERC20(currentAddress, blockNumber);
     if (!currentContract) {
       throw new Error("Unable to bind to ERC20 contract for address " + currentAddress.toString());
     }
@@ -199,7 +199,7 @@ function getBalancerPoolTokenRecords(
     pushTokenRecord(
       records,
       newTokenRecord(
-        metricName,
+        records.id,
         getContractName(poolTokenAddress),
         poolTokenAddress,
         getContractName(walletAddress),
@@ -240,11 +240,14 @@ export function getBalancerRecords(
     vaultAddress,
     poolId,
   ]);
-  const records = newTokenRecords(addToMetricName(metricName, "BalancerPool"), blockNumber);
+  const records = newTokenRecords(
+    addToMetricName(metricName, "BalancerPool/" + poolId),
+    blockNumber,
+  );
   if (tokenAddress && !liquidityPairHasToken(poolId, tokenAddress)) {
     log.debug(
-      "getBalancerRecords: tokenAddress specified and not found in balancer pool. Skipping.",
-      [],
+      "getBalancerRecords: tokenAddress {} ({}) specified and not found in balancer pool. Skipping.",
+      [getContractName(tokenAddress), tokenAddress],
     );
     return records;
   }
@@ -309,7 +312,7 @@ export function getBalancerRecords(
   combineTokenRecords(
     records,
     getBalancerPoolTokenRecords(
-      metricName,
+      records.id,
       poolId,
       poolTokenContract,
       unitRate,
@@ -356,7 +359,7 @@ export function getBalancerPoolTotalTokenQuantity(
     const currentAddress = addresses[i].toHexString();
     if (!Address.fromString(currentAddress).equals(Address.fromString(tokenAddress))) continue;
 
-    const currentContract = getERC20(getContractName(currentAddress), currentAddress, blockNumber);
+    const currentContract = getERC20(currentAddress, blockNumber);
     if (!currentContract) {
       throw new Error("Unable to bind to ERC20 contract for address " + currentAddress.toString());
     }
@@ -439,7 +442,7 @@ export function getBalancerPoolTokenQuantity(
     pushTokenRecord(
       records,
       newTokenRecord(
-        metricName,
+        records.id,
         getContractName(tokenAddress) + " in " + getContractName(poolTokenAddress),
         poolTokenAddress,
         record.source,

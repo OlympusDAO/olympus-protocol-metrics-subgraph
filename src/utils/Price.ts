@@ -2,6 +2,7 @@ import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts
 
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
+import { arrayIncludesLoose } from "./ArrayHelper";
 import {
   BALANCER_VAULT,
   ERC20_OHM_V1,
@@ -13,64 +14,133 @@ import {
   getContractName,
   getPairHandler,
   NATIVE_ETH,
-  PAIR_UNISWAP_V2_OHM_DAI,
-  PAIR_UNISWAP_V2_OHM_DAI_V2,
-  PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
-  PAIR_UNISWAP_V2_USDC_ETH,
+  OHM_PRICE_PAIRS,
 } from "./Constants";
-import { getERC20, getERC20Decimals } from "./ContractHelper";
+import { getERC20, getERC20Decimals, getUniswapV2Pair } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getBalancerPoolToken, getBalancerVault } from "./LiquidityBalancer";
-import { PairHandlerTypes } from "./PairHandler";
+import { PairHandler, PairHandlerTypes } from "./PairHandler";
+import {
+  getBaseEthUsdRate,
+  getBaseTokenOrientation,
+  getBaseTokenUSDRate,
+  PairTokenBaseOrientation,
+} from "./PriceBase";
 
-const BIG_DECIMAL_1E8 = BigDecimal.fromString("1e8");
 const BIG_DECIMAL_1E9 = BigDecimal.fromString("1e9");
-const BIG_DECIMAL_1E10 = BigDecimal.fromString("1e10");
-const BIG_DECIMAL_1E12 = BigDecimal.fromString("1e12");
 
 /**
- * One of the base price lookup functions. This has a hard-coded
- * liquidity pool that it uses to determine the price of ETH,
- * relative to the USD.
+ * Determines the non-OHM value of the given pair.
  *
- * It uses the following basis of liquidity pools:
- *
- * number of token1 * price of token1 = number of token2 * price of token2
- *
- * In the case of a USDC-ETH pair, we know the following:
- * - number of USDC (using getReserves())
- * - number of ETH (using getReserves())
- * - price of USDC (1)
- *
- * Therefore the price of ETH is:
- *
- * number of USDC * 1 / number of ETH = price of ETH
- *
- * @returns Price of ETH in USD
+ * @param pairHandler
+ * @param blockNumber
+ * @returns
  */
-export function getBaseEthUsdRate(): BigDecimal {
-  const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_USDC_ETH));
-  if (!pair) {
-    throw new Error(
-      "Cannot determine discounted value as the contract " +
-        PAIR_UNISWAP_V2_USDC_ETH +
-        " does not exist yet.",
+function getPairHandlerNonOhmValue(
+  pairHandler: PairHandler,
+  blockNumber: BigInt,
+): BigDecimal | null {
+  // TODO consider merging with the total value functions for each of the liquidity pool types.
+  const pairHandlerPool = pairHandler.getPool();
+  if (pairHandler.getType() === PairHandlerTypes.UniswapV2) {
+    log.debug(
+      "getPairHandlerNonOhmValue: checking for the non-OHM value of UniswapV2 pool {} ({}) at block {}",
+      [
+        getContractName(pairHandler.getContract()),
+        pairHandler.getContract(),
+        blockNumber.toString(),
+      ],
     );
+    const poolContract = getUniswapV2Pair(pairHandler.getContract(), blockNumber);
+
+    // Attempt to call getReserves
+    if (!poolContract || poolContract.try_getReserves().reverted) {
+      log.info(
+        "getPairHandlerNonOhmValue: unable to determine reserves for UniswapV2 pool {} ({}) at block {}. Skipping",
+        [
+          getContractName(pairHandler.getContract()),
+          pairHandler.getContract(),
+          blockNumber.toString(),
+        ],
+      );
+      return null;
+    }
+
+    // Add up non-OHM reserves
+    const token0 = poolContract.token0();
+    const token1 = poolContract.token1();
+    const reserves = poolContract.getReserves();
+    const tokenOrientation = getBaseTokenOrientation(token0, token1);
+
+    const token0Contract = getERC20(token0.toHexString(), blockNumber);
+    const token1Contract = getERC20(token1.toHexString(), blockNumber);
+    // Can't do anything if the tokens don't exist
+    if (!token0Contract || !token1Contract) {
+      return null;
+    }
+
+    const nonOhmBalance = [ERC20_OHM_V1, ERC20_OHM_V2].includes(token0.toHexString().toLowerCase())
+      ? toDecimal(reserves.value1, token1Contract.decimals())
+      : toDecimal(reserves.value0, token0Contract.decimals());
+    return nonOhmBalance.times(getBaseTokenUSDRate(token0, token1, tokenOrientation, blockNumber));
+  } else if (pairHandler.getType() === PairHandlerTypes.Balancer && pairHandlerPool !== null) {
+    log.debug(
+      "getPairHandlerNonOhmValue: checking for the non-OHM value of Balancer pool {} ({}) at block {}",
+      [getContractName(pairHandlerPool), pairHandlerPool, blockNumber.toString()],
+    );
+    const balancerVault = getBalancerVault(pairHandler.getContract(), blockNumber);
+
+    // Attempt to call getPoolTokens
+    if (balancerVault.try_getPoolTokens(Bytes.fromHexString(pairHandlerPool)).reverted) {
+      log.info(
+        "getPairHandlerNonOhmValue: unable to determine reserves for Balancer pool {} ({}) at block {}. Skipping",
+        [getContractName(pairHandlerPool), pairHandlerPool, blockNumber.toString()],
+      );
+      return null;
+    }
+
+    const poolTokenWrapper = balancerVault.getPoolTokens(Bytes.fromHexString(pairHandlerPool));
+    const addresses: Array<Address> = poolTokenWrapper.getTokens();
+    const balances: Array<BigInt> = poolTokenWrapper.getBalances();
+    let totalValue = BigDecimal.zero();
+
+    const baseTokens = ERC20_STABLE_TOKENS.slice(0);
+    baseTokens.push(ERC20_WETH);
+
+    // Add up non-OHM reserves
+    for (let i = 0; i < addresses.length; i++) {
+      const currentAddress = addresses[i];
+      const currentAddressString = currentAddress.toHexString().toLowerCase();
+      const currentBalance = balances[i];
+      const currentTokenDecimals = getERC20Decimals(currentAddressString, blockNumber);
+
+      if ([ERC20_OHM_V1, ERC20_OHM_V2].includes(currentAddressString)) {
+        continue;
+      }
+
+      // If the remaining token is not a base token (USD or ETH), we can't use it
+      // as we would risk an infinite loop if OHM is in the liquidity pool
+      if (!baseTokens.includes(currentAddressString)) {
+        continue;
+      }
+
+      const currentPrice = ERC20_STABLE_TOKENS.includes(currentAddressString)
+        ? BigDecimal.fromString("1")
+        : getBaseEthUsdRate();
+
+      totalValue = totalValue.plus(
+        toDecimal(currentBalance, currentTokenDecimals).times(currentPrice),
+      );
+    }
+
+    return totalValue;
   }
 
-  const reserves = pair.getReserves();
-  const usdReserves = reserves.value0.toBigDecimal();
-  const ethReserves = reserves.value1.toBigDecimal();
-
-  const ethRate = usdReserves.div(ethReserves).times(BIG_DECIMAL_1E12);
-  log.debug("ETH rate {}", [ethRate.toString()]);
-
-  return ethRate;
+  return null;
 }
 
 /**
- * One of the base price lookup functions. This has a hard-coded
- * liquidity pool that it uses to determine the price of OHM,
+ * Uses the UniswapV2 pool at {contractAddress} to determine the price of OHM,
  * relative to USD.
  *
  * It uses the following basis of liquidity pools:
@@ -88,18 +158,17 @@ export function getBaseEthUsdRate(): BigDecimal {
  *
  * @returns Price of OHM in USD
  */
-export function getBaseOhmUsdRate(block: BigInt): BigDecimal {
-  let contractAddress = PAIR_UNISWAP_V2_OHM_DAI;
-  if (block.gt(BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK))) {
-    contractAddress = PAIR_UNISWAP_V2_OHM_DAI_V2;
-  }
-
+export function getBaseOhmUsdRateUniswapV2(
+  contractAddress: string,
+  blockNumber: BigInt,
+): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(contractAddress));
   if (!pair) {
     throw new Error(
       "Cannot determine discounted value as the contract " +
         contractAddress +
-        " does not exist yet.",
+        " does not exist at block " +
+        blockNumber.toString(),
     );
   }
 
@@ -108,214 +177,9 @@ export function getBaseOhmUsdRate(block: BigInt): BigDecimal {
   const daiReserves = reserves.value1.toBigDecimal();
 
   const ohmRate = daiReserves.div(ohmReserves).div(BIG_DECIMAL_1E9);
-  log.debug("OHM rate {}", [ohmRate.toString()]);
+  log.debug("getBaseOhmUsdRateUniswapV2: OHM rate {}", [ohmRate.toString()]);
 
   return ohmRate;
-}
-
-// eslint-disable-next-line no-shadow
-export enum PairTokenBaseOrientation {
-  TOKEN0,
-  TOKEN1,
-  UNKNOWN,
-}
-
-/**
- * Determines if the given string array loosely includes the given value.
- *
- * This is used as Array.includes() uses strict equality, and the strings
- * provided by {Address} are not always the same.
- *
- * This also ensures that when comparison is performed, both strings
- * are lowercase.
- *
- * @param array the array to iterate over
- * @param value the value to check against
- * @returns
- */
-function arrayIncludesLoose(array: string[], value: string): boolean {
-  for (let i = 0; i < array.length; i++) {
-    if (array[i].toLowerCase() == value.toLowerCase()) return true;
-  }
-
-  return false;
-}
-
-/**
- * Determines whether token0 or token1 of a pair is the base (wETH/OHM) token.
- *
- * @param token0
- * @param token1
- * @returns
- */
-export function getBaseTokenOrientation(
-  token0: Address,
-  token1: Address,
-): PairTokenBaseOrientation {
-  // As we are ultimately trying to get to a USD-denominated rate,
-  // check for USD stablecoins first
-  if (arrayIncludesLoose(ERC20_STABLE_TOKENS, token0.toHexString())) {
-    return PairTokenBaseOrientation.TOKEN0;
-  }
-
-  if (arrayIncludesLoose(ERC20_STABLE_TOKENS, token1.toHexString())) {
-    return PairTokenBaseOrientation.TOKEN1;
-  }
-
-  /**
-   * Note: token0.toHexString() ostensibly returns the contract address,
-   * but it does not equal {ERC20_WETH} even after trimming. So we use Address.
-   */
-  const wethAddress = Address.fromString(ERC20_WETH);
-  const ohmV1Address = Address.fromString(ERC20_OHM_V1);
-  const ohmV2Address = Address.fromString(ERC20_OHM_V2);
-  // TODO what if the pair is OHM-ETH or ETH-OHM?
-
-  // Now check secondary base tokens: OHM and ETH
-  if (token0.equals(wethAddress) || token0.equals(ohmV1Address) || token0.equals(ohmV2Address)) {
-    return PairTokenBaseOrientation.TOKEN0;
-  }
-
-  if (token1.equals(wethAddress) || token1.equals(ohmV1Address) || token1.equals(ohmV2Address)) {
-    return PairTokenBaseOrientation.TOKEN1;
-  }
-
-  return PairTokenBaseOrientation.UNKNOWN;
-}
-
-/**
- * Gets the USD value of the base token, as identified by {orientation}.
- *
- * This enables pairs to have ETH or OHM as the base token.
- *
- * @param token0
- * @param token1
- * @param orientation
- * @param blockNumber
- * @returns
- */
-export function getBaseTokenUSDRate(
-  token0: Address,
-  token1: Address,
-  orientation: PairTokenBaseOrientation,
-  blockNumber: BigInt,
-): BigDecimal {
-  if (orientation === PairTokenBaseOrientation.UNKNOWN) {
-    throw new Error(
-      "Unsure how to deal with unknown token base orientation for tokens " +
-        token0.toHexString() +
-        ", " +
-        token1.toHexString(),
-    );
-  }
-
-  const baseToken = orientation === PairTokenBaseOrientation.TOKEN0 ? token0 : token1;
-
-  const ohmV1Address = Address.fromString(ERC20_OHM_V1);
-  const ohmV2Address = Address.fromString(ERC20_OHM_V2);
-  if (baseToken.equals(ohmV1Address) || baseToken.equals(ohmV2Address)) {
-    log.debug("Returning OHM", []);
-    return getBaseOhmUsdRate(blockNumber);
-  }
-
-  if (baseToken.equals(Address.fromString(ERC20_WETH))) {
-    log.debug("Returning ETH", []);
-    return getBaseEthUsdRate();
-  }
-
-  // Otherwise, USD
-  return BigDecimal.fromString("1");
-}
-
-/**
- * Returns the USD rate of the token represented by {contractAddress},
- * given the UniswapV2 pair {pairAddress}.
- *
- * This will dynamically determine which of the pair tokens is the base
- * token (wETH or OHM).
- *
- * After the base token has been determined, the following formula is used
- * to determine the USD rate of the other token.
- *
- * e.g. taking the ETH-TRIBE pair:
- * TRIBE balance = 40,537.42936106
- * ETH balance = 4.99923661
- *
- * (ETH balance / TRIBE balance) * (ETH price) = TRIBE price
- * (4.99923661 / 40537.42936106) * 2000 = 0.24
- *
- * TODO: mention p1 * q1 = p2 * q2
- *
- * @param contractAddress
- * @param pairAddress
- * @returns
- */
-export function getUSDRateUniswapV2(
-  contractAddress: string,
-  pairAddress: string,
-  blockNumber: BigInt,
-): BigDecimal {
-  log.debug("getUSDRateUniswapV2: contract {}, pair {}", [contractAddress, pairAddress]);
-  if (Address.fromString(contractAddress).equals(Address.fromString(ERC20_WETH))) {
-    log.debug("getUSDRateUniswapV2: Returning base ETH-USD rate", []);
-    return getBaseEthUsdRate();
-  }
-  if (
-    Address.fromString(contractAddress).equals(Address.fromString(ERC20_OHM_V1)) ||
-    Address.fromString(contractAddress).equals(Address.fromString(ERC20_OHM_V2))
-  ) {
-    log.debug("getUSDRateUniswapV2: Returning base OHM-USD rate", []);
-    return getBaseOhmUsdRate(blockNumber);
-  }
-  if (arrayIncludesLoose(ERC20_STABLE_TOKENS, contractAddress)) {
-    log.debug("getUSDRateUniswapV2: Returning stablecoin rate of 1", []);
-    return BigDecimal.fromString("1");
-  }
-
-  // TODO handle OHM v1 rates?
-
-  const pair = UniswapV2Pair.bind(Address.fromString(pairAddress));
-  if (pair === null || pair.try_token0().reverted || pair.try_token1().reverted) {
-    log.debug(
-      "getUSDRateUniswapV2: Cannot determine value as the contract ({}) reverted at block {}",
-      [getContractName(pairAddress), blockNumber.toString()],
-    );
-    return BigDecimal.zero();
-  }
-
-  // Determine orientation of the pair
-  log.debug("getUSDRateUniswapV2: determining pair orientation", []);
-  const token0 = pair.token0();
-  const token1 = pair.token1();
-  const baseTokenOrientation = getBaseTokenOrientation(token0, token1);
-  if (baseTokenOrientation === PairTokenBaseOrientation.UNKNOWN) {
-    throw new Error(
-      "getUSDRateUniswapV2: Unsure how to deal with unknown token base orientation for pair " +
-        pairAddress,
-    );
-  }
-
-  log.debug("getUSDRateUniswapV2: getting ERC20 token decimals", []);
-  const token0Decimals = getERC20Decimals(token0.toHexString(), blockNumber);
-  const token1Decimals = getERC20Decimals(token1.toHexString(), blockNumber);
-
-  log.debug("getUSDRateUniswapV2: getting pair reserves", []);
-  const token0Reserves = toDecimal(pair.getReserves().value0, token0Decimals);
-  const token1Reserves = toDecimal(pair.getReserves().value1, token1Decimals);
-  // Get the number of tokens denominated in ETH/OHM
-  const baseTokenNumerator =
-    baseTokenOrientation === PairTokenBaseOrientation.TOKEN0
-      ? token0Reserves.div(token1Reserves)
-      : token1Reserves.div(token0Reserves);
-
-  const baseTokenUsdRate = getBaseTokenUSDRate(token0, token1, baseTokenOrientation, blockNumber);
-  log.debug("getUSDRateUniswapV2: baseTokenUsdRate for {} ({}) is {}", [
-    getContractName(contractAddress),
-    contractAddress,
-    baseTokenUsdRate.toString(),
-  ]);
-
-  return baseTokenNumerator.times(baseTokenUsdRate);
 }
 
 /**
@@ -377,16 +241,8 @@ export function getUSDRateUniswapV3(
       : priceETH;
 
   // Multiply by difference in decimals
-  const token0Contract = getERC20(
-    getContractName(token0.toHexString()),
-    token0.toHexString(),
-    blockNumber,
-  );
-  const token1Contract = getERC20(
-    getContractName(token0.toHexString()),
-    token1.toHexString(),
-    blockNumber,
-  );
+  const token0Contract = getERC20(token0.toHexString(), blockNumber);
+  const token1Contract = getERC20(token1.toHexString(), blockNumber);
   if (!token0Contract) {
     log.warning("Unable to obtain ERC20 for token {} at block {}", [
       token0.toHexString(),
@@ -522,6 +378,158 @@ export function getUSDRateBalancer(
 }
 
 /**
+ * Determines the price for OHM denominated in USD.
+ *
+ * The sources for the price are defined in {OHM_PRICE_PAIRS}.
+ * The pair with the greatest non-OHM reserves will be used.
+ *
+ * @param blockNumber
+ * @returns
+ */
+export function getBaseOhmUsdRate(blockNumber: BigInt): BigDecimal {
+  log.debug("getBaseOhmUsdRate: determining OHM-USD rate at block {}", [blockNumber.toString()]);
+  let largestPairIndex = -1;
+  let largestPairValue: BigDecimal | null = null;
+
+  // Iterate through and find the pair with the largest non-OHM value
+  for (let i = 0; i < OHM_PRICE_PAIRS.length; i++) {
+    const pairTotalValue = getPairHandlerNonOhmValue(OHM_PRICE_PAIRS[i], blockNumber);
+    // No value is returned if the pair is not (yet) valid
+    if (!pairTotalValue) {
+      continue;
+    }
+
+    // If there is an existing largest value, but pairTotalValue is less than that, do nothing
+    if (largestPairValue && pairTotalValue <= largestPairValue) {
+      continue;
+    }
+
+    largestPairIndex = i;
+    largestPairValue = pairTotalValue;
+  }
+
+  if (largestPairIndex < 0) {
+    throw new Error(
+      "getBaseOhmUsdRate: Unable to find liquidity pool suitable for determining the OHM price at block " +
+        blockNumber.toString(),
+    );
+  }
+
+  const pairHandler = OHM_PRICE_PAIRS[largestPairIndex];
+  const pairHandlerBalancerPool = pairHandler.getPool();
+
+  // TODO consider merging with the pair handler / function mapping in getUSDRate()
+  if (pairHandler.getType() === PairHandlerTypes.UniswapV2) {
+    return getBaseOhmUsdRateUniswapV2(pairHandler.getContract(), blockNumber);
+  } else if (
+    pairHandler.getType() === PairHandlerTypes.Balancer &&
+    pairHandlerBalancerPool !== null
+  ) {
+    return getUSDRateBalancer(
+      ERC20_OHM_V2,
+      pairHandler.getContract(),
+      pairHandlerBalancerPool,
+      blockNumber,
+    );
+  }
+
+  throw new Error(
+    `getBaseOhmUsdRate: pair handler type ${pairHandler.getType()} with contract ${getContractName(
+      pairHandler.getContract(),
+    )} (${pairHandler.getContract()}) is unsupported`,
+  );
+}
+
+/**
+ * Returns the USD rate of the token represented by {contractAddress},
+ * given the UniswapV2 pair {pairAddress}.
+ *
+ * This will dynamically determine which of the pair tokens is the base
+ * token (wETH or OHM).
+ *
+ * After the base token has been determined, the following formula is used
+ * to determine the USD rate of the other token.
+ *
+ * e.g. taking the ETH-TRIBE pair:
+ * TRIBE balance = 40,537.42936106
+ * ETH balance = 4.99923661
+ *
+ * (ETH balance / TRIBE balance) * (ETH price) = TRIBE price
+ * (4.99923661 / 40537.42936106) * 2000 = 0.24
+ *
+ * TODO: mention p1 * q1 = p2 * q2
+ *
+ * @param contractAddress
+ * @param pairAddress
+ * @returns
+ */
+export function getUSDRateUniswapV2(
+  contractAddress: string,
+  pairAddress: string,
+  blockNumber: BigInt,
+): BigDecimal {
+  log.debug("getUSDRateUniswapV2: contract {}, pair {}", [contractAddress, pairAddress]);
+  if (Address.fromString(contractAddress).equals(Address.fromString(ERC20_WETH))) {
+    log.debug("getUSDRateUniswapV2: Returning base ETH-USD rate", []);
+    return getBaseEthUsdRate();
+  }
+  if (
+    Address.fromString(contractAddress).equals(Address.fromString(ERC20_OHM_V1)) ||
+    Address.fromString(contractAddress).equals(Address.fromString(ERC20_OHM_V2))
+  ) {
+    log.debug("getUSDRateUniswapV2: Returning base OHM-USD rate", []);
+    return getBaseOhmUsdRate(blockNumber);
+  }
+  if (arrayIncludesLoose(ERC20_STABLE_TOKENS, contractAddress)) {
+    log.debug("getUSDRateUniswapV2: Returning stablecoin rate of 1", []);
+    return BigDecimal.fromString("1");
+  }
+
+  const pair = UniswapV2Pair.bind(Address.fromString(pairAddress));
+  if (pair === null || pair.try_token0().reverted || pair.try_token1().reverted) {
+    log.debug(
+      "getUSDRateUniswapV2: Cannot determine value as the contract ({}) reverted at block {}",
+      [getContractName(pairAddress), blockNumber.toString()],
+    );
+    return BigDecimal.zero();
+  }
+
+  // Determine orientation of the pair
+  log.debug("getUSDRateUniswapV2: determining pair orientation", []);
+  const token0 = pair.token0();
+  const token1 = pair.token1();
+  const baseTokenOrientation = getBaseTokenOrientation(token0, token1);
+  if (baseTokenOrientation === PairTokenBaseOrientation.UNKNOWN) {
+    throw new Error(
+      "getUSDRateUniswapV2: Unsure how to deal with unknown token base orientation for pair " +
+        pairAddress,
+    );
+  }
+
+  log.debug("getUSDRateUniswapV2: getting ERC20 token decimals", []);
+  const token0Decimals = getERC20Decimals(token0.toHexString(), blockNumber);
+  const token1Decimals = getERC20Decimals(token1.toHexString(), blockNumber);
+
+  log.debug("getUSDRateUniswapV2: getting pair reserves", []);
+  const token0Reserves = toDecimal(pair.getReserves().value0, token0Decimals);
+  const token1Reserves = toDecimal(pair.getReserves().value1, token1Decimals);
+  // Get the number of tokens denominated in ETH/OHM
+  const baseTokenNumerator =
+    baseTokenOrientation === PairTokenBaseOrientation.TOKEN0
+      ? token0Reserves.div(token1Reserves)
+      : token1Reserves.div(token0Reserves);
+
+  const baseTokenUsdRate = getBaseTokenUSDRate(token0, token1, baseTokenOrientation, blockNumber);
+  log.debug("getUSDRateUniswapV2: baseTokenUsdRate for {} ({}) is {}", [
+    getContractName(contractAddress),
+    contractAddress,
+    baseTokenUsdRate.toString(),
+  ]);
+
+  return baseTokenNumerator.times(baseTokenUsdRate);
+}
+
+/**
  * Determines the USD value of the given token.
  *
  * This is achieved using the prices in liquidity pool pairs.
@@ -545,13 +553,12 @@ export function getUSDRate(contractAddress: string, blockNumber: BigInt): BigDec
   }
 
   // Handle stablecoins
-  // TODO add support for dynamic price lookup for stablecoins
   if (arrayIncludesLoose(ERC20_STABLE_TOKENS, contractAddress)) {
     log.debug("getUSDRate: Contract address {} is a stablecoin. Returning 1.", [contractAddress]);
     return BigDecimal.fromString("1");
   }
 
-  // Handle OHM V1 and V2
+  // Handle OHM separately, as we have multiple liquidity pools
   if (arrayIncludesLoose([ERC20_OHM_V1, ERC20_OHM_V2], contractAddress)) {
     log.debug("getUSDRate: Contract address {} is OHM. Returning OHM rate.", [contractAddress]);
     return getBaseOhmUsdRate(blockNumber);

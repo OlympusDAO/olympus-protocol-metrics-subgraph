@@ -49,8 +49,9 @@ export function getVestingAssets(metricName: string, blockNumber: BigInt): Token
   // PhantomDAO
   // Lobis
   // TODO remove hard-coded number
+  const records = newTokenRecords(addToMetricName(metricName, "VestingAssets"), blockNumber);
   const record = newTokenRecord(
-    metricName,
+    records.id,
     "Vesting Assets",
     "N/A",
     "No source",
@@ -59,7 +60,6 @@ export function getVestingAssets(metricName: string, blockNumber: BigInt): Token
     BigDecimal.fromString("32500000"),
     blockNumber,
   );
-  const records = newTokenRecords(addToMetricName(metricName, "VestingAssets"), blockNumber);
   pushTokenRecord(records, record);
   return records;
 }
@@ -101,71 +101,79 @@ export function getVolatileTokenBalance(
     addToMetricName(metricName, "VolatileTokenBalance-" + contractName),
     blockNumber,
   );
-  const contract = getERC20(contractName, contractAddress, blockNumber);
+  const contract = getERC20(contractAddress, blockNumber);
   if (!contract) {
-    log.info("Skipping ERC20 contract {} that returned empty at block {}", [
-      getContractName(contractAddress),
-      blockNumber.toString(),
-    ]);
+    log.info(
+      "getVolatileTokenBalance: Skipping ERC20 contract {} that returned empty at block {}",
+      [getContractName(contractAddress), blockNumber.toString()],
+    );
     return records;
   }
 
   const rate = getUSDRate(contractAddress, blockNumber);
 
   // Wallets
-  combineTokenRecords(
-    records,
-    getERC20TokenRecordsFromWallets(metricName, contractAddress, contract, rate, blockNumber),
-  );
+  // veFXS returns a value through {getVeFXSAllocatorRecords} using locked(), and the balanceOf() function returns the boosted voting power, so we manually skip that
+  if ([ERC20_FXS_VE].includes(contractAddress.toLowerCase())) {
+    log.warning(
+      "getVolatileTokenBalance: skipping ERC20 balance for token contract {} ({}) that is on ignore list",
+      [getContractName(contractAddress), contractAddress],
+    );
+  } else {
+    combineTokenRecords(
+      records,
+      getERC20TokenRecordsFromWallets(records.id, contractAddress, contract, rate, blockNumber),
+    );
+  }
 
   // Rari Allocator
   combineTokenRecords(
     records,
-    getRariAllocatorRecords(metricName, contractAddress, rate, blockNumber),
+    getRariAllocatorRecords(records.id, contractAddress, rate, blockNumber),
   );
 
   // Toke Allocator
   combineTokenRecords(
     records,
-    getTokeAllocatorRecords(metricName, contractAddress, rate, blockNumber),
+    getTokeAllocatorRecords(records.id, contractAddress, rate, blockNumber),
   );
 
   // Staked TOKE
   combineTokenRecords(
     records,
-    getTokeStakedBalancesFromWallets(metricName, contractAddress, rate, blockNumber),
+    getTokeStakedBalancesFromWallets(records.id, contractAddress, rate, blockNumber),
   );
 
   // Staked LQTY
   combineTokenRecords(
     records,
-    getLiquityStakedBalancesFromWallets(metricName, contractAddress, rate, blockNumber),
+    getLiquityStakedBalancesFromWallets(records.id, contractAddress, rate, blockNumber),
   );
 
   // Staked Convex tokens
-  combineTokenRecords(records, getConvexStakedRecords(metricName, contractAddress, blockNumber));
+  combineTokenRecords(records, getConvexStakedRecords(records.id, contractAddress, blockNumber));
 
   // Liquity Stability Pool
   combineTokenRecords(
     records,
-    getLiquityStabilityPoolRecords(metricName, contractAddress, rate, blockNumber),
+    getLiquityStabilityPoolRecords(records.id, contractAddress, rate, blockNumber),
   );
 
   // Onsen Allocator
   combineTokenRecords(
     records,
-    getOnsenAllocatorRecords(metricName, contractAddress, rate, blockNumber),
+    getOnsenAllocatorRecords(records.id, contractAddress, rate, blockNumber),
   );
 
   // VeFXS Allocator
-  combineTokenRecords(records, getVeFXSAllocatorRecords(metricName, contractAddress, blockNumber));
+  combineTokenRecords(records, getVeFXSAllocatorRecords(records.id, contractAddress, blockNumber));
 
   // Liquidity pools
   if (includeLiquidity) {
     combineTokenRecords(
       records,
       getLiquidityBalances(
-        metricName,
+        records.id,
         contractAddress,
         riskFree,
         excludeOhmValue,
@@ -223,7 +231,7 @@ export function getVolatileTokenBalances(
     combineTokenRecords(
       records,
       getVolatileTokenBalance(
-        metricName,
+        records.id,
         currentTokenAddress,
         includeLiquidity,
         riskFree,
@@ -236,7 +244,7 @@ export function getVolatileTokenBalances(
 
   // We add vesting assets manually for now
   if (!liquidOnly) {
-    combineTokenRecords(records, getVestingAssets(metricName, blockNumber));
+    combineTokenRecords(records, getVestingAssets(records.id, blockNumber));
   }
 
   log.info("Volatile token value: {}", [records.value.toString()]);
@@ -295,8 +303,8 @@ export function getVlCVXBalance(metricName: string, blockNumber: BigInt): TokenR
 export function getCVXTotalBalance(metricName: string, blockNumber: BigInt): TokenRecords {
   const records = newTokenRecords(addToMetricName(metricName, "CVXTotalBalance"), blockNumber);
 
-  combineTokenRecords(records, getCVXBalance(metricName, blockNumber));
-  combineTokenRecords(records, getVlCVXBalance(metricName, blockNumber));
+  combineTokenRecords(records, getCVXBalance(records.id, blockNumber));
+  combineTokenRecords(records, getVlCVXBalance(records.id, blockNumber));
 
   return records;
 }
@@ -335,8 +343,8 @@ export function getVeFXSBalance(metricName: string, blockNumber: BigInt): TokenR
 export function getFXSTotalBalance(metricName: string, blockNumber: BigInt): TokenRecords {
   const records = newTokenRecords(addToMetricName(metricName, "FXSTotalBalance"), blockNumber);
 
-  combineTokenRecords(records, getFXSBalance(metricName, blockNumber));
-  combineTokenRecords(records, getVeFXSBalance(metricName, blockNumber));
+  combineTokenRecords(records, getFXSBalance(records.id, blockNumber));
+  combineTokenRecords(records, getVeFXSBalance(records.id, blockNumber));
 
   return records;
 }

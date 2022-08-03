@@ -82,7 +82,7 @@ export function getUniswapV2PairTotalValue(pairAddress: string, blockNumber: Big
   // Determine token0 value
   const token0 = pair.token0().toHexString();
   log.debug("token0: {}", [token0]);
-  const token0Contract = getERC20(getContractName(token0), token0, blockNumber);
+  const token0Contract = getERC20(token0, blockNumber);
   if (!token0Contract) {
     throw new Error("Unable to find ERC20 contract for " + token0);
   }
@@ -99,7 +99,7 @@ export function getUniswapV2PairTotalValue(pairAddress: string, blockNumber: Big
   // Determine token1 value
   const token1 = pair.token1().toHexString();
   log.debug("token1: {}", [token1]);
-  const token1Contract = getERC20(getContractName(token1), token1, blockNumber);
+  const token1Contract = getERC20(token1, blockNumber);
   if (!token1Contract) {
     throw new Error("Unable to find ERC20 contract for " + token1);
   }
@@ -299,7 +299,7 @@ export function getUniswapV2PairRecords(
   blockNumber: BigInt,
 ): TokenRecords {
   const records = newTokenRecords(
-    addToMetricName(metricName, "UniswapV2PairRecords-" + getContractName(pairAddress)),
+    addToMetricName(metricName, "UniswapV2PairRecords/" + getContractName(pairAddress)),
     blockNumber,
   );
   // If we are restricting by token and tokenAddress does not match either side of the pair
@@ -321,7 +321,7 @@ export function getUniswapV2PairRecords(
     const walletAddress = wallets[i];
 
     const record = getUniswapV2PairRecord(
-      metricName,
+      records.id,
       pairAddress,
       unitRate,
       walletAddress,
@@ -341,7 +341,7 @@ function getBigDecimalFromBalance(
   balance: BigInt,
   blockNumber: BigInt,
 ): BigDecimal {
-  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  const tokenContract = getERC20(tokenAddress, blockNumber);
   if (!tokenContract) {
     throw new Error("Unable to fetch ERC20 at address " + tokenAddress + " for Curve pool");
   }
@@ -449,7 +449,7 @@ export function getUniswapV2PairTokenQuantity(
 
   // Grab balances
   const poolTokenBalances = getUniswapV2PairRecords(
-    metricName,
+    records.id,
     pairAddress,
     tokenAddress,
     false,
@@ -467,7 +467,7 @@ export function getUniswapV2PairTokenQuantity(
     pushTokenRecord(
       records,
       newTokenRecord(
-        metricName,
+        records.id,
         getContractName(tokenAddress) + " in " + getContractName(pairAddress),
         pairAddress,
         record.source,

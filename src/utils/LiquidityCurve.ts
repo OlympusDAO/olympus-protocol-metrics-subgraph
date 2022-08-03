@@ -70,7 +70,7 @@ export function getCurvePairTotalValue(
       continue;
     }
 
-    const tokenContract = getERC20(getContractName(token), token, blockNumber);
+    const tokenContract = getERC20(token, blockNumber);
     if (!tokenContract) {
       throw new Error("Unable to fetch ERC20 at address " + token + " for Curve pool");
     }
@@ -173,7 +173,7 @@ function getCurvePairRecord(
   multiplier: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecord | null {
-  const pairToken = getERC20(getContractName(pairTokenAddress), pairTokenAddress, blockNumber);
+  const pairToken = getERC20(pairTokenAddress, blockNumber);
   if (!pairToken) {
     throw new Error("Unable to bind to ERC20 contract for Curve pair token " + pairTokenAddress);
   }
@@ -234,11 +234,7 @@ function getCurvePairTokenContract(pairAddress: string, blockNumber: BigInt): ER
   const pairTokenAddress = getCurvePairToken(pairAddress, blockNumber);
   if (pairTokenAddress === null) return null;
 
-  const pairTokenContract = getERC20(
-    getContractName(pairTokenAddress),
-    pairTokenAddress,
-    blockNumber,
-  );
+  const pairTokenContract = getERC20(pairTokenAddress, blockNumber);
   if (!pairTokenContract) {
     throw new Error("Unable to bind to ERC20 contract for Curve pair token " + pairTokenAddress);
   }
@@ -307,10 +303,7 @@ export function getCurvePairRecords(
   restrictToTokenValue: boolean,
   blockNumber: BigInt,
 ): TokenRecords {
-  const records = newTokenRecords(
-    addToMetricName(metricName, "CurvePairRecords-" + getContractName(pairAddress)),
-    blockNumber,
-  );
+  const records = newTokenRecords(addToMetricName(metricName, "CurvePairRecords"), blockNumber);
   // If we are restricting by token and tokenAddress does not match either side of the pair
   if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
     log.debug(
@@ -361,7 +354,7 @@ export function getCurvePairRecords(
 
     // Normal token first
     const record = getCurvePairRecord(
-      metricName,
+      records.id,
       pairTokenAddress,
       unitRate,
       walletAddress,
@@ -378,7 +371,7 @@ export function getCurvePairRecords(
       const stakingAddress = CONVEX_STAKING_CONTRACTS[j];
 
       const stakedRecord = getCurvePairStakedRecord(
-        metricName,
+        records.id,
         pairTokenAddress,
         getConvexStakedToken(pairTokenAddress),
         walletAddress,
@@ -403,7 +396,7 @@ function getBigDecimalFromBalance(
   balance: BigInt,
   blockNumber: BigInt,
 ): BigDecimal {
-  const tokenContract = getERC20(getContractName(tokenAddress), tokenAddress, blockNumber);
+  const tokenContract = getERC20(tokenAddress, blockNumber);
   if (!tokenContract) {
     throw new Error("Unable to fetch ERC20 at address " + tokenAddress + " for Curve pool");
   }
