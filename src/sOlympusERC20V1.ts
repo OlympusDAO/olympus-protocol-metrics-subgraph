@@ -1,8 +1,8 @@
 import { Address, BigInt } from "@graphprotocol/graph-ts";
 
-import { RebaseCall } from "../generated/ProtocolMetrics/sOlympusERC20";
 import { Rebase } from "../generated/schema";
 import { OlympusERC20 } from "../generated/sOlympusERC20V1/OlympusERC20";
+import { RebaseCall } from "../generated/sOlympusERC20V1/sOlympusERC20";
 import { ERC20_OHM_V1, STAKING_CONTRACT_V1 } from "./utils/Constants";
 import { createDailyStakingReward } from "./utils/DailyStakingReward";
 import { toDecimal } from "./utils/Decimals";
