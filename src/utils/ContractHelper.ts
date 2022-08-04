@@ -1544,7 +1544,7 @@ export function getVlCvxUnlockedRecords(
       records,
       newTokenRecord(
         records.id,
-        getContractName(tokenAddress, "Unlockable"),
+        getContractName(tokenAddress, "Unlocked"),
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
