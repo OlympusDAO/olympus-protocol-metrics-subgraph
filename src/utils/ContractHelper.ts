@@ -710,7 +710,7 @@ export function getTokeStakedBalancesFromWallets(
       "getTokeStakedBalancesFromWallets: found staked balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),
-        getContractName(tokenAddress) + " - Staked",
+        getContractName(tokenAddress, "Staked"),
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -722,7 +722,7 @@ export function getTokeStakedBalancesFromWallets(
       records,
       newTokenRecord(
         records.id,
-        getContractName(tokenAddress) + " - Staked", // Needed to differentiate as there is no token for TOKE
+        getContractName(tokenAddress, "Staked"), // Needed to differentiate as there is no token for TOKE
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -810,7 +810,7 @@ export function getLiquityStakedBalancesFromWallets(
       "getLiquityStakedBalancesFromWallets: found staked balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),
-        getContractName(tokenAddress) + " - Staked",
+        getContractName(tokenAddress, "Staked"),
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -822,7 +822,7 @@ export function getLiquityStakedBalancesFromWallets(
       records,
       newTokenRecord(
         records.id,
-        getContractName(tokenAddress) + " - Staked", // Needed to differentiate as there is no token for LQTY
+        getContractName(tokenAddress, "Staked"), // Needed to differentiate as there is no token for LQTY
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -931,7 +931,7 @@ export function getBalancerGaugeBalanceFromWallets(
       "getBalancerGaugeBalanceFromWallets: found balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),
-        getContractName(tokenAddress) + " - Gauge Deposit",
+        getContractName(tokenAddress, "Gauge Deposit"),
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -943,7 +943,7 @@ export function getBalancerGaugeBalanceFromWallets(
       records,
       newTokenRecord(
         records.id,
-        getContractName(tokenAddress) + " - Gauge Deposit",
+        getContractName(tokenAddress, "Gauge Deposit"),
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
