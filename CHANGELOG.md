@@ -15,6 +15,7 @@
 - Dynamically choose the liquidity pool to determine the price of OHM in USD based on which has higher reserves (#23)
 - Updates direct and indirect dependencies
 - Make it easier to have suffixes (e.g. "Locked") and abbreviations with contract names
+- Re-defined vote-locked Convex (vlCVX) tokens as illiquid, based on policy's input
 
 ## 2.0.41 (2022-07-22)
 
