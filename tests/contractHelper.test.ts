@@ -6,13 +6,16 @@ import {
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
   CONVEX_ALLOCATOR3,
   CONVEX_ALLOCATORS,
+  CONVEX_CVX_VL_ALLOCATOR,
   CONVEX_STAKING_CONTRACTS,
   CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
   DAO_WALLET,
   ERC20_ALCX,
   ERC20_BALANCER_WETH_FDT,
+  ERC20_CVX,
   ERC20_CVX_FRAX_3CRV,
   ERC20_CVX_OHMETH,
+  ERC20_CVX_VL_V2,
   ERC20_FRAX_3CRV,
   ERC20_LQTY,
   ERC20_TOKE,
@@ -31,6 +34,7 @@ import {
   getERC20TokenRecordsFromWallets,
   getLiquityStakedBalancesFromWallets,
   getTokeStakedBalancesFromWallets,
+  getVlCvxUnlockedRecords,
 } from "../src/utils/ContractHelper";
 import { toBigInt } from "../src/utils/Decimals";
 import { ERC20_STANDARD_DECIMALS } from "./pairHelper";
@@ -497,6 +501,101 @@ describe("get Balancer liquidity gauge records", () => {
     const recordOne = TokenRecord.load(records.records[0]);
     assert.stringEquals("10", recordOne ? recordOne.balance.toString() : "");
     assert.stringEquals("2", recordOne ? recordOne.rate.toString() : "");
+    assert.i32Equals(1, records.records.length);
+  });
+});
+
+export const mockUnlockedVlCvxBalance = (
+  tokenAddress: string,
+  tokenDecimals: i32,
+  allocatorAddress: string,
+  lockedBalance: BigDecimal,
+  unlockedBalance: BigDecimal,
+): void => {
+  const tokenContract = Address.fromString(tokenAddress);
+
+  const lockDataArray: Array<ethereum.Value> = [
+    ethereum.Value.fromI32(0),
+    ethereum.Value.fromI32(0),
+    ethereum.Value.fromI32(0),
+  ];
+  const lockData = changetype<ethereum.Tuple>(lockDataArray);
+
+  // Returns locked and unlocked balances
+  createMockedFunction(
+    tokenContract,
+    "lockedBalances",
+    "lockedBalances(address):(uint256,uint256,uint256,(uint112,uint112,uint32)[])",
+  )
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(allocatorAddress))])
+    .returns([
+      ethereum.Value.fromUnsignedBigInt(
+        toBigInt(lockedBalance.plus(unlockedBalance), tokenDecimals),
+      ),
+      ethereum.Value.fromUnsignedBigInt(toBigInt(unlockedBalance, tokenDecimals)),
+      ethereum.Value.fromUnsignedBigInt(toBigInt(lockedBalance, tokenDecimals)),
+      ethereum.Value.fromTupleArray([lockData]),
+    ]);
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(tokenDecimals),
+  ]);
+};
+
+export const mockUnlockedVlCvxBalanceZero = (): void => {
+  const wallets = getWalletAddressesForContract(ERC20_CVX_VL_V2);
+  for (let i = 0; i < wallets.length; i++) {
+    mockUnlockedVlCvxBalance(ERC20_CVX_VL_V2, 18, wallets[i], BigDecimal.zero(), BigDecimal.zero());
+  }
+};
+
+describe("unlocked vlCVX", () => {
+  test("zero balance", () => {
+    mockUnlockedVlCvxBalanceZero();
+
+    const records = getVlCvxUnlockedRecords(
+      "",
+      ERC20_CVX_VL_V2,
+      BigDecimal.fromString("1"),
+      BigInt.fromString("15000000"),
+    );
+
+    assert.i32Equals(0, records.records.length);
+  });
+
+  test("unsupported token", () => {
+    mockUnlockedVlCvxBalanceZero();
+
+    const records = getVlCvxUnlockedRecords(
+      "",
+      ERC20_CVX,
+      BigDecimal.fromString("1"),
+      BigInt.fromString("15000000"),
+    );
+
+    assert.i32Equals(0, records.records.length);
+  });
+
+  test("positive balance", () => {
+    mockUnlockedVlCvxBalanceZero();
+    mockUnlockedVlCvxBalance(
+      ERC20_CVX_VL_V2,
+      18,
+      CONVEX_CVX_VL_ALLOCATOR,
+      BigDecimal.fromString("10"),
+      BigDecimal.fromString("11"), // We test for this
+    );
+
+    const records = getVlCvxUnlockedRecords(
+      "",
+      ERC20_CVX_VL_V2,
+      BigDecimal.fromString("1"),
+      BigInt.fromString("15000000"),
+    );
+
+    const recordOne = TokenRecord.load(records.records[0]);
+    assert.stringEquals("11", recordOne ? recordOne.balance.toString() : "");
     assert.i32Equals(1, records.records.length);
   });
 });

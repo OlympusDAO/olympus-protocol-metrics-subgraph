@@ -502,6 +502,8 @@ dataSources:
           file: ./abis/gOHM.json
         - name: FraxSwapPool
           file: ./abis/FraxSwapPool.json
+        - name: vlCVX
+          file: ./abis/vlCVX.json
       callHandlers:
         - function: stake(address,uint256,bool,bool)
           handler: handleMetrics

@@ -25,6 +25,7 @@ import {
   getTokeAllocatorRecords,
   getTokeStakedBalancesFromWallets,
   getVeFXSAllocatorRecords,
+  getVlCvxUnlockedRecords,
 } from "./ContractHelper";
 import { getLiquidityBalances } from "./LiquidityCalculations";
 import { getUSDRate } from "./Price";
@@ -167,6 +168,12 @@ export function getVolatileTokenBalance(
 
   // VeFXS Allocator
   combineTokenRecords(records, getVeFXSAllocatorRecords(records.id, contractAddress, blockNumber));
+
+  // Unlocked (but not withdrawn) vlCVX
+  combineTokenRecords(
+    records,
+    getVlCvxUnlockedRecords(records.id, contractAddress, rate, blockNumber),
+  );
 
   // Liquidity pools
   if (includeLiquidity) {

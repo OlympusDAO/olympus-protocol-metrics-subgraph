@@ -16,6 +16,7 @@ import { TokemakStaking } from "../../generated/ProtocolMetrics/TokemakStaking";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
+import { vlCVX } from "../../generated/ProtocolMetrics/vlCVX";
 import { TokenRecord, TokenRecords } from "../../generated/schema";
 import {
   ALLOCATOR_ONSEN_ID_NOT_FOUND,
@@ -25,6 +26,7 @@ import {
   CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
   ERC20_CVX,
+  ERC20_CVX_VL_V2,
   ERC20_FXS,
   ERC20_FXS_VE,
   ERC20_LQTY,
@@ -1494,6 +1496,64 @@ export function getVeFXSAllocatorRecords(
       blockNumber,
     ),
   );
+
+  return records;
+}
+
+function getVlCvxUnlockedBalance(
+  tokenAddress: string,
+  allocatorAddress: string,
+  _blockNumber: BigInt,
+): BigDecimal | null {
+  // Only vlCVX supported
+  if (tokenAddress != ERC20_CVX_VL_V2) return null;
+
+  const contract = vlCVX.bind(Address.fromString(tokenAddress));
+  if (!contract) return null;
+
+  const balances = contract.lockedBalances(Address.fromString(allocatorAddress));
+
+  return toDecimal(balances.getUnlockable(), contract.decimals());
+}
+
+/**
+ * Returns the records of unlocked (but not withdrawn) vlCVX.
+ *
+ * @param metricName
+ * @param tokenAddress
+ * @param rate
+ * @param blockNumber
+ * @returns
+ */
+export function getVlCvxUnlockedRecords(
+  metricName: string,
+  tokenAddress: string,
+  rate: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecords {
+  const records = newTokenRecords(addToMetricName(metricName, "Unlocked vlCVX"), blockNumber);
+
+  const wallets = getWalletAddressesForContract(tokenAddress);
+  for (let i = 0; i < wallets.length; i++) {
+    const currentWallet = wallets[i];
+
+    const balance = getVlCvxUnlockedBalance(tokenAddress, currentWallet, blockNumber);
+    if (!balance || balance.equals(BigDecimal.zero())) continue;
+
+    pushTokenRecord(
+      records,
+      newTokenRecord(
+        records.id,
+        getContractName(tokenAddress, "Unlockable"),
+        tokenAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        rate,
+        balance,
+        blockNumber,
+      ),
+    );
+  }
 
   return records;
 }
