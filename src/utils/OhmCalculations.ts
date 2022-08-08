@@ -145,7 +145,7 @@ function getMigrationOffsetRecord(metricName: string, blockNumber: BigInt): Toke
 
   return newTokenRecord(
     metricName,
-    getContractName(ERC20_OHM_V2) + " Migration Offset",
+    getContractName(ERC20_OHM_V2, "Migration Offset"),
     ERC20_OHM_V2,
     getContractName(MIGRATION_CONTRACT),
     MIGRATION_CONTRACT,

@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 2.0.72 (2022-08-03)
+## 2.0.78 (2022-08-04)
 
 - Remove gOhmCirculatingSupply, gOhmCirculatingSupplyBreakdown, treasuryLiquidBackingPerGOhmCirculating. Never used and could be misleading
 - Add treasuryLiquidBackingPerGOhm that uses a synthetic calculation for the liquid backing per gOHM (#33)
@@ -14,6 +14,9 @@
 - Rename token labels so that non- and staked/locked versions are grouped together
 - Dynamically choose the liquidity pool to determine the price of OHM in USD based on which has higher reserves (#23)
 - Updates direct and indirect dependencies
+- Make it easier to have suffixes (e.g. "Locked") and abbreviations with contract names
+- Re-defined vote-locked Convex (vlCVX) tokens as illiquid, based on policy's input
+- Add support for unlocked vlCVX (#48)
 
 ## 2.0.41 (2022-07-22)
 

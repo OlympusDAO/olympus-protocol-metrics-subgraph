@@ -226,7 +226,12 @@ export const ERC20_VOLATILE_TOKENS = [
   ERC20_XSUSHI,
   NATIVE_ETH,
 ];
-export const ERC20_VOLATILE_ILLIQUID_TOKENS = [ERC20_FXS_VE, ERC20_AURA_VL];
+export const ERC20_VOLATILE_ILLIQUID_TOKENS = [
+  ERC20_FXS_VE,
+  ERC20_AURA_VL,
+  ERC20_CVX_VL_V1,
+  ERC20_CVX_VL_V2,
+];
 export const ERC20_VOLATILE_BLUE_CHIP_TOKENS = [ERC20_WBTC, ERC20_WETH];
 
 const CONVEX_STAKED_TOKENS = new Map<string, string>();
@@ -685,6 +690,25 @@ CONTRACT_STARTING_BLOCK_MAP.set(STAKING_CONTRACT_V3, STAKING_CONTRACT_V3_BLOCK);
 CONTRACT_STARTING_BLOCK_MAP.set(TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V2_BLOCK);
 CONTRACT_STARTING_BLOCK_MAP.set(TREASURY_ADDRESS_V3, TREASURY_ADDRESS_V3_BLOCK);
 
+const CONTRACT_ABBREVIATION_MAP = new Map<string, string>();
+CONTRACT_ABBREVIATION_MAP.set(ERC20_ADAI, "aDAI");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_ALCX, "ALCX");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_AURA_VL, "vlAURA");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_AURA, "AURA");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_CRV_3POOL, "3CRV");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_CRV, "CRV");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_CVX_CRV, "cvxCRV");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_CVX_FRAX_3CRV, "cvxFRAX3CRV");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_CVX_FXS, "cvxFXS");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_CVX_OHMETH, "cvxOHMETH");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_CVX_VL_V1, "vlCVX V1");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_CVX_VL_V2, "vlCVX");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_CVX, "CVX");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_FRAX_3CRV, "FRAX3CRV");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_FXS_VE, "veFXS");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_PRIME, "D2D");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_XSUSHI, "xSUSHI");
+
 const CONTRACT_NAME_MAP = new Map<string, string>();
 CONTRACT_NAME_MAP.set(AAVE_ALLOCATOR_V2, "Aave Allocator V2");
 CONTRACT_NAME_MAP.set(AAVE_ALLOCATOR, "Aave Allocator V1");
@@ -712,33 +736,30 @@ CONTRACT_NAME_MAP.set(DAIBOND_CONTRACTS3, "DAI Bond 3");
 CONTRACT_NAME_MAP.set(DAO_WALLET, "DAO Wallet");
 CONTRACT_NAME_MAP.set(DISTRIBUTOR_CONTRACT_V2, "Distributor V2");
 CONTRACT_NAME_MAP.set(DISTRIBUTOR_CONTRACT, "Distributor");
-CONTRACT_NAME_MAP.set(ERC20_ADAI, "DAI - Aave (aDAI)");
-CONTRACT_NAME_MAP.set(ERC20_ALCX, "ALCX");
-CONTRACT_NAME_MAP.set(ERC20_AURA_VL, "AURA - Vote-Locked (vlAURA)");
-CONTRACT_NAME_MAP.set(ERC20_AURA, "AURA");
+CONTRACT_NAME_MAP.set(ERC20_ADAI, "DAI - Aave");
+CONTRACT_NAME_MAP.set(ERC20_ALCX, "Alchemix");
+CONTRACT_NAME_MAP.set(ERC20_AURA_VL, "Aura Finance - Vote-Locked");
+CONTRACT_NAME_MAP.set(ERC20_AURA, "Aura Finance");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_DAI_WETH, "Balancer V2 OHM-DAI-WETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_WETH_FDT, "Balancer V2 WETH-FDT Liquidity Pool");
-CONTRACT_NAME_MAP.set(ERC20_CRV_3POOL, "Curve 3Pool (3CRV)");
+CONTRACT_NAME_MAP.set(ERC20_CRV_3POOL, "Curve 3Pool");
 CONTRACT_NAME_MAP.set(ERC20_CRV_OHMETH, "Curve OHM-ETH Liquidity Pool");
-CONTRACT_NAME_MAP.set(ERC20_CRV, "Curve (CRV)");
-CONTRACT_NAME_MAP.set(ERC20_CVX_CRV, "Curve - Staked in Convex (cvxCRV)");
-CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_3CRV, "Curve FRAX3Pool - Staked in Convex (cvxFRAX3CRV)");
-CONTRACT_NAME_MAP.set(ERC20_CVX_FXS, "FXS - Staked in Convex (cvxFXS)");
-CONTRACT_NAME_MAP.set(
-  ERC20_CVX_OHMETH,
-  "Curve OHM-ETH Liquidity Pool - Staked in Convex (cvxOHMETH)",
-);
-CONTRACT_NAME_MAP.set(ERC20_CVX_VL_V1, "Convex - Vote-Locked (vlCVX V1)");
-CONTRACT_NAME_MAP.set(ERC20_CVX_VL_V2, "Convex - Vote-Locked (vlCVX)");
-CONTRACT_NAME_MAP.set(ERC20_CVX, "CVX");
+CONTRACT_NAME_MAP.set(ERC20_CRV, "Curve");
+CONTRACT_NAME_MAP.set(ERC20_CVX_CRV, "Curve - Staked in Convex");
+CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_3CRV, "Curve FRAX3Pool - Staked in Convex");
+CONTRACT_NAME_MAP.set(ERC20_CVX_FXS, "FXS - Staked in Convex");
+CONTRACT_NAME_MAP.set(ERC20_CVX_OHMETH, "Curve OHM-ETH Liquidity Pool - Staked in Convex");
+CONTRACT_NAME_MAP.set(ERC20_CVX_VL_V1, "Convex - Vote-Locked");
+CONTRACT_NAME_MAP.set(ERC20_CVX_VL_V2, "Convex - Vote-Locked");
+CONTRACT_NAME_MAP.set(ERC20_CVX, "Convex");
 CONTRACT_NAME_MAP.set(ERC20_DAI, "DAI");
 CONTRACT_NAME_MAP.set(ERC20_FDT, "FDT");
 CONTRACT_NAME_MAP.set(ERC20_FEI, "FEI");
 CONTRACT_NAME_MAP.set(ERC20_FOX, "FOX");
 CONTRACT_NAME_MAP.set(ERC20_FPIS, "FPIS");
-CONTRACT_NAME_MAP.set(ERC20_FRAX_3CRV, "Curve FRAX3Pool (FRAX3CRV)");
+CONTRACT_NAME_MAP.set(ERC20_FRAX_3CRV, "Curve FRAX3Pool");
 CONTRACT_NAME_MAP.set(ERC20_FRAX, "FRAX");
-CONTRACT_NAME_MAP.set(ERC20_FXS_VE, "FXS - Staked (veFXS)");
+CONTRACT_NAME_MAP.set(ERC20_FXS_VE, "FXS - Staked");
 CONTRACT_NAME_MAP.set(ERC20_FXS, "FXS");
 CONTRACT_NAME_MAP.set(ERC20_GOHM, "gOHM");
 CONTRACT_NAME_MAP.set(ERC20_KP3R, "KP3R");
@@ -746,7 +767,7 @@ CONTRACT_NAME_MAP.set(ERC20_LQTY, "LQTY");
 CONTRACT_NAME_MAP.set(ERC20_LUSD, "LUSD");
 CONTRACT_NAME_MAP.set(ERC20_OHM_V1, "OHM V1");
 CONTRACT_NAME_MAP.set(ERC20_OHM_V2, "OHM V2");
-CONTRACT_NAME_MAP.set(ERC20_PRIME, "D2D");
+CONTRACT_NAME_MAP.set(ERC20_PRIME, "PrimeDAO");
 CONTRACT_NAME_MAP.set(ERC20_SOHM_V1, "sOHM V1");
 CONTRACT_NAME_MAP.set(ERC20_SOHM_V2, "sOHM V2");
 CONTRACT_NAME_MAP.set(ERC20_SOHM_V3, "sOHM V3");
@@ -758,7 +779,7 @@ CONTRACT_NAME_MAP.set(ERC20_USDC, "USDC");
 CONTRACT_NAME_MAP.set(ERC20_UST, "UST");
 CONTRACT_NAME_MAP.set(ERC20_WBTC, "wBTC");
 CONTRACT_NAME_MAP.set(ERC20_WETH, "wETH");
-CONTRACT_NAME_MAP.set(ERC20_XSUSHI, "SUSHI - Staked (xSUSHI)");
+CONTRACT_NAME_MAP.set(ERC20_XSUSHI, "SUSHI - Staked");
 CONTRACT_NAME_MAP.set(ETHBOND_CONTRACT1, "ETH Bond 1");
 CONTRACT_NAME_MAP.set(FRAXBOND_CONTRACT1, "FRAX Bond 1");
 CONTRACT_NAME_MAP.set(LQTY_STAKING, "LQTY Staking");
@@ -810,9 +831,33 @@ CONTRACT_NAME_MAP.set(TREASURY_ADDRESS_V2, "Treasury Wallet V2");
 CONTRACT_NAME_MAP.set(TREASURY_ADDRESS_V3, "Treasury Wallet V3");
 CONTRACT_NAME_MAP.set(VEFXS_ALLOCATOR, "VeFXS Allocator");
 
-export const getContractName = (contractAddress: string): string => {
+/**
+ * Returns the name of a contract, given the {contractAddress}.
+ *
+ * The name will be returned in the following format:
+ * <contract name> - <suffix> (<abbreviation>)
+ *
+ * If the suffix is not provided or an abbreviation cannot be found, they will be omitted.
+ *
+ * @param contractAddress this string will be converted into lowercase and a lookup performed in {CONTRACT_NAME_MAP}. If it cannot be found, the contract address will be returned.
+ * @param suffix optional suffix to be appended after the contract name and before the abbreviation
+ * @returns
+ */
+export const getContractName = (contractAddress: string, suffix: string | null = null): string => {
   const contractAddressLower = contractAddress.toLowerCase();
-  if (!CONTRACT_NAME_MAP.has(contractAddressLower)) return contractAddressLower;
 
-  return CONTRACT_NAME_MAP.get(contractAddressLower);
+  // Assemble the first part
+  const contractName = CONTRACT_NAME_MAP.has(contractAddressLower)
+    ? CONTRACT_NAME_MAP.get(contractAddressLower)
+    : contractAddressLower;
+
+  // Suffix
+  const contractSuffix = suffix ? ` - ${suffix}` : "";
+
+  // Abbreviation
+  const contractAbbreviation = CONTRACT_ABBREVIATION_MAP.has(contractAddressLower)
+    ? ` (${CONTRACT_ABBREVIATION_MAP.get(contractAddressLower)})`
+    : "";
+
+  return `${contractName}${contractSuffix}${contractAbbreviation}`;
 };
