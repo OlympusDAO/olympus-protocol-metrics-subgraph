@@ -407,7 +407,6 @@ dataSources:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
       file: ./src/OHMETHBondV1.ts
-  # TODO Start syncing protocol metrics every 10 blocks when we are close to present
   - kind: ethereum/contract
     name: ProtocolMetrics
     network: mainnet
@@ -420,7 +419,7 @@ dataSources:
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - ProtocolMetrics
+        - TokenRecord
       abis:
         - name: OlympusStakingV1
           file: ./abis/OlympusStakingV1.json
@@ -438,46 +437,19 @@ dataSources:
           file: ./abis/OlympusERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
+        # Everything above this is required for basic functionality. Edit at your own risk.
         - name: UniswapV3Pair
           file: ./abis/UniswapV3Pair.json
         - name: ConvexAllocator
           file: ./abis/ConvexAllocator.json
-        - name: CirculatingSupply
-          file: ./abis/CirculatingSupply.json
         - name: ERC20
           file: ./abis/ERC20.json
         - name: MasterChef
           file: ./abis/MasterChef.json
-        - name: DAIBondV1
-          file: ./abis/DAIBondV1.json
-        - name: DAIBondV2
-          file: ./abis/DAIBondV2.json
-        - name: DAIBondV3
-          file: ./abis/DAIBondV3.json
-        - name: OHMDAIBondV1
-          file: ./abis/OHMDAIBondV1.json
-        - name: OHMDAIBondV2
-          file: ./abis/OHMDAIBondV2.json
-        - name: OHMDAIBondV3
-          file: ./abis/OHMDAIBondV3.json
-        - name: OHMDAIBondV4
-          file: ./abis/OHMDAIBondV4.json
-        - name: OHMFRAXBondV1
-          file: ./abis/OHMFRAXBondV1.json
-        - name: OHMFRAXBondV2
-          file: ./abis/OHMFRAXBondV2.json
-        - name: FRAXBondV1
-          file: ./abis/FRAXBondV1.json
-        - name: ETHBondV1
-          file: ./abis/ETHBondV1.json
-        - name: LUSDBondV1
-          file: ./abis/LUSDBondV1.json
-        - name: OHMLUSDBondV1
-          file: ./abis/OHMLUSDBondV1.json
         - name: VeFXS
           file: ./abis/VeFXS.json
-        - name: Distributor
-          file: ./abis/Distributor.json
         - name: RariAllocator
           file: ./abis/RariAllocator.json
         - name: BalancerVault
@@ -504,7 +476,109 @@ dataSources:
           file: ./abis/FraxSwapPool.json
         - name: vlCVX
           file: ./abis/vlCVX.json
+      # This will be called for every block in which the OlympusStakingV3 contract is called
       callHandlers:
         - function: stake(address,uint256,bool,bool)
-          handler: handleMetrics
-      file: ./src/utils/ProtocolMetrics.ts
+          handler: execute
+      file: ./src/TokenRecordHandler.ts
+  # # TODO Start syncing protocol metrics every 10 blocks when we are close to present
+  # - kind: ethereum/contract
+  #   name: ProtocolMetrics
+  #   network: mainnet
+  #   source:
+  #     address: "0xB63cac384247597756545b500253ff8E607a8020"
+  #     abi: OlympusStakingV3
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - ProtocolMetrics
+  #     abis:
+  #       - name: OlympusStakingV1
+  #         file: ./abis/OlympusStakingV1.json
+  #       - name: OlympusStakingV2
+  #         file: ./abis/OlympusStakingV2.json
+  #       - name: OlympusStakingV3
+  #         file: ./abis/OlympusStakingV3.json
+  #       - name: sOlympusERC20
+  #         file: ./abis/sOlympusERC20.json
+  #       - name: sOlympusERC20V2
+  #         file: ./abis/sOlympusERC20V2.json
+  #       - name: sOlympusERC20V3
+  #         file: ./abis/sOlympusERC20V3.json
+  #       - name: OlympusERC20
+  #         file: ./abis/OlympusERC20.json
+  #       - name: UniswapV2Pair
+  #         file: ./abis/UniswapV2Pair.json
+  #       - name: UniswapV3Pair
+  #         file: ./abis/UniswapV3Pair.json
+  #       - name: ConvexAllocator
+  #         file: ./abis/ConvexAllocator.json
+  #       - name: CirculatingSupply
+  #         file: ./abis/CirculatingSupply.json
+  #       - name: ERC20
+  #         file: ./abis/ERC20.json
+  #       - name: MasterChef
+  #         file: ./abis/MasterChef.json
+  #       - name: DAIBondV1
+  #         file: ./abis/DAIBondV1.json
+  #       - name: DAIBondV2
+  #         file: ./abis/DAIBondV2.json
+  #       - name: DAIBondV3
+  #         file: ./abis/DAIBondV3.json
+  #       - name: OHMDAIBondV1
+  #         file: ./abis/OHMDAIBondV1.json
+  #       - name: OHMDAIBondV2
+  #         file: ./abis/OHMDAIBondV2.json
+  #       - name: OHMDAIBondV3
+  #         file: ./abis/OHMDAIBondV3.json
+  #       - name: OHMDAIBondV4
+  #         file: ./abis/OHMDAIBondV4.json
+  #       - name: OHMFRAXBondV1
+  #         file: ./abis/OHMFRAXBondV1.json
+  #       - name: OHMFRAXBondV2
+  #         file: ./abis/OHMFRAXBondV2.json
+  #       - name: FRAXBondV1
+  #         file: ./abis/FRAXBondV1.json
+  #       - name: ETHBondV1
+  #         file: ./abis/ETHBondV1.json
+  #       - name: LUSDBondV1
+  #         file: ./abis/LUSDBondV1.json
+  #       - name: OHMLUSDBondV1
+  #         file: ./abis/OHMLUSDBondV1.json
+  #       - name: VeFXS
+  #         file: ./abis/VeFXS.json
+  #       - name: Distributor
+  #         file: ./abis/Distributor.json
+  #       - name: RariAllocator
+  #         file: ./abis/RariAllocator.json
+  #       - name: BalancerVault
+  #         file: ./abis/BalancerVault.json
+  #       - name: ConvexBaseRewardPool
+  #         file: ./abis/ConvexBaseRewardPool.json
+  #       - name: CurvePool
+  #         file: ./abis/CurvePool.json
+  #       - name: TokeAllocator
+  #         file: ./abis/TokeAllocator.json
+  #       - name: LUSDAllocatorV2
+  #         file: ./abis/LUSDAllocatorV2.json
+  #       - name: BalancerPoolToken
+  #         file: ./abis/BalancerPoolToken.json
+  #       - name: TokemakStaking
+  #         file: ./abis/TokemakStaking.json
+  #       - name: LQTYStaking
+  #         file: ./abis/LQTYStaking.json
+  #       - name: BalancerLiquidityGauge
+  #         file: ./abis/BalancerLiquidityGauge.json
+  #       - name: gOHM
+  #         file: ./abis/gOHM.json
+  #       - name: FraxSwapPool
+  #         file: ./abis/FraxSwapPool.json
+  #       - name: vlCVX
+  #         file: ./abis/vlCVX.json
+  #     callHandlers:
+  #       - function: stake(address,uint256,bool,bool)
+  #         handler: handleMetrics
+  #     file: ./src/utils/ProtocolMetrics.ts

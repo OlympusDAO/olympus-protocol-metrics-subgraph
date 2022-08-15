@@ -150,7 +150,7 @@ There are a number of inter-related components in the metrics:
   - Some metrics return integer or decimal values (e.g. `treasuryMarketValue`)
   - Alongside the decimal values are additional values suffixed by `Components` (e.g. `treasuryMarketValueComponents`). These give a detailed breakdown of the tokens and source contracts/wallets. See the Debugging section below for more detail.
   - Any changes to the `schema.graphql` file need to be applied by running `yarn codegen`, which will generate/update the `generated/schema.ts` file.
-- Nested objects are supported in the GraphQL schema (e.g. `ProtocolMetric` is related to `TokenRecords`), but it is not immediately obvious how to use them.
+- Nested objects are supported in the GraphQL schema (e.g. `ProtocolMetric` is related to `TokenRecordsWrapper`), but it is not immediately obvious how to use them.
 
   - The functions generated and written to the `schema.ts` file will not directly reference the related entity in the getters and setters. For example:
 
@@ -165,8 +165,8 @@ There are a number of inter-related components in the metrics:
     }
   ```
 
-  - Instead, the `id` of an entity is used. A `TokenRecords` entity is instantiated with a unique `id` (e.g. `TreasuryMarketValue`), and can be loaded (`load(id: string)`) and saved (`save()`) accordingly. The `id` should be passed to the setter to link the `TokenRecords` entity to the `ProtocolMetric`.
-  - Explicit loading and saving of `TokenRecords` and `TokenRecord` objects should not be required, however, as it is all handled through the `TokenRecordHelper` module.
+  - Instead, the `id` of an entity is used. A `TokenRecordsWrapper` entity is instantiated with a unique `id` (e.g. `TreasuryMarketValue`), and can be loaded (`load(id: string)`) and saved (`save()`) accordingly. The `id` should be passed to the setter to link the `TokenRecordsWrapper` entity to the `ProtocolMetric`.
+  - Explicit loading and saving of `TokenRecordsWrapper` and `TokenRecord` objects should not be required, however, as it is all handled through the `TokenRecordHelper` module.
 
 - A `metricName` parameter is passed from the top-level (`ProtocolMetrics` module) down into the different levels of utility functions that index the blockchain data. The `metricName` is used, alongside the block number, to create an `id` that is unique. Not using the `metricName` results in data from one metric (e.g. liquid backing) clobbering that of another metric (e.g. total backing).
 

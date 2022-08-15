@@ -1,7 +1,7 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
-import { TokenRecord, TokenRecords } from "../../generated/schema";
+import { TokenRecord, TokenRecordsWrapper } from "../../generated/schema";
 import {
   CIRCULATING_SUPPLY_WALLETS,
   ERC20_OHM_V1,
@@ -32,11 +32,11 @@ import { PairHandlerTypes } from "./PairHandler";
 import { getBaseOhmUsdRate } from "./Price";
 import {
   addToMetricName,
-  combineTokenRecords,
+  combineTokenRecordsWrapper,
   newTokenRecord,
-  newTokenRecords,
+  newTokenRecordsWrapper,
   pushTokenRecord,
-  setTokenRecordsMultiplier,
+  setTokenRecordsWrapperMultiplier,
 } from "./TokenRecordHelper";
 
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
@@ -104,7 +104,7 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
 }
 
 /**
- * Returns TokenRecords representing a manual offset in the migration contract.
+ * Returns TokenRecordsWrapper representing a manual offset in the migration contract.
  *
  * Reasoning:
  * - OHMv1 stopped rebasing at index 46.721314322
@@ -173,12 +173,15 @@ export function getCirculatingSupply(
   metricName: string,
   blockNumber: BigInt,
   totalSupply: BigDecimal,
-): TokenRecords {
+): TokenRecordsWrapper {
   const isV2Contract = blockNumber.gt(BigInt.fromString(ERC20_OHM_V2_BLOCK));
   const ohmContractAddress = isV2Contract ? ERC20_OHM_V2 : ERC20_OHM_V1;
 
   const ohmContract = getERC20(ohmContractAddress, blockNumber);
-  const records = newTokenRecords(addToMetricName(metricName, "OHMCirculatingSupply"), blockNumber);
+  const records = newTokenRecordsWrapper(
+    addToMetricName(metricName, "OHMCirculatingSupply"),
+    blockNumber,
+  );
 
   if (!ohmContract) {
     log.error(
@@ -240,9 +243,9 @@ export function getCirculatingSupply(
  * @param blockNumber
  * @returns
  */
-function getLiquiditySupply(metricName: string, blockNumber: BigInt): TokenRecords {
+function getLiquiditySupply(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
   const currentMetricName = addToMetricName(metricName, "OHMLiquiditySupply");
-  const records = newTokenRecords(currentMetricName, blockNumber);
+  const records = newTokenRecordsWrapper(currentMetricName, blockNumber);
 
   for (let i = 0; i < LIQUIDITY_OWNED.length; i++) {
     const pairHandler = LIQUIDITY_OWNED[i];
@@ -259,7 +262,7 @@ function getLiquiditySupply(metricName: string, blockNumber: BigInt): TokenRecor
           throw new Error("Balancer pool address is not set");
         }
 
-        combineTokenRecords(
+        combineTokenRecordsWrapper(
           records,
           getBalancerPoolTokenQuantity(
             currentMetricName,
@@ -270,12 +273,12 @@ function getLiquiditySupply(metricName: string, blockNumber: BigInt): TokenRecor
           ),
         );
       } else if (pairHandler.getType() == PairHandlerTypes.Curve) {
-        combineTokenRecords(
+        combineTokenRecordsWrapper(
           records,
           getCurvePairTokenQuantity(currentMetricName, pairAddress, ohmTokenAddress, blockNumber),
         );
       } else if (pairHandler.getType() == PairHandlerTypes.UniswapV2) {
-        combineTokenRecords(
+        combineTokenRecordsWrapper(
           records,
           getUniswapV2PairTokenQuantity(
             currentMetricName,
@@ -285,7 +288,7 @@ function getLiquiditySupply(metricName: string, blockNumber: BigInt): TokenRecor
           ),
         );
       } else if (pairHandler.getType() == PairHandlerTypes.FraxSwap) {
-        combineTokenRecords(
+        combineTokenRecordsWrapper(
           records,
           getFraxSwapPairTokenQuantityRecords(
             currentMetricName,
@@ -318,16 +321,19 @@ export function getFloatingSupply(
   metricName: string,
   totalSupply: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "OHMFloatingSupply"), blockNumber);
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(
+    addToMetricName(metricName, "OHMFloatingSupply"),
+    blockNumber,
+  );
 
   // Circulating supply
-  combineTokenRecords(records, getCirculatingSupply(metricName, blockNumber, totalSupply));
+  combineTokenRecordsWrapper(records, getCirculatingSupply(metricName, blockNumber, totalSupply));
 
   // Liquidity supply
   const liquiditySupply = getLiquiditySupply(metricName, blockNumber);
-  setTokenRecordsMultiplier(liquiditySupply, BigDecimal.fromString("-1")); // Subtracted
-  combineTokenRecords(records, liquiditySupply);
+  setTokenRecordsWrapperMultiplier(liquiditySupply, BigDecimal.fromString("-1")); // Subtracted
+  combineTokenRecordsWrapper(records, liquiditySupply);
 
   return records;
 }

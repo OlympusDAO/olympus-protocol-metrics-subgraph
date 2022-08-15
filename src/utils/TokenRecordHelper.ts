@@ -1,6 +1,6 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
-import { TokenRecord, TokenRecords } from "../../generated/schema";
+import { TokenRecord, TokenRecordsWrapper } from "../../generated/schema";
 
 // TokenRecord
 
@@ -58,9 +58,8 @@ export function newTokenRecord(
   multiplier: BigDecimal = BigDecimal.fromString("1"),
 ): TokenRecord {
   // We need to separate records between metrics, otherwise they get clobbered
-  const record = new TokenRecord(
-    metric + "-" + tokenName + "-" + sourceName + "-" + blockNumber.toString(),
-  );
+  const record = new TokenRecord(`${blockNumber.toString()}/${sourceName}/${tokenName}`);
+  record.block = blockNumber;
   record.token = tokenName;
   record.tokenAddress = tokenAddress;
   record.source = sourceName;
@@ -75,9 +74,9 @@ export function newTokenRecord(
   return record;
 }
 
-// TokenRecords
+// TokenRecordsWrapper
 
-export function getTokenRecordsBalance(records: TokenRecords): BigDecimal {
+export function getTokenRecordsWrapperBalance(records: TokenRecordsWrapper): BigDecimal {
   let totalBalance = BigDecimal.fromString("0");
   const idValues = records.records;
 
@@ -86,9 +85,9 @@ export function getTokenRecordsBalance(records: TokenRecords): BigDecimal {
     const recordValue = TokenRecord.load(recordId);
     if (!recordValue) {
       throw new Error(
-        "setTokenRecordsMultiplier: Unexpected null value for id " +
+        "setTokenRecordsWrapperMultiplier: Unexpected null value for id " +
           recordId +
-          " in TokenRecords " +
+          " in TokenRecordsWrapper " +
           records.id,
       );
     }
@@ -100,12 +99,12 @@ export function getTokenRecordsBalance(records: TokenRecords): BigDecimal {
 }
 
 /**
- * Returns the value of all of the TokenRecords.
+ * Returns the value of all of the TokenRecordsWrapper.
  *
  * @param records
  * @returns
  */
-export function getTokenRecordsValue(records: TokenRecords): BigDecimal {
+export function getTokenRecordsWrapperValue(records: TokenRecordsWrapper): BigDecimal {
   let totalValue = BigDecimal.fromString("0");
   const idValues = records.records;
 
@@ -114,9 +113,9 @@ export function getTokenRecordsValue(records: TokenRecords): BigDecimal {
     const recordValue = TokenRecord.load(recordId);
     if (!recordValue) {
       throw new Error(
-        "setTokenRecordsMultiplier: Unexpected null value for id " +
+        "setTokenRecordsWrapperMultiplier: Unexpected null value for id " +
           recordId +
-          " in TokenRecords " +
+          " in TokenRecordsWrapper " +
           records.id,
       );
     }
@@ -130,59 +129,57 @@ export function getTokenRecordsValue(records: TokenRecords): BigDecimal {
 /**
  * Pushes the `record` parameter into the array within `records`.
  *
- * @param records TokenRecords to add to
+ * @param records TokenRecordsWrapper to add to
  * @param record TokenRecord to add
  * @param update if true, updates the balance and value
  */
 export function pushTokenRecord(
-  records: TokenRecords,
+  records: TokenRecordsWrapper,
   record: TokenRecord,
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   update: boolean = true,
 ): void {
-  const newArray = records.records || [];
-  // Don't allow duplicates
-  if (!newArray.includes(record.id)) {
-    newArray.push(record.id);
-  }
-  records.records = newArray;
-
-  if (update) {
-    records.balance = getTokenRecordsBalance(records);
-    records.value = getTokenRecordsValue(records);
-  }
-
-  records.save();
+  // const newArray = records.records || [];
+  // // Don't allow duplicates
+  // if (!newArray.includes(record.id)) {
+  //   newArray.push(record.id);
+  // }
+  // records.records = newArray;
+  // if (update) {
+  //   records.balance = getTokenRecordsWrapperBalance(records);
+  //   records.value = getTokenRecordsWrapperValue(records);
+  // }
+  // records.save();
 }
 
 /**
- * Combines two TokenRecords objects.
+ * Combines two TokenRecordsWrapper objects.
  *
  * The balance and value will be updated, and {records1} will be saved.
  *
- * @param records1 The TokenRecords to add to
- * @param records2 The TokenRecords to include
+ * @param records1 The TokenRecordsWrapper to add to
+ * @param records2 The TokenRecordsWrapper to include
  */
-export function combineTokenRecords(records1: TokenRecords, records2: TokenRecords): void {
-  for (let i = 0; i < records2.records.length; i++) {
-    const records2Id = records2.records[i];
-    const records2Value = TokenRecord.load(records2Id);
-    if (!records2Value) {
-      throw new Error(
-        "combineTokenRecords: Unexpected null value for id " +
-          records2Id +
-          " in TokenRecords " +
-          records2.id,
-      );
-    }
-
-    pushTokenRecord(records1, records2Value, false);
-  }
-
-  records1.balance = getTokenRecordsBalance(records1);
-  records1.value = getTokenRecordsValue(records1);
-
-  records1.save();
+export function combineTokenRecordsWrapper(
+  records1: TokenRecordsWrapper,
+  records2: TokenRecordsWrapper,
+): void {
+  // for (let i = 0; i < records2.records.length; i++) {
+  //   const records2Id = records2.records[i];
+  //   const records2Value = TokenRecord.load(records2Id);
+  //   if (!records2Value) {
+  //     throw new Error(
+  //       "combineTokenRecordsWrapper: Unexpected null value for id " +
+  //         records2Id +
+  //         " in TokenRecordsWrapper " +
+  //         records2.id,
+  //     );
+  //   }
+  //   pushTokenRecord(records1, records2Value, false);
+  // }
+  // records1.balance = getTokenRecordsWrapperBalance(records1);
+  // records1.value = getTokenRecordsWrapperValue(records1);
+  // records1.save();
 }
 
 /**
@@ -193,15 +190,18 @@ export function combineTokenRecords(records1: TokenRecords, records2: TokenRecor
  * @param records
  * @param multiplier
  */
-export function setTokenRecordsMultiplier(records: TokenRecords, multiplier: BigDecimal): void {
+export function setTokenRecordsWrapperMultiplier(
+  records: TokenRecordsWrapper,
+  multiplier: BigDecimal,
+): void {
   for (let i = 0; i < records.records.length; i++) {
     const recordId = records.records[i];
     const recordValue = TokenRecord.load(recordId);
     if (!recordValue) {
       throw new Error(
-        "setTokenRecordsMultiplier: Unexpected null value for id " +
+        "setTokenRecordsWrapperMultiplier: Unexpected null value for id " +
           recordId +
-          " in TokenRecords " +
+          " in TokenRecordsWrapper " +
           records.id,
       );
     }
@@ -209,13 +209,13 @@ export function setTokenRecordsMultiplier(records: TokenRecords, multiplier: Big
     setTokenRecordMultiplier(recordValue, multiplier);
   }
 
-  records.balance = getTokenRecordsBalance(records);
-  records.value = getTokenRecordsValue(records);
+  records.balance = getTokenRecordsWrapperBalance(records);
+  records.value = getTokenRecordsWrapperValue(records);
 
   records.save();
 }
 
-export function sortTokenRecords(records: TokenRecords): void {
+export function sortTokenRecordsWrapper(records: TokenRecordsWrapper): void {
   // We sort by ID anyway ({name}-{source}), so we can just use the ID array
   records.records = records.records.sort((a, b) => (a > b ? 1 : -1));
 
@@ -223,14 +223,14 @@ export function sortTokenRecords(records: TokenRecords): void {
 }
 
 /**
- * Helper function to create a new TokenRecords object.
+ * Helper function to create a new TokenRecordsWrapper object.
  *
  * @param id
  * @param blockNumber
  * @returns
  */
-export function newTokenRecords(id: string, blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords(id + "-" + blockNumber.toString());
+export function newTokenRecordsWrapper(id: string, blockNumber: BigInt): TokenRecordsWrapper {
+  const records = new TokenRecordsWrapper(id + "-" + blockNumber.toString());
   records.records = [];
   records.balance = BigDecimal.fromString("0");
   records.value = BigDecimal.fromString("0");

@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts
 
 import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolToken";
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
-import { TokenRecord, TokenRecords } from "../../generated/schema";
+import { TokenRecord, TokenRecordsWrapper } from "../../generated/schema";
 import {
   ERC20_OHM_V2,
   getContractName,
@@ -14,9 +14,9 @@ import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
 import {
   addToMetricName,
-  combineTokenRecords,
+  combineTokenRecordsWrapper,
   newTokenRecord,
-  newTokenRecords,
+  newTokenRecordsWrapper,
   pushTokenRecord,
 } from "./TokenRecordHelper";
 
@@ -173,15 +173,18 @@ export function getBalancerPoolTokenBalance(
   return balanceDecimals;
 }
 
-function getBalancerPoolTokenRecords(
+function getBalancerPoolTokenRecordsWrapper(
   metricName: string,
   poolId: string,
   poolTokenContract: BalancerPoolToken,
   unitRate: BigDecimal,
   multiplier: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "BalancerPoolToken"), blockNumber);
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(
+    addToMetricName(metricName, "BalancerPoolToken"),
+    blockNumber,
+  );
 
   const wallets = getWalletAddressesForContract(poolId);
   const poolTokenAddress = poolTokenContract._address.toHexString();
@@ -189,11 +192,10 @@ function getBalancerPoolTokenRecords(
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];
     const balance = getBalancerPoolTokenBalance(poolTokenContract, walletAddress, blockNumber);
-    log.info("getBalancerPoolTokenRecords: Balancer pool {} has balance of {} in wallet {}", [
-      getContractName(poolTokenAddress),
-      balance.toString(),
-      getContractName(walletAddress),
-    ]);
+    log.info(
+      "getBalancerPoolTokenRecordsWrapper: Balancer pool {} has balance of {} in wallet {}",
+      [getContractName(poolTokenAddress), balance.toString(), getContractName(walletAddress)],
+    );
     if (balance.equals(BigDecimal.zero())) continue;
 
     pushTokenRecord(
@@ -216,7 +218,7 @@ function getBalancerPoolTokenRecords(
 }
 
 /**
- * Provides TokenRecords representing the Balancer pool identified by {poolId}.
+ * Provides TokenRecordsWrapper representing the Balancer pool identified by {poolId}.
  *
  * @param metricName
  * @param vaultAddress The address of the Balancer Vault
@@ -235,12 +237,12 @@ export function getBalancerRecords(
   restrictToTokenValue: boolean,
   blockNumber: BigInt,
   tokenAddress: string | null = null,
-): TokenRecords {
+): TokenRecordsWrapper {
   log.info("getBalancerRecords: Calculating value of Balancer vault {} for pool id {}", [
     vaultAddress,
     poolId,
   ]);
-  const records = newTokenRecords(
+  const records = newTokenRecordsWrapper(
     addToMetricName(metricName, "BalancerPool/" + poolId),
     blockNumber,
   );
@@ -309,9 +311,9 @@ export function getBalancerRecords(
   );
 
   // Standard pool tokens
-  combineTokenRecords(
+  combineTokenRecordsWrapper(
     records,
-    getBalancerPoolTokenRecords(
+    getBalancerPoolTokenRecordsWrapper(
       records.id,
       poolId,
       poolTokenContract,
@@ -322,7 +324,7 @@ export function getBalancerRecords(
   );
 
   // Pool tokens deposited in a liquidity gauge
-  combineTokenRecords(
+  combineTokenRecordsWrapper(
     records,
     getBalancerGaugeBalancesFromWallets(metricName, poolTokenAddress, unitRate, blockNumber),
   );
@@ -389,13 +391,13 @@ export function getBalancerPoolTokenQuantity(
   poolId: string,
   tokenAddress: string,
   blockNumber: BigInt,
-): TokenRecords {
+): TokenRecordsWrapper {
   log.info("Calculating quantity of token {} in Balancer vault {} for id {}", [
     getContractName(tokenAddress),
     vaultAddress,
     poolId,
   ]);
-  const records = newTokenRecords(
+  const records = newTokenRecordsWrapper(
     addToMetricName(metricName, "BalancerPoolTokenQuantity"),
     blockNumber,
   );

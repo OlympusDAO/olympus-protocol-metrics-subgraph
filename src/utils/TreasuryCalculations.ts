@@ -1,6 +1,6 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecords } from "../../generated/schema";
+import { TokenRecordsWrapper } from "../../generated/schema";
 import { getOwnedLiquidityPoolValue } from "./LiquidityCalculations";
 import {
   getCirculatingSupply,
@@ -8,7 +8,7 @@ import {
   getFloatingSupply,
   getTotalSupply,
 } from "./OhmCalculations";
-import { combineTokenRecords, newTokenRecords } from "./TokenRecordHelper";
+import { combineTokenRecordsWrapper, newTokenRecordsWrapper } from "./TokenRecordHelper";
 import { getStablecoinBalances, getStableValue } from "./TokenStablecoins";
 import { getVolatileTokenBalances } from "./TokenVolatile";
 
@@ -18,13 +18,13 @@ import { getVolatileTokenBalances } from "./TokenVolatile";
  * As this is a backing metric, the value of OHM is excluded.
  *
  * @param blockNumber the current block number
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
 export function getTreasuryVolatileBacking(
   metricName: string,
   blockNumber: BigInt,
   liquidOnly: boolean,
-): TokenRecords {
+): TokenRecordsWrapper {
   return getVolatileTokenBalances(
     metricName,
     liquidOnly,
@@ -43,9 +43,12 @@ export function getTreasuryVolatileBacking(
  * As this is a backing metric, the value of OHM is excluded.
  *
  * @param blockNumber the current block number
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
-export function getTreasuryStableBacking(metricName: string, blockNumber: BigInt): TokenRecords {
+export function getTreasuryStableBacking(
+  metricName: string,
+  blockNumber: BigInt,
+): TokenRecordsWrapper {
   const records = getStablecoinBalances(metricName, false, false, true, true, blockNumber);
 
   return records;
@@ -63,7 +66,7 @@ export function getTreasuryStableBacking(metricName: string, blockNumber: BigInt
 export function getTreasuryProtocolOwnedLiquidityBacking(
   metricName: string,
   blockNumber: BigInt,
-): TokenRecords {
+): TokenRecordsWrapper {
   const records = getOwnedLiquidityPoolValue(metricName, false, true, blockNumber);
 
   return records;
@@ -81,20 +84,20 @@ export function getTreasuryProtocolOwnedLiquidityBacking(
  * (assuming 1 OHM = $1), which has since been changed (June 2022).
  *
  * @param blockNumber the current block number
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
 export function getTreasuryBacking(
   metricName: string,
   liquidOnly: boolean,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(metricName, blockNumber);
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(metricName, blockNumber);
   const includeLiquidity = true;
   const riskFree = false;
   const excludeOhmValue = true;
   const restrictToTokenValue = true;
 
-  combineTokenRecords(
+  combineTokenRecordsWrapper(
     records,
     getStablecoinBalances(
       metricName,
@@ -105,7 +108,7 @@ export function getTreasuryBacking(
       blockNumber,
     ),
   );
-  combineTokenRecords(
+  combineTokenRecordsWrapper(
     records,
     getVolatileTokenBalances(
       metricName,
@@ -118,7 +121,10 @@ export function getTreasuryBacking(
       blockNumber,
     ),
   );
-  combineTokenRecords(records, getOwnedLiquidityPoolValue(metricName, riskFree, true, blockNumber));
+  combineTokenRecordsWrapper(
+    records,
+    getOwnedLiquidityPoolValue(metricName, riskFree, true, blockNumber),
+  );
 
   return records;
 }
@@ -187,18 +193,21 @@ export function getTreasuryLiquidBackingPerOhmFloating(
  * @param blockNumber
  * @returns
  */
-export function getMarketValue(metricName: string, blockNumber: BigInt): TokenRecords {
+export function getMarketValue(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
   log.info("Calculating market value", []);
-  const records = newTokenRecords(metricName, blockNumber);
+  const records = newTokenRecordsWrapper(metricName, blockNumber);
 
   // Stable and volatile without protocol-owned liquidity
-  combineTokenRecords(records, getStableValue(metricName, blockNumber));
-  combineTokenRecords(
+  combineTokenRecordsWrapper(records, getStableValue(metricName, blockNumber));
+  combineTokenRecordsWrapper(
     records,
     getVolatileTokenBalances(metricName, false, false, true, false, false, false, blockNumber),
   );
   // Protocol-owned liquidity
-  combineTokenRecords(records, getOwnedLiquidityPoolValue(metricName, false, false, blockNumber));
+  combineTokenRecordsWrapper(
+    records,
+    getOwnedLiquidityPoolValue(metricName, false, false, blockNumber),
+  );
 
   log.info("Market value: {}", [records.value.toString()]);
   return records;
@@ -212,12 +221,15 @@ export function getMarketValue(metricName: string, blockNumber: BigInt): TokenRe
  * @param blockNumber
  * @returns
  */
-export function getRiskFreeValue(metricName: string, blockNumber: BigInt): TokenRecords {
+export function getRiskFreeValue(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
   log.info("Calculating risk-free value", []);
-  const records = newTokenRecords(metricName, blockNumber);
+  const records = newTokenRecordsWrapper(metricName, blockNumber);
 
-  combineTokenRecords(records, getStableValue(metricName, blockNumber));
-  combineTokenRecords(records, getOwnedLiquidityPoolValue(metricName, true, true, blockNumber));
+  combineTokenRecordsWrapper(records, getStableValue(metricName, blockNumber));
+  combineTokenRecordsWrapper(
+    records,
+    getOwnedLiquidityPoolValue(metricName, true, true, blockNumber),
+  );
 
   log.info("Risk-free value: {}", [records.value.toString()]);
   return records;

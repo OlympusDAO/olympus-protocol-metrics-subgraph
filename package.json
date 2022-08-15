@@ -5,7 +5,7 @@
     "codegen": "graph codegen && yarn eslint --config ./.eslintrc.json --fix generated/",
     "build": "graph build",
     "deploy": "source .subgraph-version && graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --version-label $SUBGRAPH_VERSION olympusdao/olympus-protocol-metrics",
-    "deploy:dev": "source .subgraph-version && graph deploy --studio olympus-protocol-metrics --version-label $SUBGRAPH_VERSION",
+    "deploy:dev": "source .subgraph-version && graph deploy --studio protocol-metrics-test --version-label $SUBGRAPH_VERSION",
     "create-local": "graph create --node http://localhost:8020/ olympus",
     "remove-local": "graph remove --node http://localhost:8020/ olympus",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 olympus",

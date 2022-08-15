@@ -3,7 +3,7 @@ import { log } from "matchstick-as";
 
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
-import { TokenRecord, TokenRecords } from "../../generated/schema";
+import { TokenRecord, TokenRecordsWrapper } from "../../generated/schema";
 import {
   CONVEX_STAKING_CONTRACTS,
   ERC20_OHM_V2,
@@ -18,7 +18,7 @@ import { getUSDRate } from "./Price";
 import {
   addToMetricName,
   newTokenRecord,
-  newTokenRecords,
+  newTokenRecordsWrapper,
   pushTokenRecord,
 } from "./TokenRecordHelper";
 
@@ -302,8 +302,11 @@ export function getCurvePairRecords(
   excludeOhmValue: boolean,
   restrictToTokenValue: boolean,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "CurvePairRecords"), blockNumber);
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(
+    addToMetricName(metricName, "CurvePairRecords"),
+    blockNumber,
+  );
   // If we are restricting by token and tokenAddress does not match either side of the pair
   if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
     log.debug(
@@ -456,12 +459,12 @@ export function getCurvePairTokenQuantity(
   pairAddress: string,
   tokenAddress: string,
   blockNumber: BigInt,
-): TokenRecords {
+): TokenRecordsWrapper {
   log.info("getCurvePairTokenQuantity: Calculating quantity of token {} in Curve pool {}", [
     getContractName(tokenAddress),
     getContractName(pairAddress),
   ]);
-  const records = newTokenRecords(
+  const records = newTokenRecordsWrapper(
     addToMetricName(metricName, "CurvePoolTokenQuantity-" + getContractName(tokenAddress)),
     blockNumber,
   );

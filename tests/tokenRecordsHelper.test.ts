@@ -1,17 +1,17 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
-import { TokenRecord, TokenRecords } from "../generated/schema";
+import { TokenRecord, TokenRecordsWrapper } from "../generated/schema";
 import {
-  combineTokenRecords,
-  getTokenRecordsBalance,
-  getTokenRecordsValue,
+  combineTokenRecordsWrapper,
+  getTokenRecordsWrapperBalance,
+  getTokenRecordsWrapperValue,
   newTokenRecord,
-  newTokenRecords,
+  newTokenRecordsWrapper,
   pushTokenRecord,
   setTokenRecordMultiplier,
-  setTokenRecordsMultiplier,
-  sortTokenRecords,
+  setTokenRecordsWrapperMultiplier,
+  sortTokenRecordsWrapper,
 } from "../src/utils/TokenRecordHelper";
 
 const createTokenRecord = (): TokenRecord => {
@@ -29,7 +29,7 @@ const createTokenRecord = (): TokenRecord => {
 
 describe("constructor", () => {
   test("id not null", () => {
-    const records = newTokenRecords("test", BigInt.fromString("1"));
+    const records = newTokenRecordsWrapper("test", BigInt.fromString("1"));
 
     assert.assertNotNull(records.id);
     assert.assertNotNull(records.records);
@@ -38,7 +38,7 @@ describe("constructor", () => {
 
 describe("push", () => {
   test("single", () => {
-    const records = newTokenRecords("test", BigInt.fromString("1"));
+    const records = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
 
     pushTokenRecord(records, record1);
@@ -51,7 +51,7 @@ describe("push", () => {
   });
 
   test("multiple", () => {
-    const records = newTokenRecords("test", BigInt.fromString("1"));
+    const records = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "metric",
@@ -71,7 +71,7 @@ describe("push", () => {
   });
 
   test("multiple, same id", () => {
-    const records = newTokenRecords("test", BigInt.fromString("1"));
+    const records = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = createTokenRecord();
     setTokenRecordMultiplier(record2, BigDecimal.fromString("2")); // Same id, different value
@@ -88,11 +88,11 @@ describe("push", () => {
 
 describe("combine", () => {
   test("non-empty", () => {
-    const records1 = newTokenRecords("test", BigInt.fromString("1"));
+    const records1 = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     pushTokenRecord(records1, record1);
 
-    const records2 = newTokenRecords("test", BigInt.fromString("1"));
+    const records2 = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record2 = newTokenRecord(
       "metric",
       "name2",
@@ -105,7 +105,7 @@ describe("combine", () => {
     );
     pushTokenRecord(records2, record2);
 
-    combineTokenRecords(records1, records2);
+    combineTokenRecordsWrapper(records1, records2);
 
     assert.i32Equals(2, records1.records.length);
     // Updates value: 2*3 + 10*5
@@ -115,13 +115,13 @@ describe("combine", () => {
   });
 
   test("empty", () => {
-    const records1 = newTokenRecords("test", BigInt.fromString("1"));
+    const records1 = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     pushTokenRecord(records1, record1);
 
-    const records2 = newTokenRecords("test", BigInt.fromString("1"));
+    const records2 = newTokenRecordsWrapper("test", BigInt.fromString("1"));
 
-    combineTokenRecords(records1, records2);
+    combineTokenRecordsWrapper(records1, records2);
 
     assert.i32Equals(1, records1.records.length);
   });
@@ -129,7 +129,7 @@ describe("combine", () => {
 
 describe("multiplier", () => {
   test("push, records updated", () => {
-    const records1 = newTokenRecords("test", BigInt.fromString("1"));
+    const records1 = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "metric",
@@ -144,20 +144,20 @@ describe("multiplier", () => {
     pushTokenRecord(records1, record1);
     pushTokenRecord(records1, record2);
 
-    setTokenRecordsMultiplier(records1, BigDecimal.fromString("0.25"));
+    setTokenRecordsWrapperMultiplier(records1, BigDecimal.fromString("0.25"));
 
     const record1Updated = TokenRecord.load(record1.id);
     const record2Updated = TokenRecord.load(record2.id);
     assert.stringEquals("0.25", record1Updated ? record1Updated.multiplier.toString() : "");
     assert.stringEquals("0.25", record2Updated ? record2Updated.multiplier.toString() : "");
 
-    const recordsUpdated = TokenRecords.load(records1.id);
+    const recordsUpdated = TokenRecordsWrapper.load(records1.id);
     // 10 * 5 * 0.25 + 2 * 3 * 0.25
     assert.stringEquals("14", recordsUpdated ? recordsUpdated.value.toString() : "");
   });
 
   test("combine, records updated", () => {
-    const records1 = newTokenRecords("test", BigInt.fromString("1"));
+    const records1 = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "metric",
@@ -170,12 +170,12 @@ describe("multiplier", () => {
       BigInt.fromString("1"),
     );
 
-    const records2 = newTokenRecords("test", BigInt.fromString("1"));
+    const records2 = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     pushTokenRecord(records2, record1);
     pushTokenRecord(records2, record2);
-    setTokenRecordsMultiplier(records2, BigDecimal.fromString("0.25"));
+    setTokenRecordsWrapperMultiplier(records2, BigDecimal.fromString("0.25"));
 
-    combineTokenRecords(records1, records2);
+    combineTokenRecordsWrapper(records1, records2);
 
     // 10 * 5 * 0.25 + 2 * 3 * 0.25
     assert.stringEquals("14", records1.value.toString());
@@ -196,7 +196,7 @@ describe("multiplier", () => {
 
 describe("balance", () => {
   test("records updated", () => {
-    const records1 = newTokenRecords("test", BigInt.fromString("1"));
+    const records1 = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "metric",
@@ -212,13 +212,13 @@ describe("balance", () => {
     pushTokenRecord(records1, record2);
 
     // 3 + 5
-    assert.stringEquals("8", getTokenRecordsBalance(records1).toString());
+    assert.stringEquals("8", getTokenRecordsWrapperBalance(records1).toString());
   });
 });
 
 describe("value", () => {
   test("correct", () => {
-    const records1 = newTokenRecords("test", BigInt.fromString("1"));
+    const records1 = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "metric",
@@ -234,13 +234,13 @@ describe("value", () => {
     pushTokenRecord(records1, record2);
 
     // 2*3 + 10*5
-    assert.stringEquals("56", getTokenRecordsValue(records1).toString());
+    assert.stringEquals("56", getTokenRecordsWrapperValue(records1).toString());
   });
 });
 
 describe("sorted records", () => {
   test("correct", () => {
-    const records1 = newTokenRecords("test", BigInt.fromString("1"));
+    const records1 = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
     const record2 = newTokenRecord(
       "metric",
@@ -255,7 +255,7 @@ describe("sorted records", () => {
     pushTokenRecord(records1, record2); // name2 before name
     pushTokenRecord(records1, record1);
 
-    sortTokenRecords(records1);
+    sortTokenRecordsWrapper(records1);
     assert.stringEquals("metric-name-source-1", records1.records[0]);
     assert.stringEquals("metric-name2-source2-1", records1.records[1]);
   });

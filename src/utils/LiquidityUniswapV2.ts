@@ -1,7 +1,7 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
-import { TokenRecord, TokenRecords } from "../../generated/schema";
+import { TokenRecord, TokenRecordsWrapper } from "../../generated/schema";
 import { getContractName, getWalletAddressesForContract, liquidityPairHasToken } from "./Constants";
 import { getERC20, getUniswapV2Pair } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
@@ -9,7 +9,7 @@ import { getBaseOhmUsdRate, getUSDRateUniswapV2 } from "./Price";
 import {
   addToMetricName,
   newTokenRecord,
-  newTokenRecords,
+  newTokenRecordsWrapper,
   pushTokenRecord,
 } from "./TokenRecordHelper";
 
@@ -297,8 +297,8 @@ export function getUniswapV2PairRecords(
   tokenAddress: string | null,
   excludeOhmValue: boolean,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(
     addToMetricName(metricName, "UniswapV2PairRecords/" + getContractName(pairAddress)),
     blockNumber,
   );
@@ -408,12 +408,12 @@ export function getUniswapV2PairTokenQuantity(
   pairAddress: string,
   tokenAddress: string,
   blockNumber: BigInt,
-): TokenRecords {
+): TokenRecordsWrapper {
   log.info("Calculating quantity of token {} in UniswapV2 pool {}", [
     getContractName(tokenAddress),
     getContractName(pairAddress),
   ]);
-  const records = newTokenRecords(
+  const records = newTokenRecordsWrapper(
     addToMetricName(metricName, "UniswapV2PoolTokenQuantity"),
     blockNumber,
   );

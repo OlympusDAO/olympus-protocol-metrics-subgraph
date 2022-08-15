@@ -1347,6 +1347,15 @@ export class TokenRecord extends Entity {
     this.set("id", Value.fromString(value));
   }
 
+  get block(): BigInt {
+    const value = this.get("block");
+    return value!.toBigInt();
+  }
+
+  set block(value: BigInt) {
+    this.set("block", Value.fromBigInt(value));
+  }
+
   get token(): string {
     const value = this.get("token");
     return value!.toString();
@@ -1420,7 +1429,7 @@ export class TokenRecord extends Entity {
   }
 }
 
-export class TokenRecords extends Entity {
+export class TokenRecordsWrapper extends Entity {
   constructor(id: string) {
     super();
     this.set("id", Value.fromString(id));
@@ -1428,18 +1437,20 @@ export class TokenRecords extends Entity {
 
   save(): void {
     const id = this.get("id");
-    assert(id != null, "Cannot save TokenRecords entity without an ID");
+    assert(id != null, "Cannot save TokenRecordsWrapper entity without an ID");
     if (id) {
       assert(
         id.kind == ValueKind.STRING,
-        `Entities of type TokenRecords must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+        `Entities of type TokenRecordsWrapper must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
       );
-      store.set("TokenRecords", id.toString(), this);
+      store.set("TokenRecordsWrapper", id.toString(), this);
     }
   }
 
-  static load(id: string): TokenRecords | null {
-    return changetype<TokenRecords | null>(store.get("TokenRecords", id));
+  static load(id: string): TokenRecordsWrapper | null {
+    return changetype<TokenRecordsWrapper | null>(
+      store.get("TokenRecordsWrapper", id)
+    );
   }
 
   get id(): string {

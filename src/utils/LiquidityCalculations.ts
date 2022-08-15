@@ -1,6 +1,6 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecords } from "../../generated/schema";
+import { TokenRecordsWrapper } from "../../generated/schema";
 import {
   getContractName,
   getWalletAddressesForContract,
@@ -36,16 +36,16 @@ import { getOhmUSDPairRiskFreeValue, getUniswapV2PairValue } from "./LiquidityUn
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 import {
   addToMetricName,
-  combineTokenRecords,
-  getTokenRecordsBalance,
+  combineTokenRecordsWrapper,
+  getTokenRecordsWrapperBalance,
   newTokenRecord,
-  newTokenRecords,
+  newTokenRecordsWrapper,
   pushTokenRecord,
-  setTokenRecordsMultiplier,
+  setTokenRecordsWrapperMultiplier,
 } from "./TokenRecordHelper";
 
 /**
- * Creates TokenRecords for the giving liquidity records.
+ * Creates TokenRecordsWrapper for the giving liquidity records.
  *
  * The chief objective of this function is to determine
  * the correct price of the liquidity pool balance.
@@ -61,14 +61,14 @@ import {
  * @param riskFree
  * @returns
  */
-function getLiquidityTokenRecords(
+function getLiquidityTokenRecordsWrapper(
   metricName: string,
   liquidityBalance: LiquidityBalances,
   blockNumber: BigInt,
   riskFree: boolean,
-): TokenRecords {
-  const records = newTokenRecords(
-    addToMetricName(metricName, "LiquidityTokenRecords"),
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(
+    addToMetricName(metricName, "LiquidityTokenRecordsWrapper"),
     blockNumber,
   );
   const contractName = getContractName(liquidityBalance.contract);
@@ -87,7 +87,7 @@ function getLiquidityTokenRecords(
         liquidityBalance.contract,
         blockNumber,
       );
-  log.debug("getLiquidityTokenRecords: LP value for balance {} is {}", [
+  log.debug("getLiquidityTokenRecordsWrapper: LP value for balance {} is {}", [
     liquidityBalance.getTotalBalance().toString(),
     lpValue.toString(),
   ]);
@@ -96,7 +96,7 @@ function getLiquidityTokenRecords(
   const lpUnitPrice: BigDecimal = liquidityBalance.getTotalBalance().equals(BigInt.zero())
     ? BigDecimal.zero()
     : lpValue.div(toDecimal(liquidityBalance.getTotalBalance(), 18));
-  log.debug("getLiquidityTokenRecords: Unit price: {}", [lpUnitPrice.toString()]);
+  log.debug("getLiquidityTokenRecordsWrapper: Unit price: {}", [lpUnitPrice.toString()]);
 
   const addresses = liquidityBalance.getAddresses();
   for (let i = 0; i < addresses.length; i++) {
@@ -123,7 +123,7 @@ function getLiquidityTokenRecords(
 }
 
 /**
- * Returns the TokenRecords representing the liquidity owned by the treasury.
+ * Returns the TokenRecordsWrapper representing the liquidity owned by the treasury.
  *
  * By default, all liquidity pairs in {LIQUIDITY_OWNED} will be iterated, unless
  * overridden by the {ownedLiquidityPairs} parameter.
@@ -143,7 +143,7 @@ function getLiquidityTokenRecords(
  * @param restrictToTokenValue true if only the value of {tokenAddress} in the LP should be included
  * @param blockNumber current block number
  * @param ownedLiquidityPairs set this to override the array of owned liquidity pairs
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
 export function getLiquidityBalances(
   metricName: string,
@@ -153,8 +153,11 @@ export function getLiquidityBalances(
   restrictToTokenValue: boolean,
   blockNumber: BigInt,
   ownedLiquidityPairs: PairHandler[] = LIQUIDITY_OWNED,
-): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "LiquidityBalances"), blockNumber);
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(
+    addToMetricName(metricName, "LiquidityBalances"),
+    blockNumber,
+  );
 
   for (let j = 0; j < ownedLiquidityPairs.length; j++) {
     const pairHandler = ownedLiquidityPairs[j];
@@ -184,7 +187,7 @@ export function getLiquidityBalances(
         liquidityBalance.addBalance(currentWallet, balance);
       }
 
-      const currentTokenRecords = getLiquidityTokenRecords(
+      const currentTokenRecordsWrapper = getLiquidityTokenRecordsWrapper(
         records.id,
         liquidityBalance,
         blockNumber,
@@ -196,13 +199,13 @@ export function getLiquidityBalances(
         log.info("getLiquidityBalances: setting multiplier to 0.5 for UniswapV2 pair {}", [
           getContractName(pairHandler.getContract()),
         ]);
-        setTokenRecordsMultiplier(currentTokenRecords, BigDecimal.fromString("0.5"));
+        setTokenRecordsWrapperMultiplier(currentTokenRecordsWrapper, BigDecimal.fromString("0.5"));
       }
 
-      combineTokenRecords(records, currentTokenRecords);
+      combineTokenRecordsWrapper(records, currentTokenRecordsWrapper);
     } else if (pairHandler.getType() === PairHandlerTypes.Curve) {
       // TODO support risk-free value of Curve
-      const currentTokenRecords = getCurvePairRecords(
+      const currentTokenRecordsWrapper = getCurvePairRecords(
         records.id,
         pairHandler.getContract(),
         tokenAddress,
@@ -211,13 +214,13 @@ export function getLiquidityBalances(
         blockNumber,
       );
 
-      combineTokenRecords(records, currentTokenRecords);
+      combineTokenRecordsWrapper(records, currentTokenRecordsWrapper);
     } else if (pairHandler.getType() === PairHandlerTypes.Balancer) {
       const balancerPoolId = pairHandler.getPool();
       if (balancerPoolId === null) throw new Error("Balancer pair does not have a pool id");
 
       // TODO support risk-free value of Balancer
-      combineTokenRecords(
+      combineTokenRecordsWrapper(
         records,
         getBalancerRecords(
           records.id,
@@ -230,7 +233,7 @@ export function getLiquidityBalances(
         ),
       );
     } else if (pairHandler.getType() === PairHandlerTypes.FraxSwap) {
-      const currentTokenRecords = getFraxSwapPairRecords(
+      const currentTokenRecordsWrapper = getFraxSwapPairRecords(
         records.id,
         pairHandler.getContract(),
         excludeOhmValue,
@@ -239,7 +242,7 @@ export function getLiquidityBalances(
         tokenAddress,
       );
 
-      combineTokenRecords(records, currentTokenRecords);
+      combineTokenRecordsWrapper(records, currentTokenRecordsWrapper);
     } else {
       throw new Error("Unsupported liquidity pair type: " + pairHandler.getType().toString());
     }
@@ -260,13 +263,13 @@ export function getLiquidityBalances(
  * @param metricName
  * @param blockNumber the current block number
  * @param riskFree whether the price of the LP is part of risk-free value
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
 export function getOhmDaiLiquidityBalance(
   metricName: string,
   blockNumber: BigInt,
   riskFree: boolean,
-): TokenRecords {
+): TokenRecordsWrapper {
   const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_DAI);
   const ohmDaiLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_DAI, blockNumber);
   liquidityBalance.addBalance(
@@ -291,7 +294,7 @@ export function getOhmDaiLiquidityBalance(
     ),
   );
 
-  return getLiquidityTokenRecords(metricName, liquidityBalance, blockNumber, riskFree);
+  return getLiquidityTokenRecordsWrapper(metricName, liquidityBalance, blockNumber, riskFree);
 }
 
 /**
@@ -305,13 +308,13 @@ export function getOhmDaiLiquidityBalance(
  * @param metricName
  * @param blockNumber the current block number
  * @param riskFree whether the price of the LP is part of risk-free value
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
 export function getOhmDaiLiquidityV2Balance(
   metricName: string,
   blockNumber: BigInt,
   riskFree: boolean,
-): TokenRecords {
+): TokenRecordsWrapper {
   const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_DAI_V2);
   const ohmDaiLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_DAI_V2, blockNumber);
   liquidityBalance.addBalance(
@@ -327,7 +330,7 @@ export function getOhmDaiLiquidityV2Balance(
     getUniswapV2PairBalance(ohmDaiLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
   );
 
-  return getLiquidityTokenRecords(metricName, liquidityBalance, blockNumber, riskFree);
+  return getLiquidityTokenRecordsWrapper(metricName, liquidityBalance, blockNumber, riskFree);
 }
 
 /**
@@ -351,10 +354,10 @@ export function getOhmDaiProtocolOwnedLiquidity(
 ): BigDecimal {
   const v1Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_DAI, blockNumber);
   const v2Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_DAI_V2, blockNumber);
-  const v1Balance = getTokenRecordsBalance(
+  const v1Balance = getTokenRecordsWrapperBalance(
     getOhmDaiLiquidityBalance(metricName, blockNumber, false),
   );
-  const v2Balance = getTokenRecordsBalance(
+  const v2Balance = getTokenRecordsWrapperBalance(
     getOhmDaiLiquidityV2Balance(metricName, blockNumber, false),
   );
   const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
@@ -382,13 +385,13 @@ export function getOhmDaiProtocolOwnedLiquidity(
  * @param metricName
  * @param blockNumber the current block number
  * @param riskFree whether the price of the LP is part of risk-free value
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
 export function getOhmFraxLiquidityBalance(
   metricName: string,
   blockNumber: BigInt,
   riskFree: boolean,
-): TokenRecords {
+): TokenRecordsWrapper {
   const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_FRAX);
   const ohmFraxLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_FRAX, blockNumber);
   liquidityBalance.addBalance(
@@ -404,7 +407,7 @@ export function getOhmFraxLiquidityBalance(
     getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
   );
 
-  return getLiquidityTokenRecords(metricName, liquidityBalance, blockNumber, riskFree);
+  return getLiquidityTokenRecordsWrapper(metricName, liquidityBalance, blockNumber, riskFree);
 }
 
 /**
@@ -418,13 +421,13 @@ export function getOhmFraxLiquidityBalance(
  * @param metricName
  * @param blockNumber the current block number
  * @param riskFree whether the price of the LP is part of risk-free value
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
 export function getOhmFraxLiquidityV2Balance(
   metricName: string,
   blockNumber: BigInt,
   riskFree: boolean,
-): TokenRecords {
+): TokenRecordsWrapper {
   const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_FRAX_V2);
   const ohmFraxLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_FRAX_V2, blockNumber);
   liquidityBalance.addBalance(
@@ -440,7 +443,7 @@ export function getOhmFraxLiquidityV2Balance(
     getUniswapV2PairBalance(ohmFraxLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
   );
 
-  return getLiquidityTokenRecords(metricName, liquidityBalance, blockNumber, riskFree);
+  return getLiquidityTokenRecordsWrapper(metricName, liquidityBalance, blockNumber, riskFree);
 }
 
 /**
@@ -464,10 +467,10 @@ export function getOhmFraxProtocolOwnedLiquidity(
 ): BigDecimal {
   const v1Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_FRAX, blockNumber);
   const v2Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_FRAX_V2, blockNumber);
-  const v1Balance = getTokenRecordsBalance(
+  const v1Balance = getTokenRecordsWrapperBalance(
     getOhmFraxLiquidityBalance(metricName, blockNumber, false),
   );
-  const v2Balance = getTokenRecordsBalance(
+  const v2Balance = getTokenRecordsWrapperBalance(
     getOhmFraxLiquidityV2Balance(metricName, blockNumber, false),
   );
   const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
@@ -496,13 +499,13 @@ export function getOhmFraxProtocolOwnedLiquidity(
  * @param metricName
  * @param blockNumber the current block number
  * @param riskFree whether the price of the LP is part of risk-free value
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
 export function getOhmLusdLiquidityBalance(
   metricName: string,
   blockNumber: BigInt,
   riskFree: boolean,
-): TokenRecords {
+): TokenRecordsWrapper {
   const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_LUSD);
   const ohmLusdLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_LUSD, blockNumber);
   liquidityBalance.addBalance(
@@ -527,7 +530,7 @@ export function getOhmLusdLiquidityBalance(
     ),
   );
 
-  return getLiquidityTokenRecords(metricName, liquidityBalance, blockNumber, riskFree);
+  return getLiquidityTokenRecordsWrapper(metricName, liquidityBalance, blockNumber, riskFree);
 }
 
 /**
@@ -542,13 +545,13 @@ export function getOhmLusdLiquidityBalance(
  * @param metricName
  * @param blockNumber the current block number
  * @param riskFree whether the price of the LP is part of risk-free value
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
 export function getOhmLusdLiquidityV2Balance(
   metricName: string,
   blockNumber: BigInt,
   riskFree: boolean,
-): TokenRecords {
+): TokenRecordsWrapper {
   const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_LUSD_V2);
   const ohmFraxLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_LUSD_V2, blockNumber);
   liquidityBalance.addBalance(
@@ -573,7 +576,7 @@ export function getOhmLusdLiquidityV2Balance(
     ),
   );
 
-  return getLiquidityTokenRecords(metricName, liquidityBalance, blockNumber, riskFree);
+  return getLiquidityTokenRecordsWrapper(metricName, liquidityBalance, blockNumber, riskFree);
 }
 
 /**
@@ -597,10 +600,10 @@ export function getOhmLusdProtocolOwnedLiquidity(
 ): BigDecimal {
   const v1Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_LUSD, blockNumber);
   const v2Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_LUSD_V2, blockNumber);
-  const v1Balance = getTokenRecordsBalance(
+  const v1Balance = getTokenRecordsWrapperBalance(
     getOhmLusdLiquidityBalance(metricName, blockNumber, false),
   );
-  const v2Balance = getTokenRecordsBalance(
+  const v2Balance = getTokenRecordsWrapperBalance(
     getOhmLusdLiquidityV2Balance(metricName, blockNumber, false),
   );
   const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
@@ -628,13 +631,13 @@ export function getOhmLusdProtocolOwnedLiquidity(
  * @param metricName
  * @param blockNumber the current block number
  * @param riskFree whether the price of the LP is part of risk-free value
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
 export function getOhmEthLiquidityBalance(
   metricName: string,
   blockNumber: BigInt,
   riskFree: boolean,
-): TokenRecords {
+): TokenRecordsWrapper {
   const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_ETH);
   const ohmEthLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_ETH, blockNumber);
   liquidityBalance.addBalance(
@@ -650,7 +653,7 @@ export function getOhmEthLiquidityBalance(
     getUniswapV2PairBalance(ohmEthLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
   );
 
-  return getLiquidityTokenRecords(metricName, liquidityBalance, blockNumber, riskFree);
+  return getLiquidityTokenRecordsWrapper(metricName, liquidityBalance, blockNumber, riskFree);
 }
 
 /**
@@ -664,13 +667,13 @@ export function getOhmEthLiquidityBalance(
  * @param metricName
  * @param blockNumber the current block number
  * @param riskFree whether the price of the LP is part of risk-free value
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
 export function getOhmEthLiquidityV2Balance(
   metricName: string,
   blockNumber: BigInt,
   riskFree: boolean,
-): TokenRecords {
+): TokenRecordsWrapper {
   const liquidityBalance = new LiquidityBalances(PAIR_UNISWAP_V2_OHM_ETH_V2);
   const ohmEthLiquidityPair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_ETH_V2, blockNumber);
   liquidityBalance.addBalance(
@@ -686,7 +689,7 @@ export function getOhmEthLiquidityV2Balance(
     getUniswapV2PairBalance(ohmEthLiquidityPair, TREASURY_ADDRESS_V3, blockNumber),
   );
 
-  return getLiquidityTokenRecords(metricName, liquidityBalance, blockNumber, riskFree);
+  return getLiquidityTokenRecordsWrapper(metricName, liquidityBalance, blockNumber, riskFree);
 }
 
 /**
@@ -710,10 +713,10 @@ export function getOhmEthProtocolOwnedLiquidity(
 ): BigDecimal {
   const v1Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_ETH, blockNumber);
   const v2Pair = getUniswapV2Pair(PAIR_UNISWAP_V2_OHM_ETH_V2, blockNumber);
-  const v1Balance = getTokenRecordsBalance(
+  const v1Balance = getTokenRecordsWrapperBalance(
     getOhmEthLiquidityBalance(metricName, blockNumber, false),
   );
-  const v2Balance = getTokenRecordsBalance(
+  const v2Balance = getTokenRecordsWrapperBalance(
     getOhmEthLiquidityV2Balance(metricName, blockNumber, false),
   );
   const v1TotalSupply: BigInt = v1Pair ? v1Pair.totalSupply() : BigInt.fromString("-1");
@@ -737,21 +740,21 @@ export function getOhmEthProtocolOwnedLiquidity(
  * @param riskFree If `riskFree` is true, the risk-free value will be returned
  * @param excludeOhmValue should be true if only the non-OHM value of the LP is desired
  * @param blockNumber
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
 export function getOwnedLiquidityPoolValue(
   metricName: string,
   riskFree: boolean,
   excludeOhmValue: boolean,
   blockNumber: BigInt,
-): TokenRecords {
+): TokenRecordsWrapper {
   log.info("Calculating liquidity pool value", []);
-  const records = newTokenRecords(
+  const records = newTokenRecordsWrapper(
     addToMetricName(metricName, "OwnedLiquidityPoolValue"),
     blockNumber,
   );
 
-  combineTokenRecords(
+  combineTokenRecordsWrapper(
     records,
     getLiquidityBalances(records.id, null, riskFree, excludeOhmValue, false, blockNumber),
   );

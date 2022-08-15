@@ -17,7 +17,7 @@ import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
 import { vlCVX } from "../../generated/ProtocolMetrics/vlCVX";
-import { TokenRecord, TokenRecords } from "../../generated/schema";
+import { TokenRecord, TokenRecordsWrapper } from "../../generated/schema";
 import {
   ALLOCATOR_ONSEN_ID_NOT_FOUND,
   ALLOCATOR_RARI_ID_NOT_FOUND,
@@ -51,9 +51,9 @@ import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
 import {
   addToMetricName,
-  combineTokenRecords,
+  combineTokenRecordsWrapper,
   newTokenRecord,
-  newTokenRecords,
+  newTokenRecordsWrapper,
   pushTokenRecord,
 } from "./TokenRecordHelper";
 
@@ -606,16 +606,16 @@ export function getERC20TokenRecordFromWallet(
  * @param contract ERC20 contract
  * @param rate the unit price/rate of the token
  * @param blockNumber the current block number
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
-export function getERC20TokenRecordsFromWallets(
+export function getERC20TokenRecordsWrapperFromWallets(
   metricName: string,
   contractAddress: string,
   contract: ERC20,
   rate: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(
     addToMetricName(metricName, "ERC20/" + getContractName(contractAddress)),
     blockNumber,
   );
@@ -675,8 +675,8 @@ export function getTokeStakedBalancesFromWallets(
   tokenAddress: string,
   rate: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "TokeStaked"), blockNumber);
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(addToMetricName(metricName, "TokeStaked"), blockNumber);
 
   // Check that the token matches
   const contract = TokemakStaking.bind(Address.fromString(TOKE_STAKING));
@@ -775,8 +775,8 @@ export function getLiquityStakedBalancesFromWallets(
   tokenAddress: string,
   rate: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "LiquityStaked"), blockNumber);
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(addToMetricName(metricName, "LiquityStaked"), blockNumber);
 
   // Check that the token matches
   const contract = LQTYStaking.bind(Address.fromString(LQTY_STAKING));
@@ -877,8 +877,8 @@ export function getBalancerGaugeBalanceFromWallets(
   tokenAddress: string,
   rate: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(metricName, blockNumber);
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(metricName, blockNumber);
 
   log.debug(
     "getBalancerGaugeBalanceFromWallets: determining wallet balances in liquidity gauge {} ({}) of token {} ({}) at block {}",
@@ -974,11 +974,11 @@ export function getBalancerGaugeBalancesFromWallets(
   tokenAddress: string,
   rate: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "BalancerGauge"), blockNumber);
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(addToMetricName(metricName, "BalancerGauge"), blockNumber);
 
   for (let i = 0; i < BALANCER_LIQUIDITY_GAUGES.length; i++) {
-    combineTokenRecords(
+    combineTokenRecordsWrapper(
       records,
       getBalancerGaugeBalanceFromWallets(
         records.id,
@@ -1033,15 +1033,15 @@ function getTokeAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
  * @param tokenAddress ERC20 contract to find the balance of
  * @param price
  * @param blockNumber the current block number
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
 export function getTokeAllocatorRecords(
   metricName: string,
   tokenAddress: string,
   price: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(
     addToMetricName(metricName, getContractName(TOKE_ALLOCATOR)),
     blockNumber,
   );
@@ -1124,15 +1124,15 @@ function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
  * @param tokenAddress ERC20 contract to find the balance of
  * @param price
  * @param blockNumber the current block number
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
 export function getRariAllocatorRecords(
   metricName: string,
   tokenAddress: string,
   price: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(
     addToMetricName(metricName, getContractName(RARI_ALLOCATOR)),
     blockNumber,
   );
@@ -1164,15 +1164,15 @@ export function getRariAllocatorRecords(
  * @param tokenAddress ERC20 contract to find the balance of
  * @param price
  * @param blockNumber the current block number
- * @returns TokenRecords object
+ * @returns TokenRecordsWrapper object
  */
 export function getOnsenAllocatorRecords(
   metricName: string,
   tokenAddress: string,
   price: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(
     addToMetricName(metricName, getContractName(ONSEN_ALLOCATOR)),
     blockNumber,
   );
@@ -1276,8 +1276,8 @@ export function getConvexStakedRecords(
   metricName: string,
   tokenAddress: string,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(
     addToMetricName(metricName, "StakedConvexAllocator"),
     blockNumber,
   );
@@ -1416,8 +1416,11 @@ export function getLiquityStabilityPoolRecords(
   tokenAddress: string,
   rate: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "LiquityStabilityPool"), blockNumber);
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(
+    addToMetricName(metricName, "LiquityStabilityPool"),
+    blockNumber,
+  );
 
   const balance = getLiquityStabilityPoolBalance(LUSD_ALLOCATOR, tokenAddress, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
@@ -1472,8 +1475,8 @@ export function getVeFXSAllocatorRecords(
   metricName: string,
   tokenAddress: string,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(
     addToMetricName(metricName, getContractName(VEFXS_ALLOCATOR)),
     blockNumber,
   );
@@ -1530,8 +1533,11 @@ export function getVlCvxUnlockedRecords(
   tokenAddress: string,
   rate: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "Unlocked vlCVX"), blockNumber);
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(
+    addToMetricName(metricName, "Unlocked vlCVX"),
+    blockNumber,
+  );
 
   const wallets = getWalletAddressesForContract(tokenAddress);
   for (let i = 0; i < wallets.length; i++) {

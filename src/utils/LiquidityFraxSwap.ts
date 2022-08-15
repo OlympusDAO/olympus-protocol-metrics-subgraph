@@ -1,7 +1,7 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { FraxSwapPool } from "../../generated/ProtocolMetrics/FraxSwapPool";
-import { TokenRecord, TokenRecords } from "../../generated/schema";
+import { TokenRecord, TokenRecordsWrapper } from "../../generated/schema";
 import {
   ERC20_OHM_V2,
   getContractName,
@@ -14,7 +14,7 @@ import { getUSDRate } from "./Price";
 import {
   addToMetricName,
   newTokenRecord,
-  newTokenRecords,
+  newTokenRecordsWrapper,
   pushTokenRecord,
 } from "./TokenRecordHelper";
 
@@ -218,7 +218,7 @@ function getFraxSwapPairTokenRecord(
 }
 
 /**
- * Provides TokenRecords representing the FraxSwap pair identified by {pairAddress}.
+ * Provides TokenRecordsWrapper representing the FraxSwap pair identified by {pairAddress}.
  *
  * @param metricName
  * @param pairAddress The address of the pool
@@ -235,8 +235,8 @@ export function getFraxSwapPairRecords(
   restrictToTokenValue: boolean,
   blockNumber: BigInt,
   tokenAddress: string | null = null,
-): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "FraxSwapPool"), blockNumber);
+): TokenRecordsWrapper {
+  const records = newTokenRecordsWrapper(addToMetricName(metricName, "FraxSwapPool"), blockNumber);
   // If we are restricting by token and tokenAddress does not match either side of the pair
   if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
     log.debug(
@@ -357,12 +357,12 @@ export function getFraxSwapPairTokenQuantityRecords(
   pairAddress: string,
   tokenAddress: string,
   blockNumber: BigInt,
-): TokenRecords {
+): TokenRecordsWrapper {
   log.info(
     "getFraxSwapPairTokenQuantityRecords: Calculating quantity of token {} in FraxSwap pool {}",
     [getContractName(tokenAddress), getContractName(pairAddress)],
   );
-  const records = newTokenRecords(
+  const records = newTokenRecordsWrapper(
     addToMetricName(metricName, "FraxSwapPoolTokenQuantity"),
     blockNumber,
   );
