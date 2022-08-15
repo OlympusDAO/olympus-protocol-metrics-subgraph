@@ -4,9 +4,9 @@ import { assert, describe, test } from "matchstick-as/assembly/index";
 import { TokenRecord, TokenRecordsWrapper } from "../generated/schema";
 import {
   combineTokenRecordsWrapper,
+  createOrUpdateTokenRecord,
   getTokenRecordsWrapperBalance,
   getTokenRecordsWrapperValue,
-  newTokenRecord,
   newTokenRecordsWrapper,
   pushTokenRecord,
   setTokenRecordMultiplier,
@@ -15,7 +15,7 @@ import {
 } from "../src/utils/TokenRecordHelper";
 
 const createTokenRecord = (): TokenRecord => {
-  return newTokenRecord(
+  return createOrUpdateTokenRecord(
     "metric",
     "name",
     "tokenAddress",
@@ -53,7 +53,7 @@ describe("push", () => {
   test("multiple", () => {
     const records = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
-    const record2 = newTokenRecord(
+    const record2 = createOrUpdateTokenRecord(
       "metric",
       "name2",
       "tokenAddress2",
@@ -93,7 +93,7 @@ describe("combine", () => {
     pushTokenRecord(records1, record1);
 
     const records2 = newTokenRecordsWrapper("test", BigInt.fromString("1"));
-    const record2 = newTokenRecord(
+    const record2 = createOrUpdateTokenRecord(
       "metric",
       "name2",
       "tokenAddress2",
@@ -131,7 +131,7 @@ describe("multiplier", () => {
   test("push, records updated", () => {
     const records1 = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
-    const record2 = newTokenRecord(
+    const record2 = createOrUpdateTokenRecord(
       "metric",
       "name2",
       "tokenAddress2",
@@ -159,7 +159,7 @@ describe("multiplier", () => {
   test("combine, records updated", () => {
     const records1 = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
-    const record2 = newTokenRecord(
+    const record2 = createOrUpdateTokenRecord(
       "metric",
       "name2",
       "tokenAddres2",
@@ -198,7 +198,7 @@ describe("balance", () => {
   test("records updated", () => {
     const records1 = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
-    const record2 = newTokenRecord(
+    const record2 = createOrUpdateTokenRecord(
       "metric",
       "name2",
       "tokenAddress2",
@@ -220,7 +220,7 @@ describe("value", () => {
   test("correct", () => {
     const records1 = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
-    const record2 = newTokenRecord(
+    const record2 = createOrUpdateTokenRecord(
       "metric",
       "name2",
       "tokenAddress2",
@@ -242,7 +242,7 @@ describe("sorted records", () => {
   test("correct", () => {
     const records1 = newTokenRecordsWrapper("test", BigInt.fromString("1"));
     const record1 = createTokenRecord();
-    const record2 = newTokenRecord(
+    const record2 = createOrUpdateTokenRecord(
       "metric",
       "name2",
       "tokenAddress2",

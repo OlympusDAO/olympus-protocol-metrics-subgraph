@@ -21,20 +21,11 @@ import { getVolatileTokenBalances } from "./TokenVolatile";
  * @returns TokenRecordsWrapper object
  */
 export function getTreasuryVolatileBacking(
-  metricName: string,
+  date: string,
   blockNumber: BigInt,
   liquidOnly: boolean,
 ): TokenRecordsWrapper {
-  return getVolatileTokenBalances(
-    metricName,
-    liquidOnly,
-    false,
-    true,
-    false,
-    true,
-    true,
-    blockNumber,
-  );
+  return getVolatileTokenBalances(date, liquidOnly, false, true, false, true, true, blockNumber);
 }
 
 /**

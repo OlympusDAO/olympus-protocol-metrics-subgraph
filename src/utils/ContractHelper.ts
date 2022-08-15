@@ -49,10 +49,11 @@ import {
 } from "./Constants";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
+import { TokenCategoryPOL, TokenCategoryVolatile } from "./TokenDefinition";
 import {
   addToMetricName,
   combineTokenRecordsWrapper,
-  newTokenRecord,
+  createOrUpdateTokenRecord,
   newTokenRecordsWrapper,
   pushTokenRecord,
 } from "./TokenRecordHelper";
@@ -585,7 +586,7 @@ export function getERC20TokenRecordFromWallet(
   const balance = toDecimal(getERC20Balance(contract, walletAddress, blockNumber), decimals);
   if (!balance || balance.equals(BigDecimal.zero())) return null;
 
-  return newTokenRecord(
+  return createOrUpdateTokenRecord(
     metricName,
     getContractName(contractAddress),
     contractAddress,
@@ -594,6 +595,9 @@ export function getERC20TokenRecordFromWallet(
     rate,
     balance,
     blockNumber,
+    BigDecimal.fromString("1"),
+    TokenCategoryVolatile,
+    true, // TODO shift to deriving this from TokenDefinition
   );
 }
 
@@ -623,7 +627,7 @@ export function getERC20TokenRecordsWrapperFromWallets(
 
   for (let i = 0; i < wallets.length; i++) {
     const record = getERC20TokenRecordFromWallet(
-      records.id,
+      metricName,
       contractAddress,
       wallets[i],
       contract,
@@ -722,8 +726,8 @@ export function getTokeStakedBalancesFromWallets(
 
     pushTokenRecord(
       records,
-      newTokenRecord(
-        records.id,
+      createOrUpdateTokenRecord(
+        metricName,
         getContractName(tokenAddress, "Staked"), // Needed to differentiate as there is no token for TOKE
         tokenAddress,
         getContractName(currentWallet),
@@ -731,6 +735,9 @@ export function getTokeStakedBalancesFromWallets(
         rate,
         balance,
         blockNumber,
+        BigDecimal.fromString("1"),
+        TokenCategoryVolatile,
+        true,
       ),
     );
   }
@@ -822,8 +829,8 @@ export function getLiquityStakedBalancesFromWallets(
 
     pushTokenRecord(
       records,
-      newTokenRecord(
-        records.id,
+      createOrUpdateTokenRecord(
+        metricName,
         getContractName(tokenAddress, "Staked"), // Needed to differentiate as there is no token for LQTY
         tokenAddress,
         getContractName(currentWallet),
@@ -831,6 +838,9 @@ export function getLiquityStakedBalancesFromWallets(
         rate,
         balance,
         blockNumber,
+        BigDecimal.fromString("1"),
+        TokenCategoryVolatile,
+        true,
       ),
     );
   }
@@ -943,8 +953,8 @@ export function getBalancerGaugeBalanceFromWallets(
 
     pushTokenRecord(
       records,
-      newTokenRecord(
-        records.id,
+      createOrUpdateTokenRecord(
+        metricName,
         getContractName(tokenAddress, "Gauge Deposit"),
         tokenAddress,
         getContractName(currentWallet),
@@ -952,6 +962,9 @@ export function getBalancerGaugeBalanceFromWallets(
         rate,
         balance,
         blockNumber,
+        BigDecimal.fromString("1"),
+        TokenCategoryPOL,
+        true,
       ),
     );
   }
@@ -981,7 +994,7 @@ export function getBalancerGaugeBalancesFromWallets(
     combineTokenRecordsWrapper(
       records,
       getBalancerGaugeBalanceFromWallets(
-        records.id,
+        metricName,
         BALANCER_LIQUIDITY_GAUGES[i],
         tokenAddress,
         rate,
@@ -1051,8 +1064,8 @@ export function getTokeAllocatorRecords(
 
   pushTokenRecord(
     records,
-    newTokenRecord(
-      records.id,
+    createOrUpdateTokenRecord(
+      metricName,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(TOKE_ALLOCATOR),
@@ -1060,6 +1073,9 @@ export function getTokeAllocatorRecords(
       price,
       balance,
       blockNumber,
+      BigDecimal.fromString("1"),
+      TokenCategoryVolatile,
+      true,
     ),
   );
 
@@ -1142,8 +1158,8 @@ export function getRariAllocatorRecords(
 
   pushTokenRecord(
     records,
-    newTokenRecord(
-      records.id,
+    createOrUpdateTokenRecord(
+      metricName,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(RARI_ALLOCATOR),
@@ -1151,6 +1167,9 @@ export function getRariAllocatorRecords(
       price,
       balance,
       blockNumber,
+      BigDecimal.fromString("1"),
+      TokenCategoryVolatile,
+      true,
     ),
   );
 
@@ -1182,8 +1201,8 @@ export function getOnsenAllocatorRecords(
 
   pushTokenRecord(
     records,
-    newTokenRecord(
-      records.id,
+    createOrUpdateTokenRecord(
+      metricName,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(ONSEN_ALLOCATOR),
@@ -1191,6 +1210,9 @@ export function getOnsenAllocatorRecords(
       price,
       balance,
       blockNumber,
+      BigDecimal.fromString("1"),
+      TokenCategoryVolatile,
+      true,
     ),
   );
 
@@ -1289,7 +1311,6 @@ export function getConvexStakedRecords(
     // Look through staking contracts
     for (let j = 0; j < CONVEX_STAKING_CONTRACTS.length; j++) {
       const stakingAddress = CONVEX_STAKING_CONTRACTS[j];
-      const currentMetricName = addToMetricName(records.id, getContractName(stakingAddress));
 
       const balance = getConvexStakedBalance(
         tokenAddress,
@@ -1301,15 +1322,18 @@ export function getConvexStakedRecords(
 
       pushTokenRecord(
         records,
-        newTokenRecord(
-          currentMetricName,
-          getContractName(tokenAddress),
+        createOrUpdateTokenRecord(
+          metricName,
+          getContractName(tokenAddress, getContractName(stakingAddress)),
           tokenAddress,
           getContractName(allocatorAddress),
           allocatorAddress,
           getUSDRate(tokenAddress, blockNumber),
           balance,
           blockNumber,
+          BigDecimal.fromString("1"),
+          TokenCategoryVolatile,
+          true,
         ),
       );
     }
@@ -1431,8 +1455,8 @@ export function getLiquityStabilityPoolRecords(
   );
   pushTokenRecord(
     records,
-    newTokenRecord(
-      records.id,
+    createOrUpdateTokenRecord(
+      metricName,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(LUSD_ALLOCATOR),
@@ -1440,6 +1464,9 @@ export function getLiquityStabilityPoolRecords(
       rate,
       balance,
       blockNumber,
+      BigDecimal.fromString("1"),
+      TokenCategoryVolatile,
+      true,
     ),
   );
 
@@ -1488,8 +1515,8 @@ export function getVeFXSAllocatorRecords(
 
   pushTokenRecord(
     records,
-    newTokenRecord(
-      records.id,
+    createOrUpdateTokenRecord(
+      metricName,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(VEFXS_ALLOCATOR),
@@ -1497,6 +1524,9 @@ export function getVeFXSAllocatorRecords(
       fxsRate,
       balance,
       blockNumber,
+      BigDecimal.fromString("1"),
+      TokenCategoryVolatile,
+      false,
     ),
   );
 
@@ -1548,8 +1578,8 @@ export function getVlCvxUnlockedRecords(
 
     pushTokenRecord(
       records,
-      newTokenRecord(
-        records.id,
+      createOrUpdateTokenRecord(
+        metricName,
         getContractName(tokenAddress, "Unlocked"),
         tokenAddress,
         getContractName(currentWallet),
@@ -1557,6 +1587,9 @@ export function getVlCvxUnlockedRecords(
         rate,
         balance,
         blockNumber,
+        BigDecimal.fromString("1"),
+        TokenCategoryVolatile,
+        true,
       ),
     );
   }

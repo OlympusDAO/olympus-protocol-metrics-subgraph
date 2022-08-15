@@ -3,13 +3,13 @@ import { assert, describe, test } from "matchstick-as/assembly/index";
 
 import { TokenRecord } from "../generated/schema";
 import {
+  createOrUpdateTokenRecord,
   getTokenRecordValue,
-  newTokenRecord,
   setTokenRecordMultiplier,
 } from "../src/utils/TokenRecordHelper";
 
 const createTokenRecord = (): TokenRecord => {
-  return newTokenRecord(
+  return createOrUpdateTokenRecord(
     "metric",
     "name",
     "tokenAddress",
@@ -36,7 +36,7 @@ describe("constructor", () => {
   });
 
   test("custom multiplier", () => {
-    const record = newTokenRecord(
+    const record = createOrUpdateTokenRecord(
       "metric",
       "name",
       "tokenAddress",
@@ -74,7 +74,7 @@ describe("multiplier", () => {
 
 describe("value", () => {
   test("multiplier = 1", () => {
-    const record = newTokenRecord(
+    const record = createOrUpdateTokenRecord(
       "metric",
       "name",
       "tokenAddress",
@@ -90,7 +90,7 @@ describe("value", () => {
   });
 
   test("multiplier = 0.25", () => {
-    const record = newTokenRecord(
+    const record = createOrUpdateTokenRecord(
       "metric",
       "name",
       "tokenAddress",

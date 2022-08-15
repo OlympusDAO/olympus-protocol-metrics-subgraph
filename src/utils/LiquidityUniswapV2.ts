@@ -6,9 +6,10 @@ import { getContractName, getWalletAddressesForContract, liquidityPairHasToken }
 import { getERC20, getUniswapV2Pair } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getBaseOhmUsdRate, getUSDRateUniswapV2 } from "./Price";
+import { TokenCategoryPOL } from "./TokenDefinition";
 import {
   addToMetricName,
-  newTokenRecord,
+  createOrUpdateTokenRecord,
   newTokenRecordsWrapper,
   pushTokenRecord,
 } from "./TokenRecordHelper";
@@ -262,7 +263,7 @@ export function getUniswapV2PairRecord(
 
   const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
 
-  return newTokenRecord(
+  return createOrUpdateTokenRecord(
     metricName,
     getContractName(pairAddress),
     pairAddress,
@@ -272,6 +273,8 @@ export function getUniswapV2PairRecord(
     pairTokenBalanceDecimal,
     blockNumber,
     excludeOhmValue ? BigDecimal.fromString("0.5") : BigDecimal.fromString("1"),
+    TokenCategoryPOL,
+    true,
   );
 }
 
@@ -466,7 +469,7 @@ export function getUniswapV2PairTokenQuantity(
     const tokenBalance = totalQuantity.times(record.balance).div(poolTokenTotalSupply);
     pushTokenRecord(
       records,
-      newTokenRecord(
+      createOrUpdateTokenRecord(
         records.id,
         getContractName(tokenAddress) + " in " + getContractName(pairAddress),
         pairAddress,

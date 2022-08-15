@@ -33,7 +33,7 @@ import { getBaseOhmUsdRate } from "./Price";
 import {
   addToMetricName,
   combineTokenRecordsWrapper,
-  newTokenRecord,
+  createOrUpdateTokenRecord,
   newTokenRecordsWrapper,
   pushTokenRecord,
   setTokenRecordsWrapperMultiplier,
@@ -143,7 +143,7 @@ function getMigrationOffsetRecord(metricName: string, blockNumber: BigInt): Toke
     offset.toString(),
   ]);
 
-  return newTokenRecord(
+  return createOrUpdateTokenRecord(
     metricName,
     getContractName(ERC20_OHM_V2, "Migration Offset"),
     ERC20_OHM_V2,
@@ -194,7 +194,7 @@ export function getCirculatingSupply(
   // Total supply
   pushTokenRecord(
     records,
-    newTokenRecord(
+    createOrUpdateTokenRecord(
       records.id,
       getContractName(ohmContractAddress),
       ohmContractAddress,
@@ -213,7 +213,7 @@ export function getCirculatingSupply(
 
     pushTokenRecord(
       records,
-      newTokenRecord(
+      createOrUpdateTokenRecord(
         records.id,
         getContractName(ohmContractAddress),
         ohmContractAddress,

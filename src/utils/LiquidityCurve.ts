@@ -15,9 +15,10 @@ import {
 import { getConvexStakedBalance, getERC20 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
+import { TokenCategoryPOL } from "./TokenDefinition";
 import {
   addToMetricName,
-  newTokenRecord,
+  createOrUpdateTokenRecord,
   newTokenRecordsWrapper,
   pushTokenRecord,
 } from "./TokenRecordHelper";
@@ -140,7 +141,7 @@ function getCurvePairStakedRecord(
   );
   if (!balance || balance.equals(BigDecimal.zero())) return null;
 
-  return newTokenRecord(
+  return createOrUpdateTokenRecord(
     metricName,
     getContractName(stakedTokenAddress),
     stakedTokenAddress,
@@ -150,6 +151,8 @@ function getCurvePairStakedRecord(
     balance,
     blockNumber,
     multiplier,
+    TokenCategoryPOL,
+    true,
   );
 }
 
@@ -192,7 +195,7 @@ function getCurvePairRecord(
 
   const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
 
-  return newTokenRecord(
+  return createOrUpdateTokenRecord(
     metricName,
     getContractName(pairTokenAddress),
     pairTokenAddress,
@@ -202,6 +205,8 @@ function getCurvePairRecord(
     pairTokenBalanceDecimal,
     blockNumber,
     multiplier,
+    TokenCategoryPOL,
+    true,
   );
 }
 
@@ -357,7 +362,7 @@ export function getCurvePairRecords(
 
     // Normal token first
     const record = getCurvePairRecord(
-      records.id,
+      metricName,
       pairTokenAddress,
       unitRate,
       walletAddress,
@@ -374,7 +379,7 @@ export function getCurvePairRecords(
       const stakingAddress = CONVEX_STAKING_CONTRACTS[j];
 
       const stakedRecord = getCurvePairStakedRecord(
-        records.id,
+        metricName,
         pairTokenAddress,
         getConvexStakedToken(pairTokenAddress),
         walletAddress,
@@ -503,7 +508,7 @@ export function getCurvePairTokenQuantity(
     const tokenBalance = totalQuantity.times(record.balance).div(poolTokenTotalSupply);
     pushTokenRecord(
       records,
-      newTokenRecord(
+      createOrUpdateTokenRecord(
         metricName,
         getContractName(tokenAddress) + " in " + getContractName(poolTokenAddress),
         poolTokenAddress,

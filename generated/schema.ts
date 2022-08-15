@@ -1356,6 +1356,15 @@ export class TokenRecord extends Entity {
     this.set("block", Value.fromBigInt(value));
   }
 
+  get date(): string {
+    const value = this.get("date");
+    return value!.toString();
+  }
+
+  set date(value: string) {
+    this.set("date", Value.fromString(value));
+  }
+
   get token(): string {
     const value = this.get("token");
     return value!.toString();
@@ -1426,6 +1435,33 @@ export class TokenRecord extends Entity {
 
   set value(value: BigDecimal) {
     this.set("value", Value.fromBigDecimal(value));
+  }
+
+  get category(): string {
+    const value = this.get("category");
+    return value!.toString();
+  }
+
+  set category(value: string) {
+    this.set("category", Value.fromString(value));
+  }
+
+  get isLiquid(): boolean {
+    const value = this.get("isLiquid");
+    return value!.toBoolean();
+  }
+
+  set isLiquid(value: boolean) {
+    this.set("isLiquid", Value.fromBoolean(value));
+  }
+
+  get isBluechip(): boolean {
+    const value = this.get("isBluechip");
+    return value!.toBoolean();
+  }
+
+  set isBluechip(value: boolean) {
+    this.set("isBluechip", Value.fromBoolean(value));
   }
 }
 

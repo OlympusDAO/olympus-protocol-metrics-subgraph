@@ -1,6 +1,7 @@
 import { log } from "@graphprotocol/graph-ts";
 
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
+import { TokenCategory, TokenDefinition } from "./TokenDefinition";
 
 // Tokens definition
 export const DAIBOND_TOKEN = "DAI";
@@ -147,6 +148,7 @@ export const ERC20_USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48".toLowerCa
 export const ERC20_UST = "0xa693b19d2931d498c5b318df961919bb4aee87a5".toLowerCase();
 export const ERC20_UST_BLOCK_DEATH = "14730000";
 export const ERC20_UST_BLOCK = "13408366";
+
 export const ERC20_STABLE_TOKENS = [
   ERC20_ADAI,
   ERC20_CVX_FRAX_3CRV,
@@ -198,41 +200,32 @@ export const ERC20_XSUSHI = "0x8798249c2e607446efb7ad49ec89dd1865ff4272".toLower
 export const NATIVE_ETH = "-999999";
 
 export const ERC20_VOLATILE_TOKENS = [
-  ERC20_ALCX,
-  ERC20_AURA,
-  ERC20_AURA_VL,
-  ERC20_CRV_3POOL,
-  ERC20_CRV,
-  ERC20_CVX_CRV,
-  // ERC20_CVX_FXS, // Needs Curve liquidity pool for price lookup
-  // ERC20_CVX_OHMETH,
-  ERC20_CVX_VL_V1,
-  ERC20_CVX_VL_V2,
-  ERC20_CVX,
-  ERC20_FDT,
-  ERC20_FOX,
-  ERC20_FPIS,
-  ERC20_FXS_VE,
-  ERC20_FXS,
-  ERC20_KP3R,
-  ERC20_LQTY,
-  ERC20_PRIME,
-  ERC20_SYN,
-  ERC20_THOR,
-  ERC20_TOKE,
-  ERC20_TRIBE,
-  ERC20_WBTC,
-  ERC20_WETH,
-  ERC20_XSUSHI,
-  NATIVE_ETH,
+  new TokenDefinition(ERC20_ALCX, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_AURA, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_AURA_VL, TokenCategory.Volatile, false, false),
+  new TokenDefinition(ERC20_CRV_3POOL, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_CRV, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_CVX_CRV, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_CVX_VL_V1, TokenCategory.Volatile, false, false),
+  new TokenDefinition(ERC20_CVX_VL_V2, TokenCategory.Volatile, false, false),
+  new TokenDefinition(ERC20_CVX, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_FDT, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_FOX, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_FPIS, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_FXS_VE, TokenCategory.Volatile, false, false),
+  new TokenDefinition(ERC20_FXS, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_KP3R, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_LQTY, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_PRIME, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_SYN, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_THOR, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_TOKE, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_TRIBE, TokenCategory.Volatile, true, false),
+  new TokenDefinition(ERC20_WBTC, TokenCategory.Volatile, true, true),
+  new TokenDefinition(ERC20_WETH, TokenCategory.Volatile, true, true),
+  new TokenDefinition(ERC20_XSUSHI, TokenCategory.Volatile, true, false),
+  new TokenDefinition(NATIVE_ETH, TokenCategory.Volatile, true, true),
 ];
-export const ERC20_VOLATILE_ILLIQUID_TOKENS = [
-  ERC20_FXS_VE,
-  ERC20_AURA_VL,
-  ERC20_CVX_VL_V1,
-  ERC20_CVX_VL_V2,
-];
-export const ERC20_VOLATILE_BLUE_CHIP_TOKENS = [ERC20_WBTC, ERC20_WETH];
 
 const CONVEX_STAKED_TOKENS = new Map<string, string>();
 CONVEX_STAKED_TOKENS.set(ERC20_CRV_OHMETH, ERC20_CVX_OHMETH);

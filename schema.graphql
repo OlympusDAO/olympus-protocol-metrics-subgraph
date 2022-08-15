@@ -135,10 +135,10 @@ type BondDiscount @entity {
   ohmlusd_discount: BigDecimal!
 }
 
-type TokenRecord @entity(immutable: true) {
+type TokenRecord @entity {
   id: ID!
   block: BigInt!
-  # timestampISO8901: String!
+  date: String!
   token: String!
   tokenAddress: String!
   source: String!
@@ -147,7 +147,10 @@ type TokenRecord @entity(immutable: true) {
   balance: BigDecimal!
   multiplier: BigDecimal!
   value: BigDecimal! # Calculated
-  # TODO Add token category, etc
+  category: String!
+  isLiquid: Boolean!
+  isBluechip: Boolean!
+  # excluding OHM value
 }
 
 type TokenRecordsWrapper @entity {

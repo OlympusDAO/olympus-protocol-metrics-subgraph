@@ -11,9 +11,10 @@ import {
 import { getERC20 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
+import { TokenCategoryPOL } from "./TokenDefinition";
 import {
   addToMetricName,
-  newTokenRecord,
+  createOrUpdateTokenRecord,
   newTokenRecordsWrapper,
   pushTokenRecord,
 } from "./TokenRecordHelper";
@@ -204,7 +205,7 @@ function getFraxSwapPairTokenRecord(
     return null;
   }
 
-  return newTokenRecord(
+  return createOrUpdateTokenRecord(
     metricName,
     getContractName(pairAddress),
     pairAddress,
@@ -214,6 +215,8 @@ function getFraxSwapPairTokenRecord(
     tokenBalance,
     blockNumber,
     multiplier,
+    TokenCategoryPOL,
+    true,
   );
 }
 
@@ -282,7 +285,7 @@ export function getFraxSwapPairRecords(
     const walletAddress = wallets[i];
 
     const record = getFraxSwapPairTokenRecord(
-      records.id,
+      metricName,
       pairContract,
       unitRate,
       walletAddress,
@@ -400,7 +403,7 @@ export function getFraxSwapPairTokenQuantityRecords(
     const tokenBalance = totalQuantity.times(record.balance).div(pairTotalSupply);
     pushTokenRecord(
       records,
-      newTokenRecord(
+      createOrUpdateTokenRecord(
         records.id,
         getContractName(tokenAddress) + " in " + getContractName(pairAddress),
         pairAddress,

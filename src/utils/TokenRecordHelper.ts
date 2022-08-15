@@ -35,7 +35,7 @@ export function setTokenRecordMultiplier(record: TokenRecord, multiplier: BigDec
  * This function generates an id that should be unique,
  * and saves the record.
  *
- * @param metric
+ * @param timestamp
  * @param tokenName
  * @param tokenAddress
  * @param sourceName
@@ -46,8 +46,8 @@ export function setTokenRecordMultiplier(record: TokenRecord, multiplier: BigDec
  * @param multiplier
  * @returns
  */
-export function newTokenRecord(
-  metric: string,
+export function createOrUpdateTokenRecord(
+  date: string,
   tokenName: string,
   tokenAddress: string,
   sourceName: string,
@@ -56,10 +56,22 @@ export function newTokenRecord(
   balance: BigDecimal,
   blockNumber: BigInt,
   multiplier: BigDecimal = BigDecimal.fromString("1"),
+  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
+  category: string = "",
+  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
+  isLiquid: boolean = false,
+  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
+  isBluechip: boolean = false,
 ): TokenRecord {
-  // We need to separate records between metrics, otherwise they get clobbered
-  const record = new TokenRecord(`${blockNumber.toString()}/${sourceName}/${tokenName}`);
+  const recordId = `${date}/${sourceName}/${tokenName}`;
+
+  // Attempt to fetch the current day's record
+  const existingRecord = TokenRecord.load(recordId);
+
+  const record = existingRecord ? existingRecord : new TokenRecord(recordId);
+
   record.block = blockNumber;
+  record.date = date;
   record.token = tokenName;
   record.tokenAddress = tokenAddress;
   record.source = sourceName;
@@ -67,6 +79,9 @@ export function newTokenRecord(
   record.rate = rate;
   record.balance = balance;
   record.multiplier = multiplier;
+  record.category = category;
+  record.isLiquid = isLiquid;
+  record.isBluechip = isBluechip;
   record.value = getTokenRecordValue(record);
 
   record.save();

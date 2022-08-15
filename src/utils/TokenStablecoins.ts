@@ -79,7 +79,7 @@ export function getStablecoinBalance(
   combineTokenRecordsWrapper(
     records,
     getERC20TokenRecordsWrapperFromWallets(
-      records.id,
+      metricName,
       contractAddress,
       contract,
       rate,
@@ -90,31 +90,31 @@ export function getStablecoinBalance(
   // Rari Allocator
   combineTokenRecordsWrapper(
     records,
-    getRariAllocatorRecords(records.id, contractAddress, rate, blockNumber),
+    getRariAllocatorRecords(metricName, contractAddress, rate, blockNumber),
   );
 
   // Staked Convex tokens
   combineTokenRecordsWrapper(
     records,
-    getConvexStakedRecords(records.id, contractAddress, blockNumber),
+    getConvexStakedRecords(metricName, contractAddress, blockNumber),
   );
 
   // Liquity Stability Pool
   combineTokenRecordsWrapper(
     records,
-    getLiquityStabilityPoolRecords(records.id, contractAddress, rate, blockNumber),
+    getLiquityStabilityPoolRecords(metricName, contractAddress, rate, blockNumber),
   );
 
   // Onsen Allocator
   combineTokenRecordsWrapper(
     records,
-    getOnsenAllocatorRecords(records.id, contractAddress, rate, blockNumber),
+    getOnsenAllocatorRecords(metricName, contractAddress, rate, blockNumber),
   );
 
   // VeFXS Allocator
   combineTokenRecordsWrapper(
     records,
-    getVeFXSAllocatorRecords(records.id, contractAddress, blockNumber),
+    getVeFXSAllocatorRecords(metricName, contractAddress, blockNumber),
   );
 
   // Liquidity pools
@@ -122,7 +122,7 @@ export function getStablecoinBalance(
     combineTokenRecordsWrapper(
       records,
       getLiquidityBalances(
-        records.id,
+        metricName,
         contractAddress,
         riskFree,
         excludeOhmValue,
@@ -163,7 +163,7 @@ export function getStablecoinBalances(
     combineTokenRecordsWrapper(
       records,
       getStablecoinBalance(
-        records.id,
+        metricName,
         ERC20_STABLE_TOKENS[i],
         includeLiquidity,
         riskFree,
@@ -256,11 +256,12 @@ export function getUSTBalance(metricName: string, blockNumber: BigInt): TokenRec
  *
  * This currently (incorrectly) assumes that the value of each stablecoin is $1.
  *
+ * @param date
  * @param blockNumber the current block number
  * @returns TokenRecordsWrapper representing the components of the stablecoin value
  */
-export function getStableValue(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
-  return getStablecoinBalances(metricName, false, false, false, false, blockNumber);
+export function getStableValue(date: string, blockNumber: BigInt): TokenRecordsWrapper {
+  return getStablecoinBalances(date, false, false, false, false, blockNumber);
 }
 
 /**

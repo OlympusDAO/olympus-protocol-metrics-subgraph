@@ -12,10 +12,11 @@ import {
 import { getBalancerGaugeBalancesFromWallets, getERC20 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
+import { TokenCategoryPOL } from "./TokenDefinition";
 import {
   addToMetricName,
   combineTokenRecordsWrapper,
-  newTokenRecord,
+  createOrUpdateTokenRecord,
   newTokenRecordsWrapper,
   pushTokenRecord,
 } from "./TokenRecordHelper";
@@ -200,8 +201,8 @@ function getBalancerPoolTokenRecordsWrapper(
 
     pushTokenRecord(
       records,
-      newTokenRecord(
-        records.id,
+      createOrUpdateTokenRecord(
+        metricName,
         getContractName(poolTokenAddress),
         poolTokenAddress,
         getContractName(walletAddress),
@@ -210,6 +211,8 @@ function getBalancerPoolTokenRecordsWrapper(
         balance,
         blockNumber,
         multiplier,
+        TokenCategoryPOL,
+        true,
       ),
     );
   }
@@ -314,7 +317,7 @@ export function getBalancerRecords(
   combineTokenRecordsWrapper(
     records,
     getBalancerPoolTokenRecordsWrapper(
-      records.id,
+      metricName,
       poolId,
       poolTokenContract,
       unitRate,
@@ -443,7 +446,7 @@ export function getBalancerPoolTokenQuantity(
     const tokenBalance = totalQuantity.times(record.balance).div(poolTokenTotalSupply);
     pushTokenRecord(
       records,
-      newTokenRecord(
+      createOrUpdateTokenRecord(
         records.id,
         getContractName(tokenAddress) + " in " + getContractName(poolTokenAddress),
         poolTokenAddress,
