@@ -324,7 +324,7 @@ export function getUniswapV2PairRecords(
     const walletAddress = wallets[i];
 
     const record = getUniswapV2PairRecord(
-      records.id,
+      metricName,
       pairAddress,
       unitRate,
       walletAddress,

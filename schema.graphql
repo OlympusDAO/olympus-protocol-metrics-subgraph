@@ -151,6 +151,7 @@ type TokenRecord @entity {
   isLiquid: Boolean!
   isBluechip: Boolean!
   # excluding OHM value
+  # TODO consider adding timestamp
 }
 
 type TokenRecordsWrapper @entity {
