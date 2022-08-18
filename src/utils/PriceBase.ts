@@ -42,18 +42,12 @@ export function getBaseTokenOrientation(
     return PairTokenBaseOrientation.TOKEN1;
   }
 
-  /**
-   * Note: token0.toHexString() ostensibly returns the contract address,
-   * but it does not equal {ERC20_WETH} even after trimming. So we use Address.
-   */
-  const wethAddress = Address.fromString(ERC20_WETH);
-
   // Now check secondary base tokens: ETH
-  if (token0.equals(wethAddress)) {
+  if (token0.toHexString().toLowerCase() == ERC20_WETH.toLowerCase()) {
     return PairTokenBaseOrientation.TOKEN0;
   }
 
-  if (token1.equals(wethAddress)) {
+  if (token1.toHexString().toLowerCase() == ERC20_WETH.toLowerCase()) {
     return PairTokenBaseOrientation.TOKEN1;
   }
 
@@ -124,9 +118,9 @@ export function getBaseTokenUSDRate(
   if (orientation === PairTokenBaseOrientation.UNKNOWN) {
     throw new Error(
       "Unsure how to deal with unknown token base orientation for tokens " +
-        token0.toHexString() +
+        getContractName(token0.toHexString()) +
         ", " +
-        token1.toHexString(),
+        getContractName(token1.toHexString()),
     );
   }
 

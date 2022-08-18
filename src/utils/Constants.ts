@@ -259,18 +259,15 @@ export const getTokensInCategory = (category: string): TokenDefinition[] => {
   return filteredArray;
 };
 
-export const isTokenAddressInCategory = (tokenAddress: string, category: string): bool => {
-  const getCategoryFunc = (value: TokenDefinition, _index: i32, _array: TokenDefinition[]): string => value.getCategory();
-  
-  // Need to define the return type of map: https://github.com/AssemblyScript/assemblyscript/issues/449#issuecomment-459981415
-  return getTokensInCategory(category).map<string>(getCategoryFunc).includes(tokenAddress.toLowerCase());
-}
-
 export const getTokenAddressesInCategory = (category: string): string[] => {
-  const getAddressFunc = (value: TokenDefinition, _index: i32, _array: TokenDefinition[]): string => value.getAddress();
+  const getAddressFunc = (value: TokenDefinition, _index: i32, _array: TokenDefinition[]): string => value.getAddress().toLowerCase();
   
   // Need to define the return type of map: https://github.com/AssemblyScript/assemblyscript/issues/449#issuecomment-459981415
   return getTokensInCategory(category).map<string>(getAddressFunc);
+}
+
+export const isTokenAddressInCategory = (tokenAddress: string, category: string): bool => {
+  return getTokenAddressesInCategory(category).includes(tokenAddress.toLowerCase());
 }
 
 const CONVEX_STAKED_TOKENS = new Map<string, string>();
