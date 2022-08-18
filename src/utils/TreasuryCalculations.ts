@@ -3,12 +3,6 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { TokenRecord } from "../../generated/schema";
 import { pushArray } from "./ArrayHelper";
 import { getOwnedLiquidityPoolValue } from "./LiquidityCalculations";
-import {
-  getCirculatingSupply,
-  getCurrentIndex,
-  getFloatingSupply,
-  getTotalSupply,
-} from "./OhmCalculations";
 import { getStablecoinBalances, getStableValue } from "./TokenStablecoins";
 import { getVolatileTokenBalances } from "./TokenVolatile";
 
@@ -115,59 +109,6 @@ export function getTreasuryBacking(
 }
 
 /**
- * Liquid backing per gOHM is synthetically calculated as:
- *
- * liquid backing * current index / OHM floating supply
- *
- * @param blockNumber
- * @returns
- */
-export function getTreasuryLiquidBackingPerGOhm(
-  metricName: string,
-  blockNumber: BigInt,
-): BigDecimal {
-  return getTreasuryBacking(metricName, true, blockNumber)
-    .value.times(getCurrentIndex(blockNumber))
-    .div(getFloatingSupply(metricName, getTotalSupply(blockNumber), blockNumber).value);
-}
-
-/**
- * Returns the liquid backing per circulating OHM, equal to:
- *
- * liquid backing / OHM circulating supply
- * {getTreasuryTotalBacking} / {getCirculatingSupply}
- *
- * @param blockNumber
- * @returns
- */
-export function getTreasuryLiquidBackingPerOhmCirculating(
-  metricName: string,
-  blockNumber: BigInt,
-): BigDecimal {
-  return getTreasuryBacking(metricName, true, blockNumber).value.div(
-    getCirculatingSupply(metricName, blockNumber, getTotalSupply(blockNumber)).value,
-  );
-}
-
-/**
- * Returns the liquid backing per floating OHM, equal to:
- *
- * liquid backing / OHM floating supply
- * {getTreasuryTotalBacking} / {getFloatingSupply}
- *
- * @param blockNumber
- * @returns
- */
-export function getTreasuryLiquidBackingPerOhmFloating(
-  metricName: string,
-  blockNumber: BigInt,
-): BigDecimal {
-  return getTreasuryBacking(metricName, true, blockNumber).value.div(
-    getFloatingSupply(metricName, getTotalSupply(blockNumber), blockNumber).value,
-  );
-}
-
-/**
  * Returns the market value, which is composed of:
  * - stable value (getStableValue)
  * - volatile value (getVolatileValue)
@@ -178,36 +119,13 @@ export function getTreasuryLiquidBackingPerOhmFloating(
  * @param blockNumber
  * @returns
  */
-export function getMarketValue(metricName: string, blockNumber: BigInt): TokenRecord[] {
-  log.info("Calculating market value", []);
-  const records: TokenRecord[] = [];
+export function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): void {
+  // Stable without protocol-owned liquidity
+  getStablecoinBalances(timestamp, false, false, false, false, blockNumber);
 
-  // Stable and volatile without protocol-owned liquidity
-  pushArray(records, getStableValue(metricName, blockNumber));
-  pushArray(
-    records,
-    getVolatileTokenBalances(metricName, false, false, true, false, false, false, blockNumber),
-  );
+  // Volatile without protocol-owned liquidity, but blue-cip assets
+  getVolatileTokenBalances(timestamp, false, false, true, false, false, false, blockNumber);
+
   // Protocol-owned liquidity
-  pushArray(records, getOwnedLiquidityPoolValue(metricName, false, false, blockNumber));
-
-  return records;
-}
-
-/**
- * Returns the risk-free value, which is composed of:
- * - stable value (getStableValue)
- * - risk-free value of liquidity pools (getLiquidityPoolValue)
- *
- * @param blockNumber
- * @returns
- */
-export function getRiskFreeValue(metricName: string, blockNumber: BigInt): TokenRecord[] {
-  log.info("Calculating risk-free value", []);
-  const records: TokenRecord[] = [];
-
-  pushArray(records, getStableValue(metricName, blockNumber));
-  pushArray(records, getOwnedLiquidityPoolValue(metricName, true, true, blockNumber));
-
-  return records;
+  getOwnedLiquidityPoolValue(timestamp, false, false, blockNumber);
 }

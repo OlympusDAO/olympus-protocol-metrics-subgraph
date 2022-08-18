@@ -1,7 +1,7 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { FraxSwapPool } from "../../generated/ProtocolMetrics/FraxSwapPool";
-import { TokenRecord, TokenRecordsWrapper } from "../../generated/schema";
+import { TokenRecord } from "../../generated/schema";
 import {
   ERC20_OHM_V2,
   getContractName,
@@ -12,12 +12,7 @@ import { getERC20 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
 import { TokenCategoryPOL } from "./TokenDefinition";
-import {
-  addToMetricName,
-  createOrUpdateTokenRecord,
-  newTokenRecordsWrapper,
-  pushTokenRecord,
-} from "./TokenRecordHelper";
+import { createOrUpdateTokenRecord } from "./TokenRecordHelper";
 
 function getFraxSwapPair(pairAddress: string, blockNumber: BigInt): FraxSwapPool | null {
   const pair = FraxSwapPool.bind(Address.fromString(pairAddress));
@@ -182,7 +177,7 @@ function getFraxSwapPairTokenBalance(
 }
 
 function getFraxSwapPairTokenRecord(
-  metricName: string,
+  timestamp: BigInt,
   pairContract: FraxSwapPool,
   unitRate: BigDecimal,
   walletAddress: string,
@@ -206,7 +201,7 @@ function getFraxSwapPairTokenRecord(
   }
 
   return createOrUpdateTokenRecord(
-    metricName,
+    timestamp,
     getContractName(pairAddress),
     pairAddress,
     getContractName(walletAddress),
@@ -232,14 +227,14 @@ function getFraxSwapPairTokenRecord(
  * @returns
  */
 export function getFraxSwapPairRecords(
-  metricName: string,
+  timestamp: BigInt,
   pairAddress: string,
   excludeOhmValue: boolean,
   restrictToTokenValue: boolean,
   blockNumber: BigInt,
   tokenAddress: string | null = null,
-): TokenRecordsWrapper {
-  const records = newTokenRecordsWrapper(addToMetricName(metricName, "FraxSwapPool"), blockNumber);
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
   // If we are restricting by token and tokenAddress does not match either side of the pair
   if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
     log.debug(
@@ -285,7 +280,7 @@ export function getFraxSwapPairRecords(
     const walletAddress = wallets[i];
 
     const record = getFraxSwapPairTokenRecord(
-      metricName,
+      timestamp,
       pairContract,
       unitRate,
       walletAddress,
@@ -294,7 +289,7 @@ export function getFraxSwapPairRecords(
     );
 
     if (record && !record.balance.equals(BigDecimal.zero())) {
-      pushTokenRecord(records, record);
+      records.push(record);
     }
   }
 

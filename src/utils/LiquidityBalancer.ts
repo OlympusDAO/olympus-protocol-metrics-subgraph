@@ -169,8 +169,8 @@ export function getBalancerPoolTokenBalance(
   return balanceDecimals;
 }
 
-function getBalancerPoolTokenRecordsWrapper(
-  metricName: string,
+function getBalancerPoolTokenRecords(
+  timestamp: BigInt,
   poolId: string,
   poolTokenContract: BalancerPoolToken,
   unitRate: BigDecimal,
@@ -193,7 +193,7 @@ function getBalancerPoolTokenRecordsWrapper(
 
     records.push(
       createOrUpdateTokenRecord(
-        metricName,
+        timestamp,
         getContractName(poolTokenAddress),
         poolTokenAddress,
         getContractName(walletAddress),
@@ -224,7 +224,7 @@ function getBalancerPoolTokenRecordsWrapper(
  * @returns
  */
 export function getBalancerRecords(
-  metricName: string,
+  timestamp: BigInt,
   vaultAddress: string,
   poolId: string,
   excludeOhmValue: boolean,
@@ -304,8 +304,8 @@ export function getBalancerRecords(
   // Standard pool tokens
   pushArray(
     records,
-    getBalancerPoolTokenRecordsWrapper(
-      metricName,
+    getBalancerPoolTokenRecords(
+      timestamp,
       poolId,
       poolTokenContract,
       unitRate,
@@ -317,7 +317,7 @@ export function getBalancerRecords(
   // Pool tokens deposited in a liquidity gauge
   pushArray(
     records,
-    getBalancerGaugeBalancesFromWallets(metricName, poolTokenAddress, unitRate, blockNumber),
+    getBalancerGaugeBalancesFromWallets(timestamp, poolTokenAddress, unitRate, blockNumber),
   );
 
   return records;

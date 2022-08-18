@@ -15,7 +15,7 @@ import {
 import {
   getConvexStakedRecords,
   getERC20,
-  getERC20TokenRecordsWrapperFromWallets,
+  getERC20TokenRecordsFromWallets,
   getLiquityStabilityPoolRecords,
   getOnsenAllocatorRecords,
   getRariAllocatorRecords,
@@ -36,7 +36,7 @@ import { TokenCategoryStable } from "./TokenDefinition";
  * @returns TokenRecordsWrapper object
  */
 export function getStablecoinBalance(
-  metricName: string,
+  timestamp: BigInt,
   contractAddress: string,
   includeLiquidity: boolean,
   riskFree: boolean,
@@ -72,39 +72,30 @@ export function getStablecoinBalance(
   // Wallets
   pushArray(
     records,
-    getERC20TokenRecordsWrapperFromWallets(
-      metricName,
-      contractAddress,
-      contract,
-      rate,
-      blockNumber,
-    ),
+    getERC20TokenRecordsFromWallets(timestamp, contractAddress, contract, rate, blockNumber),
   );
 
   // Rari Allocator
-  pushArray(records, getRariAllocatorRecords(metricName, contractAddress, rate, blockNumber));
+  pushArray(records, getRariAllocatorRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Staked Convex tokens
-  pushArray(records, getConvexStakedRecords(metricName, contractAddress, blockNumber));
+  pushArray(records, getConvexStakedRecords(timestamp, contractAddress, blockNumber));
 
   // Liquity Stability Pool
-  pushArray(
-    records,
-    getLiquityStabilityPoolRecords(metricName, contractAddress, rate, blockNumber),
-  );
+  pushArray(records, getLiquityStabilityPoolRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Onsen Allocator
-  pushArray(records, getOnsenAllocatorRecords(metricName, contractAddress, rate, blockNumber));
+  pushArray(records, getOnsenAllocatorRecords(timestamp, contractAddress, rate, blockNumber));
 
   // VeFXS Allocator
-  pushArray(records, getVeFXSAllocatorRecords(metricName, contractAddress, blockNumber));
+  pushArray(records, getVeFXSAllocatorRecords(timestamp, contractAddress, blockNumber));
 
   // Liquidity pools
   if (includeLiquidity) {
     pushArray(
       records,
       getLiquidityBalances(
-        metricName,
+        timestamp,
         contractAddress,
         riskFree,
         excludeOhmValue,
@@ -124,7 +115,7 @@ export function getStablecoinBalance(
  * @returns TokenRecordsWrapper object
  */
 export function getStablecoinBalances(
-  metricName: string,
+  timestamp: BigInt,
   includeLiquidity: boolean,
   riskFree: boolean,
   excludeOhmValue: boolean,
@@ -142,7 +133,7 @@ export function getStablecoinBalances(
     pushArray(
       records,
       getStablecoinBalance(
-        metricName,
+        timestamp,
         stableTokens[i].getAddress(),
         includeLiquidity,
         riskFree,

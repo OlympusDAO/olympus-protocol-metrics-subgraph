@@ -111,7 +111,7 @@ export function getCurvePairTotalValue(
  * @returns
  */
 function getCurvePairStakedRecord(
-  metricName: string,
+  timestamp: BigInt,
   pairTokenAddress: string,
   stakedTokenAddress: string | null,
   walletAddress: string,
@@ -142,7 +142,7 @@ function getCurvePairStakedRecord(
   if (!balance || balance.equals(BigDecimal.zero())) return null;
 
   return createOrUpdateTokenRecord(
-    metricName,
+    timestamp,
     getContractName(stakedTokenAddress),
     stakedTokenAddress,
     getContractName(walletAddress),
@@ -169,7 +169,7 @@ function getCurvePairStakedRecord(
  * @returns
  */
 function getCurvePairRecord(
-  metricName: string,
+  timestamp: BigInt,
   pairTokenAddress: string,
   pairRate: BigDecimal,
   walletAddress: string,
@@ -196,7 +196,7 @@ function getCurvePairRecord(
   const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
 
   return createOrUpdateTokenRecord(
-    metricName,
+    timestamp,
     getContractName(pairTokenAddress),
     pairTokenAddress,
     getContractName(walletAddress),
@@ -301,17 +301,14 @@ function getCurvePairUnitRate(
  * @returns
  */
 export function getCurvePairRecords(
-  metricName: string,
+  timestamp: BigInt,
   pairAddress: string,
   tokenAddress: string | null,
   excludeOhmValue: boolean,
   restrictToTokenValue: boolean,
   blockNumber: BigInt,
 ): TokenRecordsWrapper {
-  const records = newTokenRecordsWrapper(
-    addToMetricName(metricName, "CurvePairRecords"),
-    blockNumber,
-  );
+  const records: TokenRecord[] = [];
   // If we are restricting by token and tokenAddress does not match either side of the pair
   if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
     log.debug(
@@ -362,7 +359,7 @@ export function getCurvePairRecords(
 
     // Normal token first
     const record = getCurvePairRecord(
-      metricName,
+      timestamp,
       pairTokenAddress,
       unitRate,
       walletAddress,
@@ -371,7 +368,7 @@ export function getCurvePairRecords(
     );
 
     if (record && !record.balance.equals(BigDecimal.zero())) {
-      pushTokenRecord(records, record);
+      records.push(record);
     }
 
     // Then staked token
@@ -379,7 +376,7 @@ export function getCurvePairRecords(
       const stakingAddress = CONVEX_STAKING_CONTRACTS[j];
 
       const stakedRecord = getCurvePairStakedRecord(
-        metricName,
+        timestamp,
         pairTokenAddress,
         getConvexStakedToken(pairTokenAddress),
         walletAddress,
@@ -390,7 +387,7 @@ export function getCurvePairRecords(
       );
 
       if (stakedRecord && !stakedRecord.balance.equals(BigDecimal.zero())) {
-        pushTokenRecord(records, stakedRecord);
+        records.push(stakedRecord);
       }
     }
   }

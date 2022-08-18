@@ -16,7 +16,7 @@ import {
 import {
   getConvexStakedRecords,
   getERC20,
-  getERC20TokenRecordsWrapperFromWallets,
+  getERC20TokenRecordsFromWallets,
   getLiquityStabilityPoolRecords,
   getLiquityStakedBalancesFromWallets,
   getOnsenAllocatorRecords,
@@ -36,7 +36,7 @@ import { createOrUpdateTokenRecord } from "./TokenRecordHelper";
  *
  * @returns TokenRecordsWrapper
  */
-export function getVestingAssets(date: string, blockNumber: BigInt): TokenRecord[] {
+export function getVestingAssets(timestamp: BigInt, blockNumber: BigInt): TokenRecord[] {
   // Cross chain assets that can not be tracked right now
   // pklima
   // butterfly
@@ -47,7 +47,7 @@ export function getVestingAssets(date: string, blockNumber: BigInt): TokenRecord
   const records: TokenRecord[] = [];
 
   const record = createOrUpdateTokenRecord(
-    date,
+    timestamp,
     "Vesting Assets",
     "N/A",
     "No source",
@@ -75,7 +75,7 @@ export function getVestingAssets(date: string, blockNumber: BigInt): TokenRecord
  * @returns TokenRecordsWrapper object
  */
 export function getVolatileTokenBalance(
-  date: string,
+  timestamp: BigInt,
   contractAddress: string,
   includeLiquidity: boolean,
   riskFree: boolean,
@@ -121,43 +121,49 @@ export function getVolatileTokenBalance(
   } else {
     pushArray(
       records,
-      getERC20TokenRecordsWrapperFromWallets(date, contractAddress, contract, rate, blockNumber),
+      getERC20TokenRecordsFromWallets(timestamp, contractAddress, contract, rate, blockNumber),
     );
   }
 
   // Rari Allocator
-  pushArray(records, getRariAllocatorRecords(date, contractAddress, rate, blockNumber));
+  pushArray(records, getRariAllocatorRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Toke Allocator
-  pushArray(records, getTokeAllocatorRecords(date, contractAddress, rate, blockNumber));
+  pushArray(records, getTokeAllocatorRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Staked TOKE
-  pushArray(records, getTokeStakedBalancesFromWallets(date, contractAddress, rate, blockNumber));
+  pushArray(
+    records,
+    getTokeStakedBalancesFromWallets(timestamp, contractAddress, rate, blockNumber),
+  );
 
   // Staked LQTY
-  pushArray(records, getLiquityStakedBalancesFromWallets(date, contractAddress, rate, blockNumber));
+  pushArray(
+    records,
+    getLiquityStakedBalancesFromWallets(timestamp, contractAddress, rate, blockNumber),
+  );
 
   // Staked Convex tokens
-  pushArray(records, getConvexStakedRecords(date, contractAddress, blockNumber));
+  pushArray(records, getConvexStakedRecords(timestamp, contractAddress, blockNumber));
 
   // Liquity Stability Pool
-  pushArray(records, getLiquityStabilityPoolRecords(date, contractAddress, rate, blockNumber));
+  pushArray(records, getLiquityStabilityPoolRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Onsen Allocator
-  pushArray(records, getOnsenAllocatorRecords(date, contractAddress, rate, blockNumber));
+  pushArray(records, getOnsenAllocatorRecords(timestamp, contractAddress, rate, blockNumber));
 
   // VeFXS Allocator
-  pushArray(records, getVeFXSAllocatorRecords(date, contractAddress, blockNumber));
+  pushArray(records, getVeFXSAllocatorRecords(timestamp, contractAddress, blockNumber));
 
   // Unlocked (but not withdrawn) vlCVX
-  pushArray(records, getVlCvxUnlockedRecords(date, contractAddress, rate, blockNumber));
+  pushArray(records, getVlCvxUnlockedRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Liquidity pools
   if (includeLiquidity) {
     pushArray(
       records,
       getLiquidityBalances(
-        date,
+        timestamp,
         contractAddress,
         riskFree,
         excludeOhmValue,
@@ -184,7 +190,7 @@ export function getVolatileTokenBalance(
  * @returns TokenRecordsWrapper object
  */
 export function getVolatileTokenBalances(
-  date: string,
+  timestamp: BigInt,
   liquidOnly: boolean,
   includeLiquidity: boolean,
   includeBlueChip: boolean,
@@ -214,7 +220,7 @@ export function getVolatileTokenBalances(
     pushArray(
       records,
       getVolatileTokenBalance(
-        date,
+        timestamp,
         currentTokenAddress,
         includeLiquidity,
         riskFree,
@@ -227,7 +233,7 @@ export function getVolatileTokenBalances(
 
   // We add vesting assets manually for now
   if (!liquidOnly) {
-    pushArray(records, getVestingAssets(date, blockNumber));
+    pushArray(records, getVestingAssets(timestamp, blockNumber));
   }
 
   return records;

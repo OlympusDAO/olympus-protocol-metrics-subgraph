@@ -31,7 +31,7 @@ import {
   getConvexStakedBalance,
   getConvexStakedRecords,
   getERC20,
-  getERC20TokenRecordsWrapperFromWallets,
+  getERC20TokenRecordsFromWallets,
   getLiquityStakedBalancesFromWallets,
   getTokeStakedBalancesFromWallets,
   getVlCvxUnlockedRecords,
@@ -274,7 +274,7 @@ describe("get ERC20 token records from wallets", () => {
     const contract = getERC20(ERC20_ALCX, blockNumber);
     if (!contract) throw new Error("Expected ERC20 contract to be non-null");
 
-    const records = getERC20TokenRecordsWrapperFromWallets(
+    const records = getERC20TokenRecordsFromWallets(
       "metric",
       ERC20_ALCX,
       contract,
@@ -299,7 +299,7 @@ describe("get ERC20 token records from wallets", () => {
     const contract = getERC20(ERC20_WETH, blockNumber);
     if (!contract) throw new Error("Expected ERC20 contract to be non-null");
 
-    const records = getERC20TokenRecordsWrapperFromWallets(
+    const records = getERC20TokenRecordsFromWallets(
       "metric",
       ERC20_WETH,
       contract,

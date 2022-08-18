@@ -28,99 +28,20 @@ type Token @entity {
 }
 
 type ProtocolMetric @entity {
-  id: ID!
+  id: ID! # YYYY-MM-DD
+  date: String! # YYYY-MM-DD
   block: BigInt!
   currentAPY: BigDecimal!
   currentIndex: BigDecimal!
   gOhmPrice: BigDecimal!
   gOhmTotalSupply: BigDecimal!
-  marketCap: BigDecimal!
   nextDistributedOhm: BigDecimal!
   nextEpochRebase: BigDecimal!
-  ohmCirculatingSupply: BigDecimal!
-  ohmCirculatingSupplyBreakdown: TokenRecordsWrapper!
-  ohmFloatingSupply: BigDecimal!
-  ohmFloatingSupplyBreakdown: TokenRecordsWrapper!
   ohmPrice: BigDecimal!
-  runway100k: BigDecimal
-  runway10k: BigDecimal
-  runway20k: BigDecimal
-  runway2dot5k: BigDecimal
-  runway50k: BigDecimal
-  runway5k: BigDecimal
-  runway70k: BigDecimal
-  runway7dot5k: BigDecimal
-  runwayCurrent: BigDecimal
-  sOhmCirculatingSupply: BigDecimal!
-  timestamp: BigInt!
-  timestampISO8901: String!
-  totalSupply: BigDecimal!
+  ohmTotalSupply: BigDecimal!
+  sOhmCirculatingSupply: BigDecimal! # Returned by the sOHM contract, so can be included here
+  timestamp: BigInt! # Unix timestamp in UTC
   totalValueLocked: BigDecimal!
-  treasuryCVXMarketValue: BigDecimal!
-  treasuryCVXMarketValueComponents: TokenRecordsWrapper!
-  treasuryDaiMarketValue: BigDecimal!
-  treasuryDaiMarketValueComponents: TokenRecordsWrapper!
-  treasuryDaiRiskFreeValue: BigDecimal!
-  treasuryDaiRiskFreeValueComponents: TokenRecordsWrapper!
-  treasuryFeiMarketValue: BigDecimal!
-  treasuryFeiMarketValueComponents: TokenRecordsWrapper!
-  treasuryFeiRiskFreeValue: BigDecimal!
-  treasuryFeiRiskFreeValueComponents: TokenRecordsWrapper!
-  treasuryFraxMarketValue: BigDecimal!
-  treasuryFraxMarketValueComponents: TokenRecordsWrapper!
-  treasuryFraxRiskFreeValue: BigDecimal!
-  treasuryFraxRiskFreeValueComponents: TokenRecordsWrapper!
-  treasuryFXSMarketValue: BigDecimal!
-  treasuryFXSMarketValueComponents: TokenRecordsWrapper!
-  treasuryLiquidBacking: BigDecimal!
-  treasuryLiquidBackingComponents: TokenRecordsWrapper!
-  treasuryLiquidBackingPerGOhm: BigDecimal!
-  treasuryLiquidBackingPerOhmCirculating: BigDecimal!
-  treasuryLiquidBackingPerOhmFloating: BigDecimal!
-  treasuryLiquidBackingProtocolOwnedLiquidity: BigDecimal!
-  treasuryLiquidBackingProtocolOwnedLiquidityComponents: TokenRecordsWrapper!
-  treasuryLiquidBackingStable: BigDecimal!
-  treasuryLiquidBackingStableComponents: TokenRecordsWrapper!
-  treasuryLiquidBackingVolatile: BigDecimal!
-  treasuryLiquidBackingVolatileComponents: TokenRecordsWrapper!
-  treasuryLPValue: BigDecimal!
-  treasuryLPValueComponents: TokenRecordsWrapper!
-  treasuryLusdMarketValue: BigDecimal!
-  treasuryLusdMarketValueComponents: TokenRecordsWrapper!
-  treasuryLusdRiskFreeValue: BigDecimal!
-  treasuryLusdRiskFreeValueComponents: TokenRecordsWrapper!
-  treasuryMarketValue: BigDecimal!
-  treasuryMarketValueComponents: TokenRecordsWrapper!
-  treasuryOhmDaiPOL: BigDecimal!
-  treasuryOhmEthPOL: BigDecimal!
-  treasuryOhmFraxPOL: BigDecimal!
-  treasuryOhmLusdPOL: BigDecimal!
-  treasuryOtherMarketValue: BigDecimal!
-  treasuryOtherMarketValueComponents: TokenRecordsWrapper!
-  treasuryProtocolOwnedLiquidityBacking: BigDecimal!
-  treasuryProtocolOwnedLiquidityBackingComponents: TokenRecordsWrapper!
-  treasuryRiskFreeValue: BigDecimal!
-  treasuryRiskFreeValueComponents: TokenRecordsWrapper!
-  treasuryStableBacking: BigDecimal!
-  treasuryStableBackingComponents: TokenRecordsWrapper!
-  treasuryStableValue: BigDecimal!
-  treasuryStableValueComponents: TokenRecordsWrapper!
-  treasuryTotalBacking: BigDecimal!
-  treasuryTotalBackingComponents: TokenRecordsWrapper!
-  treasuryUstMarketValue: BigDecimal!
-  treasuryUstMarketValueComponents: TokenRecordsWrapper!
-  treasuryVolatileBacking: BigDecimal!
-  treasuryVolatileBackingComponents: TokenRecordsWrapper!
-  treasuryVolatileValue: BigDecimal!
-  treasuryVolatileValueComponents: TokenRecordsWrapper!
-  treasuryWBTCMarketValue: BigDecimal!
-  treasuryWBTCMarketValueComponents: TokenRecordsWrapper!
-  treasuryWETHMarketValue: BigDecimal!
-  treasuryWETHMarketValueComponents: TokenRecordsWrapper!
-  treasuryWETHRiskFreeValue: BigDecimal!
-  treasuryWETHRiskFreeValueComponents: TokenRecordsWrapper!
-  treasuryXsushiMarketValue: BigDecimal!
-  treasuryXsushiMarketValueComponents: TokenRecordsWrapper!
 }
 
 type BondDiscount @entity {
@@ -136,8 +57,9 @@ type BondDiscount @entity {
 }
 
 type TokenRecord @entity {
-  id: ID!
+  id: ID! # YYYY-MM-DD/<source>/<token>
   block: BigInt!
+  timestamp: BigInt! # Unix timestamp in UTC
   date: String!
   token: String!
   tokenAddress: String!
@@ -150,13 +72,19 @@ type TokenRecord @entity {
   category: String!
   isLiquid: Boolean!
   isBluechip: Boolean!
-  # excluding OHM value
-  # TODO consider adding timestamp
 }
 
-type TokenRecordsWrapper @entity {
-  id: ID!
-  records: [TokenRecord!]!
-  balance: BigDecimal! # Calculated
-  value: BigDecimal! # Calculated
+type TokenSupply @entity {
+  id: ID! # YYYY-MM-DD/<token>/<type>/<pool>/<source>
+  block: BigInt!
+  date: String! # YYYY-MM-DD
+  token: String!
+  tokenAddress: String!
+  pool: String
+  poolAddress: String
+  source: String # e.g. a wallet
+  sourceAddress: String
+  type: String! # e.g. total supply
+  rawBalance: BigDecimal! # positive balance
+  balance: BigDecimal! # may be negative to represent the token being taken out of circulation
 }
