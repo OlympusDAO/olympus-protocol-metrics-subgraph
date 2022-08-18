@@ -1,7 +1,7 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
-import { TokenRecord, TokenRecordsWrapper } from "../../generated/schema";
+import { TokenRecord } from "../../generated/schema";
 import {
   CIRCULATING_SUPPLY_WALLETS,
   ERC20_OHM_V1,
@@ -30,14 +30,7 @@ import { getFraxSwapPairTokenQuantityRecords } from "./LiquidityFraxSwap";
 import { getUniswapV2PairTokenQuantity } from "./LiquidityUniswapV2";
 import { PairHandlerTypes } from "./PairHandler";
 import { getBaseOhmUsdRate } from "./Price";
-import {
-  addToMetricName,
-  combineTokenRecordsWrapper,
-  createOrUpdateTokenRecord,
-  newTokenRecordsWrapper,
-  pushTokenRecord,
-  setTokenRecordsWrapperMultiplier,
-} from "./TokenRecordHelper";
+import { createOrUpdateTokenRecord } from "./TokenRecordHelper";
 
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
 const MIGRATION_OFFSET = "2013";

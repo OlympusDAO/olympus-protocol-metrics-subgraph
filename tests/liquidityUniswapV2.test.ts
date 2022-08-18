@@ -209,7 +209,7 @@ describe("Token Quantity", () => {
 });
 
 describe("records", () => {
-  test("generates TokenRecordsWrapper for the given token", () => {
+  test("generates TokenRecord array for the given token", () => {
     mockBalanceVaultZero();
 
     const expectedBalanceV2 = BigDecimal.fromString("2");

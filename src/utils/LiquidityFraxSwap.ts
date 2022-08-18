@@ -216,7 +216,7 @@ function getFraxSwapPairTokenRecord(
 }
 
 /**
- * Provides TokenRecordsWrapper representing the FraxSwap pair identified by {pairAddress}.
+ * Provides TokenRecord objects representing the FraxSwap pair identified by {pairAddress}.
  *
  * @param metricName
  * @param pairAddress The address of the pool

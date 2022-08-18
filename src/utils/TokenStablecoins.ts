@@ -24,7 +24,7 @@ import { TokenCategoryStable } from "./TokenDefinition";
  *
  * @param contractAddress the address of the ERC20 contract
  * @param blockNumber the current block
- * @returns TokenRecordsWrapper object
+ * @returns TokenRecord array
  */
 export function getStablecoinBalance(
   timestamp: BigInt,
@@ -103,7 +103,7 @@ export function getStablecoinBalance(
  * Gets the balances for all stablecoins, using {getStablecoinBalance}.
  *
  * @param blockNumber the current block
- * @returns TokenRecordsWrapper object
+ * @returns TokenRecord array
  */
 export function getStablecoinBalances(
   timestamp: BigInt,

@@ -15,7 +15,7 @@ import { TokenCategoryPOL } from "./TokenDefinition";
 import { createOrUpdateTokenRecord } from "./TokenRecordHelper";
 
 /**
- * Creates TokenRecordsWrapper for the giving liquidity records.
+ * Creates TokenRecords objects for the giving liquidity records.
  *
  * The chief objective of this function is to determine
  * the correct price of the liquidity pool balance.
@@ -92,7 +92,7 @@ function getLiquidityTokenRecords(
 }
 
 /**
- * Returns the TokenRecordsWrapper representing the liquidity owned by the treasury.
+ * Returns the TokenRecord objects representing the liquidity owned by the treasury.
  *
  * By default, all liquidity pairs in {LIQUIDITY_OWNED} will be iterated, unless
  * overridden by the {ownedLiquidityPairs} parameter.
@@ -112,7 +112,7 @@ function getLiquidityTokenRecords(
  * @param restrictToTokenValue true if only the value of {tokenAddress} in the LP should be included
  * @param blockNumber current block number
  * @param ownedLiquidityPairs set this to override the array of owned liquidity pairs
- * @returns TokenRecordsWrapper object
+ * @returns TokenRecord array
  */
 export function getLiquidityBalances(
   timestamp: BigInt,
@@ -225,7 +225,7 @@ export function getLiquidityBalances(
  * @param riskFree If `riskFree` is true, the risk-free value will be returned
  * @param excludeOhmValue should be true if only the non-OHM value of the LP is desired
  * @param blockNumber
- * @returns TokenRecordsWrapper object
+ * @returns TokenRecord array
  */
 export function getOwnedLiquidityPoolValue(
   timestamp: BigInt,

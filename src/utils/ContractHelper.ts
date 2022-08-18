@@ -574,7 +574,7 @@ export function getERC20TokenRecordFromWallet(
  * @param contract ERC20 contract
  * @param rate the unit price/rate of the token
  * @param blockNumber the current block number
- * @returns TokenRecordsWrapper object
+ * @returns TokenRecord array
  */
 export function getERC20TokenRecordsFromWallets(
   timestamp: BigInt,
@@ -1004,7 +1004,7 @@ function getTokeAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
  * @param tokenAddress ERC20 contract to find the balance of
  * @param price
  * @param blockNumber the current block number
- * @returns TokenRecordsWrapper object
+ * @returns TokenRecord array
  */
 export function getTokeAllocatorRecords(
   timestamp: BigInt,
@@ -1094,7 +1094,7 @@ function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
  * @param tokenAddress ERC20 contract to find the balance of
  * @param price
  * @param blockNumber the current block number
- * @returns TokenRecordsWrapper object
+ * @returns TokenRecord array
  */
 export function getRariAllocatorRecords(
   timestamp: BigInt,
@@ -1133,7 +1133,7 @@ export function getRariAllocatorRecords(
  * @param tokenAddress ERC20 contract to find the balance of
  * @param price
  * @param blockNumber the current block number
- * @returns TokenRecordsWrapper object
+ * @returns TokenRecord array
  */
 export function getOnsenAllocatorRecords(
   timestamp: BigInt,

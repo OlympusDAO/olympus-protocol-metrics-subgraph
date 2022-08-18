@@ -24,7 +24,7 @@ import { createOrUpdateTokenRecord } from "./TokenRecordHelper";
 /**
  * Returns the value of vesting assets in the treasury
  *
- * @returns TokenRecordsWrapper
+ * @returns TokenRecord array
  */
 export function getVestingAssets(timestamp: BigInt, blockNumber: BigInt): TokenRecord[] {
   // Cross chain assets that can not be tracked right now
@@ -62,7 +62,7 @@ export function getVestingAssets(timestamp: BigInt, blockNumber: BigInt): TokenR
  *
  * @param contractAddress the address of the ERC20 contract
  * @param blockNumber the current block
- * @returns TokenRecordsWrapper object
+ * @returns TokenRecord array
  */
 export function getVolatileTokenBalance(
   timestamp: BigInt,
@@ -177,7 +177,7 @@ export function getVolatileTokenBalance(
  * @param excludeOhmValue If true, the value of liquidity pools is returned without the value of OHM. This is used to calculate backing.
  * @param restrictToTokenValue If true, the value of liquidity pools is restricted to a specific token. This is used to calculate the value of specific assets.
  * @param blockNumber the current block
- * @returns TokenRecordsWrapper object
+ * @returns TokenRecord array
  */
 export function getVolatileTokenBalances(
   timestamp: BigInt,

@@ -1,18 +1,8 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
-import { TokenRecord, TokenRecordsWrapper } from "../generated/schema";
-import {
-  combineTokenRecordsWrapper,
-  createOrUpdateTokenRecord,
-  getTokenRecordsWrapperBalance,
-  getTokenRecordsWrapperValue,
-  newTokenRecordsWrapper,
-  pushTokenRecord,
-  setTokenRecordMultiplier,
-  setTokenRecordsWrapperMultiplier,
-  sortTokenRecordsWrapper,
-} from "../src/utils/TokenRecordHelper";
+import { TokenRecord } from "../generated/schema";
+import { createOrUpdateTokenRecord } from "../src/utils/TokenRecordHelper";
 
 const createTokenRecord = (): TokenRecord => {
   return createOrUpdateTokenRecord(

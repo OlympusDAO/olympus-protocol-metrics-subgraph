@@ -1,7 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
-import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { arrayIncludesLoose } from "./ArrayHelper";
 import {
   BALANCER_VAULT,

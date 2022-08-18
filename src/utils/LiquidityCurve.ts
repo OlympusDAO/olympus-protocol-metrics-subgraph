@@ -3,7 +3,7 @@ import { log } from "matchstick-as";
 
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
-import { TokenRecord, TokenRecordsWrapper } from "../../generated/schema";
+import { TokenRecord } from "../../generated/schema";
 import {
   CONVEX_STAKING_CONTRACTS,
   ERC20_OHM_V2,
@@ -16,12 +16,7 @@ import { getConvexStakedBalance, getERC20 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
 import { TokenCategoryPOL } from "./TokenDefinition";
-import {
-  addToMetricName,
-  createOrUpdateTokenRecord,
-  newTokenRecordsWrapper,
-  pushTokenRecord,
-} from "./TokenRecordHelper";
+import { createOrUpdateTokenRecord } from "./TokenRecordHelper";
 
 // ### Balances ###
 
@@ -307,7 +302,7 @@ export function getCurvePairRecords(
   excludeOhmValue: boolean,
   restrictToTokenValue: boolean,
   blockNumber: BigInt,
-): TokenRecordsWrapper {
+): TokenRecord[] {
   const records: TokenRecord[] = [];
   // If we are restricting by token and tokenAddress does not match either side of the pair
   if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {

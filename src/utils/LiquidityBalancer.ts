@@ -212,7 +212,7 @@ function getBalancerPoolTokenRecords(
 }
 
 /**
- * Provides TokenRecordsWrapper representing the Balancer pool identified by {poolId}.
+ * Provides TokenRecord array representing the Balancer pool identified by {poolId}.
  *
  * @param metricName
  * @param vaultAddress The address of the Balancer Vault
