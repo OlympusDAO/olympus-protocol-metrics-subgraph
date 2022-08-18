@@ -29,10 +29,10 @@ type Token @entity {
 
 type ProtocolMetric @entity {
   id: ID! # YYYY-MM-DD
-  date: String! # YYYY-MM-DD
   block: BigInt!
   currentAPY: BigDecimal!
   currentIndex: BigDecimal!
+  date: String! # YYYY-MM-DD
   gOhmPrice: BigDecimal!
   gOhmTotalSupply: BigDecimal!
   nextDistributedOhm: BigDecimal!

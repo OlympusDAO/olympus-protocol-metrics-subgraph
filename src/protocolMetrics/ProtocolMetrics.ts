@@ -22,15 +22,16 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
   let protocolMetric = ProtocolMetric.load(dateString);
   if (protocolMetric == null) {
     protocolMetric = new ProtocolMetric(dateString);
-    protocolMetric.date = dateString;
     protocolMetric.block = BigInt.fromString("-1");
     protocolMetric.currentAPY = BigDecimal.fromString("0");
     protocolMetric.currentIndex = BigDecimal.fromString("0");
+    protocolMetric.date = dateString;
     protocolMetric.gOhmPrice = BigDecimal.fromString("0");
     protocolMetric.gOhmTotalSupply = BigDecimal.fromString("0");
     protocolMetric.nextDistributedOhm = BigDecimal.fromString("0");
     protocolMetric.nextEpochRebase = BigDecimal.fromString("0");
     protocolMetric.ohmPrice = BigDecimal.fromString("0");
+    protocolMetric.ohmTotalSupply = BigDecimal.fromString("0");
     protocolMetric.sOhmCirculatingSupply = BigDecimal.fromString("0");
     protocolMetric.timestamp = timestamp;
     protocolMetric.totalValueLocked = BigDecimal.fromString("0");
