@@ -45,9 +45,9 @@ export function getVestingAssets(timestamp: BigInt, blockNumber: BigInt): TokenR
     BigDecimal.fromString("1"),
     BigDecimal.fromString("32500000"),
     blockNumber,
+    false,
     BigDecimal.fromString("1"),
     TokenCategoryVolatile,
-    false,
   );
   records.push(record);
 

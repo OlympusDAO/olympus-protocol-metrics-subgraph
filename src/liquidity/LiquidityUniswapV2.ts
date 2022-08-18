@@ -1,7 +1,7 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
-import { TokenRecord } from "../../generated/schema";
+import { TokenRecord, TokenSupply } from "../../generated/schema";
 import {
   getContractName,
   getWalletAddressesForContract,
@@ -12,6 +12,7 @@ import { toDecimal } from "../utils/Decimals";
 import { getBaseOhmUsdRate, getUSDRateUniswapV2 } from "../utils/Price";
 import { TokenCategoryPOL } from "../utils/TokenDefinition";
 import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";
+import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
 /**
  * To calculate the risk-free value of an OHM-DAI LP, we assume
@@ -271,9 +272,9 @@ export function getUniswapV2PairRecord(
     pairRate,
     pairTokenBalanceDecimal,
     blockNumber,
+    true,
     excludeOhmValue ? BigDecimal.fromString("0.5") : BigDecimal.fromString("1"),
     TokenCategoryPOL,
-    true,
   );
 }
 
@@ -403,19 +404,16 @@ export function getUniswapV2PairTotalTokenQuantity(
  * @returns
  */
 export function getUniswapV2PairTokenQuantity(
-  metricName: string,
+  timestamp: BigInt,
   pairAddress: string,
   tokenAddress: string,
   blockNumber: BigInt,
-): TokenRecordsWrapper {
+): TokenSupply[] {
   log.info("Calculating quantity of token {} in UniswapV2 pool {}", [
     getContractName(tokenAddress),
     getContractName(pairAddress),
   ]);
-  const records = newTokenRecordsWrapper(
-    addToMetricName(metricName, "UniswapV2PoolTokenQuantity"),
-    blockNumber,
-  );
+  const records: TokenSupply[] = [];
   const poolTokenContract = getUniswapV2Pair(pairAddress, blockNumber);
   if (!poolTokenContract) {
     log.warning("UniswapV2 contract at {} likely doesn't exist at block {}", [
@@ -448,32 +446,30 @@ export function getUniswapV2PairTokenQuantity(
 
   // Grab balances
   const poolTokenBalances = getUniswapV2PairRecords(
-    records.id,
+    timestamp,
     pairAddress,
     tokenAddress,
     false,
     blockNumber,
   );
 
-  for (let i = 0; i < poolTokenBalances.records.length; i++) {
-    const recordId = poolTokenBalances.records[i];
-    const record = TokenRecord.load(recordId);
-    if (!record) {
-      throw new Error("Unable to load TokenRecord with id " + recordId);
-    }
+  for (let i = 0; i < poolTokenBalances.length; i++) {
+    const record = poolTokenBalances[i];
 
     const tokenBalance = totalQuantity.times(record.balance).div(poolTokenTotalSupply);
-    pushTokenRecord(
-      records,
-      createOrUpdateTokenRecord(
-        records.id,
-        getContractName(tokenAddress) + " in " + getContractName(pairAddress),
+    records.push(
+      createOrUpdateTokenSupply(
+        timestamp,
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(pairAddress),
         pairAddress,
         record.source,
         record.sourceAddress,
-        BigDecimal.fromString("1"),
+        TYPE_LIQUIDITY,
         tokenBalance,
         blockNumber,
+        -1,
       ),
     );
   }

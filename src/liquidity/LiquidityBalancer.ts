@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts
 
 import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolToken";
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
-import { TokenRecord } from "../../generated/schema";
+import { TokenRecord, TokenSupply } from "../../generated/schema";
 import { pushArray } from "../utils/ArrayHelper";
 import {
   ERC20_OHM_V2,
@@ -15,6 +15,7 @@ import { toDecimal } from "../utils/Decimals";
 import { getUSDRate } from "../utils/Price";
 import { TokenCategoryPOL } from "../utils/TokenDefinition";
 import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";
+import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
 export function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): BalancerVault {
   return BalancerVault.bind(Address.fromString(vaultAddress));
@@ -201,9 +202,9 @@ function getBalancerPoolTokenRecords(
         unitRate,
         balance,
         blockNumber,
+        true,
         multiplier,
         TokenCategoryPOL,
-        true,
       ),
     );
   }
@@ -377,18 +378,18 @@ export function getBalancerPoolTotalTokenQuantity(
  * @returns
  */
 export function getBalancerPoolTokenQuantity(
-  metricName: string,
+  timestamp: BigInt,
   vaultAddress: string,
   poolId: string,
   tokenAddress: string,
   blockNumber: BigInt,
-): TokenRecord[] {
+): TokenSupply[] {
   log.info("Calculating quantity of token {} in Balancer vault {} for id {}", [
     getContractName(tokenAddress),
     vaultAddress,
     poolId,
   ]);
-  const records: TokenRecord[] = [];
+  const records: TokenSupply[] = [];
   const poolTokenContract = getBalancerPoolToken(vaultAddress, poolId, blockNumber);
   if (poolTokenContract === null) {
     return records;
@@ -412,7 +413,7 @@ export function getBalancerPoolTokenQuantity(
 
   // Grab balances
   const poolTokenBalances = getBalancerRecords(
-    metricName,
+    timestamp,
     vaultAddress,
     poolId,
     false,
@@ -426,15 +427,18 @@ export function getBalancerPoolTokenQuantity(
 
     const tokenBalance = totalQuantity.times(record.balance).div(poolTokenTotalSupply);
     records.push(
-      createOrUpdateTokenRecord(
-        metricName,
-        getContractName(tokenAddress) + " in " + getContractName(poolTokenAddress),
+      createOrUpdateTokenSupply(
+        timestamp,
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(poolTokenAddress),
         poolTokenAddress,
         record.source,
         record.sourceAddress,
-        BigDecimal.fromString("1"), // Rate of 1, since we're reporting quantity, not value
+        TYPE_LIQUIDITY,
         tokenBalance,
         blockNumber,
+        -1,
       ),
     );
   }

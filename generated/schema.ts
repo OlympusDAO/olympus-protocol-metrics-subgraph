@@ -708,6 +708,15 @@ export class TokenSupply extends Entity {
     this.set("block", Value.fromBigInt(value));
   }
 
+  get timestamp(): BigInt {
+    const value = this.get("timestamp");
+    return value!.toBigInt();
+  }
+
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
+  }
+
   get date(): string {
     const value = this.get("date");
     return value!.toString();

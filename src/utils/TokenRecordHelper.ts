@@ -42,9 +42,9 @@ export function createOrUpdateTokenRecord(
   rate: BigDecimal,
   balance: BigDecimal,
   blockNumber: BigInt,
+  isLiquid: boolean,
   multiplier: BigDecimal = BigDecimal.fromString("1"),
-  category?: string,
-  isLiquid?: boolean,
+  category: string | null = null,
 ): TokenRecord {
   const dateString = getISO8601StringFromTimestamp(timestamp);
   const recordId = `${dateString}/${sourceName}/${tokenName}`;
@@ -64,8 +64,8 @@ export function createOrUpdateTokenRecord(
   record.rate = rate;
   record.balance = balance;
   record.multiplier = multiplier;
-  record.category = category ? category : getTokenCategory(tokenAddress);
-  record.isLiquid = isLiquid ? isLiquid : getIsTokenLiquid(tokenAddress);
+  record.category = category !== null ? category : getTokenCategory(tokenAddress);
+  record.isLiquid = isLiquid;
   record.isBluechip = getIsTokenVolatileBluechip(tokenAddress);
   record.value = getTokenRecordValue(record);
 

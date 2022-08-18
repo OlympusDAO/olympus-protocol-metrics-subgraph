@@ -1,7 +1,7 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { FraxSwapPool } from "../../generated/ProtocolMetrics/FraxSwapPool";
-import { TokenRecord } from "../../generated/schema";
+import { TokenRecord, TokenSupply } from "../../generated/schema";
 import {
   ERC20_OHM_V2,
   getContractName,
@@ -13,6 +13,7 @@ import { toDecimal } from "../utils/Decimals";
 import { getUSDRate } from "../utils/Price";
 import { TokenCategoryPOL } from "../utils/TokenDefinition";
 import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";
+import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
 function getFraxSwapPair(pairAddress: string, blockNumber: BigInt): FraxSwapPool | null {
   const pair = FraxSwapPool.bind(Address.fromString(pairAddress));
@@ -209,9 +210,9 @@ function getFraxSwapPairTokenRecord(
     unitRate,
     tokenBalance,
     blockNumber,
+    true,
     multiplier,
     TokenCategoryPOL,
-    true,
   );
 }
 
@@ -351,19 +352,16 @@ export function getFraxSwapPairTokenQuantity(
 }
 
 export function getFraxSwapPairTokenQuantityRecords(
-  metricName: string,
+  timestamp: BigInt,
   pairAddress: string,
   tokenAddress: string,
   blockNumber: BigInt,
-): TokenRecordsWrapper {
+): TokenSupply[] {
   log.info(
     "getFraxSwapPairTokenQuantityRecords: Calculating quantity of token {} in FraxSwap pool {}",
     [getContractName(tokenAddress), getContractName(pairAddress)],
   );
-  const records = newTokenRecordsWrapper(
-    addToMetricName(metricName, "FraxSwapPoolTokenQuantity"),
-    blockNumber,
-  );
+  const records: TokenSupply[] = [];
 
   const pair = getFraxSwapPair(pairAddress, blockNumber);
   if (!pair) return records;
@@ -380,7 +378,7 @@ export function getFraxSwapPairTokenQuantityRecords(
 
   // Grab balances
   const pairBalanceRecords = getFraxSwapPairRecords(
-    records.id,
+    timestamp,
     pairAddress,
     false,
     false,
@@ -388,25 +386,23 @@ export function getFraxSwapPairTokenQuantityRecords(
     tokenAddress,
   );
 
-  for (let i = 0; i < pairBalanceRecords.records.length; i++) {
-    const recordId = pairBalanceRecords.records[i];
-    const record = TokenRecord.load(recordId);
-    if (!record) {
-      throw new Error("Unable to load TokenRecord with id " + recordId);
-    }
+  for (let i = 0; i < pairBalanceRecords.length; i++) {
+    const record = pairBalanceRecords[i];
 
     const tokenBalance = totalQuantity.times(record.balance).div(pairTotalSupply);
-    pushTokenRecord(
-      records,
-      createOrUpdateTokenRecord(
-        records.id,
-        getContractName(tokenAddress) + " in " + getContractName(pairAddress),
+    records.push(
+      createOrUpdateTokenSupply(
+        timestamp,
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(pairAddress),
         pairAddress,
         record.source,
         record.sourceAddress,
-        BigDecimal.fromString("1"),
+        TYPE_LIQUIDITY,
         tokenBalance,
         blockNumber,
+        -1,
       ),
     );
   }

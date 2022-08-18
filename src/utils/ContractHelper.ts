@@ -33,6 +33,7 @@ import {
   ERC20_LUSD,
   ERC20_WETH,
   getContractName,
+  getIsTokenLiquid,
   getIsTokenVolatileBluechip,
   getOnsenAllocatorId,
   getRariAllocatorId,
@@ -559,9 +560,8 @@ export function getERC20TokenRecordFromWallet(
     rate,
     balance,
     blockNumber,
+    getIsTokenLiquid(contractAddress),
     BigDecimal.fromString("1"),
-    getTokenCategory(contractAddress),
-    getIsTokenVolatileBluechip(contractAddress),
   );
 }
 
@@ -695,6 +695,7 @@ export function getTokeStakedBalancesFromWallets(
         rate,
         balance,
         blockNumber,
+        getIsTokenLiquid(tokenAddress),
         BigDecimal.fromString("1"),
       ),
     );
@@ -795,6 +796,7 @@ export function getLiquityStakedBalancesFromWallets(
         rate,
         balance,
         blockNumber,
+        getIsTokenLiquid(tokenAddress),
         BigDecimal.fromString("1"),
       ),
     );
@@ -916,6 +918,7 @@ export function getBalancerGaugeBalanceFromWallets(
         rate,
         balance,
         blockNumber,
+        getIsTokenLiquid(tokenAddress),
         BigDecimal.fromString("1"),
       ),
     );
@@ -1021,6 +1024,7 @@ export function getTokeAllocatorRecords(
       price,
       balance,
       blockNumber,
+      getIsTokenLiquid(tokenAddress),
       BigDecimal.fromString("1"),
     ),
   );
@@ -1109,6 +1113,7 @@ export function getRariAllocatorRecords(
       price,
       balance,
       blockNumber,
+      getIsTokenLiquid(tokenAddress),
       BigDecimal.fromString("1"),
     ),
   );
@@ -1146,6 +1151,7 @@ export function getOnsenAllocatorRecords(
       price,
       balance,
       blockNumber,
+      getIsTokenLiquid(tokenAddress),
       BigDecimal.fromString("1"),
     ),
   );
@@ -1261,6 +1267,7 @@ export function getConvexStakedRecords(
           getUSDRate(tokenAddress, blockNumber),
           balance,
           blockNumber,
+          getIsTokenLiquid(tokenAddress),
           BigDecimal.fromString("1"),
         ),
       );
@@ -1388,6 +1395,7 @@ export function getLiquityStabilityPoolRecords(
       rate,
       balance,
       blockNumber,
+      getIsTokenLiquid(tokenAddress),
       BigDecimal.fromString("1"),
     ),
   );
@@ -1442,6 +1450,7 @@ export function getVeFXSAllocatorRecords(
       fxsRate,
       balance,
       blockNumber,
+      getIsTokenLiquid(tokenAddress),
       BigDecimal.fromString("1"),
     ),
   );
@@ -1499,6 +1508,7 @@ export function getVlCvxUnlockedRecords(
         rate,
         balance,
         blockNumber,
+        getIsTokenLiquid(tokenAddress),
         BigDecimal.fromString("1"),
       ),
     );

@@ -13,7 +13,7 @@ import {
   getTotalValueLocked,
 } from "../utils/OhmCalculations";
 import { getBaseOhmUsdRate } from "../utils/Price";
-import { generateTokenRecords } from "../utils/TreasuryCalculations";
+import { generateTokenRecords, generateTokenSupply } from "../utils/TreasuryCalculations";
 import { getAPY_Rebase, getNextOHMRebase } from "./Rebase";
 
 export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
@@ -22,6 +22,7 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
   let protocolMetric = ProtocolMetric.load(dateString);
   if (protocolMetric == null) {
     protocolMetric = new ProtocolMetric(dateString);
+    protocolMetric.date = dateString;
     protocolMetric.block = BigInt.fromString("-1");
     protocolMetric.currentAPY = BigDecimal.fromString("0");
     protocolMetric.currentIndex = BigDecimal.fromString("0");
@@ -82,4 +83,5 @@ export function handleMetrics(call: StakeCall): void {
   generateTokenRecords(call.block.timestamp, call.block.number);
 
   // TokenSupply
+  generateTokenSupply(call.block.timestamp, call.block.number);
 }

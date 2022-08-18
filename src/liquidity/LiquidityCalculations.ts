@@ -85,9 +85,9 @@ function getLiquidityTokenRecords(
         lpUnitPrice,
         toDecimal(balance, 18),
         blockNumber,
+        true,
         BigDecimal.fromString("1"),
         TokenCategoryPOL,
-        true,
       ),
     );
   }

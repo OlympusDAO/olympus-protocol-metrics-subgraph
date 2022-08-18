@@ -1,6 +1,11 @@
 import { BigInt } from "@graphprotocol/graph-ts";
 
 import { getOwnedLiquidityPoolValue } from "../liquidity/LiquidityCalculations";
+import {
+  getProtocolOwnedLiquiditySupplyRecords,
+  getTotalSupplyRecord,
+  getTreasuryOHMRecords,
+} from "./OhmCalculations";
 import { getStablecoinBalances } from "./TokenStablecoins";
 import { getVolatileTokenBalances } from "./TokenVolatile";
 
@@ -24,4 +29,16 @@ export function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): vo
 
   // Protocol-owned liquidity
   getOwnedLiquidityPoolValue(timestamp, false, false, blockNumber);
+}
+
+export function generateTokenSupply(timestamp: BigInt, blockNumber: BigInt): void {
+  // OHM
+  // Total supply
+  getTotalSupplyRecord(timestamp, blockNumber);
+
+  // Treasury OHM
+  getTreasuryOHMRecords(timestamp, blockNumber);
+
+  // Floating supply
+  getProtocolOwnedLiquiditySupplyRecords(timestamp, blockNumber);
 }

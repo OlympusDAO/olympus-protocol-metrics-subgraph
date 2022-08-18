@@ -77,6 +77,7 @@ type TokenRecord @entity {
 type TokenSupply @entity {
   id: ID! # YYYY-MM-DD/<token>/<type>/<pool>/<source>
   block: BigInt!
+  timestamp: BigInt! # Unix timestamp in UTC
   date: String! # YYYY-MM-DD
   token: String!
   tokenAddress: String!

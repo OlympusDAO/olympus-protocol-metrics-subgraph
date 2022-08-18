@@ -3,7 +3,7 @@ import { log } from "matchstick-as";
 
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
-import { TokenRecord } from "../../generated/schema";
+import { TokenRecord, TokenSupply } from "../../generated/schema";
 import {
   CONVEX_STAKING_CONTRACTS,
   ERC20_OHM_V2,
@@ -17,6 +17,7 @@ import { toDecimal } from "../utils/Decimals";
 import { getUSDRate } from "../utils/Price";
 import { TokenCategoryPOL } from "../utils/TokenDefinition";
 import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";
+import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
 // ### Balances ###
 
@@ -145,9 +146,9 @@ function getCurvePairStakedRecord(
     pairRate,
     balance,
     blockNumber,
+    true,
     multiplier,
     TokenCategoryPOL,
-    true,
   );
 }
 
@@ -199,9 +200,9 @@ function getCurvePairRecord(
     pairRate,
     pairTokenBalanceDecimal,
     blockNumber,
+    true,
     multiplier,
     TokenCategoryPOL,
-    true,
   );
 }
 
@@ -452,19 +453,16 @@ export function getCurvePairTotalTokenQuantity(
  * @returns
  */
 export function getCurvePairTokenQuantity(
-  metricName: string,
+  timestamp: BigInt,
   pairAddress: string,
   tokenAddress: string,
   blockNumber: BigInt,
-): TokenRecordsWrapper {
+): TokenSupply[] {
   log.info("getCurvePairTokenQuantity: Calculating quantity of token {} in Curve pool {}", [
     getContractName(tokenAddress),
     getContractName(pairAddress),
   ]);
-  const records = newTokenRecordsWrapper(
-    addToMetricName(metricName, "CurvePoolTokenQuantity-" + getContractName(tokenAddress)),
-    blockNumber,
-  );
+  const records: TokenSupply[] = [];
   const poolTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
   if (!poolTokenContract) return records;
 
@@ -482,7 +480,7 @@ export function getCurvePairTokenQuantity(
 
   // Grab balances
   const poolTokenBalances = getCurvePairRecords(
-    metricName,
+    timestamp,
     pairAddress,
     tokenAddress,
     false,
@@ -490,25 +488,23 @@ export function getCurvePairTokenQuantity(
     blockNumber,
   );
 
-  for (let i = 0; i < poolTokenBalances.records.length; i++) {
-    const recordId = poolTokenBalances.records[i];
-    const record = TokenRecord.load(recordId);
-    if (!record) {
-      throw new Error("Unable to load TokenRecord with id " + recordId);
-    }
+  for (let i = 0; i < poolTokenBalances.length; i++) {
+    const record = poolTokenBalances[i];
 
     const tokenBalance = totalQuantity.times(record.balance).div(poolTokenTotalSupply);
-    pushTokenRecord(
-      records,
-      createOrUpdateTokenRecord(
-        metricName,
-        getContractName(tokenAddress) + " in " + getContractName(poolTokenAddress),
+    records.push(
+      createOrUpdateTokenSupply(
+        timestamp,
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(poolTokenAddress),
         poolTokenAddress,
         record.source,
         record.sourceAddress,
-        BigDecimal.fromString("1"),
+        TYPE_LIQUIDITY,
         tokenBalance,
         blockNumber,
+        -1,
       ),
     );
   }
