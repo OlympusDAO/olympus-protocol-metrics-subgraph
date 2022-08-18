@@ -440,8 +440,6 @@ dataSources:
           file: ./abis/UniswapV2Pair.json
         - name: UniswapV3Pair
           file: ./abis/UniswapV3Pair.json
-        - name: ConvexAllocator
-          file: ./abis/ConvexAllocator.json
         - name: CirculatingSupply
           file: ./abis/CirculatingSupply.json
         - name: ERC20
@@ -476,8 +474,6 @@ dataSources:
           file: ./abis/OHMLUSDBondV1.json
         - name: VeFXS
           file: ./abis/VeFXS.json
-        - name: Distributor
-          file: ./abis/Distributor.json
         - name: RariAllocator
           file: ./abis/RariAllocator.json
         - name: BalancerVault

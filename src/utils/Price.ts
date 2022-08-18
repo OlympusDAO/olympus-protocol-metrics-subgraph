@@ -17,7 +17,7 @@ import {
   NATIVE_ETH,
   OHM_PRICE_PAIRS,
 } from "./Constants";
-import { getERC20, getERC20Decimals, getUniswapV2Pair } from "./ContractHelper";
+import { getERC20, getERC20Decimals, getUniswapV2Pair, getUniswapV3Pair } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getBalancerPoolToken, getBalancerVault } from "./LiquidityBalancer";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
@@ -204,7 +204,7 @@ export function getUSDRateUniswapV3(
   blockNumber: BigInt,
 ): BigDecimal {
   log.debug("getUSDRateUniswapV3: contract {}, pair {}", [contractAddress, pairAddress]);
-  const pair = UniswapV3Pair.bind(Address.fromString(pairAddress));
+  const pair = getUniswapV3Pair(pairAddress, blockNumber);
   if (!pair) {
     throw new Error(
       "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",

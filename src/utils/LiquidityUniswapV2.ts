@@ -1,18 +1,13 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
-import { TokenRecord, TokenRecordsWrapper } from "../../generated/schema";
+import { TokenRecord } from "../../generated/schema";
 import { getContractName, getWalletAddressesForContract, liquidityPairHasToken } from "./Constants";
 import { getERC20, getUniswapV2Pair } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
 import { getBaseOhmUsdRate, getUSDRateUniswapV2 } from "./Price";
 import { TokenCategoryPOL } from "./TokenDefinition";
-import {
-  addToMetricName,
-  createOrUpdateTokenRecord,
-  newTokenRecordsWrapper,
-  pushTokenRecord,
-} from "./TokenRecordHelper";
+import { createOrUpdateTokenRecord } from "./TokenRecordHelper";
 
 /**
  * To calculate the risk-free value of an OHM-DAI LP, we assume
@@ -237,7 +232,7 @@ export function getUniswapV2PairUnitRate(
  * @returns
  */
 export function getUniswapV2PairRecord(
-  metricName: string,
+  timestamp: BigInt,
   pairAddress: string,
   pairRate: BigDecimal,
   walletAddress: string,
@@ -264,7 +259,7 @@ export function getUniswapV2PairRecord(
   const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
 
   return createOrUpdateTokenRecord(
-    metricName,
+    timestamp,
     getContractName(pairAddress),
     pairAddress,
     getContractName(walletAddress),
@@ -295,16 +290,13 @@ export function getUniswapV2PairRecord(
  * @returns
  */
 export function getUniswapV2PairRecords(
-  metricName: string,
+  timestamp: BigInt,
   pairAddress: string,
   tokenAddress: string | null,
   excludeOhmValue: boolean,
   blockNumber: BigInt,
-): TokenRecordsWrapper {
-  const records = newTokenRecordsWrapper(
-    addToMetricName(metricName, "UniswapV2PairRecords/" + getContractName(pairAddress)),
-    blockNumber,
-  );
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
   // If we are restricting by token and tokenAddress does not match either side of the pair
   if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
     log.debug("Skipping UniswapV2 pair that does not match specified token address {}", [
@@ -324,7 +316,7 @@ export function getUniswapV2PairRecords(
     const walletAddress = wallets[i];
 
     const record = getUniswapV2PairRecord(
-      metricName,
+      timestamp,
       pairAddress,
       unitRate,
       walletAddress,
@@ -332,7 +324,7 @@ export function getUniswapV2PairRecords(
       blockNumber,
     );
     if (record) {
-      pushTokenRecord(records, record);
+      records.push(record);
     }
   }
 

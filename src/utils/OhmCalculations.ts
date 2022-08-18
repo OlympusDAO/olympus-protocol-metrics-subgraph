@@ -339,21 +339,6 @@ export function getFloatingSupply(
 }
 
 /**
- * Returns the market cap for the latest version of the OHM contract
- * at the given block number.
- *
- * Market cap is calculated as: OHM-USD rate * circulating supply of OHM
- *
- * @param blockNumber the current block number
- * @returns BigDecimal representing the market cap at the current block
- */
-export function getOhmMarketcap(metricName: string, blockNumber: BigInt): BigDecimal {
-  return getBaseOhmUsdRate(blockNumber).times(
-    getCirculatingSupply(metricName, blockNumber, getTotalSupply(blockNumber)).value,
-  );
-}
-
-/**
  * Returns the circulating supply of sOHM V1, V2 or V3, depending on the current block.
  *
  * @param blockNumber the current block number

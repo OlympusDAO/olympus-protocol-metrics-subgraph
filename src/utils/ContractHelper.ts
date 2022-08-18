@@ -1,7 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { BalancerLiquidityGauge } from "../../generated/ProtocolMetrics/BalancerLiquidityGauge";
-import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator";
 import { ConvexBaseRewardPool } from "../../generated/ProtocolMetrics/ConvexBaseRewardPool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { LQTYStaking } from "../../generated/ProtocolMetrics/LQTYStaking";
@@ -69,7 +68,6 @@ const contractsRariAllocator = new Map<string, RariAllocator>();
 const contractsTokeAllocator = new Map<string, TokeAllocator>();
 const contractsMasterChef = new Map<string, MasterChef>();
 const contractsVeFXS = new Map<string, VeFXS>();
-const contractsConvexAllocator = new Map<string, ConvexAllocator>();
 const contractsLUSDAllocator = new Map<string, LUSDAllocatorV2>();
 
 /**
@@ -378,24 +376,6 @@ export function getVeFXS(contractAddress: string, currentBlockNumber: BigInt): V
   return contractsVeFXS.get(contractAddress);
 }
 
-export function getConvexAllocator(
-  contractAddress: string,
-  currentBlockNumber: BigInt,
-): ConvexAllocator | null {
-  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
-
-  if (!contractsConvexAllocator.has(contractAddress)) {
-    log.debug("Binding ConvexAllocator contract for address {}. Block number {}", [
-      contractAddress,
-      currentBlockNumber.toString(),
-    ]);
-    const contract = ConvexAllocator.bind(Address.fromString(contractAddress));
-    contractsConvexAllocator.set(contractAddress, contract);
-  }
-
-  return contractsConvexAllocator.get(contractAddress);
-}
-
 /**
  * Helper method to simplify getting the balance from an ERC20 contract.
  *
@@ -534,18 +514,6 @@ export function getMasterChefBalance(
   }
 
   return contract.userInfo(BigInt.fromI32(onsenId), Address.fromString(address)).value0;
-}
-
-/**
- * Determines the value of a given balance.
- *
- * @param balance Balance of a token
- * @param decimals Number of decimals
- * @param rate The conversion rate
- * @returns BigDecimal representing the value
- */
-export function getValue(balance: BigInt, decimals: number, rate: BigDecimal): BigDecimal {
-  return toDecimal(balance, decimals).times(rate);
 }
 
 /**
