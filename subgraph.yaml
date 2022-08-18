@@ -34,7 +34,7 @@ dataSources:
       callHandlers:
         - function: rebase(uint256)
           handler: rebaseFunction
-      file: ./src/sOlympusERC20V1.ts
+      file: ./src/sOlympus/sOlympusERC20V1.ts
   - kind: ethereum/contract
     name: sOlympusERC20V2
     network: mainnet
@@ -64,7 +64,7 @@ dataSources:
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
-      file: ./src/sOlympusERC20V2.ts
+      file: ./src/sOlympus/sOlympusERC20V2.ts
   - kind: ethereum/contract
     name: sOlympusERC20V3
     network: mainnet
@@ -94,7 +94,7 @@ dataSources:
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
-      file: ./src/sOlympusERC20V3.ts
+      file: ./src/sOlympus/sOlympusERC20V3.ts
   #DAI Bond Contract V1
   - kind: ethereum/contract
     name: DAIBondV1
@@ -115,7 +115,7 @@ dataSources:
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
-      file: ./src/DAIBondV1.ts
+      file: ./src/bonds/DAIBondV1.ts
   #DAI Bond Contract V2
   - kind: ethereum/contract
     name: DAIBondV2
@@ -136,7 +136,7 @@ dataSources:
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
-      file: ./src/DAIBondV2.ts
+      file: ./src/bonds/DAIBondV2.ts
   #DAI Bond Contract V3
   - kind: ethereum/contract
     name: DAIBondV3
@@ -157,7 +157,7 @@ dataSources:
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
-      file: ./src/DAIBondV3.ts
+      file: ./src/bonds/DAIBondV3.ts
   #OHM DAI LP Bond Contract V1
   - kind: ethereum/contract
     name: OHMDAIBondV1
@@ -180,7 +180,7 @@ dataSources:
       callHandlers:
         - function: depositBondPrinciple(uint256)
           handler: handleDeposit
-      file: ./src/OHMDAIBondV1.ts
+      file: ./src/bonds/OHMDAIBondV1.ts
   #OHM DAI LP Bond Contract V2
   - kind: ethereum/contract
     name: OHMDAIBondV2
@@ -203,7 +203,7 @@ dataSources:
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
-      file: ./src/OHMDAIBondV2.ts
+      file: ./src/bonds/OHMDAIBondV2.ts
   #OHM DAI LP Bond Contract V3
   - kind: ethereum/contract
     name: OHMDAIBondV3
@@ -226,7 +226,7 @@ dataSources:
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
-      file: ./src/OHMDAIBondV3.ts
+      file: ./src/bonds/OHMDAIBondV3.ts
   #OHM DAI LP Bond Contract V4
   - kind: ethereum/contract
     name: OHMDAIBondV4
@@ -249,7 +249,7 @@ dataSources:
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
-      file: ./src/OHMDAIBondV4.ts
+      file: ./src/bonds/OHMDAIBondV4.ts
   # FRAX-OHM v1
   - kind: ethereum/contract
     name: OHMFRAXBondV1
@@ -272,7 +272,7 @@ dataSources:
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
-      file: ./src/OHMFRAXBondV1.ts
+      file: ./src/bonds/OHMFRAXBondV1.ts
   # FRAX-OHM v2
   - kind: ethereum/contract
     name: OHMFRAXBondV2
@@ -295,7 +295,7 @@ dataSources:
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
-      file: ./src/OHMFRAXBondV2.ts
+      file: ./src/bonds/OHMFRAXBondV2.ts
   # FRAX v1
   - kind: ethereum/contract
     name: FRAXBondV1
@@ -316,7 +316,7 @@ dataSources:
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
-      file: ./src/FRAXBondV1.ts
+      file: ./src/bonds/FRAXBondV1.ts
   #WETH
   - kind: ethereum/contract
     name: ETHBondV1
@@ -339,7 +339,7 @@ dataSources:
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
-      file: ./src/ETHBondV1.ts
+      file: ./src/bonds/ETHBondV1.ts
   #LUSD
   - kind: ethereum/contract
     name: LUSDBondV1
@@ -360,7 +360,7 @@ dataSources:
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
-      file: ./src/LUSDBondV1.ts
+      file: ./src/bonds/LUSDBondV1.ts
   # LUSD-OHM v2
   - kind: ethereum/contract
     name: OHMLUSDBondV1
@@ -383,7 +383,7 @@ dataSources:
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
-      file: ./src/OHMLUSDBondV1.ts
+      file: ./src/bonds/OHMLUSDBondV1.ts
   # ETH-OHM v2
   - kind: ethereum/contract
     name: OHMETHBondV1
@@ -406,7 +406,7 @@ dataSources:
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
-      file: ./src/OHMETHBondV1.ts
+      file: ./src/bonds/OHMETHBondV1.ts
   - kind: ethereum/contract
     name: ProtocolMetrics
     network: mainnet
@@ -503,4 +503,4 @@ dataSources:
       callHandlers:
         - function: stake(address,uint256,bool,bool)
           handler: handleMetrics
-      file: ./src/utils/ProtocolMetrics.ts
+      file: ./src/protocolMetrics/ProtocolMetrics.ts
