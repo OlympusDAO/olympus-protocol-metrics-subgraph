@@ -7,9 +7,9 @@ import {
   ERC20_FEI,
   ERC20_FRAX,
   ERC20_LUSD,
-  ERC20_STABLE_TOKENS,
   ERC20_UST,
   getContractName,
+  getTokensInCategory,
 } from "./Constants";
 import {
   getConvexStakedRecords,
@@ -22,6 +22,7 @@ import {
 } from "./ContractHelper";
 import { getLiquidityBalances } from "./LiquidityCalculations";
 import { getUSDRate } from "./Price";
+import { TokenCategoryStable } from "./TokenDefinition";
 import {
   addToMetricName,
   combineTokenRecordsWrapper,
@@ -159,12 +160,13 @@ export function getStablecoinBalances(
     blockNumber,
   );
 
-  for (let i = 0; i < ERC20_STABLE_TOKENS.length; i++) {
+  const stableTokens = getTokensInCategory(TokenCategoryStable);
+  for (let i = 0; i < stableTokens.length; i++) {
     combineTokenRecordsWrapper(
       records,
       getStablecoinBalance(
         metricName,
-        ERC20_STABLE_TOKENS[i],
+        stableTokens[i].getAddress(),
         includeLiquidity,
         riskFree,
         excludeOhmValue,

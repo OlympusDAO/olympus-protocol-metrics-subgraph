@@ -1,17 +1,10 @@
-// eslint-disable-next-line no-shadow
-export const enum TokenCategory {
-  Stable,
-  Volatile,
-  POL,
-}
-
 export const TokenCategoryStable = "Stable";
 export const TokenCategoryVolatile = "Volatile";
 export const TokenCategoryPOL = "Protocol-Owned Liquidity";
 
 export class TokenDefinition {
   protected address: string;
-  protected category: TokenCategory;
+  protected category: string;
   protected isLiquid: boolean;
   protected isVolatileBluechip: boolean;
 
@@ -24,12 +17,7 @@ export class TokenDefinition {
    * @param isLiquid
    * @param isVolatileBluechip
    */
-  constructor(
-    address: string,
-    category: TokenCategory,
-    isLiquid: boolean,
-    isVolatileBluechip: boolean,
-  ) {
+  constructor(address: string, category: string, isLiquid: boolean, isVolatileBluechip: boolean) {
     this.address = address.toLowerCase();
     this.category = category;
     this.isLiquid = isLiquid;
@@ -40,7 +28,7 @@ export class TokenDefinition {
     return this.address;
   }
 
-  getCategory(): TokenCategory {
+  getCategory(): string {
     return this.category;
   }
 

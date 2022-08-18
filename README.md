@@ -84,7 +84,7 @@ To add a new token:
 
 - Define a constant value with the address of the ERC20 contract, with `.toLowerCase()` appended
 - Define a constant value with the address of the Uniswap V2 or V3 liquidity pool
-- Add the token to either the `ERC20_STABLE_TOKENS` or `ERC20_VOLATILE_TOKENS` array (as appropriate)
+- Add the token definition to the `ERC20_TOKENS` map
 - Add a mapping under `PAIR_HANDLER` between the ERC20 contract and the liquidity pool contract
 - If the token is present in any wallets outside of `WALLET_ADDRESSES`, yet should be reported as part of the tresury, add it to {NON_TREASURY_ASSET_WHITELIST}.
 

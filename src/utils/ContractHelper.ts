@@ -33,8 +33,10 @@ import {
   ERC20_LUSD,
   ERC20_WETH,
   getContractName,
+  getIsTokenVolatileBluechip,
   getOnsenAllocatorId,
   getRariAllocatorId,
+  getTokenCategory,
   getWalletAddressesForContract,
   liquidityPairHasToken,
   LQTY_STAKING,
@@ -49,7 +51,6 @@ import {
 } from "./Constants";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
-import { TokenCategoryPOL, TokenCategoryVolatile } from "./TokenDefinition";
 import {
   addToMetricName,
   combineTokenRecordsWrapper,
@@ -596,8 +597,8 @@ export function getERC20TokenRecordFromWallet(
     balance,
     blockNumber,
     BigDecimal.fromString("1"),
-    TokenCategoryVolatile,
-    true, // TODO shift to deriving this from TokenDefinition
+    getTokenCategory(contractAddress),
+    getIsTokenVolatileBluechip(contractAddress),
   );
 }
 
@@ -736,7 +737,7 @@ export function getTokeStakedBalancesFromWallets(
         balance,
         blockNumber,
         BigDecimal.fromString("1"),
-        TokenCategoryVolatile,
+        getTokenCategory(tokenAddress),
         true,
       ),
     );
@@ -839,7 +840,7 @@ export function getLiquityStakedBalancesFromWallets(
         balance,
         blockNumber,
         BigDecimal.fromString("1"),
-        TokenCategoryVolatile,
+        getTokenCategory(tokenAddress),
         true,
       ),
     );
@@ -963,7 +964,7 @@ export function getBalancerGaugeBalanceFromWallets(
         balance,
         blockNumber,
         BigDecimal.fromString("1"),
-        TokenCategoryPOL,
+        getTokenCategory(tokenAddress),
         true,
       ),
     );
@@ -1074,7 +1075,7 @@ export function getTokeAllocatorRecords(
       balance,
       blockNumber,
       BigDecimal.fromString("1"),
-      TokenCategoryVolatile,
+      getTokenCategory(tokenAddress),
       true,
     ),
   );
@@ -1168,7 +1169,7 @@ export function getRariAllocatorRecords(
       balance,
       blockNumber,
       BigDecimal.fromString("1"),
-      TokenCategoryVolatile,
+      getTokenCategory(tokenAddress),
       true,
     ),
   );
@@ -1211,7 +1212,7 @@ export function getOnsenAllocatorRecords(
       balance,
       blockNumber,
       BigDecimal.fromString("1"),
-      TokenCategoryVolatile,
+      getTokenCategory(tokenAddress),
       true,
     ),
   );
@@ -1332,7 +1333,7 @@ export function getConvexStakedRecords(
           balance,
           blockNumber,
           BigDecimal.fromString("1"),
-          TokenCategoryVolatile,
+          getTokenCategory(tokenAddress),
           true,
         ),
       );
@@ -1465,7 +1466,7 @@ export function getLiquityStabilityPoolRecords(
       balance,
       blockNumber,
       BigDecimal.fromString("1"),
-      TokenCategoryVolatile,
+      getTokenCategory(tokenAddress),
       true,
     ),
   );
@@ -1525,7 +1526,7 @@ export function getVeFXSAllocatorRecords(
       balance,
       blockNumber,
       BigDecimal.fromString("1"),
-      TokenCategoryVolatile,
+      getTokenCategory(tokenAddress),
       false,
     ),
   );
@@ -1588,7 +1589,7 @@ export function getVlCvxUnlockedRecords(
         balance,
         blockNumber,
         BigDecimal.fromString("1"),
-        TokenCategoryVolatile,
+        getTokenCategory(tokenAddress),
         true,
       ),
     );

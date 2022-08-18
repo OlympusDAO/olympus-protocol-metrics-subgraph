@@ -6,11 +6,11 @@ import {
   ERC20_CVX_VL_V1,
   ERC20_FXS,
   ERC20_FXS_VE,
-  ERC20_VOLATILE_TOKENS,
   ERC20_WBTC,
   ERC20_WETH,
   ERC20_XSUSHI,
   getContractName,
+  getTokensInCategory,
 } from "./Constants";
 import {
   getConvexStakedRecords,
@@ -225,8 +225,10 @@ export function getVolatileTokenBalances(
     blockNumber,
   );
 
-  for (let i = 0; i < ERC20_VOLATILE_TOKENS.length; i++) {
-    const currentToken = ERC20_VOLATILE_TOKENS[i];
+  const volatileTokens = getTokensInCategory(TokenCategoryVolatile);
+
+  for (let i = 0; i < volatileTokens.length; i++) {
+    const currentToken = volatileTokens[i];
     const currentTokenAddress = currentToken.getAddress();
     if (liquidOnly && !currentToken.getIsLiquid()) {
       log.debug("liquidOnly is true, so skipping illiquid asset: {}", [currentTokenAddress]);

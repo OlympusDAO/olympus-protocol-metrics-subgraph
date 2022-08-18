@@ -1,7 +1,7 @@
 import { log } from "@graphprotocol/graph-ts";
 
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
-import { TokenCategory, TokenDefinition } from "./TokenDefinition";
+import { TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "./TokenDefinition";
 
 // Tokens definition
 export const DAIBOND_TOKEN = "DAI";
@@ -199,33 +199,88 @@ export const ERC20_WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2".toLowerCa
 export const ERC20_XSUSHI = "0x8798249c2e607446efb7ad49ec89dd1865ff4272".toLowerCase();
 export const NATIVE_ETH = "-999999";
 
-export const ERC20_VOLATILE_TOKENS = [
-  new TokenDefinition(ERC20_ALCX, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_AURA, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_AURA_VL, TokenCategory.Volatile, false, false),
-  new TokenDefinition(ERC20_CRV_3POOL, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_CRV, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_CVX_CRV, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_CVX_VL_V1, TokenCategory.Volatile, false, false),
-  new TokenDefinition(ERC20_CVX_VL_V2, TokenCategory.Volatile, false, false),
-  new TokenDefinition(ERC20_CVX, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_FDT, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_FOX, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_FPIS, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_FXS_VE, TokenCategory.Volatile, false, false),
-  new TokenDefinition(ERC20_FXS, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_KP3R, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_LQTY, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_PRIME, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_SYN, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_THOR, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_TOKE, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_TRIBE, TokenCategory.Volatile, true, false),
-  new TokenDefinition(ERC20_WBTC, TokenCategory.Volatile, true, true),
-  new TokenDefinition(ERC20_WETH, TokenCategory.Volatile, true, true),
-  new TokenDefinition(ERC20_XSUSHI, TokenCategory.Volatile, true, false),
-  new TokenDefinition(NATIVE_ETH, TokenCategory.Volatile, true, true),
-];
+export const ERC20_TOKENS = new Map<string, TokenDefinition>();
+ERC20_TOKENS.set(ERC20_ADAI, new TokenDefinition(ERC20_ADAI, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_CVX_FRAX_3CRV, new TokenDefinition(ERC20_CVX_FRAX_3CRV, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_DAI, new TokenDefinition(ERC20_DAI, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_FEI, new TokenDefinition(ERC20_FEI, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_FRAX, new TokenDefinition(ERC20_FRAX, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_FRAX_3CRV, new TokenDefinition(ERC20_FRAX_3CRV, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_LUSD, new TokenDefinition(ERC20_LUSD, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_UST, new TokenDefinition(ERC20_UST, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_USDC, new TokenDefinition(ERC20_USDC, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_ALCX, new TokenDefinition(ERC20_ALCX, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_AURA, new TokenDefinition(ERC20_AURA, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_AURA_VL, new TokenDefinition(ERC20_AURA_VL, TokenCategoryVolatile, false, false));
+ERC20_TOKENS.set(ERC20_CRV_3POOL, new TokenDefinition(ERC20_CRV_3POOL, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_CRV, new TokenDefinition(ERC20_CRV, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_CVX_CRV, new TokenDefinition(ERC20_CVX_CRV, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_CVX_VL_V1, new TokenDefinition(ERC20_CVX_VL_V1, TokenCategoryVolatile, false, false));
+ERC20_TOKENS.set(ERC20_CVX_VL_V2, new TokenDefinition(ERC20_CVX_VL_V2, TokenCategoryVolatile, false, false));
+ERC20_TOKENS.set(ERC20_CVX, new TokenDefinition(ERC20_CVX, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_FDT, new TokenDefinition(ERC20_FDT, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_FOX, new TokenDefinition(ERC20_FOX, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_FPIS, new TokenDefinition(ERC20_FPIS, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_FXS_VE, new TokenDefinition(ERC20_FXS_VE, TokenCategoryVolatile, false, false));
+ERC20_TOKENS.set(ERC20_FXS, new TokenDefinition(ERC20_FXS, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_KP3R, new TokenDefinition(ERC20_KP3R, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_LQTY, new TokenDefinition(ERC20_LQTY, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_PRIME, new TokenDefinition(ERC20_PRIME, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_SYN, new TokenDefinition(ERC20_SYN, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_THOR, new TokenDefinition(ERC20_THOR, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_TOKE, new TokenDefinition(ERC20_TOKE, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_TRIBE, new TokenDefinition(ERC20_TRIBE, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_WBTC, new TokenDefinition(ERC20_WBTC, TokenCategoryVolatile, true, true));
+ERC20_TOKENS.set(ERC20_WETH, new TokenDefinition(ERC20_WETH, TokenCategoryVolatile, true, true));
+ERC20_TOKENS.set(ERC20_XSUSHI, new TokenDefinition(ERC20_XSUSHI, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(NATIVE_ETH, new TokenDefinition(NATIVE_ETH, TokenCategoryVolatile, true, true));
+
+export const getTokenCategory = (contractAddress: string): string => {
+  const contractAddressLower = contractAddress.toLowerCase();
+
+  return ERC20_TOKENS.has(contractAddressLower)
+    ? ERC20_TOKENS.get(contractAddressLower).getCategory()
+    : "Unknown";
+};
+
+export const getIsTokenVolatileBluechip = (contractAddress: string): boolean => {
+  const contractAddressLower = contractAddress.toLowerCase();
+
+  return ERC20_TOKENS.has(contractAddressLower)
+    ? ERC20_TOKENS.get(contractAddressLower).getIsVolatileBluechip()
+    : false;
+};
+
+export const getTokensInCategory = (category: string): TokenDefinition[] => {
+  const filteredArray: TokenDefinition[] = [];
+  
+  // No support for closures in AssemblyScript, so we do it the old-fashioned way
+  const values = ERC20_TOKENS.values();
+  for (let i = 0; i < values.length; i++) {
+    const value = values[i];
+    if (value.getCategory() !== category) {
+      continue;
+    }
+
+    filteredArray.push(value);
+  }
+
+  return filteredArray;
+};
+
+export const isTokenAddressInCategory = (tokenAddress: string, category: string): bool => {
+  const getCategoryFunc = (value: TokenDefinition, _index: i32, _array: TokenDefinition[]): string => value.getCategory();
+  
+  // Need to define the return type of map: https://github.com/AssemblyScript/assemblyscript/issues/449#issuecomment-459981415
+  return getTokensInCategory(category).map<string>(getCategoryFunc).includes(tokenAddress.toLowerCase());
+}
+
+export const getTokenAddressesInCategory = (category: string): string[] => {
+  const getAddressFunc = (value: TokenDefinition, _index: i32, _array: TokenDefinition[]): string => value.getAddress();
+  
+  // Need to define the return type of map: https://github.com/AssemblyScript/assemblyscript/issues/449#issuecomment-459981415
+  return getTokensInCategory(category).map<string>(getAddressFunc);
+}
 
 const CONVEX_STAKED_TOKENS = new Map<string, string>();
 CONVEX_STAKED_TOKENS.set(ERC20_CRV_OHMETH, ERC20_CVX_OHMETH);

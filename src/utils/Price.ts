@@ -7,12 +7,13 @@ import {
   BALANCER_VAULT,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
-  ERC20_STABLE_TOKENS,
   ERC20_UST,
   ERC20_UST_BLOCK_DEATH,
   ERC20_WETH,
   getContractName,
   getPairHandler,
+  getTokenAddressesInCategory,
+  isTokenAddressInCategory,
   NATIVE_ETH,
   OHM_PRICE_PAIRS,
 } from "./Constants";
@@ -26,6 +27,7 @@ import {
   getBaseTokenUSDRate,
   PairTokenBaseOrientation,
 } from "./PriceBase";
+import { TokenCategoryStable } from "./TokenDefinition";
 
 const BIG_DECIMAL_1E9 = BigDecimal.fromString("1e9");
 
@@ -104,8 +106,9 @@ function getPairHandlerNonOhmValue(
     const balances: Array<BigInt> = poolTokenWrapper.getBalances();
     let totalValue = BigDecimal.zero();
 
-    const baseTokens = ERC20_STABLE_TOKENS.slice(0);
-    baseTokens.push(ERC20_WETH);
+    const stableTokenAddresses = getTokenAddressesInCategory(TokenCategoryStable);
+    const baseTokenAddresses = stableTokenAddresses.slice(0);
+    baseTokenAddresses.push(ERC20_WETH);
 
     // Add up non-OHM reserves
     for (let i = 0; i < addresses.length; i++) {
@@ -120,11 +123,11 @@ function getPairHandlerNonOhmValue(
 
       // If the remaining token is not a base token (USD or ETH), we can't use it
       // as we would risk an infinite loop if OHM is in the liquidity pool
-      if (!baseTokens.includes(currentAddressString)) {
+      if (!baseTokenAddresses.includes(currentAddressString)) {
         continue;
       }
 
-      const currentPrice = ERC20_STABLE_TOKENS.includes(currentAddressString)
+      const currentPrice = stableTokenAddresses.includes(currentAddressString)
         ? BigDecimal.fromString("1")
         : getBaseEthUsdRate();
 
@@ -480,7 +483,7 @@ export function getUSDRateUniswapV2(
     log.debug("getUSDRateUniswapV2: Returning base OHM-USD rate", []);
     return getBaseOhmUsdRate(blockNumber);
   }
-  if (arrayIncludesLoose(ERC20_STABLE_TOKENS, contractAddress)) {
+  if (isTokenAddressInCategory(TokenCategoryStable, contractAddress)) {
     log.debug("getUSDRateUniswapV2: Returning stablecoin rate of 1", []);
     return BigDecimal.fromString("1");
   }
@@ -553,7 +556,7 @@ export function getUSDRate(contractAddress: string, blockNumber: BigInt): BigDec
   }
 
   // Handle stablecoins
-  if (arrayIncludesLoose(ERC20_STABLE_TOKENS, contractAddress)) {
+  if (isTokenAddressInCategory(TokenCategoryStable, contractAddress)) {
     log.debug("getUSDRate: Contract address {} is a stablecoin. Returning 1.", [contractAddress]);
     return BigDecimal.fromString("1");
   }
