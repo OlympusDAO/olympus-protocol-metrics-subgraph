@@ -1,6 +1,7 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecordsWrapper } from "../../generated/schema";
+import { TokenRecord } from "../../generated/schema";
+import { pushArray } from "./ArrayHelper";
 import {
   ERC20_CVX,
   ERC20_CVX_VL_V1,
@@ -28,20 +29,14 @@ import {
 import { getLiquidityBalances } from "./LiquidityCalculations";
 import { getUSDRate } from "./Price";
 import { TokenCategoryVolatile } from "./TokenDefinition";
-import {
-  addToMetricName,
-  combineTokenRecordsWrapper,
-  createOrUpdateTokenRecord,
-  newTokenRecordsWrapper,
-  pushTokenRecord,
-} from "./TokenRecordHelper";
+import { createOrUpdateTokenRecord } from "./TokenRecordHelper";
 
 /**
  * Returns the value of vesting assets in the treasury
  *
  * @returns TokenRecordsWrapper
  */
-export function getVestingAssets(date: string, blockNumber: BigInt): TokenRecordsWrapper {
+export function getVestingAssets(date: string, blockNumber: BigInt): TokenRecord[] {
   // Cross chain assets that can not be tracked right now
   // pklima
   // butterfly
@@ -49,7 +44,8 @@ export function getVestingAssets(date: string, blockNumber: BigInt): TokenRecord
   // PhantomDAO
   // Lobis
   // TODO remove hard-coded number
-  const records = newTokenRecordsWrapper(addToMetricName(date, "VestingAssets"), blockNumber);
+  const records: TokenRecord[] = [];
+
   const record = createOrUpdateTokenRecord(
     date,
     "Vesting Assets",
@@ -63,7 +59,8 @@ export function getVestingAssets(date: string, blockNumber: BigInt): TokenRecord
     TokenCategoryVolatile,
     false,
   );
-  pushTokenRecord(records, record);
+  records.push(record);
+
   return records;
 }
 
@@ -85,7 +82,7 @@ export function getVolatileTokenBalance(
   excludeOhmValue: boolean,
   restrictToTokenValue: boolean,
   blockNumber: BigInt,
-): TokenRecordsWrapper {
+): TokenRecord[] {
   // TODO consider changing function signature, as excludeOhmValue and restrictToTokenValue are relevant only if includeLiquidity = true
   const contractName = getContractName(contractAddress);
   log.info(
@@ -100,10 +97,9 @@ export function getVolatileTokenBalance(
       restrictToTokenValue ? "true" : "false",
     ],
   );
-  const records = newTokenRecordsWrapper(
-    addToMetricName(date, "VolatileTokenBalance-" + contractName),
-    blockNumber,
-  );
+
+  const records: TokenRecord[] = [];
+
   const contract = getERC20(contractAddress, blockNumber);
   if (!contract) {
     log.info(
@@ -123,63 +119,42 @@ export function getVolatileTokenBalance(
       [getContractName(contractAddress), contractAddress],
     );
   } else {
-    combineTokenRecordsWrapper(
+    pushArray(
       records,
       getERC20TokenRecordsWrapperFromWallets(date, contractAddress, contract, rate, blockNumber),
     );
   }
 
   // Rari Allocator
-  combineTokenRecordsWrapper(
-    records,
-    getRariAllocatorRecords(date, contractAddress, rate, blockNumber),
-  );
+  pushArray(records, getRariAllocatorRecords(date, contractAddress, rate, blockNumber));
 
   // Toke Allocator
-  combineTokenRecordsWrapper(
-    records,
-    getTokeAllocatorRecords(date, contractAddress, rate, blockNumber),
-  );
+  pushArray(records, getTokeAllocatorRecords(date, contractAddress, rate, blockNumber));
 
   // Staked TOKE
-  combineTokenRecordsWrapper(
-    records,
-    getTokeStakedBalancesFromWallets(date, contractAddress, rate, blockNumber),
-  );
+  pushArray(records, getTokeStakedBalancesFromWallets(date, contractAddress, rate, blockNumber));
 
   // Staked LQTY
-  combineTokenRecordsWrapper(
-    records,
-    getLiquityStakedBalancesFromWallets(date, contractAddress, rate, blockNumber),
-  );
+  pushArray(records, getLiquityStakedBalancesFromWallets(date, contractAddress, rate, blockNumber));
 
   // Staked Convex tokens
-  combineTokenRecordsWrapper(records, getConvexStakedRecords(date, contractAddress, blockNumber));
+  pushArray(records, getConvexStakedRecords(date, contractAddress, blockNumber));
 
   // Liquity Stability Pool
-  combineTokenRecordsWrapper(
-    records,
-    getLiquityStabilityPoolRecords(date, contractAddress, rate, blockNumber),
-  );
+  pushArray(records, getLiquityStabilityPoolRecords(date, contractAddress, rate, blockNumber));
 
   // Onsen Allocator
-  combineTokenRecordsWrapper(
-    records,
-    getOnsenAllocatorRecords(date, contractAddress, rate, blockNumber),
-  );
+  pushArray(records, getOnsenAllocatorRecords(date, contractAddress, rate, blockNumber));
 
   // VeFXS Allocator
-  combineTokenRecordsWrapper(records, getVeFXSAllocatorRecords(date, contractAddress, blockNumber));
+  pushArray(records, getVeFXSAllocatorRecords(date, contractAddress, blockNumber));
 
   // Unlocked (but not withdrawn) vlCVX
-  combineTokenRecordsWrapper(
-    records,
-    getVlCvxUnlockedRecords(date, contractAddress, rate, blockNumber),
-  );
+  pushArray(records, getVlCvxUnlockedRecords(date, contractAddress, rate, blockNumber));
 
   // Liquidity pools
   if (includeLiquidity) {
-    combineTokenRecordsWrapper(
+    pushArray(
       records,
       getLiquidityBalances(
         date,
@@ -192,7 +167,6 @@ export function getVolatileTokenBalance(
     );
   }
 
-  log.info("Volatile token value: {}", [records.value.toString()]);
   return records;
 }
 
@@ -218,12 +192,9 @@ export function getVolatileTokenBalances(
   excludeOhmValue: boolean,
   restrictToTokenValue: boolean,
   blockNumber: BigInt,
-): TokenRecordsWrapper {
+): TokenRecord[] {
   log.info("Calculating volatile token value", []);
-  const records = newTokenRecordsWrapper(
-    addToMetricName(date, "VolatileTokenBalances"),
-    blockNumber,
-  );
+  const records: TokenRecord[] = [];
 
   const volatileTokens = getTokensInCategory(TokenCategoryVolatile);
 
@@ -240,7 +211,7 @@ export function getVolatileTokenBalances(
       continue;
     }
 
-    combineTokenRecordsWrapper(
+    pushArray(
       records,
       getVolatileTokenBalance(
         date,
@@ -256,10 +227,9 @@ export function getVolatileTokenBalances(
 
   // We add vesting assets manually for now
   if (!liquidOnly) {
-    combineTokenRecordsWrapper(records, getVestingAssets(date, blockNumber));
+    pushArray(records, getVestingAssets(date, blockNumber));
   }
 
-  log.info("Volatile token value: {}", [records.value.toString()]);
   return records;
 }
 
@@ -270,7 +240,7 @@ export function getVolatileTokenBalances(
  * @param blockNumber the current block number
  * @returns TokenRecordsWrapper object
  */
-export function getXSushiBalance(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
+export function getXSushiBalance(metricName: string, blockNumber: BigInt): TokenRecord[] {
   return getVolatileTokenBalance(metricName, ERC20_XSUSHI, false, false, false, false, blockNumber);
 }
 
@@ -281,7 +251,7 @@ export function getXSushiBalance(metricName: string, blockNumber: BigInt): Token
  * @param blockNumber the current block number
  * @returns TokenRecordsWrapper object
  */
-export function getCVXBalance(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
+export function getCVXBalance(metricName: string, blockNumber: BigInt): TokenRecord[] {
   return getVolatileTokenBalance(metricName, ERC20_CVX, false, false, false, false, blockNumber);
 }
 
@@ -292,7 +262,7 @@ export function getCVXBalance(metricName: string, blockNumber: BigInt): TokenRec
  * @param blockNumber the current block number
  * @returns TokenRecordsWrapper object
  */
-export function getVlCVXBalance(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
+export function getVlCVXBalance(metricName: string, blockNumber: BigInt): TokenRecord[] {
   return getVolatileTokenBalance(
     metricName,
     ERC20_CVX_VL_V1,
@@ -312,14 +282,11 @@ export function getVlCVXBalance(metricName: string, blockNumber: BigInt): TokenR
  * @param blockNumber the current block number
  * @returns TokenRecordsWrapper object
  */
-export function getCVXTotalBalance(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
-  const records = newTokenRecordsWrapper(
-    addToMetricName(metricName, "CVXTotalBalance"),
-    blockNumber,
-  );
+export function getCVXTotalBalance(metricName: string, blockNumber: BigInt): TokenRecord[] {
+  const records: TokenRecord[] = [];
 
-  combineTokenRecordsWrapper(records, getCVXBalance(records.id, blockNumber));
-  combineTokenRecordsWrapper(records, getVlCVXBalance(records.id, blockNumber));
+  pushArray(records, getCVXBalance(metricName, blockNumber));
+  pushArray(records, getVlCVXBalance(metricName, blockNumber));
 
   return records;
 }
@@ -331,7 +298,7 @@ export function getCVXTotalBalance(metricName: string, blockNumber: BigInt): Tok
  * @param blockNumber the current block number
  * @returns TokenRecordsWrapper object
  */
-function getFXSBalance(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
+function getFXSBalance(metricName: string, blockNumber: BigInt): TokenRecord[] {
   return getVolatileTokenBalance(metricName, ERC20_FXS, false, false, false, false, blockNumber);
 }
 
@@ -343,7 +310,7 @@ function getFXSBalance(metricName: string, blockNumber: BigInt): TokenRecordsWra
  * @param blockNumber the current block number
  * @returns TokenRecordsWrapper object
  */
-export function getVeFXSBalance(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
+export function getVeFXSBalance(metricName: string, blockNumber: BigInt): TokenRecord[] {
   return getVolatileTokenBalance(metricName, ERC20_FXS_VE, false, false, false, false, blockNumber);
 }
 
@@ -355,14 +322,11 @@ export function getVeFXSBalance(metricName: string, blockNumber: BigInt): TokenR
  * @param blockNumber the current block number
  * @returns TokenRecordsWrapper object
  */
-export function getFXSTotalBalance(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
-  const records = newTokenRecordsWrapper(
-    addToMetricName(metricName, "FXSTotalBalance"),
-    blockNumber,
-  );
+export function getFXSTotalBalance(metricName: string, blockNumber: BigInt): TokenRecord[] {
+  const records: TokenRecord[] = [];
 
-  combineTokenRecordsWrapper(records, getFXSBalance(records.id, blockNumber));
-  combineTokenRecordsWrapper(records, getVeFXSBalance(records.id, blockNumber));
+  pushArray(records, getFXSBalance(metricName, blockNumber));
+  pushArray(records, getVeFXSBalance(metricName, blockNumber));
 
   return records;
 }
@@ -374,7 +338,7 @@ export function getFXSTotalBalance(metricName: string, blockNumber: BigInt): Tok
  * @param blockNumber current block number
  * @returns TokenRecordsWrapper object
  */
-export function getWETHBalance(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
+export function getWETHBalance(metricName: string, blockNumber: BigInt): TokenRecord[] {
   return getVolatileTokenBalance(metricName, ERC20_WETH, false, false, false, false, blockNumber);
 }
 
@@ -385,7 +349,7 @@ export function getWETHBalance(metricName: string, blockNumber: BigInt): TokenRe
  * @param blockNumber current block number
  * @returns TokenRecordsWrapper object
  */
-export function getWBTCBalance(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
+export function getWBTCBalance(metricName: string, blockNumber: BigInt): TokenRecord[] {
   return getVolatileTokenBalance(metricName, ERC20_WBTC, false, false, false, false, blockNumber);
 }
 
@@ -408,7 +372,7 @@ export function getVolatileValue(
   liquidOnly: boolean,
   includeBlueChip: boolean,
   includeLiquidity: boolean,
-): TokenRecordsWrapper {
+): TokenRecord[] {
   return getVolatileTokenBalances(
     date,
     liquidOnly,
@@ -440,6 +404,6 @@ export function getEthMarketValue(
   blockNumber: BigInt,
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   riskFree: boolean = false,
-): TokenRecordsWrapper {
+): TokenRecord[] {
   return getVolatileTokenBalance(metricName, ERC20_WETH, true, riskFree, true, true, blockNumber);
 }

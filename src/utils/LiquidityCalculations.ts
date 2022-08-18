@@ -1,6 +1,7 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecordsWrapper } from "../../generated/schema";
+import { TokenRecord } from "../../generated/schema";
+import { pushArray } from "./ArrayHelper";
 import {
   getContractName,
   getWalletAddressesForContract,
@@ -35,15 +36,7 @@ import { getFraxSwapPairRecords } from "./LiquidityFraxSwap";
 import { getOhmUSDPairRiskFreeValue, getUniswapV2PairValue } from "./LiquidityUniswapV2";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 import { TokenCategoryPOL } from "./TokenDefinition";
-import {
-  addToMetricName,
-  combineTokenRecordsWrapper,
-  createOrUpdateTokenRecord,
-  getTokenRecordsWrapperBalance,
-  newTokenRecordsWrapper,
-  pushTokenRecord,
-  setTokenRecordsWrapperMultiplier,
-} from "./TokenRecordHelper";
+import { createOrUpdateTokenRecord } from "./TokenRecordHelper";
 
 /**
  * Creates TokenRecordsWrapper for the giving liquidity records.
@@ -157,11 +150,8 @@ export function getLiquidityBalances(
   restrictToTokenValue: boolean,
   blockNumber: BigInt,
   ownedLiquidityPairs: PairHandler[] = LIQUIDITY_OWNED,
-): TokenRecordsWrapper {
-  const records = newTokenRecordsWrapper(
-    addToMetricName(metricName, "LiquidityBalances"),
-    blockNumber,
-  );
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
 
   for (let j = 0; j < ownedLiquidityPairs.length; j++) {
     const pairHandler = ownedLiquidityPairs[j];
@@ -206,7 +196,7 @@ export function getLiquidityBalances(
         setTokenRecordsWrapperMultiplier(currentTokenRecordsWrapper, BigDecimal.fromString("0.5"));
       }
 
-      combineTokenRecordsWrapper(records, currentTokenRecordsWrapper);
+      pushArray(records, currentTokenRecordsWrapper);
     } else if (pairHandler.getType() === PairHandlerTypes.Curve) {
       // TODO support risk-free value of Curve
       const currentTokenRecordsWrapper = getCurvePairRecords(
@@ -218,13 +208,13 @@ export function getLiquidityBalances(
         blockNumber,
       );
 
-      combineTokenRecordsWrapper(records, currentTokenRecordsWrapper);
+      pushArray(records, currentTokenRecordsWrapper);
     } else if (pairHandler.getType() === PairHandlerTypes.Balancer) {
       const balancerPoolId = pairHandler.getPool();
       if (balancerPoolId === null) throw new Error("Balancer pair does not have a pool id");
 
       // TODO support risk-free value of Balancer
-      combineTokenRecordsWrapper(
+      pushArray(
         records,
         getBalancerRecords(
           metricName,
@@ -246,7 +236,7 @@ export function getLiquidityBalances(
         tokenAddress,
       );
 
-      combineTokenRecordsWrapper(records, currentTokenRecordsWrapper);
+      pushArray(records, currentTokenRecordsWrapper);
     } else {
       throw new Error("Unsupported liquidity pair type: " + pairHandler.getType().toString());
     }

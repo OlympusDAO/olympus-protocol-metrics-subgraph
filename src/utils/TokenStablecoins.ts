@@ -1,6 +1,7 @@
 import { BigInt, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecordsWrapper } from "../../generated/schema";
+import { TokenRecord } from "../../generated/schema";
+import { pushArray } from "./ArrayHelper";
 import {
   ERC20_ADAI,
   ERC20_DAI,
@@ -23,11 +24,6 @@ import {
 import { getLiquidityBalances } from "./LiquidityCalculations";
 import { getUSDRate } from "./Price";
 import { TokenCategoryStable } from "./TokenDefinition";
-import {
-  addToMetricName,
-  combineTokenRecordsWrapper,
-  newTokenRecordsWrapper,
-} from "./TokenRecordHelper";
 
 /**
  * Returns the token records for a given stablecoin. This includes:
@@ -47,7 +43,7 @@ export function getStablecoinBalance(
   excludeOhmValue: boolean,
   restrictToTokeValue: boolean,
   blockNumber: BigInt,
-): TokenRecordsWrapper {
+): TokenRecord[] {
   const contractName = getContractName(contractAddress);
   log.info(
     "getStablecoinBalance: Calculating stablecoin balance for {} ({}) at block number {}: liquidity? {}, risk-free? {}, exclude OHM value? {}, restrictToTokenValue? {}",
@@ -61,10 +57,7 @@ export function getStablecoinBalance(
       restrictToTokeValue ? "true" : "false",
     ],
   );
-  const records = newTokenRecordsWrapper(
-    addToMetricName(metricName, "StablecoinBalance-" + contractName),
-    blockNumber,
-  );
+  const records: TokenRecord[] = [];
   const contract = getERC20(contractAddress, blockNumber);
   if (!contract) {
     log.info("getStablecoinBalance: Skipping ERC20 contract {} that returned empty at block {}", [
@@ -77,7 +70,7 @@ export function getStablecoinBalance(
   const rate = getUSDRate(contractAddress, blockNumber);
 
   // Wallets
-  combineTokenRecordsWrapper(
+  pushArray(
     records,
     getERC20TokenRecordsWrapperFromWallets(
       metricName,
@@ -89,38 +82,26 @@ export function getStablecoinBalance(
   );
 
   // Rari Allocator
-  combineTokenRecordsWrapper(
-    records,
-    getRariAllocatorRecords(metricName, contractAddress, rate, blockNumber),
-  );
+  pushArray(records, getRariAllocatorRecords(metricName, contractAddress, rate, blockNumber));
 
   // Staked Convex tokens
-  combineTokenRecordsWrapper(
-    records,
-    getConvexStakedRecords(metricName, contractAddress, blockNumber),
-  );
+  pushArray(records, getConvexStakedRecords(metricName, contractAddress, blockNumber));
 
   // Liquity Stability Pool
-  combineTokenRecordsWrapper(
+  pushArray(
     records,
     getLiquityStabilityPoolRecords(metricName, contractAddress, rate, blockNumber),
   );
 
   // Onsen Allocator
-  combineTokenRecordsWrapper(
-    records,
-    getOnsenAllocatorRecords(metricName, contractAddress, rate, blockNumber),
-  );
+  pushArray(records, getOnsenAllocatorRecords(metricName, contractAddress, rate, blockNumber));
 
   // VeFXS Allocator
-  combineTokenRecordsWrapper(
-    records,
-    getVeFXSAllocatorRecords(metricName, contractAddress, blockNumber),
-  );
+  pushArray(records, getVeFXSAllocatorRecords(metricName, contractAddress, blockNumber));
 
   // Liquidity pools
   if (includeLiquidity) {
-    combineTokenRecordsWrapper(
+    pushArray(
       records,
       getLiquidityBalances(
         metricName,
@@ -133,7 +114,6 @@ export function getStablecoinBalance(
     );
   }
 
-  log.info("getStablecoinBalance: Stablecoin token value: {}", [records.value.toString()]);
   return records;
 }
 
@@ -150,19 +130,16 @@ export function getStablecoinBalances(
   excludeOhmValue: boolean,
   restrictToTokenValue: boolean,
   blockNumber: BigInt,
-): TokenRecordsWrapper {
+): TokenRecord[] {
   log.info(
     "getStablecoinBalances: Calculating stablecoin value. Liquidity? {}. Risk-Free Value? {}.",
     [includeLiquidity ? "true" : "false", riskFree ? "true" : "false"],
   );
-  const records = newTokenRecordsWrapper(
-    addToMetricName(metricName, "StablecoinBalances"),
-    blockNumber,
-  );
+  const records: TokenRecord[] = [];
 
   const stableTokens = getTokensInCategory(TokenCategoryStable);
   for (let i = 0; i < stableTokens.length; i++) {
-    combineTokenRecordsWrapper(
+    pushArray(
       records,
       getStablecoinBalance(
         metricName,
@@ -176,7 +153,6 @@ export function getStablecoinBalances(
     );
   }
 
-  log.info("getStablecoinBalances: Stablecoin value: {}", [records.value.toString()]);
   return records;
 }
 
@@ -190,16 +166,16 @@ export function getStablecoinBalances(
  * @param blockNumber the current block number
  * @returns TokenRecordsWrapper object
  */
-export function getDaiBalance(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
-  const records = newTokenRecordsWrapper(addToMetricName(metricName, "DAIBalance"), blockNumber);
+export function getDaiBalance(metricName: string, blockNumber: BigInt): TokenRecord[] {
+  const records: TokenRecord[] = [];
 
-  combineTokenRecordsWrapper(
+  pushArray(
     records,
-    getStablecoinBalance(records.id, ERC20_DAI, false, false, false, false, blockNumber),
+    getStablecoinBalance(metricName, ERC20_DAI, false, false, false, false, blockNumber),
   );
-  combineTokenRecordsWrapper(
+  pushArray(
     records,
-    getStablecoinBalance(records.id, ERC20_ADAI, false, false, false, false, blockNumber),
+    getStablecoinBalance(metricName, ERC20_ADAI, false, false, false, false, blockNumber),
   );
 
   return records;
@@ -212,7 +188,7 @@ export function getDaiBalance(metricName: string, blockNumber: BigInt): TokenRec
  * @param blockNumber the current block number
  * @returns TokenRecordsWrapper object
  */
-export function getFeiBalance(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
+export function getFeiBalance(metricName: string, blockNumber: BigInt): TokenRecord[] {
   return getStablecoinBalance(metricName, ERC20_FEI, false, false, false, false, blockNumber);
 }
 
@@ -224,7 +200,7 @@ export function getFeiBalance(metricName: string, blockNumber: BigInt): TokenRec
  * @param blockNumber the current block number
  * @returns TokenRecordsWrapper object
  */
-export function getFraxBalance(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
+export function getFraxBalance(metricName: string, blockNumber: BigInt): TokenRecord[] {
   return getStablecoinBalance(metricName, ERC20_FRAX, false, false, false, false, blockNumber);
 }
 
@@ -236,7 +212,7 @@ export function getFraxBalance(metricName: string, blockNumber: BigInt): TokenRe
  * @param blockNumber the current block number
  * @returns TokenRecordsWrapper object
  */
-export function getLUSDBalance(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
+export function getLUSDBalance(metricName: string, blockNumber: BigInt): TokenRecord[] {
   return getStablecoinBalance(metricName, ERC20_LUSD, false, false, false, false, blockNumber);
 }
 
@@ -249,7 +225,7 @@ export function getLUSDBalance(metricName: string, blockNumber: BigInt): TokenRe
  * @param blockNumber the current block number
  * @returns TokenRecordsWrapper object
  */
-export function getUSTBalance(metricName: string, blockNumber: BigInt): TokenRecordsWrapper {
+export function getUSTBalance(metricName: string, blockNumber: BigInt): TokenRecord[] {
   return getStablecoinBalance(metricName, ERC20_UST, false, false, false, false, blockNumber);
 }
 
@@ -262,7 +238,7 @@ export function getUSTBalance(metricName: string, blockNumber: BigInt): TokenRec
  * @param blockNumber the current block number
  * @returns TokenRecordsWrapper representing the components of the stablecoin value
  */
-export function getStableValue(date: string, blockNumber: BigInt): TokenRecordsWrapper {
+export function getStableValue(date: string, blockNumber: BigInt): TokenRecord[] {
   return getStablecoinBalances(date, false, false, false, false, blockNumber);
 }
 
@@ -284,23 +260,19 @@ export function getDaiMarketValue(
   blockNumber: BigInt,
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   riskFree: boolean = false,
-): TokenRecordsWrapper {
+): TokenRecord[] {
   log.info("getDaiMarketValue: Calculating DAI market value", []);
-  const records = newTokenRecordsWrapper(
-    addToMetricName(metricName, "DAIMarketValue"),
-    blockNumber,
+  const records: TokenRecord[] = [];
+
+  pushArray(
+    records,
+    getStablecoinBalance(metricName, ERC20_DAI, true, riskFree, false, true, blockNumber),
+  );
+  pushArray(
+    records,
+    getStablecoinBalance(metricName, ERC20_ADAI, true, riskFree, false, true, blockNumber),
   );
 
-  combineTokenRecordsWrapper(
-    records,
-    getStablecoinBalance(records.id, ERC20_DAI, true, riskFree, false, true, blockNumber),
-  );
-  combineTokenRecordsWrapper(
-    records,
-    getStablecoinBalance(records.id, ERC20_ADAI, true, riskFree, false, true, blockNumber),
-  );
-
-  log.info("getDaiMarketValue: DAI market value: {}", [records.value.toString()]);
   return records;
 }
 
@@ -322,7 +294,7 @@ export function getFraxMarketValue(
   blockNumber: BigInt,
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   riskFree: boolean = false,
-): TokenRecordsWrapper {
+): TokenRecord[] {
   return getStablecoinBalance(metricName, ERC20_FRAX, true, riskFree, false, true, blockNumber);
 }
 
@@ -344,7 +316,7 @@ export function getLusdMarketValue(
   blockNumber: BigInt,
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   riskFree: boolean = false,
-): TokenRecordsWrapper {
+): TokenRecord[] {
   return getStablecoinBalance(metricName, ERC20_LUSD, true, riskFree, false, true, blockNumber);
 }
 
@@ -366,6 +338,6 @@ export function getFeiMarketValue(
   blockNumber: BigInt,
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   riskFree: boolean = false,
-): TokenRecordsWrapper {
+): TokenRecord[] {
   return getStablecoinBalance(metricName, ERC20_FEI, true, riskFree, false, true, blockNumber);
 }

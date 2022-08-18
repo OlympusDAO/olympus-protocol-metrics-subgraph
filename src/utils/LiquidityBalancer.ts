@@ -2,7 +2,8 @@ import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts
 
 import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolToken";
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
-import { TokenRecord, TokenRecordsWrapper } from "../../generated/schema";
+import { TokenRecord } from "../../generated/schema";
+import { pushArray } from "./ArrayHelper";
 import {
   ERC20_OHM_V2,
   getContractName,
@@ -13,13 +14,7 @@ import { getBalancerGaugeBalancesFromWallets, getERC20 } from "./ContractHelper"
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
 import { TokenCategoryPOL } from "./TokenDefinition";
-import {
-  addToMetricName,
-  combineTokenRecordsWrapper,
-  createOrUpdateTokenRecord,
-  newTokenRecordsWrapper,
-  pushTokenRecord,
-} from "./TokenRecordHelper";
+import { createOrUpdateTokenRecord } from "./TokenRecordHelper";
 
 export function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): BalancerVault {
   return BalancerVault.bind(Address.fromString(vaultAddress));
@@ -181,11 +176,8 @@ function getBalancerPoolTokenRecordsWrapper(
   unitRate: BigDecimal,
   multiplier: BigDecimal,
   blockNumber: BigInt,
-): TokenRecordsWrapper {
-  const records = newTokenRecordsWrapper(
-    addToMetricName(metricName, "BalancerPoolToken"),
-    blockNumber,
-  );
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
 
   const wallets = getWalletAddressesForContract(poolId);
   const poolTokenAddress = poolTokenContract._address.toHexString();
@@ -199,8 +191,7 @@ function getBalancerPoolTokenRecordsWrapper(
     );
     if (balance.equals(BigDecimal.zero())) continue;
 
-    pushTokenRecord(
-      records,
+    records.push(
       createOrUpdateTokenRecord(
         metricName,
         getContractName(poolTokenAddress),
@@ -240,15 +231,12 @@ export function getBalancerRecords(
   restrictToTokenValue: boolean,
   blockNumber: BigInt,
   tokenAddress: string | null = null,
-): TokenRecordsWrapper {
+): TokenRecord[] {
   log.info("getBalancerRecords: Calculating value of Balancer vault {} for pool id {}", [
     vaultAddress,
     poolId,
   ]);
-  const records = newTokenRecordsWrapper(
-    addToMetricName(metricName, "BalancerPool/" + poolId),
-    blockNumber,
-  );
+  const records: TokenRecord[] = [];
   if (tokenAddress && !liquidityPairHasToken(poolId, tokenAddress)) {
     log.debug(
       "getBalancerRecords: tokenAddress {} ({}) specified and not found in balancer pool. Skipping.",
@@ -314,7 +302,7 @@ export function getBalancerRecords(
   );
 
   // Standard pool tokens
-  combineTokenRecordsWrapper(
+  pushArray(
     records,
     getBalancerPoolTokenRecordsWrapper(
       metricName,
@@ -327,7 +315,7 @@ export function getBalancerRecords(
   );
 
   // Pool tokens deposited in a liquidity gauge
-  combineTokenRecordsWrapper(
+  pushArray(
     records,
     getBalancerGaugeBalancesFromWallets(metricName, poolTokenAddress, unitRate, blockNumber),
   );
@@ -394,16 +382,13 @@ export function getBalancerPoolTokenQuantity(
   poolId: string,
   tokenAddress: string,
   blockNumber: BigInt,
-): TokenRecordsWrapper {
+): TokenRecord[] {
   log.info("Calculating quantity of token {} in Balancer vault {} for id {}", [
     getContractName(tokenAddress),
     vaultAddress,
     poolId,
   ]);
-  const records = newTokenRecordsWrapper(
-    addToMetricName(metricName, "BalancerPoolTokenQuantity"),
-    blockNumber,
-  );
+  const records: TokenRecord[] = [];
   const poolTokenContract = getBalancerPoolToken(vaultAddress, poolId, blockNumber);
   if (poolTokenContract === null) {
     return records;
@@ -436,18 +421,13 @@ export function getBalancerPoolTokenQuantity(
     tokenAddress,
   );
 
-  for (let i = 0; i < poolTokenBalances.records.length; i++) {
-    const recordId = poolTokenBalances.records[i];
-    const record = TokenRecord.load(recordId);
-    if (!record) {
-      throw new Error("Unable to load TokenRecord with id " + recordId);
-    }
+  for (let i = 0; i < poolTokenBalances.length; i++) {
+    const record = poolTokenBalances[i];
 
     const tokenBalance = totalQuantity.times(record.balance).div(poolTokenTotalSupply);
-    pushTokenRecord(
-      records,
+    records.push(
       createOrUpdateTokenRecord(
-        records.id,
+        metricName,
         getContractName(tokenAddress) + " in " + getContractName(poolTokenAddress),
         poolTokenAddress,
         record.source,
