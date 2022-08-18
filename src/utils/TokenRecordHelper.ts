@@ -2,6 +2,7 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../generated/schema";
 import { getISO8601StringFromTimestamp } from "../helpers/DateHelper";
+import { getIsTokenLiquid, getIsTokenVolatileBluechip, getTokenCategory } from "./Constants";
 
 /**
  * Returns the value of the given TokenRecord.
@@ -42,12 +43,8 @@ export function createOrUpdateTokenRecord(
   balance: BigDecimal,
   blockNumber: BigInt,
   multiplier: BigDecimal = BigDecimal.fromString("1"),
-  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-  category: string = "",
-  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-  isLiquid: boolean = false,
-  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-  isBluechip: boolean = false,
+  category?: string,
+  isLiquid?: boolean,
 ): TokenRecord {
   const dateString = getISO8601StringFromTimestamp(timestamp);
   const recordId = `${dateString}/${sourceName}/${tokenName}`;
@@ -67,9 +64,9 @@ export function createOrUpdateTokenRecord(
   record.rate = rate;
   record.balance = balance;
   record.multiplier = multiplier;
-  record.category = category;
-  record.isLiquid = isLiquid;
-  record.isBluechip = isBluechip;
+  record.category = category ? category : getTokenCategory(tokenAddress);
+  record.isLiquid = isLiquid ? isLiquid : getIsTokenLiquid(tokenAddress);
+  record.isBluechip = getIsTokenVolatileBluechip(tokenAddress);
   record.value = getTokenRecordValue(record);
 
   record.save();

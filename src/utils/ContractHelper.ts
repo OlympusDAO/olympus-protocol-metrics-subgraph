@@ -696,8 +696,6 @@ export function getTokeStakedBalancesFromWallets(
         balance,
         blockNumber,
         BigDecimal.fromString("1"),
-        getTokenCategory(tokenAddress),
-        true,
       ),
     );
   }
@@ -798,8 +796,6 @@ export function getLiquityStakedBalancesFromWallets(
         balance,
         blockNumber,
         BigDecimal.fromString("1"),
-        getTokenCategory(tokenAddress),
-        true,
       ),
     );
   }
@@ -921,8 +917,6 @@ export function getBalancerGaugeBalanceFromWallets(
         balance,
         blockNumber,
         BigDecimal.fromString("1"),
-        getTokenCategory(tokenAddress),
-        true,
       ),
     );
   }
@@ -1028,8 +1022,6 @@ export function getTokeAllocatorRecords(
       balance,
       blockNumber,
       BigDecimal.fromString("1"),
-      getTokenCategory(tokenAddress),
-      true,
     ),
   );
 
@@ -1118,8 +1110,6 @@ export function getRariAllocatorRecords(
       balance,
       blockNumber,
       BigDecimal.fromString("1"),
-      getTokenCategory(tokenAddress),
-      true,
     ),
   );
 
@@ -1157,8 +1147,6 @@ export function getOnsenAllocatorRecords(
       balance,
       blockNumber,
       BigDecimal.fromString("1"),
-      getTokenCategory(tokenAddress),
-      true,
     ),
   );
 
@@ -1274,8 +1262,6 @@ export function getConvexStakedRecords(
           balance,
           blockNumber,
           BigDecimal.fromString("1"),
-          getTokenCategory(tokenAddress),
-          true,
         ),
       );
     }
@@ -1403,8 +1389,6 @@ export function getLiquityStabilityPoolRecords(
       balance,
       blockNumber,
       BigDecimal.fromString("1"),
-      getTokenCategory(tokenAddress),
-      true,
     ),
   );
 
@@ -1459,8 +1443,6 @@ export function getVeFXSAllocatorRecords(
       balance,
       blockNumber,
       BigDecimal.fromString("1"),
-      getTokenCategory(tokenAddress),
-      false,
     ),
   );
 
@@ -1518,8 +1500,6 @@ export function getVlCvxUnlockedRecords(
         balance,
         blockNumber,
         BigDecimal.fromString("1"),
-        getTokenCategory(tokenAddress),
-        true,
       ),
     );
   }

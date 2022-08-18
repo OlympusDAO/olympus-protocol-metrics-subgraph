@@ -234,6 +234,14 @@ export const getIsTokenVolatileBluechip = (contractAddress: string): boolean => 
     : false;
 };
 
+export const getIsTokenLiquid = (contractAddress: string): boolean => {
+  const contractAddressLower = contractAddress.toLowerCase();
+
+  return ERC20_TOKENS.has(contractAddressLower)
+    ? ERC20_TOKENS.get(contractAddressLower).getIsLiquid()
+    : true;
+};
+
 export const getTokensInCategory = (category: string): TokenDefinition[] => {
   const filteredArray: TokenDefinition[] = [];
   
