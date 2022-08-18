@@ -1,6 +1,7 @@
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
+import { getBalancerPoolToken, getBalancerVault } from "../liquidity/LiquidityBalancer";
 import { arrayIncludesLoose } from "./ArrayHelper";
 import {
   BALANCER_VAULT,
@@ -18,7 +19,6 @@ import {
 } from "./Constants";
 import { getERC20, getERC20Decimals, getUniswapV2Pair, getUniswapV3Pair } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
-import { getBalancerPoolToken, getBalancerVault } from "./LiquidityBalancer";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 import {
   getBaseEthUsdRate,

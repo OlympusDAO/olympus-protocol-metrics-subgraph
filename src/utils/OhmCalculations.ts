@@ -2,6 +2,10 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
 import { TokenRecord } from "../../generated/schema";
+import { getBalancerPoolTokenQuantity } from "../liquidity/LiquidityBalancer";
+import { getCurvePairTokenQuantity } from "../liquidity/LiquidityCurve";
+import { getFraxSwapPairTokenQuantityRecords } from "../liquidity/LiquidityFraxSwap";
+import { getUniswapV2PairTokenQuantity } from "../liquidity/LiquidityUniswapV2";
 import {
   CIRCULATING_SUPPLY_WALLETS,
   ERC20_OHM_V1,
@@ -24,10 +28,6 @@ import {
   getSOlympusERC20V3,
 } from "./ContractHelper";
 import { toDecimal } from "./Decimals";
-import { getBalancerPoolTokenQuantity } from "./LiquidityBalancer";
-import { getCurvePairTokenQuantity } from "./LiquidityCurve";
-import { getFraxSwapPairTokenQuantityRecords } from "./LiquidityFraxSwap";
-import { getUniswapV2PairTokenQuantity } from "./LiquidityUniswapV2";
 import { PairHandlerTypes } from "./PairHandler";
 import { getBaseOhmUsdRate } from "./Price";
 import { createOrUpdateTokenRecord } from "./TokenRecordHelper";

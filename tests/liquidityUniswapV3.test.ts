@@ -1,9 +1,9 @@
 import { BigDecimal, log } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
+import { getUniswapV3PairTotalValue } from "../src/liquidity/LiquidityUniswapV3";
 import { PAIR_UNISWAP_V3_FXS_ETH } from "../src/utils/Constants";
 import { toDecimal } from "../src/utils/Decimals";
-import { getUniswapV3PairTotalValue } from "../src/utils/LiquidityUniswapV3";
 import {
   ERC20_STANDARD_DECIMALS,
   ETH_USD_RESERVE_BLOCK,

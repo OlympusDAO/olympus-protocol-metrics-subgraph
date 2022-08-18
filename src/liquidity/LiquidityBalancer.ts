@@ -3,18 +3,18 @@ import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts
 import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolToken";
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
 import { TokenRecord } from "../../generated/schema";
-import { pushArray } from "./ArrayHelper";
+import { pushArray } from "../utils/ArrayHelper";
 import {
   ERC20_OHM_V2,
   getContractName,
   getWalletAddressesForContract,
   liquidityPairHasToken,
-} from "./Constants";
-import { getBalancerGaugeBalancesFromWallets, getERC20 } from "./ContractHelper";
-import { toDecimal } from "./Decimals";
-import { getUSDRate } from "./Price";
-import { TokenCategoryPOL } from "./TokenDefinition";
-import { createOrUpdateTokenRecord } from "./TokenRecordHelper";
+} from "../utils/Constants";
+import { getBalancerGaugeBalancesFromWallets, getERC20 } from "../utils/ContractHelper";
+import { toDecimal } from "../utils/Decimals";
+import { getUSDRate } from "../utils/Price";
+import { TokenCategoryPOL } from "../utils/TokenDefinition";
+import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";
 
 export function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): BalancerVault {
   return BalancerVault.bind(Address.fromString(vaultAddress));

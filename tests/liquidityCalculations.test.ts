@@ -2,6 +2,7 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
 import { TokenRecord } from "../generated/schema";
+import { getOwnedLiquidityPoolValue } from "../src/liquidity/LiquidityCalculations";
 import {
   DAO_WALLET,
   ERC20_BALANCER_OHM_DAI_WETH,
@@ -17,7 +18,6 @@ import {
   TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import { toBigInt } from "../src/utils/Decimals";
-import { getOwnedLiquidityPoolValue } from "../src/utils/LiquidityCalculations";
 import { mockConvexStakedBalanceZero } from "./contractHelper.test";
 import { mockBalanceVaultOhmDaiEth, mockBalanceVaultZero } from "./liquidityBalancer.test";
 import { mockFraxSwapPairOhmFrax, mockFraxSwapPairZero } from "./liquidityFraxSwap.test";

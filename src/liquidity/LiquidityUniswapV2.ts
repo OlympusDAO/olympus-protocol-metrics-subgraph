@@ -2,12 +2,16 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { TokenRecord } from "../../generated/schema";
-import { getContractName, getWalletAddressesForContract, liquidityPairHasToken } from "./Constants";
-import { getERC20, getUniswapV2Pair } from "./ContractHelper";
-import { toDecimal } from "./Decimals";
-import { getBaseOhmUsdRate, getUSDRateUniswapV2 } from "./Price";
-import { TokenCategoryPOL } from "./TokenDefinition";
-import { createOrUpdateTokenRecord } from "./TokenRecordHelper";
+import {
+  getContractName,
+  getWalletAddressesForContract,
+  liquidityPairHasToken,
+} from "../utils/Constants";
+import { getERC20, getUniswapV2Pair } from "../utils/ContractHelper";
+import { toDecimal } from "../utils/Decimals";
+import { getBaseOhmUsdRate, getUSDRateUniswapV2 } from "../utils/Price";
+import { TokenCategoryPOL } from "../utils/TokenDefinition";
+import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";
 
 /**
  * To calculate the risk-free value of an OHM-DAI LP, we assume

@@ -1,6 +1,6 @@
 import { BigInt } from "@graphprotocol/graph-ts";
 
-import { getOwnedLiquidityPoolValue } from "./LiquidityCalculations";
+import { getOwnedLiquidityPoolValue } from "../liquidity/LiquidityCalculations";
 import { getStablecoinBalances } from "./TokenStablecoins";
 import { getVolatileTokenBalances } from "./TokenVolatile";
 

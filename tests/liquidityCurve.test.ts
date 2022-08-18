@@ -17,12 +17,12 @@ import {
   TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import { toBigInt } from "../src/utils/Decimals";
-import { getLiquidityBalances } from "../src/utils/LiquidityCalculations";
+import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
 import {
   getCurvePairTokenQuantity,
   getCurvePairTotalTokenQuantity,
   getCurvePairTotalValue,
-} from "../src/utils/LiquidityCurve";
+} from "../src/liquidity/LiquidityCurve";
 import { mockConvexStakedBalance, mockConvexStakedBalanceZero } from "./contractHelper.test";
 import { mockBalanceVaultZero } from "./liquidityBalancer.test";
 import {

@@ -1,18 +1,22 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../generated/schema";
-import { pushArray } from "./ArrayHelper";
-import { getContractName, getWalletAddressesForContract, LIQUIDITY_OWNED } from "./Constants";
-import { getUniswapV2Pair, getUniswapV2PairBalance } from "./ContractHelper";
-import { toDecimal } from "./Decimals";
+import { pushArray } from "../utils/ArrayHelper";
+import {
+  getContractName,
+  getWalletAddressesForContract,
+  LIQUIDITY_OWNED,
+} from "../utils/Constants";
+import { getUniswapV2Pair, getUniswapV2PairBalance } from "../utils/ContractHelper";
+import { toDecimal } from "../utils/Decimals";
+import { PairHandler, PairHandlerTypes } from "../utils/PairHandler";
+import { TokenCategoryPOL } from "../utils/TokenDefinition";
+import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";
 import { LiquidityBalances } from "./LiquidityBalance";
 import { getBalancerRecords } from "./LiquidityBalancer";
 import { getCurvePairRecords } from "./LiquidityCurve";
 import { getFraxSwapPairRecords } from "./LiquidityFraxSwap";
 import { getOhmUSDPairRiskFreeValue, getUniswapV2PairValue } from "./LiquidityUniswapV2";
-import { PairHandler, PairHandlerTypes } from "./PairHandler";
-import { TokenCategoryPOL } from "./TokenDefinition";
-import { createOrUpdateTokenRecord } from "./TokenRecordHelper";
 
 /**
  * Creates TokenRecords objects for the giving liquidity records.

@@ -7,12 +7,12 @@ import {
   getContractName,
   getWalletAddressesForContract,
   liquidityPairHasToken,
-} from "./Constants";
-import { getERC20 } from "./ContractHelper";
-import { toDecimal } from "./Decimals";
-import { getUSDRate } from "./Price";
-import { TokenCategoryPOL } from "./TokenDefinition";
-import { createOrUpdateTokenRecord } from "./TokenRecordHelper";
+} from "../utils/Constants";
+import { getERC20 } from "../utils/ContractHelper";
+import { toDecimal } from "../utils/Decimals";
+import { getUSDRate } from "../utils/Price";
+import { TokenCategoryPOL } from "../utils/TokenDefinition";
+import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";
 
 function getFraxSwapPair(pairAddress: string, blockNumber: BigInt): FraxSwapPool | null {
   const pair = FraxSwapPool.bind(Address.fromString(pairAddress));

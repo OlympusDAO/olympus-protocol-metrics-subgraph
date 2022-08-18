@@ -12,13 +12,13 @@ import {
   TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import { toBigInt, toDecimal } from "../src/utils/Decimals";
-import { getLiquidityBalances } from "../src/utils/LiquidityCalculations";
+import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
 import {
   getFraxSwapPairRecords,
   getFraxSwapPairTokenQuantity,
   getFraxSwapPairTokenQuantityRecords,
   getFraxSwapPairTotalValue,
-} from "../src/utils/LiquidityFraxSwap";
+} from "../src/liquidity/LiquidityFraxSwap";
 import { mockBalanceVaultZero } from "./liquidityBalancer.test";
 import {
   ERC20_STANDARD_DECIMALS,

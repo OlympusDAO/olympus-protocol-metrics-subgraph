@@ -1,6 +1,14 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
+import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
+import {
+  getOhmUSDPairRiskFreeValue,
+  getUniswapV2PairTokenQuantity,
+  getUniswapV2PairTotalTokenQuantity,
+  getUniswapV2PairTotalValue,
+  getUniswapV2PairValue,
+} from "../src/liquidity/LiquidityUniswapV2";
 import {
   ERC20_DAI,
   ERC20_OHM_V1,
@@ -13,14 +21,6 @@ import {
   TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import { toBigInt, toDecimal } from "../src/utils/Decimals";
-import { getLiquidityBalances } from "../src/utils/LiquidityCalculations";
-import {
-  getOhmUSDPairRiskFreeValue,
-  getUniswapV2PairTokenQuantity,
-  getUniswapV2PairTotalTokenQuantity,
-  getUniswapV2PairTotalValue,
-  getUniswapV2PairValue,
-} from "../src/utils/LiquidityUniswapV2";
 import { PairHandler, PairHandlerTypes } from "../src/utils/PairHandler";
 import { mockBalanceVaultZero } from "./liquidityBalancer.test";
 import {

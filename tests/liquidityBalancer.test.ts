@@ -3,6 +3,12 @@ import { assert, createMockedFunction, describe, test } from "matchstick-as/asse
 
 import { TokenRecord } from "../generated/schema";
 import {
+  getBalancerPoolTokenQuantity,
+  getBalancerPoolTotalTokenQuantity,
+  getBalancerPoolTotalValue,
+  getBalancerRecords,
+} from "../src/liquidity/LiquidityBalancer";
+import {
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
   BALANCER_VAULT,
   DAO_WALLET,
@@ -20,12 +26,6 @@ import {
   TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import { toBigInt, toDecimal } from "../src/utils/Decimals";
-import {
-  getBalancerPoolTokenQuantity,
-  getBalancerPoolTotalTokenQuantity,
-  getBalancerPoolTotalValue,
-  getBalancerRecords,
-} from "../src/utils/LiquidityBalancer";
 import { mockBalancerGaugeBalance, mockBalancerGaugeBalanceZero } from "./contractHelper.test";
 import {
   ERC20_STANDARD_DECIMALS,
