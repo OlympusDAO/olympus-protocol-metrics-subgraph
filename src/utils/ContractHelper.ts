@@ -33,11 +33,8 @@ import {
   ERC20_LUSD,
   ERC20_WETH,
   getContractName,
-  getIsTokenLiquid,
-  getIsTokenVolatileBluechip,
   getOnsenAllocatorId,
   getRariAllocatorId,
-  getTokenCategory,
   getWalletAddressesForContract,
   liquidityPairHasToken,
   LQTY_STAKING,
@@ -52,7 +49,7 @@ import {
 } from "./Constants";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
-import { createOrUpdateTokenRecord } from "./TokenRecordHelper";
+import { createOrUpdateTokenRecord, getIsTokenLiquid } from "./TokenRecordHelper";
 
 /**
  * The Graph recommends only binding a contract once

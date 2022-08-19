@@ -218,58 +218,6 @@ ERC20_TOKENS.set(ERC20_WETH, new TokenDefinition(ERC20_WETH, TokenCategoryVolati
 ERC20_TOKENS.set(ERC20_XSUSHI, new TokenDefinition(ERC20_XSUSHI, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(NATIVE_ETH, new TokenDefinition(NATIVE_ETH, TokenCategoryVolatile, true, true));
 
-export const getTokenCategory = (contractAddress: string): string => {
-  const contractAddressLower = contractAddress.toLowerCase();
-
-  return ERC20_TOKENS.has(contractAddressLower)
-    ? ERC20_TOKENS.get(contractAddressLower).getCategory()
-    : "Unknown";
-};
-
-export const getIsTokenVolatileBluechip = (contractAddress: string): boolean => {
-  const contractAddressLower = contractAddress.toLowerCase();
-
-  return ERC20_TOKENS.has(contractAddressLower)
-    ? ERC20_TOKENS.get(contractAddressLower).getIsVolatileBluechip()
-    : false;
-};
-
-export const getIsTokenLiquid = (contractAddress: string): boolean => {
-  const contractAddressLower = contractAddress.toLowerCase();
-
-  return ERC20_TOKENS.has(contractAddressLower)
-    ? ERC20_TOKENS.get(contractAddressLower).getIsLiquid()
-    : true;
-};
-
-export const getTokensInCategory = (category: string): TokenDefinition[] => {
-  const filteredArray: TokenDefinition[] = [];
-  
-  // No support for closures in AssemblyScript, so we do it the old-fashioned way
-  const values = ERC20_TOKENS.values();
-  for (let i = 0; i < values.length; i++) {
-    const value = values[i];
-    if (value.getCategory() !== category) {
-      continue;
-    }
-
-    filteredArray.push(value);
-  }
-
-  return filteredArray;
-};
-
-export const getTokenAddressesInCategory = (category: string): string[] => {
-  const getAddressFunc = (value: TokenDefinition, _index: i32, _array: TokenDefinition[]): string => value.getAddress().toLowerCase();
-  
-  // Need to define the return type of map: https://github.com/AssemblyScript/assemblyscript/issues/449#issuecomment-459981415
-  return getTokensInCategory(category).map<string>(getAddressFunc);
-}
-
-export const isTokenAddressInCategory = (tokenAddress: string, category: string): bool => {
-  return getTokenAddressesInCategory(category).includes(tokenAddress.toLowerCase());
-}
-
 const CONVEX_STAKED_TOKENS = new Map<string, string>();
 CONVEX_STAKED_TOKENS.set(ERC20_CRV_OHMETH, ERC20_CVX_OHMETH);
 CONVEX_STAKED_TOKENS.set(ERC20_CRV, ERC20_CVX_CRV);

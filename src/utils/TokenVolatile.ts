@@ -3,7 +3,7 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { TokenRecord } from "../../generated/schema";
 import { getLiquidityBalances } from "../liquidity/LiquidityCalculations";
 import { pushArray } from "./ArrayHelper";
-import { ERC20_FXS_VE, getContractName, getTokensInCategory } from "./Constants";
+import { ERC20_FXS_VE, getContractName } from "./Constants";
 import {
   getConvexStakedRecords,
   getERC20,
@@ -19,7 +19,7 @@ import {
 } from "./ContractHelper";
 import { getUSDRate } from "./Price";
 import { TokenCategoryVolatile } from "./TokenDefinition";
-import { createOrUpdateTokenRecord } from "./TokenRecordHelper";
+import { createOrUpdateTokenRecord, getTokensInCategory } from "./TokenRecordHelper";
 
 /**
  * Returns the value of vesting assets in the treasury

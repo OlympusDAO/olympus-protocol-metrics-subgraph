@@ -2,7 +2,8 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../generated/schema";
 import { getISO8601StringFromTimestamp } from "../helpers/DateHelper";
-import { getIsTokenLiquid, getIsTokenVolatileBluechip, getTokenCategory } from "./Constants";
+import { ERC20_TOKENS } from "./Constants";
+import { TokenDefinition } from "./TokenDefinition";
 
 /**
  * Returns the value of the given TokenRecord.
@@ -15,6 +16,63 @@ import { getIsTokenLiquid, getIsTokenVolatileBluechip, getTokenCategory } from "
 function getTokenRecordValue(record: TokenRecord): BigDecimal {
   return record.balance.times(record.rate).times(record.multiplier);
 }
+
+/**
+ * Convenience methods
+ */
+
+export const getTokenCategory = (contractAddress: string): string => {
+  const contractAddressLower = contractAddress.toLowerCase();
+
+  return ERC20_TOKENS.has(contractAddressLower)
+    ? ERC20_TOKENS.get(contractAddressLower).getCategory()
+    : "Unknown";
+};
+
+export const getIsTokenVolatileBluechip = (contractAddress: string): boolean => {
+  const contractAddressLower = contractAddress.toLowerCase();
+
+  return ERC20_TOKENS.has(contractAddressLower)
+    ? ERC20_TOKENS.get(contractAddressLower).getIsVolatileBluechip()
+    : false;
+};
+
+export const getIsTokenLiquid = (contractAddress: string): boolean => {
+  const contractAddressLower = contractAddress.toLowerCase();
+
+  return ERC20_TOKENS.has(contractAddressLower)
+    ? ERC20_TOKENS.get(contractAddressLower).getIsLiquid()
+    : true;
+};
+
+export const getTokensInCategory = (category: string): TokenDefinition[] => {
+  const filteredArray: TokenDefinition[] = [];
+
+  // No support for closures in AssemblyScript, so we do it the old-fashioned way
+  const values = ERC20_TOKENS.values();
+  for (let i = 0; i < values.length; i++) {
+    const value = values[i];
+    if (value.getCategory() !== category) {
+      continue;
+    }
+
+    filteredArray.push(value);
+  }
+
+  return filteredArray;
+};
+
+export const getTokenAddressesInCategory = (category: string): string[] => {
+  const getAddressFunc = (value: TokenDefinition, _index: i32, _array: TokenDefinition[]): string =>
+    value.getAddress().toLowerCase();
+
+  // Need to define the return type of map: https://github.com/AssemblyScript/assemblyscript/issues/449#issuecomment-459981415
+  return getTokensInCategory(category).map<string>(getAddressFunc);
+};
+
+export const isTokenAddressInCategory = (tokenAddress: string, category: string): bool => {
+  return getTokenAddressesInCategory(category).includes(tokenAddress.toLowerCase());
+};
 
 /**
  * Helper function to create a new TokenRecord.

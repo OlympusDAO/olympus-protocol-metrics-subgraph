@@ -2,6 +2,7 @@ import { Address } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as";
 
 import {
+  ERC20_DAI,
   ERC20_FXS,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
@@ -52,8 +53,9 @@ describe("base token", () => {
     const token0Address = Address.fromString(ERC20_OHM_V1);
     const token1Address = Address.fromString(ERC20_TRIBE);
 
-    assert.assertTrue(
-      getBaseTokenOrientation(token0Address, token1Address) === PairTokenBaseOrientation.UNKNOWN,
+    assert.i32Equals(
+      PairTokenBaseOrientation.UNKNOWN,
+      getBaseTokenOrientation(token0Address, token1Address),
     );
   });
 
@@ -61,8 +63,9 @@ describe("base token", () => {
     const token0Address = Address.fromString(ERC20_OHM_V2);
     const token1Address = Address.fromString(ERC20_TRIBE);
 
-    assert.assertTrue(
-      getBaseTokenOrientation(token0Address, token1Address) === PairTokenBaseOrientation.UNKNOWN,
+    assert.i32Equals(
+      PairTokenBaseOrientation.UNKNOWN,
+      getBaseTokenOrientation(token0Address, token1Address),
     );
   });
 
@@ -70,8 +73,9 @@ describe("base token", () => {
     const token0Address = Address.fromString(ERC20_WETH);
     const token1Address = Address.fromString(ERC20_TRIBE);
 
-    assert.assertTrue(
-      getBaseTokenOrientation(token0Address, token1Address) === PairTokenBaseOrientation.TOKEN0,
+    assert.i32Equals(
+      PairTokenBaseOrientation.TOKEN0,
+      getBaseTokenOrientation(token0Address, token1Address),
     );
   });
 
@@ -80,8 +84,9 @@ describe("base token", () => {
     const token1Address = Address.fromString(ERC20_FXS);
 
     // Matches DAI for token0
-    assert.assertTrue(
-      getBaseTokenOrientation(token1Address, token0Address) === PairTokenBaseOrientation.TOKEN1,
+    assert.i32Equals(
+      PairTokenBaseOrientation.TOKEN1,
+      getBaseTokenOrientation(token1Address, token0Address),
     );
   });
 
@@ -89,8 +94,9 @@ describe("base token", () => {
     const token0Address = Address.fromString(ERC20_USDC);
     const token1Address = Address.fromString(ERC20_WETH);
 
-    assert.assertTrue(
-      getBaseTokenOrientation(token0Address, token1Address) === PairTokenBaseOrientation.TOKEN0,
+    assert.i32Equals(
+      PairTokenBaseOrientation.TOKEN0,
+      getBaseTokenOrientation(token0Address, token1Address),
     );
   });
 
@@ -98,8 +104,29 @@ describe("base token", () => {
     const token0Address = Address.fromString(ERC20_WETH);
     const token1Address = Address.fromString(ERC20_USDC);
 
-    assert.assertTrue(
-      getBaseTokenOrientation(token0Address, token1Address) === PairTokenBaseOrientation.TOKEN1,
+    assert.i32Equals(
+      PairTokenBaseOrientation.TOKEN1,
+      getBaseTokenOrientation(token0Address, token1Address),
+    );
+  });
+
+  test("token0 == DAI, token1 == OHM V2", () => {
+    const token0Address = Address.fromString(ERC20_DAI);
+    const token1Address = Address.fromString(ERC20_OHM_V2);
+
+    assert.i32Equals(
+      PairTokenBaseOrientation.TOKEN0,
+      getBaseTokenOrientation(token0Address, token1Address),
+    );
+  });
+
+  test("token0 == OHM V2, token1 == DAI", () => {
+    const token0Address = Address.fromString(ERC20_OHM_V2);
+    const token1Address = Address.fromString(ERC20_DAI);
+
+    assert.i32Equals(
+      PairTokenBaseOrientation.TOKEN1,
+      getBaseTokenOrientation(token0Address, token1Address),
     );
   });
 
@@ -107,8 +134,9 @@ describe("base token", () => {
     const fxsAddress = Address.fromString(ERC20_FXS);
     const tribeAddress = Address.fromString(ERC20_TRIBE);
 
-    assert.assertTrue(
-      getBaseTokenOrientation(tribeAddress, fxsAddress) === PairTokenBaseOrientation.UNKNOWN,
+    assert.i32Equals(
+      PairTokenBaseOrientation.UNKNOWN,
+      getBaseTokenOrientation(tribeAddress, fxsAddress),
     );
   });
 
@@ -116,8 +144,9 @@ describe("base token", () => {
     const fxsAddress = Address.fromString(ERC20_FXS);
     const tribeAddress = Address.fromString(ERC20_TRIBE);
 
-    assert.assertTrue(
-      getBaseTokenOrientation(fxsAddress, tribeAddress) === PairTokenBaseOrientation.UNKNOWN,
+    assert.i32Equals(
+      PairTokenBaseOrientation.UNKNOWN,
+      getBaseTokenOrientation(fxsAddress, tribeAddress),
     );
   });
 });

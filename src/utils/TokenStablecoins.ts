@@ -3,7 +3,7 @@ import { BigInt, log } from "@graphprotocol/graph-ts";
 import { TokenRecord } from "../../generated/schema";
 import { getLiquidityBalances } from "../liquidity/LiquidityCalculations";
 import { pushArray } from "./ArrayHelper";
-import { getContractName, getTokensInCategory } from "./Constants";
+import { getContractName } from "./Constants";
 import {
   getConvexStakedRecords,
   getERC20,
@@ -15,6 +15,7 @@ import {
 } from "./ContractHelper";
 import { getUSDRate } from "./Price";
 import { TokenCategoryStable } from "./TokenDefinition";
+import { getTokensInCategory } from "./TokenRecordHelper";
 
 /**
  * Returns the token records for a given stablecoin. This includes:

@@ -1,8 +1,14 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
 import { TokenRecord } from "../generated/schema";
-import { createOrUpdateTokenRecord } from "../src/utils/TokenRecordHelper";
+import { ERC20_DAI, ERC20_USDC, ERC20_WETH } from "../src/utils/Constants";
+import { TokenCategoryStable, TokenCategoryVolatile } from "../src/utils/TokenDefinition";
+import {
+  createOrUpdateTokenRecord,
+  getTokenAddressesInCategory,
+  isTokenAddressInCategory,
+} from "../src/utils/TokenRecordHelper";
 
 const TIMESTAMP = BigInt.fromString("1");
 
@@ -24,7 +30,7 @@ describe("constructor", () => {
   test("basic values", () => {
     const record = createTokenRecord();
 
-    assert.stringEquals("metric-name-source-1", record.id);
+    assert.stringEquals("1970-01-01/source/name", record.id);
     assert.stringEquals("name", record.token);
     assert.stringEquals("tokenAddress", record.tokenAddress);
     assert.stringEquals("source", record.source);
@@ -94,5 +100,49 @@ describe("value", () => {
 
     // 2 * 3 * 0.25
     assert.stringEquals("1.5", record.value.toString());
+  });
+});
+
+describe("getTokenAddressesInCategory", () => {
+  test("stablecoins", () => {
+    const addresses = getTokenAddressesInCategory(TokenCategoryStable);
+
+    assert.assertTrue(addresses.includes(ERC20_DAI) == true);
+    assert.assertTrue(addresses.includes(ERC20_WETH) == false);
+  });
+
+  test("volatile", () => {
+    const addresses = getTokenAddressesInCategory(TokenCategoryVolatile);
+
+    assert.assertTrue(addresses.includes(ERC20_DAI) == false);
+    assert.assertTrue(addresses.includes(ERC20_WETH) == true);
+  });
+});
+
+describe("isTokenAddressInCategory", () => {
+  test("stablecoin category, DAI", () => {
+    assert.assertTrue(isTokenAddressInCategory(ERC20_DAI, TokenCategoryStable) == true);
+  });
+
+  test("stablecoin category, DAI hexString", () => {
+    assert.assertTrue(
+      isTokenAddressInCategory(Address.fromString(ERC20_DAI).toHexString(), TokenCategoryStable) ==
+        true,
+    );
+  });
+
+  test("stablecoin category, USDC", () => {
+    assert.assertTrue(isTokenAddressInCategory(ERC20_USDC, TokenCategoryStable) == true);
+  });
+
+  test("stablecoin category, USDC toHexString", () => {
+    assert.assertTrue(
+      isTokenAddressInCategory(Address.fromString(ERC20_USDC).toHexString(), TokenCategoryStable) ==
+        true,
+    );
+  });
+
+  test("stablecoin category, wETH", () => {
+    assert.assertTrue(isTokenAddressInCategory(ERC20_WETH, TokenCategoryStable) == false);
   });
 });

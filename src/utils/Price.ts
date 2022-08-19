@@ -12,8 +12,6 @@ import {
   ERC20_WETH,
   getContractName,
   getPairHandler,
-  getTokenAddressesInCategory,
-  isTokenAddressInCategory,
   NATIVE_ETH,
   OHM_PRICE_PAIRS,
 } from "./Constants";
@@ -27,6 +25,7 @@ import {
   PairTokenBaseOrientation,
 } from "./PriceBase";
 import { TokenCategoryStable } from "./TokenDefinition";
+import { getTokenAddressesInCategory, isTokenAddressInCategory } from "./TokenRecordHelper";
 
 const BIG_DECIMAL_1E9 = BigDecimal.fromString("1e9");
 
@@ -482,7 +481,7 @@ export function getUSDRateUniswapV2(
     log.debug("getUSDRateUniswapV2: Returning base OHM-USD rate", []);
     return getBaseOhmUsdRate(blockNumber);
   }
-  if (isTokenAddressInCategory(TokenCategoryStable, contractAddress)) {
+  if (isTokenAddressInCategory(contractAddress, TokenCategoryStable)) {
     log.debug("getUSDRateUniswapV2: Returning stablecoin rate of 1", []);
     return BigDecimal.fromString("1");
   }
@@ -555,7 +554,7 @@ export function getUSDRate(contractAddress: string, blockNumber: BigInt): BigDec
   }
 
   // Handle stablecoins
-  if (isTokenAddressInCategory(TokenCategoryStable, contractAddress)) {
+  if (isTokenAddressInCategory(contractAddress, TokenCategoryStable)) {
     log.debug("getUSDRate: Contract address {} is a stablecoin. Returning 1.", [contractAddress]);
     return BigDecimal.fromString("1");
   }
