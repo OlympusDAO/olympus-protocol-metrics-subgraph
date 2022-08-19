@@ -527,7 +527,8 @@ describe("get balancer records", () => {
     const expectedUnitRate = expectedTotalValue.div(OHM_DAI_ETH_TOKEN_TOTAL_SUPPLY);
     const expectedValue = expectedBalance.times(expectedUnitRate);
     assert.stringEquals(expectedValue.toString(), records[0].value.toString());
-    assert.i32Equals(0, records.length);
+
+    assert.i32Equals(1, records.length);
   });
 
   test("OHM-DAI-ETH pool with different tokenAddress", () => {

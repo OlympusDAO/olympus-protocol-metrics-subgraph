@@ -28,7 +28,7 @@ describe("UniswapV3 pair value", () => {
     log.debug("calculated value: {}", [calculatedValue.toString()]);
     log.debug("pairValue: {}", [pairValue.toString()]);
 
-    assert.stringEquals(calculatedValue.toString(), pairValue.toString());
+    assert.stringEquals(calculatedValue.toString().slice(0, 18), pairValue.toString().slice(0, 18));
   });
 
   // test("pair balance value is correct", () => {
