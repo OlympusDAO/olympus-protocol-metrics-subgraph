@@ -36,6 +36,7 @@ import {
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 
 const PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY = BigDecimal.fromString("100");
+const TIMESTAMP = BigInt.fromString("1");
 
 describe("getLiquidityPoolValue", () => {
   test("exclude OHM value false, curve pool", () => {
@@ -80,13 +81,13 @@ describe("getLiquidityPoolValue", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getOwnedLiquidityPoolValue("metric", false, false, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue(TIMESTAMP, false, false, ETH_USD_RESERVE_BLOCK);
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs
-    const record = TokenRecord.load(records.records[0]);
-    assert.stringEquals("1", record ? record.multiplier.toString() : "");
-    assert.i32Equals(1, records.records.length);
+    const record = records[0];
+    assert.stringEquals("1", record.multiplier.toString());
+    assert.i32Equals(1, records.length);
   });
 
   test("exclude OHM value false, FraxSwap pool", () => {
@@ -109,13 +110,13 @@ describe("getLiquidityPoolValue", () => {
       toBigInt(balance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getOwnedLiquidityPoolValue("metric", false, false, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue(TIMESTAMP, false, false, ETH_USD_RESERVE_BLOCK);
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs
-    const record = TokenRecord.load(records.records[0]);
-    assert.stringEquals("1", record ? record.multiplier.toString() : "");
-    assert.i32Equals(1, records.records.length);
+    const record = records[0];
+    assert.stringEquals("1", record.multiplier.toString());
+    assert.i32Equals(1, records.length);
   });
 
   test("curve pool includes DAO wallet", () => {
@@ -169,13 +170,13 @@ describe("getLiquidityPoolValue", () => {
       toBigInt(crvBalanceTwo, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getOwnedLiquidityPoolValue("metric", false, false, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue(TIMESTAMP, false, false, ETH_USD_RESERVE_BLOCK);
 
-    const record = TokenRecord.load(records.records[0]);
-    assert.stringEquals("10", record ? record.balance.toString() : "");
-    const recordTwo = TokenRecord.load(records.records[1]);
-    assert.stringEquals("11", recordTwo ? recordTwo.balance.toString() : "");
-    assert.i32Equals(2, records.records.length);
+    const record = records[0];
+    assert.stringEquals("10", record.balance.toString());
+    const recordTwo = records[1];
+    assert.stringEquals("11", recordTwo.balance.toString());
+    assert.i32Equals(2, records.length);
   });
 
   test("exclude OHM value false, uniswapv2 pool", () => {
@@ -208,13 +209,13 @@ describe("getLiquidityPoolValue", () => {
     );
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
-    const records = getOwnedLiquidityPoolValue("metric", false, false, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue(TIMESTAMP, false, false, ETH_USD_RESERVE_BLOCK);
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs
-    const record = TokenRecord.load(records.records[0]);
-    assert.stringEquals("1", record ? record.multiplier.toString() : "");
-    assert.i32Equals(1, records.records.length);
+    const record = records[0];
+    assert.stringEquals("1", record.multiplier.toString());
+    assert.i32Equals(1, records.length);
   });
 
   test("exclude OHM value false, balancer pool", () => {
@@ -239,12 +240,12 @@ describe("getLiquidityPoolValue", () => {
       toBigInt(expectedWalletBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getOwnedLiquidityPoolValue("metric", false, false, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue(TIMESTAMP, false, false, ETH_USD_RESERVE_BLOCK);
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs
-    const record = TokenRecord.load(records.records[0]);
-    assert.stringEquals("1", record ? record.multiplier.toString() : "");
-    assert.i32Equals(1, records.records.length);
+    const record = records[0];
+    assert.stringEquals("1", record.multiplier.toString());
+    assert.i32Equals(1, records.length);
   });
 });

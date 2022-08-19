@@ -22,6 +22,8 @@ const WETH_BALANCE_INT = toBigInt(BigDecimal.fromString(WETH_BALANCE), ERC20_STA
 const LQTY_BALANCE = "20";
 const LQTY_BALANCE_INT = toBigInt(BigDecimal.fromString(LQTY_BALANCE), ERC20_STANDARD_DECIMALS);
 
+const TIMESTAMP = BigInt.fromString("1");
+
 function mockLiquityAllocator(
   lusdAmountAllocated: BigInt,
   wEthBalance: BigInt,
@@ -98,7 +100,7 @@ test("LUSD records", () => {
   const rate = BigDecimal.fromString("2");
 
   const allocatorRecords = getLiquityStabilityPoolRecords(
-    "metric",
+    TIMESTAMP,
     ERC20_LUSD,
     rate,
     OHM_USD_RESERVE_BLOCK,
@@ -106,6 +108,7 @@ test("LUSD records", () => {
 
   assert.stringEquals(
     rate.times(BigDecimal.fromString(LUSD_BALANCE)).toString(),
-    allocatorRecords.value.toString(),
+    allocatorRecords[0].value.toString(),
   );
+  assert.i32Equals(1, allocatorRecords.length);
 });

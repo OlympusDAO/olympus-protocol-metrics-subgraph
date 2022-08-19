@@ -5,12 +5,14 @@ import { NATIVE_ETH } from "../src/utils/Constants";
 import { getStablecoinBalance } from "../src/utils/TokenStablecoins";
 import { mockEthUsdRate } from "./pairHelper";
 
+const TIMESTAMP = BigInt.fromString("1");
+
 describe("native ETH", () => {
   test("getStablecoinBalance does not throw error", () => {
     mockEthUsdRate();
 
     const records = getStablecoinBalance(
-      "metric",
+      TIMESTAMP,
       NATIVE_ETH,
       false,
       false,
@@ -21,7 +23,6 @@ describe("native ETH", () => {
 
     // Native ETH isn't an ERC20 contract, and isn't supported by TheGraph API.
     // The code shouldn't throw any errors/exceptions when it comes across native ETH.
-    assert.stringEquals("0", records.balance.toString());
-    assert.stringEquals("0", records.value.toString());
+    assert.i32Equals(0, records.length);
   });
 });

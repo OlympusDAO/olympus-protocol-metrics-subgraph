@@ -2,15 +2,13 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
 import { TokenRecord } from "../generated/schema";
-import {
-  createOrUpdateTokenRecord,
-  getTokenRecordValue,
-  setTokenRecordMultiplier,
-} from "../src/utils/TokenRecordHelper";
+import { createOrUpdateTokenRecord } from "../src/utils/TokenRecordHelper";
+
+const TIMESTAMP = BigInt.fromString("1");
 
 const createTokenRecord = (): TokenRecord => {
   return createOrUpdateTokenRecord(
-    "metric",
+    TIMESTAMP,
     "name",
     "tokenAddress",
     "source",
@@ -18,6 +16,7 @@ const createTokenRecord = (): TokenRecord => {
     BigDecimal.fromString("2"),
     BigDecimal.fromString("3"),
     BigInt.fromString("1"),
+    true,
   );
 };
 
@@ -37,7 +36,7 @@ describe("constructor", () => {
 
   test("custom multiplier", () => {
     const record = createOrUpdateTokenRecord(
-      "metric",
+      TIMESTAMP,
       "name",
       "tokenAddress",
       "source",
@@ -45,6 +44,7 @@ describe("constructor", () => {
       BigDecimal.fromString("2"),
       BigDecimal.fromString("3"),
       BigInt.fromString("1"),
+      true,
       BigDecimal.fromString("0.25"),
     );
 
@@ -60,22 +60,10 @@ describe("constructor", () => {
   });
 });
 
-describe("multiplier", () => {
-  test("sets value", () => {
-    const record = createTokenRecord();
-
-    // Setting the multiplier will change the value
-    setTokenRecordMultiplier(record, BigDecimal.fromString("0.25"));
-
-    // 2 * 3 * 0.25
-    assert.stringEquals("1.5", record.value.toString());
-  });
-});
-
 describe("value", () => {
   test("multiplier = 1", () => {
     const record = createOrUpdateTokenRecord(
-      "metric",
+      TIMESTAMP,
       "name",
       "tokenAddress",
       "source",
@@ -83,15 +71,16 @@ describe("value", () => {
       BigDecimal.fromString("2"),
       BigDecimal.fromString("3"),
       BigInt.fromString("1"),
+      true,
     );
 
     // 2 * 3 * 1
-    assert.stringEquals("6", getTokenRecordValue(record).toString());
+    assert.stringEquals("6", record.value.toString());
   });
 
   test("multiplier = 0.25", () => {
     const record = createOrUpdateTokenRecord(
-      "metric",
+      TIMESTAMP,
       "name",
       "tokenAddress",
       "source",
@@ -99,10 +88,11 @@ describe("value", () => {
       BigDecimal.fromString("2"),
       BigDecimal.fromString("3"),
       BigInt.fromString("1"),
+      true,
       BigDecimal.fromString("0.25"),
     );
 
     // 2 * 3 * 0.25
-    assert.stringEquals("1.5", getTokenRecordValue(record).toString());
+    assert.stringEquals("1.5", record.value.toString());
   });
 });
