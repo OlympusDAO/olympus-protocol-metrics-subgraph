@@ -50,8 +50,9 @@ export function createOrUpdateTokenSupply(
   record.sourceAddress = sourceAddress;
   record.pool = poolName;
   record.poolAddress = poolAddress;
-  record.rawBalance = balance;
-  record.balance = balance.times(BigDecimal.fromString(multiplier.toString()));
+  record.type = type;
+  record.balance = balance;
+  record.supplyBalance = balance.times(BigDecimal.fromString(multiplier.toString()));
 
   record.save();
 

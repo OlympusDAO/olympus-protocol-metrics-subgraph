@@ -255,6 +255,10 @@ describe("token quantity", () => {
     );
 
     assert.stringEquals(records[0].balance.toString(), expectedTokenBalance.toString());
+    assert.stringEquals(
+      records[0].supplyBalance.toString(),
+      expectedTokenBalance.times(BigDecimal.fromString("-1")).toString(),
+    ); // Being taken out of circulation
     assert.i32Equals(1, records.length);
   });
 

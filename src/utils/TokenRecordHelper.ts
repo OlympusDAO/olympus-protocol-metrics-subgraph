@@ -131,3 +131,18 @@ export function createOrUpdateTokenRecord(
 
   return record;
 }
+
+function setTokenRecordMultiplier(tokenRecord: TokenRecord, multiplier: BigDecimal): void {
+  tokenRecord.multiplier = multiplier;
+  tokenRecord.value = getTokenRecordValue(tokenRecord);
+  tokenRecord.save();
+}
+
+export function setTokenRecordsMultiplier(
+  tokenRecords: TokenRecord[],
+  multiplier: BigDecimal,
+): void {
+  for (let i = 0; i < tokenRecords.length; i++) {
+    setTokenRecordMultiplier(tokenRecords[i], multiplier);
+  }
+}

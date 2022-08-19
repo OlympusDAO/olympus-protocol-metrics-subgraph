@@ -11,7 +11,7 @@ import { getUniswapV2Pair, getUniswapV2PairBalance } from "../utils/ContractHelp
 import { toDecimal } from "../utils/Decimals";
 import { PairHandler, PairHandlerTypes } from "../utils/PairHandler";
 import { TokenCategoryPOL } from "../utils/TokenDefinition";
-import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";
+import { createOrUpdateTokenRecord, setTokenRecordsMultiplier } from "../utils/TokenRecordHelper";
 import { LiquidityBalances } from "./LiquidityBalance";
 import { getBalancerRecords } from "./LiquidityBalancer";
 import { getCurvePairRecords } from "./LiquidityCurve";
@@ -164,14 +164,13 @@ export function getLiquidityBalances(
         riskFree,
       );
 
-      // TODO determine if the multiplier needs to be applied
-      // // UniswapV2 only supports a pair, so we can safely apply the multiplier
-      // if (excludeOhmValue || (tokenAddress && restrictToTokenValue)) {
-      //   log.info("getLiquidityBalances: setting multiplier to 0.5 for UniswapV2 pair {}", [
-      //     getContractName(pairHandler.getContract()),
-      //   ]);
-      //   setTokenRecordsWrapperMultiplier(currentTokenRecords, BigDecimal.fromString("0.5"));
-      // }
+      // UniswapV2 only supports a pair, so we can safely apply the multiplier
+      if (excludeOhmValue || (tokenAddress && restrictToTokenValue)) {
+        log.info("getLiquidityBalances: setting multiplier to 0.5 for UniswapV2 pair {}", [
+          getContractName(pairHandler.getContract()),
+        ]);
+        setTokenRecordsMultiplier(currentTokenRecords, BigDecimal.fromString("0.5"));
+      }
 
       pushArray(records, currentTokenRecords);
     } else if (pairHandler.getType() === PairHandlerTypes.Curve) {

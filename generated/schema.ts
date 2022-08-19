@@ -288,15 +288,6 @@ export class ProtocolMetric extends Entity {
     this.set("id", Value.fromString(value));
   }
 
-  get date(): string {
-    const value = this.get("date");
-    return value!.toString();
-  }
-
-  set date(value: string) {
-    this.set("date", Value.fromString(value));
-  }
-
   get block(): BigInt {
     const value = this.get("block");
     return value!.toBigInt();
@@ -322,6 +313,15 @@ export class ProtocolMetric extends Entity {
 
   set currentIndex(value: BigDecimal) {
     this.set("currentIndex", Value.fromBigDecimal(value));
+  }
+
+  get date(): string {
+    const value = this.get("date");
+    return value!.toString();
+  }
+
+  set date(value: string) {
+    this.set("date", Value.fromString(value));
   }
 
   get gOhmPrice(): BigDecimal {
@@ -821,15 +821,6 @@ export class TokenSupply extends Entity {
     this.set("type", Value.fromString(value));
   }
 
-  get rawBalance(): BigDecimal {
-    const value = this.get("rawBalance");
-    return value!.toBigDecimal();
-  }
-
-  set rawBalance(value: BigDecimal) {
-    this.set("rawBalance", Value.fromBigDecimal(value));
-  }
-
   get balance(): BigDecimal {
     const value = this.get("balance");
     return value!.toBigDecimal();
@@ -837,5 +828,14 @@ export class TokenSupply extends Entity {
 
   set balance(value: BigDecimal) {
     this.set("balance", Value.fromBigDecimal(value));
+  }
+
+  get supplyBalance(): BigDecimal {
+    const value = this.get("supplyBalance");
+    return value!.toBigDecimal();
+  }
+
+  set supplyBalance(value: BigDecimal) {
+    this.set("supplyBalance", Value.fromBigDecimal(value));
   }
 }

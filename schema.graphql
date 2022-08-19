@@ -86,6 +86,6 @@ type TokenSupply @entity {
   source: String # e.g. a wallet
   sourceAddress: String
   type: String! # e.g. total supply
-  rawBalance: BigDecimal! # positive balance
-  balance: BigDecimal! # may be negative to represent the token being taken out of circulation
+  balance: BigDecimal!
+  supplyBalance: BigDecimal! # may be negative to represent the token being taken out of circulation
 }
