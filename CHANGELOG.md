@@ -1,6 +1,10 @@
 # Subgraph Changelog
 
-## 2.0.78 (2022-08-04)
+## 2.0.80 (2022-08-08)
+
+- Adjust starting block from 15050000 (1st July 2022) to 14690000 (1st May 2022)
+
+## 2.0.79 (2022-08-04)
 
 - Remove gOhmCirculatingSupply, gOhmCirculatingSupplyBreakdown, treasuryLiquidBackingPerGOhmCirculating. Never used and could be misleading
 - Add treasuryLiquidBackingPerGOhm that uses a synthetic calculation for the liquid backing per gOHM (#33)
