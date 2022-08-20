@@ -1,5 +1,10 @@
 specVersion: 0.0.4
 description: Olympus Protocol Metrics Subgraph
+features:
+  - grafting
+graft:
+  base: QmaU2vBG4LjPcQWSiNht84dhpjr6YH34nmzzKN3Eh4htkC
+  block: 15366970
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
   file: ./schema.graphql
@@ -29,6 +34,8 @@ dataSources:
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
           file: ./abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
         - name: ERC20
           file: ./abis/ERC20.json
       callHandlers:
@@ -59,6 +66,8 @@ dataSources:
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
           file: ./abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
         - name: ERC20
           file: ./abis/ERC20.json
       callHandlers:
@@ -89,6 +98,8 @@ dataSources:
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
           file: ./abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
         - name: ERC20
           file: ./abis/ERC20.json
       callHandlers:
@@ -482,6 +493,8 @@ dataSources:
           file: ./abis/RariAllocator.json
         - name: BalancerVault
           file: ./abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
         - name: ConvexBaseRewardPool
           file: ./abis/ConvexBaseRewardPool.json
         - name: CurvePool
@@ -490,8 +503,6 @@ dataSources:
           file: ./abis/TokeAllocator.json
         - name: LUSDAllocatorV2
           file: ./abis/LUSDAllocatorV2.json
-        - name: BalancerPoolToken
-          file: ./abis/BalancerPoolToken.json
         - name: TokemakStaking
           file: ./abis/TokemakStaking.json
         - name: LQTYStaking
