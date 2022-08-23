@@ -19,6 +19,7 @@ import { vlCVX } from "../../generated/ProtocolMetrics/vlCVX";
 import { TokenRecord } from "../../generated/schema";
 import { pushArray } from "./ArrayHelper";
 import {
+  addressesEqual,
   ALLOCATOR_ONSEN_ID_NOT_FOUND,
   ALLOCATOR_RARI_ID_NOT_FOUND,
   BALANCER_LIQUIDITY_GAUGES,
@@ -133,7 +134,7 @@ export function getERC20(contractAddress: string, currentBlockNumber: BigInt): E
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
   // We can't bind for native (non-ERC20) ETH
-  if (contractAddress == NATIVE_ETH) return null;
+  if (addressesEqual(contractAddress, NATIVE_ETH)) return null;
 
   if (!contractsERC20.has(contractAddress)) {
     log.debug("Binding ERC20 contract for address {}. Block number {}", [
@@ -475,7 +476,7 @@ export function getOnsenBalance(
   }
 
   const onsenId = getOnsenAllocatorId(tokenAddress);
-  if (onsenId === ALLOCATOR_ONSEN_ID_NOT_FOUND) {
+  if (onsenId == ALLOCATOR_ONSEN_ID_NOT_FOUND) {
     log.debug("No Onsen ID found for token {}. Skipping.", [tokenAddress]);
     return null;
   }
@@ -866,7 +867,7 @@ export function getBalancerGaugeBalanceFromWallets(
   }
 
   // Ignore if we're looping through and the LP token doesn't match
-  if (!contract.lp_token().equals(Address.fromString(tokenAddress))) {
+  if (!addressesEqual(contract.lp_token().toHexString(), tokenAddress)) {
     log.debug(
       "getBalancerGaugeBalanceFromWallets: output of lp_token() did not match current token {} ({}) at block {}. Skipping",
       [getContractName(tokenAddress), tokenAddress, blockNumber.toString()],
@@ -974,7 +975,7 @@ function getTokeAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
   const contract = getERC20(contractAddress, blockNumber);
 
   // No matching allocator id
-  if (allocatorId === ALLOCATOR_RARI_ID_NOT_FOUND || !tokeAllocator || !contract) {
+  if (allocatorId == ALLOCATOR_RARI_ID_NOT_FOUND || !tokeAllocator || !contract) {
     return null;
   }
 
@@ -1050,7 +1051,7 @@ function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
   const rariAllocator = getRariAllocator(RARI_ALLOCATOR, blockNumber);
   const contract = getERC20(contractAddress, blockNumber);
 
-  if (rariAllocatorId === ALLOCATOR_RARI_ID_NOT_FOUND || !rariAllocator || !contract) {
+  if (rariAllocatorId == ALLOCATOR_RARI_ID_NOT_FOUND || !rariAllocator || !contract) {
     return null;
   }
 
@@ -1173,7 +1174,7 @@ export function getConvexStakedBalance(
   blockNumber: BigInt,
 ): BigDecimal | null {
   // Unsupported
-  if (tokenAddress == NATIVE_ETH) {
+  if (addressesEqual(tokenAddress, NATIVE_ETH)) {
     log.info("getConvexStakedBalance: native ETH is unsupported", []);
     return null;
   }
@@ -1322,7 +1323,7 @@ export function getLiquityStabilityPoolBalance(
     return null;
   }
 
-  if (tokenAddress == ERC20_LUSD) {
+  if (addressesEqual(tokenAddress, ERC20_LUSD)) {
     const lusdBalance = toDecimal(
       allocator.amountAllocated(BigInt.fromI32(getRariAllocatorId(ERC20_LUSD))),
     );
@@ -1333,7 +1334,7 @@ export function getLiquityStabilityPoolBalance(
     return lusdBalance;
   }
 
-  if (tokenAddress == ERC20_WETH) {
+  if (addressesEqual(tokenAddress, ERC20_WETH)) {
     const wethBalance = toDecimal(allocator.getETHRewards());
     log.info("getLiquityStabilityPoolBalance: found wETH balance of {} at block {}", [
       wethBalance.toString(),
@@ -1342,7 +1343,7 @@ export function getLiquityStabilityPoolBalance(
     return wethBalance;
   }
 
-  if (tokenAddress == ERC20_LQTY) {
+  if (addressesEqual(tokenAddress, ERC20_LQTY)) {
     const lqtyBalance = toDecimal(allocator.getLQTYRewards());
     log.info("getLiquityStabilityPoolBalance: found LQTY balance of {} at block {}", [
       lqtyBalance.toString(),
@@ -1416,11 +1417,31 @@ function getVeFXSAllocatorBalance(
   allocatorAddress: string,
   blockNumber: BigInt,
 ): BigDecimal | null {
+  log.debug(
+    "getVeFXSAllocatorBalance: determining staked balance for allocator {} ({}) and token {} ({}) at block {}",
+    [
+      getContractName(allocatorAddress),
+      allocatorAddress,
+      getContractName(tokenAddress),
+      tokenAddress,
+      blockNumber.toString(),
+    ],
+  );
+
   // Only VeFXS supported
-  if (tokenAddress !== ERC20_FXS_VE) return null;
+  if (!addressesEqual(tokenAddress, ERC20_FXS_VE)) {
+    log.debug("getVeFXSAllocatorBalance: token {} ({}) is not supported", [
+      getContractName(tokenAddress),
+      tokenAddress,
+    ]);
+    return null;
+  }
 
   const contract = getVeFXS(tokenAddress, blockNumber);
-  if (!contract) return null;
+  if (!contract) {
+    log.debug("getVeFXSAllocatorBalance: cannot bind to veFXS contract", []);
+    return null;
+  }
 
   return toDecimal(contract.locked(Address.fromString(allocatorAddress)).value0, 18);
 }
@@ -1437,6 +1458,10 @@ export function getVeFXSAllocatorRecords(
 
   const fxsRate = getUSDRate(ERC20_FXS, blockNumber);
 
+  log.info(
+    "getVeFXSAllocatorRecords: Found balance {} of token {} in veFXS allocator at block {}",
+    [balance.toString(), getContractName(tokenAddress), blockNumber.toString()],
+  );
   records.push(
     createOrUpdateTokenRecord(
       timestamp,
