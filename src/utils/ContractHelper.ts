@@ -50,6 +50,7 @@ import {
 } from "./Constants";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
+import { TokenCategoryPOL } from "./TokenDefinition";
 import { createOrUpdateTokenRecord, getIsTokenLiquid } from "./TokenRecordHelper";
 
 /**
@@ -918,6 +919,7 @@ export function getBalancerGaugeBalanceFromWallets(
         blockNumber,
         getIsTokenLiquid(tokenAddress),
         BigDecimal.fromString("1"),
+        TokenCategoryPOL,
       ),
     );
   }
