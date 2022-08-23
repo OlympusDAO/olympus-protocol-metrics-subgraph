@@ -1523,7 +1523,7 @@ export function getVlCvxUnlockedRecords(
     records.push(
       createOrUpdateTokenRecord(
         timestamp,
-        getContractName(tokenAddress, "Unlocked"),
+        "Convex - Unlocked (vlCVX)", // Manual override
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
