@@ -3,6 +3,7 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { TokenRecord, TokenSupply } from "../../generated/schema";
 import {
+  ERC20_OHM_V2,
   getContractName,
   getWalletAddressesForContract,
   liquidityPairHasToken,
@@ -70,7 +71,11 @@ export function getOhmUSDPairRiskFreeValue(
   return result;
 }
 
-export function getUniswapV2PairTotalValue(pairAddress: string, blockNumber: BigInt): BigDecimal {
+export function getUniswapV2PairTotalValue(
+  pairAddress: string,
+  excludeOhmValue: boolean,
+  blockNumber: BigInt,
+): BigDecimal {
   log.info("Calculating total value of pair {}", [pairAddress]);
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
@@ -96,6 +101,8 @@ export function getUniswapV2PairTotalValue(pairAddress: string, blockNumber: Big
     token0Rate.toString(),
     token0Value.toString(),
   ]);
+  const token0ValueExcludingOhm =
+    token0.toLowerCase() == ERC20_OHM_V2.toLowerCase() ? BigDecimal.zero() : token0Value;
 
   // Determine token1 value
   const token1 = pair.token1().toHexString();
@@ -113,8 +120,12 @@ export function getUniswapV2PairTotalValue(pairAddress: string, blockNumber: Big
     token1Rate.toString(),
     token1Value.toString(),
   ]);
+  const token1ValueExcludingOhm =
+    token1.toLowerCase() == ERC20_OHM_V2.toLowerCase() ? BigDecimal.zero() : token1Value;
 
-  const totalValue = token0Value.plus(token1Value);
+  const totalValue = excludeOhmValue
+    ? token0ValueExcludingOhm.plus(token1ValueExcludingOhm)
+    : token0Value.plus(token1Value);
   log.info("Total value of pair {} is {}", [pairAddress, totalValue.toString()]);
   return totalValue;
 }
@@ -141,7 +152,7 @@ export function getUniswapV2PairValue(
     return BigDecimal.zero();
   }
 
-  const lpValue = getUniswapV2PairTotalValue(pairAddress, blockNumber);
+  const lpValue = getUniswapV2PairTotalValue(pairAddress, false, blockNumber);
   const poolTotalSupply = toDecimal(pair.totalSupply(), 18);
   const poolPercentageOwned = toDecimal(lpBalance, 18).div(poolTotalSupply);
   const balanceValue = poolPercentageOwned.times(lpValue);
@@ -232,16 +243,16 @@ export function getUniswapV2PairUnitRate(
  * @param pairAddress token address for the UniswapV2 pair
  * @param pairRate the unit rate of the pair
  * @param walletAddress the wallet to look up the balance
- * @param excludeOhmValue true if the value of OHM should be excluded
+ * @param multiplier
  * @param blockNumber the current block number
  * @returns
  */
-export function getUniswapV2PairRecord(
+function getUniswapV2PairRecord(
   timestamp: BigInt,
   pairAddress: string,
   pairRate: BigDecimal,
   walletAddress: string,
-  excludeOhmValue: boolean,
+  multiplier: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecord | null {
   const pairToken = getUniswapV2Pair(pairAddress, blockNumber);
@@ -273,7 +284,7 @@ export function getUniswapV2PairRecord(
     pairTokenBalanceDecimal,
     blockNumber,
     true,
-    excludeOhmValue ? BigDecimal.fromString("0.5") : BigDecimal.fromString("1"),
+    multiplier,
     TokenCategoryPOL,
   );
 }
@@ -289,8 +300,7 @@ export function getUniswapV2PairRecord(
  *
  * @param metricName
  * @param pairAddress the address of the UniswapV2 pair
- * @param tokenAddress restrict results to match the specified token
- * @param excludeOhmValue true if the value of OHM in the LP should be excluded
+ * @param tokenAddress restrict results to match the specified tokenbe excluded
  * @param blockNumber the current block number
  * @returns
  */
@@ -298,7 +308,6 @@ export function getUniswapV2PairRecords(
   timestamp: BigInt,
   pairAddress: string,
   tokenAddress: string | null,
-  excludeOhmValue: boolean,
   blockNumber: BigInt,
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
@@ -311,7 +320,11 @@ export function getUniswapV2PairRecords(
   }
 
   // Calculate total value of the LP
-  const totalValue = getUniswapV2PairTotalValue(pairAddress, blockNumber);
+  const totalValue = getUniswapV2PairTotalValue(pairAddress, false, blockNumber);
+  const includedValue = getUniswapV2PairTotalValue(pairAddress, true, blockNumber);
+  // Calculate multiplier
+  const multiplier = includedValue.div(totalValue);
+  log.info("getUniswapV2PairRecords: applying multiplier of {}", [multiplier.toString()]);
 
   // Calculate the unit rate of the LP
   const unitRate = getUniswapV2PairUnitRate(pairAddress, totalValue, blockNumber);
@@ -325,7 +338,7 @@ export function getUniswapV2PairRecords(
       pairAddress,
       unitRate,
       walletAddress,
-      excludeOhmValue,
+      multiplier,
       blockNumber,
     );
     if (record) {
@@ -449,7 +462,6 @@ export function getUniswapV2PairTokenQuantity(
     timestamp,
     pairAddress,
     tokenAddress,
-    false,
     blockNumber,
   );
 

@@ -16,7 +16,11 @@ import { LiquidityBalances } from "./LiquidityBalance";
 import { getBalancerRecords } from "./LiquidityBalancer";
 import { getCurvePairRecords } from "./LiquidityCurve";
 import { getFraxSwapPairRecords } from "./LiquidityFraxSwap";
-import { getOhmUSDPairRiskFreeValue, getUniswapV2PairValue } from "./LiquidityUniswapV2";
+import {
+  getOhmUSDPairRiskFreeValue,
+  getUniswapV2PairRecords,
+  getUniswapV2PairValue,
+} from "./LiquidityUniswapV2";
 
 /**
  * Creates TokenRecords objects for the giving liquidity records.
@@ -108,6 +112,7 @@ function getLiquidityTokenRecords(
  * - Uniswap V2
  * - Curve
  * - Balancer
+ * - FraxSwap
  *
  * @param metricName
  * @param tokenAddress the address of the ERC20 token
@@ -136,43 +141,10 @@ export function getLiquidityBalances(
       pairHandler.getContract(),
     ]);
     if (pairHandler.getType() === PairHandlerTypes.UniswapV2) {
-      // TODO shift to getUniswapV2PairRecords()
-      const liquidityPair = getUniswapV2Pair(pairHandler.getContract(), blockNumber);
-      const liquidityBalance = new LiquidityBalances(pairHandler.getContract());
-      const wallets = getWalletAddressesForContract(pairHandler.getContract());
-
-      // Across the different sources, determine the total balance of liquidity pools
-      // Uniswap LPs in wallets
-      for (let i = 0; i < wallets.length; i++) {
-        const currentWallet = wallets[i];
-        const balance = getUniswapV2PairBalance(
-          liquidityPair,
-          currentWallet,
-          blockNumber,
-          tokenAddress,
-        );
-        if (!balance || balance.equals(BigInt.zero())) continue;
-
-        log.debug("Found balance {} in wallet {}", [toDecimal(balance).toString(), currentWallet]);
-        liquidityBalance.addBalance(currentWallet, balance);
-      }
-
-      const currentTokenRecords = getLiquidityTokenRecords(
-        timestamp,
-        liquidityBalance,
-        blockNumber,
-        riskFree,
+      pushArray(
+        records,
+        getUniswapV2PairRecords(timestamp, pairHandler.getContract(), tokenAddress, blockNumber),
       );
-
-      // UniswapV2 only supports a pair, so we can safely apply the multiplier
-      if (excludeOhmValue || (tokenAddress && restrictToTokenValue)) {
-        log.info("getLiquidityBalances: setting multiplier to 0.5 for UniswapV2 pair {}", [
-          getContractName(pairHandler.getContract()),
-        ]);
-        setTokenRecordsMultiplier(currentTokenRecords, BigDecimal.fromString("0.5"));
-      }
-
-      pushArray(records, currentTokenRecords);
     } else if (pairHandler.getType() === PairHandlerTypes.Curve) {
       pushArray(
         records,
