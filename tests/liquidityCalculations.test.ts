@@ -85,8 +85,6 @@ describe("getLiquidityPoolValue", () => {
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs
-    const record = records[0];
-    assert.stringEquals("1", record.multiplier.toString());
     assert.i32Equals(1, records.length);
   });
 

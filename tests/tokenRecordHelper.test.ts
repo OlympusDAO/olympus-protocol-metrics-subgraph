@@ -63,6 +63,7 @@ describe("constructor", () => {
     // Creating the record will set the value
     // 2 * 3 * 1
     assert.stringEquals("6", record.value.toString());
+    assert.stringEquals("6", record.valueExcludingOhm.toString());
   });
 });
 
@@ -82,6 +83,7 @@ describe("value", () => {
 
     // 2 * 3 * 1
     assert.stringEquals("6", record.value.toString());
+    assert.stringEquals("6", record.valueExcludingOhm.toString());
   });
 
   test("multiplier = 0.25", () => {
@@ -98,8 +100,9 @@ describe("value", () => {
       BigDecimal.fromString("0.25"),
     );
 
+    assert.stringEquals("6", record.value.toString());
     // 2 * 3 * 0.25
-    assert.stringEquals("1.5", record.value.toString());
+    assert.stringEquals("1.5", record.valueExcludingOhm.toString());
   });
 });
 

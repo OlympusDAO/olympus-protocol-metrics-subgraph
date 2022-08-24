@@ -176,14 +176,7 @@ export function getLiquidityBalances(
     } else if (pairHandler.getType() === PairHandlerTypes.Curve) {
       pushArray(
         records,
-        getCurvePairRecords(
-          timestamp,
-          pairHandler.getContract(),
-          tokenAddress,
-          excludeOhmValue,
-          restrictToTokenValue,
-          blockNumber,
-        ),
+        getCurvePairRecords(timestamp, pairHandler.getContract(), tokenAddress, blockNumber),
       );
     } else if (pairHandler.getType() === PairHandlerTypes.Balancer) {
       const balancerPoolId = pairHandler.getPool();
