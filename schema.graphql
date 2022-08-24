@@ -27,6 +27,7 @@ type Token @entity {
   id: ID!
 }
 
+# Stores easily-calculated metrics related to the Olympus protocol
 type ProtocolMetric @entity {
   id: ID! # YYYY-MM-DD
   block: BigInt!
@@ -56,6 +57,7 @@ type BondDiscount @entity {
   ohmlusd_discount: BigDecimal!
 }
 
+# Represents the balance of a specific token in the treasury
 type TokenRecord @entity {
   id: ID! # YYYY-MM-DD/<source>/<token>
   block: BigInt!
@@ -74,6 +76,7 @@ type TokenRecord @entity {
   isBluechip: Boolean!
 }
 
+# Represents a balance that affects the supply of OHM
 type TokenSupply @entity {
   id: ID! # YYYY-MM-DD/<token>/<type>/<pool>/<source>
   block: BigInt!

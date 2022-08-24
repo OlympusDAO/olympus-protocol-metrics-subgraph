@@ -427,6 +427,7 @@ dataSources:
       entities:
         - ProtocolMetrics
         - TokenRecord
+        - TokenSupply
       abis:
         - name: OlympusStakingV1
           file: ./abis/OlympusStakingV1.json
