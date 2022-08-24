@@ -2,9 +2,9 @@
 
 Gathers data from bonds, liquidity and Olympus treasury.
 
-Used in the dashboard https://app.olympusdao.finance/ and the Olympus Playground.
+Used in the [Olympus Treasury Dashboard](https://app.olympusdao.finance/).
 
-Deployed at https://thegraph.com/hosted-service/subgraph/olympusdao/olympus-protocol-metrics
+Deployed at <https://thegraph.com/hosted-service/subgraph/olympusdao/olympus-protocol-metrics>
 
 ## Initial Setup
 
@@ -39,7 +39,7 @@ If you receive a non-sensical test result (e.g. duplicated test cases, or a test
 
 ### Deployment (Testing)
 
-1. If necessary, create an account and subgraph in the Subgraph Studio: https://thegraph.com/studio/
+1. If necessary, create an account and subgraph in the Subgraph Studio: <https://thegraph.com/studio/>
    - The subgraph should be called `olympus-protocol-metrics`
 1. Add the Subgraph Studio deploy key to the `GRAPH_STUDIO_TOKEN` variable in `.env` (using `.env.sample`)
 1. Authenticate using `yarn auth:dev`
@@ -72,7 +72,7 @@ A set of Docker containers is pre-configured to enable local testing of the subg
 2. Run the Docker stack: `yarn run-local`
 3. Create the subgraph in the local graph node: `yarn create-local` (after every restart of the graph node stack)
 4. Deploy the subgraph: `yarn deploy-local --version-label 0.1.0`
-5. Access the GraphQL query interface: http://localhost:8000/subgraphs/name/olympus/graphql
+5. Access the GraphQL query interface: <http://localhost:8000/subgraphs/name/olympus/graphql>
 
 ## Constants
 
