@@ -457,6 +457,7 @@ describe("get Balancer liquidity gauge records", () => {
       BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
       ERC20_ALCX,
       BigDecimal.fromString("2"),
+      BigDecimal.fromString("1"),
       BigInt.fromString("10"),
     );
 
@@ -475,6 +476,7 @@ describe("get Balancer liquidity gauge records", () => {
       BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
       ERC20_BALANCER_WETH_FDT,
       BigDecimal.fromString("2"),
+      BigDecimal.fromString("1"),
       BigInt.fromString("10"),
     );
 
@@ -497,6 +499,7 @@ describe("get Balancer liquidity gauge records", () => {
       BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
       ERC20_BALANCER_WETH_FDT,
       BigDecimal.fromString("2"),
+      BigDecimal.fromString("1"),
       BigInt.fromString("10"),
     );
 

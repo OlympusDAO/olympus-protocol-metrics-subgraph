@@ -31,8 +31,6 @@ export function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): Ba
  * @param vaultAddress The address of the Balancer vault
  * @param poolId The pool id, as returned by `getPool()` on the allocator contract
  * @param excludeOhmValue If true, the value will exclude OHM. This can be used to calculate backing
- * @param restrictToToken If true, the value will be restricted to that of the specified token. This can be used to calculate the value of liquidity for a certain token.
- * @param tokenAddress The tokenAddress to restrict to (or null)
  * @param blockNumber the current block number
  * @returns BigDecimal
  */
@@ -40,8 +38,6 @@ export function getBalancerPoolTotalValue(
   vaultAddress: string,
   poolId: string,
   excludeOhmValue: boolean,
-  restrictToToken: boolean,
-  tokenAddress: string | null,
   blockNumber: BigInt,
 ): BigDecimal {
   const vault = getBalancerVault(vaultAddress, blockNumber);
@@ -62,18 +58,6 @@ export function getBalancerPoolTotalValue(
 
     if (excludeOhmValue && currentAddress.toLowerCase() == ERC20_OHM_V2.toLowerCase()) {
       log.debug("getBalancerPoolTotalValue: Skipping OHM as excludeOhmValue is true", []);
-      continue;
-    }
-
-    // Skip if the tokens to include is restricted
-    if (
-      tokenAddress &&
-      restrictToToken &&
-      tokenAddress.toLowerCase() != currentAddress.toLowerCase()
-    ) {
-      log.debug("getBalancerPoolTotalValue: Skipping token {} as restrictToToken is true", [
-        currentAddress,
-      ]);
       continue;
     }
 
@@ -218,8 +202,6 @@ function getBalancerPoolTokenRecords(
  * @param metricName
  * @param vaultAddress The address of the Balancer Vault
  * @param poolId The id of the Balancer pool
- * @param excludeOhmValue If true, the value will exclude that of OHM
- * @param restrictToTokenValue If true, the value will reflect the portion of the pool made up by {tokenAddress}. Overrides {excludeOhmValue}.
  * @param blockNumber The current block number
  * @param tokenAddress If specified, this function will exit if the token is not in the liquidity pool
  * @returns
@@ -228,8 +210,6 @@ export function getBalancerRecords(
   timestamp: BigInt,
   vaultAddress: string,
   poolId: string,
-  excludeOhmValue: boolean,
-  restrictToTokenValue: boolean,
   blockNumber: BigInt,
   tokenAddress: string | null = null,
 ): TokenRecord[] {
@@ -256,39 +236,15 @@ export function getBalancerRecords(
   }
 
   // Calculate the value of the pool
-  const totalValue = getBalancerPoolTotalValue(
-    vaultAddress,
-    poolId,
-    false,
-    false,
-    null,
-    blockNumber,
-  );
-  const includedValue = getBalancerPoolTotalValue(
-    vaultAddress,
-    poolId,
-    excludeOhmValue,
-    restrictToTokenValue,
-    tokenAddress,
-    blockNumber,
-  );
+  const totalValue = getBalancerPoolTotalValue(vaultAddress, poolId, false, blockNumber);
+  const includedValue = getBalancerPoolTotalValue(vaultAddress, poolId, true, blockNumber);
 
   // Calculate the unit rate
   const unitRate = getBalancerPoolUnitRate(poolTokenContract, totalValue, blockNumber);
 
   // Calculate multiplier
-  const multiplier =
-    excludeOhmValue || restrictToTokenValue
-      ? includedValue.div(totalValue)
-      : BigDecimal.fromString("1");
-  log.info(
-    "getBalancerRecords: applying multiplier of {} based on excludeOhmValue = {} and restrictToTokenValue = {}",
-    [
-      multiplier.toString(),
-      excludeOhmValue ? "true" : "false",
-      restrictToTokenValue ? "true" : "false",
-    ],
-  );
+  const multiplier = includedValue.div(totalValue);
+  log.info("getBalancerRecords: applying nonOhm multiplier of {}", [multiplier.toString()]);
 
   const poolTokenAddress = poolTokenContract._address.toHexString();
   log.info(
@@ -318,7 +274,13 @@ export function getBalancerRecords(
   // Pool tokens deposited in a liquidity gauge
   pushArray(
     records,
-    getBalancerGaugeBalancesFromWallets(timestamp, poolTokenAddress, unitRate, blockNumber),
+    getBalancerGaugeBalancesFromWallets(
+      timestamp,
+      poolTokenAddress,
+      unitRate,
+      multiplier,
+      blockNumber,
+    ),
   );
 
   return records;
@@ -416,8 +378,6 @@ export function getBalancerPoolTokenQuantity(
     timestamp,
     vaultAddress,
     poolId,
-    false,
-    false,
     blockNumber,
     tokenAddress,
   );

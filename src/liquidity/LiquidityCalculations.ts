@@ -195,8 +195,6 @@ export function getLiquidityBalances(
           timestamp,
           pairHandler.getContract(),
           balancerPoolId,
-          excludeOhmValue,
-          restrictToTokenValue,
           blockNumber,
           tokenAddress,
         ),

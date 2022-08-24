@@ -834,6 +834,7 @@ function getBalancerGaugeBalance(
  * @param gaugeContractAddress
  * @param tokenAddress
  * @param rate
+ * @param multiplier
  * @param blockNumber
  * @returns
  */
@@ -842,6 +843,7 @@ export function getBalancerGaugeBalanceFromWallets(
   gaugeContractAddress: string,
   tokenAddress: string,
   rate: BigDecimal,
+  multiplier: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
@@ -918,7 +920,7 @@ export function getBalancerGaugeBalanceFromWallets(
         balance,
         blockNumber,
         getIsTokenLiquid(tokenAddress),
-        BigDecimal.fromString("1"),
+        multiplier,
         TokenCategoryPOL,
       ),
     );
@@ -941,6 +943,7 @@ export function getBalancerGaugeBalancesFromWallets(
   timestamp: BigInt,
   tokenAddress: string,
   rate: BigDecimal,
+  multiplier: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
@@ -953,6 +956,7 @@ export function getBalancerGaugeBalancesFromWallets(
         BALANCER_LIQUIDITY_GAUGES[i],
         tokenAddress,
         rate,
+        multiplier,
         blockNumber,
       ),
     );
