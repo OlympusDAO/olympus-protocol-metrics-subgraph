@@ -31,23 +31,12 @@ export function getStablecoinBalance(
   timestamp: BigInt,
   contractAddress: string,
   includeLiquidity: boolean,
-  riskFree: boolean,
-  excludeOhmValue: boolean,
-  restrictToTokeValue: boolean,
   blockNumber: BigInt,
 ): TokenRecord[] {
   const contractName = getContractName(contractAddress);
   log.info(
-    "getStablecoinBalance: Calculating stablecoin balance for {} ({}) at block number {}: liquidity? {}, risk-free? {}, exclude OHM value? {}, restrictToTokenValue? {}",
-    [
-      contractName,
-      contractAddress,
-      blockNumber.toString(),
-      includeLiquidity ? "true" : "false",
-      riskFree ? "true" : "false",
-      excludeOhmValue ? "true" : "false",
-      restrictToTokeValue ? "true" : "false",
-    ],
+    "getStablecoinBalance: Calculating stablecoin balance for {} ({}) at block number {}: liquidity? {}",
+    [contractName, contractAddress, blockNumber.toString(), includeLiquidity ? "true" : "false"],
   );
   const records: TokenRecord[] = [];
   const contract = getERC20(contractAddress, blockNumber);
@@ -84,17 +73,7 @@ export function getStablecoinBalance(
 
   // Liquidity pools
   if (includeLiquidity) {
-    pushArray(
-      records,
-      getLiquidityBalances(
-        timestamp,
-        contractAddress,
-        riskFree,
-        excludeOhmValue,
-        restrictToTokeValue,
-        blockNumber,
-      ),
-    );
+    pushArray(records, getLiquidityBalances(timestamp, contractAddress, blockNumber));
   }
 
   return records;
@@ -103,36 +82,26 @@ export function getStablecoinBalance(
 /**
  * Gets the balances for all stablecoins, using {getStablecoinBalance}.
  *
+ * @param timestamp
+ * @param includeLiquidity
  * @param blockNumber the current block
  * @returns TokenRecord array
  */
 export function getStablecoinBalances(
   timestamp: BigInt,
   includeLiquidity: boolean,
-  riskFree: boolean,
-  excludeOhmValue: boolean,
-  restrictToTokenValue: boolean,
   blockNumber: BigInt,
 ): TokenRecord[] {
-  log.info(
-    "getStablecoinBalances: Calculating stablecoin value. Liquidity? {}. Risk-Free Value? {}.",
-    [includeLiquidity ? "true" : "false", riskFree ? "true" : "false"],
-  );
+  log.info("getStablecoinBalances: Calculating stablecoin value. Liquidity? {}", [
+    includeLiquidity ? "true" : "false",
+  ]);
   const records: TokenRecord[] = [];
 
   const stableTokens = getTokensInCategory(TokenCategoryStable);
   for (let i = 0; i < stableTokens.length; i++) {
     pushArray(
       records,
-      getStablecoinBalance(
-        timestamp,
-        stableTokens[i].getAddress(),
-        includeLiquidity,
-        riskFree,
-        excludeOhmValue,
-        restrictToTokenValue,
-        blockNumber,
-      ),
+      getStablecoinBalance(timestamp, stableTokens[i].getAddress(), includeLiquidity, blockNumber),
     );
   }
 

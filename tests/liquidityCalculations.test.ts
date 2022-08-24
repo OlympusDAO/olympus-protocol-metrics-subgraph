@@ -80,7 +80,7 @@ describe("getLiquidityPoolValue", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getOwnedLiquidityPoolValue(TIMESTAMP, false, false, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue(TIMESTAMP, ETH_USD_RESERVE_BLOCK);
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs
@@ -107,7 +107,7 @@ describe("getLiquidityPoolValue", () => {
       toBigInt(balance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getOwnedLiquidityPoolValue(TIMESTAMP, false, false, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue(TIMESTAMP, ETH_USD_RESERVE_BLOCK);
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs
@@ -165,7 +165,7 @@ describe("getLiquidityPoolValue", () => {
       toBigInt(crvBalanceTwo, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getOwnedLiquidityPoolValue(TIMESTAMP, false, false, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue(TIMESTAMP, ETH_USD_RESERVE_BLOCK);
 
     const record = records[0];
     assert.stringEquals("10", record.balance.toString());
@@ -204,7 +204,7 @@ describe("getLiquidityPoolValue", () => {
     );
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
-    const records = getOwnedLiquidityPoolValue(TIMESTAMP, false, false, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue(TIMESTAMP, ETH_USD_RESERVE_BLOCK);
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs
@@ -233,7 +233,7 @@ describe("getLiquidityPoolValue", () => {
       toBigInt(expectedWalletBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getOwnedLiquidityPoolValue(TIMESTAMP, false, false, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue(TIMESTAMP, ETH_USD_RESERVE_BLOCK);
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs

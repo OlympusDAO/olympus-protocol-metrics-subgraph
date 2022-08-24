@@ -238,9 +238,6 @@ describe("records", () => {
     const records = getLiquidityBalances(
       TIMESTAMP,
       ERC20_DAI,
-      false,
-      false,
-      false,
       OHM_USD_RESERVE_BLOCK,
       pairArrayOverride,
     );

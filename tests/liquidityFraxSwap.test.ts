@@ -333,14 +333,7 @@ describe("get token records", () => {
       toBigInt(expectedWalletBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getLiquidityBalances(
-      TIMESTAMP,
-      null,
-      false,
-      false,
-      false,
-      OHM_USD_RESERVE_BLOCK,
-    );
+    const records = getLiquidityBalances(TIMESTAMP, null, OHM_USD_RESERVE_BLOCK);
 
     const expectedValue = expectedWalletBalance.times(FRAXSWAP_OHM_FRAX_UNIT_RATE);
     assert.stringEquals(expectedValue.toString(), records[0].value.toString());

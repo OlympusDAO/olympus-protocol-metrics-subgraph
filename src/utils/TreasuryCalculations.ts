@@ -22,13 +22,13 @@ import { getVolatileTokenBalances } from "./TokenVolatile";
  */
 export function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): void {
   // Stable without protocol-owned liquidity
-  getStablecoinBalances(timestamp, false, false, false, false, blockNumber);
+  getStablecoinBalances(timestamp, false, blockNumber);
 
   // Volatile without protocol-owned liquidity, but blue-cip assets
-  getVolatileTokenBalances(timestamp, false, false, true, false, false, false, blockNumber);
+  getVolatileTokenBalances(timestamp, false, false, true, blockNumber);
 
   // Protocol-owned liquidity
-  getOwnedLiquidityPoolValue(timestamp, false, false, blockNumber);
+  getOwnedLiquidityPoolValue(timestamp, blockNumber);
 }
 
 export function generateTokenSupply(timestamp: BigInt, blockNumber: BigInt): void {

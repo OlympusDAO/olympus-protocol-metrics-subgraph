@@ -68,25 +68,16 @@ export function getVolatileTokenBalance(
   timestamp: BigInt,
   contractAddress: string,
   includeLiquidity: boolean,
-  riskFree: boolean,
-  excludeOhmValue: boolean,
-  restrictToTokenValue: boolean,
   blockNumber: BigInt,
 ): TokenRecord[] {
   // TODO consider changing function signature, as excludeOhmValue and restrictToTokenValue are relevant only if includeLiquidity = true
   const contractName = getContractName(contractAddress);
-  log.info(
-    "Calculating volatile token balance for {} ({}) at block number {}: liquidity? {}, risk-free? {}, exclude OHM value? {}, restrictToTokenValue? {}",
-    [
-      contractName,
-      contractAddress,
-      blockNumber.toString(),
-      includeLiquidity ? "true" : "false",
-      riskFree ? "true" : "false",
-      excludeOhmValue ? "true" : "false",
-      restrictToTokenValue ? "true" : "false",
-    ],
-  );
+  log.info("Calculating volatile token balance for {} ({}) at block number {}: liquidity? {}", [
+    contractName,
+    contractAddress,
+    blockNumber.toString(),
+    includeLiquidity ? "true" : "false",
+  ]);
 
   const records: TokenRecord[] = [];
 
@@ -150,17 +141,7 @@ export function getVolatileTokenBalance(
 
   // Liquidity pools
   if (includeLiquidity) {
-    pushArray(
-      records,
-      getLiquidityBalances(
-        timestamp,
-        contractAddress,
-        riskFree,
-        excludeOhmValue,
-        restrictToTokenValue,
-        blockNumber,
-      ),
-    );
+    pushArray(records, getLiquidityBalances(timestamp, contractAddress, blockNumber));
   }
 
   return records;
@@ -169,13 +150,10 @@ export function getVolatileTokenBalance(
 /**
  * Gets the balances for all volatile tokens, using {getVolatileTokenBalance}.
  *
- * @param date
+ * @param timestamp
  * @param liquidOnly If true, exclude illiquid assets. This is currently limited to vesting assets.
  * @param includeLiquidity If true, includes volatile assets in protocol-owned liquidity
  * @param includeBlueChip If true, includes blue-chip assets (wETH and wBTC)
- * @param riskFree If true, returns the risk-free value of liquidity pools
- * @param excludeOhmValue If true, the value of liquidity pools is returned without the value of OHM. This is used to calculate backing.
- * @param restrictToTokenValue If true, the value of liquidity pools is restricted to a specific token. This is used to calculate the value of specific assets.
  * @param blockNumber the current block
  * @returns TokenRecord array
  */
@@ -184,9 +162,6 @@ export function getVolatileTokenBalances(
   liquidOnly: boolean,
   includeLiquidity: boolean,
   includeBlueChip: boolean,
-  riskFree: boolean,
-  excludeOhmValue: boolean,
-  restrictToTokenValue: boolean,
   blockNumber: BigInt,
 ): TokenRecord[] {
   log.info("Calculating volatile token value", []);
@@ -209,15 +184,7 @@ export function getVolatileTokenBalances(
 
     pushArray(
       records,
-      getVolatileTokenBalance(
-        timestamp,
-        currentTokenAddress,
-        includeLiquidity,
-        riskFree,
-        excludeOhmValue,
-        restrictToTokenValue,
-        blockNumber,
-      ),
+      getVolatileTokenBalance(timestamp, currentTokenAddress, includeLiquidity, blockNumber),
     );
   }
 

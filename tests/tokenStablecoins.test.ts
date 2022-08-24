@@ -15,9 +15,6 @@ describe("native ETH", () => {
       TIMESTAMP,
       NATIVE_ETH,
       false,
-      false,
-      false,
-      false,
       BigInt.fromString("14000000"),
     );
 

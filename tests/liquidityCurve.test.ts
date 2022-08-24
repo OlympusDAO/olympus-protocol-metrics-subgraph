@@ -437,14 +437,7 @@ describe("Pair Value", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getLiquidityBalances(
-      TIMESTAMP,
-      NATIVE_ETH,
-      false,
-      false,
-      false,
-      OHM_USD_RESERVE_BLOCK,
-    );
+    const records = getLiquidityBalances(TIMESTAMP, NATIVE_ETH, OHM_USD_RESERVE_BLOCK);
 
     const expectedNonOhmTotalValue = wethReserves.times(getEthUsdRate());
     const expectedTotalValue = getPairValue(
@@ -510,14 +503,7 @@ describe("Pair Value", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getLiquidityBalances(
-      TIMESTAMP,
-      NATIVE_ETH,
-      false,
-      false,
-      false,
-      OHM_USD_RESERVE_BLOCK,
-    );
+    const records = getLiquidityBalances(TIMESTAMP, NATIVE_ETH, OHM_USD_RESERVE_BLOCK);
 
     assert.i32Equals(0, records.length);
   });
@@ -569,14 +555,7 @@ describe("Pair Value", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     ); // Balance for the staked Curve token
 
-    const records = getLiquidityBalances(
-      TIMESTAMP,
-      NATIVE_ETH,
-      false,
-      false,
-      false,
-      OHM_USD_RESERVE_BLOCK,
-    );
+    const records = getLiquidityBalances(TIMESTAMP, NATIVE_ETH, OHM_USD_RESERVE_BLOCK);
 
     const totalValueExpected = getPairValue(
       ohmReserves,
