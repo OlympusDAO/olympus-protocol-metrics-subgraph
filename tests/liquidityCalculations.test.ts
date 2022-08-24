@@ -1,7 +1,6 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
-import { TokenRecord } from "../generated/schema";
 import { getOwnedLiquidityPoolValue } from "../src/liquidity/LiquidityCalculations";
 import {
   DAO_WALLET,
@@ -39,7 +38,7 @@ const PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY = BigDecimal.fromString("100");
 const TIMESTAMP = BigInt.fromString("1");
 
 describe("getLiquidityPoolValue", () => {
-  test("exclude OHM value false, curve pool", () => {
+  test("curve pool", () => {
     mockEthUsdRate();
     mockUsdOhmV2Rate();
 
@@ -88,7 +87,7 @@ describe("getLiquidityPoolValue", () => {
     assert.i32Equals(1, records.length);
   });
 
-  test("exclude OHM value false, FraxSwap pool", () => {
+  test("FraxSwap pool", () => {
     // Mock other liquidity pools
     mockBalanceVaultZero();
     mockUniswapV2PairsZero();
@@ -112,8 +111,6 @@ describe("getLiquidityPoolValue", () => {
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs
-    const record = records[0];
-    assert.stringEquals("1", record.multiplier.toString());
     assert.i32Equals(1, records.length);
   });
 
@@ -177,7 +174,7 @@ describe("getLiquidityPoolValue", () => {
     assert.i32Equals(2, records.length);
   });
 
-  test("exclude OHM value false, uniswapv2 pool", () => {
+  test("uniswapv2 pool", () => {
     mockUsdOhmV2Rate();
 
     // Mock liquidity pools
@@ -211,8 +208,6 @@ describe("getLiquidityPoolValue", () => {
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs
-    const record = records[0];
-    assert.stringEquals("1", record.multiplier.toString());
     assert.i32Equals(1, records.length);
   });
 

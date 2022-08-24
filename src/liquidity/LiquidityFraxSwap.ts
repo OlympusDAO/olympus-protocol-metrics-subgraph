@@ -37,16 +37,12 @@ function getFraxSwapPair(pairAddress: string, blockNumber: BigInt): FraxSwapPool
  *
  * @param pairAddress
  * @param excludeOhmValue If true, the value will exclude OHM. This can be used to calculate backing
- * @param restrictToToken  If true, the value will be restricted to that of the specified token. This can be used to calculate the value of liquidity for a certain token.
- * @param tokenAddress The tokenAddress to restrict to (or null)
  * @param blockNumber
  * @returns
  */
 export function getFraxSwapPairTotalValue(
   pairAddress: string,
   excludeOhmValue: boolean,
-  restrictToToken: boolean,
-  tokenAddress: string | null,
   blockNumber: BigInt,
 ): BigDecimal {
   const pair = getFraxSwapPair(pairAddress, blockNumber);
@@ -59,15 +55,10 @@ export function getFraxSwapPairTotalValue(
   }
 
   let totalValue = BigDecimal.zero();
-  log.info(
-    "getFraxSwapPairTotalValue: Calculating value of pair {} with excludeOhmValue = {}, restrictToToken = {}, token = {}",
-    [
-      getContractName(pairAddress),
-      excludeOhmValue ? "true" : "false",
-      restrictToToken ? "true" : "false",
-      tokenAddress ? getContractName(tokenAddress) : "null",
-    ],
-  );
+  log.info("getFraxSwapPairTotalValue: Calculating value of pair {} with excludeOhmValue = {}", [
+    getContractName(pairAddress),
+    excludeOhmValue ? "true" : "false",
+  ]);
 
   const tokens: Address[] = [];
   tokens.push(pair.token0());
@@ -83,14 +74,6 @@ export function getFraxSwapPairTotalValue(
 
     if (excludeOhmValue && token.toLowerCase() == ERC20_OHM_V2.toLowerCase()) {
       log.debug("getFraxSwapPairTotalValue: Skipping OHM as excludeOhmValue is true", []);
-      continue;
-    }
-
-    if (tokenAddress && restrictToToken && tokenAddress.toLowerCase() != token.toLowerCase()) {
-      log.debug("getFraxSwapPairTotalValue: Skipping token {} ({}) as restrictToToken is true", [
-        getContractName(token),
-        token,
-      ]);
       continue;
     }
 
@@ -230,8 +213,6 @@ function getFraxSwapPairTokenRecord(
 export function getFraxSwapPairRecords(
   timestamp: BigInt,
   pairAddress: string,
-  excludeOhmValue: boolean,
-  restrictToTokenValue: boolean,
   blockNumber: BigInt,
   tokenAddress: string | null = null,
 ): TokenRecord[] {
@@ -255,23 +236,11 @@ export function getFraxSwapPairRecords(
   }
 
   // Calculate total value of the LP
-  const totalValue = getFraxSwapPairTotalValue(pairAddress, false, false, null, blockNumber);
-  const includedValue = getFraxSwapPairTotalValue(
-    pairAddress,
-    excludeOhmValue,
-    restrictToTokenValue,
-    tokenAddress,
-    blockNumber,
-  );
+  const totalValue = getFraxSwapPairTotalValue(pairAddress, false, blockNumber);
+  const includedValue = getFraxSwapPairTotalValue(pairAddress, true, blockNumber);
   // Calculate multiplier
-  const multiplier =
-    excludeOhmValue || (tokenAddress && restrictToTokenValue)
-      ? includedValue.div(totalValue)
-      : BigDecimal.fromString("1");
-  log.info(
-    "getFraxSwapPairRecords: applying multiplier of {} based on excludeOhmValue = {} and restrictToTokenValue = {}",
-    [multiplier.toString(), excludeOhmValue ? "true" : "false", "false"],
-  );
+  const multiplier = includedValue.div(totalValue);
+  log.info("getFraxSwapPairRecords: applying multiplier of {}", [multiplier.toString()]);
 
   // Calculate the unit rate of the LP
   const unitRate = getFraxSwapPairUnitRate(pairContract, totalValue, blockNumber);
@@ -380,8 +349,6 @@ export function getFraxSwapPairTokenQuantityRecords(
   const pairBalanceRecords = getFraxSwapPairRecords(
     timestamp,
     pairAddress,
-    false,
-    false,
     blockNumber,
     tokenAddress,
   );
