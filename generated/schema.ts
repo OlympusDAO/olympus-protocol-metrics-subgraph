@@ -640,6 +640,15 @@ export class TokenRecord extends Entity {
     this.set("value", Value.fromBigDecimal(value));
   }
 
+  get valueExcludingOhm(): BigDecimal {
+    const value = this.get("valueExcludingOhm");
+    return value!.toBigDecimal();
+  }
+
+  set valueExcludingOhm(value: BigDecimal) {
+    this.set("valueExcludingOhm", Value.fromBigDecimal(value));
+  }
+
   get category(): string {
     const value = this.get("category");
     return value!.toString();

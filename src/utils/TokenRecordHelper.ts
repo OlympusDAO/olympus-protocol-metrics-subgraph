@@ -8,13 +8,16 @@ import { TokenDefinition } from "./TokenDefinition";
 /**
  * Returns the value of the given TokenRecord.
  *
- * value = balance * rate * multiplier
+ * value = balance * rate
  *
  * @param record
  * @returns
  */
-function getTokenRecordValue(record: TokenRecord): BigDecimal {
-  return record.balance.times(record.rate).times(record.multiplier);
+// eslint-disable-next-line @typescript-eslint/no-inferrable-types
+function getTokenRecordValue(record: TokenRecord, nonOhmMultiplier: boolean = false): BigDecimal {
+  return record.balance
+    .times(record.rate)
+    .times(nonOhmMultiplier ? record.multiplier : BigDecimal.fromString("1"));
 }
 
 /**
@@ -88,7 +91,9 @@ export const isTokenAddressInCategory = (tokenAddress: string, category: string)
  * @param rate
  * @param balance
  * @param blockNumber
- * @param multiplier
+ * @param isLiquid
+ * @param nonOhmMultiplier
+ * @param category
  * @returns
  */
 export function createOrUpdateTokenRecord(
@@ -101,7 +106,7 @@ export function createOrUpdateTokenRecord(
   balance: BigDecimal,
   blockNumber: BigInt,
   isLiquid: boolean,
-  multiplier: BigDecimal = BigDecimal.fromString("1"),
+  nonOhmMultiplier: BigDecimal = BigDecimal.fromString("1"),
   category: string | null = null,
 ): TokenRecord {
   const dateString = getISO8601StringFromTimestamp(timestamp);
@@ -121,11 +126,12 @@ export function createOrUpdateTokenRecord(
   record.sourceAddress = sourceAddress;
   record.rate = rate;
   record.balance = balance;
-  record.multiplier = multiplier;
+  record.multiplier = nonOhmMultiplier;
   record.category = category !== null ? category : getTokenCategory(tokenAddress);
   record.isLiquid = isLiquid;
   record.isBluechip = getIsTokenVolatileBluechip(tokenAddress);
   record.value = getTokenRecordValue(record);
+  record.valueExcludingOhm = getTokenRecordValue(record, true);
 
   record.save();
 
@@ -134,7 +140,7 @@ export function createOrUpdateTokenRecord(
 
 function setTokenRecordMultiplier(tokenRecord: TokenRecord, multiplier: BigDecimal): void {
   tokenRecord.multiplier = multiplier;
-  tokenRecord.value = getTokenRecordValue(tokenRecord);
+  tokenRecord.valueExcludingOhm = getTokenRecordValue(tokenRecord, true);
   tokenRecord.save();
 }
 

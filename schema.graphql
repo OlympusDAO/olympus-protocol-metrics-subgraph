@@ -71,6 +71,7 @@ type TokenRecord @entity {
   balance: BigDecimal!
   multiplier: BigDecimal!
   value: BigDecimal! # Calculated
+  valueExcludingOhm: BigDecimal! # Calculated
   category: String!
   isLiquid: Boolean!
   isBluechip: Boolean!
