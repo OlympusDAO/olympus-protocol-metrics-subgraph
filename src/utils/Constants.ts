@@ -285,6 +285,7 @@ export const PAIR_UNISWAP_V3_FPIS_FRAX = "0x8fe536c7dc019455cce34746755c64bbe2aa
 export const PAIR_UNISWAP_V3_FXS_ETH = "0xcd8286b48936cdac20518247dbd310ab681a9fbf".toLowerCase();
 export const PAIR_UNISWAP_V3_FXS_ETH_BLOCK = "13509100";
 export const PAIR_UNISWAP_V3_LQTY_LUSD = "0xd251dff33e31bb98d5587e5b1004ff01a5a41289".toLowerCase();
+export const PAIR_UNISWAP_V3_WETH_BTRFLY = "0x3e6e23198679419cd73bb6376518dcc5168c8260".toLowerCase();
 export const POOL_BALANCER_AURA_WETH_ID = "0xc29562b045d80fd77c69bec09541f5c16fe20d9d000200000000000000000251";
 export const POOL_BALANCER_D2D_USDC_ID = "0x27c9f71cc31464b906e0006d4fcbc8900f48f15f00020000000000000000010f";
 export const POOL_BALANCER_OHM_BTRFLY_ID = "0x2de32a7c98c3ef6ec79e703500e8ca5b2ec819aa00020000000000000000031c".toLowerCase();
@@ -306,7 +307,7 @@ const LIQUIDITY_POOL_TOKEN_LOOKUP = new Map<string, PairHandler[]>();
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_ALCX, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_ALCX_ETH)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA_VL, [pairHandlerAuraWEth]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA, [pairHandlerAuraWEth]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BTRFLY, [new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_OHM_BTRFLY_ID)]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BTRFLY, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WETH_BTRFLY)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CRV_3POOL, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_3CRV_USD)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CRV, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CRV_ETH)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_CRV, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_CRV_ETH)]);
@@ -390,6 +391,7 @@ export const getPairHandlers = (contractAddress: string): PairHandler[] => {
  * liquidity to.
  */
 export const LIQUIDITY_OWNED = [
+  new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_OHM_BTRFLY_ID),
   new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_OHM_DAI_WETH_ID),
   new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_WETH_FDT_ID),
   new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_OHM_ETH),
@@ -401,7 +403,6 @@ export const LIQUIDITY_OWNED = [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_LUSD_V2),
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_LUSD),
 ];
-// TODO add OHM-BTRFLY
 // TODO if extending far into the past, add OHM-FRAX V1 & V2
 
 export const LIQUIDITY_PAIR_TOKENS = new Map<string, string[]>();
@@ -742,6 +743,7 @@ CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_SYN_FRAX, "Uniswap V2 SYN-FRAX Liquidity P
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_3CRV_USD, "Uniswap V3 3CRV-USDC Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_FPIS_FRAX, "Uniswap V3 FPIS-FRAX Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_FXS_ETH, "Uniswap V3 FXS-ETH Liquidity Pool");
+CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_WETH_BTRFLY, "Uniswap V3 WETH-BTRFLY Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_AURA_WETH_ID, "Balancer V2 AURA-WETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_OHM_BTRFLY_ID, "Balancer V2 OHM-BTRFLY Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_OHM_DAI_WETH_ID, "Balancer V2 OHM-DAI-WETH Liquidity Pool");

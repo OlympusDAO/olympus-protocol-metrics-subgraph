@@ -34,6 +34,7 @@ import {
   PAIR_UNISWAP_V3_3CRV_USD,
   PAIR_UNISWAP_V3_FPIS_FRAX,
   PAIR_UNISWAP_V3_FXS_ETH,
+  PAIR_UNISWAP_V3_WETH_BTRFLY,
   POOL_BALANCER_OHM_DAI_WETH_ID,
   POOL_BALANCER_WETH_FDT_ID,
 } from "../src/utils/Constants";
@@ -373,23 +374,6 @@ describe("get USD rate", () => {
     assert.stringEquals(calculatedRate.toString(), usdRate.toString());
   });
 
-  test("BTRFLY (Balancer) returns correct value", () => {
-    mockEthUsdRate();
-    mockUsdOhmV2Rate();
-
-    // Mock the balancer
-    mockBalanceVaultOhmBtrfly();
-
-    const usdRate = getUSDRate(ERC20_BTRFLY, OHM_USD_RESERVE_BLOCK);
-    // ((75,921.860983195 / 0.5) / (3,912.4556504475 / 0.5)) * 18.9652073
-    // TODO correct the formula, as this is incorrect
-    const calculatedRate = OHM_BTRFLY_BALANCE_OHM.div(BigDecimal.fromString("0.5"))
-      .div(OHM_BTRFLY_BALANCE_BTRFLY.div(BigDecimal.fromString("0.5")))
-      .times(getOhmUsdRate()); // Should be around 260.898
-
-    assert.stringEquals(calculatedRate.toString(), usdRate.toString());
-  });
-
   test("FDT (Balancer) returns correct value", () => {
     mockEthUsdRate();
 
@@ -538,6 +522,31 @@ describe("get USD rate", () => {
       expectedRate.toString(),
       getUSDRate(ERC20_CRV_3POOL, OHM_USD_RESERVE_BLOCK).toString(),
     );
+  });
+
+  test("BTRFLY (UniswapV3) returns correct value", () => {
+    mockEthUsdRate();
+
+    const SLOT0 = "201047635549140265156647342605";
+    mockRateUniswapV3(
+      PAIR_UNISWAP_V3_WETH_BTRFLY,
+      BigInt.fromString(SLOT0),
+      ERC20_WETH,
+      ERC20_BTRFLY,
+      ERC20_STANDARD_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+      BigInt.zero(),
+      BigInt.zero(),
+    );
+
+    const slot0Decimal = BigDecimal.fromString(SLOT0);
+    const expectedRate = BigDecimal.fromString("1")
+      .div(slot0Decimal.times(slot0Decimal).div(BigInt.fromI32(2).pow(192).toBigDecimal()))
+      .times(getEthUsdRate()); // 294.7546283139931202627807530029295
+
+    const usdRate = getUSDRate(ERC20_BTRFLY, OHM_USD_RESERVE_BLOCK);
+
+    assert.stringEquals(expectedRate.toString(), usdRate.toString());
   });
 
   // test("Curve OHM-ETH returns correct rate", () => {

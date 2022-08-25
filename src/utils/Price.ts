@@ -227,7 +227,7 @@ export function getUSDRateUniswapV3(
       "Unsure how to deal with unknown token base orientation for pair " + pairAddress,
     );
   }
-  log.debug("Token orientation is {}", [baseTokenOrientation.toString()]);
+  log.debug("getUSDRateUniswapV3: Token orientation is {}", [baseTokenOrientation.toString()]);
 
   // slot0 = "The current price of the pool as a sqrt(token1/token0) Q64.96 value"
   // Source: https://docs.uniswap.org/protocol/reference/core/interfaces/pool/IUniswapV3PoolState#slot0
@@ -246,14 +246,14 @@ export function getUSDRateUniswapV3(
   const token0Contract = getERC20(token0.toHexString(), blockNumber);
   const token1Contract = getERC20(token1.toHexString(), blockNumber);
   if (!token0Contract) {
-    log.warning("Unable to obtain ERC20 for token {} at block {}", [
+    log.warning("getUSDRateUniswapV3: Unable to obtain ERC20 for token {} at block {}", [
       token0.toHexString(),
       blockNumber.toString(),
     ]);
     return BigDecimal.zero();
   }
   if (!token1Contract) {
-    log.warning("Unable to obtain ERC20 for token {} at block {}", [
+    log.warning("getUSDRateUniswapV3: Unable to obtain ERC20 for token {} at block {}", [
       token1.toHexString(),
       blockNumber.toString(),
     ]);
@@ -269,7 +269,13 @@ export function getUSDRateUniswapV3(
 
   const baseTokenUsdRate = getBaseTokenUSDRate(token0, token1, baseTokenOrientation, blockNumber);
 
-  return adjustedNumerator.times(baseTokenUsdRate);
+  const finalUsdRate = adjustedNumerator.times(baseTokenUsdRate);
+  log.debug("getUSDRateUniswapV3: determined rate of {} for contract {} ({})", [
+    finalUsdRate.toString(),
+    getContractName(contractAddress),
+    contractAddress,
+  ]);
+  return finalUsdRate;
 }
 
 /**
