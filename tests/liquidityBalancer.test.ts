@@ -182,6 +182,26 @@ export function mockBalanceVaultZero(): void {
     BigDecimal.fromString("0.2"),
     null,
   );
+
+  mockBalancerVault(
+    BALANCER_VAULT,
+    POOL_BALANCER_OHM_BTRFLY_ID,
+    ERC20_BALANCER_OHM_BTRFLY,
+    ERC20_STANDARD_DECIMALS,
+    BigDecimal.fromString("0"),
+    ERC20_OHM_V2,
+    ERC20_BTRFLY,
+    null,
+    BigDecimal.fromString("0"),
+    BigDecimal.fromString("0"),
+    BigDecimal.fromString("0"),
+    OHM_V2_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    BigDecimal.fromString("0.5"),
+    BigDecimal.fromString("0.5"),
+    null,
+  );
 }
 
 export function mockBalanceVaultOhmDaiEth(
