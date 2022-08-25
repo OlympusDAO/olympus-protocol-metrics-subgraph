@@ -471,6 +471,7 @@ describe("pair value", () => {
     );
 
     const ohmRate = getOhmUsdRate();
+    // 463.282541348 * 18.9652073 + 198.002629046 * 35.0430729991629573703709430194278 = 15,724.8700188208
     const calculatedValue = getPairValue(
       toDecimal(token0Reserves, OHM_V2_DECIMALS),
       toDecimal(token1Reserves, 9),
@@ -479,6 +480,7 @@ describe("pair value", () => {
     );
 
     assert.stringEquals(calculatedValue.toString(), pairValue.toString());
+    assert.stringEquals("15724.8700", pairValue.toString().slice(0, 10));
   });
 });
 

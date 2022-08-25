@@ -89,7 +89,7 @@ export function getUniswapV2PairTotalValue(
 
   // Determine token0 value
   const token0 = pair.token0().toHexString();
-  log.debug("token0: {} ({})", [token0, getContractName(token0)]);
+  log.debug("getUniswapV2PairTotalValue: token0: {} ({})", [token0, getContractName(token0)]);
   const token0Contract = getERC20(token0, blockNumber);
   if (!token0Contract) {
     throw new Error("Unable to find ERC20 contract for " + token0);

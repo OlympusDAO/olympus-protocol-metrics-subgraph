@@ -16,7 +16,7 @@ export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: Big
 
   // Determine token0 value
   const token0 = pair.token0().toHexString();
-  log.debug("token0: {}", [token0]);
+  log.debug("getUniswapV3PairTotalValue: token0: {}", [token0]);
   const token0Contract = getERC20(token0, blockNumber);
   if (!token0Contract) {
     throw new Error("Unable to find ERC20 contract for " + token0);
@@ -28,7 +28,7 @@ export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: Big
   );
   const token0Rate = getUSDRateUniswapV3(token0, pairAddress, blockNumber);
   const token0Value = token0Reserves.times(token0Rate);
-  log.debug("token0: reserves = {}, rate = {}, value: {}", [
+  log.debug("getUniswapV3PairTotalValue: token0: reserves = {}, rate = {}, value: {}", [
     token0Reserves.toString(),
     token0Rate.toString(),
     token0Value.toString(),
@@ -36,7 +36,7 @@ export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: Big
 
   // Determine token1 value
   const token1 = pair.token1().toHexString();
-  log.debug("token1: {}", [token1]);
+  log.debug("getUniswapV3PairTotalValue: token1: {}", [token1]);
   const token1Contract = getERC20(token1, blockNumber);
   if (!token1Contract) {
     throw new Error("Unable to find ERC20 contract for " + token1);
@@ -51,13 +51,16 @@ export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: Big
     ? getBaseEthUsdRate()
     : getUSDRateUniswapV3(token1, pairAddress, blockNumber);
   const token1Value = token1Reserves.times(token1Rate);
-  log.debug("token1: reserves = {}, rate = {}, value: {}", [
+  log.debug("getUniswapV3PairTotalValue: token1: reserves = {}, rate = {}, value: {}", [
     token1Reserves.toString(),
     token1Rate.toString(),
     token1Value.toString(),
   ]);
 
   const pairValue = token0Value.plus(token1Value);
-  log.debug("UniswapV3 pair value for contract {} is: {}", [pairAddress, pairValue.toString()]);
+  log.debug("getUniswapV3PairTotalValue: UniswapV3 pair value for contract {} is: {}", [
+    pairAddress,
+    pairValue.toString(),
+  ]);
   return pairValue;
 }
