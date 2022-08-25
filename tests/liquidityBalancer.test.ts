@@ -31,10 +31,12 @@ import { toBigInt, toDecimal } from "../src/utils/Decimals";
 import { mockBalancerGaugeBalance, mockBalancerGaugeBalanceZero } from "./contractHelper.test";
 import {
   ERC20_STANDARD_DECIMALS,
+  getBtrflyV2UsdRate,
   getEthUsdRate,
   getOhmUsdRate,
   mockEthUsdRate,
   mockUsdOhmV2Rate,
+  mockWEthBtrflyV2Rate,
   OHM_USD_RESERVE_BLOCK,
   OHM_V2_DECIMALS,
 } from "./pairHelper";
@@ -275,7 +277,12 @@ export const OHM_BTRFLY_BALANCE_BTRFLY = toDecimal(
   BigInt.fromString("3912455650447516493890"),
   ERC20_STANDARD_DECIMALS,
 );
-export function mockBalanceVaultOhmBtrfly(
+export const OHM_BTRFLY_TOTAL_SUPPLY = toDecimal(
+  BigInt.fromString("34449175006332125035810"),
+  ERC20_STANDARD_DECIMALS,
+);
+
+export function mockBalancerVaultOhmBtrfly(
   ohmBalance: BigDecimal = OHM_BTRFLY_BALANCE_OHM,
   btrflyBalance: BigDecimal = OHM_BTRFLY_BALANCE_BTRFLY,
 ): void {
@@ -284,7 +291,7 @@ export function mockBalanceVaultOhmBtrfly(
     POOL_BALANCER_OHM_V2_BTRFLY_V2_ID,
     ERC20_BALANCER_OHM_BTRFLY_V2,
     ERC20_STANDARD_DECIMALS,
-    toDecimal(BigInt.fromString("34449175006332125035810"), ERC20_STANDARD_DECIMALS),
+    OHM_BTRFLY_TOTAL_SUPPLY,
     ERC20_OHM_V2,
     ERC20_BTRFLY_V2,
     null,
@@ -679,6 +686,55 @@ describe("get balancer records", () => {
 
     const recordOne = records[0];
     assert.stringEquals(expectedBalance.toString(), recordOne.balance.toString());
+    assert.i32Equals(1, records.length);
+  });
+
+  test("OHM-BTRFLY V2 pool balance, all tokens", () => {
+    // Mock the balancer
+    mockBalancerVaultOhmBtrfly();
+
+    // Mock wallet balance
+    const expectedBalance = BigDecimal.fromString("2");
+    mockZeroWalletBalances(
+      ERC20_BALANCER_OHM_BTRFLY_V2,
+      getWalletAddressesForContract(ERC20_BALANCER_OHM_BTRFLY_V2),
+    );
+    mockWalletBalance(
+      ERC20_BALANCER_OHM_BTRFLY_V2,
+      TREASURY_ADDRESS_V3,
+      toBigInt(expectedBalance, ERC20_STANDARD_DECIMALS),
+    );
+
+    // Mock price lookup
+    mockEthUsdRate();
+    mockUsdOhmV2Rate();
+    mockWEthBtrflyV2Rate();
+
+    const records = getBalancerRecords(
+      TIMESTAMP,
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_V2_BTRFLY_V2_ID,
+      OHM_USD_RESERVE_BLOCK,
+      null,
+    );
+
+    // BTRFLY * rate (OHM excluded)
+    const expectedNonOhmTotalValue = OHM_BTRFLY_BALANCE_BTRFLY.times(getBtrflyV2UsdRate());
+    const expectedTotalValue = OHM_BTRFLY_BALANCE_BTRFLY.times(getBtrflyV2UsdRate()).plus(
+      OHM_BTRFLY_BALANCE_OHM.times(getOhmUsdRate()),
+    );
+
+    // The value should be determined by adjusting the multiplier
+    const expectedMultiplier = expectedNonOhmTotalValue.div(expectedTotalValue);
+    const expectedUnitRate = expectedTotalValue.div(OHM_BTRFLY_TOTAL_SUPPLY);
+    const expectedValue = expectedBalance.times(expectedUnitRate);
+    const expectedNonOhmValue = expectedBalance.times(expectedUnitRate).times(expectedMultiplier);
+
+    const record = records[0];
+    assert.stringEquals(expectedNonOhmValue.toString(), record.valueExcludingOhm.toString());
+    assert.stringEquals(expectedMultiplier.toString(), record.multiplier.toString());
+    assert.stringEquals(expectedValue.toString(), record.value.toString());
+
     assert.i32Equals(1, records.length);
   });
 });
