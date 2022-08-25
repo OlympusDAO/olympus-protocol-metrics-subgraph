@@ -10,7 +10,7 @@ import {
 } from "../utils/Constants";
 import { getERC20, getUniswapV2Pair } from "../utils/ContractHelper";
 import { toDecimal } from "../utils/Decimals";
-import { getBaseOhmUsdRate, getUSDRateUniswapV2 } from "../utils/Price";
+import { getBaseOhmUsdRate, getUSDRate, getUSDRateUniswapV2 } from "../utils/Price";
 import { TokenCategoryPOL } from "../utils/TokenDefinition";
 import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";
 import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
@@ -50,9 +50,10 @@ export function getOhmUSDPairRiskFreeValue(
   // TODO abstract out for ANY pair
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
-    log.warning("Cannot determine discounted value as the contract {} does not exist yet", [
-      getContractName(pairAddress),
-    ]);
+    log.warning(
+      "getOhmUSDPairRiskFreeValue: Cannot determine discounted value as the contract {} does not exist yet",
+      [getContractName(pairAddress)],
+    );
     return BigDecimal.zero();
   }
 
@@ -67,7 +68,7 @@ export function getOhmUSDPairRiskFreeValue(
   const sqrt = kLast.sqrt();
   const part2 = toDecimal(two.times(sqrt), 0);
   const result = part1.times(part2);
-  log.debug("OHM-DAI risk-free value is {}", [result.toString()]);
+  log.debug("getOhmUSDPairRiskFreeValue: OHM-DAI risk-free value is {}", [result.toString()]);
   return result;
 }
 
@@ -76,27 +77,29 @@ export function getUniswapV2PairTotalValue(
   excludeOhmValue: boolean,
   blockNumber: BigInt,
 ): BigDecimal {
-  log.info("Calculating total value of pair {}", [pairAddress]);
+  log.info("getUniswapV2PairTotalValue: Calculating total value of pair {}", [pairAddress]);
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
-    log.warning("Cannot determine discounted value as the contract {} does not exist yet", [
-      getContractName(pairAddress),
-    ]);
+    log.warning(
+      "getUniswapV2PairTotalValue: Cannot determine discounted value as the contract {} does not exist yet",
+      [getContractName(pairAddress)],
+    );
     return BigDecimal.zero();
   }
 
   // Determine token0 value
   const token0 = pair.token0().toHexString();
-  log.debug("token0: {}", [token0]);
+  log.debug("token0: {} ({})", [token0, getContractName(token0)]);
   const token0Contract = getERC20(token0, blockNumber);
   if (!token0Contract) {
     throw new Error("Unable to find ERC20 contract for " + token0);
   }
 
   const token0Reserves = toDecimal(pair.getReserves().value0, token0Contract.decimals());
-  const token0Rate = getUSDRateUniswapV2(token0, pairAddress, blockNumber);
+  // We use getUSDRate, so that the preferred liquidity pool is used
+  const token0Rate = getUSDRate(token0, blockNumber);
   const token0Value = token0Reserves.times(token0Rate);
-  log.debug("token0: reserves = {}, rate = {}, value: {}", [
+  log.debug("getUniswapV2PairTotalValue: token0: reserves = {}, rate = {}, value: {}", [
     token0Reserves.toString(),
     token0Rate.toString(),
     token0Value.toString(),
@@ -106,16 +109,17 @@ export function getUniswapV2PairTotalValue(
 
   // Determine token1 value
   const token1 = pair.token1().toHexString();
-  log.debug("token1: {}", [token1]);
+  log.debug("getUniswapV2PairTotalValue: token1: {} ({})", [token1, getContractName(token1)]);
   const token1Contract = getERC20(token1, blockNumber);
   if (!token1Contract) {
     throw new Error("Unable to find ERC20 contract for " + token1);
   }
 
   const token1Reserves = toDecimal(pair.getReserves().value1, token1Contract.decimals());
-  const token1Rate = getUSDRateUniswapV2(token1, pairAddress, blockNumber);
+  // We use getUSDRate, so that the preferred liquidity pool is used
+  const token1Rate = getUSDRate(token1, blockNumber);
   const token1Value = token1Reserves.times(token1Rate);
-  log.debug("token1: reserves = {}, rate = {}, value: {}", [
+  log.debug("getUniswapV2PairTotalValue: token1: reserves = {}, rate = {}, value: {}", [
     token1Reserves.toString(),
     token1Rate.toString(),
     token1Value.toString(),
@@ -126,7 +130,10 @@ export function getUniswapV2PairTotalValue(
   const totalValue = excludeOhmValue
     ? token0ValueExcludingOhm.plus(token1ValueExcludingOhm)
     : token0Value.plus(token1Value);
-  log.info("Total value of pair {} is {}", [pairAddress, totalValue.toString()]);
+  log.info("getUniswapV2PairTotalValue: Total value of pair {} is {}", [
+    pairAddress,
+    totalValue.toString(),
+  ]);
   return totalValue;
 }
 
@@ -146,9 +153,10 @@ export function getUniswapV2PairValue(
 ): BigDecimal {
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
-    log.warning("Cannot determine discounted value as the contract {} does not exist yet", [
-      getContractName(pairAddress),
-    ]);
+    log.warning(
+      "getUniswapV2PairValue: Cannot determine discounted value as the contract {} does not exist yet",
+      [getContractName(pairAddress)],
+    );
     return BigDecimal.zero();
   }
 
@@ -156,7 +164,7 @@ export function getUniswapV2PairValue(
   const poolTotalSupply = toDecimal(pair.totalSupply(), 18);
   const poolPercentageOwned = toDecimal(lpBalance, 18).div(poolTotalSupply);
   const balanceValue = poolPercentageOwned.times(lpValue);
-  log.info("Value for pair {} and balance {} is {}", [
+  log.info("getUniswapV2PairValue: Value for pair {} and balance {} is {}", [
     pairAddress,
     lpBalance.toString(),
     balanceValue.toString(),
@@ -181,9 +189,10 @@ export function getOhmUSDPairValue(
 ): BigDecimal {
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
-    log.warning("Cannot determine discounted value as the contract {} does not exist yet", [
-      getContractName(pairAddress),
-    ]);
+    log.warning(
+      "getOhmUSDPairValue: Cannot determine discounted value as the contract {} does not exist yet",
+      [getContractName(pairAddress)],
+    );
     return BigDecimal.zero();
   }
 
@@ -219,15 +228,16 @@ export function getUniswapV2PairUnitRate(
 ): BigDecimal {
   const pair = getUniswapV2Pair(pairAddress, blockNumber);
   if (!pair) {
-    log.warning("Cannot determine discounted value as the contract {} does not exist yet", [
-      getContractName(pairAddress),
-    ]);
+    log.warning(
+      "getUniswapV2PairUnitRate: Cannot determine discounted value as the contract {} does not exist yet",
+      [getContractName(pairAddress)],
+    );
     return BigDecimal.zero();
   }
 
   const totalSupply = toDecimal(pair.totalSupply(), pair.decimals());
   const unitRate = totalValue.div(totalSupply);
-  log.info("Unit rate of UniswapV2 LP {} is {} for total supply {}", [
+  log.info("getUniswapV2PairUnitRate: Unit rate of UniswapV2 LP {} is {} for total supply {}", [
     pairAddress,
     unitRate.toString(),
     totalSupply.toString(),
@@ -263,12 +273,10 @@ function getUniswapV2PairRecord(
   // Get the balance of the pair's token in walletAddress
   const pairTokenBalance = pairToken.balanceOf(Address.fromString(walletAddress));
   if (pairTokenBalance.equals(BigInt.zero())) {
-    log.debug("UniswapV2 pair balance for token {} ({}) in wallet {} ({}) was 0", [
-      getContractName(pairAddress),
-      pairAddress,
-      getContractName(walletAddress),
-      walletAddress,
-    ]);
+    log.debug(
+      "getUniswapV2PairRecord: UniswapV2 pair balance for token {} ({}) in wallet {} ({}) was 0",
+      [getContractName(pairAddress), pairAddress, getContractName(walletAddress), walletAddress],
+    );
     return null;
   }
 
@@ -313,9 +321,10 @@ export function getUniswapV2PairRecords(
   const records: TokenRecord[] = [];
   // If we are restricting by token and tokenAddress does not match either side of the pair
   if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
-    log.debug("Skipping UniswapV2 pair that does not match specified token address {}", [
-      tokenAddress,
-    ]);
+    log.debug(
+      "getUniswapV2PairRecords: Skipping UniswapV2 pair that does not match specified token address {}",
+      [tokenAddress],
+    );
     return records;
   }
 
@@ -382,9 +391,10 @@ export function getUniswapV2PairTotalTokenQuantity(
   // Obtain both tokens
   const pair = UniswapV2Pair.bind(Address.fromString(pairAddress));
   if (!pair) {
-    log.warning("Cannot determine total quantity the contract {} does not exist yet", [
-      getContractName(pairAddress),
-    ]);
+    log.warning(
+      "getUniswapV2PairTotalTokenQuantity: Cannot determine total quantity the contract {} does not exist yet",
+      [getContractName(pairAddress)],
+    );
     return BigDecimal.zero();
   }
 
@@ -400,7 +410,7 @@ export function getUniswapV2PairTotalTokenQuantity(
   }
 
   log.warning(
-    "Attempted to obtain quantity of token {} from UniswapV2 pair {}, but it was not found",
+    "getUniswapV2PairTotalTokenQuantity: Attempted to obtain quantity of token {} from UniswapV2 pair {}, but it was not found",
     [getContractName(tokenAddress), getContractName(pairAddress)],
   );
   return BigDecimal.zero();
@@ -422,37 +432,37 @@ export function getUniswapV2PairTokenQuantity(
   tokenAddress: string,
   blockNumber: BigInt,
 ): TokenSupply[] {
-  log.info("Calculating quantity of token {} in UniswapV2 pool {}", [
+  log.info("getUniswapV2PairTokenQuantity: Calculating quantity of token {} in UniswapV2 pool {}", [
     getContractName(tokenAddress),
     getContractName(pairAddress),
   ]);
   const records: TokenSupply[] = [];
   const poolTokenContract = getUniswapV2Pair(pairAddress, blockNumber);
   if (!poolTokenContract) {
-    log.warning("UniswapV2 contract at {} likely doesn't exist at block {}", [
-      pairAddress,
-      blockNumber.toString(),
-    ]);
+    log.warning(
+      "getUniswapV2PairTokenQuantity: UniswapV2 contract at {} likely doesn't exist at block {}",
+      [pairAddress, blockNumber.toString()],
+    );
     return records;
   }
 
   // Calculate the token quantity for the pool
   const totalQuantity = getUniswapV2PairTotalTokenQuantity(pairAddress, tokenAddress, blockNumber);
   const tokenDecimals = poolTokenContract.decimals();
-  log.info("UniswapV2 pool {} has total quantity of {}", [
+  log.info("getUniswapV2PairTokenQuantity: UniswapV2 pool {} has total quantity of {}", [
     getContractName(pairAddress),
     totalQuantity.toString(),
   ]);
   const poolTokenTotalSupply = toDecimal(poolTokenContract.totalSupply(), tokenDecimals);
   if (poolTokenTotalSupply.equals(BigDecimal.zero())) {
-    log.debug("Skipping UniswapV2 pair {} with total supply of 0 at block {}", [
-      getContractName(pairAddress),
-      blockNumber.toString(),
-    ]);
+    log.debug(
+      "getUniswapV2PairTokenQuantity: Skipping UniswapV2 pair {} with total supply of 0 at block {}",
+      [getContractName(pairAddress), blockNumber.toString()],
+    );
     return records;
   }
 
-  log.info("UniswapV2 pool {} has total supply of {}", [
+  log.info("getUniswapV2PairTokenQuantity: UniswapV2 pool {} has total supply of {}", [
     getContractName(pairAddress),
     poolTokenTotalSupply.toString(),
   ]);

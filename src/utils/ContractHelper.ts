@@ -128,7 +128,7 @@ function contractExistsAtBlock(contractAddress: string, blockNumber: BigInt): bo
  * @returns ERC20 or null
  */
 export function getERC20(contractAddress: string, currentBlockNumber: BigInt): ERC20 | null {
-  log.debug("Fetching ERC20 contract {} for address {}", [
+  log.debug("getERC20: Fetching ERC20 contract {} for address {}", [
     getContractName(contractAddress),
     contractAddress,
   ]);
@@ -138,7 +138,7 @@ export function getERC20(contractAddress: string, currentBlockNumber: BigInt): E
   if (addressesEqual(contractAddress, NATIVE_ETH)) return null;
 
   if (!contractsERC20.has(contractAddress)) {
-    log.debug("Binding ERC20 contract for address {}. Block number {}", [
+    log.debug("getERC20: Binding ERC20 contract for address {}. Block number {}", [
       contractAddress,
       currentBlockNumber.toString(),
     ]);

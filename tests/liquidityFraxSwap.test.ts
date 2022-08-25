@@ -25,6 +25,7 @@ import {
   mockCurvePairZero,
   mockUniswapV2PairsZero,
   mockUsdOhmV2Rate,
+  mockWEthBtrflyV1Rate,
   OHM_USD_RESERVE_BLOCK,
   OHM_V2_DECIMALS,
 } from "./pairHelper";
@@ -318,6 +319,9 @@ describe("get token records", () => {
     mockCurvePairZero();
     mockBalancerVaultZero();
     mockUniswapV2PairsZero();
+
+    // Needed for BTRFLY
+    mockWEthBtrflyV1Rate();
 
     mockFraxSwapPairOhmFrax();
 

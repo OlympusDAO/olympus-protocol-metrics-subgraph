@@ -1,10 +1,10 @@
 # Subgraph Changelog
 
-## 3.0.3 (2022-08-25)
+## 3.0.5 (2022-08-25)
 
 - Renames `Convex - Vote-Locked - Unlocked (vlCVX)` -> `Convex - Unlocked (vlCVX)`
 - The purpose of this release is primarily to achieve significant (~15x) increases in the speed of indexing (#56). See README.md for documentation on this.
-- Add support for OHM-BTRFLY liquidity pool in Balancer (#41)
+- Add support for BTRFLY V1 and V2 tokens and protocol-owned liquidity (#41 and #67)
 
 ## 2.0.80 (2022-08-08)
 

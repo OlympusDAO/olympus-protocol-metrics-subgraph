@@ -3,6 +3,7 @@ import { createMockedFunction } from "matchstick-as";
 
 import {
   CONVEX_ALLOCATORS,
+  ERC20_BTRFLY_V1,
   ERC20_CRV_OHMETH,
   ERC20_DAI,
   ERC20_FXS,
@@ -14,6 +15,7 @@ import {
   ERC20_WETH,
   getWalletAddressesForContract,
   PAIR_CURVE_OHM_ETH,
+  PAIR_UNISWAP_V2_OHM_BTRFLY_V1,
   PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_ETH,
@@ -23,6 +25,7 @@ import {
   PAIR_UNISWAP_V2_TRIBE_ETH,
   PAIR_UNISWAP_V2_USDC_ETH,
   PAIR_UNISWAP_V3_FXS_ETH,
+  PAIR_UNISWAP_V3_WETH_BTRFLY_V1,
 } from "../src/utils/Constants";
 import { toBigInt, toDecimal } from "../src/utils/Decimals";
 import { mockZeroWalletBalances } from "./walletHelper";
@@ -226,6 +229,26 @@ export const mockFxsEthRate = (): void => {
   );
 };
 
+export const OHM_BTRFLY_SLOT0 = "18438610691616111025325107";
+
+export const mockWEthBtrflyV1Rate = (): void => {
+  // price = 35.0430729991629573703709430194278
+  mockRateUniswapV3(
+    PAIR_UNISWAP_V3_WETH_BTRFLY_V1,
+    BigInt.fromString(OHM_BTRFLY_SLOT0),
+    ERC20_WETH,
+    ERC20_BTRFLY_V1,
+    ERC20_STANDARD_DECIMALS,
+    9, // BTRFLY V1 is 9
+    BigInt.zero(),
+    BigInt.zero(),
+  );
+};
+
+export const getBtrflyV1UsdRate = (): BigDecimal => {
+  return BigDecimal.fromString("35.0430729991629573703709430194278");
+};
+
 /**
  * 18.9652073
  *
@@ -415,6 +438,22 @@ export const mockUniswapV2PairsZero = (): void => {
   mockZeroWalletBalances(
     PAIR_UNISWAP_V2_OHM_LUSD,
     getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_LUSD),
+  );
+
+  mockUniswapV2Pair(
+    ERC20_OHM_V2,
+    ERC20_BTRFLY_V1,
+    OHM_V2_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    BigInt.fromString("1"),
+    BigInt.fromString("1"),
+    BigInt.fromString("1"),
+    PAIR_UNISWAP_V2_OHM_BTRFLY_V1,
+    ERC20_STANDARD_DECIMALS,
+  );
+  mockZeroWalletBalances(
+    PAIR_UNISWAP_V2_OHM_BTRFLY_V1,
+    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_BTRFLY_V1),
   );
 };
 

@@ -260,13 +260,24 @@ export function getUSDRateUniswapV3(
   }
 
   // If there is a difference between the decimal places of the two tokens, adjust for that
-  const decimalDifference: u8 = u8(token0Contract.decimals()) - u8(token1Contract.decimals());
-  const adjustedNumerator = BigInt.fromI32(10)
-    .pow(decimalDifference)
-    .toBigDecimal()
-    .times(baseTokenNumerator);
+  const decimalDifference: i32 =
+    baseTokenOrientation === PairTokenBaseOrientation.TOKEN0
+      ? token1Contract.decimals() - token0Contract.decimals()
+      : token0Contract.decimals() - token1Contract.decimals();
+  const decimalDifferenceAbs: u8 = u8(abs(decimalDifference));
+  const decimalDifferencePow: BigDecimal = BigInt.fromI32(10)
+    .pow(decimalDifferenceAbs)
+    .toBigDecimal();
+  const adjustedNumerator = (
+    decimalDifference < 0
+      ? BigDecimal.fromString("1").div(decimalDifferencePow)
+      : decimalDifferencePow
+  ).times(baseTokenNumerator);
+  log.debug("getUSDRateUniswapV3: original numerator {}", [baseTokenNumerator.toString()]);
+  log.debug("getUSDRateUniswapV3: adjusted numerator {}", [adjustedNumerator.toString()]);
 
   const baseTokenUsdRate = getBaseTokenUSDRate(token0, token1, baseTokenOrientation, blockNumber);
+  log.debug("getUSDRateUniswapV3: base token rate of {}", [baseTokenUsdRate.toString()]);
 
   const finalUsdRate = adjustedNumerator.times(baseTokenUsdRate);
   log.debug("getUSDRateUniswapV3: determined rate of {} for contract {} ({})", [

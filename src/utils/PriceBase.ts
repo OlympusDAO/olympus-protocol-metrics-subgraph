@@ -90,7 +90,7 @@ export function getBaseEthUsdRate(): BigDecimal {
   const ethReserves = reserves.value1.toBigDecimal();
 
   const ethRate = usdReserves.div(ethReserves).times(BIG_DECIMAL_1E12);
-  log.debug("ETH rate {}", [ethRate.toString()]);
+  log.debug("getBaseEthUsdRate: ETH rate {}", [ethRate.toString()]);
 
   return ethRate;
 }

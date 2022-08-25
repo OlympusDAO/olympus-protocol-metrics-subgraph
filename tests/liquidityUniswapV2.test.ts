@@ -10,28 +10,37 @@ import {
   getUniswapV2PairValue,
 } from "../src/liquidity/LiquidityUniswapV2";
 import {
+  ERC20_BTRFLY_V1,
   ERC20_DAI,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
+  ERC20_WETH,
   getWalletAddressesForContract,
+  PAIR_UNISWAP_V2_OHM_BTRFLY_V1,
   PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_ETH_V2,
+  PAIR_UNISWAP_V3_WETH_BTRFLY_V1,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import { toBigInt, toDecimal } from "../src/utils/Decimals";
 import { PairHandler, PairHandlerTypes } from "../src/utils/PairHandler";
+import { getUSDRate } from "../src/utils/Price";
 import { mockBalancerVaultZero } from "./liquidityBalancer.test";
 import {
   ERC20_STANDARD_DECIMALS,
   ETH_USD_RESERVE_BLOCK,
+  getBtrflyV1UsdRate,
   getOhmEthPairValue,
+  getOhmUsdRate,
   getPairValue,
   mockEthUsdRate,
   mockOhmEthPair,
+  mockRateUniswapV3,
   mockUniswapV2Pair,
   mockUsdOhmV2Rate,
+  mockWEthBtrflyV1Rate,
   OHM_ETH_TOTAL_SUPPLY,
   OHM_USD_RESERVE_BLOCK,
   OHM_USD_RESERVE_OHM,
@@ -433,6 +442,43 @@ describe("pair value", () => {
     assert.assertTrue(
       balanceValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
     );
+  });
+
+  test("OHM-BTRFLY V1 pair value is correct", () => {
+    mockBalancerVaultZero();
+
+    const token0Reserves = BigInt.fromString("463282541348");
+    const token1Reserves = BigInt.fromString("198002629046");
+    mockUniswapV2Pair(
+      ERC20_OHM_V2,
+      ERC20_BTRFLY_V1,
+      OHM_V2_DECIMALS,
+      9, // BTRFLY V1 is 9
+      token0Reserves,
+      token1Reserves,
+      BigInt.fromString("240068018264"),
+      PAIR_UNISWAP_V2_OHM_BTRFLY_V1,
+      ERC20_STANDARD_DECIMALS,
+    );
+
+    // UniswapV3 pair will be used for price lookup
+    mockWEthBtrflyV1Rate();
+
+    const pairValue = getUniswapV2PairTotalValue(
+      PAIR_UNISWAP_V2_OHM_BTRFLY_V1,
+      false,
+      ETH_USD_RESERVE_BLOCK,
+    );
+
+    const ohmRate = getOhmUsdRate();
+    const calculatedValue = getPairValue(
+      toDecimal(token0Reserves, OHM_V2_DECIMALS),
+      toDecimal(token1Reserves, 9),
+      ohmRate,
+      getBtrflyV1UsdRate(),
+    );
+
+    assert.stringEquals(calculatedValue.toString(), pairValue.toString());
   });
 });
 

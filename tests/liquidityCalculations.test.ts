@@ -18,7 +18,7 @@ import {
 } from "../src/utils/Constants";
 import { toBigInt } from "../src/utils/Decimals";
 import { mockConvexStakedBalanceZero } from "./contractHelper.test";
-import { mockBalanceVaultOhmDaiEth, mockBalancerVaultZero } from "./liquidityBalancer.test";
+import { mockBalancerVaultZero, mockBalanceVaultOhmDaiEth } from "./liquidityBalancer.test";
 import { mockFraxSwapPairOhmFrax, mockFraxSwapPairZero } from "./liquidityFraxSwap.test";
 import {
   ERC20_STANDARD_DECIMALS,
