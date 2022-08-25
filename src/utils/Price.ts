@@ -4,6 +4,7 @@ import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { getBalancerPoolToken, getBalancerVault } from "../liquidity/LiquidityBalancer";
 import { arrayIncludesLoose } from "./ArrayHelper";
 import {
+  addressesEqual,
   BALANCER_VAULT,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
@@ -322,18 +323,32 @@ export function getUSDRateBalancer(
 
   log.debug("getUSDRateBalancer: determining pair orientation", []);
   const baseTokenOrientation = getBaseTokenOrientation(token0, token1);
+  let nonLookupTokenPrice: BigDecimal | null = null;
+  let tokenOrientation: PairTokenBaseOrientation;
   if (baseTokenOrientation === PairTokenBaseOrientation.UNKNOWN) {
-    throw new Error(
-      "getUSDRateBalancer: Unsure how to deal with unknown token base orientation for Balancer pool " +
-        poolId,
-    );
+    const nonLookupToken = addressesEqual(token0.toHexString(), contractAddress)
+      ? token1.toHexString()
+      : token0.toHexString();
+    nonLookupTokenPrice = getUSDRate(nonLookupToken, blockNumber); // This will throw an error if the recursive lookup cannot find a price
+    log.debug("getUSDRateBalancer: price of non-lookup token {} ({}) is {}", [
+      getContractName(nonLookupToken),
+      nonLookupToken,
+      nonLookupTokenPrice.toString(),
+    ]);
+
+    tokenOrientation = addressesEqual(token0.toHexString(), contractAddress)
+      ? PairTokenBaseOrientation.TOKEN1
+      : PairTokenBaseOrientation.TOKEN0;
+  } else {
+    log.debug("getUSDRateBalancer: base token is {} ({})", [
+      baseTokenOrientation === PairTokenBaseOrientation.TOKEN0 ? "token0" : "token1",
+      baseTokenOrientation === PairTokenBaseOrientation.TOKEN0
+        ? getContractName(token0.toHexString())
+        : getContractName(token1.toHexString()),
+    ]);
+
+    tokenOrientation = baseTokenOrientation;
   }
-  log.debug("getUSDRateBalancer: base token is {} ({})", [
-    baseTokenOrientation === PairTokenBaseOrientation.TOKEN0 ? "token0" : "token1",
-    baseTokenOrientation === PairTokenBaseOrientation.TOKEN0
-      ? getContractName(token0.toHexString())
-      : getContractName(token1.toHexString()),
-  ]);
 
   const token0Decimals = getERC20Decimals(token0.toHexString(), blockNumber);
   const token1Decimals = getERC20Decimals(token1.toHexString(), blockNumber);
@@ -353,7 +368,9 @@ export function getUSDRateBalancer(
     token1Weight.toString(),
   ]);
 
-  const baseTokenUsdRate = getBaseTokenUSDRate(token0, token1, baseTokenOrientation, blockNumber);
+  const baseTokenUsdRate = nonLookupTokenPrice
+    ? nonLookupTokenPrice
+    : getBaseTokenUSDRate(token0, token1, tokenOrientation, blockNumber);
   log.debug("getUSDRateBalancer: baseTokenUsdRate for {} ({}) is {}", [
     getContractName(contractAddress),
     contractAddress,
@@ -362,11 +379,11 @@ export function getUSDRateBalancer(
 
   // Get the non-base token in terms of the base token (since we know the rate)
   const numerator =
-    baseTokenOrientation === PairTokenBaseOrientation.TOKEN0
+    tokenOrientation === PairTokenBaseOrientation.TOKEN0
       ? token0Reserves.div(token0Weight)
       : token1Reserves.div(token1Weight);
   const denominator =
-    baseTokenOrientation === PairTokenBaseOrientation.TOKEN0
+    tokenOrientation === PairTokenBaseOrientation.TOKEN0
       ? token1Reserves.div(token1Weight)
       : token0Reserves.div(token0Weight);
   const rate = numerator.div(denominator).times(baseTokenUsdRate);

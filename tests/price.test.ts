@@ -381,6 +381,8 @@ describe("get USD rate", () => {
     mockBalanceVaultOhmBtrfly();
 
     const usdRate = getUSDRate(ERC20_BTRFLY, OHM_USD_RESERVE_BLOCK);
+    // ((75,921.860983195 / 0.5) / (3,912.4556504475 / 0.5)) * 18.9652073
+    // TODO correct the formula, as this is incorrect
     const calculatedRate = OHM_BTRFLY_BALANCE_OHM.div(BigDecimal.fromString("0.5"))
       .div(OHM_BTRFLY_BALANCE_BTRFLY.div(BigDecimal.fromString("0.5")))
       .times(getOhmUsdRate()); // Should be around 260.898

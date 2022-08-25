@@ -23,7 +23,7 @@ export enum PairTokenBaseOrientation {
 }
 
 /**
- * Determines whether token0 or token1 of a pair is the base (wETH/OHM) token.
+ * Determines whether token0 or token1 of a pair is the base (wETH/USD) token.
  *
  * @param token0
  * @param token1
