@@ -148,6 +148,7 @@ export const ERC20_UST_BLOCK = "13408366";
 export const ERC20_ALCX = "0xdbdb4d16eda451d0503b854cf79d55697f90c8df".toLowerCase();
 export const ERC20_AURA = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF".toLowerCase();
 export const ERC20_AURA_VL = "0x3Fa73f1E5d8A792C80F426fc8F84FBF7Ce9bBCAC".toLowerCase();
+export const ERC20_BALANCER_OHM_BTRFLY = "0x2de32a7c98c3ef6ec79e703500e8ca5b2ec819aa".toLowerCase();
 export const ERC20_BALANCER_OHM_DAI_WETH =
   "0xc45D42f801105e861e86658648e3678aD7aa70f9".toLowerCase(); // Balancer pool token
 export const ERC20_BALANCER_WETH_FDT = "0x2D344A84BaC123660b021EEbE4eB6F12ba25fe86".toLowerCase();
@@ -663,6 +664,7 @@ CONTRACT_NAME_MAP.set(ERC20_ADAI, "DAI - Aave");
 CONTRACT_NAME_MAP.set(ERC20_ALCX, "Alchemix");
 CONTRACT_NAME_MAP.set(ERC20_AURA_VL, "Aura Finance - Vote-Locked");
 CONTRACT_NAME_MAP.set(ERC20_AURA, "Aura Finance");
+CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_BTRFLY, "Balancer V2 OHM-BTRFLY Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_DAI_WETH, "Balancer V2 OHM-DAI-WETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_WETH_FDT, "Balancer V2 WETH-FDT Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BTRFLY, "Redacted Cartel");

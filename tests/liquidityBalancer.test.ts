@@ -11,8 +11,10 @@ import {
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
   BALANCER_VAULT,
   DAO_WALLET,
+  ERC20_BALANCER_OHM_BTRFLY,
   ERC20_BALANCER_OHM_DAI_WETH,
   ERC20_BALANCER_WETH_FDT,
+  ERC20_BTRFLY,
   ERC20_DAI,
   ERC20_FDT,
   ERC20_OHM_V1,
@@ -20,6 +22,7 @@ import {
   ERC20_USDC,
   ERC20_WETH,
   getWalletAddressesForContract,
+  POOL_BALANCER_OHM_BTRFLY_ID,
   POOL_BALANCER_OHM_DAI_WETH_ID,
   POOL_BALANCER_WETH_FDT_ID,
   TREASURY_ADDRESS_V3,
@@ -240,6 +243,39 @@ export function mockBalanceVaultWethFdt(
     ERC20_STANDARD_DECIMALS,
     BigDecimal.fromString("0.2"),
     BigDecimal.fromString("0.8"),
+    null,
+  );
+}
+
+export const OHM_BTRFLY_BALANCE_OHM = toDecimal(
+  BigInt.fromString("75921860983195"),
+  OHM_V2_DECIMALS,
+);
+export const OHM_BTRFLY_BALANCE_BTRFLY = toDecimal(
+  BigInt.fromString("3912455650447516493890"),
+  ERC20_STANDARD_DECIMALS,
+);
+export function mockBalanceVaultOhmBtrfly(
+  ohmBalance: BigDecimal = OHM_BTRFLY_BALANCE_OHM,
+  btrflyBalance: BigDecimal = OHM_BTRFLY_BALANCE_BTRFLY,
+): void {
+  mockBalancerVault(
+    BALANCER_VAULT,
+    POOL_BALANCER_OHM_BTRFLY_ID,
+    ERC20_BALANCER_OHM_BTRFLY,
+    ERC20_STANDARD_DECIMALS,
+    toDecimal(BigInt.fromString("34449175006332125035810"), ERC20_STANDARD_DECIMALS),
+    ERC20_OHM_V2,
+    ERC20_BTRFLY,
+    null,
+    ohmBalance,
+    btrflyBalance,
+    null,
+    OHM_V2_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    BigDecimal.fromString("0.5"),
+    BigDecimal.fromString("0.5"),
     null,
   );
 }

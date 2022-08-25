@@ -10,6 +10,7 @@ import {
 import {
   BALANCER_VAULT,
   ERC20_BALANCER_WETH_FDT,
+  ERC20_BTRFLY,
   ERC20_CRV_3POOL,
   ERC20_DAI,
   ERC20_FDT,
@@ -40,9 +41,12 @@ import { DEFAULT_DECIMALS, toBigInt } from "../src/utils/Decimals";
 import { getBaseOhmUsdRate, getUSDRate, getUSDRateBalancer } from "../src/utils/Price";
 import { mockBalancerGaugeBalanceZero } from "./contractHelper.test";
 import {
+  mockBalanceVaultOhmBtrfly,
   mockBalanceVaultOhmDaiEth,
   mockBalanceVaultWethFdt,
   mockBalanceVaultZero,
+  OHM_BTRFLY_BALANCE_BTRFLY,
+  OHM_BTRFLY_BALANCE_OHM,
   OHM_DAI_ETH_BALANCE_DAI,
   OHM_DAI_ETH_BALANCE_OHM,
   OHM_DAI_ETH_WEIGHT_DAI,
@@ -365,6 +369,21 @@ describe("get USD rate", () => {
     const calculatedRate = OHM_DAI_ETH_BALANCE_DAI.div(OHM_DAI_ETH_WEIGHT_DAI).div(
       OHM_DAI_ETH_BALANCE_OHM.div(OHM_DAI_ETH_WEIGHT_OHM),
     );
+
+    assert.stringEquals(calculatedRate.toString(), usdRate.toString());
+  });
+
+  test("BTRFLY (Balancer) returns correct value", () => {
+    mockEthUsdRate();
+    mockUsdOhmV2Rate();
+
+    // Mock the balancer
+    mockBalanceVaultOhmBtrfly();
+
+    const usdRate = getUSDRate(ERC20_BTRFLY, OHM_USD_RESERVE_BLOCK);
+    const calculatedRate = OHM_BTRFLY_BALANCE_OHM.div(BigDecimal.fromString("0.5"))
+      .div(OHM_BTRFLY_BALANCE_BTRFLY.div(BigDecimal.fromString("0.5")))
+      .times(getOhmUsdRate()); // Should be around 260.898
 
     assert.stringEquals(calculatedRate.toString(), usdRate.toString());
   });
