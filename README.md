@@ -122,6 +122,7 @@ To add a new liquidity entry:
 - Add an entry to the `LIQUIDITY_OWNED` constant, which maps the pool type (Balancer, Curve, UniswapV2, UniswapV3) to the liquidity pool address
 - Add an entry to the `LIQUIDITY_PAIR_TOKENS` constant, which maps the liquidity pool address to the tokens that it is composed of. This could be determined on-chain, but is easier/quicker if done statically.
 - If the entry is present in any wallets outside of {WALLET_ADDRESSES}, yet should be reported as part of the tresury, add it to `NON_TREASURY_ASSET_WHITELIST`.
+- Add a mock for a zero balance to the respective test helper function (e.g. `mockBalanceVaultZero`), otherwise tests will fail.
 
 ### Staked Liquidity
 

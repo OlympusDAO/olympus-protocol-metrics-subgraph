@@ -24,7 +24,7 @@ import {
 } from "../src/utils/Constants";
 import { toBigInt } from "../src/utils/Decimals";
 import { mockConvexStakedBalance, mockConvexStakedBalanceZero } from "./contractHelper.test";
-import { mockBalanceVaultZero } from "./liquidityBalancer.test";
+import { mockBalancerVaultZero } from "./liquidityBalancer.test";
 import {
   ERC20_STANDARD_DECIMALS,
   getEthUsdRate,
@@ -395,7 +395,7 @@ describe("Pair Value", () => {
   test("OHM-ETH pair value is correct", () => {
     // Mock liquidity
     mockUniswapV2PairsZero();
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
       getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
@@ -461,7 +461,7 @@ describe("Pair Value", () => {
   test("OHM-ETH pair value before starting block", () => {
     // Mock liquidity
     mockUniswapV2PairsZero();
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
       getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
@@ -511,7 +511,7 @@ describe("Pair Value", () => {
   test("staked OHM-ETH pair value is correct", () => {
     // Mock liquidity
     mockUniswapV2PairsZero();
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
       getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),

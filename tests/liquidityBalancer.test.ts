@@ -142,7 +142,7 @@ export function mockBalancerVault(
   ).returns([ethereum.Value.fromUnsignedBigIntArray(tokenWeightArray)]);
 }
 
-export function mockBalanceVaultZero(): void {
+export function mockBalancerVaultZero(): void {
   mockBalancerVault(
     BALANCER_VAULT,
     POOL_BALANCER_OHM_DAI_WETH_ID,

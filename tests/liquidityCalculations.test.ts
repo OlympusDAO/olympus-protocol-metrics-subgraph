@@ -18,7 +18,7 @@ import {
 } from "../src/utils/Constants";
 import { toBigInt } from "../src/utils/Decimals";
 import { mockConvexStakedBalanceZero } from "./contractHelper.test";
-import { mockBalanceVaultOhmDaiEth, mockBalanceVaultZero } from "./liquidityBalancer.test";
+import { mockBalanceVaultOhmDaiEth, mockBalancerVaultZero } from "./liquidityBalancer.test";
 import { mockFraxSwapPairOhmFrax, mockFraxSwapPairZero } from "./liquidityFraxSwap.test";
 import {
   ERC20_STANDARD_DECIMALS,
@@ -43,7 +43,7 @@ describe("getLiquidityPoolValue", () => {
     mockUsdOhmV2Rate();
 
     // Mock other liquidity pools
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
     mockUniswapV2PairsZero();
     mockFraxSwapPairZero();
 
@@ -89,7 +89,7 @@ describe("getLiquidityPoolValue", () => {
 
   test("FraxSwap pool", () => {
     // Mock other liquidity pools
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
     mockUniswapV2PairsZero();
     mockCurvePairZero();
 
@@ -119,7 +119,7 @@ describe("getLiquidityPoolValue", () => {
     mockUsdOhmV2Rate();
 
     // Mock liquidity pools
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
     mockUniswapV2PairsZero();
     mockFraxSwapPairZero();
 
@@ -178,7 +178,7 @@ describe("getLiquidityPoolValue", () => {
     mockUsdOhmV2Rate();
 
     // Mock liquidity pools
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
     mockUniswapV2PairsZero();
     mockCurvePairZero();
     mockFraxSwapPairZero();
@@ -213,7 +213,7 @@ describe("getLiquidityPoolValue", () => {
 
   test("balancer pool", () => {
     // Mock liquidity pools
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
     mockUniswapV2PairsZero();
     mockCurvePairZero();
     mockFraxSwapPairZero();

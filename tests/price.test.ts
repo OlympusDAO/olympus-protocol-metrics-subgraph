@@ -45,7 +45,7 @@ import {
   mockBalanceVaultOhmBtrfly,
   mockBalanceVaultOhmDaiEth,
   mockBalanceVaultWethFdt,
-  mockBalanceVaultZero,
+  mockBalancerVaultZero,
   OHM_BTRFLY_BALANCE_BTRFLY,
   OHM_BTRFLY_BALANCE_OHM,
   OHM_DAI_ETH_BALANCE_DAI,
@@ -73,7 +73,7 @@ describe("OHM-USD rate", () => {
   test("Sushi OHM-DAI rate calculation is correct", () => {
     mockEthUsdRate();
     mockUsdOhmV2Rate();
-    mockBalanceVaultZero(); // Ensures that the OHM-DAI-ETH Balancer pool is not used for price lookup
+    mockBalancerVaultZero(); // Ensures that the OHM-DAI-ETH Balancer pool is not used for price lookup
 
     assert.stringEquals(
       getBaseOhmUsdRate(

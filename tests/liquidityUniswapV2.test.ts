@@ -22,7 +22,7 @@ import {
 } from "../src/utils/Constants";
 import { toBigInt, toDecimal } from "../src/utils/Decimals";
 import { PairHandler, PairHandlerTypes } from "../src/utils/PairHandler";
-import { mockBalanceVaultZero } from "./liquidityBalancer.test";
+import { mockBalancerVaultZero } from "./liquidityBalancer.test";
 import {
   ERC20_STANDARD_DECIMALS,
   ETH_USD_RESERVE_BLOCK,
@@ -79,7 +79,7 @@ describe("Token Quantity", () => {
   });
 
   test("balance of OHM V2 token in pool", () => {
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
 
     mockUsdOhmV2Rate();
 
@@ -206,7 +206,7 @@ describe("Token Quantity", () => {
 
 describe("records", () => {
   test("generates TokenRecord array for the given token", () => {
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
 
     const expectedBalanceV2 = BigDecimal.fromString("2");
 
@@ -324,7 +324,7 @@ describe("records", () => {
 
 describe("pair value", () => {
   test("OHM-DAI pair value is correct", () => {
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
 
     const token0Reserves = BigInt.fromString("1233838296976506");
     const token1Reserves = BigInt.fromString("15258719216508026301937394");
@@ -360,7 +360,7 @@ describe("pair value", () => {
   });
 
   test("OHM-DAI pair value is correct, excluding OHM", () => {
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
 
     const token0Reserves = BigInt.fromString("1233838296976506");
     const token1Reserves = BigInt.fromString("15258719216508026301937394");
@@ -389,7 +389,7 @@ describe("pair value", () => {
   });
 
   test("OHM-ETH pair value is correct", () => {
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
 
     mockOhmEthPair();
     mockUsdOhmV2Rate();
@@ -410,7 +410,7 @@ describe("pair value", () => {
   });
 
   test("OHM-ETH pair balance value is correct", () => {
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
 
     mockOhmEthPair();
     mockUsdOhmV2Rate();

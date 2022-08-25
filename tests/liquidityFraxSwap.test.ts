@@ -18,7 +18,7 @@ import {
   TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import { toBigInt, toDecimal } from "../src/utils/Decimals";
-import { mockBalanceVaultZero } from "./liquidityBalancer.test";
+import { mockBalancerVaultZero } from "./liquidityBalancer.test";
 import {
   ERC20_STANDARD_DECIMALS,
   getOhmUsdRate,
@@ -158,7 +158,7 @@ describe("pool total value", () => {
   });
 
   test("OHM-FRAX pool total value, excluding OHM", () => {
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
     mockFraxSwapPairOhmFrax();
     mockUsdOhmV2Rate();
 
@@ -278,7 +278,7 @@ describe("token quantity", () => {
 
 describe("get token records", () => {
   test("OHM-FRAX pool balance, all tokens", () => {
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
     mockUsdOhmV2Rate();
     mockFraxSwapPairOhmFrax();
 
@@ -316,7 +316,7 @@ describe("get token records", () => {
 
   test("getLiquidityBalances", () => {
     mockCurvePairZero();
-    mockBalanceVaultZero();
+    mockBalancerVaultZero();
     mockUniswapV2PairsZero();
 
     mockFraxSwapPairOhmFrax();
