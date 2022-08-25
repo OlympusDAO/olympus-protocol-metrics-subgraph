@@ -10,7 +10,7 @@ import {
 import {
   BALANCER_VAULT,
   ERC20_BALANCER_WETH_FDT,
-  ERC20_BTRFLY,
+  ERC20_BTRFLY_V2,
   ERC20_CRV_3POOL,
   ERC20_DAI,
   ERC20_FDT,
@@ -34,7 +34,7 @@ import {
   PAIR_UNISWAP_V3_3CRV_USD,
   PAIR_UNISWAP_V3_FPIS_FRAX,
   PAIR_UNISWAP_V3_FXS_ETH,
-  PAIR_UNISWAP_V3_WETH_BTRFLY,
+  PAIR_UNISWAP_V3_WETH_BTRFLY_V2,
   POOL_BALANCER_OHM_DAI_WETH_ID,
   POOL_BALANCER_WETH_FDT_ID,
 } from "../src/utils/Constants";
@@ -529,10 +529,10 @@ describe("get USD rate", () => {
 
     const SLOT0 = "201047635549140265156647342605";
     mockRateUniswapV3(
-      PAIR_UNISWAP_V3_WETH_BTRFLY,
+      PAIR_UNISWAP_V3_WETH_BTRFLY_V2,
       BigInt.fromString(SLOT0),
       ERC20_WETH,
-      ERC20_BTRFLY,
+      ERC20_BTRFLY_V2,
       ERC20_STANDARD_DECIMALS,
       ERC20_STANDARD_DECIMALS,
       BigInt.zero(),
@@ -544,7 +544,7 @@ describe("get USD rate", () => {
       .div(slot0Decimal.times(slot0Decimal).div(BigInt.fromI32(2).pow(192).toBigDecimal()))
       .times(getEthUsdRate()); // 294.7546283139931202627807530029295
 
-    const usdRate = getUSDRate(ERC20_BTRFLY, OHM_USD_RESERVE_BLOCK);
+    const usdRate = getUSDRate(ERC20_BTRFLY_V2, OHM_USD_RESERVE_BLOCK);
 
     assert.stringEquals(expectedRate.toString(), usdRate.toString());
   });
