@@ -1,9 +1,10 @@
 # Subgraph Changelog
 
-## 3.0.8 (2022-08-26)
+## 3.0.12 (2022-08-26)
 
 - Add support for BTRFLY V1 and V2 tokens and protocol-owned liquidity (#41 and #67)
 - Improve the accuracy of price lookup for LQTY
+- Split the calculation of bond discounts into a new data source
 
 ## 3.0.2 (2022-08-25)
 

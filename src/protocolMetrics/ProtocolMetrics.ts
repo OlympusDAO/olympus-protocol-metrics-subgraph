@@ -3,7 +3,6 @@ import { ethereum } from "@graphprotocol/graph-ts";
 
 import { StakeCall } from "../../generated/ProtocolMetrics/OlympusStakingV3";
 import { ProtocolMetric } from "../../generated/schema";
-import { updateBondDiscounts } from "../bonds/BondDiscounts";
 import { getISO8601StringFromTimestamp } from "../helpers/DateHelper";
 import { getGOhmTotalSupply } from "../utils/GOhmCalculations";
 import {
@@ -76,9 +75,6 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
 
 export function handleMetrics(call: StakeCall): void {
   updateProtocolMetrics(call.block);
-
-  // TODO look at whether this can be split into a different metric
-  updateBondDiscounts(call.block.number);
 
   // TokenRecord
   generateTokenRecords(call.block.timestamp, call.block.number);

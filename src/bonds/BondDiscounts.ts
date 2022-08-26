@@ -1,18 +1,19 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { DAIBondV1 } from "../../generated/DAIBondV1/DAIBondV1";
-import { DAIBondV2 } from "../../generated/DAIBondV2/DAIBondV2";
-import { DAIBondV3 } from "../../generated/DAIBondV3/DAIBondV3";
-import { ETHBondV1 } from "../../generated/ETHBondV1/ETHBondV1";
-import { FRAXBondV1 } from "../../generated/FRAXBondV1/FRAXBondV1";
-import { LUSDBondV1 } from "../../generated/LUSDBondV1/LUSDBondV1";
-import { OHMDAIBondV1 } from "../../generated/OHMDAIBondV1/OHMDAIBondV1";
-import { OHMDAIBondV2 } from "../../generated/OHMDAIBondV2/OHMDAIBondV2";
-import { OHMDAIBondV3 } from "../../generated/OHMDAIBondV3/OHMDAIBondV3";
-import { OHMDAIBondV4 } from "../../generated/OHMDAIBondV4/OHMDAIBondV4";
-import { OHMFRAXBondV1 } from "../../generated/OHMFRAXBondV1/OHMFRAXBondV1";
-import { OHMFRAXBondV2 } from "../../generated/OHMFRAXBondV2/OHMFRAXBondV2";
-import { OHMLUSDBondV1 } from "../../generated/OHMLUSDBondV1/OHMLUSDBondV1";
+import { DAIBondV1 } from "../../generated/BondDiscounts/DAIBondV1";
+import { DAIBondV2 } from "../../generated/BondDiscounts/DAIBondV2";
+import { DAIBondV3 } from "../../generated/BondDiscounts/DAIBondV3";
+import { ETHBondV1 } from "../../generated/BondDiscounts/ETHBondV1";
+import { FRAXBondV1 } from "../../generated/BondDiscounts/FRAXBondV1";
+import { LUSDBondV1 } from "../../generated/BondDiscounts/LUSDBondV1";
+import { OHMDAIBondV1 } from "../../generated/BondDiscounts/OHMDAIBondV1";
+import { OHMDAIBondV2 } from "../../generated/BondDiscounts/OHMDAIBondV2";
+import { OHMDAIBondV3 } from "../../generated/BondDiscounts/OHMDAIBondV3";
+import { OHMDAIBondV4 } from "../../generated/BondDiscounts/OHMDAIBondV4";
+import { OHMFRAXBondV1 } from "../../generated/BondDiscounts/OHMFRAXBondV1";
+import { OHMFRAXBondV2 } from "../../generated/BondDiscounts/OHMFRAXBondV2";
+import { OHMLUSDBondV1 } from "../../generated/BondDiscounts/OHMLUSDBondV1";
+import { StakeCall } from "../../generated/BondDiscounts/OlympusStakingV3";
 import { BondDiscount } from "../../generated/schema";
 import {
   DAIBOND_CONTRACTS1,
@@ -227,4 +228,8 @@ export function updateBondDiscounts(blockNumber: BigInt): void {
   }
 
   bd.save();
+}
+
+export function handleBondDiscounts(call: StakeCall): void {
+  updateBondDiscounts(call.block.number);
 }
