@@ -1,16 +1,20 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
 import { TokenRecord } from "../generated/schema";
+import { ERC20_DAI, ERC20_USDC, ERC20_WETH } from "../src/utils/Constants";
+import { TokenCategoryStable, TokenCategoryVolatile } from "../src/utils/TokenDefinition";
 import {
-  getTokenRecordValue,
-  newTokenRecord,
-  setTokenRecordMultiplier,
+  createOrUpdateTokenRecord,
+  getTokenAddressesInCategory,
+  isTokenAddressInCategory,
 } from "../src/utils/TokenRecordHelper";
 
+const TIMESTAMP = BigInt.fromString("1");
+
 const createTokenRecord = (): TokenRecord => {
-  return newTokenRecord(
-    "metric",
+  return createOrUpdateTokenRecord(
+    TIMESTAMP,
     "name",
     "tokenAddress",
     "source",
@@ -18,6 +22,7 @@ const createTokenRecord = (): TokenRecord => {
     BigDecimal.fromString("2"),
     BigDecimal.fromString("3"),
     BigInt.fromString("1"),
+    true,
   );
 };
 
@@ -25,7 +30,7 @@ describe("constructor", () => {
   test("basic values", () => {
     const record = createTokenRecord();
 
-    assert.stringEquals("metric-name-source-1", record.id);
+    assert.stringEquals("1970-01-01/source/name", record.id);
     assert.stringEquals("name", record.token);
     assert.stringEquals("tokenAddress", record.tokenAddress);
     assert.stringEquals("source", record.source);
@@ -36,8 +41,8 @@ describe("constructor", () => {
   });
 
   test("custom multiplier", () => {
-    const record = newTokenRecord(
-      "metric",
+    const record = createOrUpdateTokenRecord(
+      TIMESTAMP,
       "name",
       "tokenAddress",
       "source",
@@ -45,6 +50,7 @@ describe("constructor", () => {
       BigDecimal.fromString("2"),
       BigDecimal.fromString("3"),
       BigInt.fromString("1"),
+      true,
       BigDecimal.fromString("0.25"),
     );
 
@@ -57,25 +63,14 @@ describe("constructor", () => {
     // Creating the record will set the value
     // 2 * 3 * 1
     assert.stringEquals("6", record.value.toString());
-  });
-});
-
-describe("multiplier", () => {
-  test("sets value", () => {
-    const record = createTokenRecord();
-
-    // Setting the multiplier will change the value
-    setTokenRecordMultiplier(record, BigDecimal.fromString("0.25"));
-
-    // 2 * 3 * 0.25
-    assert.stringEquals("1.5", record.value.toString());
+    assert.stringEquals("6", record.valueExcludingOhm.toString());
   });
 });
 
 describe("value", () => {
   test("multiplier = 1", () => {
-    const record = newTokenRecord(
-      "metric",
+    const record = createOrUpdateTokenRecord(
+      TIMESTAMP,
       "name",
       "tokenAddress",
       "source",
@@ -83,15 +78,17 @@ describe("value", () => {
       BigDecimal.fromString("2"),
       BigDecimal.fromString("3"),
       BigInt.fromString("1"),
+      true,
     );
 
     // 2 * 3 * 1
-    assert.stringEquals("6", getTokenRecordValue(record).toString());
+    assert.stringEquals("6", record.value.toString());
+    assert.stringEquals("6", record.valueExcludingOhm.toString());
   });
 
   test("multiplier = 0.25", () => {
-    const record = newTokenRecord(
-      "metric",
+    const record = createOrUpdateTokenRecord(
+      TIMESTAMP,
       "name",
       "tokenAddress",
       "source",
@@ -99,10 +96,56 @@ describe("value", () => {
       BigDecimal.fromString("2"),
       BigDecimal.fromString("3"),
       BigInt.fromString("1"),
+      true,
       BigDecimal.fromString("0.25"),
     );
 
+    assert.stringEquals("6", record.value.toString());
     // 2 * 3 * 0.25
-    assert.stringEquals("1.5", getTokenRecordValue(record).toString());
+    assert.stringEquals("1.5", record.valueExcludingOhm.toString());
+  });
+});
+
+describe("getTokenAddressesInCategory", () => {
+  test("stablecoins", () => {
+    const addresses = getTokenAddressesInCategory(TokenCategoryStable);
+
+    assert.assertTrue(addresses.includes(ERC20_DAI) == true);
+    assert.assertTrue(addresses.includes(ERC20_WETH) == false);
+  });
+
+  test("volatile", () => {
+    const addresses = getTokenAddressesInCategory(TokenCategoryVolatile);
+
+    assert.assertTrue(addresses.includes(ERC20_DAI) == false);
+    assert.assertTrue(addresses.includes(ERC20_WETH) == true);
+  });
+});
+
+describe("isTokenAddressInCategory", () => {
+  test("stablecoin category, DAI", () => {
+    assert.assertTrue(isTokenAddressInCategory(ERC20_DAI, TokenCategoryStable) == true);
+  });
+
+  test("stablecoin category, DAI hexString", () => {
+    assert.assertTrue(
+      isTokenAddressInCategory(Address.fromString(ERC20_DAI).toHexString(), TokenCategoryStable) ==
+        true,
+    );
+  });
+
+  test("stablecoin category, USDC", () => {
+    assert.assertTrue(isTokenAddressInCategory(ERC20_USDC, TokenCategoryStable) == true);
+  });
+
+  test("stablecoin category, USDC toHexString", () => {
+    assert.assertTrue(
+      isTokenAddressInCategory(Address.fromString(ERC20_USDC).toHexString(), TokenCategoryStable) ==
+        true,
+    );
+  });
+
+  test("stablecoin category, wETH", () => {
+    assert.assertTrue(isTokenAddressInCategory(ERC20_WETH, TokenCategoryStable) == false);
   });
 });

@@ -1,7 +1,6 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
-import { TokenRecord } from "../generated/schema";
 import {
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
   CONVEX_ALLOCATOR3,
@@ -39,6 +38,8 @@ import {
 import { toBigInt } from "../src/utils/Decimals";
 import { ERC20_STANDARD_DECIMALS } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
+
+const TIMESTAMP: BigInt = BigInt.fromString("1");
 
 export const mockConvexStakedBalance = (
   tokenAddress: string,
@@ -252,9 +253,10 @@ describe("Staked Convex", () => {
       toBigInt(BigDecimal.fromString("5"), ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getConvexStakedRecords("metric", ERC20_CVX_FRAX_3CRV, BigInt.fromString("1"));
+    const records = getConvexStakedRecords(TIMESTAMP, ERC20_CVX_FRAX_3CRV, BigInt.fromString("1"));
     // 5 * $1
-    assert.stringEquals("5", records.value.toString());
+    assert.stringEquals("5", records[0].value.toString());
+    assert.i32Equals(1, records.length);
   });
 });
 
@@ -275,14 +277,14 @@ describe("get ERC20 token records from wallets", () => {
     if (!contract) throw new Error("Expected ERC20 contract to be non-null");
 
     const records = getERC20TokenRecordsFromWallets(
-      "metric",
+      TIMESTAMP,
       ERC20_ALCX,
       contract,
       BigDecimal.fromString("1"),
       blockNumber,
     );
 
-    assert.i32Equals(0, records.records.length);
+    assert.i32Equals(0, records.length);
   });
 
   test("includes token in DAO wallet on whitelist", () => {
@@ -300,16 +302,16 @@ describe("get ERC20 token records from wallets", () => {
     if (!contract) throw new Error("Expected ERC20 contract to be non-null");
 
     const records = getERC20TokenRecordsFromWallets(
-      "metric",
+      TIMESTAMP,
       ERC20_WETH,
       contract,
       BigDecimal.fromString("1"),
       blockNumber,
     );
 
-    const record = TokenRecord.load(records.records[0]);
-    assert.stringEquals(tokenBalance, record ? record.balance.toString() : "");
-    assert.i32Equals(1, records.records.length);
+    const record = records[0];
+    assert.stringEquals(tokenBalance, record.balance.toString());
+    assert.i32Equals(1, records.length);
   });
 });
 
@@ -325,13 +327,13 @@ describe("get TOKE staked records", () => {
 
     // Ignored as the token does not match the staking contract
     const records = getTokeStakedBalancesFromWallets(
-      "metric",
+      TIMESTAMP,
       ERC20_ALCX,
       BigDecimal.fromString("2"),
       BigInt.fromString("10"),
     );
 
-    assert.i32Equals(0, records.records.length);
+    assert.i32Equals(0, records.length);
   });
 
   test("staking contract reverts", () => {
@@ -342,14 +344,14 @@ describe("get TOKE staked records", () => {
     ).reverts();
 
     const records = getTokeStakedBalancesFromWallets(
-      "metric",
+      TIMESTAMP,
       ERC20_TOKE,
       BigDecimal.fromString("2"),
       BigInt.fromString("10"),
     );
 
     // Returns no records as the staking contract reverted
-    assert.i32Equals(0, records.records.length);
+    assert.i32Equals(0, records.length);
   });
 
   test("staking contract returns balance", () => {
@@ -363,16 +365,16 @@ describe("get TOKE staked records", () => {
     );
 
     const records = getTokeStakedBalancesFromWallets(
-      "metric",
+      TIMESTAMP,
       ERC20_TOKE,
       BigDecimal.fromString("2"),
       BigInt.fromString("10"),
     );
 
-    const recordOne = TokenRecord.load(records.records[0]);
-    assert.stringEquals("10", recordOne ? recordOne.balance.toString() : "");
-    assert.stringEquals("2", recordOne ? recordOne.rate.toString() : "");
-    assert.i32Equals(1, records.records.length);
+    const recordOne = records[0];
+    assert.stringEquals("10", recordOne.balance.toString());
+    assert.stringEquals("2", recordOne.rate.toString());
+    assert.i32Equals(1, records.length);
   });
 });
 
@@ -388,13 +390,13 @@ describe("get LQTY staked records", () => {
 
     // Ignored as the token does not match the staking contract
     const records = getLiquityStakedBalancesFromWallets(
-      "metric",
+      TIMESTAMP,
       ERC20_ALCX,
       BigDecimal.fromString("2"),
       BigInt.fromString("10"),
     );
 
-    assert.i32Equals(0, records.records.length);
+    assert.i32Equals(0, records.length);
   });
 
   test("staking contract reverts", () => {
@@ -405,14 +407,14 @@ describe("get LQTY staked records", () => {
     ).reverts();
 
     const records = getLiquityStakedBalancesFromWallets(
-      "metric",
+      TIMESTAMP,
       ERC20_LQTY,
       BigDecimal.fromString("2"),
       BigInt.fromString("10"),
     );
 
     // Returns no records as the staking contract reverted
-    assert.i32Equals(0, records.records.length);
+    assert.i32Equals(0, records.length);
   });
 
   test("staking contract returns balance", () => {
@@ -426,16 +428,16 @@ describe("get LQTY staked records", () => {
     );
 
     const records = getLiquityStakedBalancesFromWallets(
-      "metric",
+      TIMESTAMP,
       ERC20_LQTY,
       BigDecimal.fromString("2"),
       BigInt.fromString("10"),
     );
 
-    const recordOne = TokenRecord.load(records.records[0]);
-    assert.stringEquals("10", recordOne ? recordOne.balance.toString() : "");
-    assert.stringEquals("2", recordOne ? recordOne.rate.toString() : "");
-    assert.i32Equals(1, records.records.length);
+    const recordOne = records[0];
+    assert.stringEquals("10", recordOne.balance.toString());
+    assert.stringEquals("2", recordOne.rate.toString());
+    assert.i32Equals(1, records.length);
   });
 });
 
@@ -451,14 +453,15 @@ describe("get Balancer liquidity gauge records", () => {
 
     // Ignored as the token does not match the staking contract
     const records = getBalancerGaugeBalanceFromWallets(
-      "metric",
+      TIMESTAMP,
       BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
       ERC20_ALCX,
       BigDecimal.fromString("2"),
+      BigDecimal.fromString("1"),
       BigInt.fromString("10"),
     );
 
-    assert.i32Equals(0, records.records.length);
+    assert.i32Equals(0, records.length);
   });
 
   test("liquidity gauge contract reverts", () => {
@@ -469,15 +472,16 @@ describe("get Balancer liquidity gauge records", () => {
     ).reverts();
 
     const records = getBalancerGaugeBalanceFromWallets(
-      "metric",
+      TIMESTAMP,
       BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
       ERC20_BALANCER_WETH_FDT,
       BigDecimal.fromString("2"),
+      BigDecimal.fromString("1"),
       BigInt.fromString("10"),
     );
 
     // Returns no records as the staking contract reverted
-    assert.i32Equals(0, records.records.length);
+    assert.i32Equals(0, records.length);
   });
 
   test("liquidity gauge contract returns balance", () => {
@@ -491,17 +495,18 @@ describe("get Balancer liquidity gauge records", () => {
     );
 
     const records = getBalancerGaugeBalanceFromWallets(
-      "metric",
+      TIMESTAMP,
       BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
       ERC20_BALANCER_WETH_FDT,
       BigDecimal.fromString("2"),
+      BigDecimal.fromString("1"),
       BigInt.fromString("10"),
     );
 
-    const recordOne = TokenRecord.load(records.records[0]);
-    assert.stringEquals("10", recordOne ? recordOne.balance.toString() : "");
-    assert.stringEquals("2", recordOne ? recordOne.rate.toString() : "");
-    assert.i32Equals(1, records.records.length);
+    const recordOne = records[0];
+    assert.stringEquals("10", recordOne.balance.toString());
+    assert.stringEquals("2", recordOne.rate.toString());
+    assert.i32Equals(1, records.length);
   });
 });
 
@@ -555,26 +560,26 @@ describe("unlocked vlCVX", () => {
     mockUnlockedVlCvxBalanceZero();
 
     const records = getVlCvxUnlockedRecords(
-      "",
+      TIMESTAMP,
       ERC20_CVX_VL_V2,
       BigDecimal.fromString("1"),
       BigInt.fromString("15000000"),
     );
 
-    assert.i32Equals(0, records.records.length);
+    assert.i32Equals(0, records.length);
   });
 
   test("unsupported token", () => {
     mockUnlockedVlCvxBalanceZero();
 
     const records = getVlCvxUnlockedRecords(
-      "",
+      TIMESTAMP,
       ERC20_CVX,
       BigDecimal.fromString("1"),
       BigInt.fromString("15000000"),
     );
 
-    assert.i32Equals(0, records.records.length);
+    assert.i32Equals(0, records.length);
   });
 
   test("positive balance", () => {
@@ -588,14 +593,14 @@ describe("unlocked vlCVX", () => {
     );
 
     const records = getVlCvxUnlockedRecords(
-      "",
+      TIMESTAMP,
       ERC20_CVX_VL_V2,
       BigDecimal.fromString("1"),
       BigInt.fromString("15000000"),
     );
 
-    const recordOne = TokenRecord.load(records.records[0]);
-    assert.stringEquals("11", recordOne ? recordOne.balance.toString() : "");
-    assert.i32Equals(1, records.records.length);
+    const recordOne = records[0];
+    assert.stringEquals("11", recordOne.balance.toString());
+    assert.i32Equals(1, records.length);
   });
 });

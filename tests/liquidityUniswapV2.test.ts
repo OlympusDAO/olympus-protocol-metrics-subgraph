@@ -1,6 +1,14 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
+import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
+import {
+  getOhmUSDPairRiskFreeValue,
+  getUniswapV2PairTokenQuantity,
+  getUniswapV2PairTotalTokenQuantity,
+  getUniswapV2PairTotalValue,
+  getUniswapV2PairValue,
+} from "../src/liquidity/LiquidityUniswapV2";
 import {
   ERC20_DAI,
   ERC20_OHM_V1,
@@ -13,14 +21,6 @@ import {
   TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import { toBigInt, toDecimal } from "../src/utils/Decimals";
-import { getLiquidityBalances } from "../src/utils/LiquidityCalculations";
-import {
-  getOhmUSDPairRiskFreeValue,
-  getUniswapV2PairTokenQuantity,
-  getUniswapV2PairTotalTokenQuantity,
-  getUniswapV2PairTotalValue,
-  getUniswapV2PairValue,
-} from "../src/utils/LiquidityUniswapV2";
 import { PairHandler, PairHandlerTypes } from "../src/utils/PairHandler";
 import { mockBalanceVaultZero } from "./liquidityBalancer.test";
 import {
@@ -46,6 +46,8 @@ const pairArrayOverride: PairHandler[] = [
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI),
   new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI_V2),
 ];
+
+const TIMESTAMP = BigInt.fromString("1");
 
 describe("Token Quantity", () => {
   test("total quantity of OHM token in pool", () => {
@@ -114,15 +116,15 @@ describe("Token Quantity", () => {
     log.debug("expected OHM balance: {}", [expectedTokenBalance.toString()]);
 
     const records = getUniswapV2PairTokenQuantity(
-      "metric",
+      TIMESTAMP,
       PAIR_UNISWAP_V2_OHM_DAI_V2,
       ERC20_OHM_V2,
       OHM_USD_RESERVE_BLOCK,
     );
 
-    // Balance = value as the unit rate is 1
-    assert.stringEquals(records.balance.toString(), expectedTokenBalance.toString());
-    assert.stringEquals(records.value.toString(), expectedTokenBalance.toString());
+    assert.stringEquals(expectedTokenBalance.toString(), records[0].balance.toString());
+
+    assert.i32Equals(1, records.length);
   });
 
   test("balance of OHM V1 token in OHM V2 pool", () => {
@@ -153,17 +155,14 @@ describe("Token Quantity", () => {
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
     const records = getUniswapV2PairTokenQuantity(
-      "metric",
+      TIMESTAMP,
       PAIR_UNISWAP_V2_OHM_DAI_V2,
       ERC20_OHM_V1,
       OHM_USD_RESERVE_BLOCK,
     );
 
-    // Balance = value as the unit rate is 1
-    assert.stringEquals("0", records.balance.toString());
-    assert.stringEquals("0", records.value.toString());
     // Should be empty records due to 0 balance of OHM V1
-    assert.i32Equals(0, records.records.length);
+    assert.i32Equals(0, records.length);
   });
 
   test("balance of OHM V2 token in pool before starting block", () => {
@@ -194,26 +193,22 @@ describe("Token Quantity", () => {
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
     const records = getUniswapV2PairTokenQuantity(
-      "metric",
+      TIMESTAMP,
       PAIR_UNISWAP_V2_OHM_DAI_V2,
       ERC20_OHM_V2,
       OHM_USD_RESERVE_BLOCK,
     );
 
-    // Balance = value as the unit rate is 1
-    assert.stringEquals("0", records.balance.toString());
-    assert.stringEquals("0", records.value.toString());
     // Should be empty records due to starting block
-    assert.i32Equals(0, records.records.length);
+    assert.i32Equals(0, records.length);
   });
 });
 
 describe("records", () => {
-  test("generates TokenRecords for the given token", () => {
+  test("generates TokenRecord array for the given token", () => {
     mockBalanceVaultZero();
 
     const expectedBalanceV2 = BigDecimal.fromString("2");
-    const expectedBalanceV3 = BigDecimal.fromString("3");
 
     // OHM-DAI V1
     mockUniswapV2Pair(
@@ -239,150 +234,92 @@ describe("records", () => {
       getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
     );
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V2, toBigInt(expectedBalanceV2));
-    mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
     const records = getLiquidityBalances(
-      "metric",
+      TIMESTAMP,
       ERC20_DAI,
-      false,
-      false,
-      false,
       OHM_USD_RESERVE_BLOCK,
       pairArrayOverride,
     );
     // We can call this because we are testing that the single-sided value is returned
     // Separate tests are there for the pair value verification
     const pairValue = getUniswapV2PairValue(
-      toBigInt(expectedBalanceV2.plus(expectedBalanceV3)),
+      toBigInt(expectedBalanceV2),
       PAIR_UNISWAP_V2_OHM_DAI_V2,
       OHM_USD_RESERVE_BLOCK,
     );
 
     // Balance stays the same
+    const recordOne = records[0];
+    assert.stringEquals(expectedBalanceV2.toString(), recordOne.balance.toString());
+    assert.stringEquals("0.5", recordOne.multiplier.toString());
+    assert.stringEquals(pairValue.toString().slice(0, 18), recordOne.value.toString().slice(0, 18));
     assert.stringEquals(
-      expectedBalanceV2.plus(expectedBalanceV3).toString(),
-      records.balance.toString(),
+      pairValue.times(BigDecimal.fromString("0.5")).toString().slice(0, 18),
+      recordOne.valueExcludingOhm.toString().slice(0, 18),
     );
-    // Value multiplied by 0.5 due to being single-sided
-    assert.stringEquals(pairValue.toString(), records.value.toString());
+
+    assert.i32Equals(1, records.length);
   });
 
-  test("applies a multiplier when singleSidedValue is true", () => {
-    mockBalanceVaultZero();
+  // RFV is deprecated
+  // test("returns risk-free value when riskFree is true", () => {
+  //   const expectedBalanceV2 = BigDecimal.fromString("2");
+  //   const expectedBalanceV3 = BigDecimal.fromString("3");
 
-    const expectedBalanceV2 = BigDecimal.fromString("2");
-    const expectedBalanceV3 = BigDecimal.fromString("3");
+  //   // OHM-DAI V1
+  //   mockUniswapV2Pair(
+  //     ERC20_OHM_V1,
+  //     ERC20_DAI,
+  //     9,
+  //     18,
+  //     BigInt.fromString("382999881424"),
+  //     BigInt.fromString("23566162832855719933607"),
+  //     BigInt.fromString("76219775050984762"),
+  //     PAIR_UNISWAP_V2_OHM_DAI,
+  //     18,
+  //   );
+  //   mockZeroWalletBalances(
+  //     PAIR_UNISWAP_V2_OHM_DAI,
+  //     getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+  //   );
 
-    // OHM-DAI V1
-    mockUniswapV2Pair(
-      ERC20_OHM_V1,
-      ERC20_DAI,
-      9,
-      18,
-      BigInt.fromString("382999881424"),
-      BigInt.fromString("23566162832855719933607"),
-      BigInt.fromString("76219775050984762"),
-      PAIR_UNISWAP_V2_OHM_DAI,
-      18,
-    );
-    mockZeroWalletBalances(
-      PAIR_UNISWAP_V2_OHM_DAI,
-      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
-    );
+  //   // OHM-DAI V2
+  //   mockUsdOhmV2Rate();
+  //   mockZeroWalletBalances(
+  //     PAIR_UNISWAP_V2_OHM_DAI_V2,
+  //     getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+  //   );
+  //   mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V2, toBigInt(expectedBalanceV2));
+  //   mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
-    // OHM-DAI V2
-    mockUsdOhmV2Rate();
-    mockZeroWalletBalances(
-      PAIR_UNISWAP_V2_OHM_DAI_V2,
-      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
-    );
-    mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V2, toBigInt(expectedBalanceV2));
-    mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
+  //   const records = getLiquidityBalances(
+  //     TIMESTAMP,
+  //     ERC20_DAI,
+  //     true,
+  //     false,
+  //     false,
+  //     OHM_USD_RESERVE_BLOCK,
+  //     pairArrayOverride,
+  //   );
+  //   // We can call this because we are testing that the risk-free value is returned
+  //   // Separate tests are there for the risk-free value verification
+  //   const pairValue = getOhmUSDPairRiskFreeValue(
+  //     toBigInt(expectedBalanceV2.plus(expectedBalanceV3)),
+  //     PAIR_UNISWAP_V2_OHM_DAI_V2,
+  //     OHM_USD_RESERVE_BLOCK,
+  //   );
 
-    const records = getLiquidityBalances(
-      "metric",
-      ERC20_DAI,
-      false,
-      true,
-      false,
-      OHM_USD_RESERVE_BLOCK,
-      pairArrayOverride,
-    );
-    // We can call this because we are testing that the single-sided value is returned
-    // Separate tests are there for the pair value verification
-    const pairValue = getUniswapV2PairValue(
-      toBigInt(expectedBalanceV2.plus(expectedBalanceV3)),
-      PAIR_UNISWAP_V2_OHM_DAI_V2,
-      OHM_USD_RESERVE_BLOCK,
-    );
+  //   // Balance stays the same
+  //   const recordOne = records[0];
+  //   assert.stringEquals(expectedBalanceV2.toString(), recordOne.balance.toString());
+  //   const recordTwo = records[1];
+  //   assert.stringEquals(expectedBalanceV3.toString(), recordTwo.balance.toString());
+  //   // Value is the risk-free value
+  //   assert.stringEquals(pairValue.toString(), recordOne.value.plus(recordTwo.value).toString());
 
-    // Balance stays the same
-    assert.stringEquals(
-      expectedBalanceV2.plus(expectedBalanceV3).toString(),
-      records.balance.toString(),
-    );
-    // Value multiplied by 0.5 due to being single-sided
-    assert.stringEquals(
-      pairValue.times(BigDecimal.fromString("0.5")).toString(),
-      records.value.toString(),
-    );
-  });
-
-  test("returns risk-free value when riskFree is true", () => {
-    const expectedBalanceV2 = BigDecimal.fromString("2");
-    const expectedBalanceV3 = BigDecimal.fromString("3");
-
-    // OHM-DAI V1
-    mockUniswapV2Pair(
-      ERC20_OHM_V1,
-      ERC20_DAI,
-      9,
-      18,
-      BigInt.fromString("382999881424"),
-      BigInt.fromString("23566162832855719933607"),
-      BigInt.fromString("76219775050984762"),
-      PAIR_UNISWAP_V2_OHM_DAI,
-      18,
-    );
-    mockZeroWalletBalances(
-      PAIR_UNISWAP_V2_OHM_DAI,
-      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
-    );
-
-    // OHM-DAI V2
-    mockUsdOhmV2Rate();
-    mockZeroWalletBalances(
-      PAIR_UNISWAP_V2_OHM_DAI_V2,
-      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
-    );
-    mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V2, toBigInt(expectedBalanceV2));
-    mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
-
-    const records = getLiquidityBalances(
-      "metric",
-      ERC20_DAI,
-      true,
-      false,
-      false,
-      OHM_USD_RESERVE_BLOCK,
-      pairArrayOverride,
-    );
-    // We can call this because we are testing that the risk-free value is returned
-    // Separate tests are there for the risk-free value verification
-    const pairValue = getOhmUSDPairRiskFreeValue(
-      toBigInt(expectedBalanceV2.plus(expectedBalanceV3)),
-      PAIR_UNISWAP_V2_OHM_DAI_V2,
-      OHM_USD_RESERVE_BLOCK,
-    );
-
-    // Balance stays the same
-    assert.stringEquals(
-      expectedBalanceV2.plus(expectedBalanceV3).toString(),
-      records.balance.toString(),
-    );
-    // Value is the risk-free value
-    assert.stringEquals(pairValue.toString(), records.value.toString());
-  });
+  //   assert.i32Equals(2, records.length);
+  // });
 });
 
 describe("pair value", () => {
@@ -403,7 +340,11 @@ describe("pair value", () => {
       ERC20_STANDARD_DECIMALS,
     );
 
-    const pairValue = getUniswapV2PairTotalValue(PAIR_UNISWAP_V2_OHM_DAI_V2, ETH_USD_RESERVE_BLOCK);
+    const pairValue = getUniswapV2PairTotalValue(
+      PAIR_UNISWAP_V2_OHM_DAI_V2,
+      false,
+      ETH_USD_RESERVE_BLOCK,
+    );
     // 12.36687113
     const ohmRate = toDecimal(token1Reserves, ERC20_STANDARD_DECIMALS).div(
       toDecimal(token0Reserves, OHM_V2_DECIMALS),
@@ -418,6 +359,35 @@ describe("pair value", () => {
     assert.stringEquals(calculatedValue.toString(), pairValue.toString());
   });
 
+  test("OHM-DAI pair value is correct, excluding OHM", () => {
+    mockBalanceVaultZero();
+
+    const token0Reserves = BigInt.fromString("1233838296976506");
+    const token1Reserves = BigInt.fromString("15258719216508026301937394");
+    mockUniswapV2Pair(
+      ERC20_OHM_V2,
+      ERC20_DAI,
+      OHM_V2_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+      token0Reserves,
+      token1Reserves,
+      BigInt.fromString("133005392717808439119"),
+      PAIR_UNISWAP_V2_OHM_DAI_V2,
+      ERC20_STANDARD_DECIMALS,
+    );
+
+    const pairValue = getUniswapV2PairTotalValue(
+      PAIR_UNISWAP_V2_OHM_DAI_V2,
+      true,
+      ETH_USD_RESERVE_BLOCK,
+    );
+
+    // # DAI * 1
+    const calculatedValue = toDecimal(token1Reserves, ERC20_STANDARD_DECIMALS);
+
+    assert.stringEquals(calculatedValue.toString(), pairValue.toString());
+  });
+
   test("OHM-ETH pair value is correct", () => {
     mockBalanceVaultZero();
 
@@ -425,7 +395,11 @@ describe("pair value", () => {
     mockUsdOhmV2Rate();
     mockEthUsdRate();
 
-    const pairValue = getUniswapV2PairTotalValue(PAIR_UNISWAP_V2_OHM_ETH_V2, ETH_USD_RESERVE_BLOCK);
+    const pairValue = getUniswapV2PairTotalValue(
+      PAIR_UNISWAP_V2_OHM_ETH_V2,
+      false,
+      ETH_USD_RESERVE_BLOCK,
+    );
     const calculatedValue = getOhmEthPairValue();
     log.debug("difference: {}", [pairValue.minus(calculatedValue).toString()]);
 

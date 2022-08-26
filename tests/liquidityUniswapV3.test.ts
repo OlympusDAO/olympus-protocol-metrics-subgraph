@@ -1,9 +1,9 @@
-import { BigDecimal, log } from "@graphprotocol/graph-ts";
+import { log } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
+import { getUniswapV3PairTotalValue } from "../src/liquidity/LiquidityUniswapV3";
 import { PAIR_UNISWAP_V3_FXS_ETH } from "../src/utils/Constants";
 import { toDecimal } from "../src/utils/Decimals";
-import { getUniswapV3PairTotalValue } from "../src/utils/LiquidityUniswapV3";
 import {
   ERC20_STANDARD_DECIMALS,
   ETH_USD_RESERVE_BLOCK,
@@ -26,14 +26,9 @@ describe("UniswapV3 pair value", () => {
       .times(getFxsUsdRate())
       .plus(toDecimal(FXS_ETH_BALANCE_ETH, ERC20_STANDARD_DECIMALS).times(getEthUsdRate()));
     log.debug("calculated value: {}", [calculatedValue.toString()]);
-    log.debug("difference: {}", [pairValue.minus(calculatedValue).toString()]);
+    log.debug("pairValue: {}", [pairValue.toString()]);
 
-    // There is a loss of precision, so we need to ensure that the value is close, but not equal
-    // TODO improve assertion
-    assert.assertTrue(
-      pairValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")) &&
-        pairValue.minus(calculatedValue).gt(BigDecimal.fromString("-0.000000000000000001")),
-    );
+    assert.stringEquals(calculatedValue.toString().slice(0, 18), pairValue.toString().slice(0, 18));
   });
 
   // test("pair balance value is correct", () => {

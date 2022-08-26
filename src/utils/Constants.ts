@@ -1,6 +1,7 @@
 import { log } from "@graphprotocol/graph-ts";
 
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
+import { TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "./TokenDefinition";
 
 // Tokens definition
 export const DAIBOND_TOKEN = "DAI";
@@ -87,11 +88,6 @@ export const STAKING_CONTRACT_V3_BLOCK = "13804019";
 export const BONDING_CALCULATOR = "0xcaaa6a2d4b26067a391e7b7d65c16bb2d5fa571a".toLowerCase();
 export const BONDING_CALCULATOR_BLOCK = "12525357";
 
-export const DISTRIBUTOR_CONTRACT = "0xC58E923bf8A00E4361FE3f4275226a543D7D3ce6".toLowerCase();
-export const DISTRIBUTOR_CONTRACT_BLOCK = 12800000;
-export const DISTRIBUTOR_CONTRACT_V2 = "0xeeeb97A127a342656191E0313DF33D58D06B2E05".toLowerCase();
-export const DISTRIBUTOR_CONTRACT_BLOCK_V2 = 13805000;
-
 export const DAO_WALLET = "0x245cc372c84b3645bf0ffe6538620b04a217988b".toLowerCase();
 export const BONDS_DEPOSIT = "0x9025046c6fb25Fb39e720d97a8FD881ED69a1Ef6".toLowerCase();
 export const BONDS_INVERSE_DEPOSIT = "0xBA42BE149e5260EbA4B82418A6306f55D532eA47".toLowerCase();
@@ -147,17 +143,6 @@ export const ERC20_USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48".toLowerCa
 export const ERC20_UST = "0xa693b19d2931d498c5b318df961919bb4aee87a5".toLowerCase();
 export const ERC20_UST_BLOCK_DEATH = "14730000";
 export const ERC20_UST_BLOCK = "13408366";
-export const ERC20_STABLE_TOKENS = [
-  ERC20_ADAI,
-  ERC20_CVX_FRAX_3CRV,
-  ERC20_DAI,
-  ERC20_FEI,
-  ERC20_FRAX,
-  ERC20_FRAX_3CRV,
-  ERC20_LUSD,
-  ERC20_UST,
-  ERC20_USDC,
-];
 
 // Volatile tokens
 export const ERC20_ALCX = "0xdbdb4d16eda451d0503b854cf79d55697f90c8df".toLowerCase();
@@ -197,42 +182,41 @@ export const ERC20_WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2".toLowerCa
 export const ERC20_XSUSHI = "0x8798249c2e607446efb7ad49ec89dd1865ff4272".toLowerCase();
 export const NATIVE_ETH = "-999999";
 
-export const ERC20_VOLATILE_TOKENS = [
-  ERC20_ALCX,
-  ERC20_AURA,
-  ERC20_AURA_VL,
-  ERC20_CRV_3POOL,
-  ERC20_CRV,
-  ERC20_CVX_CRV,
-  // ERC20_CVX_FXS, // Needs Curve liquidity pool for price lookup
-  // ERC20_CVX_OHMETH,
-  ERC20_CVX_VL_V1,
-  ERC20_CVX_VL_V2,
-  ERC20_CVX,
-  ERC20_FDT,
-  ERC20_FOX,
-  ERC20_FPIS,
-  ERC20_FXS_VE,
-  ERC20_FXS,
-  ERC20_KP3R,
-  ERC20_LQTY,
-  ERC20_PRIME,
-  ERC20_SYN,
-  ERC20_THOR,
-  ERC20_TOKE,
-  ERC20_TRIBE,
-  ERC20_WBTC,
-  ERC20_WETH,
-  ERC20_XSUSHI,
-  NATIVE_ETH,
-];
-export const ERC20_VOLATILE_ILLIQUID_TOKENS = [
-  ERC20_FXS_VE,
-  ERC20_AURA_VL,
-  ERC20_CVX_VL_V1,
-  ERC20_CVX_VL_V2,
-];
-export const ERC20_VOLATILE_BLUE_CHIP_TOKENS = [ERC20_WBTC, ERC20_WETH];
+export const ERC20_TOKENS = new Map<string, TokenDefinition>();
+ERC20_TOKENS.set(ERC20_ADAI, new TokenDefinition(ERC20_ADAI, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_CVX_FRAX_3CRV, new TokenDefinition(ERC20_CVX_FRAX_3CRV, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_DAI, new TokenDefinition(ERC20_DAI, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_FEI, new TokenDefinition(ERC20_FEI, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_FRAX, new TokenDefinition(ERC20_FRAX, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_FRAX_3CRV, new TokenDefinition(ERC20_FRAX_3CRV, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_LUSD, new TokenDefinition(ERC20_LUSD, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_UST, new TokenDefinition(ERC20_UST, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_USDC, new TokenDefinition(ERC20_USDC, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_ALCX, new TokenDefinition(ERC20_ALCX, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_AURA, new TokenDefinition(ERC20_AURA, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_AURA_VL, new TokenDefinition(ERC20_AURA_VL, TokenCategoryVolatile, false, false));
+ERC20_TOKENS.set(ERC20_CRV_3POOL, new TokenDefinition(ERC20_CRV_3POOL, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_CRV, new TokenDefinition(ERC20_CRV, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_CVX_CRV, new TokenDefinition(ERC20_CVX_CRV, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_CVX_VL_V1, new TokenDefinition(ERC20_CVX_VL_V1, TokenCategoryVolatile, false, false));
+ERC20_TOKENS.set(ERC20_CVX_VL_V2, new TokenDefinition(ERC20_CVX_VL_V2, TokenCategoryVolatile, false, false));
+ERC20_TOKENS.set(ERC20_CVX, new TokenDefinition(ERC20_CVX, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_FDT, new TokenDefinition(ERC20_FDT, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_FOX, new TokenDefinition(ERC20_FOX, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_FPIS, new TokenDefinition(ERC20_FPIS, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_FXS_VE, new TokenDefinition(ERC20_FXS_VE, TokenCategoryVolatile, false, false));
+ERC20_TOKENS.set(ERC20_FXS, new TokenDefinition(ERC20_FXS, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_KP3R, new TokenDefinition(ERC20_KP3R, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_LQTY, new TokenDefinition(ERC20_LQTY, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_PRIME, new TokenDefinition(ERC20_PRIME, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_SYN, new TokenDefinition(ERC20_SYN, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_THOR, new TokenDefinition(ERC20_THOR, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_TOKE, new TokenDefinition(ERC20_TOKE, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_TRIBE, new TokenDefinition(ERC20_TRIBE, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_WBTC, new TokenDefinition(ERC20_WBTC, TokenCategoryVolatile, true, true));
+ERC20_TOKENS.set(ERC20_WETH, new TokenDefinition(ERC20_WETH, TokenCategoryVolatile, true, true));
+ERC20_TOKENS.set(ERC20_XSUSHI, new TokenDefinition(ERC20_XSUSHI, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(NATIVE_ETH, new TokenDefinition(NATIVE_ETH, TokenCategoryVolatile, true, true));
 
 const CONVEX_STAKED_TOKENS = new Map<string, string>();
 CONVEX_STAKED_TOKENS.set(ERC20_CRV_OHMETH, ERC20_CVX_OHMETH);
@@ -645,8 +629,6 @@ export const getRariAllocatorId = (contractAddress: string): i32 => {
 };
 
 export const CONTRACT_STARTING_BLOCK_MAP = new Map<string, string>();
-// CONTRACT_STARTING_BLOCK_MAP.set(DISTRIBUTOR_CONTRACT_V2, DISTRIBUTOR_CONTRACT_BLOCK_V2);
-// CONTRACT_STARTING_BLOCK_MAP.set(DISTRIBUTOR_CONTRACT, DISTRIBUTOR_CONTRACT_BLOCK);
 CONTRACT_STARTING_BLOCK_MAP.set(AAVE_ALLOCATOR_V2, AAVE_ALLOCATOR_V2_BLOCK);
 CONTRACT_STARTING_BLOCK_MAP.set(BONDING_CALCULATOR, BONDING_CALCULATOR_BLOCK);
 CONTRACT_STARTING_BLOCK_MAP.set(CIRCULATING_SUPPLY_CONTRACT, CIRCULATING_SUPPLY_CONTRACT_BLOCK);
@@ -734,8 +716,6 @@ CONTRACT_NAME_MAP.set(DAIBOND_CONTRACTS1, "DAI Bond 1");
 CONTRACT_NAME_MAP.set(DAIBOND_CONTRACTS2, "DAI Bond 2");
 CONTRACT_NAME_MAP.set(DAIBOND_CONTRACTS3, "DAI Bond 3");
 CONTRACT_NAME_MAP.set(DAO_WALLET, "DAO Wallet");
-CONTRACT_NAME_MAP.set(DISTRIBUTOR_CONTRACT_V2, "Distributor V2");
-CONTRACT_NAME_MAP.set(DISTRIBUTOR_CONTRACT, "Distributor");
 CONTRACT_NAME_MAP.set(ERC20_ADAI, "DAI - Aave");
 CONTRACT_NAME_MAP.set(ERC20_ALCX, "Alchemix");
 CONTRACT_NAME_MAP.set(ERC20_AURA_VL, "Aura Finance - Vote-Locked");
@@ -860,4 +840,15 @@ export const getContractName = (contractAddress: string, suffix: string | null =
     : "";
 
   return `${contractName}${contractSuffix}${contractAbbreviation}`;
+};
+
+/**
+ * Determines if two addresses (in string format) are equal.
+ * 
+ * This ensures that:
+ * - Both addresses are lowercase
+ * - The correct equality test (==) is used: https://github.com/AssemblyScript/assemblyscript/issues/621
+ */
+export const addressesEqual = (one: string, two: string): boolean => {
+  return one.toLowerCase() == two.toLowerCase();
 };

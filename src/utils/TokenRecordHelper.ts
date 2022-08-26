@@ -1,33 +1,81 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
-import { TokenRecord, TokenRecords } from "../../generated/schema";
-
-// TokenRecord
+import { TokenRecord } from "../../generated/schema";
+import { getISO8601StringFromTimestamp } from "../helpers/DateHelper";
+import { ERC20_TOKENS } from "./Constants";
+import { TokenDefinition } from "./TokenDefinition";
 
 /**
  * Returns the value of the given TokenRecord.
  *
- * value = balance * rate * multiplier
+ * value = balance * rate
  *
  * @param record
  * @returns
  */
-export function getTokenRecordValue(record: TokenRecord): BigDecimal {
-  return record.balance.times(record.rate).times(record.multiplier);
+// eslint-disable-next-line @typescript-eslint/no-inferrable-types
+function getTokenRecordValue(record: TokenRecord, nonOhmMultiplier: boolean = false): BigDecimal {
+  return record.balance
+    .times(record.rate)
+    .times(nonOhmMultiplier ? record.multiplier : BigDecimal.fromString("1"));
 }
 
 /**
- * Set the multiplier on the TokenRecord and update the value.
- *
- * @param record
- * @param multiplier
+ * Convenience methods
  */
-export function setTokenRecordMultiplier(record: TokenRecord, multiplier: BigDecimal): void {
-  record.multiplier = multiplier;
-  record.value = getTokenRecordValue(record);
 
-  record.save();
-}
+export const getTokenCategory = (contractAddress: string): string => {
+  const contractAddressLower = contractAddress.toLowerCase();
+
+  return ERC20_TOKENS.has(contractAddressLower)
+    ? ERC20_TOKENS.get(contractAddressLower).getCategory()
+    : "Unknown";
+};
+
+export const getIsTokenVolatileBluechip = (contractAddress: string): boolean => {
+  const contractAddressLower = contractAddress.toLowerCase();
+
+  return ERC20_TOKENS.has(contractAddressLower)
+    ? ERC20_TOKENS.get(contractAddressLower).getIsVolatileBluechip()
+    : false;
+};
+
+export const getIsTokenLiquid = (contractAddress: string): boolean => {
+  const contractAddressLower = contractAddress.toLowerCase();
+
+  return ERC20_TOKENS.has(contractAddressLower)
+    ? ERC20_TOKENS.get(contractAddressLower).getIsLiquid()
+    : true;
+};
+
+export const getTokensInCategory = (category: string): TokenDefinition[] => {
+  const filteredArray: TokenDefinition[] = [];
+
+  // No support for closures in AssemblyScript, so we do it the old-fashioned way
+  const values = ERC20_TOKENS.values();
+  for (let i = 0; i < values.length; i++) {
+    const value = values[i];
+    if (value.getCategory() !== category) {
+      continue;
+    }
+
+    filteredArray.push(value);
+  }
+
+  return filteredArray;
+};
+
+export const getTokenAddressesInCategory = (category: string): string[] => {
+  const getAddressFunc = (value: TokenDefinition, _index: i32, _array: TokenDefinition[]): string =>
+    value.getAddress().toLowerCase();
+
+  // Need to define the return type of map: https://github.com/AssemblyScript/assemblyscript/issues/449#issuecomment-459981415
+  return getTokensInCategory(category).map<string>(getAddressFunc);
+};
+
+export const isTokenAddressInCategory = (tokenAddress: string, category: string): bool => {
+  return getTokenAddressesInCategory(category).includes(tokenAddress.toLowerCase());
+};
 
 /**
  * Helper function to create a new TokenRecord.
@@ -35,7 +83,7 @@ export function setTokenRecordMultiplier(record: TokenRecord, multiplier: BigDec
  * This function generates an id that should be unique,
  * and saves the record.
  *
- * @param metric
+ * @param timestamp
  * @param tokenName
  * @param tokenAddress
  * @param sourceName
@@ -43,11 +91,13 @@ export function setTokenRecordMultiplier(record: TokenRecord, multiplier: BigDec
  * @param rate
  * @param balance
  * @param blockNumber
- * @param multiplier
+ * @param isLiquid
+ * @param nonOhmMultiplier
+ * @param category
  * @returns
  */
-export function newTokenRecord(
-  metric: string,
+export function createOrUpdateTokenRecord(
+  timestamp: BigInt,
   tokenName: string,
   tokenAddress: string,
   sourceName: string,
@@ -55,197 +105,50 @@ export function newTokenRecord(
   rate: BigDecimal,
   balance: BigDecimal,
   blockNumber: BigInt,
-  multiplier: BigDecimal = BigDecimal.fromString("1"),
+  isLiquid: boolean,
+  nonOhmMultiplier: BigDecimal = BigDecimal.fromString("1"),
+  category: string | null = null,
 ): TokenRecord {
-  // We need to separate records between metrics, otherwise they get clobbered
-  const record = new TokenRecord(
-    metric + "-" + tokenName + "-" + sourceName + "-" + blockNumber.toString(),
-  );
+  const dateString = getISO8601StringFromTimestamp(timestamp);
+  const recordId = `${dateString}/${sourceName}/${tokenName}`;
+
+  // Attempt to fetch the current day's record
+  const existingRecord = TokenRecord.load(recordId);
+
+  const record = existingRecord ? existingRecord : new TokenRecord(recordId);
+
+  record.block = blockNumber;
+  record.date = dateString;
+  record.timestamp = timestamp;
   record.token = tokenName;
   record.tokenAddress = tokenAddress;
   record.source = sourceName;
   record.sourceAddress = sourceAddress;
   record.rate = rate;
   record.balance = balance;
-  record.multiplier = multiplier;
+  record.multiplier = nonOhmMultiplier;
+  record.category = category !== null ? category : getTokenCategory(tokenAddress);
+  record.isLiquid = isLiquid;
+  record.isBluechip = getIsTokenVolatileBluechip(tokenAddress);
   record.value = getTokenRecordValue(record);
+  record.valueExcludingOhm = getTokenRecordValue(record, true);
 
   record.save();
 
   return record;
 }
 
-// TokenRecords
-
-export function getTokenRecordsBalance(records: TokenRecords): BigDecimal {
-  let totalBalance = BigDecimal.fromString("0");
-  const idValues = records.records;
-
-  for (let i = 0; i < idValues.length; i++) {
-    const recordId = idValues[i];
-    const recordValue = TokenRecord.load(recordId);
-    if (!recordValue) {
-      throw new Error(
-        "setTokenRecordsMultiplier: Unexpected null value for id " +
-          recordId +
-          " in TokenRecords " +
-          records.id,
-      );
-    }
-
-    totalBalance = totalBalance.plus(recordValue.balance);
-  }
-
-  return totalBalance;
+function setTokenRecordMultiplier(tokenRecord: TokenRecord, multiplier: BigDecimal): void {
+  tokenRecord.multiplier = multiplier;
+  tokenRecord.valueExcludingOhm = getTokenRecordValue(tokenRecord, true);
+  tokenRecord.save();
 }
 
-/**
- * Returns the value of all of the TokenRecords.
- *
- * @param records
- * @returns
- */
-export function getTokenRecordsValue(records: TokenRecords): BigDecimal {
-  let totalValue = BigDecimal.fromString("0");
-  const idValues = records.records;
-
-  for (let i = 0; i < idValues.length; i++) {
-    const recordId = idValues[i];
-    const recordValue = TokenRecord.load(recordId);
-    if (!recordValue) {
-      throw new Error(
-        "setTokenRecordsMultiplier: Unexpected null value for id " +
-          recordId +
-          " in TokenRecords " +
-          records.id,
-      );
-    }
-
-    totalValue = totalValue.plus(recordValue.value);
-  }
-
-  return totalValue;
-}
-
-/**
- * Pushes the `record` parameter into the array within `records`.
- *
- * @param records TokenRecords to add to
- * @param record TokenRecord to add
- * @param update if true, updates the balance and value
- */
-export function pushTokenRecord(
-  records: TokenRecords,
-  record: TokenRecord,
-  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-  update: boolean = true,
+export function setTokenRecordsMultiplier(
+  tokenRecords: TokenRecord[],
+  multiplier: BigDecimal,
 ): void {
-  const newArray = records.records || [];
-  // Don't allow duplicates
-  if (!newArray.includes(record.id)) {
-    newArray.push(record.id);
+  for (let i = 0; i < tokenRecords.length; i++) {
+    setTokenRecordMultiplier(tokenRecords[i], multiplier);
   }
-  records.records = newArray;
-
-  if (update) {
-    records.balance = getTokenRecordsBalance(records);
-    records.value = getTokenRecordsValue(records);
-  }
-
-  records.save();
-}
-
-/**
- * Combines two TokenRecords objects.
- *
- * The balance and value will be updated, and {records1} will be saved.
- *
- * @param records1 The TokenRecords to add to
- * @param records2 The TokenRecords to include
- */
-export function combineTokenRecords(records1: TokenRecords, records2: TokenRecords): void {
-  for (let i = 0; i < records2.records.length; i++) {
-    const records2Id = records2.records[i];
-    const records2Value = TokenRecord.load(records2Id);
-    if (!records2Value) {
-      throw new Error(
-        "combineTokenRecords: Unexpected null value for id " +
-          records2Id +
-          " in TokenRecords " +
-          records2.id,
-      );
-    }
-
-    pushTokenRecord(records1, records2Value, false);
-  }
-
-  records1.balance = getTokenRecordsBalance(records1);
-  records1.value = getTokenRecordsValue(records1);
-
-  records1.save();
-}
-
-/**
- * Sets the multiplier across all contained TokenRecord objects.
- *
- * The balance and value are updated, and the records saved.
- *
- * @param records
- * @param multiplier
- */
-export function setTokenRecordsMultiplier(records: TokenRecords, multiplier: BigDecimal): void {
-  for (let i = 0; i < records.records.length; i++) {
-    const recordId = records.records[i];
-    const recordValue = TokenRecord.load(recordId);
-    if (!recordValue) {
-      throw new Error(
-        "setTokenRecordsMultiplier: Unexpected null value for id " +
-          recordId +
-          " in TokenRecords " +
-          records.id,
-      );
-    }
-
-    setTokenRecordMultiplier(recordValue, multiplier);
-  }
-
-  records.balance = getTokenRecordsBalance(records);
-  records.value = getTokenRecordsValue(records);
-
-  records.save();
-}
-
-export function sortTokenRecords(records: TokenRecords): void {
-  // We sort by ID anyway ({name}-{source}), so we can just use the ID array
-  records.records = records.records.sort((a, b) => (a > b ? 1 : -1));
-
-  records.save();
-}
-
-/**
- * Helper function to create a new TokenRecords object.
- *
- * @param id
- * @param blockNumber
- * @returns
- */
-export function newTokenRecords(id: string, blockNumber: BigInt): TokenRecords {
-  const records = new TokenRecords(id + "-" + blockNumber.toString());
-  records.records = [];
-  records.balance = BigDecimal.fromString("0");
-  records.value = BigDecimal.fromString("0");
-  records.save();
-
-  return records;
-}
-
-/**
- * Combines {metricName} with {addition}
- *
- * @param metricName \
- * @param addition
- * @returns
- */
-export function addToMetricName(metricName: string, addition: string): string {
-  return metricName + "/" + addition;
 }

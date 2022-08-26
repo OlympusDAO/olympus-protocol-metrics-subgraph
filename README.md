@@ -2,9 +2,9 @@
 
 Gathers data from bonds, liquidity and Olympus treasury.
 
-Used in the dashboard https://app.olympusdao.finance/ and the Olympus Playground.
+Used in the [Olympus Treasury Dashboard](https://app.olympusdao.finance/).
 
-Deployed at https://thegraph.com/hosted-service/subgraph/olympusdao/olympus-protocol-metrics
+Deployed at <https://thegraph.com/hosted-service/subgraph/olympusdao/olympus-protocol-metrics>
 
 ## Initial Setup
 
@@ -39,7 +39,7 @@ If you receive a non-sensical test result (e.g. duplicated test cases, or a test
 
 ### Deployment (Testing)
 
-1. If necessary, create an account and subgraph in the Subgraph Studio: https://thegraph.com/studio/
+1. If necessary, create an account and subgraph in the Subgraph Studio: <https://thegraph.com/studio/>
    - The subgraph should be called `olympus-protocol-metrics`
 1. Add the Subgraph Studio deploy key to the `GRAPH_STUDIO_TOKEN` variable in `.env` (using `.env.sample`)
 1. Authenticate using `yarn auth:dev`
@@ -72,7 +72,7 @@ A set of Docker containers is pre-configured to enable local testing of the subg
 2. Run the Docker stack: `yarn run-local`
 3. Create the subgraph in the local graph node: `yarn create-local` (after every restart of the graph node stack)
 4. Deploy the subgraph: `yarn deploy-local --version-label 0.1.0`
-5. Access the GraphQL query interface: http://localhost:8000/subgraphs/name/olympus/graphql
+5. Access the GraphQL query interface: <http://localhost:8000/subgraphs/name/olympus/graphql>
 
 ## Constants
 
@@ -83,10 +83,10 @@ Tokens are defined and mapped in the `src/utils/Constants.ts` file.
 To add a new token:
 
 - Define a constant value with the address of the ERC20 contract, with `.toLowerCase()` appended
-- Define a constant value with the address of the Uniswap V2 or V3 liquidity pool
-- Add the token to either the `ERC20_STABLE_TOKENS` or `ERC20_VOLATILE_TOKENS` array (as appropriate)
+- Define a constant value with the address of the liquidity pool
+- Add the token definition to the `ERC20_TOKENS` map
 - Add a mapping under `PAIR_HANDLER` between the ERC20 contract and the liquidity pool contract
-- If the token is present in any wallets outside of `WALLET_ADDRESSES`, yet should be reported as part of the tresury, add it to {NON_TREASURY_ASSET_WHITELIST}.
+- If the token is present in any wallets outside of `WALLET_ADDRESSES`, yet should be reported as part of the tresury, add it to `NON_TREASURY_ASSET_WHITELIST`.
 
 ### Wallets
 
@@ -94,7 +94,7 @@ Tokens are defined and mapped in the `src/utils/Constants.ts` file.
 
 To add a new wallet:
 
-- Define a constant value with the address of the wallet
+- Define a constant value with the address of the wallet, with `.toLowerCase()` appended
 - Add the constant to the `WALLET_ADDRESSES` array
 
 ### Price Lookup
@@ -109,7 +109,7 @@ To add a new price lookup:
 Price lookups are performed in the following manner through the `getUSDRate` function:
 
 - If the token is a stablecoin, return a rate of `1`.
-- If the token is one of the base tokens (OHM or ETH), return the respective rate.
+- If the token is one of the base tokens (stablecoin or ETH), return the respective rate.
 - Otherwise, use `getPairHandler` to find the appropriate liquidity pool that will enable a price lookup into USD.
 
 ### Protocol-Owned Liquidity
@@ -144,70 +144,144 @@ To work around this, the following have been implemented:
 
 ## Data Structure
 
-There are a number of inter-related components in the metrics:
+### Current Structure
 
-- The schema is defined in the `schema.graphql` file
-  - Some metrics return integer or decimal values (e.g. `treasuryMarketValue`)
-  - Alongside the decimal values are additional values suffixed by `Components` (e.g. `treasuryMarketValueComponents`). These give a detailed breakdown of the tokens and source contracts/wallets. See the Debugging section below for more detail.
-  - Any changes to the `schema.graphql` file need to be applied by running `yarn codegen`, which will generate/update the `generated/schema.ts` file.
-- Nested objects are supported in the GraphQL schema (e.g. `ProtocolMetric` is related to `TokenRecords`), but it is not immediately obvious how to use them.
+The current schema (as of 3.0.0) has three main entities:
 
-  - The functions generated and written to the `schema.ts` file will not directly reference the related entity in the getters and setters. For example:
+- `TokenRecord`: token-wallet permutations held by the treasury. These records can be aggregated to determine the treasury market value, liquid backing, etc.
+- `TokenSupply`: OHM-wallet permutations held by the treasury. These records can be aggregated to determine the OHM circulating and floating supply.
+- `ProtocolMetric`: calculated metrics for the protocol, such as the next rebase time, current APY.
 
-  ```typescript
-    get treasuryRiskFreeValueComponents(): string {
-      let value = this.get("treasuryRiskFreeValueComponents");
-      return value!.toString();
-    }
+As defined in the `subgraph.yaml` file within the `ProtocolMetrics` data source (around line 417), when the `stake` function on the `OlympusStakingV3` contract is called (every rebase or ~8 hours), the indexing of the entities will commence.
 
-    set treasuryRiskFreeValueComponents(value: string) {
-      this.set("treasuryRiskFreeValueComponents", Value.fromString(value));
-    }
-  ```
+Each of these entities (defined in `schema.graphql`) has a unique ID that contains the date in `YYYY-MM-DD` format. Within a single day, subsequent indexing rounds will result in previous values being overwritten. However, any records that are not overwritten will also not be deleted.
 
-  - Instead, the `id` of an entity is used. A `TokenRecords` entity is instantiated with a unique `id` (e.g. `TreasuryMarketValue`), and can be loaded (`load(id: string)`) and saved (`save()`) accordingly. The `id` should be passed to the setter to link the `TokenRecords` entity to the `ProtocolMetric`.
-  - Explicit loading and saving of `TokenRecords` and `TokenRecord` objects should not be required, however, as it is all handled through the `TokenRecordHelper` module.
+#### Caveat: Outdated Blocks
 
-- A `metricName` parameter is passed from the top-level (`ProtocolMetrics` module) down into the different levels of utility functions that index the blockchain data. The `metricName` is used, alongside the block number, to create an `id` that is unique. Not using the `metricName` results in data from one metric (e.g. liquid backing) clobbering that of another metric (e.g. total backing).
+One edge-case that is not currently handled is when a token balance exists in block 1 (resulting in a TokenRecord entity being created), but the token balance is removed in block 2, the TokenRecord for block 1 will not be removed - it will have the same date as other records, but a different block number.
 
-### Value Components
+Take the following query as an example:
 
-Each metric has a "component" variant that contains the details of the assets that are summed to result in the reported value.
+```graphql
+query {
+  tokenRecords(orderBy: date, orderDirection: desc, where: { token: "wETH", date: "2022-07-06" }) {
+    id
+    block
+    date
+    timestamp
+    token
+    tokenAddress
+    source
+    sourceAddress
+    balance
+    rate
+    multiplier
+    value
+    category
+    isLiquid
+    isBluechip
+  }
+}
+```
 
-For example, the `treasuryTotalBacking` metric has `treasuryTotalBackingComponents`.
-
-The components metric returns data in the JSON format, along with some other fields, like so:
+The query results these results:
 
 ```json
 {
   "data": {
-    "protocolMetrics": [
+    "tokenRecords": [
       {
-        "treasuryMarketValueComponents": {
-          "value": "431707239.3836405267139378357370496",
-          "records": [
-            {
-              "id": "MarketValue-aDAI-Aave Allocator V1-14381377",
-              "token": "aDAI",
-              "tokenAddress": "0x028171bca77440897b824ca71d1c56cac55b68a3",
-              "source": "Aave Allocator V1",
-              "sourceAddress": "0x0e1177e47151be72e5992e0975000e73ab5fd9d4",
-              "balance": "10657221.863207801175897664",
-              "rate": "1",
-              "multiplier": "1",
-              "value": "10657221.863207801175897664"
-            }
-          ]
-        }
+        "id": "2022-07-06/Treasury Wallet V3/wETH",
+        "block": "15091947",
+        "date": "2022-07-06",
+        "timestamp": "1657150086",
+        "token": "wETH",
+        "tokenAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+        "source": "Treasury Wallet V3",
+        "sourceAddress": "0x9a315bdf513367c0377fb36545857d12e85813ef",
+        "balance": "9755.083113575199483955",
+        "rate": "1193.605651838517369531398265305985",
+        "multiplier": "1",
+        "value": "11643722.33851783954945621052911067",
+        "category": "Volatile",
+        "isLiquid": true,
+        "isBluechip": true
+      },
+      {
+        "id": "2022-07-06/Treasury Wallet V2/wETH",
+        "block": "15091947",
+        "date": "2022-07-06",
+        "timestamp": "1657150086",
+        "token": "wETH",
+        "tokenAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+        "source": "Treasury Wallet V2",
+        "sourceAddress": "0x31f8cc382c9898b273eff4e0b7626a6987c846e8",
+        "balance": "16.949992098990965551",
+        "rate": "1193.605651838517369531398265305985",
+        "multiplier": "1",
+        "value": "20231.60636797383066804381708794811",
+        "category": "Volatile",
+        "isLiquid": true,
+        "isBluechip": true
+      },
+      {
+        "id": "2022-07-06/LUSD Allocator/wETH",
+        "block": "15091947",
+        "date": "2022-07-06",
+        "timestamp": "1657150086",
+        "token": "wETH",
+        "tokenAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+        "source": "LUSD Allocator",
+        "sourceAddress": "0x97b3ef4c558ec456d59cb95c65bfb79046e31fca",
+        "balance": "0.942594895556590696",
+        "rate": "1193.605651838517369531398265305985",
+        "multiplier": "1",
+        "value": "1125.086594730483637395458609404847",
+        "category": "Volatile",
+        "isLiquid": true,
+        "isBluechip": true
+      },
+      {
+        "id": "2022-07-06/DAO Wallet/wETH",
+        "block": "15086325",
+        "date": "2022-07-06",
+        "timestamp": "1657075064",
+        "token": "wETH",
+        "tokenAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+        "source": "DAO Wallet",
+        "sourceAddress": "0x245cc372c84b3645bf0ffe6538620b04a217988b",
+        "balance": "15598.016502448886308205",
+        "rate": "1115.840986512379248158231626289313",
+        "multiplier": "1",
+        "value": "17404906.1217289366810338171332356",
+        "category": "Volatile",
+        "isLiquid": true,
+        "isBluechip": true
       }
     ]
   }
 }
 ```
 
+Note that while the records with block `15091947` are the latest on 2022-07-06, there also exists a record with block `15086325`. This represents `wETH` in the DAO wallet that was exchanged for a stablecoin.
+
+**Client-side code should filter records for the latest block on each day, as a result.**
+
+A future improvement to this subgraph might modify the behaviour to _not_ overwrite the data in historical blocks, but instead create a `TokenRecordDaySnapshot` that represents the latest block of that day.
+
+### Previous Structure
+
+The previous indexing structure (before 3.0.0) aggregated the equivalents of `TokenRecord` and `TokenSupply` underneath `ProtocolMetric` entities. For each `ProtocolMetric` entitiy, there were some 10-15 properties (e.g. `treasuryMarketValue`), which resulted in blockchain data being indexed multiple times for each block. The current structure indexes only once per block, shifting the aggregation and calculation to the client-side, and results in a 15x improvement in indexing speed.
+
+### Example Queries
+
+Users should perform aggregation and calculations on the client-side. See the `olympus-frontend` repo for examples of this.
+
+### Conversion from JSON
+
 Follow these steps to convert the JSON data into CSV:
 
-1. Copy everything (including the square bracket, `[`) after `"records": ` up to and including the next square bracket in the query results.
+1. Copy everything (including the square bracket, `[`) after `"records":` up to and including the next square bracket in the query results.
 2. Open [JSON to CSV Converter](https://konklone.io/json/)
 3. Paste the copied content into the field.
 4. Download the CSV.

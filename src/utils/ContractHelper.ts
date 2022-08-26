@@ -1,7 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { BalancerLiquidityGauge } from "../../generated/ProtocolMetrics/BalancerLiquidityGauge";
-import { ConvexAllocator } from "../../generated/ProtocolMetrics/ConvexAllocator";
 import { ConvexBaseRewardPool } from "../../generated/ProtocolMetrics/ConvexBaseRewardPool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { LQTYStaking } from "../../generated/ProtocolMetrics/LQTYStaking";
@@ -17,8 +16,10 @@ import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
 import { vlCVX } from "../../generated/ProtocolMetrics/vlCVX";
-import { TokenRecord, TokenRecords } from "../../generated/schema";
+import { TokenRecord } from "../../generated/schema";
+import { pushArray } from "./ArrayHelper";
 import {
+  addressesEqual,
   ALLOCATOR_ONSEN_ID_NOT_FOUND,
   ALLOCATOR_RARI_ID_NOT_FOUND,
   BALANCER_LIQUIDITY_GAUGES,
@@ -49,13 +50,8 @@ import {
 } from "./Constants";
 import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
-import {
-  addToMetricName,
-  combineTokenRecords,
-  newTokenRecord,
-  newTokenRecords,
-  pushTokenRecord,
-} from "./TokenRecordHelper";
+import { TokenCategoryPOL } from "./TokenDefinition";
+import { createOrUpdateTokenRecord, getIsTokenLiquid } from "./TokenRecordHelper";
 
 /**
  * The Graph recommends only binding a contract once
@@ -72,7 +68,6 @@ const contractsRariAllocator = new Map<string, RariAllocator>();
 const contractsTokeAllocator = new Map<string, TokeAllocator>();
 const contractsMasterChef = new Map<string, MasterChef>();
 const contractsVeFXS = new Map<string, VeFXS>();
-const contractsConvexAllocator = new Map<string, ConvexAllocator>();
 const contractsLUSDAllocator = new Map<string, LUSDAllocatorV2>();
 
 /**
@@ -140,7 +135,7 @@ export function getERC20(contractAddress: string, currentBlockNumber: BigInt): E
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
   // We can't bind for native (non-ERC20) ETH
-  if (contractAddress == NATIVE_ETH) return null;
+  if (addressesEqual(contractAddress, NATIVE_ETH)) return null;
 
   if (!contractsERC20.has(contractAddress)) {
     log.debug("Binding ERC20 contract for address {}. Block number {}", [
@@ -381,24 +376,6 @@ export function getVeFXS(contractAddress: string, currentBlockNumber: BigInt): V
   return contractsVeFXS.get(contractAddress);
 }
 
-export function getConvexAllocator(
-  contractAddress: string,
-  currentBlockNumber: BigInt,
-): ConvexAllocator | null {
-  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
-
-  if (!contractsConvexAllocator.has(contractAddress)) {
-    log.debug("Binding ConvexAllocator contract for address {}. Block number {}", [
-      contractAddress,
-      currentBlockNumber.toString(),
-    ]);
-    const contract = ConvexAllocator.bind(Address.fromString(contractAddress));
-    contractsConvexAllocator.set(contractAddress, contract);
-  }
-
-  return contractsConvexAllocator.get(contractAddress);
-}
-
 /**
  * Helper method to simplify getting the balance from an ERC20 contract.
  *
@@ -500,7 +477,7 @@ export function getOnsenBalance(
   }
 
   const onsenId = getOnsenAllocatorId(tokenAddress);
-  if (onsenId === ALLOCATOR_ONSEN_ID_NOT_FOUND) {
+  if (onsenId == ALLOCATOR_ONSEN_ID_NOT_FOUND) {
     log.debug("No Onsen ID found for token {}. Skipping.", [tokenAddress]);
     return null;
   }
@@ -540,18 +517,6 @@ export function getMasterChefBalance(
 }
 
 /**
- * Determines the value of a given balance.
- *
- * @param balance Balance of a token
- * @param decimals Number of decimals
- * @param rate The conversion rate
- * @returns BigDecimal representing the value
- */
-export function getValue(balance: BigInt, decimals: number, rate: BigDecimal): BigDecimal {
-  return toDecimal(balance, decimals).times(rate);
-}
-
-/**
  * Fetches the balance of the given ERC20 token from the
  * specified wallet.
  *
@@ -564,7 +529,7 @@ export function getValue(balance: BigInt, decimals: number, rate: BigDecimal): B
  * @returns TokenRecord object or null
  */
 export function getERC20TokenRecordFromWallet(
-  metricName: string,
+  timestamp: BigInt,
   contractAddress: string,
   walletAddress: string,
   contract: ERC20,
@@ -585,8 +550,8 @@ export function getERC20TokenRecordFromWallet(
   const balance = toDecimal(getERC20Balance(contract, walletAddress, blockNumber), decimals);
   if (!balance || balance.equals(BigDecimal.zero())) return null;
 
-  return newTokenRecord(
-    metricName,
+  return createOrUpdateTokenRecord(
+    timestamp,
     getContractName(contractAddress),
     contractAddress,
     getContractName(walletAddress),
@@ -594,6 +559,8 @@ export function getERC20TokenRecordFromWallet(
     rate,
     balance,
     blockNumber,
+    getIsTokenLiquid(contractAddress),
+    BigDecimal.fromString("1"),
   );
 }
 
@@ -606,24 +573,21 @@ export function getERC20TokenRecordFromWallet(
  * @param contract ERC20 contract
  * @param rate the unit price/rate of the token
  * @param blockNumber the current block number
- * @returns TokenRecords object
+ * @returns TokenRecord array
  */
 export function getERC20TokenRecordsFromWallets(
-  metricName: string,
+  timestamp: BigInt,
   contractAddress: string,
   contract: ERC20,
   rate: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(
-    addToMetricName(metricName, "ERC20/" + getContractName(contractAddress)),
-    blockNumber,
-  );
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
   const wallets = getWalletAddressesForContract(contractAddress);
 
   for (let i = 0; i < wallets.length; i++) {
     const record = getERC20TokenRecordFromWallet(
-      records.id,
+      timestamp,
       contractAddress,
       wallets[i],
       contract,
@@ -632,7 +596,7 @@ export function getERC20TokenRecordsFromWallets(
     );
     if (!record) continue;
 
-    pushTokenRecord(records, record);
+    records.push(record);
   }
 
   return records;
@@ -671,12 +635,12 @@ function getTokeStakedBalance(
  * @returns
  */
 export function getTokeStakedBalancesFromWallets(
-  metricName: string,
+  timestamp: BigInt,
   tokenAddress: string,
   rate: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "TokeStaked"), blockNumber);
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
 
   // Check that the token matches
   const contract = TokemakStaking.bind(Address.fromString(TOKE_STAKING));
@@ -720,10 +684,9 @@ export function getTokeStakedBalancesFromWallets(
       ],
     );
 
-    pushTokenRecord(
-      records,
-      newTokenRecord(
-        records.id,
+    records.push(
+      createOrUpdateTokenRecord(
+        timestamp,
         getContractName(tokenAddress, "Staked"), // Needed to differentiate as there is no token for TOKE
         tokenAddress,
         getContractName(currentWallet),
@@ -731,6 +694,8 @@ export function getTokeStakedBalancesFromWallets(
         rate,
         balance,
         blockNumber,
+        getIsTokenLiquid(tokenAddress),
+        BigDecimal.fromString("1"),
       ),
     );
   }
@@ -771,12 +736,12 @@ function getLiquityStakedBalance(
  * @returns
  */
 export function getLiquityStakedBalancesFromWallets(
-  metricName: string,
+  timestamp: BigInt,
   tokenAddress: string,
   rate: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "LiquityStaked"), blockNumber);
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
 
   // Check that the token matches
   const contract = LQTYStaking.bind(Address.fromString(LQTY_STAKING));
@@ -820,10 +785,9 @@ export function getLiquityStakedBalancesFromWallets(
       ],
     );
 
-    pushTokenRecord(
-      records,
-      newTokenRecord(
-        records.id,
+    records.push(
+      createOrUpdateTokenRecord(
+        timestamp,
         getContractName(tokenAddress, "Staked"), // Needed to differentiate as there is no token for LQTY
         tokenAddress,
         getContractName(currentWallet),
@@ -831,6 +795,8 @@ export function getLiquityStakedBalancesFromWallets(
         rate,
         balance,
         blockNumber,
+        getIsTokenLiquid(tokenAddress),
+        BigDecimal.fromString("1"),
       ),
     );
   }
@@ -868,17 +834,19 @@ function getBalancerGaugeBalance(
  * @param gaugeContractAddress
  * @param tokenAddress
  * @param rate
+ * @param multiplier
  * @param blockNumber
  * @returns
  */
 export function getBalancerGaugeBalanceFromWallets(
-  metricName: string,
+  timestamp: BigInt,
   gaugeContractAddress: string,
   tokenAddress: string,
   rate: BigDecimal,
+  multiplier: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(metricName, blockNumber);
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
 
   log.debug(
     "getBalancerGaugeBalanceFromWallets: determining wallet balances in liquidity gauge {} ({}) of token {} ({}) at block {}",
@@ -902,7 +870,7 @@ export function getBalancerGaugeBalanceFromWallets(
   }
 
   // Ignore if we're looping through and the LP token doesn't match
-  if (!contract.lp_token().equals(Address.fromString(tokenAddress))) {
+  if (!addressesEqual(contract.lp_token().toHexString(), tokenAddress)) {
     log.debug(
       "getBalancerGaugeBalanceFromWallets: output of lp_token() did not match current token {} ({}) at block {}. Skipping",
       [getContractName(tokenAddress), tokenAddress, blockNumber.toString()],
@@ -941,10 +909,9 @@ export function getBalancerGaugeBalanceFromWallets(
       ],
     );
 
-    pushTokenRecord(
-      records,
-      newTokenRecord(
-        records.id,
+    records.push(
+      createOrUpdateTokenRecord(
+        timestamp,
         getContractName(tokenAddress, "Gauge Deposit"),
         tokenAddress,
         getContractName(currentWallet),
@@ -952,6 +919,9 @@ export function getBalancerGaugeBalanceFromWallets(
         rate,
         balance,
         blockNumber,
+        getIsTokenLiquid(tokenAddress),
+        multiplier,
+        TokenCategoryPOL,
       ),
     );
   }
@@ -970,21 +940,23 @@ export function getBalancerGaugeBalanceFromWallets(
  * @returns
  */
 export function getBalancerGaugeBalancesFromWallets(
-  metricName: string,
+  timestamp: BigInt,
   tokenAddress: string,
   rate: BigDecimal,
+  multiplier: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "BalancerGauge"), blockNumber);
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
 
   for (let i = 0; i < BALANCER_LIQUIDITY_GAUGES.length; i++) {
-    combineTokenRecords(
+    pushArray(
       records,
       getBalancerGaugeBalanceFromWallets(
-        records.id,
+        timestamp,
         BALANCER_LIQUIDITY_GAUGES[i],
         tokenAddress,
         rate,
+        multiplier,
         blockNumber,
       ),
     );
@@ -1009,7 +981,7 @@ function getTokeAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
   const contract = getERC20(contractAddress, blockNumber);
 
   // No matching allocator id
-  if (allocatorId === ALLOCATOR_RARI_ID_NOT_FOUND || !tokeAllocator || !contract) {
+  if (allocatorId == ALLOCATOR_RARI_ID_NOT_FOUND || !tokeAllocator || !contract) {
     return null;
   }
 
@@ -1033,26 +1005,22 @@ function getTokeAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
  * @param tokenAddress ERC20 contract to find the balance of
  * @param price
  * @param blockNumber the current block number
- * @returns TokenRecords object
+ * @returns TokenRecord array
  */
 export function getTokeAllocatorRecords(
-  metricName: string,
+  timestamp: BigInt,
   tokenAddress: string,
   price: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(
-    addToMetricName(metricName, getContractName(TOKE_ALLOCATOR)),
-    blockNumber,
-  );
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
 
   const balance = getTokeAllocatorBalance(tokenAddress, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
 
-  pushTokenRecord(
-    records,
-    newTokenRecord(
-      records.id,
+  records.push(
+    createOrUpdateTokenRecord(
+      timestamp,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(TOKE_ALLOCATOR),
@@ -1060,6 +1028,8 @@ export function getTokeAllocatorRecords(
       price,
       balance,
       blockNumber,
+      getIsTokenLiquid(tokenAddress),
+      BigDecimal.fromString("1"),
     ),
   );
 
@@ -1087,7 +1057,7 @@ function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
   const rariAllocator = getRariAllocator(RARI_ALLOCATOR, blockNumber);
   const contract = getERC20(contractAddress, blockNumber);
 
-  if (rariAllocatorId === ALLOCATOR_RARI_ID_NOT_FOUND || !rariAllocator || !contract) {
+  if (rariAllocatorId == ALLOCATOR_RARI_ID_NOT_FOUND || !rariAllocator || !contract) {
     return null;
   }
 
@@ -1124,26 +1094,22 @@ function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
  * @param tokenAddress ERC20 contract to find the balance of
  * @param price
  * @param blockNumber the current block number
- * @returns TokenRecords object
+ * @returns TokenRecord array
  */
 export function getRariAllocatorRecords(
-  metricName: string,
+  timestamp: BigInt,
   tokenAddress: string,
   price: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(
-    addToMetricName(metricName, getContractName(RARI_ALLOCATOR)),
-    blockNumber,
-  );
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
 
   const balance = getRariAllocatorBalance(tokenAddress, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
 
-  pushTokenRecord(
-    records,
-    newTokenRecord(
-      records.id,
+  records.push(
+    createOrUpdateTokenRecord(
+      timestamp,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(RARI_ALLOCATOR),
@@ -1151,6 +1117,8 @@ export function getRariAllocatorRecords(
       price,
       balance,
       blockNumber,
+      getIsTokenLiquid(tokenAddress),
+      BigDecimal.fromString("1"),
     ),
   );
 
@@ -1164,26 +1132,22 @@ export function getRariAllocatorRecords(
  * @param tokenAddress ERC20 contract to find the balance of
  * @param price
  * @param blockNumber the current block number
- * @returns TokenRecords object
+ * @returns TokenRecord array
  */
 export function getOnsenAllocatorRecords(
-  metricName: string,
+  timestamp: BigInt,
   tokenAddress: string,
   price: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(
-    addToMetricName(metricName, getContractName(ONSEN_ALLOCATOR)),
-    blockNumber,
-  );
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
 
   const balance = getOnsenBalance(tokenAddress, ONSEN_ALLOCATOR, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
 
-  pushTokenRecord(
-    records,
-    newTokenRecord(
-      records.id,
+  records.push(
+    createOrUpdateTokenRecord(
+      timestamp,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(ONSEN_ALLOCATOR),
@@ -1191,6 +1155,8 @@ export function getOnsenAllocatorRecords(
       price,
       balance,
       blockNumber,
+      getIsTokenLiquid(tokenAddress),
+      BigDecimal.fromString("1"),
     ),
   );
 
@@ -1214,7 +1180,7 @@ export function getConvexStakedBalance(
   blockNumber: BigInt,
 ): BigDecimal | null {
   // Unsupported
-  if (tokenAddress == NATIVE_ETH) {
+  if (addressesEqual(tokenAddress, NATIVE_ETH)) {
     log.info("getConvexStakedBalance: native ETH is unsupported", []);
     return null;
   }
@@ -1273,14 +1239,11 @@ export function getConvexStakedBalance(
  * @param blockNumber the current block
  */
 export function getConvexStakedRecords(
-  metricName: string,
+  timestamp: BigInt,
   tokenAddress: string,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(
-    addToMetricName(metricName, "StakedConvexAllocator"),
-    blockNumber,
-  );
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
 
   // Loop through allocators
   for (let i = 0; i < CONVEX_ALLOCATORS.length; i++) {
@@ -1289,7 +1252,6 @@ export function getConvexStakedRecords(
     // Look through staking contracts
     for (let j = 0; j < CONVEX_STAKING_CONTRACTS.length; j++) {
       const stakingAddress = CONVEX_STAKING_CONTRACTS[j];
-      const currentMetricName = addToMetricName(records.id, getContractName(stakingAddress));
 
       const balance = getConvexStakedBalance(
         tokenAddress,
@@ -1299,17 +1261,18 @@ export function getConvexStakedRecords(
       );
       if (!balance || balance.equals(BigDecimal.zero())) continue;
 
-      pushTokenRecord(
-        records,
-        newTokenRecord(
-          currentMetricName,
-          getContractName(tokenAddress),
+      records.push(
+        createOrUpdateTokenRecord(
+          timestamp,
+          getContractName(tokenAddress, getContractName(stakingAddress)),
           tokenAddress,
           getContractName(allocatorAddress),
           allocatorAddress,
           getUSDRate(tokenAddress, blockNumber),
           balance,
           blockNumber,
+          getIsTokenLiquid(tokenAddress),
+          BigDecimal.fromString("1"),
         ),
       );
     }
@@ -1366,7 +1329,7 @@ export function getLiquityStabilityPoolBalance(
     return null;
   }
 
-  if (tokenAddress == ERC20_LUSD) {
+  if (addressesEqual(tokenAddress, ERC20_LUSD)) {
     const lusdBalance = toDecimal(
       allocator.amountAllocated(BigInt.fromI32(getRariAllocatorId(ERC20_LUSD))),
     );
@@ -1377,7 +1340,7 @@ export function getLiquityStabilityPoolBalance(
     return lusdBalance;
   }
 
-  if (tokenAddress == ERC20_WETH) {
+  if (addressesEqual(tokenAddress, ERC20_WETH)) {
     const wethBalance = toDecimal(allocator.getETHRewards());
     log.info("getLiquityStabilityPoolBalance: found wETH balance of {} at block {}", [
       wethBalance.toString(),
@@ -1386,7 +1349,7 @@ export function getLiquityStabilityPoolBalance(
     return wethBalance;
   }
 
-  if (tokenAddress == ERC20_LQTY) {
+  if (addressesEqual(tokenAddress, ERC20_LQTY)) {
     const lqtyBalance = toDecimal(allocator.getLQTYRewards());
     log.info("getLiquityStabilityPoolBalance: found LQTY balance of {} at block {}", [
       lqtyBalance.toString(),
@@ -1412,12 +1375,12 @@ export function getLiquityStabilityPoolBalance(
  * @returns
  */
 export function getLiquityStabilityPoolRecords(
-  metricName: string,
+  timestamp: BigInt,
   tokenAddress: string,
   rate: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "LiquityStabilityPool"), blockNumber);
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
 
   const balance = getLiquityStabilityPoolBalance(LUSD_ALLOCATOR, tokenAddress, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
@@ -1426,10 +1389,9 @@ export function getLiquityStabilityPoolRecords(
     "getLiquityStabilityPoolRecords: Found balance {} of token {} in Liquity allocator at block {}",
     [balance.toString(), getContractName(tokenAddress), blockNumber.toString()],
   );
-  pushTokenRecord(
-    records,
-    newTokenRecord(
-      records.id,
+  records.push(
+    createOrUpdateTokenRecord(
+      timestamp,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(LUSD_ALLOCATOR),
@@ -1437,6 +1399,8 @@ export function getLiquityStabilityPoolRecords(
       rate,
       balance,
       blockNumber,
+      getIsTokenLiquid(tokenAddress),
+      BigDecimal.fromString("1"),
     ),
   );
 
@@ -1459,34 +1423,54 @@ function getVeFXSAllocatorBalance(
   allocatorAddress: string,
   blockNumber: BigInt,
 ): BigDecimal | null {
+  log.debug(
+    "getVeFXSAllocatorBalance: determining staked balance for allocator {} ({}) and token {} ({}) at block {}",
+    [
+      getContractName(allocatorAddress),
+      allocatorAddress,
+      getContractName(tokenAddress),
+      tokenAddress,
+      blockNumber.toString(),
+    ],
+  );
+
   // Only VeFXS supported
-  if (tokenAddress !== ERC20_FXS_VE) return null;
+  if (!addressesEqual(tokenAddress, ERC20_FXS_VE)) {
+    log.debug("getVeFXSAllocatorBalance: token {} ({}) is not supported", [
+      getContractName(tokenAddress),
+      tokenAddress,
+    ]);
+    return null;
+  }
 
   const contract = getVeFXS(tokenAddress, blockNumber);
-  if (!contract) return null;
+  if (!contract) {
+    log.debug("getVeFXSAllocatorBalance: cannot bind to veFXS contract", []);
+    return null;
+  }
 
   return toDecimal(contract.locked(Address.fromString(allocatorAddress)).value0, 18);
 }
 
 export function getVeFXSAllocatorRecords(
-  metricName: string,
+  timestamp: BigInt,
   tokenAddress: string,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(
-    addToMetricName(metricName, getContractName(VEFXS_ALLOCATOR)),
-    blockNumber,
-  );
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
 
   const balance = getVeFXSAllocatorBalance(tokenAddress, VEFXS_ALLOCATOR, blockNumber);
   if (!balance || balance.equals(BigDecimal.zero())) return records;
 
   const fxsRate = getUSDRate(ERC20_FXS, blockNumber);
 
-  pushTokenRecord(
-    records,
-    newTokenRecord(
-      records.id,
+  log.info(
+    "getVeFXSAllocatorRecords: Found balance {} of token {} in veFXS allocator at block {}",
+    [balance.toString(), getContractName(tokenAddress), blockNumber.toString()],
+  );
+  records.push(
+    createOrUpdateTokenRecord(
+      timestamp,
       getContractName(tokenAddress),
       tokenAddress,
       getContractName(VEFXS_ALLOCATOR),
@@ -1494,6 +1478,8 @@ export function getVeFXSAllocatorRecords(
       fxsRate,
       balance,
       blockNumber,
+      getIsTokenLiquid(tokenAddress),
+      BigDecimal.fromString("1"),
     ),
   );
 
@@ -1526,12 +1512,12 @@ function getVlCvxUnlockedBalance(
  * @returns
  */
 export function getVlCvxUnlockedRecords(
-  metricName: string,
+  timestamp: BigInt,
   tokenAddress: string,
   rate: BigDecimal,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "Unlocked vlCVX"), blockNumber);
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
 
   const wallets = getWalletAddressesForContract(tokenAddress);
   for (let i = 0; i < wallets.length; i++) {
@@ -1540,17 +1526,18 @@ export function getVlCvxUnlockedRecords(
     const balance = getVlCvxUnlockedBalance(tokenAddress, currentWallet, blockNumber);
     if (!balance || balance.equals(BigDecimal.zero())) continue;
 
-    pushTokenRecord(
-      records,
-      newTokenRecord(
-        records.id,
-        getContractName(tokenAddress, "Unlocked"),
+    records.push(
+      createOrUpdateTokenRecord(
+        timestamp,
+        "Convex - Unlocked (vlCVX)", // Manual override
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
         rate,
         balance,
         blockNumber,
+        getIsTokenLiquid(tokenAddress),
+        BigDecimal.fromString("1"),
       ),
     );
   }

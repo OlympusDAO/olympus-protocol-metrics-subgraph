@@ -3,7 +3,7 @@ import { log } from "matchstick-as";
 
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
-import { TokenRecord, TokenRecords } from "../../generated/schema";
+import { TokenRecord, TokenSupply } from "../../generated/schema";
 import {
   CONVEX_STAKING_CONTRACTS,
   ERC20_OHM_V2,
@@ -11,16 +11,13 @@ import {
   getConvexStakedToken,
   getWalletAddressesForContract,
   liquidityPairHasToken,
-} from "./Constants";
-import { getConvexStakedBalance, getERC20 } from "./ContractHelper";
-import { toDecimal } from "./Decimals";
-import { getUSDRate } from "./Price";
-import {
-  addToMetricName,
-  newTokenRecord,
-  newTokenRecords,
-  pushTokenRecord,
-} from "./TokenRecordHelper";
+} from "../utils/Constants";
+import { getConvexStakedBalance, getERC20 } from "../utils/ContractHelper";
+import { toDecimal } from "../utils/Decimals";
+import { getUSDRate } from "../utils/Price";
+import { TokenCategoryPOL } from "../utils/TokenDefinition";
+import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";
+import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
 // ### Balances ###
 
@@ -39,22 +36,15 @@ import {
 export function getCurvePairTotalValue(
   pairAddress: string,
   excludeOhmValue: boolean,
-  restrictToToken: boolean,
-  tokenAddress: string | null,
   blockNumber: BigInt,
 ): BigDecimal {
   // Obtain both tokens
   const pair = CurvePool.bind(Address.fromString(pairAddress));
   let totalValue = BigDecimal.zero();
-  log.info(
-    "getCurvePairTotalValue: Calculating value of pair {} with excludeOhmValue = {}, restrictToToken = {}, token = {}",
-    [
-      getContractName(pairAddress),
-      excludeOhmValue ? "true" : "false",
-      restrictToToken ? "true" : "false",
-      tokenAddress ? getContractName(tokenAddress) : "null",
-    ],
-  );
+  log.info("getCurvePairTotalValue: Calculating value of pair {} with excludeOhmValue = {}", [
+    getContractName(pairAddress),
+    excludeOhmValue ? "true" : "false",
+  ]);
 
   // token0 balance * token0 rate + token1 balance * token1 rate
   for (let i = 0; i < 2; i++) {
@@ -62,11 +52,6 @@ export function getCurvePairTotalValue(
 
     if (excludeOhmValue && token.toLowerCase() == ERC20_OHM_V2.toLowerCase()) {
       log.debug("getCurvePairTotalValue: Skipping OHM as excludeOhmValue is true", []);
-      continue;
-    }
-
-    if (tokenAddress && restrictToToken && tokenAddress.toLowerCase() != token.toLowerCase()) {
-      log.debug("getCurvePairTotalValue: Skipping token {} as restrictToToken is true", [token]);
       continue;
     }
 
@@ -110,7 +95,7 @@ export function getCurvePairTotalValue(
  * @returns
  */
 function getCurvePairStakedRecord(
-  metricName: string,
+  timestamp: BigInt,
   pairTokenAddress: string,
   stakedTokenAddress: string | null,
   walletAddress: string,
@@ -140,8 +125,8 @@ function getCurvePairStakedRecord(
   );
   if (!balance || balance.equals(BigDecimal.zero())) return null;
 
-  return newTokenRecord(
-    metricName,
+  return createOrUpdateTokenRecord(
+    timestamp,
     getContractName(stakedTokenAddress),
     stakedTokenAddress,
     getContractName(walletAddress),
@@ -149,7 +134,9 @@ function getCurvePairStakedRecord(
     pairRate,
     balance,
     blockNumber,
+    true,
     multiplier,
+    TokenCategoryPOL,
   );
 }
 
@@ -166,7 +153,7 @@ function getCurvePairStakedRecord(
  * @returns
  */
 function getCurvePairRecord(
-  metricName: string,
+  timestamp: BigInt,
   pairTokenAddress: string,
   pairRate: BigDecimal,
   walletAddress: string,
@@ -192,8 +179,8 @@ function getCurvePairRecord(
 
   const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
 
-  return newTokenRecord(
-    metricName,
+  return createOrUpdateTokenRecord(
+    timestamp,
     getContractName(pairTokenAddress),
     pairTokenAddress,
     getContractName(walletAddress),
@@ -201,7 +188,9 @@ function getCurvePairRecord(
     pairRate,
     pairTokenBalanceDecimal,
     blockNumber,
+    true,
     multiplier,
+    TokenCategoryPOL,
   );
 }
 
@@ -290,20 +279,16 @@ function getCurvePairUnitRate(
  * @param metricName
  * @param pairAddress the address of the Curve pair
  * @param tokenAddress restrict pairs to match the specified token (or null)
- * @param excludeOhmValue true if the value of OHM in the LP should be excluded. This can be used to calculate backing.
- * @param restrictToTokenValue true if the value should reflect that of {tokenAddress}. This can be used to calculate the value of liquidity for a certain token.
  * @param blockNumber the current block number
  * @returns
  */
 export function getCurvePairRecords(
-  metricName: string,
+  timestamp: BigInt,
   pairAddress: string,
   tokenAddress: string | null,
-  excludeOhmValue: boolean,
-  restrictToTokenValue: boolean,
   blockNumber: BigInt,
-): TokenRecords {
-  const records = newTokenRecords(addToMetricName(metricName, "CurvePairRecords"), blockNumber);
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
   // If we are restricting by token and tokenAddress does not match either side of the pair
   if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
     log.debug(
@@ -323,23 +308,11 @@ export function getCurvePairRecords(
   }
 
   // Calculate total value of the LP
-  const totalValue = getCurvePairTotalValue(pairAddress, false, false, null, blockNumber);
-  const includedValue = getCurvePairTotalValue(
-    pairAddress,
-    excludeOhmValue,
-    restrictToTokenValue,
-    tokenAddress,
-    blockNumber,
-  );
+  const totalValue = getCurvePairTotalValue(pairAddress, false, blockNumber);
+  const includedValue = getCurvePairTotalValue(pairAddress, true, blockNumber);
   // Calculate multiplier
-  const multiplier =
-    excludeOhmValue || (tokenAddress && restrictToTokenValue)
-      ? includedValue.div(totalValue)
-      : BigDecimal.fromString("1");
-  log.info(
-    "getCurvePairRecords: applying multiplier of {} based on excludeOhmValue = {} and restrictToTokenValue = {}",
-    [multiplier.toString(), excludeOhmValue ? "true" : "false", "false"],
-  );
+  const multiplier = includedValue.div(totalValue);
+  log.info("getCurvePairRecords: applying multiplier of {}", [multiplier.toString()]);
 
   // Calculate the unit rate of the LP
   const unitRate = getCurvePairUnitRate(pairAddress, totalValue, blockNumber);
@@ -354,7 +327,7 @@ export function getCurvePairRecords(
 
     // Normal token first
     const record = getCurvePairRecord(
-      records.id,
+      timestamp,
       pairTokenAddress,
       unitRate,
       walletAddress,
@@ -363,7 +336,7 @@ export function getCurvePairRecords(
     );
 
     if (record && !record.balance.equals(BigDecimal.zero())) {
-      pushTokenRecord(records, record);
+      records.push(record);
     }
 
     // Then staked token
@@ -371,7 +344,7 @@ export function getCurvePairRecords(
       const stakingAddress = CONVEX_STAKING_CONTRACTS[j];
 
       const stakedRecord = getCurvePairStakedRecord(
-        records.id,
+        timestamp,
         pairTokenAddress,
         getConvexStakedToken(pairTokenAddress),
         walletAddress,
@@ -382,7 +355,7 @@ export function getCurvePairRecords(
       );
 
       if (stakedRecord && !stakedRecord.balance.equals(BigDecimal.zero())) {
-        pushTokenRecord(records, stakedRecord);
+        records.push(stakedRecord);
       }
     }
   }
@@ -452,19 +425,16 @@ export function getCurvePairTotalTokenQuantity(
  * @returns
  */
 export function getCurvePairTokenQuantity(
-  metricName: string,
+  timestamp: BigInt,
   pairAddress: string,
   tokenAddress: string,
   blockNumber: BigInt,
-): TokenRecords {
+): TokenSupply[] {
   log.info("getCurvePairTokenQuantity: Calculating quantity of token {} in Curve pool {}", [
     getContractName(tokenAddress),
     getContractName(pairAddress),
   ]);
-  const records = newTokenRecords(
-    addToMetricName(metricName, "CurvePoolTokenQuantity-" + getContractName(tokenAddress)),
-    blockNumber,
-  );
+  const records: TokenSupply[] = [];
   const poolTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
   if (!poolTokenContract) return records;
 
@@ -481,34 +451,25 @@ export function getCurvePairTokenQuantity(
   const poolTokenTotalSupply = toDecimal(poolTokenContract.totalSupply(), tokenDecimals);
 
   // Grab balances
-  const poolTokenBalances = getCurvePairRecords(
-    metricName,
-    pairAddress,
-    tokenAddress,
-    false,
-    false,
-    blockNumber,
-  );
+  const poolTokenBalances = getCurvePairRecords(timestamp, pairAddress, tokenAddress, blockNumber);
 
-  for (let i = 0; i < poolTokenBalances.records.length; i++) {
-    const recordId = poolTokenBalances.records[i];
-    const record = TokenRecord.load(recordId);
-    if (!record) {
-      throw new Error("Unable to load TokenRecord with id " + recordId);
-    }
+  for (let i = 0; i < poolTokenBalances.length; i++) {
+    const record = poolTokenBalances[i];
 
     const tokenBalance = totalQuantity.times(record.balance).div(poolTokenTotalSupply);
-    pushTokenRecord(
-      records,
-      newTokenRecord(
-        metricName,
-        getContractName(tokenAddress) + " in " + getContractName(poolTokenAddress),
+    records.push(
+      createOrUpdateTokenSupply(
+        timestamp,
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(poolTokenAddress),
         poolTokenAddress,
         record.source,
         record.sourceAddress,
-        BigDecimal.fromString("1"),
+        TYPE_LIQUIDITY,
         tokenBalance,
         blockNumber,
+        -1,
       ),
     );
   }

@@ -1,7 +1,13 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
-import { TokenRecord } from "../generated/schema";
+import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
+import {
+  getFraxSwapPairRecords,
+  getFraxSwapPairTokenQuantity,
+  getFraxSwapPairTokenQuantityRecords,
+  getFraxSwapPairTotalValue,
+} from "../src/liquidity/LiquidityFraxSwap";
 import {
   ERC20_FRAX,
   ERC20_OHM_V1,
@@ -12,13 +18,6 @@ import {
   TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import { toBigInt, toDecimal } from "../src/utils/Decimals";
-import { getLiquidityBalances } from "../src/utils/LiquidityCalculations";
-import {
-  getFraxSwapPairRecords,
-  getFraxSwapPairTokenQuantity,
-  getFraxSwapPairTokenQuantityRecords,
-  getFraxSwapPairTotalValue,
-} from "../src/utils/LiquidityFraxSwap";
 import { mockBalanceVaultZero } from "./liquidityBalancer.test";
 import {
   ERC20_STANDARD_DECIMALS,
@@ -54,6 +53,8 @@ const FRAXSWAP_OHM_FRAX_TOTAL_VALUE = FRAXSWAP_OHM_FRAX_TOKEN0_RESERVES.times(ge
 const FRAXSWAP_OHM_FRAX_UNIT_RATE = FRAXSWAP_OHM_FRAX_TOTAL_VALUE.div(
   FRAXSWAP_OHM_FRAX_TOTAL_SUPPLY,
 );
+
+const TIMESTAMP = BigInt.fromString("1");
 
 export function mockFraxSwapPair(
   pairAddress: string,
@@ -150,64 +151,24 @@ describe("pool total value", () => {
     const totalValue = getFraxSwapPairTotalValue(
       PAIR_FRAXSWAP_OHM_FRAX,
       false,
-      false,
-      null,
       OHM_USD_RESERVE_BLOCK,
     );
 
     assert.stringEquals(FRAXSWAP_OHM_FRAX_TOTAL_VALUE.toString(), totalValue.toString());
   });
 
-  test("OHM-FRAX pool total value, only OHM", () => {
+  test("OHM-FRAX pool total value, excluding OHM", () => {
     mockBalanceVaultZero();
     mockFraxSwapPairOhmFrax();
     mockUsdOhmV2Rate();
 
     const totalValue = getFraxSwapPairTotalValue(
       PAIR_FRAXSWAP_OHM_FRAX,
-      false,
       true,
-      ERC20_OHM_V2,
       OHM_USD_RESERVE_BLOCK,
     );
 
-    // # OHM * rate
-    const expectedValue = FRAXSWAP_OHM_FRAX_TOKEN0_RESERVES.times(getOhmUsdRate());
-    assert.stringEquals(expectedValue.toString(), totalValue.toString());
-  });
-
-  test("OHM-FRAX pool total value, only FRAX", () => {
-    mockBalanceVaultZero();
-    mockUsdOhmV2Rate();
-    mockFraxSwapPairOhmFrax();
-
-    const totalValue = getFraxSwapPairTotalValue(
-      PAIR_FRAXSWAP_OHM_FRAX,
-      false,
-      true,
-      ERC20_FRAX,
-      OHM_USD_RESERVE_BLOCK,
-    );
-
-    // # FRAX * 1
-    const expectedValue = FRAXSWAP_OHM_FRAX_TOKEN1_RESERVES;
-    assert.stringEquals(expectedValue.toString(), totalValue.toString());
-  });
-
-  test("OHM-FRAX pool total value, only FRAX uppercase", () => {
-    mockBalanceVaultZero();
-    mockUsdOhmV2Rate();
-    mockFraxSwapPairOhmFrax();
-
-    const totalValue = getFraxSwapPairTotalValue(
-      PAIR_FRAXSWAP_OHM_FRAX,
-      false,
-      true,
-      ERC20_FRAX.toUpperCase(),
-      OHM_USD_RESERVE_BLOCK,
-    );
-
-    // # FRAX * 1
+    // # FRAX * rate
     const expectedValue = FRAXSWAP_OHM_FRAX_TOKEN1_RESERVES;
     assert.stringEquals(expectedValue.toString(), totalValue.toString());
   });
@@ -247,15 +208,18 @@ describe("token quantity", () => {
     );
 
     const records = getFraxSwapPairTokenQuantityRecords(
-      "metric",
+      TIMESTAMP,
       PAIR_FRAXSWAP_OHM_FRAX,
       ERC20_OHM_V2,
       OHM_USD_RESERVE_BLOCK,
     );
 
-    // Balance = value as the unit rate is 1
-    assert.stringEquals(records.balance.toString(), expectedTokenBalance.toString());
-    assert.stringEquals(records.value.toString(), expectedTokenBalance.toString());
+    assert.stringEquals(records[0].balance.toString(), expectedTokenBalance.toString());
+    assert.stringEquals(
+      records[0].supplyBalance.toString(),
+      expectedTokenBalance.times(BigDecimal.fromString("-1")).toString(),
+    ); // Being taken out of circulation
+    assert.i32Equals(1, records.length);
   });
 
   test("balance of OHM V1 token in OHM V2 pool", () => {
@@ -274,17 +238,14 @@ describe("token quantity", () => {
     );
 
     const records = getFraxSwapPairTokenQuantityRecords(
-      "metric",
+      TIMESTAMP,
       PAIR_FRAXSWAP_OHM_FRAX,
       ERC20_OHM_V1,
       OHM_USD_RESERVE_BLOCK,
     );
 
-    // Balance = value as the unit rate is 1
-    assert.stringEquals("0", records.balance.toString());
-    assert.stringEquals("0", records.value.toString());
     // Should be empty records due to 0 balance of OHM V1
-    assert.i32Equals(0, records.records.length);
+    assert.i32Equals(0, records.length);
   });
 
   test("balance of OHM V2 token in OHM V2 pool before starting block", () => {
@@ -304,17 +265,14 @@ describe("token quantity", () => {
     );
 
     const records = getFraxSwapPairTokenQuantityRecords(
-      "metric",
+      TIMESTAMP,
       PAIR_FRAXSWAP_OHM_FRAX,
       ERC20_OHM_V2,
       OHM_USD_RESERVE_BLOCK,
     );
 
-    // Balance = value as the unit rate is 1
-    assert.stringEquals("0", records.balance.toString());
-    assert.stringEquals("0", records.value.toString());
     // Should be empty records due to starting block
-    assert.i32Equals(0, records.records.length);
+    assert.i32Equals(0, records.length);
   });
 });
 
@@ -337,16 +295,23 @@ describe("get token records", () => {
     );
 
     const records = getFraxSwapPairRecords(
-      "metric",
+      TIMESTAMP,
       PAIR_FRAXSWAP_OHM_FRAX,
-      false,
-      false,
       OHM_USD_RESERVE_BLOCK,
       null,
     );
 
+    const expectedNonOhmTotalValue = FRAXSWAP_OHM_FRAX_TOKEN1_RESERVES.times(
+      BigDecimal.fromString("1"),
+    );
+    const expectedMultiplier = expectedNonOhmTotalValue.div(FRAXSWAP_OHM_FRAX_TOTAL_VALUE);
     const expectedValue = expectedWalletBalance.times(FRAXSWAP_OHM_FRAX_UNIT_RATE);
-    assert.stringEquals(expectedValue.toString(), records.value.toString());
+    const expectedValueNonOhm = expectedValue.times(expectedMultiplier);
+
+    assert.stringEquals(expectedValue.toString(), records[0].value.toString());
+    assert.stringEquals(expectedValueNonOhm.toString(), records[0].valueExcludingOhm.toString());
+    assert.stringEquals(expectedMultiplier.toString(), records[0].multiplier.toString());
+    assert.i32Equals(1, records.length);
   });
 
   test("getLiquidityBalances", () => {
@@ -368,17 +333,11 @@ describe("get token records", () => {
       toBigInt(expectedWalletBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getLiquidityBalances(
-      "metric",
-      null,
-      false,
-      false,
-      false,
-      OHM_USD_RESERVE_BLOCK,
-    );
+    const records = getLiquidityBalances(TIMESTAMP, null, OHM_USD_RESERVE_BLOCK);
 
     const expectedValue = expectedWalletBalance.times(FRAXSWAP_OHM_FRAX_UNIT_RATE);
-    assert.stringEquals(expectedValue.toString(), records.value.toString());
+    assert.stringEquals(expectedValue.toString(), records[0].value.toString());
+    assert.i32Equals(1, records.length);
   });
 
   test("OHM-FRAX pool balance before starting block", () => {
@@ -398,15 +357,13 @@ describe("get token records", () => {
     );
 
     const records = getFraxSwapPairRecords(
-      "metric",
+      TIMESTAMP,
       PAIR_FRAXSWAP_OHM_FRAX,
-      false,
-      false,
       OHM_USD_RESERVE_BLOCK,
       null,
     );
 
-    assert.stringEquals("0", records.value.toString());
+    assert.i32Equals(0, records.length);
   });
 
   test("OHM-FRAX pool with matching tokenAddress", () => {
@@ -425,16 +382,15 @@ describe("get token records", () => {
     );
 
     const records = getFraxSwapPairRecords(
-      "metric",
+      TIMESTAMP,
       PAIR_FRAXSWAP_OHM_FRAX,
-      false,
-      false,
       OHM_USD_RESERVE_BLOCK,
       ERC20_FRAX,
     );
 
     const expectedValue = expectedWalletBalance.times(FRAXSWAP_OHM_FRAX_UNIT_RATE);
-    assert.stringEquals(expectedValue.toString(), records.value.toString());
+    assert.stringEquals(expectedValue.toString(), records[0].value.toString());
+    assert.i32Equals(1, records.length);
   });
 
   test("OHM-FRAX pool with different tokenAddress", () => {
@@ -453,52 +409,12 @@ describe("get token records", () => {
     );
 
     const records = getFraxSwapPairRecords(
-      "metric",
+      TIMESTAMP,
       PAIR_FRAXSWAP_OHM_FRAX,
-      false,
-      false,
       OHM_USD_RESERVE_BLOCK,
       ERC20_USDC,
     );
 
-    assert.stringEquals("0", records.value.toString());
-  });
-
-  test("OHM-FRAX pool single-sided value", () => {
-    mockFraxSwapPairOhmFrax();
-
-    // Mock wallet balance
-    const expectedWalletBalance = BigDecimal.fromString("2");
-    mockZeroWalletBalances(
-      PAIR_FRAXSWAP_OHM_FRAX,
-      getWalletAddressesForContract(PAIR_FRAXSWAP_OHM_FRAX),
-    );
-    mockWalletBalance(
-      PAIR_FRAXSWAP_OHM_FRAX,
-      TREASURY_ADDRESS_V3,
-      toBigInt(expectedWalletBalance, ERC20_STANDARD_DECIMALS),
-    );
-
-    const records = getFraxSwapPairRecords(
-      "metric",
-      PAIR_FRAXSWAP_OHM_FRAX,
-      true,
-      false,
-      OHM_USD_RESERVE_BLOCK,
-      null,
-    );
-
-    // The value should be determined by adjusting the multiplier
-    // (FRAX) / (OHM * rate + FRAX * rate)
-    const expectedNonOhmValue = FRAXSWAP_OHM_FRAX_TOKEN1_RESERVES;
-    const expectedMultiplier = expectedNonOhmValue.div(FRAXSWAP_OHM_FRAX_TOTAL_VALUE);
-    const expectedUnitRate = FRAXSWAP_OHM_FRAX_TOTAL_VALUE.div(FRAXSWAP_OHM_FRAX_TOTAL_SUPPLY);
-
-    const record = TokenRecord.load(records.records[0]);
-    assert.stringEquals(expectedMultiplier.toString(), record ? record.multiplier.toString() : "");
-
-    // balance * rate * multiplier
-    const expectedValue = expectedWalletBalance.times(expectedUnitRate).times(expectedMultiplier);
-    assert.stringEquals(expectedValue.toString(), records.value.toString());
+    assert.i32Equals(0, records.length);
   });
 });
