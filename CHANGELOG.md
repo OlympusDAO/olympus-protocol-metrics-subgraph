@@ -1,10 +1,11 @@
 # Subgraph Changelog
 
-## 3.0.7 (2022-08-26)
+## 3.0.8 (2022-08-26)
 
-- Renames `Convex - Vote-Locked - Unlocked (vlCVX)` -> `Convex - Unlocked (vlCVX)`
 - The purpose of this release is primarily to achieve significant (~15x) increases in the speed of indexing (#56). See README.md for documentation on this.
+- Renames `Convex - Vote-Locked - Unlocked (vlCVX)` -> `Convex - Unlocked (vlCVX)`
 - Add support for BTRFLY V1 and V2 tokens and protocol-owned liquidity (#41 and #67)
+- Improve the accuracy of price lookup for LQTY
 
 ## 2.0.80 (2022-08-08)
 
