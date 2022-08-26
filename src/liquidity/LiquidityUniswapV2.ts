@@ -330,6 +330,10 @@ export function getUniswapV2PairRecords(
 
   // Calculate total value of the LP
   const totalValue = getUniswapV2PairTotalValue(pairAddress, false, blockNumber);
+  if (totalValue.equals(BigDecimal.zero())) {
+    return records;
+  }
+
   const includedValue = getUniswapV2PairTotalValue(pairAddress, true, blockNumber);
   // Calculate multiplier
   const multiplier = includedValue.div(totalValue);
