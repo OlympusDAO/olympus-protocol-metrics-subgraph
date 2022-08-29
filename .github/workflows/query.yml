@@ -51,7 +51,7 @@ jobs:
           name: latest-block
       - name: Evaluate Latest Block
         run: |
-          export LATEST_BLOCK=$(cat query-test/block.txt)
+          export LATEST_BLOCK=$(cat block.txt)
           echo "LATEST_BLOCK=$LATEST_BLOCK" >> $GITHUB_ENV
       - name: Get Token Records
         run: |
