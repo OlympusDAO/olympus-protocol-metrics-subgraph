@@ -2,9 +2,9 @@
 
 import { ApolloClient, gql, HttpLink, InMemoryCache } from "@apollo/client/core";
 import { fetch } from "cross-fetch";
-import { writeFileSync } from "fs";
+import { writeFileSync, readFileSync } from "fs";
 
-const COMMANDS = ["latest-block", "test"];
+const COMMANDS = ["latest-block", "test", "compare"];
 
 const performQuery = async (subgraphId: string, query: string): Promise<any> => {
   const SUBGRAPH_BASE = "https://api.thegraph.com/subgraphs/id/";
@@ -106,6 +106,56 @@ const getSubgraphId = (args: string[], index: number): string => {
   return subgraphId;
 };
 
+const getFilename = (args: string[], index: number): string => {
+  if (args.length < index + 1) {
+    console.error(
+      `Expected filename to be present as argument ${index + 1 - 2}, but it was not there: ${args}`,
+    );
+    process.exit(1);
+  }
+
+  return args[index];
+};
+
+const getTokenRecordsFromFile = (filename: string): TokenRecord[] => {
+  return JSON.parse(readFileSync(filename, "utf8"));
+};
+
+const calculateMarketValue = (records: TokenRecord[]): number => {
+  return records.reduce((previousValue, record) => {
+    return previousValue + +record.value;
+  }, 0);
+};
+
+const compareTokenRecords = (filenameBase: string, filenameBranch: string): void => {
+  // Read files, parse into JSON
+  const baseRecords = getTokenRecordsFromFile(filenameBase);
+  const branchRecords = getTokenRecordsFromFile(filenameBranch);
+
+  // Perform sums
+  console.info("Comparing market value");
+  const baseMarketValue = calculateMarketValue(baseRecords);
+  console.info("Base = " + baseMarketValue);
+  const branchMarketValue = calculateMarketValue(branchRecords);
+  console.info("Branch = " + branchMarketValue);
+
+  // Output to file
+  const DIFF_THRESHOLD = 1000;
+  const FILENAME = "comparison.json";
+  const comparisonOutput = {
+    marketValue: {
+      base: baseMarketValue,
+      branch: branchMarketValue,
+      result:
+        baseMarketValue - branchMarketValue < DIFF_THRESHOLD ||
+        branchMarketValue - baseMarketValue < DIFF_THRESHOLD,
+    },
+  };
+
+  writeFileSync(FILENAME, JSON.stringify(comparisonOutput, null, 2));
+  console.info(`Wrote comparison output to ${FILENAME}`);
+};
+
 const main = (cliArgs: string[]): void => {
   // ts-node,filename,command
   if (!cliArgs || cliArgs.length < 3) {
@@ -137,6 +187,12 @@ const main = (cliArgs: string[]): void => {
       const block = cliArgs[4];
       writeTokenRecords(subgraphId, block);
       break;
+    }
+    case "compare": {
+      const filenameBase = getFilename(cliArgs, 3);
+      const filenameBranch = getFilename(cliArgs, 4);
+
+      compareTokenRecords(filenameBase, filenameBranch);
     }
     default: {
       console.error("Unknown command");
