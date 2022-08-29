@@ -1,0 +1,58 @@
+name: Query Test
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+      - name: Get Latest Block
+        # This will determine the latest block and write it to a file
+        # The same output will then be set to an environment variable for use in the next step
+        run: |
+          yarn query:latest-block
+      - name: Evaluate Latest Block
+        run: |
+          export LATEST_BLOCK=$(cat query-test/block.txt)
+          echo "::set-env name=LATEST_BLOCK::$LATEST_BLOCK"
+      - name: Upload Latest Block
+        uses: actions/upload-artifact@v3
+        with:
+          name: latest-block
+          path: query-test/block.txt
+      - name: Get Token Records
+        run: |
+          yarn query:test $LATEST_BLOCK
+      - name: Upload Token Records
+        uses: actions/upload-artifact@v3
+        with:
+          name: token-records
+          path: query-test/records.json
+  test-base:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.base_ref }}
+      - name: Download Latest Block
+        uses: actions/download-artifact@v3
+        with:
+          name: latest-block
+      - name: Evaluate Latest Block
+        run: |
+          export LATEST_BLOCK=$(cat query-test/block.txt)
+          echo "::set-env name=LATEST_BLOCK::$LATEST_BLOCK"
+      - name: Get Token Records
+        run: |
+          yarn query:test $LATEST_BLOCK
+      - name: Upload Token Records
+        uses: actions/upload-artifact@v3
+        with:
+          name: token-records-base
+          path: query-test/records.json
