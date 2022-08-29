@@ -2,13 +2,14 @@
 
 import { ApolloClient, gql, HttpLink, InMemoryCache } from "@apollo/client/core";
 import { fetch } from "cross-fetch";
+import { writeFileSync } from "fs";
 
 const COMMANDS = ["latest-block", "test"];
 
 const performQuery = async (subgraphId: string, query: string): Promise<any> => {
   const SUBGRAPH_BASE = "https://api.thegraph.com/subgraphs/id/";
   const SUBGRAPH_URL = `${SUBGRAPH_BASE}${subgraphId}`;
-  console.log(`Working with subgraph id ${subgraphId} and URL ${SUBGRAPH_URL}`);
+  console.info(`Working with subgraph id ${subgraphId} and URL ${SUBGRAPH_URL}`);
   const gqlClient = new ApolloClient({
     cache: new InMemoryCache(),
     link: new HttpLink({ uri: `${SUBGRAPH_URL}`, fetch }),
@@ -27,21 +28,28 @@ const getLatestBlock = async (subgraphId: string): Promise<string> => {
 `;
 
   const results = await performQuery(subgraphId, query);
-  console.log("results = " + JSON.stringify(results, null, 2));
   return results.data.tokenRecords[0].block;
+};
+
+const writeLatestBlock = (subgraphId: string): void => {
+  const FILENAME = "block.txt";
+  getLatestBlock(subgraphId).then((latestBlock) => {
+    writeFileSync(FILENAME, latestBlock);
+    console.info(`Latest block written to ${FILENAME}`);
+  });
 };
 
 type TokenRecord = {
   id: string;
-  block: number;
+  block: string;
   date: string;
   token: string;
   source: string;
-  rate: number;
-  balance: number;
-  multiplier: number;
-  value: number;
-  valueExcludingOhm: number;
+  rate: string;
+  balance: string;
+  multiplier: string;
+  value: string;
+  valueExcludingOhm: string;
   category: string;
   isLiquid: boolean;
   isBluechip: boolean;
@@ -71,10 +79,20 @@ const getTokenRecords = async (subgraphId: string, block: string): Promise<Token
   return results.data.tokenRecords;
 };
 
-const main = async (cliArgs: string[]) => {
-  // ts-node,filename,subgraph id,command
-  if (!cliArgs || cliArgs.length < 3) {
-    console.error(`Please execute in the format "yarn ts-node index.ts <${COMMANDS.join(" | ")}>"`);
+const writeTokenRecords = (subgraphId: string, block: string): void => {
+  const FILENAME = "records.json";
+  getTokenRecords(subgraphId, block).then((tokenRecords) => {
+    writeFileSync(FILENAME, JSON.stringify(tokenRecords, null, 2));
+    console.info(`TokenRecord results written to ${FILENAME}`);
+  });
+};
+
+const main = (cliArgs: string[]): void => {
+  // ts-node,filename,command
+  if (!cliArgs || cliArgs.length < 4) {
+    console.error(
+      `Please execute in the format "yarn ts-node index.ts <${COMMANDS.join(" | ")}> <subgraphId>"`,
+    );
     process.exit(1);
   }
 
@@ -92,8 +110,7 @@ const main = async (cliArgs: string[]) => {
 
   switch (inputCommand) {
     case "latest-block": {
-      const latestBlock = await getLatestBlock(subgraphId);
-      console.log("latest block = " + latestBlock);
+      writeLatestBlock(subgraphId);
       break;
     }
     case "test": {
@@ -105,8 +122,7 @@ const main = async (cliArgs: string[]) => {
       }
 
       const block = cliArgs[4];
-      const tokenRecords = await getTokenRecords(subgraphId, block);
-      console.log("records = " + JSON.stringify(tokenRecords, null, 2));
+      writeTokenRecords(subgraphId, block);
       break;
     }
     default: {
