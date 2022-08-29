@@ -11,12 +11,13 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ github.ref }}
+      - name: Set Yarn Shell
+        run: yarn config set script-shell bash
       - name: Get Latest Block
         # This will determine the latest block and write it to a file
         # The same output will then be set to an environment variable for use in the next step
-        # We run this with bash -c as it requires the source commnad
         run: |
-          bash -c "yarn query:latest-block"
+          yarn query:latest-block
       - name: Evaluate Latest Block
         run: |
           export LATEST_BLOCK=$(cat query-test/block.txt)
@@ -28,7 +29,7 @@ jobs:
           path: query-test/block.txt
       - name: Get Token Records
         run: |
-          bash -c "yarn query:test $LATEST_BLOCK"
+          yarn query:test $LATEST_BLOCK
       - name: Upload Token Records
         uses: actions/upload-artifact@v3
         with:
@@ -42,6 +43,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ github.base_ref }}
+      - name: Set Yarn Shell
+        run: yarn config set script-shell bash
       - name: Download Latest Block
         uses: actions/download-artifact@v3
         with:
@@ -52,7 +55,7 @@ jobs:
           echo "::set-env name=LATEST_BLOCK::$LATEST_BLOCK"
       - name: Get Token Records
         run: |
-          bash -c "yarn query:test $LATEST_BLOCK"
+          yarn query:test $LATEST_BLOCK
       - name: Upload Token Records
         uses: actions/upload-artifact@v3
         with:
