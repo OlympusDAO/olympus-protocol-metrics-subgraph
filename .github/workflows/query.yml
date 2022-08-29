@@ -15,8 +15,6 @@ jobs:
         # This will determine the latest block and write it to a file
         # The same output will then be set to an environment variable for use in the next step
         run: |
-          pwd
-          ls -al
           yarn query:latest-block
       - name: Evaluate Latest Block
         run: |
