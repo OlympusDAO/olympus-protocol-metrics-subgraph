@@ -87,12 +87,29 @@ const writeTokenRecords = (subgraphId: string, block: string): void => {
   });
 };
 
+const getSubgraphId = (args: string[], index: number): string => {
+  if (args.length < index + 1) {
+    console.error(
+      `Expected subgraph id to be present as argument ${
+        index + 1 - 2
+      }, but it was not there: ${args}`,
+    );
+    process.exit(1);
+  }
+
+  const subgraphId = args[index];
+  if (!subgraphId.includes("Qm")) {
+    console.error(`subgraph id should have the 'Qm' prefix, but was: ${subgraphId}`);
+    process.exit(1);
+  }
+
+  return subgraphId;
+};
+
 const main = (cliArgs: string[]): void => {
   // ts-node,filename,command
-  if (!cliArgs || cliArgs.length < 4) {
-    console.error(
-      `Please execute in the format "yarn ts-node index.ts <${COMMANDS.join(" | ")}> <subgraphId>"`,
-    );
+  if (!cliArgs || cliArgs.length < 3) {
+    console.error(`Please execute in the format "yarn ts-node index.ts <${COMMANDS.join(" | ")}>"`);
     process.exit(1);
   }
 
@@ -102,18 +119,14 @@ const main = (cliArgs: string[]): void => {
     process.exit(1);
   }
 
-  const subgraphId = cliArgs[3];
-  if (!subgraphId.includes("Qm")) {
-    console.error(`subgraph id should have the 'Qm' prefix, but was: ${subgraphId}`);
-    process.exit(1);
-  }
-
   switch (inputCommand) {
     case "latest-block": {
+      const subgraphId = getSubgraphId(cliArgs, 3);
       writeLatestBlock(subgraphId);
       break;
     }
     case "test": {
+      const subgraphId = getSubgraphId(cliArgs, 3);
       if (cliArgs.length < 5) {
         console.error(
           `The block to fetch should be specified in the format: yarn ts-node index.ts ${inputCommand} ${subgraphId} <block number>`,
