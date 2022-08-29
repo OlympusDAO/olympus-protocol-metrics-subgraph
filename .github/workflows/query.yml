@@ -14,8 +14,9 @@ jobs:
       - name: Get Latest Block
         # This will determine the latest block and write it to a file
         # The same output will then be set to an environment variable for use in the next step
+        # We run this with bash -c as it requires the source commnad
         run: |
-          yarn query:latest-block
+          bash -c "yarn query:latest-block"
       - name: Evaluate Latest Block
         run: |
           export LATEST_BLOCK=$(cat query-test/block.txt)
@@ -27,7 +28,7 @@ jobs:
           path: query-test/block.txt
       - name: Get Token Records
         run: |
-          yarn query:test $LATEST_BLOCK
+          bash -c "yarn query:test $LATEST_BLOCK"
       - name: Upload Token Records
         uses: actions/upload-artifact@v3
         with:
@@ -51,7 +52,7 @@ jobs:
           echo "::set-env name=LATEST_BLOCK::$LATEST_BLOCK"
       - name: Get Token Records
         run: |
-          yarn query:test $LATEST_BLOCK
+          bash -c "yarn query:test $LATEST_BLOCK"
       - name: Upload Token Records
         uses: actions/upload-artifact@v3
         with:
