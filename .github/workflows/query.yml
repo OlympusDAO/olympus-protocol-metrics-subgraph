@@ -33,7 +33,7 @@ jobs:
       - name: Upload Token Records
         uses: actions/upload-artifact@v3
         with:
-          name: token-records
+          name: token-records-branch
           path: query-test/records.json
   test-base:
     runs-on: ubuntu-latest
@@ -61,3 +61,61 @@ jobs:
         with:
           name: token-records-base
           path: query-test/records.json
+  compare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+      - name: Set Yarn Shell
+        run: yarn config set script-shell bash
+      - name: Token Records Base
+        uses: actions/download-artifact@v3
+        with:
+          name: token-records-base
+      - name: Rename Token Records Base
+        run: mv records.json records-base.json
+      - name: Token Records Branch
+        uses: actions/download-artifact@v3
+        with:
+          name: token-records-branch
+      - name: Rename Token Records Branch
+        run: mv records.json records-branch.json
+      - name: Compare Token Records
+        run: |
+          yarn query:compare records-base.json records-branch.json
+      - name: Determine Result
+        id: result
+        run: |
+          echo "::set-output name=result::$(jq .marketValue.result comparison.json)"
+          echo "::set-output name=marketValue-base::$(jq .marketValue.base comparison.json)"
+          echo "::set-output name=marketValue-branch::$(jq .marketValue.branch comparison.json)"
+          echo "::set-output name=dif::$(diff <(jq --sort-keys . records-base.json) <(jq --sort-keys . records-branch.json))"
+      - name: Post Comment - Success
+        if: ${{ steps.result.result }} == true
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          body: |
+            Result: ✅
+            Values were within threshold.
+
+            Market Value:
+             Base: ${{ steps.result.marketValue-base }}
+             Branch: ${{ steps.result.marketValue-branch }}
+      - name: Post Comment - Failure
+        if: ${{ steps.result.result }} == false
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          body: |
+            Result: ❌
+            Values were NOT within threshold.
+
+            Market Value:
+             Base: ${{ steps.result.marketValue-base }}
+             Branch: ${{ steps.result.marketValue-branch }}
+
+            Diff:
+            ```diff
+            ${{ steps.result.diff }}
+            ```
