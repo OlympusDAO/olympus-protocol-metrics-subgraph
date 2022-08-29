@@ -1,0 +1,12 @@
+{
+  "name": "query-test",
+  "version": "1.0.0",
+  "description": "Performs a test for a subgraph query",
+  "main": "index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "@apollo/client": "^3.6.9",
+    "cross-fetch": "^3.1.5",
+    "ts-node": "^10.9.1"
+  }
+}
