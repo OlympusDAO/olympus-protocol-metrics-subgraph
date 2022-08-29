@@ -193,6 +193,7 @@ const main = (cliArgs: string[]): void => {
       const filenameBranch = getFilename(cliArgs, 4);
 
       compareTokenRecords(filenameBase, filenameBranch);
+      break;
     }
     default: {
       console.error("Unknown command");
