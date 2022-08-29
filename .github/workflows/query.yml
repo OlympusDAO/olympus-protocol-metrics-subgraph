@@ -84,8 +84,9 @@ jobs:
       - name: Rename Token Records Branch
         run: mv records.json records-branch.json
       - name: Compare Token Records
+        # Upstream path as the command is run in the query-test/ directory
         run: |
-          yarn query:compare records-base.json records-branch.json
+          yarn query:compare ../records-base.json ../records-branch.json
       - name: Determine Result
         id: result
         run: |
