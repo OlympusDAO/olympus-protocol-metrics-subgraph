@@ -21,7 +21,7 @@ jobs:
       - name: Evaluate Latest Block
         run: |
           export LATEST_BLOCK=$(cat query-test/block.txt)
-          echo "::set-env name=LATEST_BLOCK::$LATEST_BLOCK"
+          echo "LATEST_BLOCK=$LATEST_BLOCK" >> $GITHUB_ENV
       - name: Upload Latest Block
         uses: actions/upload-artifact@v3
         with:
@@ -29,7 +29,7 @@ jobs:
           path: query-test/block.txt
       - name: Get Token Records
         run: |
-          yarn query:test $LATEST_BLOCK
+          yarn query:test ${{ env.LATEST_BLOCK }}
       - name: Upload Token Records
         uses: actions/upload-artifact@v3
         with:
@@ -52,10 +52,10 @@ jobs:
       - name: Evaluate Latest Block
         run: |
           export LATEST_BLOCK=$(cat query-test/block.txt)
-          echo "::set-env name=LATEST_BLOCK::$LATEST_BLOCK"
+          echo "LATEST_BLOCK=$LATEST_BLOCK" >> $GITHUB_ENV
       - name: Get Token Records
         run: |
-          yarn query:test $LATEST_BLOCK
+          yarn query:test ${{ env.LATEST_BLOCK }}
       - name: Upload Token Records
         uses: actions/upload-artifact@v3
         with:
