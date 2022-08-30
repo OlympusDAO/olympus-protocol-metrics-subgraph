@@ -61,6 +61,7 @@ const getLatestBlock = async (subgraphId: string): Promise<string> => {
   }
 `;
 
+  console.info(`Fetching latest block for subgraph id ${subgraphId}`);
   const results = await performQuery(subgraphId, query);
   return results.data.tokenRecords[0].block;
 };
@@ -122,6 +123,7 @@ const getTokenRecords = async (subgraphId: string, block: string): Promise<Token
     }
   }`;
 
+  console.info(`Fetching token records for subgraph id ${subgraphId} and block ${block}`);
   const results = await performQuery(subgraphId, query);
   return results.data.tokenRecords;
 };
@@ -192,6 +194,8 @@ const calculateMarketValue = (records: TokenRecord[]): number => {
 };
 
 const compareTokenRecords = (filenameBase: string, filenameBranch: string, comparisonFile: ComparisonResults): void => {
+  console.info(`Comparing token records for base file ${filenameBase} and branch file ${filenameBranch}`);
+
   // Read files, parse into JSON
   const baseRecords = getTokenRecordsFromFile(filenameBase);
   const branchRecords = getTokenRecordsFromFile(filenameBranch);
@@ -238,6 +242,15 @@ const getTestMode = (args: string[]): string => {
   return testMode;
 }
 
+const getBlockArg = (args: string[]): string => {
+  if (args[5].trim().length == 0 || isNaN(args[5] as unknown as number)) {
+    console.error(`The block argument should be specified as a number, but was ${args[5]}`);
+    process.exit(1);
+  }
+
+  return args[5];
+}
+
 const main = (cliArgs: string[]): void => {
   // ts-node,filename,command
   if (!cliArgs || cliArgs.length < 3) {
@@ -269,7 +282,7 @@ const main = (cliArgs: string[]): void => {
       }
 
       const testMode = getTestMode(cliArgs);
-      const block = cliArgs[5];
+      const block = getBlockArg(cliArgs);
       writeTokenRecords(subgraphId, testMode, block, comparisonFile);
       break;
     }
