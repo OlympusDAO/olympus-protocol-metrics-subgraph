@@ -147,7 +147,7 @@ const compareTokenRecords = (filenameBase: string, filenameBranch: string): void
       base: baseMarketValue,
       branch: branchMarketValue,
       result:
-        baseMarketValue - branchMarketValue < DIFF_THRESHOLD ||
+        baseMarketValue - branchMarketValue < DIFF_THRESHOLD &&
         branchMarketValue - baseMarketValue < DIFF_THRESHOLD,
     },
   };

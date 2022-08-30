@@ -106,6 +106,10 @@ jobs:
             Market Value:
              Base: ${{ steps.result.outputs.marketValue-base }}
              Branch: ${{ steps.result.outputs.marketValue-branch }}
+
+            Diff of token records:
+            ```diff
+            ${{ steps.result.outputs.diff }}
       - name: Post Comment - Failure
         if: steps.result.outputs.result == 'false'
         uses: peter-evans/create-or-update-comment@v2
@@ -119,7 +123,7 @@ jobs:
              Base: ${{ steps.result.outputs.marketValue-base }}
              Branch: ${{ steps.result.outputs.marketValue-branch }}
 
-            Diff:
+            Diff of token records:
             ```diff
             ${{ steps.result.outputs.diff }}
             ```
