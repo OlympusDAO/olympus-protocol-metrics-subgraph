@@ -142,7 +142,7 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            **Block**: ${{ steps.result.outputs.block }}
+            **Ethereum Block Tested**: ${{ steps.result.outputs.block }}
 
             **Subgraph id**:
               Base: ${{ steps.result.outputs.subgraphId-base }}
