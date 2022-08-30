@@ -89,7 +89,7 @@ jobs:
           yarn query:compare ../records-base.json ../records-branch.json
       - name: Install jd tool
         run: |
-          go install github.com/josephburnett/jd@1.6.1
+          go install github.com/josephburnett/jd@v1.6.1
       - name: Determine Result
         id: result
         # We store the diff in the github environment as it's a multiline string: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
