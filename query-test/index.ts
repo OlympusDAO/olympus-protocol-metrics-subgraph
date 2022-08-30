@@ -39,6 +39,15 @@ type ComparisonResults = {
       diff: string;
       result: boolean;
     };
+    marketValueCheck?: {
+      marketValueTotal: string;
+      marketValueStable: string;
+      marketValueVolatile: string;
+      marketValuePOL: string;
+      marketValueCalculated: string;
+      diff: string;
+      result: boolean;
+    }
   }
 };
 
@@ -236,6 +245,12 @@ const calculateMarketValue = (records: TokenRecord[]): number => {
   }, 0);
 };
 
+const calculateMarketValueCategory = (records: TokenRecord[], category: string): number => {
+  return records.filter((record) => record.category == category).reduce((previousValue, record) => {
+    return previousValue + +record.value;
+  }, 0);
+};
+
 const calculateLiquidBacking = (records: TokenRecord[]): number => {
   return records.filter((record) => record.isLiquid == true).reduce((previousValue, record) => {
     return previousValue + +record.valueExcludingOhm;
@@ -305,7 +320,34 @@ const compareMarketValueRecords = (baseRecords: TokenRecord[], branchRecords: To
  }
 
  /**
-  * Compares the market value and liquid backing records, using the following formula:
+  * Checks the market value, using the following formula:
+  * 
+  * Market value = market value (stable) + market value (volatile) + market value (POL)
+  * 
+  * @param tokenRecords 
+  * @param comparisonFile 
+  */
+  const doMarketValueCheck = (tokenRecords: TokenRecord[], comparisonFile: ComparisonResults): void => {
+    console.info("Doing sanity check of market value");
+    const marketValueTotal = calculateMarketValue(tokenRecords);
+    const marketValueStable = calculateMarketValueCategory(tokenRecords, "Stable");
+    const marketValueVolatile = calculateMarketValueCategory(tokenRecords, "Volatile");
+    const marketValuePOL = calculateMarketValueCategory(tokenRecords, "Protocol-Owned Liquidity");
+    const marketValueCalculated = marketValueStable + marketValueVolatile + marketValuePOL;
+  
+    comparisonFile.results.marketValueCheck = {
+      marketValueTotal: formatCurrency(marketValueTotal),
+      marketValueStable: formatCurrency(marketValueStable),
+      marketValueVolatile: formatNumber(marketValueVolatile),
+      marketValuePOL: formatCurrency(marketValuePOL),
+      marketValueCalculated: formatCurrency(marketValueCalculated),
+      diff: formatCurrency(marketValueCalculated - marketValueTotal),
+      result: marketValueCalculated - marketValueTotal == 0,
+    };
+  }
+
+ /**
+  * Checks the market value and liquid backing, using the following formula:
   * 
   * Market value = liquid backing + illiquid assets + # OHM in POL * OHM price
   * 
@@ -320,7 +362,7 @@ const doLiquidBackingCheck = (tokenRecords: TokenRecord[], supplyRecords: TokenS
   const liquidBacking = calculateLiquidBacking(tokenRecords);
   const ohmInLiquidity = supplyRecords.filter((tokenSupply) => tokenSupply.type == "Liquidity").reduce((previousValue, tokenSupply) => previousValue + +tokenSupply.balance, 0);
   const illiquidAssetsValue = tokenRecords.filter((tokenRecord) => tokenRecord.isLiquid == false).reduce((previousValue, tokenRecord) => previousValue + +tokenRecord.value, 0);
-  const marketValueSum = liquidBacking + illiquidAssetsValue + ohmInLiquidity * ohmPrice;
+  const marketValueCalculated = liquidBacking + illiquidAssetsValue + ohmInLiquidity * ohmPrice;
 
   comparisonFile.results.liquidBackingCheck = {
     marketValue: formatCurrency(marketValue),
@@ -328,8 +370,8 @@ const doLiquidBackingCheck = (tokenRecords: TokenRecord[], supplyRecords: TokenS
     ohmInLiquidity: formatNumber(ohmInLiquidity),
     ohmPrice: formatCurrency(ohmPrice),
     illiquidAssets: formatCurrency(illiquidAssetsValue),
-    diff: formatCurrency(marketValueSum - marketValue),
-    result: marketValue - marketValueSum < DIFF_THRESHOLD && marketValueSum - marketValue < DIFF_THRESHOLD,
+    diff: formatCurrency(marketValueCalculated - marketValue),
+    result: marketValueCalculated - marketValue == 0,
   };
 }
 
@@ -349,6 +391,7 @@ const compareTokenRecords = (filenameBase: string, filenameBranch: string, compa
   getTokenSupplies(subgraphId, block).then((branchTokenSupplies) => {
     getOhmPrice(subgraphId, block).then((ohmPrice) => {
       doLiquidBackingCheck(branchRecords, branchTokenSupplies, ohmPrice, comparisonFile);
+      doMarketValueCheck(branchRecords, comparisonFile);
 
       writeComparisonFile(comparisonFile);
     })

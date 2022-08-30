@@ -125,6 +125,15 @@ jobs:
           [[ $(jq -r .results.liquidBackingCheck.result query-test/comparison.json) == true ]] && LIQUIDBACKING_CHECK_RESULT="✅" || LIQUIDBACKING_CHECK_RESULT="❌"
           echo "::set-output name=liquidBackingCheck-result::$LIQUIDBACKING_CHECK_RESULT"
 
+          echo "::set-output name=marketValueCheck-marketValueTotal::$(jq -r .results.marketValueCheck.marketValueTotal query-test/comparison.json)"
+          echo "::set-output name=marketValueCheck-marketValueStable::$(jq -r .results.marketValueCheck.marketValueStable query-test/comparison.json)"
+          echo "::set-output name=marketValueCheck-marketValueVolatile::$(jq -r .results.marketValueCheck.marketValueVolatile query-test/comparison.json)"
+          echo "::set-output name=marketValueCheck-marketValuePOL::$(jq -r .results.marketValueCheck.marketValuePOL query-test/comparison.json)"
+          echo "::set-output name=marketValueCheck-marketValueCalculated::$(jq -r .results.marketValueCheck.marketValueCalculated query-test/comparison.json)"
+          echo "::set-output name=marketValueCheck-diff::$(jq -r .results.marketValueCheck.diff query-test/comparison.json)"
+          [[ $(jq -r .results.marketValueCheck.result query-test/comparison.json) == true ]] && MARKETVALUE_CHECK_RESULT="✅" || MARKETVALUE_CHECK_RESULT="❌"
+          echo "::set-output name=marketValueCheck-result::$MARKETVALUE_CHECK_RESULT"
+
           echo "DIFF<<EOF" >> $GITHUB_ENV
           echo "$(/home/runner/go/bin/jd -set query-test/records-base.json query-test/records-branch.json)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -163,6 +172,17 @@ jobs:
               OHM Price: ${{ steps.result.outputs.liquidBackingCheck-ohmPrice }}
               Difference in Value: ${{ steps.result.outputs.liquidBackingCheck-diff }}
               Result: ${{ steps.result.outputs.liquidBackingCheck-result }}
+
+            **Market Value Check (Current Branch Only)**:
+              Purpose: *Does a sanity check of market value for the current branch. A difference in the value indicates that a change in assets has broken the consistency of the formula.*
+              Formula: Market value = market value (stable) + market value (volatile) + market value (POL)
+              Market Value Total: ${{ steps.result.outputs.marketValueCheck-marketValueTotal }}
+              Stable Assets: ${{ steps.result.outputs.marketValueCheck-marketValueStable }}
+              Volatile Assets: ${{ steps.result.outputs.marketValueCheck-marketValueVolatile }}
+              POL Assets: ${{ steps.result.outputs.marketValueCheck-marketValuePOL }}
+              Market Value Calculated: ${{ steps.result.outputs.marketValueCheck-marketValueCalculated }}
+              Difference in Value: ${{ steps.result.outputs.marketValueCheck-diff }}
+              Result: ${{ steps.result.outputs.marketValueCheck-result }}
 
             **Diff of TokenRecord objects**:
             ```diff
