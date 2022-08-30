@@ -106,14 +106,25 @@ jobs:
 
           echo "::set-output name=marketValue-base::$(jq -r .results.marketValue.base query-test/comparison.json)"
           echo "::set-output name=marketValue-branch::$(jq -r .results.marketValue.branch query-test/comparison.json)"
+          echo "::set-output name=marketValue-diff::$(jq -r .results.marketValue.diff query-test/comparison.json)"
           MARKETVALUE_RESULT="✅" && [[ $(jq -r .marketValue.result query-test/comparison.json) == true ]] && MARKETVALUE_RESULT="❌"
           echo "::set-output name=marketValue-result::$MARKETVALUE_RESULT"
 
           echo "::set-output name=liquidBacking-base::$(jq -r .results.liquidBacking.base query-test/comparison.json)"
           echo "::set-output name=liquidBacking-branch::$(jq -r .results.liquidBacking.branch query-test/comparison.json)"
+          echo "::set-output name=liquidBacking-diff::$(jq -r .results.liquidBacking.diff query-test/comparison.json)"
           LIQUIDBACKING_RESULT="✅" && [[ $(jq -r .liquidBacking.result query-test/comparison.json) == true ]] && LIQUIDBACKING_RESULT="❌"
           echo "::set-output name=liquidBacking-result::$LIQUIDBACKING_RESULT"
-          
+
+          echo "::set-output name=liquidBackingCheck-marketValue::$(jq -r .results.liquidBackingCheck.marketValue query-test/comparison.json)"
+          echo "::set-output name=liquidBackingCheck-liquidBacking::$(jq -r .results.liquidBackingCheck.liquidBacking query-test/comparison.json)"
+          echo "::set-output name=liquidBackingCheck-illiquidAssets::$(jq -r .results.liquidBackingCheck.illiquidAssets query-test/comparison.json)"
+          echo "::set-output name=liquidBackingCheck-ohmInLiquidity::$(jq -r .results.liquidBackingCheck.ohmInLiquidity query-test/comparison.json)"
+          echo "::set-output name=liquidBackingCheck-ohmPrice::$(jq -r .results.liquidBackingCheck.ohmPrice query-test/comparison.json)"
+          echo "::set-output name=liquidBackingCheck-diff::$(jq -r .results.liquidBackingCheck.diff query-test/comparison.json)"
+          LIQUIDBACKING_CHECK_RESULT="✅" && [[ $(jq -r .liquidBackingCheck.result query-test/comparison.json) == true ]] && LIQUIDBACKING_CHECK_RESULT="❌"
+          echo "::set-output name=liquidBackingCheck-result::$LIQUIDBACKING_CHECK_RESULT"
+
           echo "DIFF<<EOF" >> $GITHUB_ENV
           echo "$(/home/runner/go/bin/jd -set query-test/records-base.json query-test/records-branch.json)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -132,11 +143,23 @@ jobs:
               Base: ${{ steps.result.outputs.marketValue-base }}
               Branch: ${{ steps.result.outputs.marketValue-branch }}
               Result: ${{ steps.result.outputs.marketValue-result }}
+              Difference in Value: ${{ steps.result.outputs.marketValue-diff }}
 
             **Liquid Backing**:
               Base: ${{ steps.result.outputs.liquidBacking-base }}
               Branch: ${{ steps.result.outputs.liquidBacking-branch }}
               Result: ${{ steps.result.outputs.liquidBacking-result }}
+              Difference in Value: ${{ steps.result.outputs.liquidBacking-diff }}
+
+            **Liquid Backing Check**:
+              Formula: Market value = liquid backing + illiquid assets + # OHM in POL * OHM price
+              Market Value: ${{ steps.result.outputs.liquidBackingCheck-marketValue }}
+              Liquid Backing: ${{ steps.result.outputs.liquidBackingCheck-liquidBacking }}
+              Illiquid Assets: ${{ steps.result.outputs.liquidBackingCheck-illiquidAssets }}
+              # OHM in Protocol-Owned Liquidity: ${{ steps.result.outputs.liquidBackingCheck-ohmInLiquidity }}
+              OHM Price: ${{ steps.result.outputs.liquidBackingCheck-ohmPrice }}
+              Result: ${{ steps.result.outputs.liquidBackingCheck-result }}
+              Difference in Value: ${{ steps.result.outputs.liquidBackingCheck-diff }}
 
             Diff of token records:
             ```diff
