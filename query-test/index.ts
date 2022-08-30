@@ -3,6 +3,7 @@
 import { ApolloClient, gql, HttpLink, InMemoryCache } from "@apollo/client/core";
 import { fetch } from "cross-fetch";
 import { writeFileSync, readFileSync, existsSync } from "fs";
+import { program, Option, InvalidArgumentError } from "commander";
 
 const COMMANDS = ["latest-block", "test", "compare"];
 const COMPARISON_FILE = "comparison.json";
@@ -153,36 +154,6 @@ const writeTokenRecords = (subgraphId: string, testMode: string, block: string, 
   });
 };
 
-const getSubgraphId = (args: string[], index: number): string => {
-  if (args.length < index + 1) {
-    console.error(
-      `Expected subgraph id to be present as argument ${
-        index + 1 - 2
-      }, but it was not there: ${args}`,
-    );
-    process.exit(1);
-  }
-
-  const subgraphId = args[index];
-  if (!subgraphId.includes("Qm")) {
-    console.error(`subgraph id should have the 'Qm' prefix, but was: ${subgraphId}`);
-    process.exit(1);
-  }
-
-  return subgraphId;
-};
-
-const getFilename = (args: string[], index: number): string => {
-  if (args.length < index + 1) {
-    console.error(
-      `Expected filename to be present as argument ${index + 1 - 2}, but it was not there: ${args}`,
-    );
-    process.exit(1);
-  }
-
-  return args[index];
-};
-
 const getTokenRecordsFromFile = (filename: string): TokenRecord[] => {
   return JSON.parse(readFileSync(filename, "utf8"));
 };
@@ -230,76 +201,51 @@ const compareTokenRecords = (filenameBase: string, filenameBranch: string, compa
   writeComparisonFile(comparisonFile);
 };
 
-const getTestMode = (args: string[]): string => {
-  const MODES = ["base", "branch"];
-  const testMode = args[4];
-
-  if (!MODES.includes(testMode)) {
-    console.error(`The testMode parameter must be one of ${MODES.join(", ")}, but was: ${testMode}`);
-    process.exit(1);
+const parseSubgraphId = (value: string, _previous: string): string => {
+  if (!value.includes("Qm")) {
+    throw new InvalidArgumentError(`${value} is not a valid subgraph id`);
   }
 
-  return testMode;
+  return value;
 }
 
-const getBlockArg = (args: string[]): string => {
-  if (args[5].trim().length == 0 || isNaN(args[5] as unknown as number)) {
-    console.error(`The block argument should be specified as a number, but was ${args[5]}`);
-    process.exit(1);
+const parseBranch = (value: string, _previous: string): string => {
+  const BRANCHES = ["base", "branch"];
+  if (!BRANCHES.includes(value)) {
+    throw new InvalidArgumentError(`The --branch argument must be one of ${BRANCHES.join(", ")}, but was: ${value}`);
   }
 
-  return args[5];
+  return value;
 }
 
-const main = (cliArgs: string[]): void => {
-  // ts-node,filename,command
-  if (!cliArgs || cliArgs.length < 3) {
-    console.error(`Please execute in the format "yarn ts-node index.ts <${COMMANDS.join(" | ")}>"`);
-    process.exit(1);
-  }
+program.name("query-test")
+  .description("CLI to test subgraph queries");
 
-  const inputCommand = cliArgs[2];
-  if (!COMMANDS.includes(inputCommand)) {
-    console.error(`command should be one of ${COMMANDS.join(", ")}, but was ${inputCommand}`);
-    process.exit(1);
-  }
+program.command("latest-block")
+  .description("Determines the latest block for a subgraph")
+  .requiredOption("--subgraph <subgraph id>", "the subgraph id", parseSubgraphId)
+  .action((options) => {
+    const comparisonFile = readComparisonFile();
+    writeLatestBlock(options.subgraph, comparisonFile);
+  });
 
-  const comparisonFile = readComparisonFile();
+program.command("test")
+  .description("Performs a test subgraph query")
+  .requiredOption("--subgraph <subgraph id>", "the subgraph id", parseSubgraphId)
+  .requiredOption("--branch <base | branch>", "the branch", parseBranch)
+  .requiredOption("--block <block number>", "the block number")
+  .action((options) => {
+    const comparisonFile = readComparisonFile();
+    writeTokenRecords(options.subgraph, options.branch, options.block, comparisonFile);
+  });
 
-  switch (inputCommand) {
-    case "latest-block": {
-      const subgraphId = getSubgraphId(cliArgs, 3);
-      writeLatestBlock(subgraphId, comparisonFile);
-      break;
-    }
-    case "test": {
-      const subgraphId = getSubgraphId(cliArgs, 3);
-      if (cliArgs.length < 6) {
-        console.error(
-          `The block to fetch should be specified in the format: yarn ts-node index.ts ${inputCommand} ${subgraphId} <base|branch> <block number>`,
-        );
-        process.exit(1);
-      }
+program.command("compare")
+  .description("Compares two TokenRecord files")
+  .requiredOption("--base <filename>", "the base records file")
+  .requiredOption("--branch <filename>", "the branch records file")
+  .action((options) => {
+    const comparisonFile = readComparisonFile();
+    compareTokenRecords(options.base, options.branch, comparisonFile);
+  });
 
-      const testMode = getTestMode(cliArgs);
-      const block = getBlockArg(cliArgs);
-      writeTokenRecords(subgraphId, testMode, block, comparisonFile);
-      break;
-    }
-    case "compare": {
-      const filenameBase = getFilename(cliArgs, 3);
-      const filenameBranch = getFilename(cliArgs, 4);
-
-      compareTokenRecords(filenameBase, filenameBranch, comparisonFile);
-      break;
-    }
-    default: {
-      console.error("Unknown command");
-      process.exit(1);
-    }
-  }
-
-  return;
-};
-
-main(process.argv);
+program.parse();

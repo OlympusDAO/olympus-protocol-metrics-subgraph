@@ -19,7 +19,7 @@ jobs:
           yarn query:latest-block
       - name: Get Token Records
         run: |
-          yarn query:test branch $(jq -r .latestBlock query-test/comparison.json)
+          yarn query:test --branch branch --block $(jq -r .latestBlock query-test/comparison.json)
       - name: Upload Comparison Results
         uses: actions/upload-artifact@v3
         with:
@@ -47,7 +47,7 @@ jobs:
           path: query-test
       - name: Get Token Records
         run: |
-          yarn query:test base $(jq -r .latestBlock query-test/comparison.json)
+          yarn query:test --branch base --block $(jq -r .latestBlock query-test/comparison.json)
       - name: Upload Comparison Results
         uses: actions/upload-artifact@v3
         with:
@@ -86,7 +86,7 @@ jobs:
       - name: Compare Token Records
         # Upstream path as the command is run in the query-test/ directory
         run: |
-          yarn query:compare records-base.json records-branch.json
+          yarn query:compare --base records-base.json --branch records-branch.json
       - name: Upload Comparison Results
         uses: actions/upload-artifact@v3
         with:

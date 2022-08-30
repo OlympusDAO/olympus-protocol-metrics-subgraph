@@ -15,8 +15,8 @@
     "auth": "source .env && graph auth --product hosted-service $GRAPH_TOKEN",
     "auth:dev": "source .env && graph auth --product subgraph-studio $GRAPH_STUDIO_TOKEN",
     "ls-deadcode": "yarn ts-prune -p tsconfig.ts-prune.json | grep -v 'used in module'",
-    "query:latest-block": "source .subgraph-version && cd query-test && yarn && yarn ts-node index.ts latest-block $SUBGRAPH_ID",
-    "query:test": "source .subgraph-version && cd query-test && yarn && yarn ts-node index.ts test $SUBGRAPH_ID",
+    "query:latest-block": "source .subgraph-version && cd query-test && yarn && yarn ts-node index.ts latest-block --subgraph $SUBGRAPH_ID",
+    "query:test": "source .subgraph-version && cd query-test && yarn && yarn ts-node index.ts test --subgraph $SUBGRAPH_ID",
     "query:compare": "cd query-test && yarn && yarn ts-node index.ts compare"
   },
   "dependencies": {
