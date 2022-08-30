@@ -19,28 +19,36 @@ type ComparisonResults = {
   };
   results: {
     marketValue?: {
-      base: number;
-      branch: number;
-      diff: number;
+      base: string;
+      branch: string;
+      diff: string;
       result: boolean;
     };
     liquidBacking?: {
-      base: number;
-      branch: number;
-      diff: number;
+      base: string;
+      branch: string;
+      diff: string;
       result: boolean;
     };
     liquidBackingCheck?: {
-      marketValue: number;
-      liquidBacking: number;
-      ohmInLiquidity: number;
-      ohmPrice: number;
-      illiquidAssets: number;
-      diff: number;
+      marketValue: string;
+      liquidBacking: string;
+      ohmInLiquidity: string;
+      ohmPrice: string;
+      illiquidAssets: string;
+      diff: string;
       result: boolean;
     };
   }
 };
+
+const formatCurrency = (value: number, decimals = 0): string => {
+  return value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: decimals });
+}
+
+const formatNumber = (value: number, decimals = 0): string => {
+  return value.toLocaleString("en-US", { maximumFractionDigits: decimals });
+}
 
 const readComparisonFile = (): ComparisonResults => {
   // Silently create the data structure if the file doesn't exist
@@ -249,15 +257,15 @@ const compareMarketValueRecords = (baseRecords: TokenRecord[], branchRecords: To
   // Perform sums
   console.info("Comparing market value");
   const baseMarketValue = calculateMarketValue(baseRecords);
-  console.info("Base = " + baseMarketValue);
+  console.info("Base = " + formatCurrency(baseMarketValue));
   const branchMarketValue = calculateMarketValue(branchRecords);
-  console.info("Branch = " + branchMarketValue);
+  console.info("Branch = " + formatCurrency(branchMarketValue));
 
   // Output to file
   const marketValueResults = {
-    base: baseMarketValue,
-    branch: branchMarketValue,
-    diff: branchMarketValue - baseMarketValue,
+    base: formatCurrency(baseMarketValue),
+    branch: formatCurrency(branchMarketValue),
+    diff: formatCurrency(branchMarketValue - baseMarketValue),
     result:
       baseMarketValue - branchMarketValue < DIFF_THRESHOLD &&
       branchMarketValue - baseMarketValue < DIFF_THRESHOLD,
@@ -279,15 +287,15 @@ const compareMarketValueRecords = (baseRecords: TokenRecord[], branchRecords: To
   // Perform sums
   console.info("Comparing liquid backing");
   const baseLiquidBacking = calculateLiquidBacking(baseRecords);
-  console.info("Base = " + baseLiquidBacking);
+  console.info("Base = " + formatCurrency(baseLiquidBacking));
   const branchLiquidBacking = calculateLiquidBacking(branchRecords);
-  console.info("Branch = " + branchLiquidBacking);
+  console.info("Branch = " + formatCurrency(branchLiquidBacking));
 
   // Output to file
   const liquidBackingResults = {
-    base: baseLiquidBacking,
-    branch: branchLiquidBacking,
-    diff: branchLiquidBacking - baseLiquidBacking,
+    base: formatCurrency(baseLiquidBacking),
+    branch: formatCurrency(branchLiquidBacking),
+    diff: formatCurrency(branchLiquidBacking - baseLiquidBacking),
     result:
       baseLiquidBacking - branchLiquidBacking < DIFF_THRESHOLD &&
       branchLiquidBacking - baseLiquidBacking < DIFF_THRESHOLD,
@@ -307,6 +315,7 @@ const compareMarketValueRecords = (baseRecords: TokenRecord[], branchRecords: To
   * @param comparisonFile 
   */
 const doLiquidBackingCheck = (tokenRecords: TokenRecord[], supplyRecords: TokenSupply[], ohmPrice: number, comparisonFile: ComparisonResults): void => {
+  console.info("Doing sanity check of market value and liquid backing");
   const marketValue = calculateMarketValue(tokenRecords);
   const liquidBacking = calculateLiquidBacking(tokenRecords);
   const ohmInLiquidity = supplyRecords.filter((tokenSupply) => tokenSupply.type == "Liquidity").reduce((previousValue, tokenSupply) => previousValue + +tokenSupply.balance, 0);
@@ -314,12 +323,12 @@ const doLiquidBackingCheck = (tokenRecords: TokenRecord[], supplyRecords: TokenS
   const marketValueSum = liquidBacking + illiquidAssetsValue + ohmInLiquidity * ohmPrice;
 
   comparisonFile.results.liquidBackingCheck = {
-    marketValue: marketValue,
-    liquidBacking: liquidBacking,
-    ohmInLiquidity: ohmInLiquidity,
-    ohmPrice: ohmPrice,
-    illiquidAssets: illiquidAssetsValue,
-    diff: marketValueSum - marketValue,
+    marketValue: formatCurrency(marketValue),
+    liquidBacking: formatCurrency(liquidBacking),
+    ohmInLiquidity: formatNumber(ohmInLiquidity),
+    ohmPrice: formatCurrency(ohmPrice),
+    illiquidAssets: formatCurrency(illiquidAssetsValue),
+    diff: formatCurrency(marketValueSum - marketValue),
     result: marketValue - marketValueSum < DIFF_THRESHOLD && marketValueSum - marketValue < DIFF_THRESHOLD,
   };
 }
