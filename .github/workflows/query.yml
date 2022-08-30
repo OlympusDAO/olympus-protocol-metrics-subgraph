@@ -10,31 +10,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.head_ref }}
       - name: Set Yarn Shell
         run: yarn config set script-shell bash
       - name: Get Latest Block
         # This will determine the latest block and write it to a file
-        # The same output will then be set to an environment variable for use in the next step
         run: |
           yarn query:latest-block
-      - name: Evaluate Latest Block
-        run: |
-          export LATEST_BLOCK=$(cat query-test/block.txt)
-          echo "LATEST_BLOCK=$LATEST_BLOCK" >> $GITHUB_ENV
-      - name: Upload Latest Block
-        uses: actions/upload-artifact@v3
-        with:
-          name: latest-block
-          path: query-test/block.txt
       - name: Get Token Records
         run: |
-          yarn query:test ${{ env.LATEST_BLOCK }}
+          yarn query:test --branch branch --block $(jq -r .latestBlock query-test/comparison.json)
+      - name: Upload Comparison Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: comparison
+          path: query-test/comparison.json
       - name: Upload Token Records
         uses: actions/upload-artifact@v3
         with:
-          name: token-records
-          path: query-test/records.json
+          name: token-records-branch
+          path: query-test/records-branch.json
   test-base:
     runs-on: ubuntu-latest
     needs: [test-branch]
@@ -45,19 +40,96 @@ jobs:
           ref: ${{ github.base_ref }}
       - name: Set Yarn Shell
         run: yarn config set script-shell bash
-      - name: Download Latest Block
+      - name: Download Comparison File
         uses: actions/download-artifact@v3
         with:
-          name: latest-block
-      - name: Evaluate Latest Block
-        run: |
-          export LATEST_BLOCK=$(cat query-test/block.txt)
-          echo "LATEST_BLOCK=$LATEST_BLOCK" >> $GITHUB_ENV
+          name: comparison
+          path: query-test
       - name: Get Token Records
         run: |
-          yarn query:test ${{ env.LATEST_BLOCK }}
+          yarn query:test --branch base --block $(jq -r .latestBlock query-test/comparison.json)
+      - name: Upload Comparison Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: comparison
+          path: query-test/comparison.json
       - name: Upload Token Records
         uses: actions/upload-artifact@v3
         with:
           name: token-records-base
-          path: query-test/records.json
+          path: query-test/records-base.json
+  compare:
+    runs-on: ubuntu-latest
+    needs: [test-branch, test-base]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+      - name: Set Yarn Shell
+        run: yarn config set script-shell bash
+      - name: Download Token Records Base
+        uses: actions/download-artifact@v3
+        with:
+          name: token-records-base
+          path: query-test
+      - name: Download Token Records Branch
+        uses: actions/download-artifact@v3
+        with:
+          name: token-records-branch
+          path: query-test
+      - name: Download Comparison Results
+        uses: actions/download-artifact@v3
+        with:
+          name: comparison
+          path: query-test
+      - name: Compare Token Records
+        # Upstream path as the command is run in the query-test/ directory
+        run: |
+          yarn query:compare --base records-base.json --branch records-branch.json
+      - name: Upload Comparison Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: comparison
+          path: query-test/comparison.json
+      - name: Install jd tool
+        run: |
+          go install github.com/josephburnett/jd@v1.6.1
+      - name: Determine Result
+        id: result
+        # We store the diff in the github environment as it's a multiline string: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
+        # We also use the jd tool here, as it can ignore sorting and provides more context. See: https://github.com/josephburnett/jd
+        run: |
+          echo "::set-output name=block::$(jq -r .latestBlock query-test/comparison.json)"
+          echo "::set-output name=subgraphId-base::$(jq -r .branches.base.subgraphId query-test/comparison.json)"
+          echo "::set-output name=subgraphId-branch::$(jq -r .branches.branch.subgraphId query-test/comparison.json)"
+          RESULT="✅" if $(jq -r .marketValue.result query-test/comparison.json) == true else "❌"
+          RESULT_MESSAGE="Values were within threshold." if $(jq -r .marketValue.result query-test/comparison.json) == true else "Values were NOT within threshold."
+          echo "::set-output name=result::$RESULT"
+          echo "::set-output name=result-message::$RESULT_MESSAGE"
+          echo "::set-output name=marketValue-base::$(jq -r .marketValue.base query-test/comparison.json)"
+          echo "::set-output name=marketValue-branch::$(jq -r .marketValue.branch query-test/comparison.json)"
+          echo "DIFF<<EOF" >> $GITHUB_ENV
+          echo "$(/home/runner/go/bin/jd -set query-test/records-base.json query-test/records-branch.json)" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+      - name: Post Comment
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            **Block**: ${{ steps.result.outputs.block }}
+            **Result**: 
+            Values were within threshold.
+
+            **Subgraph id**:
+              Base: ${{ steps.result.outputs.subgraphId-base }}
+              Branch: ${{ steps.result.outputs.subgraphId-branch }}
+
+            **Market Value**:
+              Base: ${{ steps.result.outputs.marketValue-base }}
+              Branch: ${{ steps.result.outputs.marketValue-branch }}
+
+            Diff of token records:
+            ```diff
+            ${{ env.DIFF }}
+            ```
