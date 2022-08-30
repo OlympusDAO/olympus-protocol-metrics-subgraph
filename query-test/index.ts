@@ -211,7 +211,9 @@ const writeTokenRecords = (subgraphId: string, testMode: string, block: string, 
     console.info(`TokenRecord results written to ${FILENAME}`);
 
     // Update the comparison results and write
-    comparisonFile.branches[testMode].subgraphId = subgraphId;
+    comparisonFile.branches[testMode] = {
+      subgraphId: subgraphId,
+    };
     writeComparisonFile(comparisonFile);
   });
 };
