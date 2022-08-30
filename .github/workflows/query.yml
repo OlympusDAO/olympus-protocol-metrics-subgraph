@@ -87,15 +87,19 @@ jobs:
         # Upstream path as the command is run in the query-test/ directory
         run: |
           yarn query:compare ../records-base.json ../records-branch.json
+      - name: Install jd tool
+        run: |
+          go install github.com/josephburnett/jd@1.6.1
       - name: Determine Result
         id: result
         # We store the diff in the github environment as it's a multiline string: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
+        # We also use the jd tool here, as it can ignore sorting and provides more context. See: https://github.com/josephburnett/jd
         run: |
           echo "::set-output name=result::$(jq .marketValue.result query-test/comparison.json)"
           echo "::set-output name=marketValue-base::$(jq .marketValue.base query-test/comparison.json)"
           echo "::set-output name=marketValue-branch::$(jq .marketValue.branch query-test/comparison.json)"
           echo "DIFF<<EOF" >> $GITHUB_ENV
-          echo "$(diff <(jq --sort-keys . records-base.json) <(jq --sort-keys . records-branch.json))" >> $GITHUB_ENV
+          echo "$(jd -set records-base.json records-branch.json)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
       - name: Post Comment - Success
         if: steps.result.outputs.result == 'true'
