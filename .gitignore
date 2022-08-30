@@ -65,3 +65,7 @@ build
 
 # Test build files
 tests/.bin/
+
+# query-test
+records-base.json
+records-branch.json
