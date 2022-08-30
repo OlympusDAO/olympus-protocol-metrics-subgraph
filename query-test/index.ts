@@ -259,6 +259,10 @@ const calculateLiquidBacking = (records: TokenRecord[]): number => {
 
 const DIFF_THRESHOLD = 1000;
 
+const valuesEqual = (value1: number, value2: number, threshold = DIFF_THRESHOLD): boolean => {
+  return value1 - value2 < threshold && value2 - value1 < threshold;
+}
+
 /**
  * Compares the market value from two branches, and adds the results to {comparisonFile}.
  * 
@@ -281,9 +285,7 @@ const compareMarketValueRecords = (baseRecords: TokenRecord[], branchRecords: To
     base: formatCurrency(baseMarketValue),
     branch: formatCurrency(branchMarketValue),
     diff: formatCurrency(branchMarketValue - baseMarketValue),
-    result:
-      baseMarketValue - branchMarketValue < DIFF_THRESHOLD &&
-      branchMarketValue - baseMarketValue < DIFF_THRESHOLD,
+    result: valuesEqual(baseMarketValue, branchMarketValue),
   };
 
   comparisonFile.results.marketValue = marketValueResults;
@@ -311,9 +313,7 @@ const compareMarketValueRecords = (baseRecords: TokenRecord[], branchRecords: To
     base: formatCurrency(baseLiquidBacking),
     branch: formatCurrency(branchLiquidBacking),
     diff: formatCurrency(branchLiquidBacking - baseLiquidBacking),
-    result:
-      baseLiquidBacking - branchLiquidBacking < DIFF_THRESHOLD &&
-      branchLiquidBacking - baseLiquidBacking < DIFF_THRESHOLD,
+    result: valuesEqual(baseLiquidBacking, branchLiquidBacking),
   };
 
   comparisonFile.results.liquidBacking = liquidBackingResults;
@@ -342,7 +342,7 @@ const compareMarketValueRecords = (baseRecords: TokenRecord[], branchRecords: To
       marketValuePOL: formatCurrency(marketValuePOL),
       marketValueCalculated: formatCurrency(marketValueCalculated),
       diff: formatCurrency(marketValueCalculated - marketValueTotal),
-      result: marketValueCalculated - marketValueTotal == 0,
+      result: valuesEqual(marketValueCalculated, marketValueTotal, 1),
     };
   }
 
@@ -371,7 +371,7 @@ const doLiquidBackingCheck = (tokenRecords: TokenRecord[], supplyRecords: TokenS
     ohmPrice: formatCurrency(ohmPrice),
     illiquidAssets: formatCurrency(illiquidAssetsValue),
     diff: formatCurrency(marketValueCalculated - marketValue),
-    result: marketValueCalculated - marketValue == 0,
+    result: valuesEqual(marketValueCalculated, marketValue, 1),
   };
 }
 
