@@ -19,7 +19,7 @@ jobs:
           yarn query:latest-block
       - name: Get Token Records
         run: |
-          yarn query:test branch $(jq .latestBlock query-test/comparison.json)
+          yarn query:test branch $(jq -r .latestBlock query-test/comparison.json)
       - name: Upload Comparison Results
         uses: actions/upload-artifact@v3
         with:
@@ -47,7 +47,7 @@ jobs:
           path: query-test
       - name: Get Token Records
         run: |
-          yarn query:test base $(jq .latestBlock query-test/comparison.json)
+          yarn query:test base $(jq -r .latestBlock query-test/comparison.json)
       - name: Upload Comparison Results
         uses: actions/upload-artifact@v3
         with:
@@ -100,15 +100,15 @@ jobs:
         # We store the diff in the github environment as it's a multiline string: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
         # We also use the jd tool here, as it can ignore sorting and provides more context. See: https://github.com/josephburnett/jd
         run: |
-          echo "::set-output name=block::$(jq .latestBlock query-test/comparison.json)"
-          echo "::set-output name=subgraphId-base::$(jq .branches.base.subgraphId query-test/comparison.json)"
-          echo "::set-output name=subgraphId-branch::$(jq .branches.branch.subgraphId query-test/comparison.json)"
-          RESULT="✅" if $(jq .marketValue.result query-test/comparison.json) == true else "❌"
-          RESULT_MESSAGE="Values were within threshold." if $(jq .marketValue.result query-test/comparison.json) == true else "Values were NOT within threshold."
+          echo "::set-output name=block::$(jq -r .latestBlock query-test/comparison.json)"
+          echo "::set-output name=subgraphId-base::$(jq -r .branches.base.subgraphId query-test/comparison.json)"
+          echo "::set-output name=subgraphId-branch::$(jq -r .branches.branch.subgraphId query-test/comparison.json)"
+          RESULT="✅" if $(jq -r .marketValue.result query-test/comparison.json) == true else "❌"
+          RESULT_MESSAGE="Values were within threshold." if $(jq -r .marketValue.result query-test/comparison.json) == true else "Values were NOT within threshold."
           echo "::set-output name=result::$RESULT"
           echo "::set-output name=result-message::$RESULT_MESSAGE"
-          echo "::set-output name=marketValue-base::$(jq .marketValue.base query-test/comparison.json)"
-          echo "::set-output name=marketValue-branch::$(jq .marketValue.branch query-test/comparison.json)"
+          echo "::set-output name=marketValue-base::$(jq -r .marketValue.base query-test/comparison.json)"
+          echo "::set-output name=marketValue-branch::$(jq -r .marketValue.branch query-test/comparison.json)"
           echo "DIFF<<EOF" >> $GITHUB_ENV
           echo "$(/home/runner/go/bin/jd -set query-test/records-base.json query-test/records-branch.json)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
