@@ -89,16 +89,14 @@ jobs:
           yarn query:compare ../records-base.json ../records-branch.json
       - name: Determine Result
         id: result
+        # We store the diff in the github environment as it's a multiline string: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
         run: |
           echo "::set-output name=result::$(jq .marketValue.result query-test/comparison.json)"
           echo "::set-output name=marketValue-base::$(jq .marketValue.base query-test/comparison.json)"
           echo "::set-output name=marketValue-branch::$(jq .marketValue.branch query-test/comparison.json)"
-      - name: Run Diff
-        id: diff
-        # Step output cannot be a multiline value, so we use this: https://stackoverflow.com/a/68954061
-        uses: mkungla/actions-set-text-output@v1
-        with:
-          text: $(diff <(jq --sort-keys . records-base.json) <(jq --sort-keys . records-branch.json))
+          echo "DIFF<<EOF" >> $GITHUB_ENV
+          echo $(diff <(jq --sort-keys . records-base.json) <(jq --sort-keys . records-branch.json)) >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
       - name: Post Comment - Success
         if: steps.result.outputs.result == 'true'
         uses: peter-evans/create-or-update-comment@v2
@@ -114,7 +112,7 @@ jobs:
 
             Diff of token records:
             ```diff
-            ${{ steps.diff.outputs.value }}
+            ${{ env.DIFF }}
             ```
       - name: Post Comment - Failure
         if: steps.result.outputs.result == 'false'
@@ -131,5 +129,5 @@ jobs:
 
             Diff of token records:
             ```diff
-            ${{ steps.diff.outputs.value }}
+            ${{ env.DIFF }}
             ```
