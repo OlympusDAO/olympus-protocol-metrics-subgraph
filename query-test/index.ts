@@ -133,6 +133,18 @@ const writeTokenRecords = (subgraphId: string, testMode: string, block: string, 
     writeFileSync(FILENAME, JSON.stringify(tokenRecords, null, 2));
     console.info(`TokenRecord results written to ${FILENAME}`);
 
+    // Create structure if needed
+    if (!comparisonFile.branches) {
+      comparisonFile.branches = {
+        base: {
+          subgraphId: "",
+        },
+        branch: {
+          subgraphId: "",
+        },
+      }
+    }
+
     // Update the comparison results and write
     comparisonFile.branches[testMode].subgraphId = subgraphId;
     writeComparisonFile(comparisonFile);
@@ -193,13 +205,24 @@ const compareTokenRecords = (filenameBase: string, filenameBranch: string, compa
 
   // Output to file
   const DIFF_THRESHOLD = 1000;
-  comparisonFile.results.marketValue = {
+  const marketValueResults = {
     base: baseMarketValue,
     branch: branchMarketValue,
     result:
       baseMarketValue - branchMarketValue < DIFF_THRESHOLD &&
       branchMarketValue - baseMarketValue < DIFF_THRESHOLD,
   };
+
+  // Create the data structure, if needed
+  if (!comparisonFile.results) {
+    comparisonFile.results = {
+      marketValue: marketValueResults,
+    }
+  }
+  else {
+    comparisonFile.results.marketValue = marketValueResults;
+  }
+
   writeComparisonFile(comparisonFile);
 };
 
