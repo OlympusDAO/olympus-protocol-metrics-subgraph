@@ -10,16 +10,21 @@ const COMPARISON_FILE = "comparison.json";
 
 type ComparisonResults = {
   latestBlock?: string;
-  branches?: {
-    base: {
+  branches: {
+    base?: {
       subgraphId: string;
     };
-    branch: {
+    branch?: {
       subgraphId: string;
     };
   };
-  results?: {
-    marketValue: {
+  results: {
+    marketValue?: {
+      base: number;
+      branch: number;
+      result: boolean;
+    };
+    liquidBacking?: {
       base: number;
       branch: number;
       result: boolean;
@@ -30,7 +35,10 @@ type ComparisonResults = {
 const readComparisonFile = (): ComparisonResults => {
   // Silently create the data structure if the file doesn't exist
   if (!existsSync(COMPARISON_FILE)) {
-    return {};
+    return {
+      branches: {},
+      results: {},
+    };
   }
 
   return JSON.parse(readFileSync(COMPARISON_FILE, "utf8"));
@@ -136,18 +144,6 @@ const writeTokenRecords = (subgraphId: string, testMode: string, block: string, 
     writeFileSync(FILENAME, JSON.stringify(tokenRecords, null, 2));
     console.info(`TokenRecord results written to ${FILENAME}`);
 
-    // Create structure if needed
-    if (!comparisonFile.branches) {
-      comparisonFile.branches = {
-        base: {
-          subgraphId: "",
-        },
-        branch: {
-          subgraphId: "",
-        },
-      }
-    }
-
     // Update the comparison results and write
     comparisonFile.branches[testMode].subgraphId = subgraphId;
     writeComparisonFile(comparisonFile);
@@ -164,13 +160,22 @@ const calculateMarketValue = (records: TokenRecord[]): number => {
   }, 0);
 };
 
-const compareTokenRecords = (filenameBase: string, filenameBranch: string, comparisonFile: ComparisonResults): void => {
-  console.info(`Comparing token records for base file ${filenameBase} and branch file ${filenameBranch}`);
+const calculateLiquidBacking = (records: TokenRecord[]): number => {
+  return records.filter((record) => record.isLiquid == true).reduce((previousValue, record) => {
+    return previousValue + +record.valueExcludingOhm;
+  }, 0);
+};
 
-  // Read files, parse into JSON
-  const baseRecords = getTokenRecordsFromFile(filenameBase);
-  const branchRecords = getTokenRecordsFromFile(filenameBranch);
+const DIFF_THRESHOLD = 1000;
 
+/**
+ * Compares the market value from two branches, and adds the results to {comparisonFile}.
+ * 
+ * @param baseRecords 
+ * @param branchRecords 
+ * @param comparisonFile 
+ */
+const compareMarketValue = (baseRecords: TokenRecord[], branchRecords: TokenRecord[], comparisonFile: ComparisonResults): void => {
   // Perform sums
   console.info("Comparing market value");
   const baseMarketValue = calculateMarketValue(baseRecords);
@@ -179,7 +184,6 @@ const compareTokenRecords = (filenameBase: string, filenameBranch: string, compa
   console.info("Branch = " + branchMarketValue);
 
   // Output to file
-  const DIFF_THRESHOLD = 1000;
   const marketValueResults = {
     base: baseMarketValue,
     branch: branchMarketValue,
@@ -188,15 +192,45 @@ const compareTokenRecords = (filenameBase: string, filenameBranch: string, compa
       branchMarketValue - baseMarketValue < DIFF_THRESHOLD,
   };
 
-  // Create the data structure, if needed
-  if (!comparisonFile.results) {
-    comparisonFile.results = {
-      marketValue: marketValueResults,
-    }
-  }
-  else {
-    comparisonFile.results.marketValue = marketValueResults;
-  }
+  comparisonFile.results.marketValue = marketValueResults;
+}
+
+/**
+ * Compares the liquid backing from two branches, and adds the results to {comparisonFile}.
+ * 
+ * @param baseRecords 
+ * @param branchRecords 
+ * @param comparisonFile 
+ */
+ const compareLiquidBacking = (baseRecords: TokenRecord[], branchRecords: TokenRecord[], comparisonFile: ComparisonResults): void => {
+  // Perform sums
+  console.info("Comparing liquid backing");
+  const baseLiquidBacking = calculateLiquidBacking(baseRecords);
+  console.info("Base = " + baseLiquidBacking);
+  const branchLiquidBacking = calculateLiquidBacking(branchRecords);
+  console.info("Branch = " + branchLiquidBacking);
+
+  // Output to file
+  const liquidBackingResults = {
+    base: baseLiquidBacking,
+    branch: branchLiquidBacking,
+    result:
+      baseLiquidBacking - branchLiquidBacking < DIFF_THRESHOLD &&
+      branchLiquidBacking - baseLiquidBacking < DIFF_THRESHOLD,
+  };
+
+  comparisonFile.results.liquidBacking = liquidBackingResults;
+}
+
+const compareTokenRecords = (filenameBase: string, filenameBranch: string, comparisonFile: ComparisonResults): void => {
+  console.info(`Comparing token records for base file ${filenameBase} and branch file ${filenameBranch}`);
+
+  // Read files, parse into JSON
+  const baseRecords = getTokenRecordsFromFile(filenameBase);
+  const branchRecords = getTokenRecordsFromFile(filenameBranch);
+
+  compareMarketValue(baseRecords, branchRecords, comparisonFile);
+  compareLiquidBacking(baseRecords, branchRecords, comparisonFile);
 
   writeComparisonFile(comparisonFile);
 };

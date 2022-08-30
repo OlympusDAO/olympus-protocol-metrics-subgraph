@@ -103,12 +103,17 @@ jobs:
           echo "::set-output name=block::$(jq -r .latestBlock query-test/comparison.json)"
           echo "::set-output name=subgraphId-base::$(jq -r .branches.base.subgraphId query-test/comparison.json)"
           echo "::set-output name=subgraphId-branch::$(jq -r .branches.branch.subgraphId query-test/comparison.json)"
-          RESULT="✅" && [[ $(jq -r .marketValue.result query-test/comparison.json) == true ]] && RESULT="❌"
-          echo "::set-output name=result::$RESULT"
-          RESULT_MESSAGE="Values were within threshold." && [[ $(jq -r .marketValue.result query-test/comparison.json) == true ]] && RESULT_MESSAGE="Values were NOT within threshold."
-          echo "::set-output name=result-message::$RESULT_MESSAGE"
+
           echo "::set-output name=marketValue-base::$(jq -r .results.marketValue.base query-test/comparison.json)"
           echo "::set-output name=marketValue-branch::$(jq -r .results.marketValue.branch query-test/comparison.json)"
+          MARKETVALUE_RESULT="✅" && [[ $(jq -r .marketValue.result query-test/comparison.json) == true ]] && MARKETVALUE_RESULT="❌"
+          echo "::set-output name=marketValue-result::$MARKETVALUE_RESULT"
+
+          echo "::set-output name=liquidBacking-base::$(jq -r .results.liquidBacking.base query-test/comparison.json)"
+          echo "::set-output name=liquidBacking-branch::$(jq -r .results.liquidBacking.branch query-test/comparison.json)"
+          LIQUIDBACKING_RESULT="✅" && [[ $(jq -r .liquidBacking.result query-test/comparison.json) == true ]] && LIQUIDBACKING_RESULT="❌"
+          echo "::set-output name=liquidBacking-result::$LIQUIDBACKING_RESULT"
+          
           echo "DIFF<<EOF" >> $GITHUB_ENV
           echo "$(/home/runner/go/bin/jd -set query-test/records-base.json query-test/records-branch.json)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -118,8 +123,6 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             **Block**: ${{ steps.result.outputs.block }}
-            **Result**: ${{ steps.result.outputs.result }}
-            ${{ steps.result.outputs.result-message }}
 
             **Subgraph id**:
               Base: ${{ steps.result.outputs.subgraphId-base }}
@@ -128,6 +131,12 @@ jobs:
             **Market Value**:
               Base: ${{ steps.result.outputs.marketValue-base }}
               Branch: ${{ steps.result.outputs.marketValue-branch }}
+              Result: ${{ steps.result.outputs.marketValue-result }}
+
+            **Liquid Backing**:
+              Base: ${{ steps.result.outputs.liquidBacking-base }}
+              Branch: ${{ steps.result.outputs.liquidBacking-branch }}
+              Result: ${{ steps.result.outputs.liquidBacking-result }}
 
             Diff of token records:
             ```diff
