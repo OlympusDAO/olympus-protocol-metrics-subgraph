@@ -163,7 +163,7 @@ jobs:
               Result: ${{ steps.result.outputs.liquidBacking-result }}
 
             **Liquid Backing Check (Current Branch Only)**:
-              Purpose: *Does a sanity check between market value and liquid backing for the current branch. A difference in the value indicates that a change in assets has broken the consistency of the formula.*
+              Purpose: *Does a sanity check between market value and liquid backing for the current branch. A difference in the value indicates that a change in assets or categorisation has broken the consistency of the formula.*
               Formula: Market value = liquid backing + illiquid assets + # OHM in POL * OHM price
               Market Value: ${{ steps.result.outputs.liquidBackingCheck-marketValue }}
               Liquid Backing: ${{ steps.result.outputs.liquidBackingCheck-liquidBacking }}
@@ -174,7 +174,7 @@ jobs:
               Result: ${{ steps.result.outputs.liquidBackingCheck-result }}
 
             **Market Value Check (Current Branch Only)**:
-              Purpose: *Does a sanity check of market value for the current branch. A difference in the value indicates that a change in assets has broken the consistency of the formula.*
+              Purpose: *Does a sanity check of market value for the current branch. A difference in the value indicates that a change in assets or categorisation has broken the consistency of the formula.*
               Formula: Market value = market value (stable) + market value (volatile) + market value (POL)
               Market Value Total: ${{ steps.result.outputs.marketValueCheck-marketValueTotal }}
               Stable Assets: ${{ steps.result.outputs.marketValueCheck-marketValueStable }}
