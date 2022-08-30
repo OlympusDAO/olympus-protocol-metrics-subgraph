@@ -107,8 +107,8 @@ jobs:
           echo "::set-output name=result::$RESULT"
           RESULT_MESSAGE="Values were within threshold." && [[ $(jq -r .marketValue.result query-test/comparison.json) == true ]] && RESULT_MESSAGE="Values were NOT within threshold."
           echo "::set-output name=result-message::$RESULT_MESSAGE"
-          echo "::set-output name=marketValue-base::$(jq -r .marketValue.base query-test/comparison.json)"
-          echo "::set-output name=marketValue-branch::$(jq -r .marketValue.branch query-test/comparison.json)"
+          echo "::set-output name=marketValue-base::$(jq -r .results.marketValue.base query-test/comparison.json)"
+          echo "::set-output name=marketValue-branch::$(jq -r .results.marketValue.branch query-test/comparison.json)"
           echo "DIFF<<EOF" >> $GITHUB_ENV
           echo "$(/home/runner/go/bin/jd -set query-test/records-base.json query-test/records-branch.json)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -118,8 +118,8 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             **Block**: ${{ steps.result.outputs.block }}
-            **Result**: 
-            Values were within threshold.
+            **Result**: ${{ steps.result.outputs.result }}
+            ${{ steps.result.outputs.result-message }}
 
             **Subgraph id**:
               Base: ${{ steps.result.outputs.subgraphId-base }}
