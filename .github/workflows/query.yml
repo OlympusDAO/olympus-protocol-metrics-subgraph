@@ -90,9 +90,9 @@ jobs:
       - name: Determine Result
         id: result
         run: |
-          echo "::set-output name=result::$(jq .marketValue.result comparison.json)"
-          echo "::set-output name=marketValue-base::$(jq .marketValue.base comparison.json)"
-          echo "::set-output name=marketValue-branch::$(jq .marketValue.branch comparison.json)"
+          echo "::set-output name=result::$(jq .marketValue.result query-test/comparison.json)"
+          echo "::set-output name=marketValue-base::$(jq .marketValue.base query-test/comparison.json)"
+          echo "::set-output name=marketValue-branch::$(jq .marketValue.branch query-test/comparison.json)"
           echo "::set-output name=dif::$(diff <(jq --sort-keys . records-base.json) <(jq --sort-keys . records-branch.json))"
       - name: Post Comment - Success
         if: ${{ steps.result.result }} == true
