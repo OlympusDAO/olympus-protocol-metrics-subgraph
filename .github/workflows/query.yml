@@ -99,10 +99,7 @@ jobs:
           echo "::set-output name=marketValue-base::$(jq .marketValue.base query-test/comparison.json)"
           echo "::set-output name=marketValue-branch::$(jq .marketValue.branch query-test/comparison.json)"
           echo "DIFF<<EOF" >> $GITHUB_ENV
-          go env
-          echo $GOPATH
-          echo $GOROOT
-          echo "$($GOPATH/bin/jd -set records-base.json records-branch.json)" >> $GITHUB_ENV
+          echo "$(/home/runner/go/bin/jd -set records-base.json records-branch.json)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
       - name: Post Comment - Success
         if: steps.result.outputs.result == 'true'
