@@ -2,9 +2,43 @@
 
 import { ApolloClient, gql, HttpLink, InMemoryCache } from "@apollo/client/core";
 import { fetch } from "cross-fetch";
-import { writeFileSync, readFileSync } from "fs";
+import { writeFileSync, readFileSync, existsSync } from "fs";
 
 const COMMANDS = ["latest-block", "test", "compare"];
+const COMPARISON_FILE = "comparison.json";
+
+type ComparisonResults = {
+  latestBlock?: string;
+  branches?: {
+    base: {
+      subgraphId: string;
+    };
+    branch: {
+      subgraphId: string;
+    };
+  };
+  results?: {
+    marketValue: {
+      base: number;
+      branch: number;
+      result: boolean;
+    };
+  }
+};
+
+const readComparisonFile = (): ComparisonResults => {
+  // Silently create the data structure if the file doesn't exist
+  if (!existsSync(COMPARISON_FILE)) {
+    return {};
+  }
+
+  return JSON.parse(readFileSync(COMPARISON_FILE, "utf8"));
+}
+
+const writeComparisonFile = (comparisonFile: ComparisonResults): void => {
+  writeFileSync(COMPARISON_FILE, JSON.stringify(comparisonFile, null, 2));
+  console.info(`Wrote comparison results to ${COMPARISON_FILE}`);
+}
 
 const performQuery = async (subgraphId: string, query: string): Promise<any> => {
   const SUBGRAPH_BASE = "https://api.thegraph.com/subgraphs/id/";
@@ -31,11 +65,17 @@ const getLatestBlock = async (subgraphId: string): Promise<string> => {
   return results.data.tokenRecords[0].block;
 };
 
-const writeLatestBlock = (subgraphId: string): void => {
-  const FILENAME = "block.txt";
+/**
+ * Fetches the latest block for the given subgraphId, and writes it to ${COMPARISON_FILE}.
+ * 
+ * @param subgraphId 
+ * @param comparisonFile 
+ */
+const writeLatestBlock = (subgraphId: string, comparisonFile: ComparisonResults): void => {
   getLatestBlock(subgraphId).then((latestBlock) => {
-    writeFileSync(FILENAME, latestBlock);
-    console.info(`Latest block written to ${FILENAME}`);
+    comparisonFile.latestBlock = latestBlock;
+    writeComparisonFile(comparisonFile);
+    console.info(`Latest block written to ${COMPARISON_FILE}`);
   });
 };
 
@@ -55,6 +95,13 @@ type TokenRecord = {
   isBluechip: boolean;
 };
 
+/**
+ * Fetches an array of TokenRecord objects from the GraphQL server.
+ * 
+ * @param subgraphId 
+ * @param block 
+ * @returns 
+ */
 const getTokenRecords = async (subgraphId: string, block: string): Promise<TokenRecord[]> => {
   const query = `
   {
@@ -79,11 +126,16 @@ const getTokenRecords = async (subgraphId: string, block: string): Promise<Token
   return results.data.tokenRecords;
 };
 
-const writeTokenRecords = (subgraphId: string, block: string): void => {
-  const FILENAME = "records.json";
+const writeTokenRecords = (subgraphId: string, testMode: string, block: string, comparisonFile: ComparisonResults): void => {
+  const FILENAME = `records-${testMode}.json`;
   getTokenRecords(subgraphId, block).then((tokenRecords) => {
+    // Write to a JSON file
     writeFileSync(FILENAME, JSON.stringify(tokenRecords, null, 2));
     console.info(`TokenRecord results written to ${FILENAME}`);
+
+    // Update the comparison results and write
+    comparisonFile.branches[testMode].subgraphId = subgraphId;
+    writeComparisonFile(comparisonFile);
   });
 };
 
@@ -127,7 +179,7 @@ const calculateMarketValue = (records: TokenRecord[]): number => {
   }, 0);
 };
 
-const compareTokenRecords = (filenameBase: string, filenameBranch: string): void => {
+const compareTokenRecords = (filenameBase: string, filenameBranch: string, comparisonFile: ComparisonResults): void => {
   // Read files, parse into JSON
   const baseRecords = getTokenRecordsFromFile(filenameBase);
   const branchRecords = getTokenRecordsFromFile(filenameBranch);
@@ -141,20 +193,27 @@ const compareTokenRecords = (filenameBase: string, filenameBranch: string): void
 
   // Output to file
   const DIFF_THRESHOLD = 1000;
-  const FILENAME = "comparison.json";
-  const comparisonOutput = {
-    marketValue: {
-      base: baseMarketValue,
-      branch: branchMarketValue,
-      result:
-        baseMarketValue - branchMarketValue < DIFF_THRESHOLD &&
-        branchMarketValue - baseMarketValue < DIFF_THRESHOLD,
-    },
+  comparisonFile.results.marketValue = {
+    base: baseMarketValue,
+    branch: branchMarketValue,
+    result:
+      baseMarketValue - branchMarketValue < DIFF_THRESHOLD &&
+      branchMarketValue - baseMarketValue < DIFF_THRESHOLD,
   };
-
-  writeFileSync(FILENAME, JSON.stringify(comparisonOutput, null, 2));
-  console.info(`Wrote comparison output to ${FILENAME}`);
+  writeComparisonFile(comparisonFile);
 };
+
+const getTestMode = (args: string[]): string => {
+  const MODES = ["base", "branch"];
+  const testMode = args[4];
+
+  if (!MODES.includes(testMode)) {
+    console.error(`The testMode parameter must be one of ${MODES.join(", ")}, but was: ${testMode}`);
+    process.exit(1);
+  }
+
+  return testMode;
+}
 
 const main = (cliArgs: string[]): void => {
   // ts-node,filename,command
@@ -169,30 +228,33 @@ const main = (cliArgs: string[]): void => {
     process.exit(1);
   }
 
+  const comparisonFile = readComparisonFile();
+
   switch (inputCommand) {
     case "latest-block": {
       const subgraphId = getSubgraphId(cliArgs, 3);
-      writeLatestBlock(subgraphId);
+      writeLatestBlock(subgraphId, comparisonFile);
       break;
     }
     case "test": {
       const subgraphId = getSubgraphId(cliArgs, 3);
-      if (cliArgs.length < 5) {
+      if (cliArgs.length < 6) {
         console.error(
-          `The block to fetch should be specified in the format: yarn ts-node index.ts ${inputCommand} ${subgraphId} <block number>`,
+          `The block to fetch should be specified in the format: yarn ts-node index.ts ${inputCommand} ${subgraphId} <base|branch> <block number>`,
         );
         process.exit(1);
       }
 
-      const block = cliArgs[4];
-      writeTokenRecords(subgraphId, block);
+      const testMode = getTestMode(cliArgs);
+      const block = cliArgs[5];
+      writeTokenRecords(subgraphId, testMode, block, comparisonFile);
       break;
     }
     case "compare": {
       const filenameBase = getFilename(cliArgs, 3);
       const filenameBranch = getFilename(cliArgs, 4);
 
-      compareTokenRecords(filenameBase, filenameBranch);
+      compareTokenRecords(filenameBase, filenameBranch, comparisonFile);
       break;
     }
     default: {
