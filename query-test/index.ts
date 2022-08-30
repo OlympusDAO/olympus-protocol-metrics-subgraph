@@ -377,7 +377,7 @@ program.name("query-test")
 
 program.command("latest-block")
   .description("Determines the latest block for a subgraph")
-  .requiredOption("--subgraph <subgraph id>", "the subgraph id", parseSubgraphId)
+  .requiredOption("--subgraph <subgraph id>", "the subgraph id (starts with 'Qm')", parseSubgraphId)
   .action((options) => {
     const comparisonFile = readComparisonFile();
     writeLatestBlock(options.subgraph, comparisonFile);
@@ -385,7 +385,7 @@ program.command("latest-block")
 
 program.command("test")
   .description("Performs a test subgraph query")
-  .requiredOption("--subgraph <subgraph id>", "the subgraph id", parseSubgraphId)
+  .requiredOption("--subgraph <subgraph id>", "the subgraph id (starts with 'Qm')", parseSubgraphId)
   .requiredOption("--branch <base | branch>", "the branch", parseBranch)
   .requiredOption("--block <block number>", "the block number")
   .action((options) => {
