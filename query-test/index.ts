@@ -211,8 +211,6 @@ const writeTokenRecords = (subgraphId: string, branch: string, block: string, co
     console.info(`TokenRecord results written to ${FILENAME}`);
 
     // Update the comparison results and write
-    console.log("comparison file = " + JSON.stringify(comparisonFile, null, 2));
-    console.log("branch = " + branch);
     comparisonFile.branches[branch] = {
       subgraphId: subgraphId,
     };
