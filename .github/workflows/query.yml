@@ -93,7 +93,12 @@ jobs:
           echo "::set-output name=result::$(jq .marketValue.result query-test/comparison.json)"
           echo "::set-output name=marketValue-base::$(jq .marketValue.base query-test/comparison.json)"
           echo "::set-output name=marketValue-branch::$(jq .marketValue.branch query-test/comparison.json)"
-          echo "::set-output name=diff::$(diff <(jq --sort-keys . records-base.json) <(jq --sort-keys . records-branch.json))"
+      - name: Run Diff
+        id: diff
+        # Step output cannot be a multiline value, so we use this: https://stackoverflow.com/a/68954061
+        uses: mkungla/actions-set-text-output@v1
+        with:
+          text: $(diff <(jq --sort-keys . records-base.json) <(jq --sort-keys . records-branch.json))
       - name: Post Comment - Success
         if: steps.result.outputs.result == 'true'
         uses: peter-evans/create-or-update-comment@v2
@@ -109,7 +114,8 @@ jobs:
 
             Diff of token records:
             ```diff
-            ${{ steps.result.outputs.diff }}
+            ${{ steps.diff.outputs.value }}
+            ```
       - name: Post Comment - Failure
         if: steps.result.outputs.result == 'false'
         uses: peter-evans/create-or-update-comment@v2
@@ -125,5 +131,5 @@ jobs:
 
             Diff of token records:
             ```diff
-            ${{ steps.result.outputs.diff }}
+            ${{ steps.diff.outputs.value }}
             ```
