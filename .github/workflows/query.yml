@@ -95,7 +95,7 @@ jobs:
           echo "::set-output name=marketValue-branch::$(jq .marketValue.branch query-test/comparison.json)"
           echo "::set-output name=dif::$(diff <(jq --sort-keys . records-base.json) <(jq --sort-keys . records-branch.json))"
       - name: Post Comment - Success
-        if: ${{ steps.result.result }} == true
+        if: steps.result.outputs.result == "true"
         uses: peter-evans/create-or-update-comment@v2
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -104,10 +104,10 @@ jobs:
             Values were within threshold.
 
             Market Value:
-             Base: ${{ steps.result.marketValue-base }}
-             Branch: ${{ steps.result.marketValue-branch }}
+             Base: ${{ steps.result.outputs.marketValue-base }}
+             Branch: ${{ steps.result.outputs.marketValue-branch }}
       - name: Post Comment - Failure
-        if: ${{ steps.result.result }} == false
+        if: steps.result.outputs.result == "false"
         uses: peter-evans/create-or-update-comment@v2
         with:
           issue-number: ${{ github.event.pull_request.number }}
@@ -116,10 +116,10 @@ jobs:
             Values were NOT within threshold.
 
             Market Value:
-             Base: ${{ steps.result.marketValue-base }}
-             Branch: ${{ steps.result.marketValue-branch }}
+             Base: ${{ steps.result.outputs.marketValue-base }}
+             Branch: ${{ steps.result.outputs.marketValue-branch }}
 
             Diff:
             ```diff
-            ${{ steps.result.diff }}
+            ${{ steps.result.outputs.diff }}
             ```
