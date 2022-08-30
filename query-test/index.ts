@@ -203,15 +203,17 @@ type TokenSupply = {
   return parseFloat(results.data.protocolMetrics[0].ohmPrice);
  };
 
-const writeTokenRecords = (subgraphId: string, testMode: string, block: string, comparisonFile: ComparisonResults): void => {
-  const FILENAME = `records-${testMode}.json`;
+const writeTokenRecords = (subgraphId: string, branch: string, block: string, comparisonFile: ComparisonResults): void => {
+  const FILENAME = `records-${branch}.json`;
   getTokenRecords(subgraphId, block).then((tokenRecords) => {
     // Write to a JSON file
     writeFileSync(FILENAME, JSON.stringify(tokenRecords, null, 2));
     console.info(`TokenRecord results written to ${FILENAME}`);
 
     // Update the comparison results and write
-    comparisonFile.branches[testMode] = {
+    console.log("comparison file = " + JSON.stringify(comparisonFile, null, 2));
+    console.log("branch = " + branch);
+    comparisonFile.branches[branch] = {
       subgraphId: subgraphId,
     };
     writeComparisonFile(comparisonFile);
