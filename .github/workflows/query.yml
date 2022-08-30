@@ -10,7 +10,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.head_ref }}
       - name: Set Yarn Shell
         run: yarn config set script-shell bash
       - name: Get Latest Block
