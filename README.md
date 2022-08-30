@@ -46,6 +46,7 @@ If you receive a non-sensical test result (e.g. duplicated test cases, or a test
 1. Update the `SUBGRAPH_VERSION` variable in the `.subgraph-version` file.
 1. Run `yarn build`
 1. Run `yarn deploy:dev`
+1. Update the `SUBGRAPH_ID` variable in the `.subgraph-version` file with the subgraph id that was displayed in the output.
 
 A URL for the GraphQL Explorer will be provided.
 
@@ -61,8 +62,11 @@ To deploy, do the following:
 
 1. Add the Subgraph Studio deploy key to the `GRAPH_TOKEN` variable in `.env` (using `.env.sample`)
 1. Authenticate using `yarn auth`
+1. Update the `SUBGRAPH_VERSION` variable in the `.subgraph-version` file.
 1. Run `yarn build`
 1. Run `yarn deploy`
+1. Update the `SUBGRAPH_ID` variable in the `.subgraph-version` file with the subgraph id that was displayed in the output.
+1. Update `CHANGELOG.md`.
 
 ### Deployment (Local)
 
@@ -292,4 +296,15 @@ Follow these steps to convert the JSON data into CSV:
 
 ### Unit Tests
 
+For every pull request, GitHub Actions runs the unit tests. See `.github/workflows/main.yml` for details.
+
 ### Query Tests
+
+For every pull request, GitHub Actions runs tests against the subgraph query. See `.github/workflows/query.yml` for details.
+
+These query tests are run in order to:
+
+- Highlight any significant differences in the market value and/or liquid backing between branches.
+- Highlight if the consistency of the market value and liquid backing differ for the branch to be merged.
+
+Results are posted as a comment in the GitHub pull request.
