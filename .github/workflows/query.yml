@@ -139,19 +139,22 @@ jobs:
               Base: ${{ steps.result.outputs.subgraphId-base }}
               Branch: ${{ steps.result.outputs.subgraphId-branch }}
 
-            **Market Value**:
+            **Market Value (Branch Comparison)**:
+              Purpose: *Shows the difference in market value between branches. If the numbers differ, it may be due to assets being added/removed. Check that the difference is expected, and refer to the TokenRecords diff below for more details.*
               Base: ${{ steps.result.outputs.marketValue-base }}
               Branch: ${{ steps.result.outputs.marketValue-branch }}
               Difference in Value: ${{ steps.result.outputs.marketValue-diff }}
               Result: ${{ steps.result.outputs.marketValue-result }}
 
-            **Liquid Backing**:
+            **Liquid Backing (Branch Comparison)**:
+              Purpose: *Shows the difference in liquid backing between branches. If the numbers differ, it may be due to assets being added/removed. Check that the difference is expected, and refer to the TokenRecords diff below for more details.*
               Base: ${{ steps.result.outputs.liquidBacking-base }}
               Branch: ${{ steps.result.outputs.liquidBacking-branch }}
               Difference in Value: ${{ steps.result.outputs.liquidBacking-diff }}
               Result: ${{ steps.result.outputs.liquidBacking-result }}
 
-            **Liquid Backing Check**:
+            **Liquid Backing Check (Current Branch Only)**:
+              Purpose: *Does a sanity check between market value and liquid backing for the current branch. A difference in the value indicates that a change in assets has broken the consistency of the formula.*
               Formula: Market value = liquid backing + illiquid assets + # OHM in POL * OHM price
               Market Value: ${{ steps.result.outputs.liquidBackingCheck-marketValue }}
               Liquid Backing: ${{ steps.result.outputs.liquidBackingCheck-liquidBacking }}
@@ -161,7 +164,7 @@ jobs:
               Difference in Value: ${{ steps.result.outputs.liquidBackingCheck-diff }}
               Result: ${{ steps.result.outputs.liquidBackingCheck-result }}
 
-            Diff of token records:
+            **Diff of TokenRecord objects**:
             ```diff
             ${{ env.DIFF }}
             ```
