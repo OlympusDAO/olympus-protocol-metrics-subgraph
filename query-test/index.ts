@@ -309,7 +309,7 @@ const compareMarketValueRecords = (baseRecords: TokenRecord[], branchRecords: To
 const doLiquidBackingCheck = (tokenRecords: TokenRecord[], supplyRecords: TokenSupply[], ohmPrice: number, comparisonFile: ComparisonResults): void => {
   const marketValue = calculateMarketValue(tokenRecords);
   const liquidBacking = calculateLiquidBacking(tokenRecords);
-  const ohmInLiquidity = supplyRecords.filter((tokenSupply) => tokenSupply.type == "Protocol-Owned Liquidity").reduce((previousValue, tokenSupply) => previousValue + +tokenSupply.balance, 0);
+  const ohmInLiquidity = supplyRecords.filter((tokenSupply) => tokenSupply.type == "Liquidity").reduce((previousValue, tokenSupply) => previousValue + +tokenSupply.balance, 0);
   const illiquidAssetsValue = tokenRecords.filter((tokenRecord) => tokenRecord.isLiquid == false).reduce((previousValue, tokenRecord) => previousValue + +tokenRecord.value, 0);
   const marketValueSum = liquidBacking + illiquidAssetsValue + ohmInLiquidity * ohmPrice;
 
