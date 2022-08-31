@@ -14,7 +14,7 @@ jobs:
       - name: Check Variables
         run: |
           source .subgraph-version
-          [[ ! -z "$SUBGRAPH_ID" ]] && echo "SUBGRAPH_ID is set" || (echo "SUBGRAPH_ID is not set" && exit 1)
+          [[ ! -z "$SUBGRAPH_ID" ]] && echo "SUBGRAPH_ID is set" || (echo "::error::SUBGRAPH_ID is not set in .subgraph-version" && exit 1)
       - name: Set Yarn Shell
         run: yarn config set script-shell bash
       - name: Get Latest Block
@@ -45,7 +45,7 @@ jobs:
       - name: Check Variables
         run: |
           source .subgraph-version
-          [[ ! -z "$SUBGRAPH_ID" ]] && echo "SUBGRAPH_ID is set" || (echo "SUBGRAPH_ID is not set" && exit 1)
+          [[ ! -z "$SUBGRAPH_ID" ]] && echo "SUBGRAPH_ID is set" || (echo "::error::SUBGRAPH_ID is not set in .subgraph-version" && exit 1)
       - name: Set Yarn Shell
         run: yarn config set script-shell bash
       - name: Download Comparison File
