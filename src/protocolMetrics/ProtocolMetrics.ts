@@ -1,7 +1,6 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { ethereum } from "@graphprotocol/graph-ts";
 
-import { StakeCall } from "../../generated/ProtocolMetrics/OlympusStakingV3";
 import { ProtocolMetric } from "../../generated/schema";
 import { getISO8601StringFromTimestamp } from "../helpers/DateHelper";
 import { getGOhmTotalSupply } from "../utils/GOhmCalculations";
