@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 3.0.17 ()
+
+- Add support for FraxSwap V2 pool
+
 ## 3.0.8 (2022-08-26)
 
 - Add support for BTRFLY V1 and V2 tokens and protocol-owned liquidity (#41 and #67)
