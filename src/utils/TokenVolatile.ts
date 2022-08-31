@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../generated/schema";
 import { getLiquidityBalances } from "../liquidity/LiquidityCalculations";
@@ -19,40 +19,7 @@ import {
 } from "./ContractHelper";
 import { getUSDRate } from "./Price";
 import { TokenCategoryVolatile } from "./TokenDefinition";
-import { createOrUpdateTokenRecord, getTokensInCategory } from "./TokenRecordHelper";
-
-/**
- * Returns the value of vesting assets in the treasury
- *
- * @returns TokenRecord array
- */
-export function getVestingAssets(timestamp: BigInt, blockNumber: BigInt): TokenRecord[] {
-  // Cross chain assets that can not be tracked right now
-  // pklima
-  // butterfly
-  // Vsta
-  // PhantomDAO
-  // Lobis
-  // TODO remove hard-coded number
-  const records: TokenRecord[] = [];
-
-  const record = createOrUpdateTokenRecord(
-    timestamp,
-    "Vesting Assets",
-    "N/A",
-    "No source",
-    "0x0",
-    BigDecimal.fromString("1"),
-    BigDecimal.fromString("32500000"),
-    blockNumber,
-    false,
-    BigDecimal.fromString("1"),
-    TokenCategoryVolatile,
-  );
-  records.push(record);
-
-  return records;
-}
+import { getTokensInCategory } from "./TokenRecordHelper";
 
 /**
  * Returns the token records for a given volatile token. This includes:
@@ -70,7 +37,6 @@ export function getVolatileTokenBalance(
   includeLiquidity: boolean,
   blockNumber: BigInt,
 ): TokenRecord[] {
-  // TODO consider changing function signature, as excludeOhmValue and restrictToTokenValue are relevant only if includeLiquidity = true
   const contractName = getContractName(contractAddress);
   log.info("Calculating volatile token balance for {} ({}) at block number {}: liquidity? {}", [
     contractName,
@@ -151,7 +117,7 @@ export function getVolatileTokenBalance(
  * Gets the balances for all volatile tokens, using {getVolatileTokenBalance}.
  *
  * @param timestamp
- * @param liquidOnly If true, exclude illiquid assets. This is currently limited to vesting assets.
+ * @param liquidOnly If true, exclude illiquid assets.
  * @param includeLiquidity If true, includes volatile assets in protocol-owned liquidity
  * @param includeBlueChip If true, includes blue-chip assets (wETH and wBTC)
  * @param blockNumber the current block
@@ -186,11 +152,6 @@ export function getVolatileTokenBalances(
       records,
       getVolatileTokenBalance(timestamp, currentTokenAddress, includeLiquidity, blockNumber),
     );
-  }
-
-  // We add vesting assets manually for now
-  if (!liquidOnly) {
-    pushArray(records, getVestingAssets(timestamp, blockNumber));
   }
 
   return records;
