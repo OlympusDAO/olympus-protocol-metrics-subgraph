@@ -25,14 +25,14 @@
     "assemblyscript-json": "^1.1.0"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^5.34.0",
+    "@typescript-eslint/eslint-plugin": "^5.36.1",
     "@typescript-eslint/parser": "^5.35.1",
-    "eslint": "^8.22.0",
+    "eslint": "^8.23.0",
     "eslint-plugin-simple-import-sort": "^7.0.0",
     "matchstick-as": "^0.5.0",
     "prettier": "^2.6.2",
     "ts-prune": "^0.10.3",
-    "typescript": "^4.6.4"
+    "typescript": "^4.8.2"
   },
   "resolutions": {
     "ejs": "^3.1.7",
