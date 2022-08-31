@@ -15,6 +15,7 @@ import {
   ERC20_USDC,
   getWalletAddressesForContract,
   PAIR_FRAXSWAP_V1_OHM_FRAX,
+  PAIR_FRAXSWAP_V2_OHM_FRAX,
   TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import { toBigInt, toDecimal } from "../src/utils/Decimals";
@@ -118,6 +119,18 @@ export function mockFraxSwapPair(
 export function mockFraxSwapPairZero(): void {
   mockFraxSwapPair(
     PAIR_FRAXSWAP_V1_OHM_FRAX,
+    BigDecimal.fromString("0"),
+    FRAXSWAP_OHM_FRAX_DECIMALS,
+    FRAXSWAP_OHM_FRAX_TOKEN0,
+    FRAXSWAP_OHM_FRAX_TOKEN1,
+    FRAXSWAP_OHM_FRAX_TOKEN0_DECIMALS,
+    FRAXSWAP_OHM_FRAX_TOKEN1_DECIMALS,
+    BigDecimal.fromString("0"),
+    BigDecimal.fromString("0"),
+  );
+
+  mockFraxSwapPair(
+    PAIR_FRAXSWAP_V2_OHM_FRAX,
     BigDecimal.fromString("0"),
     FRAXSWAP_OHM_FRAX_DECIMALS,
     FRAXSWAP_OHM_FRAX_TOKEN0,
@@ -319,6 +332,7 @@ describe("get token records", () => {
     mockCurvePairZero();
     mockBalancerVaultZero();
     mockUniswapV2PairsZero();
+    mockFraxSwapPairZero();
 
     // Needed for BTRFLY
     mockWEthBtrflyV1Rate();
