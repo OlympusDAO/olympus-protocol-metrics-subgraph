@@ -25,14 +25,15 @@ dataSources:
           file: ./abis/sOlympusERC20.json
         - name: OlympusERC20
           file: ./abis/OlympusERC20.json
+        # Needed for price lookup
+        - name: ERC20
+          file: ./abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
           file: ./abis/BalancerVault.json
         - name: BalancerPoolToken
           file: ./abis/BalancerPoolToken.json
-        - name: ERC20
-          file: ./abis/ERC20.json
       callHandlers:
         - function: rebase(uint256)
           handler: rebaseFunction
@@ -57,14 +58,15 @@ dataSources:
           file: ./abis/sOlympusERC20V2.json
         - name: OlympusERC20
           file: ./abis/OlympusERC20.json
+        # Needed for price lookup
+        - name: ERC20
+          file: ./abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
           file: ./abis/BalancerVault.json
         - name: BalancerPoolToken
           file: ./abis/BalancerPoolToken.json
-        - name: ERC20
-          file: ./abis/ERC20.json
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
@@ -89,14 +91,15 @@ dataSources:
           file: ./abis/sOlympusERC20V3.json
         - name: OlympusERC20
           file: ./abis/OlympusERC20.json
+        # Needed for price lookup
+        - name: ERC20
+          file: ./abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
           file: ./abis/BalancerVault.json
         - name: BalancerPoolToken
           file: ./abis/BalancerPoolToken.json
-        - name: ERC20
-          file: ./abis/ERC20.json
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
@@ -179,10 +182,17 @@ dataSources:
       entities:
         - OHMDAIBondV1
       abis:
-        - name: UniswapV2Pair
-          file: ./abis/UniswapV2Pair.json
         - name: OHMDAIBondV1
           file: ./abis/OHMDAIBondV1.json
+        # Needed for price lookup
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: UniswapV2Pair
+          file: ./abis/UniswapV2Pair.json
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
       callHandlers:
         - function: depositBondPrinciple(uint256)
           handler: handleDeposit
@@ -202,10 +212,17 @@ dataSources:
       entities:
         - OHMDAIBondV2
       abis:
-        - name: UniswapV2Pair
-          file: ./abis/UniswapV2Pair.json
         - name: OHMDAIBondV2
           file: ./abis/OHMDAIBondV2.json
+        # Needed for price lookup
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: UniswapV2Pair
+          file: ./abis/UniswapV2Pair.json
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
@@ -225,10 +242,17 @@ dataSources:
       entities:
         - OHMDAIBondV3
       abis:
-        - name: UniswapV2Pair
-          file: ./abis/UniswapV2Pair.json
         - name: OHMDAIBondV3
           file: ./abis/OHMDAIBondV3.json
+        # Needed for price lookup
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: UniswapV2Pair
+          file: ./abis/UniswapV2Pair.json
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
@@ -248,10 +272,17 @@ dataSources:
       entities:
         - OHMDAIBondV4
       abis:
-        - name: UniswapV2Pair
-          file: ./abis/UniswapV2Pair.json
         - name: OHMDAIBondV4
           file: ./abis/OHMDAIBondV4.json
+        # Needed for price lookup
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: UniswapV2Pair
+          file: ./abis/UniswapV2Pair.json
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
@@ -271,10 +302,17 @@ dataSources:
       entities:
         - OHMFRAXBondV1
       abis:
-        - name: UniswapV2Pair
-          file: ./abis/UniswapV2Pair.json
         - name: OHMFRAXBondV1
           file: ./abis/OHMFRAXBondV1.json
+        # Needed for price lookup
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: UniswapV2Pair
+          file: ./abis/UniswapV2Pair.json
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
@@ -294,10 +332,17 @@ dataSources:
       entities:
         - OHMFRAXBondV2
       abis:
-        - name: UniswapV2Pair
-          file: ./abis/UniswapV2Pair.json
         - name: OHMFRAXBondV2
           file: ./abis/OHMFRAXBondV2.json
+        # Needed for price lookup
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: UniswapV2Pair
+          file: ./abis/UniswapV2Pair.json
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
@@ -338,10 +383,10 @@ dataSources:
       entities:
         - ETHBondV1
       abis:
-        - name: UniswapV2Pair
-          file: ./abis/UniswapV2Pair.json
         - name: ETHBondV1
           file: ./abis/ETHBondV1.json
+        - name: UniswapV2Pair
+          file: ./abis/UniswapV2Pair.json
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
@@ -382,10 +427,17 @@ dataSources:
       entities:
         - OHMLUSDBondV1
       abis:
-        - name: UniswapV2Pair
-          file: ./abis/UniswapV2Pair.json
         - name: OHMLUSDBondV1
           file: ./abis/LUSDBondV1.json
+        # Needed for price lookup
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: UniswapV2Pair
+          file: ./abis/UniswapV2Pair.json
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
@@ -405,16 +457,23 @@ dataSources:
       entities:
         - OHMETHBondV1
       abis:
-        - name: UniswapV2Pair
-          file: ./abis/UniswapV2Pair.json
         - name: OHMETHBondV1
           file: ./abis/OHMETHBondV1.json
+        # Needed for price lookup
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: UniswapV2Pair
+          file: ./abis/UniswapV2Pair.json
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
       file: ./src/bonds/OHMETHBondV1.ts
   - kind: ethereum/contract
-    name: ProtocolMetrics
+    name: BondDiscounts
     network: mainnet
     source:
       address: "0xB63cac384247597756545b500253ff8E607a8020"
@@ -425,7 +484,75 @@ dataSources:
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - ProtocolMetrics
+        - BondDiscount
+      abis:
+        - name: OlympusStakingV1
+          file: ./abis/OlympusStakingV1.json
+        - name: OlympusStakingV2
+          file: ./abis/OlympusStakingV2.json
+        - name: OlympusStakingV3
+          file: ./abis/OlympusStakingV3.json
+        - name: sOlympusERC20
+          file: ./abis/sOlympusERC20.json
+        - name: sOlympusERC20V2
+          file: ./abis/sOlympusERC20V2.json
+        - name: sOlympusERC20V3
+          file: ./abis/sOlympusERC20V3.json
+        - name: OlympusERC20
+          file: ./abis/OlympusERC20.json
+        # Needed for price lookup
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: UniswapV2Pair
+          file: ./abis/UniswapV2Pair.json
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
+        # Required for bond discounts
+        - name: DAIBondV1
+          file: ./abis/DAIBondV1.json
+        - name: DAIBondV2
+          file: ./abis/DAIBondV2.json
+        - name: DAIBondV3
+          file: ./abis/DAIBondV3.json
+        - name: OHMDAIBondV1
+          file: ./abis/OHMDAIBondV1.json
+        - name: OHMDAIBondV2
+          file: ./abis/OHMDAIBondV2.json
+        - name: OHMDAIBondV3
+          file: ./abis/OHMDAIBondV3.json
+        - name: OHMDAIBondV4
+          file: ./abis/OHMDAIBondV4.json
+        - name: OHMFRAXBondV1
+          file: ./abis/OHMFRAXBondV1.json
+        - name: OHMFRAXBondV2
+          file: ./abis/OHMFRAXBondV2.json
+        - name: FRAXBondV1
+          file: ./abis/FRAXBondV1.json
+        - name: ETHBondV1
+          file: ./abis/ETHBondV1.json
+        - name: LUSDBondV1
+          file: ./abis/LUSDBondV1.json
+        - name: OHMLUSDBondV1
+          file: ./abis/OHMLUSDBondV1.json
+      callHandlers:
+        - function: stake(address,uint256,bool,bool)
+          handler: handleBondDiscounts
+      file: ./src/bonds/BondDiscounts.ts
+  - kind: ethereum/contract
+    name: ProtocolMetrics
+    network: mainnet
+    source:
+      address: "0xB63cac384247597756545b500253ff8E607a8020"
+      abi: OlympusStakingV3
+      startBlock: 13918000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - ProtocolMetric
         - TokenRecord
         - TokenSupply
       abis:
@@ -453,32 +580,6 @@ dataSources:
           file: ./abis/ERC20.json
         - name: MasterChef
           file: ./abis/MasterChef.json
-        - name: DAIBondV1
-          file: ./abis/DAIBondV1.json
-        - name: DAIBondV2
-          file: ./abis/DAIBondV2.json
-        - name: DAIBondV3
-          file: ./abis/DAIBondV3.json
-        - name: OHMDAIBondV1
-          file: ./abis/OHMDAIBondV1.json
-        - name: OHMDAIBondV2
-          file: ./abis/OHMDAIBondV2.json
-        - name: OHMDAIBondV3
-          file: ./abis/OHMDAIBondV3.json
-        - name: OHMDAIBondV4
-          file: ./abis/OHMDAIBondV4.json
-        - name: OHMFRAXBondV1
-          file: ./abis/OHMFRAXBondV1.json
-        - name: OHMFRAXBondV2
-          file: ./abis/OHMFRAXBondV2.json
-        - name: FRAXBondV1
-          file: ./abis/FRAXBondV1.json
-        - name: ETHBondV1
-          file: ./abis/ETHBondV1.json
-        - name: LUSDBondV1
-          file: ./abis/LUSDBondV1.json
-        - name: OHMLUSDBondV1
-          file: ./abis/OHMLUSDBondV1.json
         - name: VeFXS
           file: ./abis/VeFXS.json
         - name: RariAllocator

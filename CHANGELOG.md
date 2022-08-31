@@ -6,6 +6,7 @@
 - Improve the accuracy of price lookup for LQTY
 - Add support for FraxSwap V2 pool
 - Remove hard-coded vesting assets (#3)
+- Split the calculation of bond discounts into a new data source
 
 ## 3.0.2 (2022-08-25)
 

@@ -1497,6 +1497,10 @@ function getVlCvxUnlockedBalance(
   const contract = vlCVX.bind(Address.fromString(tokenAddress));
   if (!contract) return null;
 
+  if (contract.try_lockedBalances(Address.fromString(allocatorAddress)).reverted) {
+    return null;
+  }
+
   const balances = contract.lockedBalances(Address.fromString(allocatorAddress));
 
   return toDecimal(balances.getUnlockable(), contract.decimals());
