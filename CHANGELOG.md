@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 3.0.17 ()
+## 3.0.18 () - QmXopH4TretXnTfTZXN1V1u2uATuHJfgY5smrrXx4Apwfm
 
 - Add support for FraxSwap V2 pool
 
