@@ -301,7 +301,13 @@ For every pull request, GitHub Actions runs the unit tests. See `.github/workflo
 
 ### Query Tests
 
-For every pull request, GitHub Actions runs tests against the subgraph query. See `.github/workflows/query.yml` for details.
+For every pull request, GitHub Actions runs tests against the current and destination branches' subgraphs. See `.github/workflows/query.yml` for implementation details.
+
+This has a few requirements:
+
+- The subgraph id must be recorded in the `SUBGRAPH_ID` variable in the `.subgraph-version` file. See the [Deployment Testing](#deployment-testing) section of this document for steps.
+- Both of the subgraphs must be active (not archived)
+- Both of the subgraphs must have overlapping blocks. The latest block of the `branch` subgraph will be determined and the `base` subgraph will be given a query against that block.
 
 These query tests are run in order to:
 

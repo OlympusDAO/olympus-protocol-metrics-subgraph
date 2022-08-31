@@ -1,9 +1,11 @@
 # Subgraph Changelog
 
-## 3.0.8 (2022-08-26)
+## 3.0.18 (<DATE>) - <SUBGRAPH_ID>
 
 - Add support for BTRFLY V1 and V2 tokens and protocol-owned liquidity (#41 and #67)
 - Improve the accuracy of price lookup for LQTY
+- Add support for FraxSwap V2 pool
+- Remove hard-coded vesting assets (#3)
 
 ## 3.0.2 (2022-08-25)
 
