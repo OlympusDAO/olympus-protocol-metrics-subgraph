@@ -12,7 +12,7 @@ import {
   ERC20_WETH,
   getWalletAddressesForContract,
   PAIR_CURVE_OHM_ETH,
-  PAIR_FRAXSWAP_OHM_FRAX,
+  PAIR_FRAXSWAP_V1_OHM_FRAX,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
@@ -98,11 +98,11 @@ describe("getLiquidityPoolValue", () => {
     // Mock balance
     const balance = BigDecimal.fromString("10");
     mockZeroWalletBalances(
-      PAIR_FRAXSWAP_OHM_FRAX,
-      getWalletAddressesForContract(PAIR_FRAXSWAP_OHM_FRAX),
+      PAIR_FRAXSWAP_V1_OHM_FRAX,
+      getWalletAddressesForContract(PAIR_FRAXSWAP_V1_OHM_FRAX),
     );
     mockWalletBalance(
-      PAIR_FRAXSWAP_OHM_FRAX,
+      PAIR_FRAXSWAP_V1_OHM_FRAX,
       TREASURY_ADDRESS_V3,
       toBigInt(balance, ERC20_STANDARD_DECIMALS),
     );
