@@ -546,7 +546,7 @@ dataSources:
     source:
       address: "0xB63cac384247597756545b500253ff8E607a8020"
       abi: OlympusStakingV3
-      startBlock: 13918000
+      startBlock: 14690000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
