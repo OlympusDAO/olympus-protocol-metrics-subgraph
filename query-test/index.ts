@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 import { ApolloClient, gql, HttpLink, InMemoryCache } from "@apollo/client/core";
+import { InvalidArgumentError, program } from "commander";
 import { fetch } from "cross-fetch";
-import { writeFileSync, readFileSync, existsSync } from "fs";
-import { program, InvalidArgumentError } from "commander";
+import { existsSync, readFileSync, writeFileSync } from "fs";
 
 const COMPARISON_FILE = "comparison.json";
 
@@ -47,17 +47,21 @@ type ComparisonResults = {
       marketValueCalculated: string;
       diff: string;
       result: boolean;
-    }
-  }
+    };
+  };
 };
 
 const formatCurrency = (value: number, decimals = 0): string => {
-  return value.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: decimals });
-}
+  return value.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: decimals,
+  });
+};
 
 const formatNumber = (value: number, decimals = 0): string => {
   return value.toLocaleString("en-US", { maximumFractionDigits: decimals });
-}
+};
 
 const readComparisonFile = (): ComparisonResults => {
   // Silently create the data structure if the file doesn't exist
@@ -69,12 +73,12 @@ const readComparisonFile = (): ComparisonResults => {
   }
 
   return JSON.parse(readFileSync(COMPARISON_FILE, "utf8"));
-}
+};
 
 const writeComparisonFile = (comparisonFile: ComparisonResults): void => {
   writeFileSync(COMPARISON_FILE, JSON.stringify(comparisonFile, null, 2));
   console.info(`Wrote comparison results to ${COMPARISON_FILE}`);
-}
+};
 
 const performQuery = async (subgraphId: string, query: string): Promise<any> => {
   const SUBGRAPH_BASE = "https://api.thegraph.com/subgraphs/id/";
@@ -88,28 +92,71 @@ const performQuery = async (subgraphId: string, query: string): Promise<any> => 
   return await gqlClient.query({ query: gql(query) });
 };
 
-const getLatestBlock = async (subgraphId: string): Promise<string> => {
-  const query = `
+/**
+ * Determines a block that can be used for testing.
+ *
+ * Currently, this looks for the latest block that is available, and determines
+ * the latest block for the previous day. The absolute latest block
+ * is likely to become out of date, as indexing would continue, leading to query errors.
+ *
+ * @param subgraphId
+ * @returns
+ * @throws Error if there are no results from the GraphQL query
+ */
+const getTestBlock = async (subgraphId: string): Promise<string> => {
+  // We first fetch the latest block for the query
+  const latestBlockQuery = `
   {
-    tokenRecords(first: 1 orderBy: block orderDirection: desc) {
+    tokenRecords(first: 1, orderBy: block, orderDirection: desc) {
+      date
       block
     }
   }
-`;
+  `;
+  console.info(
+    `Fetching latest block for subgraph id ${subgraphId} with query: ${latestBlockQuery}`,
+  );
+  const results = await performQuery(subgraphId, latestBlockQuery);
+  if (!results.data) {
+    throw new Error("getTestBlock: latest block query returned no results");
+  }
 
-  console.info(`Fetching latest block for subgraph id ${subgraphId}`);
-  const results = await performQuery(subgraphId, query);
-  return results.data.tokenRecords[0].block;
+  console.info(`Received latest block ${results.data.tokenRecords[0].block}`);
+  const latestBlockDate = results.data.tokenRecords[0].date;
+
+  // We then get the day before the latest block
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const dayBeforeDate = new Date(latestBlockDate);
+  dayBeforeDate.setTime(dayBeforeDate.getTime() - DAY_MS);
+  const dayBeforeDateString = dayBeforeDate.toISOString().split("T")[0];
+  const dayBeforeQuery = `
+  {
+    tokenRecords(first: 1, orderBy: block, orderDirection: desc, where: {date: "${dayBeforeDateString}"}) {
+      block
+    }
+  }
+  `;
+  console.info(
+    `Fetching latest block on date ${dayBeforeDateString} for subgraph id ${subgraphId} with query: ${dayBeforeQuery}`,
+  );
+  const dayBeforeResults = await performQuery(subgraphId, dayBeforeQuery);
+  if (!dayBeforeResults.data) {
+    throw new Error("getTestBlock: day before latest block query returned no results");
+  }
+
+  const dayBeforeLatestBlock = dayBeforeResults.data.tokenRecords[0].block;
+  console.info(`Received latest block ${dayBeforeLatestBlock}`);
+  return dayBeforeLatestBlock;
 };
 
 /**
  * Fetches the latest block for the given subgraphId, and writes it to ${COMPARISON_FILE}.
- * 
- * @param subgraphId 
- * @param comparisonFile 
+ *
+ * @param subgraphId
+ * @param comparisonFile
  */
 const writeLatestBlock = (subgraphId: string, comparisonFile: ComparisonResults): void => {
-  getLatestBlock(subgraphId).then((latestBlock) => {
+  getTestBlock(subgraphId).then((latestBlock) => {
     comparisonFile.latestBlock = latestBlock;
     writeComparisonFile(comparisonFile);
     console.info(`Latest block written to ${COMPARISON_FILE}`);
@@ -134,10 +181,11 @@ type TokenRecord = {
 
 /**
  * Fetches an array of TokenRecord objects from the GraphQL server.
- * 
- * @param subgraphId 
- * @param block 
- * @returns 
+ *
+ * @param subgraphId
+ * @param block
+ * @returns
+ * @throws Error if there are no results from the GraphQL query
  */
 const getTokenRecords = async (subgraphId: string, block: string): Promise<TokenRecord[]> => {
   const query = `
@@ -159,8 +207,14 @@ const getTokenRecords = async (subgraphId: string, block: string): Promise<Token
     }
   }`;
 
-  console.info(`Fetching token records for subgraph id ${subgraphId} and block ${block}`);
+  console.info(
+    `Fetching token records for subgraph id ${subgraphId} and block ${block} with query: ${query}`,
+  );
   const results = await performQuery(subgraphId, query);
+  if (!results.data) {
+    throw new Error("getTokenRecords: tokenRecords query returned no results");
+  }
+
   return results.data.tokenRecords;
 };
 
@@ -172,16 +226,17 @@ type TokenSupply = {
   source: string;
   balance: string;
   type: string;
-}
+};
 
 /**
  * Fetches an array of TokenSupply objects from the GraphQL server.
- * 
- * @param subgraphId 
- * @param block 
- * @returns 
+ *
+ * @param subgraphId
+ * @param block
+ * @returns
+ * @throws Error if there are no results from the GraphQL query
  */
- const getTokenSupplies = async (subgraphId: string, block: string): Promise<TokenSupply[]> => {
+const getTokenSupplies = async (subgraphId: string, block: string): Promise<TokenSupply[]> => {
   const query = `
   {
     tokenSupplies(where: {block: ${block}}) {
@@ -195,19 +250,26 @@ type TokenSupply = {
     }
   }`;
 
-  console.info(`Fetching token supplies for subgraph id ${subgraphId} and block ${block}`);
+  console.info(
+    `Fetching token supplies for subgraph id ${subgraphId} and block ${block} with query: ${query}`,
+  );
   const results = await performQuery(subgraphId, query);
+  if (!results.data) {
+    throw new Error("getTokenSupplies: tokenSupplies query returned no results");
+  }
+
   return results.data.tokenSupplies;
- };
+};
 
 /**
  * Fetches the OHM price from the GraphQL server.
- * 
- * @param subgraphId 
- * @param block 
- * @returns 
+ *
+ * @param subgraphId
+ * @param block
+ * @returns
+ * @throws Error if there are no results from the GraphQL query
  */
- const getOhmPrice = async (subgraphId: string, block: string): Promise<number> => {
+const getOhmPrice = async (subgraphId: string, block: string): Promise<number> => {
   const query = `
   {
     protocolMetrics(first: 1, where: {block: ${block}}) {
@@ -215,12 +277,23 @@ type TokenSupply = {
     }
   }`;
 
-  console.info(`Fetching OHM price for subgraph id ${subgraphId} and block ${block}`);
+  console.info(
+    `Fetching OHM price for subgraph id ${subgraphId} and block ${block} with query: ${query}`,
+  );
   const results = await performQuery(subgraphId, query);
-  return parseFloat(results.data.protocolMetrics[0].ohmPrice);
- };
+  if (!results.data) {
+    throw new Error("getOhmPrice: protocolMetrics query returned no results");
+  }
 
-const writeTokenRecords = (subgraphId: string, branch: string, block: string, comparisonFile: ComparisonResults): void => {
+  return parseFloat(results.data.protocolMetrics[0].ohmPrice);
+};
+
+const writeTokenRecords = (
+  subgraphId: string,
+  branch: string,
+  block: string,
+  comparisonFile: ComparisonResults,
+): void => {
   const FILENAME = `records-${branch}.json`;
   getTokenRecords(subgraphId, block).then((tokenRecords) => {
     // Write to a JSON file
@@ -246,33 +319,41 @@ const calculateMarketValue = (records: TokenRecord[]): number => {
 };
 
 const calculateMarketValueCategory = (records: TokenRecord[], category: string): number => {
-  return records.filter((record) => record.category == category).reduce((previousValue, record) => {
-    return previousValue + +record.value;
-  }, 0);
+  return records
+    .filter((record) => record.category == category)
+    .reduce((previousValue, record) => {
+      return previousValue + +record.value;
+    }, 0);
 };
 
 const calculateLiquidBacking = (records: TokenRecord[]): number => {
-  return records.filter((record) => record.isLiquid == true).reduce((previousValue, record) => {
-    return previousValue + +record.valueExcludingOhm;
-  }, 0);
+  return records
+    .filter((record) => record.isLiquid == true)
+    .reduce((previousValue, record) => {
+      return previousValue + +record.valueExcludingOhm;
+    }, 0);
 };
 
 const DIFF_THRESHOLD = 1000;
 
 const valuesEqual = (value1: number, value2: number, threshold = DIFF_THRESHOLD): boolean => {
   return value1 - value2 < threshold && value2 - value1 < threshold;
-}
+};
 
 /**
  * Compares the market value from two branches, and adds the results to {comparisonFile}.
- * 
+ *
  * Market value is calculated as: sum of the value (`value` property) of all TokenRecord objects for a given block.
- * 
- * @param baseRecords 
- * @param branchRecords 
- * @param comparisonFile 
+ *
+ * @param baseRecords
+ * @param branchRecords
+ * @param comparisonFile
  */
-const compareMarketValueRecords = (baseRecords: TokenRecord[], branchRecords: TokenRecord[], comparisonFile: ComparisonResults): void => {
+const compareMarketValueRecords = (
+  baseRecords: TokenRecord[],
+  branchRecords: TokenRecord[],
+  comparisonFile: ComparisonResults,
+): void => {
   // Perform sums
   console.info("Comparing market value");
   const baseMarketValue = calculateMarketValue(baseRecords);
@@ -289,18 +370,22 @@ const compareMarketValueRecords = (baseRecords: TokenRecord[], branchRecords: To
   };
 
   comparisonFile.results.marketValue = marketValueResults;
-}
+};
 
 /**
  * Compares the liquid backing from two branches, and adds the results to {comparisonFile}.
- * 
+ *
  * Liquid backing is calculated as: sum of the value excluding OHM (`valueExcludingOhm` property) of all liquid TokenRecord objects (`isLiquid` = true) for a given block.
- * 
- * @param baseRecords 
- * @param branchRecords 
- * @param comparisonFile 
+ *
+ * @param baseRecords
+ * @param branchRecords
+ * @param comparisonFile
  */
- const compareLiquidBackingRecords = (baseRecords: TokenRecord[], branchRecords: TokenRecord[], comparisonFile: ComparisonResults): void => {
+const compareLiquidBackingRecords = (
+  baseRecords: TokenRecord[],
+  branchRecords: TokenRecord[],
+  comparisonFile: ComparisonResults,
+): void => {
   // Perform sums
   console.info("Comparing liquid backing");
   const baseLiquidBacking = calculateLiquidBacking(baseRecords);
@@ -317,51 +402,63 @@ const compareMarketValueRecords = (baseRecords: TokenRecord[], branchRecords: To
   };
 
   comparisonFile.results.liquidBacking = liquidBackingResults;
- }
+};
 
- /**
-  * Checks the market value, using the following formula:
-  * 
-  * Market value = market value (stable) + market value (volatile) + market value (POL)
-  * 
-  * @param tokenRecords 
-  * @param comparisonFile 
-  */
-  const doMarketValueCheck = (tokenRecords: TokenRecord[], comparisonFile: ComparisonResults): void => {
-    console.info("Doing sanity check of market value");
-    const marketValueTotal = calculateMarketValue(tokenRecords);
-    const marketValueStable = calculateMarketValueCategory(tokenRecords, "Stable");
-    const marketValueVolatile = calculateMarketValueCategory(tokenRecords, "Volatile");
-    const marketValuePOL = calculateMarketValueCategory(tokenRecords, "Protocol-Owned Liquidity");
-    const marketValueCalculated = marketValueStable + marketValueVolatile + marketValuePOL;
-  
-    comparisonFile.results.marketValueCheck = {
-      marketValueTotal: formatCurrency(marketValueTotal),
-      marketValueStable: formatCurrency(marketValueStable),
-      marketValueVolatile: formatNumber(marketValueVolatile),
-      marketValuePOL: formatCurrency(marketValuePOL),
-      marketValueCalculated: formatCurrency(marketValueCalculated),
-      diff: formatCurrency(marketValueCalculated - marketValueTotal),
-      result: valuesEqual(marketValueCalculated, marketValueTotal, 1),
-    };
-  }
+/**
+ * Checks the market value, using the following formula:
+ *
+ * Market value = market value (stable) + market value (volatile) + market value (POL)
+ *
+ * @param tokenRecords
+ * @param comparisonFile
+ */
+const doMarketValueCheck = (
+  tokenRecords: TokenRecord[],
+  comparisonFile: ComparisonResults,
+): void => {
+  console.info("Doing sanity check of market value");
+  const marketValueTotal = calculateMarketValue(tokenRecords);
+  const marketValueStable = calculateMarketValueCategory(tokenRecords, "Stable");
+  const marketValueVolatile = calculateMarketValueCategory(tokenRecords, "Volatile");
+  const marketValuePOL = calculateMarketValueCategory(tokenRecords, "Protocol-Owned Liquidity");
+  const marketValueCalculated = marketValueStable + marketValueVolatile + marketValuePOL;
 
- /**
-  * Checks the market value and liquid backing, using the following formula:
-  * 
-  * Market value = liquid backing + illiquid assets + # OHM in POL * OHM price
-  * 
-  * @param tokenRecords 
-  * @param supplyRecords 
-  * @param ohmPrice 
-  * @param comparisonFile 
-  */
-const doLiquidBackingCheck = (tokenRecords: TokenRecord[], supplyRecords: TokenSupply[], ohmPrice: number, comparisonFile: ComparisonResults): void => {
+  comparisonFile.results.marketValueCheck = {
+    marketValueTotal: formatCurrency(marketValueTotal),
+    marketValueStable: formatCurrency(marketValueStable),
+    marketValueVolatile: formatNumber(marketValueVolatile),
+    marketValuePOL: formatCurrency(marketValuePOL),
+    marketValueCalculated: formatCurrency(marketValueCalculated),
+    diff: formatCurrency(marketValueCalculated - marketValueTotal),
+    result: valuesEqual(marketValueCalculated, marketValueTotal, 1),
+  };
+};
+
+/**
+ * Checks the market value and liquid backing, using the following formula:
+ *
+ * Market value = liquid backing + illiquid assets + # OHM in POL * OHM price
+ *
+ * @param tokenRecords
+ * @param supplyRecords
+ * @param ohmPrice
+ * @param comparisonFile
+ */
+const doLiquidBackingCheck = (
+  tokenRecords: TokenRecord[],
+  supplyRecords: TokenSupply[],
+  ohmPrice: number,
+  comparisonFile: ComparisonResults,
+): void => {
   console.info("Doing sanity check of market value and liquid backing");
   const marketValue = calculateMarketValue(tokenRecords);
   const liquidBacking = calculateLiquidBacking(tokenRecords);
-  const ohmInLiquidity = supplyRecords.filter((tokenSupply) => tokenSupply.type == "Liquidity").reduce((previousValue, tokenSupply) => previousValue + +tokenSupply.balance, 0);
-  const illiquidAssetsValue = tokenRecords.filter((tokenRecord) => tokenRecord.isLiquid == false).reduce((previousValue, tokenRecord) => previousValue + +tokenRecord.value, 0);
+  const ohmInLiquidity = supplyRecords
+    .filter((tokenSupply) => tokenSupply.type == "Liquidity")
+    .reduce((previousValue, tokenSupply) => previousValue + +tokenSupply.balance, 0);
+  const illiquidAssetsValue = tokenRecords
+    .filter((tokenRecord) => tokenRecord.isLiquid == false)
+    .reduce((previousValue, tokenRecord) => previousValue + +tokenRecord.value, 0);
   const marketValueCalculated = liquidBacking + illiquidAssetsValue + ohmInLiquidity * ohmPrice;
 
   comparisonFile.results.liquidBackingCheck = {
@@ -373,10 +470,16 @@ const doLiquidBackingCheck = (tokenRecords: TokenRecord[], supplyRecords: TokenS
     diff: formatCurrency(marketValueCalculated - marketValue),
     result: valuesEqual(marketValueCalculated, marketValue, 1),
   };
-}
+};
 
-const compareTokenRecords = (filenameBase: string, filenameBranch: string, comparisonFile: ComparisonResults): void => {
-  console.info(`Comparing token records for base file ${filenameBase} and branch file ${filenameBranch}`);
+const compareTokenRecords = (
+  filenameBase: string,
+  filenameBranch: string,
+  comparisonFile: ComparisonResults,
+): void => {
+  console.info(
+    `Comparing token records for base file ${filenameBase} and branch file ${filenameBranch}`,
+  );
 
   // Read TokenRecord files, parse into JSON
   const baseRecords = getTokenRecordsFromFile(filenameBase);
@@ -394,8 +497,8 @@ const compareTokenRecords = (filenameBase: string, filenameBranch: string, compa
       doMarketValueCheck(branchRecords, comparisonFile);
 
       writeComparisonFile(comparisonFile);
-    })
-  })
+    });
+  });
 };
 
 const parseSubgraphId = (value: string, _previous: string): string => {
@@ -404,21 +507,23 @@ const parseSubgraphId = (value: string, _previous: string): string => {
   }
 
   return value;
-}
+};
 
 const parseBranch = (value: string, _previous: string): string => {
   const BRANCHES = ["base", "branch"];
   if (!BRANCHES.includes(value)) {
-    throw new InvalidArgumentError(`The --branch argument must be one of ${BRANCHES.join(", ")}, but was: ${value}`);
+    throw new InvalidArgumentError(
+      `The --branch argument must be one of ${BRANCHES.join(", ")}, but was: ${value}`,
+    );
   }
 
   return value;
-}
+};
 
-program.name("query-test")
-  .description("CLI to test subgraph queries");
+program.name("query-test").description("CLI to test subgraph queries");
 
-program.command("latest-block")
+program
+  .command("latest-block")
   .description("Determines the latest block for a subgraph")
   .requiredOption("--subgraph <subgraph id>", "the subgraph id (starts with 'Qm')", parseSubgraphId)
   .action((options) => {
@@ -426,7 +531,8 @@ program.command("latest-block")
     writeLatestBlock(options.subgraph, comparisonFile);
   });
 
-program.command("test")
+program
+  .command("test")
   .description("Performs a test subgraph query")
   .requiredOption("--subgraph <subgraph id>", "the subgraph id (starts with 'Qm')", parseSubgraphId)
   .requiredOption("--branch <base | branch>", "the branch", parseBranch)
@@ -436,7 +542,8 @@ program.command("test")
     writeTokenRecords(options.subgraph, options.branch, options.block, comparisonFile);
   });
 
-program.command("compare")
+program
+  .command("compare")
   .description("Compares two TokenRecord files")
   .requiredOption("--base <filename>", "the base records file")
   .requiredOption("--branch <filename>", "the branch records file")
