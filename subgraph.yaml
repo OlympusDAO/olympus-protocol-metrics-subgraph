@@ -507,7 +507,7 @@ dataSources:
           file: ./abis/FraxSwapPool.json
         - name: vlCVX
           file: ./abis/vlCVX.json
-      callHandlers:
-        - function: stake(address,uint256,bool,bool)
-          handler: handleMetrics
+      # There is no way to index every nth block, so we handle it in the handleMetrics function
+      blockHandlers:
+        - handler: handleMetrics
       file: ./src/protocolMetrics/ProtocolMetrics.ts

@@ -74,15 +74,22 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.save();
 }
 
-export function handleMetrics(call: StakeCall): void {
-  updateProtocolMetrics(call.block);
+export function handleMetrics(block: ethereum.Block): void {
+  // Only index every 2000th block, approximately 8 hours
+  // We previously used stake(), but that's not available cross-chain
+  if (!block.number.mod(BigInt.fromString("2000")).equals(BigInt.zero())) {
+    return;
+  }
+
+  log.debug("handleMetrics: *** Indexing block {}", [block.number.toString()]);
+  updateProtocolMetrics(block);
 
   // TODO look at whether this can be split into a different metric
-  updateBondDiscounts(call.block.number);
+  updateBondDiscounts(block.number);
 
   // TokenRecord
-  generateTokenRecords(call.block.timestamp, call.block.number);
+  generateTokenRecords(block.timestamp, block.number);
 
   // TokenSupply
-  generateTokenSupply(call.block.timestamp, call.block.number);
+  generateTokenSupply(block.timestamp, block.number);
 }
