@@ -609,6 +609,14 @@ dataSources:
         - name: vlCVX
           file: ./abis/vlCVX.json
       # There is no way to index every nth block, so we handle it in the handleMetrics function
+      # Every 2000 blocks (8 hours)
+      # Blocks every 12-14 seconds
       blockHandlers:
         - handler: handleMetrics
       file: ./src/protocolMetrics/ProtocolMetrics.ts
+  - kind: ethereum/contract
+    name: TokenRecords-matic
+    network: matic
+    source:
+      startBlock: 27790000 # 2022-05-01
+      # Blocks every 2 seconds
