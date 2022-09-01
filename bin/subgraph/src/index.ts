@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { exec } from "child_process";
 import { InvalidArgumentError, program } from "commander";
 
 const parseSubgraphId = (value: string, _previous: string): string => {
@@ -86,6 +87,29 @@ program
   .action(async (network) => {
     const query = await import(getImportFilePath(network));
     query.doComparison(network, getResultsFilePath(network));
+  });
+
+program
+  .command("build")
+  .description("Build subgraph")
+  .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
+  .action((network) => {
+    const childProcess = exec(
+      `yarn graph build networks/${network}/subgraph.yaml --output-dir networks/${network}/build/`,
+    );
+    childProcess.stdout.pipe(process.stdout);
+    childProcess.stderr.pipe(process.stderr);
+  });
+
+program
+  .command("test")
+  .description("Test subgraph")
+  .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
+  .action((network) => {
+    // TODO figure out how to get it to read matchstick.yaml and recognise tests
+    const childProcess = exec(`yarn graph test --version 0.5.3`);
+    childProcess.stdout.pipe(process.stdout);
+    childProcess.stderr.pipe(process.stderr);
   });
 
 program.parse();
