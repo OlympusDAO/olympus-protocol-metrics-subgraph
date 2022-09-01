@@ -60,11 +60,9 @@ typings/
 # next.js build output
 .next
 
-# thegraph build
-build
-
-# Test build files
+# Build files
 **/**/tests/.bin/
+**/**/build/
 
 # query-test
 records-base.json

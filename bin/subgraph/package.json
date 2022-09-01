@@ -1,7 +1,7 @@
 {
-  "name": "query-test",
+  "name": "subgraph",
   "version": "1.0.0",
-  "description": "Performs a test for a subgraph query",
+  "description": "Handles common functions for subgraphs",
   "main": "index.js",
   "license": "MIT",
   "devDependencies": {
