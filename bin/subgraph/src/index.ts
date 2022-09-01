@@ -83,11 +83,9 @@ program
   .command("compare")
   .description("Compares records")
   .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
-  .requiredOption("--base <filename>", "the base records file")
-  .requiredOption("--branch <filename>", "the branch records file")
-  .action(async (network, options) => {
+  .action(async (network) => {
     const query = await import(getImportFilePath(network));
-    query.doComparison(options.base, options.branch, getResultsFilePath(network));
+    query.doComparison(getResultsFilePath(network));
   });
 
 program.parse();

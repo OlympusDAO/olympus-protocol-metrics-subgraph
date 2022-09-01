@@ -1,3 +1,5 @@
+import { diff } from "json-diff";
+
 import {
   calculateLiquidBacking,
   calculateMarketValue,
@@ -6,6 +8,9 @@ import {
 import { formatCurrency, formatNumber, valuesEqual } from "../../helpers/number";
 import { TokenRecord, TokenSupply } from "../../subgraph";
 import { ComparisonResults } from "./results";
+
+const CHECK = "✅";
+const CROSS = "❌";
 
 /**
  * Compares the market value from two branches, and adds the results to {comparisonFile}.
@@ -34,8 +39,14 @@ export const compareMarketValueRecords = (
     branch: formatCurrency(branchMarketValue),
     diff: formatCurrency(branchMarketValue - baseMarketValue),
     result: valuesEqual(baseMarketValue, branchMarketValue),
+    output: "",
   };
-
+  marketValueResults.output = `**Market Value (Branch Comparison):**
+  Purpose: *Shows the difference in market value between branches. If the numbers differ, it may be due to assets being added/removed. Check that the difference is expected, and refer to the TokenRecords diff below for more details.*
+  Base: ${marketValueResults.base}
+  Branch: ${marketValueResults.branch}
+  Difference in Value: ${marketValueResults.diff}
+  Result: ${marketValueResults.result ? CHECK : CROSS}`;
   comparisonFile.results.marketValue = marketValueResults;
 };
 
@@ -66,8 +77,14 @@ export const compareLiquidBackingRecords = (
     branch: formatCurrency(branchLiquidBacking),
     diff: formatCurrency(branchLiquidBacking - baseLiquidBacking),
     result: valuesEqual(baseLiquidBacking, branchLiquidBacking),
+    output: "",
   };
-
+  liquidBackingResults.output = `**Liquid Backing (Branch Comparison):**
+  Purpose: *Shows the difference in liquid backing between branches. If the numbers differ, it may be due to assets being added/removed. Check that the difference is expected, and refer to the TokenRecords diff below for more details.*
+  Base: ${liquidBackingResults.base}
+  Branch: ${liquidBackingResults.branch}
+  Difference in Value: ${liquidBackingResults.diff}
+  Result: ${liquidBackingResults.result ? CHECK : CROSS}`;
   comparisonFile.results.liquidBacking = liquidBackingResults;
 };
 
@@ -90,7 +107,7 @@ export const doMarketValueCheck = (
   const marketValuePOL = calculateMarketValueCategory(tokenRecords, "Protocol-Owned Liquidity");
   const marketValueCalculated = marketValueStable + marketValueVolatile + marketValuePOL;
 
-  comparisonFile.results.marketValueCheck = {
+  const marketValueCheck = {
     marketValueTotal: formatCurrency(marketValueTotal),
     marketValueStable: formatCurrency(marketValueStable),
     marketValueVolatile: formatNumber(marketValueVolatile),
@@ -98,7 +115,19 @@ export const doMarketValueCheck = (
     marketValueCalculated: formatCurrency(marketValueCalculated),
     diff: formatCurrency(marketValueCalculated - marketValueTotal),
     result: valuesEqual(marketValueCalculated, marketValueTotal, 1),
+    output: "",
   };
+  marketValueCheck.output = `**Market Value Check (Current Branch Only):**
+    Purpose: *Does a sanity check of market value for the current branch. A difference in the value indicates that a change in assets or categorisation has broken the consistency of the formula.*
+    Formula: Market value = market value (stable) + market value (volatile) + market value (POL)
+    Market Value Total: ${marketValueCheck.marketValueTotal}
+    Stable Assets: ${marketValueCheck.marketValueStable}
+    Volatile Assets: ${marketValueCheck.marketValueVolatile}
+    POL Assets: ${marketValueCheck.marketValuePOL}
+    Market Value Calculated: ${marketValueCheck.marketValueCalculated}
+    Difference in Value: ${marketValueCheck.diff}
+    Result: ${marketValueCheck.result ? CHECK : CROSS}`;
+  comparisonFile.results.marketValueCheck = marketValueCheck;
 };
 
 /**
@@ -128,7 +157,7 @@ export const doLiquidBackingCheck = (
     .reduce((previousValue, tokenRecord) => previousValue + +tokenRecord.value, 0);
   const marketValueCalculated = liquidBacking + illiquidAssetsValue + ohmInLiquidity * ohmPrice;
 
-  comparisonFile.results.liquidBackingCheck = {
+  const liquidBackingCheck = {
     marketValue: formatCurrency(marketValue),
     liquidBacking: formatCurrency(liquidBacking),
     ohmInLiquidity: formatNumber(ohmInLiquidity),
@@ -136,7 +165,45 @@ export const doLiquidBackingCheck = (
     illiquidAssets: formatCurrency(illiquidAssetsValue),
     diff: formatCurrency(marketValueCalculated - marketValue),
     result: valuesEqual(marketValueCalculated, marketValue, 1),
+    output: "",
   };
+  liquidBackingCheck.output = `**Liquid Backing Check (Current Branch Only):**
+    Purpose: *Does a sanity check between market value and liquid backing for the current branch. A difference in the value indicates that a change in assets or categorisation has broken the consistency of the formula.*
+    Formula: Market value = liquid backing + illiquid assets + # OHM in POL * OHM price
+    Market Value: ${liquidBackingCheck.marketValue}
+    Liquid Backing: ${liquidBackingCheck.liquidBacking}
+    Illiquid Assets: ${liquidBackingCheck.illiquidAssets}
+    OHM in Protocol-Owned Liquidity (Balance): ${liquidBackingCheck.ohmInLiquidity}
+    OHM Price: ${liquidBackingCheck.ohmPrice}
+    Difference in Value: ${liquidBackingCheck.diff}
+    Result: ${liquidBackingCheck.result ? CHECK : CROSS}`;
+  comparisonFile.results.liquidBackingCheck = liquidBackingCheck;
+};
 
-  // TODO write output to file
+export const combineOutput = (comparisonFile: ComparisonResults): void => {
+  // Generate a diff between the token records
+  const recordsDiff = diff(
+    comparisonFile.records.tokenRecords.base,
+    comparisonFile.records.tokenRecords.branch,
+    { full: true },
+  );
+
+  comparisonFile.results.output = `**Ethereum Block Tested:** ${comparisonFile.latestBlock}
+  
+  **Subgraph Id:**
+  Base: ${comparisonFile.branches.base.subgraphId}
+  Branch: ${comparisonFile.branches.branch.subgraphId}
+  
+  ${comparisonFile.results.marketValue.output}
+
+  ${comparisonFile.results.liquidBacking.output}
+
+  ${comparisonFile.results.marketValueCheck.output}
+
+  ${comparisonFile.results.liquidBackingCheck.output}
+
+  \`\`\`diff
+  ${recordsDiff}
+  \`\`\`
+  `;
 };

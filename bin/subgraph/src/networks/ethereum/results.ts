@@ -25,12 +25,14 @@ export type ComparisonResults = {
       branch: string;
       diff: string;
       result: boolean;
+      output: string; // Markdown
     };
     liquidBacking?: {
       base: string;
       branch: string;
       diff: string;
       result: boolean;
+      output: string; // Markdown
     };
     liquidBackingCheck?: {
       marketValue: string;
@@ -40,6 +42,7 @@ export type ComparisonResults = {
       illiquidAssets: string;
       diff: string;
       result: boolean;
+      output: string; // Markdown
     };
     marketValueCheck?: {
       marketValueTotal: string;
@@ -49,7 +52,14 @@ export type ComparisonResults = {
       marketValueCalculated: string;
       diff: string;
       result: boolean;
+      output: string; // Markdown
     };
+    /**
+     * Output for the entire comparison step, in Markdown format.
+     *
+     * This will be included in a GitHub comment.
+     */
+    output?: string;
   };
 };
 

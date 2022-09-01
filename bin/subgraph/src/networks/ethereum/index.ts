@@ -1,5 +1,6 @@
 import { getOhmPrice, getTestBlock, getTokenRecords, getTokenSupplies } from "../../subgraph";
 import {
+  combineOutput,
   compareLiquidBackingRecords,
   compareMarketValueRecords,
   doLiquidBackingCheck,
@@ -37,15 +38,7 @@ export const doQuery = (subgraphId: string, branch: string, outputPath: string):
   });
 };
 
-export const doComparison = (
-  filenameBase: string,
-  filenameBranch: string,
-  outputPath: string,
-): void => {
-  console.info(
-    `Comparing token records for base file ${filenameBase} and branch file ${filenameBranch}`,
-  );
-
+export const doComparison = (outputPath: string): void => {
   const comparisonFile = readComparisonFile(outputPath);
 
   // Read TokenRecord files, parse into JSON
@@ -62,6 +55,7 @@ export const doComparison = (
     getOhmPrice(subgraphId, block).then((ohmPrice) => {
       doLiquidBackingCheck(branchRecords, branchTokenSupplies, ohmPrice, comparisonFile);
       doMarketValueCheck(branchRecords, comparisonFile);
+      combineOutput(comparisonFile);
 
       writeComparisonFile(comparisonFile, outputPath);
     });

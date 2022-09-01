@@ -5,6 +5,9 @@ on:
 
 jobs:
   test-branch:
+    strategy:
+      matrix:
+        network: [ethereum]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -15,26 +18,22 @@ jobs:
         run: |
           source .subgraph-version
           [[ ! -z "$SUBGRAPH_ID" ]] && echo "SUBGRAPH_ID is set" || (echo "::error::SUBGRAPH_ID is not set in .subgraph-version" && exit 1)
-      - name: Set Yarn Shell
-        run: yarn config set script-shell bash
+          echo "SUBGRAPH_ID=$SUBGRAPH_ID" >> $GITHUB_ENV
       - name: Get Latest Block
-        # This will determine the latest block and write it to a file
         run: |
-          yarn query:latest-block
+          yarn subgraph latest-block ${{ matrix.network }}
       - name: Get Token Records
         run: |
-          yarn query:test --branch branch --block $(jq -r .latestBlock query-test/comparison.json)
-      - name: Upload Comparison Results
+          yarn subgraph query ${{ matrix.network }} --branch branch --subgraph $SUBGRAPH_ID
+      - name: Upload Results
         uses: actions/upload-artifact@v3
         with:
-          name: comparison
-          path: query-test/comparison.json
-      - name: Upload Token Records
-        uses: actions/upload-artifact@v3
-        with:
-          name: token-records-branch
-          path: query-test/records-branch.json
+          name: results
+          path: build/${{ matrix.network }}/results.json
   test-base:
+    strategy:
+      matrix:
+        network: [ethereum]
     runs-on: ubuntu-latest
     needs: [test-branch]
     steps:
@@ -46,27 +45,24 @@ jobs:
         run: |
           source .subgraph-version
           [[ ! -z "$SUBGRAPH_ID" ]] && echo "SUBGRAPH_ID is set" || (echo "::error::SUBGRAPH_ID is not set in .subgraph-version" && exit 1)
-      - name: Set Yarn Shell
-        run: yarn config set script-shell bash
-      - name: Download Comparison File
+          echo "SUBGRAPH_ID=$SUBGRAPH_ID" >> $GITHUB_ENV
+      - name: Download Results
         uses: actions/download-artifact@v3
         with:
-          name: comparison
-          path: query-test
+          name: results
+          path: build/${{ matrix.network }}
       - name: Get Token Records
         run: |
-          yarn query:test --branch base --block $(jq -r .latestBlock query-test/comparison.json)
-      - name: Upload Comparison Results
+          yarn subgraph query ${{ matrix.network }} --branch base --subgraph $SUBGRAPH_ID
+      - name: Upload Results
         uses: actions/upload-artifact@v3
         with:
-          name: comparison
-          path: query-test/comparison.json
-      - name: Upload Token Records
-        uses: actions/upload-artifact@v3
-        with:
-          name: token-records-base
-          path: query-test/records-base.json
+          name: results
+          path: build/${{ matrix.network }}/results.json
   compare:
+    strategy:
+      matrix:
+        network: [ethereum]
     runs-on: ubuntu-latest
     needs: [test-branch, test-base]
     steps:
@@ -74,125 +70,29 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ github.ref }}
-      - name: Set Yarn Shell
-        run: yarn config set script-shell bash
-      - name: Download Token Records Base
+      - name: Download Results
         uses: actions/download-artifact@v3
         with:
-          name: token-records-base
-          path: query-test
-      - name: Download Token Records Branch
-        uses: actions/download-artifact@v3
-        with:
-          name: token-records-branch
-          path: query-test
-      - name: Download Comparison Results
-        uses: actions/download-artifact@v3
-        with:
-          name: comparison
-          path: query-test
+          name: results
+          path: build/${{ matrix.network }}
       - name: Compare Token Records
-        # Upstream path as the command is run in the query-test/ directory
         run: |
-          yarn query:compare --base records-base.json --branch records-branch.json
-      - name: Upload Comparison Results
+          yarn subgraph compare ${{ matrix.network }}
+      - name: Upload Results
         uses: actions/upload-artifact@v3
         with:
-          name: comparison
-          path: query-test/comparison.json
-      - name: Install jd tool
+          name: results
+          path: build/${{ matrix.network }}/results.json
+      - name: Prepare Output
+        id: output
+        # We store the output in the github environment as it's a multiline string: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
         run: |
-          go install github.com/josephburnett/jd@v1.6.1
-      - name: Determine Result
-        id: result
-        # We store the diff in the github environment as it's a multiline string: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
-        # We also use the jd tool here, as it can ignore sorting and provides more context. See: https://github.com/josephburnett/jd
-        run: |
-          echo "::set-output name=block::$(jq -r .latestBlock query-test/comparison.json)"
-          echo "::set-output name=subgraphId-base::$(jq -r .branches.base.subgraphId query-test/comparison.json)"
-          echo "::set-output name=subgraphId-branch::$(jq -r .branches.branch.subgraphId query-test/comparison.json)"
-
-          echo "::set-output name=marketValue-base::$(jq -r .results.marketValue.base query-test/comparison.json)"
-          echo "::set-output name=marketValue-branch::$(jq -r .results.marketValue.branch query-test/comparison.json)"
-          echo "::set-output name=marketValue-diff::$(jq -r .results.marketValue.diff query-test/comparison.json)"
-          [[ $(jq -r .results.marketValue.result query-test/comparison.json) == true ]] && MARKETVALUE_RESULT="✅" || MARKETVALUE_RESULT="❌"
-          echo "::set-output name=marketValue-result::$MARKETVALUE_RESULT"
-
-          echo "::set-output name=liquidBacking-base::$(jq -r .results.liquidBacking.base query-test/comparison.json)"
-          echo "::set-output name=liquidBacking-branch::$(jq -r .results.liquidBacking.branch query-test/comparison.json)"
-          echo "::set-output name=liquidBacking-diff::$(jq -r .results.liquidBacking.diff query-test/comparison.json)"
-          [[ $(jq -r .results.liquidBacking.result query-test/comparison.json) == true ]] && LIQUIDBACKING_RESULT="✅" || LIQUIDBACKING_RESULT="❌"
-          echo "::set-output name=liquidBacking-result::$LIQUIDBACKING_RESULT"
-
-          echo "::set-output name=liquidBackingCheck-marketValue::$(jq -r .results.liquidBackingCheck.marketValue query-test/comparison.json)"
-          echo "::set-output name=liquidBackingCheck-liquidBacking::$(jq -r .results.liquidBackingCheck.liquidBacking query-test/comparison.json)"
-          echo "::set-output name=liquidBackingCheck-illiquidAssets::$(jq -r .results.liquidBackingCheck.illiquidAssets query-test/comparison.json)"
-          echo "::set-output name=liquidBackingCheck-ohmInLiquidity::$(jq -r .results.liquidBackingCheck.ohmInLiquidity query-test/comparison.json)"
-          echo "::set-output name=liquidBackingCheck-ohmPrice::$(jq -r .results.liquidBackingCheck.ohmPrice query-test/comparison.json)"
-          echo "::set-output name=liquidBackingCheck-diff::$(jq -r .results.liquidBackingCheck.diff query-test/comparison.json)"
-          [[ $(jq -r .results.liquidBackingCheck.result query-test/comparison.json) == true ]] && LIQUIDBACKING_CHECK_RESULT="✅" || LIQUIDBACKING_CHECK_RESULT="❌"
-          echo "::set-output name=liquidBackingCheck-result::$LIQUIDBACKING_CHECK_RESULT"
-
-          echo "::set-output name=marketValueCheck-marketValueTotal::$(jq -r .results.marketValueCheck.marketValueTotal query-test/comparison.json)"
-          echo "::set-output name=marketValueCheck-marketValueStable::$(jq -r .results.marketValueCheck.marketValueStable query-test/comparison.json)"
-          echo "::set-output name=marketValueCheck-marketValueVolatile::$(jq -r .results.marketValueCheck.marketValueVolatile query-test/comparison.json)"
-          echo "::set-output name=marketValueCheck-marketValuePOL::$(jq -r .results.marketValueCheck.marketValuePOL query-test/comparison.json)"
-          echo "::set-output name=marketValueCheck-marketValueCalculated::$(jq -r .results.marketValueCheck.marketValueCalculated query-test/comparison.json)"
-          echo "::set-output name=marketValueCheck-diff::$(jq -r .results.marketValueCheck.diff query-test/comparison.json)"
-          [[ $(jq -r .results.marketValueCheck.result query-test/comparison.json) == true ]] && MARKETVALUE_CHECK_RESULT="✅" || MARKETVALUE_CHECK_RESULT="❌"
-          echo "::set-output name=marketValueCheck-result::$MARKETVALUE_CHECK_RESULT"
-
-          echo "DIFF<<EOF" >> $GITHUB_ENV
-          echo "$(/home/runner/go/bin/jd -set query-test/records-base.json query-test/records-branch.json)" >> $GITHUB_ENV
+          echo "OUTPUT<<EOF" >> $GITHUB_ENV
+          echo "$(jq -r .results.output build/${{ matrix.network }}/results.json)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
       - name: Post Comment
         uses: peter-evans/create-or-update-comment@v2
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
-            **Ethereum Block Tested**: ${{ steps.result.outputs.block }}
-
-            **Subgraph id**:
-              Base: ${{ steps.result.outputs.subgraphId-base }}
-              Branch: ${{ steps.result.outputs.subgraphId-branch }}
-
-            **Market Value (Branch Comparison)**:
-              Purpose: *Shows the difference in market value between branches. If the numbers differ, it may be due to assets being added/removed. Check that the difference is expected, and refer to the TokenRecords diff below for more details.*
-              Base: ${{ steps.result.outputs.marketValue-base }}
-              Branch: ${{ steps.result.outputs.marketValue-branch }}
-              Difference in Value: ${{ steps.result.outputs.marketValue-diff }}
-              Result: ${{ steps.result.outputs.marketValue-result }}
-
-            **Liquid Backing (Branch Comparison)**:
-              Purpose: *Shows the difference in liquid backing between branches. If the numbers differ, it may be due to assets being added/removed. Check that the difference is expected, and refer to the TokenRecords diff below for more details.*
-              Base: ${{ steps.result.outputs.liquidBacking-base }}
-              Branch: ${{ steps.result.outputs.liquidBacking-branch }}
-              Difference in Value: ${{ steps.result.outputs.liquidBacking-diff }}
-              Result: ${{ steps.result.outputs.liquidBacking-result }}
-
-            **Liquid Backing Check (Current Branch Only)**:
-              Purpose: *Does a sanity check between market value and liquid backing for the current branch. A difference in the value indicates that a change in assets or categorisation has broken the consistency of the formula.*
-              Formula: Market value = liquid backing + illiquid assets + # OHM in POL * OHM price
-              Market Value: ${{ steps.result.outputs.liquidBackingCheck-marketValue }}
-              Liquid Backing: ${{ steps.result.outputs.liquidBackingCheck-liquidBacking }}
-              Illiquid Assets: ${{ steps.result.outputs.liquidBackingCheck-illiquidAssets }}
-              OHM in Protocol-Owned Liquidity (Balance): ${{ steps.result.outputs.liquidBackingCheck-ohmInLiquidity }}
-              OHM Price: ${{ steps.result.outputs.liquidBackingCheck-ohmPrice }}
-              Difference in Value: ${{ steps.result.outputs.liquidBackingCheck-diff }}
-              Result: ${{ steps.result.outputs.liquidBackingCheck-result }}
-
-            **Market Value Check (Current Branch Only)**:
-              Purpose: *Does a sanity check of market value for the current branch. A difference in the value indicates that a change in assets or categorisation has broken the consistency of the formula.*
-              Formula: Market value = market value (stable) + market value (volatile) + market value (POL)
-              Market Value Total: ${{ steps.result.outputs.marketValueCheck-marketValueTotal }}
-              Stable Assets: ${{ steps.result.outputs.marketValueCheck-marketValueStable }}
-              Volatile Assets: ${{ steps.result.outputs.marketValueCheck-marketValueVolatile }}
-              POL Assets: ${{ steps.result.outputs.marketValueCheck-marketValuePOL }}
-              Market Value Calculated: ${{ steps.result.outputs.marketValueCheck-marketValueCalculated }}
-              Difference in Value: ${{ steps.result.outputs.marketValueCheck-diff }}
-              Result: ${{ steps.result.outputs.marketValueCheck-result }}
-
-            **Diff of TokenRecord objects**:
-            ```diff
-            ${{ env.DIFF }}
-            ```
+            ${{ env.OUTPUT }}
