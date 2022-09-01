@@ -26,6 +26,17 @@ const parseBranch = (value: string, _previous: string): string => {
   return value;
 };
 
+const NETWORKS = ["ethereum", "arbitrum"];
+const parseNetwork = (value: string, _previous: string): string => {
+  if (!NETWORKS.includes(value)) {
+    throw new InvalidArgumentError(
+      `The <network> argument must be one of ${NETWORKS.join(", ")}, but was ${value}`,
+    );
+  }
+
+  return value;
+};
+
 program
   .name("yarn subgraph")
   .description("CLI for the deployment and testing of Olympus subgraphs");
@@ -33,6 +44,7 @@ program
 program
   .command("latest-block")
   .description("Determines the latest block for a subgraph")
+  .argument("network", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
   .requiredOption("--subgraph <subgraph id>", "the subgraph id (starts with 'Qm')", parseSubgraphId)
   .action((options) => {
     const comparisonFile = readComparisonFile();
@@ -42,6 +54,7 @@ program
 program
   .command("test")
   .description("Performs a test subgraph query")
+  .argument("network", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
   .requiredOption("--subgraph <subgraph id>", "the subgraph id (starts with 'Qm')", parseSubgraphId)
   .requiredOption("--branch <base | branch>", "the branch", parseBranch)
   .requiredOption("--block <block number>", "the block number")
@@ -52,7 +65,8 @@ program
 
 program
   .command("compare")
-  .description("Compares two TokenRecord files")
+  .description("Compares records")
+  .argument("network", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
   .requiredOption("--base <filename>", "the base records file")
   .requiredOption("--branch <filename>", "the branch records file")
   .action((options) => {
