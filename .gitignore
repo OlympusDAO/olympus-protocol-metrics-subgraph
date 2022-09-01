@@ -65,5 +65,6 @@ typings/
 **/**/build/
 
 # query-test
-records-base.json
-records-branch.json
+**/**/records-base.json
+**/**/records-branch.json
+**/**/comparison.json
