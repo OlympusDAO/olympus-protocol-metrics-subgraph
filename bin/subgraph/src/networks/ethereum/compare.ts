@@ -1,17 +1,11 @@
-import { readFileSync } from "fs";
-
 import {
   calculateLiquidBacking,
   calculateMarketValue,
   calculateMarketValueCategory,
-} from "./helpers/metrics";
-import { formatCurrency, formatNumber, valuesEqual } from "./helpers/number";
-import { ComparisonResults, writeComparisonFile } from "./helpers/results";
-import { getOhmPrice, getTokenSupplies, TokenRecord, TokenSupply } from "./subgraph";
-
-const getTokenRecordsFromFile = (filename: string): TokenRecord[] => {
-  return JSON.parse(readFileSync(filename, "utf8"));
-};
+} from "../../helpers/metrics";
+import { formatCurrency, formatNumber, valuesEqual } from "../../helpers/number";
+import { TokenRecord, TokenSupply } from "../../subgraph";
+import { ComparisonResults } from "./results";
 
 /**
  * Compares the market value from two branches, and adds the results to {comparisonFile}.
@@ -22,7 +16,7 @@ const getTokenRecordsFromFile = (filename: string): TokenRecord[] => {
  * @param branchRecords
  * @param comparisonFile
  */
-const compareMarketValueRecords = (
+export const compareMarketValueRecords = (
   baseRecords: TokenRecord[],
   branchRecords: TokenRecord[],
   comparisonFile: ComparisonResults,
@@ -54,7 +48,7 @@ const compareMarketValueRecords = (
  * @param branchRecords
  * @param comparisonFile
  */
-const compareLiquidBackingRecords = (
+export const compareLiquidBackingRecords = (
   baseRecords: TokenRecord[],
   branchRecords: TokenRecord[],
   comparisonFile: ComparisonResults,
@@ -85,7 +79,7 @@ const compareLiquidBackingRecords = (
  * @param tokenRecords
  * @param comparisonFile
  */
-const doMarketValueCheck = (
+export const doMarketValueCheck = (
   tokenRecords: TokenRecord[],
   comparisonFile: ComparisonResults,
 ): void => {
@@ -117,7 +111,7 @@ const doMarketValueCheck = (
  * @param ohmPrice
  * @param comparisonFile
  */
-const doLiquidBackingCheck = (
+export const doLiquidBackingCheck = (
   tokenRecords: TokenRecord[],
   supplyRecords: TokenSupply[],
   ohmPrice: number,
@@ -143,33 +137,6 @@ const doLiquidBackingCheck = (
     diff: formatCurrency(marketValueCalculated - marketValue),
     result: valuesEqual(marketValueCalculated, marketValue, 1),
   };
-};
 
-export const compareTokenRecords = (
-  filenameBase: string,
-  filenameBranch: string,
-  comparisonFile: ComparisonResults,
-): void => {
-  console.info(
-    `Comparing token records for base file ${filenameBase} and branch file ${filenameBranch}`,
-  );
-
-  // Read TokenRecord files, parse into JSON
-  const baseRecords = getTokenRecordsFromFile(filenameBase);
-  const branchRecords = getTokenRecordsFromFile(filenameBranch);
-
-  compareMarketValueRecords(baseRecords, branchRecords, comparisonFile);
-  compareLiquidBackingRecords(baseRecords, branchRecords, comparisonFile);
-
-  // Get TokenSupply and OHM price
-  const subgraphId = comparisonFile.branches.branch.subgraphId;
-  const block = comparisonFile.latestBlock;
-  getTokenSupplies(subgraphId, block).then((branchTokenSupplies) => {
-    getOhmPrice(subgraphId, block).then((ohmPrice) => {
-      doLiquidBackingCheck(branchRecords, branchTokenSupplies, ohmPrice, comparisonFile);
-      doMarketValueCheck(branchRecords, comparisonFile);
-
-      writeComparisonFile(comparisonFile);
-    });
-  });
+  // TODO write output to file
 };

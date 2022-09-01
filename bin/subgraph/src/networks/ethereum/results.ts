@@ -1,4 +1,7 @@
-import { existsSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { dirname } from "path";
+
+import { TokenRecord } from "../../subgraph";
 
 export type ComparisonResults = {
   latestBlock?: string;
@@ -8,6 +11,12 @@ export type ComparisonResults = {
     };
     branch?: {
       subgraphId: string;
+    };
+  };
+  records: {
+    tokenRecords: {
+      base?: TokenRecord[];
+      branch?: TokenRecord[];
     };
   };
   results: {
@@ -44,21 +53,26 @@ export type ComparisonResults = {
   };
 };
 
-const COMPARISON_FILE = "comparison.json";
-
-export const readComparisonFile = (): ComparisonResults => {
+export const readComparisonFile = (filePath: string): ComparisonResults => {
   // Silently create the data structure if the file doesn't exist
-  if (!existsSync(COMPARISON_FILE)) {
+  if (!existsSync(filePath)) {
     return {
       branches: {},
+      records: {
+        tokenRecords: {},
+      },
       results: {},
     };
   }
 
-  return JSON.parse(readFileSync(COMPARISON_FILE, "utf8"));
+  return JSON.parse(readFileSync(filePath, "utf8"));
 };
 
-export const writeComparisonFile = (comparisonFile: ComparisonResults): void => {
-  writeFileSync(COMPARISON_FILE, JSON.stringify(comparisonFile, null, 2));
-  console.info(`Wrote comparison results to ${COMPARISON_FILE}`);
+export const writeComparisonFile = (results: ComparisonResults, filePath: string): void => {
+  // Create the parent folders, if needed
+  mkdirSync(dirname(filePath), { recursive: true });
+
+  // Write the file
+  writeFileSync(filePath, JSON.stringify(results, null, 2));
+  console.info(`Wrote comparison results to ${filePath}`);
 };

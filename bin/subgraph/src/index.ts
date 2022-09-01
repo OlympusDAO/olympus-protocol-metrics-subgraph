@@ -2,11 +2,6 @@
 
 import { InvalidArgumentError, program } from "commander";
 
-import { writeLatestBlock } from "./block";
-import { compareTokenRecords } from "./compare";
-import { readComparisonFile } from "./helpers/results";
-import { writeTokenRecords } from "./query";
-
 const parseSubgraphId = (value: string, _previous: string): string => {
   if (!value.includes("Qm")) {
     throw new InvalidArgumentError(`${value} is not a valid subgraph id`);
@@ -37,6 +32,28 @@ const parseNetwork = (value: string, _previous: string): string => {
   return value;
 };
 
+/**
+ * Returns the file path for the module corresponding to {network}.
+ *
+ * Note, this string is in the format expected by `import()`, relative to this file.
+ *
+ * @param network
+ * @returns
+ */
+const getImportFilePath = (network: string): string => {
+  return `./networks/${network}/index`;
+};
+
+/**
+ * Returns the file path for the output file, relative to the root directory.
+ *
+ * @param network
+ * @returns
+ */
+const getResultsFilePath = (network: string): string => {
+  return `build/${network}/results.json`;
+};
+
 program
   .name("yarn subgraph")
   .description("CLI for the deployment and testing of Olympus subgraphs");
@@ -44,34 +61,33 @@ program
 program
   .command("latest-block")
   .description("Determines the latest block for a subgraph")
-  .argument("network", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
+  .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
   .requiredOption("--subgraph <subgraph id>", "the subgraph id (starts with 'Qm')", parseSubgraphId)
-  .action((options) => {
-    const comparisonFile = readComparisonFile();
-    writeLatestBlock(options.subgraph, comparisonFile);
+  .action(async (network, options) => {
+    const query = await import(getImportFilePath(network));
+    query.doLatestBlock(options.subgraph, getResultsFilePath(network));
   });
 
 program
-  .command("test")
+  .command("query")
   .description("Performs a test subgraph query")
-  .argument("network", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
+  .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
   .requiredOption("--subgraph <subgraph id>", "the subgraph id (starts with 'Qm')", parseSubgraphId)
   .requiredOption("--branch <base | branch>", "the branch", parseBranch)
-  .requiredOption("--block <block number>", "the block number")
-  .action((options) => {
-    const comparisonFile = readComparisonFile();
-    writeTokenRecords(options.subgraph, options.branch, options.block, comparisonFile);
+  .action(async (network, options) => {
+    const query = await import(getImportFilePath(network));
+    query.doQuery(options.subgraph, options.branch, getResultsFilePath(network));
   });
 
 program
   .command("compare")
   .description("Compares records")
-  .argument("network", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
+  .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
   .requiredOption("--base <filename>", "the base records file")
   .requiredOption("--branch <filename>", "the branch records file")
-  .action((options) => {
-    const comparisonFile = readComparisonFile();
-    compareTokenRecords(options.base, options.branch, comparisonFile);
+  .action(async (network, options) => {
+    const query = await import(getImportFilePath(network));
+    query.doComparison(options.base, options.branch, getResultsFilePath(network));
   });
 
 program.parse();
