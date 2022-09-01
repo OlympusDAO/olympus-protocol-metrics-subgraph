@@ -1,4 +1,4 @@
-import { diff } from "json-diff";
+import { diffString } from "json-diff";
 
 import {
   calculateLiquidBacking,
@@ -180,15 +180,16 @@ export const doLiquidBackingCheck = (
   comparisonFile.results.liquidBackingCheck = liquidBackingCheck;
 };
 
-export const combineOutput = (comparisonFile: ComparisonResults): void => {
+export const combineOutput = (network: string, comparisonFile: ComparisonResults): void => {
   // Generate a diff between the token records
-  const recordsDiff = diff(
+  const recordsDiff = diffString(
     comparisonFile.records.tokenRecords.base,
     comparisonFile.records.tokenRecords.branch,
     { full: true },
   );
 
-  comparisonFile.results.output = `**Ethereum Block Tested:** ${comparisonFile.latestBlock}
+  comparisonFile.results.output = `**Network:** ${network}
+  **Block Tested:** ${comparisonFile.latestBlock}
   
   **Subgraph Id:**
   Base: ${comparisonFile.branches.base.subgraphId}
@@ -202,6 +203,7 @@ export const combineOutput = (comparisonFile: ComparisonResults): void => {
 
   ${comparisonFile.results.liquidBackingCheck.output}
 
+  **Diff of TokenRecords:**
   \`\`\`diff
   ${recordsDiff}
   \`\`\`

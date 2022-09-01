@@ -14,7 +14,7 @@ import { readComparisonFile, writeComparisonFile } from "./results";
  * @param subgraphId
  * @param comparisonFile
  */
-export const doLatestBlock = (subgraphId: string, outputPath: string): void => {
+export const doLatestBlock = (network: string, subgraphId: string, outputPath: string): void => {
   const comparisonFile = readComparisonFile(outputPath);
 
   getTestBlock(subgraphId).then((latestBlock: string) => {
@@ -23,7 +23,12 @@ export const doLatestBlock = (subgraphId: string, outputPath: string): void => {
   });
 };
 
-export const doQuery = (subgraphId: string, branch: string, outputPath: string): void => {
+export const doQuery = (
+  network: string,
+  subgraphId: string,
+  branch: string,
+  outputPath: string,
+): void => {
   const comparisonFile = readComparisonFile(outputPath);
 
   getTokenRecords(subgraphId, comparisonFile.latestBlock).then((tokenRecords) => {
@@ -38,7 +43,7 @@ export const doQuery = (subgraphId: string, branch: string, outputPath: string):
   });
 };
 
-export const doComparison = (outputPath: string): void => {
+export const doComparison = (network: string, outputPath: string): void => {
   const comparisonFile = readComparisonFile(outputPath);
 
   // Read TokenRecord files, parse into JSON
@@ -55,7 +60,7 @@ export const doComparison = (outputPath: string): void => {
     getOhmPrice(subgraphId, block).then((ohmPrice) => {
       doLiquidBackingCheck(branchRecords, branchTokenSupplies, ohmPrice, comparisonFile);
       doMarketValueCheck(branchRecords, comparisonFile);
-      combineOutput(comparisonFile);
+      combineOutput(network, comparisonFile);
 
       writeComparisonFile(comparisonFile, outputPath);
     });

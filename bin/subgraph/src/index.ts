@@ -65,7 +65,7 @@ program
   .requiredOption("--subgraph <subgraph id>", "the subgraph id (starts with 'Qm')", parseSubgraphId)
   .action(async (network, options) => {
     const query = await import(getImportFilePath(network));
-    query.doLatestBlock(options.subgraph, getResultsFilePath(network));
+    query.doLatestBlock(network, options.subgraph, getResultsFilePath(network));
   });
 
 program
@@ -76,7 +76,7 @@ program
   .requiredOption("--branch <base | branch>", "the branch", parseBranch)
   .action(async (network, options) => {
     const query = await import(getImportFilePath(network));
-    query.doQuery(options.subgraph, options.branch, getResultsFilePath(network));
+    query.doQuery(network, options.subgraph, options.branch, getResultsFilePath(network));
   });
 
 program
@@ -85,7 +85,7 @@ program
   .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
   .action(async (network) => {
     const query = await import(getImportFilePath(network));
-    query.doComparison(getResultsFilePath(network));
+    query.doComparison(network, getResultsFilePath(network));
   });
 
 program.parse();
