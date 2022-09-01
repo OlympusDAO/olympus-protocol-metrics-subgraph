@@ -16,7 +16,7 @@ jobs:
           ref: ${{ github.head_ref }}
       - name: Check Variables
         run: |
-          source .subgraph-version
+          source networks/${{ matrix.network }}/.subgraph-version
           [[ ! -z "$SUBGRAPH_ID" ]] && echo "SUBGRAPH_ID is set" || (echo "::error::SUBGRAPH_ID is not set in .subgraph-version" && exit 1)
           echo "SUBGRAPH_ID=$SUBGRAPH_ID" >> $GITHUB_ENV
       - name: Get Latest Block
@@ -43,7 +43,7 @@ jobs:
           ref: ${{ github.base_ref }}
       - name: Check Variables
         run: |
-          source .subgraph-version
+          source networks/${{ matrix.network }}/.subgraph-version
           [[ ! -z "$SUBGRAPH_ID" ]] && echo "SUBGRAPH_ID is set" || (echo "::error::SUBGRAPH_ID is not set in .subgraph-version" && exit 1)
           echo "SUBGRAPH_ID=$SUBGRAPH_ID" >> $GITHUB_ENV
       - name: Download Results
