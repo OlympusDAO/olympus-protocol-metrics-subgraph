@@ -107,7 +107,7 @@ jobs:
         with:
           name: results
           path: build/${{ matrix.network }}/results.json
-      - name: Prepare Output
+      - name: Prepare Results Output
         id: output
         # We store the output in the github environment as it's a multiline string: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
         run: |
