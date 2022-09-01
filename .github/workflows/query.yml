@@ -29,10 +29,10 @@ jobs:
           echo "SUBGRAPH_ID=$SUBGRAPH_ID" >> $GITHUB_ENV
       - name: Get Latest Block
         run: |
-          yarn subgraph latest-block ${{ matrix.network }}
+          yarn subgraph latest-block ${{ matrix.network }} --subgraph ${{ env.SUBGRAPH_ID }}
       - name: Get Token Records
         run: |
-          yarn subgraph query ${{ matrix.network }} --branch branch --subgraph $SUBGRAPH_ID
+          yarn subgraph query ${{ matrix.network }} --branch branch --subgraph ${{ env.SUBGRAPH_ID }}
       - name: Upload Results
         uses: actions/upload-artifact@v3
         with:
@@ -69,7 +69,7 @@ jobs:
           path: build/${{ matrix.network }}
       - name: Get Token Records
         run: |
-          yarn subgraph query ${{ matrix.network }} --branch base --subgraph $SUBGRAPH_ID
+          yarn subgraph query ${{ matrix.network }} --branch base --subgraph ${{ env.SUBGRAPH_ID }}
       - name: Upload Results
         uses: actions/upload-artifact@v3
         with:
