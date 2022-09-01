@@ -1,0 +1,32 @@
+specVersion: 0.0.4
+description: Olympus Protocol Metrics Subgraph - Arbitrum
+repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
+schema:
+  file: ../../schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: TokenRecords-arbitrum
+    network: arbitrum-one
+    source:
+      address: "0x8D9bA570D6cb60C7e3e0F31343Efe75AB8E65FB1" # gOHM Arbitrum
+      abi: gOHM
+      startBlock: 10950000 # 2022-05-01
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - TokenRecord
+        - TokenSupply
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+        # Price Lookup
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
+      blockHandlers:
+        - handler: handleMetricsArbitrum
+      file: ./src/protocolMetrics/ProtocolMetrics.ts
+  # Polygon starting block: 27790000 2022-05-01
