@@ -64,7 +64,7 @@ typings/
 build
 
 # Test build files
-tests/.bin/
+**/**/tests/.bin/
 
 # query-test
 records-base.json
