@@ -24,8 +24,8 @@ jobs:
           yarn install --frozen-lockfile
       - name: Check Variables
         run: |
-          source networks/${{ matrix.network }}/.subgraph-version
-          [[ ! -z "$SUBGRAPH_ID" ]] && echo "SUBGRAPH_ID is set" || (echo "::error::SUBGRAPH_ID is not set in .subgraph-version" && exit 1)
+          SUBGRAPH_ID=$(jq -r .id networks/${{ matrix.network }}/config.json)
+          [[ ! -z "$SUBGRAPH_ID" ]] && echo "subgraph id is set" || (echo "::error::subgraph id is not set in config.json" && exit 1)
           echo "SUBGRAPH_ID=$SUBGRAPH_ID" >> $GITHUB_ENV
       - name: Get Latest Block
         run: |
@@ -59,8 +59,8 @@ jobs:
           yarn install --frozen-lockfile
       - name: Check Variables
         run: |
-          source networks/${{ matrix.network }}/.subgraph-version
-          [[ ! -z "$SUBGRAPH_ID" ]] && echo "SUBGRAPH_ID is set" || (echo "::error::SUBGRAPH_ID is not set in .subgraph-version" && exit 1)
+          SUBGRAPH_ID=$(jq -r .id networks/${{ matrix.network }}/config.json)
+          [[ ! -z "$SUBGRAPH_ID" ]] && echo "subgraph id is set" || (echo "::error::subgraph id is not set in config.json" && exit 1)
           echo "SUBGRAPH_ID=$SUBGRAPH_ID" >> $GITHUB_ENV
       - name: Download Results
         uses: actions/download-artifact@v3

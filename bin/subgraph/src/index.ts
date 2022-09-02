@@ -2,8 +2,10 @@
 
 import { exec } from "child_process";
 import { InvalidArgumentError, program } from "commander";
+import { readFileSync } from "fs";
 
 import { spawnProcess } from "./helpers/process";
+import { assertConfig, readConfig } from "./helpers/subgraphConfig";
 
 const parseSubgraphId = (value: string, _previous: string): string => {
   if (!value.includes("Qm")) {
@@ -57,6 +59,18 @@ const getResultsFilePath = (network: string): string => {
   return `build/${network}/results.json`;
 };
 
+const getBuildOutputDirectory = (network: string): string => {
+  return `networks/${network}/build`;
+};
+
+const getSubgraphManifestFilePath = (network: string): string => {
+  return `networks/${network}/subgraph.yaml`;
+};
+
+const getSubgraphConfigurationFilePath = (network: string): string => {
+  return `networks/${network}/config.json`;
+};
+
 program
   .name("yarn subgraph")
   .description("CLI for the deployment and testing of Olympus subgraphs");
@@ -99,7 +113,7 @@ program
     const generatedDir = `networks/${network}/generated/`;
     console.info("*** Running codegen");
     spawnProcess(
-      `yarn graph codegen networks/${network}/subgraph.yaml --output-dir ${generatedDir}`,
+      `yarn graph codegen ${getSubgraphManifestFilePath(network)} --output-dir ${generatedDir}`,
       (codegenExitCode: number) => {
         if (codegenExitCode > 0) {
           process.exit(codegenExitCode);
@@ -124,7 +138,9 @@ program
   .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
   .action((network) => {
     const childProcess = exec(
-      `yarn graph build networks/${network}/subgraph.yaml --output-dir networks/${network}/build/`,
+      `yarn graph build ${getSubgraphManifestFilePath(
+        network,
+      )} --output-dir ${getBuildOutputDirectory(network)}`,
     );
     childProcess.stdout.pipe(process.stdout);
     childProcess.stderr.pipe(process.stderr);
@@ -155,6 +171,52 @@ program
             }
           },
         );
+      },
+    );
+  });
+
+program
+  .command("deploy")
+  .description("Deploy subgraph to production")
+  .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
+  .action((network) => {
+    const config = readConfig(getSubgraphConfigurationFilePath(network));
+    assertConfig(config);
+
+    console.info("*** Running deploy");
+    spawnProcess(
+      `yarn graph deploy --product hosted-service --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --version-label ${
+        config.version
+      } --output-dir ${getBuildOutputDirectory(network)} ${config.org}/${
+        config.name
+      } ${getSubgraphManifestFilePath(network)}`,
+      (codegenExitCode: number) => {
+        if (codegenExitCode > 0) {
+          process.exit(codegenExitCode);
+        }
+      },
+    );
+  });
+
+program
+  .command("deploy:dev")
+  .description("Deploy subgraph to development")
+  .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
+  .action((network) => {
+    const config = readConfig(getSubgraphConfigurationFilePath(network));
+    assertConfig(config);
+
+    console.info("*** Running deploy");
+    spawnProcess(
+      `yarn graph deploy --product subgraph-studio --version-label ${
+        config.version
+      } --output-dir ${getBuildOutputDirectory(network)} ${
+        config.name
+      } ${getSubgraphManifestFilePath(network)}`,
+      (codegenExitCode: number) => {
+        if (codegenExitCode > 0) {
+          process.exit(codegenExitCode);
+        }
       },
     );
   });

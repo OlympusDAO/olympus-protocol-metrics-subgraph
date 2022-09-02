@@ -43,10 +43,10 @@ If you receive a non-sensical test result (e.g. duplicated test cases, or a test
    - The subgraph should be called `olympus-protocol-metrics`
 1. Add the Subgraph Studio deploy key to the `GRAPH_STUDIO_TOKEN` variable in `.env` (using `.env.sample`)
 1. Authenticate using `yarn auth:dev`
-1. Update the `SUBGRAPH_VERSION` variable in the `.subgraph-version` file.
+1. Update the `version` property in the `networks/<network>/config.json` file.
 1. Run `yarn build`
 1. Run `yarn deploy:dev`
-1. Update the `SUBGRAPH_ID` variable in the `.subgraph-version` file with the subgraph id that was displayed in the output.
+1. Update the `id` variable in the `networks/<network>/config.json` file with the subgraph id that was displayed in the output.
 
 A URL for the GraphQL Explorer will be provided.
 
@@ -62,10 +62,10 @@ To deploy, do the following:
 
 1. Add the Subgraph Studio deploy key to the `GRAPH_TOKEN` variable in `.env` (using `.env.sample`)
 1. Authenticate using `yarn auth`
-1. Update the `SUBGRAPH_VERSION` variable in the `.subgraph-version` file.
+1. Update the `version` property in the `networks/<network>/config.json` file.
 1. Run `yarn build`
 1. Run `yarn deploy`
-1. Update the `SUBGRAPH_ID` variable in the `.subgraph-version` file with the subgraph id that was displayed in the output.
+1. Update the `id` variable in the `networks/<network>/config.json` file with the subgraph id that was displayed in the output.
 1. Update `CHANGELOG.md`.
 
 ### Deployment (Local)
@@ -305,7 +305,7 @@ For every pull request, GitHub Actions runs tests against the current and destin
 
 This has a few requirements:
 
-- The subgraph id must be recorded in the `SUBGRAPH_ID` variable in the `.subgraph-version` file. See the [Deployment Testing](#deployment-testing) section of this document for steps.
+- The subgraph id must be recorded in the `id` property in the `networks/<network>/config.json` file. See the [Deployment Testing](#deployment-testing) section of this document for steps.
 - Both of the subgraphs must be active (not archived)
 - Both of the subgraphs must have overlapping blocks. The latest block of the `branch` subgraph will be determined and the `base` subgraph will be given a query against that block.
 
