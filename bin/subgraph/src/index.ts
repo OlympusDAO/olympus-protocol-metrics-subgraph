@@ -5,7 +5,7 @@ import { InvalidArgumentError, program } from "commander";
 
 import { spawnProcess } from "./helpers/process";
 import { assertConfig, readConfig } from "./helpers/subgraphConfig";
-import { BaseNetworkHandler, NetworkHandler } from "./networkHandler";
+import { NetworkHandler } from "./networkHandler";
 
 const parseSubgraphId = (value: string, _previous: string): string => {
   if (!value.includes("Qm")) {
