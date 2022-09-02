@@ -17,6 +17,9 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   build:
+    strategy:
+      matrix:
+        network: [ethereum]
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -26,13 +29,14 @@ jobs:
       - uses: actions/checkout@v3
 
       # Install dependencies
-      - name: Yarn
-        run: yarn
+      - name: Install
+        run: |
+          yarn install --frozen-lockfile
 
       # Run build
       - name: Build
-        run: yarn build
+        run: yarn subgraph build ${{ matrix.network }}
 
       # Run tests
       - name: Unit Tests
-        run: yarn test
+        run: yarn subgraph test ${{ matrix.network }}
