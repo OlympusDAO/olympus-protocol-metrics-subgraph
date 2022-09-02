@@ -3,6 +3,8 @@
 import { exec } from "child_process";
 import { InvalidArgumentError, program } from "commander";
 
+import { spawnProcess } from "./helpers/process";
+
 const parseSubgraphId = (value: string, _previous: string): string => {
   if (!value.includes("Qm")) {
     throw new InvalidArgumentError(`${value} is not a valid subgraph id`);
@@ -106,10 +108,24 @@ program
   .description("Test subgraph")
   .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
   .action((network) => {
-    // TODO figure out how to get it to read matchstick.yaml and recognise tests
-    const childProcess = exec(`yarn graph test --version 0.5.3`);
-    childProcess.stdout.pipe(process.stdout);
-    childProcess.stderr.pipe(process.stderr);
+    console.info("*** Running mustache to generate matchstick.yaml");
+    spawnProcess(
+      `echo '${JSON.stringify({
+        network: network,
+      })}' | yarn -s mustache - matchstick.template.yaml > matchstick.yaml`,
+      (mustacheExitCode: number) => {
+        if (mustacheExitCode > 0) {
+          process.exit(mustacheExitCode);
+        }
+
+        console.info("*** Running graph test");
+        spawnProcess(`yarn graph test --version 0.5.3`, (testExitCode: number) => {
+          if (testExitCode > 0) {
+            process.exit(testExitCode);
+          }
+        });
+      },
+    );
   });
 
 program.parse();
