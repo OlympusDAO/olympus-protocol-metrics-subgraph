@@ -50,7 +50,7 @@ const getImportFilePath = (network: string): string => {
 };
 
 /**
- * Returns the file path for the output file, relative to the root directory.
+ * Returns the file path for the network's output file, relative to the root directory.
  *
  * @param network
  * @returns
@@ -59,18 +59,45 @@ const getResultsFilePath = (network: string): string => {
   return `build/${network}/results.json`;
 };
 
+/**
+ * Returns the file path for the network's build directory, relative to the root directory.
+ *
+ * @param network
+ * @returns
+ */
 const getBuildOutputDirectory = (network: string): string => {
   return `networks/${network}/build`;
 };
 
+/**
+ * Returns the file path for the network's subgraph manifest, relative to the root directory.
+ *
+ * @param network
+ * @returns
+ */
 const getSubgraphManifestFilePath = (network: string): string => {
   return `networks/${network}/subgraph.yaml`;
 };
 
+/**
+ * Returns the file path for the network's configuration file, relative to the root directory.
+ *
+ * @param network
+ * @returns
+ */
 const getSubgraphConfigurationFilePath = (network: string): string => {
   return `networks/${network}/config.json`;
 };
 
+/**
+ * For the given {network} value, import and instantiate the corresponding class
+ * that implements the `NetworkHandler` interface.
+ *
+ * @param network
+ * @param subgraphId
+ * @param branch
+ * @returns
+ */
 const getNetworkHandler = async (
   network: string,
   subgraphId?: string,
