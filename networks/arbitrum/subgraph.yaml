@@ -20,13 +20,13 @@ dataSources:
         - TokenSupply
       abis:
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: ../../abis/ERC20.json
         # Price Lookup
         - name: BalancerVault
-          file: ./abis/BalancerVault.json
+          file: ../../abis/BalancerVault.json
         - name: BalancerPoolToken
-          file: ./abis/BalancerPoolToken.json
+          file: ../../abis/BalancerPoolToken.json
       blockHandlers:
-        - handler: handleMetricsArbitrum
-      file: ./src/protocolMetrics/ProtocolMetrics.ts
+        - handler: handleAssets
+      file: ./src/treasury/Assets.ts
   # Polygon starting block: 27790000 2022-05-01

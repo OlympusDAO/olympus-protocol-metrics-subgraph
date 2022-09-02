@@ -88,12 +88,3 @@ export function handleMetrics(block: ethereum.Block): void {
   // TokenSupply
   generateTokenSupply(block.timestamp, block.number);
 }
-
-export function handleMetricsArbitrum(block: ethereum.Block): void {
-  // Only index every 14,400th block, approximately 8 hours
-  if (!block.number.mod(BigInt.fromString("14400")).equals(BigInt.zero())) {
-    return;
-  }
-
-  log.debug("handleMetricsArbitrum: *** Indexing block {}", [block.number.toString()]);
-}
