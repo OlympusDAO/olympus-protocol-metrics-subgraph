@@ -27,13 +27,13 @@ dataSources:
           file: ./abis/OlympusERC20.json
         # Needed for price lookup
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: ../../abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
-          file: ./abis/BalancerVault.json
+          file: ../../abis/BalancerVault.json
         - name: BalancerPoolToken
-          file: ./abis/BalancerPoolToken.json
+          file: ../../abis/BalancerPoolToken.json
       callHandlers:
         - function: rebase(uint256)
           handler: rebaseFunction
@@ -60,13 +60,13 @@ dataSources:
           file: ./abis/OlympusERC20.json
         # Needed for price lookup
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: ../../abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
-          file: ./abis/BalancerVault.json
+          file: ../../abis/BalancerVault.json
         - name: BalancerPoolToken
-          file: ./abis/BalancerPoolToken.json
+          file: ../../abis/BalancerPoolToken.json
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
@@ -93,13 +93,13 @@ dataSources:
           file: ./abis/OlympusERC20.json
         # Needed for price lookup
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: ../../abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
-          file: ./abis/BalancerVault.json
+          file: ../../abis/BalancerVault.json
         - name: BalancerPoolToken
-          file: ./abis/BalancerPoolToken.json
+          file: ../../abis/BalancerPoolToken.json
       callHandlers:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
@@ -186,13 +186,13 @@ dataSources:
           file: ./abis/OHMDAIBondV1.json
         # Needed for price lookup
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: ../../abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
-          file: ./abis/BalancerVault.json
+          file: ../../abis/BalancerVault.json
         - name: BalancerPoolToken
-          file: ./abis/BalancerPoolToken.json
+          file: ../../abis/BalancerPoolToken.json
       callHandlers:
         - function: depositBondPrinciple(uint256)
           handler: handleDeposit
@@ -216,13 +216,13 @@ dataSources:
           file: ./abis/OHMDAIBondV2.json
         # Needed for price lookup
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: ../../abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
-          file: ./abis/BalancerVault.json
+          file: ../../abis/BalancerVault.json
         - name: BalancerPoolToken
-          file: ./abis/BalancerPoolToken.json
+          file: ../../abis/BalancerPoolToken.json
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
@@ -246,13 +246,13 @@ dataSources:
           file: ./abis/OHMDAIBondV3.json
         # Needed for price lookup
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: ../../abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
-          file: ./abis/BalancerVault.json
+          file: ../../abis/BalancerVault.json
         - name: BalancerPoolToken
-          file: ./abis/BalancerPoolToken.json
+          file: ../../abis/BalancerPoolToken.json
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
@@ -276,13 +276,13 @@ dataSources:
           file: ./abis/OHMDAIBondV4.json
         # Needed for price lookup
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: ../../abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
-          file: ./abis/BalancerVault.json
+          file: ../../abis/BalancerVault.json
         - name: BalancerPoolToken
-          file: ./abis/BalancerPoolToken.json
+          file: ../../abis/BalancerPoolToken.json
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
@@ -306,13 +306,13 @@ dataSources:
           file: ./abis/OHMFRAXBondV1.json
         # Needed for price lookup
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: ../../abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
-          file: ./abis/BalancerVault.json
+          file: ../../abis/BalancerVault.json
         - name: BalancerPoolToken
-          file: ./abis/BalancerPoolToken.json
+          file: ../../abis/BalancerPoolToken.json
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
@@ -336,13 +336,13 @@ dataSources:
           file: ./abis/OHMFRAXBondV2.json
         # Needed for price lookup
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: ../../abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
-          file: ./abis/BalancerVault.json
+          file: ../../abis/BalancerVault.json
         - name: BalancerPoolToken
-          file: ./abis/BalancerPoolToken.json
+          file: ../../abis/BalancerPoolToken.json
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
@@ -431,13 +431,13 @@ dataSources:
           file: ./abis/LUSDBondV1.json
         # Needed for price lookup
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: ../../abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
-          file: ./abis/BalancerVault.json
+          file: ../../abis/BalancerVault.json
         - name: BalancerPoolToken
-          file: ./abis/BalancerPoolToken.json
+          file: ../../abis/BalancerPoolToken.json
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
@@ -461,13 +461,13 @@ dataSources:
           file: ./abis/OHMETHBondV1.json
         # Needed for price lookup
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: ../../abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
-          file: ./abis/BalancerVault.json
+          file: ../../abis/BalancerVault.json
         - name: BalancerPoolToken
-          file: ./abis/BalancerPoolToken.json
+          file: ../../abis/BalancerPoolToken.json
       callHandlers:
         - function: deposit(uint256,uint256,address)
           handler: handleDeposit
@@ -502,13 +502,13 @@ dataSources:
           file: ./abis/OlympusERC20.json
         # Needed for price lookup
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: ../../abis/ERC20.json
         - name: UniswapV2Pair
           file: ./abis/UniswapV2Pair.json
         - name: BalancerVault
-          file: ./abis/BalancerVault.json
+          file: ../../abis/BalancerVault.json
         - name: BalancerPoolToken
-          file: ./abis/BalancerPoolToken.json
+          file: ../../abis/BalancerPoolToken.json
         # Required for bond discounts
         - name: DAIBondV1
           file: ./abis/DAIBondV1.json
@@ -577,7 +577,7 @@ dataSources:
         - name: CirculatingSupply
           file: ./abis/CirculatingSupply.json
         - name: ERC20
-          file: ./abis/ERC20.json
+          file: ../../abis/ERC20.json
         - name: MasterChef
           file: ./abis/MasterChef.json
         - name: VeFXS
@@ -585,9 +585,9 @@ dataSources:
         - name: RariAllocator
           file: ./abis/RariAllocator.json
         - name: BalancerVault
-          file: ./abis/BalancerVault.json
+          file: ../../abis/BalancerVault.json
         - name: BalancerPoolToken
-          file: ./abis/BalancerPoolToken.json
+          file: ../../abis/BalancerPoolToken.json
         - name: ConvexBaseRewardPool
           file: ./abis/ConvexBaseRewardPool.json
         - name: CurvePool
