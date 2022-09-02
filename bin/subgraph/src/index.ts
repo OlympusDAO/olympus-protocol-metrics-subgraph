@@ -92,6 +92,33 @@ program
   });
 
 program
+  .command("codegen")
+  .description("Generate code for subgraph")
+  .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
+  .action((network) => {
+    const generatedDir = `networks/${network}/generated/`;
+    console.info("*** Running codegen");
+    spawnProcess(
+      `yarn graph codegen networks/${network}/subgraph.yaml --output-dir ${generatedDir}`,
+      (codegenExitCode: number) => {
+        if (codegenExitCode > 0) {
+          process.exit(codegenExitCode);
+        }
+
+        console.info("*** Running lint");
+        spawnProcess(
+          `yarn eslint --config ./.eslintrc.json --fix ${generatedDir}`,
+          (lintExitCode: number) => {
+            if (lintExitCode > 0) {
+              process.exit(lintExitCode);
+            }
+          },
+        );
+      },
+    );
+  });
+
+program
   .command("build")
   .description("Build subgraph")
   .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
