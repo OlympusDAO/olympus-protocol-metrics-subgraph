@@ -107,7 +107,8 @@ program
   .command("test")
   .description("Test subgraph")
   .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
-  .action((network) => {
+  .option("--recompile", "Recompiles all tests")
+  .action((network, options) => {
     console.info("*** Running mustache to generate matchstick.yaml");
     spawnProcess(
       `echo '${JSON.stringify({
@@ -119,11 +120,14 @@ program
         }
 
         console.info("*** Running graph test");
-        spawnProcess(`yarn graph test --version 0.5.3`, (testExitCode: number) => {
-          if (testExitCode > 0) {
-            process.exit(testExitCode);
-          }
-        });
+        spawnProcess(
+          `yarn graph test --version 0.5.3 ${options.recompile == true ? "--recompile" : ""}`,
+          (testExitCode: number) => {
+            if (testExitCode > 0) {
+              process.exit(testExitCode);
+            }
+          },
+        );
       },
     );
   });
