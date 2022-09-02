@@ -2,7 +2,6 @@
 
 import { exec } from "child_process";
 import { InvalidArgumentError, program } from "commander";
-import { readFileSync } from "fs";
 
 import { spawnProcess } from "./helpers/process";
 import { assertConfig, readConfig } from "./helpers/subgraphConfig";
