@@ -15,7 +15,7 @@ Run `yarn`
 Note that the Graph Protocol compiles from AssemblyScript to WASM. AssemblyScript is strongly-typed, and is similar to TypeScript. However, there are a number of expected features of TypeScript (e.g. try/catch) that aren't implemented in AssemblyScript. A few suggestions:
 
 - Utilise the linting that has been set up in this repository
-- Build frequently (`yarn build`), as linting does not pick up all problems
+- Build frequently (`yarn subgraph build <network>`), as linting does not pick up all problems
 - Variables that are nullable need to be typed accordingly
 - You may run into a TS2322 compiler error when handling null values. The workaround for this is to use the strict equality operator (`===`), instead of loose equality (`==`) or negation (`!someValue`). e.g. `if (someValue === null)`. This is due to a [limitation in the AssemblyScript compiler.](https://github.com/AssemblyScript/assemblyscript/issues/2223#issuecomment-1069245834)
 - The Graph Protocol Discord is very helpful to get support. See the `subgraph-development` channel.
@@ -25,15 +25,15 @@ Note that the Graph Protocol compiles from AssemblyScript to WASM. AssemblyScrip
 The `matchstick-as` package is used to perform testing on the subgraph code. The syntax is close to that of
 `jest`. See this page for examples: <https://github.com/LimeChain/demo-subgraph>
 
-To run tests: `yarn test`
+To run tests: `yarn subgraph test <network>`
 
-If you receive a non-sensical test result (e.g. duplicated test cases, or a test failing that should be passing), try running `yarn test:force`. The build cache will sometimes get corrupted/broken.
+If you receive a non-sensical test result (e.g. duplicated test cases, or a test failing that should be passing), try running `yarn subgraph test <network> --recompile`. The build cache will sometimes get corrupted/broken.
 
 ## Adding Contracts
 
 1. Add the ABI into the `abis/` folder.
 1. Add a reference to the ABI under the respective data source in `subgraph.yaml`
-1. Run `yarn codegen` to generate AssemblyScript files from the new ABI(s)
+1. Run `yarn subgraph codegen <network>` to generate AssemblyScript files from the new ABI(s)
 
 ## Deployment
 
@@ -44,8 +44,8 @@ If you receive a non-sensical test result (e.g. duplicated test cases, or a test
 1. Add the Subgraph Studio deploy key to the `GRAPH_STUDIO_TOKEN` variable in `.env` (using `.env.sample`)
 1. Authenticate using `yarn auth:dev`
 1. Update the `version` property in the `networks/<network>/config.json` file.
-1. Run `yarn build`
-1. Run `yarn deploy:dev`
+1. Run `yarn subgraph build <network>`
+1. Run `yarn subgraph deploy:dev <network>`
 1. Update the `id` variable in the `networks/<network>/config.json` file with the subgraph id that was displayed in the output.
 
 A URL for the GraphQL Explorer will be provided.
@@ -63,8 +63,8 @@ To deploy, do the following:
 1. Add the Subgraph Studio deploy key to the `GRAPH_TOKEN` variable in `.env` (using `.env.sample`)
 1. Authenticate using `yarn auth`
 1. Update the `version` property in the `networks/<network>/config.json` file.
-1. Run `yarn build`
-1. Run `yarn deploy`
+1. Run `yarn subgraph build <network>`
+1. Run `yarn subgraph deploy <network>`
 1. Update the `id` variable in the `networks/<network>/config.json` file with the subgraph id that was displayed in the output.
 1. Update `CHANGELOG.md`.
 
