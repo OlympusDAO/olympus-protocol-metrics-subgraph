@@ -5,6 +5,7 @@ import { InvalidArgumentError, program } from "commander";
 
 import { spawnProcess } from "./helpers/process";
 import { assertConfig, readConfig } from "./helpers/subgraphConfig";
+import { BaseNetworkHandler, NetworkHandler } from "./networkHandler";
 
 const parseSubgraphId = (value: string, _previous: string): string => {
   if (!value.includes("Qm")) {
@@ -70,6 +71,20 @@ const getSubgraphConfigurationFilePath = (network: string): string => {
   return `networks/${network}/config.json`;
 };
 
+const getNetworkHandler = async (
+  network: string,
+  subgraphId?: string,
+  branch?: string,
+): Promise<NetworkHandler> => {
+  const module = await import(getImportFilePath(network));
+  return new module.default(
+    network,
+    getResultsFilePath(network),
+    subgraphId,
+    branch,
+  ) as NetworkHandler;
+};
+
 program
   .name("yarn subgraph")
   .description("CLI for the deployment and testing of Olympus subgraphs");
@@ -80,8 +95,8 @@ program
   .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
   .requiredOption("--subgraph <subgraph id>", "the subgraph id (starts with 'Qm')", parseSubgraphId)
   .action(async (network, options) => {
-    const query = await import(getImportFilePath(network));
-    query.doLatestBlock(network, options.subgraph, getResultsFilePath(network));
+    const query = await getNetworkHandler(network, options.subgraph, null);
+    query.doLatestBlock();
   });
 
 program
@@ -91,8 +106,8 @@ program
   .requiredOption("--subgraph <subgraph id>", "the subgraph id (starts with 'Qm')", parseSubgraphId)
   .requiredOption("--branch <base | branch>", "the branch", parseBranch)
   .action(async (network, options) => {
-    const query = await import(getImportFilePath(network));
-    query.doQuery(network, options.subgraph, options.branch, getResultsFilePath(network));
+    const query = await getNetworkHandler(network, options.subgraph, options.branch);
+    query.doQuery();
   });
 
 program
@@ -100,8 +115,8 @@ program
   .description("Compares records")
   .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
   .action(async (network) => {
-    const query = await import(getImportFilePath(network));
-    query.doComparison(network, getResultsFilePath(network));
+    const query = await getNetworkHandler(network, null, null);
+    query.doComparison();
   });
 
 program

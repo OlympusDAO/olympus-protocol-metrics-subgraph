@@ -20,6 +20,26 @@ Note that the Graph Protocol compiles from AssemblyScript to WASM. AssemblyScrip
 - You may run into a TS2322 compiler error when handling null values. The workaround for this is to use the strict equality operator (`===`), instead of loose equality (`==`) or negation (`!someValue`). e.g. `if (someValue === null)`. This is due to a [limitation in the AssemblyScript compiler.](https://github.com/AssemblyScript/assemblyscript/issues/2223#issuecomment-1069245834)
 - The Graph Protocol Discord is very helpful to get support. See the `subgraph-development` channel.
 
+## CLI
+
+A CLI tool is available at `yarn subgraph` to make common tasks (building, testing, deploying) significantly easier. Run `yarn subgraph --help` for details of the commands.
+
+Please note that `<network>` is an argument for most of the commands, as files and configuration are stored on a per-network basis.
+
+## Support for Networks
+
+Assets on different networks/chains are supported.
+
+Each network has an independent subgraph, as required by the Graph Protocol. For this reason, each network has an independent file structure under `networks/`.
+
+### Adding a New Network
+
+1. Decide on the name for the network, which will be used throughout. e.g. `arbitrum`
+1. Create the following files and folders in `networks/<network>/`: `src/`, `tests/`, `config.json` and `subgraph.yaml`. See [networks/ethereum/](networks/ethereum/) for an example.
+1. Create the subgraph through the Graph Protocol (see [Deployment](#deployment) section)
+1. Create `bin/subgraph/src/networks/<network>/index.ts` and implement a class that extends `BaseNetworkHandler`. This file defines how a particular subgraph will be automatically tested using the workflow defined in [.github/workflows/query.yml](.github/workflows/query.yml). See [bin/subgraph/src/networks/ethereum/index.ts](bin/subgraph/src/networks/ethereum/index.ts) for an example.
+1. Add `<network>` to the matrix strategies defined in [.github/workflows/query.yml](.github/workflows/query.yml) and [.github/workflows/main.yml](.github/workflows/main.yml).
+
 ## Testing
 
 The `matchstick-as` package is used to perform testing on the subgraph code. The syntax is close to that of
