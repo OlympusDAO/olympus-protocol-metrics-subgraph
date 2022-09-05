@@ -1,6 +1,5 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
-// import { ContractNameLookup } from "../contracts/ContractLookup";
 import { arrayIncludesLoose } from "../utils/ArrayHelper";
 import { PriceHandler } from "./PriceHandler";
 

@@ -1,7 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { UniswapV2Pair } from "../../generated/Price/UniswapV2Pair";
-// import { ContractNameLookup } from "../contracts/ContractLookup";
 import { getDecimals } from "../contracts/ERC20";
 import { arrayIncludesLoose } from "../utils/ArrayHelper";
 import { toDecimal } from "../utils/Decimals";

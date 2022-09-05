@@ -1,17 +1,6 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 /**
- * Base function for doing price lookups.
- *
- * This should be implemented for each network and include the following:
- * - inject the array of PriceHandler objects
- * - loop through PriceHandler objects and look up prices
- */
-// export interface PriceLookup {
-//   (tokenAddress: string, block: BigInt): BigDecimal;
-// }
-
-/**
  * Defines how to determine the price of particular tokens, by mapping them to
  * a liquidity pool.
  */
