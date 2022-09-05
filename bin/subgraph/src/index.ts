@@ -26,7 +26,7 @@ const parseBranch = (value: string, _previous: string): string => {
   return value;
 };
 
-const NETWORKS = ["ethereum", "arbitrum"];
+const NETWORKS = ["ethereum", "arbitrum", "shared"];
 const parseNetwork = (value: string, _previous: string): string => {
   if (!NETWORKS.includes(value)) {
     throw new InvalidArgumentError(

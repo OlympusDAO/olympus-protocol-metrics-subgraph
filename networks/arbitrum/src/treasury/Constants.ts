@@ -19,3 +19,13 @@
 // jgOHM-gOHM
 
 // Assets: https://debank.com/profile/0x012bbf0481b97170577745d2167ee14f63e2ad4c
+
+/**
+ * Pass list/map of base tokens: token -> resolution function
+ * functions to determine if token matches a category/resolution function
+ * token orientation
+ *
+ * getPairHandlerNonOhmValue should support gOHM. Addresses to be injected
+ *
+ * algorithms (UniV2, Balancer, etc) should move to shared. Edge-cases (UST) remain.
+ */
