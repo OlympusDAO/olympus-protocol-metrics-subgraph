@@ -19,7 +19,7 @@ export interface PriceHandler {
   /**
    * @returns true if {tokenAddress} can be handled
    */
-  matches: (tokenAddress: string) => boolean;
+  matches(tokenAddress: string): boolean;
 
   /**
    * Determines the price of {tokenAddress} in USD.
@@ -33,9 +33,9 @@ export interface PriceHandler {
    * @param block
    * @returns BigDecimal
    */
-  getPrice: (
+  getPrice(
     tokenAddress: string,
     priceLookup: (inAddress: string, inBlock: BigInt) => BigDecimal,
     block: BigInt,
-  ) => BigDecimal;
+  ): BigDecimal;
 }

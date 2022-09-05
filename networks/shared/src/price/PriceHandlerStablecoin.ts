@@ -1,14 +1,14 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
-import { ContractNameLookup } from "../contracts/ContractLookup";
+// import { ContractNameLookup } from "../contracts/ContractLookup";
 import { arrayIncludesLoose } from "../utils/ArrayHelper";
 import { PriceHandler } from "./PriceHandler";
 
 export class PriceHandlerStablecoin implements PriceHandler {
   protected addresses: string[];
-  protected contractLookup: ContractNameLookup;
+  protected contractLookup: (inAddress: string) => string;
 
-  constructor(addresses: string[], contractLookup: ContractNameLookup) {
+  constructor(addresses: string[], contractLookup: (inAddress: string) => string) {
     this.addresses = addresses;
     this.contractLookup = contractLookup;
   }

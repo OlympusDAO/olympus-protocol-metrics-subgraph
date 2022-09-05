@@ -1,7 +1,7 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { UniswapV2Pair } from "../../generated/Price/UniswapV2Pair";
-import { ContractNameLookup } from "../contracts/ContractLookup";
+// import { ContractNameLookup } from "../contracts/ContractLookup";
 import { getDecimals } from "../contracts/ERC20";
 import { arrayIncludesLoose } from "../utils/ArrayHelper";
 import { toDecimal } from "../utils/Decimals";
@@ -13,9 +13,13 @@ const CLASS = "PriceHandlerUniswapV2";
 export class PriceHandlerUniswapV2 implements PriceHandler {
   protected tokens: string[];
   protected poolAddress: string;
-  protected contractLookup: ContractNameLookup;
+  protected contractLookup: (inAddress: string) => string;
 
-  constructor(tokens: string[], poolAddress: string, contractLookup: ContractNameLookup) {
+  constructor(
+    tokens: string[],
+    poolAddress: string,
+    contractLookup: (inAddress: string) => string,
+  ) {
     this.tokens = tokens;
     this.poolAddress = poolAddress;
     this.contractLookup = contractLookup;

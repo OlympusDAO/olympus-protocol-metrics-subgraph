@@ -1,3 +1,3 @@
-export interface ContractNameLookup {
-  (tokenAddress: string): string;
-}
+// export interface ContractNameLookup {
+//   (tokenAddress: string): string;
+// }
