@@ -1,6 +1,7 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
+import { toBigInt } from "../../shared/src/utils/Decimals";
 import {
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
   CONVEX_ALLOCATOR3,
@@ -35,7 +36,6 @@ import {
   getTokeStakedBalancesFromWallets,
   getVlCvxUnlockedRecords,
 } from "../src/utils/ContractHelper";
-import { toBigInt } from "../src/utils/Decimals";
 import { ERC20_STANDARD_DECIMALS } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 

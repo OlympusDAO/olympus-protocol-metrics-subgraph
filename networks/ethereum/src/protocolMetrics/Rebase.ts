@@ -1,6 +1,7 @@
 import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { log } from "matchstick-as";
 
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { OlympusStakingV1 } from "../../generated/ProtocolMetrics/OlympusStakingV1";
 import { OlympusStakingV2 } from "../../generated/ProtocolMetrics/OlympusStakingV2";
 import { OlympusStakingV3 } from "../../generated/ProtocolMetrics/OlympusStakingV3";
@@ -11,7 +12,6 @@ import {
   STAKING_CONTRACT_V3,
   STAKING_CONTRACT_V3_BLOCK,
 } from "../utils/Constants";
-import { toDecimal } from "../utils/Decimals";
 
 export function getNextOHMRebase(blockNumber: BigInt): BigDecimal {
   let next_distribution = BigDecimal.fromString("0");

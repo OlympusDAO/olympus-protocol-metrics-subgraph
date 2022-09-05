@@ -1,6 +1,7 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { createMockedFunction } from "matchstick-as";
 
+import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
 import {
   CONVEX_ALLOCATORS,
   ERC20_BTRFLY_V1,
@@ -29,7 +30,6 @@ import {
   PAIR_UNISWAP_V3_WETH_BTRFLY_V1,
   PAIR_UNISWAP_V3_WETH_BTRFLY_V2,
 } from "../src/utils/Constants";
-import { toBigInt, toDecimal } from "../src/utils/Decimals";
 import { mockZeroWalletBalances } from "./walletHelper";
 
 export const ETH_TRIBE_RESERVE_TRIBE = BigInt.fromString("40963255589554358793575");

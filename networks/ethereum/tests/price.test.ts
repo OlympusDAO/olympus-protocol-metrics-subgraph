@@ -7,6 +7,7 @@ import {
   test,
 } from "matchstick-as/assembly/index";
 
+import { DEFAULT_DECIMALS, toBigInt } from "../../shared/src/utils/Decimals";
 import {
   BALANCER_VAULT,
   ERC20_BALANCER_WETH_FDT,
@@ -40,7 +41,6 @@ import {
   POOL_BALANCER_OHM_DAI_WETH_ID,
   POOL_BALANCER_WETH_FDT_ID,
 } from "../src/utils/Constants";
-import { DEFAULT_DECIMALS, toBigInt } from "../src/utils/Decimals";
 import { getBaseOhmUsdRate, getUSDRate, getUSDRateBalancer } from "../src/utils/Price";
 import { mockBalancerGaugeBalanceZero } from "./contractHelper.test";
 import {

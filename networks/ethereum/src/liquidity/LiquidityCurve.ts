@@ -1,6 +1,7 @@
 import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { log } from "matchstick-as";
 
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { TokenRecord, TokenSupply } from "../../generated/schema";
@@ -13,7 +14,6 @@ import {
   liquidityPairHasToken,
 } from "../utils/Constants";
 import { getConvexStakedBalance, getERC20 } from "../utils/ContractHelper";
-import { toDecimal } from "../utils/Decimals";
 import { getUSDRate } from "../utils/Price";
 import { TokenCategoryPOL } from "../utils/TokenDefinition";
 import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";

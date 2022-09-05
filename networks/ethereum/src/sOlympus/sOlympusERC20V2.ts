@@ -1,11 +1,11 @@
 import { Address, BigInt } from "@graphprotocol/graph-ts";
 
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { Rebase } from "../../generated/schema";
 import { OlympusERC20 } from "../../generated/sOlympusERC20V2/OlympusERC20";
 import { RebaseCall } from "../../generated/sOlympusERC20V2/sOlympusERC20V2";
 import { ERC20_OHM_V1, STAKING_CONTRACT_V2 } from "../utils/Constants";
 import { createDailyStakingReward } from "../utils/DailyStakingReward";
-import { toDecimal } from "../utils/Decimals";
 import { getBaseOhmUsdRate } from "../utils/Price";
 
 export function rebaseFunction(call: RebaseCall): void {

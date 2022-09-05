@@ -1,5 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { FraxSwapPool } from "../../generated/ProtocolMetrics/FraxSwapPool";
 import { TokenRecord, TokenSupply } from "../../generated/schema";
 import {
@@ -9,7 +10,6 @@ import {
   liquidityPairHasToken,
 } from "../utils/Constants";
 import { getERC20 } from "../utils/ContractHelper";
-import { toDecimal } from "../utils/Decimals";
 import { getUSDRate } from "../utils/Price";
 import { TokenCategoryPOL } from "../utils/TokenDefinition";
 import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";

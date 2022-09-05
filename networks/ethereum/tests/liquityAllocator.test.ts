@@ -1,6 +1,7 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, test } from "matchstick-as/assembly/index";
 
+import { toBigInt } from "../../shared/src/utils/Decimals";
 import {
   ERC20_LQTY,
   ERC20_LUSD,
@@ -12,7 +13,6 @@ import {
   getLiquityStabilityPoolBalance,
   getLiquityStabilityPoolRecords,
 } from "../src/utils/ContractHelper";
-import { toBigInt } from "../src/utils/Decimals";
 import { ERC20_STANDARD_DECIMALS, OHM_USD_RESERVE_BLOCK } from "./pairHelper";
 
 const LUSD_BALANCE = "100";

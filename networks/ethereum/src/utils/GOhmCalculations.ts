@@ -1,8 +1,8 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { ERC20_GOHM } from "./Constants";
 import { getERC20 } from "./ContractHelper";
-import { toDecimal } from "./Decimals";
 
 /**
  * Returns the total supply of the gOHM token at the given block number.

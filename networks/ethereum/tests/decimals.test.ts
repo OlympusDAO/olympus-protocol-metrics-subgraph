@@ -1,7 +1,7 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
-import { toBigInt, toDecimal } from "../src/utils/Decimals";
+import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
 
 describe("toDecimal", () => {
   test("applies default decimal places", () => {

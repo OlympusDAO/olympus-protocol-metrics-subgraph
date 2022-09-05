@@ -1,8 +1,8 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { ERC20_WETH } from "../utils/Constants";
 import { getERC20, getUniswapV3Pair } from "../utils/ContractHelper";
-import { toDecimal } from "../utils/Decimals";
 import { getUSDRateUniswapV3 } from "../utils/Price";
 import { getBaseEthUsdRate } from "../utils/PriceBase";
 

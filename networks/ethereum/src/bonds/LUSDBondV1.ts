@@ -1,7 +1,7 @@
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { DepositCall } from "../../generated/LUSDBondV1/LUSDBondV1";
 import { createDailyBondRecord } from "../bonds/DailyBond";
 import { LUSDBOND_TOKEN } from "../utils/Constants";
-import { toDecimal } from "../utils/Decimals";
 import { loadOrCreateToken } from "../utils/Tokens";
 
 export function handleDeposit(call: DepositCall): void {

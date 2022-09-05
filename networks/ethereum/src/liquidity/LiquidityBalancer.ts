@@ -1,5 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolToken";
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
 import { TokenRecord, TokenSupply } from "../../generated/schema";
@@ -11,7 +12,6 @@ import {
   liquidityPairHasToken,
 } from "../utils/Constants";
 import { getBalancerGaugeBalancesFromWallets, getERC20 } from "../utils/ContractHelper";
-import { toDecimal } from "../utils/Decimals";
 import { getUSDRate } from "../utils/Price";
 import { TokenCategoryPOL } from "../utils/TokenDefinition";
 import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";

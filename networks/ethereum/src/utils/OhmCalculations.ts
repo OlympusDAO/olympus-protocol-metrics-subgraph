@@ -1,5 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
 import { TokenSupply } from "../../generated/schema";
 import { getBalancerPoolTokenQuantity } from "../liquidity/LiquidityBalancer";
@@ -28,7 +29,6 @@ import {
   getSOlympusERC20V2,
   getSOlympusERC20V3,
 } from "./ContractHelper";
-import { toDecimal } from "./Decimals";
 import { PairHandlerTypes } from "./PairHandler";
 import { getBaseOhmUsdRate } from "./Price";
 import {

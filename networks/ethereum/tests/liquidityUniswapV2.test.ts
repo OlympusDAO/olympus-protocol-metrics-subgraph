@@ -1,6 +1,7 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
+import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
 import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
 import {
   getOhmUSDPairRiskFreeValue,
@@ -24,7 +25,6 @@ import {
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
-import { toBigInt, toDecimal } from "../src/utils/Decimals";
 import { PairHandler, PairHandlerTypes } from "../src/utils/PairHandler";
 import { getUSDRate } from "../src/utils/Price";
 import { mockBalancerVaultZero } from "./liquidityBalancer.test";

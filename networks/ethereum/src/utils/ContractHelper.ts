@@ -1,5 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { BalancerLiquidityGauge } from "../../generated/ProtocolMetrics/BalancerLiquidityGauge";
 import { ConvexBaseRewardPool } from "../../generated/ProtocolMetrics/ConvexBaseRewardPool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
@@ -48,7 +49,6 @@ import {
   TOKE_STAKING,
   VEFXS_ALLOCATOR,
 } from "./Constants";
-import { toDecimal } from "./Decimals";
 import { getUSDRate } from "./Price";
 import { TokenCategoryPOL } from "./TokenDefinition";
 import { createOrUpdateTokenRecord, getIsTokenLiquid } from "./TokenRecordHelper";
