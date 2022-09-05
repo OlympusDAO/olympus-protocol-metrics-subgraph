@@ -1,8 +1,8 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
-// import { ContractNameLookup } from "../../src/contracts/ContractLookup";
-// import { PriceLookup } from "../../src/price/PriceHandler";
+import { ContractNameLookup } from "../../src/contracts/ContractLookup";
+import { PriceLookup } from "../../src/price/PriceHandler";
 import { PriceHandlerUniswapV2 } from "../../src/price/PriceHandlerUniswapV2";
 import { toDecimal } from "../../src/utils/Decimals";
 
@@ -103,15 +103,14 @@ export const getOhmUsdRate = (): BigDecimal => {
 
 describe("UniswapV2 price handler", () => {
   test("when secondary token = $1", () => {
-    const stablecoinPriceLookup: (inAddress: string, inBlock: BigInt) => BigDecimal = (
+    const stablecoinPriceLookup: PriceLookup = (
       _tokenAddress: string,
       _block: BigInt,
     ): BigDecimal => {
       return BigDecimal.fromString("1");
     };
 
-    const contractLookup: (inAddress: string) => string = (_tokenAddress: string): string =>
-      "OHM V2";
+    const contractLookup: ContractNameLookup = (_tokenAddress: string): string => "OHM V2";
 
     mockOhmDaiPair();
 
@@ -125,15 +124,14 @@ describe("UniswapV2 price handler", () => {
   });
 
   test("orientation flipped", () => {
-    const stablecoinPriceLookup: (inAddress: string, inBlock: BigInt) => BigDecimal = (
+    const stablecoinPriceLookup: PriceLookup = (
       _tokenAddress: string,
       _block: BigInt,
     ): BigDecimal => {
       return BigDecimal.fromString("1");
     };
 
-    const contractLookup: (inAddress: string) => string = (_tokenAddress: string): string =>
-      "OHM V2";
+    const contractLookup: ContractNameLookup = (_tokenAddress: string): string => "OHM V2";
 
     mockOhmDaiPairFlipped();
 
