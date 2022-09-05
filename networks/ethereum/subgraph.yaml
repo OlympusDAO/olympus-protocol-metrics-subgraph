@@ -603,7 +603,7 @@ dataSources:
         - name: BalancerLiquidityGauge
           file: ./abis/BalancerLiquidityGauge.json
         - name: gOHM
-          file: ./abis/gOHM.json
+          file: ../../abis/gOHM.json
         - name: FraxSwapPool
           file: ./abis/FraxSwapPool.json
         - name: vlCVX
