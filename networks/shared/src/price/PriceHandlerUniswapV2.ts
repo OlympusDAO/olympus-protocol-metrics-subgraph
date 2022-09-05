@@ -6,7 +6,7 @@ import { getDecimals } from "../contracts/ERC20";
 import { arrayIncludesLoose } from "../utils/ArrayHelper";
 import { toDecimal } from "../utils/Decimals";
 import { addressesEqual } from "../utils/StringHelper";
-import { PriceHandler, PriceLookup } from "./PriceHandler";
+import { PriceHandler, PriceLookup, PriceLookupResult } from "./PriceHandler";
 
 const CLASS = "PriceHandlerUniswapV2";
 
@@ -25,7 +25,11 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
     return arrayIncludesLoose(this.tokens, tokenAddress);
   }
 
-  getPrice(tokenAddress: string, priceLookup: PriceLookup, block: BigInt): BigDecimal {
+  getPrice(
+    tokenAddress: string,
+    priceLookup: PriceLookup,
+    block: BigInt,
+  ): PriceLookupResult | null {
     const FUNCTION = `${CLASS}: lookup:`;
 
     const pair = UniswapV2Pair.bind(Address.fromString(this.poolAddress));
@@ -35,7 +39,7 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
         this.contractLookup(this.poolAddress),
         block.toString(),
       ]);
-      return BigDecimal.zero();
+      return null;
     }
 
     // Determine orientation of the pair
@@ -65,6 +69,9 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
       ? token1.toHexString()
       : token0.toHexString();
     const secondaryTokenPrice = priceLookup(secondaryToken, block);
+    if (!secondaryTokenPrice) {
+      return null;
+    }
 
     /**
      * reserves(A)
@@ -76,6 +83,11 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
       ? token1Reserves.div(token0Reserves)
       : token0Reserves.div(token1Reserves);
 
-    return baseTokenNumerator.times(secondaryTokenPrice);
+    const tokenPrice = baseTokenNumerator.times(secondaryTokenPrice.price);
+
+    return {
+      price: tokenPrice,
+      liquidity: BigDecimal.zero(), // TODO set liquidity
+    };
   }
 }

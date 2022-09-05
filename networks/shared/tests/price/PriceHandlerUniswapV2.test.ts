@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import { ContractNameLookup } from "../../src/contracts/ContractLookup";
-import { PriceLookup } from "../../src/price/PriceHandler";
+import { PriceLookup, PriceLookupResult } from "../../src/price/PriceHandler";
 import { PriceHandlerUniswapV2 } from "../../src/price/PriceHandlerUniswapV2";
 import { toDecimal } from "../../src/utils/Decimals";
 
@@ -106,8 +106,11 @@ describe("UniswapV2 price handler", () => {
     const stablecoinPriceLookup: PriceLookup = (
       _tokenAddress: string,
       _block: BigInt,
-    ): BigDecimal => {
-      return BigDecimal.fromString("1");
+    ): PriceLookupResult => {
+      return {
+        liquidity: BigDecimal.fromString("1"),
+        price: BigDecimal.fromString("1"),
+      };
     };
 
     const contractLookup: ContractNameLookup = (_tokenAddress: string): string => "OHM V2";
@@ -117,9 +120,10 @@ describe("UniswapV2 price handler", () => {
     const handler = new PriceHandlerUniswapV2([TOKEN1], PAIR_ADDRESS, contractLookup);
 
     // Should return the price of OHM
+    const priceResult = handler.getPrice(TOKEN1, stablecoinPriceLookup, BLOCK);
     assert.stringEquals(
       getOhmUsdRate().toString(),
-      handler.getPrice(TOKEN1, stablecoinPriceLookup, BLOCK).toString(),
+      priceResult ? priceResult.price.toString() : "",
     );
   });
 
@@ -127,8 +131,11 @@ describe("UniswapV2 price handler", () => {
     const stablecoinPriceLookup: PriceLookup = (
       _tokenAddress: string,
       _block: BigInt,
-    ): BigDecimal => {
-      return BigDecimal.fromString("1");
+    ): PriceLookupResult => {
+      return {
+        price: BigDecimal.fromString("1"),
+        liquidity: BigDecimal.fromString("1"),
+      };
     };
 
     const contractLookup: ContractNameLookup = (_tokenAddress: string): string => "OHM V2";
@@ -138,9 +145,10 @@ describe("UniswapV2 price handler", () => {
     const handler = new PriceHandlerUniswapV2([TOKEN1], PAIR_ADDRESS, contractLookup);
 
     // Should return the price of OHM
+    const priceResult = handler.getPrice(TOKEN1, stablecoinPriceLookup, BLOCK);
     assert.stringEquals(
       getOhmUsdRate().toString(),
-      handler.getPrice(TOKEN1, stablecoinPriceLookup, BLOCK).toString(),
+      priceResult ? priceResult.price.toString() : "",
     );
   });
 });

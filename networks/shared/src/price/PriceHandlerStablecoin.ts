@@ -2,7 +2,7 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 import { ContractNameLookup } from "../contracts/ContractLookup";
 import { arrayIncludesLoose } from "../utils/ArrayHelper";
-import { PriceHandler, PriceLookup } from "./PriceHandler";
+import { PriceHandler, PriceLookup, PriceLookupResult } from "./PriceHandler";
 
 export class PriceHandlerStablecoin implements PriceHandler {
   protected addresses: string[];
@@ -17,7 +17,7 @@ export class PriceHandlerStablecoin implements PriceHandler {
     return arrayIncludesLoose(this.addresses, tokenAddress);
   }
 
-  getPrice(tokenAddress: string, _priceLookup: PriceLookup, _block: BigInt): BigDecimal {
+  getPrice(tokenAddress: string, _priceLookup: PriceLookup, _block: BigInt): PriceLookupResult {
     if (!this.matches(tokenAddress)) {
       throw new Error(
         `Attempted to look up unsupported token ${this.contractLookup(
@@ -26,6 +26,9 @@ export class PriceHandlerStablecoin implements PriceHandler {
       );
     }
 
-    return BigDecimal.fromString("1");
+    return {
+      price: BigDecimal.fromString("1"),
+      liquidity: BigDecimal.fromString("0"), // TODO consider setting liquidity
+    };
   }
 }
