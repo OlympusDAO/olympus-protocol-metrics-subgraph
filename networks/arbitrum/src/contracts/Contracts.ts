@@ -4,10 +4,14 @@ import { ERC20 } from "../../../shared/generated/Price/ERC20";
 import { TokenRecord } from "../../../shared/generated/schema";
 import { getERC20TokenRecordFromWallet } from "../../../shared/src/contracts/ERC20";
 import { DAO_WALLET, WALLET_ADDRESSES } from "../../../shared/src/Wallets";
-import { ERC20_TOKENS_ARBITRUM, ERC20_WETH } from "./Constants";
+import { CONTRACT_NAME_MAP, ERC20_TOKENS_ARBITRUM, ERC20_WETH } from "./Constants";
 
 export function getContractName(contractAddress: string): string {
-  return contractAddress; // TODO implement
+  const contractAddressLower = contractAddress.toLowerCase();
+
+  return CONTRACT_NAME_MAP.has(contractAddressLower)
+    ? CONTRACT_NAME_MAP.get(contractAddressLower)
+    : contractAddressLower;
 }
 
 const NON_TREASURY_ASSET_WHITELIST = new Map<string, string[]>();

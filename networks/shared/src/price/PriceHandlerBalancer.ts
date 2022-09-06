@@ -1,5 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
+import { getContractName } from "../../../ethereum/src/utils/Constants";
 import { BalancerPoolToken } from "../../generated/Price/BalancerPoolToken";
 import { BalancerVault } from "../../generated/Price/BalancerVault";
 import { ContractNameLookup } from "../contracts/ContractLookup";
@@ -48,8 +49,8 @@ export class PriceHandlerBalancer implements PriceHandler {
     if (vault.try_getPoolTokens(Bytes.fromHexString(this.poolId)).reverted) {
       log.warning(
         FUNCTION +
-          " Balancer vault contract reverted calling getPoolTokens with pool id {} at block {}. Skipping",
-        [this.poolId, block.toString()],
+          " Balancer vault contract reverted calling getPoolTokens with pool {} at block {}. Skipping",
+        [getContractName(this.poolId), block.toString()],
       );
       return null;
     }
@@ -63,8 +64,8 @@ export class PriceHandlerBalancer implements PriceHandler {
     const poolToken = BalancerPoolToken.bind(Address.fromString(poolTokenAddress));
     if (poolToken === null) {
       log.warning(
-        FUNCTION + " Balancer pool token contract reverted with pool id {} at block {}. Skipping",
-        [this.poolId, block.toString()],
+        FUNCTION + " Balancer pool token contract reverted with pool {} at block {}. Skipping",
+        [getContractName(this.poolId), block.toString()],
       );
       return null;
     }

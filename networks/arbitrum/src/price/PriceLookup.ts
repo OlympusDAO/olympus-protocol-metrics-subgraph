@@ -1,6 +1,5 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { BALANCER_VAULT, ERC20_FRAX } from '../../../ethereum/src/utils/Constants';
 import { PriceHandler, PriceLookupResult } from "../../../shared/src/price/PriceHandler";
 import { PriceHandlerBalancer } from "../../../shared/src/price/PriceHandlerBalancer";
 import { PriceHandlerStablecoin } from "../../../shared/src/price/PriceHandlerStablecoin";
@@ -8,6 +7,8 @@ import { PriceHandlerUniswapV2 } from "../../../shared/src/price/PriceHandlerUni
 import { PriceHandlerUniswapV3 } from "../../../shared/src/price/PriceHandlerUniswapV3";
 import { getUSDRate } from "../../../shared/src/price/PriceRouter";
 import {
+  BALANCER_VAULT,
+  ERC20_FRAX,
   ERC20_JONES,
   ERC20_MAGIC,
   ERC20_USDC,
@@ -16,6 +17,7 @@ import {
   LP_BALANCER_POOL_MAGIC_USDC,
   LP_BALANCER_POOL_WETH_VESTA,
   LP_UNISWAP_V2_JONES_WETH,
+  LP_UNISWAP_V2_MAGIC_WETH,
   LP_UNISWAP_V3_WETH_USDC,
 } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
@@ -23,6 +25,7 @@ import { getContractName } from "../contracts/Contracts";
 const HANDLERS: PriceHandler[] = [
   new PriceHandlerUniswapV3([ERC20_USDC, ERC20_WETH], LP_UNISWAP_V3_WETH_USDC, getContractName),
   new PriceHandlerUniswapV2([ERC20_JONES, ERC20_WETH], LP_UNISWAP_V2_JONES_WETH, getContractName),
+  new PriceHandlerUniswapV2([ERC20_MAGIC, ERC20_WETH], LP_UNISWAP_V2_MAGIC_WETH, getContractName),
   new PriceHandlerBalancer([ERC20_WETH, ERC20_VSTA], BALANCER_VAULT, LP_BALANCER_POOL_WETH_VESTA, getContractName),
   new PriceHandlerBalancer([ERC20_MAGIC, ERC20_USDC], BALANCER_VAULT, LP_BALANCER_POOL_MAGIC_USDC, getContractName),
   new PriceHandlerStablecoin([ERC20_FRAX, ERC20_USDC], getContractName),
@@ -43,6 +46,7 @@ function getPriceRecursive(
   block: BigInt,
   currentPool: string | null,
 ): PriceLookupResult | null {
+  log.debug("Determining price for {} ({}) and current pool id {}", [getContractName(tokenAddress), tokenAddress, currentPool ? currentPool : ""]);
   return getUSDRate(tokenAddress, HANDLERS, getPriceRecursive, block, currentPool);
 }
 
@@ -57,11 +61,11 @@ function getPriceRecursive(
 export function getPrice(tokenAddress: string, block: BigInt): BigDecimal {
   const priceResult = getPriceRecursive(tokenAddress, block, null);
 
-  if (!priceResult) {
-    throw new Error(
-      `Unable to determine price for token ${getContractName(tokenAddress)} (${tokenAddress})`,
-    );
+  if (priceResult === null) {
+    log.warning("Unable to determine price for token {} ({}) at block {}", [getContractName(tokenAddress), tokenAddress, block.toString()]);
+    return BigDecimal.zero();
   }
 
+  log.debug("Price for {} ({}) at block {} was: {}", [getContractName(tokenAddress), tokenAddress, block.toString(), priceResult.price.toString()]);
   return priceResult.price;
 }
