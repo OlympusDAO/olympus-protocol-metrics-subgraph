@@ -80,8 +80,7 @@ This subgraph is deployed on the Graph Protocol's Hosted Service:
 
 To deploy, do the following:
 
-1. Add the Subgraph Studio deploy key to the `GRAPH_TOKEN` variable in `.env` (using `.env.sample`)
-1. Authenticate using `yarn auth`
+1. Add the Subgraph Studio deploy key to the `GRAPH_TOKEN_<network>` variable in `.env` (using `.env.sample`)
 1. Update the `version` property in the `networks/<network>/config.json` file.
 1. Run `yarn subgraph build <network>`
 1. Run `yarn subgraph deploy <network>`

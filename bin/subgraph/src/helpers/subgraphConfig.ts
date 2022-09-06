@@ -32,9 +32,9 @@ export const readConfig = (path: string): SubgraphConfig => {
  * @throws InvalidArgumentError if a required property is not found
  */
 export const assertConfig = (config: SubgraphConfig): void => {
-  if (!config.id) {
-    throw new InvalidArgumentError("id must be set to the subgraph id ('Qm...')");
-  }
+  // if (!config.id) {
+  //   throw new InvalidArgumentError("id must be set to the subgraph id ('Qm...')");
+  // }
 
   if (!config.version) {
     throw new InvalidArgumentError("version must be set");

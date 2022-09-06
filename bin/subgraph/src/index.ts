@@ -2,10 +2,14 @@
 
 import { exec } from "child_process";
 import { InvalidArgumentError, program } from "commander";
+import * as dotenv from "dotenv";
 
 import { spawnProcess } from "./helpers/process";
 import { assertConfig, readConfig } from "./helpers/subgraphConfig";
 import { NetworkHandler } from "./networkHandler";
+
+// Load variables from .env
+dotenv.config();
 
 const parseSubgraphId = (value: string, _previous: string): string => {
   if (!value.includes("Qm")) {
@@ -226,7 +230,9 @@ program
 
     console.info("*** Running deploy");
     spawnProcess(
-      `yarn graph deploy --product hosted-service --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --version-label ${
+      `yarn graph deploy --deploy-key ${
+        process.env[`GRAPH_TOKEN_${network}`]
+      } --product hosted-service --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --version-label ${
         config.version
       } --output-dir ${getBuildOutputDirectory(network)} ${config.org}/${
         config.name
