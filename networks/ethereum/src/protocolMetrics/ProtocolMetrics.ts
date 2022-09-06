@@ -1,8 +1,8 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { ethereum } from "@graphprotocol/graph-ts";
 
+import { getISO8601StringFromTimestamp } from "../../../shared/src/utils/DateHelper";
 import { ProtocolMetric } from "../../generated/schema";
-import { getISO8601StringFromTimestamp } from "../helpers/DateHelper";
 import { getGOhmTotalSupply } from "../utils/GOhmCalculations";
 import {
   getCurrentIndex,
