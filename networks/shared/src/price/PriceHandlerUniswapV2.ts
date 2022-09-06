@@ -72,7 +72,7 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
     const secondaryToken = addressesEqual(tokenAddress, token0.toHexString())
       ? token1.toHexString()
       : token0.toHexString();
-    const secondaryTokenPrice = priceLookup(secondaryToken, block);
+    const secondaryTokenPrice = priceLookup(secondaryToken, block, this.getId());
     if (!secondaryTokenPrice) {
       return null;
     }
