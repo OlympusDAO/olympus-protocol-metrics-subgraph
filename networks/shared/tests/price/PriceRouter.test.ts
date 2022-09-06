@@ -16,7 +16,12 @@ describe("getUSDRate", () => {
       return null;
     };
 
-    const result: BigDecimal | null = getUSDRate(TOKEN, [], priceLookup, BigInt.fromString("1"));
+    const result: PriceLookupResult | null = getUSDRate(
+      TOKEN,
+      [],
+      priceLookup,
+      BigInt.fromString("1"),
+    );
     assert.assertTrue(result === null);
   });
 
@@ -36,8 +41,13 @@ describe("getUSDRate", () => {
       liquidity: BigDecimal.fromString("222222"),
     });
 
-    const result = getUSDRate(TOKEN, [customHandler], priceLookup, BigInt.fromString("1"));
-    assert.stringEquals("1.234", result ? result.toString() : "");
+    const result: PriceLookupResult | null = getUSDRate(
+      TOKEN,
+      [customHandler],
+      priceLookup,
+      BigInt.fromString("1"),
+    );
+    assert.stringEquals("1.234", result ? result.price.toString() : "");
   });
 
   test("chooses highest liquidity", () => {
@@ -61,13 +71,13 @@ describe("getUSDRate", () => {
       liquidity: BigDecimal.fromString("222223"), // Higher
     });
 
-    const result = getUSDRate(
+    const result: PriceLookupResult | null = getUSDRate(
       TOKEN,
       [customHandler, customHandlerTwo],
       priceLookup,
       BigInt.fromString("1"),
     );
     // customHandlerTwo is selected, due to the higher liquidity
-    assert.stringEquals("1.234", result ? result.toString() : "");
+    assert.stringEquals("1.234", result ? result.price.toString() : "");
   });
 });

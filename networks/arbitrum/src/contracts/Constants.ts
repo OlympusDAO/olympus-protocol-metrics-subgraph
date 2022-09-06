@@ -1,4 +1,7 @@
-// USDC: 0xff970a61a04b1ca14834a43f5de4533ebddb5cc8
+export const ERC20_USDC = "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8".toLowerCase();
+export const ERC20_WETH = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1".toLowerCase();
+
+export const LP_UNISWAP_V3_WETH_USDC = "0xc31e54c7a869b9fcbecc14363cf510d1c41fa443".toLowerCase();
 
 // Balancer
 // WETH-WBTC-USDC: 0x64541216bafffeec8ea535bb71fbc927831d0595000100000000000000000002

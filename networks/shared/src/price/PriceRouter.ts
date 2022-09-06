@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { BigInt } from "@graphprotocol/graph-ts";
 
 import { PriceHandler, PriceLookup, PriceLookupResult } from "./PriceHandler";
 
@@ -13,14 +13,14 @@ import { PriceHandler, PriceLookup, PriceLookupResult } from "./PriceHandler";
  * @param handlers a list of price handlers
  * @param priceLookup
  * @param block
- * @returns Price or null
+ * @returns PriceLookupResult or null
  */
 export function getUSDRate(
   tokenAddress: string,
   handlers: PriceHandler[],
   priceLookup: PriceLookup,
   block: BigInt,
-): BigDecimal | null {
+): PriceLookupResult | null {
   let finalPriceResult: PriceLookupResult | null = null;
 
   for (let i = 0; i < handlers.length; i++) {
@@ -49,5 +49,5 @@ export function getUSDRate(
     finalPriceResult = priceResult;
   }
 
-  return finalPriceResult ? finalPriceResult.price : null;
+  return finalPriceResult ? finalPriceResult : null;
 }
