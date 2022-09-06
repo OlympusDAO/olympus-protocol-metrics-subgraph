@@ -11,19 +11,32 @@ export class PriceLookupResult {
  * This should be implemented for each network and include the following:
  * - inject the array of PriceHandler objects
  * - loop through PriceHandler objects and look up prices
+ * - skip any handlers with getId() == currentPool
  *
  * The returned type enables the calling function to choose between the results of different
  * price handlers. For example, choosing the result with greater liquidity.
  *
+ * @param tokenAddress
+ * @param block
+ * @param currentPool the id of the current pool, using getId()
  * @returns PriceLookupResult
  */
-export type PriceLookup = (tokenAddress: string, block: BigInt) => PriceLookupResult | null;
+export type PriceLookup = (
+  tokenAddress: string,
+  block: BigInt,
+  currentPool: string | null,
+) => PriceLookupResult | null;
 
 /**
  * Defines how to determine the price of particular tokens, by mapping them to
  * a liquidity pool.
  */
 export interface PriceHandler {
+  /**
+   * Returns a unique identifier for the PriceHandler.
+   */
+  getId(): string;
+
   /**
    * @returns true if {tokenAddress} can be handled
    */

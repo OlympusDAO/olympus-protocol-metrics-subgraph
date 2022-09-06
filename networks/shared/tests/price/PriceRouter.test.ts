@@ -80,4 +80,31 @@ describe("getUSDRate", () => {
     // customHandlerTwo is selected, due to the higher liquidity
     assert.stringEquals("1.234", result ? result.price.toString() : "");
   });
+
+  test("avoids infinite loop", () => {
+    const customHandler = new PriceHandlerCustom({
+      price: BigDecimal.fromString("1.234"),
+      liquidity: BigDecimal.fromString("222222"),
+    });
+
+    // This should trigger an infinite loop
+    const priceLookup: PriceLookup = (
+      _address: string,
+      _block: BigInt,
+    ): PriceLookupResult | null => {
+      return {
+        price: BigDecimal.fromString("1"),
+        liquidity: BigDecimal.fromString("1"),
+      };
+    };
+
+    const result: PriceLookupResult | null = getUSDRate(
+      TOKEN,
+      [customHandler],
+      priceLookup,
+      BigInt.fromString("1"),
+      customHandler.getId(),
+    );
+    assert.assertNull(result);
+  });
 });

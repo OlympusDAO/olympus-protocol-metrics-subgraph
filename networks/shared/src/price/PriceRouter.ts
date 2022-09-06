@@ -20,11 +20,17 @@ export function getUSDRate(
   handlers: PriceHandler[],
   priceLookup: PriceLookup,
   block: BigInt,
+  currentPool: string | null = null,
 ): PriceLookupResult | null {
   let finalPriceResult: PriceLookupResult | null = null;
 
   for (let i = 0; i < handlers.length; i++) {
     const handler = handlers[i];
+
+    // If under recursion, skip the current pool
+    if (currentPool && handler.getId() == currentPool) {
+      continue;
+    }
 
     if (!handler.matches(tokenAddress)) {
       continue;

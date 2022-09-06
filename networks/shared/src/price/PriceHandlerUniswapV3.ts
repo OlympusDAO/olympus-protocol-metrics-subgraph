@@ -21,6 +21,10 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
     this.contractLookup = contractLookup;
   }
 
+  getId(): string {
+    return this.poolAddress;
+  }
+
   matches(tokenAddress: string): boolean {
     return arrayIncludesLoose(this.tokens, tokenAddress);
   }
@@ -94,6 +98,7 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
     const otherTokenPriceResult = priceLookup(
       otherTokenIsToken0 ? token0.toHexString() : token1.toHexString(),
       block,
+      this.getId(),
     );
     if (!otherTokenPriceResult) {
       return null;

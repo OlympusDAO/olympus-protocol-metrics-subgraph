@@ -13,6 +13,10 @@ export class PriceHandlerStablecoin implements PriceHandler {
     this.contractLookup = contractLookup;
   }
 
+  getId(): string {
+    return "PriceHandlerStablecoin";
+  }
+
   matches(tokenAddress: string): boolean {
     return arrayIncludesLoose(this.addresses, tokenAddress);
   }

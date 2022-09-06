@@ -21,6 +21,10 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
     this.contractLookup = contractLookup;
   }
 
+  getId(): string {
+    return this.poolAddress;
+  }
+
   matches(tokenAddress: string): boolean {
     return arrayIncludesLoose(this.tokens, tokenAddress);
   }
