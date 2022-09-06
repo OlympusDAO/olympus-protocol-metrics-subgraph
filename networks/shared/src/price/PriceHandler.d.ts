@@ -1,5 +1,8 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
+// Prettier is disabled for this file, as PriceLookup will cause compilation problems after wrapping
+// https://github.com/AssemblyScript/assemblyscript/issues/2509
+
 export class PriceLookupResult {
   liquidity: BigDecimal;
   price: BigDecimal;
@@ -21,11 +24,7 @@ export class PriceLookupResult {
  * @param currentPool the id of the current pool, using getId()
  * @returns PriceLookupResult
  */
-export type PriceLookup = (
-  tokenAddress: string,
-  block: BigInt,
-  currentPool: string | null,
-) => PriceLookupResult | null;
+export type PriceLookup = (tokenAddress: string, block: BigInt, currentPool: string | null) => PriceLookupResult | null;
 
 /**
  * Defines how to determine the price of particular tokens, by mapping them to
