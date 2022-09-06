@@ -5,6 +5,7 @@ import { toBigInt } from "../../shared/src/utils/Decimals";
 import {
   CONVEX_ALLOCATOR3,
   CONVEX_CVX_VL_ALLOCATOR,
+  DAO_WALLET,
   TREASURY_ADDRESS_V3,
 } from "../../shared/src/Wallets";
 import {
@@ -12,7 +13,6 @@ import {
   CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
   CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
-  DAO_WALLET,
   ERC20_ALCX,
   ERC20_BALANCER_WETH_FDT,
   ERC20_CVX,

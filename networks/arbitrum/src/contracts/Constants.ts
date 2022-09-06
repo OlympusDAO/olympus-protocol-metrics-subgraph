@@ -1,17 +1,30 @@
+import { TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
+
+export const ERC20_FRAX = "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F".toLowerCase();
+export const ERC20_JONES = "0x10393c20975cf177a3513071bc110f7962cd67da".toLowerCase();
+export const ERC20_MAGIC = "0x539bde0d7dbd336b79148aa742883198bbf60342".toLowerCase();
 export const ERC20_USDC = "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8".toLowerCase();
+export const ERC20_VSTA = "0xa684cd057951541187f288294a1e1c2646aa2d24".toLowerCase();
 export const ERC20_WETH = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1".toLowerCase();
 
 export const LP_UNISWAP_V3_WETH_USDC = "0xc31e54c7a869b9fcbecc14363cf510d1c41fa443".toLowerCase();
+
+export const ERC20_TOKENS_ARBITRUM = new Map<string, TokenDefinition>();
+ERC20_TOKENS_ARBITRUM.set(ERC20_FRAX, new TokenDefinition(ERC20_FRAX, TokenCategoryStable, true, false));
+ERC20_TOKENS_ARBITRUM.set(ERC20_JONES, new TokenDefinition(ERC20_JONES, TokenCategoryVolatile, true, false));
+ERC20_TOKENS_ARBITRUM.set(ERC20_MAGIC, new TokenDefinition(ERC20_MAGIC, TokenCategoryVolatile, true, false));
+ERC20_TOKENS_ARBITRUM.set(ERC20_USDC, new TokenDefinition(ERC20_USDC, TokenCategoryStable, true, false));
+ERC20_TOKENS_ARBITRUM.set(ERC20_VSTA, new TokenDefinition(ERC20_VSTA, TokenCategoryVolatile, true, false));
+ERC20_TOKENS_ARBITRUM.set(ERC20_WETH, new TokenDefinition(ERC20_WETH, TokenCategoryVolatile, true, true));
 
 // Balancer
 // WETH-WBTC-USDC: 0x64541216bafffeec8ea535bb71fbc927831d0595000100000000000000000002
 // WETH-VSTA: 0xc61ff48f94d801c1ceface0289085197b5ec44f000020000000000000000004d
 // MAGIC-USDC: 0xb3028ca124b80cfe6e9ca57b70ef2f0ccc41ebd40002000000000000000000ba
 
-// JONES
-// MAGIC
+// Native ETH
 // veMAGIC
-// VSTA
+// JONES pool
 
 // gOHM: 0x8D9bA570D6cb60C7e3e0F31343Efe75AB8E65FB1
 

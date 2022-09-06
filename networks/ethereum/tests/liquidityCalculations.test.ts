@@ -2,10 +2,9 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
-import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
+import { DAO_WALLET, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getOwnedLiquidityPoolValue } from "../src/liquidity/LiquidityCalculations";
 import {
-  DAO_WALLET,
   ERC20_BALANCER_OHM_DAI_WETH,
   ERC20_CRV_OHMETH,
   ERC20_CVX_OHMETH,

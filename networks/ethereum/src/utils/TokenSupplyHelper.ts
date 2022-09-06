@@ -1,7 +1,7 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
+import { getISO8601StringFromTimestamp } from "../../../shared/src/utils/DateHelper";
 import { TokenSupply } from "../../generated/schema";
-import { getISO8601StringFromTimestamp } from "../helpers/DateHelper";
 
 export const TYPE_TOTAL_SUPPLY = "Total Supply";
 export const TYPE_TREASURY = "Treasury";

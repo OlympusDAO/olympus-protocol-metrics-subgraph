@@ -1,2 +1,3 @@
 networks/ethereum/src/utils/Constants.ts
 networks/shared/src/price/PriceHandler.d.ts
+networks/arbitrum/src/contracts/Constants.ts

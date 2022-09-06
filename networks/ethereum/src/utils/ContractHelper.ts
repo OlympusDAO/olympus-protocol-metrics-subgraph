@@ -1,6 +1,13 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
+import { TokenRecord } from "../../../shared/generated/schema";
+import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
+import { pushArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
+import {
+  createOrUpdateTokenRecord,
+  getIsTokenLiquid,
+} from "../../../shared/src/utils/TokenRecordHelper";
 import { LUSD_ALLOCATOR, RARI_ALLOCATOR, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
 import { BalancerLiquidityGauge } from "../../generated/ProtocolMetrics/BalancerLiquidityGauge";
 import { ConvexBaseRewardPool } from "../../generated/ProtocolMetrics/ConvexBaseRewardPool";
@@ -18,8 +25,6 @@ import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
 import { vlCVX } from "../../generated/ProtocolMetrics/vlCVX";
-import { TokenRecord } from "../../generated/schema";
-import { pushArray } from "./ArrayHelper";
 import {
   addressesEqual,
   ALLOCATOR_ONSEN_ID_NOT_FOUND,
@@ -34,6 +39,7 @@ import {
   ERC20_FXS_VE,
   ERC20_LQTY,
   ERC20_LUSD,
+  ERC20_TOKENS,
   ERC20_WETH,
   getContractName,
   getOnsenAllocatorId,
@@ -48,8 +54,6 @@ import {
   TOKE_STAKING,
 } from "./Constants";
 import { getUSDRate } from "./Price";
-import { TokenCategoryPOL } from "./TokenDefinition";
-import { createOrUpdateTokenRecord, getIsTokenLiquid } from "./TokenRecordHelper";
 
 /**
  * The Graph recommends only binding a contract once
@@ -557,8 +561,8 @@ export function getERC20TokenRecordFromWallet(
     rate,
     balance,
     blockNumber,
-    getIsTokenLiquid(contractAddress),
-    BigDecimal.fromString("1"),
+    getIsTokenLiquid(contractAddress, ERC20_TOKENS),
+    ERC20_TOKENS,
   );
 }
 
@@ -692,8 +696,8 @@ export function getTokeStakedBalancesFromWallets(
         rate,
         balance,
         blockNumber,
-        getIsTokenLiquid(tokenAddress),
-        BigDecimal.fromString("1"),
+        getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
+        ERC20_TOKENS,
       ),
     );
   }
@@ -793,8 +797,8 @@ export function getLiquityStakedBalancesFromWallets(
         rate,
         balance,
         blockNumber,
-        getIsTokenLiquid(tokenAddress),
-        BigDecimal.fromString("1"),
+        getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
+        ERC20_TOKENS,
       ),
     );
   }
@@ -917,7 +921,8 @@ export function getBalancerGaugeBalanceFromWallets(
         rate,
         balance,
         blockNumber,
-        getIsTokenLiquid(tokenAddress),
+        getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
+        ERC20_TOKENS,
         multiplier,
         TokenCategoryPOL,
       ),
@@ -1026,8 +1031,8 @@ export function getTokeAllocatorRecords(
       price,
       balance,
       blockNumber,
-      getIsTokenLiquid(tokenAddress),
-      BigDecimal.fromString("1"),
+      getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
+      ERC20_TOKENS,
     ),
   );
 
@@ -1115,8 +1120,8 @@ export function getRariAllocatorRecords(
       price,
       balance,
       blockNumber,
-      getIsTokenLiquid(tokenAddress),
-      BigDecimal.fromString("1"),
+      getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
+      ERC20_TOKENS,
     ),
   );
 
@@ -1153,8 +1158,8 @@ export function getOnsenAllocatorRecords(
       price,
       balance,
       blockNumber,
-      getIsTokenLiquid(tokenAddress),
-      BigDecimal.fromString("1"),
+      getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
+      ERC20_TOKENS,
     ),
   );
 
@@ -1269,8 +1274,8 @@ export function getConvexStakedRecords(
           getUSDRate(tokenAddress, blockNumber),
           balance,
           blockNumber,
-          getIsTokenLiquid(tokenAddress),
-          BigDecimal.fromString("1"),
+          getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
+          ERC20_TOKENS,
         ),
       );
     }
@@ -1397,8 +1402,8 @@ export function getLiquityStabilityPoolRecords(
       rate,
       balance,
       blockNumber,
-      getIsTokenLiquid(tokenAddress),
-      BigDecimal.fromString("1"),
+      getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
+      ERC20_TOKENS,
     ),
   );
 
@@ -1476,8 +1481,8 @@ export function getVeFXSAllocatorRecords(
       fxsRate,
       balance,
       blockNumber,
-      getIsTokenLiquid(tokenAddress),
-      BigDecimal.fromString("1"),
+      getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
+      ERC20_TOKENS,
     ),
   );
 
@@ -1538,8 +1543,8 @@ export function getVlCvxUnlockedRecords(
         rate,
         balance,
         blockNumber,
-        getIsTokenLiquid(tokenAddress),
-        BigDecimal.fromString("1"),
+        getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
+        ERC20_TOKENS,
       ),
     );
   }

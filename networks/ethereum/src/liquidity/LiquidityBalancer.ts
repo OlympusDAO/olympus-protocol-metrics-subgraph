@@ -1,20 +1,22 @@
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
+import { TokenRecord } from "../../../shared/generated/schema";
+import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
+import { pushArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolToken";
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
-import { TokenRecord, TokenSupply } from "../../generated/schema";
-import { pushArray } from "../utils/ArrayHelper";
+import { TokenSupply } from "../../generated/schema";
 import {
   ERC20_OHM_V2,
+  ERC20_TOKENS,
   getContractName,
   getWalletAddressesForContract,
   liquidityPairHasToken,
 } from "../utils/Constants";
 import { getBalancerGaugeBalancesFromWallets, getERC20 } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
-import { TokenCategoryPOL } from "../utils/TokenDefinition";
-import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";
 import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
 export function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): BalancerVault {
@@ -187,6 +189,7 @@ function getBalancerPoolTokenRecords(
         balance,
         blockNumber,
         true,
+        ERC20_TOKENS,
         multiplier,
         TokenCategoryPOL,
       ),

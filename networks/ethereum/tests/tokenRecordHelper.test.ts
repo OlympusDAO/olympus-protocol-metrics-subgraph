@@ -1,14 +1,17 @@
 import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
-import { TokenRecord } from "../generated/schema";
-import { ERC20_DAI, ERC20_USDC, ERC20_WETH } from "../src/utils/Constants";
-import { TokenCategoryStable, TokenCategoryVolatile } from "../src/utils/TokenDefinition";
+import { TokenRecord } from "../../shared/generated/schema";
+import {
+  TokenCategoryStable,
+  TokenCategoryVolatile,
+} from "../../shared/src/contracts/TokenDefinition";
 import {
   createOrUpdateTokenRecord,
   getTokenAddressesInCategory,
   isTokenAddressInCategory,
-} from "../src/utils/TokenRecordHelper";
+} from "../../shared/src/utils/TokenRecordHelper";
+import { ERC20_DAI, ERC20_TOKENS, ERC20_USDC, ERC20_WETH } from "../src/utils/Constants";
 
 const TIMESTAMP = BigInt.fromString("1");
 
@@ -23,6 +26,7 @@ const createTokenRecord = (): TokenRecord => {
     BigDecimal.fromString("3"),
     BigInt.fromString("1"),
     true,
+    ERC20_TOKENS,
   );
 };
 
@@ -51,6 +55,7 @@ describe("constructor", () => {
       BigDecimal.fromString("3"),
       BigInt.fromString("1"),
       true,
+      ERC20_TOKENS,
       BigDecimal.fromString("0.25"),
     );
 
@@ -79,6 +84,7 @@ describe("value", () => {
       BigDecimal.fromString("3"),
       BigInt.fromString("1"),
       true,
+      ERC20_TOKENS,
     );
 
     // 2 * 3 * 1
@@ -97,6 +103,7 @@ describe("value", () => {
       BigDecimal.fromString("3"),
       BigInt.fromString("1"),
       true,
+      ERC20_TOKENS,
       BigDecimal.fromString("0.25"),
     );
 
@@ -108,14 +115,14 @@ describe("value", () => {
 
 describe("getTokenAddressesInCategory", () => {
   test("stablecoins", () => {
-    const addresses = getTokenAddressesInCategory(TokenCategoryStable);
+    const addresses = getTokenAddressesInCategory(TokenCategoryStable, ERC20_TOKENS);
 
     assert.assertTrue(addresses.includes(ERC20_DAI) == true);
     assert.assertTrue(addresses.includes(ERC20_WETH) == false);
   });
 
   test("volatile", () => {
-    const addresses = getTokenAddressesInCategory(TokenCategoryVolatile);
+    const addresses = getTokenAddressesInCategory(TokenCategoryVolatile, ERC20_TOKENS);
 
     assert.assertTrue(addresses.includes(ERC20_DAI) == false);
     assert.assertTrue(addresses.includes(ERC20_WETH) == true);
@@ -124,28 +131,40 @@ describe("getTokenAddressesInCategory", () => {
 
 describe("isTokenAddressInCategory", () => {
   test("stablecoin category, DAI", () => {
-    assert.assertTrue(isTokenAddressInCategory(ERC20_DAI, TokenCategoryStable) == true);
+    assert.assertTrue(
+      isTokenAddressInCategory(ERC20_DAI, TokenCategoryStable, ERC20_TOKENS) == true,
+    );
   });
 
   test("stablecoin category, DAI hexString", () => {
     assert.assertTrue(
-      isTokenAddressInCategory(Address.fromString(ERC20_DAI).toHexString(), TokenCategoryStable) ==
-        true,
+      isTokenAddressInCategory(
+        Address.fromString(ERC20_DAI).toHexString(),
+        TokenCategoryStable,
+        ERC20_TOKENS,
+      ) == true,
     );
   });
 
   test("stablecoin category, USDC", () => {
-    assert.assertTrue(isTokenAddressInCategory(ERC20_USDC, TokenCategoryStable) == true);
+    assert.assertTrue(
+      isTokenAddressInCategory(ERC20_USDC, TokenCategoryStable, ERC20_TOKENS) == true,
+    );
   });
 
   test("stablecoin category, USDC toHexString", () => {
     assert.assertTrue(
-      isTokenAddressInCategory(Address.fromString(ERC20_USDC).toHexString(), TokenCategoryStable) ==
-        true,
+      isTokenAddressInCategory(
+        Address.fromString(ERC20_USDC).toHexString(),
+        TokenCategoryStable,
+        ERC20_TOKENS,
+      ) == true,
     );
   });
 
   test("stablecoin category, wETH", () => {
-    assert.assertTrue(isTokenAddressInCategory(ERC20_WETH, TokenCategoryStable) == false);
+    assert.assertTrue(
+      isTokenAddressInCategory(ERC20_WETH, TokenCategoryStable, ERC20_TOKENS) == false,
+    );
   });
 });

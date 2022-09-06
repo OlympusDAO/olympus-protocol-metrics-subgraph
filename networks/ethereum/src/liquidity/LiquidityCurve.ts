@@ -1,13 +1,17 @@
 import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { log } from "matchstick-as";
 
+import { TokenRecord } from "../../../shared/generated/schema";
+import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
-import { TokenRecord, TokenSupply } from "../../generated/schema";
+import { TokenSupply } from "../../generated/schema";
 import {
   CONVEX_STAKING_CONTRACTS,
   ERC20_OHM_V2,
+  ERC20_TOKENS,
   getContractName,
   getConvexStakedToken,
   getWalletAddressesForContract,
@@ -15,8 +19,6 @@ import {
 } from "../utils/Constants";
 import { getConvexStakedBalance, getERC20 } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
-import { TokenCategoryPOL } from "../utils/TokenDefinition";
-import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";
 import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
 // ### Balances ###
@@ -135,6 +137,7 @@ function getCurvePairStakedRecord(
     balance,
     blockNumber,
     true,
+    ERC20_TOKENS,
     multiplier,
     TokenCategoryPOL,
   );
@@ -189,6 +192,7 @@ function getCurvePairRecord(
     pairTokenBalanceDecimal,
     blockNumber,
     true,
+    ERC20_TOKENS,
     multiplier,
     TokenCategoryPOL,
   );

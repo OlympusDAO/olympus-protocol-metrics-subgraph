@@ -1,9 +1,10 @@
 import { BigInt, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecord } from "../../generated/schema";
+import { TokenRecord } from "../../../shared/generated/schema";
+import { TokenCategoryVolatile } from "../../../shared/src/contracts/TokenDefinition";
+import { pushArray } from "../../../shared/src/utils/ArrayHelper";
 import { getLiquidityBalances } from "../liquidity/LiquidityCalculations";
-import { pushArray } from "./ArrayHelper";
-import { ERC20_FXS_VE, getContractName } from "./Constants";
+import { ERC20_FXS_VE, ERC20_TOKENS, getContractName } from "./Constants";
 import {
   getConvexStakedRecords,
   getERC20,
@@ -18,8 +19,6 @@ import {
   getVlCvxUnlockedRecords,
 } from "./ContractHelper";
 import { getUSDRate } from "./Price";
-import { TokenCategoryVolatile } from "./TokenDefinition";
-import { getTokensInCategory } from "./TokenRecordHelper";
 
 /**
  * Returns the token records for a given volatile token. This includes:
@@ -133,7 +132,7 @@ export function getVolatileTokenBalances(
   log.info("Calculating volatile token value", []);
   const records: TokenRecord[] = [];
 
-  const volatileTokens = getTokensInCategory(TokenCategoryVolatile);
+  const volatileTokens = getTokensInCategory(TokenCategoryVolatile, ERC20_TOKENS);
 
   for (let i = 0; i < volatileTokens.length; i++) {
     const currentToken = volatileTokens[i];

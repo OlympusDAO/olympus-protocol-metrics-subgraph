@@ -1,18 +1,20 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
+import { TokenRecord } from "../../../shared/generated/schema";
+import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
-import { TokenRecord, TokenSupply } from "../../generated/schema";
+import { TokenSupply } from "../../generated/schema";
 import {
   ERC20_OHM_V2,
+  ERC20_TOKENS,
   getContractName,
   getWalletAddressesForContract,
   liquidityPairHasToken,
 } from "../utils/Constants";
 import { getERC20, getUniswapV2Pair } from "../utils/ContractHelper";
-import { getBaseOhmUsdRate, getUSDRate, getUSDRateUniswapV2 } from "../utils/Price";
-import { TokenCategoryPOL } from "../utils/TokenDefinition";
-import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";
+import { getBaseOhmUsdRate, getUSDRate } from "../utils/Price";
 import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
 /**
@@ -292,6 +294,7 @@ function getUniswapV2PairRecord(
     pairTokenBalanceDecimal,
     blockNumber,
     true,
+    ERC20_TOKENS,
     multiplier,
     TokenCategoryPOL,
   );

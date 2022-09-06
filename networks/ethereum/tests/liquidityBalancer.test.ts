@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, Bytes, ethereum } from "@graphprotocol/gra
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
-import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
+import { DAO_WALLET, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import {
   getBalancerPoolTokenQuantity,
   getBalancerPoolTotalTokenQuantity,
@@ -12,7 +12,6 @@ import {
 import {
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
   BALANCER_VAULT,
-  DAO_WALLET,
   ERC20_BALANCER_OHM_BTRFLY_V2,
   ERC20_BALANCER_OHM_DAI_WETH,
   ERC20_BALANCER_WETH_FDT,

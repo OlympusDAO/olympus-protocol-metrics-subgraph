@@ -7,11 +7,11 @@
 
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
+import { TokenCategoryStable } from "../../../shared/src/contracts/TokenDefinition";
+import { isTokenAddressInCategory } from "../../../shared/src/utils/TokenRecordHelper";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
-import { ERC20_WETH, PAIR_UNISWAP_V2_USDC_ETH } from "./Constants";
+import { ERC20_TOKENS, ERC20_WETH, PAIR_UNISWAP_V2_USDC_ETH } from "./Constants";
 import { getContractName } from "./Constants";
-import { TokenCategoryStable } from "./TokenDefinition";
-import { isTokenAddressInCategory } from "./TokenRecordHelper";
 
 const BIG_DECIMAL_1E12 = BigDecimal.fromString("1e12");
 
@@ -35,11 +35,11 @@ export function getBaseTokenOrientation(
 ): PairTokenBaseOrientation {
   // As we are ultimately trying to get to a USD-denominated rate,
   // check for USD stablecoins first
-  if (isTokenAddressInCategory(token0.toHexString(), TokenCategoryStable)) {
+  if (isTokenAddressInCategory(token0.toHexString(), TokenCategoryStable, ERC20_TOKENS)) {
     return PairTokenBaseOrientation.TOKEN0;
   }
 
-  if (isTokenAddressInCategory(token1.toHexString(), TokenCategoryStable)) {
+  if (isTokenAddressInCategory(token1.toHexString(), TokenCategoryStable, ERC20_TOKENS)) {
     return PairTokenBaseOrientation.TOKEN1;
   }
 
@@ -131,7 +131,7 @@ export function getBaseTokenUSDRate(
     return getBaseEthUsdRate();
   }
 
-  if (isTokenAddressInCategory(baseToken.toHexString(), TokenCategoryStable)) {
+  if (isTokenAddressInCategory(baseToken.toHexString(), TokenCategoryStable, ERC20_TOKENS)) {
     return getBaseUsdRate();
   }
 

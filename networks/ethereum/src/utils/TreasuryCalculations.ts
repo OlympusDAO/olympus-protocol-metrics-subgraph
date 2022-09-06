@@ -11,7 +11,7 @@ import { getVolatileTokenBalances } from "./TokenVolatile";
 
 /**
  * Returns the market value, which is composed of:
- * - stable value (getStableValue)
+ * - stable value (getStablecoinBalances)
  * - volatile value (getVolatileTokenBalances)
  * - protocol-owned liquidity value (getOwnedLiquidityPoolValue)
  *

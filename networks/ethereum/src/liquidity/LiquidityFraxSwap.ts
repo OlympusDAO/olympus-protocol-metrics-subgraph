@@ -1,18 +1,20 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
+import { TokenRecord } from "../../../shared/generated/schema";
+import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { FraxSwapPool } from "../../generated/ProtocolMetrics/FraxSwapPool";
-import { TokenRecord, TokenSupply } from "../../generated/schema";
+import { TokenSupply } from "../../generated/schema";
 import {
   ERC20_OHM_V2,
+  ERC20_TOKENS,
   getContractName,
   getWalletAddressesForContract,
   liquidityPairHasToken,
 } from "../utils/Constants";
 import { getERC20 } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
-import { TokenCategoryPOL } from "../utils/TokenDefinition";
-import { createOrUpdateTokenRecord } from "../utils/TokenRecordHelper";
 import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
 function getFraxSwapPair(pairAddress: string, blockNumber: BigInt): FraxSwapPool | null {
@@ -194,6 +196,7 @@ function getFraxSwapPairTokenRecord(
     tokenBalance,
     blockNumber,
     true,
+    ERC20_TOKENS,
     multiplier,
     TokenCategoryPOL,
   );

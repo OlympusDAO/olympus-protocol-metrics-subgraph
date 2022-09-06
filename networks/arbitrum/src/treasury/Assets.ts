@@ -1,7 +1,11 @@
 import { BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
+import { getStablecoinBalances } from "./TokenStablecoins";
+
 export function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): void {
   // Stable
+  getStablecoinBalances(timestamp, false, blockNumber);
+
   // Volatile
   // POL
 }
