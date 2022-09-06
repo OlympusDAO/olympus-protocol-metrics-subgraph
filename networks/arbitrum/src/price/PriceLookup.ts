@@ -1,13 +1,31 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
+import { BALANCER_VAULT, ERC20_FRAX } from '../../../ethereum/src/utils/Constants';
 import { PriceHandler, PriceLookupResult } from "../../../shared/src/price/PriceHandler";
+import { PriceHandlerBalancer } from "../../../shared/src/price/PriceHandlerBalancer";
+import { PriceHandlerStablecoin } from "../../../shared/src/price/PriceHandlerStablecoin";
+import { PriceHandlerUniswapV2 } from "../../../shared/src/price/PriceHandlerUniswapV2";
 import { PriceHandlerUniswapV3 } from "../../../shared/src/price/PriceHandlerUniswapV3";
 import { getUSDRate } from "../../../shared/src/price/PriceRouter";
-import { ERC20_USDC, ERC20_WETH, LP_UNISWAP_V3_WETH_USDC } from "../contracts/Constants";
+import {
+  ERC20_JONES,
+  ERC20_MAGIC,
+  ERC20_USDC,
+  ERC20_VSTA,
+  ERC20_WETH,
+  LP_BALANCER_POOL_MAGIC_USDC,
+  LP_BALANCER_POOL_WETH_VESTA,
+  LP_UNISWAP_V2_JONES_WETH,
+  LP_UNISWAP_V3_WETH_USDC,
+} from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 
 const HANDLERS: PriceHandler[] = [
   new PriceHandlerUniswapV3([ERC20_USDC, ERC20_WETH], LP_UNISWAP_V3_WETH_USDC, getContractName),
+  new PriceHandlerUniswapV2([ERC20_JONES, ERC20_WETH], LP_UNISWAP_V2_JONES_WETH, getContractName),
+  new PriceHandlerBalancer([ERC20_WETH, ERC20_VSTA], BALANCER_VAULT, LP_BALANCER_POOL_WETH_VESTA, getContractName),
+  new PriceHandlerBalancer([ERC20_MAGIC, ERC20_USDC], BALANCER_VAULT, LP_BALANCER_POOL_MAGIC_USDC, getContractName),
+  new PriceHandlerStablecoin([ERC20_FRAX, ERC20_USDC], getContractName),
 ];
 
 /**
