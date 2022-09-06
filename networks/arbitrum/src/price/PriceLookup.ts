@@ -1,7 +1,6 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
-import { PriceHandler } from "../../../shared/src/price/PriceHandler";
-import { PriceLookupResult } from "../../../shared/src/price/PriceHandler.d";
+import { PriceHandler, PriceLookupResult } from "../../../shared/src/price/PriceHandler";
 import { PriceHandlerUniswapV3 } from "../../../shared/src/price/PriceHandlerUniswapV3";
 import { getUSDRate } from "../../../shared/src/price/PriceRouter";
 import { ERC20_USDC, ERC20_WETH, LP_UNISWAP_V3_WETH_USDC } from "../contracts/Constants";

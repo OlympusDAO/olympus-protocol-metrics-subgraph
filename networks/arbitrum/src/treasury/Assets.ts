@@ -1,13 +1,19 @@
 import { BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
-import { getStablecoinBalances } from "./TokenStablecoins";
+import {
+  TokenCategoryStable,
+  TokenCategoryVolatile,
+} from "../../../shared/src/contracts/TokenDefinition";
+import { getTokenBalances } from "./TokenBalances";
 
 export function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): void {
   // Stable
-  getStablecoinBalances(timestamp, false, blockNumber);
+  getTokenBalances(timestamp, TokenCategoryStable, blockNumber);
 
   // Volatile
-  // POL
+  getTokenBalances(timestamp, TokenCategoryVolatile, blockNumber);
+
+  // TODO POL
 }
 
 export function handleAssets(block: ethereum.Block): void {
