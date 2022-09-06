@@ -3,10 +3,13 @@ import { assert, createMockedFunction, describe, test } from "matchstick-as/asse
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import {
-  BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
   CONVEX_ALLOCATOR3,
-  CONVEX_ALLOCATORS,
   CONVEX_CVX_VL_ALLOCATOR,
+  TREASURY_ADDRESS_V3,
+} from "../../shared/src/Wallets";
+import {
+  BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+  CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
   CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
   DAO_WALLET,
@@ -24,7 +27,6 @@ import {
   LQTY_STAKING,
   NATIVE_ETH,
   TOKE_STAKING,
-  TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import {
   getBalancerGaugeBalanceFromWallets,

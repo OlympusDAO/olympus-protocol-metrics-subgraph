@@ -1,5 +1,6 @@
 import { log } from "@graphprotocol/graph-ts";
 
+import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, LUSD_ALLOCATOR, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 import { TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "./TokenDefinition";
 
@@ -15,32 +16,17 @@ export const OHMETHLPBOND_TOKEN = "OHM-WETH";
 
 export const MIGRATION_CONTRACT = "0x184f3fad8618a6f458c16bae63f70c426fe784b3".toLowerCase();
 
-export const CROSS_CHAIN_ARBITRUM = "0x012bbf0481b97170577745d2167ee14f63e2ad4c".toLowerCase();
-export const CROSS_CHAIN_FANTOM = "0x2bc001ffeb862d843e0a02a7163c7d4828e5fb10".toLowerCase();
-export const CROSS_CHAIN_POLYGON = "0xe06efa3d9ee6923240ee1195a16ddd96b5cce8f7".toLowerCase();
-export const TREASURY_ADDRESS_V1 = "0x886CE997aa9ee4F8c2282E182aB72A705762399D".toLowerCase();
-export const TREASURY_ADDRESS_V2 = "0x31f8cc382c9898b273eff4e0b7626a6987c846e8".toLowerCase();
 export const TREASURY_ADDRESS_V2_BLOCK = "12525281";
-export const TREASURY_ADDRESS_V3 = "0x9A315BdF513367C0377FB36545857d12e85813Ef".toLowerCase();
 export const TREASURY_ADDRESS_V3_BLOCK = "13805100";
 
-export const AAVE_ALLOCATOR = "0x0e1177e47151Be72e5992E0975000E73Ab5fd9D4".toLowerCase();
-export const AAVE_ALLOCATOR_V2 = "0x0d33c811d0fcc711bcb388dfb3a152de445be66f".toLowerCase();
 export const AAVE_ALLOCATOR_V2_BLOCK = "14375500";
-export const BALANCER_ALLOCATOR = "0xa9b52a2d0ffdbabdb2cb23ebb7cd879cac6618a6".toLowerCase(); // Incorrect?
-export const CONVEX_ALLOCATOR1 = "0x3dF5A355457dB3A4B5C744B8623A7721BF56dF78".toLowerCase();
 export const CONVEX_ALLOCATOR1_BLOCK = "13027359";
-export const CONVEX_ALLOCATOR2 = "0x408a9A09d97103022F53300A3A14Ca6c3FF867E8".toLowerCase();
 export const CONVEX_ALLOCATOR2_BLOCK = "13308077";
-export const CONVEX_ALLOCATOR3 = "0xDbf0683fC4FC8Ac11e64a6817d3285ec4f2Fc42d".toLowerCase();
 export const CONVEX_ALLOCATOR3_BLOCK = "13920000";
-export const CONVEX_CVX_ALLOCATOR = "0xdfc95aaf0a107daae2b350458ded4b7906e7f728".toLowerCase();
-export const CONVEX_CVX_VL_ALLOCATOR = "0x2d643df5de4e9ba063760d475beaa62821c71681".toLowerCase();
 export const OHMDAI_ONSEN_ID = 185;
 export const OHMLUSD_ONSEN_ID = 323;
 export const ONSEN_ALLOCATOR = "0x0316508a1b5abf1CAe42912Dc2C8B9774b682fFC".toLowerCase();
 export const SUSHI_MASTERCHEF = "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd".toLowerCase();
-export const VEFXS_ALLOCATOR = "0xde7b85f52577b113181921a7aa8fc0c22e309475".toLowerCase();
 export const CONVEX_STAKING_FRAX_3CRV_REWARD_POOL =
   "0xB900EF131301B307dB5eFcbed9DBb50A3e209B2e".toLowerCase();
 export const CONVEX_STAKING_OHM_ETH_REWARD_POOL =
@@ -89,15 +75,11 @@ export const BONDING_CALCULATOR = "0xcaaa6a2d4b26067a391e7b7d65c16bb2d5fa571a".t
 export const BONDING_CALCULATOR_BLOCK = "12525357";
 
 export const DAO_WALLET = "0x245cc372c84b3645bf0ffe6538620b04a217988b".toLowerCase();
-export const BONDS_DEPOSIT = "0x9025046c6fb25Fb39e720d97a8FD881ED69a1Ef6".toLowerCase();
-export const BONDS_INVERSE_DEPOSIT = "0xBA42BE149e5260EbA4B82418A6306f55D532eA47".toLowerCase();
 
 export const LQTY_STAKING = "0x4f9Fbb3f1E99B56e0Fe2892e623Ed36A76Fc605d".toLowerCase();
-export const LUSD_ALLOCATOR = "0x97b3ef4c558ec456d59cb95c65bfb79046e31fca".toLowerCase();
 export const LUSD_ALLOCATOR_BLOCK = "14397867";
 export const STABILITY_POOL = "0x66017d22b0f8556afdd19fc67041899eb65a21bb".toLowerCase();
 
-export const RARI_ALLOCATOR = "0x061C8610A784b8A1599De5B1157631e35180d818".toLowerCase();
 export const RARI_ALLOCATOR_BLOCK = "14550000";
 
 export const TOKE_ALLOCATOR = "0x0483DE8C11eE2f0538a29F0C294246677cbC92F5".toLowerCase();
@@ -563,7 +545,7 @@ export const liquidityPairHasToken = (pairAddress: string, tokenAddress: string)
  * This set of wallet addresses is common across many tokens,
  * and can be used for balance lookups.
  */
-const WALLET_ADDRESSES = [
+export const WALLET_ADDRESSES = [
   AAVE_ALLOCATOR_V2,
   AAVE_ALLOCATOR,
   BALANCER_ALLOCATOR,

@@ -2,6 +2,7 @@ import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
+import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
 import {
   getFraxSwapPairRecords,
@@ -17,7 +18,6 @@ import {
   getWalletAddressesForContract,
   PAIR_FRAXSWAP_V1_OHM_FRAX,
   PAIR_FRAXSWAP_V2_OHM_FRAX,
-  TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import { mockBalancerVaultZero } from "./liquidityBalancer.test";
 import {

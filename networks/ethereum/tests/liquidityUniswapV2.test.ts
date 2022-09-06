@@ -2,6 +2,7 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
 import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
+import { TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
 import {
   getOhmUSDPairRiskFreeValue,
@@ -15,18 +16,13 @@ import {
   ERC20_DAI,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
-  ERC20_WETH,
   getWalletAddressesForContract,
   PAIR_UNISWAP_V2_OHM_BTRFLY_V1,
   PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_ETH_V2,
-  PAIR_UNISWAP_V3_WETH_BTRFLY_V1,
-  TREASURY_ADDRESS_V2,
-  TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import { PairHandler, PairHandlerTypes } from "../src/utils/PairHandler";
-import { getUSDRate } from "../src/utils/Price";
 import { mockBalancerVaultZero } from "./liquidityBalancer.test";
 import {
   ERC20_STANDARD_DECIMALS,
@@ -37,7 +33,6 @@ import {
   getPairValue,
   mockEthUsdRate,
   mockOhmEthPair,
-  mockRateUniswapV3,
   mockUniswapV2Pair,
   mockUsdOhmV2Rate,
   mockWEthBtrflyV1Rate,

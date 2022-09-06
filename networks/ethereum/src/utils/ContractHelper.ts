@@ -1,6 +1,7 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { LUSD_ALLOCATOR, RARI_ALLOCATOR, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
 import { BalancerLiquidityGauge } from "../../generated/ProtocolMetrics/BalancerLiquidityGauge";
 import { ConvexBaseRewardPool } from "../../generated/ProtocolMetrics/ConvexBaseRewardPool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
@@ -40,14 +41,11 @@ import {
   getWalletAddressesForContract,
   liquidityPairHasToken,
   LQTY_STAKING,
-  LUSD_ALLOCATOR,
   NATIVE_ETH,
   ONSEN_ALLOCATOR,
-  RARI_ALLOCATOR,
   SUSHI_MASTERCHEF,
   TOKE_ALLOCATOR,
   TOKE_STAKING,
-  VEFXS_ALLOCATOR,
 } from "./Constants";
 import { getUSDRate } from "./Price";
 import { TokenCategoryPOL } from "./TokenDefinition";

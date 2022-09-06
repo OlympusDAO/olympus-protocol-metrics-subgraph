@@ -2,6 +2,7 @@ import { Address, BigDecimal, BigInt, Bytes, ethereum } from "@graphprotocol/gra
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
+import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import {
   getBalancerPoolTokenQuantity,
   getBalancerPoolTotalTokenQuantity,
@@ -26,7 +27,6 @@ import {
   POOL_BALANCER_OHM_DAI_WETH_ID,
   POOL_BALANCER_OHM_V2_BTRFLY_V2_ID,
   POOL_BALANCER_WETH_FDT_ID,
-  TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import { mockBalancerGaugeBalance, mockBalancerGaugeBalanceZero } from "./contractHelper.test";
 import {

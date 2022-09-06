@@ -2,6 +2,7 @@ import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
+import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
 import {
   getCurvePairTokenQuantity,
@@ -21,7 +22,6 @@ import {
   NATIVE_ETH,
   PAIR_CURVE_OHM_ETH,
   POOL_BALANCER_OHM_DAI_WETH_ID,
-  TREASURY_ADDRESS_V3,
 } from "../src/utils/Constants";
 import { mockConvexStakedBalance, mockConvexStakedBalanceZero } from "./contractHelper.test";
 import { mockBalancerVaultZero } from "./liquidityBalancer.test";

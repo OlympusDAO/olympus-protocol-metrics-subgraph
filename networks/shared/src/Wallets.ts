@@ -1,0 +1,48 @@
+export const CROSS_CHAIN_ARBITRUM = "0x012bbf0481b97170577745d2167ee14f63e2ad4c".toLowerCase();
+export const CROSS_CHAIN_FANTOM = "0x2bc001ffeb862d843e0a02a7163c7d4828e5fb10".toLowerCase();
+export const CROSS_CHAIN_POLYGON = "0xe06efa3d9ee6923240ee1195a16ddd96b5cce8f7".toLowerCase();
+export const TREASURY_ADDRESS_V1 = "0x886CE997aa9ee4F8c2282E182aB72A705762399D".toLowerCase();
+export const TREASURY_ADDRESS_V2 = "0x31f8cc382c9898b273eff4e0b7626a6987c846e8".toLowerCase();
+export const TREASURY_ADDRESS_V3 = "0x9A315BdF513367C0377FB36545857d12e85813Ef".toLowerCase();
+
+export const BONDS_DEPOSIT = "0x9025046c6fb25Fb39e720d97a8FD881ED69a1Ef6".toLowerCase();
+export const BONDS_INVERSE_DEPOSIT = "0xBA42BE149e5260EbA4B82418A6306f55D532eA47".toLowerCase();
+
+// TODO consider if allocators should be in shared/ or ethereum/
+export const AAVE_ALLOCATOR = "0x0e1177e47151Be72e5992E0975000E73Ab5fd9D4".toLowerCase();
+export const AAVE_ALLOCATOR_V2 = "0x0d33c811d0fcc711bcb388dfb3a152de445be66f".toLowerCase();
+export const BALANCER_ALLOCATOR = "0xa9b52a2d0ffdbabdb2cb23ebb7cd879cac6618a6".toLowerCase(); // Incorrect?
+export const CONVEX_ALLOCATOR1 = "0x3dF5A355457dB3A4B5C744B8623A7721BF56dF78".toLowerCase();
+export const CONVEX_ALLOCATOR2 = "0x408a9A09d97103022F53300A3A14Ca6c3FF867E8".toLowerCase();
+export const CONVEX_ALLOCATOR3 = "0xDbf0683fC4FC8Ac11e64a6817d3285ec4f2Fc42d".toLowerCase();
+export const CONVEX_CVX_ALLOCATOR = "0xdfc95aaf0a107daae2b350458ded4b7906e7f728".toLowerCase();
+export const CONVEX_CVX_VL_ALLOCATOR = "0x2d643df5de4e9ba063760d475beaa62821c71681".toLowerCase();
+export const LUSD_ALLOCATOR = "0x97b3ef4c558ec456d59cb95c65bfb79046e31fca".toLowerCase();
+export const RARI_ALLOCATOR = "0x061C8610A784b8A1599De5B1157631e35180d818".toLowerCase();
+export const VEFXS_ALLOCATOR = "0xde7b85f52577b113181921a7aa8fc0c22e309475".toLowerCase();
+
+/**
+ * This set of wallet addresses is common across many tokens,
+ * and can be used for balance lookups.
+ */
+export const WALLET_ADDRESSES = [
+  AAVE_ALLOCATOR_V2,
+  AAVE_ALLOCATOR,
+  BALANCER_ALLOCATOR,
+  BONDS_DEPOSIT,
+  BONDS_INVERSE_DEPOSIT,
+  CONVEX_ALLOCATOR1,
+  CONVEX_ALLOCATOR2,
+  CONVEX_ALLOCATOR3,
+  CONVEX_CVX_ALLOCATOR,
+  CONVEX_CVX_VL_ALLOCATOR,
+  CROSS_CHAIN_ARBITRUM,
+  CROSS_CHAIN_FANTOM,
+  CROSS_CHAIN_POLYGON,
+  LUSD_ALLOCATOR,
+  RARI_ALLOCATOR,
+  TREASURY_ADDRESS_V2,
+  TREASURY_ADDRESS_V3,
+  TREASURY_ADDRESS_V1,
+  VEFXS_ALLOCATOR,
+];
