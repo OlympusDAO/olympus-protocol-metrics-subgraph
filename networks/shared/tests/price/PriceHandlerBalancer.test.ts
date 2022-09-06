@@ -4,8 +4,7 @@ import { assert, createMockedFunction, describe, test } from "matchstick-as/asse
 import { ContractNameLookup } from "../../src/contracts/ContractLookup";
 import { PriceLookup, PriceLookupResult } from "../../src/price/PriceHandler";
 import { PriceHandlerBalancer } from "../../src/price/PriceHandlerBalancer";
-import { PriceHandlerUniswapV2 } from "../../src/price/PriceHandlerUniswapV2";
-import { toBigInt, toDecimal } from "../../src/utils/Decimals";
+import { toBigInt } from "../../src/utils/Decimals";
 import { addressesEqual } from "../../src/utils/StringHelper";
 
 export function mockBalancerVault(
