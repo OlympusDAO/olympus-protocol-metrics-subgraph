@@ -5,6 +5,7 @@ import { ContractNameLookup } from "../../src/contracts/ContractLookup";
 import { PriceLookup, PriceLookupResult } from "../../src/price/PriceHandler";
 import { PriceHandlerUniswapV2 } from "../../src/price/PriceHandlerUniswapV2";
 import { toDecimal } from "../../src/utils/Decimals";
+import { addressesEqual } from "../../src/utils/StringHelper";
 
 const mockUniswapV2Pair = (
   token0Address: string,
@@ -101,7 +102,7 @@ export const getOhmUsdRate = (): BigDecimal => {
   );
 };
 
-describe("UniswapV2 price handler", () => {
+describe("getPrice", () => {
   test("when secondary token = $1", () => {
     const stablecoinPriceLookup: PriceLookup = (
       _tokenAddress: string,
@@ -117,7 +118,7 @@ describe("UniswapV2 price handler", () => {
 
     mockOhmDaiPair();
 
-    const handler = new PriceHandlerUniswapV2([TOKEN1], PAIR_ADDRESS, contractLookup);
+    const handler = new PriceHandlerUniswapV2([TOKEN0, TOKEN1], PAIR_ADDRESS, contractLookup);
 
     // Should return the price of OHM
     const priceResult = handler.getPrice(TOKEN1, stablecoinPriceLookup, BLOCK);
@@ -142,7 +143,7 @@ describe("UniswapV2 price handler", () => {
 
     mockOhmDaiPairFlipped();
 
-    const handler = new PriceHandlerUniswapV2([TOKEN1], PAIR_ADDRESS, contractLookup);
+    const handler = new PriceHandlerUniswapV2([TOKEN0, TOKEN1], PAIR_ADDRESS, contractLookup);
 
     // Should return the price of OHM
     const priceResult = handler.getPrice(TOKEN1, stablecoinPriceLookup, BLOCK);
@@ -150,5 +151,77 @@ describe("UniswapV2 price handler", () => {
       getOhmUsdRate().toString(),
       priceResult ? priceResult.price.toString() : "",
     );
+  });
+});
+
+describe("getTotalValue", () => {
+  test("no exclusions", () => {
+    const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
+      if (addressesEqual(tokenAddress, TOKEN0)) {
+        return {
+          liquidity: BigDecimal.fromString("1"),
+          price: BigDecimal.fromString("1"),
+        };
+      }
+
+      return {
+        liquidity: BigDecimal.fromString("1"),
+        price: getOhmUsdRate(),
+      };
+    };
+
+    const contractLookup: ContractNameLookup = (tokenAddress: string): string => {
+      if (addressesEqual(tokenAddress, TOKEN0)) {
+        return "DAI";
+      }
+
+      return "OHM V2";
+    };
+
+    mockOhmDaiPair();
+
+    const handler = new PriceHandlerUniswapV2([TOKEN0, TOKEN1], PAIR_ADDRESS, contractLookup);
+
+    // # DAI + # OHM * OHM price
+    const expectedValue = toDecimal(TOKEN0_RESERVES, TOKEN0_DECIMALS).plus(
+      toDecimal(TOKEN1_RESERVES, TOKEN1_DECIMALS).times(getOhmUsdRate()),
+    );
+
+    const totalValue = handler.getTotalValue([], priceLookup, BLOCK);
+    assert.stringEquals(expectedValue.toString(), totalValue ? totalValue.toString() : "");
+  });
+
+  test("exclude token1", () => {
+    const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
+      if (addressesEqual(tokenAddress, TOKEN0)) {
+        return {
+          liquidity: BigDecimal.fromString("1"),
+          price: BigDecimal.fromString("1"),
+        };
+      }
+
+      return {
+        liquidity: BigDecimal.fromString("1"),
+        price: getOhmUsdRate(),
+      };
+    };
+
+    const contractLookup: ContractNameLookup = (tokenAddress: string): string => {
+      if (addressesEqual(tokenAddress, TOKEN0)) {
+        return "DAI";
+      }
+
+      return "OHM V2";
+    };
+
+    mockOhmDaiPair();
+
+    const handler = new PriceHandlerUniswapV2([TOKEN0, TOKEN1], PAIR_ADDRESS, contractLookup);
+
+    // # DAI
+    const expectedValue = toDecimal(TOKEN0_RESERVES, TOKEN0_DECIMALS);
+
+    const totalValue = handler.getTotalValue([TOKEN1], priceLookup, BLOCK);
+    assert.stringEquals(expectedValue.toString(), totalValue ? totalValue.toString() : "");
   });
 });

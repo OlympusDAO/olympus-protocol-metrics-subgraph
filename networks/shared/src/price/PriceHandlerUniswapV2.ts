@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { UniswapV2Pair } from "../../generated/Price/UniswapV2Pair";
 import { ContractNameLookup } from "../contracts/ContractLookup";
-import { getDecimals } from "../contracts/ERC20";
+import { getDecimals, getERC20 } from "../contracts/ERC20";
 import { arrayIncludesLoose } from "../utils/ArrayHelper";
 import { toDecimal } from "../utils/Decimals";
 import { addressesEqual } from "../utils/StringHelper";
@@ -29,6 +29,22 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
     return arrayIncludesLoose(this.tokens, tokenAddress);
   }
 
+  getContract(block: BigInt): UniswapV2Pair | null {
+    const FUNCTION = `${CLASS}: getContract:`;
+    const pair = UniswapV2Pair.bind(Address.fromString(this.poolAddress));
+
+    if (pair === null || pair.try_token0().reverted || pair.try_token1().reverted) {
+      log.debug("{} contract ({}) reverted at block {}", [
+        FUNCTION,
+        this.contractLookup(this.poolAddress),
+        block.toString(),
+      ]);
+      return null;
+    }
+
+    return pair;
+  }
+
   getPrice(
     tokenAddress: string,
     priceLookup: PriceLookup,
@@ -36,13 +52,8 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
   ): PriceLookupResult | null {
     const FUNCTION = `${CLASS}: lookup:`;
 
-    const pair = UniswapV2Pair.bind(Address.fromString(this.poolAddress));
-    if (pair === null || pair.try_token0().reverted || pair.try_token1().reverted) {
-      log.debug("{} Cannot determine value as the contract ({}) reverted at block {}", [
-        FUNCTION,
-        this.contractLookup(this.poolAddress),
-        block.toString(),
-      ]);
+    const pair = this.getContract(block);
+    if (!pair) {
       return null;
     }
 
@@ -93,5 +104,73 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
       price: tokenPrice,
       liquidity: BigDecimal.zero(), // TODO set liquidity
     };
+  }
+
+  getTotalValue(
+    excludedTokens: string[],
+    priceLookup: PriceLookup,
+    block: BigInt,
+  ): BigDecimal | null {
+    const FUNCTION = `${CLASS}: getTotalValue:`;
+    const pair = this.getContract(block);
+    if (!pair) {
+      return null;
+    }
+
+    const token0 = pair.token0().toHexString();
+    const token1 = pair.token1().toHexString();
+
+    const token0Contract = getERC20(token0, block);
+    const token1Contract = getERC20(token1, block);
+
+    const token0Reserves = toDecimal(pair.getReserves().value0, token0Contract.decimals());
+    const token1Reserves = toDecimal(pair.getReserves().value1, token1Contract.decimals());
+
+    const token0Rate = priceLookup(token0, block, null);
+    if (!token0Rate) {
+      log.warning(
+        "{} Unable to determine total value as the price of {} ({}) was null at block {}",
+        [FUNCTION, this.contractLookup(token0), token0, block.toString()],
+      );
+      return null;
+    }
+    const token1Rate = priceLookup(token1, block, null);
+    if (!token1Rate) {
+      log.warning(
+        "{} Unable to determine total value as the price of {} ({}) was null at block {}",
+        [FUNCTION, this.contractLookup(token1), token1, block.toString()],
+      );
+      return null;
+    }
+
+    // If the token is in {excludedTokens}, don't include its value
+    const token0Value = arrayIncludesLoose(excludedTokens, token0)
+      ? BigDecimal.zero()
+      : token0Reserves.times(token0Rate.price);
+    const token1Value = arrayIncludesLoose(excludedTokens, token1)
+      ? BigDecimal.zero()
+      : token1Reserves.times(token1Rate.price);
+
+    return token0Value.plus(token1Value);
+  }
+
+  getUnitRate(priceLookup: PriceLookup, block: BigInt): BigDecimal | null {
+    const FUNCTION = `${CLASS}: getUnitRate:`;
+    const pair = this.getContract(block);
+    if (!pair) {
+      return null;
+    }
+
+    const totalSupply = toDecimal(pair.totalSupply(), pair.decimals());
+    const totalValue = this.getTotalValue([], priceLookup, block);
+    if (!totalValue) {
+      log.warning("{} Unable to determine unit rate as total value was null at block {}", [
+        FUNCTION,
+        block.toString(),
+      ]);
+      return null;
+    }
+
+    return totalValue.div(totalSupply);
   }
 }
