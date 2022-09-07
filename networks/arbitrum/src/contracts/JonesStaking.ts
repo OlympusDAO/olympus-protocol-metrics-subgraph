@@ -52,16 +52,11 @@ const getStakedBalance = (
 
   const lpTokenDecimals = getDecimals(poolInfo.getLpToken().toHexString(), block);
 
-  const deposited = toDecimal(
+  // We don't return unclaimed rewards
+  return toDecimal(
     contract.deposited(poolIdBigInt, Address.fromString(walletAddress)),
     lpTokenDecimals,
   );
-  const rewards = toDecimal(
-    contract.pendingJones(poolIdBigInt, Address.fromString(walletAddress)),
-    lpTokenDecimals,
-  );
-
-  return deposited.plus(rewards);
 };
 
 /**
