@@ -1,4 +1,4 @@
-import { BigInt } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 import { PriceHandler, PriceLookup, PriceLookupResult } from "../../src/price/PriceHandler";
 
@@ -26,5 +26,17 @@ export class PriceHandlerCustom implements PriceHandler {
     _block: BigInt,
   ): PriceLookupResult | null {
     return this.returnValue;
+  }
+
+  getTotalValue(
+    excludedTokens: string[],
+    priceLookup: PriceLookup,
+    block: BigInt,
+  ): BigDecimal | null {
+    throw new Error("Method not implemented.");
+  }
+
+  getUnitPrice(priceLookup: PriceLookup, block: BigInt): BigDecimal | null {
+    throw new Error("Method not implemented.");
   }
 }

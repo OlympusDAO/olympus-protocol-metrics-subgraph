@@ -5,6 +5,7 @@ import { UniswapV3Pair } from "../../generated/Price/UniswapV3Pair";
 import { ContractNameLookup } from "../contracts/ContractLookup";
 import { getERC20 } from "../contracts/ERC20";
 import { arrayIncludesLoose } from "../utils/ArrayHelper";
+import { toDecimal } from "../utils/Decimals";
 import { addressesEqual } from "../utils/StringHelper";
 import { PriceHandler, PriceLookup, PriceLookupResult } from "./PriceHandler";
 
@@ -19,6 +20,22 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
     this.tokens = tokens;
     this.poolAddress = poolAddress;
     this.contractLookup = contractLookup;
+  }
+
+  private getContract(block: BigInt): UniswapV3Pair | null {
+    const FUNCTION = `${CLASS}: getContract:`;
+    const pair = UniswapV3Pair.bind(Address.fromString(this.poolAddress));
+
+    if (pair === null || pair.try_token0().reverted || pair.try_token1().reverted) {
+      log.debug("{} contract ({}) reverted at block {}", [
+        FUNCTION,
+        this.contractLookup(this.poolAddress),
+        block.toString(),
+      ]);
+      return null;
+    }
+
+    return pair;
   }
 
   getId(): string {
@@ -110,5 +127,64 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
       price: finalUsdRate,
       liquidity: BigDecimal.zero(), // TODO set liquidity
     };
+  }
+
+  getTotalValue(
+    excludedTokens: string[],
+    priceLookup: PriceLookup,
+    block: BigInt,
+  ): BigDecimal | null {
+    const FUNCTION = `${CLASS}: getTotalValue:`;
+    const pair = this.getContract(block);
+    if (!pair) {
+      return null;
+    }
+
+    const token0 = pair.token0().toHexString();
+    const token1 = pair.token1().toHexString();
+
+    const token0Contract = getERC20(token0, block);
+    const token1Contract = getERC20(token1, block);
+
+    const token0Reserves = toDecimal(
+      token0Contract.balanceOf(Address.fromString(this.poolAddress)),
+      token0Contract.decimals(),
+    );
+    const token1Reserves = toDecimal(
+      token1Contract.balanceOf(Address.fromString(this.poolAddress)),
+      token1Contract.decimals(),
+    );
+
+    const token0Rate = priceLookup(token0, block, null);
+    if (!token0Rate) {
+      log.warning(
+        "{} Unable to determine total value as the price of {} ({}) was null at block {}",
+        [FUNCTION, this.contractLookup(token0), token0, block.toString()],
+      );
+      return null;
+    }
+    const token1Rate = priceLookup(token1, block, null);
+    if (!token1Rate) {
+      log.warning(
+        "{} Unable to determine total value as the price of {} ({}) was null at block {}",
+        [FUNCTION, this.contractLookup(token1), token1, block.toString()],
+      );
+      return null;
+    }
+
+    // If the token is in {excludedTokens}, don't include its value
+    const token0Value = arrayIncludesLoose(excludedTokens, token0)
+      ? BigDecimal.zero()
+      : token0Reserves.times(token0Rate.price);
+    const token1Value = arrayIncludesLoose(excludedTokens, token1)
+      ? BigDecimal.zero()
+      : token1Reserves.times(token1Rate.price);
+
+    return token0Value.plus(token1Value);
+  }
+
+  getUnitPrice(priceLookup: PriceLookup, block: BigInt): BigDecimal | null {
+    // We are unable to determine the total supply of a UniswapV3 pool, so the unit price = total value
+    return this.getTotalValue([], priceLookup, block);
   }
 }

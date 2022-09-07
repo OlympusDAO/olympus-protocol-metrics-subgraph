@@ -4,6 +4,8 @@ import { assert, createMockedFunction, describe, test } from "matchstick-as/asse
 import { ContractNameLookup } from "../../src/contracts/ContractLookup";
 import { PriceLookup, PriceLookupResult } from "../../src/price/PriceHandler";
 import { PriceHandlerUniswapV3 } from "../../src/price/PriceHandlerUniswapV3";
+import { toBigInt } from "../../src/utils/Decimals";
+import { addressesEqual } from "../../src/utils/StringHelper";
 
 const mockRateUniswapV3 = (
   pairAddress: string,
@@ -68,8 +70,9 @@ const LP_UNISWAP_V3_FPIS_FRAX = "0x8fe536c7dc019455cce34746755c64bbe2aa163b".toL
 const ERC20_FRAX = "0x853d955acef822db058eb8505911ed77f175b99e".toLowerCase();
 const ERC20_FPIS = "0xc2544a32872a91f4a553b404c6950e89de901fdb".toLowerCase();
 const SLOT0 = "74413935457348545615865577209"; // Copied from FPIS
-const FRAX_BALANCE = "0";
-const FPIS_BALANCE = "0";
+const FRAX_BALANCE = BigDecimal.fromString("10");
+const FPIS_BALANCE = BigDecimal.fromString("15");
+const BLOCK = BigInt.fromString("1");
 
 export const mockFpisFraxPair = (): void => {
   mockRateUniswapV3(
@@ -79,14 +82,14 @@ export const mockFpisFraxPair = (): void => {
     ERC20_FPIS,
     18,
     18,
-    BigInt.fromString(FRAX_BALANCE),
-    BigInt.fromString(FPIS_BALANCE),
+    toBigInt(FRAX_BALANCE),
+    toBigInt(FPIS_BALANCE),
   );
 };
 
 const FPIS_RATE = BigDecimal.fromString("1.13357594386");
 
-describe("UniswapV3 price handler", () => {
+describe("getPrice", () => {
   test("when secondary token = $1", () => {
     const stablecoinPriceLookup: PriceLookup = (
       _tokenAddress: string,
@@ -109,10 +112,129 @@ describe("UniswapV3 price handler", () => {
     );
 
     // Should return the price of FPIS
-    const priceResult = handler.getPrice(ERC20_FPIS, stablecoinPriceLookup, BigInt.fromString("1"));
+    const priceResult = handler.getPrice(ERC20_FPIS, stablecoinPriceLookup, BLOCK);
     assert.stringEquals(
       FPIS_RATE.toString(),
       priceResult ? priceResult.price.toString().slice(0, 13) : "",
     );
+  });
+});
+
+describe("getTotalValue", () => {
+  test("no exclusions", () => {
+    const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
+      if (addressesEqual(tokenAddress, ERC20_FRAX)) {
+        return {
+          liquidity: BigDecimal.fromString("1"),
+          price: BigDecimal.fromString("1"),
+        };
+      }
+
+      return {
+        liquidity: BigDecimal.fromString("1"),
+        price: FPIS_RATE,
+      };
+    };
+
+    const contractLookup: ContractNameLookup = (tokenAddress: string): string => {
+      if (addressesEqual(tokenAddress, ERC20_FRAX)) {
+        return "FRAX";
+      }
+
+      return "FPIS";
+    };
+
+    mockFpisFraxPair();
+
+    const handler = new PriceHandlerUniswapV3(
+      [ERC20_FRAX, ERC20_FPIS],
+      LP_UNISWAP_V3_FPIS_FRAX,
+      contractLookup,
+    );
+
+    // # FRAX + # FPIS * FPIS price
+    const expectedValue = FRAX_BALANCE.plus(FPIS_BALANCE.times(FPIS_RATE));
+
+    const totalValue = handler.getTotalValue([], priceLookup, BLOCK);
+    assert.stringEquals(expectedValue.toString(), totalValue ? totalValue.toString() : "");
+  });
+
+  test("exclude token1", () => {
+    const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
+      if (addressesEqual(tokenAddress, ERC20_FRAX)) {
+        return {
+          liquidity: BigDecimal.fromString("1"),
+          price: BigDecimal.fromString("1"),
+        };
+      }
+
+      return {
+        liquidity: BigDecimal.fromString("1"),
+        price: FPIS_RATE,
+      };
+    };
+
+    const contractLookup: ContractNameLookup = (tokenAddress: string): string => {
+      if (addressesEqual(tokenAddress, ERC20_FRAX)) {
+        return "FRAX";
+      }
+
+      return "FPIS";
+    };
+
+    mockFpisFraxPair();
+
+    const handler = new PriceHandlerUniswapV3(
+      [ERC20_FRAX, ERC20_FPIS],
+      LP_UNISWAP_V3_FPIS_FRAX,
+      contractLookup,
+    );
+
+    // # FPIS * FPIS price
+    const expectedValue = FPIS_BALANCE.times(FPIS_RATE);
+
+    const totalValue = handler.getTotalValue([ERC20_FRAX], priceLookup, BLOCK);
+    assert.stringEquals(expectedValue.toString(), totalValue ? totalValue.toString() : "");
+  });
+});
+
+describe("getUnitPrice", () => {
+  test("no exclusions", () => {
+    const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
+      if (addressesEqual(tokenAddress, ERC20_FRAX)) {
+        return {
+          liquidity: BigDecimal.fromString("1"),
+          price: BigDecimal.fromString("1"),
+        };
+      }
+
+      return {
+        liquidity: BigDecimal.fromString("1"),
+        price: FPIS_RATE,
+      };
+    };
+
+    const contractLookup: ContractNameLookup = (tokenAddress: string): string => {
+      if (addressesEqual(tokenAddress, ERC20_FRAX)) {
+        return "FRAX";
+      }
+
+      return "FPIS";
+    };
+
+    mockFpisFraxPair();
+
+    const handler = new PriceHandlerUniswapV3(
+      [ERC20_FRAX, ERC20_FPIS],
+      LP_UNISWAP_V3_FPIS_FRAX,
+      contractLookup,
+    );
+
+    // # FRAX + # FPIS * FPIS price
+    const expectedValue = FRAX_BALANCE.plus(FPIS_BALANCE.times(FPIS_RATE));
+
+    // We can't count the unit price of a V3 pool (no total supply), so total supply is 1 and total value = unit price
+    const unitPrice = handler.getUnitPrice(priceLookup, BLOCK);
+    assert.stringEquals(expectedValue.toString(), unitPrice ? unitPrice.toString() : "");
   });
 });

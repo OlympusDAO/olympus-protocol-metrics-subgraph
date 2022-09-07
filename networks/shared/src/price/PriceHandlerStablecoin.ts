@@ -35,4 +35,16 @@ export class PriceHandlerStablecoin implements PriceHandler {
       liquidity: BigDecimal.fromString("0"), // TODO consider setting liquidity
     };
   }
+
+  getTotalValue(
+    _excludedTokens: string[],
+    _priceLookup: PriceLookup,
+    _block: BigInt,
+  ): BigDecimal | null {
+    throw new Error("Method not implemented.");
+  }
+
+  getUnitPrice(_priceLookup: PriceLookup, _block: BigInt): BigDecimal | null {
+    throw new Error("Method not implemented.");
+  }
 }

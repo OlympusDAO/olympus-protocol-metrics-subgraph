@@ -29,7 +29,7 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
     return arrayIncludesLoose(this.tokens, tokenAddress);
   }
 
-  getContract(block: BigInt): UniswapV2Pair | null {
+  private getContract(block: BigInt): UniswapV2Pair | null {
     const FUNCTION = `${CLASS}: getContract:`;
     const pair = UniswapV2Pair.bind(Address.fromString(this.poolAddress));
 

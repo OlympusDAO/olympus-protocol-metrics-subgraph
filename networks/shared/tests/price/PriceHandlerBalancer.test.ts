@@ -174,7 +174,7 @@ function getMockEthPrice(): BigDecimal {
 
 const BLOCK = BigInt.fromString("1");
 
-describe("Balancer price handler", () => {
+describe("getPrice", () => {
   test("OHM-DAI-ETH, OHM lookup", () => {
     const priceLookup: PriceLookup = (
       tokenAddress: string,
@@ -259,5 +259,167 @@ describe("Balancer price handler", () => {
       getMockEthPrice().toString(),
       priceResult ? priceResult.price.toString() : "",
     );
+  });
+});
+
+describe("getTotalValue", () => {
+  test("no exclusions", () => {
+    const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
+      if (addressesEqual(tokenAddress, ERC20_OHM_V2)) {
+        return {
+          liquidity: BigDecimal.fromString("1"),
+          price: getMockOhmPrice(),
+        };
+      }
+
+      if (addressesEqual(tokenAddress, ERC20_DAI)) {
+        return {
+          liquidity: BigDecimal.fromString("1"),
+          price: getMockOhmPrice(),
+        };
+      }
+
+      return {
+        liquidity: BigDecimal.fromString("1"),
+        price: getMockEthPrice(),
+      };
+    };
+
+    const contractLookup: ContractNameLookup = (tokenAddress: string): string => {
+      if (addressesEqual(tokenAddress, ERC20_OHM_V2)) {
+        return "OHM V2";
+      }
+
+      if (addressesEqual(tokenAddress, ERC20_DAI)) {
+        return "DAI";
+      }
+
+      return "wETH";
+    };
+
+    mockBalancerVaultOhmDaiEth();
+
+    const handler = new PriceHandlerBalancer(
+      [ERC20_OHM_V2, ERC20_DAI, ERC20_WETH],
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      contractLookup,
+    );
+
+    // # DAI + # OHM * OHM price + # WETH * WETH price
+    const expectedValue = OHM_DAI_ETH_BALANCE_DAI.plus(
+      OHM_DAI_ETH_BALANCE_OHM.times(getMockOhmPrice()),
+    ).plus(OHM_DAI_ETH_BALANCE_WETH.times(getMockEthPrice()));
+
+    const totalValue = handler.getTotalValue([], priceLookup, BLOCK);
+    assert.stringEquals(expectedValue.toString(), totalValue ? totalValue.toString() : "");
+  });
+
+  test("exclude token1", () => {
+    const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
+      if (addressesEqual(tokenAddress, ERC20_OHM_V2)) {
+        return {
+          liquidity: BigDecimal.fromString("1"),
+          price: getMockOhmPrice(),
+        };
+      }
+
+      if (addressesEqual(tokenAddress, ERC20_DAI)) {
+        return {
+          liquidity: BigDecimal.fromString("1"),
+          price: getMockOhmPrice(),
+        };
+      }
+
+      return {
+        liquidity: BigDecimal.fromString("1"),
+        price: getMockEthPrice(),
+      };
+    };
+
+    const contractLookup: ContractNameLookup = (tokenAddress: string): string => {
+      if (addressesEqual(tokenAddress, ERC20_OHM_V2)) {
+        return "OHM V2";
+      }
+
+      if (addressesEqual(tokenAddress, ERC20_DAI)) {
+        return "DAI";
+      }
+
+      return "wETH";
+    };
+
+    mockBalancerVaultOhmDaiEth();
+
+    const handler = new PriceHandlerBalancer(
+      [ERC20_OHM_V2, ERC20_DAI, ERC20_WETH],
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      contractLookup,
+    );
+
+    // # DAI + # WETH * WETH price
+    const expectedValue = OHM_DAI_ETH_BALANCE_DAI.plus(
+      OHM_DAI_ETH_BALANCE_WETH.times(getMockEthPrice()),
+    );
+
+    const totalValue = handler.getTotalValue([ERC20_OHM_V2], priceLookup, BLOCK);
+    assert.stringEquals(expectedValue.toString(), totalValue ? totalValue.toString() : "");
+  });
+});
+
+describe("getUnitPrice", () => {
+  test("no exclusions", () => {
+    const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
+      if (addressesEqual(tokenAddress, ERC20_OHM_V2)) {
+        return {
+          liquidity: BigDecimal.fromString("1"),
+          price: getMockOhmPrice(),
+        };
+      }
+
+      if (addressesEqual(tokenAddress, ERC20_DAI)) {
+        return {
+          liquidity: BigDecimal.fromString("1"),
+          price: getMockOhmPrice(),
+        };
+      }
+
+      return {
+        liquidity: BigDecimal.fromString("1"),
+        price: getMockEthPrice(),
+      };
+    };
+
+    const contractLookup: ContractNameLookup = (tokenAddress: string): string => {
+      if (addressesEqual(tokenAddress, ERC20_OHM_V2)) {
+        return "OHM V2";
+      }
+
+      if (addressesEqual(tokenAddress, ERC20_DAI)) {
+        return "DAI";
+      }
+
+      return "wETH";
+    };
+
+    mockBalancerVaultOhmDaiEth();
+
+    const handler = new PriceHandlerBalancer(
+      [ERC20_OHM_V2, ERC20_DAI, ERC20_WETH],
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      contractLookup,
+    );
+
+    // (# DAI + # OHM * OHM price + # WETH * WETH price)/total supply
+    const expectedValue = OHM_DAI_ETH_BALANCE_DAI.plus(
+      OHM_DAI_ETH_BALANCE_OHM.times(getMockOhmPrice()),
+    )
+      .plus(OHM_DAI_ETH_BALANCE_WETH.times(getMockEthPrice()))
+      .div(OHM_DAI_ETH_TOKEN_TOTAL_SUPPLY);
+
+    const unitPrice = handler.getUnitPrice(priceLookup, BLOCK);
+    assert.stringEquals(expectedValue.toString(), unitPrice ? unitPrice.toString() : "");
   });
 });
