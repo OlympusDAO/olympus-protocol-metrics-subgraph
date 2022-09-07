@@ -225,3 +225,41 @@ describe("getTotalValue", () => {
     assert.stringEquals(expectedValue.toString(), totalValue ? totalValue.toString() : "");
   });
 });
+
+describe("getUnitPrice", () => {
+  test("no exclusions", () => {
+    const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
+      if (addressesEqual(tokenAddress, TOKEN0)) {
+        return {
+          liquidity: BigDecimal.fromString("1"),
+          price: BigDecimal.fromString("1"),
+        };
+      }
+
+      return {
+        liquidity: BigDecimal.fromString("1"),
+        price: getOhmUsdRate(),
+      };
+    };
+
+    const contractLookup: ContractNameLookup = (tokenAddress: string): string => {
+      if (addressesEqual(tokenAddress, TOKEN0)) {
+        return "DAI";
+      }
+
+      return "OHM V2";
+    };
+
+    mockOhmDaiPair();
+
+    const handler = new PriceHandlerUniswapV2([TOKEN0, TOKEN1], PAIR_ADDRESS, contractLookup);
+
+    // (# DAI + # OHM * OHM price) / total supply
+    const expectedValue = toDecimal(TOKEN0_RESERVES, TOKEN0_DECIMALS)
+      .plus(toDecimal(TOKEN1_RESERVES, TOKEN1_DECIMALS).times(getOhmUsdRate()))
+      .div(toDecimal(TOKEN_SUPPLY, 18));
+
+    const unitPrice = handler.getUnitPrice(priceLookup, BLOCK);
+    assert.stringEquals(expectedValue.toString(), unitPrice ? unitPrice.toString() : "");
+  });
+});

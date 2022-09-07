@@ -65,10 +65,10 @@ export interface PriceHandler {
   getTotalValue(excludedTokens: string[], priceLookup: PriceLookup, block: BigInt): BigDecimal | null;
 
   /**
-   * Returns the unit rate of the liquidity pool.
+   * Returns the unit price of the liquidity pool.
    *
    * @param priceLookup
    * @param block
    */
-  getUnitRate(priceLookup: PriceLookup, block: BigInt): BigDecimal | null;
+  getUnitPrice(priceLookup: PriceLookup, block: BigInt): BigDecimal | null;
 }

@@ -154,7 +154,7 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
     return token0Value.plus(token1Value);
   }
 
-  getUnitRate(priceLookup: PriceLookup, block: BigInt): BigDecimal | null {
+  getUnitPrice(priceLookup: PriceLookup, block: BigInt): BigDecimal | null {
     const FUNCTION = `${CLASS}: getUnitRate:`;
     const pair = this.getContract(block);
     if (!pair) {
