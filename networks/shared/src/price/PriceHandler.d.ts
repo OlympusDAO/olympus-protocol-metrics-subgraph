@@ -54,4 +54,21 @@ export interface PriceHandler {
    * @returns PriceLookupResult or null
    */
   getPrice(tokenAddress: string, priceLookup: PriceLookup, block: BigInt): PriceLookupResult | null;
+
+  /**
+   * Returns the total value of the liquidity pool.
+   *
+   * @param excludedTokens if specified, the total value will exclude the value of these tokens
+   * @param priceLookup function to perform price lookups
+   * @param block
+   */
+  getTotalValue(excludedTokens: string[], priceLookup: PriceLookup, block: BigInt): BigDecimal | null;
+
+  /**
+   * Returns the unit rate of the liquidity pool.
+   *
+   * @param priceLookup
+   * @param block
+   */
+  getUnitRate(priceLookup: PriceLookup, block: BigInt): BigDecimal | null;
 }
