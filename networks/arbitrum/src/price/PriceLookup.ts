@@ -22,7 +22,7 @@ import {
 } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 
-const HANDLERS: PriceHandler[] = [
+export const HANDLERS: PriceHandler[] = [
   new PriceHandlerUniswapV3([ERC20_USDC, ERC20_WETH], LP_UNISWAP_V3_WETH_USDC, getContractName),
   new PriceHandlerUniswapV2([ERC20_JONES, ERC20_WETH], LP_UNISWAP_V2_JONES_WETH, getContractName),
   new PriceHandlerUniswapV2([ERC20_MAGIC, ERC20_WETH], LP_UNISWAP_V2_MAGIC_WETH, getContractName),

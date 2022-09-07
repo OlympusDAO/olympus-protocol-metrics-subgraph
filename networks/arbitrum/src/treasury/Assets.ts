@@ -4,16 +4,15 @@ import {
   TokenCategoryStable,
   TokenCategoryVolatile,
 } from "../../../shared/src/contracts/TokenDefinition";
+import { getOwnedLiquidityBalances } from "./OwnedLiquidity";
 import { getTokenBalances } from "./TokenBalances";
 
 export function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): void {
-  // Stable
   getTokenBalances(timestamp, TokenCategoryStable, blockNumber);
 
-  // Volatile
   getTokenBalances(timestamp, TokenCategoryVolatile, blockNumber);
 
-  // TODO POL
+  getOwnedLiquidityBalances(timestamp, blockNumber);
 }
 
 export function handleAssets(block: ethereum.Block): void {
