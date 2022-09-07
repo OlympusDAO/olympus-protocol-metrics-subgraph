@@ -18,7 +18,7 @@ import { getPrice } from "../price/PriceLookup";
  * @param blockNumber the current block
  * @returns TokenRecord array
  */
-export function getTokenBalance(
+function getTokenBalance(
   timestamp: BigInt,
   contractAddress: string,
   blockNumber: BigInt,
@@ -67,9 +67,9 @@ export function getTokenBalances(
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
 
-  const stableTokens = getTokensInCategory(category, ERC20_TOKENS_ARBITRUM);
-  for (let i = 0; i < stableTokens.length; i++) {
-    pushArray(records, getTokenBalance(timestamp, stableTokens[i].getAddress(), blockNumber));
+  const categoryTokens = getTokensInCategory(category, ERC20_TOKENS_ARBITRUM);
+  for (let i = 0; i < categoryTokens.length; i++) {
+    pushArray(records, getTokenBalance(timestamp, categoryTokens[i].getAddress(), blockNumber));
   }
 
   return records;
