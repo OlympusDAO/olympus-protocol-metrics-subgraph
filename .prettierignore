@@ -1,4 +1,4 @@
 networks/ethereum/src/utils/Constants.ts
-networks/shared/src/price/PriceHandler.d.ts
+networks/shared/src/price/PriceHandler.ts
 networks/arbitrum/src/contracts/Constants.ts
 networks/arbitrum/src/price/PriceLookup.ts

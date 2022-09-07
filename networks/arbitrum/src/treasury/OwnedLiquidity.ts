@@ -1,6 +1,6 @@
 import { BigInt, log } from "@graphprotocol/graph-ts";
 
-import { PriceHandler } from "../../../shared/src/price/PriceHandler.d";
+import { PriceHandler } from "../../../shared/src/price/PriceHandler";
 import { pushArray } from "../../../shared/src/utils/ArrayHelper";
 import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 import { TokenRecord } from "../../generated/schema";

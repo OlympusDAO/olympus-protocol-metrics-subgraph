@@ -71,4 +71,12 @@ export interface PriceHandler {
    * @param block
    */
   getUnitPrice(priceLookup: PriceLookup, block: BigInt): BigDecimal | null;
+
+  /**
+   * Returns the balance of the liquidity pool held by {walletAddress}.
+   * 
+   * @param walletAddress 
+   * @param block 
+   */
+  getBalance(walletAddress: string, block: BigInt): BigDecimal;
 }
