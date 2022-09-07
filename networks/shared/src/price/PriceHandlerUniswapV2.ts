@@ -173,4 +173,13 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
 
     return totalValue.div(totalSupply);
   }
+
+  getBalance(walletAddress: string, block: BigInt): BigDecimal {
+    const contract = this.getContract(block);
+    if (!contract) {
+      return BigDecimal.zero();
+    }
+
+    return toDecimal(contract.balanceOf(Address.fromString(walletAddress)), contract.decimals());
+  }
 }

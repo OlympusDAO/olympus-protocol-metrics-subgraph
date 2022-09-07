@@ -187,4 +187,9 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
     // We are unable to determine the total supply of a UniswapV3 pool, so the unit price = total value
     return this.getTotalValue([], priceLookup, block);
   }
+
+  getBalance(walletAddress: string, block: BigInt): BigDecimal {
+    // TODO determine how to get the "balance"/ownership of the pool using the V3 position NFT
+    return BigDecimal.zero();
+  }
 }

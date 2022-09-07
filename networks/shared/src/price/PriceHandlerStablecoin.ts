@@ -4,6 +4,9 @@ import { ContractNameLookup } from "../contracts/ContractLookup";
 import { arrayIncludesLoose } from "../utils/ArrayHelper";
 import { PriceHandler, PriceLookup, PriceLookupResult } from "./PriceHandler";
 
+/**
+ * Dummy PriceHandler instance to return a value of 1 for the stablecoins specified in the constructor.
+ */
 export class PriceHandlerStablecoin implements PriceHandler {
   protected addresses: string[];
   protected contractLookup: ContractNameLookup;
@@ -41,10 +44,14 @@ export class PriceHandlerStablecoin implements PriceHandler {
     _priceLookup: PriceLookup,
     _block: BigInt,
   ): BigDecimal | null {
-    throw new Error("Method not implemented.");
+    return null;
   }
 
   getUnitPrice(_priceLookup: PriceLookup, _block: BigInt): BigDecimal | null {
-    throw new Error("Method not implemented.");
+    return null;
+  }
+
+  getBalance(_walletAddress: string, _block: BigInt): BigDecimal {
+    return BigDecimal.zero();
   }
 }

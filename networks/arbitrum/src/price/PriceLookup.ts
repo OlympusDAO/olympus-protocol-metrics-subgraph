@@ -9,6 +9,7 @@ import { getUSDRate } from "../../../shared/src/price/PriceRouter";
 import {
   BALANCER_VAULT,
   ERC20_FRAX,
+  ERC20_GOHM,
   ERC20_JONES,
   ERC20_MAGIC,
   ERC20_USDC,
@@ -16,6 +17,7 @@ import {
   ERC20_WETH,
   LP_BALANCER_POOL_MAGIC_USDC,
   LP_BALANCER_POOL_WETH_VESTA,
+  LP_UNISWAP_V2_GOHM_WETH,
   LP_UNISWAP_V2_JONES_WETH,
   LP_UNISWAP_V2_MAGIC_WETH,
   LP_UNISWAP_V3_WETH_USDC,
@@ -23,12 +25,13 @@ import {
 import { getContractName } from "../contracts/Contracts";
 
 export const HANDLERS: PriceHandler[] = [
-  new PriceHandlerUniswapV3([ERC20_USDC, ERC20_WETH], LP_UNISWAP_V3_WETH_USDC, getContractName),
+  new PriceHandlerBalancer([ERC20_MAGIC, ERC20_USDC], BALANCER_VAULT, LP_BALANCER_POOL_MAGIC_USDC, getContractName),
+  new PriceHandlerBalancer([ERC20_WETH, ERC20_VSTA], BALANCER_VAULT, LP_BALANCER_POOL_WETH_VESTA, getContractName),
+  new PriceHandlerStablecoin([ERC20_FRAX, ERC20_USDC], getContractName),
+  new PriceHandlerUniswapV2([ERC20_GOHM, ERC20_WETH], LP_UNISWAP_V2_GOHM_WETH, getContractName),
   new PriceHandlerUniswapV2([ERC20_JONES, ERC20_WETH], LP_UNISWAP_V2_JONES_WETH, getContractName),
   new PriceHandlerUniswapV2([ERC20_MAGIC, ERC20_WETH], LP_UNISWAP_V2_MAGIC_WETH, getContractName),
-  new PriceHandlerBalancer([ERC20_WETH, ERC20_VSTA], BALANCER_VAULT, LP_BALANCER_POOL_WETH_VESTA, getContractName),
-  new PriceHandlerBalancer([ERC20_MAGIC, ERC20_USDC], BALANCER_VAULT, LP_BALANCER_POOL_MAGIC_USDC, getContractName),
-  new PriceHandlerStablecoin([ERC20_FRAX, ERC20_USDC], getContractName),
+  new PriceHandlerUniswapV3([ERC20_USDC, ERC20_WETH], LP_UNISWAP_V3_WETH_USDC, getContractName),
 ];
 
 /**
@@ -41,7 +44,7 @@ export const HANDLERS: PriceHandler[] = [
  * @param currentPool
  * @returns
  */
-function getPriceRecursive(
+export function getPriceRecursive(
   tokenAddress: string,
   block: BigInt,
   currentPool: string | null,

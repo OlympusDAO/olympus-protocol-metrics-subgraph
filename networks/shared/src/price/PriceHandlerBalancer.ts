@@ -272,4 +272,13 @@ export class PriceHandlerBalancer implements PriceHandler {
 
     return totalValue.div(totalSupply);
   }
+
+  getBalance(walletAddress: string, block: BigInt): BigDecimal {
+    const poolToken = this.getPoolToken(block);
+    if (!poolToken) {
+      return BigDecimal.zero();
+    }
+
+    return toDecimal(poolToken.balanceOf(Address.fromString(walletAddress)), poolToken.decimals());
+  }
 }
