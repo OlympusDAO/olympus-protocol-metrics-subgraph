@@ -90,7 +90,7 @@ export const mockFpisFraxPair = (): void => {
 const FPIS_RATE = BigDecimal.fromString("1.13357594386");
 
 describe("getPrice", () => {
-  test("when secondary token = $1", () => {
+  test("price is correct when secondary token = $1", () => {
     const stablecoinPriceLookup: PriceLookup = (
       _tokenAddress: string,
       _block: BigInt,
@@ -121,7 +121,7 @@ describe("getPrice", () => {
 });
 
 describe("getTotalValue", () => {
-  test("no exclusions", () => {
+  test("total value is correct", () => {
     const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
       if (addressesEqual(tokenAddress, ERC20_FRAX)) {
         return {
@@ -159,7 +159,7 @@ describe("getTotalValue", () => {
     assert.stringEquals(expectedValue.toString(), totalValue ? totalValue.toString() : "");
   });
 
-  test("exclude token1", () => {
+  test("total value is correct without token1", () => {
     const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
       if (addressesEqual(tokenAddress, ERC20_FRAX)) {
         return {
@@ -199,7 +199,7 @@ describe("getTotalValue", () => {
 });
 
 describe("getUnitPrice", () => {
-  test("no exclusions", () => {
+  test("unit price is correct", () => {
     const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
       if (addressesEqual(tokenAddress, ERC20_FRAX)) {
         return {

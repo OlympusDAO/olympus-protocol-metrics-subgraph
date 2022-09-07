@@ -12,6 +12,22 @@ import { PriceHandler, PriceLookup, PriceLookupResult } from "./PriceHandler";
 
 const CLASS = "PriceHandlerBalancer";
 
+class TokenInfo {
+  address: string;
+  reserves: BigDecimal;
+  weight: BigDecimal;
+  price: BigDecimal;
+}
+
+function createTokenInfo(): TokenInfo {
+  return {
+    address: "",
+    reserves: BigDecimal.zero(),
+    weight: BigDecimal.zero(),
+    price: BigDecimal.zero(),
+  };
+}
+
 export class PriceHandlerBalancer implements PriceHandler {
   protected tokens: string[];
   protected vaultAddress: string;
@@ -92,41 +108,76 @@ export class PriceHandlerBalancer implements PriceHandler {
     }
 
     const tokenWeights = poolToken.getNormalizedWeights();
-    // Get pair orientation
-    const token0 = addresses[0];
-    const token1 = addresses[1];
-    const otherTokenIsToken0 = addressesEqual(tokenAddress, token1.toHexString());
 
-    const token0Decimals = getDecimals(token0.toHexString(), block);
-    const token1Decimals = getDecimals(token1.toHexString(), block);
+    // Iterate over all tokens
+    const lookupTokenInfo = createTokenInfo();
+    const secondaryTokenInfo = createTokenInfo();
+    for (let i = 0; i < addresses.length; i++) {
+      const currentAddress = addresses[i].toHexString();
 
-    const token0Reserves = toDecimal(balances[0], token0Decimals);
-    const token1Reserves = toDecimal(balances[1], token1Decimals);
-    // If the reserves are 0, then we can't find out the price
-    if (token0Reserves.equals(BigDecimal.zero()) || token1Reserves.equals(BigDecimal.zero())) {
-      log.debug(FUNCTION + " reserves are 0. Skipping", []);
+      // Exit if we have found both
+      if (lookupTokenInfo.address.length > 0 && secondaryTokenInfo.address.length > 0) {
+        break;
+      }
+
+      // Get details of the lookup token
+      if (addressesEqual(currentAddress, tokenAddress)) {
+        const decimals = getDecimals(currentAddress, block);
+        const reserves = toDecimal(balances[i], decimals);
+        const weight = toDecimal(tokenWeights[i], poolToken.decimals());
+
+        lookupTokenInfo.reserves = reserves;
+        lookupTokenInfo.weight = weight;
+        lookupTokenInfo.address = currentAddress;
+
+        log.debug("{} found lookup token: {} ({})", [
+          FUNCTION,
+          this.contractLookup(currentAddress),
+          currentAddress,
+        ]);
+        continue;
+      }
+
+      // See if we can find the price of the current token using another method
+      const price = priceLookup(currentAddress, block, this.getId());
+      if (!price) {
+        continue;
+      }
+
+      const decimals = getDecimals(currentAddress, block);
+      const reserves = toDecimal(balances[i], decimals);
+      const weight = toDecimal(tokenWeights[i], poolToken.decimals());
+
+      // We can't determine the price if reserves are 0
+      if (reserves.equals(BigDecimal.zero())) {
+        continue;
+      }
+
+      secondaryTokenInfo.reserves = reserves;
+      secondaryTokenInfo.weight = weight;
+      secondaryTokenInfo.address = currentAddress;
+      secondaryTokenInfo.price = price.price;
+
+      log.debug("{} found secondary token: {} ({})", [
+        FUNCTION,
+        this.contractLookup(currentAddress),
+        currentAddress,
+      ]);
+    }
+
+    // If we didn't find tokens, skip
+    if (lookupTokenInfo.address.length == 0) {
+      log.warning(FUNCTION + " Unable to find matching lookup token", []);
+      return null;
+    }
+    if (secondaryTokenInfo.address.length == 0) {
+      log.warning(FUNCTION + " Unable to find matching secondary token", []);
       return null;
     }
 
-    const token0Weight = toDecimal(tokenWeights[0], poolToken.decimals());
-    const token1Weight = toDecimal(tokenWeights[1], poolToken.decimals());
-
-    const otherTokenPriceResult = priceLookup(
-      otherTokenIsToken0 ? token0.toHexString() : token1.toHexString(),
-      block,
-      this.getId(),
-    );
-    if (!otherTokenPriceResult) {
-      return null;
-    }
-
-    const numerator = otherTokenIsToken0
-      ? token0Reserves.div(token0Weight)
-      : token1Reserves.div(token1Weight);
-    const denominator = otherTokenIsToken0
-      ? token1Reserves.div(token1Weight)
-      : token0Reserves.div(token0Weight);
-    const rate = numerator.div(denominator).times(otherTokenPriceResult.price);
+    const numerator = secondaryTokenInfo.reserves.div(secondaryTokenInfo.weight);
+    const denominator = lookupTokenInfo.reserves.div(lookupTokenInfo.weight);
+    const rate = numerator.div(denominator).times(secondaryTokenInfo.price);
     return {
       liquidity: BigDecimal.zero(), // TODO set liquidity
       price: rate,
@@ -176,6 +227,14 @@ export class PriceHandlerBalancer implements PriceHandler {
 
       const value = currentBalanceDecimal.times(rate.price);
       totalValue = totalValue.plus(value);
+      log.debug("{} adding token {} ({}) with balance {}, rate {}, value {}", [
+        FUNCTION,
+        this.contractLookup(currentAddress),
+        currentAddress,
+        currentBalanceDecimal.toString(),
+        rate.price.toString(),
+        value.toString(),
+      ]);
     }
 
     return totalValue;

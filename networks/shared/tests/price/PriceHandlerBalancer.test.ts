@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import { ContractNameLookup } from "../../src/contracts/ContractLookup";
@@ -222,11 +222,12 @@ describe("getPrice", () => {
     const priceLookup: PriceLookup = (
       tokenAddress: string,
       _block: BigInt,
+      _currentPool: string | null,
     ): PriceLookupResult | null => {
-      if (addressesEqual(tokenAddress, ERC20_WETH)) {
+      if (addressesEqual(tokenAddress, ERC20_DAI)) {
         return {
           liquidity: BigDecimal.fromString("1"),
-          price: getMockEthPrice(),
+          price: BigDecimal.fromString("1"),
         };
       }
 
@@ -263,7 +264,7 @@ describe("getPrice", () => {
 });
 
 describe("getTotalValue", () => {
-  test("no exclusions", () => {
+  test("total value is correct", () => {
     const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
       if (addressesEqual(tokenAddress, ERC20_OHM_V2)) {
         return {
@@ -275,7 +276,7 @@ describe("getTotalValue", () => {
       if (addressesEqual(tokenAddress, ERC20_DAI)) {
         return {
           liquidity: BigDecimal.fromString("1"),
-          price: getMockOhmPrice(),
+          price: BigDecimal.fromString("1"),
         };
       }
 
@@ -315,7 +316,7 @@ describe("getTotalValue", () => {
     assert.stringEquals(expectedValue.toString(), totalValue ? totalValue.toString() : "");
   });
 
-  test("exclude token1", () => {
+  test("total value is correct when excluding token1", () => {
     const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
       if (addressesEqual(tokenAddress, ERC20_OHM_V2)) {
         return {
@@ -327,7 +328,7 @@ describe("getTotalValue", () => {
       if (addressesEqual(tokenAddress, ERC20_DAI)) {
         return {
           liquidity: BigDecimal.fromString("1"),
-          price: getMockOhmPrice(),
+          price: BigDecimal.fromString("1"),
         };
       }
 
@@ -369,7 +370,7 @@ describe("getTotalValue", () => {
 });
 
 describe("getUnitPrice", () => {
-  test("no exclusions", () => {
+  test("unit price is correct", () => {
     const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
       if (addressesEqual(tokenAddress, ERC20_OHM_V2)) {
         return {
@@ -381,7 +382,7 @@ describe("getUnitPrice", () => {
       if (addressesEqual(tokenAddress, ERC20_DAI)) {
         return {
           liquidity: BigDecimal.fromString("1"),
-          price: getMockOhmPrice(),
+          price: BigDecimal.fromString("1"),
         };
       }
 
