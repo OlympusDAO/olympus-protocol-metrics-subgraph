@@ -4,14 +4,29 @@ import { ERC20 } from "../../../shared/generated/Price/ERC20";
 import { TokenRecord } from "../../../shared/generated/schema";
 import { getERC20TokenRecordFromWallet } from "../../../shared/src/contracts/ERC20";
 import { DAO_WALLET, WALLET_ADDRESSES } from "../../../shared/src/Wallets";
-import { CONTRACT_NAME_MAP, ERC20_TOKENS_ARBITRUM, ERC20_WETH } from "./Constants";
+import {
+  CONTRACT_ABBREVIATION_MAP,
+  CONTRACT_NAME_MAP,
+  ERC20_TOKENS_ARBITRUM,
+  ERC20_WETH,
+} from "./Constants";
 
-export function getContractName(contractAddress: string): string {
+export function getContractName(contractAddress: string, suffix: string | null = null): string {
   const contractAddressLower = contractAddress.toLowerCase();
 
-  return CONTRACT_NAME_MAP.has(contractAddressLower)
+  const contractName = CONTRACT_NAME_MAP.has(contractAddressLower)
     ? CONTRACT_NAME_MAP.get(contractAddressLower)
     : contractAddressLower;
+
+  // Suffix
+  const contractSuffix = suffix ? ` - ${suffix}` : "";
+
+  // Abbreviation
+  const contractAbbreviation = CONTRACT_ABBREVIATION_MAP.has(contractAddressLower)
+    ? ` (${CONTRACT_ABBREVIATION_MAP.get(contractAddressLower)})`
+    : "";
+
+  return `${contractName}${contractSuffix}${contractAbbreviation}`;
 }
 
 const NON_TREASURY_ASSET_WHITELIST = new Map<string, string[]>();

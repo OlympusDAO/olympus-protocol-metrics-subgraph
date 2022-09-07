@@ -6,6 +6,7 @@ import { pushArray } from "../../../shared/src/utils/ArrayHelper";
 import { getTokensInCategory } from "../../../shared/src/utils/TokenRecordHelper";
 import { ERC20_TOKENS_ARBITRUM } from "../contracts/Constants";
 import { getContractName, getERC20TokenRecordsFromWallets } from "../contracts/Contracts";
+import { getStakedBalances } from "../contracts/JonesStaking";
 import { getPrice } from "../price/PriceLookup";
 
 /**
@@ -40,11 +41,14 @@ export function getTokenBalance(
 
   const rate = getPrice(contractAddress, blockNumber);
 
-  // Wallets
+  // Standard ERC20
   pushArray(
     records,
     getERC20TokenRecordsFromWallets(timestamp, contractAddress, contract, rate, blockNumber),
   );
+
+  // Jones Staking
+  pushArray(records, getStakedBalances(timestamp, contractAddress, blockNumber));
 
   return records;
 }

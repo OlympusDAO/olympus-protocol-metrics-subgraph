@@ -32,6 +32,9 @@ dataSources:
           file: ../shared/abis/UniswapV2Pair.json
         - name: UniswapV3Pair
           file: ../shared/abis/UniswapV3Pair.json
+        # Custom ABIs
+        - name: JONESStaking
+          file: abis/JONESStaking.json
       blockHandlers:
         - handler: handleAssets
       file: ./src/treasury/Assets.ts
