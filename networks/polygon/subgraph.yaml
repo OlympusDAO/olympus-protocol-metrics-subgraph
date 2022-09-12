@@ -1,0 +1,37 @@
+specVersion: 0.0.4
+description: Olympus Protocol Metrics Subgraph - Polygon
+repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
+schema:
+  file: ../../schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: TokenRecords-polygon
+    network: matic
+    source:
+      address: "0xd8cA34fd379d9ca3C6Ee3b3905678320F5b45195" # gOHM Polygon
+      abi: gOHM
+      startBlock: 27790000 # 2022-05-01
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - TokenRecord
+        - TokenSupply
+      abis:
+        - name: ERC20
+          file: ../shared/abis/ERC20.json
+        - name: gOHM
+          file: ../shared/abis/gOHM.json
+        # Price Lookup
+        - name: BalancerVault
+          file: ../shared/abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ../shared/abis/BalancerPoolToken.json
+        - name: UniswapV2Pair
+          file: ../shared/abis/UniswapV2Pair.json
+        - name: UniswapV3Pair
+          file: ../shared/abis/UniswapV3Pair.json
+      blockHandlers:
+        - handler: handleAssets
+      file: ./src/treasury/Assets.ts
