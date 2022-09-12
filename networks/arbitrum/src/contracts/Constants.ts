@@ -21,6 +21,9 @@ export const BALANCER_VAULT = "0x040d1EdC9569d4Bab2D15287Dc5A4F10F56a56B8".toLow
 export const JONES_STAKING = "0xb94d1959084081c5a11C460012Ab522F5a0FD756".toLowerCase();
 export const JONES_STAKING_POOL_IDS: u64[] = [0];
 
+export const TREASUREDAO_MINING = "0xdf19f1216aa406df8bc585246bee7d96933f285f".toLowerCase();
+export const TREASUREDAO_MINING_IDs = [0];
+
 export const ERC20_TOKENS_ARBITRUM = new Map<string, TokenDefinition>();
 ERC20_TOKENS_ARBITRUM.set(ERC20_FRAX, new TokenDefinition(ERC20_FRAX, TokenCategoryStable, true, false));
 ERC20_TOKENS_ARBITRUM.set(ERC20_JONES, new TokenDefinition(ERC20_JONES, TokenCategoryVolatile, true, false));

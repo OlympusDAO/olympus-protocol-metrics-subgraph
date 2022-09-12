@@ -6,7 +6,8 @@ import { pushArray } from "../../../shared/src/utils/ArrayHelper";
 import { getTokensInCategory } from "../../../shared/src/utils/TokenRecordHelper";
 import { ERC20_TOKENS_ARBITRUM } from "../contracts/Constants";
 import { getContractName, getERC20TokenRecordsFromWallets } from "../contracts/Contracts";
-import { getStakedBalances } from "../contracts/JonesStaking";
+import { getStakedBalances as getJonesStakedBalances } from "../contracts/JonesStaking";
+import { getStakedBalances as getTreasureStakedBalances } from "../contracts/TreasureMining";
 import { getPrice } from "../price/PriceLookup";
 
 /**
@@ -48,7 +49,10 @@ function getTokenBalance(
   );
 
   // Jones Staking
-  pushArray(records, getStakedBalances(timestamp, contractAddress, blockNumber));
+  pushArray(records, getJonesStakedBalances(timestamp, contractAddress, blockNumber));
+
+  // TreasureDAO Staking
+  pushArray(records, getTreasureStakedBalances(timestamp, contractAddress, blockNumber));
 
   return records;
 }

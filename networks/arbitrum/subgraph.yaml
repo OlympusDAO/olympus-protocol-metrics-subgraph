@@ -35,6 +35,8 @@ dataSources:
         # Custom ABIs
         - name: JONESStaking
           file: abis/JONESStaking.json
+        - name: TreasureMining
+          file: abis/TreasureMining.json
       blockHandlers:
         - handler: handleAssets
       file: ./src/treasury/Assets.ts
