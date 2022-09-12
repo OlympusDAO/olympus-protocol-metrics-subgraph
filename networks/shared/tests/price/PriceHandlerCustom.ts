@@ -11,7 +11,6 @@ export class PriceHandlerCustom implements PriceHandler {
   constructor(returnValue: PriceLookupResult) {
     this.returnValue = returnValue;
   }
-
   getId(): string {
     return "PriceHandlerCustom";
   }
@@ -29,14 +28,18 @@ export class PriceHandlerCustom implements PriceHandler {
   }
 
   getTotalValue(
-    excludedTokens: string[],
-    priceLookup: PriceLookup,
-    block: BigInt,
+    _excludedTokens: string[],
+    _priceLookup: PriceLookup,
+    _block: BigInt,
   ): BigDecimal | null {
     throw new Error("Method not implemented.");
   }
 
-  getUnitPrice(priceLookup: PriceLookup, block: BigInt): BigDecimal | null {
+  getUnitPrice(_priceLookup: PriceLookup, _block: BigInt): BigDecimal | null {
+    throw new Error("Method not implemented.");
+  }
+
+  getBalance(_walletAddress: string, _block: BigInt): BigDecimal {
     throw new Error("Method not implemented.");
   }
 }
