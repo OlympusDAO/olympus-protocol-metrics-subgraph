@@ -12,6 +12,7 @@ export const ERC20_WETH = "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1".toLowerCa
 export const LP_BALANCER_POOL_MAGIC_USDC = "0xb3028ca124b80cfe6e9ca57b70ef2f0ccc41ebd40002000000000000000000ba";
 export const LP_BALANCER_POOL_WETH_VESTA = "0xc61ff48f94d801c1ceface0289085197b5ec44f000020000000000000000004d";
 export const LP_UNISWAP_V2_GOHM_WETH = "0xaa5bd49f2162ffdc15634c87a77ac67bd51c6a6d".toLowerCase();
+export const LP_UNISWAP_V2_JONES_GOHM_GOHM = "0x292d1587a6bb37e34574c9ad5993f221d8a5616c".toLowerCase();
 export const LP_UNISWAP_V2_JONES_WETH = "0xe8ee01ae5959d3231506fcdef2d5f3e85987a39c".toLowerCase();
 export const LP_UNISWAP_V2_MAGIC_WETH = "0xb7e50106a5bd3cf21af210a755f9c8740890a8c9".toLowerCase();
 export const LP_UNISWAP_V3_WETH_USDC = "0xc31e54c7a869b9fcbecc14363cf510d1c41fa443".toLowerCase();
@@ -34,6 +35,7 @@ ERC20_TOKENS_ARBITRUM.set(ERC20_WETH, new TokenDefinition(ERC20_WETH, TokenCateg
 ERC20_TOKENS_ARBITRUM.set(LP_BALANCER_POOL_MAGIC_USDC, new TokenDefinition(LP_BALANCER_POOL_MAGIC_USDC, TokenCategoryPOL, true, false));
 ERC20_TOKENS_ARBITRUM.set(LP_BALANCER_POOL_WETH_VESTA, new TokenDefinition(LP_BALANCER_POOL_WETH_VESTA, TokenCategoryPOL, true, false));
 ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V2_GOHM_WETH, new TokenDefinition(LP_UNISWAP_V2_GOHM_WETH, TokenCategoryPOL, true, false));
+ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V2_JONES_GOHM_GOHM, new TokenDefinition(LP_UNISWAP_V2_JONES_GOHM_GOHM, TokenCategoryPOL, true, false));
 ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V2_JONES_WETH, new TokenDefinition(LP_UNISWAP_V2_JONES_WETH, TokenCategoryPOL, true, false));
 ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V2_MAGIC_WETH, new TokenDefinition(LP_UNISWAP_V2_MAGIC_WETH, TokenCategoryPOL, true, false));
 ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V3_WETH_USDC, new TokenDefinition(LP_UNISWAP_V3_WETH_USDC, TokenCategoryPOL, true, false));
@@ -67,11 +69,13 @@ CONTRACT_NAME_MAP.set(JONES_STAKING, "JONES Staking");
 CONTRACT_NAME_MAP.set(LP_BALANCER_POOL_MAGIC_USDC, "Balancer MAGIC-USDC Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_BALANCER_POOL_WETH_VESTA, "Balancer wETH-VSTA Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_GOHM_WETH, "UniswapV2 gOHM-wETH Liquidity Pool");
+CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_JONES_GOHM_GOHM, "UniswapV2 jgOHM-gOHM Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_JONES_WETH, "UniswapV2 JONES-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_MAGIC_WETH, "UniswapV2 MAGIC-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V3_WETH_USDC, "UniswapV3 wETH-USDC Liquidity Pool");
 CONTRACT_NAME_MAP.set(LUSD_ALLOCATOR, "LUSD Allocator");
 CONTRACT_NAME_MAP.set(RARI_ALLOCATOR, "Rari Allocator");
+CONTRACT_NAME_MAP.set(TREASURE_ATLAS_MINE, "TreasureDAO Atlas Mine");
 CONTRACT_NAME_MAP.set(TREASURY_ADDRESS_V1, "Treasury Wallet V1");
 CONTRACT_NAME_MAP.set(TREASURY_ADDRESS_V2, "Treasury Wallet V2");
 CONTRACT_NAME_MAP.set(TREASURY_ADDRESS_V3, "Treasury Wallet V3");
@@ -83,20 +87,3 @@ CONTRACT_ABBREVIATION_MAP.set(ERC20_JONES, "JONES");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_MAGIC, "MAGIC");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_VSTA, "VSTA");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_WETH, "wETH");
-
-// Native ETH
-// veMAGIC
-
-// jgOHM-gOHM
-
-// Assets: https://debank.com/profile/0x012bbf0481b97170577745d2167ee14f63e2ad4c
-
-/**
- * Pass list/map of base tokens: token -> resolution function
- * functions to determine if token matches a category/resolution function
- * token orientation
- *
- * getPairHandlerNonOhmValue should support gOHM. Addresses to be injected
- *
- * algorithms (UniV2, Balancer, etc) should move to shared. Edge-cases (UST) remain.
- */
