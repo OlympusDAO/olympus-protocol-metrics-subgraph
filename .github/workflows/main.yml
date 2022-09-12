@@ -15,7 +15,8 @@ jobs:
   build:
     strategy:
       matrix:
-        network: [ethereum]
+        # We want to test the shared code too
+        network: [ethereum, arbitrum, shared]
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
