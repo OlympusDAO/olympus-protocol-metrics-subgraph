@@ -3,25 +3,44 @@ import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { TokenRecord } from "../../../shared/generated/schema";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { addressesEqual } from "../../../shared/src/utils/StringHelper";
-import {
-  createOrUpdateTokenRecord,
-  getIsTokenLiquid,
-} from "../../../shared/src/utils/TokenRecordHelper";
+import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 import { TreasureMining } from "../../generated/TokenRecords-arbitrum/TreasureMining";
 import { getPrice } from "../price/PriceLookup";
-import {
-  ERC20_MAGIC,
-  ERC20_TOKENS_ARBITRUM,
-  TREASUREDAO_MINING,
-  TREASUREDAO_MINING_IDs,
-} from "./Constants";
+import { ERC20_MAGIC, ERC20_TOKENS_ARBITRUM, TREASURE_ATLAS_MINE } from "./Constants";
 import { getContractName } from "./Contracts";
 
+/**
+ * Convenience method to get the staking contract
+ *
+ * @param _block
+ * @returns
+ */
 const getStakingContract = (_block: BigInt): TreasureMining => {
-  const contract = TreasureMining.bind(Address.fromString(TREASUREDAO_MINING));
+  const contract = TreasureMining.bind(Address.fromString(TREASURE_ATLAS_MINE));
 
   return contract;
+};
+
+/**
+ * Determines the deposit IDs for the given {walletAddress}
+ *
+ * @param walletAddress
+ * @param contract
+ * @param _block
+ * @returns
+ */
+const getUserDepositIds = (
+  walletAddress: string,
+  contract: TreasureMining,
+  _block: BigInt,
+): BigInt[] => {
+  const result = contract.try_getAllUserDepositIds(Address.fromString(walletAddress));
+  if (result.reverted) {
+    return [];
+  }
+
+  return result.value;
 };
 
 /**
@@ -31,29 +50,22 @@ const getStakingContract = (_block: BigInt): TreasureMining => {
  * @param tokenAddress
  * @param walletAddress
  * @param poolId
- * @param block
+ * @param _block
  * @returns
  */
 const getStakedBalance = (
   tokenAddress: string,
   walletAddress: string,
-  poolId: u64,
-  block: BigInt,
+  poolId: BigInt,
+  contract: TreasureMining,
+  _block: BigInt,
 ): BigDecimal => {
   if (!addressesEqual(tokenAddress, ERC20_MAGIC)) {
     return BigDecimal.zero();
   }
 
-  const contract = getStakingContract(block);
-  const poolIdBigInt = BigInt.fromU64(poolId);
-
-  // Escape if the contract reverts
-  if (contract.try_userInfo(Address.fromString(walletAddress), poolIdBigInt).reverted) {
-    return BigDecimal.zero();
-  }
-
   return toDecimal(
-    contract.userInfo(Address.fromString(walletAddress), poolIdBigInt).getDepositAmount(),
+    contract.userInfo(Address.fromString(walletAddress), poolId).getDepositAmount(),
     18,
   );
 };
@@ -75,15 +87,14 @@ export const getStakedBalances = (
   const records: TokenRecord[] = [];
   let price: BigDecimal | null = null;
 
+  const contract = getStakingContract(block);
+
   for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
     const walletAddress = WALLET_ADDRESSES[i];
-    for (let j = 0; j < TREASUREDAO_MINING_IDs.length; j++) {
-      const balance = getStakedBalance(
-        tokenAddress,
-        walletAddress,
-        TREASUREDAO_MINING_IDs[j],
-        block,
-      );
+    const depositIds = getUserDepositIds(walletAddress, contract, block);
+
+    for (let j = 0; j < depositIds.length; j++) {
+      const balance = getStakedBalance(tokenAddress, walletAddress, depositIds[j], contract, block);
 
       if (balance.equals(BigDecimal.zero())) {
         continue;
@@ -96,14 +107,14 @@ export const getStakedBalances = (
 
       const record = createOrUpdateTokenRecord(
         timestamp,
-        getContractName(tokenAddress, "Staked"),
+        getContractName(tokenAddress, "Staked", "veMAGIC"),
         tokenAddress,
         getContractName(walletAddress),
         walletAddress,
         price,
         balance,
         block,
-        getIsTokenLiquid(tokenAddress, ERC20_TOKENS_ARBITRUM),
+        false, // Locked
         ERC20_TOKENS_ARBITRUM,
       );
       records.push(record);

@@ -884,7 +884,7 @@ CONTRACT_NAME_MAP.set(VEFXS_ALLOCATOR, "VeFXS Allocator");
  * @param suffix optional suffix to be appended after the contract name and before the abbreviation
  * @returns
  */
-export const getContractName = (contractAddress: string, suffix: string | null = null): string => {
+export const getContractName = (contractAddress: string, suffix: string | null = null, abbreviation: string | null = null): string => {
   const contractAddressLower = contractAddress.toLowerCase();
 
   // Assemble the first part
@@ -896,7 +896,9 @@ export const getContractName = (contractAddress: string, suffix: string | null =
   const contractSuffix = suffix ? ` - ${suffix}` : "";
 
   // Abbreviation
-  const contractAbbreviation = CONTRACT_ABBREVIATION_MAP.has(contractAddressLower)
+  const contractAbbreviation = abbreviation
+    ? ` (${abbreviation})`
+    : CONTRACT_ABBREVIATION_MAP.has(contractAddressLower)
     ? ` (${CONTRACT_ABBREVIATION_MAP.get(contractAddressLower)})`
     : "";
 

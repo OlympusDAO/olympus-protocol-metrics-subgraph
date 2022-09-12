@@ -11,7 +11,11 @@ import {
   ERC20_WETH,
 } from "./Constants";
 
-export function getContractName(contractAddress: string, suffix: string | null = null): string {
+export function getContractName(
+  contractAddress: string,
+  suffix: string | null = null,
+  abbreviation: string | null = null,
+): string {
   const contractAddressLower = contractAddress.toLowerCase();
 
   const contractName = CONTRACT_NAME_MAP.has(contractAddressLower)
@@ -22,7 +26,9 @@ export function getContractName(contractAddress: string, suffix: string | null =
   const contractSuffix = suffix ? ` - ${suffix}` : "";
 
   // Abbreviation
-  const contractAbbreviation = CONTRACT_ABBREVIATION_MAP.has(contractAddressLower)
+  const contractAbbreviation = abbreviation
+    ? ` (${abbreviation})`
+    : CONTRACT_ABBREVIATION_MAP.has(contractAddressLower)
     ? ` (${CONTRACT_ABBREVIATION_MAP.get(contractAddressLower)})`
     : "";
 
