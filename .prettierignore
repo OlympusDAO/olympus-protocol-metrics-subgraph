@@ -1,6 +1,8 @@
-networks/ethereum/src/utils/Constants.ts
-networks/shared/src/price/PriceHandler.ts
 networks/arbitrum/src/contracts/Constants.ts
 networks/arbitrum/src/price/PriceLookup.ts
+networks/ethereum/src/utils/Constants.ts
+networks/fantom/src/contracts/Constants.ts
+networks/fantom/src/price/PriceLookup.ts
 networks/polygon/src/contracts/Constants.ts
 networks/polygon/src/price/PriceLookup.ts
+networks/shared/src/price/PriceHandler.ts
