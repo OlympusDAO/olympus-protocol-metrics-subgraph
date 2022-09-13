@@ -9,6 +9,7 @@ import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolT
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
 import { TokenSupply } from "../../generated/schema";
 import {
+  BLOCKCHAIN,
   ERC20_OHM_V2,
   ERC20_TOKENS,
   getContractName,
@@ -190,6 +191,7 @@ function getBalancerPoolTokenRecords(
         blockNumber,
         true,
         ERC20_TOKENS,
+        BLOCKCHAIN,
         multiplier,
         TokenCategoryPOL,
       ),

@@ -11,7 +11,12 @@ import {
 import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 import { JONESStaking } from "../../generated/TokenRecords-arbitrum/JONESStaking";
 import { getPrice } from "../price/PriceLookup";
-import { ERC20_TOKENS_ARBITRUM, JONES_STAKING, JONES_STAKING_POOL_IDS } from "./Constants";
+import {
+  BLOCKCHAIN,
+  ERC20_TOKENS_ARBITRUM,
+  JONES_STAKING,
+  JONES_STAKING_POOL_IDS,
+} from "./Constants";
 import { getContractName } from "./Contracts";
 
 const getStakingContract = (_block: BigInt): JONESStaking => {
@@ -106,6 +111,7 @@ export const getStakedBalances = (
         block,
         getIsTokenLiquid(tokenAddress, ERC20_TOKENS_ARBITRUM),
         ERC20_TOKENS_ARBITRUM,
+        BLOCKCHAIN,
       );
       records.push(record);
     }

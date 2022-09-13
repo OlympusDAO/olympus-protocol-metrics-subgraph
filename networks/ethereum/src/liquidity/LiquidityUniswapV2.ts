@@ -7,6 +7,7 @@ import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecord
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { TokenSupply } from "../../generated/schema";
 import {
+  BLOCKCHAIN,
   ERC20_OHM_V2,
   ERC20_TOKENS,
   getContractName,
@@ -295,6 +296,7 @@ function getUniswapV2PairRecord(
     blockNumber,
     true,
     ERC20_TOKENS,
+    BLOCKCHAIN,
     multiplier,
     TokenCategoryPOL,
   );

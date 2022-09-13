@@ -30,6 +30,7 @@ import {
   ALLOCATOR_ONSEN_ID_NOT_FOUND,
   ALLOCATOR_RARI_ID_NOT_FOUND,
   BALANCER_LIQUIDITY_GAUGES,
+  BLOCKCHAIN,
   CONTRACT_STARTING_BLOCK_MAP,
   CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
@@ -563,6 +564,7 @@ export function getERC20TokenRecordFromWallet(
     blockNumber,
     getIsTokenLiquid(contractAddress, ERC20_TOKENS),
     ERC20_TOKENS,
+    BLOCKCHAIN,
   );
 }
 
@@ -698,6 +700,7 @@ export function getTokeStakedBalancesFromWallets(
         blockNumber,
         getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
         ERC20_TOKENS,
+        BLOCKCHAIN,
       ),
     );
   }
@@ -799,6 +802,7 @@ export function getLiquityStakedBalancesFromWallets(
         blockNumber,
         getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
         ERC20_TOKENS,
+        BLOCKCHAIN,
       ),
     );
   }
@@ -923,6 +927,7 @@ export function getBalancerGaugeBalanceFromWallets(
         blockNumber,
         getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
         ERC20_TOKENS,
+        BLOCKCHAIN,
         multiplier,
         TokenCategoryPOL,
       ),
@@ -1033,6 +1038,7 @@ export function getTokeAllocatorRecords(
       blockNumber,
       getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
       ERC20_TOKENS,
+      BLOCKCHAIN,
     ),
   );
 
@@ -1122,6 +1128,7 @@ export function getRariAllocatorRecords(
       blockNumber,
       getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
       ERC20_TOKENS,
+      BLOCKCHAIN,
     ),
   );
 
@@ -1160,6 +1167,7 @@ export function getOnsenAllocatorRecords(
       blockNumber,
       getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
       ERC20_TOKENS,
+      BLOCKCHAIN,
     ),
   );
 
@@ -1276,6 +1284,7 @@ export function getConvexStakedRecords(
           blockNumber,
           getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
           ERC20_TOKENS,
+          BLOCKCHAIN,
         ),
       );
     }
@@ -1404,6 +1413,7 @@ export function getLiquityStabilityPoolRecords(
       blockNumber,
       getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
       ERC20_TOKENS,
+      BLOCKCHAIN,
     ),
   );
 
@@ -1483,6 +1493,7 @@ export function getVeFXSAllocatorRecords(
       blockNumber,
       getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
       ERC20_TOKENS,
+      BLOCKCHAIN,
     ),
   );
 
@@ -1545,6 +1556,7 @@ export function getVlCvxUnlockedRecords(
         blockNumber,
         getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
         ERC20_TOKENS,
+        BLOCKCHAIN,
       ),
     );
   }

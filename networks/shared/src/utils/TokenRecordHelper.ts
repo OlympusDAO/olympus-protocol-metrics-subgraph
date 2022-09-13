@@ -67,8 +67,10 @@ function getTokenRecordValue(record: TokenRecord, nonOhmMultiplier: boolean = fa
  * @param balance
  * @param blockNumber
  * @param isLiquid
- * @param nonOhmMultiplier
- * @param category
+ * @param tokenDefinitions
+ * @param blockchain
+ * @param nonOhmMultiplier The proportion (between 0 and 1) of the value that represents non-OHM assets.
+ * @param category The asset category. If not specified, the value will be determined through a lookup.
  * @returns
  */
 export function createOrUpdateTokenRecord(
@@ -82,6 +84,7 @@ export function createOrUpdateTokenRecord(
   blockNumber: BigInt,
   isLiquid: boolean,
   tokenDefinitions: Map<string, TokenDefinition>,
+  blockchain: string,
   nonOhmMultiplier: BigDecimal = BigDecimal.fromString("1"),
   category: string | null = null,
 ): TokenRecord {
@@ -106,6 +109,7 @@ export function createOrUpdateTokenRecord(
   record.category = category !== null ? category : getTokenCategory(tokenAddress, tokenDefinitions);
   record.isLiquid = isLiquid;
   record.isBluechip = getIsTokenVolatileBluechip(tokenAddress, tokenDefinitions);
+  record.blockchain = blockchain;
   record.value = getTokenRecordValue(record);
   record.valueExcludingOhm = getTokenRecordValue(record, true);
 

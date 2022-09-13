@@ -675,6 +675,15 @@ export class TokenRecord extends Entity {
   set isBluechip(value: boolean) {
     this.set("isBluechip", Value.fromBoolean(value));
   }
+
+  get blockchain(): string {
+    const value = this.get("blockchain");
+    return value!.toString();
+  }
+
+  set blockchain(value: string) {
+    this.set("blockchain", Value.fromString(value));
+  }
 }
 
 export class TokenSupply extends Entity {

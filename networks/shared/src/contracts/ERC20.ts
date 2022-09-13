@@ -77,6 +77,7 @@ export function getERC20TokenRecordFromWallet(
   blockNumber: BigInt,
   contractLookup: ContractNameLookup,
   tokenDefinitions: Map<string, TokenDefinition>,
+  blockchain: string,
 ): TokenRecord | null {
   const callResult = contract.try_balanceOf(Address.fromString(walletAddress));
   if (callResult.reverted) {
@@ -106,5 +107,6 @@ export function getERC20TokenRecordFromWallet(
     blockNumber,
     getIsTokenLiquid(contractAddress, tokenDefinitions),
     tokenDefinitions,
+    blockchain,
   );
 }

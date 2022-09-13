@@ -5,6 +5,7 @@ import { TokenRecord } from "../../../shared/generated/schema";
 import { getERC20TokenRecordFromWallet } from "../../../shared/src/contracts/ERC20";
 import { DAO_WALLET, WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 import {
+  BLOCKCHAIN,
   CONTRACT_ABBREVIATION_MAP,
   CONTRACT_NAME_MAP,
   ERC20_TOKENS_ARBITRUM,
@@ -99,6 +100,7 @@ export function getERC20TokenRecordsFromWallets(
       blockNumber,
       getContractName,
       ERC20_TOKENS_ARBITRUM,
+      BLOCKCHAIN,
     );
     if (!record) continue;
 

@@ -8,7 +8,7 @@ import {
   getIsTokenLiquid,
 } from "../../../shared/src/utils/TokenRecordHelper";
 import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
-import { ERC20_TOKENS_ARBITRUM, OHM_TOKENS } from "../contracts/Constants";
+import { BLOCKCHAIN, ERC20_TOKENS_ARBITRUM, OHM_TOKENS } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 import { getPriceRecursive, HANDLERS } from "../price/PriceLookup";
 
@@ -72,6 +72,7 @@ function getOwnedLiquidityBalance(
       block,
       getIsTokenLiquid(liquidityHandler.getId(), ERC20_TOKENS_ARBITRUM),
       ERC20_TOKENS_ARBITRUM,
+      BLOCKCHAIN,
       multiplier,
     );
     records.push(record);

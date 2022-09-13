@@ -7,7 +7,7 @@ import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecord
 import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 import { TreasureMining } from "../../generated/TokenRecords-arbitrum/TreasureMining";
 import { getPrice } from "../price/PriceLookup";
-import { ERC20_MAGIC, ERC20_TOKENS_ARBITRUM, TREASURE_ATLAS_MINE } from "./Constants";
+import { BLOCKCHAIN, ERC20_MAGIC, ERC20_TOKENS_ARBITRUM, TREASURE_ATLAS_MINE } from "./Constants";
 import { getContractName } from "./Contracts";
 
 /**
@@ -116,6 +116,7 @@ export const getStakedBalances = (
         block,
         false, // Locked
         ERC20_TOKENS_ARBITRUM,
+        BLOCKCHAIN,
       );
       records.push(record);
     }

@@ -9,6 +9,7 @@ import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { TokenSupply } from "../../generated/schema";
 import {
+  BLOCKCHAIN,
   CONVEX_STAKING_CONTRACTS,
   ERC20_OHM_V2,
   ERC20_TOKENS,
@@ -138,6 +139,7 @@ function getCurvePairStakedRecord(
     blockNumber,
     true,
     ERC20_TOKENS,
+    BLOCKCHAIN,
     multiplier,
     TokenCategoryPOL,
   );
@@ -193,6 +195,7 @@ function getCurvePairRecord(
     blockNumber,
     true,
     ERC20_TOKENS,
+    BLOCKCHAIN,
     multiplier,
     TokenCategoryPOL,
   );
