@@ -36,7 +36,7 @@ function getOwnedLiquidityBalance(
 
   // Calculate the multiplier
   const totalValue = liquidityHandler.getTotalValue([], getPriceRecursive, block);
-  if (!totalValue) {
+  if (!totalValue || totalValue.equals(BigDecimal.zero())) {
     return records;
   }
   const includedValue = liquidityHandler.getTotalValue(OHM_TOKENS, getPriceRecursive, block);
