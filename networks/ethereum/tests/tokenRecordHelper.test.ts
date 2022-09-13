@@ -11,7 +11,13 @@ import {
   getTokenAddressesInCategory,
   isTokenAddressInCategory,
 } from "../../shared/src/utils/TokenRecordHelper";
-import { ERC20_DAI, ERC20_TOKENS, ERC20_USDC, ERC20_WETH } from "../src/utils/Constants";
+import {
+  BLOCKCHAIN,
+  ERC20_DAI,
+  ERC20_TOKENS,
+  ERC20_USDC,
+  ERC20_WETH,
+} from "../src/utils/Constants";
 
 const TIMESTAMP = BigInt.fromString("1");
 
@@ -27,6 +33,7 @@ const createTokenRecord = (): TokenRecord => {
     BigInt.fromString("1"),
     true,
     ERC20_TOKENS,
+    BLOCKCHAIN,
   );
 };
 
@@ -56,6 +63,7 @@ describe("constructor", () => {
       BigInt.fromString("1"),
       true,
       ERC20_TOKENS,
+      BLOCKCHAIN,
       BigDecimal.fromString("0.25"),
     );
 
@@ -85,6 +93,7 @@ describe("value", () => {
       BigInt.fromString("1"),
       true,
       ERC20_TOKENS,
+      BLOCKCHAIN,
     );
 
     // 2 * 3 * 1
@@ -104,6 +113,7 @@ describe("value", () => {
       BigInt.fromString("1"),
       true,
       ERC20_TOKENS,
+      BLOCKCHAIN,
       BigDecimal.fromString("0.25"),
     );
 
