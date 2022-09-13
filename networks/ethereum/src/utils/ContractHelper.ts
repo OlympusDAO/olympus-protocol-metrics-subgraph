@@ -87,34 +87,14 @@ const contractsLUSDAllocator = new Map<string, LUSDAllocatorV2>();
  * @param blockNumber
  */
 function contractExistsAtBlock(contractAddress: string, blockNumber: BigInt): boolean {
-  log.debug("contractExistsAtBlock: Checking for starting block of contract {} ({}) at block {}", [
-    getContractName(contractAddress),
-    contractAddress,
-    blockNumber.toString(),
-  ]);
-
   // Assuming the starting block is much earlier
   if (!CONTRACT_STARTING_BLOCK_MAP.has(contractAddress)) {
-    log.debug(
-      "contractExistsAtBlock: No starting block defined for contract {} ({}). Assuming it is prior to the current block {}",
-      [getContractName(contractAddress), contractAddress, blockNumber.toString()],
-    );
     return true;
   }
 
-  const startingBlock: string = CONTRACT_STARTING_BLOCK_MAP.get(contractAddress) || "N/A";
-  log.debug("contractExistsAtBlock: Starting block for contract {} ({}): {}", [
-    getContractName(contractAddress),
-    contractAddress,
-    startingBlock,
-  ]);
-
   // Current block is before the starting block
+  const startingBlock: string = CONTRACT_STARTING_BLOCK_MAP.get(contractAddress) || "N/A";
   if (blockNumber < BigInt.fromString(startingBlock)) {
-    log.debug(
-      "contractExistsAtBlock: Current block {} is before the starting block for contract {} ({}). Skipping",
-      [blockNumber.toString(), getContractName(contractAddress), contractAddress],
-    );
     return false;
   }
 
@@ -131,20 +111,12 @@ function contractExistsAtBlock(contractAddress: string, blockNumber: BigInt): bo
  * @returns ERC20 or null
  */
 export function getERC20(contractAddress: string, currentBlockNumber: BigInt): ERC20 | null {
-  log.debug("getERC20: Fetching ERC20 contract {} for address {}", [
-    getContractName(contractAddress),
-    contractAddress,
-  ]);
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
   // We can't bind for native (non-ERC20) ETH
   if (addressesEqual(contractAddress, NATIVE_ETH)) return null;
 
   if (!contractsERC20.has(contractAddress)) {
-    log.debug("getERC20: Binding ERC20 contract for address {}. Block number {}", [
-      contractAddress,
-      currentBlockNumber.toString(),
-    ]);
     const contract = ERC20.bind(Address.fromString(contractAddress));
     contractsERC20.set(contractAddress, contract);
   }
