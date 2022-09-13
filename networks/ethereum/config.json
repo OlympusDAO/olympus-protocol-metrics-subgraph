@@ -1,6 +1,6 @@
 {
-  "id": "QmbzpokMfawwup2H61SqGNr3wX2dabn8fftMJagayDtRAo",
+  "id": "QmVnCwETGB6ji58ARKZmMNFisKETTRfKana9oUkK8Pv7F7",
   "org": "olympusdao",
-  "name": "olympus-protocol-metrics",
-  "version": "3.0.20"
+  "name": "protocol-metrics-test",
+  "version": "3.0.21"
 }
