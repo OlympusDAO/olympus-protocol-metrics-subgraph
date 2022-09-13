@@ -3,6 +3,7 @@
 import { exec } from "child_process";
 import { InvalidArgumentError, program } from "commander";
 import * as dotenv from "dotenv";
+import { existsSync } from "fs";
 
 import { spawnProcess } from "./helpers/process";
 import { assertConfig, readConfig } from "./helpers/subgraphConfig";
@@ -107,7 +108,15 @@ const getNetworkHandler = async (
   subgraphId?: string,
   branch?: string,
 ): Promise<NetworkHandler> => {
-  const module = await import(getImportFilePath(network));
+  let networkFilePath = getImportFilePath(network);
+  if (!existsSync(networkFilePath)) {
+    console.info(
+      `Blockchain-specific files do not exist at ${networkFilePath}. Using shared test files.`,
+    );
+    networkFilePath = `./networks/shared/index`;
+  }
+
+  const module = await import(networkFilePath);
   return new module.default(
     network,
     getResultsFilePath(network),
