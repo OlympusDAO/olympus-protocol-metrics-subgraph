@@ -1,9 +1,10 @@
-import { BigInt, ethereum, log } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 
 import {
   TokenCategoryStable,
   TokenCategoryVolatile,
 } from "../../../shared/src/contracts/TokenDefinition";
+import { RebaseCall } from "../../generated/TokenRecords-fantom/FantOHMStaking";
 import { getOwnedLiquidityBalances } from "./OwnedLiquidity";
 import { getTokenBalances } from "./TokenBalances";
 
@@ -15,12 +16,7 @@ export function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): vo
   getOwnedLiquidityBalances(timestamp, blockNumber);
 }
 
-export function handleAssets(block: ethereum.Block): void {
-  // Only index every 28,800th block, approximately 8 hours
-  if (!block.number.mod(BigInt.fromString("28800")).equals(BigInt.zero())) {
-    return;
-  }
-
-  log.debug("handleAssets: *** Indexing block {}", [block.number.toString()]);
-  generateTokenRecords(block.timestamp, block.number);
+export function handleAssets(call: RebaseCall): void {
+  log.debug("handleAssets: *** Indexing block {}", [call.block.number.toString()]);
+  generateTokenRecords(call.block.timestamp, call.block.number);
 }
