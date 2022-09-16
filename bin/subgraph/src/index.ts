@@ -241,11 +241,9 @@ program
     spawnProcess(
       `yarn graph deploy --deploy-key ${
         process.env[`GRAPH_TOKEN_${network}`]
-      } --product hosted-service --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --version-label ${
-        config.version
-      } --output-dir ${getBuildOutputDirectory(network)} ${config.org}/${
-        config.name
-      } ${getSubgraphManifestFilePath(network)}`,
+      } --product hosted-service --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --output-dir ${getBuildOutputDirectory(
+        network,
+      )} ${config.org}/${config.name} ${getSubgraphManifestFilePath(network)}`,
       (codegenExitCode: number) => {
         if (codegenExitCode > 0) {
           process.exit(codegenExitCode);
