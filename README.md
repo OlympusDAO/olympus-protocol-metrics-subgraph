@@ -40,6 +40,17 @@ Each network has an independent subgraph, as required by the Graph Protocol. For
 1. Create `bin/subgraph/src/networks/<network>/index.ts` and implement a class that extends `BaseNetworkHandler`. This file defines how a particular subgraph will be automatically tested using the workflow defined in [.github/workflows/query.yml](.github/workflows/query.yml). See [bin/subgraph/src/networks/ethereum/index.ts](bin/subgraph/src/networks/ethereum/index.ts) for an example.
 1. Add `<network>` to the matrix strategies defined in [.github/workflows/query.yml](.github/workflows/query.yml) and [.github/workflows/main.yml](.github/workflows/main.yml).
 
+### Triggers
+
+Each network-specific subgraph has a different trigger, specified in the respective `subgraph.yaml` file:
+
+- Arbitrum: triggered on every block (unfortunately), but indexes only every 14,400th block (~8 hours).
+- Ethereum: triggered by the `stake()` function call on OlympusStakingV3
+- Fantom: triggered by the `rebase()` function call on FantOHM's staking contract (since we don't have a staking contract on Fantom)
+- Polygon: triggered on every block (unfortunately), but indexes only every 14,400th block (~8 hours).
+
+Arbitrum and Polygon are triggered on a per-block basis due to a limitation with nodes not supporting tracing. See: <https://github.com/graphprotocol/graph-node/issues/3517> (this applies to BSC, but also to Arbitrum and Polygon)
+
 ## Testing
 
 The `matchstick-as` package is used to perform testing on the subgraph code. The syntax is close to that of
