@@ -2,6 +2,7 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { ethereum } from "@graphprotocol/graph-ts";
 
 import { getISO8601StringFromTimestamp } from "../../../shared/src/utils/DateHelper";
+import { RebaseCall } from "../../generated/ProtocolMetrics/OlympusStakingV3";
 import { ProtocolMetric } from "../../generated/schema";
 import { getGOhmTotalSupply } from "../utils/GOhmCalculations";
 import {
@@ -72,19 +73,13 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.save();
 }
 
-export function handleMetrics(block: ethereum.Block): void {
-  // Only index every 2000th block, approximately 8 hours
-  // We previously used stake(), but that's not available cross-chain
-  if (!block.number.mod(BigInt.fromString("2000")).equals(BigInt.zero())) {
-    return;
-  }
-
-  log.debug("handleMetrics: *** Indexing block {}", [block.number.toString()]);
-  updateProtocolMetrics(block);
+export function handleMetrics(call: RebaseCall): void {
+  log.debug("handleMetrics: *** Indexing block {}", [call.block.number.toString()]);
+  updateProtocolMetrics(call.block);
 
   // TokenRecord
-  generateTokenRecords(block.timestamp, block.number);
+  generateTokenRecords(call.block.timestamp, call.block.number);
 
   // TokenSupply
-  generateTokenSupply(block.timestamp, block.number);
+  generateTokenSupply(call.block.timestamp, call.block.number);
 }

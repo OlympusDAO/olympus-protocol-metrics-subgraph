@@ -544,6 +544,8 @@ dataSources:
     name: ProtocolMetrics
     network: mainnet
     source:
+      # Created in December 2021. If indexing prior to then, we need to use a different contract
+      # https://etherscan.io/tx/0xd81bf37e970f5f3593d028b8503a6432d3cc6eb5b6589d98d041f28018f060b4
       address: "0xB63cac384247597756545b500253ff8E607a8020"
       abi: OlympusStakingV3
       startBlock: 14690000
@@ -608,6 +610,7 @@ dataSources:
           file: ./abis/FraxSwapPool.json
         - name: vlCVX
           file: ./abis/vlCVX.json
-      blockHandlers:
-        - handler: handleMetrics
+      callHandlers:
+        - function: rebase()
+          handler: handleMetrics
       file: ./src/protocolMetrics/ProtocolMetrics.ts
