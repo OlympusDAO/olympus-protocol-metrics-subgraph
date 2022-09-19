@@ -2,7 +2,7 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { ethereum } from "@graphprotocol/graph-ts";
 
 import { getISO8601StringFromTimestamp } from "../../../shared/src/utils/DateHelper";
-import { RebaseCall } from "../../generated/ProtocolMetrics/OlympusStakingV3";
+import { StakeCall } from "../../generated/ProtocolMetrics/OlympusStakingV3";
 import { ProtocolMetric } from "../../generated/schema";
 import { getGOhmTotalSupply } from "../utils/GOhmCalculations";
 import {
@@ -73,7 +73,7 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.save();
 }
 
-export function handleMetrics(call: RebaseCall): void {
+export function handleMetrics(call: StakeCall): void {
   log.debug("handleMetrics: *** Indexing block {}", [call.block.number.toString()]);
   updateProtocolMetrics(call.block);
 
