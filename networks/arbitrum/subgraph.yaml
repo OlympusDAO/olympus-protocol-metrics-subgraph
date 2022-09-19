@@ -40,4 +40,3 @@ dataSources:
       blockHandlers:
         - handler: handleAssets
       file: ./src/treasury/Assets.ts
-  # Polygon starting block: 27790000 2022-05-01
