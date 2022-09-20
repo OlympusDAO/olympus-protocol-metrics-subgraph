@@ -16,7 +16,11 @@ import {
   getWalletAddressesForContract,
   liquidityPairHasToken,
 } from "../utils/Constants";
-import { getBalancerGaugeBalancesFromWallets, getERC20 } from "../utils/ContractHelper";
+import {
+  getAuraStakedBalancesFromWallets,
+  getBalancerGaugeBalancesFromWallets,
+  getERC20,
+} from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
 import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
@@ -280,6 +284,18 @@ export function getBalancerRecords(
   pushArray(
     records,
     getBalancerGaugeBalancesFromWallets(
+      timestamp,
+      poolTokenAddress,
+      unitRate,
+      multiplier,
+      blockNumber,
+    ),
+  );
+
+  // Pool tokens staked in AURA
+  pushArray(
+    records,
+    getAuraStakedBalancesFromWallets(
       timestamp,
       poolTokenAddress,
       unitRate,

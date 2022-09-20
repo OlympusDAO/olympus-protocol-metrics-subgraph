@@ -610,6 +610,8 @@ dataSources:
           file: ./abis/FraxSwapPool.json
         - name: vlCVX
           file: ./abis/vlCVX.json
+        - name: AuraStaking
+          file: ./abis/AuraStaking.json
       # Triggered by the stake() call, which is fairly regular
       # rebase() would be preferred, but it doesn't seem to be called
       callHandlers:
