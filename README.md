@@ -15,25 +15,56 @@ Run `yarn`
 Note that the Graph Protocol compiles from AssemblyScript to WASM. AssemblyScript is strongly-typed, and is similar to TypeScript. However, there are a number of expected features of TypeScript (e.g. try/catch) that aren't implemented in AssemblyScript. A few suggestions:
 
 - Utilise the linting that has been set up in this repository
-- Build frequently (`yarn build`), as linting does not pick up all problems
+- Build frequently (`yarn subgraph build <network>`), as linting does not pick up all problems
 - Variables that are nullable need to be typed accordingly
 - You may run into a TS2322 compiler error when handling null values. The workaround for this is to use the strict equality operator (`===`), instead of loose equality (`==`) or negation (`!someValue`). e.g. `if (someValue === null)`. This is due to a [limitation in the AssemblyScript compiler.](https://github.com/AssemblyScript/assemblyscript/issues/2223#issuecomment-1069245834)
 - The Graph Protocol Discord is very helpful to get support. See the `subgraph-development` channel.
+
+## CLI
+
+A CLI tool is available at `yarn subgraph` to make common tasks (building, testing, deploying) significantly easier. Run `yarn subgraph --help` for details of the commands.
+
+Please note that `<network>` is an argument for most of the commands, as files and configuration are stored on a per-network basis.
+
+## Support for Networks
+
+Assets on different networks/chains are supported.
+
+Each network has an independent subgraph, as required by the Graph Protocol. For this reason, each network has an independent file structure under `networks/`.
+
+### Adding a New Network
+
+1. Decide on the name for the network, which will be used throughout. e.g. `arbitrum`
+1. Create the following files and folders in `networks/<network>/`: `src/`, `tests/`, `config.json` and `subgraph.yaml`. See [networks/ethereum/](networks/ethereum/) for an example.
+1. Create the subgraph through the Graph Protocol (see [Deployment](#deployment) section)
+1. Create `bin/subgraph/src/networks/<network>/index.ts` and implement a class that extends `BaseNetworkHandler`. This file defines how a particular subgraph will be automatically tested using the workflow defined in [.github/workflows/query.yml](.github/workflows/query.yml). See [bin/subgraph/src/networks/ethereum/index.ts](bin/subgraph/src/networks/ethereum/index.ts) for an example.
+1. Add `<network>` to the matrix strategies defined in [.github/workflows/query.yml](.github/workflows/query.yml) and [.github/workflows/main.yml](.github/workflows/main.yml).
+
+### Triggers
+
+Each network-specific subgraph has a different trigger, specified in the respective `subgraph.yaml` file:
+
+- Arbitrum: triggered on every block (unfortunately), but indexes only every 14,400th block (~8 hours).
+- Ethereum: triggered by the `stake()` function call on OlympusStakingV3
+- Fantom: triggered by the `rebase()` function call on FantOHM's staking contract (since we don't have a staking contract on Fantom)
+- Polygon: triggered on every block (unfortunately), but indexes only every 14,400th block (~8 hours).
+
+Arbitrum and Polygon are triggered on a per-block basis due to a limitation with nodes not supporting tracing. See: <https://github.com/graphprotocol/graph-node/issues/3517> (this applies to BSC, but also to Arbitrum and Polygon)
 
 ## Testing
 
 The `matchstick-as` package is used to perform testing on the subgraph code. The syntax is close to that of
 `jest`. See this page for examples: <https://github.com/LimeChain/demo-subgraph>
 
-To run tests: `yarn test`
+To run tests: `yarn subgraph test <network>`
 
-If you receive a non-sensical test result (e.g. duplicated test cases, or a test failing that should be passing), try running `yarn test:force`. The build cache will sometimes get corrupted/broken.
+If you receive a non-sensical test result (e.g. duplicated test cases, or a test failing that should be passing), try running `yarn subgraph test <network> --recompile`. The build cache will sometimes get corrupted/broken.
 
 ## Adding Contracts
 
 1. Add the ABI into the `abis/` folder.
 1. Add a reference to the ABI under the respective data source in `subgraph.yaml`
-1. Run `yarn codegen` to generate AssemblyScript files from the new ABI(s)
+1. Run `yarn subgraph codegen <network>` to generate AssemblyScript files from the new ABI(s)
 
 ## Deployment
 
@@ -43,10 +74,10 @@ If you receive a non-sensical test result (e.g. duplicated test cases, or a test
    - The subgraph should be called `olympus-protocol-metrics`
 1. Add the Subgraph Studio deploy key to the `GRAPH_STUDIO_TOKEN` variable in `.env` (using `.env.sample`)
 1. Authenticate using `yarn auth:dev`
-1. Update the `SUBGRAPH_VERSION` variable in the `.subgraph-version` file.
-1. Run `yarn build`
-1. Run `yarn deploy:dev`
-1. Update the `SUBGRAPH_ID` variable in the `.subgraph-version` file with the subgraph id that was displayed in the output.
+1. Update the `version` property in the `networks/<network>/config.json` file.
+1. Run `yarn subgraph build <network>`
+1. Run `yarn subgraph deploy:dev <network>`
+1. Update the `id` variable in the `networks/<network>/config.json` file with the subgraph id that was displayed in the output.
 
 A URL for the GraphQL Explorer will be provided.
 
@@ -60,12 +91,11 @@ This subgraph is deployed on the Graph Protocol's Hosted Service:
 
 To deploy, do the following:
 
-1. Add the Subgraph Studio deploy key to the `GRAPH_TOKEN` variable in `.env` (using `.env.sample`)
-1. Authenticate using `yarn auth`
-1. Update the `SUBGRAPH_VERSION` variable in the `.subgraph-version` file.
-1. Run `yarn build`
-1. Run `yarn deploy`
-1. Update the `SUBGRAPH_ID` variable in the `.subgraph-version` file with the subgraph id that was displayed in the output.
+1. Add the Subgraph Studio deploy key to the `GRAPH_TOKEN_<network>` variable in `.env` (using `.env.sample`)
+1. Update the `version` property in the `networks/<network>/config.json` file.
+1. Run `yarn subgraph build <network>`
+1. Run `yarn subgraph deploy <network>`
+1. Update the `id` variable in the `networks/<network>/config.json` file with the subgraph id that was displayed in the output.
 1. Update `CHANGELOG.md`.
 
 ### Deployment (Local)
@@ -305,7 +335,7 @@ For every pull request, GitHub Actions runs tests against the current and destin
 
 This has a few requirements:
 
-- The subgraph id must be recorded in the `SUBGRAPH_ID` variable in the `.subgraph-version` file. See the [Deployment Testing](#deployment-testing) section of this document for steps.
+- The subgraph id must be recorded in the `id` property in the `networks/<network>/config.json` file. See the [Deployment Testing](#deployment-testing) section of this document for steps.
 - Both of the subgraphs must be active (not archived)
 - Both of the subgraphs must have overlapping blocks. The latest block of the `branch` subgraph will be determined and the `base` subgraph will be given a query against that block.
 

@@ -1,0 +1,3 @@
+# Matchstick only supports matchstick.yaml in the current directory, so we need to generate from a template
+testsFolder: ./networks/{{ network }}/tests/
+manifestPath: ./networks/{{ network }}/subgraph.yaml
