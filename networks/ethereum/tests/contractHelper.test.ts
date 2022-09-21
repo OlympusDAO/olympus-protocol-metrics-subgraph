@@ -9,11 +9,15 @@ import {
   TREASURY_ADDRESS_V3,
 } from "../../shared/src/Wallets";
 import {
+  AURA_STAKING_OHM_DAI_WETH,
+  BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
   CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
   CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
   ERC20_ALCX,
+  ERC20_BALANCER_OHM_DAI_WETH,
+  ERC20_BALANCER_OHM_DAI_WETH_AURA,
   ERC20_BALANCER_WETH_FDT,
   ERC20_CVX,
   ERC20_CVX_FRAX_3CRV,
@@ -180,6 +184,51 @@ export const mockBalancerGaugeBalanceZero = (wallets: string[]): void => {
       ERC20_BALANCER_WETH_FDT,
       wallets[i],
       BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+      BigInt.zero(),
+    );
+  }
+
+  for (let i = 0; i < wallets.length; i++) {
+    mockBalancerGaugeBalance(
+      ERC20_BALANCER_OHM_DAI_WETH,
+      wallets[i],
+      BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
+      BigInt.zero(),
+    );
+  }
+};
+
+export const mockAuraStakedBalance = (
+  tokenAddress: string,
+  walletAddress: string,
+  stakingAddress: string,
+  balance: BigInt,
+): void => {
+  const stakingContractAddress = Address.fromString(stakingAddress);
+  // Returns token
+  createMockedFunction(stakingContractAddress, "stakingToken", "stakingToken():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
+  ]);
+
+  // Returns balance
+  createMockedFunction(stakingContractAddress, "balanceOf", "balanceOf(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(walletAddress))])
+    .returns([ethereum.Value.fromUnsignedBigInt(balance)]);
+
+  // We assume price lookup is handled
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
+export const mockAuraStakedBalanceZero = (wallets: string[]): void => {
+  for (let i = 0; i < wallets.length; i++) {
+    mockAuraStakedBalance(
+      ERC20_BALANCER_OHM_DAI_WETH_AURA,
+      wallets[i],
+      AURA_STAKING_OHM_DAI_WETH,
       BigInt.zero(),
     );
   }

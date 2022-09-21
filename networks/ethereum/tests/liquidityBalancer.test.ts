@@ -10,6 +10,7 @@ import {
   getBalancerRecords,
 } from "../src/liquidity/LiquidityBalancer";
 import {
+  BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
   BALANCER_VAULT,
   ERC20_BALANCER_OHM_BTRFLY_V2,
@@ -26,8 +27,13 @@ import {
   POOL_BALANCER_OHM_DAI_WETH_ID,
   POOL_BALANCER_OHM_V2_BTRFLY_V2_ID,
   POOL_BALANCER_WETH_FDT_ID,
+  WALLET_ADDRESSES,
 } from "../src/utils/Constants";
-import { mockBalancerGaugeBalance, mockBalancerGaugeBalanceZero } from "./contractHelper.test";
+import {
+  mockAuraStakedBalanceZero,
+  mockBalancerGaugeBalance,
+  mockBalancerGaugeBalanceZero,
+} from "./contractHelper.test";
 import {
   ERC20_STANDARD_DECIMALS,
   getBtrflyV2UsdRate,
@@ -203,6 +209,9 @@ export function mockBalancerVaultZero(): void {
     BigDecimal.fromString("0.5"),
     null,
   );
+
+  mockBalancerGaugeBalanceZero(WALLET_ADDRESSES);
+  mockAuraStakedBalanceZero(WALLET_ADDRESSES);
 }
 
 export function mockBalanceVaultOhmDaiEth(
@@ -354,6 +363,8 @@ describe("pool total value", () => {
 
 describe("token quantity", () => {
   test("total quantity of OHM token in pool", () => {
+    mockBalancerVaultZero();
+
     // Mock the balancer
     mockBalanceVaultOhmDaiEth();
 
@@ -368,6 +379,8 @@ describe("token quantity", () => {
   });
 
   test("balance of OHM V2 token in OHM V2 pool", () => {
+    mockBalancerVaultZero();
+
     // Mock the balancer
     mockBalanceVaultOhmDaiEth();
 
@@ -405,6 +418,8 @@ describe("token quantity", () => {
   });
 
   test("balance of OHM V1 token in OHM V2 pool", () => {
+    mockBalancerVaultZero();
+
     // Mock the balancer
     mockBalanceVaultOhmDaiEth();
 
@@ -433,6 +448,8 @@ describe("token quantity", () => {
   });
 
   test("balance of OHM V2 token in OHM V2 pool before starting block", () => {
+    mockBalancerVaultZero();
+
     // Mock the balancer
     mockBalanceVaultOhmDaiEth(BigDecimal.fromString("0")); // total supply 0 before starting block
 
@@ -463,6 +480,8 @@ describe("token quantity", () => {
 
 describe("get balancer records", () => {
   test("OHM-DAI-ETH pool balance, all tokens", () => {
+    mockBalancerVaultZero();
+
     // Mock the balancer
     mockBalanceVaultOhmDaiEth();
 
@@ -600,7 +619,7 @@ describe("get balancer records", () => {
   });
 
   test("OHM-DAI-ETH pool, with liquidity gauge", () => {
-    mockBalancerGaugeBalanceZero(getWalletAddressesForContract(ERC20_BALANCER_OHM_DAI_WETH));
+    mockBalancerVaultZero();
 
     // Mock the balancer
     mockBalanceVaultOhmDaiEth();
@@ -614,7 +633,7 @@ describe("get balancer records", () => {
     mockBalancerGaugeBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
       TREASURY_ADDRESS_V3,
-      BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+      BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
       toBigInt(expectedBalance),
     );
 
