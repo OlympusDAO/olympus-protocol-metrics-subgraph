@@ -19,7 +19,6 @@ import {
   LP_BALANCER_POOL_WETH_VESTA,
   LP_UNISWAP_V2_GOHM_WETH,
   LP_UNISWAP_V2_JONES_WETH,
-  LP_UNISWAP_V2_MAGIC_WETH,
   LP_UNISWAP_V3_WETH_USDC,
 } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
@@ -30,7 +29,7 @@ export const HANDLERS: PriceHandler[] = [
   new PriceHandlerStablecoin([ERC20_FRAX, ERC20_USDC], getContractName),
   new PriceHandlerUniswapV2([ERC20_GOHM, ERC20_WETH], LP_UNISWAP_V2_GOHM_WETH, getContractName),
   new PriceHandlerUniswapV2([ERC20_JONES, ERC20_WETH], LP_UNISWAP_V2_JONES_WETH, getContractName),
-  new PriceHandlerUniswapV2([ERC20_MAGIC, ERC20_WETH], LP_UNISWAP_V2_MAGIC_WETH, getContractName),
+  // new PriceHandlerUniswapV2([ERC20_MAGIC, ERC20_WETH], LP_UNISWAP_V2_MAGIC_WETH, getContractName), // DO NOT enable: will cause infinite loop
   new PriceHandlerUniswapV3([ERC20_USDC, ERC20_WETH], LP_UNISWAP_V3_WETH_USDC, getContractName),
 ];
 

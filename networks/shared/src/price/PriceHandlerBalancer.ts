@@ -93,6 +93,12 @@ export class PriceHandlerBalancer implements PriceHandler {
       return null;
     }
 
+    log.debug(FUNCTION + " Doing price lookup for token {} ({}) in Balancer pool {} ({})", [
+      this.contractLookup(tokenAddress),
+      tokenAddress,
+      this.contractLookup(this.poolId),
+      this.poolId,
+    ]);
     const poolTokenWrapper = vault.getPoolTokens(Bytes.fromHexString(this.poolId));
     const addresses: Array<Address> = poolTokenWrapper.getTokens();
     const balances: Array<BigInt> = poolTokenWrapper.getBalances();
@@ -141,6 +147,11 @@ export class PriceHandlerBalancer implements PriceHandler {
       // See if we can find the price of the current token using another method
       const price = priceLookup(currentAddress, block, this.getId());
       if (!price) {
+        log.debug("{} No price found for {} ({})", [
+          FUNCTION,
+          this.contractLookup(currentAddress),
+          currentAddress,
+        ]);
         continue;
       }
 
@@ -167,11 +178,27 @@ export class PriceHandlerBalancer implements PriceHandler {
 
     // If we didn't find tokens, skip
     if (lookupTokenInfo.address.length == 0) {
-      log.warning(FUNCTION + " Unable to find matching lookup token", []);
+      log.warning(
+        FUNCTION + " Unable to find matching lookup token in pool {} ({}) for token {} ({})",
+        [
+          this.contractLookup(this.poolId),
+          this.poolId,
+          this.contractLookup(tokenAddress),
+          tokenAddress,
+        ],
+      );
       return null;
     }
     if (secondaryTokenInfo.address.length == 0) {
-      log.warning(FUNCTION + " Unable to find matching secondary token", []);
+      log.warning(
+        FUNCTION + " Unable to find matching secondary token in pool {} ({}) for token {} ({})",
+        [
+          this.contractLookup(this.poolId),
+          this.poolId,
+          this.contractLookup(tokenAddress),
+          tokenAddress,
+        ],
+      );
       return null;
     }
 
@@ -199,6 +226,10 @@ export class PriceHandlerBalancer implements PriceHandler {
       return null;
     }
 
+    log.debug(FUNCTION + " Calculating total value of Balancer pool {} ({})", [
+      this.contractLookup(this.poolId),
+      this.poolId,
+    ]);
     const poolTokenWrapper = vault.getPoolTokens(Bytes.fromHexString(this.poolId));
     const addresses: Array<Address> = poolTokenWrapper.getTokens();
     const balances: Array<BigInt> = poolTokenWrapper.getBalances();
