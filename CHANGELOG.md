@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 3.0.29 (2022-09-20) - QmVH883X6ehYzYdbY3iuoMFKXvBsMEHNQjwvCvjhYYZjLb
+## 3.0.29 (2022-09-20)
 
 - Add support for BTRFLY V1 and V2 tokens and protocol-owned liquidity (#41 and #67)
 - Improve the accuracy of price lookup for LQTY
