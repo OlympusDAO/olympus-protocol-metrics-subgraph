@@ -16,8 +16,8 @@ export function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): vo
 }
 
 export function handleAssets(block: ethereum.Block): void {
-  // Only index every 14,400th block, approximately 8 hours
-  if (!block.number.mod(BigInt.fromString("14400")).equals(BigInt.zero())) {
+  // Only index every 86,400th block (8 hours * 60 minutes * 60 seconds * 3 per second)
+  if (!block.number.mod(BigInt.fromString("86400")).equals(BigInt.zero())) {
     return;
   }
 
