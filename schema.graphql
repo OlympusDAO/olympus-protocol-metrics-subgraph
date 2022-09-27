@@ -75,6 +75,7 @@ type TokenRecord @entity {
   category: String!
   isLiquid: Boolean!
   isBluechip: Boolean!
+  blockchain: String!
 }
 
 # Represents a balance that affects the supply of OHM

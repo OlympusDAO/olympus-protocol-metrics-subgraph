@@ -1,0 +1,40 @@
+#
+# NOTE: this is a dummy manifest and is not to be used for deployment
+# See README.md for more details
+#
+specVersion: 0.0.4
+description: Olympus Protocol Metrics Subgraph - Shared
+repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
+schema:
+  file: ../../schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Price
+    network: ethereum
+    source:
+      address: "0x8D9bA570D6cb60C7e3e0F31343Efe75AB8E65FB1" # gOHM Arbitrum
+      abi: gOHM
+      startBlock: 10950000 # 2022-05-01
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - TokenRecord
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+        - name: gOHM
+          file: ./abis/gOHM.json
+        # Price Lookup
+        - name: BalancerVault
+          file: ./abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ./abis/BalancerPoolToken.json
+        - name: UniswapV2Pair
+          file: ./abis/UniswapV2Pair.json
+        - name: UniswapV3Pair
+          file: ./abis/UniswapV3Pair.json
+      blockHandlers:
+        - handler: handleAssets
+      file: ./src/Dummy.ts

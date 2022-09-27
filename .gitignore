@@ -60,12 +60,15 @@ typings/
 # next.js build output
 .next
 
-# thegraph build
-build
-
-# Test build files
-tests/.bin/
+# Build files
+**/**/tests/.bin/
+**/**/tests/.latest.json
+**/**/build/
 
 # query-test
-records-base.json
-records-branch.json
+**/**/records-base.json
+**/**/records-branch.json
+**/**/comparison.json
+
+# Generated from a template
+matchstick.yaml

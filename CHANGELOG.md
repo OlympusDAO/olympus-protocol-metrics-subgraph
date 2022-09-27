@@ -1,9 +1,20 @@
 # Subgraph Changelog
 
+## 3.0.29 (2022-09-21)
+
+- Add support for BTRFLY V1 and V2 tokens and protocol-owned liquidity (#41 and #67)
+- Improve the accuracy of price lookup for LQTY
+- Add support for FraxSwap V2 pool
+- Remove hard-coded vesting assets (#3)
+- Split the calculation of bond discounts into a new data source
+- Create infrastructure to support the development of blockchain-specific subgraphs
+- Adds support for Arbitrum, Fantom and Polygon blockchains (#17)
+- Adds support for Balancer liquidity pools staked in AURA
+
 ## 3.0.2 (2022-08-25)
 
-- Renames `Convex - Vote-Locked - Unlocked (vlCVX)` -> `Convex - Unlocked (vlCVX)`
 - The purpose of this release is primarily to achieve significant (~15x) increases in the speed of indexing (#56). See README.md for documentation on this.
+- Renames `Convex - Vote-Locked - Unlocked (vlCVX)` -> `Convex - Unlocked (vlCVX)`
 
 ## 2.0.80 (2022-08-08)
 
