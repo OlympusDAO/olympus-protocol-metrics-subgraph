@@ -1,5 +1,10 @@
 # Subgraph Changelog
 
+## 3.0.32 (2022-11-14)
+
+- Added support for Barnbridge governance token (BOND)
+- Added support for Curve FraxBP (FRAX-USDC) and OHM-FRAXBP liquidity pools
+
 ## 3.0.29 (2022-09-21)
 
 - Add support for BTRFLY V1 and V2 tokens and protocol-owned liquidity (#41 and #67)

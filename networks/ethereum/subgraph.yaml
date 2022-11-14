@@ -4,7 +4,7 @@ features:
   - grafting
 graft:
   base: QmVH883X6ehYzYdbY3iuoMFKXvBsMEHNQjwvCvjhYYZjLb
-  block: 15968142
+  block: 15960000
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
   file: ../../schema.graphql
