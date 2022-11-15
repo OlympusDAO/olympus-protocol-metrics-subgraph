@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 3.0.36 (2022-11-16)
+
+- Added support for the new treasury (TRSRY) deployed alongside RBS
+
 ## 3.0.32 (2022-11-14)
 
 - Added support for Barnbridge governance token (BOND)
