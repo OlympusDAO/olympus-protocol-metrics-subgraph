@@ -24,6 +24,8 @@ export const VEFXS_ALLOCATOR = "0xde7b85f52577b113181921a7aa8fc0c22e309475".toLo
 
 export const DAO_WALLET = "0x245cc372c84b3645bf0ffe6538620b04a217988b".toLowerCase();
 
+export const TRSRY = "0xd0D762F11Aba1C0594D3B83CB9aa6907F733C41c".toLowerCase(); // TODO Replace Goerli address with mainnet
+
 /**
  * This set of wallet addresses is common across many tokens,
  * and can be used for balance lookups.
