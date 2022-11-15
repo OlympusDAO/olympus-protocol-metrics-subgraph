@@ -1,5 +1,10 @@
 specVersion: 0.0.4
 description: Olympus Protocol Metrics Subgraph
+features:
+  - grafting
+graft:
+  base: QmVH883X6ehYzYdbY3iuoMFKXvBsMEHNQjwvCvjhYYZjLb
+  block: 15960000
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
   file: ../../schema.graphql

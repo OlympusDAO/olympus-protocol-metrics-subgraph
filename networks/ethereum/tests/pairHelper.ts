@@ -6,8 +6,12 @@ import {
   CONVEX_ALLOCATORS,
   ERC20_BTRFLY_V1,
   ERC20_BTRFLY_V2,
+  ERC20_CRV_FRAX_USDC,
   ERC20_CRV_OHMETH,
+  ERC20_CRV_OHMFRAXBP,
   ERC20_DAI,
+  ERC20_FRAX,
+  ERC20_FRAX_BP,
   ERC20_FXS,
   ERC20_LUSD,
   ERC20_OHM_V1,
@@ -16,7 +20,9 @@ import {
   ERC20_USDC,
   ERC20_WETH,
   getWalletAddressesForContract,
+  PAIR_CURVE_FRAX_USDC,
   PAIR_CURVE_OHM_ETH,
+  PAIR_CURVE_OHM_FRAXBP,
   PAIR_UNISWAP_V2_OHM_BTRFLY_V1,
   PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
@@ -616,6 +622,34 @@ export const mockCurvePairZero = (): void => {
     ERC20_STANDARD_DECIMALS,
   );
 
+  mockCurvePairTotalValue(
+    PAIR_CURVE_OHM_FRAXBP,
+    ERC20_CRV_OHMFRAXBP,
+    ERC20_STANDARD_DECIMALS,
+    BigDecimal.fromString("0"),
+    ERC20_OHM_V2,
+    ERC20_FRAX_BP,
+    BigInt.fromString("0"),
+    BigInt.fromString("0"),
+    OHM_V2_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+  );
+
+  mockCurvePairTotalValue(
+    PAIR_CURVE_FRAX_USDC,
+    ERC20_CRV_FRAX_USDC,
+    ERC20_STANDARD_DECIMALS,
+    BigDecimal.fromString("0"),
+    ERC20_FRAX,
+    ERC20_USDC,
+    BigInt.fromString("0"),
+    BigInt.fromString("0"),
+    ERC20_STANDARD_DECIMALS,
+    USDC_DECIMALS,
+  );
+
   mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
   mockZeroWalletBalances(ERC20_CRV_OHMETH, CONVEX_ALLOCATORS);
+  mockZeroWalletBalances(ERC20_CRV_OHMFRAXBP, getWalletAddressesForContract(PAIR_CURVE_OHM_FRAXBP));
+  mockZeroWalletBalances(ERC20_CRV_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
 };
