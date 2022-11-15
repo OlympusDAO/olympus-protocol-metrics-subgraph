@@ -1,7 +1,7 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { ethereum } from "@graphprotocol/graph-ts";
 
-import { getISO8601StringFromTimestamp } from "../../../shared/src/utils/DateHelper";
+import { getISO8601DateStringFromTimestamp } from "../../../shared/src/utils/DateHelper";
 import { StakeCall } from "../../generated/ProtocolMetrics/OlympusStakingV3";
 import { ProtocolMetric } from "../../generated/schema";
 import { getGOhmTotalSupply } from "../utils/GOhmCalculations";
@@ -16,7 +16,7 @@ import { generateTokenRecords, generateTokenSupply } from "../utils/TreasuryCalc
 import { getAPY_Rebase, getNextOHMRebase } from "./Rebase";
 
 export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
-  const dateString = getISO8601StringFromTimestamp(timestamp);
+  const dateString = getISO8601DateStringFromTimestamp(timestamp);
 
   let protocolMetric = ProtocolMetric.load(dateString);
   if (protocolMetric == null) {

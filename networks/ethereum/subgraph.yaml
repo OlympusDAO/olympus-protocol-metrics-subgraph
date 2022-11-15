@@ -645,6 +645,11 @@ dataSources:
           file: ../shared/abis/BalancerVault.json
         - name: BalancerPoolToken
           file: ../shared/abis/BalancerPoolToken.json
+        # Used to get current index
+        - name: sOlympusERC20V2
+          file: ./abis/sOlympusERC20V2.json
+        - name: sOlympusERC20V3
+          file: ./abis/sOlympusERC20V3.json
       blockHandlers:
         - handler: handleBlock
       file: ./src/protocolMetrics/PriceSnapshot.ts  
