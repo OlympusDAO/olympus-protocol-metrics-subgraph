@@ -617,8 +617,6 @@ dataSources:
           file: ./abis/vlCVX.json
         - name: AuraStaking
           file: ./abis/AuraStaking.json
-        - name: Treasury
-          file: ./abis/TRSRY.json
       # Triggered by the stake() call, which is fairly regular
       # rebase() would be preferred, but it doesn't seem to be called
       callHandlers:

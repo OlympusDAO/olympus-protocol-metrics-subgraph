@@ -3,7 +3,6 @@ import { TokenRecord } from "../../../shared/generated/schema";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createOrUpdateTokenRecord, getIsTokenLiquid } from "../../../shared/src/utils/TokenRecordHelper";
 import { TRSRY } from "../../../shared/src/Wallets";
-import { Treasury } from "../../generated/ProtocolMetrics/Treasury";
 import { BLOCKCHAIN, ERC20_TOKENS, getContractName } from "./Constants";
 import { getERC20 } from "./ContractHelper";
 
@@ -14,15 +13,14 @@ function getTreasuryBalance(tokenAddress: string, blockNumber: BigInt): BigDecim
         return null;
     }
 
-    const treasuryContract = Treasury.bind(Address.fromString(TRSRY));
-    const reserves = treasuryContract.try_getReserveBalance(Address.fromString(tokenAddress));
-    if (reserves.reverted) {
-        log.warning("getTreasuryBalance: treasury contract reverted at block {}. Skipping", [blockNumber.toString()]);
-        return null;
-    }
-
+    /**
+     * Calling `getReserveBalance` on the treasury contract would return the token
+     * balance and the debt (old treasury balances), which would distort the values.
+     * 
+     * Hence, we use a simple token balance instead.
+     */
     return toDecimal(
-        reserves.value,
+        tokenContract.balanceOf(Address.fromString(TRSRY)),
         tokenContract.decimals(),
     );
 }
