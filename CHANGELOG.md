@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 3.0.40 (2022-11-18)
+## 3.1.0 (2022-11-18)
 
 - Added support for Barnbridge governance token (BOND)
 - Added support for Curve FraxBP (FRAX-USDC) and OHM-FRAXBP liquidity pools
