@@ -4,7 +4,7 @@ features:
   - grafting
 graft:
   base: QmVH883X6ehYzYdbY3iuoMFKXvBsMEHNQjwvCvjhYYZjLb
-  block: 15960000
+  block: 15998131 # TRSRY deployment
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
   file: ../../schema.graphql
