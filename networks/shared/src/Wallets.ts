@@ -24,6 +24,8 @@ export const VEFXS_ALLOCATOR = "0xde7b85f52577b113181921a7aa8fc0c22e309475".toLo
 
 export const DAO_WALLET = "0x245cc372c84b3645bf0ffe6538620b04a217988b".toLowerCase();
 
+export const TRSRY = "0xa8687A15D4BE32CC8F0a8a7B9704a4C3993D9613".toLowerCase();
+
 /**
  * This set of wallet addresses is common across many tokens,
  * and can be used for balance lookups.

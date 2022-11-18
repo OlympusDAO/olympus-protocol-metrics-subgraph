@@ -16,6 +16,7 @@ import {
   getVeFXSAllocatorRecords,
 } from "./ContractHelper";
 import { getUSDRate } from "./Price";
+import { getTreasuryRecords } from "./Treasury";
 
 /**
  * Returns the token records for a given stablecoin. This includes:
@@ -75,6 +76,9 @@ export function getStablecoinBalance(
   if (includeLiquidity) {
     pushArray(records, getLiquidityBalances(timestamp, contractAddress, blockNumber));
   }
+
+  // TRSRY
+  pushArray(records, getTreasuryRecords(timestamp, contractAddress, rate, blockNumber));
 
   return records;
 }

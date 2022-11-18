@@ -1,11 +1,12 @@
 # Subgraph Changelog
 
-## 3.0.39 (2022-11-18)
+## 3.0.40 (2022-11-18)
 
 - Added support for Barnbridge governance token (BOND)
 - Added support for Curve FraxBP (FRAX-USDC) and OHM-FRAXBP liquidity pools
 - Added support for new OHM-DAI and OHM-WETH pools in Balancer (#31)
 - Added per-block price snapshot
+- Added support for the new treasury (TRSRY) deployed alongside RBS
 
 ## 3.0.29 (2022-09-21)
 
