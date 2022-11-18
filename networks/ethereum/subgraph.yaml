@@ -3,7 +3,7 @@ description: Olympus Protocol Metrics Subgraph
 features:
   - grafting
 graft:
-  base: QmVH883X6ehYzYdbY3iuoMFKXvBsMEHNQjwvCvjhYYZjLb
+  base: QmeDGGjQknnyTKULkog8pcgsyqan2XwZNgBo8ZcyHSE43C # 3.0.39 price-snapshot branch
   block: 15998131 # TRSRY deployment
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
