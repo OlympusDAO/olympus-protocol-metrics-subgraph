@@ -857,3 +857,80 @@ export class TokenSupply extends Entity {
     this.set("supplyBalance", Value.fromBigDecimal(value));
   }
 }
+
+export class PriceSnapshot extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    const id = this.get("id");
+    assert(id != null, "Cannot save PriceSnapshot entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type PriceSnapshot must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("PriceSnapshot", id.toString(), this);
+    }
+  }
+
+  static load(id: string): PriceSnapshot | null {
+    return changetype<PriceSnapshot | null>(store.get("PriceSnapshot", id));
+  }
+
+  get id(): string {
+    const value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get block(): BigInt {
+    const value = this.get("block");
+    return value!.toBigInt();
+  }
+
+  set block(value: BigInt) {
+    this.set("block", Value.fromBigInt(value));
+  }
+
+  get timestamp(): BigInt {
+    const value = this.get("timestamp");
+    return value!.toBigInt();
+  }
+
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
+  }
+
+  get date(): string {
+    const value = this.get("date");
+    return value!.toString();
+  }
+
+  set date(value: string) {
+    this.set("date", Value.fromString(value));
+  }
+
+  get priceOhm(): BigDecimal {
+    const value = this.get("priceOhm");
+    return value!.toBigDecimal();
+  }
+
+  set priceOhm(value: BigDecimal) {
+    this.set("priceOhm", Value.fromBigDecimal(value));
+  }
+
+  get priceGOhm(): BigDecimal {
+    const value = this.get("priceGOhm");
+    return value!.toBigDecimal();
+  }
+
+  set priceGOhm(value: BigDecimal) {
+    this.set("priceGOhm", Value.fromBigDecimal(value));
+  }
+}

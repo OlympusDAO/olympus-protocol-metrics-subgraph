@@ -94,3 +94,12 @@ type TokenSupply @entity {
   balance: BigDecimal!
   supplyBalance: BigDecimal! # may be negative to represent the token being taken out of circulation
 }
+
+type PriceSnapshot @entity(immutable: true) {
+  id: ID!
+  block: BigInt!
+  timestamp: BigInt!
+  date: String!
+  priceOhm: BigDecimal!
+  priceGOhm: BigDecimal!
+}

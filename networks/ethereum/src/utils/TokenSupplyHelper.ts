@@ -1,6 +1,6 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
-import { getISO8601StringFromTimestamp } from "../../../shared/src/utils/DateHelper";
+import { getISO8601DateStringFromTimestamp } from "../../../shared/src/utils/DateHelper";
 import { TokenSupply } from "../../generated/schema";
 
 export const TYPE_TOTAL_SUPPLY = "Total Supply";
@@ -29,7 +29,7 @@ export function createOrUpdateTokenSupply(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   multiplier: i32 = 1,
 ): TokenSupply {
-  const dateString = getISO8601StringFromTimestamp(timestamp);
+  const dateString = getISO8601DateStringFromTimestamp(timestamp);
 
   const poolNameNotNull: string = poolName !== null ? poolName : "";
   const sourceNameNotNull: string = sourceName !== null ? sourceName : "";

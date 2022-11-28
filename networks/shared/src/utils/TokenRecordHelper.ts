@@ -2,7 +2,7 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../generated/schema";
 import { TokenDefinition } from "../contracts/TokenDefinition";
-import { getISO8601StringFromTimestamp } from "./DateHelper";
+import { getISO8601DateStringFromTimestamp } from "./DateHelper";
 
 export const getTokenCategory = (
   contractAddress: string,
@@ -88,7 +88,7 @@ export function createOrUpdateTokenRecord(
   nonOhmMultiplier: BigDecimal = BigDecimal.fromString("1"),
   category: string | null = null,
 ): TokenRecord {
-  const dateString = getISO8601StringFromTimestamp(timestamp);
+  const dateString = getISO8601DateStringFromTimestamp(timestamp);
   const recordId = `${dateString}/${sourceName}/${tokenName}`;
 
   // Attempt to fetch the current day's record
