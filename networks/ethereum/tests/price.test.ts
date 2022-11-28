@@ -38,6 +38,7 @@ import {
   PAIR_UNISWAP_V3_FXS_ETH,
   PAIR_UNISWAP_V3_WETH_BTRFLY_V1,
   PAIR_UNISWAP_V3_WETH_BTRFLY_V2,
+  POOL_BALANCER_OHM_DAI,
   POOL_BALANCER_OHM_DAI_WETH_ID,
   POOL_BALANCER_WETH_FDT_ID,
 } from "../src/utils/Constants";
@@ -184,6 +185,16 @@ describe("OHM-USD rate", () => {
         ])
         .reverts();
 
+      createMockedFunction(
+        Address.fromString(BALANCER_VAULT),
+        "getPoolTokens",
+        "getPoolTokens(bytes32):(address[],uint256[],uint256)",
+      )
+        .withArgs([
+          ethereum.Value.fromFixedBytes(Bytes.fromHexString(POOL_BALANCER_OHM_DAI)),
+        ])
+        .reverts();
+
       // Throws an error
       getBaseOhmUsdRate(
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
@@ -295,7 +306,7 @@ describe("get USD rate", () => {
     // There is a loss of precision, so we need to ensure that the value is close, but not equal
     assert.assertTrue(
       synUsdRate.minus(calculatedRate).lt(BigDecimal.fromString("0.000000000000000001")) &&
-        synUsdRate.minus(calculatedRate).gt(BigDecimal.fromString("-0.000000000000000001")),
+      synUsdRate.minus(calculatedRate).gt(BigDecimal.fromString("-0.000000000000000001")),
     );
   });
 
@@ -443,7 +454,7 @@ describe("get USD rate", () => {
     // There is a loss of precision, so we need to ensure that the value is close, but not equal
     assert.assertTrue(
       fxsUsdRate.minus(calculatedRate).lt(BigDecimal.fromString("0.000000000000000001")) &&
-        fxsUsdRate.minus(calculatedRate).gt(BigDecimal.fromString("-0.000000000000000001")),
+      fxsUsdRate.minus(calculatedRate).gt(BigDecimal.fromString("-0.000000000000000001")),
     );
   });
 
@@ -458,7 +469,7 @@ describe("get USD rate", () => {
     // There is a loss of precision, so we need to ensure that the value is close, but not equal
     assert.assertTrue(
       ethUsdRate.minus(calculatedRate).lt(BigDecimal.fromString("0.000000000000000001")) &&
-        ethUsdRate.minus(calculatedRate).gt(BigDecimal.fromString("-0.000000000000000001")),
+      ethUsdRate.minus(calculatedRate).gt(BigDecimal.fromString("-0.000000000000000001")),
     );
   });
 

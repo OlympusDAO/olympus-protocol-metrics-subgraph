@@ -361,6 +361,8 @@ export function mockBalancerVaultOhmBtrfly(
 
 describe("pool total value", () => {
   test("OHM-DAI-ETH pool total value, all tokens", () => {
+    mockBalancerVaultZero();
+
     // Mock the balancer
     mockBalanceVaultOhmDaiEth();
 
@@ -383,6 +385,8 @@ describe("pool total value", () => {
   });
 
   test("OHM-DAI-ETH pool total value, non-ohm tokens", () => {
+    mockBalancerVaultZero();
+
     // Mock the balancer
     mockBalanceVaultOhmDaiEth();
 
@@ -576,6 +580,8 @@ describe("get balancer records", () => {
   });
 
   test("OHM-DAI-ETH pool balance before starting block", () => {
+    mockBalancerVaultZero();
+
     // Mock the balancer
     mockBalanceVaultOhmDaiEth(BigDecimal.fromString("0")); // total supply 0 before starting block
 
@@ -606,6 +612,8 @@ describe("get balancer records", () => {
   });
 
   test("OHM-DAI-ETH pool with matching tokenAddress", () => {
+    mockBalancerVaultZero();
+
     // Mock the balancer
     mockBalanceVaultOhmDaiEth();
 
@@ -644,6 +652,8 @@ describe("get balancer records", () => {
   });
 
   test("OHM-DAI-ETH pool with different tokenAddress", () => {
+    mockBalancerVaultZero();
+
     // Mock the balancer
     mockBalanceVaultOhmDaiEth();
 

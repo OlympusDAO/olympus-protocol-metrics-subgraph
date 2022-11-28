@@ -373,7 +373,15 @@ const pairHandlerUniswapV2OhmDaiV2 = new PairHandler(
   PAIR_UNISWAP_V2_OHM_DAI_V2,
 );
 
-export const OHM_PRICE_PAIRS = [pairHandlerUniswapV2OhmDaiV2, pairHandlerBalancerOhmDaiEth];
+const pairHandlerBalanceOhmDai = new PairHandler(
+  PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_OHM_DAI,
+);
+
+const pairHandlerBalanceOhmWEth = new PairHandler(
+  PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_OHM_WETH,
+);
+
+export const OHM_PRICE_PAIRS = [pairHandlerUniswapV2OhmDaiV2, pairHandlerBalancerOhmDaiEth, pairHandlerBalanceOhmDai];
 
 /**
  * Returns the first handler for a liquidity pair. These pairs
@@ -419,10 +427,10 @@ export const getPairHandlers = (contractAddress: string): PairHandler[] => {
  */
 export const LIQUIDITY_OWNED = [
   new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_OHM_V2_BTRFLY_V2_ID),
-  new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_OHM_DAI_WETH_ID),
+  pairHandlerBalancerOhmDaiEth,
+  pairHandlerBalanceOhmDai,
+  pairHandlerBalanceOhmWEth,
   new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_WETH_FDT_ID),
-  new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_OHM_DAI),
-  new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_OHM_WETH),
   new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_FRAX_USDC),
   new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_OHM_ETH),
   new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_OHM_FRAXBP),
@@ -814,7 +822,9 @@ CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_WETH_BTRFLY_V1, "Uniswap V3 WETH-BTRFLY V1
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_WETH_BTRFLY_V2, "Uniswap V3 WETH-BTRFLY V2 Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_AURA_WETH_ID, "Balancer V2 AURA-WETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_OHM_DAI_WETH_ID, "Balancer V2 OHM-DAI-WETH Liquidity Pool");
+CONTRACT_NAME_MAP.set(POOL_BALANCER_OHM_DAI, "Balancer V2 OHM-DAI Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_OHM_V2_BTRFLY_V2_ID, "Balancer V2 OHM V2-BTRFLY V2 Liquidity Pool");
+CONTRACT_NAME_MAP.set(POOL_BALANCER_OHM_WETH, "Balancer V2 OHM-WETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_WETH_FDT_ID, "Balancer V2 WETH-FDT Liquidity Pool");
 CONTRACT_NAME_MAP.set(RARI_ALLOCATOR, "Rari Allocator");
 CONTRACT_NAME_MAP.set(STABILITY_POOL, "Liquity Stability Pool");
