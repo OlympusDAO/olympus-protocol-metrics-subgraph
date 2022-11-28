@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 3.1.2 (2022-11-28)
+## 3.1.5 (2022-11-28)
 
 - Added OHM-FraxBP liquidity pool in the DAO wallet to the whitelist
 - Added Balancer OHM-DAI liquidity pool to the OHM price lookup

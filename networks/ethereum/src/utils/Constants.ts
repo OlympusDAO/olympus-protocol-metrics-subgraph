@@ -741,6 +741,7 @@ CONTRACT_NAME_MAP.set(ERC20_BTRFLY_V2, "Redacted Cartel V2");
 CONTRACT_NAME_MAP.set(ERC20_CRV_3POOL, "Curve 3Pool");
 CONTRACT_NAME_MAP.set(ERC20_CRV_FRAX_USDC, "Curve Frax-USDC Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_CRV_OHMETH, "Curve OHM-ETH Liquidity Pool");
+CONTRACT_NAME_MAP.set(ERC20_CRV_OHMFRAXBP, "Curve OHM-FraxBP Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_CRV, "Curve");
 CONTRACT_NAME_MAP.set(ERC20_CVX_CRV, "Curve - Staked in Convex");
 CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_3CRV, "Curve FRAX3Pool - Staked in Convex");
