@@ -14,7 +14,9 @@ import {
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
   BALANCER_VAULT,
   ERC20_BALANCER_OHM_BTRFLY_V2,
+  ERC20_BALANCER_OHM_DAI,
   ERC20_BALANCER_OHM_DAI_WETH,
+  ERC20_BALANCER_OHM_WETH,
   ERC20_BALANCER_WETH_FDT,
   ERC20_BTRFLY_V2,
   ERC20_DAI,
@@ -24,8 +26,10 @@ import {
   ERC20_USDC,
   ERC20_WETH,
   getWalletAddressesForContract,
+  POOL_BALANCER_OHM_DAI,
   POOL_BALANCER_OHM_DAI_WETH_ID,
   POOL_BALANCER_OHM_V2_BTRFLY_V2_ID,
+  POOL_BALANCER_OHM_WETH,
   POOL_BALANCER_WETH_FDT_ID,
   WALLET_ADDRESSES,
 } from "../src/utils/Constants";
@@ -209,6 +213,46 @@ export function mockBalancerVaultZero(): void {
     BigDecimal.fromString("0.5"),
     null,
   );
+
+  mockBalancerVault(
+    BALANCER_VAULT,
+    POOL_BALANCER_OHM_DAI,
+    ERC20_BALANCER_OHM_DAI,
+    ERC20_STANDARD_DECIMALS,
+    BigDecimal.fromString("0"),
+    ERC20_OHM_V2,
+    ERC20_DAI,
+    null,
+    BigDecimal.fromString("0"),
+    BigDecimal.fromString("0"),
+    BigDecimal.fromString("0"),
+    OHM_V2_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    BigDecimal.fromString("0.5"),
+    BigDecimal.fromString("0.5"),
+    null,
+  )
+
+  mockBalancerVault(
+    BALANCER_VAULT,
+    POOL_BALANCER_OHM_WETH,
+    ERC20_BALANCER_OHM_WETH,
+    ERC20_STANDARD_DECIMALS,
+    BigDecimal.fromString("0"),
+    ERC20_OHM_V2,
+    ERC20_WETH,
+    null,
+    BigDecimal.fromString("0"),
+    BigDecimal.fromString("0"),
+    BigDecimal.fromString("0"),
+    OHM_V2_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    BigDecimal.fromString("0.5"),
+    BigDecimal.fromString("0.5"),
+    null,
+  )
 
   mockBalancerGaugeBalanceZero(WALLET_ADDRESSES);
   mockAuraStakedBalanceZero(WALLET_ADDRESSES);
