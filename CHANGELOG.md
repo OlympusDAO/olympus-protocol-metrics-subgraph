@@ -1,5 +1,11 @@
 # Subgraph Changelog
 
+## 3.1.2 (2022-11-28)
+
+- Added OHM-FraxBP liquidity pool in the DAO wallet to the whitelist
+- Added Balancer OHM-DAI liquidity pool to the OHM price lookup
+- Fixed failing tests
+
 ## 3.1.0 (2022-11-18)
 
 - Added support for Barnbridge governance token (BOND)
