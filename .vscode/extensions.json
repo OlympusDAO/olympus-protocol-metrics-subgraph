@@ -1,0 +1,11 @@
+{
+    "recommendations": [
+        "gruntfuggly.todo-tree",
+        "dbaeumer.vscode-eslint",
+        "mquandalle.graphql",
+        "graphql.vscode-graphql",
+        "davidanson.vscode-markdownlint",
+        "rvest.vs-code-prettier-eslint",
+        "redhat.vscode-yaml"
+    ]
+}
