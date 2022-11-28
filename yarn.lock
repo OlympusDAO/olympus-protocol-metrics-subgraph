@@ -246,11 +246,22 @@
     "@ethersproject/properties" "^5.6.0"
     "@ethersproject/strings" "^5.6.1"
 
-"@graphprotocol/graph-cli@^0.33.0":
-  version "0.33.0"
-  resolved "https://registry.yarnpkg.com/@graphprotocol/graph-cli/-/graph-cli-0.33.0.tgz#f28dbb52db9a00ac8e880a2a98916edd886b8859"
-  integrity sha512-WgitQbOTlPcfFweOXurBI74z59jn5fTfezb80/POTyTJAAIXS48n+jAUi2fxix54yMBQFcN2uZnafuDMis7j9w==
+"@float-capital/float-subgraph-uncrashable@^0.0.0-alpha.4":
+  version "0.0.0-alpha.6"
+  resolved "https://registry.yarnpkg.com/@float-capital/float-subgraph-uncrashable/-/float-subgraph-uncrashable-0.0.0-alpha.6.tgz#92929f4e60ba1aa4f901c807892527bf37998b54"
+  integrity sha512-ZPnxfewgEAr3UWjLQd1XRyx4e6kffLDaLHJiDsS8pLzVi84EOQVWeFgYOXajav/zM+QSlbTkCF9F1hVSUdcV1Q==
   dependencies:
+    "@rescript/std" "9.0.0"
+    graphql "^16.6.0"
+    graphql-import-node "^0.0.5"
+    js-yaml "^4.1.0"
+
+"@graphprotocol/graph-cli@^0.36.1":
+  version "0.36.1"
+  resolved "https://registry.yarnpkg.com/@graphprotocol/graph-cli/-/graph-cli-0.36.1.tgz#025546d368985c9b0ce42064926bdf72dc54e6be"
+  integrity sha512-JTiIyPBxLKBOliC7Mdci8A+ApzOmfuGRHNQukgZVWn2+ktld/d/hPLghEKIgE+Fy4z8hCWa865oPUHV6r/J4+Q==
+  dependencies:
+    "@float-capital/float-subgraph-uncrashable" "^0.0.0-alpha.4"
     assemblyscript "0.19.10"
     binary-install-raw "0.0.13"
     chalk "3.0.0"
@@ -260,7 +271,7 @@
     dockerode "2.5.8"
     fs-extra "9.0.0"
     glob "7.1.6"
-    gluegun "https://github.com/edgeandnode/gluegun#v4.3.1-pin-colors-dep"
+    gluegun "git+https://github.com/edgeandnode/gluegun.git#v4.3.1-pin-colors-dep"
     graphql "15.5.0"
     immutable "3.8.2"
     ipfs-http-client "34.0.0"
@@ -351,6 +362,11 @@
   dependencies:
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
+
+"@rescript/std@9.0.0":
+  version "9.0.0"
+  resolved "https://registry.yarnpkg.com/@rescript/std/-/std-9.0.0.tgz#df53f3fa5911cb4e85bd66b92e9e58ddf3e4a7e1"
+  integrity sha512-zGzFsgtZ44mgL4Xef2gOy1hrRVdrs9mcxCOOKZrIPsmbZW14yTkaF591GXxpQvjXiHtgZ/iA9qLyWH6oSReIxQ==
 
 "@ts-morph/common@~0.12.3":
   version "0.12.3"
@@ -2128,9 +2144,10 @@ globby@^11.1.0:
     merge2 "^1.4.1"
     slash "^3.0.0"
 
-"gluegun@https://github.com/edgeandnode/gluegun#v4.3.1-pin-colors-dep":
+"gluegun@git+https://github.com/edgeandnode/gluegun.git#v4.3.1-pin-colors-dep":
   version "4.3.1"
-  resolved "https://github.com/edgeandnode/gluegun#b34b9003d7bf556836da41b57ef36eb21570620a"
+  uid b34b9003d7bf556836da41b57ef36eb21570620a
+  resolved "git+https://github.com/edgeandnode/gluegun.git#b34b9003d7bf556836da41b57ef36eb21570620a"
   dependencies:
     apisauce "^1.0.1"
     app-module-path "^2.2.0"
@@ -2173,6 +2190,11 @@ grapheme-splitter@^1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/grapheme-splitter/-/grapheme-splitter-1.0.4.tgz#9cf3a665c6247479896834af35cf1dbb4400767e"
   integrity sha512-bzh50DW9kTPM00T8y4o8vQg89Di9oLJVLW/KaOGIXJWP/iqCN6WKYkbNOF04vFLJhwcpYUh9ydh/+5vpOqV4YQ==
+
+graphql-import-node@^0.0.5:
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/graphql-import-node/-/graphql-import-node-0.0.5.tgz#caf76a6cece10858b14f27cce935655398fc1bf0"
+  integrity sha512-OXbou9fqh9/Lm7vwXT0XoRN9J5+WCYKnbiTalgFDvkQERITRmcfncZs6aVABedd5B85yQU5EULS4a5pnbpuI0Q==
 
 graphql-tag@^2.12.6:
   version "2.12.6"
