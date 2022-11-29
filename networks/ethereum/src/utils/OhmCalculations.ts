@@ -33,6 +33,7 @@ import { PairHandlerTypes } from "./PairHandler";
 import { getBaseOhmUsdRate } from "./Price";
 import {
   createOrUpdateTokenSupply,
+  TYPE_LIQUIDITY,
   TYPE_OFFSET,
   TYPE_TOTAL_SUPPLY,
   TYPE_TREASURY,
@@ -102,14 +103,14 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
   return toDecimal(ohmContract.totalSupply(), 9);
 }
 
-export function getTotalSupplyRecord(timestamp: BigInt, blockNumber: BigInt): void {
+export function getTotalSupplyRecord(timestamp: BigInt, blockNumber: BigInt): TokenSupply {
   const ohmContractAddress = blockNumber.gt(BigInt.fromString(ERC20_OHM_V2_BLOCK))
     ? ERC20_OHM_V2
     : ERC20_OHM_V1;
 
   const totalSupply = getTotalSupply(blockNumber);
 
-  createOrUpdateTokenSupply(
+  return createOrUpdateTokenSupply(
     timestamp,
     getContractName(ohmContractAddress),
     ohmContractAddress,
@@ -343,4 +344,52 @@ export function getSOhmCirculatingSupply(blockNumber: BigInt): BigDecimal {
  */
 export function getTotalValueLocked(blockNumber: BigInt): BigDecimal {
   return getSOhmCirculatingSupply(blockNumber).times(getBaseOhmUsdRate(blockNumber));
+}
+
+/**
+ * For a given array of TokenSupply records (assumed to be at the same point in time),
+ * this function returns the OHM floating supply.
+ *
+ * Circulating supply is defined as:
+ * - OHM total supply
+ * - minus: OHM in treasury wallets
+ * - minus: migration offset
+ * - minus: OHM in liquidity pools
+ */
+export function getFloatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
+  let total = BigDecimal.zero();
+
+  for (let i = 0; i < tokenSupplies.length; i++) {
+    total = total.plus(tokenSupplies[i].supplyBalance);
+  }
+
+  return total;
+}
+
+/**
+ * For a given array of TokenSupply records (assumed to be at the same point in time),
+ * this function returns the OHM circulating supply.
+ *
+ * Circulating supply is defined as:
+ * - OHM total supply
+ * - minus: OHM in treasury wallets
+ * - minus: migration offset
+ *
+ * In practice, this is everything except OHM in liquidity pools.
+ */
+export function getCirculatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
+  let total = BigDecimal.zero();
+
+  for (let i = 0; i < tokenSupplies.length; i++) {
+    const tokenSupply = tokenSupplies[i];
+
+    // Liquidity is ignored
+    if (tokenSupply.type == TYPE_LIQUIDITY) {
+      continue;
+    }
+
+    total = total.plus(tokenSupply.supplyBalance);
+  }
+
+  return total;
 }

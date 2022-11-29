@@ -333,6 +333,15 @@ export class ProtocolMetric extends Entity {
     this.set("gOhmPrice", Value.fromBigDecimal(value));
   }
 
+  get gOhmSyntheticSupply(): BigDecimal {
+    const value = this.get("gOhmSyntheticSupply");
+    return value!.toBigDecimal();
+  }
+
+  set gOhmSyntheticSupply(value: BigDecimal) {
+    this.set("gOhmSyntheticSupply", Value.fromBigDecimal(value));
+  }
+
   get gOhmTotalSupply(): BigDecimal {
     const value = this.get("gOhmTotalSupply");
     return value!.toBigDecimal();
@@ -340,6 +349,15 @@ export class ProtocolMetric extends Entity {
 
   set gOhmTotalSupply(value: BigDecimal) {
     this.set("gOhmTotalSupply", Value.fromBigDecimal(value));
+  }
+
+  get marketCap(): BigDecimal {
+    const value = this.get("marketCap");
+    return value!.toBigDecimal();
+  }
+
+  set marketCap(value: BigDecimal) {
+    this.set("marketCap", Value.fromBigDecimal(value));
   }
 
   get nextDistributedOhm(): BigDecimal {
@@ -358,6 +376,24 @@ export class ProtocolMetric extends Entity {
 
   set nextEpochRebase(value: BigDecimal) {
     this.set("nextEpochRebase", Value.fromBigDecimal(value));
+  }
+
+  get ohmCirculatingSupply(): BigDecimal {
+    const value = this.get("ohmCirculatingSupply");
+    return value!.toBigDecimal();
+  }
+
+  set ohmCirculatingSupply(value: BigDecimal) {
+    this.set("ohmCirculatingSupply", Value.fromBigDecimal(value));
+  }
+
+  get ohmFloatingSupply(): BigDecimal {
+    const value = this.get("ohmFloatingSupply");
+    return value!.toBigDecimal();
+  }
+
+  set ohmFloatingSupply(value: BigDecimal) {
+    this.set("ohmFloatingSupply", Value.fromBigDecimal(value));
   }
 
   get ohmPrice(): BigDecimal {
@@ -403,6 +439,48 @@ export class ProtocolMetric extends Entity {
 
   set totalValueLocked(value: BigDecimal) {
     this.set("totalValueLocked", Value.fromBigDecimal(value));
+  }
+
+  get treasuryLiquidBacking(): BigDecimal {
+    const value = this.get("treasuryLiquidBacking");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryLiquidBacking(value: BigDecimal) {
+    this.set("treasuryLiquidBacking", Value.fromBigDecimal(value));
+  }
+
+  get treasuryLiquidBackingPerGOhmSynthetic(): BigDecimal {
+    const value = this.get("treasuryLiquidBackingPerGOhmSynthetic");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryLiquidBackingPerGOhmSynthetic(value: BigDecimal) {
+    this.set(
+      "treasuryLiquidBackingPerGOhmSynthetic",
+      Value.fromBigDecimal(value)
+    );
+  }
+
+  get treasuryLiquidBackingPerOhmFloating(): BigDecimal {
+    const value = this.get("treasuryLiquidBackingPerOhmFloating");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryLiquidBackingPerOhmFloating(value: BigDecimal) {
+    this.set(
+      "treasuryLiquidBackingPerOhmFloating",
+      Value.fromBigDecimal(value)
+    );
+  }
+
+  get treasuryMarketValue(): BigDecimal {
+    const value = this.get("treasuryMarketValue");
+    return value!.toBigDecimal();
+  }
+
+  set treasuryMarketValue(value: BigDecimal) {
+    this.set("treasuryMarketValue", Value.fromBigDecimal(value));
   }
 }
 

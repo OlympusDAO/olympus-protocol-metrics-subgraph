@@ -1,6 +1,10 @@
 import { BigInt } from "@graphprotocol/graph-ts";
 
+import { TokenRecord } from "../../../shared/generated/schema";
+import { pushArray } from "../../../shared/src/utils/ArrayHelper";
+import { TokenSupply } from "../../generated/schema";
 import { getOwnedLiquidityPoolValue } from "../liquidity/LiquidityCalculations";
+import { pushTokenSupplyArray } from "./ArrayHelper";
 import {
   getProtocolOwnedLiquiditySupplyRecords,
   getTotalSupplyRecord,
@@ -20,25 +24,51 @@ import { getVolatileTokenBalances } from "./TokenVolatile";
  * @param blockNumber
  * @returns
  */
-export function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): void {
+export function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): TokenRecord[] {
+  const records: TokenRecord[] = [];
+
   // Stable without protocol-owned liquidity
-  getStablecoinBalances(timestamp, false, blockNumber);
+  pushArray(
+    records,
+    getStablecoinBalances(timestamp, false, blockNumber),
+  );
 
   // Volatile without protocol-owned liquidity, but blue-cip assets
-  getVolatileTokenBalances(timestamp, false, false, true, blockNumber);
+  pushArray(
+    records,
+    getVolatileTokenBalances(timestamp, false, false, true, blockNumber),
+  );
 
   // Protocol-owned liquidity
-  getOwnedLiquidityPoolValue(timestamp, blockNumber);
+  pushArray(
+    records,
+    getOwnedLiquidityPoolValue(timestamp, blockNumber),
+  );
+
+  return records;
 }
 
-export function generateTokenSupply(timestamp: BigInt, blockNumber: BigInt): void {
+export function generateTokenSupply(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
+  const records: TokenSupply[] = [];
+
   // OHM
   // Total supply
-  getTotalSupplyRecord(timestamp, blockNumber);
+  pushTokenSupplyArray(
+    records,
+    [getTotalSupplyRecord(timestamp, blockNumber)],
+  );
 
   // Treasury OHM
-  getTreasuryOHMRecords(timestamp, blockNumber);
+  pushTokenSupplyArray(
+    records,
+    getTreasuryOHMRecords(timestamp, blockNumber),
+  );
 
   // Floating supply
-  getProtocolOwnedLiquiditySupplyRecords(timestamp, blockNumber);
+  pushTokenSupplyArray(
+    records,
+    getProtocolOwnedLiquiditySupplyRecords(timestamp, blockNumber),
+  );
+
+  return records;
 }

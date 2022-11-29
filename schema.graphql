@@ -35,14 +35,22 @@ type ProtocolMetric @entity {
   currentIndex: BigDecimal!
   date: String! # YYYY-MM-DD
   gOhmPrice: BigDecimal!
+  gOhmSyntheticSupply: BigDecimal!
   gOhmTotalSupply: BigDecimal!
+  marketCap: BigDecimal!
   nextDistributedOhm: BigDecimal!
   nextEpochRebase: BigDecimal!
+  ohmCirculatingSupply: BigDecimal!
+  ohmFloatingSupply: BigDecimal!
   ohmPrice: BigDecimal!
   ohmTotalSupply: BigDecimal!
   sOhmCirculatingSupply: BigDecimal! # Returned by the sOHM contract, so can be included here
   timestamp: BigInt! # Unix timestamp in UTC
   totalValueLocked: BigDecimal!
+  treasuryLiquidBacking: BigDecimal!
+  treasuryLiquidBackingPerGOhmSynthetic: BigDecimal!
+  treasuryLiquidBackingPerOhmFloating: BigDecimal!
+  treasuryMarketValue: BigDecimal!
 }
 
 type BondDiscount @entity {
