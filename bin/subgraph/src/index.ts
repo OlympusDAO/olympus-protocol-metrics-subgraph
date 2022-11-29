@@ -51,7 +51,7 @@ const parseNetwork = (value: string, _previous: string): string => {
  * @returns
  */
 const getImportFilePath = (network: string): string => {
-  return `bin/subgraph/src/networks/${network}/index.ts`;
+  return `./networks/${network}/index.ts`;
 };
 
 /**
@@ -109,7 +109,8 @@ const getNetworkHandler = async (
   branch?: string,
 ): Promise<NetworkHandler> => {
   let networkFilePath = getImportFilePath(network);
-  if (!existsSync(networkFilePath)) {
+  // Import is ok with the output of `getImportFilePath()` but `existsSync()` needs the full path
+  if (!existsSync("bin/subgraph/src/" + networkFilePath)) {
     console.info(
       `Blockchain-specific files do not exist at ${networkFilePath}. Using shared test files.`,
     );
