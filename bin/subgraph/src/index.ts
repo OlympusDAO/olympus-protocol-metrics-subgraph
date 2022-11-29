@@ -51,7 +51,7 @@ const parseNetwork = (value: string, _previous: string): string => {
  * @returns
  */
 const getImportFilePath = (network: string): string => {
-  return `./networks/${network}/index`;
+  return `./networks/${network}/index.ts`;
 };
 
 /**
@@ -113,7 +113,7 @@ const getNetworkHandler = async (
     console.info(
       `Blockchain-specific files do not exist at ${networkFilePath}. Using shared test files.`,
     );
-    networkFilePath = `./networks/shared/index`;
+    networkFilePath = `./networks/shared/index.ts`;
   }
 
   const module = await import(networkFilePath);

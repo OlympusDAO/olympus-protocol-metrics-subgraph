@@ -19,6 +19,8 @@ export class BaseNetworkHandler implements NetworkHandler {
   outputPath: string;
 
   constructor(network: string, outputPath: string, subgraphId?: string, branch?: string) {
+    console.info(`Created network handler with network ${network}, outputPath ${outputPath}, subgraphId ${subgraphId}, branch ${branch}`);
+
     this.network = network;
     this.subgraphId = subgraphId;
     this.branch = branch;

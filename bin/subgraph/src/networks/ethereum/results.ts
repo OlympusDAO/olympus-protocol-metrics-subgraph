@@ -64,6 +64,8 @@ export type ComparisonResults = {
 };
 
 export const readComparisonFile = (filePath: string): ComparisonResults => {
+  console.info(`Reading comparison file from ${filePath}`);
+
   // Silently create the data structure if the file doesn't exist
   if (!existsSync(filePath)) {
     return {
