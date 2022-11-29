@@ -61,7 +61,7 @@ const getImportFilePath = (network: string): string => {
  * @returns
  */
 const getResultsFilePath = (network: string): string => {
-  return `build/${network}/results.json`;
+  return `build/results-${network}.json`;
 };
 
 /**
@@ -239,8 +239,7 @@ program
 
     console.info("*** Running deploy");
     spawnProcess(
-      `yarn graph deploy --deploy-key ${
-        process.env[`GRAPH_TOKEN_${network}`]
+      `yarn graph deploy --deploy-key ${process.env[`GRAPH_TOKEN_${network}`]
       } --product hosted-service --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --output-dir ${getBuildOutputDirectory(
         network,
       )} ${config.org}/${config.name} ${getSubgraphManifestFilePath(network)}`,
@@ -262,10 +261,8 @@ program
 
     console.info("*** Running deploy");
     spawnProcess(
-      `yarn graph deploy --product subgraph-studio --version-label ${
-        config.version
-      } --output-dir ${getBuildOutputDirectory(network)} ${
-        config.name
+      `yarn graph deploy --product subgraph-studio --version-label ${config.version
+      } --output-dir ${getBuildOutputDirectory(network)} ${config.name
       } ${getSubgraphManifestFilePath(network)}`,
       (codegenExitCode: number) => {
         if (codegenExitCode > 0) {
