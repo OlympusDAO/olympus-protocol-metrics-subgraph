@@ -73,7 +73,7 @@ jobs:
       - name: Upload Results
         uses: actions/upload-artifact@v3
         with:
-          name: results
+          name: results-${{ matrix.network }}
           path: build/results-${{ matrix.network }}.json
   compare:
     strategy:
@@ -97,7 +97,7 @@ jobs:
       - name: Download Results
         uses: actions/download-artifact@v3
         with:
-          name: results
+          name: results-${{ matrix.network }}
           path: build/${{ matrix.network }}
       - name: Compare Token Records
         run: |
