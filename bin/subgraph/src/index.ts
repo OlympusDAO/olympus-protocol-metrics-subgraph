@@ -51,7 +51,7 @@ const parseNetwork = (value: string, _previous: string): string => {
  * @returns
  */
 const getImportFilePath = (network: string): string => {
-  return `./networks/${network}/index.ts`;
+  return `bin/subgraph/src/networks/${network}/index.ts`;
 };
 
 /**
