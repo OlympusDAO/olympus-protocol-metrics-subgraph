@@ -98,7 +98,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: results-${{ matrix.network }}
-          path: build/${{ matrix.network }}
+          path: build/
       - name: Compare Token Records
         run: |
           yarn subgraph compare ${{ matrix.network }}
