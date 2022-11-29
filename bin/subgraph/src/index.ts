@@ -51,7 +51,7 @@ const parseNetwork = (value: string, _previous: string): string => {
  * @returns
  */
 const getImportFilePath = (network: string): string => {
-  return `./networks/${network}/index`;
+  return `./networks/${network}/index.ts`;
 };
 
 /**
@@ -61,7 +61,7 @@ const getImportFilePath = (network: string): string => {
  * @returns
  */
 const getResultsFilePath = (network: string): string => {
-  return `build/${network}/results.json`;
+  return `build/results-${network}.json`;
 };
 
 /**
@@ -109,11 +109,12 @@ const getNetworkHandler = async (
   branch?: string,
 ): Promise<NetworkHandler> => {
   let networkFilePath = getImportFilePath(network);
-  if (!existsSync(networkFilePath)) {
+  // Import is ok with the output of `getImportFilePath()` but `existsSync()` needs the full path
+  if (!existsSync("bin/subgraph/src/" + networkFilePath)) {
     console.info(
       `Blockchain-specific files do not exist at ${networkFilePath}. Using shared test files.`,
     );
-    networkFilePath = `./networks/shared/index`;
+    networkFilePath = `./networks/shared/index.ts`;
   }
 
   const module = await import(networkFilePath);
@@ -239,8 +240,7 @@ program
 
     console.info("*** Running deploy");
     spawnProcess(
-      `yarn graph deploy --deploy-key ${
-        process.env[`GRAPH_TOKEN_${network}`]
+      `yarn graph deploy --deploy-key ${process.env[`GRAPH_TOKEN_${network}`]
       } --product hosted-service --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --output-dir ${getBuildOutputDirectory(
         network,
       )} ${config.org}/${config.name} ${getSubgraphManifestFilePath(network)}`,
@@ -262,10 +262,8 @@ program
 
     console.info("*** Running deploy");
     spawnProcess(
-      `yarn graph deploy --product subgraph-studio --version-label ${
-        config.version
-      } --output-dir ${getBuildOutputDirectory(network)} ${
-        config.name
+      `yarn graph deploy --product subgraph-studio --version-label ${config.version
+      } --output-dir ${getBuildOutputDirectory(network)} ${config.name
       } ${getSubgraphManifestFilePath(network)}`,
       (codegenExitCode: number) => {
         if (codegenExitCode > 0) {

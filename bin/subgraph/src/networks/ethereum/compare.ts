@@ -185,7 +185,7 @@ export const combineOutput = (network: string, comparisonFile: ComparisonResults
   const recordsDiff = diffString(
     comparisonFile.records.tokenRecords.base,
     comparisonFile.records.tokenRecords.branch,
-    { full: true },
+    { full: true, color: false },
   );
 
   comparisonFile.results.output = `**Network:** ${network}
