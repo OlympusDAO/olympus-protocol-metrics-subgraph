@@ -62,16 +62,20 @@ export function updateProtocolMetrics(block: ethereum.Block, tokenRecords: Token
   pm.nextEpochRebase = apy_rebase[1];
 
   // Token supply
-  pm.ohmCirculatingSupply = getCirculatingSupply(tokenSupplies);
-  pm.ohmFloatingSupply = getFloatingSupply(tokenSupplies);
-  pm.gOhmSyntheticSupply = getGOhmSyntheticSupply(pm.ohmFloatingSupply, pm.currentIndex);
+  const ohmCirculatingSupply = getCirculatingSupply(tokenSupplies);
+  pm.ohmCirculatingSupply = ohmCirculatingSupply;
+  const ohmFloatingSupply = getFloatingSupply(tokenSupplies);
+  pm.ohmFloatingSupply = ohmFloatingSupply;
+  const gOhmSyntheticSupply = getGOhmSyntheticSupply(ohmFloatingSupply, pm.currentIndex);
+  pm.gOhmSyntheticSupply = gOhmSyntheticSupply;
 
   // Treasury
-  pm.marketCap = getMarketCap(pm.ohmPrice, pm.ohmCirculatingSupply);
+  pm.marketCap = getMarketCap(pm.ohmPrice, ohmCirculatingSupply);
   pm.treasuryMarketValue = getTreasuryMarketValue(tokenRecords);
-  pm.treasuryLiquidBacking = getTreasuryLiquidBacking(tokenRecords);
-  pm.treasuryLiquidBackingPerOhmFloating = getTreasuryLiquidBackingPerOhmFloating(pm.treasuryLiquidBacking, pm.ohmFloatingSupply);
-  pm.treasuryLiquidBackingPerGOhmSynthetic = getTreasuryLiquidBackingPerGOhmSynthetic(pm.treasuryLiquidBacking, pm.gOhmSyntheticSupply);
+  const liquidBacking = getTreasuryLiquidBacking(tokenRecords);
+  pm.treasuryLiquidBacking = liquidBacking;
+  pm.treasuryLiquidBackingPerOhmFloating = getTreasuryLiquidBackingPerOhmFloating(liquidBacking, ohmFloatingSupply);
+  pm.treasuryLiquidBackingPerGOhmSynthetic = getTreasuryLiquidBackingPerGOhmSynthetic(liquidBacking, gOhmSyntheticSupply);
 
   pm.save();
 }

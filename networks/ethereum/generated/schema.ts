@@ -333,13 +333,21 @@ export class ProtocolMetric extends Entity {
     this.set("gOhmPrice", Value.fromBigDecimal(value));
   }
 
-  get gOhmSyntheticSupply(): BigDecimal {
+  get gOhmSyntheticSupply(): BigDecimal | null {
     const value = this.get("gOhmSyntheticSupply");
-    return value!.toBigDecimal();
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
   }
 
-  set gOhmSyntheticSupply(value: BigDecimal) {
-    this.set("gOhmSyntheticSupply", Value.fromBigDecimal(value));
+  set gOhmSyntheticSupply(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("gOhmSyntheticSupply");
+    } else {
+      this.set("gOhmSyntheticSupply", Value.fromBigDecimal(<BigDecimal>value));
+    }
   }
 
   get gOhmTotalSupply(): BigDecimal {
@@ -351,13 +359,21 @@ export class ProtocolMetric extends Entity {
     this.set("gOhmTotalSupply", Value.fromBigDecimal(value));
   }
 
-  get marketCap(): BigDecimal {
+  get marketCap(): BigDecimal | null {
     const value = this.get("marketCap");
-    return value!.toBigDecimal();
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
   }
 
-  set marketCap(value: BigDecimal) {
-    this.set("marketCap", Value.fromBigDecimal(value));
+  set marketCap(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("marketCap");
+    } else {
+      this.set("marketCap", Value.fromBigDecimal(<BigDecimal>value));
+    }
   }
 
   get nextDistributedOhm(): BigDecimal {
@@ -378,22 +394,38 @@ export class ProtocolMetric extends Entity {
     this.set("nextEpochRebase", Value.fromBigDecimal(value));
   }
 
-  get ohmCirculatingSupply(): BigDecimal {
+  get ohmCirculatingSupply(): BigDecimal | null {
     const value = this.get("ohmCirculatingSupply");
-    return value!.toBigDecimal();
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
   }
 
-  set ohmCirculatingSupply(value: BigDecimal) {
-    this.set("ohmCirculatingSupply", Value.fromBigDecimal(value));
+  set ohmCirculatingSupply(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("ohmCirculatingSupply");
+    } else {
+      this.set("ohmCirculatingSupply", Value.fromBigDecimal(<BigDecimal>value));
+    }
   }
 
-  get ohmFloatingSupply(): BigDecimal {
+  get ohmFloatingSupply(): BigDecimal | null {
     const value = this.get("ohmFloatingSupply");
-    return value!.toBigDecimal();
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
   }
 
-  set ohmFloatingSupply(value: BigDecimal) {
-    this.set("ohmFloatingSupply", Value.fromBigDecimal(value));
+  set ohmFloatingSupply(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("ohmFloatingSupply");
+    } else {
+      this.set("ohmFloatingSupply", Value.fromBigDecimal(<BigDecimal>value));
+    }
   }
 
   get ohmPrice(): BigDecimal {
@@ -441,46 +473,81 @@ export class ProtocolMetric extends Entity {
     this.set("totalValueLocked", Value.fromBigDecimal(value));
   }
 
-  get treasuryLiquidBacking(): BigDecimal {
+  get treasuryLiquidBacking(): BigDecimal | null {
     const value = this.get("treasuryLiquidBacking");
-    return value!.toBigDecimal();
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
   }
 
-  set treasuryLiquidBacking(value: BigDecimal) {
-    this.set("treasuryLiquidBacking", Value.fromBigDecimal(value));
+  set treasuryLiquidBacking(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("treasuryLiquidBacking");
+    } else {
+      this.set(
+        "treasuryLiquidBacking",
+        Value.fromBigDecimal(<BigDecimal>value)
+      );
+    }
   }
 
-  get treasuryLiquidBackingPerGOhmSynthetic(): BigDecimal {
+  get treasuryLiquidBackingPerGOhmSynthetic(): BigDecimal | null {
     const value = this.get("treasuryLiquidBackingPerGOhmSynthetic");
-    return value!.toBigDecimal();
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
   }
 
-  set treasuryLiquidBackingPerGOhmSynthetic(value: BigDecimal) {
-    this.set(
-      "treasuryLiquidBackingPerGOhmSynthetic",
-      Value.fromBigDecimal(value)
-    );
+  set treasuryLiquidBackingPerGOhmSynthetic(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("treasuryLiquidBackingPerGOhmSynthetic");
+    } else {
+      this.set(
+        "treasuryLiquidBackingPerGOhmSynthetic",
+        Value.fromBigDecimal(<BigDecimal>value)
+      );
+    }
   }
 
-  get treasuryLiquidBackingPerOhmFloating(): BigDecimal {
+  get treasuryLiquidBackingPerOhmFloating(): BigDecimal | null {
     const value = this.get("treasuryLiquidBackingPerOhmFloating");
-    return value!.toBigDecimal();
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
   }
 
-  set treasuryLiquidBackingPerOhmFloating(value: BigDecimal) {
-    this.set(
-      "treasuryLiquidBackingPerOhmFloating",
-      Value.fromBigDecimal(value)
-    );
+  set treasuryLiquidBackingPerOhmFloating(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("treasuryLiquidBackingPerOhmFloating");
+    } else {
+      this.set(
+        "treasuryLiquidBackingPerOhmFloating",
+        Value.fromBigDecimal(<BigDecimal>value)
+      );
+    }
   }
 
-  get treasuryMarketValue(): BigDecimal {
+  get treasuryMarketValue(): BigDecimal | null {
     const value = this.get("treasuryMarketValue");
-    return value!.toBigDecimal();
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
   }
 
-  set treasuryMarketValue(value: BigDecimal) {
-    this.set("treasuryMarketValue", Value.fromBigDecimal(value));
+  set treasuryMarketValue(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("treasuryMarketValue");
+    } else {
+      this.set("treasuryMarketValue", Value.fromBigDecimal(<BigDecimal>value));
+    }
   }
 }
 
