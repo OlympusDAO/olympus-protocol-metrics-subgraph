@@ -68,24 +68,21 @@ If you receive a non-sensical test result (e.g. duplicated test cases, or a test
 
 ## Deployment
 
-### Deployment (Testing)
+### Deployment (Subgraph Studio/Decentralised)
 
-1. If necessary, create an account and subgraph in the Subgraph Studio: <https://thegraph.com/studio/>
-   - The subgraph should be called `olympus-protocol-metrics`
-1. Add the Subgraph Studio deploy key to the `GRAPH_STUDIO_TOKEN` variable in `.env` (using `.env.sample`)
-1. Authenticate using `yarn auth:dev`
+1. Add the Subgraph Studio deploy key (either your own or the multisig's) to the `GRAPH_STUDIO_TOKEN` variable in `.env` (using `.env.sample`)
+1. Authenticate using `yarn auth:studio`
 1. Update the `version` property in the `networks/<network>/config.json` file.
 1. Run `yarn subgraph build <network>`
-1. Run `yarn subgraph deploy:dev <network>`
+1. Run `yarn subgraph deploy:studio <network>`
 1. Update the `id` variable in the `networks/<network>/config.json` file with the subgraph id that was displayed in the output.
 
 A URL for the GraphQL Explorer will be provided.
 
-### Deployment (Production)
+### Deployment (Hosted Service)
 
-This subgraph is deployed on the Graph Protocol's Hosted Service:
+Some subgraphs are deployed on the Graph Protocol's Hosted Service:
 
-- For historical reasons, as the hosted service was the only option at the time.
 - Going forward, the Graph Network does not yet offer multi-chain indexing, so the hosted service will still be required.
 - Note that indexing takes a significant amount of time (weeks!) at the moment. Investigation is required to look into how to improve the indexing performance.
 
@@ -94,7 +91,7 @@ To deploy, do the following:
 1. Add the Subgraph Studio deploy key to the `GRAPH_TOKEN_<network>` variable in `.env` (using `.env.sample`)
 1. Update the `version` property in the `networks/<network>/config.json` file.
 1. Run `yarn subgraph build <network>`
-1. Run `yarn subgraph deploy <network>`
+1. Run `yarn subgraph deploy:hosted <network>`
 1. Update the `id` variable in the `networks/<network>/config.json` file with the subgraph id that was displayed in the output.
 1. Update `CHANGELOG.md`.
 

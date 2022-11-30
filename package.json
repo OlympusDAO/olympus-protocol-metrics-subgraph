@@ -14,7 +14,7 @@
     "remove-local": "graph remove --node http://localhost:8020/ olympus",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 olympus",
     "run-local": "docker-compose -f docker/docker-compose.yml up --build",
-    "auth:dev": "source .env && graph auth --product subgraph-studio $GRAPH_STUDIO_TOKEN",
+    "auth:studio": "source .env && graph auth --product subgraph-studio $GRAPH_STUDIO_TOKEN",
     "ls-deadcode": "yarn ts-prune -p tsconfig.ts-prune.json | grep -v 'used in module'",
     "subgraph": "yarn ts-node bin/subgraph/src/index.ts"
   },
