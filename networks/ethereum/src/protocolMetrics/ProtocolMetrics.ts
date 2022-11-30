@@ -1,12 +1,15 @@
-import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 import { ethereum } from "@graphprotocol/graph-ts";
 
+import { TokenRecord } from "../../../shared/generated/schema";
 import { getISO8601DateStringFromTimestamp } from "../../../shared/src/utils/DateHelper";
 import { StakeCall } from "../../generated/ProtocolMetrics/OlympusStakingV3";
-import { ProtocolMetric } from "../../generated/schema";
-import { getGOhmTotalSupply } from "../utils/GOhmCalculations";
+import { ProtocolMetric, TokenSupply } from "../../generated/schema";
+import { getGOhmSyntheticSupply, getGOhmTotalSupply } from "../utils/GOhmCalculations";
 import {
+  getCirculatingSupply,
   getCurrentIndex,
+  getFloatingSupply,
   getSOhmCirculatingSupply,
   getTotalSupply,
   getTotalValueLocked,
@@ -14,6 +17,7 @@ import {
 import { getBaseOhmUsdRate } from "../utils/Price";
 import { generateTokenRecords, generateTokenSupply } from "../utils/TreasuryCalculations";
 import { getAPY_Rebase, getNextOHMRebase } from "./Rebase";
+import { getMarketCap, getTreasuryLiquidBacking, getTreasuryLiquidBackingPerGOhmSynthetic, getTreasuryLiquidBackingPerOhmFloating, getTreasuryMarketValue } from "./TreasuryMetrics";
 
 export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
   const dateString = getISO8601DateStringFromTimestamp(timestamp);
@@ -21,27 +25,14 @@ export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
   let protocolMetric = ProtocolMetric.load(dateString);
   if (protocolMetric == null) {
     protocolMetric = new ProtocolMetric(dateString);
-    protocolMetric.block = BigInt.fromString("-1");
-    protocolMetric.currentAPY = BigDecimal.fromString("0");
-    protocolMetric.currentIndex = BigDecimal.fromString("0");
     protocolMetric.date = dateString;
-    protocolMetric.gOhmPrice = BigDecimal.fromString("0");
-    protocolMetric.gOhmTotalSupply = BigDecimal.fromString("0");
-    protocolMetric.nextDistributedOhm = BigDecimal.fromString("0");
-    protocolMetric.nextEpochRebase = BigDecimal.fromString("0");
-    protocolMetric.ohmPrice = BigDecimal.fromString("0");
-    protocolMetric.ohmTotalSupply = BigDecimal.fromString("0");
-    protocolMetric.sOhmCirculatingSupply = BigDecimal.fromString("0");
     protocolMetric.timestamp = timestamp;
-    protocolMetric.totalValueLocked = BigDecimal.fromString("0");
-
-    protocolMetric.save();
   }
 
   return protocolMetric as ProtocolMetric;
 }
 
-export function updateProtocolMetrics(block: ethereum.Block): void {
+export function updateProtocolMetrics(block: ethereum.Block, tokenRecords: TokenRecord[], tokenSupplies: TokenSupply[]): void {
   const blockNumber = block.number;
   log.info("Starting protocol metrics for block {}", [blockNumber.toString()]);
 
@@ -70,16 +61,35 @@ export function updateProtocolMetrics(block: ethereum.Block): void {
   pm.currentAPY = apy_rebase[0];
   pm.nextEpochRebase = apy_rebase[1];
 
+  // Token supply
+  const ohmCirculatingSupply = getCirculatingSupply(tokenSupplies);
+  pm.ohmCirculatingSupply = ohmCirculatingSupply;
+  const ohmFloatingSupply = getFloatingSupply(tokenSupplies);
+  pm.ohmFloatingSupply = ohmFloatingSupply;
+  const gOhmSyntheticSupply = getGOhmSyntheticSupply(ohmFloatingSupply, pm.currentIndex);
+  pm.gOhmSyntheticSupply = gOhmSyntheticSupply;
+
+  // Treasury
+  pm.marketCap = getMarketCap(pm.ohmPrice, ohmCirculatingSupply);
+  pm.treasuryMarketValue = getTreasuryMarketValue(tokenRecords);
+  const liquidBacking = getTreasuryLiquidBacking(tokenRecords);
+  pm.treasuryLiquidBacking = liquidBacking;
+  pm.treasuryLiquidBackingPerOhmFloating = getTreasuryLiquidBackingPerOhmFloating(liquidBacking, ohmFloatingSupply);
+  pm.treasuryLiquidBackingPerGOhmSynthetic = getTreasuryLiquidBackingPerGOhmSynthetic(liquidBacking, gOhmSyntheticSupply);
+
   pm.save();
 }
 
 export function handleMetrics(call: StakeCall): void {
   log.debug("handleMetrics: *** Indexing block {}", [call.block.number.toString()]);
-  updateProtocolMetrics(call.block);
 
   // TokenRecord
-  generateTokenRecords(call.block.timestamp, call.block.number);
+  const tokenRecords = generateTokenRecords(call.block.timestamp, call.block.number);
 
   // TokenSupply
-  generateTokenSupply(call.block.timestamp, call.block.number);
+  const tokenSupplies = generateTokenSupply(call.block.timestamp, call.block.number);
+
+  // Use the generated records to calculate protocol/treasury metrics
+  // Otherwise we would be re-generating the records
+  updateProtocolMetrics(call.block, tokenRecords, tokenSupplies);
 }

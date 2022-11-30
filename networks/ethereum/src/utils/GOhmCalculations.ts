@@ -25,3 +25,12 @@ export function getGOhmTotalSupply(blockNumber: BigInt): BigDecimal {
 
   return toDecimal(contract.totalSupply(), contract.decimals());
 }
+
+/**
+ * gOHM circulating supply is synthetically calculated as:
+ *
+ * OHM floating supply / current index
+ */
+export function getGOhmSyntheticSupply(ohmFloatingSupply: BigDecimal, currentIndex: BigDecimal): BigDecimal {
+  return ohmFloatingSupply.div(currentIndex);
+}

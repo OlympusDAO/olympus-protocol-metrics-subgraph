@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 3.1.7 (2022-11-29)
+
+- Added market value, liquid backing and other related metrics to the daily summary record (`ProtocolMetric`) in a way that does not slow down indexing.
+
 ## 3.1.5 (2022-11-28)
 
 - Added OHM-FraxBP liquidity pool in the DAO wallet to the whitelist

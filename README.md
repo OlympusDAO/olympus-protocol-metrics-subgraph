@@ -186,6 +186,7 @@ The current schema (as of 3.0.0) has three main entities:
 - `TokenRecord`: token-wallet permutations held by the treasury. These records can be aggregated to determine the treasury market value, liquid backing, etc.
 - `TokenSupply`: OHM-wallet permutations held by the treasury. These records can be aggregated to determine the OHM circulating and floating supply.
 - `ProtocolMetric`: calculated metrics for the protocol, such as the next rebase time, current APY.
+  - NOTE: some of the later-added properties (e.g. `treasuryMarketValue` are marked as optional, to work around a `504` error that is encountered while grafting)
 
 As defined in the `subgraph.yaml` file within the `ProtocolMetrics` data source (around line 417), when the `stake` function on the `OlympusStakingV3` contract is called (every rebase or ~8 hours), the indexing of the entities will commence.
 
@@ -307,6 +308,8 @@ A future improvement to this subgraph might modify the behaviour to _not_ overwr
 ### Previous Structure
 
 The previous indexing structure (before 3.0.0) aggregated the equivalents of `TokenRecord` and `TokenSupply` underneath `ProtocolMetric` entities. For each `ProtocolMetric` entitiy, there were some 10-15 properties (e.g. `treasuryMarketValue`), which resulted in blockchain data being indexed multiple times for each block. The current structure indexes only once per block, shifting the aggregation and calculation to the client-side, and results in a 15x improvement in indexing speed.
+
+NOTE: these fields have been re-added and are now calculated without requiring redundant calculations.
 
 ### Example Queries
 
