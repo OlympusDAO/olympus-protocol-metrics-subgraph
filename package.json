@@ -19,7 +19,7 @@
     "subgraph": "yarn ts-node bin/subgraph/src/index.ts"
   },
   "dependencies": {
-    "@apollo/client": "^3.6.9",
+    "@apollo/client": "^3.7.2",
     "@graphprotocol/graph-cli": "^0.36.1",
     "@graphprotocol/graph-ts": "^0.27.0",
     "assemblyscript-json": "^1.1.0",
