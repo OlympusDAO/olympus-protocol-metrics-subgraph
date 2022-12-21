@@ -185,7 +185,7 @@ function getMigrationOffsetRecord(timestamp: BigInt, blockNumber: BigInt): Token
  *
  * Circulating supply is defined as:
  * - OHM total supply
- * - subtract: OHM in {CIRCULATING_SUPPLY_WALLETS}
+ * - subtract: OHM in {CIRCULATING_SUPPLY_WALLETS} (treasury, bonds, migration contract, DAO wallet)
  * - subtract: migration offset
  *
  * @param blockNumber the current block number
@@ -350,9 +350,9 @@ export function getTotalValueLocked(blockNumber: BigInt): BigDecimal {
  * For a given array of TokenSupply records (assumed to be at the same point in time),
  * this function returns the OHM floating supply.
  *
- * Circulating supply is defined as:
+ * Floating supply is defined as:
  * - OHM total supply
- * - minus: OHM in treasury wallets
+ * - minus: OHM in circulating supply wallets
  * - minus: migration offset
  * - minus: OHM in liquidity pools
  */
@@ -372,7 +372,7 @@ export function getFloatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
  *
  * Circulating supply is defined as:
  * - OHM total supply
- * - minus: OHM in treasury wallets
+ * - minus: OHM in circulating supply wallets
  * - minus: migration offset
  *
  * In practice, this is everything except OHM in liquidity pools.

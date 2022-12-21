@@ -3,8 +3,10 @@ description: Olympus Protocol Metrics Subgraph
 features:
   - grafting
 graft:
-  base: QmYbSKNJ8g1kWnGozrJpbot8WUKVd2Sdr9r968E1MNbGY9 # https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph/pull/117
-  block: 15998131 # TRSRY deployment
+  # base: QmYbSKNJ8g1kWnGozrJpbot8WUKVd2Sdr9r968E1MNbGY9 # https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph/pull/117
+  # block: 15998131 # TRSRY deployment
+  base: QmQwVqCC3E5tWDivxMe2Hqo2isAkL7fJf3VTmvStssW4yo # https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph/pull/136
+  block: 16228340 # Bond market launch
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
   file: ../../schema.graphql
