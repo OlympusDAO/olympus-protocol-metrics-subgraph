@@ -111,13 +111,13 @@ const getSubgraphConfigurationFilePath = (subgraph: string): string => {
  * that implements the `NetworkHandler` interface.
  *
  * @param subgraph
- * @param subgraphId
+ * @param deploymentId
  * @param branch
  * @returns
  */
 const getSubgraphHandler = async (
   subgraph: string,
-  subgraphId?: string,
+  deploymentId?: string,
   branch?: string,
 ): Promise<NetworkHandler> => {
   let subgraphFilePath = getImportFilePath(subgraph);
@@ -126,14 +126,14 @@ const getSubgraphHandler = async (
     console.info(
       `Subgraph-specific files do not exist at ${subgraphFilePath}. Using shared test files.`,
     );
-    subgraphFilePath = `./common/index.ts`;
+    subgraphFilePath = `./${SUBGRAPH_DIR}/shared/index.ts`;
   }
 
   const module = await import(subgraphFilePath);
   return new module.default(
     subgraph,
     getResultsFilePath(subgraph),
-    subgraphId,
+    deploymentId,
     branch,
   ) as NetworkHandler;
 };
@@ -150,7 +150,7 @@ program
   .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
   .requiredOption("--deployment <deployment id>", "the deployment id (starts with 'Qm')", parseDeploymentId)
   .action(async (subgraph, options) => {
-    const query = await getSubgraphHandler(subgraph, options.subgraph, null);
+    const query = await getSubgraphHandler(subgraph, options.deployment, null);
     query.doLatestBlock();
   });
 
@@ -161,7 +161,7 @@ program
   .requiredOption("--deployment <deployment id>", "the deployment id (starts with 'Qm')", parseDeploymentId)
   .requiredOption("--branch <base | branch>", "the branch", parseBranch)
   .action(async (subgraph, options) => {
-    const query = await getSubgraphHandler(subgraph, options.subgraph, options.branch);
+    const query = await getSubgraphHandler(subgraph, options.deployment, options.branch);
     query.doQuery();
   });
 
