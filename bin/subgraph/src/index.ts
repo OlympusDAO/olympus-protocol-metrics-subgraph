@@ -245,14 +245,14 @@ program
   });
 
 program
-  .command("deploy")
-  .description("Deploy subgraph to production")
+  .command("deploy:hosted")
+  .description("Deploy subgraph to the Hosted Service")
   .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
   .action((subgraph) => {
     const config = readConfig(getSubgraphConfigurationFilePath(subgraph));
     assertConfig(config);
 
-    console.info("*** Running deploy");
+    console.info("*** Deploying to Hosted Service");
     spawnProcess(
       `yarn graph deploy --deploy-key ${process.env[`GRAPH_TOKEN_${subgraph}`]
       } --product hosted-service --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --output-dir ${getBuildOutputDirectory(
@@ -267,14 +267,14 @@ program
   });
 
 program
-  .command("deploy:dev")
-  .description("Deploy subgraph to development")
+  .command("deploy:studio")
+  .description("Deploy subgraph to Subgraph Studio")
   .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
   .action((subgraph) => {
     const config = readConfig(getSubgraphConfigurationFilePath(subgraph));
     assertConfig(config);
 
-    console.info("*** Running deploy");
+    console.info("*** Deploying to Subgraph Studio");
     spawnProcess(
       `yarn graph deploy --product subgraph-studio --version-label ${config.version
       } --output-dir ${getBuildOutputDirectory(subgraph)} ${config.name

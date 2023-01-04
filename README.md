@@ -68,24 +68,23 @@ If you receive a non-sensical test result (e.g. duplicated test cases, or a test
 
 ## Deployment
 
-### Deployment (Testing)
+### Deployment - Subgraph Studio and Decentralised Service
 
 1. If necessary, create an account and subgraph in the Subgraph Studio: <https://thegraph.com/studio/>
    - The subgraph should be called `olympus-protocol-metrics`
 1. Add the Subgraph Studio deploy key to the `GRAPH_STUDIO_TOKEN` variable in `.env` (using `.env.sample`)
-1. Authenticate using `yarn auth:dev`
+1. Authenticate using `yarn auth:studio`
 1. Update the `version` property in the `subgraphs/<subgraph>/config.json` file.
 1. Run `yarn subgraph build <subgraph>`
-1. Run `yarn subgraph deploy:dev <subgraph>`
+1. Run `yarn subgraph deploy:studio <subgraph>`
 1. Update the `id` variable in the `subgraphs/<subgraph>/config.json` file with the subgraph id that was displayed in the output.
 
 A URL for the GraphQL Explorer will be provided.
 
-### Deployment (Production)
+### Deployment - Hosted Service
 
-This subgraph is deployed on the Graph Protocol's Hosted Service:
+Some subgraphs are deployed on the Graph Protocol's Hosted Service:
 
-- For historical reasons, as the hosted service was the only option at the time.
 - Going forward, the Graph Network does not yet offer multi-chain indexing, so the hosted service will still be required.
 - Note that indexing takes a significant amount of time (weeks!) at the moment. Investigation is required to look into how to improve the indexing performance.
 
@@ -94,11 +93,11 @@ To deploy, do the following:
 1. Add the Subgraph Studio deploy key to the `GRAPH_TOKEN_<subgraph>` variable in `.env` (using `.env.sample`)
 1. Update the `version` property in the `subgraphs/<subgraph>/config.json` file.
 1. Run `yarn subgraph build <subgraph>`
-1. Run `yarn subgraph deploy <subgraph>`
+1. Run `yarn subgraph deploy:hosted <subgraph>`
 1. Update the `id` variable in the `subgraphs/<subgraph>/config.json` file with the subgraph id that was displayed in the output.
 1. Update `CHANGELOG.md`.
 
-### Deployment (Local)
+### Deployment - Local
 
 A set of Docker containers is pre-configured to enable local testing of the subgraph.
 
@@ -338,7 +337,7 @@ For every pull request, GitHub Actions runs tests against the current and destin
 
 This has a few requirements:
 
-- The subgraph id must be recorded in the `id` property in the `subgraphs/<subgraph>/config.json` file. See the [Deployment Testing](#deployment-testing) section of this document for steps.
+- The subgraph id must be recorded in the `id` property in the `subgraphs/<subgraph>/config.json` file. See the [Deployment - Subgraph Studio](#deployment-subgraph-studio-and-decentralised-service) section of this document for steps.
 - Both of the subgraphs must be active (not archived)
 - Both of the subgraphs must have overlapping blocks. The latest block of the `branch` subgraph will be determined and the `base` subgraph will be given a query against that block.
 
