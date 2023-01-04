@@ -1,4 +1,4 @@
-# Olympus Protocl Metrics Subgraph
+# Olympus Protocol Metrics Subgraph
 
 Gathers data from bonds, liquidity and Olympus treasury.
 
@@ -15,7 +15,7 @@ Run `yarn`
 Note that the Graph Protocol compiles from AssemblyScript to WASM. AssemblyScript is strongly-typed, and is similar to TypeScript. However, there are a number of expected features of TypeScript (e.g. try/catch) that aren't implemented in AssemblyScript. A few suggestions:
 
 - Utilise the linting that has been set up in this repository
-- Build frequently (`yarn subgraph build <network>`), as linting does not pick up all problems
+- Build frequently (`yarn subgraph build <subgraph>`), as linting does not pick up all problems
 - Variables that are nullable need to be typed accordingly
 - You may run into a TS2322 compiler error when handling null values. The workaround for this is to use the strict equality operator (`===`), instead of loose equality (`==`) or negation (`!someValue`). e.g. `if (someValue === null)`. This is due to a [limitation in the AssemblyScript compiler.](https://github.com/AssemblyScript/assemblyscript/issues/2223#issuecomment-1069245834)
 - The Graph Protocol Discord is very helpful to get support. See the `subgraph-development` channel.
@@ -24,25 +24,25 @@ Note that the Graph Protocol compiles from AssemblyScript to WASM. AssemblyScrip
 
 A CLI tool is available at `yarn subgraph` to make common tasks (building, testing, deploying) significantly easier. Run `yarn subgraph --help` for details of the commands.
 
-Please note that `<network>` is an argument for most of the commands, as files and configuration are stored on a per-network basis.
+Please note that `<subgraph>` is an argument for most of the commands, as files and configuration are stored on a per-subgraph basis.
 
 ## Support for Networks
 
 Assets on different networks/chains are supported.
 
-Each network has an independent subgraph, as required by the Graph Protocol. For this reason, each network has an independent file structure under `networks/`.
+Each network has an independent subgraph, as required by the Graph Protocol. For this reason, each network has an independent file structure under `subgraphs/`.
 
-### Adding a New Network
+### Adding a New Subgraph
 
-1. Decide on the name for the network, which will be used throughout. e.g. `arbitrum`
-1. Create the following files and folders in `networks/<network>/`: `src/`, `tests/`, `config.json` and `subgraph.yaml`. See [networks/ethereum/](networks/ethereum/) for an example.
+1. Decide on the name for the subgraph, which will be used throughout. e.g. `arbitrum`
+1. Create the following files and folders in `subgraphs/<subgraph>/`: `src/`, `tests/`, `config.json` and `subgraph.yaml`. See [subgraphs/ethereum/](subgraphs/ethereum/) for an example.
 1. Create the subgraph through the Graph Protocol (see [Deployment](#deployment) section)
-1. Create `bin/subgraph/src/networks/<network>/index.ts` and implement a class that extends `BaseNetworkHandler`. This file defines how a particular subgraph will be automatically tested using the workflow defined in [.github/workflows/query.yml](.github/workflows/query.yml). See [bin/subgraph/src/networks/ethereum/index.ts](bin/subgraph/src/networks/ethereum/index.ts) for an example.
-1. Add `<network>` to the matrix strategies defined in [.github/workflows/query.yml](.github/workflows/query.yml) and [.github/workflows/main.yml](.github/workflows/main.yml).
+1. Create `bin/subgraph/src/subgraphs/<subgraph>/index.ts` and implement a class that extends `BaseNetworkHandler`. This file defines how a particular subgraph will be automatically tested using the workflow defined in [.github/workflows/query.yml](.github/workflows/query.yml). See [bin/subgraph/src/subgraphs/ethereum/index.ts](bin/subgraph/src/subgraphs/ethereum/index.ts) for an example.
+1. Add `<subgraph>` to the matrix strategies defined in [.github/workflows/query.yml](.github/workflows/query.yml) and [.github/workflows/main.yml](.github/workflows/main.yml).
 
 ### Triggers
 
-Each network-specific subgraph has a different trigger, specified in the respective `subgraph.yaml` file:
+Each subgraph has a different trigger, specified in the respective `subgraph.yaml` file:
 
 - Arbitrum: triggered on every block (unfortunately), but indexes only every 14,400th block (~8 hours).
 - Ethereum: triggered by the `stake()` function call on OlympusStakingV3
@@ -56,49 +56,48 @@ Arbitrum and Polygon are triggered on a per-block basis due to a limitation with
 The `matchstick-as` package is used to perform testing on the subgraph code. The syntax is close to that of
 `jest`. See this page for examples: <https://github.com/LimeChain/demo-subgraph>
 
-To run tests: `yarn subgraph test <network>`
+To run tests: `yarn subgraph test <subgraph>`
 
-If you receive a non-sensical test result (e.g. duplicated test cases, or a test failing that should be passing), try running `yarn subgraph test <network> --recompile`. The build cache will sometimes get corrupted/broken.
+If you receive a non-sensical test result (e.g. duplicated test cases, or a test failing that should be passing), try running `yarn subgraph test <subgraph> --recompile`. The build cache will sometimes get corrupted/broken.
 
 ## Adding Contracts
 
 1. Add the ABI into the `abis/` folder.
 1. Add a reference to the ABI under the respective data source in `subgraph.yaml`
-1. Run `yarn subgraph codegen <network>` to generate AssemblyScript files from the new ABI(s)
+1. Run `yarn subgraph codegen <subgraph>` to generate AssemblyScript files from the new ABI(s)
 
 ## Deployment
 
-### Deployment (Testing)
+### Deployment - Subgraph Studio and Decentralised Service
 
 1. If necessary, create an account and subgraph in the Subgraph Studio: <https://thegraph.com/studio/>
    - The subgraph should be called `olympus-protocol-metrics`
 1. Add the Subgraph Studio deploy key to the `GRAPH_STUDIO_TOKEN` variable in `.env` (using `.env.sample`)
-1. Authenticate using `yarn auth:dev`
-1. Update the `version` property in the `networks/<network>/config.json` file.
-1. Run `yarn subgraph build <network>`
-1. Run `yarn subgraph deploy:dev <network>`
-1. Update the `id` variable in the `networks/<network>/config.json` file with the subgraph id that was displayed in the output.
+1. Authenticate using `yarn auth:studio`
+1. Update the `version` property in the `subgraphs/<subgraph>/config.json` file.
+1. Run `yarn subgraph build <subgraph>`
+1. Run `yarn subgraph deploy:studio <subgraph>`
+1. Update the `id` variable in the `subgraphs/<subgraph>/config.json` file with the subgraph id that was displayed in the output.
 
 A URL for the GraphQL Explorer will be provided.
 
-### Deployment (Production)
+### Deployment - Hosted Service
 
-This subgraph is deployed on the Graph Protocol's Hosted Service:
+Some subgraphs are deployed on the Graph Protocol's Hosted Service:
 
-- For historical reasons, as the hosted service was the only option at the time.
 - Going forward, the Graph Network does not yet offer multi-chain indexing, so the hosted service will still be required.
 - Note that indexing takes a significant amount of time (weeks!) at the moment. Investigation is required to look into how to improve the indexing performance.
 
 To deploy, do the following:
 
-1. Add the Subgraph Studio deploy key to the `GRAPH_TOKEN_<network>` variable in `.env` (using `.env.sample`)
-1. Update the `version` property in the `networks/<network>/config.json` file.
-1. Run `yarn subgraph build <network>`
-1. Run `yarn subgraph deploy <network>`
-1. Update the `id` variable in the `networks/<network>/config.json` file with the subgraph id that was displayed in the output.
+1. Add the Subgraph Studio deploy key to the `GRAPH_TOKEN_<subgraph>` variable in `.env` (using `.env.sample`)
+1. Update the `version` property in the `subgraphs/<subgraph>/config.json` file.
+1. Run `yarn subgraph build <subgraph>`
+1. Run `yarn subgraph deploy:hosted <subgraph>`
+1. Update the `id` variable in the `subgraphs/<subgraph>/config.json` file with the subgraph id that was displayed in the output.
 1. Update `CHANGELOG.md`.
 
-### Deployment (Local)
+### Deployment - Local
 
 A set of Docker containers is pre-configured to enable local testing of the subgraph.
 
@@ -338,7 +337,7 @@ For every pull request, GitHub Actions runs tests against the current and destin
 
 This has a few requirements:
 
-- The subgraph id must be recorded in the `id` property in the `networks/<network>/config.json` file. See the [Deployment Testing](#deployment-testing) section of this document for steps.
+- The subgraph id must be recorded in the `id` property in the `subgraphs/<subgraph>/config.json` file. See the [Deployment - Subgraph Studio](#deployment-subgraph-studio-and-decentralised-service) section of this document for steps.
 - Both of the subgraphs must be active (not archived)
 - Both of the subgraphs must have overlapping blocks. The latest block of the `branch` subgraph will be determined and the `base` subgraph will be given a query against that block.
 

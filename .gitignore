@@ -64,6 +64,7 @@ typings/
 **/**/tests/.bin/
 **/**/tests/.latest.json
 **/**/build/
+subgraphs/**/shared/abis
 
 # query-test
 **/**/records-base.json

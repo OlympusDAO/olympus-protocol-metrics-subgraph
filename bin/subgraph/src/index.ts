@@ -5,6 +5,7 @@ import { InvalidArgumentError, program } from "commander";
 import * as dotenv from "dotenv";
 import { existsSync } from "fs";
 
+import { getDirectories } from "./helpers/fs";
 import { spawnProcess } from "./helpers/process";
 import { assertConfig, readConfig } from "./helpers/subgraphConfig";
 import { NetworkHandler } from "./networkHandler";
@@ -12,9 +13,9 @@ import { NetworkHandler } from "./networkHandler";
 // Load variables from .env
 dotenv.config();
 
-const parseSubgraphId = (value: string, _previous: string): string => {
+const parseDeploymentId = (value: string, _previous: string): string => {
   if (!value.includes("Qm")) {
-    throw new InvalidArgumentError(`${value} is not a valid subgraph id`);
+    throw new InvalidArgumentError(`${value} is not a valid deployment id`);
   }
 
   return value;
@@ -31,11 +32,22 @@ const parseBranch = (value: string, _previous: string): string => {
   return value;
 };
 
-const NETWORKS = ["ethereum", "arbitrum", "polygon", "fantom", "shared"];
-const parseNetwork = (value: string, _previous: string): string => {
-  if (!NETWORKS.includes(value)) {
+const SUBGRAPH_DIR = "subgraphs";
+
+/**
+ * Gets a list of directory names (excluding paths)
+ * corresponding to subgraphs.
+ */
+const getSubgraphs = (includePath = false): string[] => {
+  return getDirectories(SUBGRAPH_DIR, includePath);
+}
+
+const parseSubgraph = (value: string, _previous: string): string => {
+  const subgraphs = getSubgraphs();
+
+  if (!subgraphs.includes(value)) {
     throw new InvalidArgumentError(
-      `The <network> argument must be one of ${NETWORKS.join(", ")}, but was ${value}`,
+      `The <subgraph> argument must be one of ${subgraphs.join(", ")}, but was ${value}`,
     );
   }
 
@@ -43,88 +55,90 @@ const parseNetwork = (value: string, _previous: string): string => {
 };
 
 /**
- * Returns the file path for the module corresponding to {network}.
+ * Returns the file path for the module corresponding to {subgraph}.
  *
  * Note, this string is in the format expected by `import()`, relative to this file.
  *
- * @param network
+ * @param subgraph
  * @returns
  */
-const getImportFilePath = (network: string): string => {
-  return `./networks/${network}/index.ts`;
+const getImportFilePath = (subgraph: string): string => {
+  return `./${SUBGRAPH_DIR}/${subgraph}/index.ts`;
 };
 
 /**
- * Returns the file path for the network's output file, relative to the root directory.
+ * Returns the file path for the subgraph's output file, relative to the root directory.
  *
- * @param network
+ * @param subgraph
  * @returns
  */
-const getResultsFilePath = (network: string): string => {
-  return `build/results-${network}.json`;
+const getResultsFilePath = (subgraph: string): string => {
+  return `build/results-${subgraph}.json`;
 };
 
 /**
- * Returns the file path for the network's build directory, relative to the root directory.
+ * Returns the file path for the subgraph's build directory, relative to the root directory.
  *
- * @param network
+ * @param subgraph
  * @returns
  */
-const getBuildOutputDirectory = (network: string): string => {
-  return `networks/${network}/build`;
+const getBuildOutputDirectory = (subgraph: string): string => {
+  return `${SUBGRAPH_DIR}/${subgraph}/build`;
 };
 
 /**
- * Returns the file path for the network's subgraph manifest, relative to the root directory.
+ * Returns the file path for the subgraph's manifest, relative to the root directory.
  *
- * @param network
+ * @param subgraph
  * @returns
  */
-const getSubgraphManifestFilePath = (network: string): string => {
-  return `networks/${network}/subgraph.yaml`;
+const getSubgraphManifestFilePath = (subgraph: string): string => {
+  return `${SUBGRAPH_DIR}/${subgraph}/subgraph.yaml`;
 };
 
 /**
- * Returns the file path for the network's configuration file, relative to the root directory.
+ * Returns the file path for the subgraph's configuration file, relative to the root directory.
  *
- * @param network
+ * @param subgraph
  * @returns
  */
-const getSubgraphConfigurationFilePath = (network: string): string => {
-  return `networks/${network}/config.json`;
+const getSubgraphConfigurationFilePath = (subgraph: string): string => {
+  return `${SUBGRAPH_DIR}/${subgraph}/config.json`;
 };
 
 /**
- * For the given {network} value, import and instantiate the corresponding class
+ * For the given {subgraph} value, import and instantiate the corresponding class
  * that implements the `NetworkHandler` interface.
  *
- * @param network
- * @param subgraphId
+ * @param subgraph
+ * @param deploymentId
  * @param branch
  * @returns
  */
-const getNetworkHandler = async (
-  network: string,
-  subgraphId?: string,
+const getSubgraphHandler = async (
+  subgraph: string,
+  deploymentId?: string,
   branch?: string,
 ): Promise<NetworkHandler> => {
-  let networkFilePath = getImportFilePath(network);
+  let subgraphFilePath = getImportFilePath(subgraph);
   // Import is ok with the output of `getImportFilePath()` but `existsSync()` needs the full path
-  if (!existsSync("bin/subgraph/src/" + networkFilePath)) {
+  if (!existsSync("bin/subgraph/src/" + subgraphFilePath)) {
     console.info(
-      `Blockchain-specific files do not exist at ${networkFilePath}. Using shared test files.`,
+      `Subgraph-specific files do not exist at ${subgraphFilePath}. Using shared test files.`,
     );
-    networkFilePath = `./networks/shared/index.ts`;
+    subgraphFilePath = `./${SUBGRAPH_DIR}/shared/index.ts`;
   }
 
-  const module = await import(networkFilePath);
+  const module = await import(subgraphFilePath);
   return new module.default(
-    network,
-    getResultsFilePath(network),
-    subgraphId,
+    subgraph,
+    getResultsFilePath(subgraph),
+    deploymentId,
     branch,
   ) as NetworkHandler;
 };
+
+const subgraphNames = getSubgraphs();
 
 program
   .name("yarn subgraph")
@@ -133,42 +147,42 @@ program
 program
   .command("latest-block")
   .description("Determines the latest block for a subgraph")
-  .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
-  .requiredOption("--subgraph <subgraph id>", "the subgraph id (starts with 'Qm')", parseSubgraphId)
-  .action(async (network, options) => {
-    const query = await getNetworkHandler(network, options.subgraph, null);
+  .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
+  .requiredOption("--deployment <deployment id>", "the deployment id (starts with 'Qm')", parseDeploymentId)
+  .action(async (subgraph, options) => {
+    const query = await getSubgraphHandler(subgraph, options.deployment, null);
     query.doLatestBlock();
   });
 
 program
   .command("query")
   .description("Performs a test subgraph query")
-  .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
-  .requiredOption("--subgraph <subgraph id>", "the subgraph id (starts with 'Qm')", parseSubgraphId)
+  .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
+  .requiredOption("--deployment <deployment id>", "the deployment id (starts with 'Qm')", parseDeploymentId)
   .requiredOption("--branch <base | branch>", "the branch", parseBranch)
-  .action(async (network, options) => {
-    const query = await getNetworkHandler(network, options.subgraph, options.branch);
+  .action(async (subgraph, options) => {
+    const query = await getSubgraphHandler(subgraph, options.deployment, options.branch);
     query.doQuery();
   });
 
 program
   .command("compare")
   .description("Compares records")
-  .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
-  .action(async (network) => {
-    const query = await getNetworkHandler(network, null, null);
+  .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
+  .action(async (subgraph) => {
+    const query = await getSubgraphHandler(subgraph, null, null);
     query.doComparison();
   });
 
 program
   .command("codegen")
   .description("Generate code for subgraph")
-  .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
-  .action((network) => {
-    const generatedDir = `networks/${network}/generated/`;
+  .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
+  .action((subgraph) => {
+    const generatedDir = `${SUBGRAPH_DIR}/${subgraph}/generated/`;
     console.info("*** Running codegen");
     spawnProcess(
-      `yarn graph codegen ${getSubgraphManifestFilePath(network)} --output-dir ${generatedDir}`,
+      `yarn graph codegen ${getSubgraphManifestFilePath(subgraph)} --output-dir ${generatedDir}`,
       (codegenExitCode: number) => {
         if (codegenExitCode > 0) {
           process.exit(codegenExitCode);
@@ -190,12 +204,12 @@ program
 program
   .command("build")
   .description("Build subgraph")
-  .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
-  .action((network) => {
+  .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
+  .action((subgraph) => {
     const childProcess = exec(
       `yarn graph build ${getSubgraphManifestFilePath(
-        network,
-      )} --output-dir ${getBuildOutputDirectory(network)}`,
+        subgraph,
+      )} --output-dir ${getBuildOutputDirectory(subgraph)}`,
     );
     childProcess.stdout.pipe(process.stdout);
     childProcess.stderr.pipe(process.stderr);
@@ -204,13 +218,13 @@ program
 program
   .command("test")
   .description("Test subgraph")
-  .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
+  .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
   .option("--recompile", "Recompiles all tests")
-  .action((network, options) => {
+  .action((subgraph, options) => {
     console.info("*** Running mustache to generate matchstick.yaml");
     spawnProcess(
       `echo '${JSON.stringify({
-        network: network,
+        subgraph: subgraph,
       })}' | yarn -s mustache - matchstick.template.yaml > matchstick.yaml`,
       (mustacheExitCode: number) => {
         if (mustacheExitCode > 0) {
@@ -231,19 +245,19 @@ program
   });
 
 program
-  .command("deploy")
-  .description("Deploy subgraph to production")
-  .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
-  .action((network) => {
-    const config = readConfig(getSubgraphConfigurationFilePath(network));
+  .command("deploy:hosted")
+  .description("Deploy subgraph to the Hosted Service")
+  .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
+  .action((subgraph) => {
+    const config = readConfig(getSubgraphConfigurationFilePath(subgraph));
     assertConfig(config);
 
-    console.info("*** Running deploy");
+    console.info("*** Deploying to Hosted Service");
     spawnProcess(
-      `yarn graph deploy --deploy-key ${process.env[`GRAPH_TOKEN_${network}`]
+      `yarn graph deploy --deploy-key ${process.env[`GRAPH_TOKEN_${subgraph}`]
       } --product hosted-service --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --output-dir ${getBuildOutputDirectory(
-        network,
-      )} ${config.org}/${config.name} ${getSubgraphManifestFilePath(network)}`,
+        subgraph,
+      )} ${config.org}/${config.name} ${getSubgraphManifestFilePath(subgraph)}`,
       (codegenExitCode: number) => {
         if (codegenExitCode > 0) {
           process.exit(codegenExitCode);
@@ -253,18 +267,18 @@ program
   });
 
 program
-  .command("deploy:dev")
-  .description("Deploy subgraph to development")
-  .argument("<network>", `the chain/network to use, one of: ${NETWORKS.join(", ")}`, parseNetwork)
-  .action((network) => {
-    const config = readConfig(getSubgraphConfigurationFilePath(network));
+  .command("deploy:studio")
+  .description("Deploy subgraph to Subgraph Studio")
+  .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
+  .action((subgraph) => {
+    const config = readConfig(getSubgraphConfigurationFilePath(subgraph));
     assertConfig(config);
 
-    console.info("*** Running deploy");
+    console.info("*** Deploying to Subgraph Studio");
     spawnProcess(
       `yarn graph deploy --product subgraph-studio --version-label ${config.version
-      } --output-dir ${getBuildOutputDirectory(network)} ${config.name
-      } ${getSubgraphManifestFilePath(network)}`,
+      } --output-dir ${getBuildOutputDirectory(subgraph)} ${config.name
+      } ${getSubgraphManifestFilePath(subgraph)}`,
       (codegenExitCode: number) => {
         if (codegenExitCode > 0) {
           process.exit(codegenExitCode);
