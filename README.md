@@ -1,4 +1,4 @@
-# Olympus Protocl Metrics Subgraph
+# Olympus Protocol Metrics Subgraph
 
 Gathers data from bonds, liquidity and Olympus treasury.
 
