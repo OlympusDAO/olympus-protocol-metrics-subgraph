@@ -24,15 +24,15 @@ jobs:
           yarn install --frozen-lockfile
       - name: Check Variables
         run: |
-          SUBGRAPH_ID=$(jq -r .id subgraphs/${{ matrix.subgraph }}/config.json)
-          [[ ! -z "$SUBGRAPH_ID" ]] && echo "subgraph id is set" || (echo "::error::subgraph id is not set in config.json" && exit 1)
-          echo "SUBGRAPH_ID=$SUBGRAPH_ID" >> $GITHUB_ENV
+          DEPLOYMENT_ID=$(jq -r .id subgraphs/${{ matrix.subgraph }}/config.json)
+          [[ ! -z "$DEPLOYMENT_ID" ]] && echo "subgraph id is set" || (echo "::error::subgraph id is not set in config.json" && exit 1)
+          echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
       - name: Get Latest Block
         run: |
-          yarn subgraph latest-block ${{ matrix.subgraph }} --subgraph ${{ env.SUBGRAPH_ID }}
+          yarn subgraph latest-block ${{ matrix.subgraph }} --deployment ${{ env.DEPLOYMENT_ID }}
       - name: Get Token Records
         run: |
-          yarn subgraph query ${{ matrix.subgraph }} --branch branch --subgraph ${{ env.SUBGRAPH_ID }}
+          yarn subgraph query ${{ matrix.subgraph }} --branch branch --deployment ${{ env.DEPLOYMENT_ID }}
       - name: Upload Results
         uses: actions/upload-artifact@v3
         with:
@@ -59,9 +59,9 @@ jobs:
           yarn install --frozen-lockfile
       - name: Check Variables
         run: |
-          SUBGRAPH_ID=$(jq -r .id subgraphs/${{ matrix.subgraph }}/config.json)
-          [[ ! -z "$SUBGRAPH_ID" ]] && echo "subgraph id is set" || (echo "::error::subgraph id is not set in config.json" && exit 1)
-          echo "SUBGRAPH_ID=$SUBGRAPH_ID" >> $GITHUB_ENV
+          DEPLOYMENT_ID=$(jq -r .id subgraphs/${{ matrix.subgraph }}/config.json)
+          [[ ! -z "$DEPLOYMENT_ID" ]] && echo "subgraph id is set" || (echo "::error::subgraph id is not set in config.json" && exit 1)
+          echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
       - name: Download Results
         uses: actions/download-artifact@v3
         with:
@@ -69,7 +69,7 @@ jobs:
           path: build/
       - name: Get Token Records
         run: |
-          yarn subgraph query ${{ matrix.subgraph }} --branch base --subgraph ${{ env.SUBGRAPH_ID }}
+          yarn subgraph query ${{ matrix.subgraph }} --branch base --deployment ${{ env.DEPLOYMENT_ID }}
       - name: Upload Results
         uses: actions/upload-artifact@v3
         with:

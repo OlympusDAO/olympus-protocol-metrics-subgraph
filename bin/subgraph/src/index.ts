@@ -13,9 +13,9 @@ import { NetworkHandler } from "./networkHandler";
 // Load variables from .env
 dotenv.config();
 
-const parseSubgraphId = (value: string, _previous: string): string => {
+const parseDeploymentId = (value: string, _previous: string): string => {
   if (!value.includes("Qm")) {
-    throw new InvalidArgumentError(`${value} is not a valid subgraph id`);
+    throw new InvalidArgumentError(`${value} is not a valid deployment id`);
   }
 
   return value;
@@ -148,7 +148,7 @@ program
   .command("latest-block")
   .description("Determines the latest block for a subgraph")
   .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
-  .requiredOption("--subgraph <subgraph id>", "the subgraph id (starts with 'Qm')", parseSubgraphId)
+  .requiredOption("--deployment <deployment id>", "the deployment id (starts with 'Qm')", parseDeploymentId)
   .action(async (subgraph, options) => {
     const query = await getSubgraphHandler(subgraph, options.subgraph, null);
     query.doLatestBlock();
@@ -158,7 +158,7 @@ program
   .command("query")
   .description("Performs a test subgraph query")
   .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
-  .requiredOption("--subgraph <subgraph id>", "the subgraph id (starts with 'Qm')", parseSubgraphId)
+  .requiredOption("--deployment <deployment id>", "the deployment id (starts with 'Qm')", parseDeploymentId)
   .requiredOption("--branch <base | branch>", "the branch", parseBranch)
   .action(async (subgraph, options) => {
     const query = await getSubgraphHandler(subgraph, options.subgraph, options.branch);
