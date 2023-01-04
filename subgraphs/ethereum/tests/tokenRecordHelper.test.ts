@@ -1,16 +1,16 @@
 import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
-import { TokenRecord } from "../../../common/generated/schema";
+import { TokenRecord } from "../../shared/generated/schema";
 import {
   TokenCategoryStable,
   TokenCategoryVolatile,
-} from "../../../common/src/contracts/TokenDefinition";
+} from "../../shared/src/contracts/TokenDefinition";
 import {
   createOrUpdateTokenRecord,
   getTokenAddressesInCategory,
   isTokenAddressInCategory,
-} from "../../../common/src/utils/TokenRecordHelper";
+} from "../../shared/src/utils/TokenRecordHelper";
 import {
   BLOCKCHAIN,
   ERC20_DAI,

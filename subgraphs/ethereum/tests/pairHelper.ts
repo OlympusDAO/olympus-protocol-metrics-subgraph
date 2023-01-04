@@ -1,7 +1,7 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { createMockedFunction } from "matchstick-as";
 
-import { toBigInt, toDecimal } from "../../../common/src/utils/Decimals";
+import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
 import {
   CONVEX_ALLOCATORS,
   ERC20_BTRFLY_V1,

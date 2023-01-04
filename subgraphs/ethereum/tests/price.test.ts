@@ -7,7 +7,7 @@ import {
   test,
 } from "matchstick-as/assembly/index";
 
-import { DEFAULT_DECIMALS, toBigInt } from "../../../common/src/utils/Decimals";
+import { DEFAULT_DECIMALS, toBigInt } from "../../shared/src/utils/Decimals";
 import {
   BALANCER_VAULT,
   ERC20_BALANCER_WETH_FDT,

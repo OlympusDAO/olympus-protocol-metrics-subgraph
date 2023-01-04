@@ -1,8 +1,8 @@
 import { Address, BigDecimal, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
-import { toBigInt, toDecimal } from "../../../common/src/utils/Decimals";
-import { DAO_WALLET, TREASURY_ADDRESS_V3 } from "../../../common/src/Wallets";
+import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
+import { DAO_WALLET, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import {
   getBalancerPoolTokenQuantity,
   getBalancerPoolTotalTokenQuantity,

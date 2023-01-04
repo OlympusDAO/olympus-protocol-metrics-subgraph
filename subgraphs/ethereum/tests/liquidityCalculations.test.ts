@@ -1,8 +1,8 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, describe, test } from "matchstick-as/assembly/index";
 
-import { toBigInt } from "../../../common/src/utils/Decimals";
-import { DAO_WALLET, TREASURY_ADDRESS_V3 } from "../../../common/src/Wallets";
+import { toBigInt } from "../../shared/src/utils/Decimals";
+import { DAO_WALLET, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getOwnedLiquidityPoolValue } from "../src/liquidity/LiquidityCalculations";
 import {
   ERC20_BALANCER_OHM_DAI_WETH,

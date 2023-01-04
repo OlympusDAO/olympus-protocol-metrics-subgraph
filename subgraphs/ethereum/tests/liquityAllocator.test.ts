@@ -1,8 +1,8 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, test } from "matchstick-as/assembly/index";
 
-import { toBigInt } from "../../../common/src/utils/Decimals";
-import { LUSD_ALLOCATOR } from "../../../common/src/Wallets";
+import { toBigInt } from "../../shared/src/utils/Decimals";
+import { LUSD_ALLOCATOR } from "../../shared/src/Wallets";
 import { ERC20_LQTY, ERC20_LUSD, ERC20_TRIBE, ERC20_WETH } from "../src/utils/Constants";
 import {
   getLiquityStabilityPoolBalance,

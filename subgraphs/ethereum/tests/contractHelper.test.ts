@@ -1,13 +1,13 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
-import { toBigInt } from "../../../common/src/utils/Decimals";
+import { toBigInt } from "../../shared/src/utils/Decimals";
 import {
   CONVEX_ALLOCATOR3,
   CONVEX_CVX_VL_ALLOCATOR,
   DAO_WALLET,
   TREASURY_ADDRESS_V3,
-} from "../../../common/src/Wallets";
+} from "../../shared/src/Wallets";
 import {
   AURA_STAKING_OHM_DAI_WETH,
   BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
