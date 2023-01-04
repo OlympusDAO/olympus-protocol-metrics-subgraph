@@ -1,0 +1,8 @@
+type PriceSnapshot @entity(immutable: true) {
+  id: ID!
+  block: BigInt!
+  timestamp: BigInt!
+  date: String!
+  priceOhm: BigDecimal!
+  priceGOhm: BigDecimal!
+}
