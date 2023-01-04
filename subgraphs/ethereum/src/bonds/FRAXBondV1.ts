@@ -1,8 +1,8 @@
-import { toDecimal } from "../../../../common/src/utils/Decimals";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { DepositCall } from "../../generated/FRAXBondV1/FRAXBondV1";
-import { createDailyBondRecord } from "./DailyBond";
 import { FRAXBOND_TOKEN } from "../utils/Constants";
 import { loadOrCreateToken } from "../utils/Tokens";
+import { createDailyBondRecord } from "./DailyBond";
 
 export function handleDeposit(call: DepositCall): void {
   const token = loadOrCreateToken(FRAXBOND_TOKEN);

@@ -1,6 +1,6 @@
 import { BigDecimal } from "@graphprotocol/graph-ts";
 
-import { TokenRecord } from "../../../../common/generated/schema";
+import { TokenRecord } from "../../../shared/generated/schema";
 
 /**
  * OHM price * circulating supply

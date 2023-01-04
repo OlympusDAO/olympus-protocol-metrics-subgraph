@@ -1,6 +1,6 @@
 import { Address, BigInt } from "@graphprotocol/graph-ts";
 
-import { toDecimal } from "../../../../common/src/utils/Decimals";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { Rebase } from "../../generated/schema";
 import { OlympusERC20 } from "../../generated/sOlympusERC20V1/OlympusERC20";
 import { RebaseCall } from "../../generated/sOlympusERC20V1/sOlympusERC20";

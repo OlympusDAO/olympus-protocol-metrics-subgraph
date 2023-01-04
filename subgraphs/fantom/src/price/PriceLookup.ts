@@ -1,10 +1,10 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { ERC20_WETH } from "../../../arbitrum/src/contracts/Constants";
-import { PriceHandler, PriceLookupResult } from "../../../../common/src/price/PriceHandler";
-import { PriceHandlerStablecoin } from "../../../../common/src/price/PriceHandlerStablecoin";
-import { PriceHandlerUniswapV2 } from "../../../../common/src/price/PriceHandlerUniswapV2";
-import { getUSDRate } from "../../../../common/src/price/PriceRouter";
+import { PriceHandler, PriceLookupResult } from "../../../shared/src/price/PriceHandler";
+import { PriceHandlerStablecoin } from "../../../shared/src/price/PriceHandlerStablecoin";
+import { PriceHandlerUniswapV2 } from "../../../shared/src/price/PriceHandlerUniswapV2";
+import { getUSDRate } from "../../../shared/src/price/PriceRouter";
 import {
   ERC20_BEETS,
   ERC20_BOO,

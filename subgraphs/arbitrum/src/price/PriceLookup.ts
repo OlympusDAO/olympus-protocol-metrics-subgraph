@@ -1,11 +1,11 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { PriceHandler, PriceLookupResult } from "../../../../common/src/price/PriceHandler";
-import { PriceHandlerBalancer } from "../../../../common/src/price/PriceHandlerBalancer";
-import { PriceHandlerStablecoin } from "../../../../common/src/price/PriceHandlerStablecoin";
-import { PriceHandlerUniswapV2 } from "../../../../common/src/price/PriceHandlerUniswapV2";
-import { PriceHandlerUniswapV3 } from "../../../../common/src/price/PriceHandlerUniswapV3";
-import { getUSDRate } from "../../../../common/src/price/PriceRouter";
+import { PriceHandler, PriceLookupResult } from "../../../shared/src/price/PriceHandler";
+import { PriceHandlerBalancer } from "../../../shared/src/price/PriceHandlerBalancer";
+import { PriceHandlerStablecoin } from "../../../shared/src/price/PriceHandlerStablecoin";
+import { PriceHandlerUniswapV2 } from "../../../shared/src/price/PriceHandlerUniswapV2";
+import { PriceHandlerUniswapV3 } from "../../../shared/src/price/PriceHandlerUniswapV3";
+import { getUSDRate } from "../../../shared/src/price/PriceRouter";
 import {
   BALANCER_VAULT,
   ERC20_FRAX,

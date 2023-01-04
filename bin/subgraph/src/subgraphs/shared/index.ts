@@ -1,5 +1,5 @@
-import { BaseNetworkHandler } from "../networkHandler";
-import { getTestBlock, getTokenRecords } from "../subgraph";
+import { BaseNetworkHandler } from "../../networkHandler";
+import { getTestBlock, getTokenRecords } from "../../subgraph";
 import {
   combineOutput,
   compareLiquidBackingRecords,

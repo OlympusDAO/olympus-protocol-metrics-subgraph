@@ -1,10 +1,10 @@
 import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { log } from "matchstick-as";
 
-import { TokenRecord } from "../../../../common/generated/schema";
-import { TokenCategoryPOL } from "../../../../common/src/contracts/TokenDefinition";
-import { toDecimal } from "../../../../common/src/utils/Decimals";
-import { createOrUpdateTokenRecord } from "../../../../common/src/utils/TokenRecordHelper";
+import { TokenRecord } from "../../../shared/generated/schema";
+import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { TokenSupply } from "../../generated/schema";

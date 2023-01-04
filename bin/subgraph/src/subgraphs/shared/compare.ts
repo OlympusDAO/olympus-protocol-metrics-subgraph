@@ -4,9 +4,9 @@ import {
   calculateLiquidBacking,
   calculateMarketValue,
   calculateMarketValueCategory,
-} from "../helpers/metrics";
-import { formatCurrency, formatNumber, valuesEqual } from "../helpers/number";
-import { TokenRecord } from "../subgraph";
+} from "../../helpers/metrics";
+import { formatCurrency, formatNumber, valuesEqual } from "../../helpers/number";
+import { TokenRecord } from "../../subgraph";
 import { ComparisonResults } from "./results";
 
 const CHECK = "✅";

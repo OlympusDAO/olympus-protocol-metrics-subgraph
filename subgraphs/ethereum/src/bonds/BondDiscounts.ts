@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { toDecimal } from "../../../../common/src/utils/Decimals";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { DAIBondV1 } from "../../generated/BondDiscounts/DAIBondV1";
 import { DAIBondV2 } from "../../generated/BondDiscounts/DAIBondV2";
 import { DAIBondV3 } from "../../generated/BondDiscounts/DAIBondV3";

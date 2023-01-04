@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { toDecimal } from "../../../../common/src/utils/Decimals";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
 import { TokenSupply } from "../../generated/schema";
 import { getBalancerPoolTokenQuantity } from "../liquidity/LiquidityBalancer";

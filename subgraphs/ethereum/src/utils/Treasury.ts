@@ -1,8 +1,9 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
-import { TokenRecord } from "../../../../common/generated/schema";
-import { toDecimal } from "../../../../common/src/utils/Decimals";
-import { createOrUpdateTokenRecord, getIsTokenLiquid } from "../../../../common/src/utils/TokenRecordHelper";
-import { TRSRY } from "../../../../common/src/Wallets";
+
+import { TokenRecord } from "../../../shared/generated/schema";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { createOrUpdateTokenRecord, getIsTokenLiquid } from "../../../shared/src/utils/TokenRecordHelper";
+import { TRSRY } from "../../../shared/src/Wallets";
 import { BLOCKCHAIN, ERC20_TOKENS, getContractName } from "./Constants";
 import { getERC20 } from "./ContractHelper";
 

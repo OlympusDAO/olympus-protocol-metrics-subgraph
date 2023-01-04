@@ -1,9 +1,9 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
-import { ERC20 } from "../../../../common/generated/Price/ERC20";
-import { TokenRecord } from "../../../../common/generated/schema";
-import { getERC20TokenRecordFromWallet } from "../../../../common/src/contracts/ERC20";
-import { DAO_WALLET, WALLET_ADDRESSES } from "../../../../common/src/Wallets";
+import { ERC20 } from "../../../shared/generated/Price/ERC20";
+import { TokenRecord } from "../../../shared/generated/schema";
+import { getERC20TokenRecordFromWallet } from "../../../shared/src/contracts/ERC20";
+import { DAO_WALLET, WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 import {
   BLOCKCHAIN,
   CONTRACT_ABBREVIATION_MAP,

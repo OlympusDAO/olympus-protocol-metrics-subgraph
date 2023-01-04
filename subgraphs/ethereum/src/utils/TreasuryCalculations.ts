@@ -1,7 +1,7 @@
 import { BigInt } from "@graphprotocol/graph-ts";
 
-import { TokenRecord } from "../../../../common/generated/schema";
-import { pushArray } from "../../../../common/src/utils/ArrayHelper";
+import { TokenRecord } from "../../../shared/generated/schema";
+import { pushArray } from "../../../shared/src/utils/ArrayHelper";
 import { TokenSupply } from "../../generated/schema";
 import { getOwnedLiquidityPoolValue } from "../liquidity/LiquidityCalculations";
 import { pushTokenSupplyArray } from "./ArrayHelper";

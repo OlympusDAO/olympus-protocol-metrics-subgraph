@@ -7,8 +7,8 @@
 
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { TokenCategoryStable } from "../../../../common/src/contracts/TokenDefinition";
-import { isTokenAddressInCategory } from "../../../../common/src/utils/TokenRecordHelper";
+import { TokenCategoryStable } from "../../../shared/src/contracts/TokenDefinition";
+import { isTokenAddressInCategory } from "../../../shared/src/utils/TokenRecordHelper";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { ERC20_TOKENS, ERC20_WETH, PAIR_UNISWAP_V2_USDC_ETH } from "./Constants";
 import { getContractName } from "./Constants";

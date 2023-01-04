@@ -1,10 +1,10 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { PriceHandler, PriceLookupResult } from "../../../../common/src/price/PriceHandler";
-import { PriceHandlerCustomMapping } from "../../../../common/src/price/PriceHandlerCustomMapping";
-import { PriceHandlerStablecoin } from "../../../../common/src/price/PriceHandlerStablecoin";
-import { PriceHandlerUniswapV2 } from "../../../../common/src/price/PriceHandlerUniswapV2";
-import { getUSDRate } from "../../../../common/src/price/PriceRouter";
+import { PriceHandler, PriceLookupResult } from "../../../shared/src/price/PriceHandler";
+import { PriceHandlerCustomMapping } from "../../../shared/src/price/PriceHandlerCustomMapping";
+import { PriceHandlerStablecoin } from "../../../shared/src/price/PriceHandlerStablecoin";
+import { PriceHandlerUniswapV2 } from "../../../shared/src/price/PriceHandlerUniswapV2";
+import { getUSDRate } from "../../../shared/src/price/PriceRouter";
 import {
   ERC20_DAI,
   ERC20_FRAX,

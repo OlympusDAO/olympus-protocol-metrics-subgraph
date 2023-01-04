@@ -1,9 +1,9 @@
 import { BigInt, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecord } from "../../../../common/generated/schema";
-import { getERC20 } from "../../../../common/src/contracts/ERC20";
-import { pushArray } from "../../../../common/src/utils/ArrayHelper";
-import { getTokensInCategory } from "../../../../common/src/utils/TokenRecordHelper";
+import { TokenRecord } from "../../../shared/generated/schema";
+import { getERC20 } from "../../../shared/src/contracts/ERC20";
+import { pushArray } from "../../../shared/src/utils/ArrayHelper";
+import { getTokensInCategory } from "../../../shared/src/utils/TokenRecordHelper";
 import { ERC20_TOKENS_FANTOM } from "../contracts/Constants";
 import { getContractName, getERC20TokenRecordsFromWallets } from "../contracts/Contracts";
 import { getPrice } from "../price/PriceLookup";

@@ -1,4 +1,4 @@
-import { toDecimal } from "../../../../common/src/utils/Decimals";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { DepositCall } from "../../generated/FRAXBondV1/FRAXBondV1";
 import { ETHBOND_TOKEN } from "../utils/Constants";
 import { getBaseEthUsdRate } from "../utils/PriceBase";

@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { toDecimal } from "../../../../common/src/utils/Decimals";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { ERC20_WETH } from "../utils/Constants";
 import { getERC20, getUniswapV3Pair } from "../utils/ContractHelper";
 import { getUSDRateUniswapV3 } from "../utils/Price";

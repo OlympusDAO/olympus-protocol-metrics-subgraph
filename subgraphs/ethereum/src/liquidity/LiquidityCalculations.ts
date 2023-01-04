@@ -1,7 +1,7 @@
 import { BigInt, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecord } from "../../../../common/generated/schema";
-import { pushArray } from "../../../../common/src/utils/ArrayHelper";
+import { TokenRecord } from "../../../shared/generated/schema";
+import { pushArray } from "../../../shared/src/utils/ArrayHelper";
 import { getContractName, LIQUIDITY_OWNED } from "../utils/Constants";
 import { PairHandler, PairHandlerTypes } from "../utils/PairHandler";
 import { getBalancerRecords } from "./LiquidityBalancer";

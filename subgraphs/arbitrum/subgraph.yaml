@@ -21,18 +21,18 @@ dataSources:
         - TokenSupply
       abis:
         - name: ERC20
-          file: ../../common/abis/ERC20.json
+          file: ../shared/abis/ERC20.json
         - name: gOHM
-          file: ../../common/abis/gOHM.json
+          file: ../shared/abis/gOHM.json
         # Price Lookup
         - name: BalancerVault
-          file: ../../common/abis/BalancerVault.json
+          file: ../shared/abis/BalancerVault.json
         - name: BalancerPoolToken
-          file: ../../common/abis/BalancerPoolToken.json
+          file: ../shared/abis/BalancerPoolToken.json
         - name: UniswapV2Pair
-          file: ../../common/abis/UniswapV2Pair.json
+          file: ../shared/abis/UniswapV2Pair.json
         - name: UniswapV3Pair
-          file: ../../common/abis/UniswapV3Pair.json
+          file: ../shared/abis/UniswapV3Pair.json
         # Custom ABIs
         - name: JONESStaking
           file: abis/JONESStaking.json

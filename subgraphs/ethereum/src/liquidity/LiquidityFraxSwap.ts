@@ -1,9 +1,9 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecord } from "../../../../common/generated/schema";
-import { TokenCategoryPOL } from "../../../../common/src/contracts/TokenDefinition";
-import { toDecimal } from "../../../../common/src/utils/Decimals";
-import { createOrUpdateTokenRecord } from "../../../../common/src/utils/TokenRecordHelper";
+import { TokenRecord } from "../../../shared/generated/schema";
+import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { FraxSwapPool } from "../../generated/ProtocolMetrics/FraxSwapPool";
 import { TokenSupply } from "../../generated/schema";
 import {

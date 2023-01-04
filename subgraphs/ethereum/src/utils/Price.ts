@@ -1,12 +1,12 @@
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
-import { TokenCategoryStable } from "../../../../common/src/contracts/TokenDefinition";
-import { arrayIncludesLoose } from "../../../../common/src/utils/ArrayHelper";
-import { toDecimal } from "../../../../common/src/utils/Decimals";
+import { TokenCategoryStable } from "../../../shared/src/contracts/TokenDefinition";
+import { arrayIncludesLoose } from "../../../shared/src/utils/ArrayHelper";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import {
   getTokenAddressesInCategory,
   isTokenAddressInCategory,
-} from "../../../../common/src/utils/TokenRecordHelper";
+} from "../../../shared/src/utils/TokenRecordHelper";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { getBalancerPoolToken, getBalancerVault } from "../liquidity/LiquidityBalancer";
 import {

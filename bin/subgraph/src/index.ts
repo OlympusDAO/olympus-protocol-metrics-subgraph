@@ -124,7 +124,7 @@ const getSubgraphHandler = async (
   // Import is ok with the output of `getImportFilePath()` but `existsSync()` needs the full path
   if (!existsSync("bin/subgraph/src/" + subgraphFilePath)) {
     console.info(
-      `Subgraph-specific files do not exist at ${subgraphFilePath}. Using common test files.`,
+      `Subgraph-specific files do not exist at ${subgraphFilePath}. Using shared test files.`,
     );
     subgraphFilePath = `./common/index.ts`;
   }

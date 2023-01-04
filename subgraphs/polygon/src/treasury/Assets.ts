@@ -3,7 +3,7 @@ import { BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 import {
   TokenCategoryStable,
   TokenCategoryVolatile,
-} from "../../../../common/src/contracts/TokenDefinition";
+} from "../../../shared/src/contracts/TokenDefinition";
 import { getOwnedLiquidityBalances } from "./OwnedLiquidity";
 import { getTokenBalances } from "./TokenBalances";
 

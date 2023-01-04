@@ -1,10 +1,10 @@
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecord } from "../../../../common/generated/schema";
-import { TokenCategoryPOL } from "../../../../common/src/contracts/TokenDefinition";
-import { pushArray } from "../../../../common/src/utils/ArrayHelper";
-import { toDecimal } from "../../../../common/src/utils/Decimals";
-import { createOrUpdateTokenRecord } from "../../../../common/src/utils/TokenRecordHelper";
+import { TokenRecord } from "../../../shared/generated/schema";
+import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
+import { pushArray } from "../../../shared/src/utils/ArrayHelper";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolToken";
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
 import { TokenSupply } from "../../generated/schema";

@@ -1,14 +1,14 @@
 import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
-import { TokenRecord } from "../../../../common/generated/schema";
-import { getDecimals } from "../../../../common/src/contracts/ERC20";
-import { toDecimal } from "../../../../common/src/utils/Decimals";
-import { addressesEqual } from "../../../../common/src/utils/StringHelper";
+import { TokenRecord } from "../../../shared/generated/schema";
+import { getDecimals } from "../../../shared/src/contracts/ERC20";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { addressesEqual } from "../../../shared/src/utils/StringHelper";
 import {
   createOrUpdateTokenRecord,
   getIsTokenLiquid,
-} from "../../../../common/src/utils/TokenRecordHelper";
-import { WALLET_ADDRESSES } from "../../../../common/src/Wallets";
+} from "../../../shared/src/utils/TokenRecordHelper";
+import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 import { JONESStaking } from "../../generated/TokenRecords-arbitrum/JONESStaking";
 import { getPrice } from "../price/PriceLookup";
 import {

@@ -1,4 +1,4 @@
-import { toDecimal } from "../../../../common/src/utils/Decimals";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { DepositCall } from "../../generated/DAIBondV1/DAIBondV1";
 import { DAIBOND_TOKEN } from "../utils/Constants";
 import { loadOrCreateToken } from "../utils/Tokens";

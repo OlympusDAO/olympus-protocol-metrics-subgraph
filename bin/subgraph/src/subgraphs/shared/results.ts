@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname } from "path";
 
-import { TokenRecord } from "../subgraph";
+import { TokenRecord } from "../../subgraph";
 
 export type ComparisonResults = {
   latestBlock?: string;

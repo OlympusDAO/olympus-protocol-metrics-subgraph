@@ -1,10 +1,10 @@
 import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
-import { TokenRecord } from "../../../../common/generated/schema";
-import { toDecimal } from "../../../../common/src/utils/Decimals";
-import { addressesEqual } from "../../../../common/src/utils/StringHelper";
-import { createOrUpdateTokenRecord } from "../../../../common/src/utils/TokenRecordHelper";
-import { WALLET_ADDRESSES } from "../../../../common/src/Wallets";
+import { TokenRecord } from "../../../shared/generated/schema";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { addressesEqual } from "../../../shared/src/utils/StringHelper";
+import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
+import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 import { TreasureMining } from "../../generated/TokenRecords-arbitrum/TreasureMining";
 import { getPrice } from "../price/PriceLookup";
 import { BLOCKCHAIN, ERC20_MAGIC, ERC20_TOKENS_ARBITRUM, TREASURE_ATLAS_MINE } from "./Constants";

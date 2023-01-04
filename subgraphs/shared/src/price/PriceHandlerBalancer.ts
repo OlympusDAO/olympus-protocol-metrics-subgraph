@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
-import { getContractName } from "../../../subgraphs/ethereum/src/utils/Constants";
+import { getContractName } from "../../../ethereum/src/utils/Constants";
 import { BalancerPoolToken } from "../../generated/Price/BalancerPoolToken";
 import { BalancerVault } from "../../generated/Price/BalancerVault";
 import { ContractNameLookup } from "../contracts/ContractLookup";

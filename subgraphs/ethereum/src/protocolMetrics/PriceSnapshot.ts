@@ -1,5 +1,6 @@
-import { ethereum, BigInt } from "@graphprotocol/graph-ts";
-import { getISO8601StringFromTimestamp } from "../../../../common/src/utils/DateHelper";
+import { BigInt, ethereum } from "@graphprotocol/graph-ts";
+
+import { getISO8601StringFromTimestamp } from "../../../shared/src/utils/DateHelper";
 import { PriceSnapshot } from "../../generated/schema";
 import { getCurrentIndex } from "../utils/OhmCalculations";
 import { getBaseOhmUsdRate } from "../utils/Price";

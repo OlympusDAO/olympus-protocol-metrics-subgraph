@@ -1,9 +1,9 @@
-import { toDecimal } from "../../../../common/src/utils/Decimals";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { DepositCall } from "../../generated/OHMDAIBondV3/OHMDAIBondV3";
-import { createDailyBondRecord } from "./DailyBond";
 import { getOhmUSDPairValue } from "../liquidity/LiquidityUniswapV2";
 import { OHMDAILPBOND_TOKEN, PAIR_UNISWAP_V2_OHM_DAI } from "../utils/Constants";
 import { loadOrCreateToken } from "../utils/Tokens";
+import { createDailyBondRecord } from "./DailyBond";
 
 export function handleDeposit(call: DepositCall): void {
   const token = loadOrCreateToken(OHMDAILPBOND_TOKEN);

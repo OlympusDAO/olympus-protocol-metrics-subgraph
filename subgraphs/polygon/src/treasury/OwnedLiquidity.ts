@@ -1,13 +1,13 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecord } from "../../../../common/generated/schema";
-import { PriceHandler } from "../../../../common/src/price/PriceHandler";
-import { pushArray } from "../../../../common/src/utils/ArrayHelper";
+import { TokenRecord } from "../../../shared/generated/schema";
+import { PriceHandler } from "../../../shared/src/price/PriceHandler";
+import { pushArray } from "../../../shared/src/utils/ArrayHelper";
 import {
   createOrUpdateTokenRecord,
   getIsTokenLiquid,
-} from "../../../../common/src/utils/TokenRecordHelper";
-import { WALLET_ADDRESSES } from "../../../../common/src/Wallets";
+} from "../../../shared/src/utils/TokenRecordHelper";
+import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 import { BLOCKCHAIN, ERC20_TOKENS_POLYGON, OHM_TOKENS } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 import { getPriceRecursive, HANDLERS } from "../price/PriceLookup";
