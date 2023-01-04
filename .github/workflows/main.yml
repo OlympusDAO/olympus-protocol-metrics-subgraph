@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         # We want to test the shared code too
-        network: [ethereum, arbitrum, polygon, fantom, shared]
+        subgraph: [ethereum, arbitrum, polygon, fantom, shared]
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -32,8 +32,8 @@ jobs:
 
       # Run build
       - name: Build
-        run: yarn subgraph build ${{ matrix.network }}
+        run: yarn subgraph build ${{ matrix.subgraph }}
 
       # Run tests
       - name: Unit Tests
-        run: yarn subgraph test ${{ matrix.network }}
+        run: yarn subgraph test ${{ matrix.subgraph }}

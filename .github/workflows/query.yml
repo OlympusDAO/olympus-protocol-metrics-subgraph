@@ -7,7 +7,7 @@ jobs:
   test-branch:
     strategy:
       matrix:
-        network: [ethereum, arbitrum, polygon, fantom]
+        subgraph: [ethereum, arbitrum, polygon, fantom]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -24,24 +24,24 @@ jobs:
           yarn install --frozen-lockfile
       - name: Check Variables
         run: |
-          SUBGRAPH_ID=$(jq -r .id networks/${{ matrix.network }}/config.json)
+          SUBGRAPH_ID=$(jq -r .id subgraphs/${{ matrix.subgraph }}/config.json)
           [[ ! -z "$SUBGRAPH_ID" ]] && echo "subgraph id is set" || (echo "::error::subgraph id is not set in config.json" && exit 1)
           echo "SUBGRAPH_ID=$SUBGRAPH_ID" >> $GITHUB_ENV
       - name: Get Latest Block
         run: |
-          yarn subgraph latest-block ${{ matrix.network }} --subgraph ${{ env.SUBGRAPH_ID }}
+          yarn subgraph latest-block ${{ matrix.subgraph }} --subgraph ${{ env.SUBGRAPH_ID }}
       - name: Get Token Records
         run: |
-          yarn subgraph query ${{ matrix.network }} --branch branch --subgraph ${{ env.SUBGRAPH_ID }}
+          yarn subgraph query ${{ matrix.subgraph }} --branch branch --subgraph ${{ env.SUBGRAPH_ID }}
       - name: Upload Results
         uses: actions/upload-artifact@v3
         with:
-          name: results-${{ matrix.network }}
-          path: build/results-${{ matrix.network }}.json
+          name: results-${{ matrix.subgraph }}
+          path: build/results-${{ matrix.subgraph }}.json
   test-base:
     strategy:
       matrix:
-        network: [ethereum, arbitrum, polygon, fantom]
+        subgraph: [ethereum, arbitrum, polygon, fantom]
     runs-on: ubuntu-latest
     needs: [test-branch]
     steps:
@@ -59,26 +59,26 @@ jobs:
           yarn install --frozen-lockfile
       - name: Check Variables
         run: |
-          SUBGRAPH_ID=$(jq -r .id networks/${{ matrix.network }}/config.json)
+          SUBGRAPH_ID=$(jq -r .id subgraphs/${{ matrix.subgraph }}/config.json)
           [[ ! -z "$SUBGRAPH_ID" ]] && echo "subgraph id is set" || (echo "::error::subgraph id is not set in config.json" && exit 1)
           echo "SUBGRAPH_ID=$SUBGRAPH_ID" >> $GITHUB_ENV
       - name: Download Results
         uses: actions/download-artifact@v3
         with:
-          name: results-${{ matrix.network }}
+          name: results-${{ matrix.subgraph }}
           path: build/
       - name: Get Token Records
         run: |
-          yarn subgraph query ${{ matrix.network }} --branch base --subgraph ${{ env.SUBGRAPH_ID }}
+          yarn subgraph query ${{ matrix.subgraph }} --branch base --subgraph ${{ env.SUBGRAPH_ID }}
       - name: Upload Results
         uses: actions/upload-artifact@v3
         with:
-          name: results-${{ matrix.network }}
-          path: build/results-${{ matrix.network }}.json
+          name: results-${{ matrix.subgraph }}
+          path: build/results-${{ matrix.subgraph }}.json
   compare:
     strategy:
       matrix:
-        network: [ethereum, arbitrum, polygon, fantom]
+        subgraph: [ethereum, arbitrum, polygon, fantom]
     runs-on: ubuntu-latest
     needs: [test-branch, test-base]
     steps:
@@ -97,22 +97,22 @@ jobs:
       - name: Download Results
         uses: actions/download-artifact@v3
         with:
-          name: results-${{ matrix.network }}
+          name: results-${{ matrix.subgraph }}
           path: build/
       - name: Compare Token Records
         run: |
-          yarn subgraph compare ${{ matrix.network }}
+          yarn subgraph compare ${{ matrix.subgraph }}
       - name: Upload Results
         uses: actions/upload-artifact@v3
         with:
-          name: results-${{ matrix.network }}
-          path: build/results-${{ matrix.network }}.json
+          name: results-${{ matrix.subgraph }}
+          path: build/results-${{ matrix.subgraph }}.json
       - name: Prepare Results Output
         id: output
         # We store the output in the github environment as it's a multiline string: https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#multiline-strings
         run: |
           echo "OUTPUT<<EOF" >> $GITHUB_ENV
-          echo "$(jq -r .results.output build/results-${{ matrix.network }}.json)" >> $GITHUB_ENV
+          echo "$(jq -r .results.output build/results-${{ matrix.subgraph }}.json)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
       - name: Post Comment
         uses: peter-evans/create-or-update-comment@v2
