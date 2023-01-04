@@ -25,7 +25,7 @@ jobs:
       - name: Check Variables
         run: |
           DEPLOYMENT_ID=$(jq -r .id subgraphs/${{ matrix.subgraph }}/config.json)
-          [[ ! -z "$DEPLOYMENT_ID" ]] && echo "subgraph id is set" || (echo "::error::subgraph id is not set in config.json" && exit 1)
+          [[ ! -z "$DEPLOYMENT_ID" ]] && echo "deployment id is set" || (echo "::error::deployment id is not set in config.json" && exit 1)
           echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
       - name: Get Latest Block
         run: |
@@ -60,7 +60,7 @@ jobs:
       - name: Check Variables
         run: |
           DEPLOYMENT_ID=$(jq -r .id subgraphs/${{ matrix.subgraph }}/config.json)
-          [[ ! -z "$DEPLOYMENT_ID" ]] && echo "subgraph id is set" || (echo "::error::subgraph id is not set in config.json" && exit 1)
+          [[ ! -z "$DEPLOYMENT_ID" ]] && echo "deployment id is set" || (echo "::error::deployment id is not set in config.json" && exit 1)
           echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
       - name: Download Results
         uses: actions/download-artifact@v3
