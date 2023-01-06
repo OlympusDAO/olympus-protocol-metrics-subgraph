@@ -91,7 +91,7 @@ export function getLiquidityBalances(
  * @returns TokenRecord array
  */
 export function getOwnedLiquidityPoolValue(timestamp: BigInt, blockNumber: BigInt): TokenRecord[] {
-  log.info("Calculating liquidity pool value", []);
+  log.info("getOwnedLiquidityPoolValue: Calculating liquidity pool value", []);
   const records: TokenRecord[] = [];
 
   pushArray(records, getLiquidityBalances(timestamp, null, blockNumber));

@@ -33,7 +33,7 @@ export function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): To
     getStablecoinBalances(timestamp, false, blockNumber),
   );
 
-  // Volatile without protocol-owned liquidity, but blue-cip assets
+  // Volatile without protocol-owned liquidity, but blue-chip assets
   pushArray(
     records,
     getVolatileTokenBalances(timestamp, false, false, true, blockNumber),
