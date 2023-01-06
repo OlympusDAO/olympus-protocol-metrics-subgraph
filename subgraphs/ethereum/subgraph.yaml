@@ -6,7 +6,7 @@ graft:
   # base: QmYbSKNJ8g1kWnGozrJpbot8WUKVd2Sdr9r968E1MNbGY9 # https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph/pull/117
   # block: 15998131 # TRSRY deployment
   base: QmPFXU8M52Z9Sg4mYGPudYzFHr2M7HznPpPiNXK7tGxeK7 # 3.1.9
-  block: 16343580 # https://etherscan.io/tx/0x2e790fb8cfb483633d944789ec063cb7975795c5d28aa60f646ab46e0fe652d5
+  block: 16340000 # https://etherscan.io/tx/0x2e790fb8cfb483633d944789ec063cb7975795c5d28aa60f646ab46e0fe652d5
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
   file: ../../schema.graphql

@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
-import { CONVEX_STAKING_PROXY, DAO_WALLET, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
+import { CONVEX_STAKING_PROXY, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
 import {
   getCurvePairTokenQuantity,
