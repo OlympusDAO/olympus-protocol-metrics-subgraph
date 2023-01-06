@@ -21,12 +21,14 @@ import {
   ERC20_BALANCER_WETH_FDT,
   ERC20_CVX,
   ERC20_CVX_FRAX_3CRV,
+  ERC20_CVX_FRAX_USDC_STAKED,
   ERC20_CVX_OHMETH,
   ERC20_CVX_VL_V2,
   ERC20_FRAX_3CRV,
   ERC20_LQTY,
   ERC20_TOKE,
   ERC20_WETH,
+  FRAX_LOCKING_CONTRACTS,
   getWalletAddressesForContract,
   LQTY_STAKING,
   NATIVE_ETH,
@@ -114,6 +116,19 @@ export const mockFraxLockedBalance = (
   createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
     ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
   ]);
+};
+
+export const mockFraxLockedBalanceZero = (allocators: string[] = CONVEX_ALLOCATORS): void => {
+  for (let i = 0; i < allocators.length; i++) {
+    for (let j = 0; j < FRAX_LOCKING_CONTRACTS.length; j++) {
+      mockFraxLockedBalance(
+        ERC20_CVX_FRAX_USDC_STAKED,
+        allocators[i],
+        FRAX_LOCKING_CONTRACTS[j],
+        BigInt.zero(),
+      );
+    }
+  }
 };
 
 export const mockTokeStakedBalance = (

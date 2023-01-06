@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
-import { DAO_WALLET, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
+import { CONVEX_STAKING_PROXY, DAO_WALLET, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
 import {
   getCurvePairTokenQuantity,
@@ -31,7 +31,7 @@ import {
   PAIR_CURVE_OHM_ETH,
   POOL_BALANCER_OHM_DAI_WETH_ID,
 } from "../src/utils/Constants";
-import { mockConvexStakedBalance, mockConvexStakedBalanceZero, mockFraxLockedBalance } from "./contractHelper.test";
+import { mockConvexStakedBalance, mockConvexStakedBalanceZero, mockFraxLockedBalance, mockFraxLockedBalanceZero } from "./contractHelper.test";
 import { mockBalancerVaultZero } from "./liquidityBalancer.test";
 import { mockFraxSwapPairZero } from "./liquidityFraxSwap.test";
 import {
@@ -220,6 +220,7 @@ describe("Token Quantity", () => {
     mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
     mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
     mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockFraxLockedBalanceZero();
     mockWalletBalance(
       ERC20_CRV_OHMETH,
       TREASURY_ADDRESS_V3,
@@ -324,6 +325,7 @@ describe("Token Quantity", () => {
     mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
     mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
     mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockFraxLockedBalanceZero();
     mockConvexStakedBalance(
       ERC20_CVX_OHMETH,
       TREASURY_ADDRESS_V3,
@@ -406,6 +408,7 @@ describe("Pair Value", () => {
     // Mock liquidity
     mockUniswapV2PairsZero();
     mockBalancerVaultZero();
+    mockFraxLockedBalanceZero();
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
       getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
@@ -472,6 +475,7 @@ describe("Pair Value", () => {
     // Mock liquidity
     mockUniswapV2PairsZero();
     mockBalancerVaultZero();
+    mockFraxLockedBalanceZero();
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
       getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
@@ -522,6 +526,7 @@ describe("Pair Value", () => {
     // Mock liquidity
     mockUniswapV2PairsZero();
     mockBalancerVaultZero();
+    mockFraxLockedBalanceZero();
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
       getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
@@ -585,6 +590,7 @@ describe("Pair Value", () => {
     mockBalancerVaultZero();
     mockCurvePairZero();
     mockFraxSwapPairZero();
+    mockFraxLockedBalanceZero();
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
       getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
@@ -617,6 +623,7 @@ describe("Pair Value", () => {
     mockZeroWalletBalances(ERC20_CRV_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
     mockZeroWalletBalances(ERC20_CVX_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
     mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
+    mockFraxLockedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
     mockConvexStakedBalance(
       ERC20_CVX_FRAX_USDC,
       TREASURY_ADDRESS_V3,
@@ -644,6 +651,7 @@ describe("Pair Value", () => {
     mockBalancerVaultZero();
     mockCurvePairZero();
     mockFraxSwapPairZero();
+    mockFraxLockedBalanceZero();
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
       getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
@@ -680,9 +688,10 @@ describe("Pair Value", () => {
     mockZeroWalletBalances(ERC20_CRV_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
     mockZeroWalletBalances(ERC20_CVX_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
     mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockFraxLockedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
     mockFraxLockedBalance(
       ERC20_CVX_FRAX_USDC_STAKED,
-      DAO_WALLET,
+      CONVEX_STAKING_PROXY,
       FRAX_LOCKING_FRAX_USDC,
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     ); // Balance for the locked token

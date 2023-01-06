@@ -16,7 +16,7 @@ import {
   PAIR_FRAXSWAP_V1_OHM_FRAX,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
 } from "../src/utils/Constants";
-import { mockConvexStakedBalanceZero } from "./contractHelper.test";
+import { mockConvexStakedBalanceZero, mockFraxLockedBalanceZero } from "./contractHelper.test";
 import { mockBalancerVaultZero, mockBalanceVaultOhmDaiEth } from "./liquidityBalancer.test";
 import { mockFraxSwapPairOhmFrax, mockFraxSwapPairZero } from "./liquidityFraxSwap.test";
 import {
@@ -45,6 +45,7 @@ describe("getLiquidityPoolValue", () => {
     mockBalancerVaultZero();
     mockUniswapV2PairsZero();
     mockFraxSwapPairZero();
+    mockFraxLockedBalanceZero();
 
     // Mock pair
     const ohmReserves = BigDecimal.fromString("100");
@@ -121,6 +122,7 @@ describe("getLiquidityPoolValue", () => {
     mockBalancerVaultZero();
     mockUniswapV2PairsZero();
     mockFraxSwapPairZero();
+    mockFraxLockedBalanceZero();
 
     // Mock pair
     const ohmReserves = BigDecimal.fromString("100");

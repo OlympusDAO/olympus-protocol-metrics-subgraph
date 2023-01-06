@@ -13,6 +13,7 @@ import { AuraStaking } from "../../generated/ProtocolMetrics/AuraStaking";
 import { BalancerLiquidityGauge } from "../../generated/ProtocolMetrics/BalancerLiquidityGauge";
 import { ConvexBaseRewardPool } from "../../generated/ProtocolMetrics/ConvexBaseRewardPool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
+import { FraxFarm } from "../../generated/ProtocolMetrics/FraxFarm";
 import { LQTYStaking } from "../../generated/ProtocolMetrics/LQTYStaking";
 import { LUSDAllocatorV2 } from "../../generated/ProtocolMetrics/LUSDAllocatorV2";
 import { MasterChef } from "../../generated/ProtocolMetrics/MasterChef";
@@ -1365,6 +1366,67 @@ export function getConvexStakedBalance(
   const decimalBalance = toDecimal(balance, tokenContract.decimals());
   log.debug(
     "getConvexStakedBalance: Balance of {} for staking token {} ({}) and allocator {} ({})",
+    [
+      decimalBalance.toString(),
+      getContractName(tokenAddress),
+      tokenAddress,
+      getContractName(allocatorAddress),
+      allocatorAddress,
+    ],
+  );
+  return decimalBalance;
+}
+
+/**
+ * Determines the balance of a Curve token
+ * locked in Frax from the given allocator.
+ *
+ * @param tokenAddress
+ * @param allocatorAddress
+ * @param lockingAddress
+ * @param blockNumber
+ * @returns
+ */
+export function getFraxLockedBalance(
+  tokenAddress: string,
+  allocatorAddress: string,
+  lockingAddress: string,
+  blockNumber: BigInt,
+): BigDecimal | null {
+  // Unsupported
+  if (addressesEqual(tokenAddress, NATIVE_ETH)) {
+    log.info("getFraxLockedBalance: native ETH is unsupported", []);
+    return null;
+  }
+
+  // Check if tokenAddress is the same as that on the locking contract
+  const lockingContract = FraxFarm.bind(Address.fromString(lockingAddress));
+  const lockingTokenResult = lockingContract.try_stakingToken();
+  if (lockingTokenResult.reverted) {
+    log.warning(
+      "getFraxLockedBalance: Frax locking contract at {} likely doesn't exist at block {}",
+      [lockingAddress, blockNumber.toString()],
+    );
+    return null;
+  }
+
+  // Ignore if we're looping through and the locking token doesn't match
+  const lockedToken = lockingContract.stakingToken();
+  if (!lockedToken.equals(Address.fromString(tokenAddress))) {
+    log.info("getFraxLockedBalance: token {} ({}) does not match locked token {} ({}) of locking contract {} ({})", [getContractName(tokenAddress), tokenAddress, getContractName(lockedToken.toHexString()), lockedToken.toHexString(), getContractName(allocatorAddress), allocatorAddress]);
+    return null;
+  }
+
+  const tokenContract = getERC20(tokenAddress, blockNumber);
+  if (!tokenContract) {
+    throw new Error("getFraxLockedBalance: Unable to bind with ERC20 contract " + tokenAddress);
+  }
+
+  // Get balance
+  const balance = lockingContract.lockedLiquidityOf(Address.fromString(allocatorAddress));
+  const decimalBalance = toDecimal(balance, tokenContract.decimals());
+  log.debug(
+    "getFraxLockedBalance: Balance of {} for locking token {} ({}) and allocator {} ({})",
     [
       decimalBalance.toString(),
       getContractName(tokenAddress),
