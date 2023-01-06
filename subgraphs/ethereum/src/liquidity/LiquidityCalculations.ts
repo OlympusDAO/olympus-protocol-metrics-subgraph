@@ -37,6 +37,7 @@ export function getLiquidityBalances(
   ownedLiquidityPairs: PairHandler[] = LIQUIDITY_OWNED,
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
+  log.debug("getLiquidityBalances: Working with {} liquidity pairs", [ownedLiquidityPairs.length.toString()]);
 
   for (let j = 0; j < ownedLiquidityPairs.length; j++) {
     const pairHandler = ownedLiquidityPairs[j];
@@ -78,6 +79,7 @@ export function getLiquidityBalances(
     }
   }
 
+  log.debug("getLiquidityBalances: Finished with all liquidity pairs", []);
   return records;
 }
 
