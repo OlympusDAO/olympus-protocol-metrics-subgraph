@@ -291,14 +291,16 @@ function getCurvePairToken(pairAddress: string, blockNumber: BigInt): string | n
   const pair = CurvePool.bind(Address.fromString(pairAddress));
 
   // If the token does not exist at the current block, it will revert
-  if (!pair.try_token().reverted) {
-    return pair.token().toHexString();
+  const tokenResult = pair.try_token();
+  if (!tokenResult.reverted) {
+    return tokenResult.value.toHexString();
   }
 
   // For some pools (e.g. FRAX-USDC), a different interface is used... not sure why.
   const pairV2 = CurvePoolV2.bind(Address.fromString(pairAddress));
-  if (!pairV2.try_lp_token().reverted) {
-    return pairV2.lp_token().toHexString();
+  const tokenV2Result = pairV2.try_lp_token();
+  if (!tokenV2Result.reverted) {
+    return tokenV2Result.value.toHexString();
   }
 
   log.warning(
@@ -411,8 +413,7 @@ export function getCurvePairRecords(
   // Some Curve tokens are in the DAO wallet, so we add that
   const wallets = getWalletAddressesForContract(pairAddress);
 
-  const pair = CurvePool.bind(Address.fromString(pairAddress));
-  const pairTokenAddress = pair.token().toHexString();
+  const pairTokenAddress = pairTokenContract._address.toHexString();
 
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];
