@@ -709,4 +709,6 @@ describe("Pair Value", () => {
     assert.assertTrue(records[0].token.includes(getContractName(ERC20_CVX_FRAX_USDC_STAKED)) == true);
     assert.i32Equals(1, records.length);
   });
+
+  // TODO add test for CurvePoolV2
 });

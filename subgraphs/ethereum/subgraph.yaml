@@ -601,6 +601,8 @@ dataSources:
           file: ./abis/ConvexBaseRewardPool.json
         - name: CurvePool
           file: ./abis/CurvePool.json
+        - name: CurvePoolV2
+          file: ./abis/CurvePoolV2.json
         - name: TokeAllocator
           file: ./abis/TokeAllocator.json
         - name: LUSDAllocatorV2

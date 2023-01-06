@@ -6,6 +6,7 @@ import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition"
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
+import { CurvePoolV2 } from "../../generated/ProtocolMetrics/CurvePoolV2";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { TokenSupply } from "../../generated/schema";
 import {
@@ -247,16 +248,17 @@ function getCurvePairRecord(
   // Get the balance of the pair's token in walletAddress
   const pairTokenBalance = pairToken.balanceOf(Address.fromString(walletAddress));
   if (pairTokenBalance.equals(BigInt.zero())) {
-    log.debug("getCurvePairRecord: Curve pair balance for token {} ({}) in wallet {} ({}) was 0", [
-      getContractName(pairTokenAddress),
-      pairTokenAddress,
-      getContractName(walletAddress),
-      walletAddress,
-    ]);
     return null;
   }
 
   const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
+  log.debug("getCurvePairRecord: Curve pair balance for token {} ({}) in wallet {} ({}) was {}", [
+    getContractName(pairTokenAddress),
+    pairTokenAddress,
+    getContractName(walletAddress),
+    walletAddress,
+    pairTokenBalanceDecimal.toString(),
+  ]);
 
   return createOrUpdateTokenRecord(
     timestamp,
@@ -289,15 +291,21 @@ function getCurvePairToken(pairAddress: string, blockNumber: BigInt): string | n
   const pair = CurvePool.bind(Address.fromString(pairAddress));
 
   // If the token does not exist at the current block, it will revert
-  if (pair.try_token().reverted) {
-    log.debug(
-      "getCurvePairToken: ERC20 token for Curve pair {} could not be determined at block {} due to contract revert. Skipping",
-      [getContractName(pairAddress), blockNumber.toString()],
-    );
-    return null;
+  if (!pair.try_token().reverted) {
+    return pair.token().toHexString();
   }
 
-  return pair.token().toHexString();
+  // For some pools (e.g. FRAX-USDC), a different interface is used... not sure why.
+  const pairV2 = CurvePoolV2.bind(Address.fromString(pairAddress));
+  if (!pairV2.try_lp_token().reverted) {
+    return pairV2.lp_token().toHexString();
+  }
+
+  log.warning(
+    "getCurvePairToken: ERC20 token for Curve pair {} could not be determined at block {} due to contract revert. Skipping",
+    [getContractName(pairAddress), blockNumber.toString()],
+  );
+  return null;
 }
 
 function getCurvePairTokenContract(pairAddress: string, blockNumber: BigInt): ERC20 | null {
@@ -373,16 +381,20 @@ export function getCurvePairRecords(
   // If we are restricting by token and tokenAddress does not match either side of the pair
   if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
     log.debug(
-      "getCurvePairRecords: Skipping Curve pair that does not match specified token address {}",
-      [tokenAddress],
+      "getCurvePairRecords: Skipping Curve pair {} ({}) that does not match specified token address {}", [
+      getContractName(pairAddress),
+      pairAddress,
+      tokenAddress
+    ],
     );
     return records;
   }
 
   const pairTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
   if (!pairTokenContract || pairTokenContract.totalSupply().equals(BigInt.zero())) {
-    log.debug("getCurvePairRecords: Skipping Curve pair {} with total supply of 0 at block {}", [
+    log.debug("getCurvePairRecords: Skipping Curve pair {} ({}) with total supply of 0 at block {}", [
       getContractName(pairAddress),
+      pairAddress,
       blockNumber.toString(),
     ]);
     return records;
@@ -393,7 +405,6 @@ export function getCurvePairRecords(
   const includedValue = getCurvePairTotalValue(pairAddress, true, blockNumber);
   // Calculate multiplier
   const multiplier = includedValue.div(totalValue);
-  log.info("getCurvePairRecords: applying multiplier of {}", [multiplier.toString()]);
 
   // Calculate the unit rate of the LP
   const unitRate = getCurvePairUnitRate(pairAddress, totalValue, blockNumber);

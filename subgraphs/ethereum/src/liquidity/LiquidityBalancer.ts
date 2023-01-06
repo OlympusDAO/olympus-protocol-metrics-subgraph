@@ -177,12 +177,12 @@ function getBalancerPoolTokenRecords(
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];
     const balance = getBalancerPoolTokenBalance(poolTokenContract, walletAddress, blockNumber);
+    if (balance.equals(BigDecimal.zero())) continue;
+
     log.info(
       "getBalancerPoolTokenRecordsWrapper: Balancer pool {} has balance of {} in wallet {}",
       [getContractName(poolTokenAddress), balance.toString(), getContractName(walletAddress)],
     );
-    if (balance.equals(BigDecimal.zero())) continue;
-
     records.push(
       createOrUpdateTokenRecord(
         timestamp,
