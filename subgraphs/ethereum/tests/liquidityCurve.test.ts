@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
-import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
+import { DAO_WALLET, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
 import {
   getCurvePairTokenQuantity,
@@ -10,27 +10,37 @@ import {
   getCurvePairTotalValue,
 } from "../src/liquidity/LiquidityCurve";
 import {
+  CONVEX_STAKING_FRAX_USDC_REWARD_POOL,
   CONVEX_STAKING_OHM_ETH_REWARD_POOL,
   ERC20_BALANCER_OHM_DAI_WETH,
+  ERC20_CRV_FRAX_USDC,
   ERC20_CRV_OHMETH,
+  ERC20_CVX_FRAX_USDC,
+  ERC20_CVX_FRAX_USDC_STAKED,
   ERC20_CVX_OHMETH,
+  ERC20_FRAX,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
+  ERC20_USDC,
   ERC20_WETH,
+  FRAX_LOCKING_FRAX_USDC,
   getContractName,
   getWalletAddressesForContract,
   NATIVE_ETH,
+  PAIR_CURVE_FRAX_USDC,
   PAIR_CURVE_OHM_ETH,
   POOL_BALANCER_OHM_DAI_WETH_ID,
 } from "../src/utils/Constants";
-import { mockConvexStakedBalance, mockConvexStakedBalanceZero } from "./contractHelper.test";
+import { mockConvexStakedBalance, mockConvexStakedBalanceZero, mockFraxLockedBalance } from "./contractHelper.test";
 import { mockBalancerVaultZero } from "./liquidityBalancer.test";
+import { mockFraxSwapPairZero } from "./liquidityFraxSwap.test";
 import {
   ERC20_STANDARD_DECIMALS,
   getEthUsdRate,
   getOhmUsdRate,
   getPairValue,
   mockCurvePairTotalValue,
+  mockCurvePairZero,
   mockERC20TotalSupply,
   mockEthUsdRate,
   mockUniswapV2PairsZero,
@@ -566,6 +576,128 @@ describe("Pair Value", () => {
     const expectedValue = crvBalance.div(crvTotalSupply).times(totalValueExpected);
     assert.stringEquals(expectedValue.toString(), records[0].value.toString());
     assert.assertTrue(records[0].token.includes(getContractName(ERC20_CVX_OHMETH)) == true); // cvxOHMETH should be mentioned in the id
+    assert.i32Equals(1, records.length);
+  });
+
+  test("staked FRAX-USDC pair value is correct", () => {
+    // Mock liquidity
+    mockUniswapV2PairsZero();
+    mockBalancerVaultZero();
+    mockCurvePairZero();
+    mockFraxSwapPairZero();
+    mockZeroWalletBalances(
+      ERC20_BALANCER_OHM_DAI_WETH,
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+    );
+
+    // Mock total value
+    const fraxReserves = BigDecimal.fromString("100");
+    const usdcReserves = BigDecimal.fromString("100");
+    mockCurvePairTotalValue(
+      PAIR_CURVE_FRAX_USDC,
+      ERC20_CRV_FRAX_USDC,
+      ERC20_STANDARD_DECIMALS,
+      PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY,
+      ERC20_FRAX,
+      ERC20_USDC,
+      toBigInt(fraxReserves, ERC20_STANDARD_DECIMALS),
+      toBigInt(usdcReserves, ERC20_STANDARD_DECIMALS),
+      ERC20_STANDARD_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+    );
+    // Total supply
+    const crvTotalSupply = BigDecimal.fromString("20");
+    mockERC20TotalSupply(
+      ERC20_CRV_FRAX_USDC,
+      ERC20_STANDARD_DECIMALS,
+      toBigInt(crvTotalSupply, ERC20_STANDARD_DECIMALS),
+    );
+    // Mock balance
+    const crvBalance = BigDecimal.fromString("10");
+    mockZeroWalletBalances(ERC20_CRV_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
+    mockZeroWalletBalances(ERC20_CVX_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
+    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
+    mockConvexStakedBalance(
+      ERC20_CVX_FRAX_USDC,
+      TREASURY_ADDRESS_V3,
+      CONVEX_STAKING_FRAX_USDC_REWARD_POOL,
+      toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
+    ); // Balance for the staked Curve token
+
+    const records = getLiquidityBalances(TIMESTAMP, ERC20_FRAX, OHM_USD_RESERVE_BLOCK);
+
+    const totalValueExpected = getPairValue(
+      fraxReserves,
+      usdcReserves,
+      BigDecimal.fromString("1"),
+      BigDecimal.fromString("1"),
+    );
+    const expectedValue = crvBalance.div(crvTotalSupply).times(totalValueExpected);
+    assert.stringEquals(expectedValue.toString(), records[0].value.toString());
+    assert.assertTrue(records[0].token.includes(getContractName(ERC20_CVX_FRAX_USDC)) == true); // Contract name should be mentioned in the id
+    assert.i32Equals(1, records.length);
+  });
+
+  test("Pair Value of FRAX-USDC staked in Convex and locked in Frax is correct", () => {
+    // Mock liquidity
+    mockUniswapV2PairsZero();
+    mockBalancerVaultZero();
+    mockCurvePairZero();
+    mockFraxSwapPairZero();
+    mockZeroWalletBalances(
+      ERC20_BALANCER_OHM_DAI_WETH,
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+    );
+
+    // Mock price lookup
+    mockEthUsdRate();
+    mockUsdOhmV2Rate();
+
+    // Mock total value
+    const fraxReserves = BigDecimal.fromString("100");
+    const usdcReserves = BigDecimal.fromString("100");
+    mockCurvePairTotalValue(
+      PAIR_CURVE_FRAX_USDC,
+      ERC20_CRV_FRAX_USDC,
+      ERC20_STANDARD_DECIMALS,
+      PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY,
+      ERC20_FRAX,
+      ERC20_USDC,
+      toBigInt(fraxReserves, ERC20_STANDARD_DECIMALS),
+      toBigInt(usdcReserves, ERC20_STANDARD_DECIMALS),
+      ERC20_STANDARD_DECIMALS,
+      ERC20_STANDARD_DECIMALS,
+    );
+    // Total supply
+    const crvTotalSupply = BigDecimal.fromString("20");
+    mockERC20TotalSupply(
+      ERC20_CRV_FRAX_USDC,
+      ERC20_STANDARD_DECIMALS,
+      toBigInt(crvTotalSupply, ERC20_STANDARD_DECIMALS),
+    );
+    // Mock balance
+    const crvBalance = BigDecimal.fromString("10");
+    mockZeroWalletBalances(ERC20_CRV_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
+    mockZeroWalletBalances(ERC20_CVX_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
+    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockFraxLockedBalance(
+      ERC20_CVX_FRAX_USDC_STAKED,
+      DAO_WALLET,
+      FRAX_LOCKING_FRAX_USDC,
+      toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
+    ); // Balance for the locked token
+
+    const records = getLiquidityBalances(TIMESTAMP, ERC20_FRAX, OHM_USD_RESERVE_BLOCK);
+
+    const totalValueExpected = getPairValue(
+      fraxReserves,
+      usdcReserves,
+      BigDecimal.fromString("1"),
+      BigDecimal.fromString("1"),
+    );
+    const expectedValue = crvBalance.div(crvTotalSupply).times(totalValueExpected);
+    assert.stringEquals(expectedValue.toString(), records[0].value.toString());
+    assert.assertTrue(records[0].token.includes(getContractName(ERC20_CVX_FRAX_USDC_STAKED)) == true);
     assert.i32Equals(1, records.length);
   });
 });

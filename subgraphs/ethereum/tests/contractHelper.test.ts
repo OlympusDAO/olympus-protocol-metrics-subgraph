@@ -91,6 +91,31 @@ export const mockConvexStakedBalanceZero = (allocators: string[] = CONVEX_ALLOCA
   }
 };
 
+export const mockFraxLockedBalance = (
+  tokenAddress: string,
+  allocatorAddress: string,
+  stakingAddress: string,
+  balance: BigInt,
+): void => {
+  const stakingContractAddress = Address.fromString(stakingAddress);
+  // Returns token
+  createMockedFunction(stakingContractAddress, "stakingToken", "stakingToken():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
+  ]);
+
+  // Returns balance
+  createMockedFunction(stakingContractAddress, "lockedLiquidityOf", "lockedLiquidityOf(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(allocatorAddress))])
+    .returns([ethereum.Value.fromUnsignedBigInt(balance)]);
+
+  // We assume price lookup is handled
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
 export const mockTokeStakedBalance = (
   tokenAddress: string,
   walletAddress: string,
