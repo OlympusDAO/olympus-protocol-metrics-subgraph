@@ -1,8 +1,8 @@
 # Subgraph Changelog
 
-## 3.2.0 (2023-01-06)
+## 3.2.11 (2023-01-09)
 
-- Adds support for FraxBP staked in Convex
+- Adds support for FraxBP staked in Convex/locked in Frax
 
 ## 3.1.9 (2022-12-21)
 
