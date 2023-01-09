@@ -1,7 +1,7 @@
 import { log } from "@graphprotocol/graph-ts";
 
-import { TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
-import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, AURA_ALLOCATOR, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, LUSD_ALLOCATOR, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, TRSRY, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
+import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
+import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, AURA_ALLOCATOR, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CONVEX_STAKING_PROXY, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, LUSD_ALLOCATOR, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, TRSRY, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 
 export const BLOCKCHAIN = "Ethereum";
@@ -29,9 +29,11 @@ export const OHMDAI_ONSEN_ID = 185;
 export const OHMLUSD_ONSEN_ID = 323;
 export const ONSEN_ALLOCATOR = "0x0316508a1b5abf1CAe42912Dc2C8B9774b682fFC".toLowerCase();
 export const SUSHI_MASTERCHEF = "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd".toLowerCase();
-export const CONVEX_STAKING_FRAX_3CRV_REWARD_POOL = "0xB900EF131301B307dB5eFcbed9DBb50A3e209B2e".toLowerCase();
-export const CONVEX_STAKING_OHM_ETH_REWARD_POOL = "0xd683C7051a28fA150EB3F4BD92263865D4a67778".toLowerCase();
 export const CONVEX_STAKING_CRV_REWARD_POOL = "0x3fe65692bfcd0e6cf84cb1e7d24108e434a7587e".toLowerCase();
+export const CONVEX_STAKING_FRAX_3CRV_REWARD_POOL = "0xB900EF131301B307dB5eFcbed9DBb50A3e209B2e".toLowerCase();
+export const CONVEX_STAKING_FRAX_USDC_REWARD_POOL = "0x7e880867363A7e321f5d260Cade2B0Bb2F717B02".toLowerCase();
+export const CONVEX_STAKING_OHM_ETH_REWARD_POOL = "0xd683C7051a28fA150EB3F4BD92263865D4a67778".toLowerCase();
+export const FRAX_LOCKING_FRAX_USDC = "0x963f487796d54d2f27bA6F3Fbe91154cA103b199".toLowerCase();
 
 export const OHMDAISLPBOND_CONTRACT1 = "0xd27001d1aaed5f002c722ad729de88a91239ff29".toLowerCase();
 export const OHMDAISLPBOND_CONTRACT1_BLOCK = "12154429";
@@ -150,6 +152,8 @@ export const ERC20_CRV_OHMFRAXBP = "0x5271045F7B73c17825A7A7aee6917eE46b0B7520".
 export const ERC20_CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b".toLowerCase();
 export const ERC20_CVX_BLOCK = "12460000";
 export const ERC20_CVX_CRV = "0x62b9c7356a2dc64a1969e19c23e4f579f9810aa7".toLowerCase();
+export const ERC20_CVX_FRAX_USDC = "0x117A0bab81F25e60900787d98061cCFae023560c".toLowerCase();
+export const ERC20_CVX_FRAX_USDC_STAKED = "0x8a53ee42FB458D4897e15cc7dEa3F75D0F1c3475".toLowerCase();
 export const ERC20_CVX_FXS = "0xfeef77d3f69374f66429c91d732a244f074bdf74".toLowerCase();
 export const ERC20_CVX_OHMETH = "0x9bb0daf4361e1b84f5a44914595c46f07e9d12a4".toLowerCase(); // Staked ERC20_CRV_OHMETH
 export const ERC20_CVX_VL_V1 = "0xd18140b4b819b895a3dba5442f959fa44994af50".toLowerCase();
@@ -216,9 +220,10 @@ ERC20_TOKENS.set(ERC20_WETH, new TokenDefinition(ERC20_WETH, TokenCategoryVolati
 ERC20_TOKENS.set(ERC20_XSUSHI, new TokenDefinition(ERC20_XSUSHI, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(NATIVE_ETH, new TokenDefinition(NATIVE_ETH, TokenCategoryVolatile, true, true));
 
-const CONVEX_STAKED_TOKENS = new Map<string, string>();
-CONVEX_STAKED_TOKENS.set(ERC20_CRV_OHMETH, ERC20_CVX_OHMETH);
-CONVEX_STAKED_TOKENS.set(ERC20_CRV, ERC20_CVX_CRV);
+const CONVEX_STAKED_TOKENS = new Map<string, TokenDefinition>();
+CONVEX_STAKED_TOKENS.set(ERC20_CRV_FRAX_USDC, new TokenDefinition(ERC20_CVX_FRAX_USDC, TokenCategoryStable, true, false));
+CONVEX_STAKED_TOKENS.set(ERC20_CRV_OHMETH, new TokenDefinition(ERC20_CVX_OHMETH, TokenCategoryPOL, true, false));
+CONVEX_STAKED_TOKENS.set(ERC20_CRV, new TokenDefinition(ERC20_CVX_CRV, TokenCategoryVolatile, true, false));
 
 /**
  * Gets the staked Convex version of the given token.
@@ -226,7 +231,7 @@ CONVEX_STAKED_TOKENS.set(ERC20_CRV, ERC20_CVX_CRV);
  * @param contractAddress
  * @returns contract address for the staked token, or null
  */
-export const getConvexStakedToken = (contractAddress: string): string | null => {
+export const getConvexStakedToken = (contractAddress: string): TokenDefinition | null => {
   const contractAddressLower = contractAddress.toLowerCase();
   if (!CONVEX_STAKED_TOKENS.has(contractAddressLower)) return null;
 
@@ -239,8 +244,32 @@ export const getConvexStakedToken = (contractAddress: string): string | null => 
 export const CONVEX_STAKING_CONTRACTS = [
   CONVEX_STAKING_CRV_REWARD_POOL,
   CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
+  CONVEX_STAKING_FRAX_USDC_REWARD_POOL,
   CONVEX_STAKING_OHM_ETH_REWARD_POOL,
 ];
+
+/**
+ * Frax locking contracts
+ */
+export const FRAX_LOCKING_CONTRACTS = [
+  FRAX_LOCKING_FRAX_USDC,
+];
+
+const FRAX_STAKED_TOKENS = new Map<string, TokenDefinition>();
+FRAX_STAKED_TOKENS.set(ERC20_CRV_FRAX_USDC, new TokenDefinition(ERC20_CVX_FRAX_USDC_STAKED, TokenCategoryStable, true, false));
+
+/**
+ * Gets the staked Frax version of the given token.
+ *
+ * @param contractAddress
+ * @returns contract address for the staked token, or null
+ */
+export const getFraxStakedToken = (contractAddress: string): TokenDefinition | null => {
+  const contractAddressLower = contractAddress.toLowerCase();
+  if (!FRAX_STAKED_TOKENS.has(contractAddressLower)) return null;
+
+  return FRAX_STAKED_TOKENS.get(contractAddressLower);
+};
 
 /**
  * AURA staking contracts
@@ -505,14 +534,15 @@ export const WALLET_ADDRESSES = [
   CONVEX_ALLOCATOR3,
   CONVEX_CVX_ALLOCATOR,
   CONVEX_CVX_VL_ALLOCATOR,
+  CONVEX_STAKING_PROXY,
   CROSS_CHAIN_ARBITRUM,
   CROSS_CHAIN_FANTOM,
   CROSS_CHAIN_POLYGON,
   LUSD_ALLOCATOR,
   RARI_ALLOCATOR,
+  TREASURY_ADDRESS_V1,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
-  TREASURY_ADDRESS_V1,
   VEFXS_ALLOCATOR,
 ];
 // TODO consolidate with shared WALLET_ADDRESSES const
@@ -524,6 +554,7 @@ export const CONVEX_ALLOCATORS = [
   CONVEX_ALLOCATOR3,
   CONVEX_CVX_ALLOCATOR,
   CONVEX_CVX_VL_ALLOCATOR,
+  CONVEX_STAKING_PROXY,
   DAO_WALLET,
 ];
 
@@ -535,10 +566,13 @@ NON_TREASURY_ASSET_WHITELIST.set(ERC20_BARNBRIDGE, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_CRV_FRAX_USDC, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_CRV_OHMETH, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_CRV_OHMFRAXBP, [DAO_WALLET]);
+NON_TREASURY_ASSET_WHITELIST.set(ERC20_CVX_FRAX_USDC_STAKED, [DAO_WALLET]);
+NON_TREASURY_ASSET_WHITELIST.set(ERC20_CVX_FRAX_USDC, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_FRAX_BP, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_TOKE, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_TRIBE, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_WETH, [DAO_WALLET]);
+NON_TREASURY_ASSET_WHITELIST.set(PAIR_CURVE_FRAX_USDC, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(PAIR_CURVE_OHM_ETH, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(PAIR_CURVE_OHM_FRAXBP, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(POOL_BALANCER_WETH_FDT_ID, [DAO_WALLET]);
@@ -719,6 +753,7 @@ CONTRACT_NAME_MAP.set(CONVEX_ALLOCATOR3, "Convex Allocator 3");
 CONTRACT_NAME_MAP.set(CONVEX_CVX_ALLOCATOR, "Convex Allocator");
 CONTRACT_NAME_MAP.set(CONVEX_CVX_VL_ALLOCATOR, "Convex vlCVX Allocator");
 CONTRACT_NAME_MAP.set(CONVEX_STAKING_CRV_REWARD_POOL, "Convex CRV Reward Pool");
+CONTRACT_NAME_MAP.set(CONVEX_STAKING_PROXY, "Convex Staking Proxy");
 CONTRACT_NAME_MAP.set(CONVEX_STAKING_FRAX_3CRV_REWARD_POOL, "Convex FRAX3CRV Reward Pool");
 CONTRACT_NAME_MAP.set(CONVEX_STAKING_OHM_ETH_REWARD_POOL, "Convex OHMETH Reward Pool");
 CONTRACT_NAME_MAP.set(CROSS_CHAIN_ARBITRUM, "Cross-Chain Arbitrum");
@@ -749,6 +784,8 @@ CONTRACT_NAME_MAP.set(ERC20_CRV_OHMFRAXBP, "Curve OHM-FraxBP Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_CRV, "Curve");
 CONTRACT_NAME_MAP.set(ERC20_CVX_CRV, "Curve - Staked in Convex");
 CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_3CRV, "Curve FRAX3Pool - Staked in Convex");
+CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_USDC_STAKED, "Curve FraxBP - Locked in Frax");
+CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_USDC, "Curve FraxBP - Staked in Convex");
 CONTRACT_NAME_MAP.set(ERC20_CVX_FXS, "FXS - Staked in Convex");
 CONTRACT_NAME_MAP.set(ERC20_CVX_OHMETH, "Curve OHM-ETH Liquidity Pool - Staked in Convex");
 CONTRACT_NAME_MAP.set(ERC20_CVX_VL_V1, "Convex - Vote-Locked");

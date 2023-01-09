@@ -2,10 +2,11 @@ import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { log } from "matchstick-as";
 
 import { TokenRecord } from "../../../shared/generated/schema";
-import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
+import { TokenCategoryPOL, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
+import { CurvePoolV2 } from "../../generated/ProtocolMetrics/CurvePoolV2";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { TokenSupply } from "../../generated/schema";
 import {
@@ -13,12 +14,14 @@ import {
   CONVEX_STAKING_CONTRACTS,
   ERC20_OHM_V2,
   ERC20_TOKENS,
+  FRAX_LOCKING_CONTRACTS,
   getContractName,
   getConvexStakedToken,
+  getFraxStakedToken,
   getWalletAddressesForContract,
   liquidityPairHasToken,
 } from "../utils/Constants";
-import { getConvexStakedBalance, getERC20 } from "../utils/ContractHelper";
+import { getConvexStakedBalance, getERC20, getFraxLockedBalance } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
 import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
@@ -89,7 +92,7 @@ export function getCurvePairTotalValue(
  *
  * @param metricName
  * @param pairTokenAddress
- * @param stakedTokenAddress
+ * @param stakedTokenDefinition
  * @param walletAddress
  * @param stakingAddress
  * @param pairRate
@@ -100,38 +103,41 @@ export function getCurvePairTotalValue(
 function getCurvePairStakedRecord(
   timestamp: BigInt,
   pairTokenAddress: string,
-  stakedTokenAddress: string | null,
+  stakedTokenDefinition: TokenDefinition | null,
   walletAddress: string,
   stakingAddress: string,
   pairRate: BigDecimal,
   multiplier: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecord | null {
-  if (stakedTokenAddress === null) {
-    log.debug(
-      "getCurvePairStakedRecord: Curve pair balance for staked token {} ({}) in wallet {} ({}) was 0, and no staked token was found.",
-      [
-        getContractName(pairTokenAddress),
-        pairTokenAddress,
-        getContractName(walletAddress),
-        walletAddress,
-      ],
-    );
+  if (stakedTokenDefinition === null) {
     return null;
   }
 
   const balance = getConvexStakedBalance(
-    stakedTokenAddress,
+    stakedTokenDefinition.getAddress(),
     walletAddress,
     stakingAddress,
     blockNumber,
   );
   if (!balance || balance.equals(BigDecimal.zero())) return null;
 
+  log.debug(
+    "getCurvePairStakedRecord: balance for staked token {} ({}) in wallet {} ({}) and staking contract {} ({}) was {}.",
+    [
+      getContractName(stakedTokenDefinition.getAddress()),
+      stakedTokenDefinition.getAddress(),
+      getContractName(walletAddress),
+      walletAddress,
+      getContractName(stakingAddress),
+      stakingAddress,
+      balance.toString(),
+    ],
+  );
   return createOrUpdateTokenRecord(
     timestamp,
-    getContractName(stakedTokenAddress),
-    stakedTokenAddress,
+    getContractName(stakedTokenDefinition.getAddress()),
+    stakedTokenDefinition.getAddress(),
     getContractName(walletAddress),
     walletAddress,
     pairRate,
@@ -141,7 +147,76 @@ function getCurvePairStakedRecord(
     ERC20_TOKENS,
     BLOCKCHAIN,
     multiplier,
-    TokenCategoryPOL,
+    stakedTokenDefinition.getCategory(),
+  );
+}
+
+/**
+ * Creates a token record for a Frax-locked Curve pair token.
+ *
+ * If the stakedTokenAddress is null or the balance is 0, null is returned.
+ *
+ * This looks up the balance of {stakedTokenAddress} on {stakingAddress}, instead
+ * of using `balanceOf`, which doesn't work with the Convex contracts.
+ *
+ * @param metricName
+ * @param pairTokenAddress
+ * @param stakedTokenDefinition
+ * @param walletAddress
+ * @param stakingAddress
+ * @param pairRate
+ * @param excludeOhmValue
+ * @param blockNumber
+ * @returns
+ */
+function getCurvePairFraxLockedRecord(
+  timestamp: BigInt,
+  pairTokenAddress: string,
+  stakedTokenDefinition: TokenDefinition | null,
+  walletAddress: string,
+  stakingAddress: string,
+  pairRate: BigDecimal,
+  multiplier: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecord | null {
+  if (stakedTokenDefinition === null) {
+    return null;
+  }
+
+  const balance = getFraxLockedBalance(
+    stakedTokenDefinition.getAddress(),
+    walletAddress,
+    stakingAddress,
+    blockNumber,
+  );
+  if (!balance || balance.equals(BigDecimal.zero())) return null;
+
+  log.debug(
+    "getCurvePairFraxLockedRecord: balance for locked token {} ({}) in wallet {} ({}) and locking contract {} ({}) was {}.",
+    [
+      getContractName(stakedTokenDefinition.getAddress()),
+      stakedTokenDefinition.getAddress(),
+      getContractName(walletAddress),
+      walletAddress,
+      getContractName(stakingAddress),
+      stakingAddress,
+      balance.toString(),
+    ],
+  );
+  return createOrUpdateTokenRecord(
+    timestamp,
+    getContractName(stakedTokenDefinition.getAddress()),
+    stakedTokenDefinition.getAddress(),
+    getContractName(walletAddress),
+    walletAddress,
+    pairRate,
+    balance,
+    blockNumber,
+    true,
+    ERC20_TOKENS,
+    BLOCKCHAIN,
+    multiplier,
+    stakedTokenDefinition.getCategory(),
   );
 }
 
@@ -173,16 +248,17 @@ function getCurvePairRecord(
   // Get the balance of the pair's token in walletAddress
   const pairTokenBalance = pairToken.balanceOf(Address.fromString(walletAddress));
   if (pairTokenBalance.equals(BigInt.zero())) {
-    log.debug("getCurvePairRecord: Curve pair balance for token {} ({}) in wallet {} ({}) was 0", [
-      getContractName(pairTokenAddress),
-      pairTokenAddress,
-      getContractName(walletAddress),
-      walletAddress,
-    ]);
     return null;
   }
 
   const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
+  log.debug("getCurvePairRecord: Curve pair balance for token {} ({}) in wallet {} ({}) was {}", [
+    getContractName(pairTokenAddress),
+    pairTokenAddress,
+    getContractName(walletAddress),
+    walletAddress,
+    pairTokenBalanceDecimal.toString(),
+  ]);
 
   return createOrUpdateTokenRecord(
     timestamp,
@@ -215,15 +291,23 @@ function getCurvePairToken(pairAddress: string, blockNumber: BigInt): string | n
   const pair = CurvePool.bind(Address.fromString(pairAddress));
 
   // If the token does not exist at the current block, it will revert
-  if (pair.try_token().reverted) {
-    log.debug(
-      "getCurvePairToken: ERC20 token for Curve pair {} could not be determined at block {} due to contract revert. Skipping",
-      [getContractName(pairAddress), blockNumber.toString()],
-    );
-    return null;
+  const tokenResult = pair.try_token();
+  if (!tokenResult.reverted) {
+    return tokenResult.value.toHexString();
   }
 
-  return pair.token().toHexString();
+  // For some pools (e.g. FRAX-USDC), a different interface is used... not sure why.
+  const pairV2 = CurvePoolV2.bind(Address.fromString(pairAddress));
+  const tokenV2Result = pairV2.try_lp_token();
+  if (!tokenV2Result.reverted) {
+    return tokenV2Result.value.toHexString();
+  }
+
+  log.warning(
+    "getCurvePairToken: ERC20 token for Curve pair {} could not be determined at block {} due to contract revert. Skipping",
+    [getContractName(pairAddress), blockNumber.toString()],
+  );
+  return null;
 }
 
 function getCurvePairTokenContract(pairAddress: string, blockNumber: BigInt): ERC20 | null {
@@ -299,16 +383,20 @@ export function getCurvePairRecords(
   // If we are restricting by token and tokenAddress does not match either side of the pair
   if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
     log.debug(
-      "getCurvePairRecords: Skipping Curve pair that does not match specified token address {}",
-      [tokenAddress],
+      "getCurvePairRecords: Skipping Curve pair {} ({}) that does not match specified token address {}", [
+      getContractName(pairAddress),
+      pairAddress,
+      tokenAddress
+    ],
     );
     return records;
   }
 
   const pairTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
   if (!pairTokenContract || pairTokenContract.totalSupply().equals(BigInt.zero())) {
-    log.debug("getCurvePairRecords: Skipping Curve pair {} with total supply of 0 at block {}", [
+    log.debug("getCurvePairRecords: Skipping Curve pair {} ({}) with total supply of 0 at block {}", [
       getContractName(pairAddress),
+      pairAddress,
       blockNumber.toString(),
     ]);
     return records;
@@ -319,15 +407,13 @@ export function getCurvePairRecords(
   const includedValue = getCurvePairTotalValue(pairAddress, true, blockNumber);
   // Calculate multiplier
   const multiplier = includedValue.div(totalValue);
-  log.info("getCurvePairRecords: applying multiplier of {}", [multiplier.toString()]);
 
   // Calculate the unit rate of the LP
   const unitRate = getCurvePairUnitRate(pairAddress, totalValue, blockNumber);
   // Some Curve tokens are in the DAO wallet, so we add that
   const wallets = getWalletAddressesForContract(pairAddress);
 
-  const pair = CurvePool.bind(Address.fromString(pairAddress));
-  const pairTokenAddress = pair.token().toHexString();
+  const pairTokenAddress = pairTokenContract._address.toHexString();
 
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];
@@ -354,6 +440,26 @@ export function getCurvePairRecords(
         timestamp,
         pairTokenAddress,
         getConvexStakedToken(pairTokenAddress),
+        walletAddress,
+        stakingAddress,
+        unitRate,
+        multiplier,
+        blockNumber,
+      );
+
+      if (stakedRecord && !stakedRecord.balance.equals(BigDecimal.zero())) {
+        records.push(stakedRecord);
+      }
+    }
+
+    // Then token locked in Frax
+    for (let k = 0; k < FRAX_LOCKING_CONTRACTS.length; k++) {
+      const stakingAddress = FRAX_LOCKING_CONTRACTS[k];
+
+      const stakedRecord = getCurvePairFraxLockedRecord(
+        timestamp,
+        pairTokenAddress,
+        getFraxStakedToken(pairTokenAddress),
         walletAddress,
         stakingAddress,
         unitRate,

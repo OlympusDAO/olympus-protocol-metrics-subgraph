@@ -5,8 +5,8 @@ features:
 graft:
   # base: QmYbSKNJ8g1kWnGozrJpbot8WUKVd2Sdr9r968E1MNbGY9 # https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph/pull/117
   # block: 15998131 # TRSRY deployment
-  base: QmQwVqCC3E5tWDivxMe2Hqo2isAkL7fJf3VTmvStssW4yo # https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph/pull/136
-  block: 16228340 # Bond market launch
+  base: QmPFXU8M52Z9Sg4mYGPudYzFHr2M7HznPpPiNXK7tGxeK7 # 3.1.9
+  block: 16343580 # https://etherscan.io/tx/0x2e790fb8cfb483633d944789ec063cb7975795c5d28aa60f646ab46e0fe652d5
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
   file: ../../schema.graphql
@@ -601,6 +601,8 @@ dataSources:
           file: ./abis/ConvexBaseRewardPool.json
         - name: CurvePool
           file: ./abis/CurvePool.json
+        - name: CurvePoolV2
+          file: ./abis/CurvePoolV2.json
         - name: TokeAllocator
           file: ./abis/TokeAllocator.json
         - name: LUSDAllocatorV2
@@ -619,6 +621,8 @@ dataSources:
           file: ./abis/vlCVX.json
         - name: AuraStaking
           file: ./abis/AuraStaking.json
+        - name: FraxFarm
+          file: ./abis/FraxFarm.json
       # Triggered by the stake() call, which is fairly regular
       # rebase() would be preferred, but it doesn't seem to be called
       callHandlers:

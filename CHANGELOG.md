@@ -1,5 +1,13 @@
 # Subgraph Changelog
 
+## 3.2.11 (2023-01-09)
+
+- Adds support for FraxBP staked in Convex/locked in Frax
+
+## 3.1.9 (2022-12-21)
+
+- Added new bond teller contract to recognised wallets
+
 ## 3.1.7 (2022-11-29)
 
 - Added market value, liquid backing and other related metrics to the daily summary record (`ProtocolMetric`) in a way that does not slow down indexing.
