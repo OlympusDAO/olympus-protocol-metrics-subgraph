@@ -626,7 +626,7 @@ describe("Pair Value", () => {
     mockFraxLockedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
     mockConvexStakedBalance(
       ERC20_CVX_FRAX_USDC,
-      TREASURY_ADDRESS_V3,
+      CONVEX_STAKING_PROXY,
       CONVEX_STAKING_FRAX_USDC_REWARD_POOL,
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     ); // Balance for the staked Curve token
