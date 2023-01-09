@@ -1,6 +1,7 @@
 import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
+import { TokenCategoryStable } from "../../shared/src/contracts/TokenDefinition";
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { CONVEX_STAKING_PROXY, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
@@ -640,8 +641,10 @@ describe("Pair Value", () => {
       BigDecimal.fromString("1"),
     );
     const expectedValue = crvBalance.div(crvTotalSupply).times(totalValueExpected);
-    assert.stringEquals(expectedValue.toString(), records[0].value.toString());
-    assert.assertTrue(records[0].token.includes(getContractName(ERC20_CVX_FRAX_USDC)) == true); // Contract name should be mentioned in the id
+    const record = records[0];
+    assert.stringEquals(expectedValue.toString(), record.value.toString());
+    assert.assertTrue(record.token.includes(getContractName(ERC20_CVX_FRAX_USDC)) == true); // Contract name should be mentioned in the id
+    assert.stringEquals(TokenCategoryStable, record.category);
     assert.i32Equals(1, records.length);
   });
 
@@ -705,10 +708,10 @@ describe("Pair Value", () => {
       BigDecimal.fromString("1"),
     );
     const expectedValue = crvBalance.div(crvTotalSupply).times(totalValueExpected);
-    assert.stringEquals(expectedValue.toString(), records[0].value.toString());
-    assert.assertTrue(records[0].token.includes(getContractName(ERC20_CVX_FRAX_USDC_STAKED)) == true);
+    const record = records[0];
+    assert.stringEquals(expectedValue.toString(), record.value.toString());
+    assert.assertTrue(record.token.includes(getContractName(ERC20_CVX_FRAX_USDC_STAKED)) == true);
+    assert.stringEquals(TokenCategoryStable, record.category);
     assert.i32Equals(1, records.length);
   });
-
-  // TODO add test for CurvePoolV2
 });

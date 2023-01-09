@@ -1,6 +1,6 @@
 import { log } from "@graphprotocol/graph-ts";
 
-import { TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
+import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, AURA_ALLOCATOR, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CONVEX_STAKING_PROXY, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, LUSD_ALLOCATOR, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, TRSRY, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 
@@ -220,10 +220,10 @@ ERC20_TOKENS.set(ERC20_WETH, new TokenDefinition(ERC20_WETH, TokenCategoryVolati
 ERC20_TOKENS.set(ERC20_XSUSHI, new TokenDefinition(ERC20_XSUSHI, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(NATIVE_ETH, new TokenDefinition(NATIVE_ETH, TokenCategoryVolatile, true, true));
 
-const CONVEX_STAKED_TOKENS = new Map<string, string>();
-CONVEX_STAKED_TOKENS.set(ERC20_CRV_FRAX_USDC, ERC20_CVX_FRAX_USDC);
-CONVEX_STAKED_TOKENS.set(ERC20_CRV_OHMETH, ERC20_CVX_OHMETH);
-CONVEX_STAKED_TOKENS.set(ERC20_CRV, ERC20_CVX_CRV);
+const CONVEX_STAKED_TOKENS = new Map<string, TokenDefinition>();
+CONVEX_STAKED_TOKENS.set(ERC20_CRV_FRAX_USDC, new TokenDefinition(ERC20_CVX_FRAX_USDC, TokenCategoryStable, true, false));
+CONVEX_STAKED_TOKENS.set(ERC20_CRV_OHMETH, new TokenDefinition(ERC20_CVX_OHMETH, TokenCategoryPOL, true, false));
+CONVEX_STAKED_TOKENS.set(ERC20_CRV, new TokenDefinition(ERC20_CVX_CRV, TokenCategoryVolatile, true, false));
 
 /**
  * Gets the staked Convex version of the given token.
@@ -231,7 +231,7 @@ CONVEX_STAKED_TOKENS.set(ERC20_CRV, ERC20_CVX_CRV);
  * @param contractAddress
  * @returns contract address for the staked token, or null
  */
-export const getConvexStakedToken = (contractAddress: string): string | null => {
+export const getConvexStakedToken = (contractAddress: string): TokenDefinition | null => {
   const contractAddressLower = contractAddress.toLowerCase();
   if (!CONVEX_STAKED_TOKENS.has(contractAddressLower)) return null;
 
@@ -255,8 +255,8 @@ export const FRAX_LOCKING_CONTRACTS = [
   FRAX_LOCKING_FRAX_USDC,
 ];
 
-const FRAX_STAKED_TOKENS = new Map<string, string>();
-FRAX_STAKED_TOKENS.set(ERC20_CRV_FRAX_USDC, ERC20_CVX_FRAX_USDC_STAKED);
+const FRAX_STAKED_TOKENS = new Map<string, TokenDefinition>();
+FRAX_STAKED_TOKENS.set(ERC20_CRV_FRAX_USDC, new TokenDefinition(ERC20_CVX_FRAX_USDC_STAKED, TokenCategoryStable, true, false));
 
 /**
  * Gets the staked Frax version of the given token.
@@ -264,7 +264,7 @@ FRAX_STAKED_TOKENS.set(ERC20_CRV_FRAX_USDC, ERC20_CVX_FRAX_USDC_STAKED);
  * @param contractAddress
  * @returns contract address for the staked token, or null
  */
-export const getFraxStakedToken = (contractAddress: string): string | null => {
+export const getFraxStakedToken = (contractAddress: string): TokenDefinition | null => {
   const contractAddressLower = contractAddress.toLowerCase();
   if (!FRAX_STAKED_TOKENS.has(contractAddressLower)) return null;
 
