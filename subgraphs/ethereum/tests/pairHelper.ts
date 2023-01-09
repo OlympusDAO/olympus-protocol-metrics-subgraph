@@ -598,6 +598,8 @@ export const mockCurvePairTotalValue = (
   createMockedFunction(pair, "token", "token():(address)").returns([
     ethereum.Value.fromAddress(Address.fromString(pairToken)),
   ]);
+  // Pair token (for some contracts)
+  createMockedFunction(pair, "lp_token", "lp_token():(address)").reverts();
   createMockedFunction(Address.fromString(pairToken), "decimals", "decimals():(uint8)").returns([
     ethereum.Value.fromI32(pairTokenDecimals),
   ]);
