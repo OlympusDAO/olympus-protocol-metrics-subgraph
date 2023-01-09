@@ -256,13 +256,13 @@
     graphql-import-node "^0.0.5"
     js-yaml "^4.1.0"
 
-"@graphprotocol/graph-cli@^0.36.1":
-  version "0.36.1"
-  resolved "https://registry.yarnpkg.com/@graphprotocol/graph-cli/-/graph-cli-0.36.1.tgz#025546d368985c9b0ce42064926bdf72dc54e6be"
-  integrity sha512-JTiIyPBxLKBOliC7Mdci8A+ApzOmfuGRHNQukgZVWn2+ktld/d/hPLghEKIgE+Fy4z8hCWa865oPUHV6r/J4+Q==
+"@graphprotocol/graph-cli@^0.37.2":
+  version "0.37.2"
+  resolved "https://registry.yarnpkg.com/@graphprotocol/graph-cli/-/graph-cli-0.37.2.tgz#14d3b29e0e57ab2093b3cb42402c8ba5b9c4e557"
+  integrity sha512-RPHYCRCc62RsscwFpwFT+929lNNoB/FJW+PFaQ+zZaJuauj0x/+npcfIDCb4zAxlQskETqzT5WvWQ9gRK1l66g==
   dependencies:
     "@float-capital/float-subgraph-uncrashable" "^0.0.0-alpha.4"
-    assemblyscript "0.19.10"
+    assemblyscript "0.19.23"
     binary-install-raw "0.0.13"
     chalk "3.0.0"
     chokidar "3.5.1"
@@ -780,7 +780,7 @@ assemblyscript@0.19.10:
     binaryen "101.0.0-nightly.20210723"
     long "^4.0.0"
 
-assemblyscript@^0.19.20:
+assemblyscript@0.19.23, assemblyscript@^0.19.20:
   version "0.19.23"
   resolved "https://registry.yarnpkg.com/assemblyscript/-/assemblyscript-0.19.23.tgz#16ece69f7f302161e2e736a0f6a474e6db72134c"
   integrity sha512-fwOQNZVTMga5KRsfY80g7cpOl4PsFQczMwHzdtgoqLXaYhkhavufKb0sB0l3T1DUxpAufA0KNhlbpuuhZUwxMA==
