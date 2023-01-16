@@ -73,19 +73,25 @@ export function getBaseTokenOrientation(
  *
  * number of USDC * 1 / number of ETH = price of ETH
  *
- * @returns Price of ETH in USD
+ * @returns Price of ETH in USD, or 0 if the contract reverts
  */
 export function getBaseEthUsdRate(): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_USDC_ETH));
   if (!pair) {
     throw new Error(
-      "Cannot determine discounted value as the contract " +
+      "Cannot determine value of ETH-USD as the contract " +
       PAIR_UNISWAP_V2_USDC_ETH +
       " does not exist yet.",
     );
   }
 
-  const reserves = pair.getReserves();
+  const reservesResult = pair.try_getReserves();
+  if (reservesResult.reverted) {
+    log.error("getBaseEthUsdRate: Cannot determine value of ETH-USD as the contract {} reverted on getReserves().", [PAIR_UNISWAP_V2_USDC_ETH]);
+    return BigDecimal.zero();
+  }
+
+  const reserves = reservesResult.value;
   const usdReserves = reserves.value0.toBigDecimal();
   const ethReserves = reserves.value1.toBigDecimal();
 
