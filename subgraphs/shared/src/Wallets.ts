@@ -27,6 +27,8 @@ export const DAO_WALLET = "0x245cc372c84b3645bf0ffe6538620b04a217988b".toLowerCa
 
 export const TRSRY = "0xa8687A15D4BE32CC8F0a8a7B9704a4C3993D9613".toLowerCase();
 
+export const OTC_ESCROW = "0xe3312c3f1ab30878d9686452f7205ebe11e965eb".toLowerCase();
+
 /**
  * This set of wallet addresses is common across many tokens,
  * and can be used for balance lookups.
@@ -48,6 +50,7 @@ export const WALLET_ADDRESSES = [
   CROSS_CHAIN_FANTOM,
   CROSS_CHAIN_POLYGON,
   LUSD_ALLOCATOR,
+  OTC_ESCROW,
   RARI_ALLOCATOR,
   TREASURY_ADDRESS_V1,
   TREASURY_ADDRESS_V2,

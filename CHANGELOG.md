@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 3.2.12 (2023-01-18)
+
+- Add OTC escrow to treasury wallets
+
 ## 3.2.11 (2023-01-09)
 
 - Adds support for FraxBP staked in Convex/locked in Frax
