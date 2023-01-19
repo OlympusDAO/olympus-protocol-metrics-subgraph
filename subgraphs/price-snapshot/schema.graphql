@@ -1,8 +1,16 @@
 type PriceSnapshot @entity(immutable: true) {
-  id: ID!
+  id: ID! # Block number
   block: BigInt!
   timestamp: BigInt!
   date: String!
-  priceOhm: BigDecimal!
-  priceGOhm: BigDecimal!
+  ohmUsdPrice: BigDecimal!
+  ohmUsdPrice1dDelta: BigDecimal!
+  ohmUsdPrice30dVolatility: BigDecimal!
+  gOhmUsdPrice: BigDecimal!
+}
+
+# Used to access the latest PriceSnapshot for a particular date
+type PriceSnapshotDaily @entity {
+  id: ID! # YYYY-MM-DD
+  record: String! # ID of latest PriceSnapshot
 }

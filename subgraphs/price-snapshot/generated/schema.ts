@@ -68,21 +68,82 @@ export class PriceSnapshot extends Entity {
     this.set("date", Value.fromString(value));
   }
 
-  get priceOhm(): BigDecimal {
-    const value = this.get("priceOhm");
+  get ohmUsdPrice(): BigDecimal {
+    const value = this.get("ohmUsdPrice");
     return value!.toBigDecimal();
   }
 
-  set priceOhm(value: BigDecimal) {
-    this.set("priceOhm", Value.fromBigDecimal(value));
+  set ohmUsdPrice(value: BigDecimal) {
+    this.set("ohmUsdPrice", Value.fromBigDecimal(value));
   }
 
-  get priceGOhm(): BigDecimal {
-    const value = this.get("priceGOhm");
+  get ohmUsdPrice1dDelta(): BigDecimal {
+    const value = this.get("ohmUsdPrice1dDelta");
     return value!.toBigDecimal();
   }
 
-  set priceGOhm(value: BigDecimal) {
-    this.set("priceGOhm", Value.fromBigDecimal(value));
+  set ohmUsdPrice1dDelta(value: BigDecimal) {
+    this.set("ohmUsdPrice1dDelta", Value.fromBigDecimal(value));
+  }
+
+  get ohmUsdPrice30dVolatility(): BigDecimal {
+    const value = this.get("ohmUsdPrice30dVolatility");
+    return value!.toBigDecimal();
+  }
+
+  set ohmUsdPrice30dVolatility(value: BigDecimal) {
+    this.set("ohmUsdPrice30dVolatility", Value.fromBigDecimal(value));
+  }
+
+  get gOhmUsdPrice(): BigDecimal {
+    const value = this.get("gOhmUsdPrice");
+    return value!.toBigDecimal();
+  }
+
+  set gOhmUsdPrice(value: BigDecimal) {
+    this.set("gOhmUsdPrice", Value.fromBigDecimal(value));
+  }
+}
+
+export class PriceSnapshotDaily extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    const id = this.get("id");
+    assert(id != null, "Cannot save PriceSnapshotDaily entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type PriceSnapshotDaily must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("PriceSnapshotDaily", id.toString(), this);
+    }
+  }
+
+  static load(id: string): PriceSnapshotDaily | null {
+    return changetype<PriceSnapshotDaily | null>(
+      store.get("PriceSnapshotDaily", id)
+    );
+  }
+
+  get id(): string {
+    const value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get record(): string {
+    const value = this.get("record");
+    return value!.toString();
+  }
+
+  set record(value: string) {
+    this.set("record", Value.fromString(value));
   }
 }

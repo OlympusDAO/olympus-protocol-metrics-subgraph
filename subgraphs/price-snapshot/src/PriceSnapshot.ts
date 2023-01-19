@@ -17,7 +17,7 @@ export function handleBlock(block: ethereum.Block): void {
     entity.block = block.number;
     entity.timestamp = block.timestamp.times(BigInt.fromString("1000")); // Milliseconds
     entity.date = getISO8601StringFromTimestamp(block.timestamp);
-    entity.priceOhm = getBaseOhmUsdRate(block.number);
-    entity.priceGOhm = entity.priceOhm.times(ohmIndex);
+    entity.ohmUsdPrice = getBaseOhmUsdRate(block.number);
+    entity.gOhmUsdPrice = entity.ohmUsdPrice.times(ohmIndex);
     entity.save();
 }
