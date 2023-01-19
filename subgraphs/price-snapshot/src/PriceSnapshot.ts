@@ -7,7 +7,7 @@ import { PriceSnapshot } from "../generated/schema";
 
 export function handleBlock(block: ethereum.Block): void {
     // Record 1 block per hour (60*60/12 blocks per hour) 
-    if (block.number.mod(BigInt.fromI32(5 * 60)) !== BigInt.zero()) {
+    if (block.number.mod(BigInt.fromI32(5 * 60)).notEqual(BigInt.zero())) {
         return;
     }
 
