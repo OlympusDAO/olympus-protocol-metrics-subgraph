@@ -100,6 +100,16 @@ export function getPriceVolatility(currentSnapshot: PriceSnapshot, currentDate: 
     return getStandardDeviation(priceDeltas, days);
 }
 
+/**
+ * Takes a price snapshot every 300 blocks (~ 1 hour), including:
+ * - OHM-USD price
+ * - gOHM-USD price
+ * - Price delta against the latest price for the previous day, or null
+ * - Price volatility over the previous 30 days (using the standard deviation of the 1d price delta), or null
+ * 
+ * @param block 
+ * @returns 
+ */
 export function handleBlock(block: ethereum.Block): void {
     // Record 1 block per hour (60*60/12 blocks per hour) 
     if (block.number.mod(BigInt.fromI32(5 * 60)).notEqual(BigInt.zero())) {
