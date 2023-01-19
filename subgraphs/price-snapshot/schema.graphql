@@ -4,8 +4,8 @@ type PriceSnapshot @entity(immutable: true) {
   timestamp: BigInt!
   date: String!
   ohmUsdPrice: BigDecimal!
-  ohmUsdPrice1dDelta: BigDecimal!
-  ohmUsdPrice30dVolatility: BigDecimal!
+  ohmUsdPrice1dDelta: BigDecimal
+  ohmUsdPrice30dVolatility: BigDecimal
   gOhmUsdPrice: BigDecimal!
 }
 

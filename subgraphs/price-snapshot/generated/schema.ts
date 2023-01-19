@@ -77,22 +77,41 @@ export class PriceSnapshot extends Entity {
     this.set("ohmUsdPrice", Value.fromBigDecimal(value));
   }
 
-  get ohmUsdPrice1dDelta(): BigDecimal {
+  get ohmUsdPrice1dDelta(): BigDecimal | null {
     const value = this.get("ohmUsdPrice1dDelta");
-    return value!.toBigDecimal();
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
   }
 
-  set ohmUsdPrice1dDelta(value: BigDecimal) {
-    this.set("ohmUsdPrice1dDelta", Value.fromBigDecimal(value));
+  set ohmUsdPrice1dDelta(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("ohmUsdPrice1dDelta");
+    } else {
+      this.set("ohmUsdPrice1dDelta", Value.fromBigDecimal(<BigDecimal>value));
+    }
   }
 
-  get ohmUsdPrice30dVolatility(): BigDecimal {
+  get ohmUsdPrice30dVolatility(): BigDecimal | null {
     const value = this.get("ohmUsdPrice30dVolatility");
-    return value!.toBigDecimal();
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
   }
 
-  set ohmUsdPrice30dVolatility(value: BigDecimal) {
-    this.set("ohmUsdPrice30dVolatility", Value.fromBigDecimal(value));
+  set ohmUsdPrice30dVolatility(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("ohmUsdPrice30dVolatility");
+    } else {
+      this.set(
+        "ohmUsdPrice30dVolatility",
+        Value.fromBigDecimal(<BigDecimal>value)
+      );
+    }
   }
 
   get gOhmUsdPrice(): BigDecimal {
