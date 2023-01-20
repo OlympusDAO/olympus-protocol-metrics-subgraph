@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 3.2.13 (2023-01-20)
+
+- Add CRV/CVX and related tokens to the DAO whitelist, so they are properly indexed
+
 ## 3.2.12 (2023-01-18)
 
 - Add OTC escrow to treasury wallets
