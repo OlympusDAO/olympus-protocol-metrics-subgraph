@@ -143,6 +143,27 @@ function getMigrationOffsetRecord(timestamp: BigInt, blockNumber: BigInt): Token
   );
 }
 
+export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
+  const records: TokenSupply[] = [];
+
+  // May need to remove blanket removal of bond teller
+  // Is vesting OHM part of circulating or floating supply?
+
+  // Loop through Gnosis Auctions
+
+  // If the auction is open
+
+  // Exclude OHM in the bond teller (already excluded due to listing in circulating supply wallets?)
+  // Include OHM in the easy auction contract (should already be included?)
+
+  // If the auction is closed
+
+  // Include unclaimed OHM in the bond teller (or just include as circulating?)
+  // Exclude OHM deposits in the auction contract (bond manager too?)
+
+  return records;
+}
+
 /**
  * Returns the circulating supply of the latest version of the OHM contract
  * at the given block number.
