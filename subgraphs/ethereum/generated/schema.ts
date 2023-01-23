@@ -1079,3 +1079,87 @@ export class PriceSnapshot extends Entity {
     this.set("priceGOhm", Value.fromBigDecimal(value));
   }
 }
+
+export class GnosisAuctionRoot extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    const id = this.get("id");
+    assert(id != null, "Cannot save GnosisAuctionRoot entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type GnosisAuctionRoot must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("GnosisAuctionRoot", id.toString(), this);
+    }
+  }
+
+  static load(id: string): GnosisAuctionRoot | null {
+    return changetype<GnosisAuctionRoot | null>(
+      store.get("GnosisAuctionRoot", id)
+    );
+  }
+
+  get id(): string {
+    const value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get markets(): Array<BigInt> {
+    const value = this.get("markets");
+    return value!.toBigIntArray();
+  }
+
+  set markets(value: Array<BigInt>) {
+    this.set("markets", Value.fromBigIntArray(value));
+  }
+}
+
+export class GnosisAuction extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    const id = this.get("id");
+    assert(id != null, "Cannot save GnosisAuction entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type GnosisAuction must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("GnosisAuction", id.toString(), this);
+    }
+  }
+
+  static load(id: string): GnosisAuction | null {
+    return changetype<GnosisAuction | null>(store.get("GnosisAuction", id));
+  }
+
+  get id(): string {
+    const value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get capacity(): BigDecimal {
+    const value = this.get("capacity");
+    return value!.toBigDecimal();
+  }
+
+  set capacity(value: BigDecimal) {
+    this.set("capacity", Value.fromBigDecimal(value));
+  }
+}
