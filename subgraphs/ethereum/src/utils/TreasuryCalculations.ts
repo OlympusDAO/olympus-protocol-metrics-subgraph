@@ -9,6 +9,7 @@ import {
   getProtocolOwnedLiquiditySupplyRecords,
   getTotalSupplyRecord,
   getTreasuryOHMRecords,
+  getVestingBondSupplyRecords,
 } from "./OhmCalculations";
 import { getStablecoinBalances } from "./TokenStablecoins";
 import { getVolatileTokenBalances } from "./TokenVolatile";
@@ -58,16 +59,22 @@ export function generateTokenSupply(timestamp: BigInt, blockNumber: BigInt): Tok
     [getTotalSupplyRecord(timestamp, blockNumber)],
   );
 
-  // Treasury OHM
+  // Treasury OHM & migration offset
   pushTokenSupplyArray(
     records,
     getTreasuryOHMRecords(timestamp, blockNumber),
   );
 
-  // Floating supply
+  // POL
   pushTokenSupplyArray(
     records,
     getProtocolOwnedLiquiditySupplyRecords(timestamp, blockNumber),
+  );
+
+  // Bond vesting
+  pushTokenSupplyArray(
+    records,
+    getVestingBondSupplyRecords(timestamp, blockNumber),
   );
 
   return records;
