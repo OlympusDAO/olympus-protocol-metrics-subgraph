@@ -1,8 +1,12 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { BondFixedExpiryTeller } from "../../generated/ProtocolMetrics/BondFixedExpiryTeller";
+import { BondManager } from "../../generated/ProtocolMetrics/BondManager";
+import { GnosisEasyAuction } from "../../generated/ProtocolMetrics/GnosisEasyAuction";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
-import { TokenSupply } from "../../generated/schema";
+import { GnosisAuction, TokenSupply } from "../../generated/schema";
+import { GNOSIS_RECORD_ID } from "../GnosisAuction";
 import { getBalancerPoolTokenQuantity } from "../liquidity/LiquidityBalancer";
 import { getCurvePairTokenQuantity } from "../liquidity/LiquidityCurve";
 import { getFraxSwapPairTokenQuantityRecords } from "../liquidity/LiquidityFraxSwap";
@@ -41,6 +45,8 @@ import {
 
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
 const MIGRATION_OFFSET = "2013";
+
+const BOND_MANAGER = "0xf577c77ee3578c7f216327f41b5d7221ead2b2a3";
 
 /**
  * Returns the total supply of the latest version of the OHM contract
@@ -146,20 +152,37 @@ function getMigrationOffsetRecord(timestamp: BigInt, blockNumber: BigInt): Token
 export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
   const records: TokenSupply[] = [];
 
+  const gnosisAuctionRoot: GnosisAuction | null = GnosisAuction.load(GNOSIS_RECORD_ID);
+  // Record will not exist if no auctions have been launched
+  if (!gnosisAuctionRoot) {
+    return records;
+  }
+
+  // Set up the FixedExpiryTeller and GnosisEasyAuction
+  const bondManager = BondManager.bind(Address.fromString(BOND_MANAGER));
+  if (!bondManager.isActive()) {
+    return records;
+  }
+
+  const gnosisEasyAuction = GnosisEasyAuction.bind(bondManager.gnosisEasyAuction());
+  const bondFixedExpiryTeller = BondFixedExpiryTeller.bind(bondManager.fixedExpiryTeller());
+
   // May need to remove blanket removal of bond teller
   // Is vesting OHM part of circulating or floating supply?
 
   // Loop through Gnosis Auctions
+  const gnosisAuctionIds: BigInt[] = gnosisAuctionRoot.markets;
+  for (let i = 0; i < gnosisAuctionIds.length; i++) {
+    // If the auction is open
 
-  // If the auction is open
+    // Exclude OHM in the bond teller (already excluded due to listing in circulating supply wallets?)
+    // Include OHM in the easy auction contract (should already be included?)
 
-  // Exclude OHM in the bond teller (already excluded due to listing in circulating supply wallets?)
-  // Include OHM in the easy auction contract (should already be included?)
+    // If the auction is closed
 
-  // If the auction is closed
-
-  // Include unclaimed OHM in the bond teller (or just include as circulating?)
-  // Exclude OHM deposits in the auction contract (bond manager too?)
+    // Include unclaimed OHM in the bond teller (or just include as circulating?)
+    // Exclude OHM deposits in the auction contract (bond manager too?)
+  }
 
   return records;
 }

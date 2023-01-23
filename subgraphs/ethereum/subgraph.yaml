@@ -562,6 +562,8 @@ dataSources:
         - ProtocolMetric
         - TokenRecord
         - TokenSupply
+        - GnosisAuctionRoot
+        - GnosisAuction
       abis:
         - name: OlympusStakingV1
           file: ./abis/OlympusStakingV1.json
@@ -621,6 +623,13 @@ dataSources:
           file: ./abis/AuraStaking.json
         - name: FraxFarm
           file: ./abis/FraxFarm.json
+        # Gnosis Auctions
+        - name: BondManager
+          file: ./abis/BondManager.json
+        - name: GnosisEasyAuction
+          file: ./abis/GnosisEasyAuction.json
+        - name: BondFixedExpiryTeller
+          file: ./abis/BondFixedExpiryTeller.json
       # Triggered by the stake() call, which is fairly regular
       # rebase() would be preferred, but it doesn't seem to be called
       callHandlers:
@@ -656,4 +665,25 @@ dataSources:
           file: ./abis/sOlympusERC20V3.json
       blockHandlers:
         - handler: handleBlock
-      file: ./src/protocolMetrics/PriceSnapshot.ts  
+      file: ./src/protocolMetrics/PriceSnapshot.ts
+  - kind: ethereum/contract
+    name: BondManager
+    network: mainnet
+    source:
+      address: "0xf577c77ee3578c7f216327f41b5d7221ead2b2a3"
+      abi: BondManager
+      startBlock: 16226955
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - GnosisAuctionRoot
+        - GnosisAuction
+      abis:
+        - name: BondManager
+          file: ./abis/BondManager.json
+      eventHandlers:
+        - event: GnosisAuctionLaunched(uint256,address,uint96,uint48)
+          handler: handleGnosisAuctionLaunched
+      file: ./src/GnosisAuction.ts
