@@ -1,8 +1,10 @@
 # Subgraph Changelog
 
-## 3.3.2 (2023-01-23)
+## 3.3.5 (2023-01-24)
 
 - Add vesting bond tokens to the circulating/floating supply calculations
+- Remove price-snapshot from protocol-metrics, as it now has its own subgraph
+- Remove redundant subgraph data sources: bonds, sOHM
 
 ## 3.2.15 (2023-01-23)
 
