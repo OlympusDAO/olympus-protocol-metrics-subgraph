@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 3.3.2 (2023-01-23)
+
+- Add vesting bond tokens to the circulating/floating supply calculations
+
 ## 3.2.16 (2023-01-26)
 
 - Amend title of FraxBP staked in Convex and Frax

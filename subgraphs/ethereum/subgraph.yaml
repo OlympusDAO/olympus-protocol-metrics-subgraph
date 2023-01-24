@@ -4,7 +4,7 @@ features:
   - grafting
 graft:
   base: QmdzH9MPG74htR3ydU6jNyhuPoobCAKT6wEAQGdEypQzuH # 3.2.15
-  block: 16430000 # https://etherscan.io/tx/0x611b2068faef919cc09903748b5ea6ea30b2d2be2f4d824d62b7731a5a430f16
+  block: 16226955 # BondManager
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
   file: ../../schema.graphql
