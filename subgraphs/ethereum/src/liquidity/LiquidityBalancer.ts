@@ -24,8 +24,17 @@ import {
 import { getUSDRate } from "../utils/Price";
 import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
+const balancerVaultMap = new Map<string, BalancerVault>();
+
 export function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): BalancerVault {
-  return BalancerVault.bind(Address.fromString(vaultAddress));
+  const vaultAddressLower = vaultAddress.toLowerCase();
+
+  if (!balancerVaultMap.has(vaultAddressLower)) {
+    const contract = BalancerVault.bind(Address.fromString(vaultAddressLower));
+    balancerVaultMap.set(vaultAddressLower, contract);
+  }
+
+  return balancerVaultMap.get(vaultAddressLower);
 }
 
 // ### Balances for liquidity ###
@@ -106,6 +115,8 @@ function getBalancerPoolUnitRate(
   return totalValue.div(totalSupplyDecimals);
 }
 
+const balancerPoolTokenMap = new Map<string, BalancerPoolToken>();
+
 export function getBalancerPoolToken(
   vaultAddress: string,
   poolId: string,
@@ -119,7 +130,13 @@ export function getBalancerPoolToken(
   const poolInfo = vault.getPool(Bytes.fromHexString(poolId));
   const poolToken = poolInfo.getValue0().toHexString();
 
-  return BalancerPoolToken.bind(Address.fromString(poolToken));
+  const poolTokenLower = poolToken.toLowerCase();
+  if (!balancerPoolTokenMap.has(poolTokenLower)) {
+    const contract = BalancerPoolToken.bind(Address.fromString(poolTokenLower));
+    balancerPoolTokenMap.set(poolTokenLower, contract);
+  }
+
+  return balancerPoolTokenMap.get(poolTokenLower);
 }
 
 /**
