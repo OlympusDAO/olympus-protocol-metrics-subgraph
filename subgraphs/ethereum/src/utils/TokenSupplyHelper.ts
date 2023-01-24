@@ -32,7 +32,7 @@ export function createOrUpdateTokenSupply(
 ): TokenSupply {
   const dateString = getISO8601DateStringFromTimestamp(timestamp);
 
-  const poolNameNotNull: string = poolName !== null ? poolName : "";
+  const poolNameNotNull: string = poolName !== null ? poolName : "Unknown Pool";
   const sourceNameNotNull: string = sourceName !== null ? sourceName : "";
 
   const recordId = `${dateString}/${tokenName}/${type}/${poolNameNotNull}/${sourceNameNotNull}`; // YYYY-MM-DD/<token>/<type>/<pool>/<source>

@@ -11,6 +11,7 @@ import { getFraxSwapPairTokenQuantityRecords } from "../liquidity/LiquidityFraxS
 import { getUniswapV2PairTokenQuantity } from "../liquidity/LiquidityUniswapV2";
 import { pushTokenSupplyArray } from "./ArrayHelper";
 import {
+  BOND_MANAGER,
   CIRCULATING_SUPPLY_WALLETS,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
@@ -44,8 +45,6 @@ import {
 
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
 const MIGRATION_OFFSET = "2013";
-
-export const BOND_MANAGER = "0xf577c77ee3578c7f216327f41b5d7221ead2b2a3";
 
 /**
  * Returns the total supply of the latest version of the OHM contract
@@ -191,7 +190,7 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
           timestamp,
           getContractName(ERC20_OHM_V2),
           ERC20_OHM_V2,
-          null,
+          auctionId, // auction ID in place of the pool name. Keeps values distinct for different auctions.
           null,
           getContractName(bondFixedExpiryTellerAddress.toHexString()),
           bondFixedExpiryTellerAddress.toHexString(),
@@ -210,11 +209,11 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
       records.push(
         createOrUpdateTokenSupply(
           timestamp,
-          "foo", // getContractName(ERC20_OHM_V2),
+          getContractName(ERC20_OHM_V2),
           ERC20_OHM_V2,
+          auctionId, // auction ID in place of the pool name. Keeps values distinct for different auctions.
           null,
-          null,
-          "bar", // getContractName(BOND_MANAGER),
+          getContractName(BOND_MANAGER),
           BOND_MANAGER,
           TYPE_VESTING_BONDS,
           bidQuantity,
