@@ -119,7 +119,7 @@ type GnosisAuctionRoot @entity {
   markets: [BigInt!]!
 }
 
-type GnosisAuction @entity(immutable: true) {
+type GnosisAuction @entity {
   id: ID!
   payoutCapacity: BigDecimal!
   bidQuantity: BigDecimal # Is set later, so should not be required
