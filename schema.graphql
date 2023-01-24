@@ -121,5 +121,6 @@ type GnosisAuctionRoot @entity {
 
 type GnosisAuction @entity(immutable: true) {
   id: ID!
-  capacity: BigDecimal!
+  payoutCapacity: BigDecimal!
+  bidQuantity: BigDecimal # Is set later, so should not be required
 }
