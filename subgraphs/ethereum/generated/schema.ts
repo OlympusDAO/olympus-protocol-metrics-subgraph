@@ -1163,12 +1163,20 @@ export class GnosisAuction extends Entity {
     this.set("payoutCapacity", Value.fromBigDecimal(value));
   }
 
-  get bidQuantity(): BigDecimal {
+  get bidQuantity(): BigDecimal | null {
     const value = this.get("bidQuantity");
-    return value!.toBigDecimal();
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
   }
 
-  set bidQuantity(value: BigDecimal) {
-    this.set("bidQuantity", Value.fromBigDecimal(value));
+  set bidQuantity(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bidQuantity");
+    } else {
+      this.set("bidQuantity", Value.fromBigDecimal(<BigDecimal>value));
+    }
   }
 }

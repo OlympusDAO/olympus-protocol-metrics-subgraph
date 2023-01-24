@@ -1,9 +1,7 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { BondFixedExpiryTeller } from "../../generated/ProtocolMetrics/BondFixedExpiryTeller";
 import { BondManager } from "../../generated/ProtocolMetrics/BondManager";
-import { GnosisEasyAuction } from "../../generated/ProtocolMetrics/GnosisEasyAuction";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
 import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../../generated/schema";
 import { GNOSIS_RECORD_ID } from "../GnosisAuction";
@@ -41,6 +39,7 @@ import {
   TYPE_OFFSET,
   TYPE_TOTAL_SUPPLY,
   TYPE_TREASURY,
+  TYPE_VESTING_BONDS,
 } from "./TokenSupplyHelper";
 
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
@@ -150,38 +149,80 @@ function getMigrationOffsetRecord(timestamp: BigInt, blockNumber: BigInt): Token
 }
 
 export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
+  const FUNC = "getVestingBondSupplyRecords";
   const records: TokenSupply[] = [];
 
   const gnosisAuctionRoot: GnosisAuctionRoot | null = GnosisAuctionRoot.load(GNOSIS_RECORD_ID);
   // Record will not exist if no auctions have been launched
   if (!gnosisAuctionRoot) {
+    log.debug("{}: No auctions", [FUNC]);
     return records;
   }
 
   // Set up the FixedExpiryTeller and GnosisEasyAuction
   const bondManager = BondManager.bind(Address.fromString(BOND_MANAGER));
   if (!bondManager.isActive()) {
+    log.debug("{}: Bond Manager not active", [FUNC]);
     return records;
   }
 
-  const gnosisEasyAuction = GnosisEasyAuction.bind(bondManager.gnosisEasyAuction());
-  const bondFixedExpiryTeller = BondFixedExpiryTeller.bind(bondManager.fixedExpiryTeller());
-
-  // May need to remove blanket removal of bond teller
-  // Is vesting OHM part of circulating or floating supply?
+  const bondFixedExpiryTellerAddress = bondManager.fixedExpiryTeller();
 
   // Loop through Gnosis Auctions
   const gnosisAuctionIds: BigInt[] = gnosisAuctionRoot.markets;
   for (let i = 0; i < gnosisAuctionIds.length; i++) {
+    const auctionId = gnosisAuctionIds[i].toString();
+    log.debug("{}: Processing Gnosis auction with id {}", [FUNC, auctionId]);
+
+    const auctionRecord = GnosisAuction.load(auctionId);
+    if (!auctionRecord) {
+      throw new Error(`Expected to find GnosisAuction record with id ${auctionId}, but it was not found`);
+    }
+
+    const bidQuantity: BigDecimal | null = auctionRecord.bidQuantity;
+
     // If the auction is open
+    if (!bidQuantity) {
+      log.debug("{}: auction is open", [FUNC]);
 
-    // Exclude OHM in the bond teller (already excluded due to listing in circulating supply wallets?)
-    // Include OHM in the easy auction contract (should already be included?)
-
+      // OHM equivalent to the auction capacity is stored in the teller, so we adjust that
+      records.push(
+        createOrUpdateTokenSupply(
+          timestamp,
+          getContractName(ERC20_OHM_V2),
+          ERC20_OHM_V2,
+          null,
+          null,
+          getContractName(bondFixedExpiryTellerAddress.toHexString()),
+          bondFixedExpiryTellerAddress.toHexString(),
+          TYPE_VESTING_BONDS,
+          auctionRecord.payoutCapacity,
+          blockNumber,
+          -1, // Subtract
+        ),
+      );
+    }
     // If the auction is closed
+    else {
+      log.debug("{}: auction is closed", [FUNC]);
 
-    // Include unclaimed OHM in the bond teller (or just include as circulating?)
-    // Exclude OHM deposits in the auction contract (bond manager too?)
+      // OHM equivalent to the sold quantity is stored in the bond manager, so we adjust that
+      records.push(
+        createOrUpdateTokenSupply(
+          timestamp,
+          "foo", // getContractName(ERC20_OHM_V2),
+          ERC20_OHM_V2,
+          null,
+          null,
+          "bar", // getContractName(BOND_MANAGER),
+          BOND_MANAGER,
+          TYPE_VESTING_BONDS,
+          bidQuantity,
+          blockNumber,
+          -1, // Subtract
+        ),
+      );
+    }
   }
 
   return records;

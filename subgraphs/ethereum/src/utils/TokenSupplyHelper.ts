@@ -1,10 +1,11 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { getISO8601DateStringFromTimestamp } from "../../../shared/src/utils/DateHelper";
 import { TokenSupply } from "../../generated/schema";
 
 export const TYPE_TOTAL_SUPPLY = "Total Supply";
 export const TYPE_TREASURY = "Treasury";
+export const TYPE_VESTING_BONDS = "Vesting Bonds";
 export const TYPE_OFFSET = "Manual Offset";
 export const TYPE_LIQUIDITY = "Liquidity";
 

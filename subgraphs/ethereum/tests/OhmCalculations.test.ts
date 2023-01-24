@@ -1,14 +1,14 @@
-import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../generated/schema";
 import { GNOSIS_RECORD_ID } from "../src/GnosisAuction";
-import { CIRCULATING_SUPPLY_WALLETS, ERC20_OHM_V2, ERC20_OHM_V2_BLOCK } from "../src/utils/Constants";
+import { CIRCULATING_SUPPLY_WALLETS, ERC20_OHM_V2 } from "../src/utils/Constants";
 import { BOND_MANAGER, getTreasuryOHMRecords, getVestingBondSupplyRecords } from "../src/utils/OhmCalculations";
 
-const CONTRACT_GNOSIS = "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101";
-const CONTRACT_TELLER = "0x007FE70dc9797C4198528aE43d8195ffF82Bdc95";
+const CONTRACT_GNOSIS = "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101".toLowerCase();
+const CONTRACT_TELLER = "0x007FE70dc9797C4198528aE43d8195ffF82Bdc95".toLowerCase();
 
 function tokenSupplyRecordsToMap(records: TokenSupply[]): Map<string, TokenSupply> {
     const map = new Map<string, TokenSupply>();
@@ -20,7 +20,7 @@ function tokenSupplyRecordsToMap(records: TokenSupply[]): Map<string, TokenSuppl
             continue;
         }
 
-        map.set(record.sourceAddress!, record);
+        map.set(record.sourceAddress!.toLowerCase(), record);
     }
 
     return map;
@@ -49,12 +49,12 @@ function mockContractBalances(gnosisBalance: BigDecimal = BigDecimal.fromString(
         ]);
 }
 
-function mockCirculatingSupplyWalletsZero(): void {
+function mockCirculatingSupplyWallets(balance: BigInt): void {
     for (let i = 0; i < CIRCULATING_SUPPLY_WALLETS.length; i++) {
         createMockedFunction(Address.fromString(ERC20_OHM_V2), "balanceOf", "balanceOf(address):(uint256)").
             withArgs([ethereum.Value.fromAddress(Address.fromString(CIRCULATING_SUPPLY_WALLETS[i]))]).
             returns([
-                ethereum.Value.fromUnsignedBigInt(BigInt.zero()),
+                ethereum.Value.fromUnsignedBigInt(balance),
             ]);
     }
 }
@@ -118,7 +118,10 @@ describe("Vesting Bonds", () => {
         assert.stringEquals(tellerRecord.supplyBalance.toString(), PAYOUT_CAPACITY.times(BigDecimal.fromString("-1")).toString());
 
         // No supply impact from Gnosis contract
-        assert.assertTrue(recordsMap.has(CONTRACT_GNOSIS) == false);
+        assert.assertTrue(recordsMap.has(BOND_MANAGER) == false);
+
+        // Only 1 record
+        assert.i32Equals(records.length, 1);
     });
 
     test("open auction with deposits", () => {
@@ -138,7 +141,10 @@ describe("Vesting Bonds", () => {
         assert.stringEquals(tellerRecord.supplyBalance.toString(), PAYOUT_CAPACITY.times(BigDecimal.fromString("-1")).toString());
 
         // No supply impact from Gnosis contract
-        assert.assertTrue(recordsMap.has(CONTRACT_GNOSIS) == false);
+        assert.assertTrue(recordsMap.has(BOND_MANAGER) == false);
+
+        // Only 1 record
+        assert.i32Equals(records.length, 1);
     });
 
     test("closed auction with balance in GnosisEasyAuction", () => {
@@ -156,8 +162,11 @@ describe("Vesting Bonds", () => {
         assert.assertTrue(recordsMap.has(CONTRACT_TELLER) == false);
 
         // Supply decreased by BID_QUANTITY
-        const gnosisRecord = recordsMap.get(CONTRACT_GNOSIS);
+        const gnosisRecord = recordsMap.get(BOND_MANAGER);
         assert.stringEquals(gnosisRecord.supplyBalance.toString(), BID_QUANTITY.times(BigDecimal.fromString("-1")).toString());
+
+        // Only 1 record
+        assert.i32Equals(records.length, 1);
     });
 
     test("closed auction with balance in BondManager", () => {
@@ -175,8 +184,11 @@ describe("Vesting Bonds", () => {
         assert.assertTrue(recordsMap.has(CONTRACT_TELLER) == false);
 
         // Supply decreased by BID_QUANTITY
-        const gnosisRecord = recordsMap.get(CONTRACT_GNOSIS);
+        const gnosisRecord = recordsMap.get(BOND_MANAGER);
         assert.stringEquals(gnosisRecord.supplyBalance.toString(), BID_QUANTITY.times(BigDecimal.fromString("-1")).toString());
+
+        // Only 1 record
+        assert.i32Equals(records.length, 1);
     });
 
     test("closed auction with partial sale", () => {
@@ -196,14 +208,17 @@ describe("Vesting Bonds", () => {
         assert.assertTrue(recordsMap.has(CONTRACT_TELLER) == false);
 
         // Supply decreased by partialBidQuantity
-        const gnosisRecord = recordsMap.get(CONTRACT_GNOSIS);
+        const gnosisRecord = recordsMap.get(BOND_MANAGER);
         assert.stringEquals(gnosisRecord.supplyBalance.toString(), partialBidQuantity.times(BigDecimal.fromString("-1")).toString());
+
+        // Only 1 record
+        assert.i32Equals(records.length, 1);
     });
 });
 
 describe("Treasury OHM", () => {
     test("excludes bond teller", () => {
-        mockCirculatingSupplyWalletsZero();
+        mockCirculatingSupplyWallets(BigInt.fromString("0"));
         mockContractBalances(BigDecimal.zero(), BigDecimal.zero(), BigDecimal.fromString("1"));
 
         const records = getTreasuryOHMRecords(BigInt.fromString("1"), BigInt.fromString("13782590"));
@@ -214,13 +229,13 @@ describe("Treasury OHM", () => {
     });
 
     test("excludes bond manager", () => {
-        mockCirculatingSupplyWalletsZero();
+        mockCirculatingSupplyWallets(BigInt.fromString("0"));
         mockContractBalances(BigDecimal.zero(), BigDecimal.fromString("1"), BigDecimal.zero());
 
         const records = getTreasuryOHMRecords(BigInt.fromString("1"), BigInt.fromString("13782590"));
         const recordsMap = tokenSupplyRecordsToMap(records);
 
         // No supply impact from bond manager
-        assert.assertTrue(recordsMap.has(BOND_MANAGER) == false);
+        assert.assertTrue(recordsMap.has(BOND_MANAGER.toLowerCase()) == false);
     });
 });
