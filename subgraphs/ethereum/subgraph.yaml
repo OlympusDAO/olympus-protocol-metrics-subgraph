@@ -76,475 +76,475 @@ dataSources:
         - function: rebase(uint256,uint256)
           handler: rebaseFunction
       file: ./src/sOlympus/sOlympusERC20V2.ts
-  - kind: ethereum/contract
-    name: sOlympusERC20V3
-    network: mainnet
-    source:
-      address: "0x04906695D6D12CF5459975d7C3C03356E4Ccd460"
-      abi: sOlympusERC20V3
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - sOlympusERC20V3
-      abis:
-        - name: OlympusStakingV3
-          file: ./abis/OlympusStakingV3.json
-        - name: sOlympusERC20V3
-          file: ./abis/sOlympusERC20V3.json
-        - name: OlympusERC20
-          file: ./abis/OlympusERC20.json
-        # Needed for price lookup
-        - name: ERC20
-          file: ../shared/abis/ERC20.json
-        - name: UniswapV2Pair
-          file: ../shared/abis/UniswapV2Pair.json
-        - name: BalancerVault
-          file: ../shared/abis/BalancerVault.json
-        - name: BalancerPoolToken
-          file: ../shared/abis/BalancerPoolToken.json
-      callHandlers:
-        - function: rebase(uint256,uint256)
-          handler: rebaseFunction
-      file: ./src/sOlympus/sOlympusERC20V3.ts
-  #DAI Bond Contract V1
-  - kind: ethereum/contract
-    name: DAIBondV1
-    network: mainnet
-    source:
-      address: "0xa64ed1b66cb2838ef2a198d8345c0ce6967a2a3c"
-      abi: DAIBondV1
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - DAIBondDeposit
-      abis:
-        - name: DAIBondV1
-          file: ./abis/DAIBondV1.json
-      callHandlers:
-        - function: deposit(uint256,uint256,address)
-          handler: handleDeposit
-      file: ./src/bonds/DAIBondV1.ts
-  #DAI Bond Contract V2
-  - kind: ethereum/contract
-    name: DAIBondV2
-    network: mainnet
-    source:
-      address: "0xd03056323b7a63e2095ae97fa1ad92e4820ff045"
-      abi: DAIBondV2
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - DAIBondDeposit
-      abis:
-        - name: DAIBondV2
-          file: ./abis/DAIBondV2.json
-      callHandlers:
-        - function: deposit(uint256,uint256,address)
-          handler: handleDeposit
-      file: ./src/bonds/DAIBondV2.ts
-  #DAI Bond Contract V3
-  - kind: ethereum/contract
-    name: DAIBondV3
-    network: mainnet
-    source:
-      address: "0x575409F8d77c12B05feD8B455815f0e54797381c"
-      abi: DAIBondV3
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - DAIBondDeposit
-      abis:
-        - name: DAIBondV3
-          file: ./abis/DAIBondV3.json
-      callHandlers:
-        - function: deposit(uint256,uint256,address)
-          handler: handleDeposit
-      file: ./src/bonds/DAIBondV3.ts
-  #OHM DAI LP Bond Contract V1
-  - kind: ethereum/contract
-    name: OHMDAIBondV1
-    network: mainnet
-    source:
-      address: "0xd27001d1aAEd5f002C722Ad729de88a91239fF29"
-      abi: OHMDAIBondV1
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - OHMDAIBondV1
-      abis:
-        - name: OHMDAIBondV1
-          file: ./abis/OHMDAIBondV1.json
-        # Needed for price lookup
-        - name: ERC20
-          file: ../shared/abis/ERC20.json
-        - name: UniswapV2Pair
-          file: ../shared/abis/UniswapV2Pair.json
-        - name: BalancerVault
-          file: ../shared/abis/BalancerVault.json
-        - name: BalancerPoolToken
-          file: ../shared/abis/BalancerPoolToken.json
-      callHandlers:
-        - function: depositBondPrinciple(uint256)
-          handler: handleDeposit
-      file: ./src/bonds/OHMDAIBondV1.ts
-  #OHM DAI LP Bond Contract V2
-  - kind: ethereum/contract
-    name: OHMDAIBondV2
-    network: mainnet
-    source:
-      address: "0x13e8484a86327f5882d1340ed0d7643a29548536"
-      abi: OHMDAIBondV2
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - OHMDAIBondV2
-      abis:
-        - name: OHMDAIBondV2
-          file: ./abis/OHMDAIBondV2.json
-        # Needed for price lookup
-        - name: ERC20
-          file: ../shared/abis/ERC20.json
-        - name: UniswapV2Pair
-          file: ../shared/abis/UniswapV2Pair.json
-        - name: BalancerVault
-          file: ../shared/abis/BalancerVault.json
-        - name: BalancerPoolToken
-          file: ../shared/abis/BalancerPoolToken.json
-      callHandlers:
-        - function: deposit(uint256,uint256,address)
-          handler: handleDeposit
-      file: ./src/bonds/OHMDAIBondV2.ts
-  #OHM DAI LP Bond Contract V3
-  - kind: ethereum/contract
-    name: OHMDAIBondV3
-    network: mainnet
-    source:
-      address: "0x996668c46fc0b764afda88d83eb58afc933a1626"
-      abi: OHMDAIBondV3
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - OHMDAIBondV3
-      abis:
-        - name: OHMDAIBondV3
-          file: ./abis/OHMDAIBondV3.json
-        # Needed for price lookup
-        - name: ERC20
-          file: ../shared/abis/ERC20.json
-        - name: UniswapV2Pair
-          file: ../shared/abis/UniswapV2Pair.json
-        - name: BalancerVault
-          file: ../shared/abis/BalancerVault.json
-        - name: BalancerPoolToken
-          file: ../shared/abis/BalancerPoolToken.json
-      callHandlers:
-        - function: deposit(uint256,uint256,address)
-          handler: handleDeposit
-      file: ./src/bonds/OHMDAIBondV3.ts
-  #OHM DAI LP Bond Contract V4
-  - kind: ethereum/contract
-    name: OHMDAIBondV4
-    network: mainnet
-    source:
-      address: "0x956c43998316b6a2F21f89a1539f73fB5B78c151"
-      abi: OHMDAIBondV4
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - OHMDAIBondV4
-      abis:
-        - name: OHMDAIBondV4
-          file: ./abis/OHMDAIBondV4.json
-        # Needed for price lookup
-        - name: ERC20
-          file: ../shared/abis/ERC20.json
-        - name: UniswapV2Pair
-          file: ../shared/abis/UniswapV2Pair.json
-        - name: BalancerVault
-          file: ../shared/abis/BalancerVault.json
-        - name: BalancerPoolToken
-          file: ../shared/abis/BalancerPoolToken.json
-      callHandlers:
-        - function: deposit(uint256,uint256,address)
-          handler: handleDeposit
-      file: ./src/bonds/OHMDAIBondV4.ts
-  # FRAX-OHM v1
-  - kind: ethereum/contract
-    name: OHMFRAXBondV1
-    network: mainnet
-    source:
-      address: "0x539b6c906244ac34e348bbe77885cdfa994a3776"
-      abi: OHMFRAXBondV1
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - OHMFRAXBondV1
-      abis:
-        - name: OHMFRAXBondV1
-          file: ./abis/OHMFRAXBondV1.json
-        # Needed for price lookup
-        - name: ERC20
-          file: ../shared/abis/ERC20.json
-        - name: UniswapV2Pair
-          file: ../shared/abis/UniswapV2Pair.json
-        - name: BalancerVault
-          file: ../shared/abis/BalancerVault.json
-        - name: BalancerPoolToken
-          file: ../shared/abis/BalancerPoolToken.json
-      callHandlers:
-        - function: deposit(uint256,uint256,address)
-          handler: handleDeposit
-      file: ./src/bonds/OHMFRAXBondV1.ts
-  # FRAX-OHM v2
-  - kind: ethereum/contract
-    name: OHMFRAXBondV2
-    network: mainnet
-    source:
-      address: "0xc20cfff07076858a7e642e396180ec390e5a02f7"
-      abi: OHMFRAXBondV2
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - OHMFRAXBondV2
-      abis:
-        - name: OHMFRAXBondV2
-          file: ./abis/OHMFRAXBondV2.json
-        # Needed for price lookup
-        - name: ERC20
-          file: ../shared/abis/ERC20.json
-        - name: UniswapV2Pair
-          file: ../shared/abis/UniswapV2Pair.json
-        - name: BalancerVault
-          file: ../shared/abis/BalancerVault.json
-        - name: BalancerPoolToken
-          file: ../shared/abis/BalancerPoolToken.json
-      callHandlers:
-        - function: deposit(uint256,uint256,address)
-          handler: handleDeposit
-      file: ./src/bonds/OHMFRAXBondV2.ts
-  # FRAX v1
-  - kind: ethereum/contract
-    name: FRAXBondV1
-    network: mainnet
-    source:
-      address: "0x8510c8c2B6891E04864fa196693D44E6B6ec2514"
-      abi: FRAXBondV1
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - FRAXBondV1
-      abis:
-        - name: FRAXBondV1
-          file: ./abis/FRAXBondV1.json
-      callHandlers:
-        - function: deposit(uint256,uint256,address)
-          handler: handleDeposit
-      file: ./src/bonds/FRAXBondV1.ts
-  #WETH
-  - kind: ethereum/contract
-    name: ETHBondV1
-    network: mainnet
-    source:
-      address: "0xe6295201cd1ff13ced5f063a5421c39a1d236f1c"
-      abi: ETHBondV1
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - ETHBondV1
-      abis:
-        - name: ETHBondV1
-          file: ./abis/ETHBondV1.json
-        - name: UniswapV2Pair
-          file: ../shared/abis/UniswapV2Pair.json
-      callHandlers:
-        - function: deposit(uint256,uint256,address)
-          handler: handleDeposit
-      file: ./src/bonds/ETHBondV1.ts
-  #LUSD
-  - kind: ethereum/contract
-    name: LUSDBondV1
-    network: mainnet
-    source:
-      address: "0x10c0f93f64e3c8d0a1b0f4b87d6155fd9e89d08d"
-      abi: LUSDBondV1
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - LUSDBondV1
-      abis:
-        - name: LUSDBondV1
-          file: ./abis/LUSDBondV1.json
-      callHandlers:
-        - function: deposit(uint256,uint256,address)
-          handler: handleDeposit
-      file: ./src/bonds/LUSDBondV1.ts
-  # LUSD-OHM v2
-  - kind: ethereum/contract
-    name: OHMLUSDBondV1
-    network: mainnet
-    source:
-      address: "0xfb1776299e7804dd8016303df9c07a65c80f67b6"
-      abi: OHMLUSDBondV1
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - OHMLUSDBondV1
-      abis:
-        - name: OHMLUSDBondV1
-          file: ./abis/LUSDBondV1.json
-        # Needed for price lookup
-        - name: ERC20
-          file: ../shared/abis/ERC20.json
-        - name: UniswapV2Pair
-          file: ../shared/abis/UniswapV2Pair.json
-        - name: BalancerVault
-          file: ../shared/abis/BalancerVault.json
-        - name: BalancerPoolToken
-          file: ../shared/abis/BalancerPoolToken.json
-      callHandlers:
-        - function: deposit(uint256,uint256,address)
-          handler: handleDeposit
-      file: ./src/bonds/OHMLUSDBondV1.ts
-  # ETH-OHM v2
-  - kind: ethereum/contract
-    name: OHMETHBondV1
-    network: mainnet
-    source:
-      address: "0xB6C9dc843dEc44Aa305217c2BbC58B44438B6E16"
-      abi: OHMETHBondV1
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - OHMETHBondV1
-      abis:
-        - name: OHMETHBondV1
-          file: ./abis/OHMETHBondV1.json
-        # Needed for price lookup
-        - name: ERC20
-          file: ../shared/abis/ERC20.json
-        - name: UniswapV2Pair
-          file: ../shared/abis/UniswapV2Pair.json
-        - name: BalancerVault
-          file: ../shared/abis/BalancerVault.json
-        - name: BalancerPoolToken
-          file: ../shared/abis/BalancerPoolToken.json
-      callHandlers:
-        - function: deposit(uint256,uint256,address)
-          handler: handleDeposit
-      file: ./src/bonds/OHMETHBondV1.ts
-  - kind: ethereum/contract
-    name: BondDiscounts
-    network: mainnet
-    source:
-      address: "0xB63cac384247597756545b500253ff8E607a8020"
-      abi: OlympusStakingV3
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - BondDiscount
-      abis:
-        - name: OlympusStakingV1
-          file: ./abis/OlympusStakingV1.json
-        - name: OlympusStakingV2
-          file: ./abis/OlympusStakingV2.json
-        - name: OlympusStakingV3
-          file: ./abis/OlympusStakingV3.json
-        - name: sOlympusERC20
-          file: ./abis/sOlympusERC20.json
-        - name: sOlympusERC20V2
-          file: ./abis/sOlympusERC20V2.json
-        - name: sOlympusERC20V3
-          file: ./abis/sOlympusERC20V3.json
-        - name: OlympusERC20
-          file: ./abis/OlympusERC20.json
-        # Needed for price lookup
-        - name: ERC20
-          file: ../shared/abis/ERC20.json
-        - name: UniswapV2Pair
-          file: ../shared/abis/UniswapV2Pair.json
-        - name: BalancerVault
-          file: ../shared/abis/BalancerVault.json
-        - name: BalancerPoolToken
-          file: ../shared/abis/BalancerPoolToken.json
-        # Required for bond discounts
-        - name: DAIBondV1
-          file: ./abis/DAIBondV1.json
-        - name: DAIBondV2
-          file: ./abis/DAIBondV2.json
-        - name: DAIBondV3
-          file: ./abis/DAIBondV3.json
-        - name: OHMDAIBondV1
-          file: ./abis/OHMDAIBondV1.json
-        - name: OHMDAIBondV2
-          file: ./abis/OHMDAIBondV2.json
-        - name: OHMDAIBondV3
-          file: ./abis/OHMDAIBondV3.json
-        - name: OHMDAIBondV4
-          file: ./abis/OHMDAIBondV4.json
-        - name: OHMFRAXBondV1
-          file: ./abis/OHMFRAXBondV1.json
-        - name: OHMFRAXBondV2
-          file: ./abis/OHMFRAXBondV2.json
-        - name: FRAXBondV1
-          file: ./abis/FRAXBondV1.json
-        - name: ETHBondV1
-          file: ./abis/ETHBondV1.json
-        - name: LUSDBondV1
-          file: ./abis/LUSDBondV1.json
-        - name: OHMLUSDBondV1
-          file: ./abis/OHMLUSDBondV1.json
-      callHandlers:
-        - function: stake(address,uint256,bool,bool)
-          handler: handleBondDiscounts
-      file: ./src/bonds/BondDiscounts.ts
+  # - kind: ethereum/contract
+  #   name: sOlympusERC20V3
+  #   network: mainnet
+  #   source:
+  #     address: "0x04906695D6D12CF5459975d7C3C03356E4Ccd460"
+  #     abi: sOlympusERC20V3
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - sOlympusERC20V3
+  #     abis:
+  #       - name: OlympusStakingV3
+  #         file: ./abis/OlympusStakingV3.json
+  #       - name: sOlympusERC20V3
+  #         file: ./abis/sOlympusERC20V3.json
+  #       - name: OlympusERC20
+  #         file: ./abis/OlympusERC20.json
+  #       # Needed for price lookup
+  #       - name: ERC20
+  #         file: ../shared/abis/ERC20.json
+  #       - name: UniswapV2Pair
+  #         file: ../shared/abis/UniswapV2Pair.json
+  #       - name: BalancerVault
+  #         file: ../shared/abis/BalancerVault.json
+  #       - name: BalancerPoolToken
+  #         file: ../shared/abis/BalancerPoolToken.json
+  #     callHandlers:
+  #       - function: rebase(uint256,uint256)
+  #         handler: rebaseFunction
+  #     file: ./src/sOlympus/sOlympusERC20V3.ts
+  # #DAI Bond Contract V1
+  # - kind: ethereum/contract
+  #   name: DAIBondV1
+  #   network: mainnet
+  #   source:
+  #     address: "0xa64ed1b66cb2838ef2a198d8345c0ce6967a2a3c"
+  #     abi: DAIBondV1
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - DAIBondDeposit
+  #     abis:
+  #       - name: DAIBondV1
+  #         file: ./abis/DAIBondV1.json
+  #     callHandlers:
+  #       - function: deposit(uint256,uint256,address)
+  #         handler: handleDeposit
+  #     file: ./src/bonds/DAIBondV1.ts
+  # #DAI Bond Contract V2
+  # - kind: ethereum/contract
+  #   name: DAIBondV2
+  #   network: mainnet
+  #   source:
+  #     address: "0xd03056323b7a63e2095ae97fa1ad92e4820ff045"
+  #     abi: DAIBondV2
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - DAIBondDeposit
+  #     abis:
+  #       - name: DAIBondV2
+  #         file: ./abis/DAIBondV2.json
+  #     callHandlers:
+  #       - function: deposit(uint256,uint256,address)
+  #         handler: handleDeposit
+  #     file: ./src/bonds/DAIBondV2.ts
+  # #DAI Bond Contract V3
+  # - kind: ethereum/contract
+  #   name: DAIBondV3
+  #   network: mainnet
+  #   source:
+  #     address: "0x575409F8d77c12B05feD8B455815f0e54797381c"
+  #     abi: DAIBondV3
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - DAIBondDeposit
+  #     abis:
+  #       - name: DAIBondV3
+  #         file: ./abis/DAIBondV3.json
+  #     callHandlers:
+  #       - function: deposit(uint256,uint256,address)
+  #         handler: handleDeposit
+  #     file: ./src/bonds/DAIBondV3.ts
+  # #OHM DAI LP Bond Contract V1
+  # - kind: ethereum/contract
+  #   name: OHMDAIBondV1
+  #   network: mainnet
+  #   source:
+  #     address: "0xd27001d1aAEd5f002C722Ad729de88a91239fF29"
+  #     abi: OHMDAIBondV1
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - OHMDAIBondV1
+  #     abis:
+  #       - name: OHMDAIBondV1
+  #         file: ./abis/OHMDAIBondV1.json
+  #       # Needed for price lookup
+  #       - name: ERC20
+  #         file: ../shared/abis/ERC20.json
+  #       - name: UniswapV2Pair
+  #         file: ../shared/abis/UniswapV2Pair.json
+  #       - name: BalancerVault
+  #         file: ../shared/abis/BalancerVault.json
+  #       - name: BalancerPoolToken
+  #         file: ../shared/abis/BalancerPoolToken.json
+  #     callHandlers:
+  #       - function: depositBondPrinciple(uint256)
+  #         handler: handleDeposit
+  #     file: ./src/bonds/OHMDAIBondV1.ts
+  # #OHM DAI LP Bond Contract V2
+  # - kind: ethereum/contract
+  #   name: OHMDAIBondV2
+  #   network: mainnet
+  #   source:
+  #     address: "0x13e8484a86327f5882d1340ed0d7643a29548536"
+  #     abi: OHMDAIBondV2
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - OHMDAIBondV2
+  #     abis:
+  #       - name: OHMDAIBondV2
+  #         file: ./abis/OHMDAIBondV2.json
+  #       # Needed for price lookup
+  #       - name: ERC20
+  #         file: ../shared/abis/ERC20.json
+  #       - name: UniswapV2Pair
+  #         file: ../shared/abis/UniswapV2Pair.json
+  #       - name: BalancerVault
+  #         file: ../shared/abis/BalancerVault.json
+  #       - name: BalancerPoolToken
+  #         file: ../shared/abis/BalancerPoolToken.json
+  #     callHandlers:
+  #       - function: deposit(uint256,uint256,address)
+  #         handler: handleDeposit
+  #     file: ./src/bonds/OHMDAIBondV2.ts
+  # #OHM DAI LP Bond Contract V3
+  # - kind: ethereum/contract
+  #   name: OHMDAIBondV3
+  #   network: mainnet
+  #   source:
+  #     address: "0x996668c46fc0b764afda88d83eb58afc933a1626"
+  #     abi: OHMDAIBondV3
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - OHMDAIBondV3
+  #     abis:
+  #       - name: OHMDAIBondV3
+  #         file: ./abis/OHMDAIBondV3.json
+  #       # Needed for price lookup
+  #       - name: ERC20
+  #         file: ../shared/abis/ERC20.json
+  #       - name: UniswapV2Pair
+  #         file: ../shared/abis/UniswapV2Pair.json
+  #       - name: BalancerVault
+  #         file: ../shared/abis/BalancerVault.json
+  #       - name: BalancerPoolToken
+  #         file: ../shared/abis/BalancerPoolToken.json
+  #     callHandlers:
+  #       - function: deposit(uint256,uint256,address)
+  #         handler: handleDeposit
+  #     file: ./src/bonds/OHMDAIBondV3.ts
+  # #OHM DAI LP Bond Contract V4
+  # - kind: ethereum/contract
+  #   name: OHMDAIBondV4
+  #   network: mainnet
+  #   source:
+  #     address: "0x956c43998316b6a2F21f89a1539f73fB5B78c151"
+  #     abi: OHMDAIBondV4
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - OHMDAIBondV4
+  #     abis:
+  #       - name: OHMDAIBondV4
+  #         file: ./abis/OHMDAIBondV4.json
+  #       # Needed for price lookup
+  #       - name: ERC20
+  #         file: ../shared/abis/ERC20.json
+  #       - name: UniswapV2Pair
+  #         file: ../shared/abis/UniswapV2Pair.json
+  #       - name: BalancerVault
+  #         file: ../shared/abis/BalancerVault.json
+  #       - name: BalancerPoolToken
+  #         file: ../shared/abis/BalancerPoolToken.json
+  #     callHandlers:
+  #       - function: deposit(uint256,uint256,address)
+  #         handler: handleDeposit
+  #     file: ./src/bonds/OHMDAIBondV4.ts
+  # # FRAX-OHM v1
+  # - kind: ethereum/contract
+  #   name: OHMFRAXBondV1
+  #   network: mainnet
+  #   source:
+  #     address: "0x539b6c906244ac34e348bbe77885cdfa994a3776"
+  #     abi: OHMFRAXBondV1
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - OHMFRAXBondV1
+  #     abis:
+  #       - name: OHMFRAXBondV1
+  #         file: ./abis/OHMFRAXBondV1.json
+  #       # Needed for price lookup
+  #       - name: ERC20
+  #         file: ../shared/abis/ERC20.json
+  #       - name: UniswapV2Pair
+  #         file: ../shared/abis/UniswapV2Pair.json
+  #       - name: BalancerVault
+  #         file: ../shared/abis/BalancerVault.json
+  #       - name: BalancerPoolToken
+  #         file: ../shared/abis/BalancerPoolToken.json
+  #     callHandlers:
+  #       - function: deposit(uint256,uint256,address)
+  #         handler: handleDeposit
+  #     file: ./src/bonds/OHMFRAXBondV1.ts
+  # # FRAX-OHM v2
+  # - kind: ethereum/contract
+  #   name: OHMFRAXBondV2
+  #   network: mainnet
+  #   source:
+  #     address: "0xc20cfff07076858a7e642e396180ec390e5a02f7"
+  #     abi: OHMFRAXBondV2
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - OHMFRAXBondV2
+  #     abis:
+  #       - name: OHMFRAXBondV2
+  #         file: ./abis/OHMFRAXBondV2.json
+  #       # Needed for price lookup
+  #       - name: ERC20
+  #         file: ../shared/abis/ERC20.json
+  #       - name: UniswapV2Pair
+  #         file: ../shared/abis/UniswapV2Pair.json
+  #       - name: BalancerVault
+  #         file: ../shared/abis/BalancerVault.json
+  #       - name: BalancerPoolToken
+  #         file: ../shared/abis/BalancerPoolToken.json
+  #     callHandlers:
+  #       - function: deposit(uint256,uint256,address)
+  #         handler: handleDeposit
+  #     file: ./src/bonds/OHMFRAXBondV2.ts
+  # # FRAX v1
+  # - kind: ethereum/contract
+  #   name: FRAXBondV1
+  #   network: mainnet
+  #   source:
+  #     address: "0x8510c8c2B6891E04864fa196693D44E6B6ec2514"
+  #     abi: FRAXBondV1
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - FRAXBondV1
+  #     abis:
+  #       - name: FRAXBondV1
+  #         file: ./abis/FRAXBondV1.json
+  #     callHandlers:
+  #       - function: deposit(uint256,uint256,address)
+  #         handler: handleDeposit
+  #     file: ./src/bonds/FRAXBondV1.ts
+  # #WETH
+  # - kind: ethereum/contract
+  #   name: ETHBondV1
+  #   network: mainnet
+  #   source:
+  #     address: "0xe6295201cd1ff13ced5f063a5421c39a1d236f1c"
+  #     abi: ETHBondV1
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - ETHBondV1
+  #     abis:
+  #       - name: ETHBondV1
+  #         file: ./abis/ETHBondV1.json
+  #       - name: UniswapV2Pair
+  #         file: ../shared/abis/UniswapV2Pair.json
+  #     callHandlers:
+  #       - function: deposit(uint256,uint256,address)
+  #         handler: handleDeposit
+  #     file: ./src/bonds/ETHBondV1.ts
+  # #LUSD
+  # - kind: ethereum/contract
+  #   name: LUSDBondV1
+  #   network: mainnet
+  #   source:
+  #     address: "0x10c0f93f64e3c8d0a1b0f4b87d6155fd9e89d08d"
+  #     abi: LUSDBondV1
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - LUSDBondV1
+  #     abis:
+  #       - name: LUSDBondV1
+  #         file: ./abis/LUSDBondV1.json
+  #     callHandlers:
+  #       - function: deposit(uint256,uint256,address)
+  #         handler: handleDeposit
+  #     file: ./src/bonds/LUSDBondV1.ts
+  # # LUSD-OHM v2
+  # - kind: ethereum/contract
+  #   name: OHMLUSDBondV1
+  #   network: mainnet
+  #   source:
+  #     address: "0xfb1776299e7804dd8016303df9c07a65c80f67b6"
+  #     abi: OHMLUSDBondV1
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - OHMLUSDBondV1
+  #     abis:
+  #       - name: OHMLUSDBondV1
+  #         file: ./abis/LUSDBondV1.json
+  #       # Needed for price lookup
+  #       - name: ERC20
+  #         file: ../shared/abis/ERC20.json
+  #       - name: UniswapV2Pair
+  #         file: ../shared/abis/UniswapV2Pair.json
+  #       - name: BalancerVault
+  #         file: ../shared/abis/BalancerVault.json
+  #       - name: BalancerPoolToken
+  #         file: ../shared/abis/BalancerPoolToken.json
+  #     callHandlers:
+  #       - function: deposit(uint256,uint256,address)
+  #         handler: handleDeposit
+  #     file: ./src/bonds/OHMLUSDBondV1.ts
+  # # ETH-OHM v2
+  # - kind: ethereum/contract
+  #   name: OHMETHBondV1
+  #   network: mainnet
+  #   source:
+  #     address: "0xB6C9dc843dEc44Aa305217c2BbC58B44438B6E16"
+  #     abi: OHMETHBondV1
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - OHMETHBondV1
+  #     abis:
+  #       - name: OHMETHBondV1
+  #         file: ./abis/OHMETHBondV1.json
+  #       # Needed for price lookup
+  #       - name: ERC20
+  #         file: ../shared/abis/ERC20.json
+  #       - name: UniswapV2Pair
+  #         file: ../shared/abis/UniswapV2Pair.json
+  #       - name: BalancerVault
+  #         file: ../shared/abis/BalancerVault.json
+  #       - name: BalancerPoolToken
+  #         file: ../shared/abis/BalancerPoolToken.json
+  #     callHandlers:
+  #       - function: deposit(uint256,uint256,address)
+  #         handler: handleDeposit
+  #     file: ./src/bonds/OHMETHBondV1.ts
+  # - kind: ethereum/contract
+  #   name: BondDiscounts
+  #   network: mainnet
+  #   source:
+  #     address: "0xB63cac384247597756545b500253ff8E607a8020"
+  #     abi: OlympusStakingV3
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - BondDiscount
+  #     abis:
+  #       - name: OlympusStakingV1
+  #         file: ./abis/OlympusStakingV1.json
+  #       - name: OlympusStakingV2
+  #         file: ./abis/OlympusStakingV2.json
+  #       - name: OlympusStakingV3
+  #         file: ./abis/OlympusStakingV3.json
+  #       - name: sOlympusERC20
+  #         file: ./abis/sOlympusERC20.json
+  #       - name: sOlympusERC20V2
+  #         file: ./abis/sOlympusERC20V2.json
+  #       - name: sOlympusERC20V3
+  #         file: ./abis/sOlympusERC20V3.json
+  #       - name: OlympusERC20
+  #         file: ./abis/OlympusERC20.json
+  #       # Needed for price lookup
+  #       - name: ERC20
+  #         file: ../shared/abis/ERC20.json
+  #       - name: UniswapV2Pair
+  #         file: ../shared/abis/UniswapV2Pair.json
+  #       - name: BalancerVault
+  #         file: ../shared/abis/BalancerVault.json
+  #       - name: BalancerPoolToken
+  #         file: ../shared/abis/BalancerPoolToken.json
+  #       # Required for bond discounts
+  #       - name: DAIBondV1
+  #         file: ./abis/DAIBondV1.json
+  #       - name: DAIBondV2
+  #         file: ./abis/DAIBondV2.json
+  #       - name: DAIBondV3
+  #         file: ./abis/DAIBondV3.json
+  #       - name: OHMDAIBondV1
+  #         file: ./abis/OHMDAIBondV1.json
+  #       - name: OHMDAIBondV2
+  #         file: ./abis/OHMDAIBondV2.json
+  #       - name: OHMDAIBondV3
+  #         file: ./abis/OHMDAIBondV3.json
+  #       - name: OHMDAIBondV4
+  #         file: ./abis/OHMDAIBondV4.json
+  #       - name: OHMFRAXBondV1
+  #         file: ./abis/OHMFRAXBondV1.json
+  #       - name: OHMFRAXBondV2
+  #         file: ./abis/OHMFRAXBondV2.json
+  #       - name: FRAXBondV1
+  #         file: ./abis/FRAXBondV1.json
+  #       - name: ETHBondV1
+  #         file: ./abis/ETHBondV1.json
+  #       - name: LUSDBondV1
+  #         file: ./abis/LUSDBondV1.json
+  #       - name: OHMLUSDBondV1
+  #         file: ./abis/OHMLUSDBondV1.json
+  #     callHandlers:
+  #       - function: stake(address,uint256,bool,bool)
+  #         handler: handleBondDiscounts
+  #     file: ./src/bonds/BondDiscounts.ts
   - kind: ethereum/contract
     name: ProtocolMetrics
     network: mainnet
@@ -636,36 +636,36 @@ dataSources:
         - function: stake(address,uint256,bool,bool)
           handler: handleMetrics
       file: ./src/protocolMetrics/ProtocolMetrics.ts
-  - kind: ethereum/contract
-    name: PriceSnapshot
-    network: mainnet
-    source:
-      address: "0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5"
-      abi: ERC20
-      startBlock: 14690000
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - PriceSnapshot
-      abis:
-        - name: ERC20
-          file: ../shared/abis/ERC20.json
-        - name: UniswapV2Pair
-          file: ../shared/abis/UniswapV2Pair.json
-        - name: BalancerVault
-          file: ../shared/abis/BalancerVault.json
-        - name: BalancerPoolToken
-          file: ../shared/abis/BalancerPoolToken.json
-        # Used to get current index
-        - name: sOlympusERC20V2
-          file: ./abis/sOlympusERC20V2.json
-        - name: sOlympusERC20V3
-          file: ./abis/sOlympusERC20V3.json
-      blockHandlers:
-        - handler: handleBlock
-      file: ./src/protocolMetrics/PriceSnapshot.ts
+  # - kind: ethereum/contract
+  #   name: PriceSnapshot
+  #   network: mainnet
+  #   source:
+  #     address: "0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5"
+  #     abi: ERC20
+  #     startBlock: 14690000
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - PriceSnapshot
+  #     abis:
+  #       - name: ERC20
+  #         file: ../shared/abis/ERC20.json
+  #       - name: UniswapV2Pair
+  #         file: ../shared/abis/UniswapV2Pair.json
+  #       - name: BalancerVault
+  #         file: ../shared/abis/BalancerVault.json
+  #       - name: BalancerPoolToken
+  #         file: ../shared/abis/BalancerPoolToken.json
+  #       # Used to get current index
+  #       - name: sOlympusERC20V2
+  #         file: ./abis/sOlympusERC20V2.json
+  #       - name: sOlympusERC20V3
+  #         file: ./abis/sOlympusERC20V3.json
+  #     blockHandlers:
+  #       - handler: handleBlock
+  #     file: ./src/protocolMetrics/PriceSnapshot.ts
   - kind: ethereum/contract
     name: BondManager
     network: mainnet
