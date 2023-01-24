@@ -5,7 +5,10 @@ import { toBigInt } from "../../shared/src/utils/Decimals";
 import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../generated/schema";
 import { GNOSIS_RECORD_ID } from "../src/GnosisAuction";
 import { ERC20_OHM_V2 } from "../src/utils/Constants";
-import { BOND_MANAGER, getVestingBondSupplyRecords } from "../src/utils/OhmCalculations";
+import { BOND_MANAGER, getTreasuryOHMRecords, getVestingBondSupplyRecords } from "../src/utils/OhmCalculations";
+
+const CONTRACT_GNOSIS = "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101";
+const CONTRACT_TELLER = "0x007FE70dc9797C4198528aE43d8195ffF82Bdc95";
 
 function tokenSupplyRecordsToMap(records: TokenSupply[]): Map<string, TokenSupply> {
     const map = new Map<string, TokenSupply>();
@@ -22,12 +25,33 @@ function tokenSupplyRecordsToMap(records: TokenSupply[]): Map<string, TokenSuppl
     return map;
 }
 
+function mockContractBalances(gnosisBalance: BigDecimal = BigDecimal.fromString("0"), bondManagerBalance: BigDecimal = BigDecimal.fromString("0"), payoutCapacity: BigDecimal = BigDecimal.fromString("0")): void {
+    // Holds user deposits
+    createMockedFunction(Address.fromString(ERC20_OHM_V2), "balanceOf", "balanceOf(address):(uint256)").
+        withArgs([ethereum.Value.fromAddress(Address.fromString(CONTRACT_GNOSIS))]).
+        returns([
+            ethereum.Value.fromUnsignedBigInt(toBigInt(gnosisBalance, 9)),
+        ]);
+
+    // Holds user deposits after auction closure
+    createMockedFunction(Address.fromString(ERC20_OHM_V2), "balanceOf", "balanceOf(address):(uint256)").
+        withArgs([ethereum.Value.fromAddress(Address.fromString(BOND_MANAGER))]).
+        returns([
+            ethereum.Value.fromUnsignedBigInt(toBigInt(bondManagerBalance, 9)),
+        ]);
+
+    // Holds minted OHM
+    createMockedFunction(Address.fromString(ERC20_OHM_V2), "balanceOf", "balanceOf(address):(uint256)").
+        withArgs([ethereum.Value.fromAddress(Address.fromString(CONTRACT_TELLER))]).
+        returns([
+            ethereum.Value.fromUnsignedBigInt(toBigInt(payoutCapacity, 9)),
+        ]);
+}
+
 describe("Vesting Bonds", () => {
     const AUCTION_ID = "1";
     const PAYOUT_CAPACITY = BigDecimal.fromString("100000");
     const BID_QUANTITY = BigDecimal.fromString("90330");
-    const CONTRACT_GNOSIS = "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101";
-    const CONTRACT_TELLER = "0x007FE70dc9797C4198528aE43d8195ffF82Bdc95";
 
     function setUpGnosisAuction(payoutCapacity = PAYOUT_CAPACITY, bidQuantity: BigDecimal | null = null): void {
         const record = new GnosisAuction(AUCTION_ID);
@@ -42,7 +66,7 @@ describe("Vesting Bonds", () => {
         rootRecord.save();
     }
 
-    function mockContracts(gnosisBalance: BigDecimal = BigDecimal.fromString("0"), bondManagerBalance: BigDecimal = BigDecimal.fromString("0"), payoutCapacity: BigDecimal = PAYOUT_CAPACITY): void {
+    function mockContracts(): void {
         // Access methods on bond manager
         createMockedFunction(Address.fromString(BOND_MANAGER), "gnosisEasyAuction", "gnosisEasyAuction():(address)").returns([
             ethereum.Value.fromAddress(Address.fromString(CONTRACT_GNOSIS))
@@ -51,32 +75,11 @@ describe("Vesting Bonds", () => {
         createMockedFunction(Address.fromString(BOND_MANAGER), "fixedExpiryTeller", "fixedExpiryTeller():(address)").returns([
             ethereum.Value.fromAddress(Address.fromString(CONTRACT_TELLER))
         ]);
-
-        // Balances
-        // Holds user deposits
-        createMockedFunction(Address.fromString(ERC20_OHM_V2), "balanceOf", "balanceOf(address):(uint256)").
-            withArgs([ethereum.Value.fromAddress(Address.fromString(CONTRACT_GNOSIS))]).
-            returns([
-                ethereum.Value.fromUnsignedBigInt(toBigInt(gnosisBalance, 9)),
-            ]);
-
-        // Holds user deposits after auction closure
-        createMockedFunction(Address.fromString(ERC20_OHM_V2), "balanceOf", "balanceOf(address):(uint256)").
-            withArgs([ethereum.Value.fromAddress(Address.fromString(BOND_MANAGER))]).
-            returns([
-                ethereum.Value.fromUnsignedBigInt(toBigInt(bondManagerBalance, 9)),
-            ]);
-
-        // Holds minted OHM
-        createMockedFunction(Address.fromString(ERC20_OHM_V2), "balanceOf", "balanceOf(address):(uint256)").
-            withArgs([ethereum.Value.fromAddress(Address.fromString(CONTRACT_TELLER))]).
-            returns([
-                ethereum.Value.fromUnsignedBigInt(toBigInt(payoutCapacity, 9)),
-            ]);
     }
 
     test("no auctions", () => {
         mockContracts();
+        mockContractBalances();
 
         const records = getVestingBondSupplyRecords(BigInt.fromString("1"), BigInt.fromString("2"));
 
@@ -90,6 +93,7 @@ describe("Vesting Bonds", () => {
 
         // Mock contract values for the BondManager
         mockContracts();
+        mockContractBalances(BigDecimal.zero(), BigDecimal.zero(), PAYOUT_CAPACITY);
 
         const records = getVestingBondSupplyRecords(BigInt.fromString("1"), BigInt.fromString("2"));
         const recordsMap = tokenSupplyRecordsToMap(records);
@@ -107,8 +111,9 @@ describe("Vesting Bonds", () => {
         setUpGnosisAuction();
 
         // Mock contract values for the BondManager and Gnosis deposit
+        mockContracts();
         const gnosisBalance = BigDecimal.fromString("1000");
-        mockContracts(gnosisBalance, BigDecimal.zero());
+        mockContractBalances(gnosisBalance, BigDecimal.zero(), PAYOUT_CAPACITY);
 
         const records = getVestingBondSupplyRecords(BigInt.fromString("1"), BigInt.fromString("2"));
         const recordsMap = tokenSupplyRecordsToMap(records);
@@ -126,7 +131,8 @@ describe("Vesting Bonds", () => {
         setUpGnosisAuction(PAYOUT_CAPACITY, BID_QUANTITY);
 
         // Mock contract values for the BondManager
-        mockContracts(BID_QUANTITY, BigDecimal.zero());
+        mockContracts();
+        mockContractBalances(BID_QUANTITY, BigDecimal.zero(), PAYOUT_CAPACITY);
 
         const records = getVestingBondSupplyRecords(BigInt.fromString("1"), BigInt.fromString("2"));
         const recordsMap = tokenSupplyRecordsToMap(records);
@@ -144,7 +150,8 @@ describe("Vesting Bonds", () => {
         setUpGnosisAuction(PAYOUT_CAPACITY, BID_QUANTITY);
 
         // Mock contract values for the BondManager
-        mockContracts(BigDecimal.zero(), BID_QUANTITY);
+        mockContracts();
+        mockContractBalances(BigDecimal.zero(), BID_QUANTITY, PAYOUT_CAPACITY);
 
         const records = getVestingBondSupplyRecords(BigInt.fromString("1"), BigInt.fromString("2"));
         const recordsMap = tokenSupplyRecordsToMap(records);
@@ -164,7 +171,8 @@ describe("Vesting Bonds", () => {
         setUpGnosisAuction(PAYOUT_CAPACITY, partialBidQuantity);
 
         // Mock contract values for the BondManager
-        mockContracts(partialBidQuantity, BigDecimal.zero());
+        mockContracts();
+        mockContractBalances(partialBidQuantity, BigDecimal.zero(), PAYOUT_CAPACITY);
 
         const records = getVestingBondSupplyRecords(BigInt.fromString("1"), BigInt.fromString("2"));
         const recordsMap = tokenSupplyRecordsToMap(records);
@@ -178,4 +186,24 @@ describe("Vesting Bonds", () => {
     });
 });
 
-// treasury OHM excludes teller
+describe("Treasury OHM", () => {
+    test("excludes bond teller", () => {
+        mockContractBalances(BigDecimal.zero(), BigDecimal.zero(), BigDecimal.fromString("1"));
+
+        const records = getTreasuryOHMRecords(BigInt.fromString("1"), BigInt.fromString("2"));
+        const recordsMap = tokenSupplyRecordsToMap(records);
+
+        // No supply impact from teller
+        assert.assertTrue(recordsMap.has(CONTRACT_TELLER) == false);
+    });
+
+    test("excludes bond manager", () => {
+        mockContractBalances(BigDecimal.zero(), BigDecimal.fromString("1"), BigDecimal.zero());
+
+        const records = getTreasuryOHMRecords(BigInt.fromString("1"), BigInt.fromString("2"));
+        const recordsMap = tokenSupplyRecordsToMap(records);
+
+        // No supply impact from bond manager
+        assert.assertTrue(recordsMap.has(BOND_MANAGER) == false);
+    });
+});
