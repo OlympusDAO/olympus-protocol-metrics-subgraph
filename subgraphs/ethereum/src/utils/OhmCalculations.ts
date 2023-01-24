@@ -5,7 +5,7 @@ import { BondFixedExpiryTeller } from "../../generated/ProtocolMetrics/BondFixed
 import { BondManager } from "../../generated/ProtocolMetrics/BondManager";
 import { GnosisEasyAuction } from "../../generated/ProtocolMetrics/GnosisEasyAuction";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
-import { GnosisAuction, TokenSupply } from "../../generated/schema";
+import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../../generated/schema";
 import { GNOSIS_RECORD_ID } from "../GnosisAuction";
 import { getBalancerPoolTokenQuantity } from "../liquidity/LiquidityBalancer";
 import { getCurvePairTokenQuantity } from "../liquidity/LiquidityCurve";
@@ -46,7 +46,7 @@ import {
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
 const MIGRATION_OFFSET = "2013";
 
-const BOND_MANAGER = "0xf577c77ee3578c7f216327f41b5d7221ead2b2a3";
+export const BOND_MANAGER = "0xf577c77ee3578c7f216327f41b5d7221ead2b2a3";
 
 /**
  * Returns the total supply of the latest version of the OHM contract
@@ -152,7 +152,7 @@ function getMigrationOffsetRecord(timestamp: BigInt, blockNumber: BigInt): Token
 export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
   const records: TokenSupply[] = [];
 
-  const gnosisAuctionRoot: GnosisAuction | null = GnosisAuction.load(GNOSIS_RECORD_ID);
+  const gnosisAuctionRoot: GnosisAuctionRoot | null = GnosisAuctionRoot.load(GNOSIS_RECORD_ID);
   // Record will not exist if no auctions have been launched
   if (!gnosisAuctionRoot) {
     return records;
