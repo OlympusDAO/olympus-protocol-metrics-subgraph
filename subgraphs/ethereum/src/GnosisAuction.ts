@@ -16,7 +16,10 @@ export function handleGnosisAuctionLaunched(event: GnosisAuctionLaunched): void 
     }
 
     log.debug("Adding Gnosis Auction with id {} to GnosisAuction record", [event.params.marketId.toString()]);
-    rootRecord.markets.push(event.params.marketId);
+    const markets = rootRecord.markets;
+    markets.push(event.params.marketId);
+    rootRecord.markets = markets;
+
     rootRecord.save();
 
     const auctionRecord = new GnosisAuction(event.params.marketId.toString());
