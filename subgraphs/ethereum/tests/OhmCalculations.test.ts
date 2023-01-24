@@ -1,11 +1,11 @@
-import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../generated/schema";
 import { GNOSIS_RECORD_ID } from "../src/GnosisAuction";
-import { CIRCULATING_SUPPLY_WALLETS, ERC20_OHM_V2 } from "../src/utils/Constants";
-import { BOND_MANAGER, getTreasuryOHMRecords, getVestingBondSupplyRecords } from "../src/utils/OhmCalculations";
+import { BOND_MANAGER, CIRCULATING_SUPPLY_WALLETS, ERC20_OHM_V2 } from "../src/utils/Constants";
+import { getTreasuryOHMRecords, getVestingBondSupplyRecords } from "../src/utils/OhmCalculations";
 
 const CONTRACT_GNOSIS = "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101".toLowerCase();
 const CONTRACT_TELLER = "0x007FE70dc9797C4198528aE43d8195ffF82Bdc95".toLowerCase();
