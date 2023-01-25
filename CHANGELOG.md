@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 3.3.5 (2023-01-24)
+## 3.3.7 (2023-01-25)
 
 - Add vesting bond tokens to the circulating/floating supply calculations
 - Remove price-snapshot from protocol-metrics, as it now has its own subgraph
