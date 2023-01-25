@@ -248,13 +248,15 @@ program
   .command("deploy:hosted")
   .description("Deploy subgraph to the Hosted Service")
   .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
-  .action((subgraph) => {
+  .action((subgraph: string) => {
     const config = readConfig(getSubgraphConfigurationFilePath(subgraph));
     assertConfig(config);
 
+    const subgraphSafe = subgraph.replace("-", "_");
+
     console.info("*** Deploying to Hosted Service");
     spawnProcess(
-      `yarn graph deploy --deploy-key ${process.env[`GRAPH_TOKEN_${subgraph}`]
+      `yarn graph deploy --deploy-key ${process.env[`GRAPH_TOKEN_${subgraphSafe}`]
       } --product hosted-service --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --output-dir ${getBuildOutputDirectory(
         subgraph,
       )} ${config.org}/${config.name} ${getSubgraphManifestFilePath(subgraph)}`,
