@@ -1,0 +1,36 @@
+specVersion: 0.0.4
+description: Olympus Price Snapshot
+repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: PriceSnapshot
+    network: mainnet
+    source:
+      address: "0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5"
+      abi: ERC20
+      startBlock: 15346400 # TODO Revert to 14690000
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - PriceSnapshot
+      abis:
+        - name: ERC20
+          file: ../shared/abis/ERC20.json
+        - name: UniswapV2Pair
+          file: ../shared/abis/UniswapV2Pair.json
+        - name: BalancerVault
+          file: ../shared/abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ../shared/abis/BalancerPoolToken.json
+        # Used to get current index
+        - name: sOlympusERC20V2
+          file: ../shared/abis/sOlympusERC20V2.json
+        - name: sOlympusERC20V3
+          file: ../shared/abis/sOlympusERC20V3.json
+      blockHandlers:
+        - handler: handleBlock
+      file: ./src/PriceSnapshot.ts  
