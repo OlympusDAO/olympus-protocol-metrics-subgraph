@@ -183,7 +183,7 @@ export const NATIVE_ETH = "-999999";
 export const ERC20_TOKENS = new Map<string, TokenDefinition>();
 ERC20_TOKENS.set(ERC20_ADAI, new TokenDefinition(ERC20_ADAI, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_ALCX, new TokenDefinition(ERC20_ALCX, TokenCategoryVolatile, true, false));
-ERC20_TOKENS.set(ERC20_AURA_VL, new TokenDefinition(ERC20_AURA_VL, TokenCategoryVolatile, false, false));
+ERC20_TOKENS.set(ERC20_AURA_VL, new TokenDefinition(ERC20_AURA_VL, TokenCategoryVolatile, true, false)); // Locked for 16 weeks only
 ERC20_TOKENS.set(ERC20_AURA, new TokenDefinition(ERC20_AURA, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_BARNBRIDGE, new TokenDefinition(ERC20_BARNBRIDGE, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_BTRFLY_V1_STAKED, new TokenDefinition(ERC20_BTRFLY_V1_STAKED, TokenCategoryVolatile, true, false));
@@ -193,8 +193,8 @@ ERC20_TOKENS.set(ERC20_CRV_3POOL, new TokenDefinition(ERC20_CRV_3POOL, TokenCate
 ERC20_TOKENS.set(ERC20_CRV, new TokenDefinition(ERC20_CRV, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_CVX_CRV, new TokenDefinition(ERC20_CVX_CRV, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_CVX_FRAX_3CRV, new TokenDefinition(ERC20_CVX_FRAX_3CRV, TokenCategoryStable, true, false));
-ERC20_TOKENS.set(ERC20_CVX_VL_V1, new TokenDefinition(ERC20_CVX_VL_V1, TokenCategoryVolatile, false, false));
-ERC20_TOKENS.set(ERC20_CVX_VL_V2, new TokenDefinition(ERC20_CVX_VL_V2, TokenCategoryVolatile, false, false));
+ERC20_TOKENS.set(ERC20_CVX_VL_V1, new TokenDefinition(ERC20_CVX_VL_V1, TokenCategoryVolatile, true, false)); // Locked for a few months only
+ERC20_TOKENS.set(ERC20_CVX_VL_V2, new TokenDefinition(ERC20_CVX_VL_V2, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_CVX, new TokenDefinition(ERC20_CVX, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_DAI, new TokenDefinition(ERC20_DAI, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_FDT, new TokenDefinition(ERC20_FDT, TokenCategoryVolatile, true, false));
@@ -204,7 +204,7 @@ ERC20_TOKENS.set(ERC20_FPIS, new TokenDefinition(ERC20_FPIS, TokenCategoryVolati
 ERC20_TOKENS.set(ERC20_FRAX_BP, new TokenDefinition(ERC20_FRAX_BP, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_FRAX_3CRV, new TokenDefinition(ERC20_FRAX_3CRV, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_FRAX, new TokenDefinition(ERC20_FRAX, TokenCategoryStable, true, false));
-ERC20_TOKENS.set(ERC20_FXS_VE, new TokenDefinition(ERC20_FXS_VE, TokenCategoryVolatile, false, false));
+ERC20_TOKENS.set(ERC20_FXS_VE, new TokenDefinition(ERC20_FXS_VE, TokenCategoryVolatile, false, false)); // Locked till 1787788800 (2026)
 ERC20_TOKENS.set(ERC20_FXS, new TokenDefinition(ERC20_FXS, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_KP3R, new TokenDefinition(ERC20_KP3R, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_LQTY, new TokenDefinition(ERC20_LQTY, TokenCategoryVolatile, true, false));
@@ -560,6 +560,8 @@ export const CONVEX_ALLOCATORS = [
   DAO_WALLET,
 ];
 
+// TODO consider turning this into a blacklist of assets that should not be indexed in the DAO wallet
+// e.g. DAI, OHM, gOHM
 const NON_TREASURY_ASSET_WHITELIST = new Map<string, string[]>();
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_AURA_VL, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_AURA, [DAO_WALLET]);
@@ -568,8 +570,12 @@ NON_TREASURY_ASSET_WHITELIST.set(ERC20_BARNBRIDGE, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_CRV_FRAX_USDC, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_CRV_OHMETH, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_CRV_OHMFRAXBP, [DAO_WALLET]);
+NON_TREASURY_ASSET_WHITELIST.set(ERC20_CRV, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_CVX_FRAX_USDC_STAKED, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_CVX_FRAX_USDC, [DAO_WALLET]);
+NON_TREASURY_ASSET_WHITELIST.set(ERC20_CVX_VL_V1, [DAO_WALLET]);
+NON_TREASURY_ASSET_WHITELIST.set(ERC20_CVX_VL_V2, [DAO_WALLET]);
+NON_TREASURY_ASSET_WHITELIST.set(ERC20_CVX, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_FRAX_BP, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_TOKE, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_TRIBE, [DAO_WALLET]);
