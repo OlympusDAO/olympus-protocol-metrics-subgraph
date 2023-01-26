@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 3.2.16 (2023-01-26)
+
+- Amend title of FraxBP staked in Convex and Frax
+
 ## 3.2.15 (2023-01-23)
 
 - Re-define illiquid assets as those locked for more than one year

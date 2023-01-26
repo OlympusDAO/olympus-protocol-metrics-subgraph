@@ -792,7 +792,7 @@ CONTRACT_NAME_MAP.set(ERC20_CRV_OHMFRAXBP, "Curve OHM-FraxBP Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_CRV, "Curve");
 CONTRACT_NAME_MAP.set(ERC20_CVX_CRV, "Curve - Staked in Convex");
 CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_3CRV, "Curve FRAX3Pool - Staked in Convex");
-CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_USDC_STAKED, "Curve FraxBP - Locked in Frax");
+CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_USDC_STAKED, "Curve FraxBP - Staked in Frax");
 CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_USDC, "Curve FraxBP - Staked in Convex");
 CONTRACT_NAME_MAP.set(ERC20_CVX_FXS, "FXS - Staked in Convex");
 CONTRACT_NAME_MAP.set(ERC20_CVX_OHMETH, "Curve OHM-ETH Liquidity Pool - Staked in Convex");
