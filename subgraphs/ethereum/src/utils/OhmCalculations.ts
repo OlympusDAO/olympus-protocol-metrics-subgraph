@@ -271,6 +271,8 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
           ),
         );
       }
+
+      // TODO add support for recognising OHM burned from bond deposits
     }
   }
 
@@ -452,13 +454,23 @@ export function getTotalValueLocked(blockNumber: BigInt): BigDecimal {
  * - OHM total supply
  * - minus: OHM in circulating supply wallets
  * - minus: migration offset
- * - minus: OHM in liquidity pools
+ * - minus: pre-minted OHM for bonds
+ * - minus: OHM user deposits for vesting bonds
+ * - minus: protocol-owned OHM in liquidity pools
  */
 export function getFloatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
   let total = BigDecimal.zero();
 
+  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_LIQUIDITY];
+
   for (let i = 0; i < tokenSupplies.length; i++) {
-    total = total.plus(tokenSupplies[i].supplyBalance);
+    const tokenSupply = tokenSupplies[i];
+
+    if (!includedTypes.includes(tokenSupply.type)) {
+      continue;
+    }
+
+    total = total.plus(tokenSupply.supplyBalance);
   }
 
   return total;
@@ -472,13 +484,13 @@ export function getFloatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
  * - OHM total supply
  * - minus: OHM in circulating supply wallets
  * - minus: migration offset
- *
- * In practice, this is everything except OHM in liquidity pools.
+ * - minus: pre-minted OHM for bonds
+ * - minus: OHM user deposits for vesting bonds
  */
 export function getCirculatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
   let total = BigDecimal.zero();
 
-  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET];
+  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS];
 
   for (let i = 0; i < tokenSupplies.length; i++) {
     const tokenSupply = tokenSupplies[i];
