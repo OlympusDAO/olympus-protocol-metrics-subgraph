@@ -3,14 +3,14 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { getISO8601DateStringFromTimestamp } from "../../../shared/src/utils/DateHelper";
 import { TokenSupply } from "../../generated/schema";
 
+export const TYPE_BONDS_DEPOSITS = "OHM Bonds (Burnable Deposits)";
+export const TYPE_BONDS_PREMINTED = "OHM Bonds (Pre-minted)";
+export const TYPE_BONDS_VESTING_DEPOSITS = "OHM Bonds (Vesting Deposits)";
+export const TYPE_BONDS_VESTING_TOKENS = "OHM Bonds (Vesting Tokens)";
+export const TYPE_LIQUIDITY = "Liquidity";
+export const TYPE_OFFSET = "Manual Offset";
 export const TYPE_TOTAL_SUPPLY = "Total Supply";
 export const TYPE_TREASURY = "Treasury";
-export const TYPE_BONDS_VESTING_TOKENS = "OHM Bonds (Vesting Tokens)";
-export const TYPE_BONDS_VESTING_DEPOSITS = "OHM Bonds (Vesting Deposits)";
-export const TYPE_BONDS_PREMINTED = "OHM Bonds (Pre-minted)";
-export const TYPE_BONDS_DEPOSITS = "OHM Bonds (Burnable Deposits)";
-export const TYPE_OFFSET = "Manual Offset";
-export const TYPE_LIQUIDITY = "Liquidity";
 
 /**
  * Helper function to create a new TokenRecord.
