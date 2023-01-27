@@ -24,6 +24,7 @@ export function handleGnosisAuctionLaunched(event: GnosisAuctionLaunched): void 
 
     const auctionRecord = new GnosisAuction(event.params.marketId.toString());
     auctionRecord.payoutCapacity = toDecimal(event.params.capacity, 9);
+    auctionRecord.termSeconds = event.params.bondTerm;
     auctionRecord.save();
 }
 
@@ -36,5 +37,6 @@ export function handleGnosisAuctionCleared(event: AuctionCleared): void {
 
     // Save the number of OHM tokens sold
     record.bidQuantity = toDecimal(event.params.soldBiddingTokens, 9);
+    record.auctionCloseTimestamp = event.block.timestamp;
     record.save();
 }

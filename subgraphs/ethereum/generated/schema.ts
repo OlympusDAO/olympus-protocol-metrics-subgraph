@@ -1163,6 +1163,15 @@ export class GnosisAuction extends Entity {
     this.set("payoutCapacity", Value.fromBigDecimal(value));
   }
 
+  get termSeconds(): BigInt {
+    const value = this.get("termSeconds");
+    return value!.toBigInt();
+  }
+
+  set termSeconds(value: BigInt) {
+    this.set("termSeconds", Value.fromBigInt(value));
+  }
+
   get bidQuantity(): BigDecimal | null {
     const value = this.get("bidQuantity");
     if (!value || value.kind == ValueKind.NULL) {
@@ -1177,6 +1186,23 @@ export class GnosisAuction extends Entity {
       this.unset("bidQuantity");
     } else {
       this.set("bidQuantity", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get auctionCloseTimestamp(): BigInt | null {
+    const value = this.get("auctionCloseTimestamp");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set auctionCloseTimestamp(value: BigInt | null) {
+    if (!value) {
+      this.unset("auctionCloseTimestamp");
+    } else {
+      this.set("auctionCloseTimestamp", Value.fromBigInt(<BigInt>value));
     }
   }
 }

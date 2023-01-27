@@ -36,11 +36,14 @@ import { PairHandlerTypes } from "./PairHandler";
 import { getBaseOhmUsdRate } from "./Price";
 import {
   createOrUpdateTokenSupply,
+  TYPE_BONDS_DEPOSITS,
+  TYPE_BONDS_PREMINTED,
+  TYPE_BONDS_VESTING_DEPOSITS,
+  TYPE_BONDS_VESTING_TOKENS,
   TYPE_LIQUIDITY,
   TYPE_OFFSET,
   TYPE_TOTAL_SUPPLY,
   TYPE_TREASURY,
-  TYPE_VESTING_BONDS,
 } from "./TokenSupplyHelper";
 
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
@@ -184,7 +187,7 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
     if (!bidQuantity) {
       log.debug("{}: auction is open", [FUNC]);
 
-      // OHM equivalent to the auction capacity is stored in the teller, so we adjust that
+      // OHM equivalent to the auction capacity is pre-minted and stored in the teller
       records.push(
         createOrUpdateTokenSupply(
           timestamp,
@@ -194,7 +197,7 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
           null,
           getContractName(bondFixedExpiryTellerAddress.toHexString()),
           bondFixedExpiryTellerAddress.toHexString(),
-          TYPE_VESTING_BONDS,
+          TYPE_BONDS_PREMINTED,
           auctionRecord.payoutCapacity,
           blockNumber,
           -1, // Subtract
@@ -204,23 +207,70 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
     // If the auction is closed
     else {
       log.debug("{}: auction is closed", [FUNC]);
+      const bondTermSeconds = auctionRecord.termSeconds;
+      const auctionCloseTimestamp = auctionRecord.auctionCloseTimestamp;
+      if (!auctionCloseTimestamp) {
+        throw new Error(`Expected the auctionCloseTimestamp on closed auction '${auctionId}' to be set`);
+      }
 
-      // OHM equivalent to the sold quantity is stored in the bond manager, so we adjust that
-      records.push(
-        createOrUpdateTokenSupply(
-          timestamp,
-          getContractName(ERC20_OHM_V2),
-          ERC20_OHM_V2,
-          auctionId, // auction ID in place of the pool name. Keeps values distinct for different auctions.
-          null,
-          getContractName(BOND_MANAGER),
-          BOND_MANAGER,
-          TYPE_VESTING_BONDS,
-          bidQuantity,
-          blockNumber,
-          -1, // Subtract
-        ),
-      );
+      const expiryTimestamp = auctionCloseTimestamp.plus(bondTermSeconds);
+
+      // Closed auction and the bond expiry time has not been reached
+      if (timestamp.lt(expiryTimestamp)) {
+        // Vesting user deposits equal to the sold quantity are stored in the bond manager, so we adjust that
+        records.push(
+          createOrUpdateTokenSupply(
+            timestamp,
+            getContractName(ERC20_OHM_V2),
+            ERC20_OHM_V2,
+            auctionId, // auction ID in place of the pool name. Keeps values distinct for different auctions.
+            null,
+            getContractName(BOND_MANAGER),
+            BOND_MANAGER,
+            TYPE_BONDS_VESTING_DEPOSITS,
+            bidQuantity,
+            blockNumber,
+            -1, // Subtract
+          ),
+        );
+
+        // Vesting bond tokens equal to the auction capacity are stored in the teller, so we adjust that
+        records.push(
+          createOrUpdateTokenSupply(
+            timestamp,
+            getContractName(ERC20_OHM_V2),
+            ERC20_OHM_V2,
+            auctionId, // auction ID in place of the pool name. Keeps values distinct for different auctions.
+            null,
+            getContractName(bondFixedExpiryTellerAddress.toHexString()),
+            bondFixedExpiryTellerAddress.toHexString(),
+            TYPE_BONDS_VESTING_TOKENS,
+            auctionRecord.payoutCapacity,
+            blockNumber,
+            -1, // Subtract
+          ),
+        );
+      }
+      // Bond expiry time has been reached
+      else {
+        // User deposits equal to the sold quantity are stored in the bond manager, so we adjust that
+        // These deposits will eventually be burned
+        records.push(
+          createOrUpdateTokenSupply(
+            timestamp,
+            getContractName(ERC20_OHM_V2),
+            ERC20_OHM_V2,
+            auctionId, // auction ID in place of the pool name. Keeps values distinct for different auctions.
+            null,
+            getContractName(BOND_MANAGER),
+            BOND_MANAGER,
+            TYPE_BONDS_DEPOSITS,
+            bidQuantity,
+            blockNumber,
+            -1, // Subtract
+          ),
+        );
+      }
     }
   }
 
@@ -428,11 +478,12 @@ export function getFloatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
 export function getCirculatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
   let total = BigDecimal.zero();
 
+  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET];
+
   for (let i = 0; i < tokenSupplies.length; i++) {
     const tokenSupply = tokenSupplies[i];
 
-    // Liquidity is ignored
-    if (tokenSupply.type == TYPE_LIQUIDITY) {
+    if (!includedTypes.includes(tokenSupply.type)) {
       continue;
     }
 

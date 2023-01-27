@@ -6,6 +6,7 @@ import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../generated/sche
 import { GNOSIS_RECORD_ID } from "../src/GnosisAuction";
 import { BOND_MANAGER, CIRCULATING_SUPPLY_WALLETS, ERC20_OHM_V2 } from "../src/utils/Constants";
 import { getTreasuryOHMRecords, getVestingBondSupplyRecords } from "../src/utils/OhmCalculations";
+import { TYPE_BONDS_DEPOSITS, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_VESTING_TOKENS } from "../src/utils/TokenSupplyHelper";
 
 const CONTRACT_GNOSIS = "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101".toLowerCase();
 const CONTRACT_TELLER = "0x007FE70dc9797C4198528aE43d8195ffF82Bdc95".toLowerCase();
@@ -62,13 +63,25 @@ function mockCirculatingSupplyWallets(balance: BigInt): void {
 const AUCTION_ID = "1";
 const PAYOUT_CAPACITY = BigDecimal.fromString("100000");
 const BID_QUANTITY = BigDecimal.fromString("90330");
+const BOND_TERM = BigInt.fromString("10");
 
-function setUpGnosisAuction(payoutCapacity: BigDecimal = PAYOUT_CAPACITY, bidQuantity: BigDecimal | null = null): void {
+const TIMESTAMP = BigInt.fromString("1000");
+const AUCTION_CLOSE_TIMESTAMP_PRE_EXPIRY = BigInt.fromString("999");
+const AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY = BigInt.fromString("980");
+
+function setUpGnosisAuction(payoutCapacity: BigDecimal = PAYOUT_CAPACITY, termSeconds: BigInt = BOND_TERM, bidQuantity: BigDecimal | null = null, auctionCloseTimestamp: BigInt | null = null): void {
     const record = new GnosisAuction(AUCTION_ID);
     record.payoutCapacity = payoutCapacity;
+    record.termSeconds = termSeconds;
+
     if (bidQuantity) {
         record.bidQuantity = bidQuantity;
     }
+
+    if (auctionCloseTimestamp) {
+        record.auctionCloseTimestamp = auctionCloseTimestamp;
+    }
+
     record.save();
 
     const rootRecord = new GnosisAuctionRoot(GNOSIS_RECORD_ID);
@@ -96,7 +109,7 @@ describe("Vesting Bonds", () => {
         mockContracts();
         mockContractBalances();
 
-        const records = getVestingBondSupplyRecords(BigInt.fromString("1"), BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
 
         // No supply impact
         assert.i32Equals(records.length, 0);
@@ -110,17 +123,17 @@ describe("Vesting Bonds", () => {
         mockContracts();
         mockContractBalances(BigDecimal.zero(), BigDecimal.zero(), PAYOUT_CAPACITY);
 
-        const records = getVestingBondSupplyRecords(BigInt.fromString("1"), BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
         const recordsMap = tokenSupplyRecordsToMap(records);
 
         // supply decreased by payoutCapacity in teller
         const tellerRecord = recordsMap.get(CONTRACT_TELLER);
         assert.stringEquals(tellerRecord.supplyBalance.toString(), PAYOUT_CAPACITY.times(BigDecimal.fromString("-1")).toString());
+        assert.stringEquals(tellerRecord.type, TYPE_BONDS_PREMINTED);
 
         // No supply impact from Gnosis contract
         assert.assertTrue(recordsMap.has(BOND_MANAGER) == false);
 
-        // Only 1 record
         assert.i32Equals(records.length, 1);
     });
 
@@ -133,85 +146,87 @@ describe("Vesting Bonds", () => {
         const gnosisBalance = BigDecimal.fromString("1000");
         mockContractBalances(gnosisBalance, BigDecimal.zero(), PAYOUT_CAPACITY);
 
-        const records = getVestingBondSupplyRecords(BigInt.fromString("1"), BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
         const recordsMap = tokenSupplyRecordsToMap(records);
 
         // supply decreased by payoutCapacity in teller
         const tellerRecord = recordsMap.get(CONTRACT_TELLER);
         assert.stringEquals(tellerRecord.supplyBalance.toString(), PAYOUT_CAPACITY.times(BigDecimal.fromString("-1")).toString());
+        assert.stringEquals(tellerRecord.type, TYPE_BONDS_PREMINTED);
 
         // No supply impact from Gnosis contract
         assert.assertTrue(recordsMap.has(BOND_MANAGER) == false);
 
-        // Only 1 record
         assert.i32Equals(records.length, 1);
     });
 
-    test("closed auction with balance in GnosisEasyAuction", () => {
+    test("closed auction/before bond expiry/with balance in GnosisEasyAuction", () => {
         // Mock auction payoutCapacity and bidQuantity (GnosisAuction)
-        setUpGnosisAuction(PAYOUT_CAPACITY, BID_QUANTITY);
+        setUpGnosisAuction(PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_PRE_EXPIRY);
 
         // Mock contract values for the BondManager
         mockContracts();
         mockContractBalances(BID_QUANTITY, BigDecimal.zero(), PAYOUT_CAPACITY);
 
-        const records = getVestingBondSupplyRecords(BigInt.fromString("1"), BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
         const recordsMap = tokenSupplyRecordsToMap(records);
 
-        // No supply impact from teller
-        assert.assertTrue(recordsMap.has(CONTRACT_TELLER) == false);
+        // supply decreased by payout capacity in bond teller due to vesting tokens
+        const tellerRecord = recordsMap.get(CONTRACT_TELLER);
+        assert.stringEquals(tellerRecord.supplyBalance.toString(), PAYOUT_CAPACITY.times(BigDecimal.fromString("-1")).toString());
+        assert.stringEquals(tellerRecord.type, TYPE_BONDS_VESTING_TOKENS);
 
-        // Supply decreased by BID_QUANTITY
-        const gnosisRecord = recordsMap.get(BOND_MANAGER);
-        assert.stringEquals(gnosisRecord.supplyBalance.toString(), BID_QUANTITY.times(BigDecimal.fromString("-1")).toString());
+        // supply decreased by bid quantity in bond manager due to vesting user deposits
+        const bondManagerRecord = recordsMap.get(BOND_MANAGER);
+        assert.stringEquals(bondManagerRecord.supplyBalance.toString(), BID_QUANTITY.times(BigDecimal.fromString("-1")).toString());
+        assert.stringEquals(bondManagerRecord.type, TYPE_BONDS_VESTING_DEPOSITS);
 
-        // Only 1 record
-        assert.i32Equals(records.length, 1);
+        assert.i32Equals(records.length, 2);
     });
 
-    test("closed auction with balance in BondManager", () => {
+    test("closed auction/before bond expiry/with balance in BondManager", () => {
         // Mock auction payoutCapacity and bidQuantity (GnosisAuction)
-        setUpGnosisAuction(PAYOUT_CAPACITY, BID_QUANTITY);
+        setUpGnosisAuction(PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_PRE_EXPIRY);
 
         // Mock contract values for the BondManager
         mockContracts();
         mockContractBalances(BigDecimal.zero(), BID_QUANTITY, PAYOUT_CAPACITY);
 
-        const records = getVestingBondSupplyRecords(BigInt.fromString("1"), BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
         const recordsMap = tokenSupplyRecordsToMap(records);
 
-        // No supply impact from teller
-        assert.assertTrue(recordsMap.has(CONTRACT_TELLER) == false);
+        // supply decreased by payout capacity in bond teller due to vesting tokens
+        const tellerRecord = recordsMap.get(CONTRACT_TELLER);
+        assert.stringEquals(tellerRecord.supplyBalance.toString(), PAYOUT_CAPACITY.times(BigDecimal.fromString("-1")).toString());
+        assert.stringEquals(tellerRecord.type, TYPE_BONDS_VESTING_TOKENS);
 
-        // Supply decreased by BID_QUANTITY
-        const gnosisRecord = recordsMap.get(BOND_MANAGER);
-        assert.stringEquals(gnosisRecord.supplyBalance.toString(), BID_QUANTITY.times(BigDecimal.fromString("-1")).toString());
+        // supply decreased by bid quantity in bond manager due to vesting user deposits
+        const bondManagerRecord = recordsMap.get(BOND_MANAGER);
+        assert.stringEquals(bondManagerRecord.supplyBalance.toString(), BID_QUANTITY.times(BigDecimal.fromString("-1")).toString());
+        assert.stringEquals(bondManagerRecord.type, TYPE_BONDS_VESTING_DEPOSITS);
 
-        // Only 1 record
-        assert.i32Equals(records.length, 1);
+        assert.i32Equals(records.length, 2);
     });
 
-    test("closed auction with partial sale", () => {
-        const partialBidQuantity = BigDecimal.fromString("50000");
-
+    test("closed auction/after bond expiry", () => {
         // Mock auction payoutCapacity and bidQuantity (GnosisAuction)
-        setUpGnosisAuction(PAYOUT_CAPACITY, partialBidQuantity);
+        setUpGnosisAuction(PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY);
 
         // Mock contract values for the BondManager
         mockContracts();
-        mockContractBalances(partialBidQuantity, BigDecimal.zero(), PAYOUT_CAPACITY);
+        mockContractBalances(BigDecimal.zero(), BID_QUANTITY, PAYOUT_CAPACITY);
 
-        const records = getVestingBondSupplyRecords(BigInt.fromString("1"), BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
         const recordsMap = tokenSupplyRecordsToMap(records);
 
-        // No supply impact from teller
+        // No effect on supply from the teller, as bond tokens are no longer vesting
         assert.assertTrue(recordsMap.has(CONTRACT_TELLER) == false);
 
-        // Supply decreased by partialBidQuantity
-        const gnosisRecord = recordsMap.get(BOND_MANAGER);
-        assert.stringEquals(gnosisRecord.supplyBalance.toString(), partialBidQuantity.times(BigDecimal.fromString("-1")).toString());
+        // supply decreased by bid quantity in bond manager due to vesting user deposits
+        const bondManagerRecord = recordsMap.get(BOND_MANAGER);
+        assert.stringEquals(bondManagerRecord.supplyBalance.toString(), BID_QUANTITY.times(BigDecimal.fromString("-1")).toString());
+        assert.stringEquals(bondManagerRecord.type, TYPE_BONDS_DEPOSITS);
 
-        // Only 1 record
         assert.i32Equals(records.length, 1);
     });
 });
@@ -221,7 +236,7 @@ describe("Treasury OHM", () => {
         mockCirculatingSupplyWallets(BigInt.fromString("0"));
         mockContractBalances(BigDecimal.zero(), BigDecimal.zero(), BigDecimal.fromString("1"));
 
-        const records = getTreasuryOHMRecords(BigInt.fromString("1"), BigInt.fromString("13782590"));
+        const records = getTreasuryOHMRecords(TIMESTAMP, BigInt.fromString("13782590"));
         const recordsMap = tokenSupplyRecordsToMap(records);
 
         // No supply impact from teller
@@ -232,7 +247,7 @@ describe("Treasury OHM", () => {
         mockCirculatingSupplyWallets(BigInt.fromString("0"));
         mockContractBalances(BigDecimal.zero(), BigDecimal.fromString("1"), BigDecimal.zero());
 
-        const records = getTreasuryOHMRecords(BigInt.fromString("1"), BigInt.fromString("13782590"));
+        const records = getTreasuryOHMRecords(TIMESTAMP, BigInt.fromString("13782590"));
         const recordsMap = tokenSupplyRecordsToMap(records);
 
         // No supply impact from bond manager
