@@ -551,8 +551,8 @@ dataSources:
     source:
       # Created in December 2021. If indexing prior to then, we need to use a different contract
       # https://etherscan.io/tx/0xd81bf37e970f5f3593d028b8503a6432d3cc6eb5b6589d98d041f28018f060b4
-      address: "0xB63cac384247597756545b500253ff8E607a8020"
-      abi: OlympusStakingV3
+      address: "0xf816cb1576579529fec01361b4a0d92b36e1d3281250e28c47ca2a98b959da04"
+      abi: sOlympusERC20V3
       startBlock: 14690000
     mapping:
       kind: ethereum/events
@@ -630,42 +630,13 @@ dataSources:
           file: ./abis/GnosisEasyAuction.json
         - name: BondFixedExpiryTeller
           file: ./abis/BondFixedExpiryTeller.json
-      # Triggered by the stake() call, which is fairly regular
-      # rebase() would be preferred, but it doesn't seem to be called
-      callHandlers:
-        - function: stake(address,uint256,bool,bool)
+      eventHandlers:
+        - event: LogRebase(indexed uint256,uint256,uint256)
           handler: handleMetrics
       file: ./src/protocolMetrics/ProtocolMetrics.ts
-  # - kind: ethereum/contract
-  #   name: PriceSnapshot
-  #   network: mainnet
-  #   source:
-  #     address: "0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5"
-  #     abi: ERC20
-  #     startBlock: 14690000
-  #   mapping:
-  #     kind: ethereum/events
-  #     apiVersion: 0.0.6
-  #     language: wasm/assemblyscript
-  #     entities:
-  #       - PriceSnapshot
-  #     abis:
-  #       - name: ERC20
-  #         file: ../shared/abis/ERC20.json
-  #       - name: UniswapV2Pair
-  #         file: ../shared/abis/UniswapV2Pair.json
-  #       - name: BalancerVault
-  #         file: ../shared/abis/BalancerVault.json
-  #       - name: BalancerPoolToken
-  #         file: ../shared/abis/BalancerPoolToken.json
-  #       # Used to get current index
-  #       - name: sOlympusERC20V2
-  #         file: ./abis/sOlympusERC20V2.json
-  #       - name: sOlympusERC20V3
-  #         file: ./abis/sOlympusERC20V3.json
-  #     blockHandlers:
-  #       - handler: handleBlock
-  #     file: ./src/protocolMetrics/PriceSnapshot.ts
+  ###
+  # BondManager and GnosisEasyAuction index Gnosis auction events, used for bond calculations
+  ###
   - kind: ethereum/contract
     name: BondManager
     network: mainnet
