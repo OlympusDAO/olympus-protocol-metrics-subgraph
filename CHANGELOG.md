@@ -1,8 +1,9 @@
 # Subgraph Changelog
 
-## 3.3.8 (2023-01-27)
+## 3.3.10 (2023-01-27)
 
-- Add vesting bond tokens to the circulating/floating supply calculations
+- Index OHM bonds using Gnosis Easy Auctions
+- Include bonds to the circulating/floating supply calculations
 - Remove price-snapshot from protocol-metrics, as it now has its own subgraph
 - Remove redundant subgraph data sources: bonds, sOHM
 

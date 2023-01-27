@@ -455,13 +455,13 @@ export function getTotalValueLocked(blockNumber: BigInt): BigDecimal {
  * - minus: OHM in circulating supply wallets
  * - minus: migration offset
  * - minus: pre-minted OHM for bonds
- * - minus: OHM user deposits for vesting bonds
+ * - minus: OHM user deposits for bonds
  * - minus: protocol-owned OHM in liquidity pools
  */
 export function getFloatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
   let total = BigDecimal.zero();
 
-  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_LIQUIDITY];
+  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_LIQUIDITY];
 
   for (let i = 0; i < tokenSupplies.length; i++) {
     const tokenSupply = tokenSupplies[i];
@@ -485,12 +485,12 @@ export function getFloatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
  * - minus: OHM in circulating supply wallets
  * - minus: migration offset
  * - minus: pre-minted OHM for bonds
- * - minus: OHM user deposits for vesting bonds
+ * - minus: OHM user deposits for bonds
  */
 export function getCirculatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
   let total = BigDecimal.zero();
 
-  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS];
+  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS];
 
   for (let i = 0; i < tokenSupplies.length; i++) {
     const tokenSupply = tokenSupplies[i];
