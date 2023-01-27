@@ -6,6 +6,7 @@
 - Include bonds to the circulating/floating supply calculations
 - Remove price-snapshot from protocol-metrics, as it now has its own subgraph
 - Remove redundant subgraph data sources: bonds, sOHM
+- Shift trigger for ProtocolMetrics from stake() function call to LogRebase event, which should increase the speed of indexing
 
 ## 3.2.16 (2023-01-26)
 
