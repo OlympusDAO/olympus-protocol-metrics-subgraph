@@ -621,6 +621,8 @@ dataSources:
           file: ./abis/vlCVX.json
         - name: AuraStaking
           file: ./abis/AuraStaking.json
+        - name: AuraLocker
+          file: ./abis/AuraLocker.json
         - name: FraxFarm
           file: ./abis/FraxFarm.json
         # Gnosis Auctions

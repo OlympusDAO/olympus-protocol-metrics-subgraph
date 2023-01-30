@@ -3,6 +3,7 @@ import { assert, createMockedFunction, describe, test } from "matchstick-as/asse
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import {
+  AURA_ALLOCATOR_V2,
   CONVEX_ALLOCATOR3,
   CONVEX_CVX_VL_ALLOCATOR,
   DAO_WALLET,
@@ -16,6 +17,8 @@ import {
   CONVEX_STAKING_CONTRACTS,
   CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
   ERC20_ALCX,
+  ERC20_AURA,
+  ERC20_AURA_VL,
   ERC20_BALANCER_OHM_DAI_WETH,
   ERC20_BALANCER_OHM_DAI_WETH_AURA,
   ERC20_BALANCER_WETH_FDT,
@@ -33,8 +36,10 @@ import {
   LQTY_STAKING,
   NATIVE_ETH,
   TOKE_STAKING,
+  WALLET_ADDRESSES,
 } from "../src/utils/Constants";
 import {
+  getAuraLockedBalancesFromWallets,
   getBalancerGaugeBalanceFromWallets,
   getConvexStakedBalance,
   getConvexStakedRecords,
@@ -269,6 +274,47 @@ export const mockAuraStakedBalanceZero = (wallets: string[]): void => {
       ERC20_BALANCER_OHM_DAI_WETH_AURA,
       wallets[i],
       AURA_STAKING_OHM_DAI_WETH,
+      BigInt.zero(),
+    );
+  }
+};
+
+export const mockAuraLockedBalance = (
+  tokenAddress: string,
+  walletAddress: string,
+  stakingAddress: string,
+  balance: BigInt,
+): void => {
+  const stakingContractAddress = Address.fromString(stakingAddress);
+  // Returns token
+  createMockedFunction(stakingContractAddress, "stakingToken", "stakingToken():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
+  ]);
+
+  const lockDataArray: Array<ethereum.Value> = [
+    ethereum.Value.fromI32(0),
+    ethereum.Value.fromI32(0),
+    ethereum.Value.fromI32(0),
+  ];
+  const lockData = changetype<ethereum.Tuple>(lockDataArray);
+
+  // Returns balance
+  createMockedFunction(stakingContractAddress, "lockedBalances", "lockedBalances(address):(uint256,uint256,uint256,(uint112,uint32)[])")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(walletAddress))])
+    .returns([ethereum.Value.fromUnsignedBigInt(balance), ethereum.Value.fromUnsignedBigInt(BigInt.zero()), ethereum.Value.fromUnsignedBigInt(BigInt.zero()), ethereum.Value.fromTupleArray([lockData])]);
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
+export const mockAuraLockedBalanceZero = (wallets: string[]): void => {
+  for (let i = 0; i < wallets.length; i++) {
+    mockAuraLockedBalance(
+      ERC20_AURA,
+      wallets[i],
+      ERC20_AURA_VL,
       BigInt.zero(),
     );
   }
@@ -693,5 +739,31 @@ describe("unlocked vlCVX", () => {
     const recordOne = records[0];
     assert.stringEquals("11", recordOne.balance.toString());
     assert.i32Equals(1, records.length);
+  });
+});
+
+describe("locked AURA", () => {
+  test("balance", () => {
+    const balance = BigDecimal.fromString("10");
+    const rate = BigDecimal.fromString("2");
+    mockAuraLockedBalanceZero(getWalletAddressesForContract(ERC20_AURA));
+    mockAuraLockedBalance(ERC20_AURA, AURA_ALLOCATOR_V2, ERC20_AURA_VL, toBigInt(balance, 18));
+
+    const records = getAuraLockedBalancesFromWallets(TIMESTAMP, ERC20_AURA, rate, BigInt.fromString("15000000"));
+
+    const recordOne = records[0];
+    assert.stringEquals("10", recordOne.balance.toString());
+    assert.i32Equals(1, records.length);
+  });
+
+  test("balance for non-AURA token", () => {
+    const balance = BigDecimal.fromString("10");
+    const rate = BigDecimal.fromString("2");
+    mockAuraLockedBalanceZero(getWalletAddressesForContract(ERC20_AURA));
+    mockAuraLockedBalance(ERC20_AURA, AURA_ALLOCATOR_V2, ERC20_AURA_VL, toBigInt(balance, 18));
+
+    const records = getAuraLockedBalancesFromWallets(TIMESTAMP, ERC20_TOKE, rate, BigInt.fromString("15000000"));
+
+    assert.i32Equals(0, records.length);
   });
 });
