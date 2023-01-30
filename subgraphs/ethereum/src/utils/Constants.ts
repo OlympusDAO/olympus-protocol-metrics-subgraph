@@ -135,6 +135,7 @@ export const ERC20_UST_BLOCK = "13408366";
 // Volatile tokens
 export const ERC20_ALCX = "0xdbdb4d16eda451d0503b854cf79d55697f90c8df".toLowerCase();
 export const ERC20_AURA = "0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF".toLowerCase();
+export const ERC20_AURA_BAL = "0x616e8BfA43F920657B3497DBf40D6b1A02D4608d".toLowerCase();
 export const ERC20_AURA_VL = "0x3Fa73f1E5d8A792C80F426fc8F84FBF7Ce9bBCAC".toLowerCase();
 export const ERC20_BALANCER_OHM_BTRFLY_V2 = "0x2de32a7c98c3ef6ec79e703500e8ca5b2ec819aa".toLowerCase();
 export const ERC20_BALANCER_OHM_DAI = "0x76FCf0e8C7Ff37A47a799FA2cd4c13cDe0D981C9".toLowerCase();
@@ -221,6 +222,7 @@ ERC20_TOKENS.set(ERC20_WBTC, new TokenDefinition(ERC20_WBTC, TokenCategoryVolati
 ERC20_TOKENS.set(ERC20_WETH, new TokenDefinition(ERC20_WETH, TokenCategoryVolatile, true, true));
 ERC20_TOKENS.set(ERC20_XSUSHI, new TokenDefinition(ERC20_XSUSHI, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(NATIVE_ETH, new TokenDefinition(NATIVE_ETH, TokenCategoryVolatile, true, true));
+
 
 const CONVEX_STAKED_TOKENS = new Map<string, TokenDefinition>();
 CONVEX_STAKED_TOKENS.set(ERC20_CRV_FRAX_USDC, new TokenDefinition(ERC20_CVX_FRAX_USDC, TokenCategoryStable, true, false));
@@ -565,6 +567,7 @@ export const CONVEX_ALLOCATORS = [
 // TODO consider turning this into a blacklist of assets that should not be indexed in the DAO wallet
 // e.g. DAI, OHM, gOHM
 const NON_TREASURY_ASSET_WHITELIST = new Map<string, string[]>();
+NON_TREASURY_ASSET_WHITELIST.set(ERC20_AURA_BAL, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_AURA_VL, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_AURA, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(ERC20_BALANCER_WETH_FDT, [DAO_WALLET]);
@@ -746,8 +749,8 @@ CONTRACT_ABBREVIATION_MAP.set(ERC20_XSUSHI, "xSUSHI");
 const CONTRACT_NAME_MAP = new Map<string, string>();
 CONTRACT_NAME_MAP.set(AAVE_ALLOCATOR_V2, "Aave Allocator V2");
 CONTRACT_NAME_MAP.set(AAVE_ALLOCATOR, "Aave Allocator V1");
-CONTRACT_NAME_MAP.set(AURA_ALLOCATOR, "AURA Allocator");
 CONTRACT_NAME_MAP.set(AURA_ALLOCATOR_V2, "AURA Allocator V2");
+CONTRACT_NAME_MAP.set(AURA_ALLOCATOR, "AURA Allocator");
 CONTRACT_NAME_MAP.set(AURA_STAKING_OHM_DAI_WETH, "OHM-DAI-WETH Aura Deposit Vault");
 CONTRACT_NAME_MAP.set(BALANCER_ALLOCATOR, "Balancer Allocator");
 CONTRACT_NAME_MAP.set(BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH, "Curve Liquidity Gauge OHM-DAI-WETH");
@@ -777,6 +780,7 @@ CONTRACT_NAME_MAP.set(DAIBOND_CONTRACTS3, "DAI Bond 3");
 CONTRACT_NAME_MAP.set(DAO_WALLET, "DAO Wallet");
 CONTRACT_NAME_MAP.set(ERC20_ADAI, "DAI - Aave");
 CONTRACT_NAME_MAP.set(ERC20_ALCX, "Alchemix");
+CONTRACT_NAME_MAP.set(ERC20_AURA_BAL, "auraBAL");
 CONTRACT_NAME_MAP.set(ERC20_AURA_VL, "Aura Finance - Vote-Locked");
 CONTRACT_NAME_MAP.set(ERC20_AURA, "Aura Finance");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_BTRFLY_V2, "Balancer V2 OHM V2-BTRFLY V2 Liquidity Pool");
