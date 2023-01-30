@@ -1154,6 +1154,15 @@ export class GnosisAuction extends Entity {
     this.set("id", Value.fromString(value));
   }
 
+  get auctionOpenTimestamp(): BigInt {
+    const value = this.get("auctionOpenTimestamp");
+    return value!.toBigInt();
+  }
+
+  set auctionOpenTimestamp(value: BigInt) {
+    this.set("auctionOpenTimestamp", Value.fromBigInt(value));
+  }
+
   get payoutCapacity(): BigDecimal {
     const value = this.get("payoutCapacity");
     return value!.toBigDecimal();

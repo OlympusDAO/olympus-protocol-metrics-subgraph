@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 3.3.10 (2023-01-27)
+## 3.3.11 (2023-01-30)
 
 - Index OHM bonds using Gnosis Easy Auctions
 - Include bonds to the circulating/floating supply calculations

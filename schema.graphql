@@ -121,6 +121,7 @@ type GnosisAuctionRoot @entity {
 
 type GnosisAuction @entity {
   id: ID!
+  auctionOpenTimestamp: BigInt!
   payoutCapacity: BigDecimal!
   termSeconds: BigInt!
   bidQuantity: BigDecimal # Is set later, so should not be required

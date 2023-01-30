@@ -23,6 +23,7 @@ export function handleGnosisAuctionLaunched(event: GnosisAuctionLaunched): void 
     rootRecord.save();
 
     const auctionRecord = new GnosisAuction(event.params.marketId.toString());
+    auctionRecord.auctionOpenTimestamp = event.block.timestamp;
     auctionRecord.payoutCapacity = toDecimal(event.params.capacity, 9);
     auctionRecord.termSeconds = event.params.bondTerm;
     auctionRecord.save();
