@@ -8,6 +8,7 @@ import { getLiquidityBalances } from "../liquidity/LiquidityCalculations";
 import { ERC20_AURA, ERC20_FXS_VE, ERC20_LQTY, ERC20_TOKE, ERC20_TOKENS, getContractName } from "./Constants";
 import {
   getAuraLockedBalancesFromWallets,
+  getAuraPoolEarnedRecords,
   getAuraStakedBalancesFromWallets,
   getConvexStakedRecords,
   getERC20,
@@ -107,6 +108,9 @@ export function getVolatileTokenBalance(
 
   // Tokens staked in Aura
   pushArray(records, getAuraStakedBalancesFromWallets(timestamp, contractAddress, rate, BigDecimal.fromString("1"), blockNumber));
+
+  // Aura earned rewards
+  pushArray(records, getAuraPoolEarnedRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Staked Convex tokens
   pushArray(records, getConvexStakedRecords(timestamp, contractAddress, blockNumber));

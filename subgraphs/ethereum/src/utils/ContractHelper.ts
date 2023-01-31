@@ -1159,55 +1159,57 @@ export function getAuraStakedBalanceFromWallets(
   return records;
 }
 
-export function getAuraStableRewardPoolRecords(timestamp: BigInt, contractAddress: string, blockNumber: BigInt): TokenRecord[] {
+export function getAuraPoolEarnedRecords(timestamp: BigInt, contractAddress: string, rate: BigDecimal, blockNumber: BigInt): TokenRecord[] {
   const records: TokenRecord[] = [];
 
-  // Only for bb-a-USD
-  if (contractAddress.toLowerCase() != ERC20_BB_A_USD.toLowerCase()) {
-    return records;
-  }
-
-  const rewardPool = AuraVirtualBalanceRewardPool.bind(Address.fromString(AURA_STABLE_REWARD_POOL));
-
-  // Iterate over all relevant wallets
-  const wallets = getWalletAddressesForContract(contractAddress);
-  for (let i = 0; i < wallets.length; i++) {
-    const currentWallet = wallets[i];
-
-    const earnedBalance: BigDecimal = toDecimal(rewardPool.earned(Address.fromString(currentWallet)), 18);
-    if (earnedBalance.equals(BigDecimal.zero())) {
+  for (let h = 0; h < AURA_STAKING_CONTRACTS.length; h++) {
+    const poolAddress = AURA_STAKING_CONTRACTS[h];
+    log.debug("getAuraPoolEarnedRecords: looking for Aura earned rewards for token {} ({}) in pool {} ({})", [getContractName(contractAddress), contractAddress, getContractName(poolAddress), poolAddress]);
+    const rewardPool = AuraVirtualBalanceRewardPool.bind(Address.fromString(poolAddress));
+    if (rewardPool.rewardToken().toHexString().toLowerCase() != contractAddress.toLowerCase()) {
       continue;
     }
 
-    log.debug(
-      "getAuraStableRewardPoolRecords: found balance {} for token {} ({}) and wallet {} ({}) at block {}",
-      [
-        earnedBalance.toString(),
-        getContractName(contractAddress),
-        contractAddress,
-        getContractName(currentWallet),
-        currentWallet,
-        blockNumber.toString(),
-      ],
-    );
+    // Iterate over all relevant wallets
+    const wallets = getWalletAddressesForContract(contractAddress);
+    for (let i = 0; i < wallets.length; i++) {
+      const currentWallet = wallets[i];
 
-    records.push(
-      createOrUpdateTokenRecord(
-        timestamp,
-        getContractName(contractAddress),
-        contractAddress,
-        getContractName(currentWallet),
-        currentWallet,
-        BigDecimal.fromString("1"),
-        earnedBalance,
-        blockNumber,
-        getIsTokenLiquid(contractAddress, ERC20_TOKENS),
-        ERC20_TOKENS,
-        BLOCKCHAIN,
-        BigDecimal.fromString("1"),
-        TokenCategoryStable,
-      ),
-    );
+      const earnedBalance: BigDecimal = toDecimal(rewardPool.earned(Address.fromString(currentWallet)), 18);
+      if (earnedBalance.equals(BigDecimal.zero())) {
+        continue;
+      }
+
+      log.debug(
+        "getAuraPoolEarnedRecords: found earned balance {} for token {} ({}) and wallet {} ({}) in rewards pool {} ({}) at block {}",
+        [
+          earnedBalance.toString(),
+          getContractName(contractAddress),
+          contractAddress,
+          getContractName(currentWallet),
+          currentWallet,
+          getContractName(poolAddress),
+          poolAddress,
+          blockNumber.toString(),
+        ],
+      );
+
+      records.push(
+        createOrUpdateTokenRecord(
+          timestamp,
+          getContractName(contractAddress),
+          contractAddress,
+          getContractName(currentWallet),
+          currentWallet,
+          rate,
+          earnedBalance,
+          blockNumber,
+          getIsTokenLiquid(contractAddress, ERC20_TOKENS),
+          ERC20_TOKENS,
+          BLOCKCHAIN,
+        ),
+      );
+    }
   }
 
   return records;
