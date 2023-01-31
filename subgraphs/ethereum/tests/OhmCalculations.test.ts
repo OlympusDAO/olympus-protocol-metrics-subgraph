@@ -64,15 +64,17 @@ const AUCTION_ID = "1";
 const PAYOUT_CAPACITY = BigDecimal.fromString("100000");
 const BID_QUANTITY = BigDecimal.fromString("90330");
 const BOND_TERM = BigInt.fromString("10");
+const AUCTION_OPEN_TIMESTAMP = BigInt.fromString("800");
 
 const TIMESTAMP = BigInt.fromString("1000");
 const AUCTION_CLOSE_TIMESTAMP_PRE_EXPIRY = BigInt.fromString("999");
 const AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY = BigInt.fromString("980");
 
-function setUpGnosisAuction(payoutCapacity: BigDecimal = PAYOUT_CAPACITY, termSeconds: BigInt = BOND_TERM, bidQuantity: BigDecimal | null = null, auctionCloseTimestamp: BigInt | null = null): void {
+function setUpGnosisAuction(payoutCapacity: BigDecimal = PAYOUT_CAPACITY, termSeconds: BigInt = BOND_TERM, bidQuantity: BigDecimal | null = null, auctionCloseTimestamp: BigInt | null = null, auctionOpenTimestamp: BigInt = AUCTION_OPEN_TIMESTAMP): void {
     const record = new GnosisAuction(AUCTION_ID);
     record.payoutCapacity = payoutCapacity;
     record.termSeconds = termSeconds;
+    record.auctionOpenTimestamp = auctionOpenTimestamp;
 
     if (bidQuantity) {
         record.bidQuantity = bidQuantity;
