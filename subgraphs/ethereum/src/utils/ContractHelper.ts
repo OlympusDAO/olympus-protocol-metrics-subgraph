@@ -1,7 +1,7 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
-import { TokenCategoryPOL, TokenCategoryStable } from "../../../shared/src/contracts/TokenDefinition";
+import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { pushArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import {
@@ -34,7 +34,6 @@ import {
   ALLOCATOR_ONSEN_ID_NOT_FOUND,
   ALLOCATOR_RARI_ID_NOT_FOUND,
   AURA_REWARDS_CONTRACTS,
-  AURA_STABLE_REWARD_POOL,
   AURA_STAKING_CONTRACTS,
   BALANCER_LIQUIDITY_GAUGES,
   BLOCKCHAIN,
@@ -42,7 +41,6 @@ import {
   CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
   ERC20_AURA_VL,
-  ERC20_BB_A_USD,
   ERC20_CVX,
   ERC20_CVX_VL_V2,
   ERC20_FXS,
