@@ -623,6 +623,8 @@ dataSources:
           file: ./abis/AuraStaking.json
         - name: AuraLocker
           file: ./abis/AuraLocker.json
+        - name: AuraVirtualBalanceRewardPool
+          file: ./abis/AuraVirtualBalanceRewardPool.json
         - name: FraxFarm
           file: ./abis/FraxFarm.json
         # Gnosis Auctions
