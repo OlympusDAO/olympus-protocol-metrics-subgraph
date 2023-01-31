@@ -187,6 +187,7 @@ export const NATIVE_ETH = "-999999";
 export const ERC20_TOKENS = new Map<string, TokenDefinition>();
 ERC20_TOKENS.set(ERC20_ADAI, new TokenDefinition(ERC20_ADAI, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_ALCX, new TokenDefinition(ERC20_ALCX, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_AURA_BAL, new TokenDefinition(ERC20_AURA_BAL, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_AURA_VL, new TokenDefinition(ERC20_AURA_VL, TokenCategoryVolatile, true, false)); // Locked for 16 weeks only
 ERC20_TOKENS.set(ERC20_AURA, new TokenDefinition(ERC20_AURA, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_BARNBRIDGE, new TokenDefinition(ERC20_BARNBRIDGE, TokenCategoryVolatile, true, false));
@@ -205,8 +206,8 @@ ERC20_TOKENS.set(ERC20_FDT, new TokenDefinition(ERC20_FDT, TokenCategoryVolatile
 ERC20_TOKENS.set(ERC20_FEI, new TokenDefinition(ERC20_FEI, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_FOX, new TokenDefinition(ERC20_FOX, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_FPIS, new TokenDefinition(ERC20_FPIS, TokenCategoryVolatile, true, false));
-ERC20_TOKENS.set(ERC20_FRAX_BP, new TokenDefinition(ERC20_FRAX_BP, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_FRAX_3CRV, new TokenDefinition(ERC20_FRAX_3CRV, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_FRAX_BP, new TokenDefinition(ERC20_FRAX_BP, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_FRAX, new TokenDefinition(ERC20_FRAX, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_FXS_VE, new TokenDefinition(ERC20_FXS_VE, TokenCategoryVolatile, false, false)); // Locked till 1787788800 (2026)
 ERC20_TOKENS.set(ERC20_FXS, new TokenDefinition(ERC20_FXS, TokenCategoryVolatile, true, false));
@@ -366,6 +367,7 @@ const pairHandlerAuraWEth = new PairHandler(
  */
 const LIQUIDITY_POOL_TOKEN_LOOKUP = new Map<string, PairHandler[]>();
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_ALCX, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_ALCX_ETH)]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA_BAL, [new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_GRAVIAURA_AURABAL_WETH_ID)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA_VL, [pairHandlerAuraWEth]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA, [pairHandlerAuraWEth]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BARNBRIDGE, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_BOND_USDC)]);
@@ -397,7 +399,6 @@ LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_TRIBE, [new PairHandler(PairHandlerTypes.U
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_WBTC, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_ETH_WBTC)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_WETH, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_USDC_ETH)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_XSUSHI, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_XSUSHI_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA_BAL, [new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_GRAVIAURA_AURABAL_WETH_ID)]);
 
 /**
  * OHM price lookup
