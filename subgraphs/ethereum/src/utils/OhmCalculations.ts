@@ -1,14 +1,17 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { BondManager } from "../../generated/ProtocolMetrics/BondManager";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
-import { TokenSupply } from "../../generated/schema";
+import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../../generated/schema";
+import { GNOSIS_RECORD_ID } from "../GnosisAuction";
 import { getBalancerPoolTokenQuantity } from "../liquidity/LiquidityBalancer";
 import { getCurvePairTokenQuantity } from "../liquidity/LiquidityCurve";
 import { getFraxSwapPairTokenQuantityRecords } from "../liquidity/LiquidityFraxSwap";
 import { getUniswapV2PairTokenQuantity } from "../liquidity/LiquidityUniswapV2";
 import { pushTokenSupplyArray } from "./ArrayHelper";
 import {
+  BOND_MANAGER,
   CIRCULATING_SUPPLY_WALLETS,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
@@ -33,6 +36,10 @@ import { PairHandlerTypes } from "./PairHandler";
 import { getBaseOhmUsdRate } from "./Price";
 import {
   createOrUpdateTokenSupply,
+  TYPE_BONDS_DEPOSITS,
+  TYPE_BONDS_PREMINTED,
+  TYPE_BONDS_VESTING_DEPOSITS,
+  TYPE_BONDS_VESTING_TOKENS,
   TYPE_LIQUIDITY,
   TYPE_OFFSET,
   TYPE_TOTAL_SUPPLY,
@@ -141,6 +148,135 @@ function getMigrationOffsetRecord(timestamp: BigInt, blockNumber: BigInt): Token
     blockNumber,
     -1, // Will be subtracted
   );
+}
+
+export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
+  const FUNC = "getVestingBondSupplyRecords";
+  const records: TokenSupply[] = [];
+
+  const gnosisAuctionRoot: GnosisAuctionRoot | null = GnosisAuctionRoot.load(GNOSIS_RECORD_ID);
+  // Record will not exist if no auctions have been launched
+  if (!gnosisAuctionRoot) {
+    log.debug("{}: No auctions", [FUNC]);
+    return records;
+  }
+
+  // Set up the FixedExpiryTeller and GnosisEasyAuction
+  const bondManager = BondManager.bind(Address.fromString(BOND_MANAGER));
+  if (!bondManager.isActive()) {
+    log.debug("{}: Bond Manager not active", [FUNC]);
+    return records;
+  }
+
+  const bondFixedExpiryTellerAddress = bondManager.fixedExpiryTeller();
+
+  // Loop through Gnosis Auctions
+  const gnosisAuctionIds: BigInt[] = gnosisAuctionRoot.markets;
+  for (let i = 0; i < gnosisAuctionIds.length; i++) {
+    const auctionId = gnosisAuctionIds[i].toString();
+    log.debug("{}: Processing Gnosis auction with id {}", [FUNC, auctionId]);
+
+    const auctionRecord = GnosisAuction.load(auctionId);
+    if (!auctionRecord) {
+      throw new Error(`Expected to find GnosisAuction record with id ${auctionId}, but it was not found`);
+    }
+
+    const bidQuantity: BigDecimal | null = auctionRecord.bidQuantity;
+
+    // If the auction is open
+    if (!bidQuantity) {
+      log.debug("{}: auction is open", [FUNC]);
+
+      // OHM equivalent to the auction capacity is pre-minted and stored in the teller
+      records.push(
+        createOrUpdateTokenSupply(
+          timestamp,
+          getContractName(ERC20_OHM_V2),
+          ERC20_OHM_V2,
+          auctionId, // auction ID in place of the pool name. Keeps values distinct for different auctions.
+          null,
+          getContractName(bondFixedExpiryTellerAddress.toHexString()),
+          bondFixedExpiryTellerAddress.toHexString(),
+          TYPE_BONDS_PREMINTED,
+          auctionRecord.payoutCapacity,
+          blockNumber,
+          -1, // Subtract
+        ),
+      );
+    }
+    // If the auction is closed
+    else {
+      log.debug("{}: auction is closed", [FUNC]);
+      const bondTermSeconds = auctionRecord.termSeconds;
+      const auctionCloseTimestamp = auctionRecord.auctionCloseTimestamp;
+      if (!auctionCloseTimestamp) {
+        throw new Error(`Expected the auctionCloseTimestamp on closed auction '${auctionId}' to be set`);
+      }
+
+      const expiryTimestamp = auctionCloseTimestamp.plus(bondTermSeconds);
+
+      // Closed auction and the bond expiry time has not been reached
+      if (timestamp.lt(expiryTimestamp)) {
+        // Vesting user deposits equal to the sold quantity are stored in the bond manager, so we adjust that
+        records.push(
+          createOrUpdateTokenSupply(
+            timestamp,
+            getContractName(ERC20_OHM_V2),
+            ERC20_OHM_V2,
+            auctionId, // auction ID in place of the pool name. Keeps values distinct for different auctions.
+            null,
+            getContractName(BOND_MANAGER),
+            BOND_MANAGER,
+            TYPE_BONDS_VESTING_DEPOSITS,
+            bidQuantity,
+            blockNumber,
+            -1, // Subtract
+          ),
+        );
+
+        // Vesting bond tokens equal to the auction capacity are stored in the teller, so we adjust that
+        records.push(
+          createOrUpdateTokenSupply(
+            timestamp,
+            getContractName(ERC20_OHM_V2),
+            ERC20_OHM_V2,
+            auctionId, // auction ID in place of the pool name. Keeps values distinct for different auctions.
+            null,
+            getContractName(bondFixedExpiryTellerAddress.toHexString()),
+            bondFixedExpiryTellerAddress.toHexString(),
+            TYPE_BONDS_VESTING_TOKENS,
+            auctionRecord.payoutCapacity,
+            blockNumber,
+            -1, // Subtract
+          ),
+        );
+      }
+      // Bond expiry time has been reached
+      else {
+        // User deposits equal to the sold quantity are stored in the bond manager, so we adjust that
+        // These deposits will eventually be burned
+        records.push(
+          createOrUpdateTokenSupply(
+            timestamp,
+            getContractName(ERC20_OHM_V2),
+            ERC20_OHM_V2,
+            auctionId, // auction ID in place of the pool name. Keeps values distinct for different auctions.
+            null,
+            getContractName(BOND_MANAGER),
+            BOND_MANAGER,
+            TYPE_BONDS_DEPOSITS,
+            bidQuantity,
+            blockNumber,
+            -1, // Subtract
+          ),
+        );
+      }
+
+      // TODO add support for recognising OHM burned from bond deposits
+    }
+  }
+
+  return records;
 }
 
 /**
@@ -318,13 +454,23 @@ export function getTotalValueLocked(blockNumber: BigInt): BigDecimal {
  * - OHM total supply
  * - minus: OHM in circulating supply wallets
  * - minus: migration offset
- * - minus: OHM in liquidity pools
+ * - minus: pre-minted OHM for bonds
+ * - minus: OHM user deposits for bonds
+ * - minus: protocol-owned OHM in liquidity pools
  */
 export function getFloatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
   let total = BigDecimal.zero();
 
+  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_LIQUIDITY];
+
   for (let i = 0; i < tokenSupplies.length; i++) {
-    total = total.plus(tokenSupplies[i].supplyBalance);
+    const tokenSupply = tokenSupplies[i];
+
+    if (!includedTypes.includes(tokenSupply.type)) {
+      continue;
+    }
+
+    total = total.plus(tokenSupply.supplyBalance);
   }
 
   return total;
@@ -338,17 +484,18 @@ export function getFloatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
  * - OHM total supply
  * - minus: OHM in circulating supply wallets
  * - minus: migration offset
- *
- * In practice, this is everything except OHM in liquidity pools.
+ * - minus: pre-minted OHM for bonds
+ * - minus: OHM user deposits for bonds
  */
 export function getCirculatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
   let total = BigDecimal.zero();
 
+  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS];
+
   for (let i = 0; i < tokenSupplies.length; i++) {
     const tokenSupply = tokenSupplies[i];
 
-    // Liquidity is ignored
-    if (tokenSupply.type == TYPE_LIQUIDITY) {
+    if (!includedTypes.includes(tokenSupply.type)) {
       continue;
     }
 

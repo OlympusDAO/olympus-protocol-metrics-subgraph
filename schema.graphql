@@ -111,3 +111,19 @@ type PriceSnapshot @entity(immutable: true) {
   priceOhm: BigDecimal!
   priceGOhm: BigDecimal!
 }
+
+# Should be a single entry
+# Used for tracking markets
+type GnosisAuctionRoot @entity {
+  id: ID!
+  markets: [BigInt!]!
+}
+
+type GnosisAuction @entity {
+  id: ID!
+  auctionOpenTimestamp: BigInt!
+  payoutCapacity: BigDecimal!
+  termSeconds: BigInt!
+  bidQuantity: BigDecimal # Is set later, so should not be required
+  auctionCloseTimestamp: BigInt
+}
