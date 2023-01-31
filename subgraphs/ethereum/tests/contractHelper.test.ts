@@ -10,6 +10,7 @@ import {
   TREASURY_ADDRESS_V3,
 } from "../../shared/src/Wallets";
 import {
+  AURA_STAKING_AURA_BAL,
   AURA_STAKING_OHM_DAI_WETH,
   BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
@@ -18,6 +19,7 @@ import {
   CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
   ERC20_ALCX,
   ERC20_AURA,
+  ERC20_AURA_BAL,
   ERC20_AURA_VL,
   ERC20_BALANCER_OHM_DAI_WETH,
   ERC20_BALANCER_OHM_DAI_WETH_AURA,
@@ -274,6 +276,13 @@ export const mockAuraStakedBalanceZero = (wallets: string[]): void => {
       ERC20_BALANCER_OHM_DAI_WETH_AURA,
       wallets[i],
       AURA_STAKING_OHM_DAI_WETH,
+      BigInt.zero(),
+    );
+
+    mockAuraStakedBalance(
+      ERC20_BALANCER_OHM_DAI_WETH_AURA,
+      wallets[i],
+      AURA_STAKING_AURA_BAL,
       BigInt.zero(),
     );
   }

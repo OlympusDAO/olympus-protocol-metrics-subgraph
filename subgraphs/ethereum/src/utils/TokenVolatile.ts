@@ -1,4 +1,4 @@
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
 import { TokenCategoryVolatile } from "../../../shared/src/contracts/TokenDefinition";
@@ -8,6 +8,7 @@ import { getLiquidityBalances } from "../liquidity/LiquidityCalculations";
 import { ERC20_AURA, ERC20_FXS_VE, ERC20_LQTY, ERC20_TOKE, ERC20_TOKENS, getContractName } from "./Constants";
 import {
   getAuraLockedBalancesFromWallets,
+  getAuraStakedBalancesFromWallets,
   getConvexStakedRecords,
   getERC20,
   getERC20TokenRecordsFromWallets,
@@ -103,6 +104,9 @@ export function getVolatileTokenBalance(
       getAuraLockedBalancesFromWallets(timestamp, contractAddress, rate, blockNumber),
     );
   }
+
+  // Tokens staked in Aura
+  pushArray(records, getAuraStakedBalancesFromWallets(timestamp, contractAddress, rate, BigDecimal.fromString("1"), blockNumber));
 
   // Staked Convex tokens
   pushArray(records, getConvexStakedRecords(timestamp, contractAddress, blockNumber));
