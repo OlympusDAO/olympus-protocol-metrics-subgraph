@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
@@ -10,8 +10,8 @@ import {
   TREASURY_ADDRESS_V3,
 } from "../../shared/src/Wallets";
 import {
+  AURA_REWARDS_CONTRACTS,
   AURA_STAKING_AURA_BAL,
-  AURA_STAKING_CONTRACTS,
   AURA_STAKING_OHM_DAI_WETH,
   BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
@@ -20,7 +20,6 @@ import {
   CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
   ERC20_ALCX,
   ERC20_AURA,
-  ERC20_AURA_BAL,
   ERC20_AURA_VL,
   ERC20_BAL,
   ERC20_BALANCER_OHM_DAI_WETH,
@@ -36,12 +35,10 @@ import {
   ERC20_TOKE,
   ERC20_WETH,
   FRAX_LOCKING_CONTRACTS,
-  getContractName,
   getWalletAddressesForContract,
   LQTY_STAKING,
   NATIVE_ETH,
   TOKE_STAKING,
-  WALLET_ADDRESSES,
 } from "../src/utils/Constants";
 import {
   getAuraLockedBalancesFromWallets,
@@ -358,11 +355,11 @@ export const mockAuraEarnedBalance = (
 
 export const mockAuraEarnedBalanceZero = (rewardToken: string, wallets: string[]): void => {
   for (let i = 0; i < wallets.length; i++) {
-    for (let j = 0; j < AURA_STAKING_CONTRACTS.length; j++) {
+    for (let j = 0; j < AURA_REWARDS_CONTRACTS.length; j++) {
       mockAuraEarnedBalance(
         rewardToken,
         wallets[i],
-        AURA_STAKING_CONTRACTS[j],
+        AURA_REWARDS_CONTRACTS[j],
         BigInt.zero(),
       );
     }

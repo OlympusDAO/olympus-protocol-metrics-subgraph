@@ -93,11 +93,9 @@ export const BALANCER_LIQUIDITY_GAUGES = [BALANCER_LIQUIDITY_GAUGE_WETH_FDT, BAL
 
 export const AURA_STAKING_OHM_DAI_WETH = "0xF01e29461f1FCEdD82f5258Da006295E23b4Fab3".toLowerCase();
 export const AURA_STAKING_AURA_BAL = "0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2".toLowerCase();
+export const AURA_STABLE_REWARD_POOL = "0x62D7d772b2d909A0779d15299F4FC87e34513c6d".toLowerCase();
 
 export const BOND_MANAGER = "0xf577c77ee3578c7f216327f41b5d7221ead2b2a3";
-
-// TODO add to aura staking contracts?
-export const AURA_STABLE_REWARD_POOL = "0x62D7d772b2d909A0779d15299F4FC87e34513c6d".toLowerCase();
 
 export const CIRCULATING_SUPPLY_WALLETS = [
   BONDS_DEPOSIT,
@@ -293,6 +291,15 @@ export const getFraxStakedToken = (contractAddress: string): TokenDefinition | n
 export const AURA_STAKING_CONTRACTS = [
   AURA_STAKING_OHM_DAI_WETH,
   AURA_STAKING_AURA_BAL,
+];
+
+/**
+ * AURA rewards contracts
+ */
+export const AURA_REWARDS_CONTRACTS = [
+  AURA_STAKING_OHM_DAI_WETH,
+  AURA_STAKING_AURA_BAL,
+  AURA_STABLE_REWARD_POOL,
 ];
 
 const AURA_STAKED_TOKENS = new Map<string, string>();

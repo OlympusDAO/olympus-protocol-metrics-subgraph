@@ -33,6 +33,7 @@ import {
   addressesEqual,
   ALLOCATOR_ONSEN_ID_NOT_FOUND,
   ALLOCATOR_RARI_ID_NOT_FOUND,
+  AURA_REWARDS_CONTRACTS,
   AURA_STABLE_REWARD_POOL,
   AURA_STAKING_CONTRACTS,
   BALANCER_LIQUIDITY_GAUGES,
@@ -1162,8 +1163,8 @@ export function getAuraStakedBalanceFromWallets(
 export function getAuraPoolEarnedRecords(timestamp: BigInt, contractAddress: string, rate: BigDecimal, blockNumber: BigInt): TokenRecord[] {
   const records: TokenRecord[] = [];
 
-  for (let h = 0; h < AURA_STAKING_CONTRACTS.length; h++) {
-    const poolAddress = AURA_STAKING_CONTRACTS[h];
+  for (let h = 0; h < AURA_REWARDS_CONTRACTS.length; h++) {
+    const poolAddress = AURA_REWARDS_CONTRACTS[h];
     log.debug("getAuraPoolEarnedRecords: looking for Aura earned rewards for token {} ({}) in pool {} ({})", [getContractName(contractAddress), contractAddress, getContractName(poolAddress), poolAddress]);
     const rewardPool = AuraVirtualBalanceRewardPool.bind(Address.fromString(poolAddress));
     if (rewardPool.rewardToken().toHexString().toLowerCase() != contractAddress.toLowerCase()) {
