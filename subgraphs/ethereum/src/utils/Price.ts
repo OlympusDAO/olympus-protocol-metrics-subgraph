@@ -19,6 +19,7 @@ import {
   ERC20_WETH,
   getContractName,
   getPairHandler,
+  getUnstakedToken,
   NATIVE_ETH,
   OHM_PRICE_PAIRS,
 } from "./Constants";
@@ -355,17 +356,18 @@ export function getUSDRateBalancer(
   const baseTokenIndex = getBaseTokenIndex(addresses);
   if (baseTokenIndex === BASE_TOKEN_UNKNOWN) {
     throw new Error(
-      "getUSDRateBalancer: Unsure how to deal with unknown token base orientation for Balancer pool " +
-      poolId,
+      `getUSDRateBalancer: Unsure how to deal with unknown token base orientation for Balancer pool ${poolId}`
     );
   }
   log.debug("getUSDRateBalancer: base token is at index {}", [baseTokenIndex.toString()]);
 
-  const destinationTokenIndex = getTokenIndex(contractAddress, addresses);
+  // Ensure we have the unstaked token (or else looking for the index can fail)
+  // e.g. if using AURA-WETH as price lookup for vlAURA
+  const unstakedToken = getUnstakedToken(contractAddress);
+  const destinationTokenIndex = getTokenIndex(unstakedToken, addresses);
   if (destinationTokenIndex === BASE_TOKEN_UNKNOWN) {
     throw new Error(
-      "getUSDRateBalancer: Unsure how to deal with unknown destination token orientation for Balancer pool " +
-      poolId,
+      `getUSDRateBalancer: Unsure how to deal with unknown destination token orientation for Balancer pool '${poolId}', contractAddress '${getContractName(contractAddress)}' (${contractAddress})`
     );
   }
   log.debug("getUSDRateBalancer: destination token is at index {}", [destinationTokenIndex.toString()]);
@@ -377,7 +379,7 @@ export function getUSDRateBalancer(
   ]);
 
   const baseTokenDecimals = getERC20Decimals(baseToken.toHexString(), blockNumber);
-  const destinationTokenDecimals = getERC20Decimals(contractAddress, blockNumber);
+  const destinationTokenDecimals = getERC20Decimals(unstakedToken, blockNumber);
 
   const baseTokenReserves = toDecimal(balances[baseTokenIndex], baseTokenDecimals);
   const destinationTokenReserves = toDecimal(balances[destinationTokenIndex], destinationTokenDecimals);

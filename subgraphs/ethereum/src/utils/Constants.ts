@@ -142,6 +142,7 @@ export const ERC20_AURA_BAL = "0x616e8BfA43F920657B3497DBf40D6b1A02D4608d".toLow
 export const ERC20_AURA_GRAVI = "0xBA485b556399123261a5F9c95d413B4f93107407".toLowerCase();
 export const ERC20_AURA_VL = "0x3Fa73f1E5d8A792C80F426fc8F84FBF7Ce9bBCAC".toLowerCase();
 export const ERC20_BAL = "0xba100000625a3754423978a60c9317c58a424e3d".toLowerCase();
+export const ERC20_BALANCER_AURA_WETH = "0xc29562b045D80fD77c69Bec09541F5c16fe20d9d".toLowerCase();
 export const ERC20_BALANCER_BAL_WETH = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56".toLowerCase();
 export const ERC20_BALANCER_GRAVIAURA_AURABAL_WETH = "0x0578292CB20a443bA1CdE459c985CE14Ca2bDEe5".toLowerCase();
 export const ERC20_BALANCER_OHM_BTRFLY_V2 = "0x2de32a7c98c3ef6ec79e703500e8ca5b2ec819aa".toLowerCase();
@@ -233,7 +234,6 @@ ERC20_TOKENS.set(ERC20_WETH, new TokenDefinition(ERC20_WETH, TokenCategoryVolati
 ERC20_TOKENS.set(ERC20_XSUSHI, new TokenDefinition(ERC20_XSUSHI, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(NATIVE_ETH, new TokenDefinition(NATIVE_ETH, TokenCategoryVolatile, true, true));
 
-
 const CONVEX_STAKED_TOKENS = new Map<string, TokenDefinition>();
 CONVEX_STAKED_TOKENS.set(ERC20_CRV_FRAX_USDC, new TokenDefinition(ERC20_CVX_FRAX_USDC, TokenCategoryStable, true, false));
 CONVEX_STAKED_TOKENS.set(ERC20_CRV_OHMETH, new TokenDefinition(ERC20_CVX_OHMETH, TokenCategoryPOL, true, false));
@@ -318,6 +318,28 @@ export const getAuraStakedToken = (contractAddress: string): string | null => {
 
   return AURA_STAKED_TOKENS.get(contractAddressLower);
 };
+
+const UNSTAKED_TOKEN_MAPPING = new Map<string, string>();
+UNSTAKED_TOKEN_MAPPING.set(ERC20_AURA_VL, ERC20_AURA);
+UNSTAKED_TOKEN_MAPPING.set(ERC20_CVX_VL_V1, ERC20_CVX);
+UNSTAKED_TOKEN_MAPPING.set(ERC20_CVX_VL_V2, ERC20_CVX);
+UNSTAKED_TOKEN_MAPPING.set(ERC20_FXS_VE, ERC20_FXS);
+
+/**
+ * Often, staked/locked tokens have the same price as the original token. This
+ * provides the address of the unstaked token.
+ * 
+ * @param contractAddress 
+ * @returns address of the unstaked token, or the original token address if not found
+ */
+export const getUnstakedToken = (contractAddress: string): string => {
+  const contractAddressLower = contractAddress.toLowerCase();
+  if (!UNSTAKED_TOKEN_MAPPING.has(contractAddressLower)) {
+    return contractAddress;
+  }
+
+  return UNSTAKED_TOKEN_MAPPING.get(contractAddressLower);
+}
 
 // Liquidity Pools
 export const PAIR_CURVE_FRAX_USDC = "0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2".toLowerCase(); // FraxBP
@@ -818,6 +840,7 @@ CONTRACT_NAME_MAP.set(ERC20_AURA_GRAVI, "graviAURA");
 CONTRACT_NAME_MAP.set(ERC20_AURA_VL, "Aura Finance - Vote-Locked");
 CONTRACT_NAME_MAP.set(ERC20_AURA, "Aura Finance");
 CONTRACT_NAME_MAP.set(ERC20_BAL, "Balancer");
+CONTRACT_NAME_MAP.set(ERC20_BALANCER_AURA_WETH, "Balancer V2 AURA-WETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_BAL_WETH, "Balancer V2 BAL-WETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_GRAVIAURA_AURABAL_WETH, "Balancer V2 graviAURA-auraBAL-WETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_BTRFLY_V2, "Balancer V2 OHM V2-BTRFLY V2 Liquidity Pool");

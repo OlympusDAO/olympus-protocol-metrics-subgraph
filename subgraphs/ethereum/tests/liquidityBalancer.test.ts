@@ -13,8 +13,10 @@ import {
   BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
   BALANCER_VAULT,
+  ERC20_AURA,
   ERC20_AURA_BAL,
   ERC20_AURA_GRAVI,
+  ERC20_BALANCER_AURA_WETH,
   ERC20_BALANCER_GRAVIAURA_AURABAL_WETH,
   ERC20_BALANCER_OHM_BTRFLY_V2,
   ERC20_BALANCER_OHM_DAI,
@@ -29,6 +31,7 @@ import {
   ERC20_USDC,
   ERC20_WETH,
   getWalletAddressesForContract,
+  POOL_BALANCER_AURA_WETH_ID,
   POOL_BALANCER_GRAVIAURA_AURABAL_WETH_ID,
   POOL_BALANCER_OHM_DAI,
   POOL_BALANCER_OHM_DAI_WETH_ID,
@@ -352,6 +355,31 @@ export function mockBalancerVaultGraviAuraBalWeth(
     BigDecimal.fromString("0.3333"),
     BigDecimal.fromString("0.3334"),
     BigDecimal.fromString("0.3333"),
+  );
+}
+
+export function mockBalancerVaultAuraWeth(
+  auraBalance: BigDecimal = POOL_AURABAL_WETH_BALANCE_AURABAL,
+  wethBalance: BigDecimal = POOL_AURABAL_WETH_BALANCE_WETH,
+): void {
+  mockBalancerVault(
+    BALANCER_VAULT,
+    POOL_BALANCER_AURA_WETH_ID,
+    ERC20_BALANCER_AURA_WETH,
+    ERC20_STANDARD_DECIMALS,
+    toDecimal(BigInt.fromString("5676269785389456574276"), ERC20_STANDARD_DECIMALS),
+    ERC20_WETH,
+    ERC20_AURA,
+    null,
+    wethBalance,
+    auraBalance,
+    null,
+    ERC20_STANDARD_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    BigDecimal.fromString("0.5"),
+    BigDecimal.fromString("0.5"),
+    null,
   );
 }
 
