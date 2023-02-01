@@ -1,9 +1,9 @@
 # Subgraph Changelog
 
-## 3.4 (2023-01-31)
+## 3.4.1 (2023-02-01)
 
 - Indexing of Aura Allocator v2
-- Adds support for staking and rewards related to BAL, bb-a-USD, auraBAL
+- Adds support for staking and rewards related to BAL, bb-a-USD, auraBAL, vlAura
 
 ## 3.3.11 (2023-01-30)
 
