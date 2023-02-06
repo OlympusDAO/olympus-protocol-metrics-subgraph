@@ -10,6 +10,9 @@ import {
 import { DEFAULT_DECIMALS, toBigInt } from "../../shared/src/utils/Decimals";
 import {
   BALANCER_VAULT,
+  ERC20_AURA,
+  ERC20_AURA_BAL,
+  ERC20_AURA_VL,
   ERC20_BALANCER_WETH_FDT,
   ERC20_BTRFLY_V1,
   ERC20_BTRFLY_V2,
@@ -45,6 +48,8 @@ import {
 import { getBaseOhmUsdRate, getUSDRate, getUSDRateBalancer } from "../src/utils/Price";
 import { mockBalancerGaugeBalanceZero } from "./contractHelper.test";
 import {
+  mockBalancerVaultAuraWeth,
+  mockBalancerVaultGraviAuraBalWeth,
   mockBalancerVaultZero,
   mockBalanceVaultOhmDaiEth,
   mockBalanceVaultWethFdt,
@@ -381,6 +386,48 @@ describe("get USD rate", () => {
       OHM_DAI_ETH_BALANCE_OHM.div(OHM_DAI_ETH_WEIGHT_OHM),
     );
 
+    assert.stringEquals(calculatedRate.toString(), usdRate.toString());
+  });
+
+  test("auraBAL (Balancer) returns correct value", () => {
+    mockEthUsdRate();
+
+    // Mock the balancer
+    mockBalancerVaultGraviAuraBalWeth();
+
+    const usdRate = getUSDRate(ERC20_AURA_BAL, OHM_USD_RESERVE_BLOCK);
+    // (51484525313020258856*10^-18/0.3333)/(4789103758014220845986*10^-18/0.3334))*1898
+    const calculatedRate = BigDecimal.fromString("20.40430807376620776594455756154979");
+
+    // There is a loss of precision, so we need to ensure that the value is close, but not equal
+    assert.stringEquals(calculatedRate.toString(), usdRate.toString());
+  });
+
+  test("aura (Balancer) returns correct value", () => {
+    mockEthUsdRate();
+
+    // Mock the balancer
+    mockBalancerVaultAuraWeth();
+
+    const usdRate = getUSDRate(ERC20_AURA, OHM_USD_RESERVE_BLOCK);
+    // (51484525313020258856*10^-18/0.5)/(4789103758014220845986*10^-18/0.5))*1898
+    const calculatedRate = BigDecimal.fromString("20.40430807376620776594455756154979");
+
+    // There is a loss of precision, so we need to ensure that the value is close, but not equal
+    assert.stringEquals(calculatedRate.toString(), usdRate.toString());
+  });
+
+  test("vlAura (Balancer) returns correct value", () => {
+    mockEthUsdRate();
+
+    // Mock the balancer
+    mockBalancerVaultAuraWeth();
+
+    const usdRate = getUSDRate(ERC20_AURA_VL, OHM_USD_RESERVE_BLOCK);
+    // (51484525313020258856*10^-18/0.5)/(4789103758014220845986*10^-18/0.5))*1898
+    const calculatedRate = BigDecimal.fromString("20.40430807376620776594455756154979");
+
+    // There is a loss of precision, so we need to ensure that the value is close, but not equal
     assert.stringEquals(calculatedRate.toString(), usdRate.toString());
   });
 

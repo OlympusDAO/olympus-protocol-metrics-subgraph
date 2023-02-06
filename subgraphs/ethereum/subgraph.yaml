@@ -3,7 +3,7 @@ description: Olympus Protocol Metrics Subgraph
 features:
   - grafting
 graft:
-  base: QmQsrwnGdQ2VzbcNdfZWBSz4EueGg5CeKwPfrHYbtcDiWN
+  base: Qmdvbqfzx1CVw9GTpaWisw6NdFdG5jVKMuRVp2vjE1dV8A
   block: 16226955 # BondManager
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
@@ -621,6 +621,10 @@ dataSources:
           file: ./abis/vlCVX.json
         - name: AuraStaking
           file: ./abis/AuraStaking.json
+        - name: AuraLocker
+          file: ./abis/AuraLocker.json
+        - name: AuraVirtualBalanceRewardPool
+          file: ./abis/AuraVirtualBalanceRewardPool.json
         - name: FraxFarm
           file: ./abis/FraxFarm.json
         # Gnosis Auctions

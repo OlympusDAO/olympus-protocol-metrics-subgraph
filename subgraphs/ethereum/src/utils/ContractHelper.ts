@@ -9,7 +9,9 @@ import {
   getIsTokenLiquid,
 } from "../../../shared/src/utils/TokenRecordHelper";
 import { LUSD_ALLOCATOR, RARI_ALLOCATOR, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
+import { AuraLocker } from "../../generated/ProtocolMetrics/AuraLocker";
 import { AuraStaking } from "../../generated/ProtocolMetrics/AuraStaking";
+import { AuraVirtualBalanceRewardPool } from "../../generated/ProtocolMetrics/AuraVirtualBalanceRewardPool";
 import { BalancerLiquidityGauge } from "../../generated/ProtocolMetrics/BalancerLiquidityGauge";
 import { ConvexBaseRewardPool } from "../../generated/ProtocolMetrics/ConvexBaseRewardPool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
@@ -31,12 +33,14 @@ import {
   addressesEqual,
   ALLOCATOR_ONSEN_ID_NOT_FOUND,
   ALLOCATOR_RARI_ID_NOT_FOUND,
+  AURA_REWARDS_CONTRACTS,
   AURA_STAKING_CONTRACTS,
   BALANCER_LIQUIDITY_GAUGES,
   BLOCKCHAIN,
   CONTRACT_STARTING_BLOCK_MAP,
   CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
+  ERC20_AURA_VL,
   ERC20_CVX,
   ERC20_CVX_VL_V2,
   ERC20_FXS,
@@ -606,6 +610,84 @@ function getTokeStakedBalance(
 
 /**
  * Returns records for the staked balance of {tokenAddress} across
+ * all wallets that are locked with Aura.
+ *
+ * @param metricName
+ * @param tokenAddress
+ * @param rate
+ * @param blockNumber
+ * @returns
+ */
+export function getAuraLockedBalancesFromWallets(
+  timestamp: BigInt,
+  tokenAddress: string,
+  rate: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecord[] {
+  const FUNC = "getAuraLockedBalancesFromWallets";
+  const records: TokenRecord[] = [];
+
+  // Check that the token matches
+  const contract = AuraLocker.bind(Address.fromString(ERC20_AURA_VL));
+  const stakingTokenResult = contract.try_stakingToken();
+  if (stakingTokenResult.reverted) {
+    log.warning(
+      "{}: AURA locking contract reverted at block {}. Skipping",
+      [FUNC, blockNumber.toString()],
+    );
+    return records;
+  }
+
+  // Ignore if we're looping through and the staking token doesn't match
+  if (!stakingTokenResult.value.equals(Address.fromString(tokenAddress))) {
+    return records;
+  }
+
+  // Iterate over all relevant wallets
+  const wallets = getWalletAddressesForContract(tokenAddress);
+  for (let i = 0; i < wallets.length; i++) {
+    const currentWallet = wallets[i];
+    const balanceResult = contract.lockedBalances(Address.fromString(currentWallet));
+    const balance = toDecimal(balanceResult.getTotal(), 18);
+    if (balance.equals(BigDecimal.zero())) {
+      continue;
+    }
+
+    log.debug(
+      "{}: found staked balance {} for token {} ({}) and wallet {} ({}) at block {}",
+      [
+        FUNC,
+        balance.toString(),
+        getContractName(ERC20_AURA_VL),
+        ERC20_AURA_VL,
+        getContractName(currentWallet),
+        currentWallet,
+        blockNumber.toString(),
+      ],
+    );
+
+    records.push(
+      createOrUpdateTokenRecord(
+        timestamp,
+        getContractName(ERC20_AURA_VL),
+        ERC20_AURA_VL,
+        getContractName(currentWallet),
+        currentWallet,
+        rate,
+        balance,
+        blockNumber,
+        getIsTokenLiquid(ERC20_AURA_VL, ERC20_TOKENS),
+        ERC20_TOKENS,
+        BLOCKCHAIN,
+      ),
+    );
+  }
+
+  return records;
+}
+
+/**
+ * Returns records for the staked balance of {tokenAddress} across
  * all wallets that are staked with Tokemak.
  *
  * @param metricName
@@ -1071,6 +1153,62 @@ export function getAuraStakedBalanceFromWallets(
         TokenCategoryPOL,
       ),
     );
+  }
+
+  return records;
+}
+
+export function getAuraPoolEarnedRecords(timestamp: BigInt, contractAddress: string, rate: BigDecimal, blockNumber: BigInt): TokenRecord[] {
+  const records: TokenRecord[] = [];
+
+  for (let h = 0; h < AURA_REWARDS_CONTRACTS.length; h++) {
+    const poolAddress = AURA_REWARDS_CONTRACTS[h];
+    log.debug("getAuraPoolEarnedRecords: looking for Aura earned rewards for token {} ({}) in pool {} ({})", [getContractName(contractAddress), contractAddress, getContractName(poolAddress), poolAddress]);
+    const rewardPool = AuraVirtualBalanceRewardPool.bind(Address.fromString(poolAddress));
+    if (rewardPool.rewardToken().toHexString().toLowerCase() != contractAddress.toLowerCase()) {
+      continue;
+    }
+
+    // Iterate over all relevant wallets
+    const wallets = getWalletAddressesForContract(contractAddress);
+    for (let i = 0; i < wallets.length; i++) {
+      const currentWallet = wallets[i];
+
+      const earnedBalance: BigDecimal = toDecimal(rewardPool.earned(Address.fromString(currentWallet)), 18);
+      if (earnedBalance.equals(BigDecimal.zero())) {
+        continue;
+      }
+
+      log.debug(
+        "getAuraPoolEarnedRecords: found earned balance {} for token {} ({}) and wallet {} ({}) in rewards pool {} ({}) at block {}",
+        [
+          earnedBalance.toString(),
+          getContractName(contractAddress),
+          contractAddress,
+          getContractName(currentWallet),
+          currentWallet,
+          getContractName(poolAddress),
+          poolAddress,
+          blockNumber.toString(),
+        ],
+      );
+
+      records.push(
+        createOrUpdateTokenRecord(
+          timestamp,
+          getContractName(contractAddress),
+          contractAddress,
+          getContractName(currentWallet),
+          currentWallet,
+          rate,
+          earnedBalance,
+          blockNumber,
+          getIsTokenLiquid(contractAddress, ERC20_TOKENS),
+          ERC20_TOKENS,
+          BLOCKCHAIN,
+        ),
+      );
+    }
   }
 
   return records;

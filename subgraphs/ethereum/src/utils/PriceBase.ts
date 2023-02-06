@@ -22,6 +22,32 @@ export enum PairTokenBaseOrientation {
   UNKNOWN,
 }
 
+export const BASE_TOKEN_UNKNOWN = -1;
+
+/**
+ * Determines whether token0 or token1 of a pair is the base (wETH/USD) token.
+ */
+export function getBaseTokenIndex(
+  addresses: Address[],
+): i32 {
+  for (let i = 0; i < addresses.length; i++) {
+    const currentToken = addresses[i];
+
+    // As we are ultimately trying to get to a USD-denominated rate,
+    // check for USD stablecoins first
+    if (isTokenAddressInCategory(currentToken.toHexString(), TokenCategoryStable, ERC20_TOKENS)) {
+      return i;
+    }
+
+    // Now check secondary base tokens: ETH
+    if (currentToken.toHexString().toLowerCase() == ERC20_WETH.toLowerCase()) {
+      return i
+    }
+  }
+
+  return BASE_TOKEN_UNKNOWN;
+}
+
 /**
  * Determines whether token0 or token1 of a pair is the base (wETH/USD) token.
  *
@@ -122,6 +148,7 @@ export function getBaseTokenUSDRate(
   orientation: PairTokenBaseOrientation,
   _blockNumber: BigInt,
 ): BigDecimal {
+  // TODO consider shifting usage to getBaseTokenRate
   if (orientation === PairTokenBaseOrientation.UNKNOWN) {
     throw new Error(
       "Unsure how to deal with unknown token base orientation for tokens " +
@@ -133,6 +160,36 @@ export function getBaseTokenUSDRate(
 
   const baseToken = orientation === PairTokenBaseOrientation.TOKEN0 ? token0 : token1;
 
+  if (baseToken.equals(Address.fromString(ERC20_WETH))) {
+    return getBaseEthUsdRate();
+  }
+
+  if (isTokenAddressInCategory(baseToken.toHexString(), TokenCategoryStable, ERC20_TOKENS)) {
+    return getBaseUsdRate();
+  }
+
+  throw new Error(
+    `getBaseTokenUSDRate: Token ${getContractName(
+      baseToken.toHexString(),
+    )} is unsupported for base token price lookup`,
+  );
+}
+
+/**
+ * Gets the USD value of the base token, as identified by {orientation}.
+ *
+ * This enables pairs to have ETH or DAI/USDC/USDT as the base token.
+ *
+ * @param token0
+ * @param token1
+ * @param orientation
+ * @param blockNumber
+ * @returns
+ */
+export function getBaseTokenRate(
+  baseToken: Address,
+  _blockNumber: BigInt,
+): BigDecimal {
   if (baseToken.equals(Address.fromString(ERC20_WETH))) {
     return getBaseEthUsdRate();
   }

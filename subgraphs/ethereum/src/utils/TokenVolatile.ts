@@ -1,12 +1,15 @@
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
 import { TokenCategoryVolatile } from "../../../shared/src/contracts/TokenDefinition";
 import { pushArray } from "../../../shared/src/utils/ArrayHelper";
 import { getTokensInCategory } from "../../../shared/src/utils/TokenRecordHelper";
 import { getLiquidityBalances } from "../liquidity/LiquidityCalculations";
-import { ERC20_FXS_VE, ERC20_TOKENS, getContractName } from "./Constants";
+import { ERC20_AURA, ERC20_FXS_VE, ERC20_LQTY, ERC20_TOKE, ERC20_TOKENS, getContractName } from "./Constants";
 import {
+  getAuraLockedBalancesFromWallets,
+  getAuraPoolEarnedRecords,
+  getAuraStakedBalancesFromWallets,
   getConvexStakedRecords,
   getERC20,
   getERC20TokenRecordsFromWallets,
@@ -80,16 +83,34 @@ export function getVolatileTokenBalance(
   pushArray(records, getTokeAllocatorRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Staked TOKE
-  pushArray(
-    records,
-    getTokeStakedBalancesFromWallets(timestamp, contractAddress, rate, blockNumber),
-  );
+  if (contractAddress.toLowerCase() == ERC20_TOKE.toLowerCase()) {
+    pushArray(
+      records,
+      getTokeStakedBalancesFromWallets(timestamp, contractAddress, rate, blockNumber),
+    );
+  }
 
   // Staked LQTY
-  pushArray(
-    records,
-    getLiquityStakedBalancesFromWallets(timestamp, contractAddress, rate, blockNumber),
-  );
+  if (contractAddress.toLowerCase() == ERC20_LQTY.toLowerCase()) {
+    pushArray(
+      records,
+      getLiquityStakedBalancesFromWallets(timestamp, contractAddress, rate, blockNumber),
+    );
+  }
+
+  // Locked AURA
+  if (contractAddress.toLowerCase() == ERC20_AURA.toLowerCase()) {
+    pushArray(
+      records,
+      getAuraLockedBalancesFromWallets(timestamp, contractAddress, rate, blockNumber),
+    );
+  }
+
+  // Tokens staked in Aura
+  pushArray(records, getAuraStakedBalancesFromWallets(timestamp, contractAddress, rate, BigDecimal.fromString("1"), blockNumber));
+
+  // Aura earned rewards
+  pushArray(records, getAuraPoolEarnedRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Staked Convex tokens
   pushArray(records, getConvexStakedRecords(timestamp, contractAddress, blockNumber));

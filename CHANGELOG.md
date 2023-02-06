@@ -1,5 +1,10 @@
 # Subgraph Changelog
 
+## 3.4.4 (2023-02-06)
+
+- Indexing of Aura Allocator v2
+- Adds support for staking and rewards related to BAL, bb-a-USD, auraBAL, vlAura
+
 ## 3.3.11 (2023-01-30)
 
 - Index OHM bonds using Gnosis Easy Auctions

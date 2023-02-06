@@ -7,6 +7,7 @@ import { getTokensInCategory } from "../../../shared/src/utils/TokenRecordHelper
 import { getLiquidityBalances } from "../liquidity/LiquidityCalculations";
 import { ERC20_TOKENS, getContractName } from "./Constants";
 import {
+  getAuraPoolEarnedRecords,
   getConvexStakedRecords,
   getERC20,
   getERC20TokenRecordsFromWallets,
@@ -76,6 +77,9 @@ export function getStablecoinBalance(
   if (includeLiquidity) {
     pushArray(records, getLiquidityBalances(timestamp, contractAddress, blockNumber));
   }
+
+  // Aura earned rewards
+  pushArray(records, getAuraPoolEarnedRecords(timestamp, contractAddress, rate, blockNumber));
 
   // TRSRY
   pushArray(records, getTreasuryRecords(timestamp, contractAddress, rate, blockNumber));
