@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 3.5.0 (2023-02-06)
+## 3.5.5 (2023-02-06)
 
 - Adds support for deposits into the Maker DSR
 

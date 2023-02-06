@@ -3,7 +3,7 @@ description: Olympus Protocol Metrics Subgraph
 features:
   - grafting
 graft:
-  base: Qmdvbqfzx1CVw9GTpaWisw6NdFdG5jVKMuRVp2vjE1dV8A
+  base: QmcrhGvpxKHs3HGXoVzNy9LKWd1gDviQyS6snKQ38V9Keo
   block: 16226955 # BondManager
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
@@ -639,6 +639,9 @@ dataSources:
       eventHandlers:
         - event: LogRebase(indexed uint256,uint256,uint256)
           handler: handleMetrics
+      # FOR TESTING ONLY
+      # blockHandlers:
+      #   - handler: handleMetricsBlock
       file: ./src/protocolMetrics/ProtocolMetrics.ts
   ###
   # BondManager and GnosisEasyAuction index Gnosis auction events, used for bond calculations
