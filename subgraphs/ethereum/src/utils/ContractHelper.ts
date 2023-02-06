@@ -1912,10 +1912,10 @@ export function getVlCvxUnlockedRecords(
 
 function getMakerDSRBalance(contract: MakerDSR, wallet: string): BigDecimal {
   // This is helpful: https://twitter.com/MakerDAO/status/1621216032504291329
-  // Normalise DSR value
-  return contract.pie(Address.fromString(wallet)).times(contract.chi())
+  // Convert from DSR shares to DAI
+  return contract.pie(Address.fromString(wallet)).times(contract.chi()).divDecimal(BigInt.fromI32(10).pow(27).toBigDecimal())
     // Convert to decimal
-    .divDecimal(BigInt.fromI32(10).pow(18).toBigDecimal());
+    .div(BigInt.fromI32(10).pow(18).toBigDecimal());
 }
 
 export function getMakerDSRRecords(
