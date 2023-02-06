@@ -5,9 +5,11 @@ import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition"
 import { pushArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
+import { ERC20 } from "../../generated/PriceSnapshot/ERC20";
 import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolToken";
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
-import { TokenSupply } from "../../generated/schema";
+import { BalancerPoolSnapshot, TokenSupply } from "../../generated/schema";
+import { getERC20Decimals, getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import {
   BLOCKCHAIN,
   ERC20_OHM_V2,
@@ -37,6 +39,40 @@ export function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): Ba
   return balancerVaultMap.get(vaultAddressLower);
 }
 
+function getOrCreateBalancerPoolSnapshot(poolId: string, vaultAddress: string, blockNumber: BigInt): BalancerPoolSnapshot {
+  const snapshotId = `${poolId}/${blockNumber.toString()}`;
+  let snapshot = BalancerPoolSnapshot.load(snapshotId);
+  if (snapshot == null) {
+    snapshot = new BalancerPoolSnapshot(snapshotId);
+    snapshot.block = blockNumber;
+    snapshot.pool = Bytes.fromHexString(poolId);
+
+    const vault = getBalancerVault(vaultAddress, blockNumber);
+    const tokenWrapper = vault.getPoolTokens(Bytes.fromHexString(poolId));
+    const addresses: Address[] = tokenWrapper.getTokens();
+    snapshot.tokens = changetype<Bytes[]>(addresses);
+
+    const balances: BigInt[] = tokenWrapper.getBalances();
+    const snapshotBalances: BigDecimal[] = [];
+    for (let i = 0; i < balances.length; i++) {
+      const snapshotToken: Address = addresses[i];
+      const tokenDecimals: number = getERC20Decimals(snapshotToken.toHexString(), blockNumber);
+      snapshotBalances.push(toDecimal(balances[i], tokenDecimals));
+    }
+    snapshot.balances = snapshotBalances;
+
+    const poolInfo = vault.getPool(Bytes.fromHexString(poolId));
+    snapshot.poolToken = poolInfo.getValue0();
+
+    const poolTokenContract = getOrCreateERC20TokenSnapshot(snapshot.poolToken.toHexString(), blockNumber);
+    snapshot.decimals = poolTokenContract.decimals;
+    snapshot.totalSupply = poolTokenContract.totalSupply;
+    snapshot.save();
+  }
+
+  return snapshot;
+}
+
 // ### Balances for liquidity ###
 
 /**
@@ -56,10 +92,9 @@ export function getBalancerPoolTotalValue(
   excludeOhmValue: boolean,
   blockNumber: BigInt,
 ): BigDecimal {
-  const vault = getBalancerVault(vaultAddress, blockNumber);
-  const poolTokenWrapper = vault.getPoolTokens(Bytes.fromHexString(poolId));
-  const addresses: Array<Address> = poolTokenWrapper.getTokens();
-  const balances: Array<BigInt> = poolTokenWrapper.getBalances();
+  const poolSnapshot = getOrCreateBalancerPoolSnapshot(poolId, vaultAddress, blockNumber);
+  const addresses: Array<Bytes> = poolSnapshot.tokens;
+  const balances: Array<BigDecimal> = poolSnapshot.balances;
 
   // Total value is sum of (rate * balance)
   let totalValue = BigDecimal.zero();
@@ -67,18 +102,13 @@ export function getBalancerPoolTotalValue(
   for (let i = 0; i < addresses.length; i++) {
     const currentAddress = addresses[i].toHexString();
 
-    const currentContract = getERC20(currentAddress, blockNumber);
-    if (!currentContract) {
-      throw new Error("Unable to bind to ERC20 contract for address " + currentAddress.toString());
-    }
-
     if (excludeOhmValue && currentAddress.toLowerCase() == ERC20_OHM_V2.toLowerCase()) {
       log.debug("getBalancerPoolTotalValue: Skipping OHM as excludeOhmValue is true", []);
       continue;
     }
 
     // Add to the value: rate * balance
-    const currentBalanceDecimal = toDecimal(balances[i], currentContract.decimals());
+    const currentBalanceDecimal = balances[i];
     const rate = getUSDRate(currentAddress, blockNumber);
     const value = currentBalanceDecimal.times(rate);
     log.debug("Token address: {}, balance: {}, rate: {}, value: {}", [
@@ -101,18 +131,18 @@ export function getBalancerPoolTotalValue(
  *
  * @param poolTokenContract
  * @param totalValue
- * @param _blockNumber
+ * @param blockNumber
  * @returns
  */
 function getBalancerPoolUnitRate(
-  poolTokenContract: BalancerPoolToken,
+  vaultAddress: string,
+  poolId: string,
   totalValue: BigDecimal,
-  _blockNumber: BigInt,
+  blockNumber: BigInt,
 ): BigDecimal {
-  const totalSupply = poolTokenContract.totalSupply();
-  const totalSupplyDecimals = toDecimal(totalSupply, poolTokenContract.decimals());
+  const poolSnapshot = getOrCreateBalancerPoolSnapshot(poolId, vaultAddress, blockNumber);
 
-  return totalValue.div(totalSupplyDecimals);
+  return totalValue.div(poolSnapshot.totalSupply);
 }
 
 const balancerPoolTokenMap = new Map<string, BalancerPoolToken>();
@@ -145,43 +175,38 @@ export function getBalancerPoolToken(
  * Returns 0 if the minimum block number has not passed.
  *
  * @param contract The bound BalancerPoolToken contract.
- * @param address The address of the holder.
- * @param currentBlockNumber The current block number.
+ * @param walletAddress The address of the holder.
+ * @param blockNumber The current block number.
  * @returns BigDecimal
  */
-export function getBalancerPoolTokenBalance(
-  contract: BalancerPoolToken | null,
-  address: string,
-  currentBlockNumber: BigInt,
+function getBalancerPoolTokenBalance(
+  contractAddress: string,
+  walletAddress: string,
+  blockNumber: BigInt,
 ): BigDecimal {
-  if (contract === null) {
-    log.debug(
-      "getBalancerPoolTokenBalance: Contract for address {} ({}) does not exist at block {}",
-      [getContractName(address), address, currentBlockNumber.toString()],
-    );
-    return BigDecimal.zero();
-  }
-
-  const balance = contract.balanceOf(Address.fromString(address));
-  const balanceDecimals = toDecimal(balance, contract.decimals());
+  const contractSnapshot = getOrCreateERC20TokenSnapshot(contractAddress, blockNumber);
+  const contract = ERC20.bind(Address.fromString(contractAddress));
+  const balance = contract.balanceOf(Address.fromString(walletAddress));
+  const balanceDecimals = toDecimal(balance, contractSnapshot.decimals);
   log.debug(
     "getBalancerPoolTokenBalance: Found balance {} in ERC20 contract {} ({}) for wallet {} ({}) at block number {}",
     [
       balanceDecimals.toString(),
-      getContractName(contract._address.toHexString()),
-      contract._address.toHexString(),
-      getContractName(address),
-      address,
-      currentBlockNumber.toString(),
+      getContractName(contractAddress),
+      contractAddress,
+      getContractName(walletAddress),
+      walletAddress,
+      blockNumber.toString(),
     ],
   );
+
   return balanceDecimals;
 }
 
 function getBalancerPoolTokenRecords(
   timestamp: BigInt,
+  vaultAddress: string,
   poolId: string,
-  poolTokenContract: BalancerPoolToken,
   unitRate: BigDecimal,
   multiplier: BigDecimal,
   blockNumber: BigInt,
@@ -189,11 +214,12 @@ function getBalancerPoolTokenRecords(
   const records: TokenRecord[] = [];
 
   const wallets = getWalletAddressesForContract(poolId);
-  const poolTokenAddress = poolTokenContract._address.toHexString();
+  const poolSnapshot = getOrCreateBalancerPoolSnapshot(poolId, vaultAddress, blockNumber);
+  const poolTokenAddress = poolSnapshot.poolToken.toHexString();
 
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];
-    const balance = getBalancerPoolTokenBalance(poolTokenContract, walletAddress, blockNumber);
+    const balance = getBalancerPoolTokenBalance(poolSnapshot.poolToken.toHexString(), walletAddress, blockNumber);
     if (balance.equals(BigDecimal.zero())) continue;
 
     log.info(
@@ -252,8 +278,8 @@ export function getBalancerRecords(
     return records;
   }
 
-  const poolTokenContract = getBalancerPoolToken(vaultAddress, poolId, blockNumber);
-  if (poolTokenContract === null || poolTokenContract.totalSupply().equals(BigInt.zero())) {
+  const poolSnapshot = getOrCreateBalancerPoolSnapshot(poolId, vaultAddress, blockNumber);
+  if (poolSnapshot.totalSupply.equals(BigDecimal.zero())) {
     log.debug("getBalancerRecords: Skipping Balancer pool {} with total supply of 0 at block {}", [
       getContractName(poolId),
       blockNumber.toString(),
@@ -266,13 +292,13 @@ export function getBalancerRecords(
   const includedValue = getBalancerPoolTotalValue(vaultAddress, poolId, true, blockNumber);
 
   // Calculate the unit rate
-  const unitRate = getBalancerPoolUnitRate(poolTokenContract, totalValue, blockNumber);
+  const unitRate = getBalancerPoolUnitRate(vaultAddress, poolId, totalValue, blockNumber);
 
   // Calculate multiplier
   const multiplier = includedValue.div(totalValue);
   log.info("getBalancerRecords: applying nonOhm multiplier of {}", [multiplier.toString()]);
 
-  const poolTokenAddress = poolTokenContract._address.toHexString();
+  const poolTokenAddress = poolSnapshot.poolToken.toHexString();
   log.info(
     "getBalancerRecords: Balancer pool {} ({}) has total value of {}, included value of {} and unit rate of {}",
     [
@@ -289,8 +315,8 @@ export function getBalancerRecords(
     records,
     getBalancerPoolTokenRecords(
       timestamp,
+      vaultAddress,
       poolId,
-      poolTokenContract,
       unitRate,
       multiplier,
       blockNumber,
