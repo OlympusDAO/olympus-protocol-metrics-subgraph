@@ -18,6 +18,7 @@ import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { FraxFarm } from "../../generated/ProtocolMetrics/FraxFarm";
 import { LQTYStaking } from "../../generated/ProtocolMetrics/LQTYStaking";
 import { LUSDAllocatorV2 } from "../../generated/ProtocolMetrics/LUSDAllocatorV2";
+import { MakerDSR } from "../../generated/ProtocolMetrics/MakerDSR";
 import { MasterChef } from "../../generated/ProtocolMetrics/MasterChef";
 import { RariAllocator } from "../../generated/ProtocolMetrics/RariAllocator";
 import { sOlympusERC20 } from "../../generated/ProtocolMetrics/sOlympusERC20";
@@ -43,6 +44,7 @@ import {
   ERC20_AURA_VL,
   ERC20_CVX,
   ERC20_CVX_VL_V2,
+  ERC20_DAI,
   ERC20_FXS,
   ERC20_FXS_VE,
   ERC20_LQTY,
@@ -56,6 +58,7 @@ import {
   getWalletAddressesForContract,
   liquidityPairHasToken,
   LQTY_STAKING,
+  MAKER_DSR,
   NATIVE_ETH,
   ONSEN_ALLOCATOR,
   SUSHI_MASTERCHEF,
@@ -1891,6 +1894,55 @@ export function getVlCvxUnlockedRecords(
       createOrUpdateTokenRecord(
         timestamp,
         "Convex - Unlocked (vlCVX)", // Manual override
+        tokenAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        rate,
+        balance,
+        blockNumber,
+        getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
+        ERC20_TOKENS,
+        BLOCKCHAIN,
+      ),
+    );
+  }
+
+  return records;
+}
+
+function getMakerDSRBalance(contract: MakerDSR, wallet: string): BigDecimal {
+  // This is helpful: https://twitter.com/MakerDAO/status/1621216032504291329
+  // Normalise DSR value
+  return contract.pie(Address.fromString(wallet)).times(contract.chi())
+    // Convert to decimal
+    .divDecimal(BigInt.fromI32(10).pow(18).toBigDecimal());
+}
+
+export function getMakerDSRRecords(
+  timestamp: BigInt,
+  tokenAddress: string,
+  rate: BigDecimal,
+  blockNumber: BigInt
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
+
+  // DAI only
+  if (tokenAddress.toLowerCase() != ERC20_DAI.toLowerCase()) {
+    return records;
+  }
+
+  const dsrContract = MakerDSR.bind(Address.fromString(MAKER_DSR));
+  const wallets = getWalletAddressesForContract(tokenAddress);
+  for (let i = 0; i < wallets.length; i++) {
+    const currentWallet = wallets[i];
+
+    const balance = getMakerDSRBalance(dsrContract, currentWallet);
+    if (!balance || balance.equals(BigDecimal.zero())) continue;
+
+    records.push(
+      createOrUpdateTokenRecord(
+        timestamp,
+        "DAI - Deposited in DSR", // Manual override
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,

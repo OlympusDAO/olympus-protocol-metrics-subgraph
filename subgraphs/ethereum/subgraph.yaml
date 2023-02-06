@@ -627,6 +627,8 @@ dataSources:
           file: ./abis/AuraVirtualBalanceRewardPool.json
         - name: FraxFarm
           file: ./abis/FraxFarm.json
+        - name: MakerDSR
+          file: ./abis/MakerDSR.json
         # Gnosis Auctions
         - name: BondManager
           file: ./abis/BondManager.json
