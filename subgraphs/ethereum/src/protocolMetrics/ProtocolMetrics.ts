@@ -4,7 +4,6 @@ import { ethereum } from "@graphprotocol/graph-ts";
 import { TokenRecord } from "../../../shared/generated/schema";
 import { getCurrentIndex } from "../../../shared/src/supply/OhmCalculations";
 import { getISO8601DateStringFromTimestamp } from "../../../shared/src/utils/DateHelper";
-import { StakeCall } from "../../generated/ProtocolMetrics/OlympusStakingV3";
 import { LogRebase } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
 import { ProtocolMetric, TokenSupply } from "../../generated/schema";
 import { getGOhmSyntheticSupply, getGOhmTotalSupply } from "../utils/GOhmCalculations";
@@ -93,4 +92,23 @@ export function handleMetrics(event: LogRebase): void {
   // Use the generated records to calculate protocol/treasury metrics
   // Otherwise we would be re-generating the records
   updateProtocolMetrics(event.block, tokenRecords, tokenSupplies);
+}
+
+/**
+ * DO NOT USE IN PRODUCTION
+ * 
+ * FOR TESTING ONLY
+ */
+export function handleMetricsBlock(block: ethereum.Block): void {
+  log.debug("handleMetrics: *** Indexing block {}", [block.number.toString()]);
+
+  // TokenRecord
+  const tokenRecords = generateTokenRecords(block.timestamp, block.number);
+
+  // TokenSupply
+  const tokenSupplies = generateTokenSupply(block.timestamp, block.number);
+
+  // Use the generated records to calculate protocol/treasury metrics
+  // Otherwise we would be re-generating the records
+  updateProtocolMetrics(block, tokenRecords, tokenSupplies);
 }

@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 3.5.7 (2023-02-06)
+
+- Adds support for deposits into the Maker DSR
+
 ## 3.4.4 (2023-02-06)
 
 - Indexing of Aura Allocator v2

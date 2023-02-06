@@ -12,6 +12,7 @@ import {
   getERC20,
   getERC20TokenRecordsFromWallets,
   getLiquityStabilityPoolRecords,
+  getMakerDSRRecords,
   getOnsenAllocatorRecords,
   getRariAllocatorRecords,
   getVeFXSAllocatorRecords,
@@ -83,6 +84,9 @@ export function getStablecoinBalance(
 
   // TRSRY
   pushArray(records, getTreasuryRecords(timestamp, contractAddress, rate, blockNumber));
+
+  // Maker DSR
+  pushArray(records, getMakerDSRRecords(timestamp, contractAddress, rate, blockNumber));
 
   return records;
 }
