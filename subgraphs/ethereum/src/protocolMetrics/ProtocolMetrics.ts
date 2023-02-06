@@ -4,7 +4,6 @@ import { ethereum } from "@graphprotocol/graph-ts";
 import { TokenRecord } from "../../../shared/generated/schema";
 import { getCurrentIndex } from "../../../shared/src/supply/OhmCalculations";
 import { getISO8601DateStringFromTimestamp } from "../../../shared/src/utils/DateHelper";
-import { StakeCall } from "../../generated/ProtocolMetrics/OlympusStakingV3";
 import { LogRebase } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
 import { ProtocolMetric, TokenSupply } from "../../generated/schema";
 import { getGOhmSyntheticSupply, getGOhmTotalSupply } from "../utils/GOhmCalculations";

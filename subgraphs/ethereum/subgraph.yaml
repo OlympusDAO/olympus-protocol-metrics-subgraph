@@ -3,8 +3,10 @@ description: Olympus Protocol Metrics Subgraph
 features:
   - grafting
 graft:
+  # base: QmcrhGvpxKHs3HGXoVzNy9LKWd1gDviQyS6snKQ38V9Keo
+  # block: 16226955 # BondManager
   base: QmcrhGvpxKHs3HGXoVzNy9LKWd1gDviQyS6snKQ38V9Keo
-  block: 16226955 # BondManager
+  block: 16570734 # Maker DSR deployment
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
   file: ../../schema.graphql
