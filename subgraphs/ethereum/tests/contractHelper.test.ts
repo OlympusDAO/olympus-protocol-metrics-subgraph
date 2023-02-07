@@ -1,5 +1,5 @@
-import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
-import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
+import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import {
@@ -381,6 +381,11 @@ export const mockAuraEarnedBalanceZero = (rewardToken: string, wallets: string[]
     }
   }
 };
+
+beforeEach(() => {
+  log.debug("beforeEach: Clearing store", []);
+  clearStore();
+});
 
 describe("Staked Convex", () => {
   test("ignores invalid address", () => {

@@ -43,6 +43,8 @@ function getOrCreateBalancerPoolSnapshot(poolId: string, vaultAddress: string, b
   const snapshotId = `${poolId}/${blockNumber.toString()}`;
   let snapshot = BalancerPoolSnapshot.load(snapshotId);
   if (snapshot == null) {
+    log.debug("getOrCreateBalancerPoolSnapshot: Creating new snapshot for pool {} ({}) at block {}", [getContractName(poolId), poolId, blockNumber.toString()]);
+
     snapshot = new BalancerPoolSnapshot(snapshotId);
     snapshot.block = blockNumber;
     snapshot.pool = Bytes.fromHexString(poolId);
@@ -56,8 +58,10 @@ function getOrCreateBalancerPoolSnapshot(poolId: string, vaultAddress: string, b
     const snapshotBalances: BigDecimal[] = [];
     for (let i = 0; i < balances.length; i++) {
       const snapshotToken: Address = addresses[i];
+      const snapshotTokenBalance: BigInt = balances[i];
+
       const tokenDecimals: number = getERC20Decimals(snapshotToken.toHexString(), blockNumber);
-      snapshotBalances.push(toDecimal(balances[i], tokenDecimals));
+      snapshotBalances.push(toDecimal(snapshotTokenBalance, tokenDecimals));
     }
     snapshot.balances = snapshotBalances;
 
@@ -188,17 +192,25 @@ function getBalancerPoolTokenBalance(
   const contract = ERC20.bind(Address.fromString(contractAddress));
   const balance = contract.balanceOf(Address.fromString(walletAddress));
   const balanceDecimals = toDecimal(balance, contractSnapshot.decimals);
-  log.debug(
-    "getBalancerPoolTokenBalance: Found balance {} in ERC20 contract {} ({}) for wallet {} ({}) at block number {}",
-    [
-      balanceDecimals.toString(),
-      getContractName(contractAddress),
-      contractAddress,
-      getContractName(walletAddress),
-      walletAddress,
-      blockNumber.toString(),
-    ],
-  );
+
+  if (contractSnapshot.totalSupply.equals(BigDecimal.zero())) {
+    return BigDecimal.zero();
+  }
+
+  // Don't spam
+  if (!balanceDecimals.equals(BigDecimal.zero())) {
+    log.debug(
+      "getBalancerPoolTokenBalance: Found balance {} in ERC20 contract {} ({}) for wallet {} ({}) at block number {}",
+      [
+        balanceDecimals.toString(),
+        getContractName(contractAddress),
+        contractAddress,
+        getContractName(walletAddress),
+        walletAddress,
+        blockNumber.toString(),
+      ],
+    );
+  }
 
   return balanceDecimals;
 }

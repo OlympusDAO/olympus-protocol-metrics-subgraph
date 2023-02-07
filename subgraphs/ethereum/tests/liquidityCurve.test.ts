@@ -1,5 +1,5 @@
-import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
-import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import { TokenCategoryStable } from "../../shared/src/contracts/TokenDefinition";
 import { toBigInt } from "../../shared/src/utils/Decimals";
@@ -53,6 +53,11 @@ import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 
 const PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY = BigDecimal.fromString("100");
 const TIMESTAMP = BigInt.fromString("1");
+
+beforeEach(() => {
+  log.debug("beforeEach: Clearing store", []);
+  clearStore();
+});
 
 describe("Token Quantity", () => {
   test("total quantity of OHM token in pool", () => {

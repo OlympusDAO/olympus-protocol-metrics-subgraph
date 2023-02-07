@@ -2,6 +2,7 @@ import { Address, BigDecimal, BigInt, Bytes, ethereum, log } from "@graphprotoco
 import {
   assert,
   beforeEach,
+  clearStore,
   createMockedFunction,
   describe,
   test,
@@ -73,6 +74,11 @@ import {
   OHM_USD_RESERVE_BLOCK,
   USDC_DECIMALS,
 } from "./pairHelper";
+
+beforeEach(() => {
+  log.debug("beforeEach: Clearing store", []);
+  clearStore();
+});
 
 describe("OHM-USD rate", () => {
   test("Sushi OHM-DAI rate calculation is correct", () => {

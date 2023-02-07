@@ -1,5 +1,5 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
-import { assert, describe, test } from "matchstick-as/assembly/index";
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, describe, test } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { DAO_WALLET, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
@@ -35,6 +35,11 @@ import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 
 const PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY = BigDecimal.fromString("100");
 const TIMESTAMP = BigInt.fromString("1");
+
+beforeEach(() => {
+  log.debug("beforeEach: Clearing store", []);
+  clearStore();
+})
 
 describe("getLiquidityPoolValue", () => {
   test("curve pool", () => {

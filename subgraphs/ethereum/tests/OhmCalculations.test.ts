@@ -1,5 +1,5 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
-import { assert, createMockedFunction, describe, test } from "matchstick-as";
+import { assert, beforeEach, clearStore, createMockedFunction, describe, log, test } from "matchstick-as";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../generated/schema";
@@ -105,6 +105,12 @@ function mockContracts(): void {
         ethereum.Value.fromAddress(Address.fromString(CONTRACT_TELLER))
     ]);
 }
+
+beforeEach(() => {
+    log.debug("beforeEach: Clearing store", []);
+    clearStore();
+});
+
 
 describe("Vesting Bonds", () => {
     test("no auctions", () => {

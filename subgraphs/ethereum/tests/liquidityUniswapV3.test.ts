@@ -1,5 +1,5 @@
 import { log } from "@graphprotocol/graph-ts";
-import { assert, describe, test } from "matchstick-as/assembly/index";
+import { assert, beforeEach, clearStore, describe, test } from "matchstick-as/assembly/index";
 
 import { toDecimal } from "../../shared/src/utils/Decimals";
 import { getUniswapV3PairTotalValue } from "../src/liquidity/LiquidityUniswapV3";
@@ -14,6 +14,11 @@ import {
   mockEthUsdRate,
   mockFxsEthRate,
 } from "./pairHelper";
+
+beforeEach(() => {
+  log.debug("beforeEach: Clearing store", []);
+  clearStore();
+});
 
 describe("UniswapV3 pair value", () => {
   test("FXS-ETH pair value is correct", () => {

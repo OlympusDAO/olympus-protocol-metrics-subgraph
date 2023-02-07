@@ -1,5 +1,5 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
-import { assert, describe, test } from "matchstick-as/assembly/index";
+import { assert, beforeEach, clearStore, describe, test } from "matchstick-as/assembly/index";
 
 import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
 import { TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
@@ -52,6 +52,11 @@ const pairArrayOverride: PairHandler[] = [
 ];
 
 const TIMESTAMP = BigInt.fromString("1");
+
+beforeEach(() => {
+  log.debug("beforeEach: Clearing store", []);
+  clearStore();
+});
 
 describe("Token Quantity", () => {
   test("total quantity of OHM token in pool", () => {

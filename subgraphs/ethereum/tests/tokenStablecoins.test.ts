@@ -1,11 +1,16 @@
-import { BigInt } from "@graphprotocol/graph-ts";
-import { assert, describe, test } from "matchstick-as/assembly/index";
+import { BigInt, log } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, describe, test } from "matchstick-as/assembly/index";
 
 import { NATIVE_ETH } from "../src/utils/Constants";
 import { getStablecoinBalance } from "../src/utils/TokenStablecoins";
 import { mockEthUsdRate } from "./pairHelper";
 
 const TIMESTAMP = BigInt.fromString("1");
+
+beforeEach(() => {
+  log.debug("beforeEach: Clearing store", []);
+  clearStore();
+});
 
 describe("native ETH", () => {
   test("getStablecoinBalance does not throw error", () => {

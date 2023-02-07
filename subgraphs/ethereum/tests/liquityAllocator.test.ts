@@ -1,5 +1,5 @@
-import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
-import { assert, createMockedFunction, test } from "matchstick-as/assembly/index";
+import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, createMockedFunction, test } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { LUSD_ALLOCATOR } from "../../shared/src/Wallets";
@@ -41,6 +41,11 @@ function mockLiquityAllocator(
     ethereum.Value.fromUnsignedBigInt(lqtyBalance),
   ]);
 }
+
+beforeEach(() => {
+  log.debug("beforeEach: Clearing store", []);
+  clearStore();
+});
 
 test("LUSD balance", () => {
   mockLiquityAllocator(LUSD_BALANCE_INT, WETH_BALANCE_INT, LQTY_BALANCE_INT);
