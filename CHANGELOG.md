@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 3.7.x (2023-02-??)
+
+- Implement caching of on-chain values to reduce eth_call use and improve indexing performance
+
 ## 3.6.8 (2023-02-17)
 
 - Adds support for the Balancer OHM-WETH LP staked in Aura
