@@ -152,4 +152,5 @@ type BalancerPoolSnapshot @entity(immutable: true) {
   totalSupply: BigDecimal!
   tokens: [Bytes!]!
   balances: [BigDecimal!]!
+  weights: [BigDecimal!]!
 }

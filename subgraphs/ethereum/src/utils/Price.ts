@@ -4,11 +4,10 @@ import { TokenCategoryStable } from "../../../shared/src/contracts/TokenDefiniti
 import { arrayIncludesLoose } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import {
-  getTokenAddressesInCategory,
   isTokenAddressInCategory,
 } from "../../../shared/src/utils/TokenRecordHelper";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
-import { getBalancerPoolToken, getBalancerVault } from "../liquidity/LiquidityBalancer";
+import { getBalancerPoolTotalValue, getOrCreateBalancerPoolSnapshot } from "../liquidity/LiquidityBalancer";
 import {
   BALANCER_VAULT,
   ERC20_OHM_V1,
@@ -96,50 +95,9 @@ function getPairHandlerNonOhmValue(
       "getPairHandlerNonOhmValue: checking for the non-OHM value of Balancer pool {} ({}) at block {}",
       [getContractName(pairHandlerPool), pairHandlerPool, blockNumber.toString()],
     );
-    const balancerVault = getBalancerVault(pairHandler.getContract(), blockNumber);
-
-    // Attempt to call getPoolTokens
-    if (balancerVault.try_getPoolTokens(Bytes.fromHexString(pairHandlerPool)).reverted) {
-      log.info(
-        "getPairHandlerNonOhmValue: unable to determine reserves for Balancer pool {} ({}) at block {}. Skipping",
-        [getContractName(pairHandlerPool), pairHandlerPool, blockNumber.toString()],
-      );
+    const totalValue = getBalancerPoolTotalValue(pairHandler.getContract(), pairHandlerPool, true, blockNumber);
+    if (totalValue.equals(BigDecimal.zero())) {
       return null;
-    }
-
-    const poolTokenWrapper = balancerVault.getPoolTokens(Bytes.fromHexString(pairHandlerPool));
-    const addresses: Array<Address> = poolTokenWrapper.getTokens();
-    const balances: Array<BigInt> = poolTokenWrapper.getBalances();
-    let totalValue = BigDecimal.zero();
-
-    const stableTokenAddresses = getTokenAddressesInCategory(TokenCategoryStable, ERC20_TOKENS);
-    const baseTokenAddresses = stableTokenAddresses.slice(0);
-    baseTokenAddresses.push(ERC20_WETH);
-
-    // Add up non-OHM reserves
-    for (let i = 0; i < addresses.length; i++) {
-      const currentAddress = addresses[i];
-      const currentAddressString = currentAddress.toHexString().toLowerCase();
-      const currentBalance = balances[i];
-      const currentTokenDecimals = getERC20Decimals(currentAddressString, blockNumber);
-
-      if ([ERC20_OHM_V1, ERC20_OHM_V2].includes(currentAddressString)) {
-        continue;
-      }
-
-      // If the remaining token is not a base token (USD or ETH), we can't use it
-      // as we would risk an infinite loop if OHM is in the liquidity pool
-      if (!baseTokenAddresses.includes(currentAddressString)) {
-        continue;
-      }
-
-      const currentPrice = stableTokenAddresses.includes(currentAddressString)
-        ? BigDecimal.fromString("1")
-        : getBaseEthUsdRate();
-
-      totalValue = totalValue.plus(
-        toDecimal(currentBalance, currentTokenDecimals).times(currentPrice),
-      );
     }
 
     return totalValue;
@@ -296,7 +254,7 @@ export function getUSDRateUniswapV3(
   return finalUsdRate;
 }
 
-function getTokenIndex(tokenAddress: string, addresses: Address[]): i32 {
+function getTokenIndex(tokenAddress: string, addresses: Bytes[]): i32 {
   for (let i = 0; i < addresses.length; i++) {
     if (tokenAddress.toLowerCase() == addresses[i].toHexString().toLowerCase()) {
       return i;
@@ -326,34 +284,17 @@ export function getUSDRateBalancer(
 ): BigDecimal {
   log.debug("getUSDRateBalancer: contract {}, poolId {}", [contractAddress, poolId]);
 
-  const vault = getBalancerVault(vaultAddress, blockNumber);
-
-  // Get token balances
-  if (vault.try_getPoolTokens(Bytes.fromHexString(poolId)).reverted) {
-    log.warning(
-      "getUSDRateBalancer: Balancer vault contract reverted calling getPoolTokens with pool id {} at block {}. Skipping",
-      [poolId, blockNumber.toString()],
-    );
+  const poolSnapshot = getOrCreateBalancerPoolSnapshot(poolId, vaultAddress, blockNumber);
+  if (!poolSnapshot) {
     return BigDecimal.zero();
   }
-  const poolTokenWrapper = vault.getPoolTokens(Bytes.fromHexString(poolId));
-  const addresses: Array<Address> = poolTokenWrapper.getTokens();
-  const balances: Array<BigInt> = poolTokenWrapper.getBalances();
 
   // Get token weights
-  const poolToken = getBalancerPoolToken(vaultAddress, poolId, blockNumber);
-  if (poolToken === null) {
-    log.warning(
-      "getUSDRateBalancer: Balancer pool token contract reverted with pool id {} at block {}. Skipping",
-      [poolId, blockNumber.toString()],
-    );
-    return BigDecimal.zero();
-  }
-  const tokenWeights = poolToken.getNormalizedWeights();
+  const tokens = poolSnapshot.tokens;
 
   // Get pair orientation
   log.debug("getUSDRateBalancer: determining pair orientation", []);
-  const baseTokenIndex = getBaseTokenIndex(addresses);
+  const baseTokenIndex = getBaseTokenIndex(tokens);
   if (baseTokenIndex === BASE_TOKEN_UNKNOWN) {
     throw new Error(
       `getUSDRateBalancer: Unsure how to deal with unknown token base orientation for Balancer pool ${poolId}`
@@ -364,7 +305,7 @@ export function getUSDRateBalancer(
   // Ensure we have the unstaked token (or else looking for the index can fail)
   // e.g. if using AURA-WETH as price lookup for vlAURA
   const unstakedToken = getUnstakedToken(contractAddress);
-  const destinationTokenIndex = getTokenIndex(unstakedToken, addresses);
+  const destinationTokenIndex = getTokenIndex(unstakedToken, tokens);
   if (destinationTokenIndex === BASE_TOKEN_UNKNOWN) {
     throw new Error(
       `getUSDRateBalancer: Unsure how to deal with unknown destination token orientation for Balancer pool '${poolId}', contractAddress '${getContractName(contractAddress)}' (${contractAddress})`
@@ -372,31 +313,30 @@ export function getUSDRateBalancer(
   }
   log.debug("getUSDRateBalancer: destination token is at index {}", [destinationTokenIndex.toString()]);
 
-  const baseToken: Address = addresses[baseTokenIndex];
+  const baseToken: Bytes = tokens[baseTokenIndex];
   log.debug("getUSDRateBalancer: base token is {} ({})", [
     baseToken.toHexString(),
     getContractName(baseToken.toHexString()),
   ]);
 
-  const baseTokenDecimals = getERC20Decimals(baseToken.toHexString(), blockNumber);
-  const destinationTokenDecimals = getERC20Decimals(unstakedToken, blockNumber);
-
-  const baseTokenReserves = toDecimal(balances[baseTokenIndex], baseTokenDecimals);
-  const destinationTokenReserves = toDecimal(balances[destinationTokenIndex], destinationTokenDecimals);
+  const balances = poolSnapshot.balances;
+  const baseTokenReserves = balances[baseTokenIndex];
+  const destinationTokenReserves = balances[destinationTokenIndex];
   // If the reserves are 0, then we can't find out the price
   if (baseTokenReserves.equals(BigDecimal.zero()) || destinationTokenReserves.equals(BigDecimal.zero())) {
     log.debug("getUSDRateBalancer: reserves are 0. Skipping", []);
     return BigDecimal.zero();
   }
 
-  const baseTokenWeight = toDecimal(tokenWeights[baseTokenIndex], poolToken.decimals());
-  const destinationTokenWeight = toDecimal(tokenWeights[destinationTokenIndex], poolToken.decimals());
+  const tokenWeights = poolSnapshot.weights;
+  const baseTokenWeight: BigDecimal = tokenWeights[baseTokenIndex];
+  const destinationTokenWeight: BigDecimal = tokenWeights[destinationTokenIndex];
   log.debug("getUSDRateBalancer: base token weight {}, destination token weight {}", [
     baseTokenWeight.toString(),
     destinationTokenWeight.toString(),
   ]);
 
-  const baseTokenUsdRate = getBaseTokenRate(baseToken, blockNumber);
+  const baseTokenUsdRate = getBaseTokenRate(Address.fromBytes(baseToken), blockNumber);
   log.debug("getUSDRateBalancer: baseTokenUsdRate for {} ({}) is {}", [
     getContractName(baseToken.toHexString()),
     baseToken.toHexString(),

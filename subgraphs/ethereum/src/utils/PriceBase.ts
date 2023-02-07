@@ -5,7 +5,7 @@
  * Functions in this module should minimise dependencies on other modules.
  */
 
-import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
 import { TokenCategoryStable } from "../../../shared/src/contracts/TokenDefinition";
 import { isTokenAddressInCategory } from "../../../shared/src/utils/TokenRecordHelper";
@@ -28,7 +28,7 @@ export const BASE_TOKEN_UNKNOWN = -1;
  * Determines whether token0 or token1 of a pair is the base (wETH/USD) token.
  */
 export function getBaseTokenIndex(
-  addresses: Address[],
+  addresses: Bytes[],
 ): i32 {
   for (let i = 0; i < addresses.length; i++) {
     const currentToken = addresses[i];

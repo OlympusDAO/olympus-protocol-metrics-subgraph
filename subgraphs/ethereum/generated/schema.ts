@@ -1436,4 +1436,13 @@ export class BalancerPoolSnapshot extends Entity {
   set balances(value: Array<BigDecimal>) {
     this.set("balances", Value.fromBigDecimalArray(value));
   }
+
+  get weights(): Array<BigDecimal> {
+    const value = this.get("weights");
+    return value!.toBigDecimalArray();
+  }
+
+  set weights(value: Array<BigDecimal>) {
+    this.set("weights", Value.fromBigDecimalArray(value));
+  }
 }
