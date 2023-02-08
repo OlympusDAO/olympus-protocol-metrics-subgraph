@@ -76,7 +76,6 @@ const contractsERC20 = new Map<string, ERC20>();
 const contractsSOlympusERC20 = new Map<string, sOlympusERC20>();
 const contractsSOlympusERC20V2 = new Map<string, sOlympusERC20V2>();
 const contractsSOlympusERC20V3 = new Map<string, sOlympusERC20V3>();
-const contractsUniswapV2Pair = new Map<string, UniswapV2Pair>();
 const contractsUniswapV3Pair = new Map<string, UniswapV3Pair>();
 const contractsRariAllocator = new Map<string, RariAllocator>();
 const contractsTokeAllocator = new Map<string, TokeAllocator>();
@@ -233,35 +232,6 @@ export function getSOlympusERC20V3(
   }
 
   return contractsSOlympusERC20V3.get(contractAddress);
-}
-
-/**
- * Binds with a UniswapV2Pair contract.
- *
- * If the contract cannot be bound, or it does not exist at the current block number,
- * null will be returned.
- *
- * @param contractAddress contract address
- * @param currentBlockNumber the current block number
- * @returns UniswapV2Pair or null
- */
-export function getUniswapV2Pair(
-  contractAddress: string,
-  currentBlockNumber: BigInt,
-): UniswapV2Pair | null {
-  log.debug("Fetching UniswapV2Pair contract for address {}", [contractAddress]);
-  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
-
-  if (!contractsUniswapV2Pair.has(contractAddress)) {
-    log.debug("Binding UniswapV2Pair contract for address {}. Block number {}", [
-      contractAddress,
-      currentBlockNumber.toString(),
-    ]);
-    const contract = UniswapV2Pair.bind(Address.fromString(contractAddress));
-    contractsUniswapV2Pair.set(contractAddress, contract);
-  }
-
-  return contractsUniswapV2Pair.get(contractAddress);
 }
 
 /**

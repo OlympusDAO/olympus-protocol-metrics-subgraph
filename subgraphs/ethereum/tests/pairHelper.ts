@@ -60,12 +60,32 @@ export const OHM_V2_DECIMALS = 9;
 export const USDC_DECIMALS = 6;
 export const ERC20_STANDARD_DECIMALS = 18;
 
+const DEFAULT_TOTAL_SUPPLY = "1000";
+
 export const getERC20UsdRate = (
   token0Reserve: BigInt,
   token1Reserve: BigInt,
   token0Rate: BigDecimal,
 ): BigDecimal => {
   return toDecimal(token0Reserve, 18).times(token0Rate).div(toDecimal(token1Reserve, 18));
+};
+
+export const mockERC20TotalSupply = (
+  token: string,
+  tokenDecimals: i32,
+  totalSupply: BigInt,
+): void => {
+  const tokenAddress = Address.fromString(token);
+
+  // Total supply
+  createMockedFunction(tokenAddress, "totalSupply", "totalSupply():(uint256)").returns([
+    ethereum.Value.fromUnsignedBigInt(totalSupply),
+  ]);
+
+  // Token decimals
+  createMockedFunction(tokenAddress, "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(tokenDecimals),
+  ]);
 };
 
 /**
@@ -338,6 +358,9 @@ export const mockUniswapV2Pair = (
   pairDecimals: i32,
   block: BigInt = OHM_USD_RESERVE_BLOCK,
 ): void => {
+  mockERC20TotalSupply(token0Address, token0Decimals, toBigInt(BigDecimal.fromString(DEFAULT_TOTAL_SUPPLY), token0Decimals));
+  mockERC20TotalSupply(token1Address, token1Decimals, toBigInt(BigDecimal.fromString(DEFAULT_TOTAL_SUPPLY), token1Decimals));
+
   const pair = Address.fromString(pairAddress);
   createMockedFunction(pair, "getReserves", "getReserves():(uint112,uint112,uint32)").returns([
     ethereum.Value.fromUnsignedBigInt(token0Reserves),
@@ -540,24 +563,6 @@ export const getOhmEthPairValue = (): BigDecimal => {
   return toDecimal(OHM_ETH_RESERVES_OHM, OHM_V2_DECIMALS)
     .times(getOhmUsdRate())
     .plus(toDecimal(OHM_ETH_RESERVES_ETH, ERC20_STANDARD_DECIMALS).times(getEthUsdRate()));
-};
-
-export const mockERC20TotalSupply = (
-  token: string,
-  tokenDecimals: i32,
-  totalSupply: BigInt,
-): void => {
-  const tokenAddress = Address.fromString(token);
-
-  // Total supply
-  createMockedFunction(tokenAddress, "totalSupply", "totalSupply():(uint256)").returns([
-    ethereum.Value.fromUnsignedBigInt(totalSupply),
-  ]);
-
-  // Token decimals
-  createMockedFunction(tokenAddress, "decimals", "decimals():(uint8)").returns([
-    ethereum.Value.fromI32(tokenDecimals),
-  ]);
 };
 
 export const mockCurvePairTotalValue = (

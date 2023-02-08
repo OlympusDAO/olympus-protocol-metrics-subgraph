@@ -30,6 +30,15 @@ function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): BalancerV
   return BalancerVault.bind(Address.fromString(vaultAddress));
 }
 
+/**
+ * Returns a BalancerPoolSnapshot, which contains cached data about the Balancer pool. This
+ * significantly reduces the number of instances of eth_call, which speeds up indexing.
+ * 
+ * @param poolId 
+ * @param vaultAddress 
+ * @param blockNumber 
+ * @returns snapshot, or null if there was a contract revert
+ */
 export function getOrCreateBalancerPoolSnapshot(poolId: string, vaultAddress: string, blockNumber: BigInt): BalancerPoolSnapshot | null {
   const snapshotId = `${poolId}/${blockNumber.toString()}`;
   let snapshot = BalancerPoolSnapshot.load(snapshotId);

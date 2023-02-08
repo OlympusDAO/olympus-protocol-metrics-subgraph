@@ -8,6 +8,7 @@ import {
 } from "../../../shared/src/utils/TokenRecordHelper";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { getBalancerPoolTotalValue, getOrCreateBalancerPoolSnapshot } from "../liquidity/LiquidityBalancer";
+import { getUniswapV2PairTotalValue } from "../liquidity/LiquidityUniswapV2";
 import {
   BALANCER_VAULT,
   ERC20_OHM_V1,
@@ -22,7 +23,7 @@ import {
   NATIVE_ETH,
   OHM_PRICE_PAIRS,
 } from "./Constants";
-import { getERC20, getERC20Decimals, getUniswapV2Pair, getUniswapV3Pair } from "./ContractHelper";
+import { getERC20, getERC20Decimals, getUniswapV3Pair } from "./ContractHelper";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 import {
   BASE_TOKEN_UNKNOWN,
@@ -47,23 +48,12 @@ function getPairHandlerNonOhmValue(
   pairHandler: PairHandler,
   blockNumber: BigInt,
 ): BigDecimal | null {
-  // TODO consider merging with the total value functions for each of the liquidity pool types.
   const pairHandlerPool = pairHandler.getPool();
   if (pairHandler.getType() === PairHandlerTypes.UniswapV2) {
-    log.debug(
-      "getPairHandlerNonOhmValue: checking for the non-OHM value of UniswapV2 pool {} ({}) at block {}",
-      [
-        getContractName(pairHandler.getContract()),
-        pairHandler.getContract(),
-        blockNumber.toString(),
-      ],
-    );
-    const poolContract = getUniswapV2Pair(pairHandler.getContract(), blockNumber);
-
-    // Attempt to call getReserves
-    if (!poolContract || poolContract.try_getReserves().reverted) {
+    const poolNonOhmValue = getUniswapV2PairTotalValue(pairHandler.getContract(), true, blockNumber);
+    if (poolNonOhmValue.equals(BigDecimal.zero())) {
       log.info(
-        "getPairHandlerNonOhmValue: unable to determine reserves for UniswapV2 pool {} ({}) at block {}. Skipping",
+        "getPairHandlerNonOhmValue: unable to determine non-OHM value for UniswapV2 pool {} ({}) at block {}. Skipping",
         [
           getContractName(pairHandler.getContract()),
           pairHandler.getContract(),
@@ -73,23 +63,7 @@ function getPairHandlerNonOhmValue(
       return null;
     }
 
-    // Add up non-OHM reserves
-    const token0 = poolContract.token0();
-    const token1 = poolContract.token1();
-    const reserves = poolContract.getReserves();
-    const tokenOrientation = getBaseTokenOrientation(token0, token1);
-
-    const token0Contract = getERC20(token0.toHexString(), blockNumber);
-    const token1Contract = getERC20(token1.toHexString(), blockNumber);
-    // Can't do anything if the tokens don't exist
-    if (!token0Contract || !token1Contract) {
-      return null;
-    }
-
-    const nonOhmBalance = [ERC20_OHM_V1, ERC20_OHM_V2].includes(token0.toHexString().toLowerCase())
-      ? toDecimal(reserves.value1, token1Contract.decimals())
-      : toDecimal(reserves.value0, token0Contract.decimals());
-    return nonOhmBalance.times(getBaseTokenUSDRate(token0, token1, tokenOrientation, blockNumber));
+    return poolNonOhmValue;
   } else if (pairHandler.getType() === PairHandlerTypes.Balancer && pairHandlerPool !== null) {
     log.debug(
       "getPairHandlerNonOhmValue: checking for the non-OHM value of Balancer pool {} ({}) at block {}",

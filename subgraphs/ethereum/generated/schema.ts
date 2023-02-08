@@ -1446,3 +1446,94 @@ export class BalancerPoolSnapshot extends Entity {
     this.set("weights", Value.fromBigDecimalArray(value));
   }
 }
+
+export class UniswapV2PoolSnapshot extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    const id = this.get("id");
+    assert(
+      id != null,
+      "Cannot save UniswapV2PoolSnapshot entity without an ID"
+    );
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type UniswapV2PoolSnapshot must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("UniswapV2PoolSnapshot", id.toString(), this);
+    }
+  }
+
+  static load(id: string): UniswapV2PoolSnapshot | null {
+    return changetype<UniswapV2PoolSnapshot | null>(
+      store.get("UniswapV2PoolSnapshot", id)
+    );
+  }
+
+  get id(): string {
+    const value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get block(): BigInt {
+    const value = this.get("block");
+    return value!.toBigInt();
+  }
+
+  set block(value: BigInt) {
+    this.set("block", Value.fromBigInt(value));
+  }
+
+  get poolToken(): Bytes {
+    const value = this.get("poolToken");
+    return value!.toBytes();
+  }
+
+  set poolToken(value: Bytes) {
+    this.set("poolToken", Value.fromBytes(value));
+  }
+
+  get decimals(): i32 {
+    const value = this.get("decimals");
+    return value!.toI32();
+  }
+
+  set decimals(value: i32) {
+    this.set("decimals", Value.fromI32(value));
+  }
+
+  get totalSupply(): BigDecimal {
+    const value = this.get("totalSupply");
+    return value!.toBigDecimal();
+  }
+
+  set totalSupply(value: BigDecimal) {
+    this.set("totalSupply", Value.fromBigDecimal(value));
+  }
+
+  get tokens(): Array<Bytes> {
+    const value = this.get("tokens");
+    return value!.toBytesArray();
+  }
+
+  set tokens(value: Array<Bytes>) {
+    this.set("tokens", Value.fromBytesArray(value));
+  }
+
+  get balances(): Array<BigDecimal> {
+    const value = this.get("balances");
+    return value!.toBigDecimalArray();
+  }
+
+  set balances(value: Array<BigDecimal>) {
+    this.set("balances", Value.fromBigDecimalArray(value));
+  }
+}

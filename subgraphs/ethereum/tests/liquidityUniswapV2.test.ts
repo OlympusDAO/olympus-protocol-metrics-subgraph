@@ -5,7 +5,6 @@ import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
 import { TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
 import {
-  getOhmUSDPairRiskFreeValue,
   getUniswapV2PairTokenQuantity,
   getUniswapV2PairTotalTokenQuantity,
   getUniswapV2PairTotalValue,
@@ -38,9 +37,6 @@ import {
   mockWEthBtrflyV1Rate,
   OHM_ETH_TOTAL_SUPPLY,
   OHM_USD_RESERVE_BLOCK,
-  OHM_USD_RESERVE_OHM,
-  OHM_USD_RESERVE_USD,
-  OHM_USD_TOTAL_SUPPLY,
   OHM_V2_DECIMALS,
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
@@ -481,38 +477,5 @@ describe("pair value", () => {
 
     assert.stringEquals(calculatedValue.toString(), pairValue.toString());
     assert.stringEquals("15724.8700", pairValue.toString().slice(0, 10));
-  });
-});
-
-describe("risk-free pair value", () => {
-  test("risk-free pair value is correct", () => {
-    mockUsdOhmV2Rate();
-
-    const lpBalance = BigInt.fromString("1000000000000000000");
-    const pairValue = getOhmUSDPairRiskFreeValue(
-      lpBalance,
-      PAIR_UNISWAP_V2_OHM_DAI_V2,
-      OHM_USD_RESERVE_BLOCK,
-    );
-    // (# LP tokens / LP total supply) * (2) * sqrt(# DAI * # OHM)
-    const calculatedValue = toDecimal(lpBalance, 18)
-      .div(toDecimal(OHM_USD_TOTAL_SUPPLY, 18))
-      .times(BigDecimal.fromString("2"))
-      .times(
-        toDecimal(
-          toDecimal(OHM_USD_RESERVE_USD, ERC20_STANDARD_DECIMALS)
-            .times(toDecimal(OHM_USD_RESERVE_OHM, OHM_V2_DECIMALS))
-            .truncate(0)
-            .digits.sqrt(),
-          0,
-        ),
-      );
-    log.debug("calculated risk-free value: {}", [calculatedValue.toString()]);
-    log.debug("difference: {}", [pairValue.minus(calculatedValue).toString()]);
-
-    // There is a loss of precision, so we need to ensure that the value is close, but not equal
-    assert.assertTrue(
-      pairValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
-    );
   });
 });
