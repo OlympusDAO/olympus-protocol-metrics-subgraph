@@ -24,6 +24,7 @@ import {
   ERC20_STANDARD_DECIMALS,
   getOhmUsdRate,
   mockCurvePairZero,
+  mockERC20TotalSupply,
   mockUniswapV2PairsZero,
   mockUsdOhmV2Rate,
   mockWEthBtrflyV1Rate,
@@ -57,6 +58,7 @@ const FRAXSWAP_OHM_FRAX_UNIT_RATE = FRAXSWAP_OHM_FRAX_TOTAL_VALUE.div(
 );
 
 const TIMESTAMP = BigInt.fromString("1");
+const DEFAULT_TOTAL_SUPPLY = "1000";
 
 export function mockFraxSwapPair(
   pairAddress: string,
@@ -71,6 +73,9 @@ export function mockFraxSwapPair(
 ): void {
   // mock OHM price
   mockUsdOhmV2Rate();
+
+  mockERC20TotalSupply(token0Address, token0Decimals, toBigInt(BigDecimal.fromString(DEFAULT_TOTAL_SUPPLY), token0Decimals));
+  mockERC20TotalSupply(token1Address, token1Decimals, toBigInt(BigDecimal.fromString(DEFAULT_TOTAL_SUPPLY), token1Decimals));
 
   // totalSupply
   createMockedFunction(

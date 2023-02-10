@@ -1,11 +1,12 @@
-import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
 import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { FraxSwapPool } from "../../generated/ProtocolMetrics/FraxSwapPool";
-import { TokenSupply } from "../../generated/schema";
+import { PoolSnapshot, TokenSupply } from "../../generated/schema";
+import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import {
   BLOCKCHAIN,
   ERC20_OHM_V2,
@@ -14,23 +15,62 @@ import {
   getWalletAddressesForContract,
   liquidityPairHasToken,
 } from "../utils/Constants";
-import { getERC20 } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
 import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
-function getFraxSwapPair(pairAddress: string, blockNumber: BigInt): FraxSwapPool | null {
-  const pair = FraxSwapPool.bind(Address.fromString(pairAddress));
+/**
+ * Returns a PoolSnapshot, which contains cached data about the Frax pool. This
+ * significantly reduces the number of instances of eth_call, which speeds up indexing.
+ * 
+ * @param pairAddress 
+ * @param blockNumber 
+ * @returns snapshot, or null if there was a contract revert
+ */
+export function getOrCreateFraxPoolSnapshot(pairAddress: string, blockNumber: BigInt): PoolSnapshot | null {
+  const snapshotId = `${pairAddress}/${blockNumber.toString()}`;
+  let snapshot = PoolSnapshot.load(snapshotId);
+  if (snapshot == null) {
+    log.debug("getOrCreateFraxPoolSnapshot: Creating new snapshot for pool {} ({}) at block {}", [getContractName(pairAddress), pairAddress, blockNumber.toString()]);
 
-  // If the token does not exist at the current block, it will revert
-  if (pair.try_token0().reverted) {
-    log.debug(
-      "getFraxSwapPair: ERC20 token for FraxSwap pair {} could not be determined at block {} due to contract revert. Skipping",
-      [getContractName(pairAddress), blockNumber.toString()],
-    );
-    return null;
+    snapshot = new PoolSnapshot(snapshotId);
+    snapshot.block = blockNumber;
+    snapshot.pool = Bytes.fromHexString(pairAddress);
+
+    const pairContract = FraxSwapPool.bind(Address.fromString(pairAddress));
+    const pairReservesResult = pairContract.try_getReserves();
+    if (pairReservesResult.reverted) {
+      log.info(
+        "getOrCreateFraxPoolSnapshot: Unable to bind to FraxSwapPool {} ({}) at block {}. Skipping",
+        [getContractName(pairAddress), pairAddress, blockNumber.toString()],
+      );
+      return null;
+    }
+
+    const pairTokens = [pairContract.token0(), pairContract.token1()];
+    const pairBalances = [pairContract.getReserves().value0, pairContract.getReserves().value1];
+    const snapshotTokens: Bytes[] = [];
+    const snapshotBalances: BigDecimal[] = [];
+
+    for (let i = 0; i < pairTokens.length; i++) {
+      const currentToken = pairTokens[i];
+      const currentBalance = pairBalances[i];
+      const currentTokenSnapshot = getOrCreateERC20TokenSnapshot(currentToken.toHexString(), blockNumber);
+
+      snapshotTokens.push(currentToken);
+      snapshotBalances.push(toDecimal(currentBalance, currentTokenSnapshot.decimals));
+    }
+
+    snapshot.tokens = snapshotTokens;
+    snapshot.balances = snapshotBalances;
+    // No weights
+
+    snapshot.decimals = pairContract.decimals();
+    snapshot.totalSupply = toDecimal(pairContract.totalSupply(), snapshot.decimals);
+
+    snapshot.save();
   }
 
-  return pair;
+  return snapshot;
 }
 
 /**
@@ -48,8 +88,8 @@ export function getFraxSwapPairTotalValue(
   excludeOhmValue: boolean,
   blockNumber: BigInt,
 ): BigDecimal {
-  const pair = getFraxSwapPair(pairAddress, blockNumber);
-  if (!pair) {
+  const poolSnapshot = getOrCreateFraxPoolSnapshot(pairAddress, blockNumber);
+  if (!poolSnapshot) {
     log.info(
       "getFraxSwapPairTotalValue: Unable to bind to FraxSwapPool {} ({}) at block {}. Skipping",
       [getContractName(pairAddress), pairAddress, blockNumber.toString()],
@@ -63,38 +103,24 @@ export function getFraxSwapPairTotalValue(
     excludeOhmValue ? "true" : "false",
   ]);
 
-  const tokens: Address[] = [];
-  tokens.push(pair.token0());
-  tokens.push(pair.token1());
-
-  const reserves: BigInt[] = [];
-  reserves.push(pair.getReserves().value0);
-  reserves.push(pair.getReserves().value1);
-
   // token0 balance * token0 rate + token1 balance * token1 rate
-  for (let i = 0; i < tokens.length; i++) {
-    const token: string = tokens[i].toHexString();
+  for (let i = 0; i < poolSnapshot.tokens.length; i++) {
+    const token: string = poolSnapshot.tokens[i].toHexString();
+    const balance: BigDecimal = poolSnapshot.balances[i];
 
     if (excludeOhmValue && token.toLowerCase() == ERC20_OHM_V2.toLowerCase()) {
       log.debug("getFraxSwapPairTotalValue: Skipping OHM as excludeOhmValue is true", []);
       continue;
     }
 
-    const tokenContract = getERC20(token, blockNumber);
-    if (!tokenContract) {
-      throw new Error("Unable to fetch ERC20 at address " + token + " for FraxSwap pool");
-    }
-
-    const tokenBalance = reserves[i];
-    const tokenBalanceDecimal = toDecimal(tokenBalance, tokenContract.decimals());
     const rate = getUSDRate(token, blockNumber);
-    const value = tokenBalanceDecimal.times(rate);
+    const value = balance.times(rate);
     log.debug(
       "getFraxSwapPairTotalValue: Token address: {} ({}), balance: {}, rate: {}, value: {}",
       [
         getContractName(token),
         token,
-        tokenBalanceDecimal.toString(),
+        balance.toString(),
         rate.toString(),
         value.toString(),
       ],
@@ -117,26 +143,20 @@ export function getFraxSwapPairTotalValue(
  * @returns
  */
 export function getFraxSwapPairUnitRate(
-  pairContract: FraxSwapPool,
+  pairAddress: string,
   totalValue: BigDecimal,
   blockNumber: BigInt,
 ): BigDecimal {
-  const pairAddress = pairContract._address.toHexString().toLowerCase();
-  log.info(
-    "getFraxSwapPairUnitRate: Calculating unit rate for FraxSwap pair {} at block number {}",
-    [getContractName(pairAddress), blockNumber.toString()],
-  );
+  const poolSnapshot = getOrCreateFraxPoolSnapshot(pairAddress, blockNumber);
+  if (!poolSnapshot) {
+    return BigDecimal.zero();
+  }
 
-  const totalSupply = toDecimal(pairContract.totalSupply(), pairContract.decimals());
-  log.debug("getFraxSwapPairUnitRate: FraxSwap pair {} has total supply of {}", [
-    getContractName(pairAddress),
-    totalSupply.toString(),
-  ]);
-  const unitRate = totalValue.div(totalSupply);
+  const unitRate = totalValue.div(poolSnapshot.totalSupply);
   log.info("getFraxSwapPairUnitRate: Unit rate of FraxSwap LP {} is {} for total supply {}", [
     pairAddress,
     unitRate.toString(),
-    totalSupply.toString(),
+    poolSnapshot.totalSupply.toString(),
   ]);
   return unitRate;
 }
@@ -152,27 +172,28 @@ export function getFraxSwapPairUnitRate(
  * @returns BigDecimal
  */
 function getFraxSwapPairTokenBalance(
-  contract: FraxSwapPool | null,
+  pairAddress: string,
   address: string,
-  _blockNumber: BigInt,
+  blockNumber: BigInt,
 ): BigDecimal {
-  if (!contract) {
+  const poolSnapshot = getOrCreateFraxPoolSnapshot(pairAddress, blockNumber);
+  if (!poolSnapshot) {
     return BigDecimal.zero();
   }
 
-  return toDecimal(contract.balanceOf(Address.fromString(address)), contract.decimals());
+  const pairContract = FraxSwapPool.bind(Address.fromString(pairAddress));
+  return toDecimal(pairContract.balanceOf(Address.fromString(address)), poolSnapshot.decimals);
 }
 
 function getFraxSwapPairTokenRecord(
   timestamp: BigInt,
-  pairContract: FraxSwapPool,
+  pairAddress: string,
   unitRate: BigDecimal,
   walletAddress: string,
   multiplier: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecord | null {
-  const pairAddress = pairContract._address.toHexString().toLowerCase();
-  const tokenBalance = getFraxSwapPairTokenBalance(pairContract, walletAddress, blockNumber);
+  const tokenBalance = getFraxSwapPairTokenBalance(pairAddress, walletAddress, blockNumber);
   if (tokenBalance.equals(BigDecimal.zero())) {
     log.debug(
       "getFraxSwapPairTokenRecord: FraxSwap pair balance for token {} ({}) in wallet {} ({}) was 0 at block {}",
@@ -231,8 +252,8 @@ export function getFraxSwapPairRecords(
     return records;
   }
 
-  const pairContract = getFraxSwapPair(pairAddress, blockNumber);
-  if (!pairContract || pairContract.totalSupply().equals(BigInt.zero())) {
+  const poolSnapshot = getOrCreateFraxPoolSnapshot(pairAddress, blockNumber);
+  if (!poolSnapshot || poolSnapshot.totalSupply.equals(BigDecimal.zero())) {
     log.debug(
       "getFraxSwapPairRecords: Skipping FraxSwap pair {} with total supply of 0 at block {}",
       [getContractName(pairAddress), blockNumber.toString()],
@@ -248,7 +269,7 @@ export function getFraxSwapPairRecords(
   log.info("getFraxSwapPairRecords: applying multiplier of {}", [multiplier.toString()]);
 
   // Calculate the unit rate of the LP
-  const unitRate = getFraxSwapPairUnitRate(pairContract, totalValue, blockNumber);
+  const unitRate = getFraxSwapPairUnitRate(pairAddress, totalValue, blockNumber);
 
   const wallets = getWalletAddressesForContract(pairAddress);
   for (let i = 0; i < wallets.length; i++) {
@@ -256,7 +277,7 @@ export function getFraxSwapPairRecords(
 
     const record = getFraxSwapPairTokenRecord(
       timestamp,
-      pairContract,
+      pairAddress,
       unitRate,
       walletAddress,
       multiplier,
@@ -272,18 +293,6 @@ export function getFraxSwapPairRecords(
 }
 
 // ### Token Quantity ###
-function getBigDecimalFromBalance(
-  tokenAddress: string,
-  balance: BigInt,
-  blockNumber: BigInt,
-): BigDecimal {
-  const tokenContract = getERC20(tokenAddress, blockNumber);
-  if (!tokenContract) {
-    throw new Error("Unable to fetch ERC20 at address " + tokenAddress + " for FraxSwap pool");
-  }
-
-  return toDecimal(balance, tokenContract.decimals());
-}
 
 /**
  * Calculates the quantity of {tokenAddress}
@@ -302,25 +311,25 @@ export function getFraxSwapPairTokenQuantity(
   tokenAddress: string,
   blockNumber: BigInt,
 ): BigDecimal {
-  const pair = getFraxSwapPair(pairAddress, blockNumber);
-  if (!pair) {
+  const poolSnapshot = getOrCreateFraxPoolSnapshot(pairAddress, blockNumber);
+  if (!poolSnapshot) {
     return BigDecimal.zero();
   }
 
-  const token0 = pair.token0();
-  const token1 = pair.token1();
+  for (let i = 0; i < poolSnapshot.balances.length; i++) {
+    const currentToken = poolSnapshot.tokens[i];
+    const currentBalance = poolSnapshot.balances[i];
 
-  if (token0.equals(Address.fromString(tokenAddress))) {
-    const token0Balance = pair.getReserves().value0;
-    return getBigDecimalFromBalance(tokenAddress, token0Balance, blockNumber);
-  } else if (token1.equals(Address.fromString(tokenAddress))) {
-    const token1Balance = pair.getReserves().value1;
-    return getBigDecimalFromBalance(tokenAddress, token1Balance, blockNumber);
+    if (!currentToken.equals(Bytes.fromHexString(tokenAddress))) {
+      continue;
+    }
+
+    return currentBalance;
   }
 
   log.warning(
-    "getFraxSwapPairTokenQuantity: Attempted to obtain quantity of token {} from FraxSwap pair {} at block {}, but it was not found",
-    [getContractName(tokenAddress), getContractName(pairAddress), blockNumber.toString()],
+    "getFraxSwapPairTokenQuantity: Attempted to obtain quantity of token {} from FraxSwap pair {}, but it was not found",
+    [getContractName(tokenAddress), getContractName(pairAddress)],
   );
   return BigDecimal.zero();
 }
@@ -336,19 +345,16 @@ export function getFraxSwapPairTokenQuantityRecords(
     [getContractName(tokenAddress), getContractName(pairAddress)],
   );
   const records: TokenSupply[] = [];
-
-  const pair = getFraxSwapPair(pairAddress, blockNumber);
-  if (!pair) return records;
+  const poolSnapshot = getOrCreateFraxPoolSnapshot(pairAddress, blockNumber);
+  if (!poolSnapshot) return records;
 
   // Calculate the token quantity for the pool
   const totalQuantity = getFraxSwapPairTokenQuantity(pairAddress, tokenAddress, blockNumber);
 
-  const pairDecimals = pair.decimals();
   log.info(
     "getFraxSwapPairTokenQuantityRecords: FraxSwap pool {} has total quantity {} of token {}",
     [getContractName(pairAddress), totalQuantity.toString(), getContractName(tokenAddress)],
   );
-  const pairTotalSupply = toDecimal(pair.totalSupply(), pairDecimals);
 
   // Grab balances
   const pairBalanceRecords = getFraxSwapPairRecords(
@@ -361,7 +367,7 @@ export function getFraxSwapPairTokenQuantityRecords(
   for (let i = 0; i < pairBalanceRecords.length; i++) {
     const record = pairBalanceRecords[i];
 
-    const tokenBalance = totalQuantity.times(record.balance).div(pairTotalSupply);
+    const tokenBalance = totalQuantity.times(record.balance).div(poolSnapshot.totalSupply);
     records.push(
       createOrUpdateTokenSupply(
         timestamp,
