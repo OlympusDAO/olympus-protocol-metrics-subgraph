@@ -5,7 +5,7 @@ import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition"
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
-import { TokenSupply, UniswapV2PoolSnapshot } from "../../generated/schema";
+import { PoolSnapshot, TokenSupply } from "../../generated/schema";
 import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import {
   BLOCKCHAIN,
@@ -34,20 +34,20 @@ function getUniswapV2Pair(
 }
 
 /**
- * Returns a UniswapV2PoolSnapshot, which contains cached data about the UniswapV2 pool. This
+ * Returns a PoolSnapshot, which contains cached data about the UniswapV2 pool. This
  * significantly reduces the number of instances of eth_call, which speeds up indexing.
  * 
  * @param pairAddress 
  * @param blockNumber 
  * @returns snapshot, or null if there was a contract revert
  */
-export function getOrCreateUniswapV2PoolSnapshot(pairAddress: string, blockNumber: BigInt): UniswapV2PoolSnapshot | null {
+export function getOrCreateUniswapV2PoolSnapshot(pairAddress: string, blockNumber: BigInt): PoolSnapshot | null {
   const snapshotId = `${pairAddress}/${blockNumber.toString()}`;
-  let snapshot = UniswapV2PoolSnapshot.load(snapshotId);
+  let snapshot = PoolSnapshot.load(snapshotId);
   if (snapshot == null) {
     log.debug("getOrCreateUniswapV2PoolSnapshot: Creating new snapshot for pool {} ({}) at block {}", [getContractName(pairAddress), pairAddress, blockNumber.toString()]);
 
-    snapshot = new UniswapV2PoolSnapshot(snapshotId);
+    snapshot = new PoolSnapshot(snapshotId);
     snapshot.block = blockNumber;
     snapshot.poolToken = Bytes.fromHexString(pairAddress);
 

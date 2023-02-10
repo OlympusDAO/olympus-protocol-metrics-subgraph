@@ -155,7 +155,7 @@ type BalancerPoolSnapshot @entity(immutable: true) {
   weights: [BigDecimal!]!
 }
 
-type UniswapV2PoolSnapshot @entity(immutable: true) {
+type PoolSnapshot @entity(immutable: true) {
   id: ID! # pool token/block
   block: BigInt!
   poolToken: Bytes!

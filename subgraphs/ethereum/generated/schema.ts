@@ -1447,7 +1447,7 @@ export class BalancerPoolSnapshot extends Entity {
   }
 }
 
-export class UniswapV2PoolSnapshot extends Entity {
+export class PoolSnapshot extends Entity {
   constructor(id: string) {
     super();
     this.set("id", Value.fromString(id));
@@ -1455,23 +1455,18 @@ export class UniswapV2PoolSnapshot extends Entity {
 
   save(): void {
     const id = this.get("id");
-    assert(
-      id != null,
-      "Cannot save UniswapV2PoolSnapshot entity without an ID"
-    );
+    assert(id != null, "Cannot save PoolSnapshot entity without an ID");
     if (id) {
       assert(
         id.kind == ValueKind.STRING,
-        `Entities of type UniswapV2PoolSnapshot must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+        `Entities of type PoolSnapshot must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
       );
-      store.set("UniswapV2PoolSnapshot", id.toString(), this);
+      store.set("PoolSnapshot", id.toString(), this);
     }
   }
 
-  static load(id: string): UniswapV2PoolSnapshot | null {
-    return changetype<UniswapV2PoolSnapshot | null>(
-      store.get("UniswapV2PoolSnapshot", id)
-    );
+  static load(id: string): PoolSnapshot | null {
+    return changetype<PoolSnapshot | null>(store.get("PoolSnapshot", id));
   }
 
   get id(): string {
