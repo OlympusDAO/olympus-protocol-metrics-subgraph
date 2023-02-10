@@ -59,7 +59,7 @@ function getCurvePairToken(pairAddress: string, blockNumber: BigInt): string | n
 }
 
 /**
- * Returns a PoolSnapshot, which contains cached data about the UniswapV2 pool. This
+ * Returns a PoolSnapshot, which contains cached data about the Curve pool. This
  * significantly reduces the number of instances of eth_call, which speeds up indexing.
  * 
  * @param pairAddress 
@@ -532,7 +532,6 @@ export function getCurvePairTotalTokenQuantity(
   tokenAddress: string,
   blockNumber: BigInt,
 ): BigDecimal {
-  // Obtain both tokens
   const poolSnapshot = getOrCreateCurvePoolSnapshot(pairAddress, blockNumber);
   if (!poolSnapshot) {
     return BigDecimal.zero();
@@ -566,13 +565,13 @@ export function getCurvePairTotalTokenQuantity(
  * @param blockNumber
  * @returns
  */
-export function getCurvePairTokenQuantity(
+export function getCurvePairTokenQuantityRecords(
   timestamp: BigInt,
   pairAddress: string,
   tokenAddress: string,
   blockNumber: BigInt,
 ): TokenSupply[] {
-  log.info("getCurvePairTokenQuantity: Calculating quantity of token {} in Curve pool {}", [
+  log.info("getCurvePairTokenQuantityRecords: Calculating quantity of token {} in Curve pool {}", [
     getContractName(tokenAddress),
     getContractName(pairAddress),
   ]);
@@ -586,7 +585,7 @@ export function getCurvePairTokenQuantity(
   const totalQuantity = getCurvePairTotalTokenQuantity(pairAddress, tokenAddress, blockNumber);
 
   const poolTokenAddress = poolToken.toHexString();
-  log.info("getCurvePairTokenQuantity: Curve pool {} has total quantity {} of token {}", [
+  log.info("getCurvePairTokenQuantityRecords: Curve pool {} has total quantity {} of token {}", [
     getContractName(poolTokenAddress),
     totalQuantity.toString(),
     getContractName(tokenAddress),

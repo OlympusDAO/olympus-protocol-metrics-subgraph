@@ -6,7 +6,7 @@ import { toBigInt } from "../../shared/src/utils/Decimals";
 import { CONVEX_STAKING_PROXY, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
 import {
-  getCurvePairTokenQuantity,
+  getCurvePairTokenQuantityRecords,
   getCurvePairTotalTokenQuantity,
   getCurvePairTotalValue,
 } from "../src/liquidity/LiquidityCurve";
@@ -125,7 +125,7 @@ describe("Token Quantity", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getCurvePairTokenQuantity(
+    const records = getCurvePairTokenQuantityRecords(
       TIMESTAMP,
       PAIR_CURVE_OHM_ETH,
       ERC20_OHM_V2,
@@ -182,7 +182,7 @@ describe("Token Quantity", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getCurvePairTokenQuantity(
+    const records = getCurvePairTokenQuantityRecords(
       TIMESTAMP,
       PAIR_CURVE_OHM_ETH,
       ERC20_OHM_V2,
@@ -236,7 +236,7 @@ describe("Token Quantity", () => {
     // total token quantity * balance / total supply
     const expectedTokenBalance = ohmReserves.times(crvBalance).div(crvTotalSupply);
 
-    const records = getCurvePairTokenQuantity(
+    const records = getCurvePairTokenQuantityRecords(
       TIMESTAMP,
       PAIR_CURVE_OHM_ETH,
       ERC20_OHM_V2,
@@ -287,7 +287,7 @@ describe("Token Quantity", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getCurvePairTokenQuantity(
+    const records = getCurvePairTokenQuantityRecords(
       TIMESTAMP,
       PAIR_CURVE_OHM_ETH,
       ERC20_OHM_V1,
@@ -342,7 +342,7 @@ describe("Token Quantity", () => {
     // total token quantity * balance / total supply
     const expectedTokenBalance = ohmReserves.times(crvBalance).div(crvTotalSupply);
 
-    const records = getCurvePairTokenQuantity(
+    const records = getCurvePairTokenQuantityRecords(
       TIMESTAMP,
       PAIR_CURVE_OHM_ETH,
       ERC20_OHM_V2,

@@ -6,7 +6,7 @@ import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3
 import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../../generated/schema";
 import { GNOSIS_RECORD_ID } from "../GnosisAuction";
 import { getBalancerPoolTokenQuantity } from "../liquidity/LiquidityBalancer";
-import { getCurvePairTokenQuantity } from "../liquidity/LiquidityCurve";
+import { getCurvePairTokenQuantityRecords } from "../liquidity/LiquidityCurve";
 import { getFraxSwapPairTokenQuantityRecords } from "../liquidity/LiquidityFraxSwap";
 import { getUniswapV2PairTokenQuantity } from "../liquidity/LiquidityUniswapV2";
 import { pushTokenSupplyArray } from "./ArrayHelper";
@@ -446,7 +446,7 @@ export function getProtocolOwnedLiquiditySupplyRecords(
       } else if (pairHandler.getType() == PairHandlerTypes.Curve) {
         pushTokenSupplyArray(
           records,
-          getCurvePairTokenQuantity(timestamp, pairAddress, ohmTokenAddress, blockNumber),
+          getCurvePairTokenQuantityRecords(timestamp, pairAddress, ohmTokenAddress, blockNumber),
         );
       } else if (pairHandler.getType() == PairHandlerTypes.UniswapV2) {
         pushTokenSupplyArray(
