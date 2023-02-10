@@ -156,11 +156,13 @@ type BalancerPoolSnapshot @entity(immutable: true) {
 }
 
 type PoolSnapshot @entity(immutable: true) {
-  id: ID! # pool token/block
+  id: ID! # pool/block
   block: BigInt!
-  poolToken: Bytes!
+  pool: Bytes!
+  poolToken: Bytes
   decimals: Int!
   totalSupply: BigDecimal!
   tokens: [Bytes!]!
   balances: [BigDecimal!]!
+  weights: [BigDecimal!]
 }

@@ -49,7 +49,7 @@ export function getOrCreateUniswapV2PoolSnapshot(pairAddress: string, blockNumbe
 
     snapshot = new PoolSnapshot(snapshotId);
     snapshot.block = blockNumber;
-    snapshot.poolToken = Bytes.fromHexString(pairAddress);
+    snapshot.pool = Bytes.fromHexString(pairAddress);
 
     const pairContract = getUniswapV2Pair(pairAddress);
     const pairTotalSupplyResult = pairContract.try_totalSupply();
@@ -74,10 +74,13 @@ export function getOrCreateUniswapV2PoolSnapshot(pairAddress: string, blockNumbe
       snapshotBalances.push(toDecimal(currentReserves, currentTokenSnapshot.decimals));
     }
 
-    snapshot.decimals = pairContract.decimals();
-    snapshot.totalSupply = toDecimal(pairTotalSupplyResult.value, snapshot.decimals);
     snapshot.tokens = snapshotTokens;
     snapshot.balances = snapshotBalances;
+    // No weights
+
+    snapshot.decimals = pairContract.decimals();
+    snapshot.totalSupply = toDecimal(pairTotalSupplyResult.value, snapshot.decimals);
+
     snapshot.save();
   }
 

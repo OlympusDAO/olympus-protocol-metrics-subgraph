@@ -1487,13 +1487,30 @@ export class PoolSnapshot extends Entity {
     this.set("block", Value.fromBigInt(value));
   }
 
-  get poolToken(): Bytes {
-    const value = this.get("poolToken");
+  get pool(): Bytes {
+    const value = this.get("pool");
     return value!.toBytes();
   }
 
-  set poolToken(value: Bytes) {
-    this.set("poolToken", Value.fromBytes(value));
+  set pool(value: Bytes) {
+    this.set("pool", Value.fromBytes(value));
+  }
+
+  get poolToken(): Bytes | null {
+    const value = this.get("poolToken");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBytes();
+    }
+  }
+
+  set poolToken(value: Bytes | null) {
+    if (!value) {
+      this.unset("poolToken");
+    } else {
+      this.set("poolToken", Value.fromBytes(<Bytes>value));
+    }
   }
 
   get decimals(): i32 {
@@ -1530,5 +1547,22 @@ export class PoolSnapshot extends Entity {
 
   set balances(value: Array<BigDecimal>) {
     this.set("balances", Value.fromBigDecimalArray(value));
+  }
+
+  get weights(): Array<BigDecimal> | null {
+    const value = this.get("weights");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimalArray();
+    }
+  }
+
+  set weights(value: Array<BigDecimal> | null) {
+    if (!value) {
+      this.unset("weights");
+    } else {
+      this.set("weights", Value.fromBigDecimalArray(<Array<BigDecimal>>value));
+    }
   }
 }
