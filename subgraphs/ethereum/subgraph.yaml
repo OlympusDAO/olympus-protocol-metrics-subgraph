@@ -1,12 +1,11 @@
 specVersion: 0.0.4
 description: Olympus Protocol Metrics Subgraph
-features:
-  - grafting
-graft:
-  # base: QmcrhGvpxKHs3HGXoVzNy9LKWd1gDviQyS6snKQ38V9Keo
-  # block: 16226955 # BondManager
-  base: QmQvYFkPrqngyBTo3QkcKJ1hLJ4VstG8Z64ekRM2N4AUTs
-  block: 16570734 # Maker DSR deployment
+# TODO restore grafting
+# features:
+#   - grafting
+# graft:
+#   base: QmeNHVhGj6TAKmjFcqE3YA5adLtN94oTSfUbSraGnr8VP7
+#   block: 16226955 # BondManager
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
   file: ../../schema.graphql
@@ -555,7 +554,7 @@ dataSources:
       # https://etherscan.io/tx/0xd81bf37e970f5f3593d028b8503a6432d3cc6eb5b6589d98d041f28018f060b4
       address: "0x04906695D6D12CF5459975d7C3C03356E4Ccd460"
       abi: sOlympusERC20V3
-      startBlock: 14690000
+      startBlock: 16226955 # TODO restore
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
