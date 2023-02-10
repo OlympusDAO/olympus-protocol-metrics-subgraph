@@ -577,6 +577,9 @@ export const mockCurvePairTotalValue = (
   token0Decimals: i32,
   token1Decimals: i32,
 ): void => {
+  mockERC20TotalSupply(token0, token0Decimals, toBigInt(BigDecimal.fromString(DEFAULT_TOTAL_SUPPLY), token0Decimals));
+  mockERC20TotalSupply(token1, token1Decimals, toBigInt(BigDecimal.fromString(DEFAULT_TOTAL_SUPPLY), token1Decimals));
+
   const pair = Address.fromString(pairAddress);
   // Token lookup
   createMockedFunction(pair, "coins", "coins(uint256):(address)")

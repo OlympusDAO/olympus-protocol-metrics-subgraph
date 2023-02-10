@@ -128,6 +128,7 @@ describe("getLiquidityPoolValue", () => {
     mockUniswapV2PairsZero();
     mockFraxSwapPairZero();
     mockFraxLockedBalanceZero();
+    mockCurvePairZero();
 
     // Mock pair
     const ohmReserves = BigDecimal.fromString("100");
