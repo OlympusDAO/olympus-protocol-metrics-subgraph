@@ -38,8 +38,6 @@ import {
   PairTokenBaseOrientation,
 } from "./PriceBase";
 
-const BIG_DECIMAL_1E9 = BigDecimal.fromString("1e9");
-
 /**
  * Determines the non-OHM value of the given pair.
  *
@@ -172,6 +170,7 @@ export function getUSDRateUniswapV3(
     );
   }
 
+  // TODO shift to snapshot
   if (pair.try_token0().reverted) {
     log.warning(
       "getUSDRateUniswapV3: UniswapV3 pair {} ({}) does not exist at block {}. Returning 0",
