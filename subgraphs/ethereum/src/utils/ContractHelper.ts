@@ -30,6 +30,7 @@ import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
 import { vlCVX } from "../../generated/ProtocolMetrics/vlCVX";
+import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import {
   addressesEqual,
   ALLOCATOR_ONSEN_ID_NOT_FOUND,
@@ -146,8 +147,9 @@ export function getERC20(contractAddress: string, currentBlockNumber: BigInt): E
  */
 export function getERC20Decimals(contractAddress: string, blockNumber: BigInt): number {
   const contractName = getContractName(contractAddress);
-  const contract = getERC20(contractAddress, blockNumber);
-  if (!contract) {
+
+  const snapshot = getOrCreateERC20TokenSnapshot(contractAddress, blockNumber);
+  if (!snapshot) {
     throw new Error(
       "getERC20Decimals: unable to find ERC20 contract for " +
       contractName +
@@ -171,7 +173,7 @@ export function getERC20Decimals(contractAddress: string, blockNumber: BigInt): 
     return 18;
   }
 
-  return contract.decimals();
+  return snapshot.decimals;
 }
 
 export function getSOlympusERC20(

@@ -7,6 +7,7 @@ import {
   isTokenAddressInCategory,
 } from "../../../shared/src/utils/TokenRecordHelper";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
+import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import { getBalancerPoolTotalValue, getOrCreateBalancerPoolSnapshot } from "../liquidity/LiquidityBalancer";
 import { getUniswapV2PairTotalValue } from "../liquidity/LiquidityUniswapV2";
 import {
@@ -23,7 +24,7 @@ import {
   NATIVE_ETH,
   OHM_PRICE_PAIRS,
 } from "./Constants";
-import { getERC20, getERC20Decimals, getUniswapV3Pair } from "./ContractHelper";
+import { getERC20Decimals, getUniswapV3Pair } from "./ContractHelper";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 import {
   BASE_TOKEN_UNKNOWN,
@@ -182,16 +183,16 @@ export function getUSDRateUniswapV3(
       : priceETH;
 
   // Multiply by difference in decimals
-  const token0Contract = getERC20(token0.toHexString(), blockNumber);
-  const token1Contract = getERC20(token1.toHexString(), blockNumber);
-  if (!token0Contract) {
+  const token0Snapshot = getOrCreateERC20TokenSnapshot(token0.toHexString(), blockNumber);
+  const token1Snapshot = getOrCreateERC20TokenSnapshot(token1.toHexString(), blockNumber);
+  if (!token0Snapshot) {
     log.warning("getUSDRateUniswapV3: Unable to obtain ERC20 for token {} at block {}", [
       token0.toHexString(),
       blockNumber.toString(),
     ]);
     return BigDecimal.zero();
   }
-  if (!token1Contract) {
+  if (!token1Snapshot) {
     log.warning("getUSDRateUniswapV3: Unable to obtain ERC20 for token {} at block {}", [
       token1.toHexString(),
       blockNumber.toString(),
@@ -202,8 +203,8 @@ export function getUSDRateUniswapV3(
   // If there is a difference between the decimal places of the two tokens, adjust for that
   const decimalDifference: i32 =
     baseTokenOrientation === PairTokenBaseOrientation.TOKEN0
-      ? token1Contract.decimals() - token0Contract.decimals()
-      : token0Contract.decimals() - token1Contract.decimals();
+      ? token1Snapshot.decimals - token0Snapshot.decimals
+      : token0Snapshot.decimals - token1Snapshot.decimals;
   const decimalDifferenceAbs: u8 = u8(abs(decimalDifference));
   const decimalDifferencePow: BigDecimal = BigInt.fromI32(10)
     .pow(decimalDifferenceAbs)

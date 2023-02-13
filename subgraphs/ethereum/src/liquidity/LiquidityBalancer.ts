@@ -21,7 +21,6 @@ import {
 import {
   getAuraStakedBalancesFromWallets,
   getBalancerGaugeBalancesFromWallets,
-  getERC20,
 } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
 import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
@@ -407,13 +406,13 @@ export function getBalancerPoolTotalTokenQuantity(
     const currentAddress = addresses[i].toHexString();
     if (!Address.fromString(currentAddress).equals(Address.fromString(tokenAddress))) continue;
 
-    const currentContract = getERC20(currentAddress, blockNumber);
-    if (!currentContract) {
+    const tokenSnapshot = getOrCreateERC20TokenSnapshot(currentAddress, blockNumber);
+    if (!tokenSnapshot) {
       throw new Error("Unable to bind to ERC20 contract for address " + currentAddress.toString());
     }
 
     // Add to the value: rate * balance
-    const currentBalanceDecimal = toDecimal(balances[i], currentContract.decimals());
+    const currentBalanceDecimal = toDecimal(balances[i], tokenSnapshot.decimals);
     tokenQuantity = tokenQuantity.plus(currentBalanceDecimal);
   }
 

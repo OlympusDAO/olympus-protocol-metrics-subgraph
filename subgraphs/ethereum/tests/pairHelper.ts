@@ -140,6 +140,10 @@ export const getTribeUsdRate = (): BigDecimal => {
 };
 
 export const mockTribeEthRate = (): void => {
+  // TODO can be shifted to abstracted mock function?
+  mockERC20TotalSupply(ERC20_TRIBE, ERC20_STANDARD_DECIMALS, toBigInt(BigDecimal.fromString(DEFAULT_TOTAL_SUPPLY), ERC20_STANDARD_DECIMALS));
+  mockERC20TotalSupply(ERC20_WETH, ERC20_STANDARD_DECIMALS, toBigInt(BigDecimal.fromString(DEFAULT_TOTAL_SUPPLY), ERC20_STANDARD_DECIMALS));
+
   const contractAddress = Address.fromString(PAIR_UNISWAP_V2_TRIBE_ETH);
   createMockedFunction(
     contractAddress,
@@ -195,6 +199,9 @@ export const mockRateUniswapV3 = (
   token0Balance: BigInt,
   token1Balance: BigInt,
 ): void => {
+  mockERC20TotalSupply(token0Address, token0Decimals, toBigInt(BigDecimal.fromString(DEFAULT_TOTAL_SUPPLY), token0Decimals));
+  mockERC20TotalSupply(token1Address, token1Decimals, toBigInt(BigDecimal.fromString(DEFAULT_TOTAL_SUPPLY), token1Decimals));
+
   const contractAddress = Address.fromString(pairAddress);
   // slot0
   createMockedFunction(

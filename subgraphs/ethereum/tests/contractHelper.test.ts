@@ -56,10 +56,11 @@ import {
   getTokeStakedBalancesFromWallets,
   getVlCvxUnlockedRecords,
 } from "../src/utils/ContractHelper";
-import { ERC20_STANDARD_DECIMALS } from "./pairHelper";
+import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 
 const TIMESTAMP: BigInt = BigInt.fromString("1");
+const DEFAULT_TOTAL_SUPPLY = BigDecimal.fromString("1000");
 
 export const mockConvexStakedBalance = (
   tokenAddress: string,
@@ -470,11 +471,7 @@ describe("get ERC20 token records from wallets", () => {
 
     // Set balance of the non-whitelist token
     mockWalletBalance(ERC20_ALCX, DAO_WALLET, toBigInt(BigDecimal.fromString("10")));
-    createMockedFunction(
-      Address.fromString(ERC20_ALCX.toLowerCase()),
-      "decimals",
-      "decimals():(uint8)",
-    ).returns([ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS)]);
+    mockERC20TotalSupply(ERC20_ALCX, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
 
     const blockNumber = BigInt.fromString("1");
     const contract = getERC20(ERC20_ALCX, blockNumber);
@@ -497,9 +494,7 @@ describe("get ERC20 token records from wallets", () => {
     // Set balance of the whitelist token
     const tokenBalance = "10";
     mockWalletBalance(ERC20_WETH, DAO_WALLET, toBigInt(BigDecimal.fromString(tokenBalance)));
-    createMockedFunction(Address.fromString(ERC20_WETH), "decimals", "decimals():(uint8)").returns([
-      ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
-    ]);
+    mockERC20TotalSupply(ERC20_WETH, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
 
     const blockNumber = BigInt.fromString("1");
     const contract = getERC20(ERC20_WETH, blockNumber);

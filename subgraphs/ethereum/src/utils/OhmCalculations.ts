@@ -4,6 +4,7 @@ import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { BondManager } from "../../generated/ProtocolMetrics/BondManager";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
 import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../../generated/schema";
+import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import { GNOSIS_RECORD_ID } from "../GnosisAuction";
 import { getBalancerPoolTokenQuantity } from "../liquidity/LiquidityBalancer";
 import { getCurvePairTokenQuantityRecords } from "../liquidity/LiquidityCurve";
@@ -64,9 +65,9 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
     ? ERC20_OHM_V2
     : ERC20_OHM_V1;
 
-  const ohmContract = getERC20(ohmContractAddress, blockNumber);
+  const snapshot = getOrCreateERC20TokenSnapshot(ohmContractAddress, blockNumber);
 
-  if (!ohmContract) {
+  if (!snapshot) {
     log.error(
       "Expected to be able to bind to OHM contract at address {} for block {}, but it was not found.",
       [ohmContractAddress, blockNumber.toString()],
@@ -74,7 +75,7 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
     return BigDecimal.fromString("0");
   }
 
-  return toDecimal(ohmContract.totalSupply(), 9);
+  return snapshot.totalSupply;
 }
 
 export function getTotalSupplyRecord(timestamp: BigInt, blockNumber: BigInt): TokenSupply {
