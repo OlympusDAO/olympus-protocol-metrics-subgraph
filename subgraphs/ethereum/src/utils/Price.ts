@@ -10,9 +10,10 @@ import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { TokenPriceSnapshot } from "../../generated/schema";
 import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import { getBalancerPoolTotalValue, getOrCreateBalancerPoolSnapshot } from "../liquidity/LiquidityBalancer";
-import { getUniswapV2PairTotalValue } from "../liquidity/LiquidityUniswapV2";
+import { getOrCreateUniswapV2PoolSnapshot, getUniswapV2PairTotalValue } from "../liquidity/LiquidityUniswapV2";
 import {
   BALANCER_VAULT,
+  ERC20_DAI,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_TOKENS,
@@ -105,21 +106,41 @@ function getBaseOhmUsdRateUniswapV2(
   contractAddress: string,
   blockNumber: BigInt,
 ): BigDecimal {
-  const pair = UniswapV2Pair.bind(Address.fromString(contractAddress));
-  if (!pair) {
+  const snapshot = getOrCreateUniswapV2PoolSnapshot(contractAddress, blockNumber);
+  if (!snapshot) {
     throw new Error(
-      "Cannot determine discounted value as the contract " +
+      "getBaseOhmUsdRateUniswapV2: Cannot determine discounted as the contract " +
       contractAddress +
       " does not exist at block " +
       blockNumber.toString(),
     );
   }
 
-  const reserves = pair.getReserves();
-  const ohmReserves = reserves.value0.toBigDecimal();
-  const daiReserves = reserves.value1.toBigDecimal();
+  let ohmIndex = -1;
+  let daiIndex = -1;
 
-  const ohmRate = daiReserves.div(ohmReserves).div(BIG_DECIMAL_1E9);
+  for (let i = 0; i < snapshot.tokens.length; i++) {
+    const currentToken = snapshot.tokens[i];
+    if (currentToken.toHexString().toLowerCase() == ERC20_OHM_V2.toLowerCase()) {
+      ohmIndex = i;
+    }
+    else if (currentToken.toHexString().toLowerCase() == ERC20_DAI.toLowerCase()) {
+      daiIndex = i;
+    }
+  }
+
+  if (ohmIndex < 0) {
+    throw new Error(`getBaseOhmUsdRateUniswapV2: Could not determine location of OHM token for UniswapV2 pool: ${contractAddress}`);
+  }
+
+  if (daiIndex < 0) {
+    throw new Error(`getBaseOhmUsdRateUniswapV2: Could not determine location of DAI token for UniswapV2 pool: ${contractAddress}`);
+  }
+
+  const ohmReserves = snapshot.balances[ohmIndex];
+  const daiReserves = snapshot.balances[daiIndex];
+
+  const ohmRate = daiReserves.div(ohmReserves);
   log.debug("getBaseOhmUsdRateUniswapV2: OHM rate {}", [ohmRate.toString()]);
 
   return ohmRate;
@@ -337,11 +358,13 @@ export function getUSDRateBalancer(
  *
  * The sources for the price are defined in {OHM_PRICE_PAIRS}.
  * The pair with the greatest non-OHM reserves will be used.
+ * 
+ * With the current implementation, this function CANNOT use `getUSDRate` or `resolvePrice`, as it
+ * would result in an infinite loop.
  *
  * @param blockNumber
  * @returns
  */
-// TODO shift to snapshot
 export function getBaseOhmUsdRate(blockNumber: BigInt): BigDecimal {
   log.debug("getBaseOhmUsdRate: determining OHM-USD rate at block {}", [blockNumber.toString()]);
   let largestPairIndex = -1;
@@ -374,7 +397,6 @@ export function getBaseOhmUsdRate(blockNumber: BigInt): BigDecimal {
   const pairHandler = OHM_PRICE_PAIRS[largestPairIndex];
   const pairHandlerBalancerPool = pairHandler.getPool();
 
-  // TODO consider merging with the pair handler / function mapping in getUSDRate()
   if (pairHandler.getType() === PairHandlerTypes.UniswapV2) {
     return getBaseOhmUsdRateUniswapV2(pairHandler.getContract(), blockNumber);
   } else if (
