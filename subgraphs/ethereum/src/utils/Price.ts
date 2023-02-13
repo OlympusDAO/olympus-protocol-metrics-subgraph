@@ -7,6 +7,7 @@ import {
   isTokenAddressInCategory,
 } from "../../../shared/src/utils/TokenRecordHelper";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
+import { TokenPriceSnapshot } from "../../generated/schema";
 import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import { getBalancerPoolTotalValue, getOrCreateBalancerPoolSnapshot } from "../liquidity/LiquidityBalancer";
 import { getUniswapV2PairTotalValue } from "../liquidity/LiquidityUniswapV2";
@@ -100,7 +101,7 @@ function getPairHandlerNonOhmValue(
  *
  * @returns Price of OHM in USD
  */
-export function getBaseOhmUsdRateUniswapV2(
+function getBaseOhmUsdRateUniswapV2(
   contractAddress: string,
   blockNumber: BigInt,
 ): BigDecimal {
@@ -340,6 +341,7 @@ export function getUSDRateBalancer(
  * @param blockNumber
  * @returns
  */
+// TODO shift to snapshot
 export function getBaseOhmUsdRate(blockNumber: BigInt): BigDecimal {
   log.debug("getBaseOhmUsdRate: determining OHM-USD rate at block {}", [blockNumber.toString()]);
   let largestPairIndex = -1;
@@ -417,7 +419,7 @@ export function getBaseOhmUsdRate(blockNumber: BigInt): BigDecimal {
  * @param pairAddress
  * @returns
  */
-export function getUSDRateUniswapV2(
+function getUSDRateUniswapV2(
   contractAddress: string,
   pairAddress: string,
   blockNumber: BigInt,
@@ -496,7 +498,7 @@ export function getUSDRateUniswapV2(
  * @param contractAddress the token to look for
  * @returns BigDecimal or 0
  */
-export function getUSDRate(contractAddress: string, blockNumber: BigInt): BigDecimal {
+function resolvePrice(contractAddress: string, blockNumber: BigInt): BigDecimal {
   // Value UST at 0 from May 9th onwards
   if (
     contractAddress.toLowerCase() == ERC20_UST.toLowerCase() &&
@@ -553,4 +555,25 @@ export function getUSDRate(contractAddress: string, blockNumber: BigInt): BigDec
     ") for contract: " +
     contractAddress,
   );
+}
+
+function getOrCreateTokenPriceSnapshot(address: string, blockNumber: BigInt): TokenPriceSnapshot {
+  const snapshotId = `${address.toLowerCase()}/${blockNumber.toString()}`;
+  let snapshot = TokenPriceSnapshot.load(snapshotId);
+  if (snapshot == null) {
+    snapshot = new TokenPriceSnapshot(snapshotId);
+    snapshot.token = Address.fromString(address);
+    snapshot.price = resolvePrice(address, blockNumber);
+    snapshot.block = blockNumber;
+
+    snapshot.save();
+  }
+
+  return snapshot;
+}
+
+export function getUSDRate(address: string, blockNumber: BigInt): BigDecimal {
+  const snapshot = getOrCreateTokenPriceSnapshot(address, blockNumber);
+
+  return snapshot.price;
 }

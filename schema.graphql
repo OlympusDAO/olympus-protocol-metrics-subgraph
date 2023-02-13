@@ -143,6 +143,7 @@ type ConvexRewardPoolSnapshot @entity(immutable: true) {
   stakingToken: Bytes!
 }
 
+# TODO migrate to PoolSnapshot
 type BalancerPoolSnapshot @entity(immutable: true) {
   id: ID! # pool id/block
   block: BigInt!
@@ -165,4 +166,11 @@ type PoolSnapshot @entity(immutable: true) {
   tokens: [Bytes!]!
   balances: [BigDecimal!]!
   weights: [BigDecimal!]
+}
+
+type TokenPriceSnapshot @entity(immutable: true) {
+  id: ID! # address/block
+  block: BigInt!
+  token: Bytes!
+  price: BigDecimal!
 }
