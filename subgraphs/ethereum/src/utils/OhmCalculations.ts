@@ -282,9 +282,11 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
   return records;
 }
 
-export const EULER_MINT_BLOCK = BigInt.fromString("16600000"); // TODO change to real block
+// https://etherscan.io/tx/0xa7495eba745bd67279969c1b8687f816e0d83a60bf0c8b43900ef1dfaf97277e
+export const EULER_MINT_BLOCK = BigInt.fromString("16627152");
 export const EULER_MINT_QUANTITY = BigDecimal.fromString("30000");
-export const SILO_MINT_BLOCK = BigInt.fromString("16600000"); // TODO change to real block
+// https://etherscan.io/tx/0xf9bbcc923182fb6406e97fce0f92c22c87a284d55812eeae41dc484759422b4a
+export const SILO_MINT_BLOCK = BigInt.fromString("16627144");
 export const SILO_MINT_QUANTITY = BigDecimal.fromString("20000");
 
 /**

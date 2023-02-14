@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 3.7.0 (2023-02-14)
+## 3.6.0 (2023-02-14)
 
 - Adds OHM deployed into the Euler and Silo lending markets
 
