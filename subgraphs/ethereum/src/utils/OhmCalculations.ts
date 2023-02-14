@@ -36,7 +36,7 @@ import {
   getSOlympusERC20V3,
 } from "./ContractHelper";
 import { PairHandlerTypes } from "./PairHandler";
-import { getBaseOhmUsdRate } from "./Price";
+import { getUSDRate } from "./Price";
 import {
   createOrUpdateTokenSupply,
   TYPE_BONDS_DEPOSITS,
@@ -509,7 +509,7 @@ export function getSOhmCirculatingSupply(blockNumber: BigInt): BigDecimal {
  * @returns BigDecimal representing the TVL at the current block
  */
 export function getTotalValueLocked(blockNumber: BigInt): BigDecimal {
-  return getSOhmCirculatingSupply(blockNumber).times(getBaseOhmUsdRate(blockNumber));
+  return getSOhmCirculatingSupply(blockNumber).times(getUSDRate(ERC20_OHM_V2, blockNumber));
 }
 
 /**

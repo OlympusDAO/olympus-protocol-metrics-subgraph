@@ -6,6 +6,7 @@ import { getCurrentIndex } from "../../../shared/src/supply/OhmCalculations";
 import { getISO8601DateStringFromTimestamp } from "../../../shared/src/utils/DateHelper";
 import { LogRebase } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
 import { ProtocolMetric, TokenSupply } from "../../generated/schema";
+import { ERC20_OHM_V2 } from "../utils/Constants";
 import { getGOhmSyntheticSupply, getGOhmTotalSupply } from "../utils/GOhmCalculations";
 import {
   getCirculatingSupply,
@@ -14,7 +15,7 @@ import {
   getTotalSupply,
   getTotalValueLocked,
 } from "../utils/OhmCalculations";
-import { getBaseOhmUsdRate } from "../utils/Price";
+import { getUSDRate } from "../utils/Price";
 import { generateTokenRecords, generateTokenSupply } from "../utils/TreasuryCalculations";
 import { getAPY_Rebase, getNextOHMRebase } from "./Rebase";
 import { getMarketCap, getTreasuryLiquidBacking, getTreasuryLiquidBackingPerGOhmSynthetic, getTreasuryLiquidBackingPerOhmFloating, getTreasuryMarketValue } from "./TreasuryMetrics";
@@ -47,7 +48,7 @@ export function updateProtocolMetrics(block: ethereum.Block, tokenRecords: Token
   const gOhmTotalSupply = getGOhmTotalSupply(blockNumber);
   pm.gOhmTotalSupply = gOhmTotalSupply;
 
-  pm.ohmPrice = getBaseOhmUsdRate(block.number);
+  pm.ohmPrice = getUSDRate(ERC20_OHM_V2, block.number);
 
   pm.currentIndex = getCurrentIndex(block.number);
 

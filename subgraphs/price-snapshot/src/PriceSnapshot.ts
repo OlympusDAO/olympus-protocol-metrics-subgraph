@@ -1,6 +1,7 @@
 import { BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
-import { getBaseOhmUsdRate } from "../../ethereum/src/utils/Price";
+import { ERC20_OHM_V2 } from "../../ethereum/src/utils/Constants";
+import { getUSDRate } from "../../ethereum/src/utils/Price";
 import { getCurrentIndex } from "../../shared/src/supply/OhmCalculations";
 import { addDays, getDateFromBlockTimestamp, getISO8601DateString, getISO8601StringFromTimestamp } from "../../shared/src/utils/DateHelper";
 import { PriceSnapshot, PriceSnapshotDaily } from "../generated/schema";
@@ -128,7 +129,7 @@ export function handleBlock(block: ethereum.Block): void {
     currentSnapshot.timestamp = block.timestamp.times(BigInt.fromString("1000")); // Milliseconds
     currentSnapshot.date = getISO8601StringFromTimestamp(block.timestamp);
 
-    currentSnapshot.ohmUsdPrice = getBaseOhmUsdRate(block.number);
+    currentSnapshot.ohmUsdPrice = getUSDRate(ERC20_OHM_V2, block.number);
     currentSnapshot.ohmUsdPrice1dDelta = getPriceDelta(currentSnapshot, prevSnapshot);
     currentSnapshot.ohmUsdPrice30dVolatility = getPriceVolatility(currentSnapshot, currentDate, <i32>30);
 

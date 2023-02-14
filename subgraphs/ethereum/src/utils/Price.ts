@@ -364,7 +364,7 @@ export function getUSDRateBalancer(
  * @param blockNumber
  * @returns
  */
-export function getBaseOhmUsdRate(blockNumber: BigInt): BigDecimal {
+function getBaseOhmUsdRate(blockNumber: BigInt): BigDecimal {
   log.debug("getBaseOhmUsdRate: determining OHM-USD rate at block {}", [blockNumber.toString()]);
   let largestPairIndex = -1;
   let largestPairValue: BigDecimal | null = null;

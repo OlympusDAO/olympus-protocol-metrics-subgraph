@@ -46,7 +46,7 @@ import {
   POOL_BALANCER_OHM_DAI_WETH_ID,
   POOL_BALANCER_WETH_FDT_ID,
 } from "../src/utils/Constants";
-import { getBaseOhmUsdRate, getUSDRate, getUSDRateBalancer } from "../src/utils/Price";
+import { getUSDRate, getUSDRateBalancer } from "../src/utils/Price";
 import { mockBalancerGaugeBalanceZero } from "./contractHelper.test";
 import {
   mockBalancerVaultAuraWeth,
@@ -87,7 +87,7 @@ describe("OHM-USD rate", () => {
     mockBalancerVaultZero(); // Ensures that the OHM-DAI-ETH Balancer pool is not used for price lookup
 
     assert.stringEquals(
-      getBaseOhmUsdRate(
+      getUSDRate(ERC20_OHM_V2,
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
       ).toString(),
       getOhmUsdRate().toString(),
@@ -105,7 +105,7 @@ describe("OHM-USD rate", () => {
     ); // Total value is small, so Sushi OHM-DAI is used
 
     assert.stringEquals(
-      getBaseOhmUsdRate(
+      getUSDRate(ERC20_OHM_V2,
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
       ).toString(),
       getOhmUsdRate().toString(),
@@ -127,7 +127,7 @@ describe("OHM-USD rate", () => {
 
     assert.stringEquals(
       calculatedRate.toString(),
-      getBaseOhmUsdRate(
+      getUSDRate(ERC20_OHM_V2,
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
       ).toString(),
     );
@@ -150,7 +150,7 @@ describe("OHM-USD rate", () => {
 
     assert.stringEquals(
       calculatedRate.toString(),
-      getBaseOhmUsdRate(
+      getUSDRate(ERC20_OHM_V2,
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
       ).toString(),
     );
@@ -170,7 +170,7 @@ describe("OHM-USD rate", () => {
 
     assert.stringEquals(
       getOhmUsdRate().toString(), // OHM-DAI rate is used
-      getBaseOhmUsdRate(
+      getUSDRate(ERC20_OHM_V2,
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
       ).toString(),
     );
@@ -207,7 +207,7 @@ describe("OHM-USD rate", () => {
         .reverts();
 
       // Throws an error
-      getBaseOhmUsdRate(
+      getUSDRate(ERC20_OHM_V2,
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
       );
     },
@@ -225,7 +225,7 @@ describe("OHM-USD rate", () => {
         "getReserves():(uint112,uint112,uint32)",
       ).returns([]);
 
-      getBaseOhmUsdRate(
+      getUSDRate(ERC20_OHM_V2,
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
       );
     },
