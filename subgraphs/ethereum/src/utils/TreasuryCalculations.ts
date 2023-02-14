@@ -6,6 +6,7 @@ import { TokenSupply } from "../../generated/schema";
 import { getOwnedLiquidityPoolValue } from "../liquidity/LiquidityCalculations";
 import { pushTokenSupplyArray } from "./ArrayHelper";
 import {
+  getMintedBorrowableOHMRecords,
   getProtocolOwnedLiquiditySupplyRecords,
   getTotalSupplyRecord,
   getTreasuryOHMRecords,
@@ -75,6 +76,12 @@ export function generateTokenSupply(timestamp: BigInt, blockNumber: BigInt): Tok
   pushTokenSupplyArray(
     records,
     getVestingBondSupplyRecords(timestamp, blockNumber),
+  );
+
+  // Borrowable OHM
+  pushTokenSupplyArray(
+    records,
+    getMintedBorrowableOHMRecords(timestamp, blockNumber),
   );
 
   return records;

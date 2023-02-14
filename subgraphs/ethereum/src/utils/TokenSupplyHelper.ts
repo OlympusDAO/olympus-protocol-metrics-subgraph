@@ -11,6 +11,7 @@ export const TYPE_LIQUIDITY = "Liquidity";
 export const TYPE_OFFSET = "Manual Offset";
 export const TYPE_TOTAL_SUPPLY = "Total Supply";
 export const TYPE_TREASURY = "Treasury";
+export const TYPE_LENDING = "Lending";
 
 /**
  * Helper function to create a new TokenRecord.

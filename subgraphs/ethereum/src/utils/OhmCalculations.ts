@@ -21,9 +21,11 @@ import {
   ERC20_SOHM_V2_BLOCK,
   ERC20_SOHM_V3,
   ERC20_SOHM_V3_BLOCK,
+  EULER_ADDRESS,
   getContractName,
   LIQUIDITY_OWNED,
   MIGRATION_CONTRACT,
+  SILO_ADDRESS,
 } from "./Constants";
 import {
   getERC20,
@@ -40,6 +42,7 @@ import {
   TYPE_BONDS_PREMINTED,
   TYPE_BONDS_VESTING_DEPOSITS,
   TYPE_BONDS_VESTING_TOKENS,
+  TYPE_LENDING,
   TYPE_LIQUIDITY,
   TYPE_OFFSET,
   TYPE_TOTAL_SUPPLY,
@@ -279,6 +282,68 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
   return records;
 }
 
+// https://etherscan.io/tx/0xa7495eba745bd67279969c1b8687f816e0d83a60bf0c8b43900ef1dfaf97277e
+export const EULER_MINT_BLOCK = BigInt.fromString("16627152");
+export const EULER_MINT_QUANTITY = BigDecimal.fromString("30000");
+// https://etherscan.io/tx/0xf9bbcc923182fb6406e97fce0f92c22c87a284d55812eeae41dc484759422b4a
+export const SILO_MINT_BLOCK = BigInt.fromString("16627144");
+export const SILO_MINT_QUANTITY = BigDecimal.fromString("20000");
+
+/**
+ * Generates TokenSupply records for OHM that has been minted
+ * and deposited into the Euler and Silo lending markets.
+ * 
+ * The values and block(s) are hard-coded, as this was performed manually using
+ * the multi-sig. Future deployments will be automated through a smart contract.
+ * 
+ * @param timestamp 
+ * @param blockNumber 
+ * @returns 
+ */
+export function getMintedBorrowableOHMRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
+  const records: TokenSupply[] = [];
+
+  // Euler
+  if (blockNumber.ge(EULER_MINT_BLOCK)) {
+    records.push(
+      createOrUpdateTokenSupply(
+        timestamp,
+        getContractName(ERC20_OHM_V2),
+        ERC20_OHM_V2,
+        null,
+        null,
+        getContractName(EULER_ADDRESS),
+        EULER_ADDRESS,
+        TYPE_LENDING,
+        EULER_MINT_QUANTITY,
+        blockNumber,
+        -1, // Subtract
+      )
+    );
+  }
+
+  // Silo
+  if (blockNumber.ge(SILO_MINT_BLOCK)) {
+    records.push(
+      createOrUpdateTokenSupply(
+        timestamp,
+        getContractName(ERC20_OHM_V2),
+        ERC20_OHM_V2,
+        null,
+        null,
+        getContractName(SILO_ADDRESS),
+        SILO_ADDRESS,
+        TYPE_LENDING,
+        SILO_MINT_QUANTITY,
+        blockNumber,
+        -1, // Subtract
+      )
+    );
+  }
+
+  return records;
+}
+
 /**
  * Returns the circulating supply of the latest version of the OHM contract
  * at the given block number.
@@ -444,6 +509,39 @@ export function getSOhmCirculatingSupply(blockNumber: BigInt): BigDecimal {
  */
 export function getTotalValueLocked(blockNumber: BigInt): BigDecimal {
   return getSOhmCirculatingSupply(blockNumber).times(getBaseOhmUsdRate(blockNumber));
+}
+
+/**
+ * For a given array of TokenSupply records (assumed to be at the same point in time),
+ * this function returns the OHM backed supply.
+ *
+ * Backed supply is the quantity of OHM backed by treasury assets.
+ * 
+ * Backed supply is calculated as:
+ * - OHM total supply
+ * - minus: OHM in circulating supply wallets
+ * - minus: migration offset
+ * - minus: pre-minted OHM for bonds
+ * - minus: OHM user deposits for bonds
+ * - minus: protocol-owned OHM in liquidity pools
+ * - minus: OHM minted and deployed into lending markets
+ */
+export function getBackedSupply(tokenSupplies: TokenSupply[]): BigDecimal {
+  let total = BigDecimal.zero();
+
+  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_LIQUIDITY, TYPE_LENDING];
+
+  for (let i = 0; i < tokenSupplies.length; i++) {
+    const tokenSupply = tokenSupplies[i];
+
+    if (!includedTypes.includes(tokenSupply.type)) {
+      continue;
+    }
+
+    total = total.plus(tokenSupply.supplyBalance);
+  }
+
+  return total;
 }
 
 /**
