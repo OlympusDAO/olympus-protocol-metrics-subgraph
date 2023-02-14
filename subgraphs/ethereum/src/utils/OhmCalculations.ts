@@ -282,9 +282,9 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
   return records;
 }
 
-export const EULER_MINT_BLOCK = BigInt.fromString("111111");
+export const EULER_MINT_BLOCK = BigInt.fromString("16600000"); // TODO change to real block
 export const EULER_MINT_QUANTITY = BigDecimal.fromString("30000");
-export const SILO_MINT_BLOCK = BigInt.fromString("111111");
+export const SILO_MINT_BLOCK = BigInt.fromString("16600000"); // TODO change to real block
 export const SILO_MINT_QUANTITY = BigDecimal.fromString("20000");
 
 /**

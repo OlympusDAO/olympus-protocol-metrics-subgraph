@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 3.7.0 (2023-02-14)
+
+- Adds OHM deployed into the Euler and Silo lending markets
+
 ## 3.5.7 (2023-02-06)
 
 - Adds support for deposits into the Maker DSR
