@@ -5,7 +5,7 @@ import { toBigInt } from "../../shared/src/utils/Decimals";
 import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../generated/schema";
 import { GNOSIS_RECORD_ID } from "../src/GnosisAuction";
 import { BOND_MANAGER, CIRCULATING_SUPPLY_WALLETS, ERC20_OHM_V2, EULER_ADDRESS, SILO_ADDRESS } from "../src/utils/Constants";
-import { EULER_MINT_BLOCK, EULER_MINT_QUANTITY, getMintedBorrowableOHMRecords, getTreasuryOHMRecords, getVestingBondSupplyRecords, SILO_MINT_QUANTITY } from "../src/utils/OhmCalculations";
+import { EULER_MINT_BLOCK, EULER_MINT_QUANTITY, getMintedBorrowableOHMRecords, getTreasuryOHMRecords, getVestingBondSupplyRecords, SILO_MINT_BLOCK, SILO_MINT_QUANTITY } from "../src/utils/OhmCalculations";
 import { TYPE_BONDS_DEPOSITS, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_VESTING_TOKENS, TYPE_LENDING } from "../src/utils/TokenSupplyHelper";
 
 const CONTRACT_GNOSIS = "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101".toLowerCase();
@@ -259,7 +259,7 @@ describe("Treasury OHM", () => {
 
 describe("Borrowable OHM", () => {
     test("returns no records before minting", () => {
-        const records = getMintedBorrowableOHMRecords(TIMESTAMP, EULER_MINT_BLOCK.minus(BigInt.fromI32(1)));
+        const records = getMintedBorrowableOHMRecords(TIMESTAMP, SILO_MINT_BLOCK.minus(BigInt.fromI32(1)));
 
         assert.i32Equals(records.length, 0);
     });
