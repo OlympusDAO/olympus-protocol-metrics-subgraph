@@ -22,14 +22,14 @@ import {
   PAIR_UNISWAP_V2_OHM_ETH_V2,
 } from "../src/utils/Constants";
 import { PairHandler, PairHandlerTypes } from "../src/utils/PairHandler";
-import { mockBalancerVaultZero } from "./liquidityBalancer.test";
+import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
 import {
-  ERC20_STANDARD_DECIMALS,
   ETH_USD_RESERVE_BLOCK,
   getBtrflyV1UsdRate,
   getOhmEthPairValue,
   getOhmUsdRate,
   getPairValue,
+  mockBalancerVaultZero,
   mockEthUsdRate,
   mockOhmEthPair,
   mockUniswapV2Pair,

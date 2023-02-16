@@ -1,7 +1,7 @@
-import { Address, BigDecimal, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, describe, test } from "matchstick-as/assembly/index";
 
-import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
+import { toBigInt } from "../../shared/src/utils/Decimals";
 import { DAO_WALLET, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import {
   getBalancerPoolTokenQuantity,
@@ -13,435 +13,46 @@ import {
   BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
   BALANCER_VAULT,
-  ERC20_AURA,
-  ERC20_AURA_BAL,
-  ERC20_AURA_GRAVI,
-  ERC20_BALANCER_AURA_WETH,
-  ERC20_BALANCER_GRAVIAURA_AURABAL_WETH,
   ERC20_BALANCER_OHM_BTRFLY_V2,
-  ERC20_BALANCER_OHM_DAI,
   ERC20_BALANCER_OHM_DAI_WETH,
-  ERC20_BALANCER_OHM_WETH,
   ERC20_BALANCER_WETH_FDT,
-  ERC20_BTRFLY_V2,
   ERC20_DAI,
-  ERC20_FDT,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_USDC,
-  ERC20_WETH,
-  getContractName,
   getWalletAddressesForContract,
-  POOL_BALANCER_AURA_WETH_ID,
-  POOL_BALANCER_GRAVIAURA_AURABAL_WETH_ID,
-  POOL_BALANCER_OHM_DAI,
   POOL_BALANCER_OHM_DAI_WETH_ID,
   POOL_BALANCER_OHM_V2_BTRFLY_V2_ID,
-  POOL_BALANCER_OHM_WETH,
   POOL_BALANCER_WETH_FDT_ID,
-  WALLET_ADDRESSES,
 } from "../src/utils/Constants";
 import {
-  mockAuraStakedBalanceZero,
   mockBalancerGaugeBalance,
   mockBalancerGaugeBalanceZero,
 } from "./contractHelper.test";
+import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
 import {
-  ERC20_STANDARD_DECIMALS,
   getBtrflyV2UsdRate,
   getEthUsdRate,
   getOhmUsdRate,
-  mockERC20TotalSupply,
+  mockBalancerVaultOhmBtrfly,
+  mockBalancerVaultZero,
+  mockBalanceVaultOhmDaiEth,
+  mockBalanceVaultWethFdt,
   mockEthUsdRate,
   mockUsdOhmV2Rate,
   mockWEthBtrflyV2Rate,
+  OHM_BTRFLY_BALANCE_BTRFLY,
+  OHM_BTRFLY_BALANCE_OHM,
+  OHM_BTRFLY_TOTAL_SUPPLY,
+  OHM_DAI_ETH_BALANCE_DAI,
+  OHM_DAI_ETH_BALANCE_OHM,
+  OHM_DAI_ETH_BALANCE_WETH,
+  OHM_DAI_ETH_TOKEN_TOTAL_SUPPLY,
   OHM_USD_RESERVE_BLOCK,
-  OHM_V2_DECIMALS,
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 
-export const OHM_DAI_ETH_BALANCE_OHM = BigDecimal.fromString("221499.733846818");
-export const OHM_DAI_ETH_BALANCE_DAI = BigDecimal.fromString("1932155.145566782258916959");
-export const OHM_DAI_ETH_BALANCE_WETH = BigDecimal.fromString("1080.264364629190826870");
-export const OHM_DAI_ETH_TOKEN_TOTAL_SUPPLY = BigDecimal.fromString("100");
-export const OHM_DAI_ETH_WEIGHT_OHM = BigDecimal.fromString("0.5");
-export const OHM_DAI_ETH_WEIGHT_DAI = BigDecimal.fromString("0.25");
-export const OHM_DAI_ETH_WEIGHT_WETH = BigDecimal.fromString("0.25");
-
-const DEFAULT_TOTAL_SUPPLY: BigInt = toBigInt(BigDecimal.fromString("1000000"), 18);
-
 const TIMESTAMP = BigInt.fromString("1");
-
-export function mockBalancerVault(
-  vaultAddress: string,
-  poolId: string,
-  poolTokenAddress: string,
-  poolTokenDecimals: i32,
-  poolTokenTotalSupply: BigDecimal,
-  token1Address: string,
-  token2Address: string,
-  token3Address: string | null,
-  token1Balance: BigDecimal,
-  token2Balance: BigDecimal,
-  token3Balance: BigDecimal | null,
-  token1Decimals: i32,
-  token2Decimals: i32,
-  token3Decimals: i32,
-  token1Weight: BigDecimal,
-  token2Weight: BigDecimal,
-  token3Weight: BigDecimal | null,
-): void {
-  log.debug("Mocking Balancer pool id {} ({}) with token supply {}", [getContractName(poolId), poolId, poolTokenTotalSupply.toString()]);
-  const tokenAddressArray = [Address.fromString(token1Address), Address.fromString(token2Address)];
-  if (token3Address !== null) tokenAddressArray.push(Address.fromString(token3Address));
-
-  const tokenBalanceArray = [
-    toBigInt(token1Balance, token1Decimals),
-    toBigInt(token2Balance, token2Decimals),
-  ];
-  if (token3Balance !== null) tokenBalanceArray.push(toBigInt(token3Balance, token3Decimals));
-
-  // getPoolTokens
-  createMockedFunction(
-    Address.fromString(vaultAddress),
-    "getPoolTokens",
-    "getPoolTokens(bytes32):(address[],uint256[],uint256)",
-  )
-    .withArgs([ethereum.Value.fromFixedBytes(Bytes.fromHexString(poolId))])
-    .returns([
-      ethereum.Value.fromAddressArray(tokenAddressArray),
-      ethereum.Value.fromUnsignedBigIntArray(tokenBalanceArray),
-      ethereum.Value.fromUnsignedBigInt(BigInt.fromString("14936424")),
-    ]);
-
-  // getPool
-  createMockedFunction(
-    Address.fromString(vaultAddress),
-    "getPool",
-    "getPool(bytes32):(address,uint8)",
-  )
-    .withArgs([ethereum.Value.fromFixedBytes(Bytes.fromHexString(poolId))])
-    .returns([
-      ethereum.Value.fromAddress(Address.fromString(poolTokenAddress)),
-      ethereum.Value.fromUnsignedBigInt(BigInt.zero()),
-    ]);
-  // Pool token
-  createMockedFunction(
-    Address.fromString(poolTokenAddress),
-    "decimals",
-    "decimals():(uint8)",
-  ).returns([ethereum.Value.fromI32(poolTokenDecimals)]);
-  createMockedFunction(
-    Address.fromString(poolTokenAddress),
-    "totalSupply",
-    "totalSupply():(uint256)",
-  ).returns([ethereum.Value.fromUnsignedBigInt(toBigInt(poolTokenTotalSupply, poolTokenDecimals))]);
-
-  // Token Decimals
-  createMockedFunction(Address.fromString(token1Address), "decimals", "decimals():(uint8)").returns(
-    [ethereum.Value.fromI32(token1Decimals)],
-  );
-  createMockedFunction(Address.fromString(token2Address), "decimals", "decimals():(uint8)").returns(
-    [ethereum.Value.fromI32(token2Decimals)],
-  );
-  if (token3Address !== null) {
-    createMockedFunction(
-      Address.fromString(token3Address),
-      "decimals",
-      "decimals():(uint8)",
-    ).returns([ethereum.Value.fromI32(token3Decimals)]);
-  }
-
-  // Token weighting
-  const tokenWeightArray = [
-    toBigInt(token1Weight, poolTokenDecimals),
-    toBigInt(token2Weight, poolTokenDecimals),
-  ];
-  if (token3Weight !== null) tokenWeightArray.push(toBigInt(token3Weight, poolTokenDecimals));
-  createMockedFunction(
-    Address.fromString(poolTokenAddress),
-    "getNormalizedWeights",
-    "getNormalizedWeights():(uint256[])",
-  ).returns([ethereum.Value.fromUnsignedBigIntArray(tokenWeightArray)]);
-}
-
-export function mockBalancerVaultZero(): void {
-  mockERC20TotalSupply(ERC20_OHM_V2, OHM_V2_DECIMALS, DEFAULT_TOTAL_SUPPLY);
-  mockERC20TotalSupply(ERC20_DAI, ERC20_STANDARD_DECIMALS, DEFAULT_TOTAL_SUPPLY);
-  mockERC20TotalSupply(ERC20_WETH, ERC20_STANDARD_DECIMALS, DEFAULT_TOTAL_SUPPLY);
-  mockBalancerVault(
-    BALANCER_VAULT,
-    POOL_BALANCER_OHM_DAI_WETH_ID,
-    ERC20_BALANCER_OHM_DAI_WETH,
-    ERC20_STANDARD_DECIMALS,
-    BigDecimal.fromString("0"),
-    ERC20_OHM_V2,
-    ERC20_DAI,
-    ERC20_WETH,
-    BigDecimal.fromString("0"),
-    BigDecimal.fromString("0"),
-    BigDecimal.fromString("0"),
-    ERC20_STANDARD_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    BigDecimal.fromString("0.5"),
-    BigDecimal.fromString("0.25"),
-    BigDecimal.fromString("0.25"),
-  );
-
-  mockERC20TotalSupply(ERC20_FDT, ERC20_STANDARD_DECIMALS, DEFAULT_TOTAL_SUPPLY);
-  mockBalancerVault(
-    BALANCER_VAULT,
-    POOL_BALANCER_WETH_FDT_ID,
-    ERC20_BALANCER_WETH_FDT,
-    ERC20_STANDARD_DECIMALS,
-    BigDecimal.fromString("0"),
-    ERC20_WETH,
-    ERC20_FDT,
-    null,
-    BigDecimal.fromString("0"),
-    BigDecimal.fromString("0"),
-    null,
-    ERC20_STANDARD_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    BigDecimal.fromString("0.8"),
-    BigDecimal.fromString("0.2"),
-    null,
-  );
-
-  mockERC20TotalSupply(ERC20_BTRFLY_V2, ERC20_STANDARD_DECIMALS, DEFAULT_TOTAL_SUPPLY);
-  mockBalancerVault(
-    BALANCER_VAULT,
-    POOL_BALANCER_OHM_V2_BTRFLY_V2_ID,
-    ERC20_BALANCER_OHM_BTRFLY_V2,
-    ERC20_STANDARD_DECIMALS,
-    BigDecimal.fromString("0"),
-    ERC20_OHM_V2,
-    ERC20_BTRFLY_V2,
-    null,
-    BigDecimal.fromString("0"),
-    BigDecimal.fromString("0"),
-    null,
-    OHM_V2_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    BigDecimal.fromString("0.5"),
-    BigDecimal.fromString("0.5"),
-    null,
-  );
-
-  mockBalancerVault(
-    BALANCER_VAULT,
-    POOL_BALANCER_OHM_DAI,
-    ERC20_BALANCER_OHM_DAI,
-    ERC20_STANDARD_DECIMALS,
-    BigDecimal.fromString("0"),
-    ERC20_OHM_V2,
-    ERC20_DAI,
-    null,
-    BigDecimal.fromString("0"),
-    BigDecimal.fromString("0"),
-    null,
-    OHM_V2_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    BigDecimal.fromString("0.5"),
-    BigDecimal.fromString("0.5"),
-    null,
-  )
-
-  mockBalancerVault(
-    BALANCER_VAULT,
-    POOL_BALANCER_OHM_WETH,
-    ERC20_BALANCER_OHM_WETH,
-    ERC20_STANDARD_DECIMALS,
-    BigDecimal.fromString("0"),
-    ERC20_OHM_V2,
-    ERC20_WETH,
-    null,
-    BigDecimal.fromString("0"),
-    BigDecimal.fromString("0"),
-    null,
-    OHM_V2_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    BigDecimal.fromString("0.5"),
-    BigDecimal.fromString("0.5"),
-    null,
-  )
-
-  mockBalancerGaugeBalanceZero(WALLET_ADDRESSES);
-  mockAuraStakedBalanceZero(WALLET_ADDRESSES);
-}
-
-export function mockBalanceVaultOhmDaiEth(
-  totalSupply: BigDecimal = OHM_DAI_ETH_TOKEN_TOTAL_SUPPLY,
-  ohmBalance: BigDecimal = OHM_DAI_ETH_BALANCE_OHM,
-  daiBalance: BigDecimal = OHM_DAI_ETH_BALANCE_DAI,
-  wEthBalance: BigDecimal = OHM_DAI_ETH_BALANCE_WETH,
-  ohmWeight: BigDecimal = OHM_DAI_ETH_WEIGHT_OHM,
-  daiWeight: BigDecimal = OHM_DAI_ETH_WEIGHT_DAI,
-  wEthWeight: BigDecimal = OHM_DAI_ETH_WEIGHT_WETH,
-): void {
-  mockERC20TotalSupply(ERC20_OHM_V2, OHM_V2_DECIMALS, toBigInt(BigDecimal.fromString("10000000"), OHM_V2_DECIMALS));
-  mockERC20TotalSupply(ERC20_DAI, ERC20_STANDARD_DECIMALS, DEFAULT_TOTAL_SUPPLY);
-  mockERC20TotalSupply(ERC20_WETH, ERC20_STANDARD_DECIMALS, DEFAULT_TOTAL_SUPPLY);
-  mockBalancerVault(
-    BALANCER_VAULT,
-    POOL_BALANCER_OHM_DAI_WETH_ID,
-    ERC20_BALANCER_OHM_DAI_WETH,
-    ERC20_STANDARD_DECIMALS,
-    totalSupply,
-    ERC20_OHM_V2,
-    ERC20_DAI,
-    ERC20_WETH,
-    ohmBalance,
-    daiBalance,
-    wEthBalance,
-    OHM_V2_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    ohmWeight,
-    daiWeight,
-    wEthWeight,
-  );
-}
-
-const WETH_FDT_BALANCE_WETH = toDecimal(
-  BigInt.fromString("55282519432649791614"),
-  ERC20_STANDARD_DECIMALS,
-);
-const WETH_FDT_BALANCE_FDT = toDecimal(
-  BigInt.fromString("17066065377014702525776132"),
-  ERC20_STANDARD_DECIMALS,
-);
-export function mockBalanceVaultWethFdt(
-  wethBalance: BigDecimal = WETH_FDT_BALANCE_WETH,
-  fdtBalance: BigDecimal = WETH_FDT_BALANCE_FDT,
-): void {
-  mockERC20TotalSupply(ERC20_WETH, ERC20_STANDARD_DECIMALS, DEFAULT_TOTAL_SUPPLY);
-  mockERC20TotalSupply(ERC20_FDT, ERC20_STANDARD_DECIMALS, DEFAULT_TOTAL_SUPPLY);
-  mockBalancerVault(
-    BALANCER_VAULT,
-    POOL_BALANCER_WETH_FDT_ID,
-    ERC20_BALANCER_WETH_FDT,
-    ERC20_STANDARD_DECIMALS,
-    toDecimal(BigInt.fromString("2669094096479295381363690"), ERC20_STANDARD_DECIMALS),
-    ERC20_WETH,
-    ERC20_FDT,
-    null,
-    wethBalance,
-    fdtBalance,
-    null,
-    ERC20_STANDARD_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    BigDecimal.fromString("0.2"),
-    BigDecimal.fromString("0.8"),
-    null,
-  );
-}
-
-export const POOL_AURABAL_WETH_BALANCE_AURABAL = toDecimal(BigInt.fromString("4789103758014220845986"), 18);
-export const POOL_AURABAL_WETH_BALANCE_GRAVIAURA = toDecimal(BigInt.fromString("35760622390726206299930"), 18);
-export const POOL_AURABAL_WETH_BALANCE_WETH = toDecimal(BigInt.fromString("51484525313020258856"), 18);
-
-export function mockBalancerVaultGraviAuraBalWeth(
-  auraBalBalance: BigDecimal = POOL_AURABAL_WETH_BALANCE_AURABAL,
-  graviAuraBalance: BigDecimal = POOL_AURABAL_WETH_BALANCE_GRAVIAURA,
-  wethBalance: BigDecimal = POOL_AURABAL_WETH_BALANCE_WETH,
-): void {
-  mockERC20TotalSupply(ERC20_AURA_BAL, ERC20_STANDARD_DECIMALS, DEFAULT_TOTAL_SUPPLY);
-  mockERC20TotalSupply(ERC20_AURA_GRAVI, ERC20_STANDARD_DECIMALS, DEFAULT_TOTAL_SUPPLY);
-  mockERC20TotalSupply(ERC20_WETH, ERC20_STANDARD_DECIMALS, DEFAULT_TOTAL_SUPPLY);
-  mockBalancerVault(
-    BALANCER_VAULT,
-    POOL_BALANCER_GRAVIAURA_AURABAL_WETH_ID,
-    ERC20_BALANCER_GRAVIAURA_AURABAL_WETH,
-    ERC20_STANDARD_DECIMALS,
-    toDecimal(BigInt.fromString("5676269785389456574276"), ERC20_STANDARD_DECIMALS),
-    ERC20_AURA_BAL,
-    ERC20_AURA_GRAVI,
-    ERC20_WETH,
-    auraBalBalance,
-    graviAuraBalance,
-    wethBalance,
-    ERC20_STANDARD_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    BigDecimal.fromString("0.3333"),
-    BigDecimal.fromString("0.3334"),
-    BigDecimal.fromString("0.3333"),
-  );
-}
-
-export function mockBalancerVaultAuraWeth(
-  auraBalance: BigDecimal = POOL_AURABAL_WETH_BALANCE_AURABAL,
-  wethBalance: BigDecimal = POOL_AURABAL_WETH_BALANCE_WETH,
-): void {
-  mockERC20TotalSupply(ERC20_WETH, ERC20_STANDARD_DECIMALS, DEFAULT_TOTAL_SUPPLY);
-  mockERC20TotalSupply(ERC20_AURA, ERC20_STANDARD_DECIMALS, DEFAULT_TOTAL_SUPPLY);
-  mockBalancerVault(
-    BALANCER_VAULT,
-    POOL_BALANCER_AURA_WETH_ID,
-    ERC20_BALANCER_AURA_WETH,
-    ERC20_STANDARD_DECIMALS,
-    toDecimal(BigInt.fromString("5676269785389456574276"), ERC20_STANDARD_DECIMALS),
-    ERC20_WETH,
-    ERC20_AURA,
-    null,
-    wethBalance,
-    auraBalance,
-    null,
-    ERC20_STANDARD_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    BigDecimal.fromString("0.5"),
-    BigDecimal.fromString("0.5"),
-    null,
-  );
-}
-
-export const OHM_BTRFLY_BALANCE_OHM = toDecimal(
-  BigInt.fromString("75921860983195"),
-  OHM_V2_DECIMALS,
-);
-export const OHM_BTRFLY_BALANCE_BTRFLY = toDecimal(
-  BigInt.fromString("3912455650447516493890"),
-  ERC20_STANDARD_DECIMALS,
-);
-export const OHM_BTRFLY_TOTAL_SUPPLY = toDecimal(
-  BigInt.fromString("34449175006332125035810"),
-  ERC20_STANDARD_DECIMALS,
-);
-
-export function mockBalancerVaultOhmBtrfly(
-  ohmBalance: BigDecimal = OHM_BTRFLY_BALANCE_OHM,
-  btrflyBalance: BigDecimal = OHM_BTRFLY_BALANCE_BTRFLY,
-): void {
-  mockERC20TotalSupply(ERC20_OHM_V2, OHM_V2_DECIMALS, toBigInt(BigDecimal.fromString("10000000"), OHM_V2_DECIMALS));
-  mockERC20TotalSupply(ERC20_BTRFLY_V2, ERC20_STANDARD_DECIMALS, DEFAULT_TOTAL_SUPPLY);
-  mockBalancerVault(
-    BALANCER_VAULT,
-    POOL_BALANCER_OHM_V2_BTRFLY_V2_ID,
-    ERC20_BALANCER_OHM_BTRFLY_V2,
-    ERC20_STANDARD_DECIMALS,
-    OHM_BTRFLY_TOTAL_SUPPLY,
-    ERC20_OHM_V2,
-    ERC20_BTRFLY_V2,
-    null,
-    ohmBalance,
-    btrflyBalance,
-    null,
-    OHM_V2_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    ERC20_STANDARD_DECIMALS,
-    BigDecimal.fromString("0.5"),
-    BigDecimal.fromString("0.5"),
-    null,
-  );
-}
 
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
@@ -778,6 +389,7 @@ describe("get balancer records", () => {
       TREASURY_ADDRESS_V3,
       BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
       toBigInt(expectedBalance),
+      BigDecimal.fromString("1000")
     );
 
     // Mock price lookup
@@ -831,6 +443,7 @@ describe("get balancer records", () => {
       DAO_WALLET,
       BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
       toBigInt(expectedBalance),
+      BigDecimal.fromString("1000"),
     );
 
     // Mock price lookup

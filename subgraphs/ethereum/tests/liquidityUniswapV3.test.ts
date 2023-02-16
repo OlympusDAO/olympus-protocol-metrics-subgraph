@@ -4,8 +4,8 @@ import { assert, beforeEach, clearStore, describe, test } from "matchstick-as/as
 import { toDecimal } from "../../shared/src/utils/Decimals";
 import { getUniswapV3PairTotalValue } from "../src/liquidity/LiquidityUniswapV3";
 import { PAIR_UNISWAP_V3_FXS_ETH } from "../src/utils/Constants";
+import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
 import {
-  ERC20_STANDARD_DECIMALS,
   ETH_USD_RESERVE_BLOCK,
   FXS_ETH_BALANCE_ETH,
   FXS_ETH_BALANCE_FXS,

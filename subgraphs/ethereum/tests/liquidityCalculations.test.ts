@@ -17,14 +17,14 @@ import {
   PAIR_UNISWAP_V2_OHM_DAI_V2,
 } from "../src/utils/Constants";
 import { mockConvexStakedBalanceZero, mockFraxLockedBalanceZero } from "./contractHelper.test";
-import { mockBalancerVaultZero, mockBalanceVaultOhmDaiEth } from "./liquidityBalancer.test";
+import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import { mockFraxSwapPairOhmFrax, mockFraxSwapPairZero } from "./liquidityFraxSwap.test";
 import {
-  ERC20_STANDARD_DECIMALS,
   ETH_USD_RESERVE_BLOCK,
+  mockBalancerVaultZero,
+  mockBalanceVaultOhmDaiEth,
   mockCurvePairTotalValue,
   mockCurvePairZero,
-  mockERC20TotalSupply,
   mockEthUsdRate,
   mockUniswapV2Pair,
   mockUniswapV2PairsZero,

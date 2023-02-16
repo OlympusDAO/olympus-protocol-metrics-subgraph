@@ -8,7 +8,8 @@ import {
   getLiquityStabilityPoolBalance,
   getLiquityStabilityPoolRecords,
 } from "../src/utils/ContractHelper";
-import { ERC20_STANDARD_DECIMALS, OHM_USD_RESERVE_BLOCK } from "./pairHelper";
+import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
+import { OHM_USD_RESERVE_BLOCK } from "./pairHelper";
 
 const LUSD_BALANCE = "100";
 const LUSD_BALANCE_INT = toBigInt(BigDecimal.fromString(LUSD_BALANCE), ERC20_STANDARD_DECIMALS);

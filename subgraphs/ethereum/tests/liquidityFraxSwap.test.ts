@@ -19,12 +19,11 @@ import {
   PAIR_FRAXSWAP_V1_OHM_FRAX,
   PAIR_FRAXSWAP_V2_OHM_FRAX,
 } from "../src/utils/Constants";
-import { mockBalancerVaultZero } from "./liquidityBalancer.test";
+import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import {
-  ERC20_STANDARD_DECIMALS,
   getOhmUsdRate,
+  mockBalancerVaultZero,
   mockCurvePairZero,
-  mockERC20TotalSupply,
   mockUniswapV2PairsZero,
   mockUsdOhmV2Rate,
   mockWEthBtrflyV1Rate,

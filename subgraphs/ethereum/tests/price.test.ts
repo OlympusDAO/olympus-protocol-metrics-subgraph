@@ -48,29 +48,27 @@ import {
 } from "../src/utils/Constants";
 import { getUSDRate, getUSDRateBalancer } from "../src/utils/Price";
 import { mockBalancerGaugeBalanceZero } from "./contractHelper.test";
+import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
 import {
+  getERC20UsdRate,
+  getEthUsdRate,
+  getOhmUsdRate,
+  getTribeUsdRate,
   mockBalancerVaultAuraWeth,
   mockBalancerVaultGraviAuraBalWeth,
   mockBalancerVaultZero,
   mockBalanceVaultOhmDaiEth,
   mockBalanceVaultWethFdt,
-  OHM_DAI_ETH_BALANCE_DAI,
-  OHM_DAI_ETH_BALANCE_OHM,
-  OHM_DAI_ETH_WEIGHT_DAI,
-  OHM_DAI_ETH_WEIGHT_OHM,
-} from "./liquidityBalancer.test";
-import {
-  ERC20_STANDARD_DECIMALS,
-  getERC20UsdRate,
-  getEthUsdRate,
-  getOhmUsdRate,
-  getTribeUsdRate,
   mockEthUsdRate,
   mockFxsEthRate,
   mockRateUniswapV3,
   mockTribeEthRate,
   mockUniswapV2Pair,
   mockUsdOhmV2Rate,
+  OHM_DAI_ETH_BALANCE_DAI,
+  OHM_DAI_ETH_BALANCE_OHM,
+  OHM_DAI_ETH_WEIGHT_DAI,
+  OHM_DAI_ETH_WEIGHT_OHM,
   OHM_USD_RESERVE_BLOCK,
   USDC_DECIMALS,
 } from "./pairHelper";

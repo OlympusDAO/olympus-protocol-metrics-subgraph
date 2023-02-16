@@ -33,16 +33,15 @@ import {
   POOL_BALANCER_OHM_DAI_WETH_ID,
 } from "../src/utils/Constants";
 import { mockConvexStakedBalance, mockConvexStakedBalanceZero, mockFraxLockedBalance, mockFraxLockedBalanceZero } from "./contractHelper.test";
-import { mockBalancerVaultZero } from "./liquidityBalancer.test";
+import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import { mockFraxSwapPairZero } from "./liquidityFraxSwap.test";
 import {
-  ERC20_STANDARD_DECIMALS,
   getEthUsdRate,
   getOhmUsdRate,
   getPairValue,
+  mockBalancerVaultZero,
   mockCurvePairTotalValue,
   mockCurvePairZero,
-  mockERC20TotalSupply,
   mockEthUsdRate,
   mockUniswapV2PairsZero,
   mockUsdOhmV2Rate,
