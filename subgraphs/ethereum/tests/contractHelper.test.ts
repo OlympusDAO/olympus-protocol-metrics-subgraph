@@ -13,7 +13,9 @@ import {
   AURA_REWARDS_CONTRACTS,
   AURA_STAKING_AURA_BAL,
   AURA_STAKING_OHM_DAI_WETH,
+  AURA_STAKING_OHM_WETH,
   BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
+  BALANCER_LIQUIDITY_GAUGE_OHM_WETH,
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
   CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
@@ -24,6 +26,8 @@ import {
   ERC20_BAL,
   ERC20_BALANCER_OHM_DAI_WETH,
   ERC20_BALANCER_OHM_DAI_WETH_AURA,
+  ERC20_BALANCER_OHM_WETH,
+  ERC20_BALANCER_OHM_WETH_AURA,
   ERC20_BALANCER_WETH_FDT,
   ERC20_CVX,
   ERC20_CVX_FRAX_3CRV,
@@ -234,9 +238,14 @@ export const mockBalancerGaugeBalanceZero = (wallets: string[]): void => {
       BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
       BigInt.zero(),
     );
-  }
 
-  for (let i = 0; i < wallets.length; i++) {
+    mockBalancerGaugeBalance(
+      ERC20_BALANCER_OHM_WETH,
+      wallets[i],
+      BALANCER_LIQUIDITY_GAUGE_OHM_WETH,
+      BigInt.zero(),
+    );
+
     mockBalancerGaugeBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
       wallets[i],
@@ -277,6 +286,13 @@ export const mockAuraStakedBalanceZero = (wallets: string[]): void => {
       ERC20_BALANCER_OHM_DAI_WETH_AURA,
       wallets[i],
       AURA_STAKING_OHM_DAI_WETH,
+      BigInt.zero(),
+    );
+
+    mockAuraStakedBalance(
+      ERC20_BALANCER_OHM_WETH_AURA,
+      wallets[i],
+      AURA_STAKING_OHM_WETH,
       BigInt.zero(),
     );
 

@@ -1168,7 +1168,12 @@ export function getAuraPoolEarnedRecords(timestamp: BigInt, contractAddress: str
     const poolAddress = AURA_REWARDS_CONTRACTS[h];
     log.debug("getAuraPoolEarnedRecords: looking for Aura earned rewards for token {} ({}) in pool {} ({})", [getContractName(contractAddress), contractAddress, getContractName(poolAddress), poolAddress]);
     const rewardPool = AuraVirtualBalanceRewardPool.bind(Address.fromString(poolAddress));
-    if (rewardPool.rewardToken().toHexString().toLowerCase() != contractAddress.toLowerCase()) {
+    const rewardTokenResult = rewardPool.try_rewardToken();
+    if (rewardTokenResult.reverted) {
+      continue;
+    }
+
+    if (rewardTokenResult.value.toHexString().toLowerCase() != contractAddress.toLowerCase()) {
       continue;
     }
 
