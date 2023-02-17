@@ -1627,3 +1627,72 @@ export class TokenPriceSnapshot extends Entity {
     this.set("price", Value.fromBigDecimal(value));
   }
 }
+
+export class StakingPoolSnapshot extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    const id = this.get("id");
+    assert(id != null, "Cannot save StakingPoolSnapshot entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type StakingPoolSnapshot must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("StakingPoolSnapshot", id.toString(), this);
+    }
+  }
+
+  static load(id: string): StakingPoolSnapshot | null {
+    return changetype<StakingPoolSnapshot | null>(
+      store.get("StakingPoolSnapshot", id)
+    );
+  }
+
+  get id(): string {
+    const value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get block(): BigInt {
+    const value = this.get("block");
+    return value!.toBigInt();
+  }
+
+  set block(value: BigInt) {
+    this.set("block", Value.fromBigInt(value));
+  }
+
+  get contractAddress(): Bytes {
+    const value = this.get("contractAddress");
+    return value!.toBytes();
+  }
+
+  set contractAddress(value: Bytes) {
+    this.set("contractAddress", Value.fromBytes(value));
+  }
+
+  get stakingToken(): Bytes | null {
+    const value = this.get("stakingToken");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBytes();
+    }
+  }
+
+  set stakingToken(value: Bytes | null) {
+    if (!value) {
+      this.unset("stakingToken");
+    } else {
+      this.set("stakingToken", Value.fromBytes(<Bytes>value));
+    }
+  }
+}

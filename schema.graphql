@@ -174,3 +174,10 @@ type TokenPriceSnapshot @entity(immutable: true) {
   token: Bytes!
   price: BigDecimal!
 }
+
+type StakingPoolSnapshot @entity(immutable: true) {
+  id: ID! # address/block
+  block: BigInt!
+  contractAddress: Bytes!
+  stakingToken: Bytes # Will not be set if the call reverts
+}
