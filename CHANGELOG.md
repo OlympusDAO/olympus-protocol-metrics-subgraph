@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 3.6.7 (2023-02-17)
+## 3.6.8 (2023-02-17)
 
 - Adds support for the Balancer OHM-WETH LP staked in Aura
 
