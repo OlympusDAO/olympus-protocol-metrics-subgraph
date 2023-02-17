@@ -18,7 +18,6 @@ import {
 } from "../src/utils/Constants";
 import { mockConvexStakedBalanceZero, mockFraxLockedBalanceZero } from "./contractHelper.test";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
-import { mockFraxSwapPairOhmFrax, mockFraxSwapPairZero } from "./liquidityFraxSwap.test";
 import {
   ETH_USD_RESERVE_BLOCK,
   mockBalancerVaultZero,
@@ -26,8 +25,11 @@ import {
   mockCurvePairTotalValue,
   mockCurvePairZero,
   mockEthUsdRate,
+  mockFraxSwapPairOhmFrax,
+  mockFraxSwapPairZero,
   mockUniswapV2Pair,
   mockUniswapV2PairsZero,
+  mockUniswapV3PairsZero,
   mockUsdOhmV2Rate,
   OHM_V2_DECIMALS,
 } from "./pairHelper";
@@ -39,18 +41,20 @@ const TIMESTAMP = BigInt.fromString("1");
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
+
+  // Mock other liquidity pools
+  mockBalancerVaultZero();
+  mockUniswapV2PairsZero();
+  mockFraxSwapPairZero();
+  mockFraxLockedBalanceZero();
+  mockCurvePairZero();
+  mockUniswapV3PairsZero();
 })
 
 describe("getLiquidityPoolValue", () => {
   test("curve pool", () => {
     mockEthUsdRate();
     mockUsdOhmV2Rate();
-
-    // Mock other liquidity pools
-    mockBalancerVaultZero();
-    mockUniswapV2PairsZero();
-    mockFraxSwapPairZero();
-    mockFraxLockedBalanceZero();
 
     // Mock pair
     const ohmReserves = BigDecimal.fromString("100");
@@ -93,11 +97,6 @@ describe("getLiquidityPoolValue", () => {
   });
 
   test("FraxSwap pool", () => {
-    // Mock other liquidity pools
-    mockBalancerVaultZero();
-    mockUniswapV2PairsZero();
-    mockCurvePairZero();
-
     mockFraxSwapPairOhmFrax();
 
     // Mock balance
@@ -122,13 +121,6 @@ describe("getLiquidityPoolValue", () => {
   test("curve pool includes DAO wallet", () => {
     mockEthUsdRate();
     mockUsdOhmV2Rate();
-
-    // Mock liquidity pools
-    mockBalancerVaultZero();
-    mockUniswapV2PairsZero();
-    mockFraxSwapPairZero();
-    mockFraxLockedBalanceZero();
-    mockCurvePairZero();
 
     // Mock pair
     const ohmReserves = BigDecimal.fromString("100");
@@ -184,12 +176,6 @@ describe("getLiquidityPoolValue", () => {
   test("uniswapv2 pool", () => {
     mockUsdOhmV2Rate();
 
-    // Mock liquidity pools
-    mockBalancerVaultZero();
-    mockUniswapV2PairsZero();
-    mockCurvePairZero();
-    mockFraxSwapPairZero();
-
     // Mock pair
     mockUniswapV2Pair(
       ERC20_OHM_V2,
@@ -219,12 +205,6 @@ describe("getLiquidityPoolValue", () => {
   });
 
   test("balancer pool", () => {
-    // Mock liquidity pools
-    mockBalancerVaultZero();
-    mockUniswapV2PairsZero();
-    mockCurvePairZero();
-    mockFraxSwapPairZero();
-
     // Mock pool
     mockBalanceVaultOhmDaiEth();
 

@@ -23,9 +23,12 @@ import {
   ERC20_CRV_OHMFRAXBP,
   ERC20_DAI,
   ERC20_FDT,
+  ERC20_FPIS,
   ERC20_FRAX,
+  ERC20_FRAX_3CRV,
   ERC20_FRAX_BP,
   ERC20_FXS,
+  ERC20_LQTY,
   ERC20_LUSD,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
@@ -37,6 +40,8 @@ import {
   PAIR_CURVE_FRAX_USDC,
   PAIR_CURVE_OHM_ETH,
   PAIR_CURVE_OHM_FRAXBP,
+  PAIR_FRAXSWAP_V1_OHM_FRAX,
+  PAIR_FRAXSWAP_V2_OHM_FRAX,
   PAIR_UNISWAP_V2_OHM_BTRFLY_V1,
   PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
@@ -46,7 +51,11 @@ import {
   PAIR_UNISWAP_V2_OHM_LUSD_V2,
   PAIR_UNISWAP_V2_TRIBE_ETH,
   PAIR_UNISWAP_V2_USDC_ETH,
+  PAIR_UNISWAP_V3_3CRV_USD,
+  PAIR_UNISWAP_V3_FPIS_FRAX,
   PAIR_UNISWAP_V3_FXS_ETH,
+  PAIR_UNISWAP_V3_LQTY_LUSD,
+  PAIR_UNISWAP_V3_LQTY_WETH,
   PAIR_UNISWAP_V3_WETH_BTRFLY_V1,
   PAIR_UNISWAP_V3_WETH_BTRFLY_V2,
   POOL_BALANCER_AURA_WETH_ID,
@@ -211,6 +220,8 @@ export const mockRateUniswapV3 = (
   token1Decimals: i32,
   token0Balance: BigInt,
   token1Balance: BigInt,
+  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
+  shouldRevert: boolean = false,
 ): void => {
   mockERC20TotalSupply(token0Address, token0Decimals, toBigInt(DEFAULT_TOTAL_SUPPLY, token0Decimals));
   mockERC20TotalSupply(token1Address, token1Decimals, toBigInt(DEFAULT_TOTAL_SUPPLY, token1Decimals));
@@ -232,12 +243,23 @@ export const mockRateUniswapV3 = (
   ]);
 
   // Tokens
-  createMockedFunction(contractAddress, "token0", "token0():(address)").returns([
-    ethereum.Value.fromAddress(Address.fromString(token0Address)),
-  ]);
-  createMockedFunction(contractAddress, "token1", "token1():(address)").returns([
-    ethereum.Value.fromAddress(Address.fromString(token1Address)),
-  ]);
+  if (shouldRevert) {
+    createMockedFunction(contractAddress, "token0", "token0():(address)").reverts();
+  }
+  else {
+    createMockedFunction(contractAddress, "token0", "token0():(address)").returns([
+      ethereum.Value.fromAddress(Address.fromString(token0Address)),
+    ]);
+  }
+
+  if (shouldRevert) {
+    createMockedFunction(contractAddress, "token1", "token1():(address)").reverts();
+  }
+  else {
+    createMockedFunction(contractAddress, "token1", "token1():(address)").returns([
+      ethereum.Value.fromAddress(Address.fromString(token1Address)),
+    ]);
+  }
 
   // Token decimals
   createMockedFunction(Address.fromString(token0Address), "decimals", "decimals():(uint8)").returns(
@@ -263,6 +285,16 @@ export const mockRateUniswapV3 = (
     .withArgs([ethereum.Value.fromAddress(contractAddress)])
     .returns([ethereum.Value.fromUnsignedBigInt(token1Balance)]);
 };
+
+export const mockUniswapV3PairsZero = (): void => {
+  mockRateUniswapV3(PAIR_UNISWAP_V3_3CRV_USD, BigInt.zero(), ERC20_FRAX_3CRV, ERC20_USDC, ERC20_STANDARD_DECIMALS, USDC_DECIMALS, BigInt.zero(), BigInt.zero(), true);
+  mockRateUniswapV3(PAIR_UNISWAP_V3_FPIS_FRAX, BigInt.zero(), ERC20_FPIS, ERC20_FRAX, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
+  mockRateUniswapV3(PAIR_UNISWAP_V3_FXS_ETH, BigInt.zero(), ERC20_FXS, ERC20_WETH, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
+  mockRateUniswapV3(PAIR_UNISWAP_V3_LQTY_LUSD, BigInt.zero(), ERC20_LQTY, ERC20_LUSD, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
+  mockRateUniswapV3(PAIR_UNISWAP_V3_LQTY_WETH, BigInt.zero(), ERC20_LQTY, ERC20_WETH, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
+  mockRateUniswapV3(PAIR_UNISWAP_V3_WETH_BTRFLY_V1, BigInt.zero(), ERC20_WETH, ERC20_BTRFLY_V1, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
+  mockRateUniswapV3(PAIR_UNISWAP_V3_WETH_BTRFLY_V2, BigInt.zero(), ERC20_WETH, ERC20_BTRFLY_V2, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
+}
 
 export const mockFxsEthRate = (): void => {
   mockRateUniswapV3(
@@ -415,6 +447,22 @@ export const mockUniswapV2Pair = (
 
 export const mockUniswapV2PairsZero = (): void => {
   // For all entries in LIQUIDITY_OWNED
+  mockUniswapV2Pair(
+    ERC20_USDC,
+    ERC20_WETH,
+    USDC_DECIMALS,
+    ERC20_STANDARD_DECIMALS,
+    BigInt.fromString("1"),
+    BigInt.fromString("1"),
+    BigInt.fromString("1"),
+    PAIR_UNISWAP_V2_USDC_ETH,
+    ERC20_STANDARD_DECIMALS,
+  );
+  mockZeroWalletBalances(
+    PAIR_UNISWAP_V2_USDC_ETH,
+    getWalletAddressesForContract(PAIR_UNISWAP_V2_USDC_ETH),
+  );
+
   mockUniswapV2Pair(
     ERC20_OHM_V2,
     ERC20_DAI,
@@ -1043,5 +1091,132 @@ export function mockBalancerVaultOhmBtrfly(
     BigDecimal.fromString("0.5"),
     BigDecimal.fromString("0.5"),
     null,
+  );
+}
+
+export const FRAXSWAP_OHM_FRAX_DECIMALS = 18;
+export const FRAXSWAP_OHM_FRAX_TOTAL_SUPPLY = toDecimal(
+  BigInt.fromString("1303397099889362190"),
+  FRAXSWAP_OHM_FRAX_DECIMALS,
+);
+export const FRAXSWAP_OHM_FRAX_TOKEN0 = ERC20_OHM_V2;
+export const FRAXSWAP_OHM_FRAX_TOKEN0_DECIMALS = OHM_V2_DECIMALS;
+export const FRAXSWAP_OHM_FRAX_TOKEN1 = ERC20_FRAX;
+export const FRAXSWAP_OHM_FRAX_TOKEN1_DECIMALS = ERC20_STANDARD_DECIMALS;
+export const FRAXSWAP_OHM_FRAX_TOKEN0_RESERVES = toDecimal(
+  BigInt.fromString("10495919068290"),
+  FRAXSWAP_OHM_FRAX_TOKEN0_DECIMALS,
+);
+export const FRAXSWAP_OHM_FRAX_TOKEN1_RESERVES = toDecimal(
+  BigInt.fromString("161899942493712174360986"),
+  FRAXSWAP_OHM_FRAX_TOKEN1_DECIMALS,
+);
+export const FRAXSWAP_OHM_FRAX_TOTAL_VALUE = FRAXSWAP_OHM_FRAX_TOKEN0_RESERVES.times(getOhmUsdRate()).plus(
+  FRAXSWAP_OHM_FRAX_TOKEN1_RESERVES.times(BigDecimal.fromString("1")),
+);
+export const FRAXSWAP_OHM_FRAX_UNIT_RATE = FRAXSWAP_OHM_FRAX_TOTAL_VALUE.div(
+  FRAXSWAP_OHM_FRAX_TOTAL_SUPPLY,
+);
+
+export function mockFraxSwapPair(
+  pairAddress: string,
+  pairTotalSupply: BigDecimal,
+  pairDecimals: i32,
+  token0Address: string,
+  token1Address: string,
+  token0Decimals: i32,
+  token1Decimals: i32,
+  token0Reserves: BigDecimal,
+  token1Reserves: BigDecimal,
+): void {
+  // mock OHM price
+  mockUsdOhmV2Rate();
+
+  mockERC20TotalSupply(token0Address, token0Decimals, toBigInt(DEFAULT_TOTAL_SUPPLY, token0Decimals));
+  mockERC20TotalSupply(token1Address, token1Decimals, toBigInt(DEFAULT_TOTAL_SUPPLY, token1Decimals));
+
+  // totalSupply
+  createMockedFunction(
+    Address.fromString(pairAddress),
+    "totalSupply",
+    "totalSupply():(uint256)",
+  ).returns([ethereum.Value.fromUnsignedBigInt(toBigInt(pairTotalSupply, pairDecimals))]);
+
+  // decimals
+  createMockedFunction(Address.fromString(pairAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(pairDecimals),
+  ]);
+
+  // token0
+  createMockedFunction(Address.fromString(pairAddress), "token0", "token0():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(token0Address)),
+  ]);
+
+  // token1
+  createMockedFunction(Address.fromString(pairAddress), "token1", "token1():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(token1Address)),
+  ]);
+
+  // token0 decimals
+  createMockedFunction(Address.fromString(token0Address), "decimals", "decimals():(uint8)").returns(
+    [ethereum.Value.fromI32(token0Decimals)],
+  );
+
+  // token1 decimals
+  createMockedFunction(Address.fromString(token1Address), "decimals", "decimals():(uint8)").returns(
+    [ethereum.Value.fromI32(token1Decimals)],
+  );
+
+  // getReserves
+  createMockedFunction(
+    Address.fromString(pairAddress),
+    "getReserves",
+    "getReserves():(uint112,uint112,uint32)",
+  ).returns([
+    ethereum.Value.fromUnsignedBigInt(toBigInt(token0Reserves, token0Decimals)),
+    ethereum.Value.fromUnsignedBigInt(toBigInt(token1Reserves, token1Decimals)),
+    ethereum.Value.fromI32(0),
+  ]);
+}
+
+export function mockFraxSwapPairZero(): void {
+  mockFraxSwapPair(
+    PAIR_FRAXSWAP_V1_OHM_FRAX,
+    BigDecimal.fromString("0"),
+    FRAXSWAP_OHM_FRAX_DECIMALS,
+    FRAXSWAP_OHM_FRAX_TOKEN0,
+    FRAXSWAP_OHM_FRAX_TOKEN1,
+    FRAXSWAP_OHM_FRAX_TOKEN0_DECIMALS,
+    FRAXSWAP_OHM_FRAX_TOKEN1_DECIMALS,
+    BigDecimal.fromString("0"),
+    BigDecimal.fromString("0"),
+  );
+
+  mockFraxSwapPair(
+    PAIR_FRAXSWAP_V2_OHM_FRAX,
+    BigDecimal.fromString("0"),
+    FRAXSWAP_OHM_FRAX_DECIMALS,
+    FRAXSWAP_OHM_FRAX_TOKEN0,
+    FRAXSWAP_OHM_FRAX_TOKEN1,
+    FRAXSWAP_OHM_FRAX_TOKEN0_DECIMALS,
+    FRAXSWAP_OHM_FRAX_TOKEN1_DECIMALS,
+    BigDecimal.fromString("0"),
+    BigDecimal.fromString("0"),
+  );
+}
+
+export function mockFraxSwapPairOhmFrax(
+  totalSupply: BigDecimal = FRAXSWAP_OHM_FRAX_TOTAL_SUPPLY,
+): void {
+  mockFraxSwapPair(
+    PAIR_FRAXSWAP_V1_OHM_FRAX,
+    totalSupply,
+    FRAXSWAP_OHM_FRAX_DECIMALS,
+    FRAXSWAP_OHM_FRAX_TOKEN0,
+    FRAXSWAP_OHM_FRAX_TOKEN1,
+    FRAXSWAP_OHM_FRAX_TOKEN0_DECIMALS,
+    FRAXSWAP_OHM_FRAX_TOKEN1_DECIMALS,
+    FRAXSWAP_OHM_FRAX_TOKEN0_RESERVES,
+    FRAXSWAP_OHM_FRAX_TOKEN1_RESERVES,
   );
 }

@@ -389,7 +389,7 @@ describe("get balancer records", () => {
       TREASURY_ADDRESS_V3,
       BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
       toBigInt(expectedBalance),
-      BigDecimal.fromString("1000")
+      BigDecimal.fromString("100")
     );
 
     // Mock price lookup

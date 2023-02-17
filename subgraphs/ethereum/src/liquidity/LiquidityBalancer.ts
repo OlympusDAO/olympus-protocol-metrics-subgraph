@@ -143,7 +143,8 @@ export function getBalancerPoolTotalValue(
     const currentBalanceDecimal = balances[i];
     const rate = getUSDRate(currentAddress, blockNumber);
     const value = currentBalanceDecimal.times(rate);
-    log.debug("Token address: {}, balance: {}, rate: {}, value: {}", [
+    log.debug("getBalancerPoolTotalValue: Token: {} ({}), balance: {}, rate: {}, value: {}", [
+      getContractName(currentAddress),
       currentAddress,
       currentBalanceDecimal.toString(),
       rate.toString(),

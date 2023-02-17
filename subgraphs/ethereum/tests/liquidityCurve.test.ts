@@ -34,7 +34,6 @@ import {
 } from "../src/utils/Constants";
 import { mockConvexStakedBalance, mockConvexStakedBalanceZero, mockFraxLockedBalance, mockFraxLockedBalanceZero } from "./contractHelper.test";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
-import { mockFraxSwapPairZero } from "./liquidityFraxSwap.test";
 import {
   getEthUsdRate,
   getOhmUsdRate,
@@ -43,6 +42,7 @@ import {
   mockCurvePairTotalValue,
   mockCurvePairZero,
   mockEthUsdRate,
+  mockFraxSwapPairZero,
   mockUniswapV2PairsZero,
   mockUsdOhmV2Rate,
   OHM_USD_RESERVE_BLOCK,
@@ -56,6 +56,9 @@ const TIMESTAMP = BigInt.fromString("1");
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
+
+  mockBalancerVaultZero();
+  mockUniswapV2PairsZero();
 });
 
 describe("Token Quantity", () => {
