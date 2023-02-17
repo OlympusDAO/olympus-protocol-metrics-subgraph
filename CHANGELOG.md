@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 3.6.7 (2023-02-17)
+
+- Adds support for the Balancer OHM-WETH LP staked in Aura
+
 ## 3.6.0 (2023-02-14)
 
 - Adds OHM deployed into the Euler and Silo lending markets

@@ -5,7 +5,7 @@ features:
 graft:
   # base: QmcrhGvpxKHs3HGXoVzNy9LKWd1gDviQyS6snKQ38V9Keo
   # block: 16226955 # BondManager
-  base: QmbAwdAdqibJrPRepXwPpcvxx3uLzDM8ErFWRG2h8Vnxpf
+  base: QmQvYFkPrqngyBTo3QkcKJ1hLJ4VstG8Z64ekRM2N4AUTs
   block: 16570734 # Maker DSR deployment
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
