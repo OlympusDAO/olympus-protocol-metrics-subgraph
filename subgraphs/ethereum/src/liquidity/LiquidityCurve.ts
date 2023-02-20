@@ -102,7 +102,11 @@ export function getOrCreateCurvePoolSnapshot(pairAddress: string, blockNumber: B
     const pairToken: ERC20TokenSnapshot = getOrCreateERC20TokenSnapshot(pairTokenAddress, blockNumber);
     snapshot.poolToken = Bytes.fromHexString(pairTokenAddress);
     snapshot.decimals = pairToken.decimals;
-    snapshot.totalSupply = pairToken.totalSupply;
+
+    const pairTokenTotalSupply = pairToken.totalSupply;
+    if (pairTokenTotalSupply !== null) {
+      snapshot.totalSupply = pairTokenTotalSupply;
+    }
 
     snapshot.save();
   }
@@ -324,6 +328,11 @@ function getCurvePairRecord(
   multiplier: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecord | null {
+  const pairTokenSnapshot = getOrCreateERC20TokenSnapshot(pairTokenAddress, blockNumber);
+  if (pairTokenSnapshot.totalSupply === null) {
+    return null;
+  }
+
   const pairToken = getERC20(pairTokenAddress, blockNumber);
   if (!pairToken) {
     throw new Error("Unable to bind to ERC20 contract for Curve pair token " + pairTokenAddress);
@@ -335,7 +344,6 @@ function getCurvePairRecord(
     return null;
   }
 
-  const pairTokenSnapshot = getOrCreateERC20TokenSnapshot(pairTokenAddress, blockNumber);
   const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairTokenSnapshot.decimals);
   log.debug("getCurvePairRecord: Curve pair balance for token {} ({}) in wallet {} ({}) was {}", [
     getContractName(pairTokenAddress),

@@ -1,29 +1,13 @@
-import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
-import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createOrUpdateTokenRecord, getIsTokenLiquid } from "../../../shared/src/utils/TokenRecordHelper";
 import { TRSRY } from "../../../shared/src/Wallets";
 import { BLOCKCHAIN, ERC20_TOKENS, getContractName } from "./Constants";
-import { getERC20 } from "./ContractHelper";
+import { getERC20DecimalBalance } from "./ContractHelper";
 
 function getTreasuryBalance(tokenAddress: string, blockNumber: BigInt): BigDecimal | null {
-    const tokenContract = getERC20(tokenAddress, blockNumber);
-    if (!tokenContract) {
-        log.warning("getTreasuryBalance: unable to bind with ERC20 contract for token {}", [getContractName(tokenAddress)]);
-        return null;
-    }
-
-    /**
-     * Calling `getReserveBalance` on the treasury contract would return the token
-     * balance and the debt (old treasury balances), which would distort the values.
-     * 
-     * Hence, we use a simple token balance instead.
-     */
-    return toDecimal(
-        tokenContract.balanceOf(Address.fromString(TRSRY)),
-        tokenContract.decimals(),
-    );
+    return getERC20DecimalBalance(tokenAddress, TRSRY, blockNumber);
 }
 
 export function getTreasuryRecords(timestamp: BigInt, tokenAddress: string, price: BigDecimal, blockNumber: BigInt): TokenRecord[] {

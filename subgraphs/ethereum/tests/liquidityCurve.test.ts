@@ -6,6 +6,7 @@ import { toBigInt } from "../../shared/src/utils/Decimals";
 import { CONVEX_STAKING_PROXY, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
 import {
+  getCurvePairRecords,
   getCurvePairTokenQuantityRecords,
   getCurvePairTotalTokenQuantity,
   getCurvePairTotalValue,
@@ -20,6 +21,7 @@ import {
   ERC20_CVX_FRAX_USDC_STAKED,
   ERC20_CVX_OHMETH,
   ERC20_FRAX,
+  ERC20_FRAX_BP,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_USDC,
@@ -30,6 +32,7 @@ import {
   NATIVE_ETH,
   PAIR_CURVE_FRAX_USDC,
   PAIR_CURVE_OHM_ETH,
+  PAIR_CURVE_OHM_FRAXBP,
   POOL_BALANCER_OHM_DAI_WETH_ID,
 } from "../src/utils/Constants";
 import { mockConvexStakedBalance, mockConvexStakedBalanceZero, mockFraxLockedBalance, mockFraxLockedBalanceZero } from "./contractHelper.test";
@@ -720,5 +723,29 @@ describe("Pair Value", () => {
     assert.assertTrue(record.token.includes(getContractName(ERC20_CVX_FRAX_USDC_STAKED)) == true);
     assert.stringEquals(TokenCategoryStable, record.category);
     assert.i32Equals(1, records.length);
+  });
+});
+
+describe("pair records", () => {
+  test("OHM-FRAXBP, OHM contract revert", () => {
+    // Mock token0 reverting
+    createMockedFunction(Address.fromString(ERC20_OHM_V2), "decimals", "decimals():(uint8)").reverts();
+    // token1 OK
+    mockERC20TotalSupply(ERC20_FRAX_BP, 18, BigInt.fromString("1000"));
+
+    const expectedRecords = getCurvePairRecords(TIMESTAMP, PAIR_CURVE_OHM_FRAXBP, null, BigInt.fromString("15000000"));
+
+    assert.i32Equals(0, expectedRecords.length);
+  });
+
+  test("OHM-FRAXBP, FRAXBP contract revert", () => {
+    // token0 OK
+    mockERC20TotalSupply(ERC20_OHM_V2, OHM_V2_DECIMALS, BigInt.fromString("1000"));
+    // Mock token1 reverting
+    createMockedFunction(Address.fromString(ERC20_FRAX_BP), "decimals", "decimals():(uint8)").reverts();
+
+    const expectedRecords = getCurvePairRecords(TIMESTAMP, PAIR_CURVE_OHM_FRAXBP, null, BigInt.fromString("15000000"));
+
+    assert.i32Equals(0, expectedRecords.length);
   });
 });

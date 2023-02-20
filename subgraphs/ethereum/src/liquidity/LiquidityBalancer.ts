@@ -78,8 +78,14 @@ export function getOrCreateBalancerPoolSnapshot(poolId: string, vaultAddress: st
     snapshot.poolToken = poolInfo.getValue0();
 
     const poolTokenContractSnapshot = getOrCreateERC20TokenSnapshot(snapshot.poolToken.toHexString(), blockNumber);
-    snapshot.decimals = poolTokenContractSnapshot.decimals;
-    snapshot.totalSupply = poolTokenContractSnapshot.totalSupply;
+    const poolTokenTotalSupply = poolTokenContractSnapshot.totalSupply;
+    const poolTokenDecimals = poolTokenContractSnapshot.decimals;
+    if (poolTokenTotalSupply === null) {
+      return null;
+    }
+
+    snapshot.decimals = poolTokenDecimals;
+    snapshot.totalSupply = poolTokenTotalSupply;
 
     // Get the normalized weights
     const poolTokenContract = BalancerPoolToken.bind(Address.fromBytes(snapshot.poolToken));
@@ -197,13 +203,14 @@ function getBalancerPoolTokenBalance(
   blockNumber: BigInt,
 ): BigDecimal {
   const contractSnapshot = getOrCreateERC20TokenSnapshot(contractAddress, blockNumber);
+  const contractTotalSupply = contractSnapshot.totalSupply;
+  if (contractTotalSupply === null || contractTotalSupply.equals(BigDecimal.zero())) {
+    return BigDecimal.zero();
+  }
+
   const contract = ERC20.bind(Address.fromString(contractAddress));
   const balance = contract.balanceOf(Address.fromString(walletAddress));
   const balanceDecimals = toDecimal(balance, contractSnapshot.decimals);
-
-  if (contractSnapshot.totalSupply.equals(BigDecimal.zero())) {
-    return BigDecimal.zero();
-  }
 
   // Don't spam
   if (!balanceDecimals.equals(BigDecimal.zero())) {
@@ -408,8 +415,8 @@ export function getBalancerPoolTotalTokenQuantity(
     if (!Address.fromString(currentAddress).equals(Address.fromString(tokenAddress))) continue;
 
     const tokenSnapshot = getOrCreateERC20TokenSnapshot(currentAddress, blockNumber);
-    if (!tokenSnapshot) {
-      throw new Error("Unable to bind to ERC20 contract for address " + currentAddress.toString());
+    if (tokenSnapshot.totalSupply === null) {
+      continue;
     }
 
     // Add to the value: rate * balance

@@ -133,7 +133,7 @@ type ERC20TokenSnapshot @entity(immutable: true) {
   id: ID! # address/block
   address: Bytes!
   decimals: Int!
-  totalSupply: BigDecimal!
+  totalSupply: BigDecimal
 }
 
 type ConvexRewardPoolSnapshot @entity(immutable: true) {

@@ -206,14 +206,14 @@ export function getUSDRateUniswapV3(
   // Multiply by difference in decimals
   const token0Snapshot = getOrCreateERC20TokenSnapshot(token0.toHexString(), blockNumber);
   const token1Snapshot = getOrCreateERC20TokenSnapshot(token1.toHexString(), blockNumber);
-  if (!token0Snapshot) {
+  if (!token0Snapshot || token0Snapshot.totalSupply === null) {
     log.warning("getUSDRateUniswapV3: Unable to obtain ERC20 for token {} at block {}", [
       token0.toHexString(),
       blockNumber.toString(),
     ]);
     return BigDecimal.zero();
   }
-  if (!token1Snapshot) {
+  if (!token1Snapshot || token1Snapshot.totalSupply === null) {
     log.warning("getUSDRateUniswapV3: Unable to obtain ERC20 for token {} at block {}", [
       token1.toHexString(),
       blockNumber.toString(),

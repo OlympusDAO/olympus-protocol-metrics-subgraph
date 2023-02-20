@@ -177,7 +177,7 @@ function getFraxSwapPairTokenBalance(
   blockNumber: BigInt,
 ): BigDecimal {
   const poolSnapshot = getOrCreateFraxPoolSnapshot(pairAddress, blockNumber);
-  if (!poolSnapshot) {
+  if (!poolSnapshot || poolSnapshot.totalSupply === null) {
     return BigDecimal.zero();
   }
 

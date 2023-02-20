@@ -13,8 +13,9 @@ import { ERC20_GOHM } from "./Constants";
  */
 export function getGOhmTotalSupply(blockNumber: BigInt): BigDecimal {
   const snapshot = getOrCreateERC20TokenSnapshot(ERC20_GOHM, blockNumber);
+  const snapshotTotalSupply = snapshot.totalSupply;
 
-  if (!snapshot) {
+  if (snapshotTotalSupply === null) {
     log.error(
       "getTotalSupply: Expected to be able to bind to OHM contract at address {} for block {}, but it was not found.",
       [ERC20_GOHM, blockNumber.toString()],
@@ -22,7 +23,7 @@ export function getGOhmTotalSupply(blockNumber: BigInt): BigDecimal {
     return BigDecimal.zero();
   }
 
-  return snapshot.totalSupply;
+  return snapshotTotalSupply;
 }
 
 /**

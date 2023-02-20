@@ -29,8 +29,7 @@ import {
   SILO_ADDRESS,
 } from "./Constants";
 import {
-  getERC20,
-  getERC20Balance,
+  getERC20DecimalBalance,
   getSOlympusERC20,
   getSOlympusERC20V2,
   getSOlympusERC20V3,
@@ -66,8 +65,9 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
     : ERC20_OHM_V1;
 
   const snapshot = getOrCreateERC20TokenSnapshot(ohmContractAddress, blockNumber);
+  const snapshotTotalSupply = snapshot.totalSupply;
 
-  if (!snapshot) {
+  if (snapshotTotalSupply === null) {
     log.error(
       "Expected to be able to bind to OHM contract at address {} for block {}, but it was not found.",
       [ohmContractAddress, blockNumber.toString()],
@@ -75,7 +75,7 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
     return BigDecimal.fromString("0");
   }
 
-  return snapshot.totalSupply;
+  return snapshotTotalSupply;
 }
 
 export function getTotalSupplyRecord(timestamp: BigInt, blockNumber: BigInt): TokenSupply {
@@ -361,24 +361,12 @@ export function getMintedBorrowableOHMRecords(timestamp: BigInt, blockNumber: Bi
 export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
   const isV2Contract = blockNumber.gt(BigInt.fromString(ERC20_OHM_V2_BLOCK));
   const ohmContractAddress = isV2Contract ? ERC20_OHM_V2 : ERC20_OHM_V1;
-
-  const ohmContract = getERC20(ohmContractAddress, blockNumber);
   const records: TokenSupply[] = [];
-
-  if (!ohmContract) {
-    log.error(
-      "Expected to be able to bind to OHM contract at address {} for block {}, but it was not found.",
-      [ohmContractAddress, blockNumber.toString()],
-    );
-    return records;
-  }
 
   for (let i = 0; i < CIRCULATING_SUPPLY_WALLETS.length; i++) {
     const currentWallet = CIRCULATING_SUPPLY_WALLETS[i];
-    const balance = getERC20Balance(ohmContract, currentWallet, blockNumber);
-    if (balance.equals(BigInt.zero())) continue;
-
-    const walletBalance = toDecimal(balance, 9);
+    const balance = getERC20DecimalBalance(ohmContractAddress, currentWallet, blockNumber);
+    if (balance.equals(BigDecimal.zero())) continue;
 
     records.push(
       createOrUpdateTokenSupply(
@@ -390,7 +378,7 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
         getContractName(currentWallet),
         currentWallet,
         TYPE_TREASURY,
-        walletBalance,
+        balance,
         blockNumber,
         -1, // Subtract
       ),

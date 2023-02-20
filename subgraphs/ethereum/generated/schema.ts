@@ -1267,13 +1267,21 @@ export class ERC20TokenSnapshot extends Entity {
     this.set("decimals", Value.fromI32(value));
   }
 
-  get totalSupply(): BigDecimal {
+  get totalSupply(): BigDecimal | null {
     const value = this.get("totalSupply");
-    return value!.toBigDecimal();
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
   }
 
-  set totalSupply(value: BigDecimal) {
-    this.set("totalSupply", Value.fromBigDecimal(value));
+  set totalSupply(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("totalSupply");
+    } else {
+      this.set("totalSupply", Value.fromBigDecimal(<BigDecimal>value));
+    }
   }
 }
 

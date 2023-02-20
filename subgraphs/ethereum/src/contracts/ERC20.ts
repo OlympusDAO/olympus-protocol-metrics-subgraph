@@ -12,8 +12,16 @@ export function getOrCreateERC20TokenSnapshot(address: string, blockNumber: BigI
         token.address = Address.fromString(address);
 
         const erc20Contract = ERC20.bind(Address.fromString(address));
-        token.decimals = erc20Contract.decimals();
-        token.totalSupply = toDecimal(erc20Contract.totalSupply(), token.decimals);
+        // decimals() will revert if the contract has not yet been deployed
+        const decimalsResult = erc20Contract.try_decimals();
+        // Only set the values if there has been a deployment
+        if (!decimalsResult.reverted) {
+            token.decimals = erc20Contract.decimals();
+            token.totalSupply = toDecimal(erc20Contract.totalSupply(), token.decimals);
+        }
+        else {
+            token.decimals = 0;
+        }
 
         token.save();
     }
