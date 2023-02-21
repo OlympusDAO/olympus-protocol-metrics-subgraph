@@ -7,6 +7,7 @@ import { toDecimal } from "../../../shared/src/utils/Decimals";
 import {
   createOrUpdateTokenRecord,
   getIsTokenLiquid,
+  getTokenCategory,
 } from "../../../shared/src/utils/TokenRecordHelper";
 import { LUSD_ALLOCATOR, RARI_ALLOCATOR, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
 import { AuraLocker } from "../../generated/ProtocolMetrics/AuraLocker";
@@ -1078,17 +1079,6 @@ export function getAuraStakedBalanceFromWallets(
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
 
-  log.debug(
-    "getAuraStakedBalanceFromWallets: determining wallet balances staked in {} ({}) of token {} ({}) at block {}",
-    [
-      getContractName(stakingAddress),
-      stakingAddress,
-      getContractName(tokenAddress),
-      tokenAddress,
-      blockNumber.toString(),
-    ],
-  );
-
   // Check that the token matches
   const contract = AuraStaking.bind(Address.fromString(stakingAddress));
   if (contract.try_stakingToken().reverted) {
@@ -1153,7 +1143,7 @@ export function getAuraStakedBalanceFromWallets(
         ERC20_TOKENS,
         BLOCKCHAIN,
         multiplier,
-        TokenCategoryPOL,
+        getTokenCategory(tokenAddress, ERC20_TOKENS),
       ),
     );
   }

@@ -1,5 +1,10 @@
 # Subgraph Changelog
 
+## 3.6.13 (2023-02-21)
+
+- Adds support for the Balancer OHM-DAI LP staked in Aura
+- Fixes issue with staking addresses for OHM-WETH LP staked in Aura
+
 ## 3.6.8 (2023-02-17)
 
 - Adds support for the Balancer OHM-WETH LP staked in Aura
