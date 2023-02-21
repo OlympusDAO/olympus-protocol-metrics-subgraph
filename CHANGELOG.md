@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 3.7.x (2023-02-??)
+## 3.7.8 (2023-02-21)
 
 - Implement caching of on-chain values to reduce eth_call use and improve indexing performance
 
