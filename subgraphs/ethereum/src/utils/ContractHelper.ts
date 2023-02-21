@@ -7,6 +7,7 @@ import { toDecimal } from "../../../shared/src/utils/Decimals";
 import {
   createOrUpdateTokenRecord,
   getIsTokenLiquid,
+  getTokenCategory,
 } from "../../../shared/src/utils/TokenRecordHelper";
 import { LUSD_ALLOCATOR, RARI_ALLOCATOR, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
 import { AuraLocker } from "../../generated/ProtocolMetrics/AuraLocker";
@@ -1059,7 +1060,7 @@ export function getAuraStakedBalanceFromWallets(
         ERC20_TOKENS,
         BLOCKCHAIN,
         multiplier,
-        TokenCategoryPOL,
+        getTokenCategory(tokenAddress, ERC20_TOKENS),
       ),
     );
   }
