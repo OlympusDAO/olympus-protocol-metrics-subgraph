@@ -12,8 +12,10 @@ import {
 import {
   AURA_REWARDS_CONTRACTS,
   AURA_STAKING_AURA_BAL,
+  AURA_STAKING_OHM_DAI,
   AURA_STAKING_OHM_DAI_WETH,
   AURA_STAKING_OHM_WETH,
+  BALANCER_LIQUIDITY_GAUGE_OHM_DAI,
   BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
   BALANCER_LIQUIDITY_GAUGE_OHM_WETH,
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
@@ -22,8 +24,11 @@ import {
   CONVEX_STAKING_FRAX_3CRV_REWARD_POOL,
   ERC20_ALCX,
   ERC20_AURA,
+  ERC20_AURA_BAL,
   ERC20_AURA_VL,
   ERC20_BAL,
+  ERC20_BALANCER_OHM_DAI,
+  ERC20_BALANCER_OHM_DAI_AURA,
   ERC20_BALANCER_OHM_DAI_WETH,
   ERC20_BALANCER_OHM_DAI_WETH_AURA,
   ERC20_BALANCER_OHM_WETH,
@@ -252,6 +257,13 @@ export const mockBalancerGaugeBalanceZero = (wallets: string[]): void => {
     );
 
     mockBalancerGaugeBalance(
+      ERC20_BALANCER_OHM_DAI,
+      wallets[i],
+      BALANCER_LIQUIDITY_GAUGE_OHM_DAI,
+      BigInt.zero(),
+    );
+
+    mockBalancerGaugeBalance(
       ERC20_BALANCER_OHM_WETH,
       wallets[i],
       BALANCER_LIQUIDITY_GAUGE_OHM_WETH,
@@ -295,27 +307,25 @@ export const mockAuraStakedBalance = (
 };
 
 export const mockAuraStakedBalanceZero = (wallets: string[]): void => {
-  for (let i = 0; i < wallets.length; i++) {
-    mockAuraStakedBalance(
-      ERC20_BALANCER_OHM_DAI_WETH_AURA,
-      wallets[i],
-      AURA_STAKING_OHM_DAI_WETH,
-      BigInt.zero(),
-    );
+  const stakingPairs: string[][] = [
+    [ERC20_BALANCER_OHM_DAI_WETH_AURA, AURA_STAKING_OHM_DAI_WETH],
+    [ERC20_BALANCER_OHM_WETH_AURA, AURA_STAKING_OHM_WETH],
+    [ERC20_BALANCER_OHM_DAI_AURA, AURA_STAKING_OHM_DAI],
+    [ERC20_AURA_BAL, AURA_STAKING_AURA_BAL],
+  ];
 
-    mockAuraStakedBalance(
-      ERC20_BALANCER_OHM_WETH_AURA,
-      wallets[i],
-      AURA_STAKING_OHM_WETH,
-      BigInt.zero(),
-    );
-
-    mockAuraStakedBalance(
-      ERC20_BALANCER_OHM_DAI_WETH_AURA,
-      wallets[i],
-      AURA_STAKING_AURA_BAL,
-      BigInt.zero(),
-    );
+  for (let i = 0; i < stakingPairs.length; i++) {
+    const stakedToken = stakingPairs[i][0];
+    const stakingContract = stakingPairs[i][1];
+    const stakingTokenWallets = getWalletAddressesForContract(stakedToken);
+    for (let j = 0; j < stakingTokenWallets.length; j++) {
+      mockAuraStakedBalance(
+        stakedToken,
+        stakingTokenWallets[j],
+        stakingContract,
+        BigInt.zero(),
+      );
+    }
   }
 };
 

@@ -20,8 +20,8 @@ import { mockConvexStakedBalanceZero, mockFraxLockedBalanceZero } from "./contra
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import {
   ETH_USD_RESERVE_BLOCK,
-  mockBalancerVaultZero,
   mockBalancerVaultOhmDaiEth,
+  mockBalancerVaultZero,
   mockCurvePairTotalValue,
   mockCurvePairZero,
   mockEthUsdRate,
