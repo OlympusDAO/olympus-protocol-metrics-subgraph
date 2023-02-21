@@ -881,6 +881,10 @@ export function getBalancerGaugeBalanceFromWallets(
   const stakingSnapshot = getOrCreateBalancerGaugeStakingPoolSnapshot(gaugeContractAddress, blockNumber);
   const stakingSnapshotToken = stakingSnapshot.stakingToken;
   if (stakingSnapshotToken === null || !addressesEqual(stakingSnapshotToken.toHexString(), tokenAddress)) {
+    log.debug(
+      "getBalancerGaugeBalanceFromWallets: token {} ({}) does not match the staking token {} for vault {} ({}). Skipping",
+      [getContractName(tokenAddress), tokenAddress, stakingSnapshotToken === null ? "null" : stakingSnapshotToken.toHexString(), getContractName(gaugeContractAddress), gaugeContractAddress],
+    );
     return records;
   }
 
@@ -901,10 +905,20 @@ export function getBalancerGaugeBalanceFromWallets(
     const currentWallet = wallets[i];
     const balance = getBalancerGaugeBalance(contract, tokenSnapshot, currentWallet, blockNumber);
     if (balance.equals(BigDecimal.zero())) {
+      log.debug(
+        "getBalancerGaugeBalanceFromWallets: 0 balance for token {} ({}) and wallet {} ({}) at block {}",
+        [
+          getContractName(tokenAddress, "Gauge Deposit"),
+          tokenAddress,
+          getContractName(currentWallet),
+          currentWallet,
+          blockNumber.toString(),
+        ],
+      );
       continue;
     }
 
-    log.debug(
+    log.info(
       "getBalancerGaugeBalanceFromWallets: found balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),
@@ -930,7 +944,7 @@ export function getBalancerGaugeBalanceFromWallets(
         ERC20_TOKENS,
         BLOCKCHAIN,
         multiplier,
-        TokenCategoryPOL,
+        getTokenCategory(tokenAddress, ERC20_TOKENS),
       ),
     );
   }
@@ -1011,6 +1025,10 @@ export function getAuraStakedBalanceFromWallets(
   const stakingSnapshot = getOrCreateAuraStakingPoolSnapshot(stakingAddress, blockNumber);
   const stakingSnapshotToken = stakingSnapshot.stakingToken;
   if (stakingSnapshotToken === null || !addressesEqual(stakingSnapshotToken.toHexString(), tokenAddress)) {
+    log.debug(
+      "getAuraStakedBalanceFromWallets: token {} ({}) does not match the staking token {} for vault {} ({}). Skipping",
+      [getContractName(tokenAddress), tokenAddress, stakingSnapshotToken === null ? "null" : stakingSnapshotToken.toHexString(), getContractName(stakingAddress), stakingAddress],
+    );
     return records;
   }
 
@@ -1031,10 +1049,20 @@ export function getAuraStakedBalanceFromWallets(
     const currentWallet = wallets[i];
     const balance = getAuraStakedBalance(contract, tokenSnapshot, currentWallet, blockNumber);
     if (balance.equals(BigDecimal.zero())) {
+      log.debug(
+        "getAuraStakedBalanceFromWallets: 0 balance for token {} ({}) and wallet {} ({}) at block {}",
+        [
+          getContractName(tokenAddress),
+          tokenAddress,
+          getContractName(currentWallet),
+          currentWallet,
+          blockNumber.toString(),
+        ],
+      );
       continue;
     }
 
-    log.debug(
+    log.info(
       "getAuraStakedBalanceFromWallets: found balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),

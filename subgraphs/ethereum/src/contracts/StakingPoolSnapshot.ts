@@ -11,7 +11,7 @@ import { TokemakStaking } from "../../generated/ProtocolMetrics/TokemakStaking";
 import { StakingPoolSnapshot } from "../../generated/schema";
 
 export function getOrCreateBalancerGaugeStakingPoolSnapshot(address: string, blockNumber: BigInt): StakingPoolSnapshot {
-    const snapshotId = `${address.toLowerCase()}/${blockNumber.toString()}`;
+    const snapshotId = `BalancerGauge/${address.toLowerCase()}/${blockNumber.toString()}`;
     let snapshot = StakingPoolSnapshot.load(snapshotId);
     if (snapshot == null) {
         snapshot = new StakingPoolSnapshot(snapshotId);
@@ -32,7 +32,7 @@ export function getOrCreateBalancerGaugeStakingPoolSnapshot(address: string, blo
 }
 
 export function getOrCreateAuraStakingPoolSnapshot(address: string, blockNumber: BigInt): StakingPoolSnapshot {
-    const snapshotId = `${address.toLowerCase()}/${blockNumber.toString()}`;
+    const snapshotId = `AuraStaking/${address.toLowerCase()}/${blockNumber.toString()}`;
     let snapshot = StakingPoolSnapshot.load(snapshotId);
     if (snapshot == null) {
         snapshot = new StakingPoolSnapshot(snapshotId);
@@ -53,7 +53,7 @@ export function getOrCreateAuraStakingPoolSnapshot(address: string, blockNumber:
 }
 
 export function getOrCreateConvexStakingPoolSnapshot(address: string, blockNumber: BigInt): StakingPoolSnapshot {
-    const snapshotId = `${address.toLowerCase()}/${blockNumber.toString()}`;
+    const snapshotId = `ConvexStaking/${address.toLowerCase()}/${blockNumber.toString()}`;
     let snapshot = StakingPoolSnapshot.load(snapshotId);
     if (snapshot == null) {
         snapshot = new StakingPoolSnapshot(snapshotId);
@@ -74,7 +74,7 @@ export function getOrCreateConvexStakingPoolSnapshot(address: string, blockNumbe
 }
 
 export function getOrCreateFraxStakingPoolSnapshot(address: string, blockNumber: BigInt): StakingPoolSnapshot {
-    const snapshotId = `${address.toLowerCase()}/${blockNumber.toString()}`;
+    const snapshotId = `FraxStaking/${address.toLowerCase()}/${blockNumber.toString()}`;
     let snapshot = StakingPoolSnapshot.load(snapshotId);
     if (snapshot == null) {
         snapshot = new StakingPoolSnapshot(snapshotId);
@@ -95,7 +95,7 @@ export function getOrCreateFraxStakingPoolSnapshot(address: string, blockNumber:
 }
 
 export function getOrCreateAuraRewardPoolSnapshot(address: string, blockNumber: BigInt): StakingPoolSnapshot {
-    const snapshotId = `${address.toLowerCase()}/${blockNumber.toString()}`;
+    const snapshotId = `AuraReward/${address.toLowerCase()}/${blockNumber.toString()}`;
     let snapshot = StakingPoolSnapshot.load(snapshotId);
     if (snapshot == null) {
         snapshot = new StakingPoolSnapshot(snapshotId);
@@ -116,7 +116,7 @@ export function getOrCreateAuraRewardPoolSnapshot(address: string, blockNumber: 
 }
 
 export function getOrCreateLiquityStakingPoolSnapshot(address: string, blockNumber: BigInt): StakingPoolSnapshot {
-    const snapshotId = `${address.toLowerCase()}/${blockNumber.toString()}`;
+    const snapshotId = `LiquityStaking/${address.toLowerCase()}/${blockNumber.toString()}`;
     let snapshot = StakingPoolSnapshot.load(snapshotId);
     if (snapshot == null) {
         snapshot = new StakingPoolSnapshot(snapshotId);
@@ -137,7 +137,7 @@ export function getOrCreateLiquityStakingPoolSnapshot(address: string, blockNumb
 }
 
 export function getOrCreateTokemakStakingPoolSnapshot(address: string, blockNumber: BigInt): StakingPoolSnapshot {
-    const snapshotId = `${address.toLowerCase()}/${blockNumber.toString()}`;
+    const snapshotId = `TokemakStaking/${address.toLowerCase()}/${blockNumber.toString()}`;
     let snapshot = StakingPoolSnapshot.load(snapshotId);
     if (snapshot == null) {
         snapshot = new StakingPoolSnapshot(snapshotId);
@@ -158,7 +158,7 @@ export function getOrCreateTokemakStakingPoolSnapshot(address: string, blockNumb
 }
 
 export function getOrCreateAuraLockedPoolSnapshot(address: string, blockNumber: BigInt): StakingPoolSnapshot {
-    const snapshotId = `${address.toLowerCase()}/${blockNumber.toString()}`;
+    const snapshotId = `AuraLocked/${address.toLowerCase()}/${blockNumber.toString()}`;
     let snapshot = StakingPoolSnapshot.load(snapshotId);
     if (snapshot == null) {
         snapshot = new StakingPoolSnapshot(snapshotId);
