@@ -1,11 +1,10 @@
 specVersion: 0.0.4
 description: Olympus Protocol Metrics Subgraph
-# TODO restore grafting
-# features:
-#   - grafting
-# graft:
-#   base: QmeNHVhGj6TAKmjFcqE3YA5adLtN94oTSfUbSraGnr8VP7
-#   block: 16226955 # BondManager
+features:
+  - grafting
+graft:
+  base: QmeNHVhGj6TAKmjFcqE3YA5adLtN94oTSfUbSraGnr8VP7
+  block: 16226955 # BondManager
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
   file: ../../schema.graphql
