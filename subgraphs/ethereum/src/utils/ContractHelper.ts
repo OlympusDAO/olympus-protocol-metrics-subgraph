@@ -1,7 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
-import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { pushArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import {
