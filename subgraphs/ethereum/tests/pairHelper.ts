@@ -938,7 +938,7 @@ export function mockBalancerVaultZero(): void {
   mockAuraStakedBalanceZero(WALLET_ADDRESSES);
 }
 
-export function mockBalanceVaultOhmDaiEth(
+export function mockBalancerVaultOhmDaiEth(
   totalSupply: BigDecimal = OHM_DAI_ETH_TOKEN_TOTAL_SUPPLY,
   ohmBalance: BigDecimal = OHM_DAI_ETH_BALANCE_OHM,
   daiBalance: BigDecimal = OHM_DAI_ETH_BALANCE_DAI,
@@ -976,7 +976,7 @@ const WETH_FDT_BALANCE_FDT = toDecimal(
   BigInt.fromString("17066065377014702525776132"),
   ERC20_STANDARD_DECIMALS,
 );
-export function mockBalanceVaultWethFdt(
+export function mockBalancerVaultWethFdt(
   wethBalance: BigDecimal = WETH_FDT_BALANCE_WETH,
   fdtBalance: BigDecimal = WETH_FDT_BALANCE_FDT,
 ): void {

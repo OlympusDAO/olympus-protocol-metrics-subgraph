@@ -21,7 +21,7 @@ import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import {
   ETH_USD_RESERVE_BLOCK,
   mockBalancerVaultZero,
-  mockBalanceVaultOhmDaiEth,
+  mockBalancerVaultOhmDaiEth,
   mockCurvePairTotalValue,
   mockCurvePairZero,
   mockEthUsdRate,
@@ -206,7 +206,7 @@ describe("getLiquidityPoolValue", () => {
 
   test("balancer pool", () => {
     // Mock pool
-    mockBalanceVaultOhmDaiEth();
+    mockBalancerVaultOhmDaiEth();
 
     // Mock wallet balance
     const expectedWalletBalance = BigDecimal.fromString("2");

@@ -36,8 +36,8 @@ import {
   getOhmUsdRate,
   mockBalancerVaultOhmBtrfly,
   mockBalancerVaultZero,
-  mockBalanceVaultOhmDaiEth,
-  mockBalanceVaultWethFdt,
+  mockBalancerVaultOhmDaiEth,
+  mockBalancerVaultWethFdt,
   mockEthUsdRate,
   mockUsdOhmV2Rate,
   mockWEthBtrflyV2Rate,
@@ -64,7 +64,7 @@ describe("pool total value", () => {
     mockBalancerVaultZero();
 
     // Mock the balancer
-    mockBalanceVaultOhmDaiEth();
+    mockBalancerVaultOhmDaiEth();
 
     // Mock price lookup
     mockEthUsdRate();
@@ -88,7 +88,7 @@ describe("pool total value", () => {
     mockBalancerVaultZero();
 
     // Mock the balancer
-    mockBalanceVaultOhmDaiEth();
+    mockBalancerVaultOhmDaiEth();
 
     // Mock price lookup
     mockEthUsdRate();
@@ -114,7 +114,7 @@ describe("token quantity", () => {
     mockBalancerVaultZero();
 
     // Mock the balancer
-    mockBalanceVaultOhmDaiEth();
+    mockBalancerVaultOhmDaiEth();
 
     const ohm = getBalancerPoolTotalTokenQuantity(
       BALANCER_VAULT,
@@ -130,7 +130,7 @@ describe("token quantity", () => {
     mockBalancerVaultZero();
 
     // Mock the balancer
-    mockBalanceVaultOhmDaiEth();
+    mockBalancerVaultOhmDaiEth();
 
     // Mock wallet balance
     const expectedWalletBalance = BigDecimal.fromString("2");
@@ -169,7 +169,7 @@ describe("token quantity", () => {
     mockBalancerVaultZero();
 
     // Mock the balancer
-    mockBalanceVaultOhmDaiEth();
+    mockBalancerVaultOhmDaiEth();
 
     // Mock wallet balance
     const expectedWalletBalance = BigDecimal.fromString("2");
@@ -199,7 +199,7 @@ describe("token quantity", () => {
     mockBalancerVaultZero();
 
     // Mock the balancer
-    mockBalanceVaultOhmDaiEth(BigDecimal.fromString("0")); // total supply 0 before starting block
+    mockBalancerVaultOhmDaiEth(BigDecimal.fromString("0")); // total supply 0 before starting block
 
     // Mock wallet balance
     const expectedWalletBalance = BigDecimal.fromString("2");
@@ -231,7 +231,7 @@ describe("get balancer records", () => {
     mockBalancerVaultZero();
 
     // Mock the balancer
-    mockBalanceVaultOhmDaiEth();
+    mockBalancerVaultOhmDaiEth();
 
     // Mock wallet balance
     const expectedBalance = BigDecimal.fromString("2");
@@ -283,7 +283,7 @@ describe("get balancer records", () => {
     mockBalancerVaultZero();
 
     // Mock the balancer
-    mockBalanceVaultOhmDaiEth(BigDecimal.fromString("0")); // total supply 0 before starting block
+    mockBalancerVaultOhmDaiEth(BigDecimal.fromString("0")); // total supply 0 before starting block
 
     // Mock wallet balance
     const expectedBalance = BigDecimal.fromString("2");
@@ -315,7 +315,7 @@ describe("get balancer records", () => {
     mockBalancerVaultZero();
 
     // Mock the balancer
-    mockBalanceVaultOhmDaiEth();
+    mockBalancerVaultOhmDaiEth();
 
     // Mock wallet balance
     const expectedBalance = BigDecimal.fromString("2");
@@ -355,7 +355,7 @@ describe("get balancer records", () => {
     mockBalancerVaultZero();
 
     // Mock the balancer
-    mockBalanceVaultOhmDaiEth();
+    mockBalancerVaultOhmDaiEth();
 
     // Mock price lookup
     mockEthUsdRate();
@@ -376,7 +376,7 @@ describe("get balancer records", () => {
     mockBalancerVaultZero();
 
     // Mock the balancer
-    mockBalanceVaultOhmDaiEth();
+    mockBalancerVaultOhmDaiEth();
 
     // Mock wallet balance for liquidity gauge
     const expectedBalance = BigDecimal.fromString("2");
@@ -429,7 +429,7 @@ describe("get balancer records", () => {
     mockBalancerGaugeBalanceZero(getWalletAddressesForContract(ERC20_BALANCER_WETH_FDT));
 
     // Mock the balancer
-    mockBalanceVaultWethFdt();
+    mockBalancerVaultWethFdt();
 
     // Mock wallet balance for liquidity gauge
     const expectedBalance = BigDecimal.fromString("2");

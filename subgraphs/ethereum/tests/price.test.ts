@@ -57,8 +57,8 @@ import {
   mockBalancerVaultAuraWeth,
   mockBalancerVaultGraviAuraBalWeth,
   mockBalancerVaultZero,
-  mockBalanceVaultOhmDaiEth,
-  mockBalanceVaultWethFdt,
+  mockBalancerVaultOhmDaiEth,
+  mockBalancerVaultWethFdt,
   mockEthUsdRate,
   mockFxsEthRate,
   mockRateUniswapV3,
@@ -95,7 +95,7 @@ describe("OHM-USD rate", () => {
   test("Sushi OHM-DAI rate is used when greater than Balancer", () => {
     mockEthUsdRate();
     mockUsdOhmV2Rate();
-    mockBalanceVaultOhmDaiEth(
+    mockBalancerVaultOhmDaiEth(
       BigDecimal.fromString("1"),
       BigDecimal.fromString("0.5"),
       BigDecimal.fromString("0.25"),
@@ -116,7 +116,7 @@ describe("OHM-USD rate", () => {
       toBigInt(BigDecimal.fromString("1"), 9),
       toBigInt(BigDecimal.fromString("1"), 18),
     ); // Total value is small, so Balancer OHM-DAI-ETH is used
-    mockBalanceVaultOhmDaiEth();
+    mockBalancerVaultOhmDaiEth();
 
     // ((1932155.145566782258916959/0.25)/(221499.733846818/0.5)) = 17.44611709
     const calculatedRate = OHM_DAI_ETH_BALANCE_DAI.div(OHM_DAI_ETH_WEIGHT_DAI).div(
@@ -139,7 +139,7 @@ describe("OHM-USD rate", () => {
     );
     // OHM_DAI_ETH_BALANCE_DAI < Sushi USD reserves (2,000,000)
     // OHM_DAI_ETH_BALANCE_WETH * ETH price + OHM_DAI_ETH_BALANCE_DAI > Sushi USD reserves
-    mockBalanceVaultOhmDaiEth();
+    mockBalancerVaultOhmDaiEth();
 
     // ((1932155.145566782258916959/0.25)/(221499.733846818/0.5)) = 17.44611709
     const calculatedRate = OHM_DAI_ETH_BALANCE_DAI.div(OHM_DAI_ETH_WEIGHT_DAI).div(
@@ -376,7 +376,7 @@ describe("get USD rate", () => {
 
   test("OHM-DAI-ETH (Balancer) returns correct value", () => {
     mockEthUsdRate();
-    mockBalanceVaultOhmDaiEth();
+    mockBalancerVaultOhmDaiEth();
 
     const usdRate = getUSDRateBalancer(
       ERC20_OHM_V2,
@@ -439,7 +439,7 @@ describe("get USD rate", () => {
     mockEthUsdRate();
 
     // Mock the balancer
-    mockBalanceVaultWethFdt();
+    mockBalancerVaultWethFdt();
 
     const usdRate = getUSDRate(ERC20_FDT, OHM_USD_RESERVE_BLOCK);
     const calculatedRate = BigDecimal.fromString("0.02459313077010308743409892482569878");
@@ -452,7 +452,7 @@ describe("get USD rate", () => {
     mockEthUsdRate();
 
     // Mock the balancer
-    mockBalanceVaultWethFdt(BigDecimal.zero(), BigDecimal.zero());
+    mockBalancerVaultWethFdt(BigDecimal.zero(), BigDecimal.zero());
 
     const usdRate = getUSDRate(ERC20_FDT, OHM_USD_RESERVE_BLOCK);
 
