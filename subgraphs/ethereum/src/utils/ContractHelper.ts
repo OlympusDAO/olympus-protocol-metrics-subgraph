@@ -1079,17 +1079,6 @@ export function getAuraStakedBalanceFromWallets(
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
 
-  log.debug(
-    "getAuraStakedBalanceFromWallets: determining wallet balances staked in {} ({}) of token {} ({}) at block {}",
-    [
-      getContractName(stakingAddress),
-      stakingAddress,
-      getContractName(tokenAddress),
-      tokenAddress,
-      blockNumber.toString(),
-    ],
-  );
-
   // Check that the token matches
   const contract = AuraStaking.bind(Address.fromString(stakingAddress));
   if (contract.try_stakingToken().reverted) {
