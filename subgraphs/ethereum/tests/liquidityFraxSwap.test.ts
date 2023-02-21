@@ -1,7 +1,7 @@
-import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
-import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
-import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
+import { toBigInt } from "../../shared/src/utils/Decimals";
 import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
 import {
@@ -17,146 +17,37 @@ import {
   ERC20_USDC,
   getWalletAddressesForContract,
   PAIR_FRAXSWAP_V1_OHM_FRAX,
-  PAIR_FRAXSWAP_V2_OHM_FRAX,
 } from "../src/utils/Constants";
-import { mockBalancerVaultZero } from "./liquidityBalancer.test";
+import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import {
-  ERC20_STANDARD_DECIMALS,
-  getOhmUsdRate,
+  FRAXSWAP_OHM_FRAX_TOKEN0_RESERVES,
+  FRAXSWAP_OHM_FRAX_TOKEN1_RESERVES,
+  FRAXSWAP_OHM_FRAX_TOTAL_SUPPLY,
+  FRAXSWAP_OHM_FRAX_TOTAL_VALUE,
+  FRAXSWAP_OHM_FRAX_UNIT_RATE,
+  mockBalancerVaultZero,
   mockCurvePairZero,
+  mockFraxSwapPairOhmFrax,
+  mockFraxSwapPairZero,
   mockUniswapV2PairsZero,
   mockUsdOhmV2Rate,
   mockWEthBtrflyV1Rate,
   OHM_USD_RESERVE_BLOCK,
-  OHM_V2_DECIMALS,
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 
-export const FRAXSWAP_OHM_FRAX_DECIMALS = 18;
-export const FRAXSWAP_OHM_FRAX_TOTAL_SUPPLY = toDecimal(
-  BigInt.fromString("1303397099889362190"),
-  FRAXSWAP_OHM_FRAX_DECIMALS,
-);
-export const FRAXSWAP_OHM_FRAX_TOKEN0 = ERC20_OHM_V2;
-export const FRAXSWAP_OHM_FRAX_TOKEN0_DECIMALS = OHM_V2_DECIMALS;
-export const FRAXSWAP_OHM_FRAX_TOKEN1 = ERC20_FRAX;
-export const FRAXSWAP_OHM_FRAX_TOKEN1_DECIMALS = ERC20_STANDARD_DECIMALS;
-export const FRAXSWAP_OHM_FRAX_TOKEN0_RESERVES = toDecimal(
-  BigInt.fromString("10495919068290"),
-  FRAXSWAP_OHM_FRAX_TOKEN0_DECIMALS,
-);
-export const FRAXSWAP_OHM_FRAX_TOKEN1_RESERVES = toDecimal(
-  BigInt.fromString("161899942493712174360986"),
-  FRAXSWAP_OHM_FRAX_TOKEN1_DECIMALS,
-);
-const FRAXSWAP_OHM_FRAX_TOTAL_VALUE = FRAXSWAP_OHM_FRAX_TOKEN0_RESERVES.times(getOhmUsdRate()).plus(
-  FRAXSWAP_OHM_FRAX_TOKEN1_RESERVES.times(BigDecimal.fromString("1")),
-);
-const FRAXSWAP_OHM_FRAX_UNIT_RATE = FRAXSWAP_OHM_FRAX_TOTAL_VALUE.div(
-  FRAXSWAP_OHM_FRAX_TOTAL_SUPPLY,
-);
-
 const TIMESTAMP = BigInt.fromString("1");
 
-export function mockFraxSwapPair(
-  pairAddress: string,
-  pairTotalSupply: BigDecimal,
-  pairDecimals: i32,
-  token0Address: string,
-  token1Address: string,
-  token0Decimals: i32,
-  token1Decimals: i32,
-  token0Reserves: BigDecimal,
-  token1Reserves: BigDecimal,
-): void {
-  // mock OHM price
-  mockUsdOhmV2Rate();
 
-  // totalSupply
-  createMockedFunction(
-    Address.fromString(pairAddress),
-    "totalSupply",
-    "totalSupply():(uint256)",
-  ).returns([ethereum.Value.fromUnsignedBigInt(toBigInt(pairTotalSupply, pairDecimals))]);
+beforeEach(() => {
+  log.debug("beforeEach: Clearing store", []);
+  clearStore();
 
-  // decimals
-  createMockedFunction(Address.fromString(pairAddress), "decimals", "decimals():(uint8)").returns([
-    ethereum.Value.fromI32(pairDecimals),
-  ]);
-
-  // token0
-  createMockedFunction(Address.fromString(pairAddress), "token0", "token0():(address)").returns([
-    ethereum.Value.fromAddress(Address.fromString(token0Address)),
-  ]);
-
-  // token1
-  createMockedFunction(Address.fromString(pairAddress), "token1", "token1():(address)").returns([
-    ethereum.Value.fromAddress(Address.fromString(token1Address)),
-  ]);
-
-  // token0 decimals
-  createMockedFunction(Address.fromString(token0Address), "decimals", "decimals():(uint8)").returns(
-    [ethereum.Value.fromI32(token0Decimals)],
-  );
-
-  // token1 decimals
-  createMockedFunction(Address.fromString(token1Address), "decimals", "decimals():(uint8)").returns(
-    [ethereum.Value.fromI32(token1Decimals)],
-  );
-
-  // getReserves
-  createMockedFunction(
-    Address.fromString(pairAddress),
-    "getReserves",
-    "getReserves():(uint112,uint112,uint32)",
-  ).returns([
-    ethereum.Value.fromUnsignedBigInt(toBigInt(token0Reserves, token0Decimals)),
-    ethereum.Value.fromUnsignedBigInt(toBigInt(token1Reserves, token1Decimals)),
-    ethereum.Value.fromI32(0),
-  ]);
-}
-
-export function mockFraxSwapPairZero(): void {
-  mockFraxSwapPair(
-    PAIR_FRAXSWAP_V1_OHM_FRAX,
-    BigDecimal.fromString("0"),
-    FRAXSWAP_OHM_FRAX_DECIMALS,
-    FRAXSWAP_OHM_FRAX_TOKEN0,
-    FRAXSWAP_OHM_FRAX_TOKEN1,
-    FRAXSWAP_OHM_FRAX_TOKEN0_DECIMALS,
-    FRAXSWAP_OHM_FRAX_TOKEN1_DECIMALS,
-    BigDecimal.fromString("0"),
-    BigDecimal.fromString("0"),
-  );
-
-  mockFraxSwapPair(
-    PAIR_FRAXSWAP_V2_OHM_FRAX,
-    BigDecimal.fromString("0"),
-    FRAXSWAP_OHM_FRAX_DECIMALS,
-    FRAXSWAP_OHM_FRAX_TOKEN0,
-    FRAXSWAP_OHM_FRAX_TOKEN1,
-    FRAXSWAP_OHM_FRAX_TOKEN0_DECIMALS,
-    FRAXSWAP_OHM_FRAX_TOKEN1_DECIMALS,
-    BigDecimal.fromString("0"),
-    BigDecimal.fromString("0"),
-  );
-}
-
-export function mockFraxSwapPairOhmFrax(
-  totalSupply: BigDecimal = FRAXSWAP_OHM_FRAX_TOTAL_SUPPLY,
-): void {
-  mockFraxSwapPair(
-    PAIR_FRAXSWAP_V1_OHM_FRAX,
-    totalSupply,
-    FRAXSWAP_OHM_FRAX_DECIMALS,
-    FRAXSWAP_OHM_FRAX_TOKEN0,
-    FRAXSWAP_OHM_FRAX_TOKEN1,
-    FRAXSWAP_OHM_FRAX_TOKEN0_DECIMALS,
-    FRAXSWAP_OHM_FRAX_TOKEN1_DECIMALS,
-    FRAXSWAP_OHM_FRAX_TOKEN0_RESERVES,
-    FRAXSWAP_OHM_FRAX_TOKEN1_RESERVES,
-  );
-}
+  mockCurvePairZero();
+  mockBalancerVaultZero();
+  mockUniswapV2PairsZero();
+  mockFraxSwapPairZero();
+});
 
 describe("pool total value", () => {
   test("OHM-FRAX pool total value, all tokens", () => {
@@ -172,7 +63,6 @@ describe("pool total value", () => {
   });
 
   test("OHM-FRAX pool total value, excluding OHM", () => {
-    mockBalancerVaultZero();
     mockFraxSwapPairOhmFrax();
     mockUsdOhmV2Rate();
 
@@ -292,7 +182,6 @@ describe("token quantity", () => {
 
 describe("get token records", () => {
   test("OHM-FRAX pool balance, all tokens", () => {
-    mockBalancerVaultZero();
     mockUsdOhmV2Rate();
     mockFraxSwapPairOhmFrax();
 
@@ -329,11 +218,6 @@ describe("get token records", () => {
   });
 
   test("getLiquidityBalances", () => {
-    mockCurvePairZero();
-    mockBalancerVaultZero();
-    mockUniswapV2PairsZero();
-    mockFraxSwapPairZero();
-
     // Needed for BTRFLY
     mockWEthBtrflyV1Rate();
 

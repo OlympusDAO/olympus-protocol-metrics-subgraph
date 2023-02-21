@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts";
 import { log } from "matchstick-as";
 
 import { TokenRecord } from "../../../shared/generated/schema";
@@ -7,8 +7,8 @@ import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
 import { CurvePoolV2 } from "../../generated/ProtocolMetrics/CurvePoolV2";
-import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
-import { TokenSupply } from "../../generated/schema";
+import { ERC20TokenSnapshot, PoolSnapshot, TokenSupply } from "../../generated/schema";
+import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import {
   BLOCKCHAIN,
   CONVEX_STAKING_CONTRACTS,
@@ -25,6 +25,95 @@ import { getConvexStakedBalance, getERC20, getFraxLockedBalance } from "../utils
 import { getUSDRate } from "../utils/Price";
 import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
+/**
+ * Determines the address of the ERC20 token for a Curve liquidity pair.
+ *
+ * If the token cannot be determined (e.g. because it is before the starting block,
+ * causing a revert), null will be returned.
+ *
+ * @param pairAddress address of the Curve pair
+ * @param blockNumber the current block number
+ * @returns address as a string, or null
+ */
+function getCurvePairToken(pairAddress: string, blockNumber: BigInt): string | null {
+  const pair = CurvePool.bind(Address.fromString(pairAddress));
+
+  // If the token does not exist at the current block, it will revert
+  const tokenResult = pair.try_token();
+  if (!tokenResult.reverted) {
+    return tokenResult.value.toHexString();
+  }
+
+  // For some pools (e.g. FRAX-USDC), a different interface is used... not sure why.
+  const pairV2 = CurvePoolV2.bind(Address.fromString(pairAddress));
+  const tokenV2Result = pairV2.try_lp_token();
+  if (!tokenV2Result.reverted) {
+    return tokenV2Result.value.toHexString();
+  }
+
+  log.warning(
+    "getCurvePairToken: ERC20 token for Curve pair {} could not be determined at block {} due to contract revert. Skipping",
+    [getContractName(pairAddress), blockNumber.toString()],
+  );
+  return null;
+}
+
+/**
+ * Returns a PoolSnapshot, which contains cached data about the Curve pool. This
+ * significantly reduces the number of instances of eth_call, which speeds up indexing.
+ * 
+ * @param pairAddress 
+ * @param blockNumber 
+ * @returns snapshot, or null if there was a contract revert
+ */
+export function getOrCreateCurvePoolSnapshot(pairAddress: string, blockNumber: BigInt): PoolSnapshot | null {
+  const snapshotId = `${pairAddress}/${blockNumber.toString()}`;
+  let snapshot = PoolSnapshot.load(snapshotId);
+  if (snapshot == null) {
+    log.debug("getOrCreateCurvePoolSnapshot: Creating new snapshot for pool {} ({}) at block {}", [getContractName(pairAddress), pairAddress, blockNumber.toString()]);
+
+    snapshot = new PoolSnapshot(snapshotId);
+    snapshot.block = blockNumber;
+    snapshot.pool = Bytes.fromHexString(pairAddress);
+
+    const pairContract = CurvePool.bind(Address.fromString(pairAddress));
+    const pairTokenAddress: string | null = getCurvePairToken(pairAddress, blockNumber);
+    if (pairTokenAddress === null) {
+      return null;
+    }
+
+    const snapshotTokens: Bytes[] = [];
+    const snapshotBalances: BigDecimal[] = [];
+    // Only two tokens in a Curve pair
+    for (let i = 0; i < 2; i++) {
+      const currentIndex = BigInt.fromI32(i);
+      const currentToken = pairContract.coins(currentIndex);
+      const currentBalance = pairContract.balances(currentIndex);
+      const currentTokenSnapshot = getOrCreateERC20TokenSnapshot(currentToken.toHexString(), blockNumber);
+
+      snapshotTokens.push(currentToken);
+      snapshotBalances.push(toDecimal(currentBalance, currentTokenSnapshot.decimals));
+    }
+
+    snapshot.tokens = snapshotTokens;
+    snapshot.balances = snapshotBalances;
+    // No weights
+
+    const pairToken: ERC20TokenSnapshot = getOrCreateERC20TokenSnapshot(pairTokenAddress, blockNumber);
+    snapshot.poolToken = Bytes.fromHexString(pairTokenAddress);
+    snapshot.decimals = pairToken.decimals;
+
+    const pairTokenTotalSupply = pairToken.totalSupply;
+    if (pairTokenTotalSupply !== null) {
+      snapshot.totalSupply = pairTokenTotalSupply;
+    }
+
+    snapshot.save();
+  }
+
+  return snapshot;
+}
+
 // ### Balances ###
 
 /**
@@ -34,8 +123,6 @@ import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyH
  *
  * @param pairAddress
  * @param excludeOhmValue If true, the value will exclude OHM. This can be used to calculate backing
- * @param restrictToToken  If true, the value will be restricted to that of the specified token. This can be used to calculate the value of liquidity for a certain token.
- * @param tokenAddress The tokenAddress to restrict to (or null)
  * @param blockNumber
  * @returns
  */
@@ -44,34 +131,35 @@ export function getCurvePairTotalValue(
   excludeOhmValue: boolean,
   blockNumber: BigInt,
 ): BigDecimal {
-  // Obtain both tokens
-  const pair = CurvePool.bind(Address.fromString(pairAddress));
-  let totalValue = BigDecimal.zero();
+  const poolSnapshot = getOrCreateCurvePoolSnapshot(pairAddress, blockNumber);
+  if (!poolSnapshot) {
+    return BigDecimal.zero();
+  }
+
   log.info("getCurvePairTotalValue: Calculating value of pair {} with excludeOhmValue = {}", [
     getContractName(pairAddress),
     excludeOhmValue ? "true" : "false",
   ]);
 
+  // Obtain both tokens
+  let totalValue = BigDecimal.zero();
+  const poolTokens = poolSnapshot.tokens;
+
   // token0 balance * token0 rate + token1 balance * token1 rate
-  for (let i = 0; i < 2; i++) {
-    const token: string = pair.coins(BigInt.fromI32(i)).toHexString();
+  for (let i = 0; i < poolTokens.length; i++) {
+    const token: string = poolTokens[i].toHexString();
+    const balance: BigDecimal = poolSnapshot.balances[i];
 
     if (excludeOhmValue && token.toLowerCase() == ERC20_OHM_V2.toLowerCase()) {
       log.debug("getCurvePairTotalValue: Skipping OHM as excludeOhmValue is true", []);
       continue;
     }
 
-    const tokenContract = getERC20(token, blockNumber);
-    if (!tokenContract) {
-      throw new Error("Unable to fetch ERC20 at address " + token + " for Curve pool");
-    }
-    const tokenBalance = pair.balances(BigInt.fromI32(i));
-    const tokenBalanceDecimal = toDecimal(tokenBalance, tokenContract.decimals());
     const rate = getUSDRate(token, blockNumber);
-    const value = tokenBalanceDecimal.times(rate);
+    const value = balance.times(rate);
     log.debug("getCurvePairTotalValue: Token address: {}, balance: {}, rate: {}, value: {}", [
       token,
-      tokenBalanceDecimal.toString(),
+      balance.toString(),
       rate.toString(),
       value.toString(),
     ]);
@@ -240,6 +328,11 @@ function getCurvePairRecord(
   multiplier: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecord | null {
+  const pairTokenSnapshot = getOrCreateERC20TokenSnapshot(pairTokenAddress, blockNumber);
+  if (pairTokenSnapshot.totalSupply === null) {
+    return null;
+  }
+
   const pairToken = getERC20(pairTokenAddress, blockNumber);
   if (!pairToken) {
     throw new Error("Unable to bind to ERC20 contract for Curve pair token " + pairTokenAddress);
@@ -251,7 +344,7 @@ function getCurvePairRecord(
     return null;
   }
 
-  const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
+  const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairTokenSnapshot.decimals);
   log.debug("getCurvePairRecord: Curve pair balance for token {} ({}) in wallet {} ({}) was {}", [
     getContractName(pairTokenAddress),
     pairTokenAddress,
@@ -278,51 +371,6 @@ function getCurvePairRecord(
 }
 
 /**
- * Determines the address of the ERC20 token for a Curve liquidity pair.
- *
- * If the token cannot be determined (e.g. because it is before the starting block,
- * causing a revert), null will be returned.
- *
- * @param pairAddress address of the Curve pair
- * @param blockNumber the current block number
- * @returns address as a string, or null
- */
-function getCurvePairToken(pairAddress: string, blockNumber: BigInt): string | null {
-  const pair = CurvePool.bind(Address.fromString(pairAddress));
-
-  // If the token does not exist at the current block, it will revert
-  const tokenResult = pair.try_token();
-  if (!tokenResult.reverted) {
-    return tokenResult.value.toHexString();
-  }
-
-  // For some pools (e.g. FRAX-USDC), a different interface is used... not sure why.
-  const pairV2 = CurvePoolV2.bind(Address.fromString(pairAddress));
-  const tokenV2Result = pairV2.try_lp_token();
-  if (!tokenV2Result.reverted) {
-    return tokenV2Result.value.toHexString();
-  }
-
-  log.warning(
-    "getCurvePairToken: ERC20 token for Curve pair {} could not be determined at block {} due to contract revert. Skipping",
-    [getContractName(pairAddress), blockNumber.toString()],
-  );
-  return null;
-}
-
-function getCurvePairTokenContract(pairAddress: string, blockNumber: BigInt): ERC20 | null {
-  const pairTokenAddress = getCurvePairToken(pairAddress, blockNumber);
-  if (pairTokenAddress === null) return null;
-
-  const pairTokenContract = getERC20(pairTokenAddress, blockNumber);
-  if (!pairTokenContract) {
-    throw new Error("Unable to bind to ERC20 contract for Curve pair token " + pairTokenAddress);
-  }
-
-  return pairTokenContract;
-}
-
-/**
  * Calculates the unit rate of the given Curve pair.
  *
  * Each Curve pair has an associated token. The total supply
@@ -342,20 +390,16 @@ function getCurvePairUnitRate(
   log.info("getCurvePairUnitRate: Calculating unit rate for Curve pair {}", [
     getContractName(pairAddress),
   ]);
-  const pairTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
-  if (!pairTokenContract) return BigDecimal.zero();
+  const poolSnapshot = getOrCreateCurvePoolSnapshot(pairAddress, blockNumber);
+  if (!poolSnapshot) return BigDecimal.zero();
 
-  const totalSupply = toDecimal(pairTokenContract.totalSupply(), pairTokenContract.decimals());
-  log.debug("getCurvePairUnitRate: Curve pair {} has total supply of {}", [
-    getContractName(pairAddress),
-    totalSupply.toString(),
-  ]);
-  const unitRate = totalValue.div(totalSupply);
+  const unitRate = totalValue.div(poolSnapshot.totalSupply);
   log.info("getCurvePairUnitRate: Unit rate of Curve LP {} is {} for total supply {}", [
     pairAddress,
     unitRate.toString(),
-    totalSupply.toString(),
+    poolSnapshot.totalSupply.toString(),
   ]);
+
   return unitRate;
 }
 
@@ -392,8 +436,8 @@ export function getCurvePairRecords(
     return records;
   }
 
-  const pairTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
-  if (!pairTokenContract || pairTokenContract.totalSupply().equals(BigInt.zero())) {
+  const poolSnapshot = getOrCreateCurvePoolSnapshot(pairAddress, blockNumber);
+  if (!poolSnapshot || poolSnapshot.totalSupply.equals(BigDecimal.zero()) || !poolSnapshot.poolToken) {
     log.debug("getCurvePairRecords: Skipping Curve pair {} ({}) with total supply of 0 at block {}", [
       getContractName(pairAddress),
       pairAddress,
@@ -413,7 +457,8 @@ export function getCurvePairRecords(
   // Some Curve tokens are in the DAO wallet, so we add that
   const wallets = getWalletAddressesForContract(pairAddress);
 
-  const pairTokenAddress = pairTokenContract._address.toHexString();
+  const pairToken = poolSnapshot.poolToken;
+  const pairTokenAddress = pairToken === null ? "" : pairToken.toHexString();
 
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];
@@ -477,18 +522,6 @@ export function getCurvePairRecords(
 }
 
 // ### Token Quantity ###
-function getBigDecimalFromBalance(
-  tokenAddress: string,
-  balance: BigInt,
-  blockNumber: BigInt,
-): BigDecimal {
-  const tokenContract = getERC20(tokenAddress, blockNumber);
-  if (!tokenContract) {
-    throw new Error("Unable to fetch ERC20 at address " + tokenAddress + " for Curve pool");
-  }
-
-  return toDecimal(balance, tokenContract.decimals());
-}
 
 /**
  * Calculates the quantity of {tokenAddress}
@@ -507,17 +540,20 @@ export function getCurvePairTotalTokenQuantity(
   tokenAddress: string,
   blockNumber: BigInt,
 ): BigDecimal {
-  // Obtain both tokens
-  const pair = CurvePool.bind(Address.fromString(pairAddress));
-  const token0 = pair.coins(BigInt.fromI32(0));
-  const token1 = pair.coins(BigInt.fromI32(1));
+  const poolSnapshot = getOrCreateCurvePoolSnapshot(pairAddress, blockNumber);
+  if (!poolSnapshot) {
+    return BigDecimal.zero();
+  }
 
-  if (token0.equals(Address.fromString(tokenAddress))) {
-    const token0Balance = pair.balances(BigInt.fromI32(0));
-    return getBigDecimalFromBalance(tokenAddress, token0Balance, blockNumber);
-  } else if (token1.equals(Address.fromString(tokenAddress))) {
-    const token1Balance = pair.balances(BigInt.fromI32(1));
-    return getBigDecimalFromBalance(tokenAddress, token1Balance, blockNumber);
+  for (let i = 0; i < poolSnapshot.balances.length; i++) {
+    const currentToken = poolSnapshot.tokens[i];
+    const currentBalance = poolSnapshot.balances[i];
+
+    if (!currentToken.equals(Bytes.fromHexString(tokenAddress))) {
+      continue;
+    }
+
+    return currentBalance;
   }
 
   log.warning(
@@ -537,31 +573,31 @@ export function getCurvePairTotalTokenQuantity(
  * @param blockNumber
  * @returns
  */
-export function getCurvePairTokenQuantity(
+export function getCurvePairTokenQuantityRecords(
   timestamp: BigInt,
   pairAddress: string,
   tokenAddress: string,
   blockNumber: BigInt,
 ): TokenSupply[] {
-  log.info("getCurvePairTokenQuantity: Calculating quantity of token {} in Curve pool {}", [
+  log.info("getCurvePairTokenQuantityRecords: Calculating quantity of token {} in Curve pool {}", [
     getContractName(tokenAddress),
     getContractName(pairAddress),
   ]);
   const records: TokenSupply[] = [];
-  const poolTokenContract = getCurvePairTokenContract(pairAddress, blockNumber);
-  if (!poolTokenContract) return records;
+  const poolSnapshot = getOrCreateCurvePoolSnapshot(pairAddress, blockNumber);
+  if (!poolSnapshot) return records;
+  const poolToken = poolSnapshot.poolToken;
+  if (poolToken === null) return records;
 
   // Calculate the token quantity for the pool
   const totalQuantity = getCurvePairTotalTokenQuantity(pairAddress, tokenAddress, blockNumber);
 
-  const poolTokenAddress = poolTokenContract._address.toHexString();
-  const tokenDecimals = poolTokenContract.decimals();
-  log.info("getCurvePairTokenQuantity: Curve pool {} has total quantity {} of token {}", [
+  const poolTokenAddress = poolToken.toHexString();
+  log.info("getCurvePairTokenQuantityRecords: Curve pool {} has total quantity {} of token {}", [
     getContractName(poolTokenAddress),
     totalQuantity.toString(),
     getContractName(tokenAddress),
   ]);
-  const poolTokenTotalSupply = toDecimal(poolTokenContract.totalSupply(), tokenDecimals);
 
   // Grab balances
   const poolTokenBalances = getCurvePairRecords(timestamp, pairAddress, tokenAddress, blockNumber);
@@ -569,7 +605,7 @@ export function getCurvePairTokenQuantity(
   for (let i = 0; i < poolTokenBalances.length; i++) {
     const record = poolTokenBalances[i];
 
-    const tokenBalance = totalQuantity.times(record.balance).div(poolTokenTotalSupply);
+    const tokenBalance = totalQuantity.times(record.balance).div(poolSnapshot.totalSupply);
     records.push(
       createOrUpdateTokenSupply(
         timestamp,

@@ -1,5 +1,5 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
-import { assert, createMockedFunction, describe, test } from "matchstick-as";
+import { assert, beforeEach, clearStore, createMockedFunction, describe, log, test } from "matchstick-as";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../generated/schema";
@@ -7,6 +7,8 @@ import { GNOSIS_RECORD_ID } from "../src/GnosisAuction";
 import { BOND_MANAGER, CIRCULATING_SUPPLY_WALLETS, ERC20_OHM_V2, EULER_ADDRESS, SILO_ADDRESS } from "../src/utils/Constants";
 import { EULER_MINT_BLOCK, EULER_MINT_QUANTITY, getMintedBorrowableOHMRecords, getTreasuryOHMRecords, getVestingBondSupplyRecords, SILO_MINT_BLOCK, SILO_MINT_QUANTITY } from "../src/utils/OhmCalculations";
 import { TYPE_BONDS_DEPOSITS, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_VESTING_TOKENS, TYPE_LENDING } from "../src/utils/TokenSupplyHelper";
+import { mockERC20TotalSupply } from "./erc20Helper";
+import { OHM_V2_DECIMALS } from "./pairHelper";
 
 const CONTRACT_GNOSIS = "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101".toLowerCase();
 const CONTRACT_TELLER = "0x007FE70dc9797C4198528aE43d8195ffF82Bdc95".toLowerCase();
@@ -105,6 +107,13 @@ function mockContracts(): void {
         ethereum.Value.fromAddress(Address.fromString(CONTRACT_TELLER))
     ]);
 }
+
+beforeEach(() => {
+    log.debug("beforeEach: Clearing store", []);
+    clearStore();
+
+    mockERC20TotalSupply(ERC20_OHM_V2, OHM_V2_DECIMALS, toBigInt(BigDecimal.fromString("1000")));
+});
 
 describe("Vesting Bonds", () => {
     test("no auctions", () => {

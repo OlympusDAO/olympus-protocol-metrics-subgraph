@@ -1,8 +1,7 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import { ERC20_GOHM } from "./Constants";
-import { getERC20 } from "./ContractHelper";
 
 /**
  * Returns the total supply of the gOHM token at the given block number.
@@ -13,9 +12,10 @@ import { getERC20 } from "./ContractHelper";
  * @returns BigDecimal presenting the total supply at {blockNumber}
  */
 export function getGOhmTotalSupply(blockNumber: BigInt): BigDecimal {
-  const contract = getERC20(ERC20_GOHM, blockNumber);
+  const snapshot = getOrCreateERC20TokenSnapshot(ERC20_GOHM, blockNumber);
+  const snapshotTotalSupply = snapshot.totalSupply;
 
-  if (!contract) {
+  if (snapshotTotalSupply === null) {
     log.error(
       "getTotalSupply: Expected to be able to bind to OHM contract at address {} for block {}, but it was not found.",
       [ERC20_GOHM, blockNumber.toString()],
@@ -23,7 +23,7 @@ export function getGOhmTotalSupply(blockNumber: BigInt): BigDecimal {
     return BigDecimal.zero();
   }
 
-  return toDecimal(contract.totalSupply(), contract.decimals());
+  return snapshotTotalSupply;
 }
 
 /**

@@ -1,11 +1,10 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
-import { assert, describe, test } from "matchstick-as/assembly/index";
+import { assert, beforeEach, clearStore, describe, test } from "matchstick-as/assembly/index";
 
 import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
 import { TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
 import {
-  getOhmUSDPairRiskFreeValue,
   getUniswapV2PairTokenQuantity,
   getUniswapV2PairTotalTokenQuantity,
   getUniswapV2PairTotalValue,
@@ -23,24 +22,22 @@ import {
   PAIR_UNISWAP_V2_OHM_ETH_V2,
 } from "../src/utils/Constants";
 import { PairHandler, PairHandlerTypes } from "../src/utils/PairHandler";
-import { mockBalancerVaultZero } from "./liquidityBalancer.test";
+import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
 import {
-  ERC20_STANDARD_DECIMALS,
   ETH_USD_RESERVE_BLOCK,
   getBtrflyV1UsdRate,
   getOhmEthPairValue,
   getOhmUsdRate,
   getPairValue,
+  mockBalancerVaultZero,
   mockEthUsdRate,
   mockOhmEthPair,
   mockUniswapV2Pair,
+  mockUniswapV2PairsZero,
   mockUsdOhmV2Rate,
   mockWEthBtrflyV1Rate,
   OHM_ETH_TOTAL_SUPPLY,
   OHM_USD_RESERVE_BLOCK,
-  OHM_USD_RESERVE_OHM,
-  OHM_USD_RESERVE_USD,
-  OHM_USD_TOTAL_SUPPLY,
   OHM_V2_DECIMALS,
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
@@ -52,6 +49,13 @@ const pairArrayOverride: PairHandler[] = [
 ];
 
 const TIMESTAMP = BigInt.fromString("1");
+
+beforeEach(() => {
+  log.debug("beforeEach: Clearing store", []);
+  clearStore();
+  mockBalancerVaultZero();
+  mockUniswapV2PairsZero();
+});
 
 describe("Token Quantity", () => {
   test("total quantity of OHM token in pool", () => {
@@ -83,8 +87,6 @@ describe("Token Quantity", () => {
   });
 
   test("balance of OHM V2 token in pool", () => {
-    mockBalancerVaultZero();
-
     mockUsdOhmV2Rate();
 
     // Mock total value
@@ -210,8 +212,6 @@ describe("Token Quantity", () => {
 
 describe("records", () => {
   test("generates TokenRecord array for the given token", () => {
-    mockBalancerVaultZero();
-
     const expectedBalanceV2 = BigDecimal.fromString("2");
 
     // OHM-DAI V1
@@ -328,8 +328,6 @@ describe("records", () => {
 
 describe("pair value", () => {
   test("OHM-DAI pair value is correct", () => {
-    mockBalancerVaultZero();
-
     const token0Reserves = BigInt.fromString("1233838296976506");
     const token1Reserves = BigInt.fromString("15258719216508026301937394");
     mockUniswapV2Pair(
@@ -364,8 +362,6 @@ describe("pair value", () => {
   });
 
   test("OHM-DAI pair value is correct, excluding OHM", () => {
-    mockBalancerVaultZero();
-
     const token0Reserves = BigInt.fromString("1233838296976506");
     const token1Reserves = BigInt.fromString("15258719216508026301937394");
     mockUniswapV2Pair(
@@ -393,8 +389,6 @@ describe("pair value", () => {
   });
 
   test("OHM-ETH pair value is correct", () => {
-    mockBalancerVaultZero();
-
     mockOhmEthPair();
     mockUsdOhmV2Rate();
     mockEthUsdRate();
@@ -414,8 +408,6 @@ describe("pair value", () => {
   });
 
   test("OHM-ETH pair balance value is correct", () => {
-    mockBalancerVaultZero();
-
     mockOhmEthPair();
     mockUsdOhmV2Rate();
     mockEthUsdRate();
@@ -440,7 +432,11 @@ describe("pair value", () => {
   });
 
   test("OHM-BTRFLY V1 pair value is correct", () => {
-    mockBalancerVaultZero();
+    mockUsdOhmV2Rate();
+    mockEthUsdRate();
+
+    // UniswapV3 pair will be used for price lookup
+    mockWEthBtrflyV1Rate();
 
     const token0Reserves = BigInt.fromString("463282541348");
     const token1Reserves = BigInt.fromString("198002629046");
@@ -455,9 +451,6 @@ describe("pair value", () => {
       PAIR_UNISWAP_V2_OHM_BTRFLY_V1,
       ERC20_STANDARD_DECIMALS,
     );
-
-    // UniswapV3 pair will be used for price lookup
-    mockWEthBtrflyV1Rate();
 
     const pairValue = getUniswapV2PairTotalValue(
       PAIR_UNISWAP_V2_OHM_BTRFLY_V1,
@@ -476,38 +469,5 @@ describe("pair value", () => {
 
     assert.stringEquals(calculatedValue.toString(), pairValue.toString());
     assert.stringEquals("15724.8700", pairValue.toString().slice(0, 10));
-  });
-});
-
-describe("risk-free pair value", () => {
-  test("risk-free pair value is correct", () => {
-    mockUsdOhmV2Rate();
-
-    const lpBalance = BigInt.fromString("1000000000000000000");
-    const pairValue = getOhmUSDPairRiskFreeValue(
-      lpBalance,
-      PAIR_UNISWAP_V2_OHM_DAI_V2,
-      OHM_USD_RESERVE_BLOCK,
-    );
-    // (# LP tokens / LP total supply) * (2) * sqrt(# DAI * # OHM)
-    const calculatedValue = toDecimal(lpBalance, 18)
-      .div(toDecimal(OHM_USD_TOTAL_SUPPLY, 18))
-      .times(BigDecimal.fromString("2"))
-      .times(
-        toDecimal(
-          toDecimal(OHM_USD_RESERVE_USD, ERC20_STANDARD_DECIMALS)
-            .times(toDecimal(OHM_USD_RESERVE_OHM, OHM_V2_DECIMALS))
-            .truncate(0)
-            .digits.sqrt(),
-          0,
-        ),
-      );
-    log.debug("calculated risk-free value: {}", [calculatedValue.toString()]);
-    log.debug("difference: {}", [pairValue.minus(calculatedValue).toString()]);
-
-    // There is a loss of precision, so we need to ensure that the value is close, but not equal
-    assert.assertTrue(
-      pairValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
-    );
   });
 });

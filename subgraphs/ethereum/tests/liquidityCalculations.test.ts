@@ -1,5 +1,5 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
-import { assert, describe, test } from "matchstick-as/assembly/index";
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, describe, test } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { DAO_WALLET, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
@@ -17,17 +17,19 @@ import {
   PAIR_UNISWAP_V2_OHM_DAI_V2,
 } from "../src/utils/Constants";
 import { mockConvexStakedBalanceZero, mockFraxLockedBalanceZero } from "./contractHelper.test";
-import { mockBalancerVaultZero, mockBalanceVaultOhmDaiEth } from "./liquidityBalancer.test";
-import { mockFraxSwapPairOhmFrax, mockFraxSwapPairZero } from "./liquidityFraxSwap.test";
+import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import {
-  ERC20_STANDARD_DECIMALS,
   ETH_USD_RESERVE_BLOCK,
+  mockBalancerVaultOhmDaiEth,
+  mockBalancerVaultZero,
   mockCurvePairTotalValue,
   mockCurvePairZero,
-  mockERC20TotalSupply,
   mockEthUsdRate,
+  mockFraxSwapPairOhmFrax,
+  mockFraxSwapPairZero,
   mockUniswapV2Pair,
   mockUniswapV2PairsZero,
+  mockUniswapV3PairsZero,
   mockUsdOhmV2Rate,
   OHM_V2_DECIMALS,
 } from "./pairHelper";
@@ -36,16 +38,23 @@ import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 const PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY = BigDecimal.fromString("100");
 const TIMESTAMP = BigInt.fromString("1");
 
+beforeEach(() => {
+  log.debug("beforeEach: Clearing store", []);
+  clearStore();
+
+  // Mock other liquidity pools
+  mockBalancerVaultZero();
+  mockUniswapV2PairsZero();
+  mockFraxSwapPairZero();
+  mockFraxLockedBalanceZero();
+  mockCurvePairZero();
+  mockUniswapV3PairsZero();
+})
+
 describe("getLiquidityPoolValue", () => {
   test("curve pool", () => {
     mockEthUsdRate();
     mockUsdOhmV2Rate();
-
-    // Mock other liquidity pools
-    mockBalancerVaultZero();
-    mockUniswapV2PairsZero();
-    mockFraxSwapPairZero();
-    mockFraxLockedBalanceZero();
 
     // Mock pair
     const ohmReserves = BigDecimal.fromString("100");
@@ -88,11 +97,6 @@ describe("getLiquidityPoolValue", () => {
   });
 
   test("FraxSwap pool", () => {
-    // Mock other liquidity pools
-    mockBalancerVaultZero();
-    mockUniswapV2PairsZero();
-    mockCurvePairZero();
-
     mockFraxSwapPairOhmFrax();
 
     // Mock balance
@@ -117,12 +121,6 @@ describe("getLiquidityPoolValue", () => {
   test("curve pool includes DAO wallet", () => {
     mockEthUsdRate();
     mockUsdOhmV2Rate();
-
-    // Mock liquidity pools
-    mockBalancerVaultZero();
-    mockUniswapV2PairsZero();
-    mockFraxSwapPairZero();
-    mockFraxLockedBalanceZero();
 
     // Mock pair
     const ohmReserves = BigDecimal.fromString("100");
@@ -178,12 +176,6 @@ describe("getLiquidityPoolValue", () => {
   test("uniswapv2 pool", () => {
     mockUsdOhmV2Rate();
 
-    // Mock liquidity pools
-    mockBalancerVaultZero();
-    mockUniswapV2PairsZero();
-    mockCurvePairZero();
-    mockFraxSwapPairZero();
-
     // Mock pair
     mockUniswapV2Pair(
       ERC20_OHM_V2,
@@ -213,14 +205,8 @@ describe("getLiquidityPoolValue", () => {
   });
 
   test("balancer pool", () => {
-    // Mock liquidity pools
-    mockBalancerVaultZero();
-    mockUniswapV2PairsZero();
-    mockCurvePairZero();
-    mockFraxSwapPairZero();
-
     // Mock pool
-    mockBalanceVaultOhmDaiEth();
+    mockBalancerVaultOhmDaiEth();
 
     // Mock wallet balance
     const expectedWalletBalance = BigDecimal.fromString("2");

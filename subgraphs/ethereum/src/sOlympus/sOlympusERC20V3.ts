@@ -6,7 +6,7 @@ import { OlympusERC20 } from "../../generated/sOlympusERC20V3/OlympusERC20";
 import { RebaseCall } from "../../generated/sOlympusERC20V3/sOlympusERC20V3";
 import { ERC20_OHM_V2, STAKING_CONTRACT_V3 } from "../utils/Constants";
 import { createDailyStakingReward } from "../utils/DailyStakingReward";
-import { getBaseOhmUsdRate } from "../utils/Price";
+import { getUSDRate } from "../utils/Price";
 
 export function rebaseFunction(call: RebaseCall): void {
   let rebase = Rebase.load(call.block.timestamp.toString());
@@ -23,7 +23,7 @@ export function rebaseFunction(call: RebaseCall): void {
     rebase.contract = STAKING_CONTRACT_V3;
     rebase.percentage = rebase.amount.div(rebase.stakedOhms);
     rebase.timestamp = call.block.timestamp;
-    rebase.value = rebase.amount.times(getBaseOhmUsdRate(call.block.number));
+    rebase.value = rebase.amount.times(getUSDRate(ERC20_OHM_V2, call.block.number));
     rebase.save();
 
     createDailyStakingReward(rebase.timestamp, rebase.amount, call.block.number);

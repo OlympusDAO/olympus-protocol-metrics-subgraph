@@ -4,9 +4,10 @@ import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { BondManager } from "../../generated/ProtocolMetrics/BondManager";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
 import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../../generated/schema";
+import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import { GNOSIS_RECORD_ID } from "../GnosisAuction";
 import { getBalancerPoolTokenQuantity } from "../liquidity/LiquidityBalancer";
-import { getCurvePairTokenQuantity } from "../liquidity/LiquidityCurve";
+import { getCurvePairTokenQuantityRecords } from "../liquidity/LiquidityCurve";
 import { getFraxSwapPairTokenQuantityRecords } from "../liquidity/LiquidityFraxSwap";
 import { getUniswapV2PairTokenQuantity } from "../liquidity/LiquidityUniswapV2";
 import { pushTokenSupplyArray } from "./ArrayHelper";
@@ -28,14 +29,13 @@ import {
   SILO_ADDRESS,
 } from "./Constants";
 import {
-  getERC20,
-  getERC20Balance,
+  getERC20DecimalBalance,
   getSOlympusERC20,
   getSOlympusERC20V2,
   getSOlympusERC20V3,
 } from "./ContractHelper";
 import { PairHandlerTypes } from "./PairHandler";
-import { getBaseOhmUsdRate } from "./Price";
+import { getUSDRate } from "./Price";
 import {
   createOrUpdateTokenSupply,
   TYPE_BONDS_DEPOSITS,
@@ -64,9 +64,10 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
     ? ERC20_OHM_V2
     : ERC20_OHM_V1;
 
-  const ohmContract = getERC20(ohmContractAddress, blockNumber);
+  const snapshot = getOrCreateERC20TokenSnapshot(ohmContractAddress, blockNumber);
+  const snapshotTotalSupply = snapshot.totalSupply;
 
-  if (!ohmContract) {
+  if (snapshotTotalSupply === null) {
     log.error(
       "Expected to be able to bind to OHM contract at address {} for block {}, but it was not found.",
       [ohmContractAddress, blockNumber.toString()],
@@ -74,7 +75,7 @@ export function getTotalSupply(blockNumber: BigInt): BigDecimal {
     return BigDecimal.fromString("0");
   }
 
-  return toDecimal(ohmContract.totalSupply(), 9);
+  return snapshotTotalSupply;
 }
 
 export function getTotalSupplyRecord(timestamp: BigInt, blockNumber: BigInt): TokenSupply {
@@ -360,24 +361,12 @@ export function getMintedBorrowableOHMRecords(timestamp: BigInt, blockNumber: Bi
 export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
   const isV2Contract = blockNumber.gt(BigInt.fromString(ERC20_OHM_V2_BLOCK));
   const ohmContractAddress = isV2Contract ? ERC20_OHM_V2 : ERC20_OHM_V1;
-
-  const ohmContract = getERC20(ohmContractAddress, blockNumber);
   const records: TokenSupply[] = [];
-
-  if (!ohmContract) {
-    log.error(
-      "Expected to be able to bind to OHM contract at address {} for block {}, but it was not found.",
-      [ohmContractAddress, blockNumber.toString()],
-    );
-    return records;
-  }
 
   for (let i = 0; i < CIRCULATING_SUPPLY_WALLETS.length; i++) {
     const currentWallet = CIRCULATING_SUPPLY_WALLETS[i];
-    const balance = getERC20Balance(ohmContract, currentWallet, blockNumber);
-    if (balance.equals(BigInt.zero())) continue;
-
-    const walletBalance = toDecimal(balance, 9);
+    const balance = getERC20DecimalBalance(ohmContractAddress, currentWallet, blockNumber);
+    if (balance.equals(BigDecimal.zero())) continue;
 
     records.push(
       createOrUpdateTokenSupply(
@@ -389,7 +378,7 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
         getContractName(currentWallet),
         currentWallet,
         TYPE_TREASURY,
-        walletBalance,
+        balance,
         blockNumber,
         -1, // Subtract
       ),
@@ -446,7 +435,7 @@ export function getProtocolOwnedLiquiditySupplyRecords(
       } else if (pairHandler.getType() == PairHandlerTypes.Curve) {
         pushTokenSupplyArray(
           records,
-          getCurvePairTokenQuantity(timestamp, pairAddress, ohmTokenAddress, blockNumber),
+          getCurvePairTokenQuantityRecords(timestamp, pairAddress, ohmTokenAddress, blockNumber),
         );
       } else if (pairHandler.getType() == PairHandlerTypes.UniswapV2) {
         pushTokenSupplyArray(
@@ -508,7 +497,7 @@ export function getSOhmCirculatingSupply(blockNumber: BigInt): BigDecimal {
  * @returns BigDecimal representing the TVL at the current block
  */
 export function getTotalValueLocked(blockNumber: BigInt): BigDecimal {
-  return getSOhmCirculatingSupply(blockNumber).times(getBaseOhmUsdRate(blockNumber));
+  return getSOhmCirculatingSupply(blockNumber).times(getUSDRate(ERC20_OHM_V2, blockNumber));
 }
 
 /**

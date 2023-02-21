@@ -1,7 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
-import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { pushArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import {
@@ -31,6 +30,9 @@ import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { UniswapV3Pair } from "../../generated/ProtocolMetrics/UniswapV3Pair";
 import { VeFXS } from "../../generated/ProtocolMetrics/VeFXS";
 import { vlCVX } from "../../generated/ProtocolMetrics/vlCVX";
+import { ERC20TokenSnapshot } from "../../generated/schema";
+import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
+import { getOrCreateAuraLockedPoolSnapshot, getOrCreateAuraRewardPoolSnapshot, getOrCreateAuraStakingPoolSnapshot, getOrCreateBalancerGaugeStakingPoolSnapshot, getOrCreateConvexStakingPoolSnapshot, getOrCreateFraxStakingPoolSnapshot, getOrCreateLiquityStakingPoolSnapshot, getOrCreateTokemakStakingPoolSnapshot } from "../contracts/StakingPoolSnapshot";
 import {
   addressesEqual,
   ALLOCATOR_ONSEN_ID_NOT_FOUND,
@@ -77,7 +79,6 @@ const contractsERC20 = new Map<string, ERC20>();
 const contractsSOlympusERC20 = new Map<string, sOlympusERC20>();
 const contractsSOlympusERC20V2 = new Map<string, sOlympusERC20V2>();
 const contractsSOlympusERC20V3 = new Map<string, sOlympusERC20V3>();
-const contractsUniswapV2Pair = new Map<string, UniswapV2Pair>();
 const contractsUniswapV3Pair = new Map<string, UniswapV3Pair>();
 const contractsRariAllocator = new Map<string, RariAllocator>();
 const contractsTokeAllocator = new Map<string, TokeAllocator>();
@@ -148,8 +149,9 @@ export function getERC20(contractAddress: string, currentBlockNumber: BigInt): E
  */
 export function getERC20Decimals(contractAddress: string, blockNumber: BigInt): number {
   const contractName = getContractName(contractAddress);
-  const contract = getERC20(contractAddress, blockNumber);
-  if (!contract) {
+
+  const snapshot = getOrCreateERC20TokenSnapshot(contractAddress, blockNumber);
+  if (!snapshot || snapshot.totalSupply === null) {
     throw new Error(
       "getERC20Decimals: unable to find ERC20 contract for " +
       contractName +
@@ -173,7 +175,7 @@ export function getERC20Decimals(contractAddress: string, blockNumber: BigInt): 
     return 18;
   }
 
-  return contract.decimals();
+  return snapshot.decimals;
 }
 
 export function getSOlympusERC20(
@@ -237,35 +239,6 @@ export function getSOlympusERC20V3(
 }
 
 /**
- * Binds with a UniswapV2Pair contract.
- *
- * If the contract cannot be bound, or it does not exist at the current block number,
- * null will be returned.
- *
- * @param contractAddress contract address
- * @param currentBlockNumber the current block number
- * @returns UniswapV2Pair or null
- */
-export function getUniswapV2Pair(
-  contractAddress: string,
-  currentBlockNumber: BigInt,
-): UniswapV2Pair | null {
-  log.debug("Fetching UniswapV2Pair contract for address {}", [contractAddress]);
-  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
-
-  if (!contractsUniswapV2Pair.has(contractAddress)) {
-    log.debug("Binding UniswapV2Pair contract for address {}. Block number {}", [
-      contractAddress,
-      currentBlockNumber.toString(),
-    ]);
-    const contract = UniswapV2Pair.bind(Address.fromString(contractAddress));
-    contractsUniswapV2Pair.set(contractAddress, contract);
-  }
-
-  return contractsUniswapV2Pair.get(contractAddress);
-}
-
-/**
  * Binds with a UniswapV3Pair contract.
  *
  * If the contract cannot be bound, or it does not exist at the current block number,
@@ -294,7 +267,7 @@ export function getUniswapV3Pair(
   return contractsUniswapV3Pair.get(contractAddress);
 }
 
-export function getMasterChef(
+function getMasterChef(
   contractAddress: string,
   currentBlockNumber: BigInt,
 ): MasterChef | null {
@@ -312,7 +285,7 @@ export function getMasterChef(
   return contractsMasterChef.get(contractAddress);
 }
 
-export function getTokeAllocator(
+function getTokeAllocator(
   contractAddress: string,
   currentBlockNumber: BigInt,
 ): TokeAllocator | null {
@@ -330,7 +303,7 @@ export function getTokeAllocator(
   return contractsTokeAllocator.get(contractAddress);
 }
 
-export function getRariAllocator(
+function getRariAllocator(
   contractAddress: string,
   currentBlockNumber: BigInt,
 ): RariAllocator | null {
@@ -348,7 +321,7 @@ export function getRariAllocator(
   return contractsRariAllocator.get(contractAddress);
 }
 
-export function getVeFXS(contractAddress: string, currentBlockNumber: BigInt): VeFXS | null {
+function getVeFXS(contractAddress: string, currentBlockNumber: BigInt): VeFXS | null {
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
   if (!contractsVeFXS.has(contractAddress)) {
@@ -363,43 +336,19 @@ export function getVeFXS(contractAddress: string, currentBlockNumber: BigInt): V
   return contractsVeFXS.get(contractAddress);
 }
 
-/**
- * Helper method to simplify getting the balance from an ERC20 contract.
- *
- * Returns 0 if the minimum block number has not passed.
- *
- * @param contract The bound ERC20 contract.
- * @param address The address of the holder.
- * @param currentBlockNumber The current block number.
- * @returns BigInt
- */
-export function getERC20Balance(
-  contract: ERC20 | null,
-  address: string,
-  currentBlockNumber: BigInt,
-): BigInt {
-  if (!contract) {
-    log.debug("Contract for address {} ({}) does not exist at block {}", [
-      getContractName(address),
-      address,
-      currentBlockNumber.toString(),
-    ]);
-    return BigInt.fromString("0");
+export function getERC20DecimalBalance(tokenAddress: string, walletAddress: string, blockNumber: BigInt): BigDecimal {
+  const tokenSnapshot = getOrCreateERC20TokenSnapshot(tokenAddress, blockNumber);
+  const tokenContract = getERC20(tokenAddress, blockNumber);
+  if (tokenContract === null || tokenSnapshot.totalSupply === null) {
+    return BigDecimal.zero();
   }
 
-  const balance = contract.balanceOf(Address.fromString(address));
-  log.debug(
-    "getERC20Balance: Found balance {} in ERC20 contract {} ({}) for wallet {} ({}) at block number {}",
-    [
-      balance.toString(),
-      getContractName(contract._address.toHexString()),
-      contract._address.toHexString(),
-      getContractName(address),
-      address,
-      currentBlockNumber.toString(),
-    ],
-  );
-  return balance;
+  const balanceResult = tokenContract.try_balanceOf(Address.fromString(walletAddress));
+  if (balanceResult.reverted) {
+    return BigDecimal.zero();
+  }
+
+  return toDecimal(balanceResult.value, tokenSnapshot.decimals);
 }
 
 /**
@@ -534,7 +483,7 @@ export function getERC20TokenRecordFromWallet(
 
   const decimals = getERC20Decimals(contractAddress, blockNumber);
 
-  const balance = toDecimal(getERC20Balance(contract, walletAddress, blockNumber), decimals);
+  const balance = toDecimal(callResult.value, decimals);
   if (!balance || balance.equals(BigDecimal.zero())) return null;
 
   return createOrUpdateTokenRecord(
@@ -602,13 +551,13 @@ export function getERC20TokenRecordsFromWallets(
  */
 function getTokeStakedBalance(
   stakingContract: TokemakStaking,
-  tokenContract: ERC20,
+  tokenSnapshot: ERC20TokenSnapshot,
   walletAddress: string,
   _blockNumber: BigInt,
 ): BigDecimal {
   return toDecimal(
     stakingContract.balanceOf(Address.fromString(walletAddress)),
-    tokenContract.decimals(),
+    tokenSnapshot.decimals,
   );
 }
 
@@ -631,23 +580,15 @@ export function getAuraLockedBalancesFromWallets(
   const FUNC = "getAuraLockedBalancesFromWallets";
   const records: TokenRecord[] = [];
 
-  // Check that the token matches
-  const contract = AuraLocker.bind(Address.fromString(ERC20_AURA_VL));
-  const stakingTokenResult = contract.try_stakingToken();
-  if (stakingTokenResult.reverted) {
-    log.warning(
-      "{}: AURA locking contract reverted at block {}. Skipping",
-      [FUNC, blockNumber.toString()],
-    );
-    return records;
-  }
-
   // Ignore if we're looping through and the staking token doesn't match
-  if (!stakingTokenResult.value.equals(Address.fromString(tokenAddress))) {
+  const stakingSnapshot = getOrCreateAuraLockedPoolSnapshot(ERC20_AURA_VL, blockNumber);
+  const stakingSnapshotToken = stakingSnapshot.stakingToken;
+  if (stakingSnapshotToken === null || !addressesEqual(stakingSnapshotToken.toHexString(), tokenAddress)) {
     return records;
   }
 
   // Iterate over all relevant wallets
+  const contract = AuraLocker.bind(Address.fromString(ERC20_AURA_VL));
   const wallets = getWalletAddressesForContract(tokenAddress);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
@@ -708,32 +649,25 @@ export function getTokeStakedBalancesFromWallets(
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
 
-  // Check that the token matches
-  const contract = TokemakStaking.bind(Address.fromString(TOKE_STAKING));
-  if (contract.try_tokeToken().reverted) {
-    log.warning(
-      "getTokeStakedBalancesFromWallets: TOKE staking contract reverted at block {}. Skipping",
-      [blockNumber.toString()],
-    );
-    return records;
-  }
-
   // Ignore if we're looping through and the staking token doesn't match
-  if (!contract.tokeToken().equals(Address.fromString(tokenAddress))) {
+  const stakingSnapshot = getOrCreateTokemakStakingPoolSnapshot(TOKE_STAKING, blockNumber);
+  const stakingSnapshotToken = stakingSnapshot.stakingToken;
+  if (stakingSnapshotToken === null || !addressesEqual(stakingSnapshotToken.toHexString(), tokenAddress)) {
     return records;
   }
 
   // Check that the token exists
-  const tokenContract = getERC20(tokenAddress, blockNumber);
-  if (tokenContract == null) {
+  const tokenSnapshot = getOrCreateERC20TokenSnapshot(tokenAddress, blockNumber);
+  if (tokenSnapshot === null || tokenSnapshot.totalSupply === null) {
     return records;
   }
 
   // Iterate over all relevant wallets
+  const contract = TokemakStaking.bind(Address.fromString(TOKE_STAKING));
   const wallets = getWalletAddressesForContract(tokenAddress);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
-    const balance = getTokeStakedBalance(contract, tokenContract, currentWallet, blockNumber);
+    const balance = getTokeStakedBalance(contract, tokenSnapshot, currentWallet, blockNumber);
     if (balance.equals(BigDecimal.zero())) {
       continue;
     }
@@ -782,13 +716,13 @@ export function getTokeStakedBalancesFromWallets(
  */
 function getLiquityStakedBalance(
   stakingContract: LQTYStaking,
-  tokenContract: ERC20,
+  tokenSnapshot: ERC20TokenSnapshot,
   walletAddress: string,
   _blockNumber: BigInt,
 ): BigDecimal {
   return toDecimal(
     stakingContract.stakes(Address.fromString(walletAddress)),
-    tokenContract.decimals(),
+    tokenSnapshot.decimals,
   );
 }
 
@@ -810,32 +744,25 @@ export function getLiquityStakedBalancesFromWallets(
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
 
-  // Check that the token matches
-  const contract = LQTYStaking.bind(Address.fromString(LQTY_STAKING));
-  if (contract.try_lqtyToken().reverted) {
-    log.warning(
-      "getLiquityStakedBalancesFromWallets: LQTY staking contract reverted at block {}. Skipping",
-      [blockNumber.toString()],
-    );
-    return records;
-  }
-
   // Ignore if we're looping through and the staking token doesn't match
-  if (!contract.lqtyToken().equals(Address.fromString(tokenAddress))) {
+  const stakingSnapshot = getOrCreateLiquityStakingPoolSnapshot(LQTY_STAKING, blockNumber);
+  const stakingSnapshotToken = stakingSnapshot.stakingToken;
+  if (stakingSnapshotToken === null || !addressesEqual(stakingSnapshotToken.toHexString(), tokenAddress)) {
     return records;
   }
 
   // Check that the token exists
-  const tokenContract = getERC20(tokenAddress, blockNumber);
-  if (tokenContract == null) {
+  const tokenSnapshot = getOrCreateERC20TokenSnapshot(tokenAddress, blockNumber);
+  if (tokenSnapshot == null || tokenSnapshot.totalSupply === null) {
     return records;
   }
 
   // Iterate over all relevant wallets
+  const contract = LQTYStaking.bind(Address.fromString(LQTY_STAKING));
   const wallets = getWalletAddressesForContract(tokenAddress);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
-    const balance = getLiquityStakedBalance(contract, tokenContract, currentWallet, blockNumber);
+    const balance = getLiquityStakedBalance(contract, tokenSnapshot, currentWallet, blockNumber);
     if (balance.equals(BigDecimal.zero())) {
       continue;
     }
@@ -884,13 +811,13 @@ export function getLiquityStakedBalancesFromWallets(
  */
 function getBalancerGaugeBalance(
   gaugeContract: BalancerLiquidityGauge,
-  tokenContract: ERC20,
+  tokenSnapshot: ERC20TokenSnapshot,
   walletAddress: string,
   _blockNumber: BigInt,
 ): BigDecimal {
   return toDecimal(
     gaugeContract.balanceOf(Address.fromString(walletAddress)),
-    tokenContract.decimals(),
+    tokenSnapshot.decimals,
   );
 }
 
@@ -906,13 +833,13 @@ function getBalancerGaugeBalance(
  */
 function getAuraStakedBalance(
   stakingContract: AuraStaking,
-  tokenContract: ERC20,
+  tokenSnapshot: ERC20TokenSnapshot,
   walletAddress: string,
   _blockNumber: BigInt,
 ): BigDecimal {
   return toDecimal(
     stakingContract.balanceOf(Address.fromString(walletAddress)),
-    tokenContract.decimals(),
+    tokenSnapshot.decimals,
   );
 }
 
@@ -949,28 +876,20 @@ export function getBalancerGaugeBalanceFromWallets(
     ],
   );
 
-  // Check that the token matches
-  const contract = BalancerLiquidityGauge.bind(Address.fromString(gaugeContractAddress));
-  if (contract.try_lp_token().reverted) {
-    log.warning(
-      "getBalancerGaugeBalanceFromWallets: Balancer liquidity gauge contract reverted at block {}. Skipping",
-      [blockNumber.toString()],
-    );
-    return records;
-  }
-
-  // Ignore if we're looping through and the LP token doesn't match
-  if (!addressesEqual(contract.lp_token().toHexString(), tokenAddress)) {
+  // Ignore if we're looping through and the staking token doesn't match
+  const stakingSnapshot = getOrCreateBalancerGaugeStakingPoolSnapshot(gaugeContractAddress, blockNumber);
+  const stakingSnapshotToken = stakingSnapshot.stakingToken;
+  if (stakingSnapshotToken === null || !addressesEqual(stakingSnapshotToken.toHexString(), tokenAddress)) {
     log.debug(
-      "getBalancerGaugeBalanceFromWallets: output of lp_token() did not match current token {} ({}) at block {}. Skipping",
-      [getContractName(tokenAddress), tokenAddress, blockNumber.toString()],
+      "getBalancerGaugeBalanceFromWallets: token {} ({}) does not match the staking token {} for vault {} ({}). Skipping",
+      [getContractName(tokenAddress), tokenAddress, stakingSnapshotToken === null ? "null" : stakingSnapshotToken.toHexString(), getContractName(gaugeContractAddress), gaugeContractAddress],
     );
     return records;
   }
 
   // Check that the token exists
-  const tokenContract = getERC20(tokenAddress, blockNumber);
-  if (tokenContract == null) {
+  const tokenSnapshot = getOrCreateERC20TokenSnapshot(tokenAddress, blockNumber);
+  if (tokenSnapshot == null || tokenSnapshot.totalSupply === null) {
     log.debug(
       "getBalancerGaugeBalanceFromWallets: token {} ({}) does not seem to exist at block {}. Skipping",
       [getContractName(tokenAddress), tokenAddress, blockNumber.toString()],
@@ -979,15 +898,26 @@ export function getBalancerGaugeBalanceFromWallets(
   }
 
   // Iterate over all relevant wallets
+  const contract = BalancerLiquidityGauge.bind(Address.fromString(gaugeContractAddress));
   const wallets = getWalletAddressesForContract(tokenAddress);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
-    const balance = getBalancerGaugeBalance(contract, tokenContract, currentWallet, blockNumber);
+    const balance = getBalancerGaugeBalance(contract, tokenSnapshot, currentWallet, blockNumber);
     if (balance.equals(BigDecimal.zero())) {
+      log.debug(
+        "getBalancerGaugeBalanceFromWallets: 0 balance for token {} ({}) and wallet {} ({}) at block {}",
+        [
+          getContractName(tokenAddress, "Gauge Deposit"),
+          tokenAddress,
+          getContractName(currentWallet),
+          currentWallet,
+          blockNumber.toString(),
+        ],
+      );
       continue;
     }
 
-    log.debug(
+    log.info(
       "getBalancerGaugeBalanceFromWallets: found balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),
@@ -1013,7 +943,7 @@ export function getBalancerGaugeBalanceFromWallets(
         ERC20_TOKENS,
         BLOCKCHAIN,
         multiplier,
-        TokenCategoryPOL,
+        getTokenCategory(tokenAddress, ERC20_TOKENS),
       ),
     );
   }
@@ -1079,28 +1009,31 @@ export function getAuraStakedBalanceFromWallets(
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
 
-  // Check that the token matches
-  const contract = AuraStaking.bind(Address.fromString(stakingAddress));
-  if (contract.try_stakingToken().reverted) {
-    log.warning(
-      "getAuraStakedBalanceFromWallets: Aura staking contract reverted at block {}. Skipping",
-      [blockNumber.toString()],
-    );
-    return records;
-  }
+  log.debug(
+    "getAuraStakedBalanceFromWallets: determining wallet balances staked in {} ({}) of token {} ({}) at block {}",
+    [
+      getContractName(stakingAddress),
+      stakingAddress,
+      getContractName(tokenAddress),
+      tokenAddress,
+      blockNumber.toString(),
+    ],
+  );
 
-  // Ignore if we're looping through and the LP token doesn't match
-  if (!addressesEqual(contract.stakingToken().toHexString(), tokenAddress)) {
+  // Ignore if we're looping through and the staking token doesn't match
+  const stakingSnapshot = getOrCreateAuraStakingPoolSnapshot(stakingAddress, blockNumber);
+  const stakingSnapshotToken = stakingSnapshot.stakingToken;
+  if (stakingSnapshotToken === null || !addressesEqual(stakingSnapshotToken.toHexString(), tokenAddress)) {
     log.debug(
-      "getAuraStakedBalanceFromWallets: output of lp_token() did not match current token {} ({}) at block {}. Skipping",
-      [getContractName(tokenAddress), tokenAddress, blockNumber.toString()],
+      "getAuraStakedBalanceFromWallets: token {} ({}) does not match the staking token {} for vault {} ({}). Skipping",
+      [getContractName(tokenAddress), tokenAddress, stakingSnapshotToken === null ? "null" : stakingSnapshotToken.toHexString(), getContractName(stakingAddress), stakingAddress],
     );
     return records;
   }
 
   // Check that the token exists
-  const tokenContract = getERC20(tokenAddress, blockNumber);
-  if (tokenContract == null) {
+  const tokenSnapshot = getOrCreateERC20TokenSnapshot(tokenAddress, blockNumber);
+  if (tokenSnapshot == null || tokenSnapshot.totalSupply === null) {
     log.debug(
       "getAuraStakedBalanceFromWallets: token {} ({}) does not seem to exist at block {}. Skipping",
       [getContractName(tokenAddress), tokenAddress, blockNumber.toString()],
@@ -1109,15 +1042,26 @@ export function getAuraStakedBalanceFromWallets(
   }
 
   // Iterate over all relevant wallets
+  const contract = AuraStaking.bind(Address.fromString(stakingAddress));
   const wallets = getWalletAddressesForContract(tokenAddress);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
-    const balance = getAuraStakedBalance(contract, tokenContract, currentWallet, blockNumber);
+    const balance = getAuraStakedBalance(contract, tokenSnapshot, currentWallet, blockNumber);
     if (balance.equals(BigDecimal.zero())) {
+      log.debug(
+        "getAuraStakedBalanceFromWallets: 0 balance for token {} ({}) and wallet {} ({}) at block {}",
+        [
+          getContractName(tokenAddress),
+          tokenAddress,
+          getContractName(currentWallet),
+          currentWallet,
+          blockNumber.toString(),
+        ],
+      );
       continue;
     }
 
-    log.debug(
+    log.info(
       "getAuraStakedBalanceFromWallets: found balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),
@@ -1157,17 +1101,16 @@ export function getAuraPoolEarnedRecords(timestamp: BigInt, contractAddress: str
   for (let h = 0; h < AURA_REWARDS_CONTRACTS.length; h++) {
     const poolAddress = AURA_REWARDS_CONTRACTS[h];
     log.debug("getAuraPoolEarnedRecords: looking for Aura earned rewards for token {} ({}) in pool {} ({})", [getContractName(contractAddress), contractAddress, getContractName(poolAddress), poolAddress]);
-    const rewardPool = AuraVirtualBalanceRewardPool.bind(Address.fromString(poolAddress));
-    const rewardTokenResult = rewardPool.try_rewardToken();
-    if (rewardTokenResult.reverted) {
-      continue;
-    }
 
-    if (rewardTokenResult.value.toHexString().toLowerCase() != contractAddress.toLowerCase()) {
+    // Ignore if we're looping through and the staking token doesn't match
+    const stakingSnapshot = getOrCreateAuraRewardPoolSnapshot(poolAddress, blockNumber);
+    const stakingSnapshotToken = stakingSnapshot.stakingToken;
+    if (stakingSnapshotToken === null || !addressesEqual(stakingSnapshotToken.toHexString(), contractAddress)) {
       continue;
     }
 
     // Iterate over all relevant wallets
+    const rewardPool = AuraVirtualBalanceRewardPool.bind(Address.fromString(poolAddress));
     const wallets = getWalletAddressesForContract(contractAddress);
     for (let i = 0; i < wallets.length; i++) {
       const currentWallet = wallets[i];
@@ -1266,10 +1209,14 @@ export function getAuraStakedBalancesFromWallets(
 function getTokeAllocatorBalance(contractAddress: string, blockNumber: BigInt): BigDecimal | null {
   const allocatorId = getRariAllocatorId(contractAddress);
   const tokeAllocator = getTokeAllocator(TOKE_ALLOCATOR, blockNumber);
-  const contract = getERC20(contractAddress, blockNumber);
+  const tokenSnapshot = getOrCreateERC20TokenSnapshot(contractAddress, blockNumber);
+
+  if (!tokenSnapshot || tokenSnapshot.totalSupply === null) {
+    return null;
+  }
 
   // No matching allocator id
-  if (allocatorId == ALLOCATOR_RARI_ID_NOT_FOUND || !tokeAllocator || !contract) {
+  if (allocatorId == ALLOCATOR_RARI_ID_NOT_FOUND || !tokeAllocator) {
     return null;
   }
 
@@ -1283,7 +1230,7 @@ function getTokeAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
     return null;
   }
 
-  return toDecimal(tokeAllocator.tokeDeposited(), contract.decimals());
+  return toDecimal(tokeAllocator.tokeDeposited(), tokenSnapshot.decimals);
 }
 
 /**
@@ -1344,9 +1291,13 @@ const RARI_DEBT_WRITEOFF_BLOCK = "14983058";
 function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): BigDecimal | null {
   const rariAllocatorId = getRariAllocatorId(contractAddress);
   const rariAllocator = getRariAllocator(RARI_ALLOCATOR, blockNumber);
-  const contract = getERC20(contractAddress, blockNumber);
+  const tokenSnapshot = getOrCreateERC20TokenSnapshot(contractAddress, blockNumber);
 
-  if (rariAllocatorId == ALLOCATOR_RARI_ID_NOT_FOUND || !rariAllocator || !contract) {
+  if (!tokenSnapshot || tokenSnapshot.totalSupply === null) {
+    return null;
+  }
+
+  if (rariAllocatorId == ALLOCATOR_RARI_ID_NOT_FOUND || !rariAllocator) {
     return null;
   }
 
@@ -1372,7 +1323,7 @@ function getRariAllocatorBalance(contractAddress: string, blockNumber: BigInt): 
 
   return toDecimal(
     rariAllocator.amountAllocated(BigInt.fromI32(rariAllocatorId)),
-    contract.decimals(),
+    tokenSnapshot.decimals,
   );
 }
 
@@ -1476,30 +1427,22 @@ export function getConvexStakedBalance(
     return null;
   }
 
-  // Check if tokenAddress is the same as that on the staking contract
-  const stakingContract = ConvexBaseRewardPool.bind(Address.fromString(stakingAddress));
-  const stakingTokenResult = stakingContract.try_stakingToken();
-  if (stakingTokenResult.reverted) {
-    log.warning(
-      "getConvexStakedBalance: Convex staking contract at {} likely doesn't exist at block {}",
-      [stakingAddress, blockNumber.toString()],
-    );
-    return null;
-  }
-
   // Ignore if we're looping through and the staking token doesn't match
-  if (!stakingContract.stakingToken().equals(Address.fromString(tokenAddress))) {
+  const stakingSnapshot = getOrCreateConvexStakingPoolSnapshot(stakingAddress, blockNumber);
+  const stakingSnapshotToken = stakingSnapshot.stakingToken;
+  if (stakingSnapshotToken === null || !addressesEqual(stakingSnapshotToken.toHexString(), tokenAddress)) {
     return null;
   }
 
-  const tokenContract = getERC20(tokenAddress, blockNumber);
-  if (!tokenContract) {
-    throw new Error("getConvexStakedBalance: Unable to bind with ERC20 contract " + tokenAddress);
+  const tokenSnapshot = getOrCreateERC20TokenSnapshot(tokenAddress, blockNumber);
+  if (!tokenSnapshot || tokenSnapshot.totalSupply === null) {
+    return null;
   }
 
   // Get balance
+  const stakingContract = ConvexBaseRewardPool.bind(Address.fromString(stakingAddress));
   const balance = stakingContract.balanceOf(Address.fromString(allocatorAddress));
-  const decimalBalance = toDecimal(balance, tokenContract.decimals());
+  const decimalBalance = toDecimal(balance, tokenSnapshot.decimals);
   log.debug(
     "getConvexStakedBalance: Balance of {} for staking token {} ({}) and allocator {} ({})",
     [
@@ -1535,32 +1478,22 @@ export function getFraxLockedBalance(
     return null;
   }
 
-  // Check if tokenAddress is the same as that on the locking contract
-  const lockingContract = FraxFarm.bind(Address.fromString(lockingAddress));
-  const lockingTokenResult = lockingContract.try_stakingToken();
-  if (lockingTokenResult.reverted) {
-    log.warning(
-      "getFraxLockedBalance: Frax locking contract at {} likely doesn't exist at block {}",
-      [lockingAddress, blockNumber.toString()],
-    );
+  // Ignore if we're looping through and the staking token doesn't match
+  const stakingSnapshot = getOrCreateFraxStakingPoolSnapshot(lockingAddress, blockNumber);
+  const stakingSnapshotToken = stakingSnapshot.stakingToken;
+  if (stakingSnapshotToken === null || !addressesEqual(stakingSnapshotToken.toHexString(), tokenAddress)) {
     return null;
   }
 
-  // Ignore if we're looping through and the locking token doesn't match
-  const lockedToken = lockingContract.stakingToken();
-  if (!lockedToken.equals(Address.fromString(tokenAddress))) {
-    log.info("getFraxLockedBalance: token {} ({}) does not match locked token {} ({}) of locking contract {} ({})", [getContractName(tokenAddress), tokenAddress, getContractName(lockedToken.toHexString()), lockedToken.toHexString(), getContractName(allocatorAddress), allocatorAddress]);
+  const tokenSnapshot = getOrCreateERC20TokenSnapshot(tokenAddress, blockNumber);
+  if (!tokenSnapshot || tokenSnapshot.totalSupply === null) {
     return null;
-  }
-
-  const tokenContract = getERC20(tokenAddress, blockNumber);
-  if (!tokenContract) {
-    throw new Error("getFraxLockedBalance: Unable to bind with ERC20 contract " + tokenAddress);
   }
 
   // Get balance
+  const lockingContract = FraxFarm.bind(Address.fromString(lockingAddress));
   const balance = lockingContract.lockedLiquidityOf(Address.fromString(allocatorAddress));
-  const decimalBalance = toDecimal(balance, tokenContract.decimals());
+  const decimalBalance = toDecimal(balance, tokenSnapshot.decimals);
   log.debug(
     "getFraxLockedBalance: Balance of {} for locking token {} ({}) and allocator {} ({})",
     [

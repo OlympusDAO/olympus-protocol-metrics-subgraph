@@ -1,12 +1,13 @@
-import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
-import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import { TokenCategoryStable } from "../../shared/src/contracts/TokenDefinition";
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { CONVEX_STAKING_PROXY, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
 import {
-  getCurvePairTokenQuantity,
+  getCurvePairRecords,
+  getCurvePairTokenQuantityRecords,
   getCurvePairTotalTokenQuantity,
   getCurvePairTotalValue,
 } from "../src/liquidity/LiquidityCurve";
@@ -20,6 +21,7 @@ import {
   ERC20_CVX_FRAX_USDC_STAKED,
   ERC20_CVX_OHMETH,
   ERC20_FRAX,
+  ERC20_FRAX_BP,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_USDC,
@@ -30,20 +32,20 @@ import {
   NATIVE_ETH,
   PAIR_CURVE_FRAX_USDC,
   PAIR_CURVE_OHM_ETH,
+  PAIR_CURVE_OHM_FRAXBP,
   POOL_BALANCER_OHM_DAI_WETH_ID,
 } from "../src/utils/Constants";
 import { mockConvexStakedBalance, mockConvexStakedBalanceZero, mockFraxLockedBalance, mockFraxLockedBalanceZero } from "./contractHelper.test";
-import { mockBalancerVaultZero } from "./liquidityBalancer.test";
-import { mockFraxSwapPairZero } from "./liquidityFraxSwap.test";
+import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import {
-  ERC20_STANDARD_DECIMALS,
   getEthUsdRate,
   getOhmUsdRate,
   getPairValue,
+  mockBalancerVaultZero,
   mockCurvePairTotalValue,
   mockCurvePairZero,
-  mockERC20TotalSupply,
   mockEthUsdRate,
+  mockFraxSwapPairZero,
   mockUniswapV2PairsZero,
   mockUsdOhmV2Rate,
   OHM_USD_RESERVE_BLOCK,
@@ -53,6 +55,14 @@ import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 
 const PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY = BigDecimal.fromString("100");
 const TIMESTAMP = BigInt.fromString("1");
+
+beforeEach(() => {
+  log.debug("beforeEach: Clearing store", []);
+  clearStore();
+
+  mockBalancerVaultZero();
+  mockUniswapV2PairsZero();
+});
 
 describe("Token Quantity", () => {
   test("total quantity of OHM token in pool", () => {
@@ -120,7 +130,7 @@ describe("Token Quantity", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getCurvePairTokenQuantity(
+    const records = getCurvePairTokenQuantityRecords(
       TIMESTAMP,
       PAIR_CURVE_OHM_ETH,
       ERC20_OHM_V2,
@@ -177,7 +187,7 @@ describe("Token Quantity", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getCurvePairTokenQuantity(
+    const records = getCurvePairTokenQuantityRecords(
       TIMESTAMP,
       PAIR_CURVE_OHM_ETH,
       ERC20_OHM_V2,
@@ -231,7 +241,7 @@ describe("Token Quantity", () => {
     // total token quantity * balance / total supply
     const expectedTokenBalance = ohmReserves.times(crvBalance).div(crvTotalSupply);
 
-    const records = getCurvePairTokenQuantity(
+    const records = getCurvePairTokenQuantityRecords(
       TIMESTAMP,
       PAIR_CURVE_OHM_ETH,
       ERC20_OHM_V2,
@@ -282,7 +292,7 @@ describe("Token Quantity", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getCurvePairTokenQuantity(
+    const records = getCurvePairTokenQuantityRecords(
       TIMESTAMP,
       PAIR_CURVE_OHM_ETH,
       ERC20_OHM_V1,
@@ -337,7 +347,7 @@ describe("Token Quantity", () => {
     // total token quantity * balance / total supply
     const expectedTokenBalance = ohmReserves.times(crvBalance).div(crvTotalSupply);
 
-    const records = getCurvePairTokenQuantity(
+    const records = getCurvePairTokenQuantityRecords(
       TIMESTAMP,
       PAIR_CURVE_OHM_ETH,
       ERC20_OHM_V2,
@@ -713,5 +723,29 @@ describe("Pair Value", () => {
     assert.assertTrue(record.token.includes(getContractName(ERC20_CVX_FRAX_USDC_STAKED)) == true);
     assert.stringEquals(TokenCategoryStable, record.category);
     assert.i32Equals(1, records.length);
+  });
+});
+
+describe("pair records", () => {
+  test("OHM-FRAXBP, OHM contract revert", () => {
+    // Mock token0 reverting
+    createMockedFunction(Address.fromString(ERC20_OHM_V2), "decimals", "decimals():(uint8)").reverts();
+    // token1 OK
+    mockERC20TotalSupply(ERC20_FRAX_BP, 18, BigInt.fromString("1000"));
+
+    const expectedRecords = getCurvePairRecords(TIMESTAMP, PAIR_CURVE_OHM_FRAXBP, null, BigInt.fromString("15000000"));
+
+    assert.i32Equals(0, expectedRecords.length);
+  });
+
+  test("OHM-FRAXBP, FRAXBP contract revert", () => {
+    // token0 OK
+    mockERC20TotalSupply(ERC20_OHM_V2, OHM_V2_DECIMALS, BigInt.fromString("1000"));
+    // Mock token1 reverting
+    createMockedFunction(Address.fromString(ERC20_FRAX_BP), "decimals", "decimals():(uint8)").reverts();
+
+    const expectedRecords = getCurvePairRecords(TIMESTAMP, PAIR_CURVE_OHM_FRAXBP, null, BigInt.fromString("15000000"));
+
+    assert.i32Equals(0, expectedRecords.length);
   });
 });

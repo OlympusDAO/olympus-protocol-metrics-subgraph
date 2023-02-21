@@ -1,8 +1,9 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 import { DailyStakingReward } from "../../generated/schema";
+import { ERC20_OHM_V2 } from "./Constants";
 import { dayFromTimestamp } from "./Dates";
-import { getBaseOhmUsdRate } from "./Price";
+import { getUSDRate } from "./Price";
 
 export function loadOrCreateDailyStakingReward(timestamp: BigInt): DailyStakingReward {
   const day_timestamp = dayFromTimestamp(timestamp);
@@ -25,6 +26,6 @@ export function createDailyStakingReward(
 ): void {
   const dailySR = loadOrCreateDailyStakingReward(timestamp);
   dailySR.amount = dailySR.amount.plus(amount);
-  dailySR.value = dailySR.amount.times(getBaseOhmUsdRate(block));
+  dailySR.value = dailySR.amount.times(getUSDRate(ERC20_OHM_V2, block));
   dailySR.save();
 }

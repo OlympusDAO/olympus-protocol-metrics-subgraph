@@ -127,3 +127,57 @@ type GnosisAuction @entity {
   bidQuantity: BigDecimal # Is set later, so should not be required
   auctionCloseTimestamp: BigInt
 }
+
+# Caching
+type ERC20TokenSnapshot @entity(immutable: true) {
+  id: ID! # address/block
+  address: Bytes!
+  decimals: Int!
+  totalSupply: BigDecimal
+}
+
+type ConvexRewardPoolSnapshot @entity(immutable: true) {
+  id: ID! # lowercase address/block
+  block: BigInt!
+  address: Bytes!
+  stakingToken: Bytes!
+}
+
+# TODO migrate to PoolSnapshot
+type BalancerPoolSnapshot @entity(immutable: true) {
+  id: ID! # pool id/block
+  block: BigInt!
+  pool: Bytes!
+  poolToken: Bytes!
+  decimals: Int!
+  totalSupply: BigDecimal!
+  tokens: [Bytes!]!
+  balances: [BigDecimal!]!
+  weights: [BigDecimal!]!
+}
+
+type PoolSnapshot @entity(immutable: true) {
+  id: ID! # pool/block
+  block: BigInt!
+  pool: Bytes!
+  poolToken: Bytes
+  decimals: Int!
+  totalSupply: BigDecimal!
+  tokens: [Bytes!]!
+  balances: [BigDecimal!]!
+  weights: [BigDecimal!]
+}
+
+type TokenPriceSnapshot @entity(immutable: true) {
+  id: ID! # address/block
+  block: BigInt!
+  token: Bytes!
+  price: BigDecimal!
+}
+
+type StakingPoolSnapshot @entity(immutable: true) {
+  id: ID! # address/block
+  block: BigInt!
+  contractAddress: Bytes!
+  stakingToken: Bytes # Will not be set if the call reverts
+}

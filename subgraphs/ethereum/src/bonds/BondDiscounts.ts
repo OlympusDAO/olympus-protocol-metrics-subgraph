@@ -23,6 +23,7 @@ import {
   DAIBOND_CONTRACTS2_BLOCK,
   DAIBOND_CONTRACTS3,
   DAIBOND_CONTRACTS3_BLOCK,
+  ERC20_OHM_V2,
   ETHBOND_CONTRACT1,
   ETHBOND_CONTRACT1_BLOCK,
   FRAXBOND_CONTRACT1,
@@ -45,7 +46,7 @@ import {
   OHMLUSDBOND_CONTRACT1_BLOCK,
 } from "../utils/Constants";
 import { hourFromTimestamp } from "../utils/Dates";
-import { getBaseOhmUsdRate } from "../utils/Price";
+import { getUSDRate } from "../utils/Price";
 
 export function loadOrCreateBondDiscount(timestamp: BigInt): BondDiscount {
   const hourTimestamp = hourFromTimestamp(timestamp);
@@ -68,7 +69,7 @@ export function loadOrCreateBondDiscount(timestamp: BigInt): BondDiscount {
 
 export function updateBondDiscounts(blockNumber: BigInt): void {
   const bd = loadOrCreateBondDiscount(blockNumber);
-  const ohmRate = getBaseOhmUsdRate(blockNumber);
+  const ohmRate = getUSDRate(ERC20_OHM_V2, blockNumber);
 
   // OHMDAI
   if (blockNumber.gt(BigInt.fromString(OHMDAISLPBOND_CONTRACT1_BLOCK))) {

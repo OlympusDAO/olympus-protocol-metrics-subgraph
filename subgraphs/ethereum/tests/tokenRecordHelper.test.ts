@@ -1,5 +1,5 @@
-import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
-import { assert, describe, test } from "matchstick-as/assembly/index";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, describe, test } from "matchstick-as/assembly/index";
 
 import { TokenRecord } from "../../shared/generated/schema";
 import {
@@ -36,6 +36,11 @@ const createTokenRecord = (): TokenRecord => {
     BLOCKCHAIN,
   );
 };
+
+beforeEach(() => {
+  log.debug("beforeEach: Clearing store", []);
+  clearStore();
+});
 
 describe("constructor", () => {
   test("basic values", () => {

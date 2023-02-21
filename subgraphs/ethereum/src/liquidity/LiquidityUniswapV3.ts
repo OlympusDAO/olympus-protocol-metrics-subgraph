@@ -1,8 +1,7 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { ERC20_WETH } from "../utils/Constants";
-import { getERC20, getUniswapV3Pair } from "../utils/ContractHelper";
+import { getERC20, getERC20DecimalBalance, getUniswapV3Pair } from "../utils/ContractHelper";
 import { getUSDRateUniswapV3 } from "../utils/Price";
 import { getBaseEthUsdRate } from "../utils/PriceBase";
 
@@ -22,10 +21,7 @@ export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: Big
     throw new Error("Unable to find ERC20 contract for " + token0);
   }
 
-  const token0Reserves = toDecimal(
-    token0Contract.balanceOf(Address.fromString(pairAddress)),
-    token0Contract.decimals(),
-  );
+  const token0Reserves = getERC20DecimalBalance(token0, pairAddress, blockNumber);
   const token0Rate = getUSDRateUniswapV3(token0, pairAddress, blockNumber);
   const token0Value = token0Reserves.times(token0Rate);
   log.debug("getUniswapV3PairTotalValue: token0: reserves = {}, rate = {}, value: {}", [
@@ -42,10 +38,7 @@ export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: Big
     throw new Error("Unable to find ERC20 contract for " + token1);
   }
 
-  const token1Reserves = toDecimal(
-    token1Contract.balanceOf(Address.fromString(pairAddress)),
-    token1Contract.decimals(),
-  );
+  const token1Reserves = getERC20DecimalBalance(token1, pairAddress, blockNumber);
   // Cheating, a little bit
   const token1Rate = Address.fromString(token1).equals(Address.fromString(ERC20_WETH))
     ? getBaseEthUsdRate()

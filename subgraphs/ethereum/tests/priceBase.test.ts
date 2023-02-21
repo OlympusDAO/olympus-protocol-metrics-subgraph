@@ -1,5 +1,5 @@
 import { Address } from "@graphprotocol/graph-ts";
-import { assert, createMockedFunction, describe, test } from "matchstick-as";
+import { assert, beforeEach, clearStore, createMockedFunction, describe, log, test } from "matchstick-as";
 
 import {
   ERC20_DAI,
@@ -23,6 +23,11 @@ import {
   mockUsdOhmV2Rate,
   OHM_USD_RESERVE_BLOCK,
 } from "./pairHelper";
+
+beforeEach(() => {
+  log.debug("beforeEach: Clearing store", []);
+  clearStore();
+});
 
 describe("ETH-USD rate", () => {
   test("rate calculation is correct", () => {
