@@ -208,6 +208,12 @@ ERC20_TOKENS.set(ERC20_AURA_BAL, new TokenDefinition(ERC20_AURA_BAL, TokenCatego
 ERC20_TOKENS.set(ERC20_AURA_VL, new TokenDefinition(ERC20_AURA_VL, TokenCategoryVolatile, true, false)); // Locked for 16 weeks only
 ERC20_TOKENS.set(ERC20_AURA, new TokenDefinition(ERC20_AURA, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_BAL, new TokenDefinition(ERC20_BAL, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_BALANCER_OHM_DAI_AURA, new TokenDefinition(ERC20_BALANCER_OHM_DAI_AURA, TokenCategoryPOL, true, false));
+ERC20_TOKENS.set(ERC20_BALANCER_OHM_DAI_WETH_AURA, new TokenDefinition(ERC20_BALANCER_OHM_DAI_WETH_AURA, TokenCategoryPOL, true, false));
+ERC20_TOKENS.set(ERC20_BALANCER_OHM_DAI_WETH, new TokenDefinition(ERC20_BALANCER_OHM_DAI_WETH, TokenCategoryPOL, true, false));
+ERC20_TOKENS.set(ERC20_BALANCER_OHM_DAI, new TokenDefinition(ERC20_BALANCER_OHM_DAI, TokenCategoryPOL, true, false));
+ERC20_TOKENS.set(ERC20_BALANCER_OHM_WETH_AURA, new TokenDefinition(ERC20_BALANCER_OHM_WETH_AURA, TokenCategoryPOL, true, false));
+ERC20_TOKENS.set(ERC20_BALANCER_OHM_WETH, new TokenDefinition(ERC20_BALANCER_OHM_WETH, TokenCategoryPOL, true, false));
 ERC20_TOKENS.set(ERC20_BARNBRIDGE, new TokenDefinition(ERC20_BARNBRIDGE, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_BB_A_USD, new TokenDefinition(ERC20_BB_A_USD, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_BTRFLY_V1_STAKED, new TokenDefinition(ERC20_BTRFLY_V1_STAKED, TokenCategoryVolatile, true, false));
