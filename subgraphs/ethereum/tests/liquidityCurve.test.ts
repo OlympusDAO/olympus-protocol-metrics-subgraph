@@ -3,7 +3,7 @@ import { assert, beforeEach, clearStore, createMockedFunction, describe, test } 
 
 import { TokenCategoryStable } from "../../shared/src/contracts/TokenDefinition";
 import { toBigInt } from "../../shared/src/utils/Decimals";
-import { CONVEX_STAKING_PROXY, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
+import { CONVEX_STAKING_PROXY_FRAXBP, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getLiquidityBalances } from "../src/liquidity/LiquidityCalculations";
 import {
   getCurvePairRecords,
@@ -637,7 +637,7 @@ describe("Pair Value", () => {
     mockFraxLockedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
     mockConvexStakedBalance(
       ERC20_CVX_FRAX_USDC,
-      CONVEX_STAKING_PROXY,
+      CONVEX_STAKING_PROXY_FRAXBP,
       CONVEX_STAKING_FRAX_USDC_REWARD_POOL,
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     ); // Balance for the staked Curve token
@@ -704,7 +704,7 @@ describe("Pair Value", () => {
     mockFraxLockedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
     mockFraxLockedBalance(
       ERC20_CVX_FRAX_USDC_STAKED,
-      CONVEX_STAKING_PROXY,
+      CONVEX_STAKING_PROXY_FRAXBP,
       FRAX_LOCKING_FRAX_USDC,
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     ); // Balance for the locked token
