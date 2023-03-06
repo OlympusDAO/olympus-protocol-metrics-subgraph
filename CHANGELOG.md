@@ -1,9 +1,11 @@
 # Subgraph Changelog
 
-## 3.8.0 (2023-03-06)
+## 3.8.6 (2023-03-06)
 
 - Add Olympus Association wallet to the circulating supply wallets
 - Add support for revenue-locked BTRFLY (rlBTRFLY)
+- Correct categorisation of Curve FraxBP
+- Add missing proxy contract for staked OHM-FraxBP
 
 ## 3.7.14 (2023-03-03)
 
