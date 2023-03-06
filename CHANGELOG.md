@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 3.8.6 (2023-03-06)
+## 3.8.7 (2023-03-06)
 
 - Add Olympus Association wallet to the circulating supply wallets
 - Add support for revenue-locked BTRFLY (rlBTRFLY)
