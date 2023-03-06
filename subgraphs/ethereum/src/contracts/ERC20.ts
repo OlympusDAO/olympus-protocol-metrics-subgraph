@@ -1,10 +1,12 @@
-import { Address, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { ERC20TokenSnapshot } from "../../generated/schema";
+import { getContractName } from "../utils/Constants";
 
 export function getOrCreateERC20TokenSnapshot(address: string, blockNumber: BigInt): ERC20TokenSnapshot {
+    const FUNC = "getOrCreateERC20TokenSnapshot";
     const snapshotId = `${address.toLowerCase()}/${blockNumber.toString()}`;
     let token = ERC20TokenSnapshot.load(snapshotId);
     if (token == null) {
@@ -20,6 +22,7 @@ export function getOrCreateERC20TokenSnapshot(address: string, blockNumber: BigI
             token.totalSupply = toDecimal(erc20Contract.totalSupply(), token.decimals);
         }
         else {
+            log.debug("{}: call to decimals() on ERC20 contract {} ({}) reverted. Setting decimals to 0.", [FUNC, getContractName(address), address]);
             token.decimals = 0;
         }
 
