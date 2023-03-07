@@ -1,11 +1,13 @@
 # Subgraph Changelog
 
-## 3.8.7 (2023-03-06)
+## 3.8.17 (2023-03-07)
 
 - Add Olympus Association wallet to the circulating supply wallets
-- Add support for revenue-locked BTRFLY (rlBTRFLY)
+- Add support for revenue-locked BTRFLY (rlBTRFLY), which is excluded from liquid backing due to high slippage
 - Correct categorisation of Curve FraxBP
 - Add missing proxy contract for staked OHM-FraxBP
+- Add token lookup for wstETH
+- Add POL entry for OHM-wstETH pool in Balancer (including the Balancer gauge and Aura vault)
 
 ## 3.7.14 (2023-03-03)
 
