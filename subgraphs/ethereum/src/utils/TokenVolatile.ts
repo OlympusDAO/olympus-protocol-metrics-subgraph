@@ -10,6 +10,7 @@ import {
   getAuraLockedBalancesFromWallets,
   getAuraPoolEarnedRecords,
   getAuraStakedBalancesFromWallets,
+  getBtrflyLockedBalancesFromWallets,
   getConvexStakedRecords,
   getERC20,
   getERC20TokenRecordsFromWallets,
@@ -108,6 +109,9 @@ export function getVolatileTokenBalance(
 
   // Tokens staked in Aura
   pushArray(records, getAuraStakedBalancesFromWallets(timestamp, contractAddress, rate, BigDecimal.fromString("1"), blockNumber));
+
+  // Locked rlBTRFLY
+  pushArray(records, getBtrflyLockedBalancesFromWallets(timestamp, contractAddress, rate, blockNumber));
 
   // Aura earned rewards
   pushArray(records, getAuraPoolEarnedRecords(timestamp, contractAddress, rate, blockNumber));

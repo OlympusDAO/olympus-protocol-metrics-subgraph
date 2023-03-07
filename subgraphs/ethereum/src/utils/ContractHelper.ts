@@ -21,6 +21,7 @@ import { LUSDAllocatorV2 } from "../../generated/ProtocolMetrics/LUSDAllocatorV2
 import { MakerDSR } from "../../generated/ProtocolMetrics/MakerDSR";
 import { MasterChef } from "../../generated/ProtocolMetrics/MasterChef";
 import { RariAllocator } from "../../generated/ProtocolMetrics/RariAllocator";
+import { rlBTRFLY } from "../../generated/ProtocolMetrics/rlBTRFLY";
 import { sOlympusERC20 } from "../../generated/ProtocolMetrics/sOlympusERC20";
 import { sOlympusERC20V2 } from "../../generated/ProtocolMetrics/sOlympusERC20V2";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
@@ -45,6 +46,7 @@ import {
   CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
   ERC20_AURA_VL,
+  ERC20_BTRFLY_V2_RL,
   ERC20_CVX,
   ERC20_CVX_VL_V2,
   ERC20_DAI,
@@ -151,7 +153,7 @@ export function getERC20Decimals(contractAddress: string, blockNumber: BigInt): 
   const contractName = getContractName(contractAddress);
 
   const snapshot = getOrCreateERC20TokenSnapshot(contractAddress, blockNumber);
-  if (!snapshot || snapshot.totalSupply === null) {
+  if (!snapshot || snapshot.decimals <= 0) {
     throw new Error(
       "getERC20Decimals: unable to find ERC20 contract for " +
       contractName +
@@ -622,6 +624,75 @@ export function getAuraLockedBalancesFromWallets(
         balance,
         blockNumber,
         getIsTokenLiquid(ERC20_AURA_VL, ERC20_TOKENS),
+        ERC20_TOKENS,
+        BLOCKCHAIN,
+      ),
+    );
+  }
+
+  return records;
+}
+
+/**
+ * Returns records for the staked balance of {tokenAddress} across
+ * all wallets that are staked with rlBTRFLY.
+ *
+ * @param metricName
+ * @param tokenAddress
+ * @param rate
+ * @param blockNumber
+ * @returns
+ */
+export function getBtrflyLockedBalancesFromWallets(
+  timestamp: BigInt,
+  tokenAddress: string,
+  rate: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
+  if (tokenAddress.toLowerCase() != ERC20_BTRFLY_V2_RL.toLowerCase()) {
+    return records;
+  }
+
+  // Check that the token exists
+  const tokenSnapshot = getOrCreateERC20TokenSnapshot(tokenAddress, blockNumber);
+  if (tokenSnapshot === null || tokenSnapshot.decimals <= 0) {
+    return records;
+  }
+
+  // Iterate over all relevant wallets
+  const contract = rlBTRFLY.bind(Address.fromString(tokenAddress));
+  const wallets = getWalletAddressesForContract(tokenAddress);
+  for (let i = 0; i < wallets.length; i++) {
+    const currentWallet = wallets[i];
+    const balance: BigDecimal = toDecimal(contract.lockedBalanceOf(Address.fromString(currentWallet)), tokenSnapshot.decimals);
+    if (balance.equals(BigDecimal.zero())) {
+      continue;
+    }
+
+    log.debug(
+      "getBtrflyLockedBalancesFromWallets: found locked balance {} for token {} ({}) and wallet {} ({}) at block {}",
+      [
+        balance.toString(),
+        getContractName(tokenAddress, "Locked"),
+        tokenAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        blockNumber.toString(),
+      ],
+    );
+
+    records.push(
+      createOrUpdateTokenRecord(
+        timestamp,
+        getContractName(tokenAddress, "Locked"), // Needed to differentiate
+        tokenAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        rate,
+        balance,
+        blockNumber,
+        getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
         ERC20_TOKENS,
         BLOCKCHAIN,
       ),

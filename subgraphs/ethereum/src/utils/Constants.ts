@@ -913,7 +913,7 @@ CONTRACT_NAME_MAP.set(ERC20_BARNBRIDGE, "BarnBridge Governance");
 CONTRACT_NAME_MAP.set(ERC20_BB_A_USD, "Balancer Aave Boosted StablePool");
 CONTRACT_NAME_MAP.set(ERC20_BTRFLY_V1_STAKED, "Redacted Cartel V1 - Staked");
 CONTRACT_NAME_MAP.set(ERC20_BTRFLY_V1, "Redacted Cartel V1");
-CONTRACT_NAME_MAP.set(ERC20_BTRFLY_V2_RL, "Redacted Cartel V2 - Revenue-Locked");
+CONTRACT_NAME_MAP.set(ERC20_BTRFLY_V2_RL, "Redacted Cartel V2 - Staked");
 CONTRACT_NAME_MAP.set(ERC20_BTRFLY_V2, "Redacted Cartel V2");
 CONTRACT_NAME_MAP.set(ERC20_CRV_3POOL, "Curve 3Pool");
 CONTRACT_NAME_MAP.set(ERC20_CRV_FRAX_USDC, "Curve Frax-USDC Liquidity Pool");
