@@ -2,9 +2,9 @@ import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts";
 import { log } from "matchstick-as";
 
 import { TokenRecord } from "../../../shared/generated/schema";
-import { TokenCategoryPOL, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
+import { TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
+import { createOrUpdateTokenRecord, getTokenCategory } from "../../../shared/src/utils/TokenRecordHelper";
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
 import { CurvePoolV2 } from "../../generated/ProtocolMetrics/CurvePoolV2";
 import { ERC20TokenSnapshot, PoolSnapshot, TokenSupply } from "../../generated/schema";
@@ -366,7 +366,7 @@ function getCurvePairRecord(
     ERC20_TOKENS,
     BLOCKCHAIN,
     multiplier,
-    TokenCategoryPOL,
+    getTokenCategory(pairTokenAddress, ERC20_TOKENS),
   );
 }
 

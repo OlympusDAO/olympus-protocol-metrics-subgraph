@@ -19,11 +19,16 @@ export function getOrCreateERC20TokenSnapshot(address: string, blockNumber: BigI
         // Only set the values if there has been a deployment
         if (!decimalsResult.reverted) {
             token.decimals = erc20Contract.decimals();
-            token.totalSupply = toDecimal(erc20Contract.totalSupply(), token.decimals);
         }
         else {
             log.debug("{}: call to decimals() on ERC20 contract {} ({}) reverted. Setting decimals to 0.", [FUNC, getContractName(address), address]);
             token.decimals = 0;
+        }
+
+        // Only calculate totalSupply if the contract call is successful, and there is a valid decimals number
+        const totalSupplyResult = erc20Contract.try_totalSupply();
+        if (!decimalsResult.reverted && !totalSupplyResult.reverted) {
+            token.totalSupply = toDecimal(erc20Contract.totalSupply(), token.decimals);
         }
 
         token.save();

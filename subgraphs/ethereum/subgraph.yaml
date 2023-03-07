@@ -3,7 +3,7 @@ description: Olympus Protocol Metrics Subgraph
 features:
   - grafting
 graft:
-  base: QmTn5ZDSYsSyY2rQm1NTYkEkwNat2x4XBeD6PzR5tZeuXc
+  base: QmdcimRhFpM5q9fX2akYDaoZpmAtRg6SARvNJexxguJH74
   block: 16226955 # BondManager
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
@@ -629,6 +629,8 @@ dataSources:
           file: ./abis/FraxFarm.json
         - name: MakerDSR
           file: ./abis/MakerDSR.json
+        - name: rlBTRFLY
+          file: ./abis/rlBTRFLY.json
         # Gnosis Auctions
         - name: BondManager
           file: ./abis/BondManager.json
