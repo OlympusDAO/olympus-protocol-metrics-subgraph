@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts";
 import { log } from "matchstick-as";
 
 import { TokenRecord } from "../../../shared/generated/schema";
-import { TokenCategoryPOL, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
+import { TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createOrUpdateTokenRecord, getTokenCategory } from "../../../shared/src/utils/TokenRecordHelper";
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
