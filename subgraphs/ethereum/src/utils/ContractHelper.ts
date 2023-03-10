@@ -634,7 +634,7 @@ export function getAuraLockedBalancesFromWallets(
 }
 
 /**
- * Returns records for the staked balance of {tokenAddress} across
+ * Returns records for the unlocked balance of {tokenAddress} across
  * all wallets that are staked with rlBTRFLY.
  *
  * @param metricName
@@ -643,7 +643,7 @@ export function getAuraLockedBalancesFromWallets(
  * @param blockNumber
  * @returns
  */
-export function getBtrflyLockedBalancesFromWallets(
+export function getBtrflyUnlockedBalancesFromWallets(
   timestamp: BigInt,
   tokenAddress: string,
   rate: BigDecimal,
@@ -665,16 +665,20 @@ export function getBtrflyLockedBalancesFromWallets(
   const wallets = getWalletAddressesForContract(tokenAddress);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
-    const balance: BigDecimal = toDecimal(contract.lockedBalanceOf(Address.fromString(currentWallet)), tokenSnapshot.decimals);
+
+    // rlBTRFLY.balanceOf() returns the balance in active locks, so we only need to return unlocked balances
+    // Source: https://github.com/redacted-cartel/contracts-v2/blob/7ef760ae4f4287caa0abf698060096c5cfebd0cf/contracts/core/RLBTRFLY.sol#L109
+    const lockedBalances = contract.lockedBalances(Address.fromString(currentWallet));
+    const balance: BigDecimal = toDecimal(lockedBalances.getUnlockable(), tokenSnapshot.decimals);
     if (balance.equals(BigDecimal.zero())) {
       continue;
     }
 
     log.debug(
-      "getBtrflyLockedBalancesFromWallets: found locked balance {} for token {} ({}) and wallet {} ({}) at block {}",
+      "getBtrflyLockedBalancesFromWallets: found unlocked balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),
-        getContractName(tokenAddress, "Locked"),
+        getContractName(tokenAddress, "Unlocked"),
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -685,7 +689,7 @@ export function getBtrflyLockedBalancesFromWallets(
     records.push(
       createOrUpdateTokenRecord(
         timestamp,
-        getContractName(tokenAddress, "Locked"), // Needed to differentiate
+        getContractName(tokenAddress, "Unlocked"), // Needed to differentiate
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
