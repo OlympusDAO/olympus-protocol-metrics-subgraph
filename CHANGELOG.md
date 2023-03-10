@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 3.8.18 (2023-03-10)
+
+- Fix locked/unlocked balances with rlBTRFLY
+
 ## 3.8.17 (2023-03-07)
 
 - Add Olympus Association wallet to the circulating supply wallets
