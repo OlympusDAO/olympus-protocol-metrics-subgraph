@@ -3,8 +3,8 @@ description: Olympus Protocol Metrics Subgraph
 features:
   - grafting
 graft:
-  base: QmUxCvAZK4RBkqoHEuB4TbCYQqerD7VbGUSuqB7zL5roL8
-  block: 16226955 # BondManager
+  base: QmWkUYxNziV7NGPZ9sQruhwyHuqHXRqFvEHwdSqGqej4Li
+  block: 16804000 # BondManager
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
   file: ../../schema.graphql
@@ -631,6 +631,8 @@ dataSources:
           file: ./abis/MakerDSR.json
         - name: rlBTRFLY
           file: ./abis/rlBTRFLY.json
+        - name: ChainlinkPriceFeed
+          file: ./abis/ChainlinkPriceFeed.json
         # Gnosis Auctions
         - name: BondManager
           file: ./abis/BondManager.json

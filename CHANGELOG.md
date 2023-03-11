@@ -1,5 +1,10 @@
 # Subgraph Changelog
 
+## 3.9.x (2023-03-11)
+
+- Utilise Chainlink price feeds for USDC and DAI, instead of assuming = $1
+- Utilise Chainlink price feed for ETH
+
 ## 3.8.18 (2023-03-10)
 
 - Fix locked/unlocked balances with rlBTRFLY

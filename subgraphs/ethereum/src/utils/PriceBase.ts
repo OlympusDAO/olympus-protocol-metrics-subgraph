@@ -7,11 +7,10 @@
 
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
-import { TokenCategoryStable } from "../../../shared/src/contracts/TokenDefinition";
-import { isTokenAddressInCategory } from "../../../shared/src/utils/TokenRecordHelper";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
-import { ERC20_TOKENS, ERC20_WETH, PAIR_UNISWAP_V2_USDC_ETH } from "./Constants";
+import { ERC20_WETH, PAIR_UNISWAP_V2_USDC_ETH } from "./Constants";
 import { getContractName } from "./Constants";
+import { getPriceFeedTokens, getPriceFeedValue } from "./PriceChainlink";
 
 const BIG_DECIMAL_1E12 = BigDecimal.fromString("1e12");
 
@@ -24,6 +23,16 @@ export enum PairTokenBaseOrientation {
 
 export const BASE_TOKEN_UNKNOWN = -1;
 
+export function isBaseToken(baseToken: string): boolean {
+  const baseTokenLower = baseToken.toLowerCase();
+
+  if (getPriceFeedTokens().includes(baseTokenLower)) {
+    return true;
+  }
+
+  return false;
+}
+
 /**
  * Determines whether token0 or token1 of a pair is the base (wETH/USD) token.
  */
@@ -35,7 +44,7 @@ export function getBaseTokenIndex(
 
     // As we are ultimately trying to get to a USD-denominated rate,
     // check for USD stablecoins first
-    if (isTokenAddressInCategory(currentToken.toHexString(), TokenCategoryStable, ERC20_TOKENS)) {
+    if (isBaseToken(currentToken.toHexString())) {
       return i;
     }
 
@@ -59,22 +68,11 @@ export function getBaseTokenOrientation(
   token0: Address,
   token1: Address,
 ): PairTokenBaseOrientation {
-  // As we are ultimately trying to get to a USD-denominated rate,
-  // check for USD stablecoins first
-  if (isTokenAddressInCategory(token0.toHexString(), TokenCategoryStable, ERC20_TOKENS)) {
+  if (isBaseToken(token0.toHexString())) {
     return PairTokenBaseOrientation.TOKEN0;
   }
 
-  if (isTokenAddressInCategory(token1.toHexString(), TokenCategoryStable, ERC20_TOKENS)) {
-    return PairTokenBaseOrientation.TOKEN1;
-  }
-
-  // Now check secondary base tokens: ETH
-  if (token0.toHexString().toLowerCase() == ERC20_WETH.toLowerCase()) {
-    return PairTokenBaseOrientation.TOKEN0;
-  }
-
-  if (token1.toHexString().toLowerCase() == ERC20_WETH.toLowerCase()) {
+  if (isBaseToken(token1.toHexString())) {
     return PairTokenBaseOrientation.TOKEN1;
   }
 
@@ -127,8 +125,37 @@ export function getBaseEthUsdRate(): BigDecimal {
   return ethRate;
 }
 
-export function getBaseUsdRate(): BigDecimal {
-  return BigDecimal.fromString("1");
+/**
+ * Gets the USD value of the base token, as identified by {orientation}.
+ *
+ * This enables pairs to have ETH or DAI/USDC/USDT as the base token.
+ *
+ * @param token0
+ * @param token1
+ * @param orientation
+ * @param blockNumber
+ * @returns
+ */
+export function getBaseTokenRate(
+  baseToken: Address,
+  _blockNumber: BigInt,
+): BigDecimal {
+  const baseTokenAddress = baseToken.toHexString().toLowerCase();
+  if (!isBaseToken(baseTokenAddress)) {
+    throw new Error(
+      `getBaseTokenUSDRate: Token ${getContractName(
+        baseTokenAddress,
+      )} is unsupported for base token price lookup`,
+    );
+  }
+
+  const usdRate = getPriceFeedValue(baseTokenAddress);
+
+  if (usdRate === null || usdRate.equals(BigDecimal.zero())) {
+    throw new Error(`Unable to determine USD rate for token ${getContractName(baseTokenAddress)} (${baseTokenAddress}) at block ${_blockNumber.toString()}`);
+  }
+
+  return usdRate;
 }
 
 /**
@@ -148,7 +175,6 @@ export function getBaseTokenUSDRate(
   orientation: PairTokenBaseOrientation,
   _blockNumber: BigInt,
 ): BigDecimal {
-  // TODO consider shifting usage to getBaseTokenRate
   if (orientation === PairTokenBaseOrientation.UNKNOWN) {
     throw new Error(
       "Unsure how to deal with unknown token base orientation for tokens " +
@@ -160,47 +186,5 @@ export function getBaseTokenUSDRate(
 
   const baseToken = orientation === PairTokenBaseOrientation.TOKEN0 ? token0 : token1;
 
-  if (baseToken.equals(Address.fromString(ERC20_WETH))) {
-    return getBaseEthUsdRate();
-  }
-
-  if (isTokenAddressInCategory(baseToken.toHexString(), TokenCategoryStable, ERC20_TOKENS)) {
-    return getBaseUsdRate();
-  }
-
-  throw new Error(
-    `getBaseTokenUSDRate: Token ${getContractName(
-      baseToken.toHexString(),
-    )} is unsupported for base token price lookup`,
-  );
-}
-
-/**
- * Gets the USD value of the base token, as identified by {orientation}.
- *
- * This enables pairs to have ETH or DAI/USDC/USDT as the base token.
- *
- * @param token0
- * @param token1
- * @param orientation
- * @param blockNumber
- * @returns
- */
-export function getBaseTokenRate(
-  baseToken: Address,
-  _blockNumber: BigInt,
-): BigDecimal {
-  if (baseToken.equals(Address.fromString(ERC20_WETH))) {
-    return getBaseEthUsdRate();
-  }
-
-  if (isTokenAddressInCategory(baseToken.toHexString(), TokenCategoryStable, ERC20_TOKENS)) {
-    return getBaseUsdRate();
-  }
-
-  throw new Error(
-    `getBaseTokenUSDRate: Token ${getContractName(
-      baseToken.toHexString(),
-    )} is unsupported for base token price lookup`,
-  );
+  return getBaseTokenRate(baseToken, _blockNumber);
 }

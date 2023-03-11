@@ -13,10 +13,15 @@ import { getBalancerPoolTotalValue, getOrCreateBalancerPoolSnapshot } from "../l
 import { getOrCreateUniswapV2PoolSnapshot, getUniswapV2PairTotalValue } from "../liquidity/LiquidityUniswapV2";
 import {
   BALANCER_VAULT,
+  ERC20_BB_A_USD,
+  ERC20_CVX_FRAX_3CRV,
   ERC20_DAI,
+  ERC20_FRAX_3CRV,
+  ERC20_FRAX_BP,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_TOKENS,
+  ERC20_USDC,
   ERC20_UST,
   ERC20_UST_BLOCK_DEATH,
   ERC20_WETH,
@@ -35,6 +40,7 @@ import {
   getBaseTokenOrientation,
   getBaseTokenRate,
   getBaseTokenUSDRate,
+  isBaseToken,
   PairTokenBaseOrientation,
 } from "./PriceBase";
 
@@ -457,6 +463,8 @@ function getUSDRateUniswapV2(
     log.debug("getUSDRateUniswapV2: Returning base OHM-USD rate", []);
     return getBaseOhmUsdRate(blockNumber);
   }
+
+  // TODO look at replacing this
   if (isTokenAddressInCategory(contractAddress, TokenCategoryStable, ERC20_TOKENS)) {
     log.debug("getUSDRateUniswapV2: Returning stablecoin rate of 1", []);
     return BigDecimal.fromString("1");
@@ -529,10 +537,10 @@ function resolvePrice(contractAddress: string, blockNumber: BigInt): BigDecimal 
     return BigDecimal.fromString("0");
   }
 
-  // Handle stablecoins
-  if (isTokenAddressInCategory(contractAddress, TokenCategoryStable, ERC20_TOKENS)) {
-    log.debug("getUSDRate: Contract address {} is a stablecoin. Returning 1.", [contractAddress]);
-    return BigDecimal.fromString("1");
+  // If the value can be resolved using a price feed, do that
+  const contractAddressWithEth = contractAddress == NATIVE_ETH ? ERC20_WETH : contractAddress;
+  if (isBaseToken(contractAddressWithEth)) {
+    return getBaseTokenRate(Address.fromString(contractAddressWithEth), blockNumber);
   }
 
   // Handle OHM separately, as we have multiple liquidity pools
@@ -541,12 +549,9 @@ function resolvePrice(contractAddress: string, blockNumber: BigInt): BigDecimal 
     return getBaseOhmUsdRate(blockNumber);
   }
 
-  // Handle native ETH
-  if (contractAddress == NATIVE_ETH) {
-    log.debug("getUSDRate: Contract address {} is native ETH. Returning wETH rate.", [
-      contractAddress,
-    ]);
-    return getBaseEthUsdRate();
+  // Handle more complex derivates
+  if ([ERC20_BB_A_USD.toLowerCase(), ERC20_CVX_FRAX_3CRV.toLowerCase(), ERC20_FRAX_3CRV.toLowerCase(), ERC20_FRAX_BP.toLowerCase()].includes(contractAddress.toLowerCase())) {
+    return getBaseTokenRate(Address.fromString(ERC20_USDC), blockNumber);
   }
 
   // Look for the pair
