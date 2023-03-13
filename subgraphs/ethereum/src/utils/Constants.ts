@@ -643,7 +643,7 @@ export const liquidityPairHasToken = (pairAddress: string, tokenAddress: string)
  * This set of wallet addresses is common across many tokens,
  * and can be used for balance lookups.
  */
-export const WALLET_ADDRESSES = [
+const WALLET_ADDRESSES = [
   AAVE_ALLOCATOR_V2,
   AAVE_ALLOCATOR,
   AURA_ALLOCATOR,
@@ -661,6 +661,7 @@ export const WALLET_ADDRESSES = [
   CROSS_CHAIN_ARBITRUM,
   CROSS_CHAIN_FANTOM,
   CROSS_CHAIN_POLYGON,
+  DAO_WALLET,
   LUSD_ALLOCATOR,
   MAKER_DSR_ALLOCATOR,
   MAKER_DSR_ALLOCATOR_PROXY,
@@ -731,6 +732,10 @@ NON_TREASURY_ASSET_WHITELIST.set(PAIR_CURVE_OHM_ETH, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(PAIR_CURVE_OHM_FRAXBP, [DAO_WALLET]);
 NON_TREASURY_ASSET_WHITELIST.set(POOL_BALANCER_WETH_FDT_ID, [DAO_WALLET]);
 
+const DAO_WALLET_BLACKLIST = new Map<string, string[]>();
+DAO_WALLET_BLACKLIST.set(ERC20_OHM_V1, [DAO_WALLET]);
+DAO_WALLET_BLACKLIST.set(ERC20_OHM_V2, [DAO_WALLET]);
+
 /**
  * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
  * For this reason, the wallets to be used differ on a per-contract basis.
@@ -742,23 +747,30 @@ NON_TREASURY_ASSET_WHITELIST.set(POOL_BALANCER_WETH_FDT_ID, [DAO_WALLET]);
  * @returns
  */
 export const getWalletAddressesForContract = (contractAddress: string): string[] => {
-  const nonTreasuryAddresses = NON_TREASURY_ASSET_WHITELIST.has(contractAddress.toLowerCase())
-    ? NON_TREASURY_ASSET_WHITELIST.get(contractAddress.toLowerCase())
-    : [];
-  const newAddresses = WALLET_ADDRESSES.slice(0);
+  const walletAddresses = WALLET_ADDRESSES.slice(0);
 
-  // Add the values of nonTreasuryAddresses, but filter duplicates
-  for (let i = 0; i < nonTreasuryAddresses.length; i++) {
-    const currentValue = nonTreasuryAddresses[i];
+  // If the contract isn't on the blacklist, return as normal
+  if (!DAO_WALLET_BLACKLIST.has(contractAddress.toLowerCase())) {
+    log.debug("getWalletAddressesForContract: token {} is not on DAO wallet blacklist", [contractAddress]);
+    return walletAddresses;
+  }
 
-    if (newAddresses.includes(currentValue)) {
+  // Otherwise remove the values in the blacklist
+  // AssemblyScript doesn't yet have closures, so filter() cannot be used
+  const walletBlacklist = DAO_WALLET_BLACKLIST.get(contractAddress.toLowerCase());
+  for (let i = 0; i < walletBlacklist.length; i++) {
+    // If the blacklisted address is not in the array, skip
+    const arrayIndex = walletAddresses.indexOf(walletBlacklist[i]);
+    if (arrayIndex < 0) {
       continue;
     }
 
-    newAddresses.push(currentValue);
+    // Otherwise the blacklist address is removed from the array in-place
+    const splicedValues = walletAddresses.splice(arrayIndex, 1);
+    log.debug("getWalletAddressesForContract: removed values: {}", [splicedValues.toString()]);
   }
 
-  return newAddresses;
+  return walletAddresses;
 };
 
 const ALLOCATOR_ONSEN_ID = new Map<string, i32>();
