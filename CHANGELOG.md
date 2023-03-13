@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 4.0.1 (2023-03-13)
+## 4.0.2 (2023-03-13)
 
 - Shift from whitelisting assets in the DAO wallet to a blacklist (since many assets are held there now)
 
