@@ -1,5 +1,5 @@
-import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, describe, test } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
@@ -18,7 +18,8 @@ import {
   getWalletAddressesForContract,
   PAIR_FRAXSWAP_V1_OHM_FRAX,
 } from "../src/utils/Constants";
-import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
+import { mockStablecoinsPriceFeeds } from "./chainlink";
+import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
 import {
   FRAXSWAP_OHM_FRAX_TOKEN0_RESERVES,
   FRAXSWAP_OHM_FRAX_TOKEN1_RESERVES,
@@ -27,9 +28,12 @@ import {
   FRAXSWAP_OHM_FRAX_UNIT_RATE,
   mockBalancerVaultZero,
   mockCurvePairZero,
+  mockEthUsdRate,
+  mockFraxLockedBalanceZero,
   mockFraxSwapPairOhmFrax,
   mockFraxSwapPairZero,
   mockUniswapV2PairsZero,
+  mockUniswapV3PairsZero,
   mockUsdOhmV2Rate,
   mockWEthBtrflyV1Rate,
   OHM_USD_RESERVE_BLOCK,
@@ -43,10 +47,15 @@ beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
 
-  mockCurvePairZero();
   mockBalancerVaultZero();
   mockUniswapV2PairsZero();
   mockFraxSwapPairZero();
+  mockFraxLockedBalanceZero();
+  mockCurvePairZero();
+  mockUniswapV3PairsZero();
+
+  mockEthUsdRate();
+  mockStablecoinsPriceFeeds();
 });
 
 describe("pool total value", () => {

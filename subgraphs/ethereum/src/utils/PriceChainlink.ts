@@ -15,6 +15,15 @@ export function getPriceFeedTokens(): string[] {
     return tokenPriceFeedMap.keys();
 }
 
+export function getPriceFeed(token: string): string | null {
+    const tokenLower = token.toLowerCase();
+    if (!tokenPriceFeedMap.has(tokenLower)) {
+        return null;
+    }
+
+    return tokenPriceFeedMap.get(tokenLower);
+}
+
 export function getPriceFeedValue(tokenAddress: string): BigDecimal | null {
     const tokenAddressLower = tokenAddress.toLowerCase();
     if (!tokenPriceFeedMap.has(tokenAddressLower)) {

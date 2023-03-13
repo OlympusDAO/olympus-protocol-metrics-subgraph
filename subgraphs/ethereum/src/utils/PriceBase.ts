@@ -98,6 +98,7 @@ export function getBaseTokenOrientation(
  * number of USDC * 1 / number of ETH = price of ETH
  *
  * @returns Price of ETH in USD, or 0 if the contract reverts
+ * @deprecated
  */
 export function getBaseEthUsdRate(): BigDecimal {
   const pair = UniswapV2Pair.bind(Address.fromString(PAIR_UNISWAP_V2_USDC_ETH));

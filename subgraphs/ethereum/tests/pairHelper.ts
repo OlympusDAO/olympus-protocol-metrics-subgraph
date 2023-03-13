@@ -2,28 +2,50 @@ import { Address, BigDecimal, BigInt, Bytes, ethereum } from "@graphprotocol/gra
 import { createMockedFunction, log } from "matchstick-as";
 
 import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
+import { DAO_WALLET } from "../../shared/src/Wallets";
 import {
+  AURA_REWARDS_CONTRACTS,
+  AURA_STAKING_AURA_BAL,
+  AURA_STAKING_OHM_DAI,
+  AURA_STAKING_OHM_DAI_WETH,
+  AURA_STAKING_OHM_WETH,
+  AURA_STAKING_OHM_WSTETH,
+  BALANCER_LIQUIDITY_GAUGE_OHM_DAI,
+  BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
+  BALANCER_LIQUIDITY_GAUGE_OHM_WETH,
+  BALANCER_LIQUIDITY_GAUGE_OHM_WSTETH,
+  BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+  BALANCER_LIQUIDITY_GAUGES,
   BALANCER_VAULT,
   CONVEX_ALLOCATORS,
+  CONVEX_STAKING_CONTRACTS,
   ERC20_AURA,
   ERC20_AURA_BAL,
   ERC20_AURA_GRAVI,
+  ERC20_AURA_VL,
   ERC20_BALANCER_AURA_WETH,
   ERC20_BALANCER_GRAVIAURA_AURABAL_WETH,
   ERC20_BALANCER_OHM_BTRFLY_V2,
   ERC20_BALANCER_OHM_DAI,
+  ERC20_BALANCER_OHM_DAI_AURA,
   ERC20_BALANCER_OHM_DAI_WETH,
   ERC20_BALANCER_OHM_DAI_WETH_AURA,
   ERC20_BALANCER_OHM_WETH,
+  ERC20_BALANCER_OHM_WETH_AURA,
   ERC20_BALANCER_OHM_WSTETH,
+  ERC20_BALANCER_OHM_WSTETH_AURA,
   ERC20_BALANCER_WETH_FDT,
   ERC20_BTRFLY_V1,
   ERC20_BTRFLY_V2,
   ERC20_CRV_FRAX_USDC,
   ERC20_CRV_OHMETH,
   ERC20_CRV_OHMFRAXBP,
+  ERC20_CVX_FRAX_3CRV,
+  ERC20_CVX_FRAX_USDC_STAKED,
+  ERC20_CVX_OHMETH,
   ERC20_DAI,
   ERC20_FDT,
+  ERC20_FEI,
   ERC20_FPIS,
   ERC20_FRAX,
   ERC20_FRAX_3CRV,
@@ -33,12 +55,15 @@ import {
   ERC20_LUSD,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
+  ERC20_TOKE,
   ERC20_TRIBE,
   ERC20_USDC,
   ERC20_WETH,
   ERC20_WSTETH,
+  FRAX_LOCKING_CONTRACTS,
   getContractName,
   getWalletAddressesForContract,
+  LQTY_STAKING,
   PAIR_CURVE_FRAX_USDC,
   PAIR_CURVE_OHM_ETH,
   PAIR_CURVE_OHM_FRAXBP,
@@ -54,10 +79,12 @@ import {
   PAIR_UNISWAP_V2_TRIBE_ETH,
   PAIR_UNISWAP_V2_USDC_ETH,
   PAIR_UNISWAP_V3_3CRV_USD,
+  PAIR_UNISWAP_V3_FEI_USDC,
   PAIR_UNISWAP_V3_FPIS_FRAX,
   PAIR_UNISWAP_V3_FXS_ETH,
   PAIR_UNISWAP_V3_LQTY_LUSD,
   PAIR_UNISWAP_V3_LQTY_WETH,
+  PAIR_UNISWAP_V3_LUSD_USDC,
   PAIR_UNISWAP_V3_WETH_BTRFLY_V1,
   PAIR_UNISWAP_V3_WETH_BTRFLY_V2,
   POOL_BALANCER_AURA_WETH_ID,
@@ -68,9 +95,10 @@ import {
   POOL_BALANCER_OHM_WETH,
   POOL_BALANCER_OHM_WSTETH_ID,
   POOL_BALANCER_WETH_FDT_ID,
+  TOKE_STAKING,
   WALLET_ADDRESSES,
 } from "../src/utils/Constants";
-import { mockAuraStakedBalanceZero, mockBalancerGaugeBalanceZero } from "./contractHelper.test";
+import { mockPriceFeed, mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import { mockZeroWalletBalances } from "./walletHelper";
 
@@ -123,6 +151,10 @@ export const getEthUsdRate = (): BigDecimal => {
 };
 
 export const mockEthUsdRate = (): void => {
+  mockPriceFeed(ERC20_WETH, BigDecimal.fromString("1898.01397374"));
+};
+
+export const mockUniswapV2EthUsdRate = (): void => {
   const contractAddress = Address.fromString(PAIR_UNISWAP_V2_USDC_ETH);
   createMockedFunction(
     contractAddress,
@@ -149,7 +181,8 @@ export const mockEthUsdRate = (): void => {
   createMockedFunction(Address.fromString(ERC20_WETH), "decimals", "decimals():(uint8)").returns([
     ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
   ]);
-};
+
+}
 
 /**
  * # ETH * price ETH / # TRIBE = price TRIBE (in USD)
@@ -291,10 +324,12 @@ export const mockRateUniswapV3 = (
 
 export const mockUniswapV3PairsZero = (): void => {
   mockRateUniswapV3(PAIR_UNISWAP_V3_3CRV_USD, BigInt.zero(), ERC20_FRAX_3CRV, ERC20_USDC, ERC20_STANDARD_DECIMALS, USDC_DECIMALS, BigInt.zero(), BigInt.zero(), true);
+  mockRateUniswapV3(PAIR_UNISWAP_V3_FEI_USDC, BigInt.zero(), ERC20_FEI, ERC20_USDC, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
   mockRateUniswapV3(PAIR_UNISWAP_V3_FPIS_FRAX, BigInt.zero(), ERC20_FPIS, ERC20_FRAX, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
   mockRateUniswapV3(PAIR_UNISWAP_V3_FXS_ETH, BigInt.zero(), ERC20_FXS, ERC20_WETH, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
   mockRateUniswapV3(PAIR_UNISWAP_V3_LQTY_LUSD, BigInt.zero(), ERC20_LQTY, ERC20_LUSD, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
   mockRateUniswapV3(PAIR_UNISWAP_V3_LQTY_WETH, BigInt.zero(), ERC20_LQTY, ERC20_WETH, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
+  mockRateUniswapV3(PAIR_UNISWAP_V3_LUSD_USDC, BigInt.zero(), ERC20_LUSD, ERC20_USDC, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
   mockRateUniswapV3(PAIR_UNISWAP_V3_WETH_BTRFLY_V1, BigInt.zero(), ERC20_WETH, ERC20_BTRFLY_V1, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
   mockRateUniswapV3(PAIR_UNISWAP_V3_WETH_BTRFLY_V2, BigInt.zero(), ERC20_WETH, ERC20_BTRFLY_V2, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
 }
@@ -310,6 +345,8 @@ export const mockFxsEthRate = (): void => {
     FXS_ETH_BALANCE_FXS,
     FXS_ETH_BALANCE_ETH,
   );
+
+  mockStablecoinsPriceFeeds();
 };
 
 export const OHM_BTRFLY_V1_SLOT0 = "18438610691616111025325107";
@@ -399,6 +436,358 @@ export const mockUsdOhmV2Rate = (
   createMockedFunction(Address.fromString(ERC20_WETH), "decimals", "decimals():(uint8)").returns([
     ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
   ]);
+
+  mockStablecoinsPriceFeeds();
+};
+
+export const mockConvexStakedBalance = (
+  tokenAddress: string,
+  allocatorAddress: string,
+  stakingAddress: string,
+  balance: BigInt,
+): void => {
+  mockERC20TotalSupply(tokenAddress, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
+
+  const stakingContractAddress = Address.fromString(stakingAddress);
+  // Returns token
+  createMockedFunction(stakingContractAddress, "stakingToken", "stakingToken():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
+  ]);
+
+  // Returns balance
+  createMockedFunction(stakingContractAddress, "balanceOf", "balanceOf(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(allocatorAddress))])
+    .returns([ethereum.Value.fromUnsignedBigInt(balance)]);
+
+  // We assume price lookup is handled
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
+export const mockConvexStakedBalanceZero = (allocators: string[] = CONVEX_ALLOCATORS): void => {
+  for (let i = 0; i < allocators.length; i++) {
+    for (let j = 0; j < CONVEX_STAKING_CONTRACTS.length; j++) {
+      mockConvexStakedBalance(
+        ERC20_CVX_FRAX_3CRV,
+        allocators[i],
+        CONVEX_STAKING_CONTRACTS[j],
+        BigInt.zero(),
+      );
+      mockConvexStakedBalance(
+        ERC20_CVX_OHMETH,
+        allocators[i],
+        CONVEX_STAKING_CONTRACTS[j],
+        BigInt.zero(),
+      );
+    }
+  }
+};
+
+export const mockFraxLockedBalance = (
+  tokenAddress: string,
+  allocatorAddress: string,
+  stakingAddress: string,
+  balance: BigInt,
+): void => {
+  mockERC20TotalSupply(tokenAddress, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
+
+  const stakingContractAddress = Address.fromString(stakingAddress);
+  // Returns token
+  createMockedFunction(stakingContractAddress, "stakingToken", "stakingToken():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
+  ]);
+
+  // Returns balance
+  createMockedFunction(stakingContractAddress, "lockedLiquidityOf", "lockedLiquidityOf(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(allocatorAddress))])
+    .returns([ethereum.Value.fromUnsignedBigInt(balance)]);
+
+  // We assume price lookup is handled
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
+export const mockFraxLockedBalanceZero = (allocators: string[] = CONVEX_ALLOCATORS): void => {
+  for (let i = 0; i < allocators.length; i++) {
+    for (let j = 0; j < FRAX_LOCKING_CONTRACTS.length; j++) {
+      mockFraxLockedBalance(
+        ERC20_CVX_FRAX_USDC_STAKED,
+        allocators[i],
+        FRAX_LOCKING_CONTRACTS[j],
+        BigInt.zero(),
+      );
+    }
+  }
+};
+
+export const mockTokeStakedBalance = (
+  tokenAddress: string,
+  walletAddress: string,
+  stakingAddress: string,
+  balance: BigInt,
+): void => {
+  mockERC20TotalSupply(tokenAddress, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
+
+  const stakingContractAddress = Address.fromString(stakingAddress);
+  // Returns token
+  createMockedFunction(stakingContractAddress, "tokeToken", "tokeToken():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
+  ]);
+
+  // Returns balance
+  createMockedFunction(stakingContractAddress, "balanceOf", "balanceOf(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(walletAddress))])
+    .returns([ethereum.Value.fromUnsignedBigInt(balance)]);
+
+  // We assume price lookup is handled
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
+export const mockTokeStakedBalanceZero = (wallets: string[]): void => {
+  for (let i = 0; i < wallets.length; i++) {
+    mockTokeStakedBalance(ERC20_TOKE, wallets[i], TOKE_STAKING, BigInt.zero());
+  }
+};
+
+export const mockLiquityStakedBalance = (
+  tokenAddress: string,
+  walletAddress: string,
+  stakingAddress: string,
+  balance: BigInt,
+): void => {
+  mockERC20TotalSupply(tokenAddress, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
+
+  const stakingContractAddress = Address.fromString(stakingAddress);
+  // Returns token
+  createMockedFunction(stakingContractAddress, "lqtyToken", "lqtyToken():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
+  ]);
+
+  // Returns balance
+  createMockedFunction(stakingContractAddress, "stakes", "stakes(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(walletAddress))])
+    .returns([ethereum.Value.fromUnsignedBigInt(balance)]);
+
+  // We assume price lookup is handled
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
+export const mockLiquityStakedBalanceZero = (wallets: string[]): void => {
+  for (let i = 0; i < wallets.length; i++) {
+    mockLiquityStakedBalance(ERC20_LQTY, wallets[i], LQTY_STAKING, BigInt.zero());
+  }
+};
+
+export const mockBalancerGaugeBalance = (
+  tokenAddress: string,
+  walletAddress: string,
+  gaugeBalance: string,
+  balance: BigInt,
+  tokenTotalSupply: BigDecimal = DEFAULT_TOTAL_SUPPLY,
+): void => {
+  mockERC20TotalSupply(tokenAddress, ERC20_STANDARD_DECIMALS, toBigInt(tokenTotalSupply, ERC20_STANDARD_DECIMALS));
+
+  const gaugeContractAddress = Address.fromString(gaugeBalance);
+  // Returns token
+  createMockedFunction(gaugeContractAddress, "lp_token", "lp_token():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
+  ]);
+
+  // Returns balance
+  createMockedFunction(gaugeContractAddress, "balanceOf", "balanceOf(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(walletAddress))])
+    .returns([ethereum.Value.fromUnsignedBigInt(balance)]);
+
+  // We assume price lookup is handled
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
+export const mockBalancerGaugeBalanceZero = (wallets_: string[]): void => {
+  const wallets = wallets_.slice(0);
+  wallets.push(DAO_WALLET);
+
+  for (let i = 0; i < wallets.length; i++) {
+    mockBalancerGaugeBalance(
+      ERC20_BALANCER_WETH_FDT,
+      wallets[i],
+      BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+      BigInt.zero(),
+    );
+
+    mockBalancerGaugeBalance(
+      ERC20_BALANCER_OHM_DAI,
+      wallets[i],
+      BALANCER_LIQUIDITY_GAUGE_OHM_DAI,
+      BigInt.zero(),
+    );
+
+    mockBalancerGaugeBalance(
+      ERC20_BALANCER_OHM_WETH,
+      wallets[i],
+      BALANCER_LIQUIDITY_GAUGE_OHM_WETH,
+      BigInt.zero(),
+    );
+
+    mockBalancerGaugeBalance(
+      ERC20_BALANCER_OHM_DAI_WETH,
+      wallets[i],
+      BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
+      BigInt.zero(),
+    );
+
+    mockBalancerGaugeBalance(
+      ERC20_BALANCER_OHM_WSTETH,
+      wallets[i],
+      BALANCER_LIQUIDITY_GAUGE_OHM_WSTETH,
+      BigInt.zero(),
+    );
+  }
+};
+
+export const mockAuraStakedBalance = (
+  tokenAddress: string,
+  walletAddress: string,
+  stakingAddress: string,
+  balance: BigInt,
+): void => {
+  mockERC20TotalSupply(tokenAddress, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
+
+  const stakingContractAddress = Address.fromString(stakingAddress);
+  // Returns token
+  createMockedFunction(stakingContractAddress, "stakingToken", "stakingToken():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
+  ]);
+
+  // Returns balance
+  createMockedFunction(stakingContractAddress, "balanceOf", "balanceOf(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(walletAddress))])
+    .returns([ethereum.Value.fromUnsignedBigInt(balance)]);
+
+  // We assume price lookup is handled
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
+export const mockAuraStakedBalanceZero = (wallets: string[]): void => {
+  const stakingPairs: string[][] = [
+    [ERC20_BALANCER_OHM_DAI_WETH_AURA, AURA_STAKING_OHM_DAI_WETH],
+    [ERC20_BALANCER_OHM_WETH_AURA, AURA_STAKING_OHM_WETH],
+    [ERC20_BALANCER_OHM_DAI_AURA, AURA_STAKING_OHM_DAI],
+    [ERC20_BALANCER_OHM_WSTETH_AURA, AURA_STAKING_OHM_WSTETH],
+    [ERC20_AURA_BAL, AURA_STAKING_AURA_BAL],
+  ];
+
+  for (let i = 0; i < stakingPairs.length; i++) {
+    const stakedToken = stakingPairs[i][0];
+    const stakingContract = stakingPairs[i][1];
+    const stakingTokenWallets = getWalletAddressesForContract(stakedToken);
+    for (let j = 0; j < stakingTokenWallets.length; j++) {
+      mockAuraStakedBalance(
+        stakedToken,
+        stakingTokenWallets[j],
+        stakingContract,
+        BigInt.zero(),
+      );
+    }
+  }
+};
+
+export const mockAuraLockedBalance = (
+  tokenAddress: string,
+  walletAddress: string,
+  stakingAddress: string,
+  balance: BigInt,
+): void => {
+  const stakingContractAddress = Address.fromString(stakingAddress);
+  // Returns token
+  createMockedFunction(stakingContractAddress, "stakingToken", "stakingToken():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
+  ]);
+
+  const lockDataArray: Array<ethereum.Value> = [
+    ethereum.Value.fromI32(0),
+    ethereum.Value.fromI32(0),
+    ethereum.Value.fromI32(0),
+  ];
+  const lockData = changetype<ethereum.Tuple>(lockDataArray);
+
+  // Returns balance
+  createMockedFunction(stakingContractAddress, "lockedBalances", "lockedBalances(address):(uint256,uint256,uint256,(uint112,uint32)[])")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(walletAddress))])
+    .returns([ethereum.Value.fromUnsignedBigInt(balance), ethereum.Value.fromUnsignedBigInt(BigInt.zero()), ethereum.Value.fromUnsignedBigInt(BigInt.zero()), ethereum.Value.fromTupleArray([lockData])]);
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
+export const mockAuraLockedBalanceZero = (wallets: string[]): void => {
+  for (let i = 0; i < wallets.length; i++) {
+    mockAuraLockedBalance(
+      ERC20_AURA,
+      wallets[i],
+      ERC20_AURA_VL,
+      BigInt.zero(),
+    );
+  }
+};
+
+export const mockAuraEarnedBalance = (
+  tokenAddress: string,
+  walletAddress: string,
+  stakingAddress: string,
+  balance: BigInt,
+): void => {
+  const stakingContractAddress = Address.fromString(stakingAddress);
+  // Returns token
+  createMockedFunction(stakingContractAddress, "rewardToken", "rewardToken():(address)").returns([
+    ethereum.Value.fromAddress(Address.fromString(tokenAddress)),
+  ]);
+
+  // Returns balance
+  createMockedFunction(stakingContractAddress, "earned", "earned(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(walletAddress))])
+    .returns([ethereum.Value.fromUnsignedBigInt(balance)]);
+
+  // Token decimals
+  createMockedFunction(Address.fromString(tokenAddress), "decimals", "decimals():(uint8)").returns([
+    ethereum.Value.fromI32(ERC20_STANDARD_DECIMALS),
+  ]);
+};
+
+export const mockAuraEarnedBalanceZero = (rewardToken: string, wallets: string[]): void => {
+  for (let i = 0; i < wallets.length; i++) {
+    for (let j = 0; j < AURA_REWARDS_CONTRACTS.length; j++) {
+      mockAuraEarnedBalance(
+        rewardToken,
+        wallets[i],
+        AURA_REWARDS_CONTRACTS[j],
+        BigInt.zero(),
+      );
+    }
+  }
 };
 
 export const mockUniswapV2Pair = (

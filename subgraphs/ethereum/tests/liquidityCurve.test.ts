@@ -35,18 +35,23 @@ import {
   PAIR_CURVE_OHM_FRAXBP,
   POOL_BALANCER_OHM_DAI_WETH_ID,
 } from "../src/utils/Constants";
-import { mockConvexStakedBalance, mockConvexStakedBalanceZero, mockFraxLockedBalance, mockFraxLockedBalanceZero } from "./contractHelper.test";
+import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import {
   getEthUsdRate,
   getOhmUsdRate,
   getPairValue,
   mockBalancerVaultZero,
+  mockConvexStakedBalance,
+  mockConvexStakedBalanceZero,
   mockCurvePairTotalValue,
   mockCurvePairZero,
   mockEthUsdRate,
+  mockFraxLockedBalance,
+  mockFraxLockedBalanceZero,
   mockFraxSwapPairZero,
   mockUniswapV2PairsZero,
+  mockUniswapV3PairsZero,
   mockUsdOhmV2Rate,
   OHM_USD_RESERVE_BLOCK,
   OHM_V2_DECIMALS,
@@ -62,6 +67,13 @@ beforeEach(() => {
 
   mockBalancerVaultZero();
   mockUniswapV2PairsZero();
+  mockFraxSwapPairZero();
+  mockFraxLockedBalanceZero();
+  mockCurvePairZero();
+  mockUniswapV3PairsZero();
+
+  mockEthUsdRate();
+  mockStablecoinsPriceFeeds();
 });
 
 describe("Token Quantity", () => {
@@ -383,8 +395,8 @@ describe("Pair Value", () => {
 
     const expectedValue = getPairValue(ohmBalance, wethBalance, getOhmUsdRate(), getEthUsdRate());
     assert.stringEquals(
-      expectedValue.toString(),
-      getCurvePairTotalValue(PAIR_CURVE_OHM_ETH, false, OHM_USD_RESERVE_BLOCK).toString(),
+      expectedValue.truncate(4).toString(),
+      getCurvePairTotalValue(PAIR_CURVE_OHM_ETH, false, OHM_USD_RESERVE_BLOCK).truncate(4).toString(),
     );
   });
 
@@ -410,8 +422,8 @@ describe("Pair Value", () => {
 
     const expectedValue = wethBalance.times(getEthUsdRate());
     assert.stringEquals(
-      expectedValue.toString(),
-      getCurvePairTotalValue(PAIR_CURVE_OHM_ETH, true, OHM_USD_RESERVE_BLOCK).toString(),
+      expectedValue.truncate(4).toString(),
+      getCurvePairTotalValue(PAIR_CURVE_OHM_ETH, true, OHM_USD_RESERVE_BLOCK).truncate(4).toString(),
     );
   });
 
@@ -476,9 +488,9 @@ describe("Pair Value", () => {
       .div(crvTotalSupply)
       .times(expectedTotalValue)
       .times(expectedMultiplier);
-    assert.stringEquals(expectedValue.toString(), records[0].value.toString());
-    assert.stringEquals(expectedMultiplier.toString(), records[0].multiplier.toString());
-    assert.stringEquals(expectedNonOhmValue.toString(), records[0].valueExcludingOhm.toString());
+    assert.stringEquals(expectedValue.truncate(4).toString(), records[0].value.truncate(4).toString());
+    assert.stringEquals(expectedMultiplier.truncate(4).toString(), records[0].multiplier.truncate(4).toString());
+    assert.stringEquals(expectedNonOhmValue.truncate(4).toString(), records[0].valueExcludingOhm.truncate(4).toString());
     assert.i32Equals(1, records.length);
   });
 
@@ -590,7 +602,7 @@ describe("Pair Value", () => {
       getEthUsdRate(),
     );
     const expectedValue = crvBalance.div(crvTotalSupply).times(totalValueExpected);
-    assert.stringEquals(expectedValue.toString(), records[0].value.toString());
+    assert.stringEquals(expectedValue.truncate(4).toString(), records[0].value.truncate(4).toString());
     assert.assertTrue(records[0].token.includes(getContractName(ERC20_CVX_OHMETH)) == true); // cvxOHMETH should be mentioned in the id
     assert.i32Equals(1, records.length);
   });
@@ -652,7 +664,7 @@ describe("Pair Value", () => {
     );
     const expectedValue = crvBalance.div(crvTotalSupply).times(totalValueExpected);
     const record = records[0];
-    assert.stringEquals(expectedValue.toString(), record.value.toString());
+    assert.stringEquals(expectedValue.truncate(4).toString(), record.value.truncate(4).toString());
     assert.assertTrue(record.token.includes(getContractName(ERC20_CVX_FRAX_USDC)) == true); // Contract name should be mentioned in the id
     assert.stringEquals(TokenCategoryStable, record.category);
     assert.i32Equals(1, records.length);
@@ -719,7 +731,7 @@ describe("Pair Value", () => {
     );
     const expectedValue = crvBalance.div(crvTotalSupply).times(totalValueExpected);
     const record = records[0];
-    assert.stringEquals(expectedValue.toString(), record.value.toString());
+    assert.stringEquals(expectedValue.truncate(4).toString(), record.value.truncate(4).toString());
     assert.assertTrue(record.token.includes(getContractName(ERC20_CVX_FRAX_USDC_STAKED)) == true);
     assert.stringEquals(TokenCategoryStable, record.category);
     assert.i32Equals(1, records.length);

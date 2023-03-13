@@ -25,20 +25,24 @@ import {
   POOL_BALANCER_OHM_V2_BTRFLY_V2_ID,
   POOL_BALANCER_WETH_FDT_ID,
 } from "../src/utils/Constants";
-import {
-  mockBalancerGaugeBalance,
-  mockBalancerGaugeBalanceZero,
-} from "./contractHelper.test";
+import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
 import {
   getBtrflyV2UsdRate,
   getEthUsdRate,
   getOhmUsdRate,
+  mockBalancerGaugeBalance,
+  mockBalancerGaugeBalanceZero,
   mockBalancerVaultOhmBtrfly,
   mockBalancerVaultOhmDaiEth,
   mockBalancerVaultWethFdt,
   mockBalancerVaultZero,
+  mockCurvePairZero,
   mockEthUsdRate,
+  mockFraxLockedBalanceZero,
+  mockFraxSwapPairZero,
+  mockUniswapV2PairsZero,
+  mockUniswapV3PairsZero,
   mockUsdOhmV2Rate,
   mockWEthBtrflyV2Rate,
   OHM_BTRFLY_BALANCE_BTRFLY,
@@ -57,6 +61,16 @@ const TIMESTAMP = BigInt.fromString("1");
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
+
+  mockBalancerVaultZero();
+  mockUniswapV2PairsZero();
+  mockFraxSwapPairZero();
+  mockFraxLockedBalanceZero();
+  mockCurvePairZero();
+  mockUniswapV3PairsZero();
+
+  mockEthUsdRate();
+  mockStablecoinsPriceFeeds();
 });
 
 describe("pool total value", () => {
@@ -81,7 +95,7 @@ describe("pool total value", () => {
     const expectedValue = OHM_DAI_ETH_BALANCE_OHM.times(getOhmUsdRate())
       .plus(OHM_DAI_ETH_BALANCE_DAI)
       .plus(OHM_DAI_ETH_BALANCE_WETH.times(getEthUsdRate()));
-    assert.stringEquals(expectedValue.toString(), totalValue.toString());
+    assert.stringEquals(expectedValue.truncate(3).toString(), totalValue.truncate(3).toString());
   });
 
   test("OHM-DAI-ETH pool total value, non-ohm tokens", () => {
@@ -105,7 +119,7 @@ describe("pool total value", () => {
     const expectedValue = OHM_DAI_ETH_BALANCE_DAI.plus(
       OHM_DAI_ETH_BALANCE_WETH.times(getEthUsdRate()),
     );
-    assert.stringEquals(expectedValue.toString(), totalValue.toString());
+    assert.stringEquals(expectedValue.truncate(4).toString(), totalValue.truncate(4).toString());
   });
 });
 
@@ -272,9 +286,9 @@ describe("get balancer records", () => {
     const expectedNonOhmValue = expectedBalance.times(expectedUnitRate).times(expectedMultiplier);
 
     const record = records[0];
-    assert.stringEquals(expectedNonOhmValue.toString(), record.valueExcludingOhm.toString());
-    assert.stringEquals(expectedMultiplier.toString(), record.multiplier.toString());
-    assert.stringEquals(expectedValue.toString(), record.value.toString());
+    assert.stringEquals(expectedNonOhmValue.truncate(4).toString(), record.valueExcludingOhm.truncate(4).truncate(4).toString());
+    assert.stringEquals(expectedMultiplier.truncate(4).toString(), record.multiplier.truncate(4).toString());
+    assert.stringEquals(expectedValue.truncate(4).toString(), record.value.truncate(4).toString());
 
     assert.i32Equals(1, records.length);
   });
@@ -346,7 +360,7 @@ describe("get balancer records", () => {
       .plus(OHM_DAI_ETH_BALANCE_WETH.times(getEthUsdRate()));
     const expectedUnitRate = expectedTotalValue.div(OHM_DAI_ETH_TOKEN_TOTAL_SUPPLY);
     const expectedValue = expectedBalance.times(expectedUnitRate);
-    assert.stringEquals(expectedValue.toString(), records[0].value.toString());
+    assert.stringEquals(expectedValue.truncate(4).toString(), records[0].value.truncate(4).toString());
 
     assert.i32Equals(1, records.length);
   });
@@ -418,9 +432,9 @@ describe("get balancer records", () => {
     const expectedNonOhmValue = expectedBalance.times(expectedUnitRate).times(expectedMultiplier);
 
     const record = records[0];
-    assert.stringEquals(expectedNonOhmValue.toString(), record.valueExcludingOhm.toString());
-    assert.stringEquals(expectedMultiplier.toString(), record.multiplier.toString());
-    assert.stringEquals(expectedValue.toString(), record.value.toString());
+    assert.stringEquals(expectedNonOhmValue.truncate(4).toString(), record.valueExcludingOhm.truncate(4).toString());
+    assert.stringEquals(expectedMultiplier.truncate(4).toString(), record.multiplier.truncate(4).toString());
+    assert.stringEquals(expectedValue.truncate(4).toString(), record.value.truncate(4).toString());
 
     assert.i32Equals(1, records.length);
   });
@@ -505,9 +519,9 @@ describe("get balancer records", () => {
     const expectedNonOhmValue = expectedBalance.times(expectedUnitRate).times(expectedMultiplier);
 
     const record = records[0];
-    assert.stringEquals(expectedNonOhmValue.toString(), record.valueExcludingOhm.toString());
-    assert.stringEquals(expectedMultiplier.toString(), record.multiplier.toString());
-    assert.stringEquals(expectedValue.toString(), record.value.toString());
+    assert.stringEquals(expectedNonOhmValue.truncate(4).toString(), record.valueExcludingOhm.truncate(4).toString());
+    assert.stringEquals(expectedMultiplier.truncate(4).toString(), record.multiplier.truncate(4).toString());
+    assert.stringEquals(expectedValue.truncate(4).toString(), record.value.truncate(4).toString());
 
     assert.i32Equals(1, records.length);
   });
