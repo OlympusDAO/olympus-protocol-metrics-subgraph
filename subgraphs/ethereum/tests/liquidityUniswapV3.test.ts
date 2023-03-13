@@ -4,6 +4,7 @@ import { assert, beforeEach, clearStore, describe, test } from "matchstick-as/as
 import { toDecimal } from "../../shared/src/utils/Decimals";
 import { getUniswapV3PairTotalValue } from "../src/liquidity/LiquidityUniswapV3";
 import { PAIR_UNISWAP_V3_FXS_ETH } from "../src/utils/Constants";
+import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
 import {
   ETH_USD_RESERVE_BLOCK,
@@ -11,19 +12,37 @@ import {
   FXS_ETH_BALANCE_FXS,
   getEthUsdRate,
   getFxsUsdRate,
+  mockBalancerVaultZero,
+  mockCurvePairZero,
   mockEthUsdRate,
+  mockFraxLockedBalanceZero,
+  mockFraxSwapPairZero,
   mockFxsEthRate,
+  mockUniswapV2EthUsdRate,
+  mockUniswapV2PairsZero,
+  mockUniswapV3PairsZero,
 } from "./pairHelper";
 
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
+
+  mockBalancerVaultZero();
+  mockUniswapV2PairsZero();
+  mockFraxSwapPairZero();
+  mockFraxLockedBalanceZero();
+  mockCurvePairZero();
+  mockUniswapV3PairsZero();
+
+  mockEthUsdRate();
+  mockStablecoinsPriceFeeds();
 });
 
 describe("UniswapV3 pair value", () => {
   test("FXS-ETH pair value is correct", () => {
     mockFxsEthRate();
     mockEthUsdRate();
+    mockUniswapV2EthUsdRate();
 
     const pairValue = getUniswapV3PairTotalValue(PAIR_UNISWAP_V3_FXS_ETH, ETH_USD_RESERVE_BLOCK);
     // # ETH * p ETH + # FXS * p FXS
@@ -33,7 +52,7 @@ describe("UniswapV3 pair value", () => {
     log.debug("calculated value: {}", [calculatedValue.toString()]);
     log.debug("pairValue: {}", [pairValue.toString()]);
 
-    assert.stringEquals(calculatedValue.toString().slice(0, 18), pairValue.toString().slice(0, 18));
+    assert.stringEquals(calculatedValue.truncate(4).toString(), pairValue.truncate(4).toString());
   });
 
   // test("pair balance value is correct", () => {

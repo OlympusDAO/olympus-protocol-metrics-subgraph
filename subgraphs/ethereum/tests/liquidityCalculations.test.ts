@@ -16,15 +16,17 @@ import {
   PAIR_FRAXSWAP_V1_OHM_FRAX,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
 } from "../src/utils/Constants";
-import { mockConvexStakedBalanceZero, mockFraxLockedBalanceZero } from "./contractHelper.test";
+import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import {
   ETH_USD_RESERVE_BLOCK,
   mockBalancerVaultOhmDaiEth,
   mockBalancerVaultZero,
+  mockConvexStakedBalanceZero,
   mockCurvePairTotalValue,
   mockCurvePairZero,
   mockEthUsdRate,
+  mockFraxLockedBalanceZero,
   mockFraxSwapPairOhmFrax,
   mockFraxSwapPairZero,
   mockUniswapV2Pair,
@@ -49,11 +51,13 @@ beforeEach(() => {
   mockFraxLockedBalanceZero();
   mockCurvePairZero();
   mockUniswapV3PairsZero();
+
+  mockEthUsdRate();
+  mockStablecoinsPriceFeeds();
 })
 
 describe("getLiquidityPoolValue", () => {
   test("curve pool", () => {
-    mockEthUsdRate();
     mockUsdOhmV2Rate();
 
     // Mock pair

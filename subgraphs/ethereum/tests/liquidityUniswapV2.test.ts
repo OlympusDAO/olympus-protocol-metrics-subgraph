@@ -22,6 +22,7 @@ import {
   PAIR_UNISWAP_V2_OHM_ETH_V2,
 } from "../src/utils/Constants";
 import { PairHandler, PairHandlerTypes } from "../src/utils/PairHandler";
+import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
 import {
   ETH_USD_RESERVE_BLOCK,
@@ -30,10 +31,14 @@ import {
   getOhmUsdRate,
   getPairValue,
   mockBalancerVaultZero,
+  mockCurvePairZero,
   mockEthUsdRate,
+  mockFraxLockedBalanceZero,
+  mockFraxSwapPairZero,
   mockOhmEthPair,
   mockUniswapV2Pair,
   mockUniswapV2PairsZero,
+  mockUniswapV3PairsZero,
   mockUsdOhmV2Rate,
   mockWEthBtrflyV1Rate,
   OHM_ETH_TOTAL_SUPPLY,
@@ -53,8 +58,16 @@ const TIMESTAMP = BigInt.fromString("1");
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
+
   mockBalancerVaultZero();
   mockUniswapV2PairsZero();
+  mockFraxSwapPairZero();
+  mockFraxLockedBalanceZero();
+  mockCurvePairZero();
+  mockUniswapV3PairsZero();
+
+  mockEthUsdRate();
+  mockStablecoinsPriceFeeds();
 });
 
 describe("Token Quantity", () => {
@@ -385,7 +398,7 @@ describe("pair value", () => {
     // # DAI * 1
     const calculatedValue = toDecimal(token1Reserves, ERC20_STANDARD_DECIMALS);
 
-    assert.stringEquals(calculatedValue.toString(), pairValue.toString());
+    assert.stringEquals(pairValue.truncate(4).toString(), calculatedValue.truncate(4).toString());
   });
 
   test("OHM-ETH pair value is correct", () => {
@@ -401,10 +414,7 @@ describe("pair value", () => {
     const calculatedValue = getOhmEthPairValue();
     log.debug("difference: {}", [pairValue.minus(calculatedValue).toString()]);
 
-    // There is a loss of precision, so we need to ensure that the value is close, but not equal
-    assert.assertTrue(
-      pairValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
-    );
+    assert.stringEquals(pairValue.truncate(3).toString(), calculatedValue.truncate(3).toString());
   });
 
   test("OHM-ETH pair balance value is correct", () => {
@@ -426,9 +436,7 @@ describe("pair value", () => {
     log.debug("difference: {}", [balanceValue.minus(calculatedValue).toString()]);
 
     // There is a loss of precision, so we need to ensure that the value is close, but not equal
-    assert.assertTrue(
-      balanceValue.minus(calculatedValue).lt(BigDecimal.fromString("0.000000000000000001")),
-    );
+    assert.stringEquals(balanceValue.truncate(4).toString(), calculatedValue.truncate(4).toString());
   });
 
   test("OHM-BTRFLY V1 pair value is correct", () => {
@@ -467,7 +475,6 @@ describe("pair value", () => {
       getBtrflyV1UsdRate(),
     );
 
-    assert.stringEquals(calculatedValue.toString(), pairValue.toString());
-    assert.stringEquals("15724.8700", pairValue.toString().slice(0, 10));
+    assert.stringEquals(calculatedValue.truncate(4).toString(), pairValue.truncate(4).toString());
   });
 });

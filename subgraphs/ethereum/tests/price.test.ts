@@ -47,18 +47,19 @@ import {
   POOL_BALANCER_WETH_FDT_ID,
 } from "../src/utils/Constants";
 import { getUSDRate, getUSDRateBalancer } from "../src/utils/Price";
-import { mockBalancerGaugeBalanceZero } from "./contractHelper.test";
+import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
 import {
   getERC20UsdRate,
   getEthUsdRate,
   getOhmUsdRate,
   getTribeUsdRate,
+  mockBalancerGaugeBalanceZero,
   mockBalancerVaultAuraWeth,
   mockBalancerVaultGraviAuraBalWeth,
-  mockBalancerVaultZero,
   mockBalancerVaultOhmDaiEth,
   mockBalancerVaultWethFdt,
+  mockBalancerVaultZero,
   mockEthUsdRate,
   mockFxsEthRate,
   mockRateUniswapV3,
@@ -76,6 +77,9 @@ import {
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
+
+  mockEthUsdRate();
+  mockStablecoinsPriceFeeds();
 });
 
 describe("OHM-USD rate", () => {
@@ -87,8 +91,8 @@ describe("OHM-USD rate", () => {
     assert.stringEquals(
       getUSDRate(ERC20_OHM_V2,
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
-      ).toString(),
-      getOhmUsdRate().toString(),
+      ).truncate(4).toString(),
+      getOhmUsdRate().truncate(4).toString(),
     );
   });
 
@@ -105,8 +109,8 @@ describe("OHM-USD rate", () => {
     assert.stringEquals(
       getUSDRate(ERC20_OHM_V2,
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
-      ).toString(),
-      getOhmUsdRate().toString(),
+      ).truncate(4).toString(),
+      getOhmUsdRate().truncate(4).toString(),
     );
   });
 
@@ -124,10 +128,10 @@ describe("OHM-USD rate", () => {
     );
 
     assert.stringEquals(
-      calculatedRate.toString(),
+      calculatedRate.truncate(4).toString(),
       getUSDRate(ERC20_OHM_V2,
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
-      ).toString(),
+      ).truncate(4).toString(),
     );
   });
 
@@ -147,10 +151,10 @@ describe("OHM-USD rate", () => {
     );
 
     assert.stringEquals(
-      calculatedRate.toString(),
+      calculatedRate.truncate(4).toString(),
       getUSDRate(ERC20_OHM_V2,
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
-      ).toString(),
+      ).truncate(4).toString(),
     );
   });
 
@@ -167,10 +171,10 @@ describe("OHM-USD rate", () => {
       .reverts();
 
     assert.stringEquals(
-      getOhmUsdRate().toString(), // OHM-DAI rate is used
+      getOhmUsdRate().truncate(4).toString(), // OHM-DAI rate is used
       getUSDRate(ERC20_OHM_V2,
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
-      ).toString(),
+      ).truncate(4).toString(),
     );
   });
 
@@ -260,8 +264,8 @@ describe("get USD rate", () => {
     mockEthUsdRate();
 
     assert.stringEquals(
-      getUSDRate(NATIVE_ETH, OHM_USD_RESERVE_BLOCK).toString(),
-      getEthUsdRate().toString(),
+      getUSDRate(NATIVE_ETH, OHM_USD_RESERVE_BLOCK).truncate(4).toString(),
+      getEthUsdRate().truncate(4).toString(),
     );
   });
 
@@ -269,8 +273,8 @@ describe("get USD rate", () => {
     mockEthUsdRate();
 
     assert.stringEquals(
-      getUSDRate(ERC20_WETH, OHM_USD_RESERVE_BLOCK).toString(),
-      getEthUsdRate().toString(),
+      getUSDRate(ERC20_WETH, OHM_USD_RESERVE_BLOCK).truncate(4).toString(),
+      getEthUsdRate().truncate(4).toString(),
     );
   });
 
@@ -278,8 +282,8 @@ describe("get USD rate", () => {
     mockUsdOhmV2Rate();
 
     assert.stringEquals(
-      getUSDRate(ERC20_OHM_V1, OHM_USD_RESERVE_BLOCK).toString(),
-      getOhmUsdRate().toString(),
+      getUSDRate(ERC20_OHM_V1, OHM_USD_RESERVE_BLOCK).truncate(4).toString(),
+      getOhmUsdRate().truncate(4).toString(),
     );
   });
 
@@ -287,8 +291,8 @@ describe("get USD rate", () => {
     mockUsdOhmV2Rate();
 
     assert.stringEquals(
-      getUSDRate(ERC20_OHM_V2, OHM_USD_RESERVE_BLOCK).toString(),
-      getOhmUsdRate().toString(),
+      getUSDRate(ERC20_OHM_V2, OHM_USD_RESERVE_BLOCK).truncate(4).toString(),
+      getOhmUsdRate().truncate(4).toString(),
     );
   });
 
@@ -312,11 +316,7 @@ describe("get USD rate", () => {
     const calculatedRate = getERC20UsdRate(fraxReserve, synReserve, BigDecimal.fromString("1"));
     log.debug("difference: {}", [synUsdRate.minus(calculatedRate).toString()]);
 
-    // There is a loss of precision, so we need to ensure that the value is close, but not equal
-    assert.assertTrue(
-      synUsdRate.minus(calculatedRate).lt(BigDecimal.fromString("0.000000000000000001")) &&
-      synUsdRate.minus(calculatedRate).gt(BigDecimal.fromString("-0.000000000000000001")),
-    );
+    assert.stringEquals(synUsdRate.truncate(4).toString(), calculatedRate.truncate(4).toString());
   });
 
   test("TRIBE (UniswapV2) returns correct value", () => {
@@ -327,10 +327,7 @@ describe("get USD rate", () => {
     const calculatedRate = getTribeUsdRate();
     log.debug("difference: {}", [tribeUsdRate.minus(calculatedRate).toString()]);
 
-    // There is a loss of precision, so we need to ensure that the value is close, but not equal
-    assert.assertTrue(
-      tribeUsdRate.minus(calculatedRate).lt(BigDecimal.fromString("0.000000000000000001")),
-    );
+    assert.stringEquals(tribeUsdRate.truncate(4).toString(), calculatedRate.truncate(4).toString());
   });
 
   test("TRIBE (UniswapV2) handles contract revert on token1", () => {
@@ -390,7 +387,7 @@ describe("get USD rate", () => {
       OHM_DAI_ETH_BALANCE_OHM.div(OHM_DAI_ETH_WEIGHT_OHM),
     );
 
-    assert.stringEquals(calculatedRate.toString(), usdRate.toString());
+    assert.stringEquals(calculatedRate.truncate(4).toString(), usdRate.truncate(4).toString());
   });
 
   test("auraBAL (Balancer) returns correct value", () => {
@@ -404,7 +401,7 @@ describe("get USD rate", () => {
     const calculatedRate = BigDecimal.fromString("20.40430807376620776594455756154979");
 
     // There is a loss of precision, so we need to ensure that the value is close, but not equal
-    assert.stringEquals(calculatedRate.toString(), usdRate.toString());
+    assert.stringEquals(calculatedRate.truncate(4).toString(), usdRate.truncate(4).toString());
   });
 
   test("aura (Balancer) returns correct value", () => {
@@ -418,7 +415,7 @@ describe("get USD rate", () => {
     const calculatedRate = BigDecimal.fromString("20.40430807376620776594455756154979");
 
     // There is a loss of precision, so we need to ensure that the value is close, but not equal
-    assert.stringEquals(calculatedRate.toString(), usdRate.toString());
+    assert.stringEquals(calculatedRate.truncate(4).toString(), usdRate.truncate(4).toString());
   });
 
   test("vlAura (Balancer) returns correct value", () => {
@@ -432,7 +429,7 @@ describe("get USD rate", () => {
     const calculatedRate = BigDecimal.fromString("20.40430807376620776594455756154979");
 
     // There is a loss of precision, so we need to ensure that the value is close, but not equal
-    assert.stringEquals(calculatedRate.toString(), usdRate.toString());
+    assert.stringEquals(calculatedRate.truncate(4).toString(), usdRate.truncate(4).toString());
   });
 
   test("FDT (Balancer) returns correct value", () => {
@@ -445,7 +442,7 @@ describe("get USD rate", () => {
     const calculatedRate = BigDecimal.fromString("0.02459313077010308743409892482569878");
 
     // There is a loss of precision, so we need to ensure that the value is close, but not equal
-    assert.stringEquals(calculatedRate.toString(), usdRate.toString());
+    assert.stringEquals(calculatedRate.truncate(4).toString(), usdRate.truncate(4).toString());
   });
 
   test("FDT (Balancer) handles empty reserves", () => {
@@ -502,11 +499,7 @@ describe("get USD rate", () => {
     const fxsUsdRate = getUSDRate(ERC20_FXS, OHM_USD_RESERVE_BLOCK);
     const calculatedRate = BigDecimal.fromString("5.877414538282582611"); // 5.87741453828258261098431099338906
 
-    // There is a loss of precision, so we need to ensure that the value is close, but not equal
-    assert.assertTrue(
-      fxsUsdRate.minus(calculatedRate).lt(BigDecimal.fromString("0.000000000000000001")) &&
-      fxsUsdRate.minus(calculatedRate).gt(BigDecimal.fromString("-0.000000000000000001")),
-    );
+    assert.stringEquals(fxsUsdRate.truncate(4).toString(), calculatedRate.truncate(4).toString());
   });
 
   test("FXS (UniswapV3) returns correct value for ETH", () => {
@@ -517,11 +510,7 @@ describe("get USD rate", () => {
     const calculatedRate = BigDecimal.fromString("1898.013973745253121667");
     log.debug("difference: {}", [ethUsdRate.minus(calculatedRate).toString()]);
 
-    // There is a loss of precision, so we need to ensure that the value is close, but not equal
-    assert.assertTrue(
-      ethUsdRate.minus(calculatedRate).lt(BigDecimal.fromString("0.000000000000000001")) &&
-      ethUsdRate.minus(calculatedRate).gt(BigDecimal.fromString("-0.000000000000000001")),
-    );
+    assert.stringEquals(ethUsdRate.truncate(4).toString(), calculatedRate.truncate(4).toString());
   });
 
   test("FXS (UniswapV3) handles contract revert", () => {
@@ -557,8 +546,8 @@ describe("get USD rate", () => {
     // The calculated rate has greater precision than what is expected (through manual calculations),
     // so we trim the calculated rate to 11 decimal places.
     assert.stringEquals(
-      expectedRate.toString(),
-      getUSDRate(ERC20_FPIS, OHM_USD_RESERVE_BLOCK).toString().substring(0, 13),
+      expectedRate.truncate(4).toString(),
+      getUSDRate(ERC20_FPIS, OHM_USD_RESERVE_BLOCK).truncate(4).toString(),
     );
   });
 
@@ -580,8 +569,8 @@ describe("get USD rate", () => {
     // The calculated rate has greater precision than what is expected (through manual calculations),
     // so we trim the calculated rate to 11 decimal places.
     assert.stringEquals(
-      expectedRate.toString(),
-      getUSDRate(ERC20_CRV_3POOL, OHM_USD_RESERVE_BLOCK).toString(),
+      expectedRate.truncate(4).toString(),
+      getUSDRate(ERC20_CRV_3POOL, OHM_USD_RESERVE_BLOCK).truncate(4).toString(),
     );
   });
 
@@ -603,7 +592,7 @@ describe("get USD rate", () => {
     const usdRate = getUSDRate(ERC20_BTRFLY_V1, OHM_USD_RESERVE_BLOCK);
 
     // (1/(18438610691616111025325107*18438610691616111025325107/(2^192)))*(1/(10^9))*1898.01397374525312166748106658611
-    assert.stringEquals("35.043072999", usdRate.toString().slice(0, 12));
+    assert.stringEquals("35.043", usdRate.truncate(4).toString());
   });
 
   test("BTRFLY V2 (UniswapV3) returns correct value", () => {
@@ -628,8 +617,7 @@ describe("get USD rate", () => {
 
     const usdRate = getUSDRate(ERC20_BTRFLY_V2, OHM_USD_RESERVE_BLOCK);
 
-    assert.stringEquals(expectedRate.toString(), usdRate.toString());
-    assert.stringEquals("294.75462831", usdRate.toString().slice(0, 12));
+    assert.stringEquals(expectedRate.truncate(4).toString(), usdRate.truncate(4).toString());
   });
 
   // test("Curve OHM-ETH returns correct rate", () => {

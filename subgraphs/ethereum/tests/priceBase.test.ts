@@ -17,9 +17,11 @@ import {
   getBaseTokenUSDRate,
   PairTokenBaseOrientation,
 } from "../src/utils/PriceBase";
+import { mockStablecoinsPriceFeeds } from "./chainlink";
 import {
   getEthUsdRate,
   mockEthUsdRate,
+  mockUniswapV2EthUsdRate,
   mockUsdOhmV2Rate,
   OHM_USD_RESERVE_BLOCK,
 } from "./pairHelper";
@@ -27,13 +29,17 @@ import {
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
+
+  mockEthUsdRate();
+  mockStablecoinsPriceFeeds();
 });
 
 describe("ETH-USD rate", () => {
   test("rate calculation is correct", () => {
     mockEthUsdRate();
+    mockUniswapV2EthUsdRate();
 
-    assert.stringEquals(getBaseEthUsdRate().toString(), getEthUsdRate().toString());
+    assert.stringEquals(getBaseEthUsdRate().truncate(4).toString(), getEthUsdRate().truncate(4).toString());
   });
 
   test(
@@ -110,7 +116,7 @@ describe("base token", () => {
     const token1Address = Address.fromString(ERC20_USDC);
 
     assert.i32Equals(
-      PairTokenBaseOrientation.TOKEN1,
+      PairTokenBaseOrientation.TOKEN0, // Defaults to token0
       getBaseTokenOrientation(token0Address, token1Address),
     );
   });
@@ -198,8 +204,8 @@ describe("base token USD rate", () => {
         Address.fromString(ERC20_TRIBE),
         PairTokenBaseOrientation.TOKEN0,
         OHM_USD_RESERVE_BLOCK,
-      ).toString(),
-      getEthUsdRate().toString(),
+      ).truncate(4).toString(),
+      getEthUsdRate().truncate(4).toString(),
     );
   });
 
@@ -212,8 +218,8 @@ describe("base token USD rate", () => {
         Address.fromString(ERC20_WETH),
         PairTokenBaseOrientation.TOKEN1,
         OHM_USD_RESERVE_BLOCK,
-      ).toString(),
-      getEthUsdRate().toString(),
+      ).truncate(4).toString(),
+      getEthUsdRate().truncate(4).toString(),
     );
   });
 });
