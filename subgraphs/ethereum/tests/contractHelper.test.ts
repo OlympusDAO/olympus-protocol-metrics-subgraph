@@ -23,6 +23,7 @@ import {
   ERC20_CVX_VL_V2,
   ERC20_FRAX_3CRV,
   ERC20_LQTY,
+  ERC20_OHM_V2,
   ERC20_TOKE,
   ERC20_WETH,
   getWalletAddressesForContract,
@@ -136,20 +137,20 @@ describe("Staked Convex", () => {
 });
 
 describe("get ERC20 token records from wallets", () => {
-  test("excludes token not on whitelist", () => {
-    mockZeroWalletBalances(ERC20_ALCX, getWalletAddressesForContract(ERC20_ALCX));
+  test("excludes token in DAO wallet on blacklist", () => {
+    mockZeroWalletBalances(ERC20_OHM_V2, getWalletAddressesForContract(ERC20_OHM_V2));
 
-    // Set balance of the non-whitelist token
-    mockWalletBalance(ERC20_ALCX, DAO_WALLET, toBigInt(BigDecimal.fromString("10")));
-    mockERC20TotalSupply(ERC20_ALCX, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
+    // Set balance of the blacklist token
+    mockWalletBalance(ERC20_OHM_V2, DAO_WALLET, toBigInt(BigDecimal.fromString("10")));
+    mockERC20TotalSupply(ERC20_OHM_V2, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
 
-    const blockNumber = BigInt.fromString("1");
-    const contract = getERC20(ERC20_ALCX, blockNumber);
+    const blockNumber = BigInt.fromString("14000000");
+    const contract = getERC20(ERC20_OHM_V2, blockNumber);
     if (!contract) throw new Error("Expected ERC20 contract to be non-null");
 
     const records = getERC20TokenRecordsFromWallets(
       TIMESTAMP,
-      ERC20_ALCX,
+      ERC20_OHM_V2,
       contract,
       BigDecimal.fromString("1"),
       blockNumber,
@@ -158,7 +159,7 @@ describe("get ERC20 token records from wallets", () => {
     assert.i32Equals(0, records.length);
   });
 
-  test("includes token in DAO wallet on whitelist", () => {
+  test("includes token in DAO wallet not on blacklist", () => {
     mockZeroWalletBalances(ERC20_WETH, getWalletAddressesForContract(ERC20_WETH));
 
     // Set balance of the whitelist token
@@ -166,7 +167,7 @@ describe("get ERC20 token records from wallets", () => {
     mockWalletBalance(ERC20_WETH, DAO_WALLET, toBigInt(BigDecimal.fromString(tokenBalance)));
     mockERC20TotalSupply(ERC20_WETH, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
 
-    const blockNumber = BigInt.fromString("1");
+    const blockNumber = BigInt.fromString("14000000");
     const contract = getERC20(ERC20_WETH, blockNumber);
     if (!contract) throw new Error("Expected ERC20 contract to be non-null");
 

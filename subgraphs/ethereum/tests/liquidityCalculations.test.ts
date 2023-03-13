@@ -170,10 +170,10 @@ describe("getLiquidityPoolValue", () => {
 
     const records = getOwnedLiquidityPoolValue(TIMESTAMP, ETH_USD_RESERVE_BLOCK);
 
-    const record = records[0];
-    assert.stringEquals("10", record.balance.toString());
-    const recordTwo = records[1];
-    assert.stringEquals("11", recordTwo.balance.toString());
+    const recordOne = records[0]; // DAO wallet
+    assert.stringEquals("11", recordOne.balance.toString());
+    const recordTwo = records[1]; // Treasury
+    assert.stringEquals("10", recordTwo.balance.toString());
     assert.i32Equals(2, records.length);
   });
 

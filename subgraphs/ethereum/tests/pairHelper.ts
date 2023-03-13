@@ -96,7 +96,6 @@ import {
   POOL_BALANCER_OHM_WSTETH_ID,
   POOL_BALANCER_WETH_FDT_ID,
   TOKE_STAKING,
-  WALLET_ADDRESSES,
 } from "../src/utils/Constants";
 import { mockPriceFeed, mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
@@ -1346,8 +1345,8 @@ export function mockBalancerVaultZero(): void {
 
   mockERC20TotalSupply(ERC20_BALANCER_OHM_DAI_WETH_AURA, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
 
-  mockBalancerGaugeBalanceZero(WALLET_ADDRESSES);
-  mockAuraStakedBalanceZero(WALLET_ADDRESSES);
+  mockBalancerGaugeBalanceZero(getWalletAddressesForContract(""));
+  mockAuraStakedBalanceZero(getWalletAddressesForContract(""));
 }
 
 export function mockBalancerVaultOhmDaiEth(

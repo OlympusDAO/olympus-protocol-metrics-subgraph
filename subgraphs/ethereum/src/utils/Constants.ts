@@ -643,7 +643,7 @@ export const liquidityPairHasToken = (pairAddress: string, tokenAddress: string)
  * This set of wallet addresses is common across many tokens,
  * and can be used for balance lookups.
  */
-export const WALLET_ADDRESSES = [
+const WALLET_ADDRESSES = [
   AAVE_ALLOCATOR_V2,
   AAVE_ALLOCATOR,
   AURA_ALLOCATOR,
@@ -661,6 +661,7 @@ export const WALLET_ADDRESSES = [
   CROSS_CHAIN_ARBITRUM,
   CROSS_CHAIN_FANTOM,
   CROSS_CHAIN_POLYGON,
+  DAO_WALLET,
   LUSD_ALLOCATOR,
   MAKER_DSR_ALLOCATOR,
   MAKER_DSR_ALLOCATOR_PROXY,
@@ -686,50 +687,13 @@ export const CONVEX_ALLOCATORS = [
   DAO_WALLET,
 ];
 
-// TODO consider turning this into a blacklist of assets that should not be indexed in the DAO wallet
-// e.g. DAI, OHM, gOHM
-const NON_TREASURY_ASSET_WHITELIST = new Map<string, string[]>();
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_AURA_BAL, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_AURA_GRAVI, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_AURA_VL, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_AURA, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BAL, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BALANCER_OHM_DAI_AURA, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BALANCER_OHM_DAI_WETH_AURA, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BALANCER_OHM_DAI_WETH, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BALANCER_OHM_DAI, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BALANCER_OHM_WETH_AURA, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BALANCER_OHM_WETH, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BALANCER_OHM_WSTETH_AURA, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BALANCER_OHM_WSTETH, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BALANCER_WETH_FDT, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BALANCER_WSTETH_WETH, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BARNBRIDGE, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BB_A_USD, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BTRFLY_V1_STAKED, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BTRFLY_V1, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BTRFLY_V2_RL, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_BTRFLY_V2, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_CRV_FRAX_USDC, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_CRV_OHMETH, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_CRV_OHMFRAXBP, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_CRV, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_CVX_FRAX_USDC_STAKED, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_CVX_FRAX_USDC, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_CVX_OHM_FRAXBP, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_CVX_OHMETH, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_CVX_VL_V1, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_CVX_VL_V2, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_CVX, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_FRAX_BP, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_TOKE, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_TRIBE, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(ERC20_WETH, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(PAIR_CURVE_ETH_STETH, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(PAIR_CURVE_FRAX_USDC, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(PAIR_CURVE_OHM_ETH, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(PAIR_CURVE_OHM_FRAXBP, [DAO_WALLET]);
-NON_TREASURY_ASSET_WHITELIST.set(POOL_BALANCER_WETH_FDT_ID, [DAO_WALLET]);
+const DAO_WALLET_BLACKLIST = new Map<string, string[]>();
+DAO_WALLET_BLACKLIST.set(ERC20_OHM_V1, [DAO_WALLET]);
+DAO_WALLET_BLACKLIST.set(ERC20_OHM_V2, [DAO_WALLET]);
+DAO_WALLET_BLACKLIST.set(ERC20_GOHM, [DAO_WALLET]);
+DAO_WALLET_BLACKLIST.set(ERC20_SOHM_V1, [DAO_WALLET]);
+DAO_WALLET_BLACKLIST.set(ERC20_SOHM_V2, [DAO_WALLET]);
+DAO_WALLET_BLACKLIST.set(ERC20_SOHM_V3, [DAO_WALLET]);
 
 /**
  * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
@@ -742,23 +706,30 @@ NON_TREASURY_ASSET_WHITELIST.set(POOL_BALANCER_WETH_FDT_ID, [DAO_WALLET]);
  * @returns
  */
 export const getWalletAddressesForContract = (contractAddress: string): string[] => {
-  const nonTreasuryAddresses = NON_TREASURY_ASSET_WHITELIST.has(contractAddress.toLowerCase())
-    ? NON_TREASURY_ASSET_WHITELIST.get(contractAddress.toLowerCase())
-    : [];
-  const newAddresses = WALLET_ADDRESSES.slice(0);
+  const walletAddresses = WALLET_ADDRESSES.slice(0);
 
-  // Add the values of nonTreasuryAddresses, but filter duplicates
-  for (let i = 0; i < nonTreasuryAddresses.length; i++) {
-    const currentValue = nonTreasuryAddresses[i];
+  // If the contract isn't on the blacklist, return as normal
+  if (!DAO_WALLET_BLACKLIST.has(contractAddress.toLowerCase())) {
+    log.debug("getWalletAddressesForContract: token {} is not on DAO wallet blacklist", [contractAddress]);
+    return walletAddresses;
+  }
 
-    if (newAddresses.includes(currentValue)) {
+  // Otherwise remove the values in the blacklist
+  // AssemblyScript doesn't yet have closures, so filter() cannot be used
+  const walletBlacklist = DAO_WALLET_BLACKLIST.get(contractAddress.toLowerCase());
+  for (let i = 0; i < walletBlacklist.length; i++) {
+    // If the blacklisted address is not in the array, skip
+    const arrayIndex = walletAddresses.indexOf(walletBlacklist[i]);
+    if (arrayIndex < 0) {
       continue;
     }
 
-    newAddresses.push(currentValue);
+    // Otherwise the blacklist address is removed from the array in-place
+    const splicedValues = walletAddresses.splice(arrayIndex, 1);
+    log.debug("getWalletAddressesForContract: removed values: {}", [splicedValues.toString()]);
   }
 
-  return newAddresses;
+  return walletAddresses;
 };
 
 const ALLOCATOR_ONSEN_ID = new Map<string, i32>();
