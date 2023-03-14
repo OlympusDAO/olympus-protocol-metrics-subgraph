@@ -1,5 +1,10 @@
 # Subgraph Changelog
 
+## 4.1.x (2023-03-14)
+
+- Add the ability to define a multiplier used in calculating liquid backing. This is used for tokens where the protocol
+owns a significant percentage of the token's total supply, and exchanging the token would incur considerable slippage. Currently, these are: BOND, KLIMA, JONES, rlBTRFLY, VSTA.
+
 ## 4.0.2 (2023-03-13)
 
 - Shift from whitelisting assets in the DAO wallet to a blacklist (since many assets are held there now)
