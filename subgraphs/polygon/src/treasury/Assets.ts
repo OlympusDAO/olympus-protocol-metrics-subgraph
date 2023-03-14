@@ -4,6 +4,7 @@ import {
   TokenCategoryStable,
   TokenCategoryVolatile,
 } from "../../../shared/src/contracts/TokenDefinition";
+import { RoundRequested } from "../../generated/TokenRecords-polygon/ChainlinkOffchainAggregator";
 import { getOwnedLiquidityBalances } from "./OwnedLiquidity";
 import { getTokenBalances } from "./TokenBalances";
 
@@ -23,4 +24,9 @@ export function handleAssets(block: ethereum.Block): void {
 
   log.debug("handleAssets: *** Indexing block {}", [block.number.toString()]);
   generateTokenRecords(block.timestamp, block.number);
+}
+
+export function handleEvent(event: RoundRequested): void {
+  log.debug("handleEvent: *** Indexing block {}", [event.block.number.toString()]);
+  generateTokenRecords(event.block.timestamp, event.block.number);
 }

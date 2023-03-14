@@ -8,9 +8,8 @@ dataSources:
     name: TokenRecords-polygon
     network: matic
     source:
-      # We would ideally use rebase() on the KlimaStaking contract, but Polygon's nodes do not support trace, so we can't use a call handler
-      address: "0xd8cA34fd379d9ca3C6Ee3b3905678320F5b45195" # gOHM Polygon
-      abi: gOHM
+      address: "0x4dd6655ad5ed7c06c882f496e3f42ace5766cb89" # Chainlink Offchain Aggregator
+      abi: ChainlinkOffchainAggregator
       startBlock: 27790000 # 2022-05-01
     mapping:
       kind: ethereum/events
@@ -33,6 +32,11 @@ dataSources:
           file: ../shared/abis/UniswapV2Pair.json
         - name: UniswapV3Pair
           file: ../shared/abis/UniswapV3Pair.json
-      blockHandlers:
-        - handler: handleAssets
+        # Event trigger
+        - name: ChainlinkOffchainAggregator
+          file: ./abis/ChainlinkOffchainAggregator.json
+      # The gOHM contract doesn't emit any regular events, but RoundRequested is called regularly, so we can use that
+      eventHandlers:
+        - event: RoundRequested(indexed address,bytes16,uint32,uint8)
+          handler: handleEvent
       file: ./src/treasury/Assets.ts

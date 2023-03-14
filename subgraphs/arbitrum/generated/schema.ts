@@ -333,6 +333,23 @@ export class ProtocolMetric extends Entity {
     this.set("gOhmPrice", Value.fromBigDecimal(value));
   }
 
+  get gOhmSyntheticSupply(): BigDecimal | null {
+    const value = this.get("gOhmSyntheticSupply");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set gOhmSyntheticSupply(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("gOhmSyntheticSupply");
+    } else {
+      this.set("gOhmSyntheticSupply", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
   get gOhmTotalSupply(): BigDecimal {
     const value = this.get("gOhmTotalSupply");
     return value!.toBigDecimal();
@@ -340,6 +357,23 @@ export class ProtocolMetric extends Entity {
 
   set gOhmTotalSupply(value: BigDecimal) {
     this.set("gOhmTotalSupply", Value.fromBigDecimal(value));
+  }
+
+  get marketCap(): BigDecimal | null {
+    const value = this.get("marketCap");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set marketCap(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("marketCap");
+    } else {
+      this.set("marketCap", Value.fromBigDecimal(<BigDecimal>value));
+    }
   }
 
   get nextDistributedOhm(): BigDecimal {
@@ -358,6 +392,40 @@ export class ProtocolMetric extends Entity {
 
   set nextEpochRebase(value: BigDecimal) {
     this.set("nextEpochRebase", Value.fromBigDecimal(value));
+  }
+
+  get ohmCirculatingSupply(): BigDecimal | null {
+    const value = this.get("ohmCirculatingSupply");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set ohmCirculatingSupply(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("ohmCirculatingSupply");
+    } else {
+      this.set("ohmCirculatingSupply", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get ohmFloatingSupply(): BigDecimal | null {
+    const value = this.get("ohmFloatingSupply");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set ohmFloatingSupply(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("ohmFloatingSupply");
+    } else {
+      this.set("ohmFloatingSupply", Value.fromBigDecimal(<BigDecimal>value));
+    }
   }
 
   get ohmPrice(): BigDecimal {
@@ -403,6 +471,83 @@ export class ProtocolMetric extends Entity {
 
   set totalValueLocked(value: BigDecimal) {
     this.set("totalValueLocked", Value.fromBigDecimal(value));
+  }
+
+  get treasuryLiquidBacking(): BigDecimal | null {
+    const value = this.get("treasuryLiquidBacking");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set treasuryLiquidBacking(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("treasuryLiquidBacking");
+    } else {
+      this.set(
+        "treasuryLiquidBacking",
+        Value.fromBigDecimal(<BigDecimal>value)
+      );
+    }
+  }
+
+  get treasuryLiquidBackingPerGOhmSynthetic(): BigDecimal | null {
+    const value = this.get("treasuryLiquidBackingPerGOhmSynthetic");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set treasuryLiquidBackingPerGOhmSynthetic(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("treasuryLiquidBackingPerGOhmSynthetic");
+    } else {
+      this.set(
+        "treasuryLiquidBackingPerGOhmSynthetic",
+        Value.fromBigDecimal(<BigDecimal>value)
+      );
+    }
+  }
+
+  get treasuryLiquidBackingPerOhmFloating(): BigDecimal | null {
+    const value = this.get("treasuryLiquidBackingPerOhmFloating");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set treasuryLiquidBackingPerOhmFloating(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("treasuryLiquidBackingPerOhmFloating");
+    } else {
+      this.set(
+        "treasuryLiquidBackingPerOhmFloating",
+        Value.fromBigDecimal(<BigDecimal>value)
+      );
+    }
+  }
+
+  get treasuryMarketValue(): BigDecimal | null {
+    const value = this.get("treasuryMarketValue");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set treasuryMarketValue(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("treasuryMarketValue");
+    } else {
+      this.set("treasuryMarketValue", Value.fromBigDecimal(<BigDecimal>value));
+    }
   }
 }
 
@@ -855,5 +1000,707 @@ export class TokenSupply extends Entity {
 
   set supplyBalance(value: BigDecimal) {
     this.set("supplyBalance", Value.fromBigDecimal(value));
+  }
+}
+
+export class PriceSnapshot extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    const id = this.get("id");
+    assert(id != null, "Cannot save PriceSnapshot entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type PriceSnapshot must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("PriceSnapshot", id.toString(), this);
+    }
+  }
+
+  static load(id: string): PriceSnapshot | null {
+    return changetype<PriceSnapshot | null>(store.get("PriceSnapshot", id));
+  }
+
+  get id(): string {
+    const value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get block(): BigInt {
+    const value = this.get("block");
+    return value!.toBigInt();
+  }
+
+  set block(value: BigInt) {
+    this.set("block", Value.fromBigInt(value));
+  }
+
+  get timestamp(): BigInt {
+    const value = this.get("timestamp");
+    return value!.toBigInt();
+  }
+
+  set timestamp(value: BigInt) {
+    this.set("timestamp", Value.fromBigInt(value));
+  }
+
+  get date(): string {
+    const value = this.get("date");
+    return value!.toString();
+  }
+
+  set date(value: string) {
+    this.set("date", Value.fromString(value));
+  }
+
+  get priceOhm(): BigDecimal {
+    const value = this.get("priceOhm");
+    return value!.toBigDecimal();
+  }
+
+  set priceOhm(value: BigDecimal) {
+    this.set("priceOhm", Value.fromBigDecimal(value));
+  }
+
+  get priceGOhm(): BigDecimal {
+    const value = this.get("priceGOhm");
+    return value!.toBigDecimal();
+  }
+
+  set priceGOhm(value: BigDecimal) {
+    this.set("priceGOhm", Value.fromBigDecimal(value));
+  }
+}
+
+export class GnosisAuctionRoot extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    const id = this.get("id");
+    assert(id != null, "Cannot save GnosisAuctionRoot entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type GnosisAuctionRoot must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("GnosisAuctionRoot", id.toString(), this);
+    }
+  }
+
+  static load(id: string): GnosisAuctionRoot | null {
+    return changetype<GnosisAuctionRoot | null>(
+      store.get("GnosisAuctionRoot", id)
+    );
+  }
+
+  get id(): string {
+    const value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get markets(): Array<BigInt> {
+    const value = this.get("markets");
+    return value!.toBigIntArray();
+  }
+
+  set markets(value: Array<BigInt>) {
+    this.set("markets", Value.fromBigIntArray(value));
+  }
+}
+
+export class GnosisAuction extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    const id = this.get("id");
+    assert(id != null, "Cannot save GnosisAuction entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type GnosisAuction must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("GnosisAuction", id.toString(), this);
+    }
+  }
+
+  static load(id: string): GnosisAuction | null {
+    return changetype<GnosisAuction | null>(store.get("GnosisAuction", id));
+  }
+
+  get id(): string {
+    const value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get auctionOpenTimestamp(): BigInt {
+    const value = this.get("auctionOpenTimestamp");
+    return value!.toBigInt();
+  }
+
+  set auctionOpenTimestamp(value: BigInt) {
+    this.set("auctionOpenTimestamp", Value.fromBigInt(value));
+  }
+
+  get payoutCapacity(): BigDecimal {
+    const value = this.get("payoutCapacity");
+    return value!.toBigDecimal();
+  }
+
+  set payoutCapacity(value: BigDecimal) {
+    this.set("payoutCapacity", Value.fromBigDecimal(value));
+  }
+
+  get termSeconds(): BigInt {
+    const value = this.get("termSeconds");
+    return value!.toBigInt();
+  }
+
+  set termSeconds(value: BigInt) {
+    this.set("termSeconds", Value.fromBigInt(value));
+  }
+
+  get bidQuantity(): BigDecimal | null {
+    const value = this.get("bidQuantity");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set bidQuantity(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("bidQuantity");
+    } else {
+      this.set("bidQuantity", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+
+  get auctionCloseTimestamp(): BigInt | null {
+    const value = this.get("auctionCloseTimestamp");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set auctionCloseTimestamp(value: BigInt | null) {
+    if (!value) {
+      this.unset("auctionCloseTimestamp");
+    } else {
+      this.set("auctionCloseTimestamp", Value.fromBigInt(<BigInt>value));
+    }
+  }
+}
+
+export class ERC20TokenSnapshot extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    const id = this.get("id");
+    assert(id != null, "Cannot save ERC20TokenSnapshot entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type ERC20TokenSnapshot must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("ERC20TokenSnapshot", id.toString(), this);
+    }
+  }
+
+  static load(id: string): ERC20TokenSnapshot | null {
+    return changetype<ERC20TokenSnapshot | null>(
+      store.get("ERC20TokenSnapshot", id)
+    );
+  }
+
+  get id(): string {
+    const value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get address(): Bytes {
+    const value = this.get("address");
+    return value!.toBytes();
+  }
+
+  set address(value: Bytes) {
+    this.set("address", Value.fromBytes(value));
+  }
+
+  get decimals(): i32 {
+    const value = this.get("decimals");
+    return value!.toI32();
+  }
+
+  set decimals(value: i32) {
+    this.set("decimals", Value.fromI32(value));
+  }
+
+  get totalSupply(): BigDecimal | null {
+    const value = this.get("totalSupply");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set totalSupply(value: BigDecimal | null) {
+    if (!value) {
+      this.unset("totalSupply");
+    } else {
+      this.set("totalSupply", Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+}
+
+export class ConvexRewardPoolSnapshot extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    const id = this.get("id");
+    assert(
+      id != null,
+      "Cannot save ConvexRewardPoolSnapshot entity without an ID"
+    );
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type ConvexRewardPoolSnapshot must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("ConvexRewardPoolSnapshot", id.toString(), this);
+    }
+  }
+
+  static load(id: string): ConvexRewardPoolSnapshot | null {
+    return changetype<ConvexRewardPoolSnapshot | null>(
+      store.get("ConvexRewardPoolSnapshot", id)
+    );
+  }
+
+  get id(): string {
+    const value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get block(): BigInt {
+    const value = this.get("block");
+    return value!.toBigInt();
+  }
+
+  set block(value: BigInt) {
+    this.set("block", Value.fromBigInt(value));
+  }
+
+  get address(): Bytes {
+    const value = this.get("address");
+    return value!.toBytes();
+  }
+
+  set address(value: Bytes) {
+    this.set("address", Value.fromBytes(value));
+  }
+
+  get stakingToken(): Bytes {
+    const value = this.get("stakingToken");
+    return value!.toBytes();
+  }
+
+  set stakingToken(value: Bytes) {
+    this.set("stakingToken", Value.fromBytes(value));
+  }
+}
+
+export class BalancerPoolSnapshot extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    const id = this.get("id");
+    assert(id != null, "Cannot save BalancerPoolSnapshot entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type BalancerPoolSnapshot must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("BalancerPoolSnapshot", id.toString(), this);
+    }
+  }
+
+  static load(id: string): BalancerPoolSnapshot | null {
+    return changetype<BalancerPoolSnapshot | null>(
+      store.get("BalancerPoolSnapshot", id)
+    );
+  }
+
+  get id(): string {
+    const value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get block(): BigInt {
+    const value = this.get("block");
+    return value!.toBigInt();
+  }
+
+  set block(value: BigInt) {
+    this.set("block", Value.fromBigInt(value));
+  }
+
+  get pool(): Bytes {
+    const value = this.get("pool");
+    return value!.toBytes();
+  }
+
+  set pool(value: Bytes) {
+    this.set("pool", Value.fromBytes(value));
+  }
+
+  get poolToken(): Bytes {
+    const value = this.get("poolToken");
+    return value!.toBytes();
+  }
+
+  set poolToken(value: Bytes) {
+    this.set("poolToken", Value.fromBytes(value));
+  }
+
+  get decimals(): i32 {
+    const value = this.get("decimals");
+    return value!.toI32();
+  }
+
+  set decimals(value: i32) {
+    this.set("decimals", Value.fromI32(value));
+  }
+
+  get totalSupply(): BigDecimal {
+    const value = this.get("totalSupply");
+    return value!.toBigDecimal();
+  }
+
+  set totalSupply(value: BigDecimal) {
+    this.set("totalSupply", Value.fromBigDecimal(value));
+  }
+
+  get tokens(): Array<Bytes> {
+    const value = this.get("tokens");
+    return value!.toBytesArray();
+  }
+
+  set tokens(value: Array<Bytes>) {
+    this.set("tokens", Value.fromBytesArray(value));
+  }
+
+  get balances(): Array<BigDecimal> {
+    const value = this.get("balances");
+    return value!.toBigDecimalArray();
+  }
+
+  set balances(value: Array<BigDecimal>) {
+    this.set("balances", Value.fromBigDecimalArray(value));
+  }
+
+  get weights(): Array<BigDecimal> {
+    const value = this.get("weights");
+    return value!.toBigDecimalArray();
+  }
+
+  set weights(value: Array<BigDecimal>) {
+    this.set("weights", Value.fromBigDecimalArray(value));
+  }
+}
+
+export class PoolSnapshot extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    const id = this.get("id");
+    assert(id != null, "Cannot save PoolSnapshot entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type PoolSnapshot must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("PoolSnapshot", id.toString(), this);
+    }
+  }
+
+  static load(id: string): PoolSnapshot | null {
+    return changetype<PoolSnapshot | null>(store.get("PoolSnapshot", id));
+  }
+
+  get id(): string {
+    const value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get block(): BigInt {
+    const value = this.get("block");
+    return value!.toBigInt();
+  }
+
+  set block(value: BigInt) {
+    this.set("block", Value.fromBigInt(value));
+  }
+
+  get pool(): Bytes {
+    const value = this.get("pool");
+    return value!.toBytes();
+  }
+
+  set pool(value: Bytes) {
+    this.set("pool", Value.fromBytes(value));
+  }
+
+  get poolToken(): Bytes | null {
+    const value = this.get("poolToken");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBytes();
+    }
+  }
+
+  set poolToken(value: Bytes | null) {
+    if (!value) {
+      this.unset("poolToken");
+    } else {
+      this.set("poolToken", Value.fromBytes(<Bytes>value));
+    }
+  }
+
+  get decimals(): i32 {
+    const value = this.get("decimals");
+    return value!.toI32();
+  }
+
+  set decimals(value: i32) {
+    this.set("decimals", Value.fromI32(value));
+  }
+
+  get totalSupply(): BigDecimal {
+    const value = this.get("totalSupply");
+    return value!.toBigDecimal();
+  }
+
+  set totalSupply(value: BigDecimal) {
+    this.set("totalSupply", Value.fromBigDecimal(value));
+  }
+
+  get tokens(): Array<Bytes> {
+    const value = this.get("tokens");
+    return value!.toBytesArray();
+  }
+
+  set tokens(value: Array<Bytes>) {
+    this.set("tokens", Value.fromBytesArray(value));
+  }
+
+  get balances(): Array<BigDecimal> {
+    const value = this.get("balances");
+    return value!.toBigDecimalArray();
+  }
+
+  set balances(value: Array<BigDecimal>) {
+    this.set("balances", Value.fromBigDecimalArray(value));
+  }
+
+  get weights(): Array<BigDecimal> | null {
+    const value = this.get("weights");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimalArray();
+    }
+  }
+
+  set weights(value: Array<BigDecimal> | null) {
+    if (!value) {
+      this.unset("weights");
+    } else {
+      this.set("weights", Value.fromBigDecimalArray(<Array<BigDecimal>>value));
+    }
+  }
+}
+
+export class TokenPriceSnapshot extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    const id = this.get("id");
+    assert(id != null, "Cannot save TokenPriceSnapshot entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type TokenPriceSnapshot must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("TokenPriceSnapshot", id.toString(), this);
+    }
+  }
+
+  static load(id: string): TokenPriceSnapshot | null {
+    return changetype<TokenPriceSnapshot | null>(
+      store.get("TokenPriceSnapshot", id)
+    );
+  }
+
+  get id(): string {
+    const value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get block(): BigInt {
+    const value = this.get("block");
+    return value!.toBigInt();
+  }
+
+  set block(value: BigInt) {
+    this.set("block", Value.fromBigInt(value));
+  }
+
+  get token(): Bytes {
+    const value = this.get("token");
+    return value!.toBytes();
+  }
+
+  set token(value: Bytes) {
+    this.set("token", Value.fromBytes(value));
+  }
+
+  get price(): BigDecimal {
+    const value = this.get("price");
+    return value!.toBigDecimal();
+  }
+
+  set price(value: BigDecimal) {
+    this.set("price", Value.fromBigDecimal(value));
+  }
+}
+
+export class StakingPoolSnapshot extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    const id = this.get("id");
+    assert(id != null, "Cannot save StakingPoolSnapshot entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type StakingPoolSnapshot must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("StakingPoolSnapshot", id.toString(), this);
+    }
+  }
+
+  static load(id: string): StakingPoolSnapshot | null {
+    return changetype<StakingPoolSnapshot | null>(
+      store.get("StakingPoolSnapshot", id)
+    );
+  }
+
+  get id(): string {
+    const value = this.get("id");
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get block(): BigInt {
+    const value = this.get("block");
+    return value!.toBigInt();
+  }
+
+  set block(value: BigInt) {
+    this.set("block", Value.fromBigInt(value));
+  }
+
+  get contractAddress(): Bytes {
+    const value = this.get("contractAddress");
+    return value!.toBytes();
+  }
+
+  set contractAddress(value: Bytes) {
+    this.set("contractAddress", Value.fromBytes(value));
+  }
+
+  get stakingToken(): Bytes | null {
+    const value = this.get("stakingToken");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBytes();
+    }
+  }
+
+  set stakingToken(value: Bytes | null) {
+    if (!value) {
+      this.unset("stakingToken");
+    } else {
+      this.set("stakingToken", Value.fromBytes(<Bytes>value));
+    }
   }
 }

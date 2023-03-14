@@ -4,6 +4,7 @@ import {
   TokenCategoryStable,
   TokenCategoryVolatile,
 } from "../../../shared/src/contracts/TokenDefinition";
+import { Harvest } from "../../generated/TokenRecords-arbitrum/JonesMillinerV2";
 import { getOwnedLiquidityBalances } from "./OwnedLiquidity";
 import { getTokenBalances } from "./TokenBalances";
 
@@ -23,4 +24,9 @@ export function handleAssets(block: ethereum.Block): void {
 
   log.debug("handleAssets: *** Indexing block {}", [block.number.toString()]);
   generateTokenRecords(block.timestamp, block.number);
+}
+
+export function handleHarvestEvent(event: Harvest): void {
+  log.debug("handleHarvestEvent: *** Indexing block {}", [event.block.number.toString()]);
+  generateTokenRecords(event.block.timestamp, event.block.number);
 }
