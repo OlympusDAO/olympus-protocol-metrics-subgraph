@@ -5,6 +5,7 @@ import { TokenRecord } from "../../shared/generated/schema";
 import {
   TokenCategoryStable,
   TokenCategoryVolatile,
+  TokenDefinition,
 } from "../../shared/src/contracts/TokenDefinition";
 import {
   createOrUpdateTokenRecord,
@@ -13,6 +14,7 @@ import {
 } from "../../shared/src/utils/TokenRecordHelper";
 import {
   BLOCKCHAIN,
+  ERC20_ALCX,
   ERC20_DAI,
   ERC20_TOKENS,
   ERC20_USDC,
@@ -125,6 +127,55 @@ describe("value", () => {
     assert.stringEquals("6", record.value.toString());
     // 2 * 3 * 0.25
     assert.stringEquals("1.5", record.valueExcludingOhm.toString());
+  });
+
+  test("liquidBackingMultiplier specified", () => {
+    const tokenDefinitions = new Map<string, TokenDefinition>();
+    tokenDefinitions.set(ERC20_ALCX, new TokenDefinition(ERC20_ALCX, TokenCategoryVolatile, true, false, BigDecimal.fromString("0.5")));
+
+    const record = createOrUpdateTokenRecord(
+      TIMESTAMP,
+      "name",
+      ERC20_ALCX,
+      "source",
+      "address",
+      BigDecimal.fromString("2"),
+      BigDecimal.fromString("3"),
+      BigInt.fromString("1"),
+      true,
+      tokenDefinitions,
+      BLOCKCHAIN,
+    );
+
+    // 2 * 3 * 1
+    assert.stringEquals("6", record.value.toString());
+    // 2 * 3 * 1 * 0.5
+    assert.stringEquals("3", record.valueExcludingOhm.toString());
+  });
+
+  test("liquidBackingMultiplier specified, nonOhmMultiplier overrides", () => {
+    const tokenDefinitions = new Map<string, TokenDefinition>();
+    tokenDefinitions.set(ERC20_ALCX, new TokenDefinition(ERC20_ALCX, TokenCategoryVolatile, true, false, BigDecimal.fromString("0.5")));
+
+    const record = createOrUpdateTokenRecord(
+      TIMESTAMP,
+      "name",
+      ERC20_ALCX,
+      "source",
+      "address",
+      BigDecimal.fromString("2"),
+      BigDecimal.fromString("3"),
+      BigInt.fromString("1"),
+      true,
+      tokenDefinitions,
+      BLOCKCHAIN,
+      BigDecimal.fromString("0.75"),
+    );
+
+    // 2 * 3 * 1
+    assert.stringEquals("6", record.value.toString());
+    // 2 * 3 * 1 * 0.75
+    assert.stringEquals("4.5", record.valueExcludingOhm.toString());
   });
 });
 

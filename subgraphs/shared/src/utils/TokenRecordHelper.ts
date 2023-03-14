@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../generated/schema";
 import { TokenDefinition } from "../contracts/TokenDefinition";
@@ -53,6 +53,35 @@ function getTokenRecordValue(record: TokenRecord, nonOhmMultiplier: boolean = fa
 }
 
 /**
+ * Determines the multiplier for a specified token, according to the following rules:
+ * - if {nonOhmMultiplier} is set (commonly with POL), it is used
+ * - if the TokenDefinition has a liquidBackingMultiplier set, it is used
+ * - otherwise a multiplier of 1 is used
+ * 
+ * @param tokenAddress 
+ * @param tokenDefinitions 
+ * @param nonOhmMultiplier 
+ * @returns 
+ */
+function getTokenMultiplier(tokenAddress: string, tokenDefinitions: Map<string, TokenDefinition>, nonOhmMultiplier: BigDecimal | null): BigDecimal {
+  if (nonOhmMultiplier !== null) {
+    return nonOhmMultiplier;
+  }
+
+  const tokenAddressLower = tokenAddress.toLowerCase();
+  if (tokenDefinitions.has(tokenAddressLower)) {
+    const tokenDefinition = tokenDefinitions.get(tokenAddressLower);
+
+    const multiplier = tokenDefinition.getLiquidBackingMultiplier();
+    if (multiplier !== null) {
+      return multiplier;
+    }
+  }
+
+  return BigDecimal.fromString("1");
+}
+
+/**
  * Helper function to create a new TokenRecord.
  *
  * This function generates an id that should be unique,
@@ -85,7 +114,7 @@ export function createOrUpdateTokenRecord(
   isLiquid: boolean,
   tokenDefinitions: Map<string, TokenDefinition>,
   blockchain: string,
-  nonOhmMultiplier: BigDecimal = BigDecimal.fromString("1"),
+  nonOhmMultiplier: BigDecimal | null = null,
   category: string | null = null,
 ): TokenRecord {
   const dateString = getISO8601DateStringFromTimestamp(timestamp);
@@ -105,7 +134,9 @@ export function createOrUpdateTokenRecord(
   record.sourceAddress = sourceAddress;
   record.rate = rate;
   record.balance = balance;
-  record.multiplier = nonOhmMultiplier;
+
+  // Multiplier used to set valueExcludingOhm (which should really be "liquidBackingValue")
+  record.multiplier = getTokenMultiplier(tokenAddress, tokenDefinitions, nonOhmMultiplier);
   record.category = category !== null ? category : getTokenCategory(tokenAddress, tokenDefinitions);
   record.isLiquid = isLiquid;
   record.isBluechip = getIsTokenVolatileBluechip(tokenAddress, tokenDefinitions);
