@@ -1,4 +1,4 @@
-import { Address, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, log } from "@graphprotocol/graph-ts";
 
 import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, AURA_ALLOCATOR, AURA_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CONVEX_STAKING_PROXY_FRAXBP, CONVEX_STAKING_PROXY_OHM_FRAXBP, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, LUSD_ALLOCATOR, MAKER_DSR_ALLOCATOR, MAKER_DSR_ALLOCATOR_PROXY, OLYMPUS_ASSOCIATION_WALLET, OTC_ESCROW, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, TRSRY, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
@@ -231,12 +231,12 @@ ERC20_TOKENS.set(ERC20_BALANCER_OHM_WETH, new TokenDefinition(ERC20_BALANCER_OHM
 ERC20_TOKENS.set(ERC20_BALANCER_OHM_WSTETH_AURA, new TokenDefinition(ERC20_BALANCER_OHM_WSTETH_AURA, TokenCategoryPOL, true, false));
 ERC20_TOKENS.set(ERC20_BALANCER_OHM_WSTETH, new TokenDefinition(ERC20_BALANCER_OHM_WSTETH, TokenCategoryPOL, true, false));
 ERC20_TOKENS.set(ERC20_BALANCER_WSTETH_WETH, new TokenDefinition(ERC20_BALANCER_WSTETH_WETH, TokenCategoryPOL, true, false));
-ERC20_TOKENS.set(ERC20_BARNBRIDGE, new TokenDefinition(ERC20_BARNBRIDGE, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_BARNBRIDGE, new TokenDefinition(ERC20_BARNBRIDGE, TokenCategoryVolatile, true, false, BigDecimal.fromString("0.77")));
 ERC20_TOKENS.set(ERC20_BB_A_USD, new TokenDefinition(ERC20_BB_A_USD, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_BTRFLY_V1_STAKED, new TokenDefinition(ERC20_BTRFLY_V1_STAKED, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_BTRFLY_V1, new TokenDefinition(ERC20_BTRFLY_V1, TokenCategoryVolatile, true, false));
-ERC20_TOKENS.set(ERC20_BTRFLY_V2_RL, new TokenDefinition(ERC20_BTRFLY_V2_RL, TokenCategoryVolatile, false, false)); // Marked as illiquid in order to exclude from liquid backing
-ERC20_TOKENS.set(ERC20_BTRFLY_V2, new TokenDefinition(ERC20_BTRFLY_V2, TokenCategoryVolatile, false, false)); // Marked as illiquid in order to exclude from liquid backing
+ERC20_TOKENS.set(ERC20_BTRFLY_V2_RL, new TokenDefinition(ERC20_BTRFLY_V2_RL, TokenCategoryVolatile, false, false, BigDecimal.fromString("0.89")));
+ERC20_TOKENS.set(ERC20_BTRFLY_V2, new TokenDefinition(ERC20_BTRFLY_V2, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_CRV_3POOL, new TokenDefinition(ERC20_CRV_3POOL, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_CRV, new TokenDefinition(ERC20_CRV, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_CVX_CRV, new TokenDefinition(ERC20_CVX_CRV, TokenCategoryVolatile, true, false));

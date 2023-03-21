@@ -1,3 +1,5 @@
+import { BigDecimal } from "@graphprotocol/graph-ts";
+
 export const TokenCategoryStable = "Stable";
 export const TokenCategoryVolatile = "Volatile";
 export const TokenCategoryPOL = "Protocol-Owned Liquidity";
@@ -7,6 +9,7 @@ export class TokenDefinition {
   protected category: string;
   protected isLiquid: boolean;
   protected isVolatileBluechip: boolean;
+  protected liquidBackingMultiplier: BigDecimal | null;
 
   /**
    * Creates a new token definition.
@@ -17,11 +20,12 @@ export class TokenDefinition {
    * @param isLiquid
    * @param isVolatileBluechip
    */
-  constructor(address: string, category: string, isLiquid: boolean, isVolatileBluechip: boolean) {
+  constructor(address: string, category: string, isLiquid: boolean, isVolatileBluechip: boolean, liquidBackingMultiplier: BigDecimal | null = null) {
     this.address = address.toLowerCase();
     this.category = category;
     this.isLiquid = isLiquid;
     this.isVolatileBluechip = isVolatileBluechip;
+    this.liquidBackingMultiplier = liquidBackingMultiplier;
   }
 
   getAddress(): string {
@@ -38,5 +42,9 @@ export class TokenDefinition {
 
   getIsVolatileBluechip(): boolean {
     return this.isVolatileBluechip;
+  }
+
+  getLiquidBackingMultiplier(): BigDecimal | null {
+    return this.liquidBackingMultiplier;
   }
 }

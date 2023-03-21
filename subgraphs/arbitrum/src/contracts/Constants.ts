@@ -1,3 +1,5 @@
+import { BigDecimal } from "@graphprotocol/graph-ts";
+
 import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, LUSD_ALLOCATOR, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
 
@@ -28,10 +30,10 @@ export const TREASURE_ATLAS_MINE = "0xa0a89db1c899c49f98e6326b764bafcf167fc2ce".
 
 export const ERC20_TOKENS_ARBITRUM = new Map<string, TokenDefinition>();
 ERC20_TOKENS_ARBITRUM.set(ERC20_FRAX, new TokenDefinition(ERC20_FRAX, TokenCategoryStable, true, false));
-ERC20_TOKENS_ARBITRUM.set(ERC20_JONES, new TokenDefinition(ERC20_JONES, TokenCategoryVolatile, true, false));
+ERC20_TOKENS_ARBITRUM.set(ERC20_JONES, new TokenDefinition(ERC20_JONES, TokenCategoryVolatile, true, false, BigDecimal.fromString("0.83")));
 ERC20_TOKENS_ARBITRUM.set(ERC20_MAGIC, new TokenDefinition(ERC20_MAGIC, TokenCategoryVolatile, true, false));
 ERC20_TOKENS_ARBITRUM.set(ERC20_USDC, new TokenDefinition(ERC20_USDC, TokenCategoryStable, true, false));
-ERC20_TOKENS_ARBITRUM.set(ERC20_VSTA, new TokenDefinition(ERC20_VSTA, TokenCategoryVolatile, true, false));
+ERC20_TOKENS_ARBITRUM.set(ERC20_VSTA, new TokenDefinition(ERC20_VSTA, TokenCategoryVolatile, true, false, BigDecimal.fromString("0.77")));
 ERC20_TOKENS_ARBITRUM.set(ERC20_WETH, new TokenDefinition(ERC20_WETH, TokenCategoryVolatile, true, true));
 
 ERC20_TOKENS_ARBITRUM.set(LP_BALANCER_POOL_MAGIC_USDC, new TokenDefinition(LP_BALANCER_POOL_MAGIC_USDC, TokenCategoryPOL, true, false));

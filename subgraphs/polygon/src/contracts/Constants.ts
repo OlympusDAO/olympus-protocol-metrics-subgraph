@@ -1,3 +1,5 @@
+import { BigDecimal } from "@graphprotocol/graph-ts";
+
 import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, LUSD_ALLOCATOR, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
 
@@ -23,8 +25,8 @@ export const BALANCER_VAULT = "0xBA12222222228d8Ba445958a75a0704d566BF2C8".toLow
 export const ERC20_TOKENS_POLYGON = new Map<string, TokenDefinition>();
 ERC20_TOKENS_POLYGON.set(ERC20_DAI, new TokenDefinition(ERC20_DAI, TokenCategoryStable, true, false));
 ERC20_TOKENS_POLYGON.set(ERC20_FRAX, new TokenDefinition(ERC20_FRAX, TokenCategoryStable, true, false));
-ERC20_TOKENS_POLYGON.set(ERC20_KLIMA_STAKED, new TokenDefinition(ERC20_KLIMA_STAKED, TokenCategoryVolatile, true, false));
-ERC20_TOKENS_POLYGON.set(ERC20_KLIMA, new TokenDefinition(ERC20_KLIMA, TokenCategoryVolatile, true, false));
+ERC20_TOKENS_POLYGON.set(ERC20_KLIMA_STAKED, new TokenDefinition(ERC20_KLIMA_STAKED, TokenCategoryVolatile, true, false, BigDecimal.fromString("0.85")));
+ERC20_TOKENS_POLYGON.set(ERC20_KLIMA, new TokenDefinition(ERC20_KLIMA, TokenCategoryVolatile, true, false, BigDecimal.fromString("0.85")));
 ERC20_TOKENS_POLYGON.set(ERC20_SYN, new TokenDefinition(ERC20_SYN, TokenCategoryVolatile, true, false));
 ERC20_TOKENS_POLYGON.set(ERC20_USDC, new TokenDefinition(ERC20_USDC, TokenCategoryStable, true, false));
 ERC20_TOKENS_POLYGON.set(ERC20_WETH, new TokenDefinition(ERC20_WETH, TokenCategoryVolatile, true, true));
