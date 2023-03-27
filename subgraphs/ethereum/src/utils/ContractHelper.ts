@@ -530,7 +530,7 @@ export function getVendorFinanceRecords(
   for (let i = 0; i < deployments.length; i++) {
     const currentDeployment = deployments[i];
     // Exclude if before deployment
-    if (!blockNumber.lt(currentDeployment.getBlockNumber())) {
+    if (blockNumber.lt(currentDeployment.getBlockNumber())) {
       continue;
     }
 
@@ -577,7 +577,7 @@ export function getMysoFinanceRecords(
   for (let i = 0; i < deployments.length; i++) {
     const currentDeployment = deployments[i];
     // Exclude if before deployment
-    if (!blockNumber.lt(currentDeployment.getBlockNumber())) {
+    if (blockNumber.lt(currentDeployment.getBlockNumber())) {
       continue;
     }
 
