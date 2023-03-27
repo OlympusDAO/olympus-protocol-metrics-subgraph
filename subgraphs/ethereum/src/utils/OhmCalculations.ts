@@ -351,7 +351,7 @@ export function getMintedBorrowableOHMRecords(timestamp: BigInt, blockNumber: Bi
  *
  * Circulating supply is defined as:
  * - OHM total supply
- * - subtract: OHM in {CIRCULATING_SUPPLY_WALLETS} (treasury, bonds, migration contract, DAO wallet)
+ * - subtract: OHM in {CIRCULATING_SUPPLY_WALLETS} (treasury, bonds, migration contract, DAO wallet, lending markets)
  * - subtract: migration offset
  *
  * @param blockNumber the current block number
