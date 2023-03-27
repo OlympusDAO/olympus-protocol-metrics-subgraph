@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 4.2.12 (2023-03-27)
+## 4.2.13 (2023-03-27)
 
 - Adds support for deployments (currently DAI) into Myso Finance and Vendor Finance lending markets (https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph/issues/191)
 
