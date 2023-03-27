@@ -1,7 +1,8 @@
-import { Address, BigDecimal, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, AURA_ALLOCATOR, AURA_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CONVEX_STAKING_PROXY_FRAXBP, CONVEX_STAKING_PROXY_OHM_FRAXBP, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, LUSD_ALLOCATOR, MAKER_DSR_ALLOCATOR, MAKER_DSR_ALLOCATOR_PROXY, MYSO_LENDING, OLYMPUS_ASSOCIATION_WALLET, OTC_ESCROW, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, TRSRY, VEFXS_ALLOCATOR, VENDOR_LENDING, WALLET_ADDRESSES } from "../../../shared/src/Wallets";
+import { LendingMarketDeployment } from "./LendingMarketDeployment";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 
 export const BLOCKCHAIN = "Ethereum";
@@ -114,19 +115,19 @@ export const SILO_ADDRESS = "0xb2374f84b3cEeFF6492943Df613C9BcF45322a0c";
  * Defines the contract addresses that belong to the protocol & treasury.
  * 
  * This is normally deducted from total supply to determine circulating supply.
+ * 
+ * Myso and Vendor Finance contracts are NOT included in here, as the deployed amounts are hard-coded.
  */
 export const CIRCULATING_SUPPLY_WALLETS = [
   BONDS_DEPOSIT,
   BONDS_INVERSE_DEPOSIT,
   DAO_WALLET,
-  MIGRATION_CONTRACT,
-  MYSO_LENDING,
+  // MIGRATION_CONTRACT, // Ignored as the migration offset is used
   OLYMPUS_ASSOCIATION_WALLET,
   OTC_ESCROW,
   TREASURY_ADDRESS_V1,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
-  VENDOR_LENDING,
 ];
 
 // Olympus tokens
@@ -761,6 +762,44 @@ export const getRariAllocatorId = (contractAddress: string): i32 => {
 
   return ALLOCATOR_RARI_ID.get(contractAddressLower);
 };
+
+const VENDOR_DEPLOYMENTS = new Map<string, LendingMarketDeployment[]>();
+VENDOR_DEPLOYMENTS.set(ERC20_DAI, [
+  new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("16897393"), BigDecimal.fromString("500000"), VENDOR_LENDING), // https://etherscan.io/tx/0x0d4a3d19f4c35d8635793760050c3be4f54e1e2b43fb857282c4db992bce1469
+]);
+
+/**
+ * Returns Vendor Finance deployments for the given contract address.
+ * 
+ * The details of the deployment are manually recorded, as the deposited principal (e.g. DAI)
+ * is what is recognised until a default takes place - irrespective of the actual balance of 
+ * DAI and gOHM in the contract. 
+ */
+export function getVendorDeployments(contractAddress: string): LendingMarketDeployment[] {
+  const contractAddressLower = contractAddress.toLowerCase();
+  if (!VENDOR_DEPLOYMENTS.has(contractAddressLower)) return [];
+
+  return VENDOR_DEPLOYMENTS.get(contractAddressLower);
+}
+
+const MYSO_DEPLOYMENTS = new Map<string, LendingMarketDeployment[]>();
+MYSO_DEPLOYMENTS.set(ERC20_DAI.toLowerCase(), [
+  new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("16898161"), BigDecimal.fromString("500000"), MYSO_LENDING), // https://etherscan.io/tx/0xe26e451b069fcc387eb71c1dc86a05307e58e918ad5ca2fcc13baf3887795e24
+]);
+
+/**
+ * Returns Myso Finance deployments for the given contract address.
+ * 
+ * The details of the deployment are manually recorded, as the deposited principal (e.g. DAI)
+ * is what is recognised until a default takes place - irrespective of the actual balance of 
+ * DAI and gOHM in the contract. 
+ */
+export function getMysoDeployments(contractAddress: string): LendingMarketDeployment[] {
+  const contractAddressLower = contractAddress.toLowerCase();
+  if (!MYSO_DEPLOYMENTS.has(contractAddressLower)) return [];
+
+  return MYSO_DEPLOYMENTS.get(contractAddressLower);
+}
 
 export const CONTRACT_STARTING_BLOCK_MAP = new Map<string, string>();
 CONTRACT_STARTING_BLOCK_MAP.set(AAVE_ALLOCATOR_V2, AAVE_ALLOCATOR_V2_BLOCK);

@@ -40,6 +40,8 @@ export const VENDOR_LENDING = "0x83234a159dbd60a32457df158fafcbdf3d1ccc08".toLow
 /**
  * This set of wallet addresses is common across many tokens,
  * and can be used for balance lookups.
+ * 
+ * Myso and Vendor Finance contracts are NOT included in here, as the deployed amounts are hard-coded.
  */
 export const WALLET_ADDRESSES = [
   AAVE_ALLOCATOR_V2,
@@ -61,12 +63,10 @@ export const WALLET_ADDRESSES = [
   LUSD_ALLOCATOR,
   MAKER_DSR_ALLOCATOR_PROXY,
   MAKER_DSR_ALLOCATOR,
-  MYSO_LENDING,
   OTC_ESCROW,
   RARI_ALLOCATOR,
   TREASURY_ADDRESS_V1,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
   VEFXS_ALLOCATOR,
-  VENDOR_LENDING,
 ];

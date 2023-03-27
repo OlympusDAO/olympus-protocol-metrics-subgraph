@@ -58,8 +58,10 @@ import {
   ERC20_WETH,
   getAuraStakedToken,
   getContractName,
+  getMysoDeployments,
   getOnsenAllocatorId,
   getRariAllocatorId,
+  getVendorDeployments,
   getWalletAddressesForContract,
   liquidityPairHasToken,
   LQTY_STAKING,
@@ -501,6 +503,98 @@ export function getERC20TokenRecordFromWallet(
     ERC20_TOKENS,
     BLOCKCHAIN,
   );
+}
+
+/**
+ * Generates TokenRecord objects for the given ERC20 token, representing deposits into a
+ * Vendor Finance market.
+ * 
+ * @param timestamp 
+ * @param contractAddress 
+ * @param rate 
+ * @param blockNumber 
+ * @returns 
+ */
+export function getVendorFinanceRecords(
+  timestamp: BigInt,
+  contractAddress: string,
+  rate: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
+  const deployments = getVendorDeployments(contractAddress);
+  if (deployments.length == 0) {
+    return records;
+  }
+
+  for (let i = 0; i < deployments.length; i++) {
+    const currentDeployment = deployments[i];
+    if (!currentDeployment.getBlockNumber().equals(blockNumber)) {
+      continue;
+    }
+
+    records.push(createOrUpdateTokenRecord(
+      timestamp,
+      getContractName(contractAddress),
+      contractAddress,
+      getContractName(currentDeployment.getAddress()),
+      currentDeployment.getAddress(),
+      rate,
+      currentDeployment.getAmount(),
+      blockNumber,
+      getIsTokenLiquid(contractAddress, ERC20_TOKENS),
+      ERC20_TOKENS,
+      BLOCKCHAIN,
+    ));
+  }
+
+  return records;
+}
+
+/**
+ * Generates TokenRecord objects for the given ERC20 token, representing deposits into a
+ * Myso Finance market.
+ * 
+ * @param timestamp 
+ * @param contractAddress 
+ * @param rate 
+ * @param blockNumber 
+ * @returns 
+ */
+export function getMysoFinanceRecords(
+  timestamp: BigInt,
+  contractAddress: string,
+  rate: BigDecimal,
+  blockNumber: BigInt,
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
+  const deployments = getMysoDeployments(contractAddress);
+  if (deployments.length == 0) {
+    return records;
+  }
+
+  for (let i = 0; i < deployments.length; i++) {
+    const currentDeployment = deployments[i];
+    if (!currentDeployment.getBlockNumber().equals(blockNumber)) {
+      continue;
+    }
+
+    records.push(createOrUpdateTokenRecord(
+      timestamp,
+      getContractName(contractAddress),
+      contractAddress,
+      getContractName(currentDeployment.getAddress()),
+      currentDeployment.getAddress(),
+      rate,
+      currentDeployment.getAmount(),
+      blockNumber,
+      getIsTokenLiquid(contractAddress, ERC20_TOKENS),
+      ERC20_TOKENS,
+      BLOCKCHAIN,
+    ));
+  }
+
+  return records;
 }
 
 /**

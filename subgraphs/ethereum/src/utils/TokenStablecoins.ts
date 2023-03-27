@@ -13,9 +13,11 @@ import {
   getERC20TokenRecordsFromWallets,
   getLiquityStabilityPoolRecords,
   getMakerDSRRecords,
+  getMysoFinanceRecords,
   getOnsenAllocatorRecords,
   getRariAllocatorRecords,
   getVeFXSAllocatorRecords,
+  getVendorFinanceRecords,
 } from "./ContractHelper";
 import { getUSDRate } from "./Price";
 import { getTreasuryRecords } from "./Treasury";
@@ -87,6 +89,12 @@ export function getStablecoinBalance(
 
   // Maker DSR
   pushArray(records, getMakerDSRRecords(timestamp, contractAddress, rate, blockNumber));
+
+  // Myso Finance
+  pushArray(records, getMysoFinanceRecords(timestamp, contractAddress, rate, blockNumber));
+
+  // Vendor Finance
+  pushArray(records, getVendorFinanceRecords(timestamp, contractAddress, rate, blockNumber));
 
   return records;
 }

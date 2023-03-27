@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 4.2.12 (2023-03-27)
+
+- Adds support for deployments (currently DAI) into Myso Finance and Vendor Finance lending markets (https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph/issues/191)
+
 ## 4.1.0 (2023-03-16)
 
 - Add the ability to define a multiplier used in calculating liquid backing. This is used for tokens where the protocol

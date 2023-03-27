@@ -16,11 +16,13 @@ import {
   getERC20TokenRecordsFromWallets,
   getLiquityStabilityPoolRecords,
   getLiquityStakedBalancesFromWallets,
+  getMysoFinanceRecords,
   getOnsenAllocatorRecords,
   getRariAllocatorRecords,
   getTokeAllocatorRecords,
   getTokeStakedBalancesFromWallets,
   getVeFXSAllocatorRecords,
+  getVendorFinanceRecords,
   getVlCvxUnlockedRecords,
 } from "./ContractHelper";
 import { getUSDRate } from "./Price";
@@ -138,6 +140,12 @@ export function getVolatileTokenBalance(
 
   // TRSRY
   pushArray(records, getTreasuryRecords(timestamp, contractAddress, rate, blockNumber));
+
+  // Myso Finance
+  pushArray(records, getMysoFinanceRecords(timestamp, contractAddress, rate, blockNumber));
+
+  // Vendor Finance
+  pushArray(records, getVendorFinanceRecords(timestamp, contractAddress, rate, blockNumber));
 
   return records;
 }
