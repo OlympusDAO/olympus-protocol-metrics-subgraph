@@ -490,6 +490,12 @@ export function getERC20TokenRecordFromWallet(
   const balance = toDecimal(callResult.value, decimals);
   if (!balance || balance.equals(BigDecimal.zero())) return null;
 
+  log.debug("getERC20TokenRecordFromWallet: Found balance {} of token {} in wallet {} at block {}", [
+    balance.toString(),
+    getContractName(contractAddress),
+    getContractName(walletAddress),
+    blockNumber.toString(),
+  ]);
   return createOrUpdateTokenRecord(
     timestamp,
     getContractName(contractAddress),
@@ -1236,7 +1242,7 @@ export function getAuraStakedBalanceFromWallets(
       "getAuraStakedBalanceFromWallets: found balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),
-        getContractName(tokenAddress),
+        getContractName(tokenAddress, `Staked in ${getContractName(stakingAddress)}`),
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -1247,7 +1253,7 @@ export function getAuraStakedBalanceFromWallets(
     records.push(
       createOrUpdateTokenRecord(
         timestamp,
-        getContractName(tokenAddress),
+        getContractName(tokenAddress, `Staked in ${getContractName(stakingAddress)}`),
         tokenAddress,
         getContractName(currentWallet),
         currentWallet,
@@ -1295,7 +1301,7 @@ export function getAuraPoolEarnedRecords(timestamp: BigInt, contractAddress: str
         "getAuraPoolEarnedRecords: found earned balance {} for token {} ({}) and wallet {} ({}) in rewards pool {} ({}) at block {}",
         [
           earnedBalance.toString(),
-          getContractName(contractAddress),
+          getContractName(contractAddress, `Rewards from ${getContractName(poolAddress)}`),
           contractAddress,
           getContractName(currentWallet),
           currentWallet,
@@ -1308,7 +1314,7 @@ export function getAuraPoolEarnedRecords(timestamp: BigInt, contractAddress: str
       records.push(
         createOrUpdateTokenRecord(
           timestamp,
-          getContractName(contractAddress),
+          getContractName(contractAddress, `Rewards from ${getContractName(poolAddress)}`),
           contractAddress,
           getContractName(currentWallet),
           currentWallet,
