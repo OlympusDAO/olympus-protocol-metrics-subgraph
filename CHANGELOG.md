@@ -1,5 +1,10 @@
 # Subgraph Changelog
 
+## 4.3.0 (2023-03-29)
+
+- The names of staked/locked/earned tokens are differentiated from raw tokens, to avoid clobbering. #194
+- Add LDO and agEUR tokens
+
 ## 4.2.14 (2023-03-27)
 
 - Adds support for deployments (currently DAI) into Myso Finance and Vendor Finance lending markets (https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph/issues/191)
