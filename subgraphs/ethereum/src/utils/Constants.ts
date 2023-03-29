@@ -214,6 +214,7 @@ export const ERC20_KP3R = "0x1ceb5cb57c4d4e2b2433641b95dd330a33185a44".toLowerCa
 export const ERC20_LDO = "0x5a98fcbea516cf06857215779fd812ca3bef1b32".toLowerCase();
 export const ERC20_LQTY = "0x6dea81c8171d0ba574754ef6f8b412f2ed88c54d".toLowerCase();
 export const ERC20_PRIME = "0x43d4a3cd90ddd2f8f4f693170c9c8098163502ad".toLowerCase();
+export const ERC20_SUSHI = "0x6B3595068778DD592e39A122f4f5a5cF09C90fE2".toLowerCase();
 export const ERC20_STETH = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84".toLowerCase();
 export const ERC20_SYN = "0x0f2d719407fdbeff09d87557abb7232601fd9f29".toLowerCase();
 export const ERC20_THOR = "0xa5f2211b9b8170f694421f2046281775e8468044".toLowerCase();
@@ -273,6 +274,7 @@ ERC20_TOKENS.set(ERC20_LQTY, new TokenDefinition(ERC20_LQTY, TokenCategoryVolati
 ERC20_TOKENS.set(ERC20_LUSD, new TokenDefinition(ERC20_LUSD, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_OHM_V2, new TokenDefinition(ERC20_OHM_V2, TokenCategoryVolatile, false, false)); // Illiquid so it's excluded from LB
 ERC20_TOKENS.set(ERC20_PRIME, new TokenDefinition(ERC20_PRIME, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_SUSHI, new TokenDefinition(ERC20_SUSHI, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_SYN, new TokenDefinition(ERC20_SYN, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_THOR, new TokenDefinition(ERC20_THOR, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_TOKE, new TokenDefinition(ERC20_TOKE, TokenCategoryVolatile, true, false));
@@ -437,6 +439,7 @@ export const PAIR_UNISWAP_V2_OHM_LUSD = "0xfdf12d1f85b5082877a6e070524f50f6c84fa
 export const PAIR_UNISWAP_V2_OHM_LUSD_BLOCK = "13327921";
 export const PAIR_UNISWAP_V2_OHM_LUSD_V2 = "0x46E4D8A1322B9448905225E52F914094dBd6dDdF".toLowerCase();
 export const PAIR_UNISWAP_V2_OHM_LUSD_V2_BLOCK = "14381693";
+export const PAIR_UNISWAP_V2_SUSHI_ETH = "0x795065dcc9f64b5614c407a6efdc400da6221fb0".toLowerCase();
 export const PAIR_UNISWAP_V2_SYN_FRAX = "0x9fae36a18ef8ac2b43186ade5e2b07403dc742b1".toLowerCase();
 export const PAIR_UNISWAP_V2_THOR_ETH = "0x3d3f13f2529ec3c84b2940155effbf9b39a8f3ec".toLowerCase();
 export const PAIR_UNISWAP_V2_TOKE_ETH = "0xd4e7a6e2d03e4e48dfc27dd3f46df1c176647e38".toLowerCase();
@@ -512,6 +515,7 @@ LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_LDO, [new PairHandler(PairHandlerTypes.Uni
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_LQTY, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_LQTY_WETH)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_LUSD, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_LUSD_USDC)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_PRIME, [new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_D2D_USDC_ID)]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_SUSHI, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_SUSHI_ETH)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_STETH, [new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_ETH_STETH)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_SYN, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_SYN_FRAX)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_THOR, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_THOR_ETH)]);
@@ -884,6 +888,7 @@ CONTRACT_ABBREVIATION_MAP.set(ERC20_FRAX_BP, "FraxBP");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_FXS_VE, "veFXS");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_LDO, "LDO");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_PRIME, "D2D");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_SUSHI, "SUSHI");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_XSUSHI, "xSUSHI");
 
 const CONTRACT_NAME_MAP = new Map<string, string>();
@@ -994,6 +999,7 @@ CONTRACT_NAME_MAP.set(ERC20_SOHM_V1, "sOHM V1");
 CONTRACT_NAME_MAP.set(ERC20_SOHM_V2, "sOHM V2");
 CONTRACT_NAME_MAP.set(ERC20_SOHM_V3, "sOHM V3");
 CONTRACT_NAME_MAP.set(ERC20_STETH, "stETH");
+CONTRACT_NAME_MAP.set(ERC20_SUSHI, "SushiSwap");
 CONTRACT_NAME_MAP.set(ERC20_SYN, "SYN");
 CONTRACT_NAME_MAP.set(ERC20_THOR, "THOR");
 CONTRACT_NAME_MAP.set(ERC20_TOKE, "TOKE");
@@ -1050,11 +1056,14 @@ CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_OHM_FRAX_V2, "Uniswap V2 OHM V2-FRAX Liqui
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_OHM_FRAX, "Uniswap V2 OHM-FRAX Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_OHM_LUSD_V2, "Uniswap V2 OHM V2-LUSD Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_OHM_LUSD, "Uniswap V2 OHM V1-LUSD Liquidity Pool");
+CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_SUSHI_ETH, "Uniswap V2 SUSHI-FRAX Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V2_SYN_FRAX, "Uniswap V2 SYN-FRAX Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_3CRV_USD, "Uniswap V3 3CRV-USDC Liquidity Pool");
+CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_AGEUR_USDC, "Uniswap V2 agEUR-USDC Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_FEI_USDC, "Uniswap V2 FEI-USDC Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_FPIS_FRAX, "Uniswap V3 FPIS-FRAX Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_FXS_ETH, "Uniswap V3 FXS-ETH Liquidity Pool");
+CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_LDO_WETH, "Uniswap V2 LDO-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_LQTY_WETH, "Uniswap V3 LQTY-WETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_LUSD_USDC, "Uniswap V2 LUSD-USDC Liquidity Pool");
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_WETH_BTRFLY_V1, "Uniswap V3 WETH-BTRFLY V1 Liquidity Pool");
