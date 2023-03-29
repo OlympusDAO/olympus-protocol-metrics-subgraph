@@ -1,7 +1,8 @@
-import { Address, BigDecimal, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
-import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, AURA_ALLOCATOR, AURA_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CONVEX_STAKING_PROXY_FRAXBP, CONVEX_STAKING_PROXY_OHM_FRAXBP, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, LUSD_ALLOCATOR, MAKER_DSR_ALLOCATOR, MAKER_DSR_ALLOCATOR_PROXY, OLYMPUS_ASSOCIATION_WALLET, OTC_ESCROW, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, TRSRY, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
+import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, AURA_ALLOCATOR, AURA_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CONVEX_STAKING_PROXY_FRAXBP, CONVEX_STAKING_PROXY_OHM_FRAXBP, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, LUSD_ALLOCATOR, MAKER_DSR_ALLOCATOR, MAKER_DSR_ALLOCATOR_PROXY, MYSO_LENDING, OLYMPUS_ASSOCIATION_WALLET, OTC_ESCROW, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, TRSRY, VEFXS_ALLOCATOR, VENDOR_LENDING, WALLET_ADDRESSES } from "../../../shared/src/Wallets";
+import { LendingMarketDeployment } from "./LendingMarketDeployment";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 
 export const BLOCKCHAIN = "Ethereum";
@@ -110,11 +111,18 @@ export const MAKER_DSR = "0x197E90f9FAD81970bA7976f33CbD77088E5D7cf7";
 export const EULER_ADDRESS = "0x27182842E098f60e3D576794A5bFFb0777E025d3";
 export const SILO_ADDRESS = "0xb2374f84b3cEeFF6492943Df613C9BcF45322a0c";
 
+/**
+ * Defines the contract addresses that belong to the protocol & treasury.
+ * 
+ * This is normally deducted from total supply to determine circulating supply.
+ * 
+ * Myso and Vendor Finance contracts are NOT included in here, as the deployed amounts are hard-coded.
+ */
 export const CIRCULATING_SUPPLY_WALLETS = [
   BONDS_DEPOSIT,
   BONDS_INVERSE_DEPOSIT,
   DAO_WALLET,
-  MIGRATION_CONTRACT,
+  // MIGRATION_CONTRACT, // Ignored as the migration offset is used
   OLYMPUS_ASSOCIATION_WALLET,
   OTC_ESCROW,
   TREASURY_ADDRESS_V1,
@@ -216,6 +224,7 @@ export const ERC20_XSUSHI = "0x8798249c2e607446efb7ad49ec89dd1865ff4272".toLower
 export const NATIVE_ETH = Address.zero().toHexString().toLowerCase();
 
 export const ERC20_TOKENS = new Map<string, TokenDefinition>();
+// ERC20_TOKENS.set(ERC20_STETH, new TokenDefinition(ERC20_STETH, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_ADAI, new TokenDefinition(ERC20_ADAI, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_ALCX, new TokenDefinition(ERC20_ALCX, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_AURA_BAL, new TokenDefinition(ERC20_AURA_BAL, TokenCategoryVolatile, true, false));
@@ -254,11 +263,12 @@ ERC20_TOKENS.set(ERC20_FRAX_BP, new TokenDefinition(ERC20_FRAX_BP, TokenCategory
 ERC20_TOKENS.set(ERC20_FRAX, new TokenDefinition(ERC20_FRAX, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_FXS_VE, new TokenDefinition(ERC20_FXS_VE, TokenCategoryVolatile, false, false)); // Locked till 1787788800 (2026)
 ERC20_TOKENS.set(ERC20_FXS, new TokenDefinition(ERC20_FXS, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(ERC20_GOHM, new TokenDefinition(ERC20_GOHM, TokenCategoryVolatile, false, false)); // Illiquid so it's excluded from LB
 ERC20_TOKENS.set(ERC20_KP3R, new TokenDefinition(ERC20_KP3R, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_LQTY, new TokenDefinition(ERC20_LQTY, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_LUSD, new TokenDefinition(ERC20_LUSD, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_OHM_V2, new TokenDefinition(ERC20_OHM_V2, TokenCategoryVolatile, false, false)); // Illiquid so it's excluded from LB
 ERC20_TOKENS.set(ERC20_PRIME, new TokenDefinition(ERC20_PRIME, TokenCategoryVolatile, true, false));
-// ERC20_TOKENS.set(ERC20_STETH, new TokenDefinition(ERC20_STETH, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_SYN, new TokenDefinition(ERC20_SYN, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_THOR, new TokenDefinition(ERC20_THOR, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_TOKE, new TokenDefinition(ERC20_TOKE, TokenCategoryVolatile, true, false));
@@ -463,13 +473,13 @@ const pairHandlerAuraWEth = new PairHandler(
  * Maps an ERC20 token with an array of liquidity pairs that can be used for price lookup.
  */
 const LIQUIDITY_POOL_TOKEN_LOOKUP = new Map<string, PairHandler[]>();
+// LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BB_A_USD, [new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_BB_A_WSTETH_ID)]); // TODO not ideal, find a better pool
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_ALCX, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_ALCX_ETH)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA_BAL, [new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_GRAVIAURA_AURABAL_WETH_ID)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA_VL, [pairHandlerAuraWEth]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA, [pairHandlerAuraWEth]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BAL, [new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_BAL_WETH_ID)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BARNBRIDGE, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_BOND_USDC)]);
-// LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BB_A_USD, [new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_BB_A_WSTETH_ID)]); // TODO not ideal, find a better pool
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BTRFLY_V1_STAKED, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WETH_BTRFLY_V1)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BTRFLY_V1, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WETH_BTRFLY_V1)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BTRFLY_V2_RL, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WETH_BTRFLY_V2)]);
@@ -638,43 +648,6 @@ export const liquidityPairHasToken = (pairAddress: string, tokenAddress: string)
   return getLiquidityPairTokens(pairAddress).includes(tokenAddress.toLowerCase());
 };
 
-// Wallets
-/**
- * This set of wallet addresses is common across many tokens,
- * and can be used for balance lookups.
- */
-const WALLET_ADDRESSES = [
-  AAVE_ALLOCATOR_V2,
-  AAVE_ALLOCATOR,
-  AURA_ALLOCATOR,
-  AURA_ALLOCATOR_V2,
-  BALANCER_ALLOCATOR,
-  BONDS_DEPOSIT,
-  BONDS_INVERSE_DEPOSIT,
-  CONVEX_ALLOCATOR1,
-  CONVEX_ALLOCATOR2,
-  CONVEX_ALLOCATOR3,
-  CONVEX_CVX_ALLOCATOR,
-  CONVEX_CVX_VL_ALLOCATOR,
-  CONVEX_STAKING_PROXY_FRAXBP,
-  CONVEX_STAKING_PROXY_OHM_FRAXBP,
-  CROSS_CHAIN_ARBITRUM,
-  CROSS_CHAIN_FANTOM,
-  CROSS_CHAIN_POLYGON,
-  DAO_WALLET,
-  LUSD_ALLOCATOR,
-  MAKER_DSR_ALLOCATOR,
-  MAKER_DSR_ALLOCATOR_PROXY,
-  OLYMPUS_ASSOCIATION_WALLET,
-  OTC_ESCROW,
-  RARI_ALLOCATOR,
-  TREASURY_ADDRESS_V1,
-  TREASURY_ADDRESS_V2,
-  TREASURY_ADDRESS_V3,
-  VEFXS_ALLOCATOR,
-];
-// TODO consolidate with shared WALLET_ADDRESSES const
-
 // TODO consider merging convex allocator and wallet addresses constants
 export const CONVEX_ALLOCATORS = [
   CONVEX_ALLOCATOR1,
@@ -688,12 +661,17 @@ export const CONVEX_ALLOCATORS = [
 ];
 
 const DAO_WALLET_BLACKLIST = new Map<string, string[]>();
-DAO_WALLET_BLACKLIST.set(ERC20_OHM_V1, [DAO_WALLET]);
-DAO_WALLET_BLACKLIST.set(ERC20_OHM_V2, [DAO_WALLET]);
-DAO_WALLET_BLACKLIST.set(ERC20_GOHM, [DAO_WALLET]);
-DAO_WALLET_BLACKLIST.set(ERC20_SOHM_V1, [DAO_WALLET]);
-DAO_WALLET_BLACKLIST.set(ERC20_SOHM_V2, [DAO_WALLET]);
-DAO_WALLET_BLACKLIST.set(ERC20_SOHM_V3, [DAO_WALLET]);
+
+/**
+ * OHM and gOHM in the following wallets are blacklisted (not indexed) as they are not part of the treasury (DAO wallet, association wallet),
+ * or is OHM that is due to be burned (bonds).
+ */
+DAO_WALLET_BLACKLIST.set(ERC20_OHM_V1, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET]);
+DAO_WALLET_BLACKLIST.set(ERC20_OHM_V2, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET]);
+DAO_WALLET_BLACKLIST.set(ERC20_GOHM, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET]);
+DAO_WALLET_BLACKLIST.set(ERC20_SOHM_V1, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET]);
+DAO_WALLET_BLACKLIST.set(ERC20_SOHM_V2, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET]);
+DAO_WALLET_BLACKLIST.set(ERC20_SOHM_V3, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET]);
 
 /**
  * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
@@ -790,6 +768,44 @@ export const getRariAllocatorId = (contractAddress: string): i32 => {
   return ALLOCATOR_RARI_ID.get(contractAddressLower);
 };
 
+const VENDOR_DEPLOYMENTS = new Map<string, LendingMarketDeployment[]>();
+VENDOR_DEPLOYMENTS.set(ERC20_DAI, [
+  new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("16897393"), BigDecimal.fromString("500000"), VENDOR_LENDING), // https://etherscan.io/tx/0x0d4a3d19f4c35d8635793760050c3be4f54e1e2b43fb857282c4db992bce1469
+]);
+
+/**
+ * Returns Vendor Finance deployments for the given contract address.
+ * 
+ * The details of the deployment are manually recorded, as the deposited principal (e.g. DAI)
+ * is what is recognised until a default takes place - irrespective of the actual balance of 
+ * DAI and gOHM in the contract. 
+ */
+export function getVendorDeployments(contractAddress: string): LendingMarketDeployment[] {
+  const contractAddressLower = contractAddress.toLowerCase();
+  if (!VENDOR_DEPLOYMENTS.has(contractAddressLower)) return [];
+
+  return VENDOR_DEPLOYMENTS.get(contractAddressLower);
+}
+
+const MYSO_DEPLOYMENTS = new Map<string, LendingMarketDeployment[]>();
+MYSO_DEPLOYMENTS.set(ERC20_DAI.toLowerCase(), [
+  new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("16898161"), BigDecimal.fromString("500000"), MYSO_LENDING), // https://etherscan.io/tx/0xe26e451b069fcc387eb71c1dc86a05307e58e918ad5ca2fcc13baf3887795e24
+]);
+
+/**
+ * Returns Myso Finance deployments for the given contract address.
+ * 
+ * The details of the deployment are manually recorded, as the deposited principal (e.g. DAI)
+ * is what is recognised until a default takes place - irrespective of the actual balance of 
+ * DAI and gOHM in the contract. 
+ */
+export function getMysoDeployments(contractAddress: string): LendingMarketDeployment[] {
+  const contractAddressLower = contractAddress.toLowerCase();
+  if (!MYSO_DEPLOYMENTS.has(contractAddressLower)) return [];
+
+  return MYSO_DEPLOYMENTS.get(contractAddressLower);
+}
+
 export const CONTRACT_STARTING_BLOCK_MAP = new Map<string, string>();
 CONTRACT_STARTING_BLOCK_MAP.set(AAVE_ALLOCATOR_V2, AAVE_ALLOCATOR_V2_BLOCK);
 CONTRACT_STARTING_BLOCK_MAP.set(BONDING_CALCULATOR, BONDING_CALCULATOR_BLOCK);
@@ -862,6 +878,7 @@ CONTRACT_ABBREVIATION_MAP.set(ERC20_PRIME, "D2D");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_XSUSHI, "xSUSHI");
 
 const CONTRACT_NAME_MAP = new Map<string, string>();
+// CONTRACT_NAME_MAP.set(POOL_BALANCER_BB_A_WSTETH_ID, "Balancer V2 BB-A-wstETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(AAVE_ALLOCATOR_V2, "Aave Allocator V2");
 CONTRACT_NAME_MAP.set(AAVE_ALLOCATOR, "Aave Allocator V1");
 CONTRACT_NAME_MAP.set(AURA_ALLOCATOR_V2, "AURA Allocator V2");
@@ -977,6 +994,7 @@ CONTRACT_NAME_MAP.set(ERC20_WETH, "wETH");
 CONTRACT_NAME_MAP.set(ERC20_WSTETH, "wstETH");
 CONTRACT_NAME_MAP.set(ERC20_XSUSHI, "SUSHI - Staked");
 CONTRACT_NAME_MAP.set(ETHBOND_CONTRACT1, "ETH Bond 1");
+CONTRACT_NAME_MAP.set(EULER_ADDRESS, "Euler Finance");
 CONTRACT_NAME_MAP.set(EULER_ADDRESS, "Euler Protocol");
 CONTRACT_NAME_MAP.set(FRAX_LOCKING_FRAX_USDC, "Frax Farm - FraxBP");
 CONTRACT_NAME_MAP.set(FRAX_LOCKING_OHM_FRAXBP, "Frax Farm - OHM-FraxBP");
@@ -987,6 +1005,7 @@ CONTRACT_NAME_MAP.set(LUSDBOND_CONTRACT1, "LUSD Bond 1");
 CONTRACT_NAME_MAP.set(MAKER_DSR_ALLOCATOR_PROXY, "Maker DSR Allocator Proxy");
 CONTRACT_NAME_MAP.set(MAKER_DSR_ALLOCATOR, "Maker DSR Allocator");
 CONTRACT_NAME_MAP.set(MIGRATION_CONTRACT, "Migration Contract");
+CONTRACT_NAME_MAP.set(MYSO_LENDING, "Myso Finance");
 CONTRACT_NAME_MAP.set(NATIVE_ETH, "Native ETH");
 CONTRACT_NAME_MAP.set(OHMDAISLPBOND_CONTRACT1, "OHM-DAI SLP Bond 1");
 CONTRACT_NAME_MAP.set(OHMDAISLPBOND_CONTRACT2, "OHM-DAI SLP Bond 2");
@@ -995,6 +1014,7 @@ CONTRACT_NAME_MAP.set(OHMDAISLPBOND_CONTRACT4, "OHM-DAI SLP Bond 4");
 CONTRACT_NAME_MAP.set(OHMFRAXLPBOND_CONTRACT1, "OHM-FRAX Bond 1");
 CONTRACT_NAME_MAP.set(OHMFRAXLPBOND_CONTRACT2, "OHM-FRAX Bond 2");
 CONTRACT_NAME_MAP.set(OHMLUSDBOND_CONTRACT1, "OHM-LUSD Bond 1");
+CONTRACT_NAME_MAP.set(OLYMPUS_ASSOCIATION_WALLET, "Olympus Association");
 CONTRACT_NAME_MAP.set(ONSEN_ALLOCATOR, "Onsen Allocator");
 CONTRACT_NAME_MAP.set(OTC_ESCROW, "OTC Escrow");
 CONTRACT_NAME_MAP.set(PAIR_CURVE_ETH_STETH, "Curve ETH-stETH Liquidity Pool");
@@ -1030,7 +1050,6 @@ CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_WETH_BTRFLY_V1, "Uniswap V3 WETH-BTRFLY V1
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_WETH_BTRFLY_V2, "Uniswap V3 WETH-BTRFLY V2 Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_AURA_WETH_ID, "Balancer V2 AURA-WETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_BAL_WETH_ID, "Balancer V2 BAL-WETH Liquidity Pool");
-// CONTRACT_NAME_MAP.set(POOL_BALANCER_BB_A_WSTETH_ID, "Balancer V2 BB-A-wstETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_GRAVIAURA_AURABAL_WETH_ID, "Balancer V2 graviAURA-auraBAL-WETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_OHM_DAI_WETH_ID, "Balancer V2 OHM-DAI-WETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_OHM_DAI, "Balancer V2 OHM-DAI Liquidity Pool");
@@ -1039,6 +1058,7 @@ CONTRACT_NAME_MAP.set(POOL_BALANCER_OHM_WETH, "Balancer V2 OHM-WETH Liquidity Po
 CONTRACT_NAME_MAP.set(POOL_BALANCER_OHM_WSTETH_ID, "Balancer V2 OHM-wstETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_WETH_FDT_ID, "Balancer V2 WETH-FDT Liquidity Pool");
 CONTRACT_NAME_MAP.set(RARI_ALLOCATOR, "Rari Allocator");
+CONTRACT_NAME_MAP.set(SILO_ADDRESS, "Silo Finance");
 CONTRACT_NAME_MAP.set(SILO_ADDRESS, "Silo Router");
 CONTRACT_NAME_MAP.set(STABILITY_POOL, "Liquity Stability Pool");
 CONTRACT_NAME_MAP.set(STAKING_CONTRACT_V1, "Staking V1");
@@ -1051,6 +1071,7 @@ CONTRACT_NAME_MAP.set(TREASURY_ADDRESS_V2, "Treasury Wallet V2");
 CONTRACT_NAME_MAP.set(TREASURY_ADDRESS_V3, "Treasury Wallet V3");
 CONTRACT_NAME_MAP.set(TRSRY, "Bophades Treasury");
 CONTRACT_NAME_MAP.set(VEFXS_ALLOCATOR, "VeFXS Allocator");
+CONTRACT_NAME_MAP.set(VENDOR_LENDING, "Vendor Finance");
 
 /**
  * Returns the name of a contract, given the {contractAddress}.

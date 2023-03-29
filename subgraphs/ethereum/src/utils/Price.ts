@@ -1,6 +1,7 @@
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
 import { TokenCategoryStable } from "../../../shared/src/contracts/TokenDefinition";
+import { getCurrentIndex } from "../../../shared/src/supply/OhmCalculations";
 import { arrayIncludesLoose } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import {
@@ -18,6 +19,7 @@ import {
   ERC20_DAI,
   ERC20_FRAX_3CRV,
   ERC20_FRAX_BP,
+  ERC20_GOHM,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_TOKENS,
@@ -547,6 +549,11 @@ function resolvePrice(contractAddress: string, blockNumber: BigInt): BigDecimal 
   if (arrayIncludesLoose([ERC20_OHM_V1, ERC20_OHM_V2], contractAddress)) {
     log.debug("getUSDRate: Contract address {} is OHM. Returning OHM rate.", [contractAddress]);
     return getBaseOhmUsdRate(blockNumber);
+  }
+
+  // Handle gOHM
+  if (arrayIncludesLoose([ERC20_GOHM], contractAddress)) {
+    return getBaseOhmUsdRate(blockNumber).times(getCurrentIndex(blockNumber));
   }
 
   // Handle more complex derivates
