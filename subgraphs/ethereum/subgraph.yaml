@@ -640,6 +640,11 @@ dataSources:
           file: ./abis/GnosisEasyAuction.json
         - name: BondFixedExpiryTeller
           file: ./abis/BondFixedExpiryTeller.json
+        # Boosted Liquidity Vault
+        - name: OlympusBoostedLiquidityRegistry
+          file: ./abis/OlympusBoostedLiquidityRegistry.json
+        - name: OlympusBoostedLiquidityVaultLido
+          file: ./abis/OlympusBoostedLiquidityVaultLido.json
       eventHandlers:
         - event: LogRebase(indexed uint256,uint256,uint256)
           handler: handleMetrics

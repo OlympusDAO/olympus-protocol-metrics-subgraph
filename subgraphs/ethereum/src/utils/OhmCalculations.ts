@@ -2,9 +2,11 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { BondManager } from "../../generated/ProtocolMetrics/BondManager";
+import { OlympusBoostedLiquidityRegistry } from "../../generated/ProtocolMetrics/OlympusBoostedLiquidityRegistry";
+import { OlympusBoostedLiquidityVaultLido } from "../../generated/ProtocolMetrics/OlympusBoostedLiquidityVaultLido";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
 import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../../generated/schema";
-import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
+import { getERC20Decimals, getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import { GNOSIS_RECORD_ID } from "../GnosisAuction";
 import { getBalancerPoolTokenQuantity } from "../liquidity/LiquidityBalancer";
 import { getCurvePairTokenQuantityRecords } from "../liquidity/LiquidityCurve";
@@ -26,6 +28,7 @@ import {
   getContractName,
   LIQUIDITY_OWNED,
   MIGRATION_CONTRACT,
+  OLYMPUS_BOOSTED_LIQUIDITY_REGISTRY,
   SILO_DEPLOYMENTS,
 } from "./Constants";
 import {
@@ -43,6 +46,7 @@ import {
   TYPE_BONDS_PREMINTED,
   TYPE_BONDS_VESTING_DEPOSITS,
   TYPE_BONDS_VESTING_TOKENS,
+  TYPE_BOOSTED_LIQUIDITY_VAULT,
   TYPE_LENDING,
   TYPE_LIQUIDITY,
   TYPE_OFFSET,
@@ -485,6 +489,64 @@ export function getProtocolOwnedLiquiditySupplyRecords(
 }
 
 /**
+ * Returns TokenSupply records representing the OHM minted into boosted liquidity vaults.
+ * 
+ * The value reported for each vault is based on the following:
+ * - OHM is minted into the vaults (`deployedOhm()`) and cannot be used by users, so it is removed from circulating supply.
+ * - OHM that was previously circulating (`circulatingOhmBurned()`) and is burned is NOT included, as the total supply of OHM would be reduced anyway. Including burned OHM would be double-counting.
+ * - Minted OHM can be released into circulating (and therefore should not be reported here) if
+ * OHM gains in value relative to the paired asset. 
+ * 
+ * @param timestamp 
+ * @param blockNumber 
+ * @returns 
+ */
+export function getBoostedLiquiditySupplyRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
+  const records: TokenSupply[] = [];
+
+  // For each vault registry
+  const liquidityRegistry = OlympusBoostedLiquidityRegistry.bind(Address.fromString(OLYMPUS_BOOSTED_LIQUIDITY_REGISTRY));
+  const activeVaultsCountResult = liquidityRegistry.try_activeVaultCount();
+  if (activeVaultsCountResult.reverted) {
+    return records;
+  }
+
+  const ohmDecimals = getERC20Decimals(ERC20_OHM_V2, blockNumber);
+
+  // Get vaults
+  const activeVaultsCount = activeVaultsCountResult.value.toU32();
+  for (let i = 0; i < activeVaultsCount; i++) {
+    const vaultAddress = liquidityRegistry.activeVaults(BigInt.fromI32(i));
+    const vault = OlympusBoostedLiquidityVaultLido.bind(vaultAddress);
+
+    // Get the OHM share in the LP
+    const ohmInPool = vault.getPoolOhmShare();
+    const ohmInPoolDecimal = toDecimal(ohmInPool, ohmDecimals);
+    if (ohmInPoolDecimal.equals(BigDecimal.zero())) {
+      continue;
+    }
+
+    records.push(
+      createOrUpdateTokenSupply(
+        timestamp,
+        getContractName(ERC20_OHM_V2),
+        ERC20_OHM_V2,
+        null,
+        null,
+        getContractName(vaultAddress.toHexString().toLowerCase()),
+        vaultAddress.toHexString().toLowerCase(),
+        TYPE_BOOSTED_LIQUIDITY_VAULT,
+        ohmInPoolDecimal,
+        blockNumber,
+        -1, // Subtract
+      ),
+    );
+  }
+
+  return records;
+}
+
+/**
  * Returns the circulating supply of sOHM V1, V2 or V3, depending on the current block.
  *
  * @param blockNumber the current block number
@@ -540,13 +602,14 @@ export function getTotalValueLocked(blockNumber: BigInt): BigDecimal {
  * - minus: migration offset
  * - minus: pre-minted OHM for bonds
  * - minus: OHM user deposits for bonds
+ * - minus: OHM in boosted liquidity vaults
  * - minus: protocol-owned OHM in liquidity pools
  * - minus: OHM minted and deployed into lending markets
  */
 export function getBackedSupply(tokenSupplies: TokenSupply[]): BigDecimal {
   let total = BigDecimal.zero();
 
-  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_LIQUIDITY, TYPE_LENDING];
+  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_BOOSTED_LIQUIDITY_VAULT, TYPE_LIQUIDITY, TYPE_LENDING];
 
   for (let i = 0; i < tokenSupplies.length; i++) {
     const tokenSupply = tokenSupplies[i];
@@ -571,12 +634,13 @@ export function getBackedSupply(tokenSupplies: TokenSupply[]): BigDecimal {
  * - minus: migration offset
  * - minus: pre-minted OHM for bonds
  * - minus: OHM user deposits for bonds
+ * - minus: OHM in boosted liquidity vaults
  * - minus: protocol-owned OHM in liquidity pools
  */
 export function getFloatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
   let total = BigDecimal.zero();
 
-  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_LIQUIDITY];
+  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_BOOSTED_LIQUIDITY_VAULT, TYPE_LIQUIDITY];
 
   for (let i = 0; i < tokenSupplies.length; i++) {
     const tokenSupply = tokenSupplies[i];
@@ -601,11 +665,12 @@ export function getFloatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
  * - minus: migration offset
  * - minus: pre-minted OHM for bonds
  * - minus: OHM user deposits for bonds
+ * - minus: OHM in boosted liquidity vaults
  */
 export function getCirculatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
   let total = BigDecimal.zero();
 
-  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS];
+  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_BOOSTED_LIQUIDITY_VAULT];
 
   for (let i = 0; i < tokenSupplies.length; i++) {
     const tokenSupply = tokenSupplies[i];
