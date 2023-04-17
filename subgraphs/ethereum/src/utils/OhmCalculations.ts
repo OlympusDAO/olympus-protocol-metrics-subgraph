@@ -25,10 +25,12 @@ import {
   ERC20_SOHM_V3,
   ERC20_SOHM_V3_BLOCK,
   EULER_ADDRESS,
+  EULER_DEPLOYMENTS,
   getContractName,
   LIQUIDITY_OWNED,
   MIGRATION_CONTRACT,
   SILO_ADDRESS,
+  SILO_DEPLOYMENTS,
 } from "./Constants";
 import {
   getERC20DecimalBalance,
@@ -36,6 +38,7 @@ import {
   getSOlympusERC20V2,
   getSOlympusERC20V3,
 } from "./ContractHelper";
+import { LendingMarketDeployment } from "./LendingMarketDeployment";
 import { PairHandlerTypes } from "./PairHandler";
 import { getUSDRate } from "./Price";
 import {
@@ -285,12 +288,40 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
   return records;
 }
 
-// https://etherscan.io/tx/0xa7495eba745bd67279969c1b8687f816e0d83a60bf0c8b43900ef1dfaf97277e
-export const EULER_MINT_BLOCK = BigInt.fromString("16627152");
-export const EULER_MINT_QUANTITY = BigDecimal.fromString("30000");
-// https://etherscan.io/tx/0xf9bbcc923182fb6406e97fce0f92c22c87a284d55812eeae41dc484759422b4a
-export const SILO_MINT_BLOCK = BigInt.fromString("16627144");
-export const SILO_MINT_QUANTITY = BigDecimal.fromString("20000");
+function getLendingMarketDeploymentOHMRecords(timestamp: BigInt, deployments: LendingMarketDeployment[], blockNumber: BigInt): TokenSupply[] {
+  const records: TokenSupply[] = [];
+
+  for (let i = 0; i < SILO_DEPLOYMENTS.length; i++) {
+    const currentDeployment = SILO_DEPLOYMENTS[i];
+    // Exclude if before deployment
+    if (blockNumber.lt(currentDeployment.getBlockNumber())) {
+      continue;
+    }
+
+    // Exclude if not OHM
+    if (currentDeployment.getToken().toLowerCase() != ERC20_OHM_V2.toLowerCase()) {
+      continue;
+    }
+
+    records.push(
+      createOrUpdateTokenSupply(
+        timestamp,
+        getContractName(ERC20_OHM_V2),
+        ERC20_OHM_V2,
+        null,
+        null,
+        getContractName(currentDeployment.getAddress()),
+        currentDeployment.getAddress(),
+        TYPE_LENDING,
+        currentDeployment.getAmount(),
+        blockNumber,
+        -1, // Subtract
+      )
+    );
+  }
+
+  return records;
+}
 
 /**
  * Generates TokenSupply records for OHM that has been minted
@@ -306,43 +337,15 @@ export const SILO_MINT_QUANTITY = BigDecimal.fromString("20000");
 export function getMintedBorrowableOHMRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
   const records: TokenSupply[] = [];
 
-  // Euler
-  if (blockNumber.ge(EULER_MINT_BLOCK)) {
-    records.push(
-      createOrUpdateTokenSupply(
-        timestamp,
-        getContractName(ERC20_OHM_V2),
-        ERC20_OHM_V2,
-        null,
-        null,
-        getContractName(EULER_ADDRESS),
-        EULER_ADDRESS,
-        TYPE_LENDING,
-        EULER_MINT_QUANTITY,
-        blockNumber,
-        -1, // Subtract
-      )
-    );
-  }
+  pushTokenSupplyArray(
+    records,
+    getLendingMarketDeploymentOHMRecords(timestamp, SILO_DEPLOYMENTS, blockNumber),
+  );
 
-  // Silo
-  if (blockNumber.ge(SILO_MINT_BLOCK)) {
-    records.push(
-      createOrUpdateTokenSupply(
-        timestamp,
-        getContractName(ERC20_OHM_V2),
-        ERC20_OHM_V2,
-        null,
-        null,
-        getContractName(SILO_ADDRESS),
-        SILO_ADDRESS,
-        TYPE_LENDING,
-        SILO_MINT_QUANTITY,
-        blockNumber,
-        -1, // Subtract
-      )
-    );
-  }
+  pushTokenSupplyArray(
+    records,
+    getLendingMarketDeploymentOHMRecords(timestamp, EULER_DEPLOYMENTS, blockNumber),
+  );
 
   return records;
 }
