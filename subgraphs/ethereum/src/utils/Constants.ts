@@ -108,8 +108,8 @@ export const BOND_MANAGER = "0xf577c77ee3578c7f216327f41b5d7221ead2b2a3";
 
 export const MAKER_DSR = "0x197E90f9FAD81970bA7976f33CbD77088E5D7cf7";
 
-export const EULER_ADDRESS = "0x27182842E098f60e3D576794A5bFFb0777E025d3";
-export const SILO_ADDRESS = "0xb2374f84b3cEeFF6492943Df613C9BcF45322a0c";
+export const EULER_ADDRESS = "0x27182842E098f60e3D576794A5bFFb0777E025d3".toLowerCase();
+export const SILO_ADDRESS = "0xb2374f84b3cEeFF6492943Df613C9BcF45322a0c".toLowerCase();
 
 /**
  * Defines the contract addresses that belong to the protocol & treasury.
