@@ -1,8 +1,9 @@
 # Subgraph Changelog
 
-## 4.4.3 (2023-03-17)
+## 4.4.4 (2023-03-17)
 
 - Add additional deployment of OHM to Silo
+- Support for OHM minted for Boosted Liquidity Vaults
 
 ## 4.3.1 (2023-03-29)
 

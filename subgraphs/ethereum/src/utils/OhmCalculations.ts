@@ -514,7 +514,7 @@ export function getBoostedLiquiditySupplyRecords(timestamp: BigInt, blockNumber:
   const ohmDecimals = getERC20Decimals(ERC20_OHM_V2, blockNumber);
 
   // Get vaults
-  const activeVaultsCount = activeVaultsCountResult.value.toU32();
+  const activeVaultsCount = activeVaultsCountResult.value.toI32();
   for (let i = 0; i < activeVaultsCount; i++) {
     const vaultAddress = liquidityRegistry.activeVaults(BigInt.fromI32(i));
     const vault = OlympusBoostedLiquidityVaultLido.bind(vaultAddress);
