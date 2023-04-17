@@ -823,7 +823,7 @@ SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromStrin
 SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("17016622"), BigDecimal.fromString("25000"), SILO_ADDRESS)); // https://etherscan.io/tx/0x8d71fa055470f4654cf52e64452aebf02b2dd3c3b338c0a3edaae4ac7a4376a0
 
 export const EULER_DEPLOYMENTS = new Array<LendingMarketDeployment>();
-EULER_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("16627152"), BigDecimal.fromString("30000"), SILO_ADDRESS)); // https://etherscan.io/tx/0xa7495eba745bd67279969c1b8687f816e0d83a60bf0c8b43900ef1dfaf97277e
+EULER_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("16627152"), BigDecimal.fromString("30000"), EULER_ADDRESS)); // https://etherscan.io/tx/0xa7495eba745bd67279969c1b8687f816e0d83a60bf0c8b43900ef1dfaf97277e
 
 export const CONTRACT_STARTING_BLOCK_MAP = new Map<string, string>();
 CONTRACT_STARTING_BLOCK_MAP.set(AAVE_ALLOCATOR_V2, AAVE_ALLOCATOR_V2_BLOCK);

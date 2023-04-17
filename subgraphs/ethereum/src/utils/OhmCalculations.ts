@@ -287,8 +287,8 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
 function getLendingMarketDeploymentOHMRecords(timestamp: BigInt, deployments: LendingMarketDeployment[], blockNumber: BigInt): TokenSupply[] {
   const records: TokenSupply[] = [];
 
-  for (let i = 0; i < SILO_DEPLOYMENTS.length; i++) {
-    const currentDeployment = SILO_DEPLOYMENTS[i];
+  for (let i = 0; i < deployments.length; i++) {
+    const currentDeployment = deployments[i];
     // Exclude if before deployment
     if (blockNumber.lt(currentDeployment.getBlockNumber())) {
       continue;
