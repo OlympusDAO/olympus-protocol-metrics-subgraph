@@ -1,6 +1,10 @@
 # Subgraph Changelog
 
-## 4.3.0 (2023-03-29)
+## 4.4.3 (2023-03-17)
+
+- Add additional deployment of OHM to Silo
+
+## 4.3.1 (2023-03-29)
 
 - The names of staked/locked/earned tokens are differentiated from raw tokens, to avoid clobbering. #194
 - Add LDO, SUSHI and agEUR tokens

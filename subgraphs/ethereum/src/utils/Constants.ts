@@ -108,8 +108,8 @@ export const BOND_MANAGER = "0xf577c77ee3578c7f216327f41b5d7221ead2b2a3";
 
 export const MAKER_DSR = "0x197E90f9FAD81970bA7976f33CbD77088E5D7cf7";
 
-export const EULER_ADDRESS = "0x27182842E098f60e3D576794A5bFFb0777E025d3";
-export const SILO_ADDRESS = "0xb2374f84b3cEeFF6492943Df613C9BcF45322a0c";
+export const EULER_ADDRESS = "0x27182842E098f60e3D576794A5bFFb0777E025d3".toLowerCase();
+export const SILO_ADDRESS = "0xb2374f84b3cEeFF6492943Df613C9BcF45322a0c".toLowerCase();
 
 /**
  * Defines the contract addresses that belong to the protocol & treasury.
@@ -817,6 +817,13 @@ export function getMysoDeployments(contractAddress: string): LendingMarketDeploy
 
   return MYSO_DEPLOYMENTS.get(contractAddressLower);
 }
+
+export const SILO_DEPLOYMENTS = new Array<LendingMarketDeployment>();
+SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("16627144"), BigDecimal.fromString("20000"), SILO_ADDRESS)); // https://etherscan.io/tx/0xf9bbcc923182fb6406e97fce0f92c22c87a284d55812eeae41dc484759422b4a
+SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("17016622"), BigDecimal.fromString("25000"), SILO_ADDRESS)); // https://etherscan.io/tx/0x8d71fa055470f4654cf52e64452aebf02b2dd3c3b338c0a3edaae4ac7a4376a0
+
+export const EULER_DEPLOYMENTS = new Array<LendingMarketDeployment>();
+EULER_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("16627152"), BigDecimal.fromString("30000"), EULER_ADDRESS)); // https://etherscan.io/tx/0xa7495eba745bd67279969c1b8687f816e0d83a60bf0c8b43900ef1dfaf97277e
 
 export const CONTRACT_STARTING_BLOCK_MAP = new Map<string, string>();
 CONTRACT_STARTING_BLOCK_MAP.set(AAVE_ALLOCATOR_V2, AAVE_ALLOCATOR_V2_BLOCK);

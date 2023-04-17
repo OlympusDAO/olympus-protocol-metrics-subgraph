@@ -5,7 +5,7 @@ import { toBigInt } from "../../shared/src/utils/Decimals";
 import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../generated/schema";
 import { GNOSIS_RECORD_ID } from "../src/GnosisAuction";
 import { BOND_MANAGER, CIRCULATING_SUPPLY_WALLETS, ERC20_OHM_V2, EULER_ADDRESS, SILO_ADDRESS } from "../src/utils/Constants";
-import { EULER_MINT_BLOCK, EULER_MINT_QUANTITY, getMintedBorrowableOHMRecords, getTreasuryOHMRecords, getVestingBondSupplyRecords, SILO_MINT_BLOCK, SILO_MINT_QUANTITY } from "../src/utils/OhmCalculations";
+import { getMintedBorrowableOHMRecords, getTreasuryOHMRecords, getVestingBondSupplyRecords } from "../src/utils/OhmCalculations";
 import { TYPE_BONDS_DEPOSITS, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_VESTING_TOKENS, TYPE_LENDING } from "../src/utils/TokenSupplyHelper";
 import { mockERC20TotalSupply } from "./erc20Helper";
 import { OHM_V2_DECIMALS } from "./pairHelper";
@@ -266,6 +266,11 @@ describe("Treasury OHM", () => {
     });
 });
 
+const SILO_MINT_BLOCK = BigInt.fromString("16627144");
+const SILO_MINT_QUANTITY = BigDecimal.fromString("20000");
+const EULER_MINT_BLOCK = BigInt.fromString("16627152");
+const EULER_MINT_QUANTITY = BigDecimal.fromString("30000");
+
 describe("Borrowable OHM", () => {
     test("returns no records before minting", () => {
         const records = getMintedBorrowableOHMRecords(TIMESTAMP, SILO_MINT_BLOCK.minus(BigInt.fromI32(1)));
@@ -276,15 +281,15 @@ describe("Borrowable OHM", () => {
     test("returns minted OHM after minting", () => {
         const records = getMintedBorrowableOHMRecords(TIMESTAMP, EULER_MINT_BLOCK.plus(BigInt.fromI32(1)));
 
-        const recordOne = records[0];
-        assert.stringEquals(recordOne.supplyBalance.toString(), "-" + EULER_MINT_QUANTITY.toString());
-        assert.assertTrue(recordOne.sourceAddress == EULER_ADDRESS);
-        assert.stringEquals(recordOne.type, TYPE_LENDING);
+        const recordSilo = records[0];
+        assert.stringEquals(recordSilo.supplyBalance.toString(), "-" + SILO_MINT_QUANTITY.toString());
+        assert.assertTrue(recordSilo.sourceAddress == SILO_ADDRESS);
+        assert.stringEquals(recordSilo.type, TYPE_LENDING);
 
-        const recordTwo = records[1];
-        assert.stringEquals(recordTwo.supplyBalance.toString(), "-" + SILO_MINT_QUANTITY.toString());
-        assert.assertTrue(recordTwo.sourceAddress == SILO_ADDRESS);
-        assert.stringEquals(recordTwo.type, TYPE_LENDING);
+        const recordEuler = records[1];
+        assert.stringEquals(recordEuler.supplyBalance.toString(), "-" + EULER_MINT_QUANTITY.toString());
+        assert.assertTrue(recordEuler.sourceAddress == EULER_ADDRESS);
+        assert.stringEquals(recordEuler.type, TYPE_LENDING);
 
         assert.i32Equals(records.length, 2);
     });
