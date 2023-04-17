@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 4.4.2 (2023-03-17)
+## 4.4.3 (2023-03-17)
 
 - Add additional deployment of OHM to Silo
 
