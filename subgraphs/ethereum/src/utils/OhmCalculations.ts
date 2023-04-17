@@ -1,6 +1,5 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { getCurrentIndex } from "../../../shared/src/supply/OhmCalculations";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { BondManager } from "../../generated/ProtocolMetrics/BondManager";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
@@ -15,7 +14,6 @@ import { pushTokenSupplyArray } from "./ArrayHelper";
 import {
   BOND_MANAGER,
   CIRCULATING_SUPPLY_WALLETS,
-  ERC20_GOHM,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_OHM_V2_BLOCK,
@@ -24,12 +22,10 @@ import {
   ERC20_SOHM_V2_BLOCK,
   ERC20_SOHM_V3,
   ERC20_SOHM_V3_BLOCK,
-  EULER_ADDRESS,
   EULER_DEPLOYMENTS,
   getContractName,
   LIQUIDITY_OWNED,
   MIGRATION_CONTRACT,
-  SILO_ADDRESS,
   SILO_DEPLOYMENTS,
 } from "./Constants";
 import {
