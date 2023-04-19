@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 4.5.0 (2023-03-19)
+
+- Adds the DAO working capital multi-sig to indexed and circulating supply wallets
+
 ## 4.4.4 (2023-03-17)
 
 - Add additional deployment of OHM to Silo
