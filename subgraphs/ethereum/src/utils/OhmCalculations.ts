@@ -124,6 +124,9 @@ export function getTotalSupplyRecord(timestamp: BigInt, blockNumber: BigInt): To
  * - Binds with the sOHM V3 contract
  * - Multiplies index() from sOHM V3 by {MIGRATION_OFFSET}
  * - Returns a token record with the offset
+ * 
+ * NOTE: the balance of gOHM in the migration contract is likely to be higher than this manual offset,
+ * as it is gOHM pre-minted for migration of OHM (v1). As a result, the difference in the gOHM balance is not considered protocol-owned.
  *
  * @param blockNumber
  * @returns
