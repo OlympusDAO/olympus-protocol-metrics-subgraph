@@ -73,7 +73,6 @@ If you receive a non-sensical test result (e.g. duplicated test cases, or a test
 1. If necessary, create an account and subgraph in the Subgraph Studio: <https://thegraph.com/studio/>
    - The subgraph should be called `olympus-protocol-metrics`
 1. Add the Subgraph Studio deploy key to the `GRAPH_STUDIO_TOKEN` variable in `.env` (using `.env.sample`)
-1. Authenticate using `yarn auth:studio`
 1. Update the `version` property in the `subgraphs/<subgraph>/config.json` file.
 1. Run `yarn subgraph build <subgraph>`
 1. Run `yarn subgraph deploy:studio <subgraph>`
