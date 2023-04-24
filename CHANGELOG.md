@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 4.5.1 (2023-03-24)
+
+- Removes OHM (and variants) in the DAO working capital address from being listed as in the treasury
+
 ## 4.5.0 (2023-03-19)
 
 - Adds the DAO working capital multi-sig to indexed and circulating supply wallets

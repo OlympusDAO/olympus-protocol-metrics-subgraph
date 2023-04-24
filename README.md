@@ -111,24 +111,26 @@ A set of Docker containers is pre-configured to enable local testing of the subg
 
 ### Tokens
 
-Tokens are defined and mapped in the `src/utils/Constants.ts` file.
+Tokens are defined and mapped in the `Constants.ts` file for each chain/subgraph (typically).
 
 To add a new token:
 
 - Define a constant value with the address of the ERC20 contract, with `.toLowerCase()` appended
-- Define a constant value with the address of the liquidity pool
+- Define a constant value with the address of the liquidity pool used for price lookup
 - Add the token definition to the `ERC20_TOKENS` map
 - Add a mapping under `PAIR_HANDLER` between the ERC20 contract and the liquidity pool contract
-- If the token is present in any wallets outside of `WALLET_ADDRESSES`, yet should be reported as part of the tresury, add it to `NON_TREASURY_ASSET_WHITELIST`.
+- Add the names for the ERC20 contract and liquidity pool to `CONTRACT_NAME_MAP`
 
 ### Wallets
 
-Tokens are defined and mapped in the `src/utils/Constants.ts` file.
+Wallets are defined and mapped in the `src/utils/Constants.ts` file.
 
 To add a new wallet:
 
 - Define a constant value with the address of the wallet, with `.toLowerCase()` appended
 - Add the constant to the `WALLET_ADDRESSES` array
+- Add the name for the wallet to `CONTRACT_NAME_MAP`
+- If specific tokens in the wallet should not be reported as part of the treasury, add it to `DAO_WALLET_BLACKLIST`.
 
 ### Price Lookup
 
