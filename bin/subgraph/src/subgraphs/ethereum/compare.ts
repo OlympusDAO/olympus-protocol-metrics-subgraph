@@ -290,14 +290,10 @@ export const combineOutput = (network: string, comparisonFile: ComparisonResults
 
   ${comparisonFile.results.liquidBackingCheck.output}
 
-  <details>
-    <summary>Diff of TokenRecord</summary>
-
-    \`\`\`diff
-    ${recordsDiff}
-    \`\`\`
-    
-  </details>
+  **Diff of TokenRecord**
+  \`\`\`diff
+  ${recordsDiff}
+  \`\`\`
 
   ## Supply Records
   ${comparisonFile.results.circulatingSupply.output}
@@ -306,13 +302,9 @@ export const combineOutput = (network: string, comparisonFile: ComparisonResults
 
   ${comparisonFile.results.backedSupply.output}
 
-  <details>
-    <summary>Diff of TokenSupply</summary>
-
-    \`\`\`diff
-    ${supplyDiff}
-    \`\`\`
-
-  </details>
+  **Diff of TokenSupply**
+  \`\`\`diff
+  ${supplyDiff}
+  \`\`\`
   `;
 };
