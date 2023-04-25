@@ -2,12 +2,13 @@ import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, beforeEach, clearStore, createMockedFunction, describe, log, test } from "matchstick-as";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
+import { OLYMPUS_ASSOCIATION_WALLET } from "../../shared/src/Wallets";
 import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../generated/schema";
 import { GNOSIS_RECORD_ID } from "../src/GnosisAuction";
-import { BOND_MANAGER, CIRCULATING_SUPPLY_WALLETS, ERC20_OHM_V2, EULER_ADDRESS, SILO_ADDRESS } from "../src/utils/Constants";
+import { BOND_MANAGER, CIRCULATING_SUPPLY_WALLETS, ERC20_GOHM, ERC20_OHM_V2, ERC20_SOHM_V3, EULER_ADDRESS, SILO_ADDRESS } from "../src/utils/Constants";
 import { getMintedBorrowableOHMRecords, getTreasuryOHMRecords, getVestingBondSupplyRecords } from "../src/utils/OhmCalculations";
 import { TYPE_BONDS_DEPOSITS, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_VESTING_TOKENS, TYPE_LENDING } from "../src/utils/TokenSupplyHelper";
-import { mockERC20TotalSupply } from "./erc20Helper";
+import { mockERC20Balance, mockERC20Decimals, mockERC20TotalSupply } from "./erc20Helper";
 import { OHM_V2_DECIMALS } from "./pairHelper";
 
 const CONTRACT_GNOSIS = "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101".toLowerCase();
@@ -54,12 +55,16 @@ function mockContractBalances(gnosisBalance: BigDecimal = BigDecimal.fromString(
 
 function mockCirculatingSupplyWallets(balance: BigInt): void {
     for (let i = 0; i < CIRCULATING_SUPPLY_WALLETS.length; i++) {
-        createMockedFunction(Address.fromString(ERC20_OHM_V2), "balanceOf", "balanceOf(address):(uint256)").
-            withArgs([ethereum.Value.fromAddress(Address.fromString(CIRCULATING_SUPPLY_WALLETS[i]))]).
-            returns([
-                ethereum.Value.fromUnsignedBigInt(balance),
-            ]);
+        mockERC20Balance(ERC20_OHM_V2, CIRCULATING_SUPPLY_WALLETS[i], balance);
+        mockERC20Balance(ERC20_SOHM_V3, CIRCULATING_SUPPLY_WALLETS[i], balance);
+        mockERC20Balance(ERC20_GOHM, CIRCULATING_SUPPLY_WALLETS[i], balance);
     }
+}
+
+function mockCurrentIndex(index: BigInt): void {
+    createMockedFunction(Address.fromString(ERC20_SOHM_V3), "index", "index():(uint256)").returns([
+        ethereum.Value.fromUnsignedBigInt(index)
+    ]);
 }
 
 const AUCTION_ID = "1";
@@ -243,8 +248,17 @@ describe("Vesting Bonds", () => {
 });
 
 describe("Treasury OHM", () => {
-    test("excludes bond teller", () => {
+    beforeEach(() => {
+        mockCurrentIndex(BigInt.fromString("100"));
         mockCirculatingSupplyWallets(BigInt.fromString("0"));
+        mockERC20Balance(ERC20_OHM_V2, OLYMPUS_ASSOCIATION_WALLET, BigInt.fromString("1000000000000000000"));
+        mockERC20Balance(ERC20_SOHM_V3, OLYMPUS_ASSOCIATION_WALLET, BigInt.fromString("1000000000000000000"));
+        mockERC20Balance(ERC20_GOHM, OLYMPUS_ASSOCIATION_WALLET, BigInt.fromString("1000000000000000000"));
+        mockERC20TotalSupply(ERC20_SOHM_V3, 9, BigInt.fromString("1000000000000000000"));
+        mockERC20TotalSupply(ERC20_GOHM, 18, BigInt.fromString("1000000000000000000"));
+    });
+
+    test("excludes bond teller", () => {
         mockContractBalances(BigDecimal.zero(), BigDecimal.zero(), BigDecimal.fromString("1"));
 
         const records = getTreasuryOHMRecords(TIMESTAMP, BigInt.fromString("13782590"));
@@ -255,7 +269,6 @@ describe("Treasury OHM", () => {
     });
 
     test("excludes bond manager", () => {
-        mockCirculatingSupplyWallets(BigInt.fromString("0"));
         mockContractBalances(BigDecimal.zero(), BigDecimal.fromString("1"), BigDecimal.zero());
 
         const records = getTreasuryOHMRecords(TIMESTAMP, BigInt.fromString("13782590"));
@@ -263,6 +276,24 @@ describe("Treasury OHM", () => {
 
         // No supply impact from bond manager
         assert.assertTrue(recordsMap.has(BOND_MANAGER.toLowerCase()) == false);
+    });
+
+    test("excludes Olympus Association after milestone block", () => {
+        mockContractBalances(BigDecimal.zero(), BigDecimal.fromString("1"), BigDecimal.zero());
+
+        const records = getTreasuryOHMRecords(TIMESTAMP, BigInt.fromString("17115001"));
+        const recordsMap = tokenSupplyRecordsToMap(records);
+
+        assert.assertTrue(recordsMap.has(OLYMPUS_ASSOCIATION_WALLET.toLowerCase()) == false);
+    });
+
+    test("includes Olympus Association before milestone block", () => {
+        mockContractBalances(BigDecimal.zero(), BigDecimal.fromString("1"), BigDecimal.zero());
+
+        const records = getTreasuryOHMRecords(TIMESTAMP, BigInt.fromString("17114999"));
+        const recordsMap = tokenSupplyRecordsToMap(records);
+
+        assert.assertTrue(recordsMap.has(OLYMPUS_ASSOCIATION_WALLET.toLowerCase()) == true);
     });
 });
 
