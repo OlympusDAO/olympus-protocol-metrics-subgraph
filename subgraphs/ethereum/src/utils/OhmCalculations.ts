@@ -386,7 +386,13 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
   const isV2Contract = blockNumber.gt(BigInt.fromString(ERC20_OHM_V2_BLOCK));
   const ohmContractAddress = isV2Contract ? ERC20_OHM_V2 : ERC20_OHM_V1;
   const records: TokenSupply[] = [];
-  const wallets = [...CIRCULATING_SUPPLY_WALLETS];
+
+  // Make a copy of the array
+  const wallets = new Array<string>();
+  for (let i = 0; i < CIRCULATING_SUPPLY_WALLETS.length; i++) {
+    wallets.push(CIRCULATING_SUPPLY_WALLETS[i]);
+  }
+
   // Add the Olympus Association wallet if before the milestone
   if (blockNumber.lt(BigInt.fromString(OLYMPUS_ASSOCIATION_BLOCK))) {
     wallets.push(OLYMPUS_ASSOCIATION_WALLET);
