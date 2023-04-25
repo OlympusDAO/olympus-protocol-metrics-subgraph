@@ -278,7 +278,8 @@ program
 
     console.info("*** Deploying to Subgraph Studio");
     spawnProcess(
-      `yarn graph deploy --product subgraph-studio --version-label ${config.version
+      `yarn graph deploy --deploy-key ${process.env[`GRAPH_STUDIO_TOKEN`]
+      } --product subgraph-studio --version-label ${config.version
       } --output-dir ${getBuildOutputDirectory(subgraph)} ${config.name
       } ${getSubgraphManifestFilePath(subgraph)}`,
       (codegenExitCode: number) => {
