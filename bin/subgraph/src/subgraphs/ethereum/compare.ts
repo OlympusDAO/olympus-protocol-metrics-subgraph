@@ -292,9 +292,11 @@ export const combineOutput = (network: string, comparisonFile: ComparisonResults
 
   <details>
     <summary>Diff of TokenRecord</summary>
+
     \`\`\`diff
     ${recordsDiff}
-    \`\`\`  
+    \`\`\`
+    
   </details>
 
   ## Supply Records
@@ -306,9 +308,11 @@ export const combineOutput = (network: string, comparisonFile: ComparisonResults
 
   <details>
     <summary>Diff of TokenSupply</summary>
+
     \`\`\`diff
     ${supplyDiff}
-    \`\`\`  
+    \`\`\`
+
   </details>
   `;
 };
