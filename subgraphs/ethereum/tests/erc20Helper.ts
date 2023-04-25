@@ -20,3 +20,24 @@ export const mockERC20TotalSupply = (
         ethereum.Value.fromI32(tokenDecimals),
     ]);
 };
+
+export const mockERC20Decimals = (
+    token: string,
+    decimals: i32,
+): void => {
+    createMockedFunction(Address.fromString(token), "decimals", "decimals():(uint8)").returns([
+        ethereum.Value.fromI32(decimals),
+    ]);
+};
+
+export const mockERC20Balance = (
+    token: string,
+    wallet: string,
+    balance: BigInt,
+): void => {
+    createMockedFunction(Address.fromString(token), "balanceOf", "balanceOf(address):(uint256)").
+        withArgs([ethereum.Value.fromAddress(Address.fromString(wallet))]).
+        returns([
+            ethereum.Value.fromUnsignedBigInt(balance),
+        ]);
+}
