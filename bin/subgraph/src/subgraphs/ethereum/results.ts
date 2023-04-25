@@ -58,6 +58,27 @@ export type ComparisonResults = {
       result: boolean;
       output: string; // Markdown
     };
+    circulatingSupply?: {
+      base: string;
+      branch: string;
+      diff: string;
+      result: boolean;
+      output: string; // Markdown
+    };
+    floatingSupply?: {
+      base: string;
+      branch: string;
+      diff: string;
+      result: boolean;
+      output: string; // Markdown
+    };
+    backedSupply?: {
+      base: string;
+      branch: string;
+      diff: string;
+      result: boolean;
+      output: string; // Markdown
+    };
     /**
      * Output for the entire comparison step, in Markdown format.
      *

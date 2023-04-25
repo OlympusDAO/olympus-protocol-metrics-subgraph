@@ -1,6 +1,9 @@
 import { diffString } from "json-diff";
 
 import {
+  calculateBackedSupply,
+  calculateCirculatingSupply,
+  calculateFloatingSupply,
   calculateLiquidBacking,
   calculateMarketValue,
   calculateMarketValueCategory,
@@ -180,11 +183,94 @@ export const doLiquidBackingCheck = (
   comparisonFile.results.liquidBackingCheck = liquidBackingCheck;
 };
 
+export const compareCirculatingSupplyRecords = (
+  baseRecords: TokenSupply[],
+  branchRecords: TokenSupply[],
+  comparisonFile: ComparisonResults,
+): void => {
+  console.info("Comparing circulating supply");
+  const circulatingSupplyBase = calculateCirculatingSupply(baseRecords);
+  const circulatingSupplyBranch = calculateCirculatingSupply(branchRecords);
+
+  // Output to file
+  const circulatingSupplyResults = {
+    base: formatNumber(circulatingSupplyBase),
+    branch: formatNumber(circulatingSupplyBranch),
+    diff: formatNumber(circulatingSupplyBranch - circulatingSupplyBase),
+    result: valuesEqual(circulatingSupplyBase, circulatingSupplyBranch),
+    output: "",
+  };
+  circulatingSupplyResults.output = `**Circulating Supply (Branch Comparison):**
+  Purpose: *Shows the difference in circulating supply between branches. If the numbers differ, it may be due to assets/wallets being added/removed. Check that the difference is expected, and refer to the TokenSupply diff below for more details.*
+  Base: ${circulatingSupplyResults.base}
+  Branch: ${circulatingSupplyResults.branch}
+  Difference in Quantity: ${circulatingSupplyResults.diff}
+  Result: ${circulatingSupplyResults.result ? CHECK : CROSS}`;
+  comparisonFile.results.circulatingSupply = circulatingSupplyResults;
+}
+
+export const compareFloatingSupplyRecords = (
+  baseRecords: TokenSupply[],
+  branchRecords: TokenSupply[],
+  comparisonFile: ComparisonResults,
+): void => {
+  console.info("Comparing floating supply");
+  const floatingSupplyBase = calculateFloatingSupply(baseRecords);
+  const floatingSupplyBranch = calculateFloatingSupply(branchRecords);
+
+  // Output to file
+  const floatingSupplyResults = {
+    base: formatNumber(floatingSupplyBase),
+    branch: formatNumber(floatingSupplyBranch),
+    diff: formatNumber(floatingSupplyBranch - floatingSupplyBase),
+    result: valuesEqual(floatingSupplyBase, floatingSupplyBranch),
+    output: "",
+  };
+  floatingSupplyResults.output = `**Floating Supply (Branch Comparison):**
+  Purpose: *Shows the difference in floating supply between branches. If the numbers differ, it may be due to assets/wallets being added/removed. Check that the difference is expected, and refer to the TokenSupply diff below for more details.*
+  Base: ${floatingSupplyResults.base}
+  Branch: ${floatingSupplyResults.branch}
+  Difference in Quantity: ${floatingSupplyResults.diff}
+  Result: ${floatingSupplyResults.result ? CHECK : CROSS}`;
+  comparisonFile.results.floatingSupply = floatingSupplyResults;
+}
+
+export const compareBackedSupplyRecords = (
+  baseRecords: TokenSupply[],
+  branchRecords: TokenSupply[],
+  comparisonFile: ComparisonResults,
+): void => {
+  console.info("Comparing backed supply");
+  const backedSupplyBase = calculateBackedSupply(baseRecords);
+  const backedSupplyBranch = calculateBackedSupply(branchRecords);
+
+  // Output to file
+  const backedSupplyResults = {
+    base: formatNumber(backedSupplyBase),
+    branch: formatNumber(backedSupplyBranch),
+    diff: formatNumber(backedSupplyBranch - backedSupplyBase),
+    result: valuesEqual(backedSupplyBase, backedSupplyBranch),
+    output: "",
+  };
+  backedSupplyResults.output = `**Backed Supply (Branch Comparison):**
+  Purpose: *Shows the difference in backed supply between branches. If the numbers differ, it may be due to assets/wallets being added/removed. Check that the difference is expected, and refer to the TokenSupply diff below for more details.*
+  Base: ${backedSupplyResults.base}
+  Branch: ${backedSupplyResults.branch}
+  Difference in Quantity: ${backedSupplyResults.diff}
+  Result: ${backedSupplyResults.result ? CHECK : CROSS}`;
+  comparisonFile.results.backedSupply = backedSupplyResults;
+}
+
 export const combineOutput = (network: string, comparisonFile: ComparisonResults): void => {
   // Generate a diff between the token records
   const recordsDiff = diffString(
     comparisonFile.records.tokenRecords.base,
     comparisonFile.records.tokenRecords.branch,
+    { full: true, color: false },
+  );
+  const supplyDiff = diffString(
+    comparisonFile.records.tokenSupplies.base,
+    comparisonFile.records.tokenSupplies.branch,
     { full: true, color: false },
   );
 
@@ -195,6 +281,7 @@ export const combineOutput = (network: string, comparisonFile: ComparisonResults
   Base: ${comparisonFile.branches.base.subgraphId}
   Branch: ${comparisonFile.branches.branch.subgraphId}
   
+  ## Asset Records
   ${comparisonFile.results.marketValue.output}
 
   ${comparisonFile.results.liquidBacking.output}
@@ -203,9 +290,25 @@ export const combineOutput = (network: string, comparisonFile: ComparisonResults
 
   ${comparisonFile.results.liquidBackingCheck.output}
 
-  **Diff of TokenRecords:**
-  \`\`\`diff
-  ${recordsDiff}
-  \`\`\`
+  <details>
+    <summary>Diff of TokenRecord</summary>
+    \`\`\`diff
+    ${recordsDiff}
+    \`\`\`  
+  </details>
+
+  ## Supply Records
+  ${comparisonFile.results.circulatingSupply.output}
+
+  ${comparisonFile.results.floatingSupply.output}
+
+  ${comparisonFile.results.backedSupply.output}
+
+  <details>
+    <summary>Diff of TokenSupply</summary>
+    \`\`\`diff
+    ${supplyDiff}
+    \`\`\`  
+  </details>
   `;
 };
