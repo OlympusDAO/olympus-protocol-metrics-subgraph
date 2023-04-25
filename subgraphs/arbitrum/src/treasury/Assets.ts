@@ -1,5 +1,6 @@
 import { BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
+import { NewRound } from "../../../ethereum/generated/ProtocolMetrics/ChainlinkPriceFeed";
 import {
   TokenCategoryStable,
   TokenCategoryVolatile,
@@ -20,6 +21,13 @@ export function handleAssets(block: ethereum.Block): void {
   if (!block.number.mod(BigInt.fromString("86400")).equals(BigInt.zero())) {
     return;
   }
+
+  log.debug("handleAssets: *** Indexing block {}", [block.number.toString()]);
+  generateTokenRecords(block.timestamp, block.number);
+}
+
+export function handleChainlinkNewRoundEvent(event: NewRound): void {
+  const block = event.block;
 
   log.debug("handleAssets: *** Indexing block {}", [block.number.toString()]);
   generateTokenRecords(block.timestamp, block.number);
