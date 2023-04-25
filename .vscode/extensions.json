@@ -6,6 +6,7 @@
         "graphql.vscode-graphql",
         "davidanson.vscode-markdownlint",
         "rvest.vs-code-prettier-eslint",
-        "redhat.vscode-yaml"
+        "redhat.vscode-yaml",
+        "shd101wyy.markdown-preview-enhanced"
     ]
 }
