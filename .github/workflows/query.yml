@@ -91,6 +91,13 @@ jobs:
         with:
           node-version: "16"
           cache: "yarn"
+      # Looks for an existing comment, so it can be updated
+      - name: Find Existing Comment
+        uses: peter-evans/find-comment@v2
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-includes: ${{ matrix.subgraph }}
       - name: Install
         run: |
           yarn install --frozen-lockfile
@@ -114,13 +121,6 @@ jobs:
           echo "OUTPUT<<EOF" >> $GITHUB_ENV
           echo "$(jq -r .results.output build/results-${{ matrix.subgraph }}.json)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-      # Looks for an existing comment, so it can be updated
-      - name: Find Existing Comment
-        uses: peter-evans/find-comment@v2
-        id: fc
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          body-includes: '**Network**: ${{ matrix.subgraph }}'
       - name: Post Comment
         uses: peter-evans/create-or-update-comment@v2
         with:
