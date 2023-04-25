@@ -369,18 +369,14 @@ export function getMintedBorrowableOHMRecords(timestamp: BigInt, blockNumber: Bi
 }
 
 /**
- * Returns the circulating supply of the latest version of the OHM contract
- * at the given block number.
+ * Returns the supply of protocol- and DAO-owned OHM at the given block number.
  *
- * Circulating supply is defined as:
- * - OHM total supply
- * - subtract: OHM in {CIRCULATING_SUPPLY_WALLETS} (treasury, bonds, migration contract, DAO wallet, lending markets)
- * - subtract: OHM represented by gOHM in {CIRCULATING_SUPPLY_WALLETS}
- * - subtract: migration offset
+ * sOHM and gOHM are converted to the equivalent quantity of OHM (using the index)
+ * and included in the calculation.
  *
+ * @param timestmap the current timestamp
  * @param blockNumber the current block number
- * @param totalSupply the total supply of OHM
- * @returns BigDecimal representing the circulating supply at the time of the block
+ * @returns TokenSupply records
  */
 export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
   const isV2Contract = blockNumber.gt(BigInt.fromString(ERC20_OHM_V2_BLOCK));
