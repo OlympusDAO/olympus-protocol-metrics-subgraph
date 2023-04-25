@@ -135,6 +135,7 @@ export type TokenSupply = {
   token: string;
   source: string;
   balance: string;
+  supplyBalance: string;
   type: string;
 };
 
@@ -159,6 +160,7 @@ export const getTokenSupplies = async (
         token
         source
         balance
+        supplyBalance
         type
       }
     }`;
