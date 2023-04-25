@@ -9,31 +9,31 @@ import {
 import { readComparisonFile, writeComparisonFile } from "./results";
 
 export default class EthereumHandler extends BaseNetworkHandler {
-  doLatestBlock(): void {
+  async doLatestBlock(): Promise<void> {
     const comparisonFile = readComparisonFile(this.outputPath);
 
-    getTestBlock(this.subgraphId).then((latestBlock: string) => {
-      comparisonFile.latestBlock = latestBlock;
-      writeComparisonFile(comparisonFile, this.outputPath);
-    });
+    const latestBlock = await getTestBlock(this.subgraphId);
+
+    comparisonFile.latestBlock = latestBlock;
+    writeComparisonFile(comparisonFile, this.outputPath);
   }
 
-  doQuery(): void {
+  async doQuery(): Promise<void> {
     const comparisonFile = readComparisonFile(this.outputPath);
 
-    getTokenRecords(this.subgraphId, comparisonFile.latestBlock).then((tokenRecords) => {
-      // Update the comparison results and write
-      comparisonFile.branches[this.branch] = {
-        subgraphId: this.subgraphId,
-      };
+    const tokenRecords = await getTokenRecords(this.subgraphId, comparisonFile.latestBlock);
 
-      comparisonFile.records.tokenRecords[this.branch] = tokenRecords;
+    // Update the comparison results and write
+    comparisonFile.branches[this.branch] = {
+      subgraphId: this.subgraphId,
+    };
 
-      writeComparisonFile(comparisonFile, this.outputPath);
-    });
+    comparisonFile.records.tokenRecords[this.branch] = tokenRecords;
+
+    writeComparisonFile(comparisonFile, this.outputPath);
   }
 
-  doComparison(): void {
+  async doComparison(): Promise<void> {
     const comparisonFile = readComparisonFile(this.outputPath);
 
     // Read TokenRecord files, parse into JSON

@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname } from "path";
 
-import { TokenRecord } from "../../subgraph";
+import { TokenRecord, TokenSupply } from "../../subgraph";
 
 export type ComparisonResults = {
   latestBlock?: string;
@@ -17,6 +17,10 @@ export type ComparisonResults = {
     tokenRecords: {
       base?: TokenRecord[];
       branch?: TokenRecord[];
+    };
+    tokenSupplies: {
+      base?: TokenSupply[];
+      branch?: TokenSupply[];
     };
   };
   results: {
@@ -72,6 +76,7 @@ export const readComparisonFile = (filePath: string): ComparisonResults => {
       branches: {},
       records: {
         tokenRecords: {},
+        tokenSupplies: {},
       },
       results: {},
     };

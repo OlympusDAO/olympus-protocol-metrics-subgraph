@@ -10,51 +10,54 @@ import {
 import { readComparisonFile, writeComparisonFile } from "./results";
 
 export default class EthereumHandler extends BaseNetworkHandler {
-  doLatestBlock(): void {
+  async doLatestBlock(): Promise<void> {
     const comparisonFile = readComparisonFile(this.outputPath);
 
-    getTestBlock(this.subgraphId).then((latestBlock: string) => {
-      comparisonFile.latestBlock = latestBlock;
-      writeComparisonFile(comparisonFile, this.outputPath);
-    });
+    const latestBlock = await getTestBlock(this.subgraphId);
+
+    comparisonFile.latestBlock = latestBlock;
+    writeComparisonFile(comparisonFile, this.outputPath);
   }
 
-  doQuery(): void {
+  async doQuery(): Promise<void> {
     const comparisonFile = readComparisonFile(this.outputPath);
 
-    getTokenRecords(this.subgraphId, comparisonFile.latestBlock).then((tokenRecords) => {
-      // Update the comparison results and write
-      comparisonFile.branches[this.branch] = {
-        subgraphId: this.subgraphId,
-      };
+    const tokenRecords = await getTokenRecords(this.subgraphId, comparisonFile.latestBlock);
+    const tokenSupplies = await getTokenSupplies(this.subgraphId, comparisonFile.latestBlock);
 
-      comparisonFile.records.tokenRecords[this.branch] = tokenRecords;
+    // Update the comparison results and write
+    comparisonFile.branches[this.branch] = {
+      subgraphId: this.subgraphId,
+    };
 
-      writeComparisonFile(comparisonFile, this.outputPath);
-    });
+    comparisonFile.records.tokenRecords[this.branch] = tokenRecords;
+    comparisonFile.records.tokenSupplies[this.branch] = tokenSupplies;
+
+    writeComparisonFile(comparisonFile, this.outputPath);
   }
 
-  doComparison(): void {
+  async doComparison(): Promise<void> {
     const comparisonFile = readComparisonFile(this.outputPath);
 
     // Read TokenRecord files, parse into JSON
-    const baseRecords = comparisonFile.records.tokenRecords.base;
-    const branchRecords = comparisonFile.records.tokenRecords.branch;
+    const tokenRecordsBase = comparisonFile.records.tokenRecords.base;
+    const tokenRecordsBranch = comparisonFile.records.tokenRecords.branch;
 
-    compareMarketValueRecords(baseRecords, branchRecords, comparisonFile);
-    compareLiquidBackingRecords(baseRecords, branchRecords, comparisonFile);
+    const tokenSuppliesBase = comparisonFile.records.tokenSupplies.base;
+    const tokenSuppliesBranch = comparisonFile.records.tokenSupplies.branch;
 
-    // Get TokenSupply and OHM price
+    compareMarketValueRecords(tokenRecordsBase, tokenRecordsBranch, comparisonFile);
+    compareLiquidBackingRecords(tokenRecordsBase, tokenRecordsBranch, comparisonFile);
+
+    // Get OHM price
     const subgraphId = comparisonFile.branches.branch.subgraphId;
     const block = comparisonFile.latestBlock;
-    getTokenSupplies(subgraphId, block).then((branchTokenSupplies) => {
-      getOhmPrice(subgraphId, block).then((ohmPrice) => {
-        doLiquidBackingCheck(branchRecords, branchTokenSupplies, ohmPrice, comparisonFile);
-        doMarketValueCheck(branchRecords, comparisonFile);
-        combineOutput(this.network, comparisonFile);
+    const ohmPrice = await getOhmPrice(subgraphId, block);
 
-        writeComparisonFile(comparisonFile, this.outputPath);
-      });
-    });
+    doLiquidBackingCheck(tokenRecordsBranch, tokenSuppliesBranch, ohmPrice, comparisonFile);
+    doMarketValueCheck(tokenRecordsBranch, comparisonFile);
+    combineOutput(this.network, comparisonFile);
+
+    writeComparisonFile(comparisonFile, this.outputPath);
   }
 }

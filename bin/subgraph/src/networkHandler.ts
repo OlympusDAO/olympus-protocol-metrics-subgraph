@@ -27,13 +27,13 @@ export class BaseNetworkHandler implements NetworkHandler {
     this.outputPath = outputPath;
   }
 
-  public doLatestBlock(): void {
+  public async doLatestBlock(): Promise<void> {
     throw new Error("Method not implemented.");
   }
-  public doQuery(): void {
+  public async doQuery(): Promise<void> {
     throw new Error("Method not implemented.");
   }
-  public doComparison(): void {
+  public async doComparison(): Promise<void> {
     throw new Error("Method not implemented.");
   }
 }

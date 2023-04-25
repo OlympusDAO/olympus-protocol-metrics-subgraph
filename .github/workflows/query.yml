@@ -91,6 +91,13 @@ jobs:
         with:
           node-version: "16"
           cache: "yarn"
+      # Looks for an existing comment, so it can be updated
+      - name: Find Existing Comment
+        uses: peter-evans/find-comment@v2
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body-includes: ${{ matrix.subgraph }}
       - name: Install
         run: |
           yarn install --frozen-lockfile
@@ -117,6 +124,7 @@ jobs:
       - name: Post Comment
         uses: peter-evans/create-or-update-comment@v2
         with:
+          comment-id: ${{ steps.fc.outputs.comment-id }} # If no comment exists, a new comment will be created
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ${{ env.OUTPUT }}
