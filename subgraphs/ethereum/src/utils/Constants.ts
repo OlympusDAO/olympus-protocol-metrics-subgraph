@@ -114,19 +114,22 @@ export const EULER_ADDRESS = "0x27182842E098f60e3D576794A5bFFb0777E025d3".toLowe
 export const SILO_ADDRESS = "0xb2374f84b3cEeFF6492943Df613C9BcF45322a0c".toLowerCase();
 
 /**
- * Defines the contract addresses that belong to the protocol & treasury.
+ * Defines the contract addresses that belong to the protocol & DAO treasuries.
  * 
  * This is normally deducted from total supply to determine circulating supply.
  * 
- * Myso and Vendor Finance contracts are NOT included in here, as the deployed amounts are hard-coded.
+ * The following are not included:
+ * - Myso and Vendor Finance: the deployed amounts are hard-coded.
+ * - Migration Contract: the migration offset is used to indicate the protocol-owned OHM. 
+ * Additionally, the OHM and gOHM in the migration contract is pre-minted for v1 -> v2 migrations,
+ * and is not owned by the protocol or DAO.
+ * - Olympus Association: not considered part of the protocol or DAO treasuries.
  */
 export const CIRCULATING_SUPPLY_WALLETS = [
   BONDS_DEPOSIT,
   BONDS_INVERSE_DEPOSIT,
   DAO_WALLET,
   DAO_WORKING_CAPITAL,
-  // MIGRATION_CONTRACT, // Ignored as the migration offset is used
-  OLYMPUS_ASSOCIATION_WALLET,
   OTC_ESCROW,
   TREASURY_ADDRESS_V1,
   TREASURY_ADDRESS_V2,
