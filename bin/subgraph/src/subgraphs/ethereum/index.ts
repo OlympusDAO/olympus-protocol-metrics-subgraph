@@ -2,6 +2,9 @@ import { BaseNetworkHandler } from "../../networkHandler";
 import { getOhmPrice, getTestBlock, getTokenRecords, getTokenSupplies } from "../../subgraph";
 import {
   combineOutput,
+  compareBackedSupplyRecords,
+  compareCirculatingSupplyRecords,
+  compareFloatingSupplyRecords,
   compareLiquidBackingRecords,
   compareMarketValueRecords,
   doLiquidBackingCheck,
@@ -56,6 +59,11 @@ export default class EthereumHandler extends BaseNetworkHandler {
 
     doLiquidBackingCheck(tokenRecordsBranch, tokenSuppliesBranch, ohmPrice, comparisonFile);
     doMarketValueCheck(tokenRecordsBranch, comparisonFile);
+
+    compareCirculatingSupplyRecords(tokenSuppliesBase, tokenSuppliesBranch, comparisonFile);
+    compareFloatingSupplyRecords(tokenSuppliesBase, tokenSuppliesBranch, comparisonFile);
+    compareBackedSupplyRecords(tokenSuppliesBase, tokenSuppliesBranch, comparisonFile);
+
     combineOutput(this.network, comparisonFile);
 
     writeComparisonFile(comparisonFile, this.outputPath);

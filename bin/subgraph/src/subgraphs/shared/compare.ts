@@ -140,22 +140,32 @@ export const combineOutput = (network: string, comparisonFile: ComparisonResults
     { full: true },
   );
 
-  comparisonFile.results.output = `**Network:** ${network}
-  **Block Tested:** ${comparisonFile.latestBlock}
-  
-  **Subgraph Id:**
-  Base: ${comparisonFile.branches.base.subgraphId}
-  Branch: ${comparisonFile.branches.branch.subgraphId}
-  
-  ${comparisonFile.results.marketValue.output}
+  /**
+   * NOTE: The indentation of the code block is important.
+   */
+  comparisonFile.results.output = `
+**Network:** ${network}
+**Block Tested:** ${comparisonFile.latestBlock}
 
-  ${comparisonFile.results.liquidBacking.output}
+**Subgraph Id:**
+Base: ${comparisonFile.branches.base.subgraphId}
+Branch: ${comparisonFile.branches.branch.subgraphId}
 
-  ${comparisonFile.results.marketValueCheck.output}
+## Asset Records
+${comparisonFile.results.marketValue.output}
 
-  **Diff of TokenRecords:**
-  \`\`\`diff
+${comparisonFile.results.liquidBacking.output}
+
+${comparisonFile.results.marketValueCheck.output}
+
+<details>
+  <summary>Diff of TokenRecord</summary>
+
+\`\`\`diff
   ${recordsDiff}
-  \`\`\`
-  `;
+
+\`\`\`
+  
+</details>
+`;
 };
