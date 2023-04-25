@@ -723,6 +723,9 @@ export function getFloatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
  * - minus: pre-minted OHM for bonds
  * - minus: OHM user deposits for bonds
  * - minus: OHM in boosted liquidity vaults
+ * 
+ * OHM represented by vesting bond tokens (type `TYPE_BONDS_VESTING_TOKENS`) is not included in the circulating supply, as it is
+ * owned by users and not the protocol.
  */
 export function getCirculatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
   let total = BigDecimal.zero();
