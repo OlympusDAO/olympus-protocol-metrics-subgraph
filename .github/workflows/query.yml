@@ -120,7 +120,7 @@ jobs:
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}
-          body-includes: 'Network: ${{ matrix.subgraph }}'
+          body-includes: '**Network**: ${{ matrix.subgraph }}'
       - name: Post Comment
         uses: peter-evans/create-or-update-comment@v2
         with:
