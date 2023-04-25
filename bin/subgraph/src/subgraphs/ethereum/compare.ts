@@ -274,47 +274,51 @@ export const combineOutput = (network: string, comparisonFile: ComparisonResults
     { full: true, color: false },
   );
 
-  comparisonFile.results.output = `**Network:** ${network}
-  **Block Tested:** ${comparisonFile.latestBlock}
+  /**
+   * NOTE: The indentation of the code block is important.
+   */
+  comparisonFile.results.output = `
+**Network:** ${network}
+**Block Tested:** ${comparisonFile.latestBlock}
+
+**Subgraph Id:**
+Base: ${comparisonFile.branches.base.subgraphId}
+Branch: ${comparisonFile.branches.branch.subgraphId}
+
+## Asset Records
+${comparisonFile.results.marketValue.output}
+
+${comparisonFile.results.liquidBacking.output}
+
+${comparisonFile.results.marketValueCheck.output}
+
+${comparisonFile.results.liquidBackingCheck.output}
+
+<details>
+  <summary>Diff of TokenRecord</summary>
+
+\`\`\`diff
+  ${recordsDiff}
+
+\`\`\`
   
-  **Subgraph Id:**
-  Base: ${comparisonFile.branches.base.subgraphId}
-  Branch: ${comparisonFile.branches.branch.subgraphId}
-  
-  ## Asset Records
-  ${comparisonFile.results.marketValue.output}
+</details>
 
-  ${comparisonFile.results.liquidBacking.output}
+## Supply Records
+${comparisonFile.results.circulatingSupply.output}
 
-  ${comparisonFile.results.marketValueCheck.output}
+${comparisonFile.results.floatingSupply.output}
 
-  ${comparisonFile.results.liquidBackingCheck.output}
+${comparisonFile.results.backedSupply.output}
 
-  <details>
-    <summary>Diff of TokenRecord</summary>
+<details>
+  <summary>Diff of TokenSupply</summary>
 
-    \`\`\`diff
-    ${recordsDiff}
+\`\`\`diff
+  ${supplyDiff}
 
-    \`\`\`
-    
-  </details>
+\`\`\`
 
-  ## Supply Records
-  ${comparisonFile.results.circulatingSupply.output}
-
-  ${comparisonFile.results.floatingSupply.output}
-
-  ${comparisonFile.results.backedSupply.output}
-
-  <details>
-    <summary>Diff of TokenSupply</summary>
-
-    \`\`\`diff
-    ${supplyDiff}
-    
-    \`\`\`
-
-  </details>
-  `;
+</details>
+`;
 };
