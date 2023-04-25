@@ -2,6 +2,7 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { getCurrentIndex } from "../../../shared/src/supply/OhmCalculations";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { OLYMPUS_ASSOCIATION_WALLET } from "../../../shared/src/Wallets";
 import { BondManager } from "../../generated/ProtocolMetrics/BondManager";
 import { OlympusBoostedLiquidityRegistry } from "../../generated/ProtocolMetrics/OlympusBoostedLiquidityRegistry";
 import { OlympusBoostedLiquidityVaultLido } from "../../generated/ProtocolMetrics/OlympusBoostedLiquidityVaultLido";
@@ -58,6 +59,18 @@ import {
 
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
 const MIGRATION_OFFSET = "2013";
+
+/**
+ * The block from which the wallet of the Olympus Association
+ * was removed from the definition of protocol- and DAO-owned wallets.
+ */
+const OLYMPUS_ASSOCIATION_BLOCK = "17115000";
+
+/**
+ * The block from which gOHM in protocol- and DAO-owned wallets
+ * was considered.
+ */
+const GOHM_INDEXING_BLOCK = "17115000";
 
 /**
  * Returns the total supply of the latest version of the OHM contract
@@ -362,7 +375,7 @@ export function getMintedBorrowableOHMRecords(timestamp: BigInt, blockNumber: Bi
  * Circulating supply is defined as:
  * - OHM total supply
  * - subtract: OHM in {CIRCULATING_SUPPLY_WALLETS} (treasury, bonds, migration contract, DAO wallet, lending markets)
- * - subtract; OHM represented by gOHM in {CIRCULATING_SUPPLY_WALLETS}
+ * - subtract: OHM represented by gOHM in {CIRCULATING_SUPPLY_WALLETS}
  * - subtract: migration offset
  *
  * @param blockNumber the current block number
@@ -373,9 +386,14 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
   const isV2Contract = blockNumber.gt(BigInt.fromString(ERC20_OHM_V2_BLOCK));
   const ohmContractAddress = isV2Contract ? ERC20_OHM_V2 : ERC20_OHM_V1;
   const records: TokenSupply[] = [];
+  const wallets = [...CIRCULATING_SUPPLY_WALLETS];
+  // Add the Olympus Association wallet if before the milestone
+  if (blockNumber.lt(BigInt.fromString(OLYMPUS_ASSOCIATION_BLOCK))) {
+    wallets.push(OLYMPUS_ASSOCIATION_WALLET);
+  }
 
-  for (let i = 0; i < CIRCULATING_SUPPLY_WALLETS.length; i++) {
-    const currentWallet = CIRCULATING_SUPPLY_WALLETS[i];
+  for (let i = 0; i < wallets.length; i++) {
+    const currentWallet = wallets[i];
     const balance = getERC20DecimalBalance(ohmContractAddress, currentWallet, blockNumber);
     if (balance.equals(BigDecimal.zero())) continue;
 
@@ -396,59 +414,62 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
     );
   }
 
-  const ohmIndex: BigDecimal = getCurrentIndex(blockNumber);
+  // Index sOHM and gOHM if after the milestone
+  if (blockNumber.ge(BigInt.fromString(GOHM_INDEXING_BLOCK))) {
+    const ohmIndex: BigDecimal = getCurrentIndex(blockNumber);
 
-  // sOHM
-  for (let i = 0; i < CIRCULATING_SUPPLY_WALLETS.length; i++) {
-    const currentWallet = CIRCULATING_SUPPLY_WALLETS[i];
+    // sOHM
+    for (let i = 0; i < wallets.length; i++) {
+      const currentWallet = wallets[i];
 
-    const balance = getERC20DecimalBalance(ERC20_SOHM_V3, currentWallet, blockNumber);
-    if (balance.equals(BigDecimal.zero())) continue;
+      const balance = getERC20DecimalBalance(ERC20_SOHM_V3, currentWallet, blockNumber);
+      if (balance.equals(BigDecimal.zero())) continue;
 
-    // Derive the OHM balance
-    const ohmBalance = ohmIndex.times(balance);
+      // Derive the OHM balance
+      const ohmBalance = ohmIndex.times(balance);
 
-    records.push(
-      createOrUpdateTokenSupply(
-        timestamp,
-        `${getContractName(ERC20_OHM_V2)} in sOHM v3`,
-        ERC20_OHM_V2,
-        null,
-        null,
-        getContractName(currentWallet),
-        currentWallet,
-        TYPE_TREASURY,
-        ohmBalance,
-        blockNumber,
-        -1, // Subtract
-      ),
-    );
-  }
+      records.push(
+        createOrUpdateTokenSupply(
+          timestamp,
+          `${getContractName(ERC20_OHM_V2)} in sOHM v3`,
+          ERC20_OHM_V2,
+          null,
+          null,
+          getContractName(currentWallet),
+          currentWallet,
+          TYPE_TREASURY,
+          ohmBalance,
+          blockNumber,
+          -1, // Subtract
+        ),
+      );
+    }
 
-  // gOHM
-  for (let i = 0; i < CIRCULATING_SUPPLY_WALLETS.length; i++) {
-    const currentWallet = CIRCULATING_SUPPLY_WALLETS[i];
-    const balance = getERC20DecimalBalance(ERC20_GOHM, currentWallet, blockNumber);
-    if (balance.equals(BigDecimal.zero())) continue;
+    // gOHM
+    for (let i = 0; i < wallets.length; i++) {
+      const currentWallet = wallets[i];
+      const balance = getERC20DecimalBalance(ERC20_GOHM, currentWallet, blockNumber);
+      if (balance.equals(BigDecimal.zero())) continue;
 
-    // Derive the OHM balance
-    const ohmBalance = ohmIndex.times(balance);
+      // Derive the OHM balance
+      const ohmBalance = ohmIndex.times(balance);
 
-    records.push(
-      createOrUpdateTokenSupply(
-        timestamp,
-        `${getContractName(ERC20_OHM_V2)} in gOHM`,
-        ERC20_OHM_V2,
-        null,
-        null,
-        getContractName(currentWallet),
-        currentWallet,
-        TYPE_TREASURY,
-        ohmBalance,
-        blockNumber,
-        -1, // Subtract
-      ),
-    );
+      records.push(
+        createOrUpdateTokenSupply(
+          timestamp,
+          `${getContractName(ERC20_OHM_V2)} in gOHM`,
+          ERC20_OHM_V2,
+          null,
+          null,
+          getContractName(currentWallet),
+          currentWallet,
+          TYPE_TREASURY,
+          ohmBalance,
+          blockNumber,
+          -1, // Subtract
+        ),
+      );
+    }
   }
 
   // Migration offset

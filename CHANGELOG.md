@@ -1,5 +1,11 @@
 # Subgraph Changelog
 
+## 4.6.0 (2023-03-25)
+
+- Include the OHM requivalent of gOHM and sOHM in protocol- and DAO-owned wallets when calculating supply metrics.
+- Remove the Olympus Association wallet from being included in supply metrics, as it is not protocol- or DAO-owned.
+- The above two changes apply to metric values calculated after `GOHM_INDEXING_BLOCK`, to maintain auditability of historical data and reports.
+
 ## 4.5.1 (2023-03-24)
 
 - Removes OHM (and variants) in the DAO working capital address from being listed as in the treasury
