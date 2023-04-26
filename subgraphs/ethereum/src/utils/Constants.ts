@@ -678,18 +678,18 @@ export const CONVEX_ALLOCATORS = [
   DAO_WALLET,
 ];
 
-const DAO_WALLET_BLACKLIST = new Map<string, string[]>();
+const TREASURY_BLACKLIST = new Map<string, string[]>();
 
 /**
  * OHM and gOHM in the following wallets are blacklisted (not indexed) as they are not part of the treasury (DAO wallet, association wallet),
  * or is OHM that is due to be burned (bonds).
  */
-DAO_WALLET_BLACKLIST.set(ERC20_OHM_V1, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
-DAO_WALLET_BLACKLIST.set(ERC20_OHM_V2, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
-DAO_WALLET_BLACKLIST.set(ERC20_GOHM, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
-DAO_WALLET_BLACKLIST.set(ERC20_SOHM_V1, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
-DAO_WALLET_BLACKLIST.set(ERC20_SOHM_V2, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
-DAO_WALLET_BLACKLIST.set(ERC20_SOHM_V3, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
+TREASURY_BLACKLIST.set(ERC20_OHM_V1, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
+TREASURY_BLACKLIST.set(ERC20_OHM_V2, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
+TREASURY_BLACKLIST.set(ERC20_GOHM, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
+TREASURY_BLACKLIST.set(ERC20_SOHM_V1, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
+TREASURY_BLACKLIST.set(ERC20_SOHM_V2, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
+TREASURY_BLACKLIST.set(ERC20_SOHM_V3, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
 
 /**
  * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
@@ -705,14 +705,14 @@ export const getWalletAddressesForContract = (contractAddress: string): string[]
   const walletAddresses = WALLET_ADDRESSES.slice(0);
 
   // If the contract isn't on the blacklist, return as normal
-  if (!DAO_WALLET_BLACKLIST.has(contractAddress.toLowerCase())) {
-    log.debug("getWalletAddressesForContract: token {} is not on DAO wallet blacklist", [contractAddress]);
+  if (!TREASURY_BLACKLIST.has(contractAddress.toLowerCase())) {
+    log.debug("getWalletAddressesForContract: token {} is not on treasury blacklist", [contractAddress]);
     return walletAddresses;
   }
 
   // Otherwise remove the values in the blacklist
   // AssemblyScript doesn't yet have closures, so filter() cannot be used
-  const walletBlacklist = DAO_WALLET_BLACKLIST.get(contractAddress.toLowerCase());
+  const walletBlacklist = TREASURY_BLACKLIST.get(contractAddress.toLowerCase());
   for (let i = 0; i < walletBlacklist.length; i++) {
     // If the blacklisted address is not in the array, skip
     const arrayIndex = walletAddresses.indexOf(walletBlacklist[i]);
