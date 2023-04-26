@@ -383,7 +383,13 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
   const ohmContractAddress = isV2Contract ? ERC20_OHM_V2 : ERC20_OHM_V1;
   const records: TokenSupply[] = [];
 
-  // Make a copy of the array
+  /**
+   * Make a copy of the circulating wallets array
+   * 
+   * NOTE: this deliberately does not use the `getWalletAddressesForContract` function, 
+   * as that blacklists all OHM variants in treasury wallets, so that they are not added
+   * to the market value
+   */
   const wallets = new Array<string>();
   for (let i = 0; i < CIRCULATING_SUPPLY_WALLETS.length; i++) {
     wallets.push(CIRCULATING_SUPPLY_WALLETS[i]);
