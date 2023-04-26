@@ -5,6 +5,7 @@ import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, B
 
 export const BLOCKCHAIN = "Arbitrum";
 
+export const ERC20_ARB = "0x912ce59144191c1204e64559fe8253a0e49e6548".toLowerCase();
 export const ERC20_FRAX = "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F".toLowerCase();
 export const ERC20_GOHM = "0x8D9bA570D6cb60C7e3e0F31343Efe75AB8E65FB1".toLowerCase(); // Not added to ERC20_TOKENS_ARBITRUM
 export const ERC20_JONES = "0x10393c20975cf177a3513071bc110f7962cd67da".toLowerCase();
@@ -19,6 +20,7 @@ export const LP_UNISWAP_V2_GOHM_WETH = "0xaa5bd49f2162ffdc15634c87a77ac67bd51c6a
 export const LP_UNISWAP_V2_JONES_GOHM_GOHM = "0x292d1587a6bb37e34574c9ad5993f221d8a5616c".toLowerCase();
 export const LP_UNISWAP_V2_JONES_WETH = "0xe8ee01ae5959d3231506fcdef2d5f3e85987a39c".toLowerCase();
 export const LP_UNISWAP_V2_MAGIC_WETH = "0xb7e50106a5bd3cf21af210a755f9c8740890a8c9".toLowerCase();
+export const LP_UNISWAP_V3_ARB_WETH = "0xc6f780497a95e246eb9449f5e4770916dcd6396a".toLowerCase();
 export const LP_UNISWAP_V3_WETH_USDC = "0xc31e54c7a869b9fcbecc14363cf510d1c41fa443".toLowerCase();
 
 export const BALANCER_VAULT = "0xBA12222222228d8Ba445958a75a0704d566BF2C8".toLowerCase();
@@ -29,6 +31,7 @@ export const JONES_STAKING_POOL_IDS: u64[] = [0];
 export const TREASURE_ATLAS_MINE = "0xa0a89db1c899c49f98e6326b764bafcf167fc2ce".toLowerCase();
 
 export const ERC20_TOKENS_ARBITRUM = new Map<string, TokenDefinition>();
+ERC20_TOKENS_ARBITRUM.set(ERC20_ARB, new TokenDefinition(ERC20_ARB, TokenCategoryVolatile, true, false));
 ERC20_TOKENS_ARBITRUM.set(ERC20_FRAX, new TokenDefinition(ERC20_FRAX, TokenCategoryStable, true, false));
 ERC20_TOKENS_ARBITRUM.set(ERC20_JONES, new TokenDefinition(ERC20_JONES, TokenCategoryVolatile, true, false, BigDecimal.fromString("0.83")));
 ERC20_TOKENS_ARBITRUM.set(ERC20_MAGIC, new TokenDefinition(ERC20_MAGIC, TokenCategoryVolatile, true, false));
@@ -42,6 +45,7 @@ ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V2_GOHM_WETH, new TokenDefinition(LP_UNISWA
 ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V2_JONES_GOHM_GOHM, new TokenDefinition(LP_UNISWAP_V2_JONES_GOHM_GOHM, TokenCategoryPOL, true, false));
 ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V2_JONES_WETH, new TokenDefinition(LP_UNISWAP_V2_JONES_WETH, TokenCategoryPOL, true, false));
 ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V2_MAGIC_WETH, new TokenDefinition(LP_UNISWAP_V2_MAGIC_WETH, TokenCategoryPOL, true, false));
+ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V3_ARB_WETH, new TokenDefinition(LP_UNISWAP_V3_ARB_WETH, TokenCategoryPOL, true, false));
 ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V3_WETH_USDC, new TokenDefinition(LP_UNISWAP_V3_WETH_USDC, TokenCategoryPOL, true, false));
 
 export const OHM_TOKENS = [ERC20_GOHM];
@@ -62,6 +66,7 @@ CONTRACT_NAME_MAP.set(CROSS_CHAIN_ARBITRUM, "Cross-Chain Arbitrum");
 CONTRACT_NAME_MAP.set(CROSS_CHAIN_FANTOM, "Cross-Chain Fantom");
 CONTRACT_NAME_MAP.set(CROSS_CHAIN_POLYGON, "Cross-Chain Polygon");
 CONTRACT_NAME_MAP.set(DAO_WALLET, "DAO Wallet");
+CONTRACT_NAME_MAP.set(ERC20_ARB, "Arbitrum");
 CONTRACT_NAME_MAP.set(ERC20_FRAX, "FRAX");
 CONTRACT_NAME_MAP.set(ERC20_GOHM, "Governance OHM");
 CONTRACT_NAME_MAP.set(ERC20_JONES, "JonesDAO");
@@ -76,6 +81,7 @@ CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_GOHM_WETH, "UniswapV2 gOHM-wETH Liquidity Po
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_JONES_GOHM_GOHM, "UniswapV2 jgOHM-gOHM Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_JONES_WETH, "UniswapV2 JONES-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_MAGIC_WETH, "UniswapV2 MAGIC-wETH Liquidity Pool");
+CONTRACT_NAME_MAP.set(LP_UNISWAP_V3_ARB_WETH, "UniswapV3 ARB-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V3_WETH_USDC, "UniswapV3 wETH-USDC Liquidity Pool");
 CONTRACT_NAME_MAP.set(LUSD_ALLOCATOR, "LUSD Allocator");
 CONTRACT_NAME_MAP.set(RARI_ALLOCATOR, "Rari Allocator");
@@ -86,6 +92,7 @@ CONTRACT_NAME_MAP.set(TREASURY_ADDRESS_V3, "Treasury Wallet V3");
 CONTRACT_NAME_MAP.set(VEFXS_ALLOCATOR, "VeFXS Allocator");
 
 export const CONTRACT_ABBREVIATION_MAP = new Map<string, string>();
+CONTRACT_ABBREVIATION_MAP.set(ERC20_ARB, "ARB");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_GOHM, "gOHM");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_JONES, "JONES");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_MAGIC, "MAGIC");

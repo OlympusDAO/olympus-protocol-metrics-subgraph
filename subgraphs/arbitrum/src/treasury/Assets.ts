@@ -4,6 +4,7 @@ import {
   TokenCategoryStable,
   TokenCategoryVolatile,
 } from "../../../shared/src/contracts/TokenDefinition";
+import { FundsDeposited } from "../../generated/TokenRecords-arbitrum/GelatoTaskTreasury";
 import { getOwnedLiquidityBalances } from "./OwnedLiquidity";
 import { getTokenBalances } from "./TokenBalances";
 
@@ -20,6 +21,13 @@ export function handleAssets(block: ethereum.Block): void {
   if (!block.number.mod(BigInt.fromString("86400")).equals(BigInt.zero())) {
     return;
   }
+
+  log.debug("handleAssets: *** Indexing block {}", [block.number.toString()]);
+  generateTokenRecords(block.timestamp, block.number);
+}
+
+export function handleEvent(event: FundsDeposited): void {
+  const block = event.block;
 
   log.debug("handleAssets: *** Indexing block {}", [block.number.toString()]);
   generateTokenRecords(block.timestamp, block.number);

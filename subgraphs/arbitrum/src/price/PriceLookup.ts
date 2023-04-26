@@ -8,6 +8,7 @@ import { PriceHandlerUniswapV3 } from "../../../shared/src/price/PriceHandlerUni
 import { getUSDRate } from "../../../shared/src/price/PriceRouter";
 import {
   BALANCER_VAULT,
+  ERC20_ARB,
   ERC20_FRAX,
   ERC20_GOHM,
   ERC20_JONES,
@@ -19,6 +20,7 @@ import {
   LP_UNISWAP_V2_GOHM_WETH,
   LP_UNISWAP_V2_JONES_WETH,
   LP_UNISWAP_V2_MAGIC_WETH,
+  LP_UNISWAP_V3_ARB_WETH,
   LP_UNISWAP_V3_WETH_USDC,
 } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
@@ -31,6 +33,7 @@ export const HANDLERS: PriceHandler[] = [
   new PriceHandlerUniswapV2([ERC20_JONES, ERC20_WETH], LP_UNISWAP_V2_JONES_WETH, getContractName),
   new PriceHandlerUniswapV2([ERC20_MAGIC, ERC20_WETH], LP_UNISWAP_V2_MAGIC_WETH, getContractName),
   new PriceHandlerUniswapV3([ERC20_USDC, ERC20_WETH], LP_UNISWAP_V3_WETH_USDC, getContractName),
+  new PriceHandlerUniswapV3([ERC20_ARB, ERC20_WETH], LP_UNISWAP_V3_ARB_WETH, getContractName),
 ];
 
 /**

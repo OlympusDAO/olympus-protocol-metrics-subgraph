@@ -4,8 +4,8 @@ repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 features:
   - grafting
 graft:
-  base: QmQCqqy3WASD1R8b3fsn4iTgXc7AdZUTogJJGmEFLxVecJ
-  block: 69400000 # 2023-03-13
+  base: QmUWRimfjsqDP4CKwZ2zQ8dJxyY3yee3U5hSPQmZ6D83g5
+  block: 83000000 # 2023-04-22
 schema:
   file: ../../schema.graphql
 dataSources:
@@ -13,9 +13,8 @@ dataSources:
     name: TokenRecords-arbitrum
     network: arbitrum-one
     source:
-      # We would ideally use harvest() on the PlutusJonesStaker contract, but Arbitrum's nodes do not support trace, so we can't use a call handler
-      address: "0x8D9bA570D6cb60C7e3e0F31343Efe75AB8E65FB1" # gOHM Arbitrum
-      abi: gOHM
+      address: "0xB2f34fd4C16e656163dADFeEaE4Ae0c1F13b140A"
+      abi: GelatoTaskTreasury
       startBlock: 10950000 # 2022-05-01
     mapping:
       kind: ethereum/events
@@ -43,6 +42,10 @@ dataSources:
           file: abis/JONESStaking.json
         - name: TreasureMining
           file: abis/TreasureMining.json
-      blockHandlers:
-        - handler: handleAssets
+        # For event trigger
+        - name: GelatoTaskTreasury
+          file: abis/GelatoTaskTreasury.json
+      eventHandlers:
+        - event: FundsDeposited(indexed address,indexed address,indexed uint256)
+          handler: handleEvent
       file: ./src/treasury/Assets.ts
