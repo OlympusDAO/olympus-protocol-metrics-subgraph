@@ -5,6 +5,7 @@ import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition"
 import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
+import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { ERC20 } from "../../generated/PriceSnapshot/ERC20";
 import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolToken";
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
@@ -23,7 +24,6 @@ import {
   getBalancerGaugeBalancesFromWallets,
 } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
-import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
 function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): BalancerVault {
   return BalancerVault.bind(Address.fromString(vaultAddress));

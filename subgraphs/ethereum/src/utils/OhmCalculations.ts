@@ -4,6 +4,7 @@ import { TokenSupply } from "../../../shared/generated/schema";
 import { getCurrentIndex } from "../../../shared/src/supply/OhmCalculations";
 import { pushTokenSupplyArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { createOrUpdateTokenSupply, TYPE_BONDS_DEPOSITS, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_VESTING_TOKENS, TYPE_BOOSTED_LIQUIDITY_VAULT, TYPE_LENDING, TYPE_LIQUIDITY, TYPE_OFFSET, TYPE_TOTAL_SUPPLY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { OLYMPUS_ASSOCIATION_WALLET } from "../../../shared/src/Wallets";
 import { BondManager } from "../../generated/ProtocolMetrics/BondManager";
 import { OlympusBoostedLiquidityRegistry } from "../../generated/ProtocolMetrics/OlympusBoostedLiquidityRegistry";
@@ -44,19 +45,6 @@ import {
 import { LendingMarketDeployment } from "./LendingMarketDeployment";
 import { PairHandlerTypes } from "./PairHandler";
 import { getUSDRate } from "./Price";
-import {
-  createOrUpdateTokenSupply,
-  TYPE_BONDS_DEPOSITS,
-  TYPE_BONDS_PREMINTED,
-  TYPE_BONDS_VESTING_DEPOSITS,
-  TYPE_BONDS_VESTING_TOKENS,
-  TYPE_BOOSTED_LIQUIDITY_VAULT,
-  TYPE_LENDING,
-  TYPE_LIQUIDITY,
-  TYPE_OFFSET,
-  TYPE_TOTAL_SUPPLY,
-  TYPE_TREASURY,
-} from "./TokenSupplyHelper";
 
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
 const MIGRATION_OFFSET = "2013";

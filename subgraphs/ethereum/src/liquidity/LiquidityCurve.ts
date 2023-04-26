@@ -5,6 +5,7 @@ import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
 import { TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createOrUpdateTokenRecord, getTokenCategory } from "../../../shared/src/utils/TokenRecordHelper";
+import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
 import { CurvePoolV2 } from "../../generated/ProtocolMetrics/CurvePoolV2";
 import { ERC20TokenSnapshot, PoolSnapshot } from "../../generated/schema";
@@ -23,7 +24,6 @@ import {
 } from "../utils/Constants";
 import { getConvexStakedBalance, getERC20, getFraxLockedBalance } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
-import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
 /**
  * Determines the address of the ERC20 token for a Curve liquidity pair.

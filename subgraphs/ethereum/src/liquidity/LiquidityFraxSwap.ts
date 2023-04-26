@@ -4,6 +4,7 @@ import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
 import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
+import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { FraxSwapPool } from "../../generated/ProtocolMetrics/FraxSwapPool";
 import { PoolSnapshot } from "../../generated/schema";
 import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
@@ -16,7 +17,6 @@ import {
   liquidityPairHasToken,
 } from "../utils/Constants";
 import { getUSDRate } from "../utils/Price";
-import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
 /**
  * Returns a PoolSnapshot, which contains cached data about the Frax pool. This
