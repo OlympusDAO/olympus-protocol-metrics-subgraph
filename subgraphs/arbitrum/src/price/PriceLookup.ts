@@ -25,7 +25,7 @@ import {
 } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 
-export const HANDLERS: PriceHandler[] = [
+export const PRICE_HANDLERS: PriceHandler[] = [
   // new PriceHandlerBalancer([ERC20_MAGIC, ERC20_USDC], BALANCER_VAULT, LP_BALANCER_POOL_MAGIC_USDC, getContractName), // DO NOT enable: will cause infinite loop: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph/issues/94
   new PriceHandlerBalancer([ERC20_WETH, ERC20_VSTA], BALANCER_VAULT, LP_BALANCER_POOL_WETH_VESTA, getContractName),
   new PriceHandlerStablecoin([ERC20_FRAX, ERC20_USDC], getContractName),
@@ -52,7 +52,7 @@ export function getPriceRecursive(
   currentPool: string | null,
 ): PriceLookupResult | null {
   log.debug("Determining price for {} ({}) and current pool id {}", [getContractName(tokenAddress), tokenAddress, currentPool ? currentPool : ""]);
-  return getUSDRate(tokenAddress, HANDLERS, getPriceRecursive, block, currentPool);
+  return getUSDRate(tokenAddress, PRICE_HANDLERS, getPriceRecursive, block, currentPool);
 }
 
 /**
