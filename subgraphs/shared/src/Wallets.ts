@@ -6,6 +6,12 @@ export const TREASURY_ADDRESS_V2 = "0x31f8cc382c9898b273eff4e0b7626a6987c846e8".
 export const TREASURY_ADDRESS_V3 = "0x9A315BdF513367C0377FB36545857d12e85813Ef".toLowerCase();
 
 export const BONDS_DEPOSIT = "0x9025046c6fb25Fb39e720d97a8FD881ED69a1Ef6".toLowerCase();
+
+/**
+ * OHM in this contract is considered burned
+ * Excluded from treasury market value (double-counting otherwise)
+ * Included in calculations of protocol-owned OHM
+ */
 export const BONDS_INVERSE_DEPOSIT = "0xBA42BE149e5260EbA4B82418A6306f55D532eA47".toLowerCase();
 
 // TODO consider if allocators should be in shared/ or ethereum/
