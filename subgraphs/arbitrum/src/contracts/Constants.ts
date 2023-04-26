@@ -7,7 +7,7 @@ export const BLOCKCHAIN = "Arbitrum";
 
 export const ERC20_ARB = "0x912ce59144191c1204e64559fe8253a0e49e6548".toLowerCase();
 export const ERC20_FRAX = "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F".toLowerCase();
-export const ERC20_GOHM = "0x8D9bA570D6cb60C7e3e0F31343Efe75AB8E65FB1".toLowerCase(); // Not added to ERC20_TOKENS_ARBITRUM
+export const ERC20_GOHM_SYNAPSE = "0x8D9bA570D6cb60C7e3e0F31343Efe75AB8E65FB1".toLowerCase(); // Not added to ERC20_TOKENS_ARBITRUM
 export const ERC20_JONES = "0x10393c20975cf177a3513071bc110f7962cd67da".toLowerCase();
 export const ERC20_MAGIC = "0x539bde0d7dbd336b79148aa742883198bbf60342".toLowerCase();
 export const ERC20_USDC = "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8".toLowerCase();
@@ -48,7 +48,7 @@ ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V2_MAGIC_WETH, new TokenDefinition(LP_UNISW
 ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V3_ARB_WETH, new TokenDefinition(LP_UNISWAP_V3_ARB_WETH, TokenCategoryPOL, true, false));
 ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V3_WETH_USDC, new TokenDefinition(LP_UNISWAP_V3_WETH_USDC, TokenCategoryPOL, true, false));
 
-export const OHM_TOKENS = [ERC20_GOHM];
+export const OHM_TOKENS = [ERC20_GOHM_SYNAPSE];
 
 const TREASURY_BLACKLIST = new Map<string, string[]>();
 
@@ -56,7 +56,7 @@ const TREASURY_BLACKLIST = new Map<string, string[]>();
  * OHM and gOHM in the following wallets are blacklisted (not indexed) as we do not want the value
  * being considered as part of the protocol or DAO treasuries.
  */
-TREASURY_BLACKLIST.set(ERC20_GOHM, WALLET_ADDRESSES);
+TREASURY_BLACKLIST.set(ERC20_GOHM_SYNAPSE, WALLET_ADDRESSES);
 
 /**
  * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
@@ -113,7 +113,7 @@ CONTRACT_NAME_MAP.set(CROSS_CHAIN_POLYGON, "Cross-Chain Polygon");
 CONTRACT_NAME_MAP.set(DAO_WALLET, "Treasury MS (Formerly DAO Wallet)");
 CONTRACT_NAME_MAP.set(ERC20_ARB, "Arbitrum");
 CONTRACT_NAME_MAP.set(ERC20_FRAX, "FRAX");
-CONTRACT_NAME_MAP.set(ERC20_GOHM, "Governance OHM");
+CONTRACT_NAME_MAP.set(ERC20_GOHM_SYNAPSE, "Governance OHM (Synapse)");
 CONTRACT_NAME_MAP.set(ERC20_JONES, "JonesDAO");
 CONTRACT_NAME_MAP.set(ERC20_MAGIC, "TreasureDAO");
 CONTRACT_NAME_MAP.set(ERC20_USDC, "USDC");
@@ -138,7 +138,7 @@ CONTRACT_NAME_MAP.set(VEFXS_ALLOCATOR, "VeFXS Allocator");
 
 export const CONTRACT_ABBREVIATION_MAP = new Map<string, string>();
 CONTRACT_ABBREVIATION_MAP.set(ERC20_ARB, "ARB");
-CONTRACT_ABBREVIATION_MAP.set(ERC20_GOHM, "gOHM");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_GOHM_SYNAPSE, "gOHM");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_JONES, "JONES");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_MAGIC, "MAGIC");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_VSTA, "VSTA");
