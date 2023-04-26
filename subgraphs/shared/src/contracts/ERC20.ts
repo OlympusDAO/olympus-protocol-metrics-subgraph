@@ -56,6 +56,13 @@ export function getBalance(
   return balance;
 }
 
+export function getERC20DecimalBalance(tokenAddress: string, sourceAddress: string, blockNumber: BigInt, contractLookup: ContractNameLookup): BigDecimal {
+  const contract = ERC20.bind(Address.fromString(tokenAddress));
+  const balance: BigInt = contract.balanceOf(Address.fromString(sourceAddress));
+
+  return toDecimal(balance, contract.decimals());
+}
+
 /**
  * Fetches the balance of the given ERC20 token from the
  * specified wallet.
