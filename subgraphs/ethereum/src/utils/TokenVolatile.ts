@@ -2,7 +2,7 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
 import { TokenCategoryVolatile } from "../../../shared/src/contracts/TokenDefinition";
-import { pushArray } from "../../../shared/src/utils/ArrayHelper";
+import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { getTokensInCategory } from "../../../shared/src/utils/TokenRecordHelper";
 import { getLiquidityBalances } from "../liquidity/LiquidityCalculations";
 import { ERC20_AURA, ERC20_FXS_VE, ERC20_LQTY, ERC20_TOKE, ERC20_TOKENS, getContractName } from "./Constants";
@@ -73,21 +73,21 @@ export function getVolatileTokenBalance(
       [getContractName(contractAddress), contractAddress],
     );
   } else {
-    pushArray(
+    pushTokenRecordArray(
       records,
       getERC20TokenRecordsFromWallets(timestamp, contractAddress, contract, rate, blockNumber),
     );
   }
 
   // Rari Allocator
-  pushArray(records, getRariAllocatorRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getRariAllocatorRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Toke Allocator
-  pushArray(records, getTokeAllocatorRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getTokeAllocatorRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Staked TOKE
   if (contractAddress.toLowerCase() == ERC20_TOKE.toLowerCase()) {
-    pushArray(
+    pushTokenRecordArray(
       records,
       getTokeStakedBalancesFromWallets(timestamp, contractAddress, rate, blockNumber),
     );
@@ -95,7 +95,7 @@ export function getVolatileTokenBalance(
 
   // Staked LQTY
   if (contractAddress.toLowerCase() == ERC20_LQTY.toLowerCase()) {
-    pushArray(
+    pushTokenRecordArray(
       records,
       getLiquityStakedBalancesFromWallets(timestamp, contractAddress, rate, blockNumber),
     );
@@ -103,49 +103,49 @@ export function getVolatileTokenBalance(
 
   // Locked AURA
   if (contractAddress.toLowerCase() == ERC20_AURA.toLowerCase()) {
-    pushArray(
+    pushTokenRecordArray(
       records,
       getAuraLockedBalancesFromWallets(timestamp, contractAddress, rate, blockNumber),
     );
   }
 
   // Tokens staked in Aura
-  pushArray(records, getAuraStakedBalancesFromWallets(timestamp, contractAddress, rate, BigDecimal.fromString("1"), blockNumber));
+  pushTokenRecordArray(records, getAuraStakedBalancesFromWallets(timestamp, contractAddress, rate, BigDecimal.fromString("1"), blockNumber));
 
   // Unlocked rlBTRFLY
-  pushArray(records, getBtrflyUnlockedBalancesFromWallets(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getBtrflyUnlockedBalancesFromWallets(timestamp, contractAddress, rate, blockNumber));
 
   // Aura earned rewards
-  pushArray(records, getAuraPoolEarnedRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getAuraPoolEarnedRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Staked Convex tokens
-  pushArray(records, getConvexStakedRecords(timestamp, contractAddress, blockNumber));
+  pushTokenRecordArray(records, getConvexStakedRecords(timestamp, contractAddress, blockNumber));
 
   // Liquity Stability Pool
-  pushArray(records, getLiquityStabilityPoolRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getLiquityStabilityPoolRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Onsen Allocator
-  pushArray(records, getOnsenAllocatorRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getOnsenAllocatorRecords(timestamp, contractAddress, rate, blockNumber));
 
   // VeFXS Allocator
-  pushArray(records, getVeFXSAllocatorRecords(timestamp, contractAddress, blockNumber));
+  pushTokenRecordArray(records, getVeFXSAllocatorRecords(timestamp, contractAddress, blockNumber));
 
   // Unlocked (but not withdrawn) vlCVX
-  pushArray(records, getVlCvxUnlockedRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getVlCvxUnlockedRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Liquidity pools
   if (includeLiquidity) {
-    pushArray(records, getLiquidityBalances(timestamp, contractAddress, blockNumber));
+    pushTokenRecordArray(records, getLiquidityBalances(timestamp, contractAddress, blockNumber));
   }
 
   // TRSRY
-  pushArray(records, getTreasuryRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getTreasuryRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Myso Finance
-  pushArray(records, getMysoFinanceRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getMysoFinanceRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Vendor Finance
-  pushArray(records, getVendorFinanceRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getVendorFinanceRecords(timestamp, contractAddress, rate, blockNumber));
 
   return records;
 }
@@ -185,7 +185,7 @@ export function getVolatileTokenBalances(
       continue;
     }
 
-    pushArray(
+    pushTokenRecordArray(
       records,
       getVolatileTokenBalance(timestamp, currentTokenAddress, includeLiquidity, blockNumber),
     );

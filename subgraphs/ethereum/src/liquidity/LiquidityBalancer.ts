@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts
 
 import { TokenRecord } from "../../../shared/generated/schema";
 import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
-import { pushArray } from "../../../shared/src/utils/ArrayHelper";
+import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { ERC20 } from "../../generated/PriceSnapshot/ERC20";
@@ -346,7 +346,7 @@ export function getBalancerRecords(
   );
 
   // Standard pool tokens
-  pushArray(
+  pushTokenRecordArray(
     records,
     getBalancerPoolTokenRecords(
       timestamp,
@@ -359,7 +359,7 @@ export function getBalancerRecords(
   );
 
   // Pool tokens deposited in a liquidity gauge
-  pushArray(
+  pushTokenRecordArray(
     records,
     getBalancerGaugeBalancesFromWallets(
       timestamp,
@@ -371,7 +371,7 @@ export function getBalancerRecords(
   );
 
   // Pool tokens staked in AURA
-  pushArray(
+  pushTokenRecordArray(
     records,
     getAuraStakedBalancesFromWallets(
       timestamp,

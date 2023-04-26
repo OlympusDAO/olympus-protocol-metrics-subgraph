@@ -21,7 +21,7 @@ export function arrayIncludesLoose(array: string[], value: string): boolean {
   return false;
 }
 
-export function pushArray(destinationArray: TokenRecord[], sourceArray: TokenRecord[]): void {
+export function pushTokenRecordArray(destinationArray: TokenRecord[], sourceArray: TokenRecord[]): void {
   for (let i = 0; i < sourceArray.length; i++) {
     destinationArray.push(sourceArray[i]);
   }

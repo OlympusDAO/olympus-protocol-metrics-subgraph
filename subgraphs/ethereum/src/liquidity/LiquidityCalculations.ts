@@ -1,7 +1,7 @@
 import { BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
-import { pushArray } from "../../../shared/src/utils/ArrayHelper";
+import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { getContractName, LIQUIDITY_OWNED } from "../utils/Constants";
 import { PairHandler, PairHandlerTypes } from "../utils/PairHandler";
 import { getBalancerRecords } from "./LiquidityBalancer";
@@ -46,12 +46,12 @@ export function getLiquidityBalances(
       pairHandler.getContract(),
     ]);
     if (pairHandler.getType() === PairHandlerTypes.UniswapV2) {
-      pushArray(
+      pushTokenRecordArray(
         records,
         getUniswapV2PairRecords(timestamp, pairHandler.getContract(), tokenAddress, blockNumber),
       );
     } else if (pairHandler.getType() === PairHandlerTypes.Curve) {
-      pushArray(
+      pushTokenRecordArray(
         records,
         getCurvePairRecords(timestamp, pairHandler.getContract(), tokenAddress, blockNumber),
       );
@@ -59,7 +59,7 @@ export function getLiquidityBalances(
       const balancerPoolId = pairHandler.getPool();
       if (balancerPoolId === null) throw new Error("Balancer pair does not have a pool id");
 
-      pushArray(
+      pushTokenRecordArray(
         records,
         getBalancerRecords(
           timestamp,
@@ -70,7 +70,7 @@ export function getLiquidityBalances(
         ),
       );
     } else if (pairHandler.getType() === PairHandlerTypes.FraxSwap) {
-      pushArray(
+      pushTokenRecordArray(
         records,
         getFraxSwapPairRecords(timestamp, pairHandler.getContract(), blockNumber, tokenAddress),
       );
@@ -94,7 +94,7 @@ export function getOwnedLiquidityPoolValue(timestamp: BigInt, blockNumber: BigIn
   log.info("getOwnedLiquidityPoolValue: Calculating liquidity pool value", []);
   const records: TokenRecord[] = [];
 
-  pushArray(records, getLiquidityBalances(timestamp, null, blockNumber));
+  pushTokenRecordArray(records, getLiquidityBalances(timestamp, null, blockNumber));
 
   return records;
 }

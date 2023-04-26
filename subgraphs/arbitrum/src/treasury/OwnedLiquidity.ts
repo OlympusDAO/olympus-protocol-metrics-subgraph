@@ -2,7 +2,7 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
 import { PriceHandler } from "../../../shared/src/price/PriceHandler";
-import { pushArray } from "../../../shared/src/utils/ArrayHelper";
+import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import {
   createOrUpdateTokenRecord,
   getIsTokenLiquid,
@@ -92,7 +92,7 @@ export function getOwnedLiquidityBalances(timestamp: BigInt, blockNumber: BigInt
   const records: TokenRecord[] = [];
 
   for (let i = 0; i < HANDLERS.length; i++) {
-    pushArray(records, getOwnedLiquidityBalance(timestamp, HANDLERS[i], blockNumber));
+    pushTokenRecordArray(records, getOwnedLiquidityBalance(timestamp, HANDLERS[i], blockNumber));
   }
 
   return records;

@@ -2,7 +2,7 @@ import { BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
 import { getERC20 } from "../../../shared/src/contracts/ERC20";
-import { pushArray } from "../../../shared/src/utils/ArrayHelper";
+import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { getTokensInCategory } from "../../../shared/src/utils/TokenRecordHelper";
 import { ERC20_TOKENS_FANTOM } from "../contracts/Constants";
 import { getContractName, getERC20TokenRecordsFromWallets } from "../contracts/Contracts";
@@ -41,7 +41,7 @@ function getTokenBalance(
   const rate = getPrice(contractAddress, blockNumber);
 
   // Standard ERC20
-  pushArray(
+  pushTokenRecordArray(
     records,
     getERC20TokenRecordsFromWallets(timestamp, contractAddress, contract, rate, blockNumber),
   );
@@ -65,7 +65,7 @@ export function getTokenBalances(
 
   const categoryTokens = getTokensInCategory(category, ERC20_TOKENS_FANTOM);
   for (let i = 0; i < categoryTokens.length; i++) {
-    pushArray(records, getTokenBalance(timestamp, categoryTokens[i].getAddress(), blockNumber));
+    pushTokenRecordArray(records, getTokenBalance(timestamp, categoryTokens[i].getAddress(), blockNumber));
   }
 
   return records;

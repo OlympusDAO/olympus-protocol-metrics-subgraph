@@ -1,7 +1,7 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
-import { pushArray } from "../../../shared/src/utils/ArrayHelper";
+import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import {
   createOrUpdateTokenRecord,
@@ -1148,7 +1148,7 @@ export function getBalancerGaugeBalancesFromWallets(
   const records: TokenRecord[] = [];
 
   for (let i = 0; i < BALANCER_LIQUIDITY_GAUGES.length; i++) {
-    pushArray(
+    pushTokenRecordArray(
       records,
       getBalancerGaugeBalanceFromWallets(
         timestamp,
@@ -1357,7 +1357,7 @@ export function getAuraStakedBalancesFromWallets(
   }
 
   for (let i = 0; i < AURA_STAKING_CONTRACTS.length; i++) {
-    pushArray(
+    pushTokenRecordArray(
       records,
       getAuraStakedBalanceFromWallets(
         timestamp,
