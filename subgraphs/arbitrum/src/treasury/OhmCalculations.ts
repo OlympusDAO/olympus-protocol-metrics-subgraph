@@ -33,20 +33,8 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
     return records;
   }
 
-  /**
-   * Make a copy of the circulating wallets array
-   * 
-   * NOTE: this deliberately does not use the `getWalletAddressesForContract` function, 
-   * as that blacklists all OHM variants in treasury wallets, so that they are not added
-   * to the market value
-   */
-  const wallets = new Array<string>();
   for (let i = 0; i < CIRCULATING_SUPPLY_WALLETS.length; i++) {
-    wallets.push(CIRCULATING_SUPPLY_WALLETS[i]);
-  }
-
-  for (let i = 0; i < wallets.length; i++) {
-    const currentWallet = wallets[i];
+    const currentWallet = CIRCULATING_SUPPLY_WALLETS[i];
     const balance = getERC20DecimalBalance(ERC20_GOHM_SYNAPSE, currentWallet, blockNumber, getContractName);
     if (balance.equals(BigDecimal.zero())) continue;
 
@@ -90,6 +78,11 @@ export function getProtocolOwnedLiquiditySupplyRecords(
 ): TokenSupply[] {
   const records: TokenSupply[] = [];
 
+  // Accounting for gOHM on Arbitrum was added late, so we don't want to mess up historical accounting/reports.
+  if (blockNumber.lt(BigInt.fromString(START_BLOCK))) {
+    return records;
+  }
+
   const ohmTokens = [ERC20_GOHM_SYNAPSE];
   const wallets = CIRCULATING_SUPPLY_WALLETS;
 
@@ -122,6 +115,7 @@ export function getProtocolOwnedLiquiditySupplyRecords(
             TYPE_LIQUIDITY,
             balance,
             blockNumber,
+            -1, // Subtract
           ),
         )
       }
