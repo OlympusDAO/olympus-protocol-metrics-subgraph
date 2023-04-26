@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecord } from "../../../shared/generated/schema";
+import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
 import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
@@ -8,7 +8,7 @@ import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecord
 import { ERC20 } from "../../generated/PriceSnapshot/ERC20";
 import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolToken";
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
-import { BalancerPoolSnapshot, TokenSupply } from "../../generated/schema";
+import { BalancerPoolSnapshot } from "../../generated/schema";
 import { getERC20Decimals, getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import {
   BLOCKCHAIN,

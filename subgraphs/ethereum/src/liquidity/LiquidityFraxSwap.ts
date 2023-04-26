@@ -1,11 +1,11 @@
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecord } from "../../../shared/generated/schema";
+import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
 import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { FraxSwapPool } from "../../generated/ProtocolMetrics/FraxSwapPool";
-import { PoolSnapshot, TokenSupply } from "../../generated/schema";
+import { PoolSnapshot } from "../../generated/schema";
 import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import {
   BLOCKCHAIN,

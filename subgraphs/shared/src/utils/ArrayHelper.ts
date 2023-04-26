@@ -1,4 +1,4 @@
-import { TokenRecord } from "../../generated/schema";
+import { TokenRecord, TokenSupply } from "../../generated/schema";
 
 /**
  * Determines if the given string array loosely includes the given value.
@@ -22,6 +22,12 @@ export function arrayIncludesLoose(array: string[], value: string): boolean {
 }
 
 export function pushTokenRecordArray(destinationArray: TokenRecord[], sourceArray: TokenRecord[]): void {
+  for (let i = 0; i < sourceArray.length; i++) {
+    destinationArray.push(sourceArray[i]);
+  }
+}
+
+export function pushTokenSupplyArray(destinationArray: TokenSupply[], sourceArray: TokenSupply[]): void {
   for (let i = 0; i < sourceArray.length; i++) {
     destinationArray.push(sourceArray[i]);
   }
