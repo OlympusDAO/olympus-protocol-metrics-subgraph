@@ -15,7 +15,6 @@ export class PriceHandlerStablecoin implements PriceHandler {
     this.addresses = addresses;
     this.contractLookup = contractLookup;
   }
-
   getId(): string {
     return "PriceHandlerStablecoin";
   }
@@ -53,5 +52,9 @@ export class PriceHandlerStablecoin implements PriceHandler {
 
   getBalance(_walletAddress: string, _block: BigInt): BigDecimal {
     return BigDecimal.zero();
+  }
+
+  getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal {
+    throw new Error("Method not implemented.");
   }
 }

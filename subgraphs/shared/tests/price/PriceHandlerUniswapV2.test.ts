@@ -1,11 +1,14 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
+import { CIRCULATING_SUPPLY_WALLETS } from "../../../arbitrum/src/contracts/Constants";
 import { ContractNameLookup } from "../../src/contracts/ContractLookup";
 import { PriceLookup, PriceLookupResult } from "../../src/price/PriceHandler";
 import { PriceHandlerUniswapV2 } from "../../src/price/PriceHandlerUniswapV2";
 import { toDecimal } from "../../src/utils/Decimals";
 import { addressesEqual } from "../../src/utils/StringHelper";
+import { CROSS_CHAIN_ARBITRUM } from "../../src/Wallets";
+import { mockERC20Balance, mockERC20Balances } from "../ERC20Helper";
 
 const mockUniswapV2Pair = (
   token0Address: string,
@@ -56,8 +59,11 @@ const TOKEN1 = "0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5"; // OHM V2
 const TOKEN0_DECIMALS = 18;
 const TOKEN1_DECIMALS = 9;
 const TOKEN0_RESERVES = BigInt.fromString("18867842715859452534935831");
+const TOKEN0_RESERVES_DECIMAL = toDecimal(TOKEN0_RESERVES, TOKEN0_DECIMALS);
 const TOKEN1_RESERVES = BigInt.fromString("994866147276819");
+const TOKEN1_RESERVES_DECIMAL = toDecimal(TOKEN1_RESERVES, TOKEN1_DECIMALS);
 const TOKEN_SUPPLY = BigInt.fromString("133005392717808439119");
+const TOKEN_SUPPLY_DECIMAL = toDecimal(TOKEN_SUPPLY, 18);
 const PAIR_ADDRESS = "0x055475920a8c93cffb64d039a8205f7acc7722d3";
 const BLOCK = BigInt.fromString("15000000");
 
@@ -261,5 +267,29 @@ describe("getUnitPrice", () => {
 
     const unitPrice = handler.getUnitPrice(priceLookup, BLOCK);
     assert.stringEquals(expectedValue.toString(), unitPrice ? unitPrice.toString() : "");
+  });
+});
+
+describe("getUnderlyingTokenBalance", () => {
+  test("calculates the underlying token balance accurately", () => {
+    const contractLookup: ContractNameLookup = (tokenAddress: string): string => {
+      if (addressesEqual(tokenAddress, TOKEN0)) {
+        return "DAI";
+      }
+
+      return "OHM V2";
+    };
+
+    mockOhmDaiPair();
+    const lpBalance = BigDecimal.fromString("10");
+    mockERC20Balances(CIRCULATING_SUPPLY_WALLETS, PAIR_ADDRESS, BigDecimal.zero());
+    mockERC20Balance(CROSS_CHAIN_ARBITRUM, PAIR_ADDRESS, lpBalance);
+
+    const expectedBalance = lpBalance.times(TOKEN0_RESERVES_DECIMAL).div(TOKEN_SUPPLY_DECIMAL);
+
+    const handler = new PriceHandlerUniswapV2([TOKEN0, TOKEN1], PAIR_ADDRESS, contractLookup);
+
+    const balance = handler.getUnderlyingTokenBalance(CROSS_CHAIN_ARBITRUM, TOKEN0, BLOCK);
+    assert.stringEquals(expectedBalance.toString(), balance.toString());
   });
 });

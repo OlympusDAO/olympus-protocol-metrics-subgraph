@@ -2,9 +2,11 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 import { TokenSupply } from "../../../shared/generated/schema";
 import { getERC20DecimalBalance } from "../../../shared/src/contracts/ERC20";
-import { createOrUpdateTokenSupply, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
+import { pushTokenSupplyArray } from "../../../shared/src/utils/ArrayHelper";
+import { createOrUpdateTokenSupply, TYPE_LIQUIDITY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { CIRCULATING_SUPPLY_WALLETS, ERC20_GOHM_SYNAPSE } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
+import { PRICE_HANDLERS } from "../price/PriceLookup";
 
 /**
  * The start block for accounting of protocol-owned gOHM on Arbitrum.
@@ -70,6 +72,60 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
         -1, // Subtract
       ),
     );
+  }
+
+  return records;
+}
+
+/**
+ * Returns the quantity of OHM owned by the treasury in
+ * liquidity pools.
+ *
+ * @param blockNumber
+ * @returns
+ */
+export function getProtocolOwnedLiquiditySupplyRecords(
+  timestamp: BigInt,
+  blockNumber: BigInt,
+): TokenSupply[] {
+  const records: TokenSupply[] = [];
+
+  const ohmTokens = [ERC20_GOHM_SYNAPSE];
+  const wallets = CIRCULATING_SUPPLY_WALLETS;
+
+  for (let i = 0; i < PRICE_HANDLERS.length; i++) {
+    const pairHandler = PRICE_HANDLERS[i];
+
+    for (let j = 0; j < ohmTokens.length; j++) {
+      const currentOhmToken = ohmTokens[j];
+      // We only want to look at pairs that contain gOHM
+      if (!pairHandler.matches(currentOhmToken)) {
+        continue;
+      }
+
+      for (let k = 0; k < wallets.length; k++) {
+        const currentWallet = wallets[k];
+        const balance: BigDecimal = pairHandler.getUnderlyingTokenBalance(currentWallet, currentOhmToken, blockNumber);
+        if (balance.equals(BigDecimal.zero())) {
+          continue;
+        }
+
+        records.push(
+          createOrUpdateTokenSupply(
+            timestamp,
+            getContractName(currentOhmToken),
+            currentOhmToken,
+            getContractName(pairHandler.getId()),
+            pairHandler.getId(),
+            getContractName(currentWallet),
+            currentWallet,
+            TYPE_LIQUIDITY,
+            balance,
+            blockNumber,
+          ),
+        )
+      }
+    }
   }
 
   return records;
