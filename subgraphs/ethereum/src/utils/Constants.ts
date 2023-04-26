@@ -17,6 +17,15 @@ export const LUSDBOND_TOKEN = "LUSD";
 export const OHMLUSDLPBOND_TOKEN = "OHM-LUSD";
 export const OHMETHLPBOND_TOKEN = "OHM-WETH";
 
+/**
+ * Holds OHM V1, wsOHM (V1) and gOHM
+ * 
+ * Any V1 assets in this contract were previously external to the protocol,
+ * and should NOT be counted as protocol assets.
+ * 
+ * Any gOHM in this contract has been pre-minted
+ * for migration from V1 assets, and should NOT be counted as protocol assets.
+ */
 export const MIGRATION_CONTRACT = "0x184f3fad8618a6f458c16bae63f70c426fe784b3".toLowerCase();
 
 export const TREASURY_ADDRESS_V2_BLOCK = "12525281";
