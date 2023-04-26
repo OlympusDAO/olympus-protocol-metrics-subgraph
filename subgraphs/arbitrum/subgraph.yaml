@@ -13,8 +13,8 @@ dataSources:
     name: TokenRecords-arbitrum
     network: arbitrum-one
     source:
-      address: "0x3607e46698d218b3a5cae44bf381475c0a5e2ca7" # Chainlink oracle
-      abi: ChainlinkAggregator
+      address: "0xB2f34fd4C16e656163dADFeEaE4Ae0c1F13b140A"
+      abi: GelatoTaskTreasury
       startBlock: 10950000 # 2022-05-01
     mapping:
       kind: ethereum/events
@@ -43,9 +43,9 @@ dataSources:
         - name: TreasureMining
           file: abis/TreasureMining.json
         # For event trigger
-        - name: ChainlinkAggregator
-          file: abis/ChainlinkAggregator.json
+        - name: GelatoTaskTreasury
+          file: abis/GelatoTaskTreasury.json
       eventHandlers:
-        - event: NewRound(indexed uint256,indexed address,uint256)
-          handler: handleChainlinkNewRoundEvent
+        - event: FundsDeposited(indexed address,indexed address,indexed uint256)
+          handler: handleEvent
       file: ./src/treasury/Assets.ts

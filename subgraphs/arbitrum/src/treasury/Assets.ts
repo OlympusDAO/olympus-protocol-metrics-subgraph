@@ -1,10 +1,10 @@
 import { BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
-import { NewRound } from "../../../ethereum/generated/ProtocolMetrics/ChainlinkPriceFeed";
 import {
   TokenCategoryStable,
   TokenCategoryVolatile,
 } from "../../../shared/src/contracts/TokenDefinition";
+import { FundsDeposited } from "../../generated/TokenRecords-arbitrum/GelatoTaskTreasury";
 import { getOwnedLiquidityBalances } from "./OwnedLiquidity";
 import { getTokenBalances } from "./TokenBalances";
 
@@ -26,7 +26,7 @@ export function handleAssets(block: ethereum.Block): void {
   generateTokenRecords(block.timestamp, block.number);
 }
 
-export function handleChainlinkNewRoundEvent(event: NewRound): void {
+export function handleEvent(event: FundsDeposited): void {
   const block = event.block;
 
   log.debug("handleAssets: *** Indexing block {}", [block.number.toString()]);
