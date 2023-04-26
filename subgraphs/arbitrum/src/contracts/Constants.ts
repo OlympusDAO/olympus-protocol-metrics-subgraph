@@ -1,7 +1,7 @@
-import { BigDecimal } from "@graphprotocol/graph-ts";
+import { BigDecimal, log } from "@graphprotocol/graph-ts";
 
 import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
-import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, LUSD_ALLOCATOR, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
+import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, LUSD_ALLOCATOR, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, VEFXS_ALLOCATOR, WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 
 export const BLOCKCHAIN = "Arbitrum";
 
@@ -49,6 +49,51 @@ ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V3_ARB_WETH, new TokenDefinition(LP_UNISWAP
 ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V3_WETH_USDC, new TokenDefinition(LP_UNISWAP_V3_WETH_USDC, TokenCategoryPOL, true, false));
 
 export const OHM_TOKENS = [ERC20_GOHM];
+
+const TREASURY_BLACKLIST = new Map<string, string[]>();
+
+/**
+ * OHM and gOHM in the following wallets are blacklisted (not indexed) as we do not want the value
+ * being considered as part of the protocol or DAO treasuries.
+ */
+TREASURY_BLACKLIST.set(ERC20_GOHM, WALLET_ADDRESSES);
+
+/**
+ * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
+ * For this reason, the wallets to be used differ on a per-contract basis.
+ *
+ * This function returns the wallets that should be iterated over for the given
+ * contract, {contractAddress}.
+ *
+ * @param contractAddress
+ * @returns
+ */
+export const getWalletAddressesForContract = (contractAddress: string): string[] => {
+  const walletAddresses = WALLET_ADDRESSES.slice(0);
+
+  // If the contract isn't on the blacklist, return as normal
+  if (!TREASURY_BLACKLIST.has(contractAddress.toLowerCase())) {
+    log.debug("getWalletAddressesForContract: token {} is not on treasury blacklist", [contractAddress]);
+    return walletAddresses;
+  }
+
+  // Otherwise remove the values in the blacklist
+  // AssemblyScript doesn't yet have closures, so filter() cannot be used
+  const walletBlacklist = TREASURY_BLACKLIST.get(contractAddress.toLowerCase());
+  for (let i = 0; i < walletBlacklist.length; i++) {
+    // If the blacklisted address is not in the array, skip
+    const arrayIndex = walletAddresses.indexOf(walletBlacklist[i]);
+    if (arrayIndex < 0) {
+      continue;
+    }
+
+    // Otherwise the blacklist address is removed from the array in-place
+    const splicedValues = walletAddresses.splice(arrayIndex, 1);
+    log.debug("getWalletAddressesForContract: removed values: {}", [splicedValues.toString()]);
+  }
+
+  return walletAddresses;
+};
 
 export const CONTRACT_NAME_MAP = new Map<string, string>();
 CONTRACT_NAME_MAP.set(AAVE_ALLOCATOR_V2, "Aave Allocator V2");
