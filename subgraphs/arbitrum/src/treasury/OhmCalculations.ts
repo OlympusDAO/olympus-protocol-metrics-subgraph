@@ -2,7 +2,6 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 import { TokenSupply } from "../../../shared/generated/schema";
 import { getERC20DecimalBalance } from "../../../shared/src/contracts/ERC20";
-import { pushTokenSupplyArray } from "../../../shared/src/utils/ArrayHelper";
 import { createOrUpdateTokenSupply, TYPE_LIQUIDITY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { CIRCULATING_SUPPLY_WALLETS, ERC20_GOHM_SYNAPSE } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
