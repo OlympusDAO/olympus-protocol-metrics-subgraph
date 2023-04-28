@@ -34,6 +34,12 @@ export const calculateLiquidBacking = (records: TokenRecord[]): number => {
     }, 0);
 };
 
+export const calculateSupplySum = (records: TokenSupply[]): number => {
+  return records.reduce((previousValue, record) => {
+    return previousValue + +record.supplyBalance;
+  }, 0);
+}
+
 // Source: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph/blob/9ef60c7c2be9fc9b45dd98dd119c0fa5cefb4760/subgraphs/ethereum/src/utils/OhmCalculations.ts#L673
 export const calculateCirculatingSupply = (records: TokenSupply[]): number => {
   let total = 0;

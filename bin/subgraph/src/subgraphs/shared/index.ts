@@ -1,9 +1,10 @@
 import { BaseNetworkHandler } from "../../networkHandler";
-import { getTestBlock, getTokenRecords } from "../../subgraph";
+import { getTestBlock, getTokenRecords, getTokenSupplies } from "../../subgraph";
 import {
   combineOutput,
   compareLiquidBackingRecords,
   compareMarketValueRecords,
+  compareOHMSupplyRecords,
   doMarketValueCheck,
 } from "./compare";
 import { readComparisonFile, writeComparisonFile } from "./results";
@@ -22,6 +23,7 @@ export default class EthereumHandler extends BaseNetworkHandler {
     const comparisonFile = readComparisonFile(this.outputPath);
 
     const tokenRecords = await getTokenRecords(this.subgraphId, comparisonFile.latestBlock);
+    const tokenSupplies = await getTokenSupplies(this.subgraphId, comparisonFile.latestBlock);
 
     // Update the comparison results and write
     comparisonFile.branches[this.branch] = {
@@ -29,6 +31,7 @@ export default class EthereumHandler extends BaseNetworkHandler {
     };
 
     comparisonFile.records.tokenRecords[this.branch] = tokenRecords;
+    comparisonFile.records.tokenSupplies[this.branch] = tokenSupplies;
 
     writeComparisonFile(comparisonFile, this.outputPath);
   }
@@ -40,10 +43,15 @@ export default class EthereumHandler extends BaseNetworkHandler {
     const baseRecords = comparisonFile.records.tokenRecords.base;
     const branchRecords = comparisonFile.records.tokenRecords.branch;
 
+    const tokenSuppliesBase = comparisonFile.records.tokenSupplies.base;
+    const tokenSuppliesBranch = comparisonFile.records.tokenSupplies.branch;
+
     compareMarketValueRecords(baseRecords, branchRecords, comparisonFile);
     compareLiquidBackingRecords(baseRecords, branchRecords, comparisonFile);
+    compareOHMSupplyRecords(tokenSuppliesBase, tokenSuppliesBranch, comparisonFile);
 
     doMarketValueCheck(branchRecords, comparisonFile);
+
     combineOutput(this.network, comparisonFile);
 
     writeComparisonFile(comparisonFile, this.outputPath);

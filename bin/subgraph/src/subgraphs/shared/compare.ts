@@ -4,9 +4,10 @@ import {
   calculateLiquidBacking,
   calculateMarketValue,
   calculateMarketValueCategory,
+  calculateSupplySum,
 } from "../../helpers/metrics";
 import { formatCurrency, formatNumber, valuesEqual } from "../../helpers/number";
-import { TokenRecord } from "../../subgraph";
+import { TokenRecord, TokenSupply } from "../../subgraph";
 import { ComparisonResults } from "./results";
 
 const CHECK = "✅";
@@ -89,6 +90,43 @@ export const compareLiquidBackingRecords = (
 };
 
 /**
+ * Compares the OHM supply between two branches, and adds the results to {comparisonFile}.
+ *
+ * @param baseRecords
+ * @param branchRecords
+ * @param comparisonFile
+ */
+export const compareOHMSupplyRecords = (
+  baseRecords: TokenSupply[],
+  branchRecords: TokenSupply[],
+  comparisonFile: ComparisonResults,
+): void => {
+  // Perform sums
+  console.info("Comparing OHM supply");
+  const baseTotal = calculateSupplySum(baseRecords);
+  console.info("Base = " + formatNumber(baseTotal));
+  const branchTotal = calculateSupplySum(branchRecords);
+  console.info("Branch = " + formatNumber(branchTotal));
+
+  // Output to file
+  const ohmSupplyResults = {
+    base: formatNumber(baseTotal),
+    branch: formatNumber(branchTotal),
+    diff: formatCurrency(branchTotal - baseTotal),
+    result: valuesEqual(baseTotal, branchTotal),
+    output: "",
+  };
+
+  ohmSupplyResults.output = `**OHM Supply (Branch Comparison):**
+  Purpose: *Shows the difference in OHM supply between branches. If the numbers differ, it may be due to assets being added/removed. Check that the difference is expected, and refer to the TokenSupply diff below for more details.*
+  Base: ${ohmSupplyResults.base}
+  Branch: ${ohmSupplyResults.branch}
+  Difference in Value: ${ohmSupplyResults.diff}
+  Result: ${ohmSupplyResults.result ? CHECK : CROSS}`;
+  comparisonFile.results.ohmSupply = ohmSupplyResults;
+};
+
+/**
  * Checks the market value, using the following formula:
  *
  * Market value = market value (stable) + market value (volatile) + market value (POL)
@@ -139,6 +177,11 @@ export const combineOutput = (network: string, comparisonFile: ComparisonResults
     comparisonFile.records.tokenRecords.branch,
     { full: true, color: false },
   );
+  const supplyDiff = diffString(
+    comparisonFile.records.tokenSupplies.base,
+    comparisonFile.records.tokenSupplies.branch,
+    { full: true, color: false },
+  );
 
   /**
    * NOTE: The indentation of the code block is important.
@@ -163,6 +206,19 @@ ${comparisonFile.results.marketValueCheck.output}
 
 \`\`\`diff
   ${recordsDiff}
+
+\`\`\`
+  
+</details>
+
+## Supply Records
+${comparisonFile.results.ohmSupply.output}
+
+<details>
+  <summary>Diff of TokenSupply</summary>
+
+\`\`\`diff
+  ${supplyDiff}
 
 \`\`\`
   
