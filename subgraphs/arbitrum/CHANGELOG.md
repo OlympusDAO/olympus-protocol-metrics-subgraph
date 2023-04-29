@@ -1,6 +1,6 @@
 # Arbitrum Subgraph Changelog
 
-## 1.2.0 (2023-04-XX)
+## 1.2.2 (2023-04-29)
 
 - Populate TokenSupply records with the quantity of protocol-owned gOHM
 
