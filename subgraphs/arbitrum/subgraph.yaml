@@ -1,11 +1,11 @@
 specVersion: 0.0.4
 description: Olympus Protocol Metrics Subgraph - Arbitrum
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
-features:
-  - grafting
-graft:
-  base: QmUWRimfjsqDP4CKwZ2zQ8dJxyY3yee3U5hSPQmZ6D83g5
-  block: 83000000 # 2023-04-22
+# features:
+#   - grafting
+# graft:
+#   base: QmUWRimfjsqDP4CKwZ2zQ8dJxyY3yee3U5hSPQmZ6D83g5
+#   block: 83000000 # 2023-04-22
 schema:
   file: ../../schema.graphql
 dataSources:
