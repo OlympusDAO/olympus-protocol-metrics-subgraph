@@ -17,6 +17,15 @@ export const LUSDBOND_TOKEN = "LUSD";
 export const OHMLUSDLPBOND_TOKEN = "OHM-LUSD";
 export const OHMETHLPBOND_TOKEN = "OHM-WETH";
 
+/**
+ * Holds OHM V1, wsOHM (V1) and gOHM
+ * 
+ * Any V1 assets in this contract were previously external to the protocol,
+ * and should NOT be counted as protocol assets.
+ * 
+ * Any gOHM in this contract has been pre-minted
+ * for migration from V1 assets, and should NOT be counted as protocol assets.
+ */
 export const MIGRATION_CONTRACT = "0x184f3fad8618a6f458c16bae63f70c426fe784b3".toLowerCase();
 
 export const TREASURY_ADDRESS_V2_BLOCK = "12525281";
@@ -114,19 +123,22 @@ export const EULER_ADDRESS = "0x27182842E098f60e3D576794A5bFFb0777E025d3".toLowe
 export const SILO_ADDRESS = "0xb2374f84b3cEeFF6492943Df613C9BcF45322a0c".toLowerCase();
 
 /**
- * Defines the contract addresses that belong to the protocol & treasury.
+ * Defines the contract addresses that belong to the protocol & DAO treasuries.
  * 
  * This is normally deducted from total supply to determine circulating supply.
  * 
- * Myso and Vendor Finance contracts are NOT included in here, as the deployed amounts are hard-coded.
+ * The following are not included:
+ * - Myso and Vendor Finance: the deployed amounts are hard-coded.
+ * - Migration Contract: the migration offset is used to indicate the protocol-owned OHM. 
+ * Additionally, the OHM and gOHM in the migration contract is pre-minted for v1 -> v2 migrations,
+ * and is not owned by the protocol or DAO.
+ * - Olympus Association: not considered part of the protocol or DAO treasuries.
  */
 export const CIRCULATING_SUPPLY_WALLETS = [
   BONDS_DEPOSIT,
   BONDS_INVERSE_DEPOSIT,
   DAO_WALLET,
   DAO_WORKING_CAPITAL,
-  // MIGRATION_CONTRACT, // Ignored as the migration offset is used
-  OLYMPUS_ASSOCIATION_WALLET,
   OTC_ESCROW,
   TREASURY_ADDRESS_V1,
   TREASURY_ADDRESS_V2,
@@ -675,18 +687,18 @@ export const CONVEX_ALLOCATORS = [
   DAO_WALLET,
 ];
 
-const DAO_WALLET_BLACKLIST = new Map<string, string[]>();
+const TREASURY_BLACKLIST = new Map<string, string[]>();
 
 /**
- * OHM and gOHM in the following wallets are blacklisted (not indexed) as they are not part of the treasury (DAO wallet, association wallet),
- * or is OHM that is due to be burned (bonds).
+ * OHM and gOHM in the following wallets are blacklisted (not indexed) as we do not want the value
+ * being considered as part of the protocol or DAO treasuries.
  */
-DAO_WALLET_BLACKLIST.set(ERC20_OHM_V1, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
-DAO_WALLET_BLACKLIST.set(ERC20_OHM_V2, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
-DAO_WALLET_BLACKLIST.set(ERC20_GOHM, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
-DAO_WALLET_BLACKLIST.set(ERC20_SOHM_V1, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
-DAO_WALLET_BLACKLIST.set(ERC20_SOHM_V2, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
-DAO_WALLET_BLACKLIST.set(ERC20_SOHM_V3, [DAO_WALLET, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, OLYMPUS_ASSOCIATION_WALLET, DAO_WORKING_CAPITAL]);
+TREASURY_BLACKLIST.set(ERC20_OHM_V1, WALLET_ADDRESSES);
+TREASURY_BLACKLIST.set(ERC20_OHM_V2, WALLET_ADDRESSES);
+TREASURY_BLACKLIST.set(ERC20_GOHM, WALLET_ADDRESSES);
+TREASURY_BLACKLIST.set(ERC20_SOHM_V1, WALLET_ADDRESSES);
+TREASURY_BLACKLIST.set(ERC20_SOHM_V2, WALLET_ADDRESSES);
+TREASURY_BLACKLIST.set(ERC20_SOHM_V3, WALLET_ADDRESSES);
 
 /**
  * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
@@ -702,14 +714,14 @@ export const getWalletAddressesForContract = (contractAddress: string): string[]
   const walletAddresses = WALLET_ADDRESSES.slice(0);
 
   // If the contract isn't on the blacklist, return as normal
-  if (!DAO_WALLET_BLACKLIST.has(contractAddress.toLowerCase())) {
-    log.debug("getWalletAddressesForContract: token {} is not on DAO wallet blacklist", [contractAddress]);
+  if (!TREASURY_BLACKLIST.has(contractAddress.toLowerCase())) {
+    log.debug("getWalletAddressesForContract: token {} is not on treasury blacklist", [contractAddress]);
     return walletAddresses;
   }
 
   // Otherwise remove the values in the blacklist
   // AssemblyScript doesn't yet have closures, so filter() cannot be used
-  const walletBlacklist = DAO_WALLET_BLACKLIST.get(contractAddress.toLowerCase());
+  const walletBlacklist = TREASURY_BLACKLIST.get(contractAddress.toLowerCase());
   for (let i = 0; i < walletBlacklist.length; i++) {
     // If the blacklisted address is not in the array, skip
     const arrayIndex = walletAddresses.indexOf(walletBlacklist[i]);
@@ -941,7 +953,7 @@ CONTRACT_NAME_MAP.set(CROSS_CHAIN_POLYGON, "Cross-Chain Polygon");
 CONTRACT_NAME_MAP.set(DAIBOND_CONTRACTS1, "DAI Bond 1");
 CONTRACT_NAME_MAP.set(DAIBOND_CONTRACTS2, "DAI Bond 2");
 CONTRACT_NAME_MAP.set(DAIBOND_CONTRACTS3, "DAI Bond 3");
-CONTRACT_NAME_MAP.set(DAO_WALLET, "DAO Wallet");
+CONTRACT_NAME_MAP.set(DAO_WALLET, "Treasury MS (Formerly DAO Wallet)");
 CONTRACT_NAME_MAP.set(DAO_WORKING_CAPITAL, "DAO Working Capital");
 CONTRACT_NAME_MAP.set(ERC20_ADAI, "DAI - Aave");
 CONTRACT_NAME_MAP.set(ERC20_AGEUR, "agEUR");

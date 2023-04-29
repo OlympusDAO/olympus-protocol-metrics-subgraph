@@ -8,6 +8,7 @@ import {
   CONVEX_CVX_VL_ALLOCATOR,
   DAO_WALLET,
   TREASURY_ADDRESS_V3,
+  WALLET_ADDRESSES,
 } from "../../shared/src/Wallets";
 import {
   AURA_STAKING_AURA_BAL,
@@ -22,6 +23,7 @@ import {
   ERC20_CVX_FRAX_3CRV,
   ERC20_CVX_VL_V2,
   ERC20_FRAX_3CRV,
+  ERC20_GOHM,
   ERC20_LQTY,
   ERC20_OHM_V2,
   ERC20_TOKE,
@@ -182,6 +184,52 @@ describe("get ERC20 token records from wallets", () => {
     const record = records[0];
     assert.stringEquals(tokenBalance, record.balance.toString());
     assert.i32Equals(1, records.length);
+  });
+
+  test("excludes OHM in treasury wallet addresses", () => {
+    mockZeroWalletBalances(ERC20_OHM_V2, getWalletAddressesForContract(ERC20_OHM_V2));
+    mockERC20TotalSupply(ERC20_OHM_V2, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
+
+    for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
+      mockWalletBalance(ERC20_OHM_V2, WALLET_ADDRESSES[i], toBigInt(BigDecimal.fromString("10")));
+    }
+
+    const blockNumber = BigInt.fromString("14000000");
+    const contract = getERC20(ERC20_OHM_V2, blockNumber);
+    if (!contract) throw new Error("Expected ERC20 contract to be non-null");
+
+    const records = getERC20TokenRecordsFromWallets(
+      TIMESTAMP,
+      ERC20_OHM_V2,
+      contract,
+      BigDecimal.fromString("1"),
+      blockNumber,
+    );
+
+    assert.i32Equals(0, records.length);
+  });
+
+  test("excludes gOHM in treasury wallet addresses", () => {
+    mockZeroWalletBalances(ERC20_GOHM, getWalletAddressesForContract(ERC20_GOHM));
+    mockERC20TotalSupply(ERC20_GOHM, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
+
+    for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
+      mockWalletBalance(ERC20_GOHM, WALLET_ADDRESSES[i], toBigInt(BigDecimal.fromString("10")));
+    }
+
+    const blockNumber = BigInt.fromString("14000000");
+    const contract = getERC20(ERC20_GOHM, blockNumber);
+    if (!contract) throw new Error("Expected ERC20 contract to be non-null");
+
+    const records = getERC20TokenRecordsFromWallets(
+      TIMESTAMP,
+      ERC20_GOHM,
+      contract,
+      BigDecimal.fromString("1"),
+      blockNumber,
+    );
+
+    assert.i32Equals(0, records.length);
   });
 });
 

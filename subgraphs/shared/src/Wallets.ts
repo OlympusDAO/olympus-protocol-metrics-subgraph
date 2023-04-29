@@ -6,6 +6,12 @@ export const TREASURY_ADDRESS_V2 = "0x31f8cc382c9898b273eff4e0b7626a6987c846e8".
 export const TREASURY_ADDRESS_V3 = "0x9A315BdF513367C0377FB36545857d12e85813Ef".toLowerCase();
 
 export const BONDS_DEPOSIT = "0x9025046c6fb25Fb39e720d97a8FD881ED69a1Ef6".toLowerCase();
+
+/**
+ * OHM in this contract is considered burned
+ * Excluded from treasury market value (double-counting otherwise)
+ * Included in calculations of protocol-owned OHM
+ */
 export const BONDS_INVERSE_DEPOSIT = "0xBA42BE149e5260EbA4B82418A6306f55D532eA47".toLowerCase();
 
 // TODO consider if allocators should be in shared/ or ethereum/
@@ -30,6 +36,9 @@ export const VEFXS_ALLOCATOR = "0xde7b85f52577b113181921a7aa8fc0c22e309475".toLo
 export const DAO_WALLET = "0x245cc372c84b3645bf0ffe6538620b04a217988b".toLowerCase();
 export const DAO_WORKING_CAPITAL = "0xF65A665D650B5De224F46D729e2bD0885EeA9dA5".toLowerCase();
 
+/**
+ * Not considered protocol- or DAO-owned
+ */
 export const OLYMPUS_ASSOCIATION_WALLET = "0x4c71db02aeeb336cbd8f3d2cc866911f6e2fbd94".toLowerCase();
 
 export const TRSRY = "0xa8687A15D4BE32CC8F0a8a7B9704a4C3993D9613".toLowerCase();
