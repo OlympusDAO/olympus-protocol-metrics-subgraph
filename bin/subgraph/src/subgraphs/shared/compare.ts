@@ -112,7 +112,7 @@ export const compareOHMSupplyRecords = (
   const ohmSupplyResults = {
     base: formatNumber(baseTotal),
     branch: formatNumber(branchTotal),
-    diff: formatCurrency(branchTotal - baseTotal),
+    diff: formatNumber(branchTotal - baseTotal),
     result: valuesEqual(baseTotal, branchTotal),
     output: "",
   };
@@ -121,7 +121,7 @@ export const compareOHMSupplyRecords = (
   Purpose: *Shows the difference in OHM supply between branches. If the numbers differ, it may be due to assets being added/removed. Check that the difference is expected, and refer to the TokenSupply diff below for more details.*
   Base: ${ohmSupplyResults.base}
   Branch: ${ohmSupplyResults.branch}
-  Difference in Value: ${ohmSupplyResults.diff}
+  Difference in Quantity: ${ohmSupplyResults.diff}
   Result: ${ohmSupplyResults.result ? CHECK : CROSS}`;
   comparisonFile.results.ohmSupply = ohmSupplyResults;
 };
