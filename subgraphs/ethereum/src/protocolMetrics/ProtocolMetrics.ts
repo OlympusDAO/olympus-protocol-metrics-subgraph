@@ -1,11 +1,11 @@
 import { BigInt, log } from "@graphprotocol/graph-ts";
 import { ethereum } from "@graphprotocol/graph-ts";
 
-import { TokenRecord } from "../../../shared/generated/schema";
+import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
 import { getCurrentIndex } from "../../../shared/src/supply/OhmCalculations";
 import { getISO8601DateStringFromTimestamp } from "../../../shared/src/utils/DateHelper";
 import { LogRebase } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
-import { ProtocolMetric, TokenSupply } from "../../generated/schema";
+import { ProtocolMetric } from "../../generated/schema";
 import { ERC20_OHM_V2 } from "../utils/Constants";
 import { getGOhmSyntheticSupply, getGOhmTotalSupply } from "../utils/GOhmCalculations";
 import {

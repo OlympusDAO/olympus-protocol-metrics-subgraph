@@ -2,7 +2,7 @@ import { BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
 import { getERC20 } from "../../../shared/src/contracts/ERC20";
-import { pushArray } from "../../../shared/src/utils/ArrayHelper";
+import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { getTokensInCategory } from "../../../shared/src/utils/TokenRecordHelper";
 import { ERC20_TOKENS_ARBITRUM } from "../contracts/Constants";
 import { getContractName, getERC20TokenRecordsFromWallets } from "../contracts/Contracts";
@@ -43,16 +43,16 @@ function getTokenBalance(
   const rate = getPrice(contractAddress, blockNumber);
 
   // Standard ERC20
-  pushArray(
+  pushTokenRecordArray(
     records,
     getERC20TokenRecordsFromWallets(timestamp, contractAddress, contract, rate, blockNumber),
   );
 
   // Jones Staking
-  pushArray(records, getJonesStakedBalances(timestamp, contractAddress, blockNumber));
+  pushTokenRecordArray(records, getJonesStakedBalances(timestamp, contractAddress, blockNumber));
 
   // TreasureDAO Staking
-  pushArray(records, getTreasureStakedBalances(timestamp, contractAddress, blockNumber));
+  pushTokenRecordArray(records, getTreasureStakedBalances(timestamp, contractAddress, blockNumber));
 
   return records;
 }
@@ -73,7 +73,7 @@ export function getTokenBalances(
 
   const categoryTokens = getTokensInCategory(category, ERC20_TOKENS_ARBITRUM);
   for (let i = 0; i < categoryTokens.length; i++) {
-    pushArray(records, getTokenBalance(timestamp, categoryTokens[i].getAddress(), blockNumber));
+    pushTokenRecordArray(records, getTokenBalance(timestamp, categoryTokens[i].getAddress(), blockNumber));
   }
 
   return records;

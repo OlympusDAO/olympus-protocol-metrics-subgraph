@@ -1,14 +1,15 @@
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecord } from "../../../shared/generated/schema";
+import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
 import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
-import { pushArray } from "../../../shared/src/utils/ArrayHelper";
+import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
+import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { ERC20 } from "../../generated/PriceSnapshot/ERC20";
 import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolToken";
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
-import { BalancerPoolSnapshot, TokenSupply } from "../../generated/schema";
+import { BalancerPoolSnapshot } from "../../generated/schema";
 import { getERC20Decimals, getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import {
   BLOCKCHAIN,
@@ -23,7 +24,6 @@ import {
   getBalancerGaugeBalancesFromWallets,
 } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
-import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../utils/TokenSupplyHelper";
 
 function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): BalancerVault {
   return BalancerVault.bind(Address.fromString(vaultAddress));
@@ -346,7 +346,7 @@ export function getBalancerRecords(
   );
 
   // Standard pool tokens
-  pushArray(
+  pushTokenRecordArray(
     records,
     getBalancerPoolTokenRecords(
       timestamp,
@@ -359,7 +359,7 @@ export function getBalancerRecords(
   );
 
   // Pool tokens deposited in a liquidity gauge
-  pushArray(
+  pushTokenRecordArray(
     records,
     getBalancerGaugeBalancesFromWallets(
       timestamp,
@@ -371,7 +371,7 @@ export function getBalancerRecords(
   );
 
   // Pool tokens staked in AURA
-  pushArray(
+  pushTokenRecordArray(
     records,
     getAuraStakedBalancesFromWallets(
       timestamp,

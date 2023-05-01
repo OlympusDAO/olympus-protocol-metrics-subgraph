@@ -2,7 +2,7 @@ import { BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
 import { TokenCategoryStable } from "../../../shared/src/contracts/TokenDefinition";
-import { pushArray } from "../../../shared/src/utils/ArrayHelper";
+import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { getTokensInCategory } from "../../../shared/src/utils/TokenRecordHelper";
 import { getLiquidityBalances } from "../liquidity/LiquidityCalculations";
 import { ERC20_TOKENS, getContractName } from "./Constants";
@@ -56,45 +56,45 @@ export function getStablecoinBalance(
   const rate = getUSDRate(contractAddress, blockNumber);
 
   // Wallets
-  pushArray(
+  pushTokenRecordArray(
     records,
     getERC20TokenRecordsFromWallets(timestamp, contractAddress, contract, rate, blockNumber),
   );
 
   // Rari Allocator
-  pushArray(records, getRariAllocatorRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getRariAllocatorRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Staked Convex tokens
-  pushArray(records, getConvexStakedRecords(timestamp, contractAddress, blockNumber));
+  pushTokenRecordArray(records, getConvexStakedRecords(timestamp, contractAddress, blockNumber));
 
   // Liquity Stability Pool
-  pushArray(records, getLiquityStabilityPoolRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getLiquityStabilityPoolRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Onsen Allocator
-  pushArray(records, getOnsenAllocatorRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getOnsenAllocatorRecords(timestamp, contractAddress, rate, blockNumber));
 
   // VeFXS Allocator
-  pushArray(records, getVeFXSAllocatorRecords(timestamp, contractAddress, blockNumber));
+  pushTokenRecordArray(records, getVeFXSAllocatorRecords(timestamp, contractAddress, blockNumber));
 
   // Liquidity pools
   if (includeLiquidity) {
-    pushArray(records, getLiquidityBalances(timestamp, contractAddress, blockNumber));
+    pushTokenRecordArray(records, getLiquidityBalances(timestamp, contractAddress, blockNumber));
   }
 
   // Aura earned rewards
-  pushArray(records, getAuraPoolEarnedRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getAuraPoolEarnedRecords(timestamp, contractAddress, rate, blockNumber));
 
   // TRSRY
-  pushArray(records, getTreasuryRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getTreasuryRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Maker DSR
-  pushArray(records, getMakerDSRRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getMakerDSRRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Myso Finance
-  pushArray(records, getMysoFinanceRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getMysoFinanceRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Vendor Finance
-  pushArray(records, getVendorFinanceRecords(timestamp, contractAddress, rate, blockNumber));
+  pushTokenRecordArray(records, getVendorFinanceRecords(timestamp, contractAddress, rate, blockNumber));
 
   return records;
 }
@@ -119,7 +119,7 @@ export function getStablecoinBalances(
 
   const stableTokens = getTokensInCategory(TokenCategoryStable, ERC20_TOKENS);
   for (let i = 0; i < stableTokens.length; i++) {
-    pushArray(
+    pushTokenRecordArray(
       records,
       getStablecoinBalance(timestamp, stableTokens[i].getAddress(), includeLiquidity, blockNumber),
     );

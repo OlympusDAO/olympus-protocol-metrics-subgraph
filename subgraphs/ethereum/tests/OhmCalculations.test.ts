@@ -1,14 +1,15 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { assert, beforeEach, clearStore, createMockedFunction, describe, log, test } from "matchstick-as";
 
+import { TokenSupply } from "../../shared/generated/schema";
 import { toBigInt } from "../../shared/src/utils/Decimals";
+import { TYPE_BONDS_DEPOSITS, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_VESTING_TOKENS, TYPE_LENDING } from "../../shared/src/utils/TokenSupplyHelper";
 import { OLYMPUS_ASSOCIATION_WALLET } from "../../shared/src/Wallets";
-import { GnosisAuction, GnosisAuctionRoot, TokenSupply } from "../generated/schema";
+import { GnosisAuction, GnosisAuctionRoot } from "../generated/schema";
 import { GNOSIS_RECORD_ID } from "../src/GnosisAuction";
 import { BOND_MANAGER, CIRCULATING_SUPPLY_WALLETS, ERC20_GOHM, ERC20_OHM_V2, ERC20_SOHM_V3, EULER_ADDRESS, SILO_ADDRESS } from "../src/utils/Constants";
 import { getMintedBorrowableOHMRecords, getTreasuryOHMRecords, getVestingBondSupplyRecords } from "../src/utils/OhmCalculations";
-import { TYPE_BONDS_DEPOSITS, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_VESTING_TOKENS, TYPE_LENDING } from "../src/utils/TokenSupplyHelper";
-import { mockERC20Balance, mockERC20Decimals, mockERC20TotalSupply } from "./erc20Helper";
+import { mockERC20Balance, mockERC20TotalSupply } from "./erc20Helper";
 import { OHM_V2_DECIMALS } from "./pairHelper";
 
 const CONTRACT_GNOSIS = "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101".toLowerCase();

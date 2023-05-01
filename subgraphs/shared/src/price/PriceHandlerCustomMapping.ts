@@ -58,4 +58,8 @@ export class PriceHandlerCustomMapping implements PriceHandler {
     // TODO implement
     return BigDecimal.zero();
   }
+
+  getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal {
+    throw new Error("Method not implemented.");
+  }
 }

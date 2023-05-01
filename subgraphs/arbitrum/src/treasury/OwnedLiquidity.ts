@@ -2,7 +2,7 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
 import { PriceHandler } from "../../../shared/src/price/PriceHandler";
-import { pushArray } from "../../../shared/src/utils/ArrayHelper";
+import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import {
   createOrUpdateTokenRecord,
   getIsTokenLiquid,
@@ -10,7 +10,7 @@ import {
 import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 import { BLOCKCHAIN, ERC20_TOKENS_ARBITRUM, OHM_TOKENS } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
-import { getPriceRecursive, HANDLERS } from "../price/PriceLookup";
+import { getPriceRecursive, PRICE_HANDLERS } from "../price/PriceLookup";
 
 /**
  * Returns the token records for a given token. This includes:
@@ -91,8 +91,8 @@ function getOwnedLiquidityBalance(
 export function getOwnedLiquidityBalances(timestamp: BigInt, blockNumber: BigInt): TokenRecord[] {
   const records: TokenRecord[] = [];
 
-  for (let i = 0; i < HANDLERS.length; i++) {
-    pushArray(records, getOwnedLiquidityBalance(timestamp, HANDLERS[i], blockNumber));
+  for (let i = 0; i < PRICE_HANDLERS.length; i++) {
+    pushTokenRecordArray(records, getOwnedLiquidityBalance(timestamp, PRICE_HANDLERS[i], blockNumber));
   }
 
   return records;

@@ -68,8 +68,7 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
       throw new Error(
         `${FUNCTION} token ${this.contractLookup(
           tokenAddress,
-        )} (${tokenAddress}) does not belong to LP ${this.contractLookup(this.poolAddress)} (${
-          this.poolAddress
+        )} (${tokenAddress}) does not belong to LP ${this.contractLookup(this.poolAddress)} (${this.poolAddress
         })`,
       );
     }
@@ -181,5 +180,65 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
     }
 
     return toDecimal(contract.balanceOf(Address.fromString(walletAddress)), contract.decimals());
+  }
+
+  private getTokenIndex(tokenAddress: string, block: BigInt): number {
+    const pair = this.getContract(block);
+    if (!pair) {
+      throw new Error(`Unable to bind with UniswapV2 contract ${this.poolAddress} at block ${block.toString()}`);
+    }
+
+    if (tokenAddress.toLowerCase() == pair.token0().toHexString().toLowerCase()) {
+      return 0;
+    }
+
+    if (tokenAddress.toLowerCase() == pair.token1().toHexString().toLowerCase()) {
+      return 1;
+    }
+
+    throw new Error(`Unable to determine index of token ${tokenAddress} in UniswapV2 contract ${this.poolAddress}`);
+  }
+
+  private getTokenReserves(tokenAddress: string, tokenIndex: number, block: BigInt): BigDecimal {
+    const pair = this.getContract(block);
+    if (!pair) {
+      throw new Error(`Unable to bind with UniswapV2 contract ${this.poolAddress} at block ${block.toString()}`);
+    }
+
+    const reserves = pair.getReserves();
+    let reserveInt: BigInt;
+    if (tokenIndex == 0) {
+      reserveInt = reserves.get_reserve0();
+    }
+    else if (tokenIndex == 1) {
+      reserveInt = reserves.get_reserve1();
+    }
+    else {
+      throw new Error(`Invalid token index ${tokenIndex} for UniswapV2 contract ${this.poolAddress}`);
+    }
+
+    const tokenContract = getERC20(tokenAddress, block);
+    return toDecimal(reserveInt, tokenContract.decimals());
+  }
+
+  private getTotalSupply(block: BigInt): BigDecimal {
+    const pair = this.getContract(block);
+    if (!pair) {
+      throw new Error(`Unable to bind with UniswapV2 contract ${this.poolAddress} at block ${block.toString()}`);
+    }
+
+    return toDecimal(pair.totalSupply(), pair.decimals());
+  }
+
+  getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal {
+    const pair = this.getContract(block);
+    if (!pair) {
+      throw new Error(`Unable to bind with UniswapV2 contract ${this.poolAddress} at block ${block.toString()}`);
+    }
+
+    const tokenIndex = this.getTokenIndex(tokenAddress, block);
+    const tokenReserves = this.getTokenReserves(tokenAddress, tokenIndex, block);
+
+    return tokenReserves.times(this.getBalance(walletAddress, block)).div(this.getTotalSupply(block));
   }
 }

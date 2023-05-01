@@ -1,7 +1,7 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
-import { getISO8601DateStringFromTimestamp } from "../../../shared/src/utils/DateHelper";
 import { TokenSupply } from "../../generated/schema";
+import { getISO8601DateStringFromTimestamp } from "./DateHelper";
 
 export const TYPE_BONDS_DEPOSITS = "OHM Bonds (Burnable Deposits)";
 export const TYPE_BONDS_PREMINTED = "OHM Bonds (Pre-minted)";

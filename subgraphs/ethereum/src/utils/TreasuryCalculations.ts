@@ -1,10 +1,9 @@
 import { BigInt } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
-import { pushArray } from "../../../shared/src/utils/ArrayHelper";
-import { TokenSupply } from "../../generated/schema";
+import { TokenSupply } from "../../../shared/generated/schema";
+import { pushTokenRecordArray, pushTokenSupplyArray } from "../../../shared/src/utils/ArrayHelper";
 import { getOwnedLiquidityPoolValue } from "../liquidity/LiquidityCalculations";
-import { pushTokenSupplyArray } from "./ArrayHelper";
 import {
   getBoostedLiquiditySupplyRecords,
   getMintedBorrowableOHMRecords,
@@ -31,19 +30,19 @@ export function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): To
   const records: TokenRecord[] = [];
 
   // Stable without protocol-owned liquidity
-  pushArray(
+  pushTokenRecordArray(
     records,
     getStablecoinBalances(timestamp, false, blockNumber),
   );
 
   // Volatile without protocol-owned liquidity, but blue-chip assets
-  pushArray(
+  pushTokenRecordArray(
     records,
     getVolatileTokenBalances(timestamp, false, false, true, blockNumber),
   );
 
   // Protocol-owned liquidity
-  pushArray(
+  pushTokenRecordArray(
     records,
     getOwnedLiquidityPoolValue(timestamp, blockNumber),
   );

@@ -312,4 +312,8 @@ export class PriceHandlerBalancer implements PriceHandler {
 
     return toDecimal(poolToken.balanceOf(Address.fromString(walletAddress)), poolToken.decimals());
   }
+
+  getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal {
+    throw new Error("Method not implemented.");
+  }
 }

@@ -79,4 +79,12 @@ export interface PriceHandler {
    * @param block 
    */
   getBalance(walletAddress: string, block: BigInt): BigDecimal;
+
+  /**
+   * Returns the balance of the underlying token held by the liquidity pool.
+   * 
+   * @param tokenAddress 
+   * @param block 
+   */
+  getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal;
 }

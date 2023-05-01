@@ -74,8 +74,7 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
       throw new Error(
         `${FUNCTION} token ${this.contractLookup(
           tokenAddress,
-        )} (${tokenAddress}) does not belong to LP ${this.contractLookup(this.poolAddress)} (${
-          this.poolAddress
+        )} (${tokenAddress}) does not belong to LP ${this.contractLookup(this.poolAddress)} (${this.poolAddress
         })`,
       );
     }
@@ -191,5 +190,9 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
   getBalance(walletAddress: string, block: BigInt): BigDecimal {
     // TODO determine how to get the "balance"/ownership of the pool using the V3 position NFT
     return BigDecimal.zero();
+  }
+
+  getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal {
+    throw new Error("Method not implemented.");
   }
 }
