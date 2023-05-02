@@ -37,6 +37,8 @@ dataSources:
           file: ../shared/abis/UniswapV2Pair.json
         - name: UniswapV3Pair
           file: ../shared/abis/UniswapV3Pair.json
+        - name: ChainlinkPriceFeed
+          file: ../shared/abis/ChainlinkPriceFeed.json
         # Custom ABIs
         - name: JONESStaking
           file: abis/JONESStaking.json

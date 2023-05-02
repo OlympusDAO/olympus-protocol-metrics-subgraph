@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { PriceHandler, PriceLookupResult } from "../../../shared/src/price/PriceHandler";
 import { PriceHandlerBalancer } from "../../../shared/src/price/PriceHandlerBalancer";
@@ -12,6 +12,7 @@ import {
   ERC20_FRAX,
   ERC20_GOHM_SYNAPSE,
   ERC20_JONES,
+  ERC20_LQTY,
   ERC20_MAGIC,
   ERC20_USDC,
   ERC20_VSTA,
@@ -19,11 +20,13 @@ import {
   LP_BALANCER_POOL_WETH_VESTA,
   LP_UNISWAP_V2_GOHM_WETH,
   LP_UNISWAP_V2_JONES_WETH,
+  LP_UNISWAP_V2_LQTY_WETH,
   LP_UNISWAP_V2_MAGIC_WETH,
   LP_UNISWAP_V3_ARB_WETH,
   LP_UNISWAP_V3_WETH_USDC,
 } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
+import { getBaseTokenRate, isBaseToken } from "./PriceBase";
 
 export const PRICE_HANDLERS: PriceHandler[] = [
   // new PriceHandlerBalancer([ERC20_MAGIC, ERC20_USDC], BALANCER_VAULT, LP_BALANCER_POOL_MAGIC_USDC, getContractName), // DO NOT enable: will cause infinite loop: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph/issues/94
@@ -31,6 +34,7 @@ export const PRICE_HANDLERS: PriceHandler[] = [
   new PriceHandlerStablecoin([ERC20_FRAX, ERC20_USDC], getContractName),
   new PriceHandlerUniswapV2([ERC20_GOHM_SYNAPSE, ERC20_WETH], LP_UNISWAP_V2_GOHM_WETH, getContractName),
   new PriceHandlerUniswapV2([ERC20_JONES, ERC20_WETH], LP_UNISWAP_V2_JONES_WETH, getContractName),
+  new PriceHandlerUniswapV2([ERC20_LQTY, ERC20_WETH], LP_UNISWAP_V2_LQTY_WETH, getContractName),
   new PriceHandlerUniswapV2([ERC20_MAGIC, ERC20_WETH], LP_UNISWAP_V2_MAGIC_WETH, getContractName),
   new PriceHandlerUniswapV3([ERC20_USDC, ERC20_WETH], LP_UNISWAP_V3_WETH_USDC, getContractName),
   new PriceHandlerUniswapV3([ERC20_ARB, ERC20_WETH], LP_UNISWAP_V3_ARB_WETH, getContractName),
@@ -64,6 +68,10 @@ export function getPriceRecursive(
  * @throws Error if a price cannot be found, so that the subgraph indexing fails quickly
  */
 export function getPrice(tokenAddress: string, block: BigInt): BigDecimal {
+  if (isBaseToken(tokenAddress)) {
+    return getBaseTokenRate(Address.fromString(tokenAddress), block);
+  }
+
   const priceResult = getPriceRecursive(tokenAddress, block, null);
 
   if (priceResult === null) {

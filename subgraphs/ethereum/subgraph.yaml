@@ -632,7 +632,7 @@ dataSources:
         - name: rlBTRFLY
           file: ./abis/rlBTRFLY.json
         - name: ChainlinkPriceFeed
-          file: ./abis/ChainlinkPriceFeed.json
+          file: ../shared/abis/ChainlinkPriceFeed.json
         # Gnosis Auctions
         - name: BondManager
           file: ./abis/BondManager.json
