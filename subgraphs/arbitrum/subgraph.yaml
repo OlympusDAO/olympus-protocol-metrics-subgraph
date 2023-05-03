@@ -4,8 +4,8 @@ repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 features:
   - grafting
 graft:
-  base: QmcZ5q9dX6ziwz5rv1rksgt8qFd6E1UEndy12kkGFqeiJz # 1.1.6
-  block: 83000000 # 2023-04-22
+  base: QmcxmRwZzzeXpKPUiKr4aXrkCTqAmvHTzW8JcQHh1i4Tta # 1.2.2
+  block: 86200000 # 2023-05-01
 schema:
   file: ../../schema.graphql
 dataSources:
@@ -13,8 +13,8 @@ dataSources:
     name: TokenRecords-arbitrum
     network: arbitrum-one
     source:
-      address: "0xB2f34fd4C16e656163dADFeEaE4Ae0c1F13b140A"
-      abi: GelatoTaskTreasury
+      address: "0x660e7af290f540205a84dccc1f40d0269fc936f5"
+      abi: ChainlinkAggregator
       startBlock: 10950000 # 2022-05-01
     mapping:
       kind: ethereum/events
@@ -37,15 +37,16 @@ dataSources:
           file: ../shared/abis/UniswapV2Pair.json
         - name: UniswapV3Pair
           file: ../shared/abis/UniswapV3Pair.json
+        - name: ChainlinkPriceFeed
+          file: ../shared/abis/ChainlinkPriceFeed.json
         # Custom ABIs
         - name: JONESStaking
           file: abis/JONESStaking.json
         - name: TreasureMining
           file: abis/TreasureMining.json
-        # For event trigger
-        - name: GelatoTaskTreasury
-          file: abis/GelatoTaskTreasury.json
+        - name: ChainlinkAggregator
+          file: abis/ChainlinkAggregator.json
       eventHandlers:
-        - event: FundsDeposited(indexed address,indexed address,indexed uint256)
+        - event: NewRound(indexed uint256,indexed address,uint256)
           handler: handleEvent
       file: ./src/treasury/Assets.ts
