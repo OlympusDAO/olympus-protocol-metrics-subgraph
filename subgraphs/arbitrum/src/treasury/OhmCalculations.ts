@@ -1,11 +1,26 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 import { TokenSupply } from "../../../shared/generated/schema";
 import { getERC20DecimalBalance } from "../../../shared/src/contracts/ERC20";
-import { createOrUpdateTokenSupply, TYPE_LIQUIDITY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
-import { CIRCULATING_SUPPLY_WALLETS, ERC20_GOHM_SYNAPSE } from "../contracts/Constants";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { createOrUpdateTokenSupply, TYPE_LIQUIDITY, TYPE_TOTAL_SUPPLY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
+import { ERC20 } from "../../generated/TokenRecords-arbitrum/ERC20";
+import { CIRCULATING_SUPPLY_WALLETS, ERC20_GOHM_SYNAPSE, ERC20_OHM } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 import { PRICE_HANDLERS } from "../price/PriceLookup";
+
+export function getTotalSupply(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
+  const contract = ERC20.bind(Address.fromString(ERC20_OHM));
+  const totalSupplyResult = contract.try_totalSupply();
+  const decimalsResult = contract.try_decimals();
+  if (totalSupplyResult.reverted || decimalsResult.reverted) {
+    return [];
+  }
+
+  const totalSupply = toDecimal(totalSupplyResult.value, decimalsResult.value);
+  return [createOrUpdateTokenSupply(
+    timestamp, getContractName(ERC20_OHM), ERC20_OHM, null, null, null, null, TYPE_TOTAL_SUPPLY, totalSupply, blockNumber)];
+}
 
 /**
  * The start block for accounting of protocol-owned gOHM on Arbitrum.

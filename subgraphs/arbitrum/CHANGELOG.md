@@ -5,6 +5,7 @@
 - Add LUSD, LQTY on Arbitrum
 - Add OHM on Arbitrum
 - Add Chainlink price feeds for LUSD, USDC, WETH
+- Add OHM total supply
 
 ## 1.2.2 (2023-04-29)
 

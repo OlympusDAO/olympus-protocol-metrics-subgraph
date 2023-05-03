@@ -7,7 +7,7 @@ import {
 } from "../../../shared/src/contracts/TokenDefinition";
 import { pushTokenRecordArray, pushTokenSupplyArray } from "../../../shared/src/utils/ArrayHelper";
 import { FundsDeposited } from "../../generated/TokenRecords-arbitrum/GelatoTaskTreasury";
-import { getProtocolOwnedLiquiditySupplyRecords, getTreasuryOHMRecords } from "./OhmCalculations";
+import { getProtocolOwnedLiquiditySupplyRecords, getTotalSupply, getTreasuryOHMRecords } from "./OhmCalculations";
 import { getOwnedLiquidityBalances } from "./OwnedLiquidity";
 import { getTokenBalances } from "./TokenBalances";
 
@@ -35,6 +35,12 @@ function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): TokenReco
 
 function generateTokenSupplies(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
   const records: TokenSupply[] = [];
+
+  // Total supply
+  pushTokenSupplyArray(
+    records,
+    getTotalSupply(timestamp, blockNumber),
+  );
 
   // Treasury OHM
   pushTokenSupplyArray(
