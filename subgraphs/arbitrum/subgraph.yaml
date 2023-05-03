@@ -13,8 +13,8 @@ dataSources:
     name: TokenRecords-arbitrum
     network: arbitrum-one
     source:
-      address: "0xa0a89db1c899c49f98e6326b764bafcf167fc2ce"
-      abi: TreasureMining
+      address: "0x660e7af290f540205a84dccc1f40d0269fc936f5"
+      abi: ChainlinkAggregator
       startBlock: 10950000 # 2022-05-01
     mapping:
       kind: ethereum/events
@@ -44,7 +44,9 @@ dataSources:
           file: abis/JONESStaking.json
         - name: TreasureMining
           file: abis/TreasureMining.json
+        - name: ChainlinkAggregator
+          file: abis/ChainlinkAggregator.json
       eventHandlers:
-        - event: Harvest(indexed address,indexed uint256,uint256)
+        - event: NewRound(indexed uint256,indexed address,uint256)
           handler: handleEvent
       file: ./src/treasury/Assets.ts
