@@ -13,8 +13,8 @@ dataSources:
     name: TokenRecords-arbitrum
     network: arbitrum-one
     source:
-      address: "0xB2f34fd4C16e656163dADFeEaE4Ae0c1F13b140A"
-      abi: GelatoTaskTreasury
+      address: "0xa0a89db1c899c49f98e6326b764bafcf167fc2ce"
+      abi: TreasureMining
       startBlock: 10950000 # 2022-05-01
     mapping:
       kind: ethereum/events
@@ -44,10 +44,7 @@ dataSources:
           file: abis/JONESStaking.json
         - name: TreasureMining
           file: abis/TreasureMining.json
-        # For event trigger
-        - name: GelatoTaskTreasury
-          file: abis/GelatoTaskTreasury.json
       eventHandlers:
-        - event: FundsDeposited(indexed address,indexed address,indexed uint256)
+        - event: Harvest(indexed address,indexed uint256,uint256)
           handler: handleEvent
       file: ./src/treasury/Assets.ts

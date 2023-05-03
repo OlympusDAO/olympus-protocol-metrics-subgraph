@@ -6,7 +6,7 @@ import {
   TokenCategoryVolatile,
 } from "../../../shared/src/contracts/TokenDefinition";
 import { pushTokenRecordArray, pushTokenSupplyArray } from "../../../shared/src/utils/ArrayHelper";
-import { FundsDeposited } from "../../generated/TokenRecords-arbitrum/GelatoTaskTreasury";
+import { Harvest } from "../../generated/TokenRecords-arbitrum/TreasureMining";
 import { getProtocolOwnedLiquiditySupplyRecords, getTotalSupply, getTreasuryOHMRecords } from "./OhmCalculations";
 import { getOwnedLiquidityBalances } from "./OwnedLiquidity";
 import { getTokenBalances } from "./TokenBalances";
@@ -57,7 +57,7 @@ function generateTokenSupplies(timestamp: BigInt, blockNumber: BigInt): TokenSup
   return records;
 }
 
-export function handleEvent(event: FundsDeposited): void {
+export function handleEvent(event: Harvest): void {
   const block = event.block;
 
   log.debug("handleEvent: *** Indexing block {}", [block.number.toString()]);
