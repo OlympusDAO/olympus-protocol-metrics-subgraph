@@ -14,9 +14,12 @@ import {
   ERC20_JONES,
   ERC20_LQTY,
   ERC20_MAGIC,
+  ERC20_OHM,
   ERC20_USDC,
   ERC20_VSTA,
   ERC20_WETH,
+  LP_BALANCER_POOL_OHM_USDC,
+  LP_BALANCER_POOL_WETH_OHM,
   LP_BALANCER_POOL_WETH_VESTA,
   LP_UNISWAP_V2_GOHM_WETH,
   LP_UNISWAP_V2_JONES_WETH,
@@ -31,6 +34,8 @@ import { getBaseTokenRate, isBaseToken } from "./PriceBase";
 export const PRICE_HANDLERS: PriceHandler[] = [
   // new PriceHandlerBalancer([ERC20_MAGIC, ERC20_USDC], BALANCER_VAULT, LP_BALANCER_POOL_MAGIC_USDC, getContractName), // DO NOT enable: will cause infinite loop: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph/issues/94
   new PriceHandlerBalancer([ERC20_WETH, ERC20_VSTA], BALANCER_VAULT, LP_BALANCER_POOL_WETH_VESTA, getContractName),
+  new PriceHandlerBalancer([ERC20_WETH, ERC20_OHM], BALANCER_VAULT, LP_BALANCER_POOL_WETH_OHM, getContractName),
+  new PriceHandlerBalancer([ERC20_OHM, ERC20_USDC], BALANCER_VAULT, LP_BALANCER_POOL_OHM_USDC, getContractName),
   new PriceHandlerStablecoin([ERC20_FRAX, ERC20_USDC], getContractName),
   new PriceHandlerUniswapV2([ERC20_GOHM_SYNAPSE, ERC20_WETH], LP_UNISWAP_V2_GOHM_WETH, getContractName),
   new PriceHandlerUniswapV2([ERC20_JONES, ERC20_WETH], LP_UNISWAP_V2_JONES_WETH, getContractName),

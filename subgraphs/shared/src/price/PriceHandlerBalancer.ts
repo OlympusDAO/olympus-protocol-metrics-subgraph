@@ -313,7 +313,52 @@ export class PriceHandlerBalancer implements PriceHandler {
     return toDecimal(poolToken.balanceOf(Address.fromString(walletAddress)), poolToken.decimals());
   }
 
+  private getTokenReserves(tokenAddress: string, block: BigInt): BigDecimal {
+    const FUNCTION = `${CLASS}: getTokenReserves:`;
+    const vault = this.getVault(block);
+    if (!vault) {
+      log.warning("{} Unable to determine token balance as the vault was not accessible at block {}", [
+        FUNCTION,
+        block.toString(),
+      ]);
+      return BigDecimal.zero();
+    }
+
+    const poolTokenWrapper = vault.getPoolTokens(Bytes.fromHexString(this.poolId));
+    const addresses: Array<Address> = poolTokenWrapper.getTokens();
+    const balances: Array<BigInt> = poolTokenWrapper.getBalances();
+    let tokenIndex = -1;
+    for (let i = 0; i < addresses.length; i++) {
+      if (addressesEqual(addresses[i].toHexString(), tokenAddress)) {
+        tokenIndex = i;
+        break;
+      }
+    }
+
+    if (tokenIndex == -1) {
+      throw new Error(`Unable to find token ${tokenAddress} in Balancer pool ${this.poolId}`);
+    }
+
+    const balance = balances[tokenIndex];
+    const tokenContract = getERC20(tokenAddress, block);
+    return toDecimal(balance, tokenContract.decimals());
+  }
+
   getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal {
-    throw new Error("Method not implemented.");
+    const FUNCTION = `${CLASS}: getUnderlyingTokenBalance:`;
+    const poolToken = this.getPoolToken(block);
+    if (!poolToken) {
+      log.warning(
+        "{} Unable to determine underlying token balance as the pool token was not accessible at block {}",
+        [FUNCTION, block.toString()],
+      );
+      return BigDecimal.zero();
+    }
+
+    const totalSupply = toDecimal(poolToken.totalSupply(), poolToken.decimals());
+    const tokenBalance = this.getTokenReserves(tokenAddress, block);
+    const walletBalance = this.getBalance(walletAddress, block);
+
+    return tokenBalance.times(walletBalance).div(totalSupply);
   }
 }

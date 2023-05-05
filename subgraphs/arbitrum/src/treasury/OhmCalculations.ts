@@ -97,7 +97,7 @@ export function getProtocolOwnedLiquiditySupplyRecords(
     return records;
   }
 
-  const ohmTokens = [ERC20_GOHM_SYNAPSE];
+  const ohmTokens = [ERC20_GOHM_SYNAPSE, ERC20_OHM];
   const wallets = CIRCULATING_SUPPLY_WALLETS;
 
   for (let i = 0; i < PRICE_HANDLERS.length; i++) {
@@ -105,7 +105,7 @@ export function getProtocolOwnedLiquiditySupplyRecords(
 
     for (let j = 0; j < ohmTokens.length; j++) {
       const currentOhmToken = ohmTokens[j];
-      // We only want to look at pairs that contain gOHM
+      // We only want to look at pairs that contain an OHM token
       if (!pairHandler.matches(currentOhmToken)) {
         continue;
       }
