@@ -1,15 +1,18 @@
-import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { getContractName } from "../contracts/Contracts";
-import { getPriceFeedTokens, getPriceFeedValue } from "./PriceChainlink";
+import { getPriceFeedValue } from "./PriceChainlink";
 
 export function isBaseToken(baseToken: string): boolean {
-  const baseTokenLower = baseToken.toLowerCase();
+  const FUNC = "isBaseToken";
+  const priceFeedValue = getPriceFeedValue(baseToken);
 
-  if (getPriceFeedTokens().includes(baseTokenLower)) {
+  if (priceFeedValue !== null) {
+    log.debug("{}: Token {} is a base token", [FUNC, getContractName(baseToken)]);
     return true;
   }
 
+  log.debug("{}: Token {} is not a base token", [FUNC, getContractName(baseToken)]);
   return false;
 }
 
@@ -26,20 +29,21 @@ export function getBaseTokenRate(
   baseToken: Address,
   blockNumber: BigInt,
 ): BigDecimal {
+  const FUNC = "getBaseTokenRate";
   const baseTokenAddress = baseToken.toHexString().toLowerCase();
   if (!isBaseToken(baseTokenAddress)) {
     throw new Error(
-      `getBaseTokenRate: Token ${getContractName(
+      `${FUNC}: Token ${getContractName(
         baseTokenAddress,
       )} is unsupported for base token price lookup`,
     );
   }
 
   const usdRate = getPriceFeedValue(baseTokenAddress);
-
   if (usdRate === null || usdRate.equals(BigDecimal.zero())) {
-    throw new Error(`getBaseTokenRate: Unable to determine USD rate for token ${getContractName(baseTokenAddress)} (${baseTokenAddress}) at block ${blockNumber.toString()}`);
+    throw new Error(`${FUNC}: Unable to determine USD rate for token ${getContractName(baseTokenAddress)} (${baseTokenAddress}) at block ${blockNumber.toString()}`);
   }
 
+  log.debug(`${FUNC}: USD rate for token ${getContractName(baseTokenAddress)} (${baseTokenAddress}) is ${usdRate.toString()}`, []);
   return usdRate;
 }

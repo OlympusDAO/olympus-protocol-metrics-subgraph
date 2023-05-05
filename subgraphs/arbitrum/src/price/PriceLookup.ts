@@ -60,7 +60,20 @@ export function getPriceRecursive(
   block: BigInt,
   currentPool: string | null,
 ): PriceLookupResult | null {
-  log.debug("Determining price for {} ({}) and current pool id {}", [getContractName(tokenAddress), tokenAddress, currentPool ? currentPool : ""]);
+  const FUNC = "getPriceRecursive";
+
+  /**
+   * Check for a base token in this function, instead of getPrice, so that recursive checks can use price feeds.
+   */
+  if (isBaseToken(tokenAddress)) {
+    const usdRate = getBaseTokenRate(Address.fromString(tokenAddress), block);
+    return {
+      price: usdRate,
+      liquidity: new BigDecimal(BigInt.fromU64(U64.MAX_VALUE))
+    }
+  }
+
+  log.debug("{}: Determining price for {} ({}) and current pool id {}", [FUNC, getContractName(tokenAddress), tokenAddress, currentPool ? currentPool : ""]);
   return getUSDRate(tokenAddress, PRICE_HANDLERS, getPriceRecursive, block, currentPool);
 }
 
@@ -73,9 +86,8 @@ export function getPriceRecursive(
  * @throws Error if a price cannot be found, so that the subgraph indexing fails quickly
  */
 export function getPrice(tokenAddress: string, block: BigInt): BigDecimal {
-  if (isBaseToken(tokenAddress)) {
-    return getBaseTokenRate(Address.fromString(tokenAddress), block);
-  }
+  const FUNC = "getPrice";
+  log.debug(`${FUNC}: Determining price for ${getContractName(tokenAddress)} (${tokenAddress}) at block ${block.toString()}`, []);
 
   const priceResult = getPriceRecursive(tokenAddress, block, null);
 

@@ -46,7 +46,6 @@ ERC20_TOKENS_ARBITRUM.set(ERC20_MAGIC, new TokenDefinition(ERC20_MAGIC, TokenCat
 ERC20_TOKENS_ARBITRUM.set(ERC20_USDC, new TokenDefinition(ERC20_USDC, TokenCategoryStable, true, false));
 ERC20_TOKENS_ARBITRUM.set(ERC20_VSTA, new TokenDefinition(ERC20_VSTA, TokenCategoryVolatile, true, false, BigDecimal.fromString("0.77")));
 ERC20_TOKENS_ARBITRUM.set(ERC20_WETH, new TokenDefinition(ERC20_WETH, TokenCategoryVolatile, true, true));
-
 ERC20_TOKENS_ARBITRUM.set(LP_BALANCER_POOL_MAGIC_USDC, new TokenDefinition(LP_BALANCER_POOL_MAGIC_USDC, TokenCategoryPOL, true, false));
 ERC20_TOKENS_ARBITRUM.set(LP_BALANCER_POOL_WETH_VESTA, new TokenDefinition(LP_BALANCER_POOL_WETH_VESTA, TokenCategoryPOL, true, false));
 ERC20_TOKENS_ARBITRUM.set(LP_BALANCER_POOL_WETH_OHM, new TokenDefinition(LP_BALANCER_POOL_WETH_OHM, TokenCategoryPOL, true, false));

@@ -1,6 +1,6 @@
 # Arbitrum Subgraph Changelog
 
-## 1.4.0 (2023-05-05)
+## 1.4.3 (2023-05-05)
 
 - Add wETH-OHM and OHM-USDC POL
 
