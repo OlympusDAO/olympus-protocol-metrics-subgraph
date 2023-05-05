@@ -1,6 +1,10 @@
 # Arbitrum Subgraph Changelog
 
-## 1.3.0 (2023-05-XX)
+## 1.4.3 (2023-05-05)
+
+- Add wETH-OHM and OHM-USDC POL
+
+## 1.3.4 (2023-05-03)
 
 - Add LUSD, LQTY on Arbitrum
 - Add OHM on Arbitrum

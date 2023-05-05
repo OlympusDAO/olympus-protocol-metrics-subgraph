@@ -1,11 +1,14 @@
 import { Address, BigDecimal, BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts";
 import { assert, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
+import { CIRCULATING_SUPPLY_WALLETS } from "../../../arbitrum/src/contracts/Constants";
 import { ContractNameLookup } from "../../src/contracts/ContractLookup";
 import { PriceLookup, PriceLookupResult } from "../../src/price/PriceHandler";
 import { PriceHandlerBalancer } from "../../src/price/PriceHandlerBalancer";
 import { toBigInt } from "../../src/utils/Decimals";
 import { addressesEqual } from "../../src/utils/StringHelper";
+import { CROSS_CHAIN_ARBITRUM } from "../../src/Wallets";
+import { mockERC20Balance, mockERC20Balances } from "../ERC20Helper";
 
 export function mockBalancerVault(
   vaultAddress: string,
@@ -422,5 +425,39 @@ describe("getUnitPrice", () => {
 
     const unitPrice = handler.getUnitPrice(priceLookup, BLOCK);
     assert.stringEquals(expectedValue.toString(), unitPrice ? unitPrice.toString() : "");
+  });
+});
+
+describe("getUnderlyingTokenBalance", () => {
+  test("calculates the underlying token balance accurately", () => {
+    const contractLookup: ContractNameLookup = (tokenAddress: string): string => {
+      if (addressesEqual(tokenAddress, ERC20_OHM_V2)) {
+        return "OHM V2";
+      }
+
+      if (addressesEqual(tokenAddress, ERC20_DAI)) {
+        return "DAI";
+      }
+
+      return "wETH";
+    };
+
+    mockBalancerVaultOhmDaiEth();
+
+    const lpBalance = BigDecimal.fromString("10");
+    mockERC20Balances(CIRCULATING_SUPPLY_WALLETS, ERC20_BALANCER_OHM_DAI_WETH, BigDecimal.zero());
+    mockERC20Balance(CROSS_CHAIN_ARBITRUM, ERC20_BALANCER_OHM_DAI_WETH, lpBalance);
+
+    const handler = new PriceHandlerBalancer(
+      [ERC20_OHM_V2, ERC20_DAI, ERC20_WETH],
+      BALANCER_VAULT,
+      POOL_BALANCER_OHM_DAI_WETH_ID,
+      contractLookup,
+    );
+
+    const expectedBalance = lpBalance.times(OHM_DAI_ETH_BALANCE_OHM).div(OHM_DAI_ETH_TOKEN_TOTAL_SUPPLY);
+
+    const balance = handler.getUnderlyingTokenBalance(CROSS_CHAIN_ARBITRUM, ERC20_OHM_V2, BLOCK);
+    assert.stringEquals(expectedBalance.toString(), balance.toString());
   });
 });
