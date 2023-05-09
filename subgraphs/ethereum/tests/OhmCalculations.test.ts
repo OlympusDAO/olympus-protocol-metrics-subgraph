@@ -302,6 +302,8 @@ const SILO_MINT_BLOCK = BigInt.fromString("16627144");
 const SILO_MINT_QUANTITY = BigDecimal.fromString("20000");
 const EULER_MINT_BLOCK = BigInt.fromString("16627152");
 const EULER_MINT_QUANTITY = BigDecimal.fromString("30000");
+const EULER_WITHDRAW_BLOCK = BigInt.fromString("16818299");
+const EULER_WITHDRAW_QUANTITY = BigDecimal.fromString("-27239.193995359");
 
 describe("Borrowable OHM", () => {
     test("returns no records before minting", () => {
@@ -314,15 +316,36 @@ describe("Borrowable OHM", () => {
         const records = getMintedBorrowableOHMRecords(TIMESTAMP, EULER_MINT_BLOCK.plus(BigInt.fromI32(1)));
 
         const recordSilo = records[0];
-        assert.stringEquals(recordSilo.supplyBalance.toString(), "-" + SILO_MINT_QUANTITY.toString());
+        assert.stringEquals(recordSilo.supplyBalance.toString(), (BigDecimal.fromString("-1").times(SILO_MINT_QUANTITY)).toString());
         assert.assertTrue(recordSilo.sourceAddress == SILO_ADDRESS);
         assert.stringEquals(recordSilo.type, TYPE_LENDING);
 
         const recordEuler = records[1];
-        assert.stringEquals(recordEuler.supplyBalance.toString(), "-" + EULER_MINT_QUANTITY.toString());
+        assert.stringEquals(recordEuler.supplyBalance.toString(), (BigDecimal.fromString("-1").times(EULER_MINT_QUANTITY)).toString());
         assert.assertTrue(recordEuler.sourceAddress == EULER_ADDRESS);
         assert.stringEquals(recordEuler.type, TYPE_LENDING);
 
         assert.i32Equals(records.length, 2);
+    });
+
+    test("considers withdraws", () => {
+        const records = getMintedBorrowableOHMRecords(TIMESTAMP, EULER_WITHDRAW_BLOCK.plus(BigInt.fromI32(1)));
+
+        const recordSilo = records[0];
+        assert.stringEquals(recordSilo.supplyBalance.toString(), (BigDecimal.fromString("-1").times(SILO_MINT_QUANTITY)).toString());
+        assert.assertTrue(recordSilo.sourceAddress == SILO_ADDRESS);
+        assert.stringEquals(recordSilo.type, TYPE_LENDING);
+
+        const recordEuler = records[1];
+        assert.stringEquals(recordEuler.supplyBalance.toString(), (BigDecimal.fromString("-1").times(EULER_MINT_QUANTITY)).toString());
+        assert.assertTrue(recordEuler.sourceAddress == EULER_ADDRESS);
+        assert.stringEquals(recordEuler.type, TYPE_LENDING);
+
+        const recordEulerTwo = records[2];
+        assert.stringEquals(recordEulerTwo.supplyBalance.toString(), (BigDecimal.fromString("-1").times(EULER_WITHDRAW_QUANTITY)).toString());
+        assert.assertTrue(recordEulerTwo.sourceAddress == EULER_ADDRESS);
+        assert.stringEquals(recordEulerTwo.type, TYPE_LENDING);
+
+        assert.i32Equals(records.length, 3);
     });
 });
