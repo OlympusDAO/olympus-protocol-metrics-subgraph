@@ -315,9 +315,9 @@ function getLendingMarketDeploymentOHMRecords(timestamp: BigInt, deployments: Le
         timestamp,
         getContractName(ERC20_OHM_V2),
         ERC20_OHM_V2,
-        null,
-        null,
-        getContractName(currentDeployment.getAddress(), currentDeployment.getBlockNumber().toString()), // Avoids clobbering
+        currentDeployment.getBlockNumber().toString(), // Avoids clobbering
+        currentDeployment.getBlockNumber().toString(),
+        getContractName(currentDeployment.getAddress()),
         currentDeployment.getAddress(),
         TYPE_LENDING,
         currentDeployment.getAmount(),
