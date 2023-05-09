@@ -337,15 +337,10 @@ describe("Borrowable OHM", () => {
         assert.stringEquals(recordSilo.type, TYPE_LENDING);
 
         const recordEuler = records[1];
-        assert.stringEquals(recordEuler.supplyBalance.toString(), (BigDecimal.fromString("-1").times(EULER_MINT_QUANTITY)).toString());
+        assert.stringEquals(recordEuler.supplyBalance.toString(), (BigDecimal.fromString("-1").times(EULER_MINT_QUANTITY.plus(EULER_WITHDRAW_QUANTITY))).toString());
         assert.assertTrue(recordEuler.sourceAddress == EULER_ADDRESS);
         assert.stringEquals(recordEuler.type, TYPE_LENDING);
 
-        const recordEulerTwo = records[2];
-        assert.stringEquals(recordEulerTwo.supplyBalance.toString(), (BigDecimal.fromString("-1").times(EULER_WITHDRAW_QUANTITY)).toString());
-        assert.assertTrue(recordEulerTwo.sourceAddress == EULER_ADDRESS);
-        assert.stringEquals(recordEulerTwo.type, TYPE_LENDING);
-
-        assert.i32Equals(records.length, 3);
+        assert.i32Equals(records.length, 2);
     });
 });

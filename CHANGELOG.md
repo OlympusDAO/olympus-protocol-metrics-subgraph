@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 4.8.2 (2023-05-09)
+## 4.8.3 (2023-05-09)
 
 - Remove duplication of staking/locking messages in contract names
 - Add Chainlink price feed for LUSD
@@ -8,6 +8,7 @@
 - Add contract name for boosted liquidity vaults
 - Amend the way Euler and Silo manual deployments are identified
 - Record additional Euler and Silo deployments
+- Shift to recording OHM supplied to Euler and Silo as running balance snapshots, instead of individual transactions
 
 ## 4.7.0 (2023-03-27)
 
