@@ -779,7 +779,7 @@ export function getBtrflyUnlockedBalancesFromWallets(
     }
 
     log.debug(
-      "getBtrflyLockedBalancesFromWallets: found unlocked balance {} for token {} ({}) and wallet {} ({}) at block {}",
+      "getBtrflyUnlockedBalancesFromWallets: found unlocked balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),
         getContractName(tokenAddress, "Unlocked"),

@@ -267,8 +267,6 @@ ERC20_TOKENS.set(ERC20_BTRFLY_V2_RL, new TokenDefinition(ERC20_BTRFLY_V2_RL, Tok
 ERC20_TOKENS.set(ERC20_BTRFLY_V2, new TokenDefinition(ERC20_BTRFLY_V2, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_CRV_3POOL, new TokenDefinition(ERC20_CRV_3POOL, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_CRV, new TokenDefinition(ERC20_CRV, TokenCategoryVolatile, true, false));
-ERC20_TOKENS.set(ERC20_CVX_CRV, new TokenDefinition(ERC20_CVX_CRV, TokenCategoryVolatile, true, false));
-ERC20_TOKENS.set(ERC20_CVX_FRAX_3CRV, new TokenDefinition(ERC20_CVX_FRAX_3CRV, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_CVX_VL_V1, new TokenDefinition(ERC20_CVX_VL_V1, TokenCategoryVolatile, true, false)); // Locked for a few months only
 ERC20_TOKENS.set(ERC20_CVX_VL_V2, new TokenDefinition(ERC20_CVX_VL_V2, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_CVX, new TokenDefinition(ERC20_CVX, TokenCategoryVolatile, true, false));
@@ -302,11 +300,18 @@ ERC20_TOKENS.set(ERC20_WSTETH, new TokenDefinition(ERC20_WSTETH, TokenCategoryVo
 ERC20_TOKENS.set(ERC20_XSUSHI, new TokenDefinition(ERC20_XSUSHI, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(NATIVE_ETH, new TokenDefinition(NATIVE_ETH, TokenCategoryVolatile, true, true));
 
+/**
+ * Mapping between the non-staked token and the token staked in Convex.
+ * 
+ * The staked token should NOT be listed in {ERC20_TOKENS}.
+ */
 const CONVEX_STAKED_TOKENS = new Map<string, TokenDefinition>();
 CONVEX_STAKED_TOKENS.set(ERC20_CRV_FRAX_USDC, new TokenDefinition(ERC20_CVX_FRAX_USDC, TokenCategoryStable, true, false));
 CONVEX_STAKED_TOKENS.set(ERC20_CRV_OHMETH, new TokenDefinition(ERC20_CVX_OHMETH, TokenCategoryPOL, true, false));
 CONVEX_STAKED_TOKENS.set(ERC20_CRV_OHMFRAXBP, new TokenDefinition(ERC20_CVX_OHM_FRAXBP, TokenCategoryPOL, true, false));
 CONVEX_STAKED_TOKENS.set(ERC20_CRV, new TokenDefinition(ERC20_CVX_CRV, TokenCategoryVolatile, true, false));
+CONVEX_STAKED_TOKENS.set(ERC20_FRAX_3CRV, new TokenDefinition(ERC20_CVX_FRAX_3CRV, TokenCategoryStable, true, false));
+CONVEX_STAKED_TOKENS.set(ERC20_FXS, new TokenDefinition(ERC20_CVX_FXS, TokenCategoryVolatile, true, false));
 
 /**
  * Gets the staked Convex version of the given token.
@@ -340,6 +345,11 @@ export const FRAX_LOCKING_CONTRACTS = [
   FRAX_LOCKING_OHM_FRAXBP,
 ];
 
+/**
+ * Mapping between the non-staked token and the token staked in Frax.
+ * 
+ * The staked token should NOT be listed in {ERC20_TOKENS}.
+ */
 const FRAX_STAKED_TOKENS = new Map<string, TokenDefinition>();
 FRAX_STAKED_TOKENS.set(ERC20_CRV_FRAX_USDC, new TokenDefinition(ERC20_CVX_FRAX_USDC_STAKED, TokenCategoryStable, true, false));
 FRAX_STAKED_TOKENS.set(ERC20_CRV_OHMFRAXBP, new TokenDefinition(ERC20_CVX_OHM_FRAXBP_STAKED, TokenCategoryPOL, true, false));
@@ -913,6 +923,16 @@ CONTRACT_ABBREVIATION_MAP.set(ERC20_PRIME, "D2D");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_SUSHI, "SUSHI");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_XSUSHI, "xSUSHI");
 
+export function getContractAbbreviation(
+  contractAddress: string,
+): string | null {
+  const contractAddressLower = contractAddress.toLowerCase();
+
+  return CONTRACT_ABBREVIATION_MAP.has(contractAddressLower)
+    ? CONTRACT_ABBREVIATION_MAP.get(contractAddressLower)
+    : null;
+}
+
 const CONTRACT_NAME_MAP = new Map<string, string>();
 // CONTRACT_NAME_MAP.set(POOL_BALANCER_BB_A_WSTETH_ID, "Balancer BB-A-wstETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(AAVE_ALLOCATOR_V2, "Aave Allocator V2");
@@ -968,13 +988,13 @@ CONTRACT_NAME_MAP.set(ERC20_BALANCER_BAL_WETH, "Balancer BAL-WETH Liquidity Pool
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_BB_A_WSTETH, "Balancer BB-A-wstETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_GRAVIAURA_AURABAL_WETH, "Balancer graviAURA-auraBAL-WETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_BTRFLY_V2, "Balancer OHM V2-BTRFLY V2 Liquidity Pool");
-CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_DAI_AURA, "Balancer OHM-DAI Liquidity Pool - Staked in Aura");
-CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_DAI_WETH_AURA, "Balancer OHM-DAI-WETH Liquidity Pool - Staked in Aura");
+CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_DAI_AURA, "Balancer OHM-DAI Liquidity Pool");
+CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_DAI_WETH_AURA, "Balancer OHM-DAI-WETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_DAI_WETH, "Balancer OHM-DAI-WETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_DAI, "Balancer OHM-DAI Liquidity Pool");
-CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_WETH_AURA, "Balancer OHM-WETH Liquidity Pool - Staked in Aura");
+CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_WETH_AURA, "Balancer OHM-WETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_WETH, "Balancer OHM-WETH Liquidity Pool");
-CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_WSTETH_AURA, "Balancer OHM-wstETH Liquidity Pool - Staked in Aura");
+CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_WSTETH_AURA, "Balancer OHM-wstETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_WSTETH, "Balancer OHM-wstETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_WETH_FDT, "Balancer WETH-FDT Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_WSTETH_WETH, "Balancer wstETH-wETH Liquidity Pool");
@@ -989,14 +1009,14 @@ CONTRACT_NAME_MAP.set(ERC20_CRV_FRAX_USDC, "Curve Frax-USDC Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_CRV_OHMETH, "Curve OHM-ETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_CRV_OHMFRAXBP, "Curve OHM-FraxBP Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_CRV, "Curve");
-CONTRACT_NAME_MAP.set(ERC20_CVX_CRV, "Curve - Staked in Convex");
-CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_3CRV, "Curve FRAX3Pool - Staked in Convex");
-CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_USDC_STAKED, "Curve FraxBP - Staked in Frax");
-CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_USDC, "Curve FraxBP - Staked in Convex");
-CONTRACT_NAME_MAP.set(ERC20_CVX_FXS, "FXS - Staked in Convex");
-CONTRACT_NAME_MAP.set(ERC20_CVX_OHM_FRAXBP_STAKED, "Curve OHM-FraxBP - Staked in Frax");
-CONTRACT_NAME_MAP.set(ERC20_CVX_OHM_FRAXBP, "Curve OHM-FraxBP Liquidity Pool - Staked in Convex");
-CONTRACT_NAME_MAP.set(ERC20_CVX_OHMETH, "Curve OHM-ETH Liquidity Pool - Staked in Convex");
+CONTRACT_NAME_MAP.set(ERC20_CVX_CRV, "Curve");
+CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_3CRV, "Curve FRAX3Pool");
+CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_USDC_STAKED, "Curve FraxBP");
+CONTRACT_NAME_MAP.set(ERC20_CVX_FRAX_USDC, "Curve FraxBP");
+CONTRACT_NAME_MAP.set(ERC20_CVX_FXS, "FXS");
+CONTRACT_NAME_MAP.set(ERC20_CVX_OHM_FRAXBP_STAKED, "Curve OHM-FraxBP");
+CONTRACT_NAME_MAP.set(ERC20_CVX_OHM_FRAXBP, "Curve OHM-FraxBP Liquidity Pool");
+CONTRACT_NAME_MAP.set(ERC20_CVX_OHMETH, "Curve OHM-ETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_CVX_VL_V1, "Convex - Vote-Locked");
 CONTRACT_NAME_MAP.set(ERC20_CVX_VL_V2, "Convex - Vote-Locked");
 CONTRACT_NAME_MAP.set(ERC20_CVX, "Convex");

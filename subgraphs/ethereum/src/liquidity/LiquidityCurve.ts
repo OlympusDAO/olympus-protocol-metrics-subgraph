@@ -171,7 +171,7 @@ export function getCurvePairTotalValue(
 }
 
 /**
- * Creates a token record for a staked Curve pair token.
+ * Creates a token record for a Curve pair token staked in Convex.
  *
  * If the stakedTokenAddress is null or the balance is 0, null is returned.
  *
@@ -188,7 +188,7 @@ export function getCurvePairTotalValue(
  * @param blockNumber
  * @returns
  */
-function getCurvePairStakedRecord(
+function getCurvePairConvexStakedRecord(
   timestamp: BigInt,
   pairTokenAddress: string,
   stakedTokenDefinition: TokenDefinition | null,
@@ -224,7 +224,7 @@ function getCurvePairStakedRecord(
   );
   return createOrUpdateTokenRecord(
     timestamp,
-    getContractName(stakedTokenDefinition.getAddress()),
+    getContractName(stakedTokenDefinition.getAddress(), "Staked in Convex"),
     stakedTokenDefinition.getAddress(),
     getContractName(walletAddress),
     walletAddress,
@@ -293,7 +293,7 @@ function getCurvePairFraxLockedRecord(
   );
   return createOrUpdateTokenRecord(
     timestamp,
-    getContractName(stakedTokenDefinition.getAddress()),
+    getContractName(stakedTokenDefinition.getAddress(), "Staked in Frax"),
     stakedTokenDefinition.getAddress(),
     getContractName(walletAddress),
     walletAddress,
@@ -481,7 +481,7 @@ export function getCurvePairRecords(
     for (let j = 0; j < CONVEX_STAKING_CONTRACTS.length; j++) {
       const stakingAddress = CONVEX_STAKING_CONTRACTS[j];
 
-      const stakedRecord = getCurvePairStakedRecord(
+      const stakedRecord = getCurvePairConvexStakedRecord(
         timestamp,
         pairTokenAddress,
         getConvexStakedToken(pairTokenAddress),
