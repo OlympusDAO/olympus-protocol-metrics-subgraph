@@ -16,6 +16,7 @@ import { BalancerLiquidityGauge } from "../../generated/ProtocolMetrics/Balancer
 import { ConvexBaseRewardPool } from "../../generated/ProtocolMetrics/ConvexBaseRewardPool";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { FraxFarm } from "../../generated/ProtocolMetrics/FraxFarm";
+import { LiquityStabilityPool } from "../../generated/ProtocolMetrics/LiquityStabilityPool";
 import { LQTYStaking } from "../../generated/ProtocolMetrics/LQTYStaking";
 import { LUSDAllocatorV2 } from "../../generated/ProtocolMetrics/LUSDAllocatorV2";
 import { MakerDSR } from "../../generated/ProtocolMetrics/MakerDSR";
@@ -64,6 +65,7 @@ import {
   getVendorDeployments,
   getWalletAddressesForContract,
   liquidityPairHasToken,
+  LIQUITY_STABILITY_POOL,
   LQTY_STAKING,
   MAKER_DSR,
   NATIVE_ETH,
@@ -777,7 +779,7 @@ export function getBtrflyUnlockedBalancesFromWallets(
     }
 
     log.debug(
-      "getBtrflyLockedBalancesFromWallets: found unlocked balance {} for token {} ({}) and wallet {} ({}) at block {}",
+      "getBtrflyUnlockedBalancesFromWallets: found unlocked balance {} for token {} ({}) and wallet {} ({}) at block {}",
       [
         balance.toString(),
         getContractName(tokenAddress, "Unlocked"),
@@ -1744,88 +1746,108 @@ export function getConvexStakedRecords(
   return records;
 }
 
-export function getLUSDAllocator(
-  contractAddress: string,
-  currentBlockNumber: BigInt,
-): LUSDAllocatorV2 | null {
-  if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
-
-  if (!contractsLUSDAllocator.has(contractAddress)) {
-    log.debug("Binding LiquityAllocator contract for address {}. Block number {}", [
-      contractAddress,
-      currentBlockNumber.toString(),
-    ]);
-    const contract = LUSDAllocatorV2.bind(Address.fromString(contractAddress));
-    contractsLUSDAllocator.set(contractAddress, contract);
+/**
+ * Returns the deposited balance of {tokenSnapshot} belonging to {walletAddress}
+ * in the Liquity Stability Pool.
+ *
+ * @param stabilityPoolContract
+ * @param tokenContract
+ * @param walletAddress
+ * @param blockNumber
+ * @returns
+ */
+function getLiquityStabilityPoolDeposit(
+  stabilityPoolContract: LiquityStabilityPool,
+  tokenSnapshot: ERC20TokenSnapshot,
+  walletAddress: string,
+  _blockNumber: BigInt,
+): BigDecimal {
+  const depositResult = stabilityPoolContract.try_deposits(Address.fromString(walletAddress));
+  if (depositResult.reverted) {
+    return BigDecimal.zero();
   }
 
-  return contractsLUSDAllocator.get(contractAddress);
+  return toDecimal(
+    depositResult.value.getInitialValue(),
+    tokenSnapshot.decimals,
+  );
 }
 
 /**
- * Returns the balance of the given token in the Liquity stability pool
- * through the allocator at {allocatorAddress}
+ * Returns the ETH rewards of {tokenSnapshot} belonging to {walletAddress}
+ * in the Liquity Stability Pool.
  *
- * @param allocatorAddress allocator address
- * @param tokenAddress token address
- * @param blockNumber the current block number
- * @returns BigDecimal or null
+ * @param stabilityPoolContract
+ * @param tokenContract
+ * @param walletAddress
+ * @param blockNumber
+ * @returns
  */
-export function getLiquityStabilityPoolBalance(
-  allocatorAddress: string,
-  tokenAddress: string,
-  blockNumber: BigInt,
-): BigDecimal | null {
-  log.debug(
-    "getLiquityStabilityPoolBalance: determining Liquity stability pool balance for allocator {} ({}) and token {} ({}) at block {}",
-    [
-      getContractName(allocatorAddress),
-      allocatorAddress,
-      getContractName(tokenAddress),
-      tokenAddress,
-      blockNumber.toString(),
-    ],
+function getLiquityStabilityPoolETHRewards(
+  stabilityPoolContract: LiquityStabilityPool,
+  tokenSnapshot: ERC20TokenSnapshot,
+  walletAddress: string,
+  _blockNumber: BigInt,
+): BigDecimal {
+  const depositResult = stabilityPoolContract.try_getDepositorETHGain(Address.fromString(walletAddress));
+  if (depositResult.reverted) {
+    return BigDecimal.zero();
+  }
+
+  return toDecimal(
+    depositResult.value,
+    tokenSnapshot.decimals,
   );
-  const allocator = getLUSDAllocator(allocatorAddress, blockNumber);
-  if (!allocator) {
-    log.debug("getLiquityStabilityPoolBalance: no allocator. Skipping.", []);
-    return null;
+}
+
+/**
+ * Returns the LQTY rewards of {tokenSnapshot} belonging to {walletAddress}
+ * in the Liquity Stability Pool.
+ *
+ * @param stabilityPoolContract
+ * @param tokenContract
+ * @param walletAddress
+ * @param blockNumber
+ * @returns
+ */
+function getLiquityStabilityPoolLQTYRewards(
+  stabilityPoolContract: LiquityStabilityPool,
+  tokenSnapshot: ERC20TokenSnapshot,
+  walletAddress: string,
+  _blockNumber: BigInt,
+): BigDecimal {
+  const depositResult = stabilityPoolContract.try_getDepositorLQTYGain(Address.fromString(walletAddress));
+  if (depositResult.reverted) {
+    return BigDecimal.zero();
   }
 
-  if (addressesEqual(tokenAddress, ERC20_LUSD)) {
-    const lusdBalance = toDecimal(
-      allocator.amountAllocated(BigInt.fromI32(getRariAllocatorId(ERC20_LUSD))),
-    );
-    log.info("getLiquityStabilityPoolBalance: found LUSD balance of {} at block {}", [
-      lusdBalance.toString(),
-      blockNumber.toString(),
-    ]);
-    return lusdBalance;
+  return toDecimal(
+    depositResult.value,
+    tokenSnapshot.decimals,
+  );
+}
+
+function getLiquityStabilityPoolTokenBalance(
+  stabilityPoolContract: LiquityStabilityPool,
+  tokenSnapshot: ERC20TokenSnapshot,
+  walletAddress: string,
+  _blockNumber: BigInt,
+): BigDecimal {
+  const tokenAddress = tokenSnapshot.address.toHexString().toLowerCase();
+
+  if (tokenAddress == ERC20_LUSD.toLowerCase()) {
+    return getLiquityStabilityPoolDeposit(stabilityPoolContract, tokenSnapshot, walletAddress, _blockNumber);
   }
 
-  if (addressesEqual(tokenAddress, ERC20_WETH)) {
-    const wethBalance = toDecimal(allocator.getETHRewards());
-    log.info("getLiquityStabilityPoolBalance: found wETH balance of {} at block {}", [
-      wethBalance.toString(),
-      blockNumber.toString(),
-    ]);
-    return wethBalance;
+  if (tokenAddress == ERC20_WETH.toLowerCase()) {
+    return getLiquityStabilityPoolETHRewards(stabilityPoolContract, tokenSnapshot, walletAddress, _blockNumber);
   }
 
-  if (addressesEqual(tokenAddress, ERC20_LQTY)) {
-    const lqtyBalance = toDecimal(allocator.getLQTYRewards());
-    log.info("getLiquityStabilityPoolBalance: found LQTY balance of {} at block {}", [
-      lqtyBalance.toString(),
-      blockNumber.toString(),
-    ]);
-    return lqtyBalance;
+  if (tokenAddress == ERC20_LQTY.toLowerCase()) {
+    return getLiquityStabilityPoolLQTYRewards(stabilityPoolContract, tokenSnapshot, walletAddress, _blockNumber);
   }
 
-  log.debug("getLiquityStabilityPoolBalance: no balance for unsupported token {} at block {}", [
-    getContractName(tokenAddress),
-    blockNumber.toString(),
-  ]);
-  return null;
+  return BigDecimal.zero();
 }
 
 /**
@@ -1845,28 +1867,51 @@ export function getLiquityStabilityPoolRecords(
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
 
-  const balance = getLiquityStabilityPoolBalance(LUSD_ALLOCATOR, tokenAddress, blockNumber);
-  if (!balance || balance.equals(BigDecimal.zero())) return records;
+  // Check that the token exists
+  const tokenSnapshot = getOrCreateERC20TokenSnapshot(tokenAddress, blockNumber);
+  if (tokenSnapshot == null || tokenSnapshot.totalSupply === null) {
+    return records;
+  }
 
-  log.info(
-    "getLiquityStabilityPoolRecords: Found balance {} of token {} in Liquity allocator at block {}",
-    [balance.toString(), getContractName(tokenAddress), blockNumber.toString()],
-  );
-  records.push(
-    createOrUpdateTokenRecord(
-      timestamp,
-      getContractName(tokenAddress),
-      tokenAddress,
-      getContractName(LUSD_ALLOCATOR),
-      LUSD_ALLOCATOR,
-      rate,
-      balance,
-      blockNumber,
-      getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
-      ERC20_TOKENS,
-      BLOCKCHAIN,
-    ),
-  );
+  // Iterate over all relevant wallets
+  const contract = LiquityStabilityPool.bind(Address.fromString(LIQUITY_STABILITY_POOL));
+  const wallets = getWalletAddressesForContract(tokenAddress);
+  for (let i = 0; i < wallets.length; i++) {
+    const currentWallet = wallets[i];
+
+    const balance = getLiquityStabilityPoolTokenBalance(contract, tokenSnapshot, currentWallet, blockNumber);
+    if (balance.equals(BigDecimal.zero())) {
+      continue;
+    }
+
+    log.debug(
+      "getLiquityStabilityPoolRecords: found balance {} for token {} ({}) and wallet {} ({}) at block {}",
+      [
+        balance.toString(),
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        blockNumber.toString(),
+      ],
+    );
+
+    records.push(
+      createOrUpdateTokenRecord(
+        timestamp,
+        getContractName(tokenAddress, "Stability Pool"),
+        tokenAddress,
+        getContractName(currentWallet),
+        currentWallet,
+        rate,
+        balance,
+        blockNumber,
+        getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
+        ERC20_TOKENS,
+        BLOCKCHAIN,
+      ),
+    );
+  }
 
   return records;
 }

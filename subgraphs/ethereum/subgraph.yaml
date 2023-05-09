@@ -633,6 +633,8 @@ dataSources:
           file: ./abis/rlBTRFLY.json
         - name: ChainlinkPriceFeed
           file: ../shared/abis/ChainlinkPriceFeed.json
+        - name: LiquityStabilityPool
+          file: ./abis/StabilityPool.json
         # Gnosis Auctions
         - name: BondManager
           file: ./abis/BondManager.json

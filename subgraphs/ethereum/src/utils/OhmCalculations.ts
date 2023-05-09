@@ -29,11 +29,13 @@ import {
   ERC20_SOHM_V2_BLOCK,
   ERC20_SOHM_V3,
   ERC20_SOHM_V3_BLOCK,
+  EULER_ADDRESS,
   EULER_DEPLOYMENTS,
   getContractName,
   LIQUIDITY_OWNED,
   MIGRATION_CONTRACT,
   OLYMPUS_BOOSTED_LIQUIDITY_REGISTRY,
+  SILO_ADDRESS,
   SILO_DEPLOYMENTS,
 } from "./Constants";
 import {
@@ -295,9 +297,11 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
   return records;
 }
 
-function getLendingMarketDeploymentOHMRecords(timestamp: BigInt, deployments: LendingMarketDeployment[], blockNumber: BigInt): TokenSupply[] {
+function getLendingMarketDeploymentOHMRecords(timestamp: BigInt, deploymentAddress: string, deployments: LendingMarketDeployment[], blockNumber: BigInt): TokenSupply[] {
   const records: TokenSupply[] = [];
+  let balance = BigDecimal.zero();
 
+  // Calculate a running balance for the OHM tokens deposited into the lending market
   for (let i = 0; i < deployments.length; i++) {
     const currentDeployment = deployments[i];
     // Exclude if before deployment
@@ -310,22 +314,30 @@ function getLendingMarketDeploymentOHMRecords(timestamp: BigInt, deployments: Le
       continue;
     }
 
-    records.push(
-      createOrUpdateTokenSupply(
-        timestamp,
-        getContractName(ERC20_OHM_V2),
-        ERC20_OHM_V2,
-        null,
-        null,
-        getContractName(currentDeployment.getAddress(), currentDeployment.getBlockNumber().toString()), // Avoids clobbering
-        currentDeployment.getAddress(),
-        TYPE_LENDING,
-        currentDeployment.getAmount(),
-        blockNumber,
-        -1, // Subtract
-      )
-    );
+    balance = balance.plus(currentDeployment.getAmount());
   }
+
+  // Skip if there's no balance at the current block
+  if (balance.equals(BigDecimal.zero())) {
+    return records;
+  }
+
+  // Record the balance at the current block
+  records.push(
+    createOrUpdateTokenSupply(
+      timestamp,
+      getContractName(ERC20_OHM_V2),
+      ERC20_OHM_V2,
+      null,
+      null,
+      getContractName(deploymentAddress),
+      deploymentAddress,
+      TYPE_LENDING,
+      balance,
+      blockNumber,
+      -1, // Subtract, as this represents OHM taken out of supply
+    ),
+  );
 
   return records;
 }
@@ -346,12 +358,12 @@ export function getMintedBorrowableOHMRecords(timestamp: BigInt, blockNumber: Bi
 
   pushTokenSupplyArray(
     records,
-    getLendingMarketDeploymentOHMRecords(timestamp, SILO_DEPLOYMENTS, blockNumber),
+    getLendingMarketDeploymentOHMRecords(timestamp, SILO_ADDRESS, SILO_DEPLOYMENTS, blockNumber),
   );
 
   pushTokenSupplyArray(
     records,
-    getLendingMarketDeploymentOHMRecords(timestamp, EULER_DEPLOYMENTS, blockNumber),
+    getLendingMarketDeploymentOHMRecords(timestamp, EULER_ADDRESS, EULER_DEPLOYMENTS, blockNumber),
   );
 
   return records;
@@ -363,7 +375,7 @@ export function getMintedBorrowableOHMRecords(timestamp: BigInt, blockNumber: Bi
  * sOHM and gOHM are converted to the equivalent quantity of OHM (using the index)
  * and included in the calculation.
  *
- * @param timestmap the current timestamp
+ * @param timestamp the current timestamp
  * @param blockNumber the current block number
  * @returns TokenSupply records
  */
@@ -585,7 +597,7 @@ export function getBoostedLiquiditySupplyRecords(timestamp: BigInt, blockNumber:
         ERC20_OHM_V2,
         null,
         null,
-        getContractName(vaultAddress.toHexString().toLowerCase()),
+        `Boosted Liquidity Vault - ${vaultAddress.toHexString()}`, // Avoids record clobbering. The address comes from the registry, so cannot be recorded in advance.
         vaultAddress.toHexString().toLowerCase(),
         TYPE_BOOSTED_LIQUIDITY_VAULT,
         ohmInPoolDecimal,

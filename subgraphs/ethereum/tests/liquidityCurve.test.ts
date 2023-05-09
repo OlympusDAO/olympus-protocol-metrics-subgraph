@@ -27,6 +27,7 @@ import {
   ERC20_USDC,
   ERC20_WETH,
   FRAX_LOCKING_FRAX_USDC,
+  getContractAbbreviation,
   getContractName,
   getWalletAddressesForContract,
   NATIVE_ETH,
@@ -603,7 +604,10 @@ describe("Pair Value", () => {
     );
     const expectedValue = crvBalance.div(crvTotalSupply).times(totalValueExpected);
     assert.stringEquals(expectedValue.truncate(4).toString(), records[0].value.truncate(4).toString());
-    assert.assertTrue(records[0].token.includes(getContractName(ERC20_CVX_OHMETH)) == true); // cvxOHMETH should be mentioned in the id
+
+    // The token name will have a suffix, making it hard to match, so search for the abbreviation
+    const contractAbbreviation = getContractAbbreviation(ERC20_CVX_OHMETH);
+    assert.assertTrue(records[0].token.includes(contractAbbreviation === null ? "abbreviation not found" : contractAbbreviation) == true); // cvxOHMETH should be mentioned in the id
     assert.i32Equals(1, records.length);
   });
 

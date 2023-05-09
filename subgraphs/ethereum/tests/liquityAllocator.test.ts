@@ -2,13 +2,12 @@ import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph
 import { assert, beforeEach, clearStore, createMockedFunction, test } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
-import { LUSD_ALLOCATOR } from "../../shared/src/Wallets";
-import { ERC20_LQTY, ERC20_LUSD, ERC20_TRIBE, ERC20_WETH } from "../src/utils/Constants";
+import { DAO_WALLET } from "../../shared/src/Wallets";
+import { ERC20_LQTY, ERC20_LUSD, ERC20_TRIBE, ERC20_WETH, getWalletAddressesForContract, LIQUITY_STABILITY_POOL } from "../src/utils/Constants";
 import {
-  getLiquityStabilityPoolBalance,
   getLiquityStabilityPoolRecords,
 } from "../src/utils/ContractHelper";
-import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
+import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import { OHM_USD_RESERVE_BLOCK } from "./pairHelper";
 
 const LUSD_BALANCE = "100";
@@ -21,83 +20,112 @@ const LQTY_BALANCE_INT = toBigInt(BigDecimal.fromString(LQTY_BALANCE), ERC20_STA
 const TIMESTAMP = BigInt.fromString("1");
 
 function mockLiquityAllocator(
+  address: string,
   lusdAmountAllocated: BigInt,
   wEthBalance: BigInt,
   lqtyBalance: BigInt,
 ): void {
-  const allocatorAddress = Address.fromString(LUSD_ALLOCATOR);
+  const stabilityPoolAddress = Address.fromString(LIQUITY_STABILITY_POOL);
 
   // LUSD balance
-  createMockedFunction(allocatorAddress, "amountAllocated", "amountAllocated(uint256):(uint256)")
-    .withArgs([ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(1))])
-    .returns([ethereum.Value.fromUnsignedBigInt(lusdAmountAllocated)]);
+  createMockedFunction(stabilityPoolAddress, "deposits", "deposits(address):(uint256,address)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(address))])
+    .returns([ethereum.Value.fromUnsignedBigInt(lusdAmountAllocated), ethereum.Value.fromAddress(Address.zero())]);
 
   // wETH balance
-  createMockedFunction(allocatorAddress, "getETHRewards", "getETHRewards():(uint256)").returns([
-    ethereum.Value.fromUnsignedBigInt(wEthBalance),
-  ]);
+  createMockedFunction(stabilityPoolAddress, "getDepositorETHGain", "getDepositorETHGain(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(address))])
+    .returns([
+      ethereum.Value.fromUnsignedBigInt(wEthBalance),
+    ]);
 
   // LQTY balance
-  createMockedFunction(allocatorAddress, "getLQTYRewards", "getLQTYRewards():(uint256)").returns([
-    ethereum.Value.fromUnsignedBigInt(lqtyBalance),
-  ]);
+  createMockedFunction(stabilityPoolAddress, "getDepositorLQTYGain", "getDepositorLQTYGain(address):(uint256)")
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(address))])
+    .returns([
+      ethereum.Value.fromUnsignedBigInt(lqtyBalance),
+    ]);
+}
+
+function mockLiquityBalanceZero(): void {
+  const wallets = getWalletAddressesForContract(LIQUITY_STABILITY_POOL);
+  for (let i = 0; i < wallets.length; i++) {
+    mockLiquityAllocator(wallets[i], BigInt.fromString("0"), BigInt.fromString("0"), BigInt.fromString("0"));
+  }
+
+  mockERC20TotalSupply(ERC20_LUSD, ERC20_STANDARD_DECIMALS, BigInt.fromI32(1));
+  mockERC20TotalSupply(ERC20_WETH, ERC20_STANDARD_DECIMALS, BigInt.fromI32(1));
+  mockERC20TotalSupply(ERC20_LQTY, ERC20_STANDARD_DECIMALS, BigInt.fromI32(1));
 }
 
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
+  mockLiquityBalanceZero();
 });
 
 test("LUSD balance", () => {
-  mockLiquityAllocator(LUSD_BALANCE_INT, WETH_BALANCE_INT, LQTY_BALANCE_INT);
+  mockLiquityAllocator(DAO_WALLET, LUSD_BALANCE_INT, WETH_BALANCE_INT, LQTY_BALANCE_INT);
+  const rate = BigDecimal.fromString("2");
 
-  const allocatorBalance = getLiquityStabilityPoolBalance(
-    LUSD_ALLOCATOR,
+  const allocatorRecords = getLiquityStabilityPoolRecords(
+    TIMESTAMP,
     ERC20_LUSD,
+    rate,
     OHM_USD_RESERVE_BLOCK,
   );
 
-  assert.stringEquals(LUSD_BALANCE, allocatorBalance ? allocatorBalance.toString() : "");
+  assert.stringEquals(LUSD_BALANCE, allocatorRecords[0].balance.toString());
+  assert.i32Equals(1, allocatorRecords.length);
 });
 
 test("wETH rewards", () => {
-  mockLiquityAllocator(LUSD_BALANCE_INT, WETH_BALANCE_INT, LQTY_BALANCE_INT);
+  mockLiquityAllocator(DAO_WALLET, LUSD_BALANCE_INT, WETH_BALANCE_INT, LQTY_BALANCE_INT);
+  const rate = BigDecimal.fromString("2");
 
-  const allocatorBalance = getLiquityStabilityPoolBalance(
-    LUSD_ALLOCATOR,
+  const allocatorRecords = getLiquityStabilityPoolRecords(
+    TIMESTAMP,
     ERC20_WETH,
+    rate,
     OHM_USD_RESERVE_BLOCK,
   );
 
-  assert.stringEquals(WETH_BALANCE, allocatorBalance ? allocatorBalance.toString() : "");
+  assert.stringEquals(WETH_BALANCE, allocatorRecords[0].balance.toString());
+  assert.i32Equals(1, allocatorRecords.length);
 });
 
 test("LQTY rewards", () => {
-  mockLiquityAllocator(LUSD_BALANCE_INT, WETH_BALANCE_INT, LQTY_BALANCE_INT);
+  mockLiquityAllocator(DAO_WALLET, LUSD_BALANCE_INT, WETH_BALANCE_INT, LQTY_BALANCE_INT);
+  const rate = BigDecimal.fromString("2");
 
-  const allocatorBalance = getLiquityStabilityPoolBalance(
-    LUSD_ALLOCATOR,
+  const allocatorRecords = getLiquityStabilityPoolRecords(
+    TIMESTAMP,
     ERC20_LQTY,
+    rate,
     OHM_USD_RESERVE_BLOCK,
   );
 
-  assert.stringEquals(LQTY_BALANCE, allocatorBalance ? allocatorBalance.toString() : "");
+  assert.stringEquals(LQTY_BALANCE, allocatorRecords[0].balance.toString());
+  assert.i32Equals(1, allocatorRecords.length);
 });
 
 test("other token", () => {
-  mockLiquityAllocator(LUSD_BALANCE_INT, WETH_BALANCE_INT, LQTY_BALANCE_INT);
+  mockLiquityAllocator(DAO_WALLET, LUSD_BALANCE_INT, WETH_BALANCE_INT, LQTY_BALANCE_INT);
+  mockERC20TotalSupply(ERC20_TRIBE, ERC20_STANDARD_DECIMALS, BigInt.fromI32(1));
+  const rate = BigDecimal.fromString("2");
 
-  const allocatorBalance = getLiquityStabilityPoolBalance(
-    LUSD_ALLOCATOR,
+  const allocatorRecords = getLiquityStabilityPoolRecords(
+    TIMESTAMP,
     ERC20_TRIBE,
+    rate,
     OHM_USD_RESERVE_BLOCK,
   );
 
-  assert.assertNull(allocatorBalance ? "" : null);
+  assert.i32Equals(0, allocatorRecords.length);
 });
 
 test("LUSD records", () => {
-  mockLiquityAllocator(LUSD_BALANCE_INT, WETH_BALANCE_INT, LQTY_BALANCE_INT);
+  mockLiquityAllocator(DAO_WALLET, LUSD_BALANCE_INT, WETH_BALANCE_INT, LQTY_BALANCE_INT);
   const rate = BigDecimal.fromString("2");
 
   const allocatorRecords = getLiquityStabilityPoolRecords(
