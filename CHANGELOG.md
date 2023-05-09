@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 4.8.0 (2023-05-09)
+## 4.8.1 (2023-05-09)
 
 - Remove duplication of staking/locking messages in contract names
 - Add Chainlink price feed for LUSD
