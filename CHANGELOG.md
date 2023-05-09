@@ -1,5 +1,14 @@
 # Subgraph Changelog
 
+## 4.8.0 (2023-05-09)
+
+- Remove duplication of staking/locking messages in contract names
+- Add Chainlink price feed for LUSD
+- Index Liquidity stability pool directly, instead of through the LUSD allocator
+- Add contract name for boosted liquidity vaults
+- Amend the way Euler and Silo manual deployments are identified
+- Record additional Euler and Silo deployments
+
 ## 4.7.0 (2023-03-27)
 
 - Include the OHM requivalent of gOHM and sOHM in protocol- and DAO-owned wallets when calculating supply metrics.
