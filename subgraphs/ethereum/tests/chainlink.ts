@@ -2,7 +2,7 @@ import { Address, BigDecimal, ethereum } from "@graphprotocol/graph-ts";
 import { createMockedFunction, log } from "matchstick-as";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
-import { ERC20_DAI, ERC20_FRAX, ERC20_USDC, ERC20_WETH } from "../src/utils/Constants";
+import { ERC20_DAI, ERC20_FRAX, ERC20_LUSD, ERC20_USDC, ERC20_WETH } from "../src/utils/Constants";
 import { getPriceFeed } from "../src/utils/PriceChainlink";
 
 export function mockPriceFeed(token: string, price: BigDecimal): void {
@@ -25,7 +25,7 @@ export function mockPriceFeed(token: string, price: BigDecimal): void {
 }
 
 export function mockStablecoinsPriceFeeds(): void {
-    const tokens = [ERC20_DAI, ERC20_FRAX, ERC20_USDC];
+    const tokens = [ERC20_DAI, ERC20_FRAX, ERC20_LUSD, ERC20_USDC];
     for (let i = 0; i < tokens.length; i++) {
         mockPriceFeed(tokens[i], BigDecimal.fromString("1"));
     }
