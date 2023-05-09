@@ -585,7 +585,7 @@ export function getBoostedLiquiditySupplyRecords(timestamp: BigInt, blockNumber:
         ERC20_OHM_V2,
         null,
         null,
-        getContractName(vaultAddress.toHexString().toLowerCase()),
+        `Boosted Liquidity Vault - ${vaultAddress.toHexString()}`, // Avoids record clobbering. The address comes from the registry, so cannot be recorded in advance.
         vaultAddress.toHexString().toLowerCase(),
         TYPE_BOOSTED_LIQUIDITY_VAULT,
         ohmInPoolDecimal,
