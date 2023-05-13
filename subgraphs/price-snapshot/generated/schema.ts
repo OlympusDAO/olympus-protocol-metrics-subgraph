@@ -34,7 +34,11 @@ export class PriceSnapshot extends Entity {
 
   get id(): string {
     const value = this.get("id");
-    return value!.toString();
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
   }
 
   set id(value: string) {
@@ -43,7 +47,11 @@ export class PriceSnapshot extends Entity {
 
   get block(): BigInt {
     const value = this.get("block");
-    return value!.toBigInt();
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toBigInt();
+    }
   }
 
   set block(value: BigInt) {
@@ -52,7 +60,11 @@ export class PriceSnapshot extends Entity {
 
   get timestamp(): BigInt {
     const value = this.get("timestamp");
-    return value!.toBigInt();
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toBigInt();
+    }
   }
 
   set timestamp(value: BigInt) {
@@ -61,7 +73,11 @@ export class PriceSnapshot extends Entity {
 
   get date(): string {
     const value = this.get("date");
-    return value!.toString();
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
   }
 
   set date(value: string) {
@@ -70,7 +86,11 @@ export class PriceSnapshot extends Entity {
 
   get ohmUsdPrice(): BigDecimal {
     const value = this.get("ohmUsdPrice");
-    return value!.toBigDecimal();
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toBigDecimal();
+    }
   }
 
   set ohmUsdPrice(value: BigDecimal) {
@@ -116,7 +136,11 @@ export class PriceSnapshot extends Entity {
 
   get gOhmUsdPrice(): BigDecimal {
     const value = this.get("gOhmUsdPrice");
-    return value!.toBigDecimal();
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toBigDecimal();
+    }
   }
 
   set gOhmUsdPrice(value: BigDecimal) {
@@ -150,7 +174,11 @@ export class PriceSnapshotDaily extends Entity {
 
   get id(): string {
     const value = this.get("id");
-    return value!.toString();
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
   }
 
   set id(value: string) {
@@ -159,10 +187,91 @@ export class PriceSnapshotDaily extends Entity {
 
   get record(): string {
     const value = this.get("record");
-    return value!.toString();
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
   }
 
   set record(value: string) {
     this.set("record", Value.fromString(value));
+  }
+}
+
+export class TokenPriceSnapshot extends Entity {
+  constructor(id: string) {
+    super();
+    this.set("id", Value.fromString(id));
+  }
+
+  save(): void {
+    const id = this.get("id");
+    assert(id != null, "Cannot save TokenPriceSnapshot entity without an ID");
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type TokenPriceSnapshot must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set("TokenPriceSnapshot", id.toString(), this);
+    }
+  }
+
+  static load(id: string): TokenPriceSnapshot | null {
+    return changetype<TokenPriceSnapshot | null>(
+      store.get("TokenPriceSnapshot", id)
+    );
+  }
+
+  get id(): string {
+    const value = this.get("id");
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
+  }
+
+  set id(value: string) {
+    this.set("id", Value.fromString(value));
+  }
+
+  get block(): BigInt {
+    const value = this.get("block");
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toBigInt();
+    }
+  }
+
+  set block(value: BigInt) {
+    this.set("block", Value.fromBigInt(value));
+  }
+
+  get token(): Bytes {
+    const value = this.get("token");
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toBytes();
+    }
+  }
+
+  set token(value: Bytes) {
+    this.set("token", Value.fromBytes(value));
+  }
+
+  get price(): BigDecimal {
+    const value = this.get("price");
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set price(value: BigDecimal) {
+    this.set("price", Value.fromBigDecimal(value));
   }
 }
