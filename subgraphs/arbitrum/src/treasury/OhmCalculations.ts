@@ -2,11 +2,13 @@ import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
 import { TokenSupply } from "../../../shared/generated/schema";
 import { getERC20DecimalBalance } from "../../../shared/src/contracts/ERC20";
+import { pushTokenSupplyArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { LendingMarketDeployment } from "../../../shared/src/utils/LendingMarketDeployment";
 import { createOrUpdateTokenSupply, TYPE_LENDING, TYPE_LIQUIDITY, TYPE_TOTAL_SUPPLY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { ERC20 } from "../../generated/TokenRecords-arbitrum/ERC20";
 import { OlympusLender } from "../../generated/TokenRecords-arbitrum/OlympusLender";
-import { CIRCULATING_SUPPLY_WALLETS, ERC20_GOHM_SYNAPSE, ERC20_OHM, OLYMPUS_LENDER } from "../contracts/Constants";
+import { CIRCULATING_SUPPLY_WALLETS, ERC20_GOHM_SYNAPSE, ERC20_OHM, OLYMPUS_LENDER, SENTIMENT_DEPLOYMENTS, SENTIMENT_LTOKEN, SILO_ADDRESS, SILO_DEPLOYMENTS } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 import { PRICE_HANDLERS } from "../price/PriceLookup";
 
@@ -25,13 +27,13 @@ export function getTotalSupply(timestamp: BigInt, blockNumber: BigInt): TokenSup
 
 /**
  * Generates TokenSupply records for OHM that has been minted and deposited into lending markets
- * using the OlympusLender contract.
+ * using the OlympusLender/LendingAMO contract.
  * 
  * @param timestamp 
  * @param blockNumber 
  * @returns 
  */
-export function getLendingMarketOHMRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
+export function getLendingAMOOHMRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
   const records: TokenSupply[] = [];
 
   // Grab the number of AMOs
@@ -72,6 +74,83 @@ export function getLendingMarketOHMRecords(timestamp: BigInt, blockNumber: BigIn
       )
     )
   }
+
+  return records;
+}
+
+function getLendingMarketManualDeploymentOHMRecords(timestamp: BigInt, deploymentAddress: string, deployments: LendingMarketDeployment[], blockNumber: BigInt): TokenSupply[] {
+  const records: TokenSupply[] = [];
+  let balance = BigDecimal.zero();
+
+  // Calculate a running balance for the OHM tokens deposited into the lending market
+  for (let i = 0; i < deployments.length; i++) {
+    const currentDeployment = deployments[i];
+    // Exclude if before deployment
+    if (blockNumber.lt(currentDeployment.getBlockNumber())) {
+      continue;
+    }
+
+    // Exclude if not OHM
+    if (currentDeployment.getToken().toLowerCase() != ERC20_OHM.toLowerCase()) {
+      continue;
+    }
+
+    balance = balance.plus(currentDeployment.getAmount());
+  }
+
+  // Skip if there's no balance at the current block
+  if (balance.equals(BigDecimal.zero())) {
+    return records;
+  }
+
+  // Record the balance at the current block
+  records.push(
+    createOrUpdateTokenSupply(
+      timestamp,
+      getContractName(ERC20_OHM),
+      ERC20_OHM,
+      null,
+      null,
+      getContractName(deploymentAddress),
+      deploymentAddress,
+      TYPE_LENDING,
+      balance,
+      blockNumber,
+      -1, // Subtract, as this represents OHM taken out of supply
+    ),
+  );
+
+  return records;
+}
+
+/**
+ * Generates TokenSupply records for OHM that has been minted and deposited into lending markets.
+ * 
+ * This includes both manual and automated (lending AMO) deposits.
+ * 
+ * @param timestamp 
+ * @param blockNumber 
+ */
+export function getLendingMarketOHMRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
+  const records: TokenSupply[] = [];
+
+  // Lending AMO
+  pushTokenSupplyArray(
+    records,
+    getLendingAMOOHMRecords(timestamp, blockNumber),
+  );
+
+  // Silo
+  pushTokenSupplyArray(
+    records,
+    getLendingMarketManualDeploymentOHMRecords(timestamp, SILO_ADDRESS, SILO_DEPLOYMENTS, blockNumber),
+  );
+
+  // Sentiment
+  pushTokenSupplyArray(
+    records,
+    getLendingMarketManualDeploymentOHMRecords(timestamp, SENTIMENT_LTOKEN, SENTIMENT_DEPLOYMENTS, blockNumber),
+  );
 
   return records;
 }

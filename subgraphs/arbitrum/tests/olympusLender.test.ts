@@ -9,7 +9,7 @@ import {
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { TYPE_LENDING } from "../../shared/src/utils/TokenSupplyHelper";
 import { OLYMPUS_LENDER } from "../src/contracts/Constants";
-import { getLendingMarketOHMRecords } from "../src/treasury/OhmCalculations";
+import { getLendingAMOOHMRecords } from "../src/treasury/OhmCalculations";
 
 function mockLenderAMOCount(lenderAddress: string, count: i64): void {
   createMockedFunction(
@@ -58,7 +58,7 @@ describe("olympus lender", () => {
     mockLenderDeployedOhm(OLYMPUS_LENDER, amoTwo, amoTwoBalance);
 
     // Grab records
-    const records = getLendingMarketOHMRecords(BigInt.fromI32(1), BigInt.fromI32(1));
+    const records = getLendingAMOOHMRecords(BigInt.fromI32(1), BigInt.fromI32(1));
 
     // Verify
     const recordOne = records[0];
@@ -86,7 +86,7 @@ describe("olympus lender", () => {
     ).reverts();
 
     // Grab records
-    const records = getLendingMarketOHMRecords(BigInt.fromI32(1), BigInt.fromI32(1));
+    const records = getLendingAMOOHMRecords(BigInt.fromI32(1), BigInt.fromI32(1));
 
     // Verify
     assert.i32Equals(records.length, 0);
@@ -104,7 +104,7 @@ describe("olympus lender", () => {
       reverts();
 
     // Grab records
-    const records = getLendingMarketOHMRecords(BigInt.fromI32(1), BigInt.fromI32(1));
+    const records = getLendingAMOOHMRecords(BigInt.fromI32(1), BigInt.fromI32(1));
 
     // Verify
     assert.i32Equals(records.length, 0);
@@ -123,7 +123,7 @@ describe("olympus lender", () => {
       reverts();
 
     // Grab records
-    const records = getLendingMarketOHMRecords(BigInt.fromI32(1), BigInt.fromI32(1));
+    const records = getLendingAMOOHMRecords(BigInt.fromI32(1), BigInt.fromI32(1));
 
     // Verify
     assert.i32Equals(records.length, 0);
