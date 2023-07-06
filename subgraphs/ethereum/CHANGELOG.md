@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 4.9.0 (2023-07-06)
+
+- Adds manual deployments for Silo and Euler
+
 ## 4.8.3 (2023-05-09)
 
 - Remove duplication of staking/locking messages in contract names
