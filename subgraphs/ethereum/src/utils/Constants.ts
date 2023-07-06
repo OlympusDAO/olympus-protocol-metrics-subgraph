@@ -1,8 +1,8 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
+import { LendingMarketDeployment } from "../../../shared/src/utils/LendingMarketDeployment";
 import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, AURA_ALLOCATOR, AURA_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CONVEX_STAKING_PROXY_FRAXBP, CONVEX_STAKING_PROXY_OHM_FRAXBP, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, DAO_WORKING_CAPITAL, LUSD_ALLOCATOR, MAKER_DSR_ALLOCATOR, MAKER_DSR_ALLOCATOR_PROXY, MYSO_LENDING, OLYMPUS_ASSOCIATION_WALLET, OTC_ESCROW, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, TRSRY, VEFXS_ALLOCATOR, VENDOR_LENDING, WALLET_ADDRESSES } from "../../../shared/src/Wallets";
-import { LendingMarketDeployment } from "./LendingMarketDeployment";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 
 export const BLOCKCHAIN = "Ethereum";
