@@ -7,7 +7,7 @@ import {
 } from "../../../shared/src/contracts/TokenDefinition";
 import { pushTokenRecordArray, pushTokenSupplyArray } from "../../../shared/src/utils/ArrayHelper";
 import { NewRound } from "../../generated/TokenRecords-arbitrum/ChainlinkAggregator";
-import { getProtocolOwnedLiquiditySupplyRecords, getTotalSupply, getTreasuryOHMRecords } from "./OhmCalculations";
+import { getLendingMarketOHMRecords, getProtocolOwnedLiquiditySupplyRecords, getTotalSupply, getTreasuryOHMRecords } from "./OhmCalculations";
 import { getOwnedLiquidityBalances } from "./OwnedLiquidity";
 import { getTokenBalances } from "./TokenBalances";
 
@@ -52,6 +52,12 @@ function generateTokenSupplies(timestamp: BigInt, blockNumber: BigInt): TokenSup
   pushTokenSupplyArray(
     records,
     getProtocolOwnedLiquiditySupplyRecords(timestamp, blockNumber),
+  );
+
+  // Lending markets
+  pushTokenSupplyArray(
+    records,
+    getLendingMarketOHMRecords(timestamp, blockNumber),
   );
 
   return records;
