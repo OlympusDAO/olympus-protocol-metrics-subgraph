@@ -6,7 +6,9 @@
     "source.fixAll.eslint": true
   },
   "cSpell.words": [
+    "arbitrum",
     "assemblyscript",
+    "Chainlink",
     "deadcode",
     "graphprotocol"
   ],
