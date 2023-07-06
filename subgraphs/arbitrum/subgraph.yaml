@@ -28,6 +28,8 @@ dataSources:
           file: ../shared/abis/ERC20.json
         - name: gOHM
           file: ../shared/abis/gOHM.json
+        - name: OlympusLender
+          file: abis/OlympusLender.json
         # Price Lookup
         - name: BalancerVault
           file: ../shared/abis/BalancerVault.json

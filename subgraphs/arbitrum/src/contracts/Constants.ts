@@ -36,6 +36,8 @@ export const JONES_STAKING_POOL_IDS: u64[] = [0];
 
 export const TREASURE_ATLAS_MINE = "0xa0a89db1c899c49f98e6326b764bafcf167fc2ce".toLowerCase();
 
+export const OLYMPUS_LENDER = "0x868C3ae18Fdea85bBb7a303e379c5B7e23b30F03".toLowerCase();
+
 export const ERC20_TOKENS_ARBITRUM = new Map<string, TokenDefinition>();
 ERC20_TOKENS_ARBITRUM.set(ERC20_ARB, new TokenDefinition(ERC20_ARB, TokenCategoryVolatile, true, false));
 ERC20_TOKENS_ARBITRUM.set(ERC20_FRAX, new TokenDefinition(ERC20_FRAX, TokenCategoryStable, true, false));
@@ -151,9 +153,9 @@ CONTRACT_NAME_MAP.set(ERC20_VSTA, "Vesta");
 CONTRACT_NAME_MAP.set(ERC20_WETH, "Wrapped ETH");
 CONTRACT_NAME_MAP.set(JONES_STAKING, "JONES Staking");
 CONTRACT_NAME_MAP.set(LP_BALANCER_POOL_MAGIC_USDC, "Balancer MAGIC-USDC Liquidity Pool");
-CONTRACT_NAME_MAP.set(LP_BALANCER_POOL_WETH_VESTA, "Balancer wETH-VSTA Liquidity Pool");
-CONTRACT_NAME_MAP.set(LP_BALANCER_POOL_WETH_OHM, "Balancer wETH-OHM Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_BALANCER_POOL_OHM_USDC, "Balancer OHM-USDC Liquidity Pool");
+CONTRACT_NAME_MAP.set(LP_BALANCER_POOL_WETH_OHM, "Balancer wETH-OHM Liquidity Pool");
+CONTRACT_NAME_MAP.set(LP_BALANCER_POOL_WETH_VESTA, "Balancer wETH-VSTA Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_GOHM_WETH, "UniswapV2 gOHM-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_JONES_GOHM_GOHM, "UniswapV2 jgOHM-gOHM Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_JONES_WETH, "UniswapV2 JONES-wETH Liquidity Pool");
@@ -162,6 +164,7 @@ CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_MAGIC_WETH, "UniswapV2 MAGIC-wETH Liquidity 
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V3_ARB_WETH, "UniswapV3 ARB-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V3_WETH_USDC, "UniswapV3 wETH-USDC Liquidity Pool");
 CONTRACT_NAME_MAP.set(LUSD_ALLOCATOR, "LUSD Allocator");
+CONTRACT_NAME_MAP.set(OLYMPUS_LENDER, "Olympus Lender");
 CONTRACT_NAME_MAP.set(RARI_ALLOCATOR, "Rari Allocator");
 CONTRACT_NAME_MAP.set(TREASURE_ATLAS_MINE, "TreasureDAO Atlas Mine");
 CONTRACT_NAME_MAP.set(TREASURY_ADDRESS_V1, "Treasury Wallet V1");

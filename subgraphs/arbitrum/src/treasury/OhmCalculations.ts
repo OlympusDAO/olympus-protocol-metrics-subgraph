@@ -3,9 +3,10 @@ import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { TokenSupply } from "../../../shared/generated/schema";
 import { getERC20DecimalBalance } from "../../../shared/src/contracts/ERC20";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { createOrUpdateTokenSupply, TYPE_LIQUIDITY, TYPE_TOTAL_SUPPLY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
+import { createOrUpdateTokenSupply, TYPE_LENDING, TYPE_LIQUIDITY, TYPE_TOTAL_SUPPLY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { ERC20 } from "../../generated/TokenRecords-arbitrum/ERC20";
-import { CIRCULATING_SUPPLY_WALLETS, ERC20_GOHM_SYNAPSE, ERC20_OHM } from "../contracts/Constants";
+import { OlympusLender } from "../../generated/TokenRecords-arbitrum/OlympusLender";
+import { CIRCULATING_SUPPLY_WALLETS, ERC20_GOHM_SYNAPSE, ERC20_OHM, OLYMPUS_LENDER } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 import { PRICE_HANDLERS } from "../price/PriceLookup";
 
@@ -20,6 +21,59 @@ export function getTotalSupply(timestamp: BigInt, blockNumber: BigInt): TokenSup
   const totalSupply = toDecimal(totalSupplyResult.value, decimalsResult.value);
   return [createOrUpdateTokenSupply(
     timestamp, getContractName(ERC20_OHM), ERC20_OHM, null, null, null, null, TYPE_TOTAL_SUPPLY, totalSupply, blockNumber)];
+}
+
+/**
+ * Generates TokenSupply records for OHM that has been minted and deposited into lending markets
+ * using the OlympusLender contract.
+ * 
+ * @param timestamp 
+ * @param blockNumber 
+ * @returns 
+ */
+export function getLendingMarketOHMRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
+  const records: TokenSupply[] = [];
+
+  // Grab the number of AMOs
+  const lenderContract = OlympusLender.bind(Address.fromString(OLYMPUS_LENDER));
+  const amoCountResult = lenderContract.try_activeAMOCount();
+  if (amoCountResult.reverted) {
+    return records;
+  }
+
+  const amoCount = amoCountResult.value.toI64();
+  for (let i = 0; i < amoCount; i++) {
+    // Get the AMO address
+    const amoAddressResult = lenderContract.try_activeAMOs(BigInt.fromU32(i));
+    if (amoAddressResult.reverted) {
+      continue;
+    }
+
+    const amoAddress = amoAddressResult.value;
+    // Get deployed OHM
+    const deployedOhmResult = lenderContract.try_getDeployedOhm(amoAddress);
+    if (deployedOhmResult.reverted) {
+      continue;
+    }
+
+    records.push(
+      createOrUpdateTokenSupply(
+        timestamp,
+        getContractName(ERC20_OHM),
+        ERC20_OHM,
+        null,
+        null,
+        `${getContractName(OLYMPUS_LENDER)} - ${amoAddress.toHexString()}`,
+        amoAddress.toHexString(),
+        TYPE_LENDING,
+        toDecimal(deployedOhmResult.value, 9),
+        blockNumber,
+        -1, // Subtract
+      )
+    )
+  }
+
+  return records;
 }
 
 /**
