@@ -561,11 +561,7 @@ export function getProtocolOwnedLiquiditySupplyRecords(
 /**
  * Returns TokenSupply records representing the OHM minted into boosted liquidity vaults.
  * 
- * The value reported for each vault is based on the following:
- * - OHM is minted into the vaults (`deployedOhm()`) and cannot be used by users, so it is removed from circulating supply.
- * - OHM that was previously circulating (`circulatingOhmBurned()`) and is burned is NOT included, as the total supply of OHM would be reduced anyway. Including burned OHM would be double-counting.
- * - Minted OHM can be released into circulating (and therefore should not be reported here) if
- * OHM gains in value relative to the paired asset. 
+ * The value reported for each vault is the result of calling `getPoolOhmShare()`.
  * 
  * @param timestamp 
  * @param blockNumber 
