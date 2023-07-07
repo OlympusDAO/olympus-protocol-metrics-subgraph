@@ -58,6 +58,11 @@ export function getLendingAMOOHMRecords(timestamp: BigInt, blockNumber: BigInt):
       continue;
     }
 
+    const deployedOhm = deployedOhmResult.value;
+    if (deployedOhm.equals(BigInt.zero())) {
+      continue;
+    }
+
     records.push(
       createOrUpdateTokenSupply(
         timestamp,
@@ -68,7 +73,7 @@ export function getLendingAMOOHMRecords(timestamp: BigInt, blockNumber: BigInt):
         `${getContractName(OLYMPUS_LENDER)} - ${amoAddress.toHexString()}`,
         amoAddress.toHexString(),
         TYPE_LENDING,
-        toDecimal(deployedOhmResult.value, 9),
+        toDecimal(deployedOhm, 9),
         blockNumber,
         -1, // Subtract
       )
