@@ -64,6 +64,12 @@ const OLYMPUS_ASSOCIATION_BLOCK = "17115000";
 const GOHM_INDEXING_BLOCK = "17115000";
 
 /**
+ * The block from which the inclusion of BLV in floating and circulating supply
+ * was changed.
+ */
+const BLV_INCLUSION_BLOCK = "17620000";
+
+/**
  * Returns the total supply of the latest version of the OHM contract
  * at the given block number.
  *
@@ -670,7 +676,7 @@ export function getTotalValueLocked(blockNumber: BigInt): BigDecimal {
  * - minus: protocol-owned OHM in liquidity pools
  * - minus: OHM minted and deployed into lending markets
  */
-export function getBackedSupply(tokenSupplies: TokenSupply[]): BigDecimal {
+export function getBackedSupply(tokenSupplies: TokenSupply[], block: BigInt): BigDecimal {
   let total = BigDecimal.zero();
 
   const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_BOOSTED_LIQUIDITY_VAULT, TYPE_LIQUIDITY, TYPE_LENDING];
@@ -698,13 +704,23 @@ export function getBackedSupply(tokenSupplies: TokenSupply[]): BigDecimal {
  * - minus: migration offset
  * - minus: pre-minted OHM for bonds
  * - minus: OHM user deposits for bonds
- * - minus: OHM in boosted liquidity vaults
  * - minus: protocol-owned OHM in liquidity pools
+ * - minus: OHM in boosted liquidity vaults (before `BLV_INCLUSION_BLOCK`)
  */
-export function getFloatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
+export function getFloatingSupply(tokenSupplies: TokenSupply[], block: BigInt): BigDecimal {
   let total = BigDecimal.zero();
 
-  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_BOOSTED_LIQUIDITY_VAULT, TYPE_LIQUIDITY];
+  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_LIQUIDITY];
+
+  /**
+   * Prior to `BLV_INCLUSION_BLOCK`, OHM minted into boosted liquidity vaults was deducted from total supply,
+   * which meant that floating supply excluded BLV OHM. This was changed to include BLV OHM in floating supply.
+   * 
+   * The reasoning is that OHM minted for BLV is floating.
+   */
+  if (block.lt(BigInt.fromString(BLV_INCLUSION_BLOCK))) {
+    includedTypes.push(TYPE_BOOSTED_LIQUIDITY_VAULT);
+  }
 
   for (let i = 0; i < tokenSupplies.length; i++) {
     const tokenSupply = tokenSupplies[i];
@@ -729,15 +745,25 @@ export function getFloatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
  * - minus: migration offset
  * - minus: pre-minted OHM for bonds
  * - minus: OHM user deposits for bonds
- * - minus: OHM in boosted liquidity vaults
+ * - minus: OHM in boosted liquidity vaults (before `BLV_INCLUSION_BLOCK`)
  * 
  * OHM represented by vesting bond tokens (type `TYPE_BONDS_VESTING_TOKENS`) is not included in the circulating supply, as it is
  * owned by users and not the protocol.
  */
-export function getCirculatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
+export function getCirculatingSupply(tokenSupplies: TokenSupply[], block: BigInt): BigDecimal {
   let total = BigDecimal.zero();
 
-  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_BOOSTED_LIQUIDITY_VAULT];
+  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS];
+
+  /**
+   * Prior to `BLV_INCLUSION_BLOCK`, OHM minted into boosted liquidity vaults was deducted from total supply,
+   * which meant that circulating supply excluded BLV OHM. This was changed to include BLV OHM in circulating supply.
+   * 
+   * The reasoning is that OHM minted for BLV is circulating.
+   */
+  if (block.lt(BigInt.fromString(BLV_INCLUSION_BLOCK))) {
+    includedTypes.push(TYPE_BOOSTED_LIQUIDITY_VAULT);
+  }
 
   for (let i = 0; i < tokenSupplies.length; i++) {
     const tokenSupply = tokenSupplies[i];

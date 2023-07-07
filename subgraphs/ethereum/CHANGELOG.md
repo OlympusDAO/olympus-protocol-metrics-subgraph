@@ -3,6 +3,7 @@
 ## 4.9.0 (2023-07-06)
 
 - Adds manual deployments for Silo and Euler
+- Going forward, OHM minted for BLV is included in circulating and floating supply
 
 ## 4.8.3 (2023-05-09)
 

@@ -63,9 +63,9 @@ export function updateProtocolMetrics(block: ethereum.Block, tokenRecords: Token
   pm.nextEpochRebase = apy_rebase[1];
 
   // Token supply
-  const ohmCirculatingSupply = getCirculatingSupply(tokenSupplies);
+  const ohmCirculatingSupply = getCirculatingSupply(tokenSupplies, blockNumber);
   pm.ohmCirculatingSupply = ohmCirculatingSupply;
-  const ohmFloatingSupply = getFloatingSupply(tokenSupplies);
+  const ohmFloatingSupply = getFloatingSupply(tokenSupplies, blockNumber);
   pm.ohmFloatingSupply = ohmFloatingSupply;
   const gOhmSyntheticSupply = getGOhmSyntheticSupply(ohmFloatingSupply, pm.currentIndex);
   pm.gOhmSyntheticSupply = gOhmSyntheticSupply;
