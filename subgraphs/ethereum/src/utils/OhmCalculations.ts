@@ -8,6 +8,7 @@ import { LendingMarketDeployment } from "../../../shared/src/utils/LendingMarket
 import { createOrUpdateTokenSupply, TYPE_BONDS_DEPOSITS, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_VESTING_TOKENS, TYPE_BOOSTED_LIQUIDITY_VAULT, TYPE_LENDING, TYPE_LIQUIDITY, TYPE_OFFSET, TYPE_TOTAL_SUPPLY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { OLYMPUS_ASSOCIATION_WALLET } from "../../../shared/src/Wallets";
 import { BondManager } from "../../generated/ProtocolMetrics/BondManager";
+import { IncurDebt } from "../../generated/ProtocolMetrics/IncurDebt";
 import { OlympusBoostedLiquidityRegistry } from "../../generated/ProtocolMetrics/OlympusBoostedLiquidityRegistry";
 import { OlympusBoostedLiquidityVaultLido } from "../../generated/ProtocolMetrics/OlympusBoostedLiquidityVaultLido";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
@@ -36,6 +37,7 @@ import {
   LIQUIDITY_OWNED,
   MIGRATION_CONTRACT,
   OLYMPUS_BOOSTED_LIQUIDITY_REGISTRY,
+  OLYMPUS_INCUR_DEBT,
   SILO_ADDRESS,
   SILO_DEPLOYMENTS,
 } from "./Constants";
@@ -68,6 +70,12 @@ const GOHM_INDEXING_BLOCK = "17115000";
  * was changed.
  */
 const BLV_INCLUSION_BLOCK = "17620000";
+
+/**
+ * The block from which IncurDebt is being indexed. This is to avoid changing
+ * the historical values.
+ */
+const OLYMPUS_INCUR_DEBT_BLOCK = "17620000";
 
 /**
  * Returns the total supply of the latest version of the OHM contract
@@ -554,6 +562,56 @@ export function getProtocolOwnedLiquiditySupplyRecords(
       }
     }
   }
+
+  return records;
+}
+
+/**
+ * Returns TokenSupply records representing the OHM minted into the IncurDebt contract.
+ * 
+ * The value reported for each vault is based on the value of `totalOutstandingGlobalDebt()`.
+ * 
+ * Only applicable after `OLYMPUS_INCUR_DEBT_BLOCK`
+ * 
+ * @param timestamp 
+ * @param blockNumber 
+ * @returns 
+ */
+export function getIncurDebtSupplyRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
+  const records: TokenSupply[] = [];
+
+  // Don't apply retro-actively
+  if (blockNumber.lt(BigInt.fromString(OLYMPUS_INCUR_DEBT_BLOCK))) {
+    return records;
+  }
+
+  const incurDebtContract = IncurDebt.bind(Address.fromString(OLYMPUS_INCUR_DEBT));
+
+  // Get the outstanding debt in OHM
+  const outstandingDebtResult = incurDebtContract.try_totalOutstandingGlobalDebt();
+  if (outstandingDebtResult.reverted) {
+    return records;
+  }
+
+  // Create a TokenSupply record
+  const ohmDecimals = getERC20Decimals(ERC20_OHM_V2, blockNumber);
+  const outstandingDebt = toDecimal(outstandingDebtResult.value, ohmDecimals);
+
+  records.push(
+    createOrUpdateTokenSupply(
+      timestamp,
+      getContractName(ERC20_OHM_V2),
+      ERC20_OHM_V2,
+      null,
+      null,
+      getContractName(OLYMPUS_INCUR_DEBT),
+      OLYMPUS_INCUR_DEBT,
+      TYPE_BOOSTED_LIQUIDITY_VAULT, // Analogous to OHM in BLV
+      outstandingDebt,
+      blockNumber,
+      -1, // Subtract
+    ),
+  );
 
   return records;
 }
