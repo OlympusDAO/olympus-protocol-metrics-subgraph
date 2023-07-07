@@ -695,6 +695,14 @@ export function getBackedSupply(tokenSupplies: TokenSupply[], block: BigInt): Bi
 }
 
 /**
+ * Prior to `BLV_INCLUSION_BLOCK`, OHM minted into boosted liquidity vaults was deducted from total supply,
+ * which meant that floating & circulating supply excluded BLV OHM. This was changed to include BLV OHM in floating and circulating supply.
+ */
+function isBLVIncluded(block: BigInt): boolean {
+  return block.lt(BigInt.fromString(BLV_INCLUSION_BLOCK));
+}
+
+/**
  * For a given array of TokenSupply records (assumed to be at the same point in time),
  * this function returns the OHM floating supply.
  *
@@ -712,13 +720,7 @@ export function getFloatingSupply(tokenSupplies: TokenSupply[], block: BigInt): 
 
   const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_LIQUIDITY];
 
-  /**
-   * Prior to `BLV_INCLUSION_BLOCK`, OHM minted into boosted liquidity vaults was deducted from total supply,
-   * which meant that floating supply excluded BLV OHM. This was changed to include BLV OHM in floating supply.
-   * 
-   * The reasoning is that OHM minted for BLV is floating.
-   */
-  if (block.lt(BigInt.fromString(BLV_INCLUSION_BLOCK))) {
+  if (isBLVIncluded(block)) {
     includedTypes.push(TYPE_BOOSTED_LIQUIDITY_VAULT);
   }
 
@@ -755,13 +757,7 @@ export function getCirculatingSupply(tokenSupplies: TokenSupply[], block: BigInt
 
   const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS];
 
-  /**
-   * Prior to `BLV_INCLUSION_BLOCK`, OHM minted into boosted liquidity vaults was deducted from total supply,
-   * which meant that circulating supply excluded BLV OHM. This was changed to include BLV OHM in circulating supply.
-   * 
-   * The reasoning is that OHM minted for BLV is circulating.
-   */
-  if (block.lt(BigInt.fromString(BLV_INCLUSION_BLOCK))) {
+  if (isBLVIncluded(block)) {
     includedTypes.push(TYPE_BOOSTED_LIQUIDITY_VAULT);
   }
 
