@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 4.9.0 (2023-07-06)
+## 4.9.1 (2023-07-07)
 
 - Adds manual deployments for Silo and Euler
 - Going forward, OHM minted for BLV is included in circulating and floating supply
