@@ -166,14 +166,12 @@ export function getLendingMarketOHMRecords(timestamp: BigInt, blockNumber: BigIn
 const START_BLOCK = "84000000";
 
 /**
- * Returns the supply of protocol- and DAO-owned gOHM at the given block number.
+ * Returns the supply of protocol- and DAO-owned OHM and gOHM at the given block number.
  *
  * Unlike on Ethereum mainnet, the raw gOHM value is added to the TokenSupply records.
  * This will be converted later into a quantity of OHM.
- * 
- * OHM and sOHM do not exist natively on Arbitrum at this time, so are not included
  *
- * @param timestmap the current timestamp
+ * @param timestamp the current timestamp
  * @param blockNumber the current block number
  * @returns TokenSupply records
  */
@@ -185,6 +183,7 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
     return records;
   }
 
+  // Add Synapse gOHM
   for (let i = 0; i < CIRCULATING_SUPPLY_WALLETS.length; i++) {
     const currentWallet = CIRCULATING_SUPPLY_WALLETS[i];
     const balance = getERC20DecimalBalance(ERC20_GOHM_SYNAPSE, currentWallet, blockNumber, getContractName);
@@ -202,6 +201,29 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
         timestamp,
         getContractName(ERC20_GOHM_SYNAPSE),
         ERC20_GOHM_SYNAPSE,
+        null,
+        null,
+        getContractName(currentWallet),
+        currentWallet,
+        TYPE_TREASURY,
+        balance,
+        blockNumber,
+        -1, // Subtract
+      ),
+    );
+  }
+
+  // Add native OHM
+  for (let i = 0; i < CIRCULATING_SUPPLY_WALLETS.length; i++) {
+    const currentWallet = CIRCULATING_SUPPLY_WALLETS[i];
+    const balance = getERC20DecimalBalance(ERC20_OHM, currentWallet, blockNumber, getContractName);
+    if (balance.equals(BigDecimal.zero())) continue;
+
+    records.push(
+      createOrUpdateTokenSupply(
+        timestamp,
+        getContractName(ERC20_OHM),
+        ERC20_OHM,
         null,
         null,
         getContractName(currentWallet),
