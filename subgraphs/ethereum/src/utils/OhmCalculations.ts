@@ -20,7 +20,6 @@ import { getCurvePairTokenQuantityRecords } from "../liquidity/LiquidityCurve";
 import { getFraxSwapPairTokenQuantityRecords } from "../liquidity/LiquidityFraxSwap";
 import { getUniswapV2PairTokenQuantity } from "../liquidity/LiquidityUniswapV2";
 import {
-  BLOCKCHAIN,
   BOND_MANAGER,
   CIRCULATING_SUPPLY_WALLETS,
   ERC20_GOHM,
@@ -122,7 +121,6 @@ export function getTotalSupplyRecord(timestamp: BigInt, blockNumber: BigInt): To
     TYPE_TOTAL_SUPPLY,
     totalSupply,
     blockNumber,
-    BLOCKCHAIN,
   );
 }
 
@@ -180,7 +178,6 @@ function getMigrationOffsetRecord(timestamp: BigInt, blockNumber: BigInt): Token
     TYPE_OFFSET,
     offset,
     blockNumber,
-    BLOCKCHAIN,
     -1, // Will be subtracted
   );
 }
@@ -235,7 +232,6 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
           TYPE_BONDS_PREMINTED,
           auctionRecord.payoutCapacity,
           blockNumber,
-          BLOCKCHAIN,
           -1, // Subtract
         ),
       );
@@ -266,7 +262,6 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
             TYPE_BONDS_VESTING_DEPOSITS,
             bidQuantity,
             blockNumber,
-            BLOCKCHAIN,
             -1, // Subtract
           ),
         );
@@ -284,7 +279,6 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
             TYPE_BONDS_VESTING_TOKENS,
             auctionRecord.payoutCapacity,
             blockNumber,
-            BLOCKCHAIN,
             -1, // Subtract
           ),
         );
@@ -305,7 +299,6 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
             TYPE_BONDS_DEPOSITS,
             bidQuantity,
             blockNumber,
-            BLOCKCHAIN,
             -1, // Subtract
           ),
         );
@@ -356,7 +349,6 @@ function getLendingMarketDeploymentOHMRecords(timestamp: BigInt, deploymentAddre
       TYPE_LENDING,
       balance,
       blockNumber,
-      BLOCKCHAIN,
       -1, // Subtract, as this represents OHM taken out of supply
     ),
   );
@@ -440,7 +432,6 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
         TYPE_TREASURY,
         balance,
         blockNumber,
-        BLOCKCHAIN,
         -1, // Subtract
       ),
     );
@@ -472,7 +463,6 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
           TYPE_TREASURY,
           ohmBalance,
           blockNumber,
-          BLOCKCHAIN,
           -1, // Subtract
         ),
       );
@@ -499,7 +489,6 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
           TYPE_TREASURY,
           ohmBalance,
           blockNumber,
-          BLOCKCHAIN,
           -1, // Subtract
         ),
       );
@@ -620,7 +609,6 @@ export function getIncurDebtSupplyRecords(timestamp: BigInt, blockNumber: BigInt
       TYPE_BOOSTED_LIQUIDITY_VAULT, // Analogous to OHM in BLV
       outstandingDebt,
       blockNumber,
-      BLOCKCHAIN,
       -1, // Subtract
     ),
   );
@@ -674,7 +662,6 @@ export function getBoostedLiquiditySupplyRecords(timestamp: BigInt, blockNumber:
         TYPE_BOOSTED_LIQUIDITY_VAULT,
         ohmInPoolDecimal,
         blockNumber,
-        BLOCKCHAIN,
         -1, // Subtract
       ),
     );

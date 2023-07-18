@@ -28,10 +28,6 @@ export class DailyBond extends Entity {
     }
   }
 
-  static loadInBlock(id: string): DailyBond | null {
-    return changetype<DailyBond | null>(store.get_in_block("DailyBond", id));
-  }
-
   static load(id: string): DailyBond | null {
     return changetype<DailyBond | null>(store.get("DailyBond", id));
   }
@@ -118,10 +114,6 @@ export class Rebase extends Entity {
       );
       store.set("Rebase", id.toString(), this);
     }
-  }
-
-  static loadInBlock(id: string): Rebase | null {
-    return changetype<Rebase | null>(store.get_in_block("Rebase", id));
   }
 
   static load(id: string): Rebase | null {
@@ -238,12 +230,6 @@ export class DailyStakingReward extends Entity {
     }
   }
 
-  static loadInBlock(id: string): DailyStakingReward | null {
-    return changetype<DailyStakingReward | null>(
-      store.get_in_block("DailyStakingReward", id)
-    );
-  }
-
   static load(id: string): DailyStakingReward | null {
     return changetype<DailyStakingReward | null>(
       store.get("DailyStakingReward", id)
@@ -321,10 +307,6 @@ export class Token extends Entity {
     }
   }
 
-  static loadInBlock(id: string): Token | null {
-    return changetype<Token | null>(store.get_in_block("Token", id));
-  }
-
   static load(id: string): Token | null {
     return changetype<Token | null>(store.get("Token", id));
   }
@@ -359,12 +341,6 @@ export class ProtocolMetric extends Entity {
       );
       store.set("ProtocolMetric", id.toString(), this);
     }
-  }
-
-  static loadInBlock(id: string): ProtocolMetric | null {
-    return changetype<ProtocolMetric | null>(
-      store.get_in_block("ProtocolMetric", id)
-    );
   }
 
   static load(id: string): ProtocolMetric | null {
@@ -717,12 +693,6 @@ export class BondDiscount extends Entity {
     }
   }
 
-  static loadInBlock(id: string): BondDiscount | null {
-    return changetype<BondDiscount | null>(
-      store.get_in_block("BondDiscount", id)
-    );
-  }
-
   static load(id: string): BondDiscount | null {
     return changetype<BondDiscount | null>(store.get("BondDiscount", id));
   }
@@ -861,12 +831,6 @@ export class TokenRecord extends Entity {
       );
       store.set("TokenRecord", id.toString(), this);
     }
-  }
-
-  static loadInBlock(id: string): TokenRecord | null {
-    return changetype<TokenRecord | null>(
-      store.get_in_block("TokenRecord", id)
-    );
   }
 
   static load(id: string): TokenRecord | null {
@@ -1113,12 +1077,6 @@ export class TokenSupply extends Entity {
     }
   }
 
-  static loadInBlock(id: string): TokenSupply | null {
-    return changetype<TokenSupply | null>(
-      store.get_in_block("TokenSupply", id)
-    );
-  }
-
   static load(id: string): TokenSupply | null {
     return changetype<TokenSupply | null>(store.get("TokenSupply", id));
   }
@@ -1307,19 +1265,6 @@ export class TokenSupply extends Entity {
   set supplyBalance(value: BigDecimal) {
     this.set("supplyBalance", Value.fromBigDecimal(value));
   }
-
-  get blockchain(): string {
-    const value = this.get("blockchain");
-    if (!value || value.kind == ValueKind.NULL) {
-      throw new Error("Cannot return null for a required field.");
-    } else {
-      return value.toString();
-    }
-  }
-
-  set blockchain(value: string) {
-    this.set("blockchain", Value.fromString(value));
-  }
 }
 
 export class PriceSnapshot extends Entity {
@@ -1338,12 +1283,6 @@ export class PriceSnapshot extends Entity {
       );
       store.set("PriceSnapshot", id.toString(), this);
     }
-  }
-
-  static loadInBlock(id: string): PriceSnapshot | null {
-    return changetype<PriceSnapshot | null>(
-      store.get_in_block("PriceSnapshot", id)
-    );
   }
 
   static load(id: string): PriceSnapshot | null {
@@ -1447,12 +1386,6 @@ export class GnosisAuctionRoot extends Entity {
     }
   }
 
-  static loadInBlock(id: string): GnosisAuctionRoot | null {
-    return changetype<GnosisAuctionRoot | null>(
-      store.get_in_block("GnosisAuctionRoot", id)
-    );
-  }
-
   static load(id: string): GnosisAuctionRoot | null {
     return changetype<GnosisAuctionRoot | null>(
       store.get("GnosisAuctionRoot", id)
@@ -1502,12 +1435,6 @@ export class GnosisAuction extends Entity {
       );
       store.set("GnosisAuction", id.toString(), this);
     }
-  }
-
-  static loadInBlock(id: string): GnosisAuction | null {
-    return changetype<GnosisAuction | null>(
-      store.get_in_block("GnosisAuction", id)
-    );
   }
 
   static load(id: string): GnosisAuction | null {
@@ -1619,12 +1546,6 @@ export class ERC20TokenSnapshot extends Entity {
     }
   }
 
-  static loadInBlock(id: string): ERC20TokenSnapshot | null {
-    return changetype<ERC20TokenSnapshot | null>(
-      store.get_in_block("ERC20TokenSnapshot", id)
-    );
-  }
-
   static load(id: string): ERC20TokenSnapshot | null {
     return changetype<ERC20TokenSnapshot | null>(
       store.get("ERC20TokenSnapshot", id)
@@ -1709,12 +1630,6 @@ export class ConvexRewardPoolSnapshot extends Entity {
     }
   }
 
-  static loadInBlock(id: string): ConvexRewardPoolSnapshot | null {
-    return changetype<ConvexRewardPoolSnapshot | null>(
-      store.get_in_block("ConvexRewardPoolSnapshot", id)
-    );
-  }
-
   static load(id: string): ConvexRewardPoolSnapshot | null {
     return changetype<ConvexRewardPoolSnapshot | null>(
       store.get("ConvexRewardPoolSnapshot", id)
@@ -1790,12 +1705,6 @@ export class BalancerPoolSnapshot extends Entity {
       );
       store.set("BalancerPoolSnapshot", id.toString(), this);
     }
-  }
-
-  static loadInBlock(id: string): BalancerPoolSnapshot | null {
-    return changetype<BalancerPoolSnapshot | null>(
-      store.get_in_block("BalancerPoolSnapshot", id)
-    );
   }
 
   static load(id: string): BalancerPoolSnapshot | null {
@@ -1938,12 +1847,6 @@ export class PoolSnapshot extends Entity {
       );
       store.set("PoolSnapshot", id.toString(), this);
     }
-  }
-
-  static loadInBlock(id: string): PoolSnapshot | null {
-    return changetype<PoolSnapshot | null>(
-      store.get_in_block("PoolSnapshot", id)
-    );
   }
 
   static load(id: string): PoolSnapshot | null {
@@ -2094,12 +1997,6 @@ export class TokenPriceSnapshot extends Entity {
     }
   }
 
-  static loadInBlock(id: string): TokenPriceSnapshot | null {
-    return changetype<TokenPriceSnapshot | null>(
-      store.get_in_block("TokenPriceSnapshot", id)
-    );
-  }
-
   static load(id: string): TokenPriceSnapshot | null {
     return changetype<TokenPriceSnapshot | null>(
       store.get("TokenPriceSnapshot", id)
@@ -2175,12 +2072,6 @@ export class StakingPoolSnapshot extends Entity {
       );
       store.set("StakingPoolSnapshot", id.toString(), this);
     }
-  }
-
-  static loadInBlock(id: string): StakingPoolSnapshot | null {
-    return changetype<StakingPoolSnapshot | null>(
-      store.get_in_block("StakingPoolSnapshot", id)
-    );
   }
 
   static load(id: string): StakingPoolSnapshot | null {

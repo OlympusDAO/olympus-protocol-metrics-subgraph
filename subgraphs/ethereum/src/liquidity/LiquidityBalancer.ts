@@ -496,7 +496,6 @@ export function getBalancerPoolTokenQuantity(
         TYPE_LIQUIDITY,
         tokenBalance,
         blockNumber,
-        BLOCKCHAIN,
         -1,
       ),
     );

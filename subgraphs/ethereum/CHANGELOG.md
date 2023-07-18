@@ -5,7 +5,6 @@
 - Adds manual deployments for Silo and Euler
 - Going forward, OHM minted for BLV is included in circulating and floating supply
 - Indexes OHM borrowed using the IncurDebt contract
-- Adds a blockchain field to the TokenSupply entity
 
 ## 4.8.3 (2023-05-09)
 

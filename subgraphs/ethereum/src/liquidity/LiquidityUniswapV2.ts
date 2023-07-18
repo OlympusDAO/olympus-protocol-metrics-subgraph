@@ -458,7 +458,6 @@ export function getUniswapV2PairTokenQuantity(
         TYPE_LIQUIDITY,
         tokenBalance,
         blockNumber,
-        BLOCKCHAIN,
         -1,
       ),
     );

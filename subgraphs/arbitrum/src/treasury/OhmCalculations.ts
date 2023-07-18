@@ -8,7 +8,7 @@ import { LendingMarketDeployment } from "../../../shared/src/utils/LendingMarket
 import { createOrUpdateTokenSupply, TYPE_LENDING, TYPE_LIQUIDITY, TYPE_TOTAL_SUPPLY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { ERC20 } from "../../generated/TokenRecords-arbitrum/ERC20";
 import { OlympusLender } from "../../generated/TokenRecords-arbitrum/OlympusLender";
-import { BLOCKCHAIN, CIRCULATING_SUPPLY_WALLETS, ERC20_GOHM_SYNAPSE, ERC20_OHM, OLYMPUS_LENDER, SENTIMENT_DEPLOYMENTS, SENTIMENT_LTOKEN, SILO_ADDRESS, SILO_DEPLOYMENTS } from "../contracts/Constants";
+import { CIRCULATING_SUPPLY_WALLETS, ERC20_GOHM_SYNAPSE, ERC20_OHM, OLYMPUS_LENDER, SENTIMENT_DEPLOYMENTS, SENTIMENT_LTOKEN, SILO_ADDRESS, SILO_DEPLOYMENTS } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 import { PRICE_HANDLERS } from "../price/PriceLookup";
 
@@ -21,10 +21,8 @@ export function getTotalSupply(timestamp: BigInt, blockNumber: BigInt): TokenSup
   }
 
   const totalSupply = toDecimal(totalSupplyResult.value, decimalsResult.value);
-  return [
-    createOrUpdateTokenSupply(
-      timestamp, getContractName(ERC20_OHM), ERC20_OHM, null, null, null, null, TYPE_TOTAL_SUPPLY, totalSupply, blockNumber, BLOCKCHAIN)
-  ];
+  return [createOrUpdateTokenSupply(
+    timestamp, getContractName(ERC20_OHM), ERC20_OHM, null, null, null, null, TYPE_TOTAL_SUPPLY, totalSupply, blockNumber)];
 }
 
 /**
@@ -77,7 +75,6 @@ export function getLendingAMOOHMRecords(timestamp: BigInt, blockNumber: BigInt):
         TYPE_LENDING,
         toDecimal(deployedOhm, 9),
         blockNumber,
-        BLOCKCHAIN,
         -1, // Subtract
       )
     )
@@ -124,7 +121,6 @@ function getLendingMarketManualDeploymentOHMRecords(timestamp: BigInt, deploymen
       TYPE_LENDING,
       balance,
       blockNumber,
-      BLOCKCHAIN,
       -1, // Subtract, as this represents OHM taken out of supply
     ),
   );
@@ -212,7 +208,6 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
         TYPE_TREASURY,
         balance,
         blockNumber,
-        BLOCKCHAIN,
         -1, // Subtract
       ),
     );
@@ -236,7 +231,6 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
         TYPE_TREASURY,
         balance,
         blockNumber,
-        BLOCKCHAIN,
         -1, // Subtract
       ),
     );
@@ -295,7 +289,6 @@ export function getProtocolOwnedLiquiditySupplyRecords(
             TYPE_LIQUIDITY,
             balance,
             blockNumber,
-            BLOCKCHAIN,
             -1, // Subtract
           ),
         )

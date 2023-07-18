@@ -618,7 +618,6 @@ export function getCurvePairTokenQuantityRecords(
         TYPE_LIQUIDITY,
         tokenBalance,
         blockNumber,
-        BLOCKCHAIN,
         -1,
       ),
     );

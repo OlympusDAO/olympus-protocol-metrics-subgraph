@@ -32,7 +32,6 @@ export function createOrUpdateTokenSupply(
   type: string,
   balance: BigDecimal,
   blockNumber: BigInt,
-  blockchain: string,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   multiplier: i32 = 1,
 ): TokenSupply {
@@ -60,7 +59,6 @@ export function createOrUpdateTokenSupply(
   record.type = type;
   record.balance = balance;
   record.supplyBalance = balance.times(BigDecimal.fromString(multiplier.toString()));
-  record.blockchain = blockchain;
 
   record.save();
 
