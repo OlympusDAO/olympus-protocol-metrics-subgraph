@@ -1,6 +1,6 @@
 # Arbitrum Subgraph Changelog
 
-## 1.5.2 (2023-07-18)
+## 1.5.3 (2023-07-18)
 
 - Adds support for the Lending AMO
 - Adds manual deployments of OHM to Silo and Sentiment
