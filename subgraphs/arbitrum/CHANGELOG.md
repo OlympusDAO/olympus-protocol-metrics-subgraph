@@ -5,6 +5,7 @@
 - Adds support for the Lending AMO
 - Adds manual deployments of OHM to Silo and Sentiment
 - Index OHM in treasury wallets
+- Adds a blockchain field to the TokenSupply entity
 
 ## 1.4.3 (2023-05-05)
 

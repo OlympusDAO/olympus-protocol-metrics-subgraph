@@ -1307,6 +1307,19 @@ export class TokenSupply extends Entity {
   set supplyBalance(value: BigDecimal) {
     this.set("supplyBalance", Value.fromBigDecimal(value));
   }
+
+  get blockchain(): string {
+    const value = this.get("blockchain");
+    if (!value || value.kind == ValueKind.NULL) {
+      throw new Error("Cannot return null for a required field.");
+    } else {
+      return value.toString();
+    }
+  }
+
+  set blockchain(value: string) {
+    this.set("blockchain", Value.fromString(value));
+  }
 }
 
 export class PriceSnapshot extends Entity {

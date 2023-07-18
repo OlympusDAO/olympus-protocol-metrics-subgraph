@@ -380,6 +380,7 @@ export function getFraxSwapPairTokenQuantityRecords(
         TYPE_LIQUIDITY,
         tokenBalance,
         blockNumber,
+        BLOCKCHAIN,
         -1,
       ),
     );

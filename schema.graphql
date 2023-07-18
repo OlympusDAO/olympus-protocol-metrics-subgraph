@@ -101,6 +101,7 @@ type TokenSupply @entity {
   type: String! # e.g. total supply
   balance: BigDecimal!
   supplyBalance: BigDecimal! # may be negative to represent the token being taken out of circulation
+  blockchain: String!
 }
 
 type PriceSnapshot @entity(immutable: true) {
