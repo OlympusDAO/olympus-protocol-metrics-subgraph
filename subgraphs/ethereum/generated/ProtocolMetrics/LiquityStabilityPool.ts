@@ -7,8 +7,7 @@ import {
   Entity,
   ethereum,
   JSONValue,
-  TypedMap
-} from "@graphprotocol/graph-ts";
+  TypedMap} from "@graphprotocol/graph-ts";
 
 export class ActivePoolAddressChanged extends ethereum.Event {
   get params(): ActivePoolAddressChanged__Params {

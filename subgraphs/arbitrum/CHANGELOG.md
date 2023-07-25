@@ -1,5 +1,12 @@
 # Arbitrum Subgraph Changelog
 
+## 1.5.3 (2023-07-18)
+
+- Adds support for the Lending AMO
+- Adds manual deployments of OHM to Silo and Sentiment
+- Index OHM in treasury wallets
+- Amended the event trigger to reduce frequency
+
 ## 1.4.3 (2023-05-05)
 
 - Add wETH-OHM and OHM-USDC POL

@@ -1,8 +1,15 @@
 {
-    "eslint.alwaysShowStatus": true,
-    "eslint.packageManager": "yarn",
-    "eslint.format.enable": true,
-    "editor.codeActionsOnSave": {
-      "source.fixAll.eslint": true
-    },  
+  "eslint.alwaysShowStatus": true,
+  "eslint.packageManager": "yarn",
+  "eslint.format.enable": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "cSpell.words": [
+    "arbitrum",
+    "assemblyscript",
+    "Chainlink",
+    "deadcode",
+    "graphprotocol"
+  ],
 }

@@ -4,9 +4,11 @@ import { TokenSupply } from "../../../shared/generated/schema";
 import { getCurrentIndex } from "../../../shared/src/supply/OhmCalculations";
 import { pushTokenSupplyArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { LendingMarketDeployment } from "../../../shared/src/utils/LendingMarketDeployment";
 import { createOrUpdateTokenSupply, TYPE_BONDS_DEPOSITS, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_VESTING_TOKENS, TYPE_BOOSTED_LIQUIDITY_VAULT, TYPE_LENDING, TYPE_LIQUIDITY, TYPE_OFFSET, TYPE_TOTAL_SUPPLY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { OLYMPUS_ASSOCIATION_WALLET } from "../../../shared/src/Wallets";
 import { BondManager } from "../../generated/ProtocolMetrics/BondManager";
+import { IncurDebt } from "../../generated/ProtocolMetrics/IncurDebt";
 import { OlympusBoostedLiquidityRegistry } from "../../generated/ProtocolMetrics/OlympusBoostedLiquidityRegistry";
 import { OlympusBoostedLiquidityVaultLido } from "../../generated/ProtocolMetrics/OlympusBoostedLiquidityVaultLido";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
@@ -35,6 +37,7 @@ import {
   LIQUIDITY_OWNED,
   MIGRATION_CONTRACT,
   OLYMPUS_BOOSTED_LIQUIDITY_REGISTRY,
+  OLYMPUS_INCUR_DEBT,
   SILO_ADDRESS,
   SILO_DEPLOYMENTS,
 } from "./Constants";
@@ -44,7 +47,6 @@ import {
   getSOlympusERC20V2,
   getSOlympusERC20V3,
 } from "./ContractHelper";
-import { LendingMarketDeployment } from "./LendingMarketDeployment";
 import { PairHandlerTypes } from "./PairHandler";
 import { getUSDRate } from "./Price";
 
@@ -62,6 +64,18 @@ const OLYMPUS_ASSOCIATION_BLOCK = "17115000";
  * was considered.
  */
 const GOHM_INDEXING_BLOCK = "17115000";
+
+/**
+ * The block from which the inclusion of BLV in floating and circulating supply
+ * was changed.
+ */
+const BLV_INCLUSION_BLOCK = "17620000";
+
+/**
+ * The block from which IncurDebt is being indexed. This is to avoid changing
+ * the historical values.
+ */
+const OLYMPUS_INCUR_DEBT_BLOCK = "17620000";
 
 /**
  * Returns the total supply of the latest version of the OHM contract
@@ -553,13 +567,59 @@ export function getProtocolOwnedLiquiditySupplyRecords(
 }
 
 /**
+ * Returns TokenSupply records representing the OHM minted into the IncurDebt contract.
+ * 
+ * The value reported for each vault is based on the value of `totalOutstandingGlobalDebt()`.
+ * 
+ * Only applicable after `OLYMPUS_INCUR_DEBT_BLOCK`
+ * 
+ * @param timestamp 
+ * @param blockNumber 
+ * @returns 
+ */
+export function getIncurDebtSupplyRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
+  const records: TokenSupply[] = [];
+
+  // Don't apply retro-actively
+  if (blockNumber.lt(BigInt.fromString(OLYMPUS_INCUR_DEBT_BLOCK))) {
+    return records;
+  }
+
+  const incurDebtContract = IncurDebt.bind(Address.fromString(OLYMPUS_INCUR_DEBT));
+
+  // Get the outstanding debt in OHM
+  const outstandingDebtResult = incurDebtContract.try_totalOutstandingGlobalDebt();
+  if (outstandingDebtResult.reverted) {
+    return records;
+  }
+
+  // Create a TokenSupply record
+  const ohmDecimals = getERC20Decimals(ERC20_OHM_V2, blockNumber);
+  const outstandingDebt = toDecimal(outstandingDebtResult.value, ohmDecimals);
+
+  records.push(
+    createOrUpdateTokenSupply(
+      timestamp,
+      getContractName(ERC20_OHM_V2),
+      ERC20_OHM_V2,
+      null,
+      null,
+      getContractName(OLYMPUS_INCUR_DEBT),
+      OLYMPUS_INCUR_DEBT,
+      TYPE_BOOSTED_LIQUIDITY_VAULT, // Analogous to OHM in BLV
+      outstandingDebt,
+      blockNumber,
+      -1, // Subtract
+    ),
+  );
+
+  return records;
+}
+
+/**
  * Returns TokenSupply records representing the OHM minted into boosted liquidity vaults.
  * 
- * The value reported for each vault is based on the following:
- * - OHM is minted into the vaults (`deployedOhm()`) and cannot be used by users, so it is removed from circulating supply.
- * - OHM that was previously circulating (`circulatingOhmBurned()`) and is burned is NOT included, as the total supply of OHM would be reduced anyway. Including burned OHM would be double-counting.
- * - Minted OHM can be released into circulating (and therefore should not be reported here) if
- * OHM gains in value relative to the paired asset. 
+ * The value reported for each vault is the result of calling `getPoolOhmShare()`.
  * 
  * @param timestamp 
  * @param blockNumber 
@@ -666,14 +726,14 @@ export function getTotalValueLocked(blockNumber: BigInt): BigDecimal {
  * - minus: migration offset
  * - minus: pre-minted OHM for bonds
  * - minus: OHM user deposits for bonds
- * - minus: OHM in boosted liquidity vaults
  * - minus: protocol-owned OHM in liquidity pools
+ * - minus: OHM in boosted liquidity vaults
  * - minus: OHM minted and deployed into lending markets
  */
-export function getBackedSupply(tokenSupplies: TokenSupply[]): BigDecimal {
+export function getBackedSupply(tokenSupplies: TokenSupply[], block: BigInt): BigDecimal {
   let total = BigDecimal.zero();
 
-  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_BOOSTED_LIQUIDITY_VAULT, TYPE_LIQUIDITY, TYPE_LENDING];
+  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_LIQUIDITY, TYPE_BOOSTED_LIQUIDITY_VAULT, TYPE_LENDING];
 
   for (let i = 0; i < tokenSupplies.length; i++) {
     const tokenSupply = tokenSupplies[i];
@@ -689,6 +749,14 @@ export function getBackedSupply(tokenSupplies: TokenSupply[]): BigDecimal {
 }
 
 /**
+ * Prior to `BLV_INCLUSION_BLOCK`, OHM minted into boosted liquidity vaults was deducted from total supply,
+ * which meant that floating & circulating supply excluded BLV OHM. This was changed to include BLV OHM in floating and circulating supply.
+ */
+function isBLVIncluded(block: BigInt): boolean {
+  return block.lt(BigInt.fromString(BLV_INCLUSION_BLOCK));
+}
+
+/**
  * For a given array of TokenSupply records (assumed to be at the same point in time),
  * this function returns the OHM floating supply.
  *
@@ -698,13 +766,17 @@ export function getBackedSupply(tokenSupplies: TokenSupply[]): BigDecimal {
  * - minus: migration offset
  * - minus: pre-minted OHM for bonds
  * - minus: OHM user deposits for bonds
- * - minus: OHM in boosted liquidity vaults
  * - minus: protocol-owned OHM in liquidity pools
+ * - minus: OHM in boosted liquidity vaults (before `BLV_INCLUSION_BLOCK`)
  */
-export function getFloatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
+export function getFloatingSupply(tokenSupplies: TokenSupply[], block: BigInt): BigDecimal {
   let total = BigDecimal.zero();
 
-  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_BOOSTED_LIQUIDITY_VAULT, TYPE_LIQUIDITY];
+  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_LIQUIDITY];
+
+  if (isBLVIncluded(block)) {
+    includedTypes.push(TYPE_BOOSTED_LIQUIDITY_VAULT);
+  }
 
   for (let i = 0; i < tokenSupplies.length; i++) {
     const tokenSupply = tokenSupplies[i];
@@ -729,15 +801,19 @@ export function getFloatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
  * - minus: migration offset
  * - minus: pre-minted OHM for bonds
  * - minus: OHM user deposits for bonds
- * - minus: OHM in boosted liquidity vaults
+ * - minus: OHM in boosted liquidity vaults (before `BLV_INCLUSION_BLOCK`)
  * 
  * OHM represented by vesting bond tokens (type `TYPE_BONDS_VESTING_TOKENS`) is not included in the circulating supply, as it is
  * owned by users and not the protocol.
  */
-export function getCirculatingSupply(tokenSupplies: TokenSupply[]): BigDecimal {
+export function getCirculatingSupply(tokenSupplies: TokenSupply[], block: BigInt): BigDecimal {
   let total = BigDecimal.zero();
 
-  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_BOOSTED_LIQUIDITY_VAULT];
+  const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS];
+
+  if (isBLVIncluded(block)) {
+    includedTypes.push(TYPE_BOOSTED_LIQUIDITY_VAULT);
+  }
 
   for (let i = 0; i < tokenSupplies.length; i++) {
     const tokenSupply = tokenSupplies[i];

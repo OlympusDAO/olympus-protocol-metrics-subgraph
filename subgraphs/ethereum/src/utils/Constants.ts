@@ -1,8 +1,8 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
+import { LendingMarketDeployment } from "../../../shared/src/utils/LendingMarketDeployment";
 import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, AURA_ALLOCATOR, AURA_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CONVEX_STAKING_PROXY_FRAXBP, CONVEX_STAKING_PROXY_OHM_FRAXBP, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, DAO_WORKING_CAPITAL, LUSD_ALLOCATOR, MAKER_DSR_ALLOCATOR, MAKER_DSR_ALLOCATOR_PROXY, MYSO_LENDING, OLYMPUS_ASSOCIATION_WALLET, OTC_ESCROW, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, TRSRY, VEFXS_ALLOCATOR, VENDOR_LENDING, WALLET_ADDRESSES } from "../../../shared/src/Wallets";
-import { LendingMarketDeployment } from "./LendingMarketDeployment";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 
 export const BLOCKCHAIN = "Ethereum";
@@ -100,6 +100,8 @@ export const TOKE_STAKING = "0x96f98ed74639689c3a11daf38ef86e59f43417d3".toLower
 export const BALANCER_VAULT = "0xba12222222228d8ba445958a75a0704d566bf2c8".toLowerCase();
 
 export const OLYMPUS_BOOSTED_LIQUIDITY_REGISTRY = "0x375E06C694B5E50aF8be8FB03495A612eA3e2275".toLowerCase();
+
+export const OLYMPUS_INCUR_DEBT = "0xd9d87586774fb9d036fa95a5991474513ff6c96e".toLowerCase();
 
 export const BALANCER_LIQUIDITY_GAUGE_OHM_DAI = "0x107A2209883621aFe2968da31C03190e0B2782C2".toLowerCase();
 export const BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH = "0x852CF729dEF9beB9De2f18c97a0ea6bf93a7dF8B".toLowerCase();
@@ -849,10 +851,12 @@ export const SILO_DEPLOYMENTS = new Array<LendingMarketDeployment>();
 SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("16627144"), BigDecimal.fromString("20000"), SILO_ADDRESS)); // https://etherscan.io/tx/0xf9bbcc923182fb6406e97fce0f92c22c87a284d55812eeae41dc484759422b4a
 SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("16834221"), BigDecimal.fromString("28081.19399535"), SILO_ADDRESS)); // https://etherscan.io/tx/0x4676080481af6128cd1eef788bf7526632509176fb28d9bc69a4276c05c58349
 SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("17016622"), BigDecimal.fromString("25000"), SILO_ADDRESS)); // https://etherscan.io/tx/0x8d71fa055470f4654cf52e64452aebf02b2dd3c3b338c0a3edaae4ac7a4376a0
+SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("17464332"), BigDecimal.fromString("-25000"), SILO_ADDRESS)); // https://etherscan.io/tx/0x6b429c97403c5e8c60396c07248138cf6cab5d224e3984e1a5159f3ee525b6f6
 
 export const EULER_DEPLOYMENTS = new Array<LendingMarketDeployment>();
 EULER_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("16627152"), BigDecimal.fromString("30000"), EULER_ADDRESS)); // https://etherscan.io/tx/0xa7495eba745bd67279969c1b8687f816e0d83a60bf0c8b43900ef1dfaf97277e
 EULER_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("16818299"), BigDecimal.fromString("-27239.193995359"), EULER_ADDRESS)); // https://etherscan.io/tx/0x54bb9ecb66c66aaa6bca677cff8fe8d64fcdbb44a7f00a0ee32f1670526e1c23
+EULER_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("17348446"), BigDecimal.fromString("-2760.806004641"), EULER_ADDRESS)); // https://etherscan.io/tx/0x8fac17c10e7d3b077344809c9f7c70ee2afcae99323c8f81b81a0e50a327a722 // Settlement in ETH/USDC. This entry balances out the remaining deployed OHM.
 
 export const CONTRACT_STARTING_BLOCK_MAP = new Map<string, string>();
 CONTRACT_STARTING_BLOCK_MAP.set(AAVE_ALLOCATOR_V2, AAVE_ALLOCATOR_V2_BLOCK);
@@ -1063,6 +1067,7 @@ CONTRACT_NAME_MAP.set(EULER_ADDRESS, "Euler Protocol");
 CONTRACT_NAME_MAP.set(FRAX_LOCKING_FRAX_USDC, "Frax Farm - FraxBP");
 CONTRACT_NAME_MAP.set(FRAX_LOCKING_OHM_FRAXBP, "Frax Farm - OHM-FraxBP");
 CONTRACT_NAME_MAP.set(FRAXBOND_CONTRACT1, "FRAX Bond 1");
+CONTRACT_NAME_MAP.set(LIQUITY_STABILITY_POOL, "Liquity Stability Pool");
 CONTRACT_NAME_MAP.set(LQTY_STAKING, "LQTY Staking");
 CONTRACT_NAME_MAP.set(LUSD_ALLOCATOR, "LUSD Allocator");
 CONTRACT_NAME_MAP.set(LUSDBOND_CONTRACT1, "LUSD Bond 1");
@@ -1080,6 +1085,7 @@ CONTRACT_NAME_MAP.set(OHMFRAXLPBOND_CONTRACT2, "OHM-FRAX Bond 2");
 CONTRACT_NAME_MAP.set(OHMLUSDBOND_CONTRACT1, "OHM-LUSD Bond 1");
 CONTRACT_NAME_MAP.set(OLYMPUS_ASSOCIATION_WALLET, "Olympus Association");
 CONTRACT_NAME_MAP.set(OLYMPUS_BOOSTED_LIQUIDITY_REGISTRY, "Boosted Liquidity Vault Registry");
+CONTRACT_NAME_MAP.set(OLYMPUS_INCUR_DEBT, "IncurDebt");
 CONTRACT_NAME_MAP.set(ONSEN_ALLOCATOR, "Onsen Allocator");
 CONTRACT_NAME_MAP.set(OTC_ESCROW, "OTC Escrow");
 CONTRACT_NAME_MAP.set(PAIR_CURVE_ETH_STETH, "Curve ETH-stETH Liquidity Pool");
@@ -1128,7 +1134,6 @@ CONTRACT_NAME_MAP.set(POOL_BALANCER_WETH_FDT_ID, "Balancer wETH-FDT Liquidity Po
 CONTRACT_NAME_MAP.set(RARI_ALLOCATOR, "Rari Allocator");
 CONTRACT_NAME_MAP.set(SILO_ADDRESS, "Silo Finance");
 CONTRACT_NAME_MAP.set(SILO_ADDRESS, "Silo Router");
-CONTRACT_NAME_MAP.set(LIQUITY_STABILITY_POOL, "Liquity Stability Pool");
 CONTRACT_NAME_MAP.set(STAKING_CONTRACT_V1, "Staking V1");
 CONTRACT_NAME_MAP.set(STAKING_CONTRACT_V2, "Staking V2");
 CONTRACT_NAME_MAP.set(STAKING_CONTRACT_V3, "Staking V3");

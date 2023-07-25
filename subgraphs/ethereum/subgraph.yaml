@@ -1,11 +1,11 @@
 specVersion: 0.0.4
 description: Olympus Protocol Metrics Subgraph
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
-features:
-  - grafting
-graft:
-  base: QmYMDVYuLWwpH3nsW72orjWBom3LBAbipdTFAygEshRqmU
-  block: 16890000 # Myso/Vendor deployment
+# features:
+#   - grafting
+# graft:
+#   base: QmfC7nn4agkCjpgsjVdcCkKiKoGiu97yQTQSG1z7EaNnxd
+#   block: 17348446 # Euler claim
 schema:
   file: ../../schema.graphql
 dataSources:
@@ -647,6 +647,9 @@ dataSources:
           file: ./abis/OlympusBoostedLiquidityRegistry.json
         - name: OlympusBoostedLiquidityVaultLido
           file: ./abis/OlympusBoostedLiquidityVaultLido.json
+        # IncurDebt
+        - name: IncurDebt
+          file: ./abis/IncurDebt.json
       eventHandlers:
         - event: LogRebase(indexed uint256,uint256,uint256)
           handler: handleMetrics

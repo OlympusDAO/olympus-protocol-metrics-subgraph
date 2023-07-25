@@ -6,6 +6,7 @@ import { pushTokenRecordArray, pushTokenSupplyArray } from "../../../shared/src/
 import { getOwnedLiquidityPoolValue } from "../liquidity/LiquidityCalculations";
 import {
   getBoostedLiquiditySupplyRecords,
+  getIncurDebtSupplyRecords,
   getMintedBorrowableOHMRecords,
   getProtocolOwnedLiquiditySupplyRecords,
   getTotalSupplyRecord,
@@ -88,6 +89,12 @@ export function generateTokenSupply(timestamp: BigInt, blockNumber: BigInt): Tok
   pushTokenSupplyArray(
     records,
     getBoostedLiquiditySupplyRecords(timestamp, blockNumber),
+  );
+
+  // OHM in IncurDebt
+  pushTokenSupplyArray(
+    records,
+    getIncurDebtSupplyRecords(timestamp, blockNumber),
   );
 
   return records;

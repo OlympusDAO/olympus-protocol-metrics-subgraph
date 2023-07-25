@@ -1,6 +1,7 @@
-import { BigDecimal, log } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
+import { LendingMarketDeployment } from "../../../shared/src/utils/LendingMarketDeployment";
 import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, DAO_WORKING_CAPITAL, LUSD_ALLOCATOR, OTC_ESCROW, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, VEFXS_ALLOCATOR, WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 
 export const BLOCKCHAIN = "Arbitrum";
@@ -35,6 +36,18 @@ export const JONES_STAKING = "0xb94d1959084081c5a11C460012Ab522F5a0FD756".toLowe
 export const JONES_STAKING_POOL_IDS: u64[] = [0];
 
 export const TREASURE_ATLAS_MINE = "0xa0a89db1c899c49f98e6326b764bafcf167fc2ce".toLowerCase();
+
+export const OLYMPUS_LENDER = "0x868C3ae18Fdea85bBb7a303e379c5B7e23b30F03".toLowerCase();
+
+export const SILO_ADDRESS = "0x9992f660137979C1ca7f8b119Cd16361594E3681".toLowerCase();
+export const SENTIMENT_LTOKEN = "0x3c34c679a76697e12e8a7496173487fea004f7c0".toLowerCase();
+
+export const SILO_DEPLOYMENTS = new Array<LendingMarketDeployment>();
+SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM, BigInt.fromString("99067079"), BigDecimal.fromString("25000"), SILO_ADDRESS)); // https://arbiscan.io/tx/0x55cabbd6cd41d2fa79a6c93743729bbfa85577ff3e92255f27bfd832344871f6
+SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM, BigInt.fromString("100875469"), BigDecimal.fromString("25000"), SILO_ADDRESS)); // https://arbiscan.io/tx/0xf8c9d222481435330ca1a7b761e90ab3698c8b111b014776162f19050c1288b8
+
+export const SENTIMENT_DEPLOYMENTS = new Array<LendingMarketDeployment>();
+SENTIMENT_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM, BigInt.fromString("100875583"), BigDecimal.fromString("5000"), SENTIMENT_LTOKEN)); // https://arbiscan.io/tx/0x5adab20ba57cf09a136c0cd1c61672c7e0d5249f4410f978f85a05a0de707e81
 
 export const ERC20_TOKENS_ARBITRUM = new Map<string, TokenDefinition>();
 ERC20_TOKENS_ARBITRUM.set(ERC20_ARB, new TokenDefinition(ERC20_ARB, TokenCategoryVolatile, true, false));
@@ -151,9 +164,9 @@ CONTRACT_NAME_MAP.set(ERC20_VSTA, "Vesta");
 CONTRACT_NAME_MAP.set(ERC20_WETH, "Wrapped ETH");
 CONTRACT_NAME_MAP.set(JONES_STAKING, "JONES Staking");
 CONTRACT_NAME_MAP.set(LP_BALANCER_POOL_MAGIC_USDC, "Balancer MAGIC-USDC Liquidity Pool");
-CONTRACT_NAME_MAP.set(LP_BALANCER_POOL_WETH_VESTA, "Balancer wETH-VSTA Liquidity Pool");
-CONTRACT_NAME_MAP.set(LP_BALANCER_POOL_WETH_OHM, "Balancer wETH-OHM Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_BALANCER_POOL_OHM_USDC, "Balancer OHM-USDC Liquidity Pool");
+CONTRACT_NAME_MAP.set(LP_BALANCER_POOL_WETH_OHM, "Balancer wETH-OHM Liquidity Pool");
+CONTRACT_NAME_MAP.set(LP_BALANCER_POOL_WETH_VESTA, "Balancer wETH-VSTA Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_GOHM_WETH, "UniswapV2 gOHM-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_JONES_GOHM_GOHM, "UniswapV2 jgOHM-gOHM Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_JONES_WETH, "UniswapV2 JONES-wETH Liquidity Pool");
@@ -162,7 +175,10 @@ CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_MAGIC_WETH, "UniswapV2 MAGIC-wETH Liquidity 
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V3_ARB_WETH, "UniswapV3 ARB-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V3_WETH_USDC, "UniswapV3 wETH-USDC Liquidity Pool");
 CONTRACT_NAME_MAP.set(LUSD_ALLOCATOR, "LUSD Allocator");
+CONTRACT_NAME_MAP.set(OLYMPUS_LENDER, "Olympus Lender");
 CONTRACT_NAME_MAP.set(RARI_ALLOCATOR, "Rari Allocator");
+CONTRACT_NAME_MAP.set(SENTIMENT_LTOKEN, "Sentiment Finance");
+CONTRACT_NAME_MAP.set(SILO_ADDRESS, "Silo Router");
 CONTRACT_NAME_MAP.set(TREASURE_ATLAS_MINE, "TreasureDAO Atlas Mine");
 CONTRACT_NAME_MAP.set(TREASURY_ADDRESS_V1, "Treasury Wallet V1");
 CONTRACT_NAME_MAP.set(TREASURY_ADDRESS_V2, "Treasury Wallet V2");

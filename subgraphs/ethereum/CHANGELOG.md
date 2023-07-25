@@ -1,5 +1,11 @@
 # Subgraph Changelog
 
+## 4.9.2 (2023-07-07)
+
+- Adds manual deployments for Silo and Euler
+- Going forward, OHM minted for BLV is included in circulating and floating supply
+- Indexes OHM borrowed using the IncurDebt contract
+
 ## 4.8.3 (2023-05-09)
 
 - Remove duplication of staking/locking messages in contract names

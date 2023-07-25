@@ -4,6 +4,7 @@ import { ERC20_OHM_V2 } from "../../ethereum/src/utils/Constants";
 import { getUSDRate } from "../../ethereum/src/utils/Price";
 import { getCurrentIndex } from "../../shared/src/supply/OhmCalculations";
 import { addDays, getDateFromBlockTimestamp, getISO8601DateString, getISO8601StringFromTimestamp } from "../../shared/src/utils/DateHelper";
+import { NewRound } from "../generated/PriceSnapshot/ChainlinkPriceFeed";
 import { PriceSnapshot, PriceSnapshotDaily } from "../generated/schema";
 import { getDelta, getStandardDeviation } from "./helpers/Math";
 
@@ -108,14 +109,11 @@ export function getPriceVolatility(currentSnapshot: PriceSnapshot, currentDate: 
  * - Price delta against the latest price for the previous day, or null
  * - Price volatility over the previous 30 days (using the standard deviation of the 1d price delta), or null
  * 
- * @param block 
+ * @param event
  * @returns 
  */
-export function handleBlock(block: ethereum.Block): void {
-    // Record 1 block per hour (60*60/12 blocks per hour) 
-    if (block.number.mod(BigInt.fromI32(5 * 60)).notEqual(BigInt.zero())) {
-        return;
-    }
+export function handleEvent(event: NewRound): void {
+    const block = event.block;
 
     const ohmIndex = getCurrentIndex(block.number);
 

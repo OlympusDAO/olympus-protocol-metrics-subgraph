@@ -1,11 +1,13 @@
 specVersion: 0.0.4
 description: Olympus Protocol Metrics Subgraph - Arbitrum
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
+# Given the block speed of Arbitrum, it is abominably slow to index from scratch.
+# Avoid changing the schema, as it will require indexing from scratch.
 features:
   - grafting
 graft:
-  base: QmcxmRwZzzeXpKPUiKr4aXrkCTqAmvHTzW8JcQHh1i4Tta # 1.2.2
-  block: 86200000 # 2023-05-01
+  base: QmPh8394KhA5354S6WDQbyDUH6MPZxMx7jcwkj3JTyNXuA # 1.4.4
+  block: 99067079
 schema:
   file: ../../schema.graphql
 dataSources:
@@ -13,7 +15,7 @@ dataSources:
     name: TokenRecords-arbitrum
     network: arbitrum-one
     source:
-      address: "0x660e7af290f540205a84dccc1f40d0269fc936f5"
+      address: "0x79daa21a44d1415306ec17c361e0090bdd4cfcbe" # COMP-USD feed, once per hour(-ish)
       abi: ChainlinkAggregator
       startBlock: 10950000 # 2022-05-01
     mapping:
@@ -28,6 +30,8 @@ dataSources:
           file: ../shared/abis/ERC20.json
         - name: gOHM
           file: ../shared/abis/gOHM.json
+        - name: OlympusLender
+          file: abis/OlympusLender.json
         # Price Lookup
         - name: BalancerVault
           file: ../shared/abis/BalancerVault.json

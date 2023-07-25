@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0 (2023-07-18)
+
+- Improve the indexing speed by shifting to using an event handler for every hour, instead of a block handler.
+
 ## 1.1.2 (2023-05-13)
 
 - Deployed to Subgraph Studio/Decentralized Network
