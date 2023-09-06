@@ -1,5 +1,5 @@
 import { ApolloClient, gql, HttpLink, InMemoryCache } from "@apollo/client/core";
-import { fetch } from "cross-fetch";
+import { fetch } from "node-fetch";
 
 const performQuery = async (subgraphId: string, query: string): Promise<any> => {
   const SUBGRAPH_BASE = "https://api.thegraph.com/subgraphs/id/";
