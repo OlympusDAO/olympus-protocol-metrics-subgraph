@@ -635,6 +635,8 @@ dataSources:
           file: ../shared/abis/ChainlinkPriceFeed.json
         - name: LiquityStabilityPool
           file: ./abis/StabilityPool.json
+        - name: ERC4626
+          file: ./abis/ERC4626.json
         # Gnosis Auctions
         - name: BondManager
           file: ./abis/BondManager.json
