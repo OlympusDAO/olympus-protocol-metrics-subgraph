@@ -304,6 +304,13 @@ ERC20_TOKENS.set(ERC20_WSTETH, new TokenDefinition(ERC20_WSTETH, TokenCategoryVo
 ERC20_TOKENS.set(ERC20_XSUSHI, new TokenDefinition(ERC20_XSUSHI, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(NATIVE_ETH, new TokenDefinition(NATIVE_ETH, TokenCategoryVolatile, true, true));
 
+// === ERC4626 ===
+
+const ERC4626_SDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA".toLowerCase();
+
+export const ERC4626_TOKENS = new Map<string, TokenDefinition>();
+ERC4626_TOKENS.set(ERC4626_SDAI, new TokenDefinition(ERC4626_SDAI, TokenCategoryStable, false, false));
+
 /**
  * Mapping between the non-staked token and the token staked in Convex.
  * 
@@ -930,6 +937,7 @@ CONTRACT_ABBREVIATION_MAP.set(ERC20_LDO, "LDO");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_PRIME, "D2D");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_SUSHI, "SUSHI");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_XSUSHI, "xSUSHI");
+CONTRACT_ABBREVIATION_MAP.set(ERC4626_SDAI, "sDAI");
 
 export function getContractAbbreviation(
   contractAddress: string,
@@ -1061,6 +1069,7 @@ CONTRACT_NAME_MAP.set(ERC20_WBTC, "wBTC");
 CONTRACT_NAME_MAP.set(ERC20_WETH, "wETH");
 CONTRACT_NAME_MAP.set(ERC20_WSTETH, "wstETH");
 CONTRACT_NAME_MAP.set(ERC20_XSUSHI, "SUSHI - Staked");
+CONTRACT_NAME_MAP.set(ERC4626_SDAI, "Savings DAI");
 CONTRACT_NAME_MAP.set(ETHBOND_CONTRACT1, "ETH Bond 1");
 CONTRACT_NAME_MAP.set(EULER_ADDRESS, "Euler Finance");
 CONTRACT_NAME_MAP.set(EULER_ADDRESS, "Euler Protocol");
