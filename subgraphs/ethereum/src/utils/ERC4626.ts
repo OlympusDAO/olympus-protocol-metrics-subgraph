@@ -104,17 +104,32 @@ function getERC4626Rate(
 ): BigDecimal | null {
   const underlyingToken = contract.try_asset();
   if (underlyingToken.reverted) {
+    log.debug(
+      "getERC4626Rate: Skipping {} because the underlying token could not be determined at block {}",
+      [getContractName(contract._address.toHexString()), blockNumber.toString()]
+    )
     return null;
   }
 
   const underlyingRate: BigDecimal = getUSDRate(underlyingToken.value.toHexString(), blockNumber);
   if (underlyingRate.equals(BigDecimal.zero())) {
+    log.debug(
+      "getERC4626Rate: Skipping {} because the underlying token {} has no price at block {}",
+      [
+        getContractName(contract._address.toHexString()),
+        getContractName(underlyingToken.value.toHexString()), blockNumber.toString()
+      ]
+    );
     return null;
   }
+  log.info("getERC4626Rate: 1 {} is {} USD", [getContractName(underlyingToken.value.toHexString()), underlyingRate.toString()]);
 
   // Get 1 share in terms of the underlying token
   const decimals: u8 = u8(contract.decimals());
-  const sharesToUnderlying: BigDecimal = toDecimal(contract.convertToAssets(BigInt.fromI32(10).pow(decimals)), decimals);
+  const sharesToUnderlying: BigDecimal = toDecimal(
+    contract.convertToAssets(
+      BigInt.fromU32(10).pow(decimals)),
+    decimals);
   log.info("getERC4626Rate: 1 share of {} is {} of the underlying", [getContractName(contract._address.toHexString()), sharesToUnderlying.toString()]);
 
   const wrappedRate: BigDecimal = underlyingRate.times(sharesToUnderlying);

@@ -308,6 +308,11 @@ ERC20_TOKENS.set(NATIVE_ETH, new TokenDefinition(NATIVE_ETH, TokenCategoryVolati
 
 const ERC4626_SDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA".toLowerCase();
 
+/**
+ * Mapping between the contract address of an ERC4626 token and the TokenDefinition.
+ * 
+ * A price lookup path must be defined for the underlying token within `LIQUIDITY_POOL_TOKEN_LOOKUP`.
+ */
 export const ERC4626_TOKENS = new Map<string, TokenDefinition>();
 ERC4626_TOKENS.set(ERC4626_SDAI, new TokenDefinition(ERC4626_SDAI, TokenCategoryStable, false, false));
 
