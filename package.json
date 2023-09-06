@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.6.9",
-    "@graphprotocol/graph-cli": "^0.51.0",
+    "@graphprotocol/graph-cli": "^0.57.0",
     "@graphprotocol/graph-ts": "^0.31.0",
     "assemblyscript-json": "^1.1.0",
     "commander": "^9.4.0",
@@ -29,7 +29,7 @@
   },
   "devDependencies": {
     "@types/json-diff": "^0.7.0",
-    "@types/node": "^16",
+    "@types/node": "^18",
     "@typescript-eslint/eslint-plugin": "^5.44.0",
     "@typescript-eslint/parser": "^5.44.0",
     "eslint": "^8.23.0",
