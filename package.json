@@ -18,18 +18,19 @@
   },
   "dependencies": {
     "@apollo/client": "^3.6.9",
-    "@graphprotocol/graph-cli": "^0.51.0",
+    "@graphprotocol/graph-cli": "^0.57.0",
     "@graphprotocol/graph-ts": "^0.31.0",
     "assemblyscript-json": "^1.1.0",
     "commander": "^9.4.0",
-    "cross-fetch": "^3.1.5",
+    "cross-fetch": "^4.0.0",
     "dotenv": "^16.0.2",
     "graphql": "^16.6.0",
+    "node-fetch": "^2.6.7",
     "ts-node": "^10.9.1"
   },
   "devDependencies": {
     "@types/json-diff": "^0.7.0",
-    "@types/node": "^16",
+    "@types/node": "^18",
     "@typescript-eslint/eslint-plugin": "^5.44.0",
     "@typescript-eslint/parser": "^5.44.0",
     "eslint": "^8.23.0",

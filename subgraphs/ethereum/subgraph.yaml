@@ -1,11 +1,11 @@
 specVersion: 0.0.4
 description: Olympus Protocol Metrics Subgraph
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
-# features:
-#   - grafting
-# graft:
-#   base: QmfC7nn4agkCjpgsjVdcCkKiKoGiu97yQTQSG1z7EaNnxd
-#   block: 17348446 # Euler claim
+features:
+  - grafting
+graft:
+  base: QmRwdXDRS3JQEcrAYKWcSrDnH46xhR9unTBDDGAJFg5mCT
+  block: 18070000 # Deployment time
 schema:
   file: ../../schema.graphql
 dataSources:
@@ -635,6 +635,8 @@ dataSources:
           file: ../shared/abis/ChainlinkPriceFeed.json
         - name: LiquityStabilityPool
           file: ./abis/StabilityPool.json
+        - name: ERC4626
+          file: ./abis/ERC4626.json
         # Gnosis Auctions
         - name: BondManager
           file: ./abis/BondManager.json

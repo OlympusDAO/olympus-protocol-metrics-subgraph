@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 4.10.0 (2023-09-06)
+
+- Adds support for the indexing of ERC4626 tokens (starting with sDAI)
+
 ## 4.9.2 (2023-07-07)
 
 - Adds manual deployments for Silo and Euler

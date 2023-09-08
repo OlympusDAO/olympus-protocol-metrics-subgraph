@@ -161,12 +161,12 @@ export const doLiquidBackingCheck = (
   const marketValueCalculated = liquidBacking + illiquidAssetsValue + ohmInLiquidity * ohmPrice;
 
   const liquidBackingCheck = {
-    marketValue: formatCurrency(marketValue),
-    liquidBacking: formatCurrency(liquidBacking),
-    ohmInLiquidity: formatNumber(ohmInLiquidity),
-    ohmPrice: formatCurrency(ohmPrice),
-    illiquidAssets: formatCurrency(illiquidAssetsValue),
-    diff: formatCurrency(marketValueCalculated - marketValue),
+    marketValue: formatCurrency(marketValue, 2),
+    liquidBacking: formatCurrency(liquidBacking, 2),
+    ohmInLiquidity: formatNumber(ohmInLiquidity, 2),
+    ohmPrice: formatCurrency(ohmPrice, 2),
+    illiquidAssets: formatCurrency(illiquidAssetsValue, 2),
+    diff: formatCurrency(marketValueCalculated - marketValue, 2),
     result: valuesEqual(marketValueCalculated, marketValue, 1),
     output: "",
   };

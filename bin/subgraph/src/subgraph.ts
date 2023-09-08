@@ -200,5 +200,7 @@ export const getOhmPrice = async (subgraphId: string, block: string): Promise<nu
     throw new Error("getOhmPrice: protocolMetrics query returned no results");
   }
 
-  return parseFloat(results.data.protocolMetrics[0].ohmPrice);
+  const ohmPrice = results.data.protocolMetrics[0].ohmPrice;
+  console.info(`Received OHM price ${ohmPrice}`);
+  return parseFloat(ohmPrice);
 };

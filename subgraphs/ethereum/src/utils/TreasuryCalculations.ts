@@ -15,6 +15,7 @@ import {
 } from "./OhmCalculations";
 import { getStablecoinBalances } from "./TokenStablecoins";
 import { getVolatileTokenBalances } from "./TokenVolatile";
+import { getAllERC4626Balances } from "./ERC4626";
 
 /**
  * Returns the market value, which is composed of:
@@ -46,6 +47,12 @@ export function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): To
   pushTokenRecordArray(
     records,
     getOwnedLiquidityPoolValue(timestamp, blockNumber),
+  );
+
+  // Get ERC4626 tokens
+  pushTokenRecordArray(
+    records,
+    getAllERC4626Balances(timestamp, blockNumber),
   );
 
   return records;
