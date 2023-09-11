@@ -1,6 +1,6 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { TokenRecord } from "../../../shared/generated/schema";
+import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
 import { BLOCKCHAIN, ERC20_OHM_V2, ERC20_TOKENS, ERC20_WETH, getContractName, getWalletAddressesForContract, liquidityPairHasToken } from "../utils/Constants";
 import { getERC20, getERC20DecimalBalance, getUniswapV3Pair } from "../utils/ContractHelper";
 import { getUSDRate, getUSDRateUniswapV3 } from "../utils/Price";
@@ -9,39 +9,60 @@ import { getERC20Decimals } from "../contracts/ERC20";
 import { UniswapV3PositionManager } from "../../generated/ProtocolMetrics/UniswapV3PositionManager";
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { getBaseEthUsdRate } from "../utils/PriceBase";
+import { TYPE_LIQUIDITY, createOrUpdateTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
 
 export const UNISWAP_V3_POSITION_MANAGER = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const Q96 = BigInt.fromI32(2).pow(96);
 
-function getSqrtRatioAtTick(tick: number): BigInt {
-  const sqrtRatio = BigInt.fromU64(u64(sqrt(1.0001 ** tick)));
-  log.debug("getSqrtRatioAtTick: sqrtRatio: {}", [sqrtRatio.toString()]);
+function getPairBalances(pairAddress: string, positionId: BigInt, blockNumber: BigInt): BigDecimal[] | null {
+  // Pair
+  const pair = getUniswapV3Pair(pairAddress, blockNumber);
+  if (!pair) {
+    return null;
+  }
 
-  return sqrtRatio;
+  const token0Result = pair.try_token0();
+  const token1Result = pair.try_token1();
+  if (token0Result.reverted || token1Result.reverted) {
+    return null;
+  }
 
-  // return sqrtRatio.times(BigInt.fromU64(2).pow(96));
-}
+  const sqrtPriceX96 = pair.slot0().getSqrtPriceX96();
 
-// Token amount functions inspired by: https://stackoverflow.com/questions/71814845/how-to-calculate-uniswap-v3-pools-total-value-locked-tvl-on-chain
+  // Position
+  const positionManager = UniswapV3PositionManager.bind(Address.fromString(UNISWAP_V3_POSITION_MANAGER));
+  log.debug("getPairBalances: positionId: {}", [positionId.toString()]);
+  const position = positionManager.positions(positionId);
+  const token0 = position.getToken0();
+  const token1 = position.getToken1();
 
-function min(a: BigInt, b: BigInt): BigInt {
-  return a.lt(b) ? a : b;
-}
+  // Check that the position is for the pair we are looking for
+  if (!token0.equals(token0Result.value) || !token1.equals(token1Result.value)) {
+    log.debug("getPairBalances: Skipping position that does not match tokens in pair address {}", [pairAddress])
+    return null;
+  }
 
-function max(a: BigInt, b: BigInt): BigInt {
-  return a.gt(b) ? a : b;
-}
+  // If a position has no liquidity, we don't want to record details
+  const liquidity: BigInt = position.getLiquidity();
+  if (liquidity.equals(BigInt.zero())) {
+    return null;
+  }
 
-function getToken0Amount(liquidity: BigInt, sqrtPrice: BigInt, sqrtRatioA: BigInt, sqrtRatioB: BigInt): BigInt {
-  const newSqrtPrice = max(min(sqrtPrice, sqrtRatioB), sqrtRatioA);
+  const sqrtPrice: BigInt = sqrtPriceX96.div(Q96);
+  log.debug("getPairBalances: sqrtPrice: {}", [sqrtPrice.toString()]);
 
-  return liquidity.times(sqrtRatioB.minus(newSqrtPrice)).div(newSqrtPrice.times(sqrtRatioB));
-}
+  // NOTE: This seems to work, but may only be appropriate for full-range liquidity
+  const token0Amount: BigInt = liquidity.times(sqrtPrice);
+  const token1Amount: BigInt = liquidity.div(sqrtPrice);
 
-function getToken1Amount(liquidity: BigInt, sqrtPrice: BigInt, sqrtRatioA: BigInt, sqrtRatioB: BigInt): BigInt {
-  const newSqrtPrice = max(min(sqrtPrice, sqrtRatioB), sqrtRatioA);
+  const token0Decimals = getERC20Decimals(token0.toHexString(), blockNumber);
+  const token1Decimals = getERC20Decimals(token1.toHexString(), blockNumber);
 
-  return liquidity.times(newSqrtPrice.minus(sqrtRatioA));
+  const token0Balance = toDecimal(token0Amount, token0Decimals);
+  const token1Balance = toDecimal(token1Amount, token1Decimals);
+  log.debug("getPairBalances: token0Balance: {}, token1Balance: {}", [token0Balance.toString(), token1Balance.toString()]);
+
+  return [token0Balance, token1Balance];
 }
 
 /**
@@ -75,8 +96,6 @@ export function getUniswapV3POLRecords(
     return records;
   }
 
-  const sqrtPriceX96 = pair.slot0().getSqrtPriceX96();
-
   const token0Result = pair.try_token0();
   const token1Result = pair.try_token1();
   if (token0Result.reverted || token1Result.reverted) {
@@ -93,40 +112,19 @@ export function getUniswapV3POLRecords(
     for (let j: u32 = 0; j < positionCount.toU32(); j++) {
       const positionId = positionManager.tokenOfOwnerByIndex(Address.fromString(walletAddress), BigInt.fromU32(j));
       log.debug("getUniswapV3PairRecords: positionId: {}", [positionId.toString()]);
-      const position = positionManager.positions(positionId);
 
-      const token0 = position.getToken0();
-      const token1 = position.getToken1();
-
-      // Check that the position is for the pair we are looking for
-      if (!token0.equals(token0Result.value) || !token1.equals(token1Result.value)) {
-        log.debug("getUniswapV3PairRecords: Skipping position that does not match tokens in pair address {}", [pairAddress])
+      const balances = getPairBalances(pairAddress, positionId, blockNumber);
+      if (!balances) {
         continue;
       }
 
-      // If a position has no liquidity, we don't want to record details
-      const liquidity: BigInt = position.getLiquidity();
-      if (liquidity.equals(BigInt.zero())) {
-        continue;
-      }
-
-      const sqrtPrice: BigInt = sqrtPriceX96.div(Q96);
-      log.debug("getUniswapV3PairRecords: sqrtPrice: {}", [sqrtPrice.toString()]);
-
-      // NOTE: This seems to work, but may only be appropriate for full-range liquidity
-      const token0Amount: BigInt = liquidity.times(sqrtPrice);
-      const token1Amount: BigInt = liquidity.div(sqrtPrice);
-
-      const token0Decimals = getERC20Decimals(token0.toHexString(), blockNumber);
-      const token1Decimals = getERC20Decimals(token1.toHexString(), blockNumber);
-
-      const token0Balance = toDecimal(token0Amount, token0Decimals);
-      const token1Balance = toDecimal(token1Amount, token1Decimals);
+      const token0Balance = balances[0];
+      const token1Balance = balances[1];
       log.debug("getUniswapV3PairRecords: token0Balance: {}, token1Balance: {}", [token0Balance.toString(), token1Balance.toString()]);
 
       // Get the prices
-      const token0Price = getUSDRate(token0.toHexString(), blockNumber);
-      const token1Price = getUSDRate(token1.toHexString(), blockNumber);
+      const token0Price = getUSDRate(token0Result.value.toHexString(), blockNumber);
+      const token1Price = getUSDRate(token1Result.value.toHexString(), blockNumber);
 
       const token0Value = token0Balance.times(token0Price);
       const token1Value = token1Balance.times(token1Price);
@@ -134,8 +132,8 @@ export function getUniswapV3POLRecords(
       const totalValue = token0Value.plus(token1Value);
       log.debug("getUniswapV3PairRecords: totalValue: {}", [totalValue.toString()]);
 
-      const token0IncludedValue = token0.equals(Address.fromString(ERC20_OHM_V2)) ? BigDecimal.fromString("0") : token0Value;
-      const token1IncludedValue = token1.equals(Address.fromString(ERC20_OHM_V2)) ? BigDecimal.fromString("0") : token1Value;
+      const token0IncludedValue = token0Result.value.equals(Address.fromString(ERC20_OHM_V2)) ? BigDecimal.fromString("0") : token0Value;
+      const token1IncludedValue = token1Result.value.equals(Address.fromString(ERC20_OHM_V2)) ? BigDecimal.fromString("0") : token1Value;
       const includedValue = token0IncludedValue.plus(token1IncludedValue);
       const multiplier = includedValue.div(totalValue);
       log.debug("getUniswapV3PairRecords: multiplier: {}", [multiplier.toString()]);
@@ -211,4 +209,81 @@ export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: Big
     pairValue.toString(),
   ]);
   return pairValue;
+}
+
+export function getUniswapV3OhmSupply(
+  timestamp: BigInt,
+  pairAddress: string,
+  tokenAddress: string,
+  blockNumber: BigInt,
+): TokenSupply[] {
+  const records: TokenSupply[] = [];
+
+  // If we are restricting by token and tokenAddress does not match either side of the pair
+  if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
+    log.debug(
+      "getUniswapV3OhmSupply: Skipping UniswapV3 pair that does not match specified token address {}",
+      [tokenAddress],
+    );
+    return records;
+  }
+
+  // For the given pairAddress, determine the addresses of the tokens
+  const pair = getUniswapV3Pair(pairAddress, blockNumber);
+  if (!pair) {
+    return records;
+  }
+
+  const token0Result = pair.try_token0();
+  const token1Result = pair.try_token1();
+  if (token0Result.reverted || token1Result.reverted) {
+    return records;
+  }
+
+  const token0 = token0Result.value.toHexString();
+  const token1 = token1Result.value.toHexString();
+
+  // Get the OHM index
+  if (token0.toLowerCase() != tokenAddress.toLowerCase() && token1.toLowerCase() != tokenAddress.toLowerCase()) {
+    return records;
+  }
+
+  const ohmIndex: u32 = token0.toLowerCase() == tokenAddress.toLowerCase() ? 0 : 1;
+
+  const wallets = getWalletAddressesForContract(pairAddress);
+  const positionManager = UniswapV3PositionManager.bind(Address.fromString(UNISWAP_V3_POSITION_MANAGER));
+
+  for (let i = 0; i < wallets.length; i++) {
+    const walletAddress = wallets[i];
+
+    const positionCount = positionManager.balanceOf(Address.fromString(walletAddress));
+    for (let j: u32 = 0; j < positionCount.toU32(); j++) {
+      const positionId = positionManager.tokenOfOwnerByIndex(Address.fromString(walletAddress), BigInt.fromU32(j));
+      log.debug("getUniswapV3PairRecords: positionId: {}", [positionId.toString()]);
+
+      const balances = getPairBalances(pairAddress, positionId, blockNumber);
+      if (!balances) {
+        continue;
+      }
+
+      const ohmBalance = balances[ohmIndex];
+
+      records.push(
+        createOrUpdateTokenSupply(
+          timestamp,
+          getContractName(tokenAddress),
+          tokenAddress,
+          null,
+          null,
+          getContractName(walletAddress),
+          walletAddress,
+          TYPE_LIQUIDITY,
+          ohmBalance,
+          blockNumber,
+        )
+      );
+    }
+  }
+
+  return records;
 }

@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph
 import { assert, beforeEach, clearStore, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import { toDecimal } from "../../shared/src/utils/Decimals";
-import { UNISWAP_V3_POSITION_MANAGER, getUniswapV3POLRecords, getUniswapV3PairTotalValue } from "../src/liquidity/LiquidityUniswapV3";
+import { UNISWAP_V3_POSITION_MANAGER, getUniswapV3OhmSupply, getUniswapV3POLRecords, getUniswapV3PairTotalValue } from "../src/liquidity/LiquidityUniswapV3";
 import { ERC20_OHM_V2, ERC20_WETH, PAIR_UNISWAP_V3_FXS_ETH, PAIR_UNISWAP_V3_WETH_OHM, getWalletAddressesForContract } from "../src/utils/Constants";
 import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
@@ -239,5 +239,39 @@ describe("POL records", () => {
     assert.assertTrue(
       records[0].multiplier.minus(expectedMultiplier) < supportedMultiplierDifference &&
       records[0].multiplier.minus(expectedMultiplier) > supportedMultiplierDifference.times(BigDecimal.fromString("-1")));
+  });
+});
+
+describe("OHM supply records", () => {
+  test("generates TokenSupply array for wETH-OHM POL", () => {
+    // Ignore other wallets
+    mockUniswapV3PositionsZero(UNISWAP_V3_POSITION_MANAGER);
+
+    // Mock OHM price
+    mockUsdOhmV2Rate();
+
+    // Mock ETH price
+    mockEthUsdRate();
+
+    // Mock POL balance
+    mockUniswapV3Pair(PAIR_UNISWAP_V3_WETH_OHM, ERC20_WETH, ERC20_OHM_V2, BigInt.fromString("210385600452651183274688532908673"), BigInt.fromI32(157695));
+    mockUniswapV3Positions(UNISWAP_V3_POSITION_MANAGER, TREASURY_ADDRESS_V3, [BigInt.fromString("1")]);
+    mockUniswapV3Position(UNISWAP_V3_POSITION_MANAGER, TREASURY_ADDRESS_V3, BigInt.fromString("1"), ERC20_WETH, ERC20_OHM_V2, BigInt.fromString("346355586036686019"), BigInt.fromI32(-887220), BigInt.fromI32(887220));
+
+    // Call function
+    const records = getUniswapV3OhmSupply(BigInt.zero(), PAIR_UNISWAP_V3_WETH_OHM, ERC20_OHM_V2, BigInt.zero());
+
+    // Check that the correct number of records were generated
+    assert.i32Equals(1, records.length);
+
+    // Values derived from: https://revert.finance/#/account/0x245cc372C84B3645Bf0Ffe6538620B04a217988B
+    const expectedOhmBalance = BigDecimal.fromString("130432.485");
+
+    const supportedDifference = BigDecimal.fromString("30");
+    log.debug("expected value: {}", [expectedOhmBalance.toString()]);
+    log.debug("actual value: {}", [records[0].supplyBalance.toString()]);
+    assert.assertTrue(
+      records[0].supplyBalance.minus(expectedOhmBalance) < supportedDifference &&
+      records[0].supplyBalance.minus(expectedOhmBalance) > supportedDifference.times(BigDecimal.fromString("-1")));
   });
 });
