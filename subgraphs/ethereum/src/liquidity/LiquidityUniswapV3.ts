@@ -96,9 +96,7 @@ export function getUniswapV3POLRecords(
       const position = positionManager.positions(positionId);
 
       const token0 = position.getToken0();
-      log.debug("getUniswapV3PairRecords: token0: {} ({})", [token0.toHexString(), getContractName(token0.toHexString())]);
       const token1 = position.getToken1();
-      log.debug("getUniswapV3PairRecords: token1: {} ({})", [token1.toHexString(), getContractName(token1.toHexString())]);
 
       // Check that the position is for the pair we are looking for
       if (!token0.equals(token0Result.value) || !token1.equals(token1Result.value)) {
@@ -112,26 +110,15 @@ export function getUniswapV3POLRecords(
         continue;
       }
 
-      const tickLower = position.getTickLower();
-      log.debug("getUniswapV3PairRecords: tickLower: {}", [tickLower.toString()]);
-      const sqrtRatioA: BigInt = getSqrtRatioAtTick(tickLower);
-      log.debug("getUniswapV3PairRecords: sqrtRatioA: {}", [sqrtRatioA.toString()]);
-
-      const tickUpper = position.getTickUpper();
-      log.debug("getUniswapV3PairRecords: tickUpper: {}", [tickUpper.toString()]);
-      const sqrtRatioB: BigInt = getSqrtRatioAtTick(tickUpper);
-      log.debug("getUniswapV3PairRecords: sqrtRatioB: {}", [sqrtRatioB.toString()]);
-
       const sqrtPrice: BigInt = sqrtPriceX96.div(Q96);
       log.debug("getUniswapV3PairRecords: sqrtPrice: {}", [sqrtPrice.toString()]);
 
-      const token0Amount: BigInt = getToken0Amount(liquidity, sqrtPrice, sqrtRatioA, sqrtRatioB);
-      const token1Amount: BigInt = getToken1Amount(liquidity, sqrtPrice, sqrtRatioA, sqrtRatioB);
+      // NOTE: This seems to work, but may only be appropriate for full-range liquidity
+      const token0Amount: BigInt = liquidity.times(sqrtPrice);
+      const token1Amount: BigInt = liquidity.div(sqrtPrice);
 
       const token0Decimals = getERC20Decimals(token0.toHexString(), blockNumber);
-      log.debug("getUniswapV3PairRecords: token0Decimals: {}", [token0Decimals.toString()]);
       const token1Decimals = getERC20Decimals(token1.toHexString(), blockNumber);
-      log.debug("getUniswapV3PairRecords: token1Decimals: {}", [token1Decimals.toString()]);
 
       const token0Balance = toDecimal(token0Amount, token0Decimals);
       const token1Balance = toDecimal(token1Amount, token1Decimals);

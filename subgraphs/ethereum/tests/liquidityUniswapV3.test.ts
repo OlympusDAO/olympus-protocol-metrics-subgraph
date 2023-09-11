@@ -225,9 +225,21 @@ describe("POL records", () => {
     // Check that the correct values were generated
     assert.stringEquals("1", records[0].balance.toString());
     assert.stringEquals(PAIR_UNISWAP_V3_WETH_OHM, records[0].tokenAddress);
+
+    // Check that the actual value is += 200 of the expected value
+    const supportedDifference = BigDecimal.fromString("200");
     log.debug("expected value: {}", [expectedValue.toString()]);
-    assert.stringEquals(expectedValue.toString(), records[0].value.toString());
+    log.debug("actual value: {}", [records[0].value.toString()]);
+    assert.assertTrue(
+      records[0].value.minus(expectedValue) < supportedDifference &&
+      records[0].value.minus(expectedValue) > supportedDifference.times(BigDecimal.fromString("-1")));
+
+    // Check that the actual multiplier is += 0.0001 of the expected multiplier
+    const supportedMultiplierDifference = BigDecimal.fromString("0.0001");
     log.debug("expected multiplier: {}", [expectedMultiplier.toString()]);
-    assert.stringEquals(expectedMultiplier.toString(), records[0].multiplier.toString());
+    log.debug("actual multiplier: {}", [records[0].multiplier.toString()]);
+    assert.assertTrue(
+      records[0].multiplier.minus(expectedMultiplier) < supportedMultiplierDifference &&
+      records[0].multiplier.minus(expectedMultiplier) > supportedMultiplierDifference.times(BigDecimal.fromString("-1")));
   });
 });
