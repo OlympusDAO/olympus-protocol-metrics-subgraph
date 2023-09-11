@@ -10,12 +10,19 @@ import { UniswapV3PositionManager } from "../../generated/ProtocolMetrics/Uniswa
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { getBaseEthUsdRate } from "../utils/PriceBase";
 
-const UNISWAP_V3_POSITIONS_MANAGER = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
+export const UNISWAP_V3_POSITION_MANAGER = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const Q96 = BigInt.fromI32(2).pow(96);
 
 function getTickAtSqrtRatio(sqrtPriceX96: BigInt): f64 {
   const tick: f64 = Math.floor(Math.log(f64(sqrtPriceX96.div(Q96).pow(2).toU64())) / Math.log(1.0001));
   return tick;
+}
+
+function getSqrtRatioAtTick(tick: number): BigInt {
+  const sqrtRatio = BigInt.fromU64(u64(sqrt(1.0001 ** tick)));
+  log.debug("getSqrtRatioAtTick: sqrtRatio: {}", [sqrtRatio.toString()]);
+
+  return sqrtRatio.times(BigInt.fromU64(2).pow(96));
 }
 
 /**
@@ -58,7 +65,7 @@ export function getUniswapV3POLRecords(
   }
 
   const wallets = getWalletAddressesForContract(pairAddress);
-  const positionManager = UniswapV3PositionManager.bind(Address.fromString(UNISWAP_V3_POSITIONS_MANAGER));
+  const positionManager = UniswapV3PositionManager.bind(Address.fromString(UNISWAP_V3_POSITION_MANAGER));
 
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];
@@ -66,6 +73,7 @@ export function getUniswapV3POLRecords(
     const positionCount = positionManager.balanceOf(Address.fromString(walletAddress));
     for (let j: u32 = 0; j < positionCount.toU32(); j++) {
       const positionId = positionManager.tokenOfOwnerByIndex(Address.fromString(walletAddress), BigInt.fromU32(j));
+      log.debug("getUniswapV3PairRecords: positionId: {}", [positionId.toString()]);
       const position = positionManager.positions(positionId);
 
       const token0 = position.getToken0();
@@ -73,44 +81,54 @@ export function getUniswapV3POLRecords(
 
       // Check that the position is for the pair we are looking for
       if (!token0.equals(token0Result.value) || !token1.equals(token1Result.value)) {
+        log.debug("getUniswapV3PairRecords: Skipping position that does not match tokens in pair address {}", [pairAddress])
         continue;
       }
 
       // If a position has no liquidity, we don't want to record details
-      const liquidity: f64 = f64(position.getLiquidity().toU64());
-      if (liquidity === 0) {
+      const liquidity: BigInt = position.getLiquidity();
+      if (liquidity.equals(BigInt.zero())) {
         continue;
       }
 
       const tickLower = position.getTickLower();
+      log.debug("getUniswapV3PairRecords: tickLower: {}", [tickLower.toString()]);
+      const sqrtRatioA: BigInt = getSqrtRatioAtTick(tickLower);
+      log.debug("getUniswapV3PairRecords: sqrtRatioA: {}", [sqrtRatioA.toString()]);
+
       const tickUpper = position.getTickUpper();
-      const sqrtRatioA = Math.sqrt(1.0001 ** tickLower);
-      const sqrtRatioB = Math.sqrt(1.0001 ** tickUpper);
+      log.debug("getUniswapV3PairRecords: tickUpper: {}", [tickUpper.toString()]);
+      const sqrtRatioB: BigInt = getSqrtRatioAtTick(tickUpper);
+      log.debug("getUniswapV3PairRecords: sqrtRatioB: {}", [sqrtRatioB.toString()]);
 
       const currentTick = getTickAtSqrtRatio(sqrtPriceX96);
-      const sqrtPrice: f64 = f64(sqrtPriceX96.div(Q96).toU64());
+      const sqrtPrice: BigInt = sqrtPriceX96.div(Q96);
+      log.debug("getUniswapV3PairRecords: sqrtPrice: {}", [sqrtPrice.toString()]);
 
-      let token0Amount: number = 0;
-      let token1Amount: number = 0;
+      let token0Amount: BigInt = BigInt.zero();
+      let token1Amount: BigInt = BigInt.zero();
 
       // Get the balances of each token
       // Source: https://ethereum.stackexchange.com/a/140264
       if (currentTick <= tickLower) {
-        token0Amount = Math.floor(liquidity * ((sqrtRatioB - sqrtRatioA) / (sqrtRatioA * sqrtRatioB)));
+        log.debug("getUniswapV3PairRecords: currentTick <= tickLower", []);
+        token0Amount = liquidity.times(sqrtRatioB.minus(sqrtRatioA).div(sqrtRatioA.times(sqrtRatioB)));
       }
       else if (currentTick > tickUpper) {
-        token1Amount = Math.floor(liquidity * (sqrtRatioB - sqrtRatioA));
+        log.debug("getUniswapV3PairRecords: currentTick > tickUpper", []);
+        token1Amount = liquidity.times(sqrtRatioB.minus(sqrtRatioA));
       }
       else {
-        token0Amount = Math.floor(liquidity * ((sqrtRatioB - sqrtPrice) / (sqrtPrice * sqrtRatioB)));
-        token1Amount = Math.floor(liquidity * (sqrtPrice - sqrtRatioA));
+        log.debug("getUniswapV3PairRecords: currentTick > tickLower && currentTick <= tickUpper", []);
+        token0Amount = liquidity.times(sqrtRatioB.minus(sqrtPrice).div(sqrtPrice.times(sqrtRatioB)));
+        token1Amount = liquidity.times(sqrtPrice.minus(sqrtRatioA));
       }
 
       const token0Decimals = getERC20Decimals(token0.toHexString(), blockNumber);
       const token1Decimals = getERC20Decimals(token1.toHexString(), blockNumber);
 
-      const token0Balance = toDecimal(BigInt.fromU64(u64(token0Amount)), token0Decimals);
-      const token1Balance = toDecimal(BigInt.fromU64(u64(token1Amount)), token1Decimals);
+      const token0Balance = toDecimal(token0Amount, token0Decimals);
+      const token1Balance = toDecimal(token1Amount, token1Decimals);
 
       // Get the prices
       const token0Price = getUSDRate(token0.toHexString(), blockNumber);
