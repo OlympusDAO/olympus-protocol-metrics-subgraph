@@ -49,6 +49,7 @@ import {
 } from "./ContractHelper";
 import { PairHandlerTypes } from "./PairHandler";
 import { getUSDRate } from "./Price";
+import { getUniswapV3OhmSupply } from "../liquidity/LiquidityUniswapV3";
 
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
 const MIGRATION_OFFSET = "2013";
@@ -557,7 +558,13 @@ export function getProtocolOwnedLiquiditySupplyRecords(
           records,
           getFraxSwapPairTokenQuantityRecords(timestamp, pairAddress, ohmTokenAddress, blockNumber),
         );
-      } else {
+      } else if (pairHandler.getType() == PairHandlerTypes.UniswapV3) {
+        pushTokenSupplyArray(
+          records,
+          getUniswapV3OhmSupply(timestamp, pairAddress, ohmTokenAddress, blockNumber),
+        );
+      }
+      else {
         throw new Error("Unsupported pair type: " + pairHandler.getType().toString());
       }
     }
