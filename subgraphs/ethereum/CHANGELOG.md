@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 4.11.0 (2023-09-11)
+## 4.11.2 (2023-09-11)
 
 - Adds support for protocol-owned liquidity in Uniswap V3 (both assets and OHM supply)
 
