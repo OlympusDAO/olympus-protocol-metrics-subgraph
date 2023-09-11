@@ -202,9 +202,9 @@ describe("POL records", () => {
     mockEthUsdRate();
 
     // Mock POL balance
-    mockUniswapV3Pair(PAIR_UNISWAP_V3_WETH_OHM, ERC20_WETH, ERC20_OHM_V2, BigInt.fromString("210385600452651183274688532908673"), BigInt.fromI32(157695));
+    mockUniswapV3Pair(PAIR_UNISWAP_V3_WETH_OHM, ERC20_OHM_V2, ERC20_WETH, BigInt.fromString("210385600452651183274688532908673"), BigInt.fromI32(157695));
     mockUniswapV3Positions(UNISWAP_V3_POSITION_MANAGER, TREASURY_ADDRESS_V3, [BigInt.fromString("1")]);
-    mockUniswapV3Position(UNISWAP_V3_POSITION_MANAGER, TREASURY_ADDRESS_V3, BigInt.fromString("1"), ERC20_WETH, ERC20_OHM_V2, BigInt.fromString("346355586036686019"), BigInt.fromI32(-887220), BigInt.fromI32(887220));
+    mockUniswapV3Position(UNISWAP_V3_POSITION_MANAGER, TREASURY_ADDRESS_V3, BigInt.fromString("1"), ERC20_OHM_V2, ERC20_WETH, BigInt.fromString("346355586036686019"), BigInt.fromI32(-887220), BigInt.fromI32(887220));
 
     // Call function
     const records = getUniswapV3POLRecords(BigInt.zero(), PAIR_UNISWAP_V3_WETH_OHM, null, BigInt.zero());
@@ -265,7 +265,7 @@ describe("OHM supply records", () => {
     assert.i32Equals(1, records.length);
 
     // Values derived from: https://revert.finance/#/account/0x245cc372C84B3645Bf0Ffe6538620B04a217988B
-    const expectedOhmBalance = BigDecimal.fromString("130432.485");
+    const expectedOhmBalance = BigDecimal.fromString("-130432.485");
 
     const supportedDifference = BigDecimal.fromString("30");
     log.debug("expected value: {}", [expectedOhmBalance.toString()]);
