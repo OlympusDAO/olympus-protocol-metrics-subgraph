@@ -99,6 +99,7 @@ export function getUniswapV3POLRecords(
   const token0Result = pair.try_token0();
   const token1Result = pair.try_token1();
   if (token0Result.reverted || token1Result.reverted) {
+    log.debug("getUniswapV3PairRecords: Skipping UniswapV3 pair {} ({}) as token calls reverted", [pairAddress, getContractName(pairAddress)]);
     return records;
   }
 
@@ -109,6 +110,7 @@ export function getUniswapV3POLRecords(
     const walletAddress = wallets[i];
 
     const positionCount = positionManager.balanceOf(Address.fromString(walletAddress));
+    log.debug("getUniswapV3PairRecords: wallet {} ({}) position count: {}", [walletAddress, getContractName(walletAddress), positionCount.toString()]);
     for (let j: u32 = 0; j < positionCount.toU32(); j++) {
       const positionId = positionManager.tokenOfOwnerByIndex(Address.fromString(walletAddress), BigInt.fromU32(j));
       log.debug("getUniswapV3PairRecords: positionId: {}", [positionId.toString()]);
@@ -280,6 +282,7 @@ export function getUniswapV3OhmSupply(
           TYPE_LIQUIDITY,
           ohmBalance,
           blockNumber,
+          -1,
         )
       );
     }
