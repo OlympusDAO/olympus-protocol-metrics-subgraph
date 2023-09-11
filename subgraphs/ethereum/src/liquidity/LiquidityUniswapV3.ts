@@ -24,10 +24,14 @@ function getPairBalances(pairAddress: string, positionId: BigInt, blockNumber: B
   const token0Result = pair.try_token0();
   const token1Result = pair.try_token1();
   if (token0Result.reverted || token1Result.reverted) {
+    log.debug("getPairBalances: Skipping UniswapV3 pair {} ({}) as token calls reverted", [pairAddress, getContractName(pairAddress)]);
     return null;
   }
 
   const sqrtPriceX96 = pair.slot0().getSqrtPriceX96();
+  log.debug("getPairBalances: sqrtPriceX96: {}", [sqrtPriceX96.toString()]);
+  const currentTick = pair.slot0().getTick();
+  log.debug("getPairBalances: currentTick: {}", [currentTick.toString()]);
 
   // Position
   const positionManager = UniswapV3PositionManager.bind(Address.fromString(UNISWAP_V3_POSITION_MANAGER));
@@ -38,15 +42,22 @@ function getPairBalances(pairAddress: string, positionId: BigInt, blockNumber: B
 
   // Check that the position is for the pair we are looking for
   if (!token0.equals(token0Result.value) || !token1.equals(token1Result.value)) {
-    log.debug("getPairBalances: Skipping position that does not match tokens in pair address {}", [pairAddress])
+    log.debug("getPairBalances: Skipping position {} that does not match tokens in pair address {}", [positionId.toString(), pairAddress])
     return null;
   }
+
+  // Ticks
+  position.getTickLower();
+  position.getTickUpper();
+  log.debug("getPairBalances: tickLower: {}, tickUpper: {}", [position.getTickLower().toString(), position.getTickUpper().toString()]);
 
   // If a position has no liquidity, we don't want to record details
   const liquidity: BigInt = position.getLiquidity();
   if (liquidity.equals(BigInt.zero())) {
+    log.debug("getPairBalances: Skipping position with zero liquidity", []);
     return null;
   }
+  log.debug("getPairBalances: liquidity: {}", [liquidity.toString()]);
 
   const sqrtPrice: BigInt = sqrtPriceX96.div(Q96);
   log.debug("getPairBalances: sqrtPrice: {}", [sqrtPrice.toString()]);
@@ -84,7 +95,7 @@ export function getUniswapV3POLRecords(
   // If we are restricting by token and tokenAddress does not match either side of the pair
   if (tokenAddress && !liquidityPairHasToken(pairAddress, tokenAddress)) {
     log.debug(
-      "getUniswapV3PairRecords: Skipping UniswapV3 pair that does not match specified token address {}",
+      "getUniswapV3POLRecords: Skipping UniswapV3 pair that does not match specified token address {}",
       [tokenAddress],
     );
     return records;
@@ -99,7 +110,7 @@ export function getUniswapV3POLRecords(
   const token0Result = pair.try_token0();
   const token1Result = pair.try_token1();
   if (token0Result.reverted || token1Result.reverted) {
-    log.debug("getUniswapV3PairRecords: Skipping UniswapV3 pair {} ({}) as token calls reverted", [pairAddress, getContractName(pairAddress)]);
+    log.debug("getUniswapV3POLRecords: Skipping UniswapV3 pair {} ({}) as token calls reverted", [pairAddress, getContractName(pairAddress)]);
     return records;
   }
 
@@ -110,10 +121,10 @@ export function getUniswapV3POLRecords(
     const walletAddress = wallets[i];
 
     const positionCount = positionManager.balanceOf(Address.fromString(walletAddress));
-    log.debug("getUniswapV3PairRecords: wallet {} ({}) position count: {}", [walletAddress, getContractName(walletAddress), positionCount.toString()]);
+    log.debug("getUniswapV3POLRecords: wallet {} ({}) position count: {}", [walletAddress, getContractName(walletAddress), positionCount.toString()]);
     for (let j: u32 = 0; j < positionCount.toU32(); j++) {
       const positionId = positionManager.tokenOfOwnerByIndex(Address.fromString(walletAddress), BigInt.fromU32(j));
-      log.debug("getUniswapV3PairRecords: positionId: {}", [positionId.toString()]);
+      log.debug("getUniswapV3POLRecords: positionId: {}", [positionId.toString()]);
 
       const balances = getPairBalances(pairAddress, positionId, blockNumber);
       if (!balances) {
@@ -122,7 +133,7 @@ export function getUniswapV3POLRecords(
 
       const token0Balance = balances[0];
       const token1Balance = balances[1];
-      log.debug("getUniswapV3PairRecords: token0Balance: {}, token1Balance: {}", [token0Balance.toString(), token1Balance.toString()]);
+      log.debug("getUniswapV3POLRecords: token0Balance: {}, token1Balance: {}", [token0Balance.toString(), token1Balance.toString()]);
 
       // Get the prices
       const token0Price = getUSDRate(token0Result.value.toHexString(), blockNumber);
@@ -132,13 +143,13 @@ export function getUniswapV3POLRecords(
       const token1Value = token1Balance.times(token1Price);
 
       const totalValue = token0Value.plus(token1Value);
-      log.debug("getUniswapV3PairRecords: totalValue: {}", [totalValue.toString()]);
+      log.debug("getUniswapV3POLRecords: totalValue: {}", [totalValue.toString()]);
 
       const token0IncludedValue = token0Result.value.equals(Address.fromString(ERC20_OHM_V2)) ? BigDecimal.fromString("0") : token0Value;
       const token1IncludedValue = token1Result.value.equals(Address.fromString(ERC20_OHM_V2)) ? BigDecimal.fromString("0") : token1Value;
       const includedValue = token0IncludedValue.plus(token1IncludedValue);
       const multiplier = includedValue.div(totalValue);
-      log.debug("getUniswapV3PairRecords: multiplier: {}", [multiplier.toString()]);
+      log.debug("getUniswapV3POLRecords: multiplier: {}", [multiplier.toString()]);
 
       records.push(createOrUpdateTokenRecord(
         timestamp,
