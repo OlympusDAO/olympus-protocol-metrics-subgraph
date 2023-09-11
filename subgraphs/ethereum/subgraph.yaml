@@ -637,6 +637,8 @@ dataSources:
           file: ./abis/StabilityPool.json
         - name: ERC4626
           file: ./abis/ERC4626.json
+        - name: UniswapV3PositionManager
+          file: ./abis/UniswapV3PositionManager.json
         # Gnosis Auctions
         - name: BondManager
           file: ./abis/BondManager.json
