@@ -150,8 +150,10 @@ export const getEthUsdRate = (): BigDecimal => {
   return toDecimal(ETH_USD_RESERVE_USD, 6).div(toDecimal(ETH_USD_RESERVE_ETH, 18));
 };
 
+export const ETH_PRICE = "1898.01397374"
+
 export const mockEthUsdRate = (): void => {
-  mockPriceFeed(ERC20_WETH, BigDecimal.fromString("1898.01397374"));
+  mockPriceFeed(ERC20_WETH, BigDecimal.fromString(ETH_PRICE));
 };
 
 export const mockUniswapV2EthUsdRate = (): void => {
