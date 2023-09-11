@@ -14,6 +14,33 @@ import { TYPE_LIQUIDITY, createOrUpdateTokenSupply } from "../../../shared/src/u
 export const UNISWAP_V3_POSITION_MANAGER = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const Q96 = BigInt.fromI32(2).pow(96);
 
+function min(a: BigInt, b: BigInt): BigInt {
+  return a.lt(b) ? a : b;
+}
+
+function max(a: BigInt, b: BigInt): BigInt {
+  return a.gt(b) ? a : b;
+}
+
+function getToken0Amount(liquidity: BigInt, sqrtPrice: BigInt, sqrtRatioA: BigInt, sqrtRatioB: BigInt): BigInt {
+  const newSqrtPrice = max(min(sqrtPrice, sqrtRatioB), sqrtRatioA);
+
+  return liquidity.times(sqrtRatioB.minus(newSqrtPrice)).div(newSqrtPrice.times(sqrtRatioB));
+}
+
+function getToken1Amount(liquidity: BigInt, sqrtPrice: BigInt, sqrtRatioA: BigInt, sqrtRatioB: BigInt): BigInt {
+  const newSqrtPrice = max(min(sqrtPrice, sqrtRatioB), sqrtRatioA);
+
+  return liquidity.times(newSqrtPrice.minus(sqrtRatioA));
+}
+
+function getSqrtRatioAtTick(tick: number): BigInt {
+  const sqrtRatio = BigInt.fromU64(u64(sqrt(1.0001 ** tick)));
+  log.debug("getSqrtRatioAtTick: sqrtRatio: {}", [sqrtRatio.toString()]);
+
+  return sqrtRatio;
+}
+
 function getPairBalances(pairAddress: string, positionId: BigInt, blockNumber: BigInt): BigDecimal[] | null {
   // Pair
   const pair = getUniswapV3Pair(pairAddress, blockNumber);
@@ -47,9 +74,15 @@ function getPairBalances(pairAddress: string, positionId: BigInt, blockNumber: B
   }
 
   // Ticks
-  position.getTickLower();
-  position.getTickUpper();
-  log.debug("getPairBalances: tickLower: {}, tickUpper: {}", [position.getTickLower().toString(), position.getTickUpper().toString()]);
+  const tickLower = position.getTickLower();
+  log.debug("getPairBalances: tickLower: {}", [tickLower.toString()]);
+  const sqrtRatioA: BigInt = getSqrtRatioAtTick(tickLower);
+  log.debug("getPairBalances: sqrtRatioA: {}", [sqrtRatioA.toString()]);
+
+  const tickUpper = position.getTickUpper();
+  log.debug("getUniswapV3PairRecords: tickUpper: {}", [tickUpper.toString()]);
+  const sqrtRatioB: BigInt = getSqrtRatioAtTick(tickUpper);
+  log.debug("getUniswapV3PairRecords: sqrtRatioB: {}", [sqrtRatioB.toString()]);
 
   // If a position has no liquidity, we don't want to record details
   const liquidity: BigInt = position.getLiquidity();
@@ -62,9 +95,8 @@ function getPairBalances(pairAddress: string, positionId: BigInt, blockNumber: B
   const sqrtPrice: BigInt = sqrtPriceX96.div(Q96);
   log.debug("getPairBalances: sqrtPrice: {}", [sqrtPrice.toString()]);
 
-  // NOTE: This seems to work, but may only be appropriate for full-range liquidity
-  const token0Amount: BigInt = liquidity.times(sqrtPrice);
-  const token1Amount: BigInt = liquidity.div(sqrtPrice);
+  const token0Amount: BigInt = getToken0Amount(liquidity, sqrtPrice, sqrtRatioA, sqrtRatioB);
+  const token1Amount: BigInt = getToken1Amount(liquidity, sqrtPrice, sqrtRatioA, sqrtRatioB);
 
   const token0Decimals = getERC20Decimals(token0.toHexString(), blockNumber);
   const token1Decimals = getERC20Decimals(token1.toHexString(), blockNumber);
