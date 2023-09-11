@@ -125,6 +125,7 @@ function mockUniswapV3Pair(
   token0: string,
   token1: string,
   sqrtPriceX96: BigInt,
+  tick: BigInt,
 ): void {
   // Mock the pair
   createMockedFunction(
@@ -133,7 +134,7 @@ function mockUniswapV3Pair(
     "slot0():(uint160,int24,uint16,uint16,uint16,uint8,bool)",
   ).returns([
     ethereum.Value.fromUnsignedBigInt(sqrtPriceX96),
-    ethereum.Value.fromSignedBigInt(BigInt.fromI32(MIN_TICK)),
+    ethereum.Value.fromSignedBigInt(tick),
     ethereum.Value.fromUnsignedBigInt(BigInt.zero()),
     ethereum.Value.fromUnsignedBigInt(BigInt.zero()),
     ethereum.Value.fromUnsignedBigInt(BigInt.zero()),
@@ -166,6 +167,8 @@ function mockUniswapV3Position(
   token0: string,
   token1: string,
   liquidity: BigInt,
+  tickLower: BigInt,
+  tickUpper: BigInt,
 ): void {
   // Mock the position
   createMockedFunction(
@@ -179,8 +182,8 @@ function mockUniswapV3Position(
       ethereum.Value.fromAddress(Address.fromString(token0)), // Token0
       ethereum.Value.fromAddress(Address.fromString(token1)), // Token1
       ethereum.Value.fromUnsignedBigInt(BigInt.zero()), // Fee
-      ethereum.Value.fromSignedBigInt(BigInt.fromI32(MIN_TICK)), // TickLower
-      ethereum.Value.fromSignedBigInt(BigInt.fromI32(MAX_TICK)), // TickUpper
+      ethereum.Value.fromSignedBigInt(tickLower), // TickLower
+      ethereum.Value.fromSignedBigInt(tickUpper), // TickUpper
       ethereum.Value.fromUnsignedBigInt(liquidity), // Liquidity
       ethereum.Value.fromUnsignedBigInt(BigInt.zero()), // FeeGrowthInside0LastX128
       ethereum.Value.fromUnsignedBigInt(BigInt.zero()), // FeeGrowthInside1LastX128
@@ -201,9 +204,9 @@ describe("POL records", () => {
     mockEthUsdRate();
 
     // Mock POL balance
-    mockUniswapV3Pair(PAIR_UNISWAP_V3_WETH_OHM, ERC20_WETH, ERC20_OHM_V2, BigInt.fromString("208156540126091642307710971817291"));
+    mockUniswapV3Pair(PAIR_UNISWAP_V3_WETH_OHM, ERC20_WETH, ERC20_OHM_V2, BigInt.fromString("210385600452651183274688532908673"), BigInt.fromI32(157695));
     mockUniswapV3Positions(UNISWAP_V3_POSITION_MANAGER, TREASURY_ADDRESS_V3, [BigInt.fromString("1")]);
-    mockUniswapV3Position(UNISWAP_V3_POSITION_MANAGER, TREASURY_ADDRESS_V3, BigInt.fromString("1"), ERC20_WETH, ERC20_OHM_V2, BigInt.fromString("346355586036686019"));
+    mockUniswapV3Position(UNISWAP_V3_POSITION_MANAGER, TREASURY_ADDRESS_V3, BigInt.fromString("1"), ERC20_WETH, ERC20_OHM_V2, BigInt.fromString("346355586036686019"), BigInt.fromI32(-887220), BigInt.fromI32(887220));
 
     // Call function
     const records = getUniswapV3POLRecords(BigInt.zero(), PAIR_UNISWAP_V3_WETH_OHM, null, BigInt.zero());
@@ -212,16 +215,19 @@ describe("POL records", () => {
     assert.i32Equals(1, records.length);
 
     // Values derived from: https://revert.finance/#/account/0x245cc372C84B3645Bf0Ffe6538620B04a217988B
-    const expectedEthBalance = BigDecimal.fromString("909.981730");
+    const expectedEthBalance = BigDecimal.fromString("919.726340");
     const expectedEthValue = expectedEthBalance.times(BigDecimal.fromString(ETH_PRICE));
-    const expectedOhmBalance = BigDecimal.fromString("131829.231");
+    const expectedOhmBalance = BigDecimal.fromString("130432.485");
     const expectedOhmValue = expectedOhmBalance.times(getOhmUsdRate());
-    const expectedMultiplier = expectedEthValue.div(expectedOhmValue.plus(expectedEthValue));
+    const expectedValue = expectedOhmValue.plus(expectedEthValue);
+    const expectedMultiplier = expectedEthValue.div(expectedValue);
 
     // Check that the correct values were generated
     assert.stringEquals("1", records[0].balance.toString());
     assert.stringEquals(PAIR_UNISWAP_V3_WETH_OHM, records[0].tokenAddress);
-    assert.stringEquals(expectedEthValue.toString(), records[0].value.toString());
+    log.debug("expected value: {}", [expectedValue.toString()]);
+    assert.stringEquals(expectedValue.toString(), records[0].value.toString());
+    log.debug("expected multiplier: {}", [expectedMultiplier.toString()]);
     assert.stringEquals(expectedMultiplier.toString(), records[0].multiplier.toString());
   });
 });

@@ -13,16 +13,35 @@ import { getBaseEthUsdRate } from "../utils/PriceBase";
 export const UNISWAP_V3_POSITION_MANAGER = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const Q96 = BigInt.fromI32(2).pow(96);
 
-function getTickAtSqrtRatio(sqrtPriceX96: BigInt): f64 {
-  const tick: f64 = Math.floor(Math.log(f64(sqrtPriceX96.div(Q96).pow(2).toU64())) / Math.log(1.0001));
-  return tick;
-}
-
 function getSqrtRatioAtTick(tick: number): BigInt {
   const sqrtRatio = BigInt.fromU64(u64(sqrt(1.0001 ** tick)));
   log.debug("getSqrtRatioAtTick: sqrtRatio: {}", [sqrtRatio.toString()]);
 
-  return sqrtRatio.times(BigInt.fromU64(2).pow(96));
+  return sqrtRatio;
+
+  // return sqrtRatio.times(BigInt.fromU64(2).pow(96));
+}
+
+// Token amount functions inspired by: https://stackoverflow.com/questions/71814845/how-to-calculate-uniswap-v3-pools-total-value-locked-tvl-on-chain
+
+function min(a: BigInt, b: BigInt): BigInt {
+  return a.lt(b) ? a : b;
+}
+
+function max(a: BigInt, b: BigInt): BigInt {
+  return a.gt(b) ? a : b;
+}
+
+function getToken0Amount(liquidity: BigInt, sqrtPrice: BigInt, sqrtRatioA: BigInt, sqrtRatioB: BigInt): BigInt {
+  const newSqrtPrice = max(min(sqrtPrice, sqrtRatioB), sqrtRatioA);
+
+  return liquidity.times(sqrtRatioB.minus(newSqrtPrice)).div(newSqrtPrice.times(sqrtRatioB));
+}
+
+function getToken1Amount(liquidity: BigInt, sqrtPrice: BigInt, sqrtRatioA: BigInt, sqrtRatioB: BigInt): BigInt {
+  const newSqrtPrice = max(min(sqrtPrice, sqrtRatioB), sqrtRatioA);
+
+  return liquidity.times(newSqrtPrice.minus(sqrtRatioA));
 }
 
 /**
@@ -77,7 +96,9 @@ export function getUniswapV3POLRecords(
       const position = positionManager.positions(positionId);
 
       const token0 = position.getToken0();
+      log.debug("getUniswapV3PairRecords: token0: {} ({})", [token0.toHexString(), getContractName(token0.toHexString())]);
       const token1 = position.getToken1();
+      log.debug("getUniswapV3PairRecords: token1: {} ({})", [token1.toHexString(), getContractName(token1.toHexString())]);
 
       // Check that the position is for the pair we are looking for
       if (!token0.equals(token0Result.value) || !token1.equals(token1Result.value)) {
@@ -101,34 +122,20 @@ export function getUniswapV3POLRecords(
       const sqrtRatioB: BigInt = getSqrtRatioAtTick(tickUpper);
       log.debug("getUniswapV3PairRecords: sqrtRatioB: {}", [sqrtRatioB.toString()]);
 
-      const currentTick = getTickAtSqrtRatio(sqrtPriceX96);
       const sqrtPrice: BigInt = sqrtPriceX96.div(Q96);
       log.debug("getUniswapV3PairRecords: sqrtPrice: {}", [sqrtPrice.toString()]);
 
-      let token0Amount: BigInt = BigInt.zero();
-      let token1Amount: BigInt = BigInt.zero();
-
-      // Get the balances of each token
-      // Source: https://ethereum.stackexchange.com/a/140264
-      if (currentTick <= tickLower) {
-        log.debug("getUniswapV3PairRecords: currentTick <= tickLower", []);
-        token0Amount = liquidity.times(sqrtRatioB.minus(sqrtRatioA).div(sqrtRatioA.times(sqrtRatioB)));
-      }
-      else if (currentTick > tickUpper) {
-        log.debug("getUniswapV3PairRecords: currentTick > tickUpper", []);
-        token1Amount = liquidity.times(sqrtRatioB.minus(sqrtRatioA));
-      }
-      else {
-        log.debug("getUniswapV3PairRecords: currentTick > tickLower && currentTick <= tickUpper", []);
-        token0Amount = liquidity.times(sqrtRatioB.minus(sqrtPrice).div(sqrtPrice.times(sqrtRatioB)));
-        token1Amount = liquidity.times(sqrtPrice.minus(sqrtRatioA));
-      }
+      const token0Amount: BigInt = getToken0Amount(liquidity, sqrtPrice, sqrtRatioA, sqrtRatioB);
+      const token1Amount: BigInt = getToken1Amount(liquidity, sqrtPrice, sqrtRatioA, sqrtRatioB);
 
       const token0Decimals = getERC20Decimals(token0.toHexString(), blockNumber);
+      log.debug("getUniswapV3PairRecords: token0Decimals: {}", [token0Decimals.toString()]);
       const token1Decimals = getERC20Decimals(token1.toHexString(), blockNumber);
+      log.debug("getUniswapV3PairRecords: token1Decimals: {}", [token1Decimals.toString()]);
 
       const token0Balance = toDecimal(token0Amount, token0Decimals);
       const token1Balance = toDecimal(token1Amount, token1Decimals);
+      log.debug("getUniswapV3PairRecords: token0Balance: {}, token1Balance: {}", [token0Balance.toString(), token1Balance.toString()]);
 
       // Get the prices
       const token0Price = getUSDRate(token0.toHexString(), blockNumber);
@@ -138,11 +145,13 @@ export function getUniswapV3POLRecords(
       const token1Value = token1Balance.times(token1Price);
 
       const totalValue = token0Value.plus(token1Value);
+      log.debug("getUniswapV3PairRecords: totalValue: {}", [totalValue.toString()]);
 
       const token0IncludedValue = token0.equals(Address.fromString(ERC20_OHM_V2)) ? BigDecimal.fromString("0") : token0Value;
       const token1IncludedValue = token1.equals(Address.fromString(ERC20_OHM_V2)) ? BigDecimal.fromString("0") : token1Value;
       const includedValue = token0IncludedValue.plus(token1IncludedValue);
       const multiplier = includedValue.div(totalValue);
+      log.debug("getUniswapV3PairRecords: multiplier: {}", [multiplier.toString()]);
 
       records.push(createOrUpdateTokenRecord(
         timestamp,
