@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 4.11.0 (2023-09-11)
+
+- Adds support for protocol-owned liquidity in Uniswap V3 (both assets and OHM supply)
+
 ## 4.10.0 (2023-09-06)
 
 - Adds support for the indexing of ERC4626 tokens (starting with sDAI)
