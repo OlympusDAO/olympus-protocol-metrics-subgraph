@@ -609,6 +609,11 @@ export function getIncurDebtSupplyRecords(timestamp: BigInt, blockNumber: BigInt
   const ohmDecimals = getERC20Decimals(ERC20_OHM_V2, blockNumber);
   const outstandingDebt = toDecimal(outstandingDebtResult.value, ohmDecimals);
 
+  // Ignore zero balance
+  if (outstandingDebt.equals(BigDecimal.zero())) {
+    return records;
+  }
+
   records.push(
     createOrUpdateTokenSupply(
       timestamp,
