@@ -160,6 +160,7 @@ export function getBalancerPoolTotalValue(
     totalValue = totalValue.plus(value);
   }
 
+  log.info("getBalancerPoolTotalValue: Total value of Balancer pool {} is {}", [poolId, totalValue.toString()]);
   return totalValue;
 }
 

@@ -92,7 +92,7 @@ export function getUniswapV2PairTotalValue(
   excludeOhmValue: boolean,
   blockNumber: BigInt,
 ): BigDecimal {
-  log.info("getUniswapV2PairTotalValue: Calculating total value of pair {}", [pairAddress]);
+  log.info("getUniswapV2PairTotalValue: Calculating total value of pair {} ({}). excludeOhmValue? {}", [getContractName(pairAddress), pairAddress, excludeOhmValue.toString()]);
 
   const poolSnapshot = getOrCreateUniswapV2PoolSnapshot(pairAddress, blockNumber);
   if (!poolSnapshot) {
@@ -110,20 +110,24 @@ export function getUniswapV2PairTotalValue(
   for (let i = 0; i < poolTokens.length; i++) {
     const currentToken = poolTokens[i];
     const currentBalance = poolBalances[i];
+    log.debug("getUniswapV2PairTotalValue: Checking token {}", [getContractName(currentToken.toHexString())]);
 
     // Skip if OHM is excluded
     if (excludeOhmValue && currentToken.toHexString().toLowerCase() == ERC20_OHM_V2.toLowerCase()) {
+      log.debug("getUniswapV2PairTotalValue: Skipping OHM value for pair {}, as excludeOhmValue is true", [getContractName(pairAddress)]);
       continue;
     }
 
-    const currentRate = getUSDRate(currentToken.toHexString(), blockNumber);
+    log.debug("getUniswapV2PairTotalValue: balance of token {} is {}", [getContractName(currentToken.toHexString()), currentBalance.toString()]); const currentRate = getUSDRate(currentToken.toHexString(), blockNumber);
     const currentValue = currentBalance.times(currentRate);
+    log.debug("getUniswapV2PairTotalValue: value of token {} in pair is {}", [getContractName(currentToken.toHexString()), currentValue.toString()]);
     totalValue = totalValue.plus(currentValue);
   }
 
-  log.info("getUniswapV2PairTotalValue: Total value of pair {} is {}", [
-    pairAddress,
+  log.info("getUniswapV2PairTotalValue: Total value of pair {} is {}. excludeOhmValue? {}", [
+    getContractName(pairAddress),
     totalValue.toString(),
+    excludeOhmValue.toString(),
   ]);
   return totalValue;
 }

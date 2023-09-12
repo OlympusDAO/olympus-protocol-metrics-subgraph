@@ -261,6 +261,7 @@ export const mockRateUniswapV3 = (
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   shouldRevert: boolean = false,
 ): void => {
+  log.info("Mocking rate for UniswapV3 pair {}", [pairAddress]);
   mockERC20TotalSupply(token0Address, token0Decimals, toBigInt(DEFAULT_TOTAL_SUPPLY, token0Decimals));
   mockERC20TotalSupply(token1Address, token1Decimals, toBigInt(DEFAULT_TOTAL_SUPPLY, token1Decimals));
 
@@ -405,6 +406,8 @@ export const mockUsdOhmV2Rate = (
   ohmReserves: BigInt = OHM_USD_RESERVE_OHM,
   usdReserves: BigInt = OHM_USD_RESERVE_USD,
 ): void => {
+  log.info("Mocking rate for UniswapV2 pair {}: OHM {}, USD: {}", [PAIR_UNISWAP_V2_OHM_DAI_V2, toDecimal(ohmReserves, 9).toString(), toDecimal(usdReserves, 18).toString()]);
+
   const contractAddress = Address.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2);
   createMockedFunction(
     contractAddress,

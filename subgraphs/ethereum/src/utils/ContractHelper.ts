@@ -258,11 +258,11 @@ export function getUniswapV3Pair(
   contractAddress: string,
   currentBlockNumber: BigInt,
 ): UniswapV3Pair | null {
-  log.debug("Fetching UniswapV3Pair contract for address {}", [contractAddress]);
+  log.debug("getUniswapV3Pair: Fetching UniswapV3Pair contract for address {}", [contractAddress]);
   if (!contractExistsAtBlock(contractAddress, currentBlockNumber)) return null;
 
   if (!contractsUniswapV3Pair.has(contractAddress)) {
-    log.debug("Binding UniswapV3Pair contract for address {}. Block number {}", [
+    log.debug("getUniswapV3Pair: Binding UniswapV3Pair contract for address {}. Block number {}", [
       contractAddress,
       currentBlockNumber.toString(),
     ]);

@@ -1,14 +1,13 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
-import { BLOCKCHAIN, ERC20_OHM_V2, ERC20_TOKENS, ERC20_WETH, getContractName, getWalletAddressesForContract, liquidityPairHasToken } from "../utils/Constants";
-import { getERC20, getERC20DecimalBalance, getUniswapV3Pair } from "../utils/ContractHelper";
-import { getUSDRate, getUSDRateUniswapV3 } from "../utils/Price";
+import { BLOCKCHAIN, ERC20_OHM_V2, ERC20_TOKENS, getContractName, getWalletAddressesForContract, liquidityPairHasToken } from "../utils/Constants";
+import { getERC20DecimalBalance, getUniswapV3Pair } from "../utils/ContractHelper";
+import { getUSDRate } from "../utils/Price";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { getERC20Decimals } from "../contracts/ERC20";
 import { UniswapV3PositionManager } from "../../generated/ProtocolMetrics/UniswapV3PositionManager";
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
-import { getBaseEthUsdRate } from "../utils/PriceBase";
 import { TYPE_LIQUIDITY, createOrUpdateTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
 import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 
@@ -207,57 +206,65 @@ export function getUniswapV3POLRecords(
   return records;
 }
 
-export function getUniswapV3PairTotalValue(pairAddress: string, blockNumber: BigInt): BigDecimal {
+/**
+ * The TVL of a UniswapV3 pool.
+ * 
+ * To avoid circular dependencies, this CANNOT be used by getUniswapV3OhmSupply or getUniswapV3POLRecords
+ * 
+ * @param pairAddress 
+ * @param excludeOhmValue 
+ * @param blockNumber 
+ * @returns 
+ */
+export function getUniswapV3PairTotalValue(pairAddress: string, excludeOhmValue: boolean, blockNumber: BigInt): BigDecimal {
+  log.info("getUniswapV3PairTotalValue: Calculating total value of pair {} ({}). excludeOhmValue? {}", [getContractName(pairAddress), pairAddress, excludeOhmValue.toString()]);
+
   const pair = getUniswapV3Pair(pairAddress, blockNumber);
   if (!pair) {
-    throw new Error(
-      "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
+    log.warning(
+      "getUniswapV3PairTotalValue: Cannot determine total value as the UniswapV3 pool {} does not exist yet",
+      [getContractName(pairAddress)],
     );
+    return BigDecimal.zero();
   }
 
-  // Determine token0 value
-  const token0 = pair.token0().toHexString();
-  log.debug("getUniswapV3PairTotalValue: token0: {}", [token0]);
-  const token0Contract = getERC20(token0, blockNumber);
-  if (!token0Contract) {
-    throw new Error("Unable to find ERC20 contract for " + token0);
+  const token0Result = pair.try_token0();
+  const token1Result = pair.try_token1();
+  if (token0Result.reverted || token1Result.reverted) {
+    log.warning(
+      "getUniswapV3PairTotalValue: Cannot determine total value as the UniswapV3 pool {} does not exist yet",
+      [getContractName(pairAddress)],
+    );
+    return BigDecimal.zero();
   }
 
-  const token0Reserves = getERC20DecimalBalance(token0, pairAddress, blockNumber);
-  const token0Rate = getUSDRateUniswapV3(token0, pairAddress, blockNumber);
-  const token0Value = token0Reserves.times(token0Rate);
-  log.debug("getUniswapV3PairTotalValue: token0: reserves = {}, rate = {}, value: {}", [
-    token0Reserves.toString(),
-    token0Rate.toString(),
-    token0Value.toString(),
-  ]);
+  const poolTokens = [token0Result.value.toHexString(), token1Result.value.toHexString()];
+  let totalValue = BigDecimal.zero();
 
-  // Determine token1 value
-  const token1 = pair.token1().toHexString();
-  log.debug("getUniswapV3PairTotalValue: token1: {}", [token1]);
-  const token1Contract = getERC20(token1, blockNumber);
-  if (!token1Contract) {
-    throw new Error("Unable to find ERC20 contract for " + token1);
+  for (let i = 0; i < poolTokens.length; i++) {
+    const currentToken = poolTokens[i];
+    log.debug("getUniswapV3PairTotalValue: Checking token {}", [getContractName(currentToken)]);
+
+    // Skip if OHM is excluded
+    if (excludeOhmValue && currentToken.toLowerCase() == ERC20_OHM_V2.toLowerCase()) {
+      log.debug("getUniswapV3PairTotalValue: Skipping OHM value for pair {}, as excludeOhmValue is true", [getContractName(pairAddress)]);
+      continue;
+    }
+
+    const currentBalance = getERC20DecimalBalance(currentToken, pairAddress, blockNumber);
+    log.debug("getUniswapV3PairTotalValue: balance of token {} is {}", [getContractName(currentToken), currentBalance.toString()]);
+    const currentRate = getUSDRate(currentToken, blockNumber);
+    const currentValue = currentBalance.times(currentRate);
+    log.debug("getUniswapV3PairTotalValue: value of token {} in pair is {}", [getContractName(currentToken), currentValue.toString()]);
+    totalValue = totalValue.plus(currentValue);
   }
 
-  const token1Reserves = getERC20DecimalBalance(token1, pairAddress, blockNumber);
-  // Cheating, a little bit
-  const token1Rate = Address.fromString(token1).equals(Address.fromString(ERC20_WETH))
-    ? getBaseEthUsdRate()
-    : getUSDRateUniswapV3(token1, pairAddress, blockNumber);
-  const token1Value = token1Reserves.times(token1Rate);
-  log.debug("getUniswapV3PairTotalValue: token1: reserves = {}, rate = {}, value: {}", [
-    token1Reserves.toString(),
-    token1Rate.toString(),
-    token1Value.toString(),
+  log.info("getUniswapV3PairTotalValue: Total value of pair {} is {}. excludeOhmValue? {}", [
+    getContractName(pairAddress),
+    totalValue.toString(),
+    excludeOhmValue.toString(),
   ]);
-
-  const pairValue = token0Value.plus(token1Value);
-  log.debug("getUniswapV3PairTotalValue: UniswapV3 pair value for contract {} is: {}", [
-    pairAddress,
-    pairValue.toString(),
-  ]);
-  return pairValue;
+  return totalValue;
 }
 
 export function getUniswapV3OhmSupply(

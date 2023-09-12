@@ -1,16 +1,17 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { assert, beforeEach, clearStore, describe, test } from "matchstick-as/assembly/index";
 
-import { toDecimal } from "../../shared/src/utils/Decimals";
+import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
 import { UNISWAP_V3_POSITION_MANAGER, getUniswapV3OhmSupply, getUniswapV3POLRecords, getUniswapV3PairTotalValue } from "../src/liquidity/LiquidityUniswapV3";
 import { ERC20_OHM_V2, ERC20_WETH, PAIR_UNISWAP_V3_FXS_ETH, PAIR_UNISWAP_V3_WETH_OHM } from "../src/utils/Constants";
 import { mockStablecoinsPriceFeeds } from "./chainlink";
-import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
+import { ERC20_STANDARD_DECIMALS, mockERC20Balance } from "./erc20Helper";
 import {
   ETH_PRICE,
   ETH_USD_RESERVE_BLOCK,
   FXS_ETH_BALANCE_ETH,
   FXS_ETH_BALANCE_FXS,
+  OHM_V2_DECIMALS,
   getEthUsdRate,
   getFxsUsdRate,
   getOhmUsdRate,
@@ -30,32 +31,95 @@ import { TokenCategoryPOL } from "../../shared/src/contracts/TokenDefinition";
 import { TYPE_LIQUIDITY } from "../../shared/src/utils/TokenSupplyHelper";
 import { mockUniswapV3PositionsZero, mockUniswapV3Pair, mockUniswapV3Positions, mockUniswapV3Position } from "./uniswapV3Helper";
 
-beforeEach(() => {
-  log.debug("beforeEach: Clearing store", []);
-  clearStore();
-
-  mockBalancerVaultZero();
-  mockUniswapV2PairsZero();
-  mockFraxSwapPairZero();
-  mockFraxLockedBalanceZero();
-  mockCurvePairZero();
-  mockUniswapV3PairsZero();
-
-  mockEthUsdRate();
-  mockStablecoinsPriceFeeds();
-});
-
 describe("UniswapV3 pair value", () => {
+  beforeEach(() => {
+    log.debug("beforeEach: Clearing store", []);
+    clearStore();
+
+    mockBalancerVaultZero();
+    mockFraxSwapPairZero();
+    mockFraxLockedBalanceZero();
+    mockCurvePairZero();
+    mockUniswapV3PairsZero();
+
+    mockEthUsdRate();
+    mockStablecoinsPriceFeeds();
+
+    // This needs to be last, or the OHM-USD price will be set. Something in the stack above mocks the value otherwise.
+    mockUniswapV2PairsZero();
+  });
+
   test("FXS-ETH pair value is correct", () => {
     mockFxsEthRate();
     mockEthUsdRate();
     mockUniswapV2EthUsdRate();
 
-    const pairValue = getUniswapV3PairTotalValue(PAIR_UNISWAP_V3_FXS_ETH, ETH_USD_RESERVE_BLOCK);
+    const pairValue = getUniswapV3PairTotalValue(PAIR_UNISWAP_V3_FXS_ETH, false, ETH_USD_RESERVE_BLOCK);
     // # ETH * p ETH + # FXS * p FXS
     const calculatedValue = toDecimal(FXS_ETH_BALANCE_FXS, ERC20_STANDARD_DECIMALS)
       .times(getFxsUsdRate())
       .plus(toDecimal(FXS_ETH_BALANCE_ETH, ERC20_STANDARD_DECIMALS).times(getEthUsdRate()));
+    log.debug("calculated value: {}", [calculatedValue.toString()]);
+    log.debug("pairValue: {}", [pairValue.toString()]);
+
+    assert.stringEquals(calculatedValue.truncate(4).toString(), pairValue.truncate(4).toString());
+  });
+
+  test("wETH-OHM pair value is correct", () => {
+    mockEthUsdRate();
+
+    // Mock OHM price = 13.3791479512
+    mockUniswapV3Pair(PAIR_UNISWAP_V3_WETH_OHM, ERC20_OHM_V2, ERC20_WETH, BigInt.fromString("210385600452651183274688532908673"), BigInt.fromI32(157695));
+    mockUniswapV3Positions(UNISWAP_V3_POSITION_MANAGER, TREASURY_ADDRESS_V3, [BigInt.fromString("1")]);
+    mockUniswapV3Position(UNISWAP_V3_POSITION_MANAGER, TREASURY_ADDRESS_V3, BigInt.fromString("1"), ERC20_OHM_V2, ERC20_WETH, BigInt.fromString("346355586036686019"), BigInt.fromI32(-887220), BigInt.fromI32(887220));
+
+    const ethBalance = BigDecimal.fromString("919.574080927");
+    const ohmBalance = BigDecimal.fromString("130454.081369749");
+
+    // Mock balances in the pair (used for determining price)
+    mockERC20Balance(ERC20_OHM_V2, PAIR_UNISWAP_V3_WETH_OHM, toBigInt(ohmBalance, OHM_V2_DECIMALS));
+    mockERC20Balance(ERC20_WETH, PAIR_UNISWAP_V3_WETH_OHM, toBigInt(ethBalance, ERC20_STANDARD_DECIMALS));
+
+    // Call function
+    const pairValue = getUniswapV3PairTotalValue(PAIR_UNISWAP_V3_WETH_OHM, false, ETH_USD_RESERVE_BLOCK);
+
+    // # ETH * p ETH + # OHM * p OHM
+    const calculatedValue = ethBalance
+      .times(BigDecimal.fromString(ETH_PRICE))
+      .plus(ohmBalance.times(BigDecimal.fromString("13.3835")));
+    log.debug("calculated value: {}", [calculatedValue.toString()]);
+    log.debug("pairValue: {}", [pairValue.toString()]);
+
+
+    // Check that the actual value is += 200 of the expected value
+    const supportedDifference = BigDecimal.fromString("50");
+    log.debug("expected value: {}", [calculatedValue.toString()]);
+    log.debug("actual value: {}", [pairValue.toString()]);
+    assert.assertTrue(
+      pairValue.minus(calculatedValue) < supportedDifference &&
+      pairValue.minus(calculatedValue) > supportedDifference.times(BigDecimal.fromString("-1")));
+  });
+
+  test("wETH-OHM pair value excluding OHM is correct", () => {
+    mockEthUsdRate();
+
+    // Mock OHM price = 13.3791479512
+    mockUniswapV3Pair(PAIR_UNISWAP_V3_WETH_OHM, ERC20_OHM_V2, ERC20_WETH, BigInt.fromString("210385600452651183274688532908673"), BigInt.fromI32(157695));
+    mockUniswapV3Positions(UNISWAP_V3_POSITION_MANAGER, TREASURY_ADDRESS_V3, [BigInt.fromString("1")]);
+    mockUniswapV3Position(UNISWAP_V3_POSITION_MANAGER, TREASURY_ADDRESS_V3, BigInt.fromString("1"), ERC20_OHM_V2, ERC20_WETH, BigInt.fromString("346355586036686019"), BigInt.fromI32(-887220), BigInt.fromI32(887220));
+
+    const ethBalance = BigDecimal.fromString("919.574080927");
+    const ohmBalance = BigDecimal.fromString("130454.081369749");
+
+    // Mock balances in the pair (used for determining price)
+    mockERC20Balance(ERC20_OHM_V2, PAIR_UNISWAP_V3_WETH_OHM, toBigInt(ohmBalance, OHM_V2_DECIMALS));
+    mockERC20Balance(ERC20_WETH, PAIR_UNISWAP_V3_WETH_OHM, toBigInt(ethBalance, ERC20_STANDARD_DECIMALS));
+
+    // Call function
+    const pairValue = getUniswapV3PairTotalValue(PAIR_UNISWAP_V3_WETH_OHM, true, ETH_USD_RESERVE_BLOCK);
+    // # ETH * p ETH
+    const calculatedValue = ethBalance
+      .times(BigDecimal.fromString(ETH_PRICE));
     log.debug("calculated value: {}", [calculatedValue.toString()]);
     log.debug("pairValue: {}", [pairValue.toString()]);
 
@@ -86,6 +150,21 @@ describe("UniswapV3 pair value", () => {
 });
 
 describe("POL records", () => {
+  beforeEach(() => {
+    log.debug("beforeEach: Clearing store", []);
+    clearStore();
+
+    mockBalancerVaultZero();
+    mockUniswapV2PairsZero();
+    mockFraxSwapPairZero();
+    mockFraxLockedBalanceZero();
+    mockCurvePairZero();
+    mockUniswapV3PairsZero();
+
+    mockEthUsdRate();
+    mockStablecoinsPriceFeeds();
+  });
+
   test("generates TokenRecord array for wETH-OHM POL", () => {
     // Ignore other wallets
     mockUniswapV3PositionsZero(UNISWAP_V3_POSITION_MANAGER);
@@ -139,6 +218,21 @@ describe("POL records", () => {
 });
 
 describe("OHM supply records", () => {
+  beforeEach(() => {
+    log.debug("beforeEach: Clearing store", []);
+    clearStore();
+
+    mockBalancerVaultZero();
+    mockUniswapV2PairsZero();
+    mockFraxSwapPairZero();
+    mockFraxLockedBalanceZero();
+    mockCurvePairZero();
+    mockUniswapV3PairsZero();
+
+    mockEthUsdRate();
+    mockStablecoinsPriceFeeds();
+  });
+
   test("generates TokenSupply array for wETH-OHM POL", () => {
     // Ignore other wallets
     mockUniswapV3PositionsZero(UNISWAP_V3_POSITION_MANAGER);
