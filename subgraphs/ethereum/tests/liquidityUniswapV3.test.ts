@@ -26,6 +26,8 @@ import {
   mockUsdOhmV2Rate,
 } from "./pairHelper";
 import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
+import { TokenCategoryPOL } from "../../shared/src/contracts/TokenDefinition";
+import { TYPE_LIQUIDITY } from "../../shared/src/utils/TokenSupplyHelper";
 
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
@@ -223,6 +225,7 @@ describe("POL records", () => {
     // Check that the correct values were generated
     assert.stringEquals("1", records[0].balance.toString());
     assert.stringEquals(PAIR_UNISWAP_V3_WETH_OHM, records[0].tokenAddress);
+    assert.stringEquals(TokenCategoryPOL, records[0].category);
 
     // Check that the actual value is += 200 of the expected value
     const supportedDifference = BigDecimal.fromString("200");
@@ -263,6 +266,12 @@ describe("OHM supply records", () => {
 
     // Check that the correct number of records were generated
     assert.i32Equals(1, records.length);
+
+    assert.stringEquals(ERC20_OHM_V2.toLowerCase(), records[0].tokenAddress.toLowerCase());
+    assert.stringEquals(TYPE_LIQUIDITY, records[0].type);
+    assert.stringEquals(PAIR_UNISWAP_V3_WETH_OHM.toLowerCase(), records[0].poolAddress!.toLowerCase());
+    assert.stringEquals(ERC20_OHM_V2.toLowerCase(), records[0].tokenAddress.toLowerCase());
+    assert.stringEquals(TREASURY_ADDRESS_V3.toLowerCase(), records[0].sourceAddress!.toLowerCase());
 
     // Values derived from: https://revert.finance/#/account/0x245cc372C84B3645Bf0Ffe6538620B04a217988B
     const expectedOhmBalance = BigDecimal.fromString("-130432.485");

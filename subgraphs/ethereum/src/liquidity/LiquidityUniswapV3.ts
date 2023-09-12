@@ -10,6 +10,7 @@ import { UniswapV3PositionManager } from "../../generated/ProtocolMetrics/Uniswa
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { getBaseEthUsdRate } from "../utils/PriceBase";
 import { TYPE_LIQUIDITY, createOrUpdateTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
+import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 
 export const UNISWAP_V3_POSITION_MANAGER = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const Q96 = BigInt.fromI32(2).pow(96);
@@ -183,20 +184,23 @@ export function getUniswapV3POLRecords(
       const multiplier = includedValue.div(totalValue);
       log.debug("getUniswapV3POLRecords: multiplier: {}", [multiplier.toString()]);
 
-      records.push(createOrUpdateTokenRecord(
-        timestamp,
-        getContractName(pairAddress),
-        pairAddress,
-        getContractName(walletAddress),
-        walletAddress,
-        totalValue,
-        BigDecimal.fromString("1"),
-        blockNumber,
-        true,
-        ERC20_TOKENS,
-        BLOCKCHAIN,
-        multiplier,
-      ));
+      records.push(
+        createOrUpdateTokenRecord(
+          timestamp,
+          getContractName(pairAddress),
+          pairAddress,
+          getContractName(walletAddress),
+          walletAddress,
+          totalValue,
+          BigDecimal.fromString("1"),
+          blockNumber,
+          true,
+          ERC20_TOKENS,
+          BLOCKCHAIN,
+          multiplier,
+          TokenCategoryPOL,
+        )
+      );
     }
   }
 
