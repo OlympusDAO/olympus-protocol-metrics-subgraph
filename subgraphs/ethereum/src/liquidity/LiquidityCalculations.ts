@@ -8,6 +8,7 @@ import { getBalancerRecords } from "./LiquidityBalancer";
 import { getCurvePairRecords } from "./LiquidityCurve";
 import { getFraxSwapPairRecords } from "./LiquidityFraxSwap";
 import { getUniswapV2PairRecords } from "./LiquidityUniswapV2";
+import { getUniswapV3POLRecords } from "./LiquidityUniswapV3";
 
 /**
  * Returns the TokenRecord objects representing the liquidity owned by the treasury.
@@ -20,6 +21,7 @@ import { getUniswapV2PairRecords } from "./LiquidityUniswapV2";
  *
  * This currently supports the following LPs:
  * - Uniswap V2
+ * - Uniswap V3
  * - Curve
  * - Balancer
  * - FraxSwap
@@ -74,7 +76,13 @@ export function getLiquidityBalances(
         records,
         getFraxSwapPairRecords(timestamp, pairHandler.getContract(), blockNumber, tokenAddress),
       );
-    } else {
+    } else if (pairHandler.getType() === PairHandlerTypes.UniswapV3) {
+      pushTokenRecordArray(
+        records,
+        getUniswapV3POLRecords(timestamp, pairHandler.getContract(), tokenAddress, blockNumber),
+      )
+    }
+    else {
       throw new Error("Unsupported liquidity pair type: " + pairHandler.getType().toString());
     }
   }

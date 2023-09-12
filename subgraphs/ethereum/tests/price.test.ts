@@ -42,14 +42,16 @@ import {
   PAIR_UNISWAP_V3_FXS_ETH,
   PAIR_UNISWAP_V3_WETH_BTRFLY_V1,
   PAIR_UNISWAP_V3_WETH_BTRFLY_V2,
+  PAIR_UNISWAP_V3_WETH_OHM,
   POOL_BALANCER_OHM_DAI,
   POOL_BALANCER_OHM_DAI_WETH_ID,
   POOL_BALANCER_WETH_FDT_ID,
 } from "../src/utils/Constants";
 import { getUSDRate, getUSDRateBalancer } from "../src/utils/Price";
 import { mockStablecoinsPriceFeeds } from "./chainlink";
-import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
+import { ERC20_STANDARD_DECIMALS, mockERC20Balance } from "./erc20Helper";
 import {
+  ETH_PRICE,
   getERC20UsdRate,
   getEthUsdRate,
   getOhmUsdRate,
@@ -65,14 +67,20 @@ import {
   mockRateUniswapV3,
   mockTribeEthRate,
   mockUniswapV2Pair,
+  mockUniswapV2PairsZero,
+  mockUniswapV3PairsZero,
   mockUsdOhmV2Rate,
   OHM_DAI_ETH_BALANCE_DAI,
   OHM_DAI_ETH_BALANCE_OHM,
   OHM_DAI_ETH_WEIGHT_DAI,
   OHM_DAI_ETH_WEIGHT_OHM,
   OHM_USD_RESERVE_BLOCK,
+  OHM_V2_DECIMALS,
   USDC_DECIMALS,
 } from "./pairHelper";
+import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
+import { UNISWAP_V3_POSITION_MANAGER } from "../src/liquidity/LiquidityUniswapV3";
+import { mockUniswapV3Pair, mockUniswapV3Positions, mockUniswapV3Position } from "./uniswapV3Helper";
 
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
@@ -83,10 +91,15 @@ beforeEach(() => {
 });
 
 describe("OHM-USD rate", () => {
+  beforeEach(() => {
+    mockBalancerVaultZero();
+    mockUniswapV2PairsZero();
+    mockUniswapV3PairsZero();
+  });
+
   test("Sushi OHM-DAI rate calculation is correct", () => {
     mockEthUsdRate();
     mockUsdOhmV2Rate();
-    mockBalancerVaultZero(); // Ensures that the OHM-DAI-ETH Balancer pool is not used for price lookup
 
     assert.stringEquals(
       getUSDRate(ERC20_OHM_V2,
@@ -175,6 +188,34 @@ describe("OHM-USD rate", () => {
       getUSDRate(ERC20_OHM_V2,
         BigInt.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK).plus(BigInt.fromString("1")),
       ).truncate(4).toString(),
+    );
+  });
+
+  test("Uniswap V3 wETH-OHM rate is used when non-OHM reserves are greater than Sushi", () => {
+    mockEthUsdRate(); // ETH = 1898.01397374
+    mockUsdOhmV2Rate(
+      toBigInt(BigDecimal.fromString("10"), 9),
+      toBigInt(BigDecimal.fromString("100"), 18),
+    );
+
+    // Mock OHM price = 13.3791479512
+    mockUniswapV3Pair(PAIR_UNISWAP_V3_WETH_OHM, ERC20_OHM_V2, ERC20_WETH, BigInt.fromString("210385600452651183274688532908673"), BigInt.fromI32(157695));
+    mockUniswapV3Positions(UNISWAP_V3_POSITION_MANAGER, TREASURY_ADDRESS_V3, [BigInt.fromString("1")]);
+    mockUniswapV3Position(UNISWAP_V3_POSITION_MANAGER, TREASURY_ADDRESS_V3, BigInt.fromString("1"), ERC20_OHM_V2, ERC20_WETH, BigInt.fromString("346355586036686019"), BigInt.fromI32(-887220), BigInt.fromI32(887220));
+
+    const ethBalance = BigDecimal.fromString("919.574080927");
+    const ohmBalance = BigDecimal.fromString("130454.081369749");
+
+    // Mock balances in the pair (used for determining price)
+    mockERC20Balance(ERC20_OHM_V2, PAIR_UNISWAP_V3_WETH_OHM, toBigInt(ohmBalance, OHM_V2_DECIMALS));
+    mockERC20Balance(ERC20_WETH, PAIR_UNISWAP_V3_WETH_OHM, toBigInt(ethBalance, ERC20_STANDARD_DECIMALS));
+
+    // 919.574080927401380445 * 1898.01397374 / 130454.081369749 = 13.3791479512
+    const calculatedRate = BigDecimal.fromString("13.3835");
+
+    assert.stringEquals(
+      calculatedRate.truncate(4).toString(),
+      getUSDRate(ERC20_OHM_V2, BigInt.zero()).truncate(4).toString(),
     );
   });
 

@@ -45,6 +45,7 @@ import {
   isBaseToken,
   PairTokenBaseOrientation,
 } from "./PriceBase";
+import { getUniswapV3PairTotalValue } from "../liquidity/LiquidityUniswapV3";
 
 /**
  * Determines the non-OHM value of the given pair.
@@ -79,6 +80,18 @@ function getPairHandlerNonOhmValue(
       [getContractName(pairHandlerPool), pairHandlerPool, blockNumber.toString()],
     );
     const totalValue = getBalancerPoolTotalValue(pairHandler.getContract(), pairHandlerPool, true, blockNumber);
+    if (totalValue.equals(BigDecimal.zero())) {
+      return null;
+    }
+
+    return totalValue;
+  } else if (pairHandler.getType() === PairHandlerTypes.UniswapV3) {
+    log.debug(
+      "getPairHandlerNonOhmValue: checking for the non-OHM value of UniswapV3 pool {} ({}) at block {}",
+      [getContractName(pairHandler.getContract()), pairHandler.getContract(), blockNumber.toString()],
+    );
+
+    const totalValue = getUniswapV3PairTotalValue(pairHandler.getContract(), true, blockNumber);
     if (totalValue.equals(BigDecimal.zero())) {
       return null;
     }
@@ -379,7 +392,8 @@ function getBaseOhmUsdRate(blockNumber: BigInt): BigDecimal {
 
   // Iterate through and find the pair with the largest non-OHM value
   for (let i = 0; i < OHM_PRICE_PAIRS.length; i++) {
-    const pairTotalValue = getPairHandlerNonOhmValue(OHM_PRICE_PAIRS[i], blockNumber);
+    const priceHandler = OHM_PRICE_PAIRS[i];
+    const pairTotalValue = getPairHandlerNonOhmValue(priceHandler, blockNumber);
     // No value is returned if the pair is not (yet) valid
     if (!pairTotalValue) {
       continue;
@@ -387,9 +401,11 @@ function getBaseOhmUsdRate(blockNumber: BigInt): BigDecimal {
 
     // If there is an existing largest value, but pairTotalValue is less than that, do nothing
     if (largestPairValue && pairTotalValue <= largestPairValue) {
+      log.debug("getBaseOhmUsdRate: skipping pair {} with non-OHM value {} less than current largest pair value {}", [getContractName(priceHandler.getContract()), pairTotalValue.toString(), largestPairValue.toString()]);
       continue;
     }
 
+    log.info("getBaseOhmUsdRate: found new largest pair {} ({}) with non-OHM value {}", [getContractName(priceHandler.getContract()), priceHandler.getContract(), pairTotalValue.toString()]);
     largestPairIndex = i;
     largestPairValue = pairTotalValue;
   }
@@ -416,6 +432,8 @@ function getBaseOhmUsdRate(blockNumber: BigInt): BigDecimal {
       pairHandlerBalancerPool,
       blockNumber,
     );
+  } else if (pairHandler.getType() === PairHandlerTypes.UniswapV3) {
+    return getUSDRateUniswapV3(ERC20_OHM_V2, pairHandler.getContract(), blockNumber);
   }
 
   throw new Error(

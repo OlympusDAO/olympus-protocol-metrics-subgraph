@@ -87,6 +87,7 @@ import {
   PAIR_UNISWAP_V3_LUSD_USDC,
   PAIR_UNISWAP_V3_WETH_BTRFLY_V1,
   PAIR_UNISWAP_V3_WETH_BTRFLY_V2,
+  PAIR_UNISWAP_V3_WETH_OHM,
   POOL_BALANCER_AURA_WETH_ID,
   POOL_BALANCER_GRAVIAURA_AURABAL_WETH_ID,
   POOL_BALANCER_OHM_DAI,
@@ -149,8 +150,10 @@ export const getEthUsdRate = (): BigDecimal => {
   return toDecimal(ETH_USD_RESERVE_USD, 6).div(toDecimal(ETH_USD_RESERVE_ETH, 18));
 };
 
+export const ETH_PRICE = "1898.01397374"
+
 export const mockEthUsdRate = (): void => {
-  mockPriceFeed(ERC20_WETH, BigDecimal.fromString("1898.01397374"));
+  mockPriceFeed(ERC20_WETH, BigDecimal.fromString(ETH_PRICE));
 };
 
 export const mockUniswapV2EthUsdRate = (): void => {
@@ -258,6 +261,7 @@ export const mockRateUniswapV3 = (
   // eslint-disable-next-line @typescript-eslint/no-inferrable-types
   shouldRevert: boolean = false,
 ): void => {
+  log.info("Mocking rate for UniswapV3 pair {}", [pairAddress]);
   mockERC20TotalSupply(token0Address, token0Decimals, toBigInt(DEFAULT_TOTAL_SUPPLY, token0Decimals));
   mockERC20TotalSupply(token1Address, token1Decimals, toBigInt(DEFAULT_TOTAL_SUPPLY, token1Decimals));
 
@@ -331,6 +335,7 @@ export const mockUniswapV3PairsZero = (): void => {
   mockRateUniswapV3(PAIR_UNISWAP_V3_LUSD_USDC, BigInt.zero(), ERC20_LUSD, ERC20_USDC, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
   mockRateUniswapV3(PAIR_UNISWAP_V3_WETH_BTRFLY_V1, BigInt.zero(), ERC20_WETH, ERC20_BTRFLY_V1, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
   mockRateUniswapV3(PAIR_UNISWAP_V3_WETH_BTRFLY_V2, BigInt.zero(), ERC20_WETH, ERC20_BTRFLY_V2, ERC20_STANDARD_DECIMALS, ERC20_STANDARD_DECIMALS, BigInt.zero(), BigInt.zero(), true);
+  mockRateUniswapV3(PAIR_UNISWAP_V3_WETH_OHM, BigInt.zero(), ERC20_WETH, ERC20_OHM_V2, ERC20_STANDARD_DECIMALS, OHM_V2_DECIMALS, BigInt.zero(), BigInt.zero(), true);
 }
 
 export const mockFxsEthRate = (): void => {
@@ -401,6 +406,8 @@ export const mockUsdOhmV2Rate = (
   ohmReserves: BigInt = OHM_USD_RESERVE_OHM,
   usdReserves: BigInt = OHM_USD_RESERVE_USD,
 ): void => {
+  log.info("Mocking rate for UniswapV2 pair {}: OHM {}, USD: {}", [PAIR_UNISWAP_V2_OHM_DAI_V2, toDecimal(ohmReserves, 9).toString(), toDecimal(usdReserves, 18).toString()]);
+
   const contractAddress = Address.fromString(PAIR_UNISWAP_V2_OHM_DAI_V2);
   createMockedFunction(
     contractAddress,

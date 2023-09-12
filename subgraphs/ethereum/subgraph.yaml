@@ -4,8 +4,8 @@ repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 features:
   - grafting
 graft:
-  base: QmRwdXDRS3JQEcrAYKWcSrDnH46xhR9unTBDDGAJFg5mCT
-  block: 18070000 # Deployment time
+  base: QmbRracFsJ55Q3seDYGV3aVwbwsH9Jg36tkVawuPBhNR4K
+  block: 18107516 # Uniswap V3 pool minting block
 schema:
   file: ../../schema.graphql
 dataSources:
@@ -637,6 +637,8 @@ dataSources:
           file: ./abis/StabilityPool.json
         - name: ERC4626
           file: ./abis/ERC4626.json
+        - name: UniswapV3PositionManager
+          file: ./abis/UniswapV3PositionManager.json
         # Gnosis Auctions
         - name: BondManager
           file: ./abis/BondManager.json
