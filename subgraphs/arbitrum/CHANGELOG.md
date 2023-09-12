@@ -1,5 +1,9 @@
 # Arbitrum Subgraph Changelog
 
+## 1.6.0 (2023-09-12)
+
+- Apply write-off of JonesDAO token, since it cannot be sold.
+
 ## 1.5.3 (2023-07-18)
 
 - Adds support for the Lending AMO

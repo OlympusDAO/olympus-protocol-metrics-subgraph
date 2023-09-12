@@ -6,6 +6,7 @@ import { toDecimal } from "../utils/Decimals";
 import { createOrUpdateTokenRecord, getIsTokenLiquid } from "../utils/TokenRecordHelper";
 import { ContractNameLookup } from "./ContractLookup";
 import { TokenDefinition } from "./TokenDefinition";
+import { ERC20_JONES } from "../../../arbitrum/src/contracts/Constants";
 
 export function getERC20(tokenAddress: string, _block: BigInt): ERC20 {
   return ERC20.bind(Address.fromString(tokenAddress));
@@ -63,6 +64,8 @@ export function getERC20DecimalBalance(tokenAddress: string, sourceAddress: stri
   return toDecimal(balance, contract.decimals());
 }
 
+const JONES_WRITE_OFF_BLOCK = "130482707";
+
 /**
  * Fetches the balance of the given ERC20 token from the
  * specified wallet.
@@ -102,6 +105,26 @@ export function getERC20TokenRecordFromWallet(
     decimals,
   );
   if (!balance || balance.equals(BigDecimal.zero())) return null;
+
+  // If the token is JONES and the block number is greater than the write-off block, then apply a multiplier of 0 to exclude it from liquid backing
+  if (contractAddress.toLowerCase() == ERC20_JONES.toLowerCase()
+    &&
+    blockNumber.ge(BigInt.fromString(JONES_WRITE_OFF_BLOCK))) {
+    return createOrUpdateTokenRecord(
+      timestamp,
+      contractLookup(contractAddress),
+      contractAddress,
+      contractLookup(walletAddress),
+      walletAddress,
+      rate,
+      balance,
+      blockNumber,
+      getIsTokenLiquid(contractAddress, tokenDefinitions),
+      tokenDefinitions,
+      blockchain,
+      BigDecimal.zero(),
+    );
+  }
 
   return createOrUpdateTokenRecord(
     timestamp,
