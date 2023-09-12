@@ -79,6 +79,11 @@ const BLV_INCLUSION_BLOCK = "17620000";
 const OLYMPUS_INCUR_DEBT_BLOCK = "17620000";
 
 /**
+ * The block from which the sOHM calculations were corrected to remove the multiplication by index.
+ */
+const SOHM_INDEX_CORRECTION_BLOCK = "18121728";
+
+/**
  * Returns the total supply of the latest version of the OHM contract
  * at the given block number.
  *
@@ -450,7 +455,7 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
       if (balance.equals(BigDecimal.zero())) continue;
 
       // Derive the OHM balance
-      const ohmBalance = ohmIndex.times(balance);
+      const ohmBalance = blockNumber.ge(BigInt.fromString(SOHM_INDEX_CORRECTION_BLOCK)) ? balance : ohmIndex.times(balance);
 
       records.push(
         createOrUpdateTokenSupply(

@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 4.12.0 (2023-09-13)
+
+- Fix the incorrect multiplication of sOHM balance by OHM index
+
 ## 4.11.3 (2023-09-12)
 
 - Adds support for protocol-owned liquidity in Uniswap V3 (both assets and OHM supply)
