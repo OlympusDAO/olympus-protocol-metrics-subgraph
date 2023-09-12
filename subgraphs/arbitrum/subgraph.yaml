@@ -43,6 +43,10 @@ dataSources:
           file: ../shared/abis/UniswapV3Pair.json
         - name: ChainlinkPriceFeed
           file: ../shared/abis/ChainlinkPriceFeed.json
+        - name: SiloRepository
+          file: abis/SiloRepository.json
+        - name: Silo
+          file: abis/Silo.json
         # Custom ABIs
         - name: JONESStaking
           file: abis/JONESStaking.json

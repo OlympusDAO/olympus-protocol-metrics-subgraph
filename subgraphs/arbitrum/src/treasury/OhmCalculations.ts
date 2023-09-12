@@ -11,6 +11,12 @@ import { OlympusLender } from "../../generated/TokenRecords-arbitrum/OlympusLend
 import { CIRCULATING_SUPPLY_WALLETS, ERC20_GOHM_SYNAPSE, ERC20_OHM, OLYMPUS_LENDER, SENTIMENT_DEPLOYMENTS, SENTIMENT_LTOKEN, SILO_ADDRESS, SILO_DEPLOYMENTS } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 import { PRICE_HANDLERS } from "../price/PriceLookup";
+import { getSiloSupply } from "../contracts/Silo";
+
+/**
+ * Block after which the Silo repository will be used, instead of manual deployments.
+ */
+const SILO_REPOSITORY_BLOCK = "130482707";
 
 export function getTotalSupply(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
   const contract = ERC20.bind(Address.fromString(ERC20_OHM));
@@ -146,10 +152,18 @@ export function getLendingMarketOHMRecords(timestamp: BigInt, blockNumber: BigIn
   );
 
   // Silo
-  pushTokenSupplyArray(
-    records,
-    getLendingMarketManualDeploymentOHMRecords(timestamp, SILO_ADDRESS, SILO_DEPLOYMENTS, blockNumber),
-  );
+  if (blockNumber.lt(BigInt.fromString(SILO_REPOSITORY_BLOCK))) {
+    pushTokenSupplyArray(
+      records,
+      getLendingMarketManualDeploymentOHMRecords(timestamp, SILO_ADDRESS, SILO_DEPLOYMENTS, blockNumber),
+    );
+  }
+  else {
+    pushTokenSupplyArray(
+      records,
+      getSiloSupply(timestamp, SILO_ADDRESS, blockNumber),
+    );
+  }
 
   // Sentiment
   pushTokenSupplyArray(
