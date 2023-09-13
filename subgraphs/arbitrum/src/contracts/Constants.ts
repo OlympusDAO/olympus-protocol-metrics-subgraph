@@ -44,6 +44,8 @@ export const SILO_REPOSITORY = "0x8658047e48CC09161f4152c79155Dac1d710Ff0a".toLo
 export const SILO_ADDRESS = "0x9992f660137979C1ca7f8b119Cd16361594E3681".toLowerCase();
 export const SENTIMENT_LTOKEN = "0x37E6a0EcB9e8E5D90104590049a0A197E1363b67".toLowerCase();
 
+export const JONES_WRITE_OFF_BLOCK = "130482707";
+
 export const SILO_DEPLOYMENTS = new Array<LendingMarketDeployment>();
 SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM, BigInt.fromString("99067079"), BigDecimal.fromString("25000"), SILO_ADDRESS)); // https://arbiscan.io/tx/0x55cabbd6cd41d2fa79a6c93743729bbfa85577ff3e92255f27bfd832344871f6
 SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM, BigInt.fromString("100875469"), BigDecimal.fromString("25000"), SILO_ADDRESS)); // https://arbiscan.io/tx/0xf8c9d222481435330ca1a7b761e90ab3698c8b111b014776162f19050c1288b8

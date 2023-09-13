@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { ERC20 } from "../../../shared/generated/Price/ERC20";
 import { TokenRecord } from "../../../shared/generated/schema";
@@ -8,9 +8,12 @@ import {
   BLOCKCHAIN,
   CONTRACT_ABBREVIATION_MAP,
   CONTRACT_NAME_MAP,
+  ERC20_JONES,
   ERC20_TOKENS_ARBITRUM,
   ERC20_WETH,
+  JONES_WRITE_OFF_BLOCK,
 } from "./Constants";
+import { getTokenRecordValue } from "../../../shared/src/utils/TokenRecordHelper";
 
 export function getContractName(
   contractAddress: string,
@@ -103,6 +106,15 @@ export function getERC20TokenRecordsFromWallets(
       BLOCKCHAIN,
     );
     if (!record) continue;
+
+    // If the token is JONES and the block number is greater than the write-off block, then apply a multiplier of 0 to exclude it from liquid backing
+    if (contractAddress.toLowerCase() == ERC20_JONES.toLowerCase()
+      &&
+      blockNumber.ge(BigInt.fromString(JONES_WRITE_OFF_BLOCK))) {
+      log.info("getERC20TokenRecordsFromWallets: Applying liquid backing multiplier of 0 to {} token record at block {}", [getContractName(ERC20_JONES), blockNumber.toString()]);
+      record.multiplier = BigDecimal.zero();
+      record.valueExcludingOhm = getTokenRecordValue(record, true);
+    }
 
     records.push(record);
   }
