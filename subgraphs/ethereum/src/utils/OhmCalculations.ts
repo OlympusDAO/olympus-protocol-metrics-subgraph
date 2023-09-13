@@ -50,6 +50,7 @@ import {
 import { PairHandlerTypes } from "./PairHandler";
 import { getUSDRate } from "./Price";
 import { getUniswapV3OhmSupply } from "../liquidity/LiquidityUniswapV3";
+import { getSiloSupply } from "./Silo";
 
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
 const MIGRATION_OFFSET = "2013";
@@ -82,6 +83,11 @@ const OLYMPUS_INCUR_DEBT_BLOCK = "17620000";
  * The block from which the sOHM calculations were corrected to remove the multiplication by index.
  */
 const SOHM_INDEX_CORRECTION_BLOCK = "18121728";
+
+/**
+ * The block from which the balance of the Silo Borrowable OHM token was used, instead of manual deployments.
+ */
+const SILO_TOKEN_BLOCK = "18121728";
 
 /**
  * Returns the total supply of the latest version of the OHM contract
@@ -376,10 +382,19 @@ function getLendingMarketDeploymentOHMRecords(timestamp: BigInt, deploymentAddre
 export function getMintedBorrowableOHMRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
   const records: TokenSupply[] = [];
 
-  pushTokenSupplyArray(
-    records,
-    getLendingMarketDeploymentOHMRecords(timestamp, SILO_ADDRESS, SILO_DEPLOYMENTS, blockNumber),
-  );
+  // Silo
+  if (blockNumber.lt(BigInt.fromString(SILO_TOKEN_BLOCK))) {
+    pushTokenSupplyArray(
+      records,
+      getLendingMarketDeploymentOHMRecords(timestamp, SILO_ADDRESS, SILO_DEPLOYMENTS, blockNumber),
+    );
+  }
+  else {
+    pushTokenSupplyArray(
+      records,
+      getSiloSupply(timestamp, blockNumber),
+    );
+  }
 
   pushTokenSupplyArray(
     records,

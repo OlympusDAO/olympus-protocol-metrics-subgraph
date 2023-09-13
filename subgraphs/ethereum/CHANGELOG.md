@@ -3,6 +3,7 @@
 ## 4.12.0 (2023-09-13)
 
 - Fix the incorrect multiplication of sOHM balance by OHM index
+- Going forward, dynamically determine the OHM supply minted into Silo Finance
 
 ## 4.11.3 (2023-09-12)
 
