@@ -1,9 +1,10 @@
 # Arbitrum Subgraph Changelog
 
-## 1.6.0 (2023-09-12)
+## 1.6.0 (2023-09-13)
 
 - Apply write-off of JonesDAO token, since it cannot be sold.
 - Going forward, dynamically determine the OHM supply minted into Silo Finance and Sentiment Finance
+- Indexing now takes place using a block handler with a filter for approximately every 4 hours. This will result in faster indexing, compared to the previous use of Chainlink events.
 
 ## 1.5.3 (2023-07-18)
 
