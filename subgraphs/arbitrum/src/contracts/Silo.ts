@@ -1,47 +1,32 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenSupply } from "../../../shared/generated/schema";
-import { SiloRepository } from "../../generated/TokenRecords-arbitrum/SiloRepository";
 import { ERC20_OHM } from "./Constants";
-import { Silo } from "../../generated/TokenRecords-arbitrum/Silo";
 import { ERC20 } from "../../generated/TokenRecords-arbitrum/ERC20";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { TYPE_LENDING, createOrUpdateTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
 import { getContractName, getWalletAddressesForContract } from "./Contracts";
 
+// Hard-coding this for now. If we wanted this to be generalisable, we would use the Silo Repository contract.
+const SILO_OHM_COLLATERAL_TOKEN = "0xD8102963c400fEDBbc23Fe92f1b09c0C561e77Ae";
+
 export function getSiloSupply(timestamp: BigInt, siloRepositoryAddress: string, blockNumber: BigInt): TokenSupply[] {
   const records: TokenSupply[] = [];
 
-  // Get the Silo from the Silo repository
-  const siloRepository = SiloRepository.bind(Address.fromString(siloRepositoryAddress));
-  const siloResult = siloRepository.try_getSilo(Address.fromString(ERC20_OHM));
-  if (siloResult.reverted) {
-    log.debug("getSiloSupply: getSilo reverted", []);
+  const collateralTokenContract = ERC20.bind(Address.fromString(SILO_OHM_COLLATERAL_TOKEN));
+  const collateralTokenDecimalsResult = collateralTokenContract.try_decimals();
+  if (collateralTokenDecimalsResult.reverted) {
     return records;
   }
-
-  const siloAddress = siloResult.value;
-  const silo = Silo.bind(siloAddress);
-
-  // Get the address of the token minted when depositing OHM
-  const siloAssets = silo.getAssetsWithState();
-  if (siloAssets.getAssetsStorage().length == 0) {
-    return records;
-  }
-
-  const collateralToken = siloAssets.getAssetsStorage()[0].collateralToken;
-  const collateralTokenContract = ERC20.bind(collateralToken);
+  const collateralTokenDecimals = collateralTokenDecimalsResult.value;
 
   // Iterate over wallets to find the balances
-  const wallets = getWalletAddressesForContract(siloAddress.toHexString());
+  const wallets = getWalletAddressesForContract(SILO_OHM_COLLATERAL_TOKEN);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
-    const balanceResult = collateralTokenContract.try_balanceOf(Address.fromString(currentWallet));
-    if (balanceResult.reverted) {
-      return records;
-    }
 
-    const balance = toDecimal(balanceResult.value, collateralTokenContract.decimals());
+    const balance = toDecimal(
+      collateralTokenContract.balanceOf(Address.fromString(currentWallet)), collateralTokenDecimals);
     if (balance.equals(BigDecimal.zero())) {
       continue;
     }
@@ -53,7 +38,7 @@ export function getSiloSupply(timestamp: BigInt, siloRepositoryAddress: string, 
         getContractName(ERC20_OHM),
         ERC20_OHM,
         "Silo",
-        siloAddress.toHexString(),
+        SILO_OHM_COLLATERAL_TOKEN,
         getContractName(currentWallet),
         currentWallet,
         TYPE_LENDING,
