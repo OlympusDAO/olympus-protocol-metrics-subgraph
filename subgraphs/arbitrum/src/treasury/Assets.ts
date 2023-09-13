@@ -1,4 +1,4 @@
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import { BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
 import {
@@ -67,6 +67,12 @@ export function handleEvent(event: NewRound): void {
   const block = event.block;
 
   log.debug("handleEvent: *** Indexing block {}", [block.number.toString()]);
+  generateTokenRecords(block.timestamp, block.number);
+  generateTokenSupplies(block.timestamp, block.number);
+}
+
+export function handleBlock(block: ethereum.Block): void {
+  log.debug("handleBlock: *** Indexing block {}", [block.number.toString()]);
   generateTokenRecords(block.timestamp, block.number);
   generateTokenSupplies(block.timestamp, block.number);
 }

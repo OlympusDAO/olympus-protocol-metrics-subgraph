@@ -1,4 +1,4 @@
-specVersion: 0.0.4
+specVersion: 0.0.8
 description: Olympus Protocol Metrics Subgraph - Arbitrum
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 # Given the block speed of Arbitrum, it is abominably slow to index from scratch.
@@ -50,6 +50,13 @@ dataSources:
           file: abis/TreasureMining.json
         - name: ChainlinkAggregator
           file: abis/ChainlinkAggregator.json
+      blockHandlers:
+        - handler: handleBlock
+          filter:
+            kind: polling
+            # Every 4 hours
+            # 4 blocks per second * 60 seconds * 60 minutes * 4 hours
+            every: 57600
       eventHandlers:
         - event: NewRound(indexed uint256,indexed address,uint256)
           handler: handleEvent
