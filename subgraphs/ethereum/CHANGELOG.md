@@ -6,6 +6,7 @@
 - OHM supply: Going forward, dynamically determine the OHM supply minted into Silo Finance
 - Liquid backing: Write down the value of cvxCRV that is bricked/inaccessible in the Convex allocator contract
 - Liquid backing: Add missing withdrawal from Myso pool
+- Indexing now takes place using a block handler with a filter for approximately every 4 hours. This reduces the reliance on the LogRebase event and OHM staking, which will be deprecated soon.
 
 ## 4.11.3 (2023-09-12)
 

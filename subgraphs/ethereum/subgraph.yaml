@@ -1,4 +1,4 @@
-specVersion: 0.0.4
+specVersion: 0.0.8
 description: Olympus Protocol Metrics Subgraph
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 features:
@@ -654,12 +654,13 @@ dataSources:
         # IncurDebt
         - name: IncurDebt
           file: ./abis/IncurDebt.json
-      eventHandlers:
-        - event: LogRebase(indexed uint256,uint256,uint256)
-          handler: handleMetrics
-      # FOR TESTING ONLY
-      # blockHandlers:
-      #   - handler: handleMetricsBlock
+      blockHandlers:
+        - handler: handleMetricsBlock
+          filter:
+            kind: polling
+            # Every 4 hours
+            # 5 blocks per minute * 60 minutes * 4 hours
+            every: 1200
       file: ./src/protocolMetrics/ProtocolMetrics.ts
   ###
   # BondManager and GnosisEasyAuction index Gnosis auction events, used for bond calculations
