@@ -42,7 +42,7 @@ export const OLYMPUS_LENDER = "0x868C3ae18Fdea85bBb7a303e379c5B7e23b30F03".toLow
 export const SILO_REPOSITORY = "0x8658047e48CC09161f4152c79155Dac1d710Ff0a".toLowerCase();
 
 export const SILO_ADDRESS = "0x9992f660137979C1ca7f8b119Cd16361594E3681".toLowerCase();
-export const SENTIMENT_LTOKEN = "0x3c34c679a76697e12e8a7496173487fea004f7c0".toLowerCase();
+export const SENTIMENT_LTOKEN = "0x37E6a0EcB9e8E5D90104590049a0A197E1363b67".toLowerCase();
 
 export const SILO_DEPLOYMENTS = new Array<LendingMarketDeployment>();
 SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM, BigInt.fromString("99067079"), BigDecimal.fromString("25000"), SILO_ADDRESS)); // https://arbiscan.io/tx/0x55cabbd6cd41d2fa79a6c93743729bbfa85577ff3e92255f27bfd832344871f6
