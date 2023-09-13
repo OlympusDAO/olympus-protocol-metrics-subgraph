@@ -8,7 +8,7 @@ import {
   getIsTokenLiquid,
   getTokenCategory,
 } from "../../../shared/src/utils/TokenRecordHelper";
-import { LUSD_ALLOCATOR, RARI_ALLOCATOR, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
+import { CONVEX_CVX_VL_ALLOCATOR, LUSD_ALLOCATOR, RARI_ALLOCATOR, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
 import { AuraLocker } from "../../generated/ProtocolMetrics/AuraLocker";
 import { AuraStaking } from "../../generated/ProtocolMetrics/AuraStaking";
 import { AuraVirtualBalanceRewardPool } from "../../generated/ProtocolMetrics/AuraVirtualBalanceRewardPool";
@@ -49,6 +49,7 @@ import {
   ERC20_AURA_VL,
   ERC20_BTRFLY_V2_RL,
   ERC20_CVX,
+  ERC20_CVX_CRV,
   ERC20_CVX_VL_V2,
   ERC20_DAI,
   ERC20_FXS,
@@ -1687,6 +1688,11 @@ export function getFraxLockedBalance(
 }
 
 /**
+ * The block after which the cvxCRV balance is written-off, as it is bricked in an allocator.
+ */
+const CVX_CRV_WRITE_OFF_BLOCK = "18121728";
+
+/**
  * Returns the details of the specified token staked in Convex
  * from the Convex allocator contracts.
  *
@@ -1725,21 +1731,45 @@ export function getConvexStakedRecords(
       );
       if (!balance || balance.equals(BigDecimal.zero())) continue;
 
-      records.push(
-        createOrUpdateTokenRecord(
-          timestamp,
-          getContractName(tokenAddress, getContractName(stakingAddress)),
-          tokenAddress,
-          getContractName(allocatorAddress),
-          allocatorAddress,
-          getUSDRate(tokenAddress, blockNumber),
-          balance,
-          blockNumber,
-          getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
-          ERC20_TOKENS,
-          BLOCKCHAIN,
-        ),
-      );
+      if (tokenAddress.toLowerCase() == ERC20_CVX_CRV.toLowerCase()
+        &&
+        stakingAddress.toLowerCase() == CONVEX_CVX_VL_ALLOCATOR.toLowerCase()
+        &&
+        blockNumber.ge(BigInt.fromString(CVX_CRV_WRITE_OFF_BLOCK))) {
+        records.push(
+          createOrUpdateTokenRecord(
+            timestamp,
+            getContractName(tokenAddress, getContractName(stakingAddress)),
+            tokenAddress,
+            getContractName(allocatorAddress),
+            allocatorAddress,
+            getUSDRate(tokenAddress, blockNumber),
+            balance,
+            blockNumber,
+            getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
+            ERC20_TOKENS,
+            BLOCKCHAIN,
+            BigDecimal.zero(), // Write down the liquid backing value of cvxCRV to zero
+          ),
+        );
+      }
+      else {
+        records.push(
+          createOrUpdateTokenRecord(
+            timestamp,
+            getContractName(tokenAddress, getContractName(stakingAddress)),
+            tokenAddress,
+            getContractName(allocatorAddress),
+            allocatorAddress,
+            getUSDRate(tokenAddress, blockNumber),
+            balance,
+            blockNumber,
+            getIsTokenLiquid(tokenAddress, ERC20_TOKENS),
+            ERC20_TOKENS,
+            BLOCKCHAIN,
+          ),
+        );
+      }
     }
   }
 

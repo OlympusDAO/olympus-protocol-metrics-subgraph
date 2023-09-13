@@ -2,8 +2,9 @@
 
 ## 4.12.0 (2023-09-13)
 
-- Fix the incorrect multiplication of sOHM balance by OHM index
-- Going forward, dynamically determine the OHM supply minted into Silo Finance
+- OHM supply: Fix the incorrect multiplication of sOHM balance by OHM index
+- OHM supply: Going forward, dynamically determine the OHM supply minted into Silo Finance
+- Liquid backing: Write down the value of cvxCRV that is bricked/inaccessible in the Convex allocator contract
 
 ## 4.11.3 (2023-09-12)
 
