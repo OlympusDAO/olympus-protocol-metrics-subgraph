@@ -1733,7 +1733,7 @@ export function getConvexStakedRecords(
 
       if (tokenAddress.toLowerCase() == ERC20_CVX_CRV.toLowerCase()
         &&
-        stakingAddress.toLowerCase() == CONVEX_CVX_VL_ALLOCATOR.toLowerCase()
+        allocatorAddress.toLowerCase() == CONVEX_CVX_VL_ALLOCATOR.toLowerCase()
         &&
         blockNumber.ge(BigInt.fromString(CVX_CRV_WRITE_OFF_BLOCK))) {
         records.push(
