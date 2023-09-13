@@ -114,6 +114,7 @@ export function getERC20TokenRecordsFromWallets(
       log.info("getERC20TokenRecordsFromWallets: Applying liquid backing multiplier of 0 to {} token record at block {}", [getContractName(ERC20_JONES), blockNumber.toString()]);
       record.multiplier = BigDecimal.zero();
       record.valueExcludingOhm = getTokenRecordValue(record, true);
+      record.save();
     }
 
     records.push(record);

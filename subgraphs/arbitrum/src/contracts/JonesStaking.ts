@@ -121,6 +121,7 @@ export const getStakedBalances = (
         log.info("getERC20TokenRecordsFromWallets: Applying liquid backing multiplier of 0 to JONES token record at block {}", [block.toString()]);
         record.multiplier = BigDecimal.zero();
         record.valueExcludingOhm = getTokenRecordValue(record, true);
+        record.save();
       }
 
       records.push(record);
