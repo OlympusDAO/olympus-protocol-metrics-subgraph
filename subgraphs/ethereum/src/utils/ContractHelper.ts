@@ -1736,6 +1736,7 @@ export function getConvexStakedRecords(
         allocatorAddress.toLowerCase() == CONVEX_CVX_VL_ALLOCATOR.toLowerCase()
         &&
         blockNumber.ge(BigInt.fromString(CVX_CRV_WRITE_OFF_BLOCK))) {
+        log.info("getConvexStakedRecords: Applying liquid backing multiplier of 0 to {} token record at block {}", [getContractName(ERC20_CVX_CRV), blockNumber.toString()]);
         records.push(
           createOrUpdateTokenRecord(
             timestamp,
