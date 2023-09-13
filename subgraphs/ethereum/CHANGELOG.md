@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 4.12.1 (2023-09-13)
+## 4.12.2 (2023-09-13)
 
 - OHM supply: Fix the incorrect multiplication of sOHM balance by OHM index
 - OHM supply: Going forward, dynamically determine the OHM supply minted into Silo Finance
