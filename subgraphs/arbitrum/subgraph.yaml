@@ -57,7 +57,4 @@ dataSources:
             # Every 4 hours
             # 4 blocks per second * 60 seconds * 60 minutes * 4 hours
             every: 57600
-      eventHandlers:
-        - event: NewRound(indexed uint256,indexed address,uint256)
-          handler: handleEvent
       file: ./src/treasury/Assets.ts
