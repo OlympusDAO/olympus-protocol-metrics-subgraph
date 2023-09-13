@@ -10,7 +10,7 @@ import { getContractName, getWalletAddressesForContract } from "./Contracts";
 // Hard-coding this for now. If we wanted this to be generalisable, we would use the Silo Repository contract.
 const SILO_OHM_COLLATERAL_TOKEN = "0xD8102963c400fEDBbc23Fe92f1b09c0C561e77Ae";
 
-export function getSiloSupply(timestamp: BigInt, siloRepositoryAddress: string, blockNumber: BigInt): TokenSupply[] {
+export function getSiloSupply(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
   const records: TokenSupply[] = [];
 
   const collateralTokenContract = ERC20.bind(Address.fromString(SILO_OHM_COLLATERAL_TOKEN));

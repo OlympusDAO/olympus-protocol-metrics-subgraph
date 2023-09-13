@@ -161,7 +161,7 @@ export function getLendingMarketOHMRecords(timestamp: BigInt, blockNumber: BigIn
   else {
     pushTokenSupplyArray(
       records,
-      getSiloSupply(timestamp, SILO_ADDRESS, blockNumber),
+      getSiloSupply(timestamp, blockNumber),
     );
   }
 
