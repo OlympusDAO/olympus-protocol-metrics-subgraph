@@ -299,7 +299,7 @@ export function getUSDRateBalancer(
   poolId: string,
   blockNumber: BigInt,
 ): BigDecimal {
-  log.debug("getUSDRateBalancer: contract {}, poolId {}", [contractAddress, poolId]);
+  log.debug("getUSDRateBalancer: contract {}, poolId {}", [getContractName(contractAddress), poolId]);
 
   const poolSnapshot = getOrCreateBalancerPoolSnapshot(poolId, vaultAddress, blockNumber);
   if (!poolSnapshot) {
@@ -364,12 +364,14 @@ export function getUSDRateBalancer(
   const numerator = baseTokenReserves.div(baseTokenWeight);
   const denominator = destinationTokenReserves.div(destinationTokenWeight);
   const rate = numerator.div(denominator).times(baseTokenUsdRate);
-  log.info("getUSDRateBalancer: numerator {}, denominator {}, base token USD rate {}, USD rate {}", [
+  log.debug("getUSDRateBalancer: token {}, numerator {}, denominator {}, base token USD rate {}, USD rate {}", [
+    getContractName(contractAddress),
     numerator.toString(),
     denominator.toString(),
     baseTokenUsdRate.toString(),
     rate.toString(),
   ]);
+  log.info("getUSDRateBalancer: token {} at block {} has rate {}", [getContractName(contractAddress), blockNumber.toString(), rate.toString()]);
   return rate;
 }
 

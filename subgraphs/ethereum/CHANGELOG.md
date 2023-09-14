@@ -1,8 +1,9 @@
 # Subgraph Changelog
 
-## 4.12.4 (2023-09-14)
+## 4.12.5 (2023-09-14)
 
 - Fix issues with sDAI indexing
+- Add additional liquidity pool for wstETH price lookup
 
 ## 4.12.2 (2023-09-13)
 
