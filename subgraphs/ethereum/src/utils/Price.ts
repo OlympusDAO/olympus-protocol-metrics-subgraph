@@ -620,6 +620,7 @@ function getOrCreateTokenPriceSnapshot(address: string, blockNumber: BigInt): To
     snapshot.block = blockNumber;
 
     snapshot.save();
+    log.debug("getOrCreateTokenPriceSnapshot: created snapshot for token {} with price {} at block {}", [getContractName(address), snapshot.price.toString(), blockNumber.toString()]);
   }
 
   return snapshot;
