@@ -183,11 +183,11 @@ export function getUSDRateUniswapV3(
   pairAddress: string,
   blockNumber: BigInt,
 ): BigDecimal {
-  log.debug("getUSDRateUniswapV3: contract {}, pair {}", [contractAddress, pairAddress]);
+  log.debug("getUSDRateUniswapV3: token {}, pair {}", [getContractName(contractAddress), getContractName(pairAddress)]);
   const pair = getUniswapV3Pair(pairAddress, blockNumber);
   if (!pair) {
     throw new Error(
-      "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
+      "Cannot determine discounted value as the pair contract " + pairAddress + " does not exist yet.",
     );
   }
 
@@ -263,7 +263,7 @@ export function getUSDRateUniswapV3(
   log.debug("getUSDRateUniswapV3: base token rate of {}", [baseTokenUsdRate.toString()]);
 
   const finalUsdRate = adjustedNumerator.times(baseTokenUsdRate);
-  log.debug("getUSDRateUniswapV3: determined rate of {} for contract {} ({})", [
+  log.debug("getUSDRateUniswapV3: determined rate of {} for token {} ({})", [
     finalUsdRate.toString(),
     getContractName(contractAddress),
     contractAddress,
