@@ -183,11 +183,11 @@ export function getUSDRateUniswapV3(
   pairAddress: string,
   blockNumber: BigInt,
 ): BigDecimal {
-  log.debug("getUSDRateUniswapV3: contract {}, pair {}", [contractAddress, pairAddress]);
+  log.debug("getUSDRateUniswapV3: token {}, pair {}", [getContractName(contractAddress), getContractName(pairAddress)]);
   const pair = getUniswapV3Pair(pairAddress, blockNumber);
   if (!pair) {
     throw new Error(
-      "Cannot determine discounted value as the contract " + pairAddress + " does not exist yet.",
+      "Cannot determine discounted value as the pair contract " + pairAddress + " does not exist yet.",
     );
   }
 
@@ -263,7 +263,7 @@ export function getUSDRateUniswapV3(
   log.debug("getUSDRateUniswapV3: base token rate of {}", [baseTokenUsdRate.toString()]);
 
   const finalUsdRate = adjustedNumerator.times(baseTokenUsdRate);
-  log.debug("getUSDRateUniswapV3: determined rate of {} for contract {} ({})", [
+  log.debug("getUSDRateUniswapV3: determined rate of {} for token {} ({})", [
     finalUsdRate.toString(),
     getContractName(contractAddress),
     contractAddress,
@@ -299,7 +299,7 @@ export function getUSDRateBalancer(
   poolId: string,
   blockNumber: BigInt,
 ): BigDecimal {
-  log.debug("getUSDRateBalancer: contract {}, poolId {}", [contractAddress, poolId]);
+  log.debug("getUSDRateBalancer: contract {}, poolId {}", [getContractName(contractAddress), poolId]);
 
   const poolSnapshot = getOrCreateBalancerPoolSnapshot(poolId, vaultAddress, blockNumber);
   if (!poolSnapshot) {
@@ -364,12 +364,14 @@ export function getUSDRateBalancer(
   const numerator = baseTokenReserves.div(baseTokenWeight);
   const denominator = destinationTokenReserves.div(destinationTokenWeight);
   const rate = numerator.div(denominator).times(baseTokenUsdRate);
-  log.info("getUSDRateBalancer: numerator {}, denominator {}, base token USD rate {}, USD rate {}", [
+  log.debug("getUSDRateBalancer: token {}, numerator {}, denominator {}, base token USD rate {}, USD rate {}", [
+    getContractName(contractAddress),
     numerator.toString(),
     denominator.toString(),
     baseTokenUsdRate.toString(),
     rate.toString(),
   ]);
+  log.info("getUSDRateBalancer: token {} at block {} has rate {}", [getContractName(contractAddress), blockNumber.toString(), rate.toString()]);
   return rate;
 }
 
@@ -618,6 +620,7 @@ function getOrCreateTokenPriceSnapshot(address: string, blockNumber: BigInt): To
     snapshot.block = blockNumber;
 
     snapshot.save();
+    log.debug("getOrCreateTokenPriceSnapshot: created snapshot for token {} with price {} at block {}", [getContractName(address), snapshot.price.toString(), blockNumber.toString()]);
   }
 
   return snapshot;

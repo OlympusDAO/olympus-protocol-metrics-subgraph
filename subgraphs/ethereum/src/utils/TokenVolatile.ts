@@ -26,7 +26,6 @@ import {
   getVlCvxUnlockedRecords,
 } from "./ContractHelper";
 import { getUSDRate } from "./Price";
-import { getTreasuryRecords } from "./Treasury";
 
 /**
  * Returns the token records for a given volatile token. This includes:
@@ -137,9 +136,6 @@ export function getVolatileTokenBalance(
   if (includeLiquidity) {
     pushTokenRecordArray(records, getLiquidityBalances(timestamp, contractAddress, blockNumber));
   }
-
-  // TRSRY
-  pushTokenRecordArray(records, getTreasuryRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Myso Finance
   pushTokenRecordArray(records, getMysoFinanceRecords(timestamp, contractAddress, rate, blockNumber));

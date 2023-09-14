@@ -51,6 +51,7 @@ export function getOrCreateBalancerPoolSnapshot(poolId: string, vaultAddress: st
     const vault = getBalancerVault(vaultAddress, blockNumber);
     const tokenWrapperResult = vault.try_getPoolTokens(Bytes.fromHexString(poolId));
     if (tokenWrapperResult.reverted) {
+      log.warning("getOrCreateBalancerPoolSnapshot: Pool {} ({}) not found in vault {} ({}) at block {}", [getContractName(poolId), poolId, getContractName(vaultAddress), vaultAddress, blockNumber.toString()]);
       return null;
     }
 
@@ -71,6 +72,7 @@ export function getOrCreateBalancerPoolSnapshot(poolId: string, vaultAddress: st
 
     const poolInfoResult = vault.try_getPool(Bytes.fromHexString(poolId));
     if (poolInfoResult.reverted) {
+      log.warning("getOrCreateBalancerPoolSnapshot: Pool {} ({}) not found in vault {} ({}) at block {}", [getContractName(poolId), poolId, getContractName(vaultAddress), vaultAddress, blockNumber.toString()]);
       return null;
     }
 
@@ -81,6 +83,7 @@ export function getOrCreateBalancerPoolSnapshot(poolId: string, vaultAddress: st
     const poolTokenTotalSupply = poolTokenContractSnapshot.totalSupply;
     const poolTokenDecimals = poolTokenContractSnapshot.decimals;
     if (poolTokenTotalSupply === null) {
+      log.warning("getOrCreateBalancerPoolSnapshot: Pool token {} ({}) not found at block {}", [getContractName(snapshot.poolToken.toHexString()), snapshot.poolToken.toHexString(), blockNumber.toString()]);
       return null;
     }
 
@@ -91,6 +94,7 @@ export function getOrCreateBalancerPoolSnapshot(poolId: string, vaultAddress: st
     const poolTokenContract = BalancerPoolToken.bind(Address.fromBytes(snapshot.poolToken));
     const poolTokenWeightsResult = poolTokenContract.try_getNormalizedWeights();
     if (poolTokenWeightsResult.reverted) {
+      log.warning("getOrCreateBalancerPoolSnapshot: Pool token {} ({}) not found at block {}", [getContractName(snapshot.poolToken.toHexString()), snapshot.poolToken.toHexString(), blockNumber.toString()]);
       return null;
     }
 

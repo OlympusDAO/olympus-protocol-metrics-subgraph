@@ -12,7 +12,7 @@ import { TokenRecord } from "../../../shared/generated/schema";
  * 
  * @param timestamp 
  * @param blockNumber 
- * @param contract 
+ * @param vaultContract 
  * @param walletAddress 
  * @param rate 
  * @returns 
@@ -20,33 +20,37 @@ import { TokenRecord } from "../../../shared/generated/schema";
 function getERC4626TokenRecordFromWallets(
   timestamp: BigInt,
   blockNumber: BigInt,
-  contract: ERC4626,
+  vaultContract: ERC4626,
   walletAddress: string,
   rate: BigDecimal,
 ): TokenRecord | null {
-  const balanceResult = contract.try_balanceOf(Address.fromString(walletAddress));
+  const tokenContractAddress = vaultContract._address.toHexString();
+  const balanceResult = vaultContract.try_balanceOf(Address.fromString(walletAddress));
+
   if (balanceResult.reverted) {
-    log.info("getERC4626TokenRecordFromWallets: Skipping wallet {} that returned empty at block {}", [getContractName(contract._address.toHexString()), blockNumber.toString()]);
+    log.info("getERC4626TokenRecordFromWallets: Skipping wallet {} that reverted for balanceOf {} at block {}", [getContractName(walletAddress), getContractName(tokenContractAddress), blockNumber.toString()]);
     return null;
   }
 
-  const decimals = contract.decimals();
+  const decimals = vaultContract.decimals();
   const balance = toDecimal(balanceResult.value, decimals);
 
-  if (!balance || balance.equals(BigDecimal.zero())) return null;
+  if (!balance || balance.equals(BigDecimal.zero())) {
+    log.debug("getERC4626TokenRecordFromWallets: Skipping wallet {} that returned zero for balanceOf {} at block {}", [getContractName(walletAddress), getContractName(tokenContractAddress), blockNumber.toString()]);
+    return null;
+  }
 
-  const contractAddress = contract._address.toHexString();
-
+  log.debug("getERC4626TokenRecordFromWallets: {} has balanceOf {} {} at block {}", [getContractName(walletAddress), balance.toString(), getContractName(tokenContractAddress), blockNumber.toString()]);
   return createOrUpdateTokenRecord(
     timestamp,
-    getContractName(contractAddress),
-    contractAddress,
+    getContractName(tokenContractAddress),
+    tokenContractAddress,
     getContractName(walletAddress),
     walletAddress,
     rate,
     balance,
     blockNumber,
-    getIsTokenLiquid(contractAddress, ERC4626_TOKENS),
+    getIsTokenLiquid(tokenContractAddress, ERC4626_TOKENS),
     ERC4626_TOKENS,
     BLOCKCHAIN,
   );
@@ -57,18 +61,18 @@ function getERC4626TokenRecordFromWallets(
  * 
  * @param timestamp 
  * @param blockNumber 
- * @param contract 
+ * @param vaultContract 
  * @param rate 
  * @returns 
  */
 function getERC4626TokenRecordsFromWallets(
   timestamp: BigInt,
   blockNumber: BigInt,
-  contract: ERC4626,
+  vaultContract: ERC4626,
   rate: BigDecimal,
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
-  const wallets = getWalletAddressesForContract(contract._address.toHexString());
+  const wallets = getWalletAddressesForContract(vaultContract._address.toHexString());
 
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];
@@ -76,7 +80,7 @@ function getERC4626TokenRecordsFromWallets(
     const record = getERC4626TokenRecordFromWallets(
       timestamp,
       blockNumber,
-      contract,
+      vaultContract,
       walletAddress,
       rate,
     );
@@ -95,18 +99,18 @@ function getERC4626TokenRecordsFromWallets(
  * - The ratio of the shares to the underlying asset
  * - The price of the underlying asset
  * 
- * @param contract 
+ * @param vaultContract 
  * @returns 
  */
 function getERC4626Rate(
   blockNumber: BigInt,
-  contract: ERC4626,
+  vaultContract: ERC4626,
 ): BigDecimal | null {
-  const underlyingToken = contract.try_asset();
+  const underlyingToken = vaultContract.try_asset();
   if (underlyingToken.reverted) {
     log.debug(
       "getERC4626Rate: Skipping {} because the underlying token could not be determined at block {}",
-      [getContractName(contract._address.toHexString()), blockNumber.toString()]
+      [getContractName(vaultContract._address.toHexString()), blockNumber.toString()]
     )
     return null;
   }
@@ -116,7 +120,7 @@ function getERC4626Rate(
     log.debug(
       "getERC4626Rate: Skipping {} because the underlying token {} has no price at block {}",
       [
-        getContractName(contract._address.toHexString()),
+        getContractName(vaultContract._address.toHexString()),
         getContractName(underlyingToken.value.toHexString()), blockNumber.toString()
       ]
     );
@@ -125,15 +129,15 @@ function getERC4626Rate(
   log.info("getERC4626Rate: 1 {} is {} USD", [getContractName(underlyingToken.value.toHexString()), underlyingRate.toString()]);
 
   // Get 1 share in terms of the underlying token
-  const decimals: u8 = u8(contract.decimals());
+  const decimals: u8 = u8(vaultContract.decimals());
   const sharesToUnderlying: BigDecimal = toDecimal(
-    contract.convertToAssets(
+    vaultContract.convertToAssets(
       BigInt.fromU32(10).pow(decimals)),
     decimals);
-  log.info("getERC4626Rate: 1 share of {} is {} of the underlying", [getContractName(contract._address.toHexString()), sharesToUnderlying.toString()]);
+  log.info("getERC4626Rate: 1 share of {} is {} of the underlying", [getContractName(vaultContract._address.toHexString()), sharesToUnderlying.toString()]);
 
   const wrappedRate: BigDecimal = underlyingRate.times(sharesToUnderlying);
-  log.info("getERC4626Rate: 1 share of {} is {} USD", [getContractName(contract._address.toHexString()), wrappedRate.toString()]);
+  log.info("getERC4626Rate: 1 share of {} is {} USD", [getContractName(vaultContract._address.toHexString()), wrappedRate.toString()]);
 
   return wrappedRate;
 }
@@ -143,21 +147,21 @@ function getERC4626Rate(
  * 
  * @param timestamp 
  * @param blockNumber 
- * @param contractAddress 
+ * @param vaultContractAddress 
  * @returns 
  */
 function getERC4626Balance(
   timestamp: BigInt,
   blockNumber: BigInt,
-  contractAddress: string,
+  vaultContractAddress: string,
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
 
-  const contract = ERC4626.bind(Address.fromString(contractAddress));
+  const vaultContract = ERC4626.bind(Address.fromString(vaultContractAddress));
 
-  const rate: BigDecimal | null = getERC4626Rate(blockNumber, contract);
+  const rate: BigDecimal | null = getERC4626Rate(blockNumber, vaultContract);
   if (rate === null) {
-    log.info("getERC4626Balance: Skipping {} because the rate could not be determined at block {}", [getContractName(contractAddress), blockNumber.toString()]);
+    log.info("getERC4626Balance: Skipping {} because the rate could not be determined at block {}", [getContractName(vaultContractAddress), blockNumber.toString()]);
     return records;
   }
 
@@ -166,7 +170,7 @@ function getERC4626Balance(
     getERC4626TokenRecordsFromWallets(
       timestamp,
       blockNumber,
-      contract,
+      vaultContract,
       rate,
     ),
   );
@@ -181,13 +185,13 @@ export function getAllERC4626Balances(
   log.info("getERC4626Balances: Calculating ERC4626 balances at block number {}", [blockNumber.toString()]);
   const records: TokenRecord[] = [];
 
-  const tokenKeys = ERC4626_TOKENS.keys();
-  for (let i = 0; i < tokenKeys.length; i++) {
-    const tokenAddress = tokenKeys[i];
+  const vaultAddresses = ERC4626_TOKENS.keys();
+  for (let i = 0; i < vaultAddresses.length; i++) {
+    const vaultAddress = vaultAddresses[i];
 
     pushTokenRecordArray(
       records,
-      getERC4626Balance(timestamp, blockNumber, tokenAddress),
+      getERC4626Balance(timestamp, blockNumber, vaultAddress),
     );
   }
 
