@@ -20,7 +20,6 @@ import {
   getVendorFinanceRecords,
 } from "./ContractHelper";
 import { getUSDRate } from "./Price";
-import { getTreasuryRecords } from "./Treasury";
 
 /**
  * Returns the token records for a given stablecoin. This includes:
@@ -83,9 +82,6 @@ export function getStablecoinBalance(
 
   // Aura earned rewards
   pushTokenRecordArray(records, getAuraPoolEarnedRecords(timestamp, contractAddress, rate, blockNumber));
-
-  // TRSRY
-  pushTokenRecordArray(records, getTreasuryRecords(timestamp, contractAddress, rate, blockNumber));
 
   // Maker DSR
   pushTokenRecordArray(records, getMakerDSRRecords(timestamp, contractAddress, rate, blockNumber));

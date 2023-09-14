@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 4.12.4 (2023-09-14)
+
+- Fix issues with sDAI indexing
+
 ## 4.12.2 (2023-09-13)
 
 - OHM supply: Fix the incorrect multiplication of sOHM balance by OHM index

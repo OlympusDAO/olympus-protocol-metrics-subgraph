@@ -314,7 +314,7 @@ const ERC4626_SDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA".toLowerCase();
  * A price lookup path must be defined for the underlying token within `LIQUIDITY_POOL_TOKEN_LOOKUP`.
  */
 export const ERC4626_TOKENS = new Map<string, TokenDefinition>();
-ERC4626_TOKENS.set(ERC4626_SDAI, new TokenDefinition(ERC4626_SDAI, TokenCategoryStable, false, false));
+ERC4626_TOKENS.set(ERC4626_SDAI, new TokenDefinition(ERC4626_SDAI, TokenCategoryStable, true, false));
 
 /**
  * Mapping between the non-staked token and the token staked in Convex.
