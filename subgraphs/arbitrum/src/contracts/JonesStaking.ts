@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
 import { getDecimals } from "../../../shared/src/contracts/ERC20";
@@ -7,6 +7,7 @@ import { addressesEqual } from "../../../shared/src/utils/StringHelper";
 import {
   createOrUpdateTokenRecord,
   getIsTokenLiquid,
+  getTokenRecordValue,
 } from "../../../shared/src/utils/TokenRecordHelper";
 import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 import { JONESStaking } from "../../generated/TokenRecords-arbitrum/JONESStaking";
@@ -16,6 +17,7 @@ import {
   ERC20_TOKENS_ARBITRUM,
   JONES_STAKING,
   JONES_STAKING_POOL_IDS,
+  JONES_WRITE_OFF_BLOCK,
 } from "./Constants";
 import { getContractName } from "./Contracts";
 
@@ -113,6 +115,15 @@ export const getStakedBalances = (
         ERC20_TOKENS_ARBITRUM,
         BLOCKCHAIN,
       );
+
+      // If the token is JONES and the block number is greater than the write-off block, then apply a multiplier of 0 to exclude it from liquid backing
+      if (block.ge(BigInt.fromString(JONES_WRITE_OFF_BLOCK))) {
+        log.info("getERC20TokenRecordsFromWallets: Applying liquid backing multiplier of 0 to JONES token record at block {}", [block.toString()]);
+        record.multiplier = BigDecimal.zero();
+        record.valueExcludingOhm = getTokenRecordValue(record, true);
+        record.save();
+      }
+
       records.push(record);
     }
   }

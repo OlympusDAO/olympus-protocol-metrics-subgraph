@@ -46,7 +46,7 @@ export const getIsTokenLiquid = (
  * @returns
  */
 // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-function getTokenRecordValue(record: TokenRecord, nonOhmMultiplier: boolean = false): BigDecimal {
+export function getTokenRecordValue(record: TokenRecord, nonOhmMultiplier: boolean = false): BigDecimal {
   return record.balance
     .times(record.rate)
     .times(nonOhmMultiplier ? record.multiplier : BigDecimal.fromString("1"));

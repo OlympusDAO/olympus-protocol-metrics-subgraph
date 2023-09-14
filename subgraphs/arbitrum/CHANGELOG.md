@@ -1,5 +1,10 @@
 # Arbitrum Subgraph Changelog
 
+## 1.6.4 (2023-09-13)
+
+- Apply write-off of JonesDAO token, since it cannot be sold.
+- Going forward, dynamically determine the OHM supply minted into Silo Finance and Sentiment Finance
+
 ## 1.5.3 (2023-07-18)
 
 - Adds support for the Lending AMO

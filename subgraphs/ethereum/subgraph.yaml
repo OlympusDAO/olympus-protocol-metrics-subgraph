@@ -657,9 +657,14 @@ dataSources:
       eventHandlers:
         - event: LogRebase(indexed uint256,uint256,uint256)
           handler: handleMetrics
-      # FOR TESTING ONLY
+      # This can be re-enabled, but likely needs a reindexing from scratch
       # blockHandlers:
       #   - handler: handleMetricsBlock
+      #     filter:
+      #       kind: polling
+      #       # Every 4 hours
+      #       # 5 blocks per minute * 60 minutes * 4 hours
+      #       every: 1200
       file: ./src/protocolMetrics/ProtocolMetrics.ts
   ###
   # BondManager and GnosisEasyAuction index Gnosis auction events, used for bond calculations

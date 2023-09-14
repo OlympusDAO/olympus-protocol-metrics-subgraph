@@ -6,8 +6,8 @@ repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 features:
   - grafting
 graft:
-  base: QmPh8394KhA5354S6WDQbyDUH6MPZxMx7jcwkj3JTyNXuA # 1.4.4
-  block: 99067079
+  base: QmXVMuS639JzTTq9ZVkRnGFTftiYJ8c6FPrB52qCshSnFa # 1.5.3
+  block: 130482707 # JonesDAO write-off
 schema:
   file: ../../schema.graphql
 dataSources:
@@ -50,6 +50,14 @@ dataSources:
           file: abis/TreasureMining.json
         - name: ChainlinkAggregator
           file: abis/ChainlinkAggregator.json
+      # This can be re-enabled, but likely needs a reindexing from scratch
+      # blockHandlers:
+      #   - handler: handleBlock
+      #     filter:
+      #       kind: polling
+      #       # Every 4 hours
+      #       # 4 blocks per second * 60 seconds * 60 minutes * 4 hours
+      #       every: 57600
       eventHandlers:
         - event: NewRound(indexed uint256,indexed address,uint256)
           handler: handleEvent
