@@ -849,7 +849,8 @@ export function getVendorDeployments(contractAddress: string): LendingMarketDepl
 const MYSO_DEPLOYMENTS = new Map<string, LendingMarketDeployment[]>();
 MYSO_DEPLOYMENTS.set(ERC20_DAI.toLowerCase(), [
   new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("16898161"), BigDecimal.fromString("500000"), MYSO_LENDING), // https://etherscan.io/tx/0xe26e451b069fcc387eb71c1dc86a05307e58e918ad5ca2fcc13baf3887795e24
-  new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("16975846"), BigDecimal.fromString("471186.4848231525"), MYSO_LENDING), // https://etherscan.io/tx/0xdd9b3cdde143e1bdf1ba1af14c388dc0e2f6d61a5a58b9cc270f961e83d9f22b
+  new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("16975846"), BigDecimal.fromString("-471186.4848231525"), MYSO_LENDING), // https://etherscan.io/tx/0xdd9b3cdde143e1bdf1ba1af14c388dc0e2f6d61a5a58b9cc270f961e83d9f22b
+  new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("18190633"), BigDecimal.fromString("-28813.5151768475"), MYSO_LENDING), // Write-off
 ]);
 
 /**
