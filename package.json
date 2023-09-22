@@ -24,7 +24,7 @@
     "commander": "^9.4.0",
     "cross-fetch": "^4.0.0",
     "dotenv": "^16.0.2",
-    "graphql": "^16.6.0",
+    "graphql": "^16.8.1",
     "node-fetch": "^2.6.7",
     "ts-node": "^10.9.1"
   },
