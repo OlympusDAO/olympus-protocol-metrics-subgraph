@@ -25,7 +25,7 @@ export function getClearinghouseBalance(timestamp: BigInt, blockNumber: BigInt):
   records.push(
     createOrUpdateTokenRecord(
       timestamp,
-      `${getContractName(ERC20_DAI)} - Receivables`,
+      `${getContractName(ERC20_DAI)} - Borrowed Through Cooler Loans`,
       ERC20_DAI,
       getContractName(COOLER_LOANS_CLEARINGHOUSE),
       COOLER_LOANS_CLEARINGHOUSE,
