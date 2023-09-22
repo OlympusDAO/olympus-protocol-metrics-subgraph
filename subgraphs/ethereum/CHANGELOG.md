@@ -1,5 +1,10 @@
 # Subgraph Changelog
 
+## 4.13.0 (2023-09-22)
+
+- Include Cooler Loans Clearinghouse balances and receivables
+- Write-off remaining Myso balance
+
 ## 4.12.6 (2023-09-14)
 
 - Fix issues with sDAI indexing
