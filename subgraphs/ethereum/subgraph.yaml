@@ -4,8 +4,8 @@ repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 features:
   - grafting
 graft:
-  base: QmbRracFsJ55Q3seDYGV3aVwbwsH9Jg36tkVawuPBhNR4K
-  block: 18107516 # Uniswap V3 pool minting block
+  base: QmSwwBfAoWJLHQeSTagFnkibnkrjeprxcQpXAHk6AVrysA
+  block: 18185779 # Clearinghouse deployment
 schema:
   file: ../../schema.graphql
 dataSources:
@@ -654,6 +654,9 @@ dataSources:
         # IncurDebt
         - name: IncurDebt
           file: ./abis/IncurDebt.json
+        # Cooler Loans
+        - name: CoolerLoansClearinghouse
+          file: ./abis/CoolerLoansClearinghouse.json
       eventHandlers:
         - event: LogRebase(indexed uint256,uint256,uint256)
           handler: handleMetrics

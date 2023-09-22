@@ -8,7 +8,7 @@ import {
   getIsTokenLiquid,
   getTokenCategory,
 } from "../../../shared/src/utils/TokenRecordHelper";
-import { CONVEX_CVX_VL_ALLOCATOR, LUSD_ALLOCATOR, RARI_ALLOCATOR, VEFXS_ALLOCATOR } from "../../../shared/src/Wallets";
+import { CONVEX_CVX_VL_ALLOCATOR, LUSD_ALLOCATOR, MYSO_LENDING, RARI_ALLOCATOR, VEFXS_ALLOCATOR, VENDOR_LENDING } from "../../../shared/src/Wallets";
 import { AuraLocker } from "../../generated/ProtocolMetrics/AuraLocker";
 import { AuraStaking } from "../../generated/ProtocolMetrics/AuraStaking";
 import { AuraVirtualBalanceRewardPool } from "../../generated/ProtocolMetrics/AuraVirtualBalanceRewardPool";
@@ -536,6 +536,8 @@ export function getVendorFinanceRecords(
     return records;
   }
 
+  // Calculate a running balance for the tokens deposited into the lending market
+  let balance = BigDecimal.zero();
   for (let i = 0; i < deployments.length; i++) {
     const currentDeployment = deployments[i];
     // Exclude if before deployment
@@ -543,20 +545,22 @@ export function getVendorFinanceRecords(
       continue;
     }
 
-    records.push(createOrUpdateTokenRecord(
-      timestamp,
-      getContractName(contractAddress),
-      contractAddress,
-      getContractName(currentDeployment.getAddress()),
-      currentDeployment.getAddress(),
-      rate,
-      currentDeployment.getAmount(),
-      blockNumber,
-      getIsTokenLiquid(contractAddress, ERC20_TOKENS),
-      ERC20_TOKENS,
-      BLOCKCHAIN,
-    ));
+    balance = balance.plus(currentDeployment.getAmount());
   }
+
+  records.push(createOrUpdateTokenRecord(
+    timestamp,
+    getContractName(contractAddress),
+    contractAddress,
+    getContractName(VENDOR_LENDING),
+    VENDOR_LENDING,
+    rate,
+    balance,
+    blockNumber,
+    getIsTokenLiquid(contractAddress, ERC20_TOKENS),
+    ERC20_TOKENS,
+    BLOCKCHAIN,
+  ));
 
   return records;
 }
@@ -583,6 +587,8 @@ export function getMysoFinanceRecords(
     return records;
   }
 
+  // Calculate a running balance for the tokens deposited into the lending market
+  let balance = BigDecimal.zero();
   for (let i = 0; i < deployments.length; i++) {
     const currentDeployment = deployments[i];
     // Exclude if before deployment
@@ -590,20 +596,22 @@ export function getMysoFinanceRecords(
       continue;
     }
 
-    records.push(createOrUpdateTokenRecord(
-      timestamp,
-      getContractName(contractAddress),
-      contractAddress,
-      getContractName(currentDeployment.getAddress()),
-      currentDeployment.getAddress(),
-      rate,
-      currentDeployment.getAmount(),
-      blockNumber,
-      getIsTokenLiquid(contractAddress, ERC20_TOKENS),
-      ERC20_TOKENS,
-      BLOCKCHAIN,
-    ));
+    balance = balance.plus(currentDeployment.getAmount());
   }
+
+  records.push(createOrUpdateTokenRecord(
+    timestamp,
+    getContractName(contractAddress),
+    contractAddress,
+    getContractName(MYSO_LENDING),
+    MYSO_LENDING,
+    rate,
+    balance,
+    blockNumber,
+    getIsTokenLiquid(contractAddress, ERC20_TOKENS),
+    ERC20_TOKENS,
+    BLOCKCHAIN,
+  ));
 
   return records;
 }
