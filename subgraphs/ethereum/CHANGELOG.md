@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 4.13.1 (2023-09-22)
+## 4.13.2 (2023-09-22)
 
 - Include Cooler Loans Clearinghouse balances and receivables
 - Write-off remaining Myso balance
