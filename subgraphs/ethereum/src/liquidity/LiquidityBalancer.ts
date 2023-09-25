@@ -4,8 +4,8 @@ import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
 import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
-import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
+import { createTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
+import { createTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { ERC20 } from "../../generated/PriceSnapshot/ERC20";
 import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolToken";
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
@@ -263,7 +263,7 @@ function getBalancerPoolTokenRecords(
       [getContractName(poolTokenAddress), balance.toString(), getContractName(walletAddress)],
     );
     records.push(
-      createOrUpdateTokenRecord(
+      createTokenRecord(
         timestamp,
         getContractName(poolTokenAddress),
         poolTokenAddress,
@@ -490,7 +490,7 @@ export function getBalancerPoolTokenQuantity(
 
     const tokenBalance = totalQuantity.times(record.balance).div(poolTokenTotalSupply);
     records.push(
-      createOrUpdateTokenSupply(
+      createTokenSupply(
         timestamp,
         getContractName(tokenAddress),
         tokenAddress,

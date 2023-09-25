@@ -21,7 +21,7 @@ export const TYPE_TREASURY = "Treasury";
  * and saves the record.
  * @returns
  */
-export function createOrUpdateTokenSupply(
+export function createTokenSupply(
   timestamp: BigInt,
   tokenName: string,
   tokenAddress: string,
@@ -42,10 +42,7 @@ export function createOrUpdateTokenSupply(
 
   const recordId = `${dateString}/${tokenName}/${type}/${poolNameNotNull}/${sourceNameNotNull}`; // YYYY-MM-DD/<token>/<type>/<pool>/<source>
 
-  // Attempt to fetch the current day's record
-  const existingRecord = TokenSupply.load(recordId);
-
-  const record = existingRecord ? existingRecord : new TokenSupply(recordId);
+  const record = new TokenSupply(recordId);
 
   record.block = blockNumber;
   record.date = dateString;

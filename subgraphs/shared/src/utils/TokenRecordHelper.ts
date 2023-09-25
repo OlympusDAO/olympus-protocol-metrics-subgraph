@@ -102,7 +102,7 @@ function getTokenMultiplier(tokenAddress: string, tokenDefinitions: Map<string, 
  * @param category The asset category. If not specified, the value will be determined through a lookup.
  * @returns
  */
-export function createOrUpdateTokenRecord(
+export function createTokenRecord(
   timestamp: BigInt,
   tokenName: string,
   tokenAddress: string,
@@ -120,10 +120,7 @@ export function createOrUpdateTokenRecord(
   const dateString = getISO8601DateStringFromTimestamp(timestamp);
   const recordId = `${dateString}/${sourceName}/${tokenName}`;
 
-  // Attempt to fetch the current day's record
-  const existingRecord = TokenRecord.load(recordId);
-
-  const record = existingRecord ? existingRecord : new TokenRecord(recordId);
+  const record = new TokenRecord(recordId);
 
   record.block = blockNumber;
   record.date = dateString;

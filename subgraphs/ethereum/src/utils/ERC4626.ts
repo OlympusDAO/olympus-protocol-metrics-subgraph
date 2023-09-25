@@ -3,7 +3,7 @@ import { ERC4626 } from "../../generated/ProtocolMetrics/ERC4626";
 import { BLOCKCHAIN, ERC4626_TOKENS, getContractName, getWalletAddressesForContract } from "./Constants";
 import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { createOrUpdateTokenRecord, getIsTokenLiquid } from "../../../shared/src/utils/TokenRecordHelper";
+import { createTokenRecord, getIsTokenLiquid } from "../../../shared/src/utils/TokenRecordHelper";
 import { getUSDRate } from "./Price";
 import { TokenRecord } from "../../../shared/generated/schema";
 
@@ -41,7 +41,7 @@ function getERC4626TokenRecordFromWallets(
   }
 
   log.debug("getERC4626TokenRecordFromWallets: {} has balanceOf {} {} at block {}", [getContractName(walletAddress), balance.toString(), getContractName(tokenContractAddress), blockNumber.toString()]);
-  return createOrUpdateTokenRecord(
+  return createTokenRecord(
     timestamp,
     getContractName(tokenContractAddress),
     tokenContractAddress,
