@@ -274,10 +274,10 @@
     graphql-import-node "^0.0.5"
     js-yaml "^4.1.0"
 
-"@graphprotocol/graph-cli@^0.57.0":
-  version "0.57.0"
-  resolved "https://registry.yarnpkg.com/@graphprotocol/graph-cli/-/graph-cli-0.57.0.tgz#dca0327f83b6fc081416cca1cc9f9d005dc10d03"
-  integrity sha512-UQ+4a4qTeGYdIWHNINtwTiL7izuRe4smgSeGmTxQQMSeebehTgrpa6NV3brGWcYsmN1Bo5egM4D9stkQtRnxeA==
+"@graphprotocol/graph-cli@^0.58.0":
+  version "0.58.0"
+  resolved "https://registry.yarnpkg.com/@graphprotocol/graph-cli/-/graph-cli-0.58.0.tgz#60af39fbf96296353dab862ea9f55026639f9851"
+  integrity sha512-EbdL5LZFmIMAuItQXv7LXgd7cqYQ3BdIJR2jxNr+LRL0juBAxmEz6zVvYnIUmgXoa5SB5rxE9ZT6pfe+fhbD6Q==
   dependencies:
     "@float-capital/float-subgraph-uncrashable" "^0.0.0-alpha.4"
     "@oclif/core" "2.8.6"
@@ -2386,12 +2386,7 @@ graphql@15.5.0:
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-15.5.0.tgz#39d19494dbe69d1ea719915b578bf920344a69d5"
   integrity sha512-OmaM7y0kaK31NKG31q4YbD2beNYa6jBBKtMFT6gLYJljHLJr42IqJ8KX08u3Li/0ifzTU5HjmoOOrwa5BRLeDA==
 
-graphql@^16.6.0:
-  version "16.8.0"
-  resolved "https://registry.yarnpkg.com/graphql/-/graphql-16.8.0.tgz#374478b7f27b2dc6153c8f42c1b80157f79d79d4"
-  integrity sha512-0oKGaR+y3qcS5mCu1vb7KG+a89vjn06C7Ihq/dDl3jA+A8B3TKomvi3CiEcVLJQGalbu8F52LxkOym7U5sSfbg==
-
-graphql@^16.8.1:
+graphql@^16.6.0, graphql@^16.8.1:
   version "16.8.1"
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-16.8.1.tgz#1930a965bef1170603702acdb68aedd3f3cf6f07"
   integrity sha512-59LZHPdGZVh695Ud9lRzPBVTtlX9ZCV150Er2W43ro37wVof0ctenSaskPPjN7lVTIN8mSZt8PHUNKZuNQUuxw==
