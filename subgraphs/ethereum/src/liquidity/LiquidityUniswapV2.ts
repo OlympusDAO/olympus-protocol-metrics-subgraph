@@ -13,10 +13,10 @@ import {
   ERC20_OHM_V2,
   ERC20_TOKENS,
   getContractName,
-  getWalletAddressesForContract,
   liquidityPairHasToken,
 } from "../utils/Constants";
 import { getUSDRate } from "../utils/Price";
+import { getWalletAddressesForContract } from "../utils/ProtocolAddresses";
 
 
 /**

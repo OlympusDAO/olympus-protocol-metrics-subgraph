@@ -11,7 +11,6 @@ import {
   ERC20_DAI,
   ERC20_OHM_V2,
   ERC20_WETH,
-  getWalletAddressesForContract,
   PAIR_CURVE_OHM_ETH,
   PAIR_FRAXSWAP_V1_OHM_FRAX,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
@@ -36,6 +35,7 @@ import {
   OHM_V2_DECIMALS,
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 const PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY = BigDecimal.fromString("100");
 const TIMESTAMP = BigInt.fromString("1");

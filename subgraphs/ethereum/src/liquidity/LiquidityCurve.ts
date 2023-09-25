@@ -19,11 +19,11 @@ import {
   getContractName,
   getConvexStakedToken,
   getFraxStakedToken,
-  getWalletAddressesForContract,
   liquidityPairHasToken,
 } from "../utils/Constants";
 import { getConvexStakedBalance, getERC20, getFraxLockedBalance } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
+import { getWalletAddressesForContract } from "../utils/ProtocolAddresses";
 
 /**
  * Determines the address of the ERC20 token for a Curve liquidity pair.

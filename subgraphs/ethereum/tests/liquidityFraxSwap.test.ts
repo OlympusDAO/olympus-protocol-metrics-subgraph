@@ -15,7 +15,6 @@ import {
   ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_USDC,
-  getWalletAddressesForContract,
   PAIR_FRAXSWAP_V1_OHM_FRAX,
 } from "../src/utils/Constants";
 import { mockStablecoinsPriceFeeds } from "./chainlink";
@@ -39,6 +38,7 @@ import {
   OHM_USD_RESERVE_BLOCK,
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 const TIMESTAMP = BigInt.fromString("1");
 

@@ -1,6 +1,6 @@
 import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { createMockedFunction } from "matchstick-as";
-import { getWalletAddressesForContract } from "../src/utils/Constants";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 export function mockUniswapV3Positions(
   positionManager: string,

@@ -8,7 +8,7 @@ import {
   getIsTokenLiquid,
   getTokenCategory,
 } from "../../../shared/src/utils/TokenRecordHelper";
-import { CONVEX_CVX_VL_ALLOCATOR, LUSD_ALLOCATOR, MYSO_LENDING, RARI_ALLOCATOR, VEFXS_ALLOCATOR, VENDOR_LENDING } from "../../../shared/src/Wallets";
+import { CONVEX_CVX_VL_ALLOCATOR, MYSO_LENDING, RARI_ALLOCATOR, VEFXS_ALLOCATOR, VENDOR_LENDING } from "../../../shared/src/Wallets";
 import { AuraLocker } from "../../generated/ProtocolMetrics/AuraLocker";
 import { AuraStaking } from "../../generated/ProtocolMetrics/AuraStaking";
 import { AuraVirtualBalanceRewardPool } from "../../generated/ProtocolMetrics/AuraVirtualBalanceRewardPool";
@@ -18,7 +18,6 @@ import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { FraxFarm } from "../../generated/ProtocolMetrics/FraxFarm";
 import { LiquityStabilityPool } from "../../generated/ProtocolMetrics/LiquityStabilityPool";
 import { LQTYStaking } from "../../generated/ProtocolMetrics/LQTYStaking";
-import { LUSDAllocatorV2 } from "../../generated/ProtocolMetrics/LUSDAllocatorV2";
 import { MakerDSR } from "../../generated/ProtocolMetrics/MakerDSR";
 import { MasterChef } from "../../generated/ProtocolMetrics/MasterChef";
 import { RariAllocator } from "../../generated/ProtocolMetrics/RariAllocator";
@@ -44,7 +43,6 @@ import {
   BALANCER_LIQUIDITY_GAUGES,
   BLOCKCHAIN,
   CONTRACT_STARTING_BLOCK_MAP,
-  CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
   ERC20_AURA_VL,
   ERC20_BTRFLY_V2_RL,
@@ -64,7 +62,6 @@ import {
   getOnsenAllocatorId,
   getRariAllocatorId,
   getVendorDeployments,
-  getWalletAddressesForContract,
   liquidityPairHasToken,
   LIQUITY_STABILITY_POOL,
   LQTY_STAKING,
@@ -76,6 +73,7 @@ import {
   TOKE_STAKING,
 } from "./Constants";
 import { getUSDRate } from "./Price";
+import { CONVEX_ALLOCATORS, getWalletAddressesForContract } from "./ProtocolAddresses";
 
 /**
  * The Graph recommends only binding a contract once
@@ -91,7 +89,6 @@ const contractsRariAllocator = new Map<string, RariAllocator>();
 const contractsTokeAllocator = new Map<string, TokeAllocator>();
 const contractsMasterChef = new Map<string, MasterChef>();
 const contractsVeFXS = new Map<string, VeFXS>();
-const contractsLUSDAllocator = new Map<string, LUSDAllocatorV2>();
 
 /**
  * Indicates whether a contract exists at a given block number.
@@ -1724,8 +1721,9 @@ export function getConvexStakedRecords(
   const records: TokenRecord[] = [];
 
   // Loop through allocators
-  for (let i = 0; i < CONVEX_ALLOCATORS.length; i++) {
-    const allocatorAddress = CONVEX_ALLOCATORS[i];
+  const convexAllocators = CONVEX_ALLOCATORS;
+  for (let i = 0; i < convexAllocators.length; i++) {
+    const allocatorAddress = convexAllocators[i];
 
     // Look through staking contracts
     for (let j = 0; j < CONVEX_STAKING_CONTRACTS.length; j++) {

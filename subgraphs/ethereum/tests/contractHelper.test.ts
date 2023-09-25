@@ -28,7 +28,6 @@ import {
   ERC20_OHM_V2,
   ERC20_TOKE,
   ERC20_WETH,
-  getWalletAddressesForContract,
   LQTY_STAKING,
   NATIVE_ETH,
   TOKE_STAKING,
@@ -49,6 +48,7 @@ import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import { mockAuraEarnedBalance, mockAuraEarnedBalanceZero, mockAuraLockedBalance, mockAuraLockedBalanceZero, mockBalancerGaugeBalance, mockBalancerGaugeBalanceZero, mockConvexStakedBalance, mockConvexStakedBalanceZero, mockEthUsdRate, mockLiquityStakedBalance, mockLiquityStakedBalanceZero, mockTokeStakedBalance, mockTokeStakedBalanceZero } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 const TIMESTAMP: BigInt = BigInt.fromString("1");
 const DEFAULT_TOTAL_SUPPLY = BigDecimal.fromString("0");

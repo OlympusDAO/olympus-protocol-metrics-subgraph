@@ -1,9 +1,10 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { TokenSupply } from "../../../shared/generated/schema";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
-import { ERC20_OHM_V2, getContractName, getWalletAddressesForContract } from "./Constants";
+import { ERC20_OHM_V2, getContractName } from "./Constants";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { TYPE_LENDING, createOrUpdateTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
+import { getWalletAddressesForContract } from "./ProtocolAddresses";
 
 // Hard-coding this for now. If we wanted this to be generalisable, we would use the Silo Repository contract.
 const SILO_OHM_COLLATERAL_TOKEN = "0x907136B74abA7D5978341eBA903544134A66B065";
