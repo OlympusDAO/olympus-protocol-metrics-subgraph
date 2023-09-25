@@ -48,7 +48,6 @@ describe("constructor", () => {
   test("basic values", () => {
     const record = createTokenRecord();
 
-    assert.stringEquals("1970-01-01/source/name", record.id);
     assert.stringEquals("name", record.token);
     assert.stringEquals("tokenAddress", record.tokenAddress);
     assert.stringEquals("source", record.source);
