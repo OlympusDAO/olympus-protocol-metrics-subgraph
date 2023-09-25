@@ -66,7 +66,7 @@ type BondDiscount @entity {
 }
 
 # Represents the balance of a specific token in the treasury
-type TokenRecord @entity(immutable: true) {
+type TokenRecord @entity {
   id: ID! # YYYY-MM-DD/<source>/<token>
   block: BigInt!
   timestamp: BigInt! # Unix timestamp in UTC
@@ -87,7 +87,7 @@ type TokenRecord @entity(immutable: true) {
 }
 
 # Represents a balance that affects the supply of OHM
-type TokenSupply @entity(immutable: true) {
+type TokenSupply @entity {
   id: ID! # YYYY-MM-DD/<token>/<type>/<pool>/<source>
   block: BigInt!
   timestamp: BigInt! # Unix timestamp in UTC

@@ -5,7 +5,7 @@ import { getERC20DecimalBalance } from "../../../shared/src/contracts/ERC20";
 import { pushTokenSupplyArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { LendingMarketDeployment } from "../../../shared/src/utils/LendingMarketDeployment";
-import { createTokenSupply, TYPE_LENDING, TYPE_LIQUIDITY, TYPE_TOTAL_SUPPLY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
+import { createOrUpdateTokenSupply, TYPE_LENDING, TYPE_LIQUIDITY, TYPE_TOTAL_SUPPLY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { ERC20 } from "../../generated/TokenRecords-arbitrum/ERC20";
 import { OlympusLender } from "../../generated/TokenRecords-arbitrum/OlympusLender";
 import { CIRCULATING_SUPPLY_WALLETS, ERC20_GOHM_SYNAPSE, ERC20_OHM, OLYMPUS_LENDER, SENTIMENT_DEPLOYMENTS, SENTIMENT_LTOKEN, SILO_ADDRESS, SILO_DEPLOYMENTS } from "../contracts/Constants";
@@ -33,7 +33,7 @@ export function getTotalSupply(timestamp: BigInt, blockNumber: BigInt): TokenSup
   }
 
   const totalSupply = toDecimal(totalSupplyResult.value, decimalsResult.value);
-  return [createTokenSupply(
+  return [createOrUpdateTokenSupply(
     timestamp, getContractName(ERC20_OHM), ERC20_OHM, null, null, null, null, TYPE_TOTAL_SUPPLY, totalSupply, blockNumber)];
 }
 
@@ -76,7 +76,7 @@ export function getLendingAMOOHMRecords(timestamp: BigInt, blockNumber: BigInt):
     }
 
     records.push(
-      createTokenSupply(
+      createOrUpdateTokenSupply(
         timestamp,
         getContractName(ERC20_OHM),
         ERC20_OHM,
@@ -122,7 +122,7 @@ function getLendingMarketManualDeploymentOHMRecords(timestamp: BigInt, deploymen
 
   // Record the balance at the current block
   records.push(
-    createTokenSupply(
+    createOrUpdateTokenSupply(
       timestamp,
       getContractName(ERC20_OHM),
       ERC20_OHM,
@@ -225,7 +225,7 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
      * and the frontend will use the index to convert gOHM to OHM.
      */
     records.push(
-      createTokenSupply(
+      createOrUpdateTokenSupply(
         timestamp,
         getContractName(ERC20_GOHM_SYNAPSE),
         ERC20_GOHM_SYNAPSE,
@@ -248,7 +248,7 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
     if (balance.equals(BigDecimal.zero())) continue;
 
     records.push(
-      createTokenSupply(
+      createOrUpdateTokenSupply(
         timestamp,
         getContractName(ERC20_OHM),
         ERC20_OHM,
@@ -306,7 +306,7 @@ export function getProtocolOwnedLiquiditySupplyRecords(
         }
 
         records.push(
-          createTokenSupply(
+          createOrUpdateTokenSupply(
             timestamp,
             getContractName(currentOhmToken),
             currentOhmToken,

@@ -4,7 +4,7 @@ import { TokenSupply } from "../../../shared/generated/schema";
 import { ERC20_OHM, SENTIMENT_LTOKEN } from "./Constants";
 import { ERC20 } from "../../generated/TokenRecords-arbitrum/ERC20";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { TYPE_LENDING, createTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
+import { TYPE_LENDING, createOrUpdateTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
 import { getContractName, getWalletAddressesForContract } from "./Contracts";
 
 export function getSentimentSupply(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
@@ -30,7 +30,7 @@ export function getSentimentSupply(timestamp: BigInt, blockNumber: BigInt): Toke
 
     log.info("getSentimentSupply: Sentiment OHM balance {} for wallet {}", [balance.toString(), getContractName(currentWallet)]);
     records.push(
-      createTokenSupply(
+      createOrUpdateTokenSupply(
         timestamp,
         getContractName(ERC20_OHM),
         ERC20_OHM,

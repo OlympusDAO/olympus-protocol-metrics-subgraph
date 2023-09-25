@@ -4,8 +4,8 @@ import { log } from "matchstick-as";
 import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
 import { TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { createTokenRecord, getTokenCategory } from "../../../shared/src/utils/TokenRecordHelper";
-import { createTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
+import { createOrUpdateTokenRecord, getTokenCategory } from "../../../shared/src/utils/TokenRecordHelper";
+import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
 import { CurvePoolV2 } from "../../generated/ProtocolMetrics/CurvePoolV2";
 import { ERC20TokenSnapshot, PoolSnapshot } from "../../generated/schema";
@@ -222,7 +222,7 @@ function getCurvePairConvexStakedRecord(
       balance.toString(),
     ],
   );
-  return createTokenRecord(
+  return createOrUpdateTokenRecord(
     timestamp,
     getContractName(stakedTokenDefinition.getAddress(), "Staked in Convex"),
     stakedTokenDefinition.getAddress(),
@@ -291,7 +291,7 @@ function getCurvePairFraxLockedRecord(
       balance.toString(),
     ],
   );
-  return createTokenRecord(
+  return createOrUpdateTokenRecord(
     timestamp,
     getContractName(stakedTokenDefinition.getAddress(), "Staked in Frax"),
     stakedTokenDefinition.getAddress(),
@@ -353,7 +353,7 @@ function getCurvePairRecord(
     pairTokenBalanceDecimal.toString(),
   ]);
 
-  return createTokenRecord(
+  return createOrUpdateTokenRecord(
     timestamp,
     getContractName(pairTokenAddress),
     pairTokenAddress,
@@ -607,7 +607,7 @@ export function getCurvePairTokenQuantityRecords(
 
     const tokenBalance = totalQuantity.times(record.balance).div(poolSnapshot.totalSupply);
     records.push(
-      createTokenSupply(
+      createOrUpdateTokenSupply(
         timestamp,
         getContractName(tokenAddress),
         tokenAddress,

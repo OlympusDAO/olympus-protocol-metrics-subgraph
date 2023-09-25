@@ -5,7 +5,7 @@ import { getDecimals } from "../../../shared/src/contracts/ERC20";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { addressesEqual } from "../../../shared/src/utils/StringHelper";
 import {
-  createTokenRecord,
+  createOrUpdateTokenRecord,
   getIsTokenLiquid,
   getTokenRecordValue,
 } from "../../../shared/src/utils/TokenRecordHelper";
@@ -102,7 +102,7 @@ export const getStakedBalances = (
         price = getPrice(tokenAddress, block);
       }
 
-      const record = createTokenRecord(
+      const record = createOrUpdateTokenRecord(
         timestamp,
         getContractName(tokenAddress, "Staked"),
         tokenAddress,

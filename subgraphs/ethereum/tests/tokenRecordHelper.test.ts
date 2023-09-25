@@ -8,7 +8,7 @@ import {
   TokenDefinition,
 } from "../../shared/src/contracts/TokenDefinition";
 import {
-  createTokenRecord,
+  createOrUpdateTokenRecord,
   getTokenAddressesInCategory,
   isTokenAddressInCategory,
 } from "../../shared/src/utils/TokenRecordHelper";
@@ -24,7 +24,7 @@ import {
 const TIMESTAMP = BigInt.fromString("1");
 
 const createTokenRecord = (): TokenRecord => {
-  return createTokenRecord(
+  return createOrUpdateTokenRecord(
     TIMESTAMP,
     "name",
     "tokenAddress",
@@ -59,7 +59,7 @@ describe("constructor", () => {
   });
 
   test("custom multiplier", () => {
-    const record = createTokenRecord(
+    const record = createOrUpdateTokenRecord(
       TIMESTAMP,
       "name",
       "tokenAddress",
@@ -89,7 +89,7 @@ describe("constructor", () => {
 
 describe("value", () => {
   test("multiplier = 1", () => {
-    const record = createTokenRecord(
+    const record = createOrUpdateTokenRecord(
       TIMESTAMP,
       "name",
       "tokenAddress",
@@ -109,7 +109,7 @@ describe("value", () => {
   });
 
   test("multiplier = 0.25", () => {
-    const record = createTokenRecord(
+    const record = createOrUpdateTokenRecord(
       TIMESTAMP,
       "name",
       "tokenAddress",
@@ -133,7 +133,7 @@ describe("value", () => {
     const tokenDefinitions = new Map<string, TokenDefinition>();
     tokenDefinitions.set(ERC20_ALCX, new TokenDefinition(ERC20_ALCX, TokenCategoryVolatile, true, false, BigDecimal.fromString("0.5")));
 
-    const record = createTokenRecord(
+    const record = createOrUpdateTokenRecord(
       TIMESTAMP,
       "name",
       ERC20_ALCX,
@@ -157,7 +157,7 @@ describe("value", () => {
     const tokenDefinitions = new Map<string, TokenDefinition>();
     tokenDefinitions.set(ERC20_ALCX, new TokenDefinition(ERC20_ALCX, TokenCategoryVolatile, true, false, BigDecimal.fromString("0.5")));
 
-    const record = createTokenRecord(
+    const record = createOrUpdateTokenRecord(
       TIMESTAMP,
       "name",
       ERC20_ALCX,

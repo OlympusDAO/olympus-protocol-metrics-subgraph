@@ -4,7 +4,7 @@ import { TokenRecord } from "../../../shared/generated/schema";
 import { PriceHandler } from "../../../shared/src/price/PriceHandler";
 import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import {
-  createTokenRecord,
+  createOrUpdateTokenRecord,
   getIsTokenLiquid,
 } from "../../../shared/src/utils/TokenRecordHelper";
 import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
@@ -62,7 +62,7 @@ function getOwnedLiquidityBalance(
     }
 
     // Create record
-    const record = createTokenRecord(
+    const record = createOrUpdateTokenRecord(
       timestamp,
       getContractName(liquidityHandler.getId()),
       liquidityHandler.getId(),
