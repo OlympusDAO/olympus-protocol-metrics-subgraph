@@ -8,7 +8,6 @@ import {
   CONVEX_CVX_VL_ALLOCATOR,
   DAO_WALLET,
   TREASURY_ADDRESS_V3,
-  WALLET_ADDRESSES,
 } from "../../shared/src/Wallets";
 import {
   AURA_STAKING_AURA_BAL,
@@ -187,11 +186,12 @@ describe("get ERC20 token records from wallets", () => {
   });
 
   test("excludes OHM in treasury wallet addresses", () => {
-    mockZeroWalletBalances(ERC20_OHM_V2, getWalletAddressesForContract(ERC20_OHM_V2));
+    const walletAddresses = getWalletAddressesForContract(ERC20_OHM_V2);
+    mockZeroWalletBalances(ERC20_OHM_V2, walletAddresses);
     mockERC20TotalSupply(ERC20_OHM_V2, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
 
-    for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
-      mockWalletBalance(ERC20_OHM_V2, WALLET_ADDRESSES[i], toBigInt(BigDecimal.fromString("10")));
+    for (let i = 0; i < walletAddresses.length; i++) {
+      mockWalletBalance(ERC20_OHM_V2, walletAddresses[i], toBigInt(BigDecimal.fromString("10")));
     }
 
     const blockNumber = BigInt.fromString("14000000");
@@ -210,11 +210,12 @@ describe("get ERC20 token records from wallets", () => {
   });
 
   test("excludes gOHM in treasury wallet addresses", () => {
-    mockZeroWalletBalances(ERC20_GOHM, getWalletAddressesForContract(ERC20_GOHM));
+    const walletAddresses = getWalletAddressesForContract(ERC20_OHM_V2);
+    mockZeroWalletBalances(ERC20_GOHM, walletAddresses);
     mockERC20TotalSupply(ERC20_GOHM, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
 
-    for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
-      mockWalletBalance(ERC20_GOHM, WALLET_ADDRESSES[i], toBigInt(BigDecimal.fromString("10")));
+    for (let i = 0; i < walletAddresses.length; i++) {
+      mockWalletBalance(ERC20_GOHM, walletAddresses[i], toBigInt(BigDecimal.fromString("10")));
     }
 
     const blockNumber = BigInt.fromString("14000000");
