@@ -39,7 +39,8 @@ function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): BalancerV
  * @returns snapshot, or null if there was a contract revert
  */
 export function getOrCreateBalancerPoolSnapshot(poolId: string, vaultAddress: string, blockNumber: BigInt): BalancerPoolSnapshot | null {
-  const snapshotId = `${poolId}/${blockNumber.toString()}`;
+  // poolId-blockNumber
+  const snapshotId = Bytes.fromUTF8(poolId).concatI32(blockNumber.toI32());
   let snapshot = BalancerPoolSnapshot.load(snapshotId);
   if (snapshot == null) {
     log.debug("getOrCreateBalancerPoolSnapshot: Creating new snapshot for pool {} ({}) at block {}", [getContractName(poolId), poolId, blockNumber.toString()]);

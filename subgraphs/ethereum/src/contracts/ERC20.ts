@@ -1,4 +1,4 @@
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
@@ -7,7 +7,7 @@ import { getContractName } from "../utils/Constants";
 
 export function getOrCreateERC20TokenSnapshot(address: string, blockNumber: BigInt): ERC20TokenSnapshot {
     const FUNC = "getOrCreateERC20TokenSnapshot";
-    const snapshotId = `${address.toLowerCase()}/${blockNumber.toString()}`;
+    const snapshotId = Bytes.fromHexString(address).concatI32(blockNumber.toI32());
     let token = ERC20TokenSnapshot.load(snapshotId);
     if (token == null) {
         token = new ERC20TokenSnapshot(snapshotId);

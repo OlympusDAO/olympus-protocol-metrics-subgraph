@@ -67,7 +67,7 @@ type BondDiscount @entity {
 
 # Represents the balance of a specific token in the treasury
 type TokenRecord @entity {
-  id: ID! # YYYY-MM-DD/<source>/<token>
+  id: Bytes! # YYYY-MM-DD/<source>/<token>
   block: BigInt!
   timestamp: BigInt! # Unix timestamp in UTC
   date: String!
@@ -88,7 +88,7 @@ type TokenRecord @entity {
 
 # Represents a balance that affects the supply of OHM
 type TokenSupply @entity {
-  id: ID! # YYYY-MM-DD/<token>/<type>/<pool>/<source>
+  id: Bytes! # YYYY-MM-DD/<token>/<type>/<pool>/<source>
   block: BigInt!
   timestamp: BigInt! # Unix timestamp in UTC
   date: String! # YYYY-MM-DD
@@ -130,22 +130,15 @@ type GnosisAuction @entity {
 
 # Caching
 type ERC20TokenSnapshot @entity(immutable: true) {
-  id: ID! # address/block
+  id: Bytes! # address/block
   address: Bytes!
   decimals: Int!
   totalSupply: BigDecimal
 }
 
-type ConvexRewardPoolSnapshot @entity(immutable: true) {
-  id: ID! # lowercase address/block
-  block: BigInt!
-  address: Bytes!
-  stakingToken: Bytes!
-}
-
 # TODO migrate to PoolSnapshot
 type BalancerPoolSnapshot @entity(immutable: true) {
-  id: ID! # pool id/block
+  id: Bytes! # pool id/block
   block: BigInt!
   pool: Bytes!
   poolToken: Bytes!
@@ -157,7 +150,7 @@ type BalancerPoolSnapshot @entity(immutable: true) {
 }
 
 type PoolSnapshot @entity(immutable: true) {
-  id: ID! # pool/block
+  id: Bytes! # pool/block
   block: BigInt!
   pool: Bytes!
   poolToken: Bytes
@@ -169,14 +162,14 @@ type PoolSnapshot @entity(immutable: true) {
 }
 
 type TokenPriceSnapshot @entity(immutable: true) {
-  id: ID! # address/block
+  id: Bytes! # address/block
   block: BigInt!
   token: Bytes!
   price: BigDecimal!
 }
 
 type StakingPoolSnapshot @entity(immutable: true) {
-  id: ID! # address/block
+  id: Bytes! # address/block
   block: BigInt!
   contractAddress: Bytes!
   stakingToken: Bytes # Will not be set if the call reverts

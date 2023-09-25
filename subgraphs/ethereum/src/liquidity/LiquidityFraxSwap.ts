@@ -27,7 +27,8 @@ import { getUSDRate } from "../utils/Price";
  * @returns snapshot, or null if there was a contract revert
  */
 export function getOrCreateFraxPoolSnapshot(pairAddress: string, blockNumber: BigInt): PoolSnapshot | null {
-  const snapshotId = `${pairAddress}/${blockNumber.toString()}`;
+  // pairAddress/blockNumber
+  const snapshotId = Bytes.fromHexString(pairAddress).concatI32(blockNumber.toI32());
   let snapshot = PoolSnapshot.load(snapshotId);
   if (snapshot == null) {
     log.debug("getOrCreateFraxPoolSnapshot: Creating new snapshot for pool {} ({}) at block {}", [getContractName(pairAddress), pairAddress, blockNumber.toString()]);
