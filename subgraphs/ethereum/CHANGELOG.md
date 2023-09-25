@@ -1,5 +1,10 @@
 # Subgraph Changelog
 
+## 5.0.0 (???)
+
+- Improve indexing performance by using Bytes instead of String for entity ids
+- Re-index using a block handler, as the previous event will be deprecated soon
+
 ## 4.13.3 (2023-09-22)
 
 - Include Cooler Loans Clearinghouse balances and receivables
