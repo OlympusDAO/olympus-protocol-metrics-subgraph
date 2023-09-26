@@ -5,7 +5,6 @@ import { Rebase } from "../../generated/schema";
 import { OlympusERC20 } from "../../generated/sOlympusERC20V2/OlympusERC20";
 import { RebaseCall } from "../../generated/sOlympusERC20V2/sOlympusERC20V2";
 import { ERC20_OHM_V1, ERC20_OHM_V2, STAKING_CONTRACT_V2 } from "../utils/Constants";
-import { createDailyStakingReward } from "../utils/DailyStakingReward";
 import { getUSDRate } from "../utils/Price";
 
 export function rebaseFunction(call: RebaseCall): void {
@@ -25,7 +24,5 @@ export function rebaseFunction(call: RebaseCall): void {
     rebase.timestamp = call.block.timestamp;
     rebase.value = rebase.amount.times(getUSDRate(ERC20_OHM_V2, call.block.number));
     rebase.save();
-
-    createDailyStakingReward(rebase.timestamp, rebase.amount, call.block.number);
   }
 }
