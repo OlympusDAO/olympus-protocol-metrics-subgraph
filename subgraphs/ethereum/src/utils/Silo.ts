@@ -3,7 +3,7 @@ import { TokenSupply } from "../../../shared/generated/schema";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { ERC20_OHM_V2, getContractName } from "./Constants";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { TYPE_LENDING, createOrUpdateTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
+import { TYPE_LENDING, createTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
 import { getWalletAddressesForContract } from "./ProtocolAddresses";
 
 // Hard-coding this for now. If we wanted this to be generalisable, we would use the Silo Repository contract.
@@ -32,7 +32,7 @@ export function getSiloSupply(timestamp: BigInt, blockNumber: BigInt): TokenSupp
 
     log.info("getSiloSupply: Silo OHM balance {} for wallet {}", [balance.toString(), getContractName(currentWallet)]);
     records.push(
-      createOrUpdateTokenSupply(
+      createTokenSupply(
         timestamp,
         getContractName(ERC20_OHM_V2),
         ERC20_OHM_V2,

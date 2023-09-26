@@ -1,4 +1,4 @@
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 import { ethereum } from "@graphprotocol/graph-ts";
 
 import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
@@ -20,15 +20,14 @@ import { generateTokenRecords, generateTokenSupply } from "../utils/TreasuryCalc
 import { getAPY_Rebase, getNextOHMRebase } from "./Rebase";
 import { getMarketCap, getTreasuryLiquidBacking, getTreasuryLiquidBackingPerGOhmSynthetic, getTreasuryLiquidBackingPerOhmFloating, getTreasuryMarketValue } from "./TreasuryMetrics";
 
-export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
+export function createProtocolMetric(timestamp: BigInt, blockNumber: BigInt): ProtocolMetric {
   const dateString = getISO8601DateStringFromTimestamp(timestamp);
+  // YYYY-MM-DD/<block>
+  const recordId = Bytes.fromUTF8(dateString).concatI32(blockNumber.toI32());
 
-  let protocolMetric = ProtocolMetric.load(dateString);
-  if (protocolMetric == null) {
-    protocolMetric = new ProtocolMetric(dateString);
-    protocolMetric.date = dateString;
-    protocolMetric.timestamp = timestamp;
-  }
+  const protocolMetric = new ProtocolMetric(recordId);
+  protocolMetric.date = dateString;
+  protocolMetric.timestamp = timestamp;
 
   return protocolMetric as ProtocolMetric;
 }
@@ -37,7 +36,7 @@ export function updateProtocolMetrics(block: ethereum.Block, tokenRecords: Token
   const blockNumber = block.number;
   log.info("Starting protocol metrics for block {}", [blockNumber.toString()]);
 
-  const pm = loadOrCreateProtocolMetric(block.timestamp);
+  const pm = createProtocolMetric(block.timestamp, block.number);
 
   pm.block = blockNumber;
 
@@ -95,11 +94,6 @@ export function handleMetrics(event: LogRebase): void {
   updateProtocolMetrics(event.block, tokenRecords, tokenSupplies);
 }
 
-/**
- * DO NOT USE IN PRODUCTION
- * 
- * FOR TESTING ONLY
- */
 export function handleMetricsBlock(block: ethereum.Block): void {
   log.debug("handleMetrics: *** Indexing block {}", [block.number.toString()]);
 

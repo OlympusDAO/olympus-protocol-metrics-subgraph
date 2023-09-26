@@ -3,7 +3,7 @@ import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { TokenRecord } from "../../../shared/generated/schema";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { addressesEqual } from "../../../shared/src/utils/StringHelper";
-import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
+import { createTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 import { TreasureMining } from "../../generated/TokenRecords-arbitrum/TreasureMining";
 import { getPrice } from "../price/PriceLookup";
@@ -105,7 +105,7 @@ export const getStakedBalances = (
         price = getPrice(tokenAddress, block);
       }
 
-      const record = createOrUpdateTokenRecord(
+      const record = createTokenRecord(
         timestamp,
         getContractName(tokenAddress, "Staked", "veMAGIC"),
         tokenAddress,

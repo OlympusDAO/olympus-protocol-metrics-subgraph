@@ -3,7 +3,7 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { ERC20 } from "../../generated/Price/ERC20";
 import { TokenRecord } from "../../generated/schema";
 import { toDecimal } from "../utils/Decimals";
-import { createOrUpdateTokenRecord, getIsTokenLiquid } from "../utils/TokenRecordHelper";
+import { createTokenRecord, getIsTokenLiquid } from "../utils/TokenRecordHelper";
 import { ContractNameLookup } from "./ContractLookup";
 import { TokenDefinition } from "./TokenDefinition";
 
@@ -103,7 +103,7 @@ export function getERC20TokenRecordFromWallet(
   );
   if (!balance || balance.equals(BigDecimal.zero())) return null;
 
-  return createOrUpdateTokenRecord(
+  return createTokenRecord(
     timestamp,
     contractLookup(contractAddress),
     contractAddress,

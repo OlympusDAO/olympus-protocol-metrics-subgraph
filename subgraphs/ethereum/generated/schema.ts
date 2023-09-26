@@ -344,9 +344,9 @@ export class Token extends Entity {
 }
 
 export class ProtocolMetric extends Entity {
-  constructor(id: string) {
+  constructor(id: Bytes) {
     super();
-    this.set("id", Value.fromString(id));
+    this.set("id", Value.fromBytes(id));
   }
 
   save(): void {
@@ -354,34 +354,36 @@ export class ProtocolMetric extends Entity {
     assert(id != null, "Cannot save ProtocolMetric entity without an ID");
     if (id) {
       assert(
-        id.kind == ValueKind.STRING,
-        `Entities of type ProtocolMetric must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+        id.kind == ValueKind.BYTES,
+        `Entities of type ProtocolMetric must have an ID of type Bytes but the id '${id.displayData()}' is of type ${id.displayKind()}`
       );
-      store.set("ProtocolMetric", id.toString(), this);
+      store.set("ProtocolMetric", id.toBytes().toHexString(), this);
     }
   }
 
-  static loadInBlock(id: string): ProtocolMetric | null {
+  static loadInBlock(id: Bytes): ProtocolMetric | null {
     return changetype<ProtocolMetric | null>(
-      store.get_in_block("ProtocolMetric", id)
+      store.get_in_block("ProtocolMetric", id.toHexString())
     );
   }
 
-  static load(id: string): ProtocolMetric | null {
-    return changetype<ProtocolMetric | null>(store.get("ProtocolMetric", id));
+  static load(id: Bytes): ProtocolMetric | null {
+    return changetype<ProtocolMetric | null>(
+      store.get("ProtocolMetric", id.toHexString())
+    );
   }
 
-  get id(): string {
+  get id(): Bytes {
     const value = this.get("id");
     if (!value || value.kind == ValueKind.NULL) {
       throw new Error("Cannot return null for a required field.");
     } else {
-      return value.toString();
+      return value.toBytes();
     }
   }
 
-  set id(value: string) {
-    this.set("id", Value.fromString(value));
+  set id(value: Bytes) {
+    this.set("id", Value.fromBytes(value));
   }
 
   get block(): BigInt {

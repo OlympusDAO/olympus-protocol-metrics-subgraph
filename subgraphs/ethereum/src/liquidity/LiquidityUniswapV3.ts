@@ -7,8 +7,8 @@ import { getUSDRate } from "../utils/Price";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { getERC20Decimals } from "../contracts/ERC20";
 import { UniswapV3PositionManager } from "../../generated/ProtocolMetrics/UniswapV3PositionManager";
-import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
-import { TYPE_LIQUIDITY, createOrUpdateTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
+import { createTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
+import { TYPE_LIQUIDITY, createTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
 import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { getWalletAddressesForContract } from "../utils/ProtocolAddresses";
 
@@ -185,7 +185,7 @@ export function getUniswapV3POLRecords(
       log.debug("getUniswapV3POLRecords: multiplier: {}", [multiplier.toString()]);
 
       records.push(
-        createOrUpdateTokenRecord(
+        createTokenRecord(
           timestamp,
           getContractName(pairAddress),
           pairAddress,
@@ -326,7 +326,7 @@ export function getUniswapV3OhmSupply(
       const ohmBalance = balances[ohmIndex];
 
       records.push(
-        createOrUpdateTokenSupply(
+        createTokenSupply(
           timestamp,
           getContractName(tokenAddress),
           tokenAddress,

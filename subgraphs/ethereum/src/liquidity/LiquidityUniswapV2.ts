@@ -3,8 +3,8 @@ import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts
 import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
 import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
-import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
+import { createTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
+import { createTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { PoolSnapshot } from "../../generated/schema";
 import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
@@ -263,7 +263,7 @@ function getUniswapV2PairRecord(
 
   const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
 
-  return createOrUpdateTokenRecord(
+  return createTokenRecord(
     timestamp,
     getContractName(pairAddress),
     pairAddress,
@@ -452,7 +452,7 @@ export function getUniswapV2PairTokenQuantity(
 
     const tokenBalance = totalQuantity.times(record.balance).div(poolTokenTotalSupply);
     records.push(
-      createOrUpdateTokenSupply(
+      createTokenSupply(
         timestamp,
         getContractName(tokenAddress),
         tokenAddress,
