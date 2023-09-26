@@ -477,7 +477,9 @@ export function getERC20TokenRecordFromWallet(
   blockNumber: BigInt,
 ): TokenRecord | null {
   // Check decimals first, as this is cached
-  const decimals = getERC20Decimals(contractAddress, blockNumber);
+  // But don't use getERC20Decimals, as that will throw an error
+  const erc20Snapshot = getOrCreateERC20TokenSnapshot(contractAddress, blockNumber);
+  const decimals = erc20Snapshot.decimals;
   if (decimals <= 0) {
     log.warning(
       "getERC20TokenRecordFromWallet: Unable to determine decimals for token {} ({}) at block {}. Skipping.",
