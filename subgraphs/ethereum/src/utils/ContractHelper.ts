@@ -479,6 +479,16 @@ export function getERC20TokenRecordFromWallet(
   rate: BigDecimal,
   blockNumber: BigInt,
 ): TokenRecord | null {
+  // Check decimals first, as this is cached
+  const decimals = getERC20Decimals(contractAddress, blockNumber);
+  if (decimals <= 0) {
+    log.warning(
+      "getERC20TokenRecordFromWallet: Unable to determine decimals for token {} ({}) at block {}. Skipping.",
+      [getContractName(contractAddress), contractAddress, blockNumber.toString()],
+    );
+    return null;
+  }
+
   const callResult = contract.try_balanceOf(Address.fromString(walletAddress));
   if (callResult.reverted) {
     log.warning(
@@ -487,8 +497,6 @@ export function getERC20TokenRecordFromWallet(
     );
     return null;
   }
-
-  const decimals = getERC20Decimals(contractAddress, blockNumber);
 
   const balance = toDecimal(callResult.value, decimals);
   if (!balance || balance.equals(BigDecimal.zero())) return null;
