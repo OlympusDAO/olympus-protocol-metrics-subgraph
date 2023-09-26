@@ -23,7 +23,7 @@ import {
 
 const TIMESTAMP = BigInt.fromString("1");
 
-const createTokenRecord = (): TokenRecord => {
+const createSampleTokenRecord = (): TokenRecord => {
   return createTokenRecord(
     TIMESTAMP,
     "name",
@@ -46,7 +46,7 @@ beforeEach(() => {
 
 describe("constructor", () => {
   test("basic values", () => {
-    const record = createTokenRecord();
+    const record = createSampleTokenRecord();
 
     assert.stringEquals("name", record.token);
     assert.stringEquals("tokenAddress", record.tokenAddress);
@@ -77,7 +77,7 @@ describe("constructor", () => {
   });
 
   test("sets value", () => {
-    const record = createTokenRecord();
+    const record = createSampleTokenRecord();
 
     // Creating the record will set the value
     // 2 * 3 * 1
