@@ -19,6 +19,7 @@ import { getUSDRate } from "../utils/Price";
 import { generateTokenRecords, generateTokenSupply } from "../utils/TreasuryCalculations";
 import { getAPY_Rebase, getNextOHMRebase } from "./Rebase";
 import { getMarketCap, getTreasuryLiquidBacking, getTreasuryLiquidBackingPerGOhmSynthetic, getTreasuryLiquidBackingPerOhmFloating, getTreasuryMarketValue } from "./TreasuryMetrics";
+import { NewRound } from "../../generated/ProtocolMetrics/ChainlinkPriceFeed";
 
 export function createProtocolMetric(timestamp: BigInt, blockNumber: BigInt): ProtocolMetric {
   const dateString = getISO8601DateStringFromTimestamp(timestamp);
@@ -80,8 +81,8 @@ export function updateProtocolMetrics(block: ethereum.Block, tokenRecords: Token
   pm.save();
 }
 
-export function handleMetrics(event: LogRebase): void {
-  log.debug("handleMetrics: *** Indexing block {}", [event.block.number.toString()]);
+export function handleNewRound(event: NewRound): void {
+  log.debug("handleNewRound: *** Indexing block {}", [event.block.number.toString()]);
 
   // TokenRecord
   const tokenRecords = generateTokenRecords(event.block.timestamp, event.block.number);
@@ -92,18 +93,4 @@ export function handleMetrics(event: LogRebase): void {
   // Use the generated records to calculate protocol/treasury metrics
   // Otherwise we would be re-generating the records
   updateProtocolMetrics(event.block, tokenRecords, tokenSupplies);
-}
-
-export function handleMetricsBlock(block: ethereum.Block): void {
-  log.debug("handleMetrics: *** Indexing block {}", [block.number.toString()]);
-
-  // TokenRecord
-  const tokenRecords = generateTokenRecords(block.timestamp, block.number);
-
-  // TokenSupply
-  const tokenSupplies = generateTokenSupply(block.timestamp, block.number);
-
-  // Use the generated records to calculate protocol/treasury metrics
-  // Otherwise we would be re-generating the records
-  updateProtocolMetrics(block, tokenRecords, tokenSupplies);
 }
