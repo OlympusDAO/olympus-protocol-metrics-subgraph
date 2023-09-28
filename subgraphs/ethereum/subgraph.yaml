@@ -113,8 +113,8 @@ dataSources:
     name: ProtocolMetrics
     network: mainnet
     source:
-      # DAI-USD price feed
-      address: "0x478238a1c8B862498c74D0647329Aef9ea6819Ed"
+      # DAI-ETH price feed
+      address: "0x158228e08C52F3e2211Ccbc8ec275FA93f6033FC"
       abi: ChainlinkPriceFeed
       startBlock: 14690000
     mapping:
