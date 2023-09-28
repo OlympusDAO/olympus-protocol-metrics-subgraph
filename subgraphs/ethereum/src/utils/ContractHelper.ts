@@ -558,6 +558,10 @@ export function getVendorFinanceRecords(
     balance = balance.plus(currentDeployment.getAmount());
   }
 
+  if (balance.equals(BigDecimal.zero())) {
+    return records;
+  }
+
   records.push(createOrUpdateTokenRecord(
     timestamp,
     getContractName(contractAddress),
@@ -607,6 +611,10 @@ export function getMysoFinanceRecords(
     }
 
     balance = balance.plus(currentDeployment.getAmount());
+  }
+
+  if (balance.equals(BigDecimal.zero())) {
+    return records;
   }
 
   records.push(createOrUpdateTokenRecord(
