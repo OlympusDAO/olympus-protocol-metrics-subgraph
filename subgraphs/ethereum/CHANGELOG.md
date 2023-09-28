@@ -4,7 +4,8 @@
 
 - Improve indexing performance by using Bytes instead of String for entity ids
 - Improve indexing performance by shifting TokenRecord, TokenSupply and ProtocolMetric entities to be immutable
-- Re-index using a block handler, as the previous event will be deprecated soon
+- Change the indexing trigger to Chainlink, as the previous event will be deprecated soon
+- Add removal of funds from Vendor Finance
 
 ## 4.13.3 (2023-09-22)
 
