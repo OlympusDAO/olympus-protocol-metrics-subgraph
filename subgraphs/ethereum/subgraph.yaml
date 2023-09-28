@@ -114,7 +114,7 @@ dataSources:
     network: mainnet
     source:
       # DAI-USD price feed
-      address: "0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9"
+      address: "0x478238a1c8B862498c74D0647329Aef9ea6819Ed"
       abi: ChainlinkPriceFeed
       startBlock: 14690000
     mapping:
