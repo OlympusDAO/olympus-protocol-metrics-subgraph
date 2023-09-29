@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 4.14.0 (2023-09-29)
+
+- Add V1.1 of the Cooler Loans Clearinghouse
+
 ## 4.13.3 (2023-09-22)
 
 - Include Cooler Loans Clearinghouse balances and receivables
