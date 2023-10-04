@@ -31,6 +31,7 @@ import {
   ERC20_SOHM_V2_BLOCK,
   ERC20_SOHM_V3,
   ERC20_SOHM_V3_BLOCK,
+  ERC20_WSOHM,
   EULER_ADDRESS,
   EULER_DEPLOYMENTS,
   getContractName,
@@ -51,6 +52,8 @@ import { PairHandlerTypes } from "./PairHandler";
 import { getUSDRate } from "./Price";
 import { getUniswapV3OhmSupply } from "../liquidity/LiquidityUniswapV3";
 import { getSiloSupply } from "./Silo";
+import { wsOHM } from "../../generated/ProtocolMetrics/wsOHM";
+import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
 const MIGRATION_OFFSET = "2013";
@@ -88,6 +91,11 @@ const SOHM_INDEX_CORRECTION_BLOCK = "18121728";
  * The block from which the balance of the Silo Borrowable OHM token was used, instead of manual deployments.
  */
 const SILO_TOKEN_BLOCK = "18121728";
+
+/**
+ * The block from which sOHM v2 was indexed.
+ */
+const SOHM_V2_INDEX_BLOCK = "18260000";
 
 /**
  * Returns the total supply of the latest version of the OHM contract
@@ -458,11 +466,11 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
     );
   }
 
-  // Index sOHM and gOHM if after the milestone
+  // Index sOHM v3 and gOHM if after the milestone
   if (blockNumber.ge(BigInt.fromString(GOHM_INDEXING_BLOCK))) {
     const ohmIndex: BigDecimal = getCurrentIndex(blockNumber);
 
-    // sOHM
+    // sOHM v3
     for (let i = 0; i < wallets.length; i++) {
       const currentWallet = wallets[i];
 
@@ -502,6 +510,57 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
         createOrUpdateTokenSupply(
           timestamp,
           `${getContractName(ERC20_OHM_V2)} in gOHM`,
+          ERC20_OHM_V2,
+          null,
+          null,
+          getContractName(currentWallet),
+          currentWallet,
+          TYPE_TREASURY,
+          ohmBalance,
+          blockNumber,
+          -1, // Subtract
+        ),
+      );
+    }
+  }
+
+  // Index sOHM v2 if after the milestone
+  if (blockNumber.ge(BigInt.fromString(SOHM_V2_INDEX_BLOCK))) {
+    const walletsExtended = new Array<string>();
+    for (let i = 0; i < wallets.length; i++) {
+      walletsExtended.push(wallets[i]);
+    }
+
+    // Add the sOHM v2 contract, as any OHM in there is effectively burned and out of circulation
+    walletsExtended.push(ERC20_SOHM_V2);
+
+    // Get the contracts
+    const sOHMV2Contract = ERC20.bind(Address.fromString(ERC20_SOHM_V2));
+    const wsOHMContract = wsOHM.bind(Address.fromString(ERC20_WSOHM));
+    const wsOHMDecimals = 18;
+    const ohmIndex: BigDecimal = getCurrentIndex(blockNumber);
+
+    // sOHM v2
+    for (let i = 0; i < walletsExtended.length; i++) {
+      const currentWallet = walletsExtended[i];
+
+      const balanceResult = sOHMV2Contract.try_balanceOf(Address.fromString(currentWallet));
+      if (balanceResult.reverted) continue;
+
+      const balance = balanceResult.value;
+      if (balance.equals(BigInt.zero())) continue;
+
+      // Convert balance to be in terms of gOHM, using the wsOHM contract
+      const gOhmBalanceResult = wsOHMContract.try_sOHMTowOHM(balance);
+      if (gOhmBalanceResult.reverted) continue;
+
+      // Derive the OHM balance
+      const ohmBalance = toDecimal(gOhmBalanceResult.value, wsOHMDecimals).times(ohmIndex);
+
+      records.push(
+        createOrUpdateTokenSupply(
+          timestamp,
+          `${getContractName(ERC20_OHM_V2)} in sOHM v1`,
           ERC20_OHM_V2,
           null,
           null,

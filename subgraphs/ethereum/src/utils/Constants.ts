@@ -157,6 +157,7 @@ export const ERC20_SOHM_V2_BLOCK = "12622596";
 export const ERC20_SOHM_V3 = "0x04906695D6D12CF5459975d7C3C03356E4Ccd460".toLowerCase();
 export const ERC20_SOHM_V3_BLOCK = "13806000";
 export const ERC20_GOHM = "0x0ab87046fBb341D058F17CBC4c1133F25a20a52f".toLowerCase();
+export const ERC20_WSOHM = "0xCa76543Cf381ebBB277bE79574059e32108e3E65".toLowerCase();
 
 // Stablecoin tokens
 export const ERC20_ADAI = "0x028171bca77440897b824ca71d1c56cac55b68a3".toLowerCase();

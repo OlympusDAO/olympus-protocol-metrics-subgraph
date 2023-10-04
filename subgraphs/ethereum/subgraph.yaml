@@ -579,6 +579,8 @@ dataSources:
           file: ./abis/sOlympusERC20V3.json
         - name: OlympusERC20
           file: ./abis/OlympusERC20.json
+        - name: wsOHM
+          file: ./abis/wsOHM.json
         - name: UniswapV2Pair
           file: ../shared/abis/UniswapV2Pair.json
         - name: UniswapV3Pair
