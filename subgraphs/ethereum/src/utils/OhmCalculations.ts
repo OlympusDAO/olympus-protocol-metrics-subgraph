@@ -417,6 +417,13 @@ export function getMintedBorrowableOHMRecords(timestamp: BigInt, blockNumber: Bi
  *
  * sOHM and gOHM are converted to the equivalent quantity of OHM (using the index)
  * and included in the calculation.
+ * 
+ * Notes:
+ * - All versions of OHM/sOHM/wsOHM in the migration contract are not considered, as the tokens
+ * are transferred into the contract upon migration into OHMv3/gOHM and hence reflected in
+ * the balance. Source: https://github.com/OlympusDAO/olympus-contracts/blob/92864570011fa2a3b30222c9602cf0ad0f6149fd/contracts/migration/OlympusTokenMigrator.sol#L95C7-L95C7
+ * - The balances of sOHM in the wsOHM contract are not considered, as the tokens are transferred into the
+ * contract when wrapping into wsOHM. Source: https://github.com/OlympusDAO/olympus-contracts/blob/92864570011fa2a3b30222c9602cf0ad0f6149fd/contracts/OLD/OLDwsOHM.sol#L774C14-L774C14
  *
  * @param timestamp the current timestamp
  * @param blockNumber the current block number
@@ -551,6 +558,8 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
       if (balance.equals(BigInt.zero())) continue;
 
       // Convert balance to be in terms of gOHM, using the wsOHM contract
+      // Function for sOHM v2 to wOHM conversion: https://github.com/OlympusDAO/olympus-contracts/blob/92864570011fa2a3b30222c9602cf0ad0f6149fd/contracts/OLD/OLDwsOHM.sol#L809C4-L809C4
+      // This demonstrates that a wOHM/wsOHM is 1:1 with gOHM: https://github.com/OlympusDAO/olympus-contracts/blob/92864570011fa2a3b30222c9602cf0ad0f6149fd/contracts/migration/OlympusTokenMigrator.sol#L141
       const gOhmBalanceResult = wsOHMContract.try_sOHMTowOHM(balance);
       if (gOhmBalanceResult.reverted) continue;
 
