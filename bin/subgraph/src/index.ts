@@ -180,21 +180,31 @@ program
   .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
   .action((subgraph) => {
     const generatedDir = `${SUBGRAPH_DIR}/${subgraph}/generated/`;
-    console.info("*** Running codegen");
+    console.info("*** Removing generated directory");
     spawnProcess(
-      `yarn graph codegen ${getSubgraphManifestFilePath(subgraph)} --output-dir ${generatedDir}`,
-      (codegenExitCode: number) => {
-        if (codegenExitCode > 0) {
-          process.exit(codegenExitCode);
+      `rm -rf ${generatedDir}`,
+      (rmExitCode: number) => {
+        if (rmExitCode > 0) {
+          process.exit(rmExitCode);
         }
 
-        console.info("*** Running lint");
+        console.info("*** Running codegen");
         spawnProcess(
-          `yarn eslint --config ./.eslintrc.json --fix ${generatedDir}`,
-          (lintExitCode: number) => {
-            if (lintExitCode > 0) {
-              process.exit(lintExitCode);
+          `yarn graph codegen ${getSubgraphManifestFilePath(subgraph)} --output-dir ${generatedDir}`,
+          (codegenExitCode: number) => {
+            if (codegenExitCode > 0) {
+              process.exit(codegenExitCode);
             }
+
+            console.info("*** Running lint");
+            spawnProcess(
+              `yarn eslint --config ./.eslintrc.json --fix ${generatedDir}`,
+              (lintExitCode: number) => {
+                if (lintExitCode > 0) {
+                  process.exit(lintExitCode);
+                }
+              },
+            );
           },
         );
       },
