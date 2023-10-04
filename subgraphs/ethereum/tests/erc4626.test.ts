@@ -5,12 +5,14 @@ import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
 import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { getAllERC4626Balances } from "../src/utils/ERC4626";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
-import { getWalletAddressesForContract } from "../src/utils/Constants";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 const SDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA";
 const DAI = "0x6B175474E89094C44Da98b954EedeAC495271d0F";
 
 const ASSETS_TO_SHARES = toDecimal(BigInt.fromString("1033238201161564342"), 18);
+
+const BLOCK_NUMBER = BigInt.fromString("14000000");
 
 const mockERC4626Reverts = (
   tokenAddress: string,
@@ -50,7 +52,7 @@ describe("ERC4626", () => {
     // Mock zero wallet balances
     mockZeroWalletBalances(
       SDAI,
-      getWalletAddressesForContract(SDAI));
+      getWalletAddressesForContract(SDAI, BLOCK_NUMBER));
   });
 
   test("handles contract revert", () => {

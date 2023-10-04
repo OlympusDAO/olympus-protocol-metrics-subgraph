@@ -1,7 +1,7 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
-import { BLOCKCHAIN, ERC20_OHM_V2, ERC20_TOKENS, getContractName, getWalletAddressesForContract, liquidityPairHasToken } from "../utils/Constants";
+import { BLOCKCHAIN, ERC20_OHM_V2, ERC20_TOKENS, getContractName, liquidityPairHasToken } from "../utils/Constants";
 import { getERC20DecimalBalance, getUniswapV3Pair } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
@@ -10,6 +10,7 @@ import { UniswapV3PositionManager } from "../../generated/ProtocolMetrics/Uniswa
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { TYPE_LIQUIDITY, createOrUpdateTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
 import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
+import { getWalletAddressesForContract } from "../utils/ProtocolAddresses";
 
 export const UNISWAP_V3_POSITION_MANAGER = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";
 const Q96 = BigInt.fromI32(2).pow(96);
@@ -146,7 +147,7 @@ export function getUniswapV3POLRecords(
     return records;
   }
 
-  const wallets = getWalletAddressesForContract(pairAddress);
+  const wallets = getWalletAddressesForContract(pairAddress, blockNumber);
   const positionManager = UniswapV3PositionManager.bind(Address.fromString(UNISWAP_V3_POSITION_MANAGER));
 
   for (let i = 0; i < wallets.length; i++) {
@@ -306,7 +307,7 @@ export function getUniswapV3OhmSupply(
 
   const ohmIndex: u32 = token0.toLowerCase() == tokenAddress.toLowerCase() ? 0 : 1;
 
-  const wallets = getWalletAddressesForContract(pairAddress);
+  const wallets = getWalletAddressesForContract(pairAddress, blockNumber);
   const positionManager = UniswapV3PositionManager.bind(Address.fromString(UNISWAP_V3_POSITION_MANAGER));
 
   for (let i = 0; i < wallets.length; i++) {

@@ -11,7 +11,6 @@ import {
   ERC20_DAI,
   ERC20_OHM_V2,
   ERC20_WETH,
-  getWalletAddressesForContract,
   PAIR_CURVE_OHM_ETH,
   PAIR_FRAXSWAP_V1_OHM_FRAX,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
@@ -19,7 +18,6 @@ import {
 import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import {
-  ETH_USD_RESERVE_BLOCK,
   mockBalancerVaultOhmDaiEth,
   mockBalancerVaultZero,
   mockConvexStakedBalanceZero,
@@ -36,9 +34,11 @@ import {
   OHM_V2_DECIMALS,
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 const PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY = BigDecimal.fromString("100");
 const TIMESTAMP = BigInt.fromString("1");
+const BLOCK_NUMBER: BigInt = BigInt.fromString("14000000");
 
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
@@ -84,16 +84,16 @@ describe("getLiquidityPoolValue", () => {
     );
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
-    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
     mockWalletBalance(
       ERC20_CRV_OHMETH,
       TREASURY_ADDRESS_V3,
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getOwnedLiquidityPoolValue(TIMESTAMP, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue(TIMESTAMP, BLOCK_NUMBER);
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs
@@ -107,7 +107,7 @@ describe("getLiquidityPoolValue", () => {
     const balance = BigDecimal.fromString("10");
     mockZeroWalletBalances(
       PAIR_FRAXSWAP_V1_OHM_FRAX,
-      getWalletAddressesForContract(PAIR_FRAXSWAP_V1_OHM_FRAX),
+      getWalletAddressesForContract(PAIR_FRAXSWAP_V1_OHM_FRAX, BLOCK_NUMBER),
     );
     mockWalletBalance(
       PAIR_FRAXSWAP_V1_OHM_FRAX,
@@ -115,7 +115,7 @@ describe("getLiquidityPoolValue", () => {
       toBigInt(balance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getOwnedLiquidityPoolValue(TIMESTAMP, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue(TIMESTAMP, BLOCK_NUMBER);
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs
@@ -151,9 +151,9 @@ describe("getLiquidityPoolValue", () => {
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
     const crvBalanceTwo = BigDecimal.fromString("11");
-    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
 
     mockWalletBalance(
       ERC20_CRV_OHMETH,
@@ -168,7 +168,7 @@ describe("getLiquidityPoolValue", () => {
       toBigInt(crvBalanceTwo, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getOwnedLiquidityPoolValue(TIMESTAMP, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue(TIMESTAMP, BLOCK_NUMBER);
 
     const recordOne = records[0]; // DAO wallet
     assert.stringEquals("11", recordOne.balance.toString());
@@ -197,11 +197,11 @@ describe("getLiquidityPoolValue", () => {
     const expectedBalanceV3 = BigDecimal.fromString("3");
     mockZeroWalletBalances(
       PAIR_UNISWAP_V2_OHM_DAI_V2,
-      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2, BLOCK_NUMBER),
     );
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
-    const records = getOwnedLiquidityPoolValue(TIMESTAMP, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue(TIMESTAMP, BLOCK_NUMBER);
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs
@@ -216,7 +216,7 @@ describe("getLiquidityPoolValue", () => {
     const expectedWalletBalance = BigDecimal.fromString("2");
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
-      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2, BLOCK_NUMBER),
     );
     mockWalletBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
@@ -224,7 +224,7 @@ describe("getLiquidityPoolValue", () => {
       toBigInt(expectedWalletBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getOwnedLiquidityPoolValue(TIMESTAMP, ETH_USD_RESERVE_BLOCK);
+    const records = getOwnedLiquidityPoolValue(TIMESTAMP, BLOCK_NUMBER);
 
     // We already know that the individual pool values are tested
     // We just want to test the inputs against the outputs

@@ -15,9 +15,7 @@ import {
   BALANCER_LIQUIDITY_GAUGE_OHM_WETH,
   BALANCER_LIQUIDITY_GAUGE_OHM_WSTETH,
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
-  BALANCER_LIQUIDITY_GAUGES,
   BALANCER_VAULT,
-  CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
   ERC20_AURA,
   ERC20_AURA_BAL,
@@ -62,7 +60,6 @@ import {
   ERC20_WSTETH,
   FRAX_LOCKING_CONTRACTS,
   getContractName,
-  getWalletAddressesForContract,
   LQTY_STAKING,
   PAIR_CURVE_FRAX_USDC,
   PAIR_CURVE_OHM_ETH,
@@ -101,6 +98,7 @@ import {
 import { mockPriceFeed, mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import { mockZeroWalletBalances } from "./walletHelper";
+import { CONVEX_ALLOCATORS, getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 export const ETH_TRIBE_RESERVE_TRIBE = BigInt.fromString("40963255589554358793575");
 export const ETH_TRIBE_RESERVE_ETH = BigInt.fromString("4956325030062526848");
@@ -130,6 +128,8 @@ export const OHM_DAI_ETH_WEIGHT_WETH = BigDecimal.fromString("0.25");
 
 export const OHM_V2_DECIMALS = 9;
 export const USDC_DECIMALS = 6;
+
+const BLOCK_NUMBER = BigInt.fromString("14000000");
 
 const DEFAULT_TOTAL_SUPPLY = BigDecimal.fromString("0");
 
@@ -707,7 +707,7 @@ export const mockAuraStakedBalanceZero = (wallets: string[]): void => {
   for (let i = 0; i < stakingPairs.length; i++) {
     const stakedToken = stakingPairs[i][0];
     const stakingContract = stakingPairs[i][1];
-    const stakingTokenWallets = getWalletAddressesForContract(stakedToken);
+    const stakingTokenWallets = getWalletAddressesForContract(stakedToken, BLOCK_NUMBER);
     for (let j = 0; j < stakingTokenWallets.length; j++) {
       mockAuraStakedBalance(
         stakedToken,
@@ -858,7 +858,7 @@ export const mockUniswapV2PairsZero = (): void => {
   );
   mockZeroWalletBalances(
     PAIR_UNISWAP_V2_USDC_ETH,
-    getWalletAddressesForContract(PAIR_UNISWAP_V2_USDC_ETH),
+    getWalletAddressesForContract(PAIR_UNISWAP_V2_USDC_ETH, BLOCK_NUMBER),
   );
 
   mockUniswapV2Pair(
@@ -874,7 +874,7 @@ export const mockUniswapV2PairsZero = (): void => {
   );
   mockZeroWalletBalances(
     PAIR_UNISWAP_V2_OHM_DAI_V2,
-    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2, BLOCK_NUMBER),
   );
 
   mockUniswapV2Pair(
@@ -890,7 +890,7 @@ export const mockUniswapV2PairsZero = (): void => {
   );
   mockZeroWalletBalances(
     PAIR_UNISWAP_V2_OHM_DAI,
-    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI),
+    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI, BLOCK_NUMBER),
   );
 
   mockUniswapV2Pair(
@@ -906,7 +906,7 @@ export const mockUniswapV2PairsZero = (): void => {
   );
   mockZeroWalletBalances(
     PAIR_UNISWAP_V2_OHM_ETH_V2,
-    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_ETH_V2),
+    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_ETH_V2, BLOCK_NUMBER),
   );
 
   mockUniswapV2Pair(
@@ -922,7 +922,7 @@ export const mockUniswapV2PairsZero = (): void => {
   );
   mockZeroWalletBalances(
     PAIR_UNISWAP_V2_OHM_ETH,
-    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_ETH),
+    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_ETH, BLOCK_NUMBER),
   );
 
   mockUniswapV2Pair(
@@ -938,7 +938,7 @@ export const mockUniswapV2PairsZero = (): void => {
   );
   mockZeroWalletBalances(
     PAIR_UNISWAP_V2_OHM_LUSD_V2,
-    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_LUSD_V2),
+    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_LUSD_V2, BLOCK_NUMBER),
   );
 
   mockUniswapV2Pair(
@@ -954,7 +954,7 @@ export const mockUniswapV2PairsZero = (): void => {
   );
   mockZeroWalletBalances(
     PAIR_UNISWAP_V2_OHM_LUSD,
-    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_LUSD),
+    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_LUSD, BLOCK_NUMBER),
   );
 
   mockUniswapV2Pair(
@@ -970,7 +970,7 @@ export const mockUniswapV2PairsZero = (): void => {
   );
   mockZeroWalletBalances(
     PAIR_UNISWAP_V2_OHM_BTRFLY_V1,
-    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_BTRFLY_V1),
+    getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_BTRFLY_V1, BLOCK_NUMBER),
   );
 };
 
@@ -1124,10 +1124,10 @@ export const mockCurvePairZero = (): void => {
     USDC_DECIMALS,
   );
 
-  mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+  mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
   mockZeroWalletBalances(ERC20_CRV_OHMETH, CONVEX_ALLOCATORS);
-  mockZeroWalletBalances(ERC20_CRV_OHMFRAXBP, getWalletAddressesForContract(PAIR_CURVE_OHM_FRAXBP));
-  mockZeroWalletBalances(ERC20_CRV_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
+  mockZeroWalletBalances(ERC20_CRV_OHMFRAXBP, getWalletAddressesForContract(PAIR_CURVE_OHM_FRAXBP, BLOCK_NUMBER));
+  mockZeroWalletBalances(ERC20_CRV_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC, BLOCK_NUMBER));
 };
 
 export function mockBalancerVault(
@@ -1352,8 +1352,8 @@ export function mockBalancerVaultZero(): void {
 
   mockERC20TotalSupply(ERC20_BALANCER_OHM_DAI_WETH_AURA, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
 
-  mockBalancerGaugeBalanceZero(getWalletAddressesForContract(""));
-  mockAuraStakedBalanceZero(getWalletAddressesForContract(""));
+  mockBalancerGaugeBalanceZero(getWalletAddressesForContract("", BLOCK_NUMBER));
+  mockAuraStakedBalanceZero(getWalletAddressesForContract("", BLOCK_NUMBER));
 }
 
 export function mockBalancerVaultOhmDaiEth(

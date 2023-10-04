@@ -123,6 +123,11 @@ dataSources:
         # Cooler Loans
         - name: CoolerLoansClearinghouse
           file: ./abis/CoolerLoansClearinghouse.json
+        # Bophades
+        - name: BophadesKernel
+          file: ./abis/BophadesKernel.json
+        - name: BophadesTreasury
+          file: ./abis/BophadesTreasury.json
       eventHandlers:
         - event: LogRebase(indexed uint256,uint256,uint256)
           handler: handleMetrics

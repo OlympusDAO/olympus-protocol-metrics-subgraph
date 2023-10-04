@@ -15,7 +15,6 @@ import {
   ERC20_DAI,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
-  getWalletAddressesForContract,
   PAIR_UNISWAP_V2_OHM_BTRFLY_V1,
   PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
@@ -25,7 +24,6 @@ import { PairHandler, PairHandlerTypes } from "../src/utils/PairHandler";
 import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
 import {
-  ETH_USD_RESERVE_BLOCK,
   getBtrflyV1UsdRate,
   getOhmEthPairValue,
   getOhmUsdRate,
@@ -42,10 +40,10 @@ import {
   mockUsdOhmV2Rate,
   mockWEthBtrflyV1Rate,
   OHM_ETH_TOTAL_SUPPLY,
-  OHM_USD_RESERVE_BLOCK,
   OHM_V2_DECIMALS,
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 // Limits the search to the OHM-DAI pairs, otherwise other pairs will be iterated over
 const pairArrayOverride: PairHandler[] = [
@@ -54,6 +52,7 @@ const pairArrayOverride: PairHandler[] = [
 ];
 
 const TIMESTAMP = BigInt.fromString("1");
+const BLOCK_NUMBER: BigInt = BigInt.fromString("14000000");
 
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
@@ -90,7 +89,7 @@ describe("Token Quantity", () => {
     const totalTokenQuantity = getUniswapV2PairTotalTokenQuantity(
       PAIR_UNISWAP_V2_OHM_DAI_V2,
       ERC20_OHM_V2,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     assert.stringEquals(
@@ -124,7 +123,7 @@ describe("Token Quantity", () => {
     const expectedBalanceV3 = BigDecimal.fromString("3");
     mockZeroWalletBalances(
       PAIR_UNISWAP_V2_OHM_DAI_V2,
-      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2, BLOCK_NUMBER),
     );
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
@@ -138,7 +137,7 @@ describe("Token Quantity", () => {
       TIMESTAMP,
       PAIR_UNISWAP_V2_OHM_DAI_V2,
       ERC20_OHM_V2,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     assert.stringEquals(expectedTokenBalance.toString(), records[0].balance.toString());
@@ -169,7 +168,7 @@ describe("Token Quantity", () => {
     const expectedBalanceV3 = BigDecimal.fromString("3");
     mockZeroWalletBalances(
       PAIR_UNISWAP_V2_OHM_DAI_V2,
-      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2, BLOCK_NUMBER),
     );
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
@@ -177,7 +176,7 @@ describe("Token Quantity", () => {
       TIMESTAMP,
       PAIR_UNISWAP_V2_OHM_DAI_V2,
       ERC20_OHM_V1,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     // Should be empty records due to 0 balance of OHM V1
@@ -207,7 +206,7 @@ describe("Token Quantity", () => {
     const expectedBalanceV3 = BigDecimal.fromString("3");
     mockZeroWalletBalances(
       PAIR_UNISWAP_V2_OHM_DAI_V2,
-      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2, BLOCK_NUMBER),
     );
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V3, toBigInt(expectedBalanceV3));
 
@@ -215,7 +214,7 @@ describe("Token Quantity", () => {
       TIMESTAMP,
       PAIR_UNISWAP_V2_OHM_DAI_V2,
       ERC20_OHM_V2,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     // Should be empty records due to starting block
@@ -241,21 +240,21 @@ describe("records", () => {
     );
     mockZeroWalletBalances(
       PAIR_UNISWAP_V2_OHM_DAI,
-      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2, BLOCK_NUMBER),
     );
 
     // OHM-DAI V2
     mockUsdOhmV2Rate();
     mockZeroWalletBalances(
       PAIR_UNISWAP_V2_OHM_DAI_V2,
-      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2),
+      getWalletAddressesForContract(PAIR_UNISWAP_V2_OHM_DAI_V2, BLOCK_NUMBER),
     );
     mockWalletBalance(PAIR_UNISWAP_V2_OHM_DAI_V2, TREASURY_ADDRESS_V2, toBigInt(expectedBalanceV2));
 
     const records = getLiquidityBalances(
       TIMESTAMP,
       ERC20_DAI,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
       pairArrayOverride,
     );
     // We can call this because we are testing that the single-sided value is returned
@@ -263,7 +262,7 @@ describe("records", () => {
     const pairValue = getUniswapV2PairValue(
       toBigInt(expectedBalanceV2),
       PAIR_UNISWAP_V2_OHM_DAI_V2,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     // Balance stays the same
@@ -358,7 +357,7 @@ describe("pair value", () => {
     const pairValue = getUniswapV2PairTotalValue(
       PAIR_UNISWAP_V2_OHM_DAI_V2,
       false,
-      ETH_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
     // 12.36687113
     const ohmRate = toDecimal(token1Reserves, ERC20_STANDARD_DECIMALS).div(
@@ -392,7 +391,7 @@ describe("pair value", () => {
     const pairValue = getUniswapV2PairTotalValue(
       PAIR_UNISWAP_V2_OHM_DAI_V2,
       true,
-      ETH_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     // # DAI * 1
@@ -409,7 +408,7 @@ describe("pair value", () => {
     const pairValue = getUniswapV2PairTotalValue(
       PAIR_UNISWAP_V2_OHM_ETH_V2,
       false,
-      ETH_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
     const calculatedValue = getOhmEthPairValue();
     log.debug("difference: {}", [pairValue.minus(calculatedValue).toString()]);
@@ -426,7 +425,7 @@ describe("pair value", () => {
     const balanceValue = getUniswapV2PairValue(
       lpBalance,
       PAIR_UNISWAP_V2_OHM_ETH_V2,
-      ETH_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     // (balance / total supply) * pair value
@@ -463,7 +462,7 @@ describe("pair value", () => {
     const pairValue = getUniswapV2PairTotalValue(
       PAIR_UNISWAP_V2_OHM_BTRFLY_V1,
       false,
-      ETH_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     const ohmRate = getOhmUsdRate();

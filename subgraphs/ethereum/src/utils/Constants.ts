@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 import { LendingMarketDeployment } from "../../../shared/src/utils/LendingMarketDeployment";
-import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, AURA_ALLOCATOR, AURA_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CONVEX_STAKING_PROXY_FRAXBP, CONVEX_STAKING_PROXY_OHM_FRAXBP, COOLER_LOANS_CLEARINGHOUSE_V1, COOLER_LOANS_CLEARINGHOUSE_V1_1, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, DAO_WORKING_CAPITAL, LUSD_ALLOCATOR, MAKER_DSR_ALLOCATOR, MAKER_DSR_ALLOCATOR_PROXY, MYSO_LENDING, OLYMPUS_ASSOCIATION_WALLET, OTC_ESCROW, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, TRSRY, VEFXS_ALLOCATOR, VENDOR_LENDING, WALLET_ADDRESSES } from "../../../shared/src/Wallets";
+import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, AURA_ALLOCATOR, AURA_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CONVEX_STAKING_PROXY_FRAXBP, CONVEX_STAKING_PROXY_OHM_FRAXBP, COOLER_LOANS_CLEARINGHOUSE_V1, COOLER_LOANS_CLEARINGHOUSE_V1_1, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, DAO_WORKING_CAPITAL, LUSD_ALLOCATOR, MAKER_DSR_ALLOCATOR, MAKER_DSR_ALLOCATOR_PROXY, MYSO_LENDING, OLYMPUS_ASSOCIATION_WALLET, OTC_ESCROW, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, TRSRY, VEFXS_ALLOCATOR, VENDOR_LENDING } from "../../../shared/src/Wallets";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 
 export const BLOCKCHAIN = "Ethereum";
@@ -706,68 +706,6 @@ const getLiquidityPairTokens = (pairAddress: string): string[] => {
  */
 export const liquidityPairHasToken = (pairAddress: string, tokenAddress: string): bool => {
   return getLiquidityPairTokens(pairAddress).includes(tokenAddress.toLowerCase());
-};
-
-// TODO consider merging convex allocator and wallet addresses constants
-export const CONVEX_ALLOCATORS = [
-  CONVEX_ALLOCATOR1,
-  CONVEX_ALLOCATOR2,
-  CONVEX_ALLOCATOR3,
-  CONVEX_CVX_ALLOCATOR,
-  CONVEX_CVX_VL_ALLOCATOR,
-  CONVEX_STAKING_PROXY_FRAXBP,
-  CONVEX_STAKING_PROXY_OHM_FRAXBP,
-  DAO_WALLET,
-];
-
-const TREASURY_BLACKLIST = new Map<string, string[]>();
-
-/**
- * OHM and gOHM in the following wallets are blacklisted (not indexed) as we do not want the value
- * being considered as part of the protocol or DAO treasuries.
- */
-TREASURY_BLACKLIST.set(ERC20_OHM_V1, WALLET_ADDRESSES);
-TREASURY_BLACKLIST.set(ERC20_OHM_V2, WALLET_ADDRESSES);
-TREASURY_BLACKLIST.set(ERC20_GOHM, WALLET_ADDRESSES);
-TREASURY_BLACKLIST.set(ERC20_SOHM_V1, WALLET_ADDRESSES);
-TREASURY_BLACKLIST.set(ERC20_SOHM_V2, WALLET_ADDRESSES);
-TREASURY_BLACKLIST.set(ERC20_SOHM_V3, WALLET_ADDRESSES);
-
-/**
- * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
- * For this reason, the wallets to be used differ on a per-contract basis.
- *
- * This function returns the wallets that should be iterated over for the given
- * contract, {contractAddress}.
- *
- * @param contractAddress
- * @returns
- */
-export const getWalletAddressesForContract = (contractAddress: string): string[] => {
-  const walletAddresses = WALLET_ADDRESSES.slice(0);
-
-  // If the contract isn't on the blacklist, return as normal
-  if (!TREASURY_BLACKLIST.has(contractAddress.toLowerCase())) {
-    log.debug("getWalletAddressesForContract: token {} is not on treasury blacklist", [contractAddress]);
-    return walletAddresses;
-  }
-
-  // Otherwise remove the values in the blacklist
-  // AssemblyScript doesn't yet have closures, so filter() cannot be used
-  const walletBlacklist = TREASURY_BLACKLIST.get(contractAddress.toLowerCase());
-  for (let i = 0; i < walletBlacklist.length; i++) {
-    // If the blacklisted address is not in the array, skip
-    const arrayIndex = walletAddresses.indexOf(walletBlacklist[i]);
-    if (arrayIndex < 0) {
-      continue;
-    }
-
-    // Otherwise the blacklist address is removed from the array in-place
-    const splicedValues = walletAddresses.splice(arrayIndex, 1);
-    log.debug("getWalletAddressesForContract: removed values: {}", [splicedValues.toString()]);
-  }
-
-  return walletAddresses;
 };
 
 const ALLOCATOR_ONSEN_ID = new Map<string, i32>();

@@ -1,11 +1,12 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { ERC4626 } from "../../generated/ProtocolMetrics/ERC4626";
-import { BLOCKCHAIN, ERC4626_TOKENS, getContractName, getWalletAddressesForContract } from "./Constants";
+import { BLOCKCHAIN, ERC4626_TOKENS, getContractName } from "./Constants";
 import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createOrUpdateTokenRecord, getIsTokenLiquid } from "../../../shared/src/utils/TokenRecordHelper";
 import { getUSDRate } from "./Price";
 import { TokenRecord } from "../../../shared/generated/schema";
+import { getWalletAddressesForContract } from "./ProtocolAddresses";
 
 /**
  * Returns the balance of the ERC4626 token in the specified wallet.
@@ -72,7 +73,7 @@ function getERC4626TokenRecordsFromWallets(
   rate: BigDecimal,
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
-  const wallets = getWalletAddressesForContract(vaultContract._address.toHexString());
+  const wallets = getWalletAddressesForContract(vaultContract._address.toHexString(), blockNumber);
 
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];

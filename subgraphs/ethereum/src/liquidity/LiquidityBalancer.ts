@@ -15,7 +15,6 @@ import {
   ERC20_OHM_V2,
   ERC20_TOKENS,
   getContractName,
-  getWalletAddressesForContract,
   liquidityPairHasToken,
 } from "../utils/Constants";
 import {
@@ -24,6 +23,7 @@ import {
 } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
+import { getWalletAddressesForContract } from "../utils/ProtocolAddresses";
 
 function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): BalancerVault {
   return BalancerVault.bind(Address.fromString(vaultAddress));
@@ -245,7 +245,7 @@ function getBalancerPoolTokenRecords(
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
 
-  const wallets = getWalletAddressesForContract(poolId);
+  const wallets = getWalletAddressesForContract(poolId, blockNumber);
   const poolSnapshot = getOrCreateBalancerPoolSnapshot(poolId, vaultAddress, blockNumber);
   if (!poolSnapshot) {
     return records;

@@ -13,10 +13,10 @@ import {
   ERC20_OHM_V2,
   ERC20_TOKENS,
   getContractName,
-  getWalletAddressesForContract,
   liquidityPairHasToken,
 } from "../utils/Constants";
 import { getUSDRate } from "../utils/Price";
+import { getWalletAddressesForContract } from "../utils/ProtocolAddresses";
 
 /**
  * Returns a PoolSnapshot, which contains cached data about the Frax pool. This
@@ -271,7 +271,7 @@ export function getFraxSwapPairRecords(
   // Calculate the unit rate of the LP
   const unitRate = getFraxSwapPairUnitRate(pairAddress, totalValue, blockNumber);
 
-  const wallets = getWalletAddressesForContract(pairAddress);
+  const wallets = getWalletAddressesForContract(pairAddress, blockNumber);
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];
 

@@ -19,11 +19,11 @@ import {
   getContractName,
   getConvexStakedToken,
   getFraxStakedToken,
-  getWalletAddressesForContract,
   liquidityPairHasToken,
 } from "../utils/Constants";
 import { getConvexStakedBalance, getERC20, getFraxLockedBalance } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
+import { getWalletAddressesForContract } from "../utils/ProtocolAddresses";
 
 /**
  * Determines the address of the ERC20 token for a Curve liquidity pair.
@@ -455,7 +455,7 @@ export function getCurvePairRecords(
   // Calculate the unit rate of the LP
   const unitRate = getCurvePairUnitRate(pairAddress, totalValue, blockNumber);
   // Some Curve tokens are in the DAO wallet, so we add that
-  const wallets = getWalletAddressesForContract(pairAddress);
+  const wallets = getWalletAddressesForContract(pairAddress, blockNumber);
 
   const pairToken = poolSnapshot.poolToken;
   const pairTokenAddress = pairToken === null ? "" : pairToken.toHexString();

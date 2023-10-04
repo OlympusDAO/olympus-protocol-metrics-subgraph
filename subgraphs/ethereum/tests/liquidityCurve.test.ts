@@ -29,7 +29,6 @@ import {
   FRAX_LOCKING_FRAX_USDC,
   getContractAbbreviation,
   getContractName,
-  getWalletAddressesForContract,
   NATIVE_ETH,
   PAIR_CURVE_FRAX_USDC,
   PAIR_CURVE_OHM_ETH,
@@ -54,13 +53,14 @@ import {
   mockUniswapV2PairsZero,
   mockUniswapV3PairsZero,
   mockUsdOhmV2Rate,
-  OHM_USD_RESERVE_BLOCK,
   OHM_V2_DECIMALS,
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 const PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY = BigDecimal.fromString("100");
 const TIMESTAMP = BigInt.fromString("1");
+const BLOCK_NUMBER: BigInt = BigInt.fromString("14000000");
 
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
@@ -98,7 +98,7 @@ describe("Token Quantity", () => {
     const totalTokenQuantity = getCurvePairTotalTokenQuantity(
       PAIR_CURVE_OHM_ETH,
       ERC20_OHM_V2,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     assert.stringEquals(totalTokenQuantity.toString(), ohmReserves.toString());
@@ -134,9 +134,9 @@ describe("Token Quantity", () => {
 
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
-    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
     mockWalletBalance(
       ERC20_CRV_OHMETH,
       TREASURY_ADDRESS_V3,
@@ -147,7 +147,7 @@ describe("Token Quantity", () => {
       TIMESTAMP,
       PAIR_CURVE_OHM_ETH,
       ERC20_OHM_V2,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     // Should be empty records due to starting block
@@ -191,9 +191,9 @@ describe("Token Quantity", () => {
 
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
-    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
     mockWalletBalance(
       ERC20_CRV_OHMETH,
       TREASURY_ADDRESS_V3,
@@ -204,7 +204,7 @@ describe("Token Quantity", () => {
       TIMESTAMP,
       PAIR_CURVE_OHM_ETH,
       ERC20_OHM_V2,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     // Should be empty records due to starting block
@@ -241,9 +241,9 @@ describe("Token Quantity", () => {
 
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
-    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
     mockFraxLockedBalanceZero();
     mockWalletBalance(
       ERC20_CRV_OHMETH,
@@ -258,7 +258,7 @@ describe("Token Quantity", () => {
       TIMESTAMP,
       PAIR_CURVE_OHM_ETH,
       ERC20_OHM_V2,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     // Balance = value as the unit rate is 1
@@ -296,9 +296,9 @@ describe("Token Quantity", () => {
 
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
-    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
     mockWalletBalance(
       ERC20_CRV_OHMETH,
       TREASURY_ADDRESS_V3,
@@ -309,7 +309,7 @@ describe("Token Quantity", () => {
       TIMESTAMP,
       PAIR_CURVE_OHM_ETH,
       ERC20_OHM_V1,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     // Should be empty records due to 0 balance of OHM V1
@@ -346,9 +346,9 @@ describe("Token Quantity", () => {
 
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
-    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
     mockFraxLockedBalanceZero();
     mockConvexStakedBalance(
       ERC20_CVX_OHMETH,
@@ -364,7 +364,7 @@ describe("Token Quantity", () => {
       TIMESTAMP,
       PAIR_CURVE_OHM_ETH,
       ERC20_OHM_V2,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     // Balance = value as the unit rate is 1
@@ -397,7 +397,7 @@ describe("Pair Value", () => {
     const expectedValue = getPairValue(ohmBalance, wethBalance, getOhmUsdRate(), getEthUsdRate());
     assert.stringEquals(
       expectedValue.truncate(4).toString(),
-      getCurvePairTotalValue(PAIR_CURVE_OHM_ETH, false, OHM_USD_RESERVE_BLOCK).truncate(4).toString(),
+      getCurvePairTotalValue(PAIR_CURVE_OHM_ETH, false, BLOCK_NUMBER).truncate(4).toString(),
     );
   });
 
@@ -424,7 +424,7 @@ describe("Pair Value", () => {
     const expectedValue = wethBalance.times(getEthUsdRate());
     assert.stringEquals(
       expectedValue.truncate(4).toString(),
-      getCurvePairTotalValue(PAIR_CURVE_OHM_ETH, true, OHM_USD_RESERVE_BLOCK).truncate(4).toString(),
+      getCurvePairTotalValue(PAIR_CURVE_OHM_ETH, true, BLOCK_NUMBER).truncate(4).toString(),
     );
   });
 
@@ -435,7 +435,7 @@ describe("Pair Value", () => {
     mockFraxLockedBalanceZero();
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
-      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID, BLOCK_NUMBER),
     );
 
     mockEthUsdRate();
@@ -465,16 +465,16 @@ describe("Pair Value", () => {
     );
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
-    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
     mockWalletBalance(
       ERC20_CRV_OHMETH,
       TREASURY_ADDRESS_V3,
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getLiquidityBalances(TIMESTAMP, NATIVE_ETH, OHM_USD_RESERVE_BLOCK);
+    const records = getLiquidityBalances(TIMESTAMP, NATIVE_ETH, BLOCK_NUMBER);
 
     const expectedNonOhmTotalValue = wethReserves.times(getEthUsdRate());
     const expectedTotalValue = getPairValue(
@@ -502,7 +502,7 @@ describe("Pair Value", () => {
     mockFraxLockedBalanceZero();
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
-      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID, BLOCK_NUMBER),
     );
 
     mockEthUsdRate();
@@ -532,16 +532,16 @@ describe("Pair Value", () => {
     );
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
-    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
     mockWalletBalance(
       ERC20_CRV_OHMETH,
       TREASURY_ADDRESS_V3,
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     );
 
-    const records = getLiquidityBalances(TIMESTAMP, NATIVE_ETH, OHM_USD_RESERVE_BLOCK);
+    const records = getLiquidityBalances(TIMESTAMP, NATIVE_ETH, BLOCK_NUMBER);
 
     assert.i32Equals(0, records.length);
   });
@@ -553,7 +553,7 @@ describe("Pair Value", () => {
     mockFraxLockedBalanceZero();
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
-      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID, BLOCK_NUMBER),
     );
 
     // Mock price lookup
@@ -584,9 +584,9 @@ describe("Pair Value", () => {
     );
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
-    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
+    mockZeroWalletBalances(ERC20_CRV_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockZeroWalletBalances(ERC20_CVX_OHMETH, getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
     mockConvexStakedBalance(
       ERC20_CVX_OHMETH,
       TREASURY_ADDRESS_V3,
@@ -594,7 +594,7 @@ describe("Pair Value", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     ); // Balance for the staked Curve token
 
-    const records = getLiquidityBalances(TIMESTAMP, NATIVE_ETH, OHM_USD_RESERVE_BLOCK);
+    const records = getLiquidityBalances(TIMESTAMP, NATIVE_ETH, BLOCK_NUMBER);
 
     const totalValueExpected = getPairValue(
       ohmReserves,
@@ -620,7 +620,7 @@ describe("Pair Value", () => {
     mockFraxLockedBalanceZero();
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
-      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID, BLOCK_NUMBER),
     );
 
     // Mock total value
@@ -647,10 +647,10 @@ describe("Pair Value", () => {
     );
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
-    mockZeroWalletBalances(ERC20_CRV_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
-    mockZeroWalletBalances(ERC20_CVX_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
-    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
-    mockFraxLockedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
+    mockZeroWalletBalances(ERC20_CRV_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC, BLOCK_NUMBER));
+    mockZeroWalletBalances(ERC20_CVX_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC, BLOCK_NUMBER));
+    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC, BLOCK_NUMBER));
+    mockFraxLockedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC, BLOCK_NUMBER));
     mockConvexStakedBalance(
       ERC20_CVX_FRAX_USDC,
       CONVEX_STAKING_PROXY_FRAXBP,
@@ -658,7 +658,7 @@ describe("Pair Value", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     ); // Balance for the staked Curve token
 
-    const records = getLiquidityBalances(TIMESTAMP, ERC20_FRAX, OHM_USD_RESERVE_BLOCK);
+    const records = getLiquidityBalances(TIMESTAMP, ERC20_FRAX, BLOCK_NUMBER);
 
     const totalValueExpected = getPairValue(
       fraxReserves,
@@ -683,7 +683,7 @@ describe("Pair Value", () => {
     mockFraxLockedBalanceZero();
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
-      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID, BLOCK_NUMBER),
     );
 
     // Mock price lookup
@@ -714,10 +714,10 @@ describe("Pair Value", () => {
     );
     // Mock balance
     const crvBalance = BigDecimal.fromString("10");
-    mockZeroWalletBalances(ERC20_CRV_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
-    mockZeroWalletBalances(ERC20_CVX_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
-    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH));
-    mockFraxLockedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC));
+    mockZeroWalletBalances(ERC20_CRV_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC, BLOCK_NUMBER));
+    mockZeroWalletBalances(ERC20_CVX_FRAX_USDC, getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC, BLOCK_NUMBER));
+    mockConvexStakedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_OHM_ETH, BLOCK_NUMBER));
+    mockFraxLockedBalanceZero(getWalletAddressesForContract(PAIR_CURVE_FRAX_USDC, BLOCK_NUMBER));
     mockFraxLockedBalance(
       ERC20_CVX_FRAX_USDC_STAKED,
       CONVEX_STAKING_PROXY_FRAXBP,
@@ -725,7 +725,7 @@ describe("Pair Value", () => {
       toBigInt(crvBalance, ERC20_STANDARD_DECIMALS),
     ); // Balance for the locked token
 
-    const records = getLiquidityBalances(TIMESTAMP, ERC20_FRAX, OHM_USD_RESERVE_BLOCK);
+    const records = getLiquidityBalances(TIMESTAMP, ERC20_FRAX, BLOCK_NUMBER);
 
     const totalValueExpected = getPairValue(
       fraxReserves,
@@ -749,7 +749,7 @@ describe("pair records", () => {
     // token1 OK
     mockERC20TotalSupply(ERC20_FRAX_BP, 18, BigInt.fromString("1000"));
 
-    const expectedRecords = getCurvePairRecords(TIMESTAMP, PAIR_CURVE_OHM_FRAXBP, null, BigInt.fromString("15000000"));
+    const expectedRecords = getCurvePairRecords(TIMESTAMP, PAIR_CURVE_OHM_FRAXBP, null, BLOCK_NUMBER);
 
     assert.i32Equals(0, expectedRecords.length);
   });
@@ -760,7 +760,7 @@ describe("pair records", () => {
     // Mock token1 reverting
     createMockedFunction(Address.fromString(ERC20_FRAX_BP), "decimals", "decimals():(uint8)").reverts();
 
-    const expectedRecords = getCurvePairRecords(TIMESTAMP, PAIR_CURVE_OHM_FRAXBP, null, BigInt.fromString("15000000"));
+    const expectedRecords = getCurvePairRecords(TIMESTAMP, PAIR_CURVE_OHM_FRAXBP, null, BLOCK_NUMBER);
 
     assert.i32Equals(0, expectedRecords.length);
   });
