@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 4.14.0 (2023-10-04)
+## 4.14.1 (2023-10-04)
 
 - Deduct bricked/burned sOHMv2 from circulation
 - Add removal of funds from Vendor Finance
