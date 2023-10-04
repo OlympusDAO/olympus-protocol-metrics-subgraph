@@ -3,6 +3,7 @@
 ## 4.14.0 (2023-10-04)
 
 - Deduct bricked/burned sOHMv2 from circulation
+- Add removal of funds from Vendor Finance
 
 ## 4.13.4 (2023-09-29)
 

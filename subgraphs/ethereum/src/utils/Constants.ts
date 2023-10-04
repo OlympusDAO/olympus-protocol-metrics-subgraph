@@ -831,6 +831,7 @@ export const getRariAllocatorId = (contractAddress: string): i32 => {
 const VENDOR_DEPLOYMENTS = new Map<string, LendingMarketDeployment[]>();
 VENDOR_DEPLOYMENTS.set(ERC20_DAI, [
   new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("16897393"), BigDecimal.fromString("500000"), VENDOR_LENDING), // https://etherscan.io/tx/0x0d4a3d19f4c35d8635793760050c3be4f54e1e2b43fb857282c4db992bce1469
+  new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("18227657"), BigDecimal.fromString("-500000"), VENDOR_LENDING), // https://etherscan.io/tx/0x627259b9fef9a188184bbdcb5f7ccf18ee55a91f8c437d6ebc637ec62e202b44
 ]);
 
 /**
