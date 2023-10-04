@@ -560,7 +560,7 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
       records.push(
         createOrUpdateTokenSupply(
           timestamp,
-          `${getContractName(ERC20_OHM_V2)} in sOHM v1`,
+          `${getContractName(ERC20_OHM_V2)} in sOHM v2`,
           ERC20_OHM_V2,
           null,
           null,
