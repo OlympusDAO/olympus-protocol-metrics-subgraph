@@ -5,7 +5,7 @@ features:
   - grafting
 graft:
   base: QmSwwBfAoWJLHQeSTagFnkibnkrjeprxcQpXAHk6AVrysA
-  block: 18185779 # Clearinghouse deployment
+  block: 18200000
 schema:
   file: ../../schema.graphql
 dataSources:
