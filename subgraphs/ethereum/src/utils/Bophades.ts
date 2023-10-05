@@ -1,4 +1,4 @@
-import { Address, BigInt, ByteArray, Bytes, dataSource } from "@graphprotocol/graph-ts";
+import { Address, BigInt, ByteArray, Bytes, dataSource, log } from "@graphprotocol/graph-ts";
 import { BophadesKernel } from "../../generated/ProtocolMetrics/BophadesKernel";
 import { BophadesTreasury } from "../../generated/ProtocolMetrics/BophadesTreasury";
 import { BophadesModule } from "../../generated/schema";
@@ -12,34 +12,43 @@ function getKernelAddress(): Address {
     throw new Error("Unknown network: " + dataSource.network());
   }
 
-  return Address.fromString(KERNEL_MAP.get(dataSource.network()));
+  const kernelAddress = KERNEL_MAP.get(dataSource.network());
+  log.debug("getKernelAddress: kernel address: {}", [kernelAddress]);
+  return Address.fromString(kernelAddress);
 }
 
-function getBophadesModuleAddress(keycode: string, blockNumber: BigInt): Address {
+function getBophadesModuleAddress(keycode: string, blockNumber: BigInt): Address | null {
   // Keycode/blockNumber
   const moduleId = Bytes.fromUTF8(keycode).concatI32(blockNumber.toI32());
 
   // If it exists
   const existingModule = BophadesModule.load(moduleId);
   if (existingModule !== null) {
+    log.debug("getBophadesModuleAddress: using cached module address: {}", [existingModule.moduleAddress.toHexString()]);
     return Address.fromBytes(existingModule.moduleAddress);
   }
 
   // Otherwise
 
   // Get the kernel and module address
+  log.debug("getBophadesModuleAddress: getting module address for keycode: {}", [keycode]);
   const kernelAddress = getKernelAddress();
   const kernelContract = BophadesKernel.bind(kernelAddress);
-  const moduleAddress = kernelContract.getModuleForKeycode(Bytes.fromByteArray(ByteArray.fromUTF8(keycode)));
+  const moduleAddressResult = kernelContract.try_getModuleForKeycode(Bytes.fromByteArray(ByteArray.fromUTF8(keycode)));
+  if (moduleAddressResult.reverted) {
+    log.debug("getBophadesModuleAddress: unable to get module for keycode: {}", [keycode]);
+    return null;
+  }
 
   // Cache it
   const module = new BophadesModule(moduleId);
   module.block = blockNumber;
   module.keycode = keycode;
-  module.moduleAddress = moduleAddress;
+  module.moduleAddress = moduleAddressResult.value;
   module.save();
 
-  return moduleAddress;
+  log.debug("getBophadesModuleAddress: module address for keycode {}: {}", [keycode, moduleAddressResult.value.toHexString()]);
+  return moduleAddressResult.value;
 }
 
 /**
@@ -50,10 +59,15 @@ function getBophadesModuleAddress(keycode: string, blockNumber: BigInt): Address
  * 
  * @returns 
  */
-export function getTreasuryAddress(blockNumber: BigInt): Address {
+export function getTreasuryAddress(blockNumber: BigInt): Address | null {
   return getBophadesModuleAddress("TRSRY", blockNumber);
 }
 
-export function getTRSRY(blockNumber: BigInt): BophadesTreasury {
-  return BophadesTreasury.bind(getTreasuryAddress(blockNumber));
+export function getTRSRY(blockNumber: BigInt): BophadesTreasury | null {
+  const trsryAddress = getTreasuryAddress(blockNumber);
+  if (trsryAddress === null) {
+    return null;
+  };
+
+  return BophadesTreasury.bind(trsryAddress);
 }

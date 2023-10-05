@@ -126,8 +126,11 @@ export const getWalletAddressesForContract = (contractAddress: string, blockNumb
   const walletAddresses = PROTOCOL_ADDRESSES.slice(0);
   const trsryAddress = getTreasuryAddress(blockNumber);
 
-  // Add in the Bophades Treasury address, since that is dynamic
-  walletAddresses.push(trsryAddress.toHexString().toLowerCase());
+  // // Add in the Bophades Treasury address, since that is dynamic
+  if (trsryAddress !== null) {
+    log.info("getWalletAddressesForContract: adding treasury address: {}", [trsryAddress.toHexString()]);
+    walletAddresses.push(trsryAddress.toHexString().toLowerCase());
+  }
 
   // If the contract isn't on the blacklist, return as normal
   if (!TREASURY_BLACKLIST.has(contractAddress.toLowerCase())) {
