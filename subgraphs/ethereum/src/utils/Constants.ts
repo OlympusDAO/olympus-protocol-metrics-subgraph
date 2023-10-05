@@ -157,6 +157,7 @@ export const ERC20_SOHM_V2_BLOCK = "12622596";
 export const ERC20_SOHM_V3 = "0x04906695D6D12CF5459975d7C3C03356E4Ccd460".toLowerCase();
 export const ERC20_SOHM_V3_BLOCK = "13806000";
 export const ERC20_GOHM = "0x0ab87046fBb341D058F17CBC4c1133F25a20a52f".toLowerCase();
+export const ERC20_WSOHM = "0xCa76543Cf381ebBB277bE79574059e32108e3E65".toLowerCase();
 
 // Stablecoin tokens
 export const ERC20_ADAI = "0x028171bca77440897b824ca71d1c56cac55b68a3".toLowerCase();
@@ -830,6 +831,7 @@ export const getRariAllocatorId = (contractAddress: string): i32 => {
 const VENDOR_DEPLOYMENTS = new Map<string, LendingMarketDeployment[]>();
 VENDOR_DEPLOYMENTS.set(ERC20_DAI, [
   new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("16897393"), BigDecimal.fromString("500000"), VENDOR_LENDING), // https://etherscan.io/tx/0x0d4a3d19f4c35d8635793760050c3be4f54e1e2b43fb857282c4db992bce1469
+  new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("18227657"), BigDecimal.fromString("-500000"), VENDOR_LENDING), // https://etherscan.io/tx/0x627259b9fef9a188184bbdcb5f7ccf18ee55a91f8c437d6ebc637ec62e202b44
 ]);
 
 /**

@@ -1,5 +1,10 @@
 # Subgraph Changelog
 
+## 4.14.1 (2023-10-04)
+
+- Deduct bricked/burned sOHMv2 from circulation
+- Add removal of funds from Vendor Finance
+
 ## 4.13.4 (2023-09-29)
 
 - Add V1.1 of the Cooler Loans Clearinghouse

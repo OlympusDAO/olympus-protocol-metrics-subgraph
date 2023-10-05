@@ -10,6 +10,8 @@ import { toDecimal } from "../../../shared/src/utils/Decimals";
 export function getClearinghouseBalances(timestamp: BigInt, blockNumber: BigInt): TokenRecord[] {
   const records: TokenRecord[] = [];
 
+  const daiRate = getUSDRate(ERC20_DAI, blockNumber);
+
   for (let i = 0; i < COOLER_LOANS_CLEARINGHOUSES.length; i++) {
     const clearinghouseAddress = COOLER_LOANS_CLEARINGHOUSES[i];
 
@@ -21,7 +23,6 @@ export function getClearinghouseBalances(timestamp: BigInt, blockNumber: BigInt)
       continue;
     }
 
-    const daiRate = getUSDRate(ERC20_DAI, blockNumber);
     const receivablesBalance = toDecimal(receivablesResult.value, 18);
     log.info(`Cooler Loans Clearinghouse receivables balance: {}`, [receivablesBalance.toString()]);
 
