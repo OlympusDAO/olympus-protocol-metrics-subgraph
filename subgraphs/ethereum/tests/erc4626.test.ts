@@ -1,5 +1,5 @@
-import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
+import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, createMockedFunction, describe, test, log } from "matchstick-as/assembly/index";
 import { mockPriceFeed } from "./chainlink";
 import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
 import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";

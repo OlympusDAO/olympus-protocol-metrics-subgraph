@@ -1,5 +1,5 @@
-import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, describe, test } from "matchstick-as/assembly/index";
+import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, describe, test, log } from "matchstick-as/assembly/index";
 
 import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
 import { UNISWAP_V3_POSITION_MANAGER, getUniswapV3OhmSupply, getUniswapV3POLRecords, getUniswapV3PairTotalValue } from "../src/liquidity/LiquidityUniswapV3";
