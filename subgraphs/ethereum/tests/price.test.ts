@@ -80,6 +80,7 @@ import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { UNISWAP_V3_POSITION_MANAGER } from "../src/liquidity/LiquidityUniswapV3";
 import { mockUniswapV3Pair, mockUniswapV3Positions, mockUniswapV3Position } from "./uniswapV3Helper";
 import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
+import { mockTreasuryAddressNull } from "./bophadesHelper";
 
 const BLOCK_NUMBER: BigInt = BigInt.fromString("14000000");
 
@@ -87,17 +88,18 @@ beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
 
+  // Do at the start, as it can be used by mock functions
+  mockTreasuryAddressNull();
+
   mockEthUsdRate();
   mockStablecoinsPriceFeeds();
+  mockBalancerVaultZero();
+  mockUniswapV2PairsZero();
+  mockUniswapV3PairsZero();
+  mockBalancerGaugeBalanceZero(getWalletAddressesForContract(ERC20_BALANCER_WETH_FDT, BLOCK_NUMBER));
 });
 
 describe("OHM-USD rate", () => {
-  beforeEach(() => {
-    mockBalancerVaultZero();
-    mockUniswapV2PairsZero();
-    mockUniswapV3PairsZero();
-  });
-
   test("Sushi OHM-DAI rate calculation is correct", () => {
     mockEthUsdRate();
     mockUsdOhmV2Rate();
@@ -278,10 +280,6 @@ describe("OHM-USD rate", () => {
 });
 
 describe("get USD rate", () => {
-  beforeEach(() => {
-    mockBalancerGaugeBalanceZero(getWalletAddressesForContract(ERC20_BALANCER_WETH_FDT, BLOCK_NUMBER));
-  });
-
   test("DAI returns 1", () => {
     assert.stringEquals(getUSDRate(ERC20_DAI, BLOCK_NUMBER).toString(), "1");
   });

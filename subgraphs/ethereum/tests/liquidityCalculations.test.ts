@@ -35,6 +35,7 @@ import {
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
+import { mockTreasuryAddressNull } from "./bophadesHelper";
 
 const PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY = BigDecimal.fromString("100");
 const TIMESTAMP = BigInt.fromString("1");
@@ -43,6 +44,9 @@ const BLOCK_NUMBER: BigInt = BigInt.fromString("14000000");
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
+
+  // Do at the start, as it can be used by mock functions
+  mockTreasuryAddressNull();
 
   // Mock other liquidity pools
   mockBalancerVaultZero();

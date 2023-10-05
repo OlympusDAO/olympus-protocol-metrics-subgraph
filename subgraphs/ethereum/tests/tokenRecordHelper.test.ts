@@ -20,6 +20,7 @@ import {
   ERC20_USDC,
   ERC20_WETH,
 } from "../src/utils/Constants";
+import { mockTreasuryAddressNull } from "./bophadesHelper";
 
 const TIMESTAMP = BigInt.fromString("1");
 
@@ -42,6 +43,9 @@ const createSampleTokenRecord = (): TokenRecord => {
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
+
+  // Do at the start, as it can be used by mock functions
+  mockTreasuryAddressNull();
 });
 
 describe("constructor", () => {
