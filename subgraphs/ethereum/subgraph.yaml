@@ -13,9 +13,8 @@ dataSources:
     name: ProtocolMetrics
     network: mainnet
     source:
-      # DAI-ETH price feed
-      address: "0x158228e08C52F3e2211Ccbc8ec275FA93f6033FC"
-      abi: ChainlinkPriceFeed
+      address: "0x0ab87046fBb341D058F17CBC4c1133F25a20a52f"
+      abi: gOHM
       startBlock: 14690000
     mapping:
       kind: ethereum/events
@@ -122,11 +121,13 @@ dataSources:
         # Cooler Loans
         - name: CoolerLoansClearinghouse
           file: ./abis/CoolerLoansClearinghouse.json
-      # This will trigger every hour
-      # Some Chainlink price feeds will trigger every 24 hours, but that is too infrequent
-      eventHandlers:
-        - event: NewRound(indexed uint256,indexed address,uint256)
-          handler: handleNewRound
+      blockHandlers:
+        - handler: handleMetricsBlock
+          filter:
+            kind: polling
+            # Every 8 hours
+            # 5 blocks per minute * 60 minutes * 8 hours
+            every: 2400
       file: ./src/protocolMetrics/ProtocolMetrics.ts
   ###
   # BondManager and GnosisEasyAuction index Gnosis auction events, used for bond calculations
