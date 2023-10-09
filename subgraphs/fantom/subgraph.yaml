@@ -1,4 +1,4 @@
-specVersion: 0.0.4
+specVersion: 0.0.8
 description: Olympus Protocol Metrics Subgraph - Fantom
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 # features:
@@ -13,8 +13,8 @@ dataSources:
     name: TokenRecords-fantom
     network: fantom
     source:
-      address: "0xc7439cd23025a798913a027fb46bc347021483db"
-      abi: ChainlinkAggregator
+      address: "0x91fa20244Fb509e8289CA630E5db3E9166233FDc"
+      abi: gOHM
       startBlock: 37320000 # 2022-05-01
     mapping:
       kind: ethereum/events
@@ -24,9 +24,6 @@ dataSources:
         - TokenRecord
         - TokenSupply
       abis:
-        # For the event handler
-        - name: ChainlinkAggregator
-          file: abis/ChainlinkAggregator.json
         # Basic
         - name: ERC20
           file: ../shared/abis/ERC20.json
@@ -41,8 +38,10 @@ dataSources:
           file: ../shared/abis/UniswapV2Pair.json
         - name: UniswapV3Pair
           file: ../shared/abis/UniswapV3Pair.json
-      eventHandlers:
-        # Event every few hours
-        - event: NewRound(indexed uint256,indexed address,uint256)
-          handler: handleAssets
+      blockHandlers:
+        - handler: handleAssets
+          filter:
+            kind: polling
+            # Only index every 7200nd block, approximately 8 hours
+            every: 7200
       file: ./src/treasury/Assets.ts
