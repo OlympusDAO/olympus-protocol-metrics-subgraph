@@ -5,6 +5,14 @@
 - Improve indexing performance by using Bytes instead of String for entity ids
 - Improve indexing performance by shifting TokenRecord, TokenSupply and ProtocolMetric entities to be immutable
 - Change the indexing trigger to Chainlink, as the previous event will be deprecated soon
+
+## 4.14.2 (2023-10-05)
+
+- Fixes incorrect grafting
+
+## 4.14.1 (2023-10-04)
+
+- Deduct bricked/burned sOHMv2 from circulation
 - Add removal of funds from Vendor Finance
 
 ## 4.13.4 (2023-09-29)

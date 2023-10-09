@@ -9,106 +9,6 @@ repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
   file: ../../schema.graphql
 dataSources:
-  # #sOHM
-  # - kind: ethereum/contract
-  #   name: sOlympusERC20V1
-  #   network: mainnet
-  #   source:
-  #     address: "0x31932e6e45012476ba3a3a4953cba62aee77fbbe"
-  #     abi: sOlympusERC20
-  #     startBlock: 14690000
-  #   mapping:
-  #     kind: ethereum/events
-  #     apiVersion: 0.0.6
-  #     language: wasm/assemblyscript
-  #     entities:
-  #       - sOlympusERC20V1
-  #     abis:
-  #       - name: OlympusStakingV1
-  #         file: ./abis/OlympusStakingV1.json
-  #       - name: sOlympusERC20
-  #         file: ./abis/sOlympusERC20.json
-  #       - name: OlympusERC20
-  #         file: ./abis/OlympusERC20.json
-  #       # Needed for price lookup
-  #       - name: ERC20
-  #         file: ../shared/abis/ERC20.json
-  #       - name: UniswapV2Pair
-  #         file: ../shared/abis/UniswapV2Pair.json
-  #       - name: BalancerVault
-  #         file: ../shared/abis/BalancerVault.json
-  #       - name: BalancerPoolToken
-  #         file: ../shared/abis/BalancerPoolToken.json
-  #     callHandlers:
-  #       - function: rebase(uint256)
-  #         handler: rebaseFunction
-  #     file: ./src/sOlympus/sOlympusERC20V1.ts
-  # - kind: ethereum/contract
-  #   name: sOlympusERC20V2
-  #   network: mainnet
-  #   source:
-  #     address: "0x04f2694c8fcee23e8fd0dfea1d4f5bb8c352111f"
-  #     abi: sOlympusERC20V2
-  #     startBlock: 14690000
-  #   mapping:
-  #     kind: ethereum/events
-  #     apiVersion: 0.0.6
-  #     language: wasm/assemblyscript
-  #     entities:
-  #       - sOlympusERC20V2
-  #     abis:
-  #       - name: OlympusStakingV2
-  #         file: ./abis/OlympusStakingV2.json
-  #       - name: sOlympusERC20V2
-  #         file: ./abis/sOlympusERC20V2.json
-  #       - name: OlympusERC20
-  #         file: ./abis/OlympusERC20.json
-  #       # Needed for price lookup
-  #       - name: ERC20
-  #         file: ../shared/abis/ERC20.json
-  #       - name: UniswapV2Pair
-  #         file: ../shared/abis/UniswapV2Pair.json
-  #       - name: BalancerVault
-  #         file: ../shared/abis/BalancerVault.json
-  #       - name: BalancerPoolToken
-  #         file: ../shared/abis/BalancerPoolToken.json
-  #     callHandlers:
-  #       - function: rebase(uint256,uint256)
-  #         handler: rebaseFunction
-  #     file: ./src/sOlympus/sOlympusERC20V2.ts
-  # - kind: ethereum/contract
-  #   name: sOlympusERC20V3
-  #   network: mainnet
-  #   source:
-  #     address: "0x04906695D6D12CF5459975d7C3C03356E4Ccd460"
-  #     abi: sOlympusERC20V3
-  #     startBlock: 14690000
-  #   mapping:
-  #     kind: ethereum/events
-  #     apiVersion: 0.0.6
-  #     language: wasm/assemblyscript
-  #     entities:
-  #       - sOlympusERC20V3
-  #     abis:
-  #       - name: OlympusStakingV3
-  #         file: ./abis/OlympusStakingV3.json
-  #       - name: sOlympusERC20V3
-  #         file: ./abis/sOlympusERC20V3.json
-  #       - name: OlympusERC20
-  #         file: ./abis/OlympusERC20.json
-  #       # Needed for price lookup
-  #       - name: ERC20
-  #         file: ../shared/abis/ERC20.json
-  #       - name: UniswapV2Pair
-  #         file: ../shared/abis/UniswapV2Pair.json
-  #       - name: BalancerVault
-  #         file: ../shared/abis/BalancerVault.json
-  #       - name: BalancerPoolToken
-  #         file: ../shared/abis/BalancerPoolToken.json
-  #     callHandlers:
-  #       - function: rebase(uint256,uint256)
-  #         handler: rebaseFunction
-  #     file: ./src/sOlympus/sOlympusERC20V3.ts
   - kind: ethereum/contract
     name: ProtocolMetrics
     network: mainnet
@@ -142,6 +42,8 @@ dataSources:
           file: ./abis/sOlympusERC20V3.json
         - name: OlympusERC20
           file: ./abis/OlympusERC20.json
+        - name: wsOHM
+          file: ./abis/wsOHM.json
         - name: UniswapV2Pair
           file: ../shared/abis/UniswapV2Pair.json
         - name: UniswapV3Pair
