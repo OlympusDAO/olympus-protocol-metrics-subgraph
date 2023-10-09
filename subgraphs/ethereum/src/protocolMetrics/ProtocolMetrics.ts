@@ -81,16 +81,16 @@ export function updateProtocolMetrics(block: ethereum.Block, tokenRecords: Token
   pm.save();
 }
 
-export function handleNewRound(event: NewRound): void {
-  log.debug("handleNewRound: *** Indexing block {}", [event.block.number.toString()]);
+export function handleMetricsBlock(block: ethereum.Block): void {
+  log.debug("handleMetricsBlock: *** Indexing block {}", [block.number.toString()]);
 
   // TokenRecord
-  const tokenRecords = generateTokenRecords(event.block.timestamp, event.block.number);
+  const tokenRecords = generateTokenRecords(block.timestamp, block.number);
 
   // TokenSupply
-  const tokenSupplies = generateTokenSupply(event.block.timestamp, event.block.number);
+  const tokenSupplies = generateTokenSupply(block.timestamp, block.number);
 
   // Use the generated records to calculate protocol/treasury metrics
   // Otherwise we would be re-generating the records
-  updateProtocolMetrics(event.block, tokenRecords, tokenSupplies);
+  updateProtocolMetrics(block, tokenRecords, tokenSupplies);
 }
