@@ -42,6 +42,6 @@ dataSources:
         - handler: handleAssets
           filter:
             kind: polling
-            # Only index every 7200nd block, approximately 8 hours
-            every: 7200
+            # Only index every 24000 blocks, approximately 8 hours
+            every: 24000
       file: ./src/treasury/Assets.ts
