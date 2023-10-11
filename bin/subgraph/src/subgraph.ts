@@ -105,7 +105,7 @@ export const getTokenRecords = async (
 ): Promise<TokenRecord[]> => {
   const query = `
     {
-      tokenRecords(where: {block: ${block}}) {
+      tokenRecords(orderBy: token, where: {block: ${block}}) {
         id
         block
         date
@@ -158,11 +158,12 @@ export const getTokenSupplies = async (
 ): Promise<TokenSupply[]> => {
   const query = `
     {
-      tokenSupplies(where: {block: ${block}}) {
+      tokenSupplies(orderBy: token, where: {block: ${block}}) {
         id
         block
         date
         token
+        pool
         source
         balance
         supplyBalance
