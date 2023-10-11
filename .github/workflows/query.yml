@@ -27,9 +27,9 @@ jobs:
           DEPLOYMENT_ID=$(jq -r .id subgraphs/${{ matrix.subgraph }}/config.json)
           [[ ! -z "$DEPLOYMENT_ID" ]] && echo "deployment id is set" || (echo "::error::deployment id is not set in config.json" && exit 1)
           echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
-      - name: Get Latest Block
+      - name: Get Latest Date
         run: |
-          yarn subgraph latest-block ${{ matrix.subgraph }} --deployment ${{ env.DEPLOYMENT_ID }}
+          yarn subgraph latest-date ${{ matrix.subgraph }} --deployment ${{ env.DEPLOYMENT_ID }}
       - name: Get Token Records
         run: |
           yarn subgraph query ${{ matrix.subgraph }} --branch branch --deployment ${{ env.DEPLOYMENT_ID }}
