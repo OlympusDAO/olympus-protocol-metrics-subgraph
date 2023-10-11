@@ -279,11 +279,11 @@ export const combineOutput = (network: string, comparisonFile: ComparisonResults
    */
   comparisonFile.results.output = `
 **Network:** ${network}
-**Block Tested:** ${comparisonFile.latestBlock}
+**Date:** ${comparisonFile.latestDate}
 
 **Subgraph Id:**
-Base: ${comparisonFile.branches.base.subgraphId}
-Branch: ${comparisonFile.branches.branch.subgraphId}
+Base: ${comparisonFile.branches.base.subgraphId} (Block: ${comparisonFile.branches.base.blockNumber})
+Branch: ${comparisonFile.branches.branch.subgraphId} (Block: ${comparisonFile.branches.branch.blockNumber})
 
 ## Asset Records
 ${comparisonFile.results.marketValue.output}
