@@ -1,5 +1,5 @@
 import { BaseNetworkHandler } from "../../networkHandler";
-import { getOhmPrice, getTestBlock, getTokenRecords, getTokenSupplies } from "../../subgraph";
+import { getLatestBlock, getOhmPrice, getTestDate, getTokenRecords, getTokenSupplies } from "../../subgraph";
 import {
   combineOutput,
   compareBackedSupplyRecords,
@@ -13,25 +13,27 @@ import {
 import { readComparisonFile, writeComparisonFile } from "./results";
 
 export default class EthereumHandler extends BaseNetworkHandler {
-  async doLatestBlock(): Promise<void> {
+  async doLatestDate(): Promise<void> {
     const comparisonFile = readComparisonFile(this.outputPath);
 
-    const latestBlock = await getTestBlock(this.subgraphId);
+    const latestDate = await getTestDate(this.subgraphId);
+    comparisonFile.latestDate = latestDate;
 
-    comparisonFile.latestBlock = latestBlock;
     writeComparisonFile(comparisonFile, this.outputPath);
   }
 
   async doQuery(): Promise<void> {
     const comparisonFile = readComparisonFile(this.outputPath);
 
-    const tokenRecords = await getTokenRecords(this.subgraphId, comparisonFile.latestBlock);
-    const tokenSupplies = await getTokenSupplies(this.subgraphId, comparisonFile.latestBlock);
+    // Fetch the latest block for each branch
+    const latestBlock = await getLatestBlock(this.subgraphId, comparisonFile.latestDate);
+    comparisonFile.branches[this.branch].blockNumber = latestBlock;
+
+    const tokenRecords = await getTokenRecords(this.subgraphId, latestBlock);
+    const tokenSupplies = await getTokenSupplies(this.subgraphId, latestBlock);
 
     // Update the comparison results and write
-    comparisonFile.branches[this.branch] = {
-      subgraphId: this.subgraphId,
-    };
+    comparisonFile.branches[this.branch].subgraphId = this.subgraphId;
 
     comparisonFile.records.tokenRecords[this.branch] = tokenRecords;
     comparisonFile.records.tokenSupplies[this.branch] = tokenSupplies;
@@ -54,7 +56,7 @@ export default class EthereumHandler extends BaseNetworkHandler {
 
     // Get OHM price
     const subgraphId = comparisonFile.branches.branch.subgraphId;
-    const block = comparisonFile.latestBlock;
+    const block = comparisonFile.branches.branch.blockNumber;
     const ohmPrice = await getOhmPrice(subgraphId, block);
 
     doLiquidBackingCheck(tokenRecordsBranch, tokenSuppliesBranch, ohmPrice, comparisonFile);

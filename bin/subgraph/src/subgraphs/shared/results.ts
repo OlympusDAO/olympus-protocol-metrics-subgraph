@@ -4,12 +4,14 @@ import { dirname } from "path";
 import { TokenRecord, TokenSupply } from "../../subgraph";
 
 export type ComparisonResults = {
-  latestBlock?: string;
+  latestDate?: string;
   branches: {
     base?: {
+      blockNumber?: string;
       subgraphId: string;
     };
     branch?: {
+      blockNumber?: string;
       subgraphId: string;
     };
   };
