@@ -3,12 +3,13 @@ import { assert, beforeEach, clearStore, createMockedFunction, test } from "matc
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { DAO_WALLET } from "../../shared/src/Wallets";
-import { ERC20_LQTY, ERC20_LUSD, ERC20_TRIBE, ERC20_WETH, getWalletAddressesForContract, LIQUITY_STABILITY_POOL } from "../src/utils/Constants";
+import { ERC20_LQTY, ERC20_LUSD, ERC20_TRIBE, ERC20_WETH, LIQUITY_STABILITY_POOL } from "../src/utils/Constants";
 import {
   getLiquityStabilityPoolRecords,
 } from "../src/utils/ContractHelper";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import { OHM_USD_RESERVE_BLOCK } from "./pairHelper";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 const LUSD_BALANCE = "100";
 const LUSD_BALANCE_INT = toBigInt(BigDecimal.fromString(LUSD_BALANCE), ERC20_STANDARD_DECIMALS);

@@ -5,7 +5,7 @@ import { getCurrentIndex } from "../../../shared/src/supply/OhmCalculations";
 import { pushTokenSupplyArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { LendingMarketDeployment } from "../../../shared/src/utils/LendingMarketDeployment";
-import { createOrUpdateTokenSupply, TYPE_BONDS_DEPOSITS, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_VESTING_TOKENS, TYPE_BOOSTED_LIQUIDITY_VAULT, TYPE_LENDING, TYPE_LIQUIDITY, TYPE_OFFSET, TYPE_TOTAL_SUPPLY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
+import { createTokenSupply, TYPE_BONDS_DEPOSITS, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_VESTING_TOKENS, TYPE_BOOSTED_LIQUIDITY_VAULT, TYPE_LENDING, TYPE_LIQUIDITY, TYPE_OFFSET, TYPE_TOTAL_SUPPLY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { OLYMPUS_ASSOCIATION_WALLET } from "../../../shared/src/Wallets";
 import { BondManager } from "../../generated/ProtocolMetrics/BondManager";
 import { IncurDebt } from "../../generated/ProtocolMetrics/IncurDebt";
@@ -130,7 +130,7 @@ export function getTotalSupplyRecord(timestamp: BigInt, blockNumber: BigInt): To
 
   const totalSupply = getTotalSupply(blockNumber);
 
-  return createOrUpdateTokenSupply(
+  return createTokenSupply(
     timestamp,
     getContractName(ohmContractAddress),
     ohmContractAddress,
@@ -187,7 +187,7 @@ function getMigrationOffsetRecord(timestamp: BigInt, blockNumber: BigInt): Token
     offset.toString(),
   ]);
 
-  return createOrUpdateTokenSupply(
+  return createTokenSupply(
     timestamp,
     getContractName(ERC20_OHM_V2),
     ERC20_OHM_V2,
@@ -241,7 +241,7 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
 
       // OHM equivalent to the auction capacity is pre-minted and stored in the teller
       records.push(
-        createOrUpdateTokenSupply(
+        createTokenSupply(
           timestamp,
           getContractName(ERC20_OHM_V2),
           ERC20_OHM_V2,
@@ -271,7 +271,7 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
       if (timestamp.lt(expiryTimestamp)) {
         // Vesting user deposits equal to the sold quantity are stored in the bond manager, so we adjust that
         records.push(
-          createOrUpdateTokenSupply(
+          createTokenSupply(
             timestamp,
             getContractName(ERC20_OHM_V2),
             ERC20_OHM_V2,
@@ -288,7 +288,7 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
 
         // Vesting bond tokens equal to the auction capacity are stored in the teller, so we adjust that
         records.push(
-          createOrUpdateTokenSupply(
+          createTokenSupply(
             timestamp,
             getContractName(ERC20_OHM_V2),
             ERC20_OHM_V2,
@@ -308,7 +308,7 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
         // User deposits equal to the sold quantity are stored in the bond manager, so we adjust that
         // These deposits will eventually be burned
         records.push(
-          createOrUpdateTokenSupply(
+          createTokenSupply(
             timestamp,
             getContractName(ERC20_OHM_V2),
             ERC20_OHM_V2,
@@ -358,7 +358,7 @@ function getLendingMarketDeploymentOHMRecords(timestamp: BigInt, deploymentAddre
 
   // Record the balance at the current block
   records.push(
-    createOrUpdateTokenSupply(
+    createTokenSupply(
       timestamp,
       getContractName(ERC20_OHM_V2),
       ERC20_OHM_V2,
@@ -457,7 +457,7 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
     if (balance.equals(BigDecimal.zero())) continue;
 
     records.push(
-      createOrUpdateTokenSupply(
+      createTokenSupply(
         timestamp,
         getContractName(ohmContractAddress),
         ohmContractAddress,
@@ -488,7 +488,7 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
       const ohmBalance = blockNumber.ge(BigInt.fromString(SOHM_INDEX_CORRECTION_BLOCK)) ? balance : ohmIndex.times(balance);
 
       records.push(
-        createOrUpdateTokenSupply(
+        createTokenSupply(
           timestamp,
           `${getContractName(ERC20_OHM_V2)} in sOHM v3`,
           ERC20_OHM_V2,
@@ -514,7 +514,7 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
       const ohmBalance = ohmIndex.times(balance);
 
       records.push(
-        createOrUpdateTokenSupply(
+        createTokenSupply(
           timestamp,
           `${getContractName(ERC20_OHM_V2)} in gOHM`,
           ERC20_OHM_V2,
@@ -567,7 +567,7 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
       const ohmBalance = toDecimal(gOhmBalanceResult.value, wsOHMDecimals).times(ohmIndex);
 
       records.push(
-        createOrUpdateTokenSupply(
+        createTokenSupply(
           timestamp,
           `${getContractName(ERC20_OHM_V2)} in sOHM v2`,
           ERC20_OHM_V2,
@@ -698,7 +698,7 @@ export function getIncurDebtSupplyRecords(timestamp: BigInt, blockNumber: BigInt
   }
 
   records.push(
-    createOrUpdateTokenSupply(
+    createTokenSupply(
       timestamp,
       getContractName(ERC20_OHM_V2),
       ERC20_OHM_V2,
@@ -751,7 +751,7 @@ export function getBoostedLiquiditySupplyRecords(timestamp: BigInt, blockNumber:
     }
 
     records.push(
-      createOrUpdateTokenSupply(
+      createTokenSupply(
         timestamp,
         getContractName(ERC20_OHM_V2),
         ERC20_OHM_V2,

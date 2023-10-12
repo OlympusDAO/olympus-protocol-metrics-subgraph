@@ -3,8 +3,8 @@ import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts
 import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
 import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
-import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
+import { createTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
+import { createTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { FraxSwapPool } from "../../generated/ProtocolMetrics/FraxSwapPool";
 import { PoolSnapshot } from "../../generated/schema";
 import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
@@ -13,10 +13,10 @@ import {
   ERC20_OHM_V2,
   ERC20_TOKENS,
   getContractName,
-  getWalletAddressesForContract,
   liquidityPairHasToken,
 } from "../utils/Constants";
 import { getUSDRate } from "../utils/Price";
+import { getWalletAddressesForContract } from "../utils/ProtocolAddresses";
 
 /**
  * Returns a PoolSnapshot, which contains cached data about the Frax pool. This
@@ -27,7 +27,8 @@ import { getUSDRate } from "../utils/Price";
  * @returns snapshot, or null if there was a contract revert
  */
 export function getOrCreateFraxPoolSnapshot(pairAddress: string, blockNumber: BigInt): PoolSnapshot | null {
-  const snapshotId = `${pairAddress}/${blockNumber.toString()}`;
+  // pairAddress/blockNumber
+  const snapshotId = Bytes.fromHexString(pairAddress).concatI32(blockNumber.toI32());
   let snapshot = PoolSnapshot.load(snapshotId);
   if (snapshot == null) {
     log.debug("getOrCreateFraxPoolSnapshot: Creating new snapshot for pool {} ({}) at block {}", [getContractName(pairAddress), pairAddress, blockNumber.toString()]);
@@ -208,7 +209,7 @@ function getFraxSwapPairTokenRecord(
     return null;
   }
 
-  return createOrUpdateTokenRecord(
+  return createTokenRecord(
     timestamp,
     getContractName(pairAddress),
     pairAddress,
@@ -369,7 +370,7 @@ export function getFraxSwapPairTokenQuantityRecords(
 
     const tokenBalance = totalQuantity.times(record.balance).div(poolSnapshot.totalSupply);
     records.push(
-      createOrUpdateTokenSupply(
+      createTokenSupply(
         timestamp,
         getContractName(tokenAddress),
         tokenAddress,

@@ -29,7 +29,6 @@ import {
   FRAX_LOCKING_FRAX_USDC,
   getContractAbbreviation,
   getContractName,
-  getWalletAddressesForContract,
   NATIVE_ETH,
   PAIR_CURVE_FRAX_USDC,
   PAIR_CURVE_OHM_ETH,
@@ -58,6 +57,7 @@ import {
   OHM_V2_DECIMALS,
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 const PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY = BigDecimal.fromString("100");
 const TIMESTAMP = BigInt.fromString("1");

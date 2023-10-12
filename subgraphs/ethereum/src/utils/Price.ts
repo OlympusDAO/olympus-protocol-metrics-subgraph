@@ -611,7 +611,8 @@ function resolvePrice(contractAddress: string, blockNumber: BigInt): BigDecimal 
 }
 
 function getOrCreateTokenPriceSnapshot(address: string, blockNumber: BigInt): TokenPriceSnapshot {
-  const snapshotId = `${address.toLowerCase()}/${blockNumber.toString()}`;
+  // address/blockNumber
+  const snapshotId = Bytes.fromHexString(address).concatI32(blockNumber.toI32());
   let snapshot = TokenPriceSnapshot.load(snapshotId);
   if (snapshot == null) {
     snapshot = new TokenPriceSnapshot(snapshotId);

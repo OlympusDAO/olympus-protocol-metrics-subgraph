@@ -1,11 +1,11 @@
-specVersion: 0.0.4
+specVersion: 0.0.8
 description: Olympus Protocol Metrics Subgraph
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
-features:
-  - grafting
-graft:
-  base: QmSwwBfAoWJLHQeSTagFnkibnkrjeprxcQpXAHk6AVrysA
-  block: 18185779 # Clearinghouse deployment
+# features:
+#   - grafting
+# graft:
+#   base: QmSwwBfAoWJLHQeSTagFnkibnkrjeprxcQpXAHk6AVrysA
+#   block: 18185779 # Clearinghouse deployment
 schema:
   file: ../../schema.graphql
 dataSources:
@@ -13,10 +13,8 @@ dataSources:
     name: ProtocolMetrics
     network: mainnet
     source:
-      # Created in December 2021. If indexing prior to then, we need to use a different contract
-      # https://etherscan.io/tx/0xd81bf37e970f5f3593d028b8503a6432d3cc6eb5b6589d98d041f28018f060b4
-      address: "0x04906695D6D12CF5459975d7C3C03356E4Ccd460"
-      abi: sOlympusERC20V3
+      address: "0x0ab87046fBb341D058F17CBC4c1133F25a20a52f"
+      abi: gOHM
       startBlock: 14690000
     mapping:
       kind: ethereum/events
@@ -123,17 +121,13 @@ dataSources:
         # Cooler Loans
         - name: CoolerLoansClearinghouse
           file: ./abis/CoolerLoansClearinghouse.json
-      eventHandlers:
-        - event: LogRebase(indexed uint256,uint256,uint256)
-          handler: handleMetrics
-      # This can be re-enabled, but likely needs a reindexing from scratch
-      # blockHandlers:
-      #   - handler: handleMetricsBlock
-      #     filter:
-      #       kind: polling
-      #       # Every 4 hours
-      #       # 5 blocks per minute * 60 minutes * 4 hours
-      #       every: 1200
+      blockHandlers:
+        - handler: handleMetricsBlock
+          filter:
+            kind: polling
+            # Every 8 hours
+            # 5 blocks per minute * 60 minutes * 8 hours
+            every: 2400
       file: ./src/protocolMetrics/ProtocolMetrics.ts
   ###
   # BondManager and GnosisEasyAuction index Gnosis auction events, used for bond calculations

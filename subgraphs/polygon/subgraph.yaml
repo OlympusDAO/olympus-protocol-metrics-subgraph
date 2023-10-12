@@ -1,11 +1,11 @@
-specVersion: 0.0.4
+specVersion: 0.0.8
 description: Olympus Protocol Metrics Subgraph - Polygon
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
-features:
-  - grafting
-graft:
-  base: Qmayo4ydvieNxGzLcHdpNZZZCgeqBqcxtL4sTiEjdbDwKo
-  block: 40300000 # 2023-03-13
+# features:
+#   - grafting
+# graft:
+#   base: Qmayo4ydvieNxGzLcHdpNZZZCgeqBqcxtL4sTiEjdbDwKo
+#   block: 40300000 # 2023-03-13
 schema:
   file: ../../schema.graphql
 dataSources:
@@ -40,4 +40,8 @@ dataSources:
           file: ../shared/abis/UniswapV3Pair.json
       blockHandlers:
         - handler: handleAssets
+          filter:
+            kind: polling
+            # Only index every 14,400th block, approximately 8 hours
+            every: 14400
       file: ./src/treasury/Assets.ts

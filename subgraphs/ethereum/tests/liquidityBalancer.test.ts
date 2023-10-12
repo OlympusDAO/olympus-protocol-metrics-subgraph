@@ -20,7 +20,6 @@ import {
   ERC20_OHM_V1,
   ERC20_OHM_V2,
   ERC20_USDC,
-  getWalletAddressesForContract,
   POOL_BALANCER_OHM_DAI_WETH_ID,
   POOL_BALANCER_OHM_V2_BTRFLY_V2_ID,
   POOL_BALANCER_WETH_FDT_ID,
@@ -55,6 +54,7 @@ import {
   OHM_USD_RESERVE_BLOCK,
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 const TIMESTAMP = BigInt.fromString("1");
 

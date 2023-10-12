@@ -8,7 +8,7 @@ import {
   TokenDefinition,
 } from "../../shared/src/contracts/TokenDefinition";
 import {
-  createOrUpdateTokenRecord,
+  createTokenRecord,
   getTokenAddressesInCategory,
   isTokenAddressInCategory,
 } from "../../shared/src/utils/TokenRecordHelper";
@@ -24,7 +24,7 @@ import {
 const TIMESTAMP = BigInt.fromString("1");
 
 const createSampleTokenRecord = (): TokenRecord => {
-  return createOrUpdateTokenRecord(
+  return createTokenRecord(
     TIMESTAMP,
     "name",
     "tokenAddress",
@@ -48,7 +48,6 @@ describe("constructor", () => {
   test("basic values", () => {
     const record = createSampleTokenRecord();
 
-    assert.stringEquals("1970-01-01/source/name", record.id);
     assert.stringEquals("name", record.token);
     assert.stringEquals("tokenAddress", record.tokenAddress);
     assert.stringEquals("source", record.source);
@@ -59,7 +58,7 @@ describe("constructor", () => {
   });
 
   test("custom multiplier", () => {
-    const record = createOrUpdateTokenRecord(
+    const record = createTokenRecord(
       TIMESTAMP,
       "name",
       "tokenAddress",
@@ -89,7 +88,7 @@ describe("constructor", () => {
 
 describe("value", () => {
   test("multiplier = 1", () => {
-    const record = createOrUpdateTokenRecord(
+    const record = createTokenRecord(
       TIMESTAMP,
       "name",
       "tokenAddress",
@@ -109,7 +108,7 @@ describe("value", () => {
   });
 
   test("multiplier = 0.25", () => {
-    const record = createOrUpdateTokenRecord(
+    const record = createTokenRecord(
       TIMESTAMP,
       "name",
       "tokenAddress",
@@ -133,7 +132,7 @@ describe("value", () => {
     const tokenDefinitions = new Map<string, TokenDefinition>();
     tokenDefinitions.set(ERC20_ALCX, new TokenDefinition(ERC20_ALCX, TokenCategoryVolatile, true, false, BigDecimal.fromString("0.5")));
 
-    const record = createOrUpdateTokenRecord(
+    const record = createTokenRecord(
       TIMESTAMP,
       "name",
       ERC20_ALCX,
@@ -157,7 +156,7 @@ describe("value", () => {
     const tokenDefinitions = new Map<string, TokenDefinition>();
     tokenDefinitions.set(ERC20_ALCX, new TokenDefinition(ERC20_ALCX, TokenCategoryVolatile, true, false, BigDecimal.fromString("0.5")));
 
-    const record = createOrUpdateTokenRecord(
+    const record = createTokenRecord(
       TIMESTAMP,
       "name",
       ERC20_ALCX,

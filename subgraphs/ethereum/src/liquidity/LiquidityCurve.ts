@@ -4,8 +4,8 @@ import { log } from "matchstick-as";
 import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
 import { TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { createOrUpdateTokenRecord, getTokenCategory } from "../../../shared/src/utils/TokenRecordHelper";
-import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
+import { createTokenRecord, getTokenCategory } from "../../../shared/src/utils/TokenRecordHelper";
+import { createTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { CurvePool } from "../../generated/ProtocolMetrics/CurvePool";
 import { CurvePoolV2 } from "../../generated/ProtocolMetrics/CurvePoolV2";
 import { ERC20TokenSnapshot, PoolSnapshot } from "../../generated/schema";
@@ -19,11 +19,11 @@ import {
   getContractName,
   getConvexStakedToken,
   getFraxStakedToken,
-  getWalletAddressesForContract,
   liquidityPairHasToken,
 } from "../utils/Constants";
 import { getConvexStakedBalance, getERC20, getFraxLockedBalance } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
+import { getWalletAddressesForContract } from "../utils/ProtocolAddresses";
 
 /**
  * Determines the address of the ERC20 token for a Curve liquidity pair.
@@ -67,7 +67,8 @@ function getCurvePairToken(pairAddress: string, blockNumber: BigInt): string | n
  * @returns snapshot, or null if there was a contract revert
  */
 export function getOrCreateCurvePoolSnapshot(pairAddress: string, blockNumber: BigInt): PoolSnapshot | null {
-  const snapshotId = `${pairAddress}/${blockNumber.toString()}`;
+  // pairAddress/blockNumber
+  const snapshotId = Bytes.fromHexString(pairAddress).concatI32(blockNumber.toI32());
   let snapshot = PoolSnapshot.load(snapshotId);
   if (snapshot == null) {
     log.debug("getOrCreateCurvePoolSnapshot: Creating new snapshot for pool {} ({}) at block {}", [getContractName(pairAddress), pairAddress, blockNumber.toString()]);
@@ -222,7 +223,7 @@ function getCurvePairConvexStakedRecord(
       balance.toString(),
     ],
   );
-  return createOrUpdateTokenRecord(
+  return createTokenRecord(
     timestamp,
     getContractName(stakedTokenDefinition.getAddress(), "Staked in Convex"),
     stakedTokenDefinition.getAddress(),
@@ -291,7 +292,7 @@ function getCurvePairFraxLockedRecord(
       balance.toString(),
     ],
   );
-  return createOrUpdateTokenRecord(
+  return createTokenRecord(
     timestamp,
     getContractName(stakedTokenDefinition.getAddress(), "Staked in Frax"),
     stakedTokenDefinition.getAddress(),
@@ -353,7 +354,7 @@ function getCurvePairRecord(
     pairTokenBalanceDecimal.toString(),
   ]);
 
-  return createOrUpdateTokenRecord(
+  return createTokenRecord(
     timestamp,
     getContractName(pairTokenAddress),
     pairTokenAddress,
@@ -607,7 +608,7 @@ export function getCurvePairTokenQuantityRecords(
 
     const tokenBalance = totalQuantity.times(record.balance).div(poolSnapshot.totalSupply);
     records.push(
-      createOrUpdateTokenSupply(
+      createTokenSupply(
         timestamp,
         getContractName(tokenAddress),
         tokenAddress,

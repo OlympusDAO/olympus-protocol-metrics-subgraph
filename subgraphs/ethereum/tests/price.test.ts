@@ -31,7 +31,6 @@ import {
   ERC20_USDC,
   ERC20_UST,
   ERC20_WETH,
-  getWalletAddressesForContract,
   NATIVE_ETH,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
   PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK,
@@ -51,7 +50,6 @@ import { getUSDRate, getUSDRateBalancer } from "../src/utils/Price";
 import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS, mockERC20Balance } from "./erc20Helper";
 import {
-  ETH_PRICE,
   getERC20UsdRate,
   getEthUsdRate,
   getOhmUsdRate,
@@ -81,6 +79,7 @@ import {
 import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { UNISWAP_V3_POSITION_MANAGER } from "../src/liquidity/LiquidityUniswapV3";
 import { mockUniswapV3Pair, mockUniswapV3Positions, mockUniswapV3Position } from "./uniswapV3Helper";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);

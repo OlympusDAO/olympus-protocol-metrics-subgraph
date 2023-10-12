@@ -1,4 +1,4 @@
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 import { ethereum } from "@graphprotocol/graph-ts";
 
 import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
@@ -19,16 +19,16 @@ import { getUSDRate } from "../utils/Price";
 import { generateTokenRecords, generateTokenSupply } from "../utils/TreasuryCalculations";
 import { getAPY_Rebase, getNextOHMRebase } from "./Rebase";
 import { getMarketCap, getTreasuryLiquidBacking, getTreasuryLiquidBackingPerGOhmSynthetic, getTreasuryLiquidBackingPerOhmFloating, getTreasuryMarketValue } from "./TreasuryMetrics";
+import { NewRound } from "../../generated/ProtocolMetrics/ChainlinkPriceFeed";
 
-export function loadOrCreateProtocolMetric(timestamp: BigInt): ProtocolMetric {
+export function createProtocolMetric(timestamp: BigInt, blockNumber: BigInt): ProtocolMetric {
   const dateString = getISO8601DateStringFromTimestamp(timestamp);
+  // YYYY-MM-DD/<block>
+  const recordId = Bytes.fromUTF8(dateString).concatI32(blockNumber.toI32());
 
-  let protocolMetric = ProtocolMetric.load(dateString);
-  if (protocolMetric == null) {
-    protocolMetric = new ProtocolMetric(dateString);
-    protocolMetric.date = dateString;
-    protocolMetric.timestamp = timestamp;
-  }
+  const protocolMetric = new ProtocolMetric(recordId);
+  protocolMetric.date = dateString;
+  protocolMetric.timestamp = timestamp;
 
   return protocolMetric as ProtocolMetric;
 }
@@ -37,7 +37,7 @@ export function updateProtocolMetrics(block: ethereum.Block, tokenRecords: Token
   const blockNumber = block.number;
   log.info("Starting protocol metrics for block {}", [blockNumber.toString()]);
 
-  const pm = loadOrCreateProtocolMetric(block.timestamp);
+  const pm = createProtocolMetric(block.timestamp, block.number);
 
   pm.block = blockNumber;
 
@@ -81,27 +81,8 @@ export function updateProtocolMetrics(block: ethereum.Block, tokenRecords: Token
   pm.save();
 }
 
-export function handleMetrics(event: LogRebase): void {
-  log.debug("handleMetrics: *** Indexing block {}", [event.block.number.toString()]);
-
-  // TokenRecord
-  const tokenRecords = generateTokenRecords(event.block.timestamp, event.block.number);
-
-  // TokenSupply
-  const tokenSupplies = generateTokenSupply(event.block.timestamp, event.block.number);
-
-  // Use the generated records to calculate protocol/treasury metrics
-  // Otherwise we would be re-generating the records
-  updateProtocolMetrics(event.block, tokenRecords, tokenSupplies);
-}
-
-/**
- * DO NOT USE IN PRODUCTION
- * 
- * FOR TESTING ONLY
- */
 export function handleMetricsBlock(block: ethereum.Block): void {
-  log.debug("handleMetrics: *** Indexing block {}", [block.number.toString()]);
+  log.debug("handleMetricsBlock: *** Indexing block {}", [block.number.toString()]);
 
   // TokenRecord
   const tokenRecords = generateTokenRecords(block.timestamp, block.number);

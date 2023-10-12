@@ -15,7 +15,6 @@ import {
   ERC20_DAI,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
-  getWalletAddressesForContract,
   PAIR_UNISWAP_V2_OHM_BTRFLY_V1,
   PAIR_UNISWAP_V2_OHM_DAI,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
@@ -46,6 +45,7 @@ import {
   OHM_V2_DECIMALS,
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 // Limits the search to the OHM-DAI pairs, otherwise other pairs will be iterated over
 const pairArrayOverride: PairHandler[] = [

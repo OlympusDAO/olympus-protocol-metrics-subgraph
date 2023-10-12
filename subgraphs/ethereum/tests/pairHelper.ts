@@ -15,9 +15,7 @@ import {
   BALANCER_LIQUIDITY_GAUGE_OHM_WETH,
   BALANCER_LIQUIDITY_GAUGE_OHM_WSTETH,
   BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
-  BALANCER_LIQUIDITY_GAUGES,
   BALANCER_VAULT,
-  CONVEX_ALLOCATORS,
   CONVEX_STAKING_CONTRACTS,
   ERC20_AURA,
   ERC20_AURA_BAL,
@@ -62,7 +60,6 @@ import {
   ERC20_WSTETH,
   FRAX_LOCKING_CONTRACTS,
   getContractName,
-  getWalletAddressesForContract,
   LQTY_STAKING,
   PAIR_CURVE_FRAX_USDC,
   PAIR_CURVE_OHM_ETH,
@@ -101,6 +98,7 @@ import {
 import { mockPriceFeed, mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import { mockZeroWalletBalances } from "./walletHelper";
+import { CONVEX_ALLOCATORS, getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 export const ETH_TRIBE_RESERVE_TRIBE = BigInt.fromString("40963255589554358793575");
 export const ETH_TRIBE_RESERVE_ETH = BigInt.fromString("4956325030062526848");

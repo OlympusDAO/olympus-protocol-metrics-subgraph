@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../generated/schema";
 import { TokenDefinition } from "../contracts/TokenDefinition";
@@ -102,7 +102,7 @@ function getTokenMultiplier(tokenAddress: string, tokenDefinitions: Map<string, 
  * @param category The asset category. If not specified, the value will be determined through a lookup.
  * @returns
  */
-export function createOrUpdateTokenRecord(
+export function createTokenRecord(
   timestamp: BigInt,
   tokenName: string,
   tokenAddress: string,
@@ -118,12 +118,9 @@ export function createOrUpdateTokenRecord(
   category: string | null = null,
 ): TokenRecord {
   const dateString = getISO8601DateStringFromTimestamp(timestamp);
-  const recordId = `${dateString}/${sourceName}/${tokenName}`;
-
-  // Attempt to fetch the current day's record
-  const existingRecord = TokenRecord.load(recordId);
-
-  const record = existingRecord ? existingRecord : new TokenRecord(recordId);
+  // YYYY-MM-DD/<block>/<token>/<source>
+  const recordId = Bytes.fromUTF8(dateString).concatI32(blockNumber.toI32()).concat(Bytes.fromUTF8(sourceName)).concat(Bytes.fromUTF8(tokenName));
+  const record = new TokenRecord(recordId);
 
   record.block = blockNumber;
   record.date = dateString;
