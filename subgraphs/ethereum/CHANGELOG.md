@@ -7,6 +7,10 @@
 - Change the indexing trigger to a polling block handler (every 8 hours), as the previous event trigger will be deprecated soon
 - Re-index from 2022-05-01
 
+## 4.14.3 (2023-10-13)
+
+- Fix recognition of DAI and sDAI balances in Clearinghouses
+
 ## 4.14.2 (2023-10-05)
 
 - Fixes incorrect grafting
