@@ -4,7 +4,7 @@
 
 import { log } from "@graphprotocol/graph-ts";
 import { ERC20_GOHM, ERC20_OHM_V1, ERC20_OHM_V2, ERC20_SOHM_V1, ERC20_SOHM_V2, ERC20_SOHM_V3 } from "./Constants";
-import { COOLER_LOANS_CLEARINGHOUSES } from "../../../shared/src/Wallets";
+import { COOLER_LOANS_CLEARINGHOUSES, COOLER_LOANS_CLEARINGHOUSE_V1, COOLER_LOANS_CLEARINGHOUSE_V1_1 } from "../../../shared/src/Wallets";
 
 export const TREASURY_ADDRESS_V1 = "0x886CE997aa9ee4F8c2282E182aB72A705762399D".toLowerCase();
 export const TREASURY_ADDRESS_V2 = "0x31f8cc382c9898b273eff4e0b7626a6987c846e8".toLowerCase();
@@ -99,6 +99,8 @@ export const PROTOCOL_ADDRESSES = [
   TREASURY_ADDRESS_V3,
   TRSRY,
   VEFXS_ALLOCATOR,
+  COOLER_LOANS_CLEARINGHOUSE_V1,
+  COOLER_LOANS_CLEARINGHOUSE_V1_1,
 ];
 
 const TREASURY_BLACKLIST = new Map<string, string[]>();
@@ -126,11 +128,6 @@ TREASURY_BLACKLIST.set(ERC20_SOHM_V3, PROTOCOL_ADDRESSES);
  */
 export const getWalletAddressesForContract = (contractAddress: string): string[] => {
   const walletAddresses = PROTOCOL_ADDRESSES.slice(0);
-
-  // Add the clearinghouses to the list
-  for (let i = 0; i < COOLER_LOANS_CLEARINGHOUSES.length; i++) {
-    walletAddresses.push(COOLER_LOANS_CLEARINGHOUSES[i]);
-  }
 
   // If the contract isn't on the blacklist, return as normal
   if (!TREASURY_BLACKLIST.has(contractAddress.toLowerCase())) {
