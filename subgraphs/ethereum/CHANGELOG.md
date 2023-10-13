@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 4.15.1 (2023-10-13)
+## 4.15.2 (2023-10-13)
 
 - Fix recognition of DAI and sDAI balances in Clearinghouses
 
