@@ -3,10 +3,9 @@ import { TokenRecord } from "../../../shared/generated/schema";
 import { CoolerLoansClearinghouse } from "../../generated/ProtocolMetrics/CoolerLoansClearinghouse";
 import { COOLER_LOANS_CLEARINGHOUSES } from "../../../shared/src/Wallets";
 import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
-import { BLOCKCHAIN, ERC20_DAI, ERC20_TOKENS, ERC4626_SDAI, getContractName } from "../utils/Constants";
+import { BLOCKCHAIN, ERC20_DAI, ERC20_TOKENS, getContractName } from "../utils/Constants";
 import { getUSDRate } from "../utils/Price";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 
 /**
  * Generates records for the DAI receivables in the Clearinghouses. 
