@@ -2,7 +2,7 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 import { LendingMarketDeployment } from "../../../shared/src/utils/LendingMarketDeployment";
-import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, DAO_WORKING_CAPITAL, LUSD_ALLOCATOR, OTC_ESCROW, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, VEFXS_ALLOCATOR, WALLET_ADDRESSES } from "../../../shared/src/Wallets";
+import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, COOLER_LOANS_CLEARINGHOUSES, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, DAO_WORKING_CAPITAL, LUSD_ALLOCATOR, OTC_ESCROW, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, VEFXS_ALLOCATOR, WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 
 export const BLOCKCHAIN = "Arbitrum";
 
@@ -97,6 +97,11 @@ TREASURY_BLACKLIST.set(ERC20_OHM, WALLET_ADDRESSES);
  */
 export const getWalletAddressesForContract = (contractAddress: string): string[] => {
   const walletAddresses = WALLET_ADDRESSES.slice(0);
+
+  // Add the clearinghouses to the list
+  for (let i = 0; i < COOLER_LOANS_CLEARINGHOUSES.length; i++) {
+    walletAddresses.push(COOLER_LOANS_CLEARINGHOUSES[i]);
+  }
 
   // If the contract isn't on the blacklist, return as normal
   if (!TREASURY_BLACKLIST.has(contractAddress.toLowerCase())) {
