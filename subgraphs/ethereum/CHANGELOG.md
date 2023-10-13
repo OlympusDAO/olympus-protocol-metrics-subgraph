@@ -11,10 +11,6 @@
 
 - Fix recognition of DAI and sDAI balances in Clearinghouses
 
-## 4.14.3 (2023-10-13)
-
-- Fix recognition of DAI and sDAI balances in Clearinghouses
-
 ## 4.14.2 (2023-10-05)
 
 - Fixes incorrect grafting
