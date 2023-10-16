@@ -51,14 +51,16 @@ function getPairBalances(pairAddress: string, positionId: BigInt, blockNumber: B
 
   const token0Result = pair.try_token0();
   const token1Result = pair.try_token1();
-  if (token0Result.reverted || token1Result.reverted) {
+  const slot0Result = pair.try_slot0();
+  if (token0Result.reverted || token1Result.reverted || slot0Result.reverted) {
     log.debug("getPairBalances: Skipping UniswapV3 pair {} ({}) as token calls reverted", [pairAddress, getContractName(pairAddress)]);
     return null;
   }
 
-  const sqrtPriceX96 = pair.slot0().getSqrtPriceX96();
+  const slot0 = slot0Result.value;
+  const sqrtPriceX96 = slot0.getSqrtPriceX96();
   log.debug("getPairBalances: sqrtPriceX96: {}", [sqrtPriceX96.toString()]);
-  const currentTick = pair.slot0().getTick();
+  const currentTick = slot0.getTick();
   log.debug("getPairBalances: currentTick: {}", [currentTick.toString()]);
 
   // Position
