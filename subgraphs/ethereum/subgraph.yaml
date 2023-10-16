@@ -130,47 +130,47 @@ dataSources:
             # 5 blocks per minute * 60 minutes * 8 hours
             every: 2400
       file: ./src/protocolMetrics/ProtocolMetrics.ts
-  ###
-  # BondManager and GnosisEasyAuction index Gnosis auction events, used for bond calculations
-  ###
-  - kind: ethereum/contract
-    name: BondManager
-    network: mainnet
-    source:
-      address: "0xf577c77ee3578c7f216327f41b5d7221ead2b2a3"
-      abi: BondManager
-      startBlock: 16226955
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - GnosisAuctionRoot
-        - GnosisAuction
-      abis:
-        - name: BondManager
-          file: ./abis/BondManager.json
-      eventHandlers:
-        - event: GnosisAuctionLaunched(uint256,address,uint96,uint48)
-          handler: handleGnosisAuctionLaunched
-      file: ./src/GnosisAuction.ts
-  - kind: ethereum/contract
-    name: GnosisEasyAuction
-    network: mainnet
-    source:
-      address: "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101"
-      abi: GnosisEasyAuction
-      startBlock: 16226955 # Same as BondManager
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - GnosisAuction
-      abis:
-        - name: GnosisEasyAuction
-          file: ./abis/GnosisEasyAuction.json
-      eventHandlers:
-        - event: AuctionCleared(indexed uint256,uint96,uint96,bytes32)
-          handler: handleGnosisAuctionCleared
-      file: ./src/GnosisAuction.ts
+  # ###
+  # # BondManager and GnosisEasyAuction index Gnosis auction events, used for bond calculations
+  # ###
+  # - kind: ethereum/contract
+  #   name: BondManager
+  #   network: mainnet
+  #   source:
+  #     address: "0xf577c77ee3578c7f216327f41b5d7221ead2b2a3"
+  #     abi: BondManager
+  #     startBlock: 16226955
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - GnosisAuctionRoot
+  #       - GnosisAuction
+  #     abis:
+  #       - name: BondManager
+  #         file: ./abis/BondManager.json
+  #     eventHandlers:
+  #       - event: GnosisAuctionLaunched(uint256,address,uint96,uint48)
+  #         handler: handleGnosisAuctionLaunched
+  #     file: ./src/GnosisAuction.ts
+  # - kind: ethereum/contract
+  #   name: GnosisEasyAuction
+  #   network: mainnet
+  #   source:
+  #     address: "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101"
+  #     abi: GnosisEasyAuction
+  #     startBlock: 16226955 # Same as BondManager
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - GnosisAuction
+  #     abis:
+  #       - name: GnosisEasyAuction
+  #         file: ./abis/GnosisEasyAuction.json
+  #     eventHandlers:
+  #       - event: AuctionCleared(indexed uint256,uint96,uint96,bytes32)
+  #         handler: handleGnosisAuctionCleared
+  #     file: ./src/GnosisAuction.ts
