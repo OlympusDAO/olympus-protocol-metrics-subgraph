@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 5.0.3 (2023-10-13)
+## 5.0.4 (2023-10-17)
 
 - Improve indexing performance by using Bytes instead of String for entity ids
 - Improve indexing performance by shifting TokenRecord, TokenSupply and ProtocolMetric entities to be immutable
