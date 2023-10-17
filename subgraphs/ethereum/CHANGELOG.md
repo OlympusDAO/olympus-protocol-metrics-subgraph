@@ -1,10 +1,11 @@
 # Subgraph Changelog
 
-## 5.0.4 (2023-10-17)
+## 5.0.5 (2023-10-17)
 
 - Improve indexing performance by using Bytes instead of String for entity ids
 - Improve indexing performance by shifting TokenRecord, TokenSupply and ProtocolMetric entities to be immutable
 - Change the indexing trigger to a polling block handler (every 8 hours), as the previous event trigger will be deprecated soon
+- Protect against reverts with balanceOf()
 - Re-index from 2022-05-01
 
 ## 4.15.2 (2023-10-13)
