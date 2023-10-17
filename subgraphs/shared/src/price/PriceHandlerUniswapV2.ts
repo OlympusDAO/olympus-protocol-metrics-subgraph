@@ -179,7 +179,12 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
       return BigDecimal.zero();
     }
 
-    return toDecimal(contract.balanceOf(Address.fromString(walletAddress)), contract.decimals());
+    const balanceResult = contract.try_balanceOf(Address.fromString(walletAddress));
+    if (balanceResult.reverted) {
+      return BigDecimal.zero();
+    }
+
+    return toDecimal(balanceResult.value, contract.decimals());
   }
 
   private getTokenIndex(tokenAddress: string, block: BigInt): number {

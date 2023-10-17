@@ -155,7 +155,12 @@ export function getUniswapV3POLRecords(
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];
 
-    const positionCount = positionManager.balanceOf(Address.fromString(walletAddress));
+    const positionCountResult = positionManager.try_balanceOf(Address.fromString(walletAddress));
+    if (positionCountResult.reverted) {
+      continue;
+    }
+
+    const positionCount = positionCountResult.value;
     log.debug("getUniswapV3POLRecords: wallet {} ({}) position count: {}", [walletAddress, getContractName(walletAddress), positionCount.toString()]);
     for (let j: u32 = 0; j < positionCount.toU32(); j++) {
       const positionId = positionManager.tokenOfOwnerByIndex(Address.fromString(walletAddress), BigInt.fromU32(j));
@@ -315,7 +320,12 @@ export function getUniswapV3OhmSupply(
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];
 
-    const positionCount = positionManager.balanceOf(Address.fromString(walletAddress));
+    const positionCountResult = positionManager.try_balanceOf(Address.fromString(walletAddress));
+    if (positionCountResult.reverted) {
+      continue;
+    }
+
+    const positionCount = positionCountResult.value;
     for (let j: u32 = 0; j < positionCount.toU32(); j++) {
       const positionId = positionManager.tokenOfOwnerByIndex(Address.fromString(walletAddress), BigInt.fromU32(j));
       log.debug("getUniswapV3PairRecords: positionId: {}", [positionId.toString()]);

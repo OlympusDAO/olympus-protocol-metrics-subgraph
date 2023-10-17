@@ -377,11 +377,11 @@ export function getUniswapV2PairBalance(
       address,
       currentBlockNumber.toString(),
     ]);
-    return BigInt.fromString("0");
+    return BigInt.zero();
   }
 
   if (tokenAddress && !liquidityPairHasToken(contract._address.toHexString(), tokenAddress)) {
-    return BigInt.fromString("0");
+    return BigInt.zero();
   }
 
   log.debug(
@@ -389,7 +389,12 @@ export function getUniswapV2PairBalance(
     [contract._address.toHexString(), address, currentBlockNumber.toString()],
   );
 
-  return contract.balanceOf(Address.fromString(address));
+  const balanceResult = contract.try_balanceOf(Address.fromString(address));
+  if (balanceResult.reverted) {
+    return BigInt.zero();
+  }
+
+  return balanceResult.value;
 }
 
 /**
@@ -685,8 +690,13 @@ function getTokeStakedBalance(
   walletAddress: string,
   _blockNumber: BigInt,
 ): BigDecimal {
+  const balanceResult = stakingContract.try_balanceOf(Address.fromString(walletAddress));
+  if (balanceResult.reverted) {
+    return BigDecimal.zero();
+  }
+
   return toDecimal(
-    stakingContract.balanceOf(Address.fromString(walletAddress)),
+    balanceResult.value,
     tokenSnapshot.decimals,
   );
 }
@@ -796,8 +806,12 @@ export function getBtrflyUnlockedBalancesFromWallets(
 
     // rlBTRFLY.balanceOf() returns the balance in active locks, so we only need to return unlocked balances
     // Source: https://github.com/redacted-cartel/contracts-v2/blob/7ef760ae4f4287caa0abf698060096c5cfebd0cf/contracts/core/RLBTRFLY.sol#L109
-    const lockedBalances = contract.lockedBalances(Address.fromString(currentWallet));
-    const balance: BigDecimal = toDecimal(lockedBalances.getUnlockable(), tokenSnapshot.decimals);
+    const lockedBalancesResult = contract.try_lockedBalances(Address.fromString(currentWallet));
+    if (lockedBalancesResult.reverted) {
+      continue;
+    }
+
+    const balance: BigDecimal = toDecimal(lockedBalancesResult.value.getUnlockable(), tokenSnapshot.decimals);
     if (balance.equals(BigDecimal.zero())) {
       continue;
     }
@@ -1018,8 +1032,13 @@ function getBalancerGaugeBalance(
   walletAddress: string,
   _blockNumber: BigInt,
 ): BigDecimal {
+  const balanceResult = gaugeContract.try_balanceOf(Address.fromString(walletAddress));
+  if (balanceResult.reverted) {
+    return BigDecimal.zero();
+  }
+
   return toDecimal(
-    gaugeContract.balanceOf(Address.fromString(walletAddress)),
+    balanceResult.value,
     tokenSnapshot.decimals,
   );
 }
@@ -1040,8 +1059,13 @@ function getAuraStakedBalance(
   walletAddress: string,
   _blockNumber: BigInt,
 ): BigDecimal {
+  const balanceResult = stakingContract.try_balanceOf(Address.fromString(walletAddress));
+  if (balanceResult.reverted) {
+    return BigDecimal.zero();
+  }
+
   return toDecimal(
-    stakingContract.balanceOf(Address.fromString(walletAddress)),
+    balanceResult.value,
     tokenSnapshot.decimals,
   );
 }
@@ -1644,8 +1668,12 @@ export function getConvexStakedBalance(
 
   // Get balance
   const stakingContract = ConvexBaseRewardPool.bind(Address.fromString(stakingAddress));
-  const balance = stakingContract.balanceOf(Address.fromString(allocatorAddress));
-  const decimalBalance = toDecimal(balance, tokenSnapshot.decimals);
+  const balanceResult = stakingContract.try_balanceOf(Address.fromString(allocatorAddress));
+  if (balanceResult.reverted) {
+    return null;
+  }
+
+  const decimalBalance = toDecimal(balanceResult.value, tokenSnapshot.decimals);
   log.debug(
     "getConvexStakedBalance: Balance of {} for staking token {} ({}) and allocator {} ({})",
     [

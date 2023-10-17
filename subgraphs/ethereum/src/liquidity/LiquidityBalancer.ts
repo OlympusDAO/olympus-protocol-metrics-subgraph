@@ -215,8 +215,12 @@ function getBalancerPoolTokenBalance(
   }
 
   const contract = ERC20.bind(Address.fromString(contractAddress));
-  const balance = contract.balanceOf(Address.fromString(walletAddress));
-  const balanceDecimals = toDecimal(balance, contractSnapshot.decimals);
+  const balanceResult = contract.try_balanceOf(Address.fromString(walletAddress));
+  if (balanceResult.reverted) {
+    return BigDecimal.zero();
+  }
+
+  const balanceDecimals = toDecimal(balanceResult.value, contractSnapshot.decimals);
 
   // Don't spam
   if (!balanceDecimals.equals(BigDecimal.zero())) {

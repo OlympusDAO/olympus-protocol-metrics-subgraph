@@ -340,12 +340,12 @@ function getCurvePairRecord(
   }
 
   // Get the balance of the pair's token in walletAddress
-  const pairTokenBalance = pairToken.balanceOf(Address.fromString(walletAddress));
-  if (pairTokenBalance.equals(BigInt.zero())) {
+  const pairTokenBalanceResult = pairToken.try_balanceOf(Address.fromString(walletAddress));
+  if (pairTokenBalanceResult.reverted || pairTokenBalanceResult.value.equals(BigInt.zero())) {
     return null;
   }
 
-  const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairTokenSnapshot.decimals);
+  const pairTokenBalanceDecimal = toDecimal(pairTokenBalanceResult.value, pairTokenSnapshot.decimals);
   log.debug("getCurvePairRecord: Curve pair balance for token {} ({}) in wallet {} ({}) was {}", [
     getContractName(pairTokenAddress),
     pairTokenAddress,
