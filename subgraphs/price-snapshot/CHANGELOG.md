@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.2 (2023-11-29)
+
+- Re-deployment to benefit from changes to OHM protocol-owned liquidity
+
 ## 1.2.0 (2023-07-18)
 
 - Improve the indexing speed by shifting to using an event handler for every hour, instead of a block handler.
