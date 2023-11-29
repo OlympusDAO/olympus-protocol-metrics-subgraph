@@ -18,7 +18,7 @@ type PriceSnapshotDaily @entity {
 ### Added from protocol-metrics subgraph. Used for pricing.
 
 type ERC20TokenSnapshot @entity(immutable: true) {
-  id: ID! # address/block
+  id: Bytes! # address/block
   address: Bytes!
   decimals: Int!
   totalSupply: BigDecimal
@@ -33,7 +33,7 @@ type ConvexRewardPoolSnapshot @entity(immutable: true) {
 
 # TODO migrate to PoolSnapshot
 type BalancerPoolSnapshot @entity(immutable: true) {
-  id: ID! # pool id/block
+  id: Bytes! # pool id/block
   block: BigInt!
   pool: Bytes!
   poolToken: Bytes!
@@ -45,7 +45,7 @@ type BalancerPoolSnapshot @entity(immutable: true) {
 }
 
 type PoolSnapshot @entity(immutable: true) {
-  id: ID! # pool/block
+  id: Bytes! # pool/block
   block: BigInt!
   pool: Bytes!
   poolToken: Bytes
@@ -57,14 +57,14 @@ type PoolSnapshot @entity(immutable: true) {
 }
 
 type TokenPriceSnapshot @entity(immutable: true) {
-  id: ID! # address/block
+  id: Bytes! # address/block
   block: BigInt!
   token: Bytes!
   price: BigDecimal!
 }
 
 type StakingPoolSnapshot @entity(immutable: true) {
-  id: ID! # address/block
+  id: Bytes! # address/block
   block: BigInt!
   contractAddress: Bytes!
   stakingToken: Bytes # Will not be set if the call reverts
