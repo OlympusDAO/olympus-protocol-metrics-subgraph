@@ -78,8 +78,8 @@ const TIMESTAMP = BigInt.fromString("1000");
 const AUCTION_CLOSE_TIMESTAMP_PRE_EXPIRY = BigInt.fromString("999");
 const AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY = BigInt.fromString("980");
 
-function setUpGnosisAuction(payoutCapacity: BigDecimal = PAYOUT_CAPACITY, termSeconds: BigInt = BOND_TERM, bidQuantity: BigDecimal | null = null, auctionCloseTimestamp: BigInt | null = null, auctionOpenTimestamp: BigInt = AUCTION_OPEN_TIMESTAMP): void {
-    const record = new GnosisAuction(AUCTION_ID);
+function setUpGnosisAuction(auctionId: string = AUCTION_ID, payoutCapacity: BigDecimal = PAYOUT_CAPACITY, termSeconds: BigInt = BOND_TERM, bidQuantity: BigDecimal | null = null, auctionCloseTimestamp: BigInt | null = null, auctionOpenTimestamp: BigInt = AUCTION_OPEN_TIMESTAMP): void {
+    const record = new GnosisAuction(auctionId);
     record.payoutCapacity = payoutCapacity;
     record.termSeconds = termSeconds;
     record.auctionOpenTimestamp = auctionOpenTimestamp;
@@ -179,7 +179,7 @@ describe("Vesting Bonds", () => {
 
     test("closed auction/before bond expiry/with balance in GnosisEasyAuction", () => {
         // Mock auction payoutCapacity and bidQuantity (GnosisAuction)
-        setUpGnosisAuction(PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_PRE_EXPIRY);
+        setUpGnosisAuction(AUCTION_ID, PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_PRE_EXPIRY);
 
         // Mock contract values for the BondManager
         mockContracts();
@@ -203,7 +203,7 @@ describe("Vesting Bonds", () => {
 
     test("closed auction/before bond expiry/with balance in BondManager", () => {
         // Mock auction payoutCapacity and bidQuantity (GnosisAuction)
-        setUpGnosisAuction(PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_PRE_EXPIRY);
+        setUpGnosisAuction(AUCTION_ID, PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_PRE_EXPIRY);
 
         // Mock contract values for the BondManager
         mockContracts();
@@ -227,7 +227,7 @@ describe("Vesting Bonds", () => {
 
     test("closed auction/after bond expiry", () => {
         // Mock auction payoutCapacity and bidQuantity (GnosisAuction)
-        setUpGnosisAuction(PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY);
+        setUpGnosisAuction(AUCTION_ID, PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY);
 
         // Mock contract values for the BondManager
         mockContracts();
@@ -239,12 +239,30 @@ describe("Vesting Bonds", () => {
         // No effect on supply from the teller, as bond tokens are no longer vesting
         assert.assertTrue(recordsMap.has(CONTRACT_TELLER) == false);
 
-        // supply decreased by bid quantity in bond manager due to vesting user deposits
+        // supply decreased by bid quantity in bond manager due to burnable deposits
         const bondManagerRecord = recordsMap.get(BOND_MANAGER);
         assert.stringEquals(bondManagerRecord.supplyBalance.toString(), BID_QUANTITY.times(BigDecimal.fromString("-1")).toString());
         assert.stringEquals(bondManagerRecord.type, TYPE_BONDS_DEPOSITS);
 
         assert.i32Equals(records.length, 1);
+    });
+
+    test("closed auction/after bond expiry/all burned", () => {
+        // Mock auction payoutCapacity and bidQuantity (GnosisAuction)
+        setUpGnosisAuction(AUCTION_ID, PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY);
+
+        // Mock contract values for the BondManager
+        mockContracts();
+        mockContractBalances(BigDecimal.zero(), BID_QUANTITY, BigDecimal.zero());
+
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
+        const recordsMap = tokenSupplyRecordsToMap(records);
+
+        // No effect on supply from the teller, as bond tokens are no longer vesting
+        assert.assertTrue(recordsMap.has(CONTRACT_TELLER) == false);
+
+        // Burnable deposits are burned, which offsets the "burnable" entries
+        assert.i32Equals(records.length, 0);
     });
 });
 
