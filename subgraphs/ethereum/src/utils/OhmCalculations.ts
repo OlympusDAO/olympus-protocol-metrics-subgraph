@@ -54,6 +54,7 @@ import { getUniswapV3OhmSupply } from "../liquidity/LiquidityUniswapV3";
 import { getSiloSupply } from "./Silo";
 import { wsOHM } from "../../generated/ProtocolMetrics/wsOHM";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
+import { BONDS_DEPOSIT } from "./ProtocolAddresses";
 
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
 const MIGRATION_OFFSET = "2013";
@@ -513,7 +514,10 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
   const wallets = new Array<string>();
   for (let i = 0; i < CIRCULATING_SUPPLY_WALLETS.length; i++) {
     // Skip the Bond Depository wallet if after the milestone
-    if (blockNumber.gt(BigInt.fromString(BOND_DEPOSITORY_BLOCK))) {
+    if (blockNumber.gt(BigInt.fromString(BOND_DEPOSITORY_BLOCK))
+      &&
+      CIRCULATING_SUPPLY_WALLETS[i] == BONDS_DEPOSIT
+    ) {
       continue;
     }
 
