@@ -43,6 +43,7 @@ import {
   SILO_DEPLOYMENTS,
 } from "./Constants";
 import {
+  getERC20,
   getERC20DecimalBalance,
   getSOlympusERC20,
   getSOlympusERC20V2,
@@ -164,7 +165,7 @@ export function getTotalSupplyRecord(timestamp: BigInt, blockNumber: BigInt): To
  * - Binds with the sOHM V3 contract
  * - Multiplies index() from sOHM V3 by {MIGRATION_OFFSET}
  * - Returns a token record with the offset
- * 
+ *
  * NOTE: the balance of gOHM in the migration contract is likely to be higher than this manual offset,
  * as it is gOHM pre-minted for migration of OHM (v1). As a result, the difference in the gOHM balance is not considered protocol-owned.
  *
@@ -222,8 +223,57 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
 
   const bondFixedExpiryTellerAddress = bondManager.fixedExpiryTeller();
 
+  // Get the balance of OHM
+  const bondManagerOhmBalanceTmp = getERC20DecimalBalance(ERC20_OHM_V2, BOND_MANAGER, blockNumber);
+  let bondManagerOhmBalanceUnallocated = bondManagerOhmBalanceTmp;
+
   // Loop through Gnosis Auctions
   const gnosisAuctionIds: BigInt[] = gnosisAuctionRoot.markets;
+
+  // Determine the amount of OHM to deduct from the burnable amount
+  let totalBurnableOhm = BigDecimal.zero();
+  for (let i = 0; i < gnosisAuctionIds.length; i++) {
+    const auctionId = gnosisAuctionIds[i].toString();
+    log.debug("{}: Processing Gnosis auction with id {}", [FUNC, auctionId]);
+
+    const auctionRecord = GnosisAuction.load(auctionId);
+    if (!auctionRecord) {
+      throw new Error(`Expected to find GnosisAuction record with id ${auctionId}, but it was not found`);
+    }
+
+    const bidQuantity: BigDecimal | null = auctionRecord.bidQuantity;
+
+    // Open auction
+    if (!bidQuantity) {
+      continue;
+    }
+
+    const bondTermSeconds = auctionRecord.termSeconds;
+    const auctionCloseTimestamp = auctionRecord.auctionCloseTimestamp;
+    if (!auctionCloseTimestamp) {
+      throw new Error(`Expected the auctionCloseTimestamp on closed auction '${auctionId}' to be set`);
+    }
+
+    const expiryTimestamp = auctionCloseTimestamp.plus(bondTermSeconds);
+
+    // Close auction but not fully-vested
+    if (timestamp.lt(expiryTimestamp)) {
+      // Deduct the bid quantity from the unallocated balance
+      bondManagerOhmBalanceUnallocated = bondManagerOhmBalanceUnallocated.minus(bidQuantity);
+      continue;
+    }
+
+    // Closed auction and the bond expiry time has been reached
+    // Add the OHM to the total burnable amount
+    totalBurnableOhm = totalBurnableOhm.plus(bidQuantity);
+  }
+
+  // If the Bond Manager OHM balance is greater than the burnable amount, cap it
+  log.debug("{}: Bond Manager OHM balance is {}", [FUNC, bondManagerOhmBalanceTmp.toString()]);
+  log.debug("{}: Total burnable OHM is {}", [FUNC, totalBurnableOhm.toString()]);
+  const bondManagerOhmBalance = bondManagerOhmBalanceUnallocated.gt(totalBurnableOhm) ? totalBurnableOhm : bondManagerOhmBalanceUnallocated;
+
+  // Record bond details
   for (let i = 0; i < gnosisAuctionIds.length; i++) {
     const auctionId = gnosisAuctionIds[i].toString();
     log.debug("{}: Processing Gnosis auction with id {}", [FUNC, auctionId]);
@@ -269,6 +319,8 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
 
       // Closed auction and the bond expiry time has not been reached
       if (timestamp.lt(expiryTimestamp)) {
+        log.debug("{}: bonds are still vesting", [FUNC]);
+
         // Vesting user deposits equal to the sold quantity are stored in the bond manager, so we adjust that
         records.push(
           createTokenSupply(
@@ -305,6 +357,18 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
       }
       // Bond expiry time has been reached
       else {
+        log.debug("{}: bonds are vested", [FUNC]);
+
+        // If OHM in the Bond Manager has been fully or partially burned, this will adjust for it
+        const adjustedBidQuantity = bidQuantity.times(bondManagerOhmBalance).div(totalBurnableOhm);
+        log.debug("{}: bidQuantity is {}", [FUNC, bidQuantity.toString()]);
+        log.debug("{}: adjustedBidQuantity is {}", [FUNC, adjustedBidQuantity.toString()]);
+
+        if (adjustedBidQuantity.equals(BigDecimal.zero())) {
+          log.debug("{}: adjustedBidQuantity is zero, skipping", [FUNC]);
+          continue;
+        }
+
         // User deposits equal to the sold quantity are stored in the bond manager, so we adjust that
         // These deposits will eventually be burned
         records.push(
@@ -317,14 +381,12 @@ export function getVestingBondSupplyRecords(timestamp: BigInt, blockNumber: BigI
             getContractName(BOND_MANAGER),
             BOND_MANAGER,
             TYPE_BONDS_DEPOSITS,
-            bidQuantity,
+            adjustedBidQuantity,
             blockNumber,
             -1, // Subtract
           ),
         );
       }
-
-      // TODO add support for recognising OHM burned from bond deposits
     }
   }
 
@@ -379,13 +441,13 @@ function getLendingMarketDeploymentOHMRecords(timestamp: BigInt, deploymentAddre
 /**
  * Generates TokenSupply records for OHM that has been minted
  * and deposited into the Euler and Silo lending markets.
- * 
+ *
  * The values and block(s) are hard-coded, as this was performed manually using
  * the multi-sig. Future deployments will be automated through a smart contract.
- * 
- * @param timestamp 
- * @param blockNumber 
- * @returns 
+ *
+ * @param timestamp
+ * @param blockNumber
+ * @returns
  */
 export function getMintedBorrowableOHMRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
   const records: TokenSupply[] = [];
@@ -417,7 +479,7 @@ export function getMintedBorrowableOHMRecords(timestamp: BigInt, blockNumber: Bi
  *
  * sOHM and gOHM are converted to the equivalent quantity of OHM (using the index)
  * and included in the calculation.
- * 
+ *
  * Notes:
  * - All versions of OHM/sOHM/wsOHM in the migration contract are not considered, as the tokens
  * are transferred into the contract upon migration into OHMv3/gOHM and hence reflected in
@@ -436,8 +498,8 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
 
   /**
    * Make a copy of the circulating wallets array
-   * 
-   * NOTE: this deliberately does not use the `getWalletAddressesForContract` function, 
+   *
+   * NOTE: this deliberately does not use the `getWalletAddressesForContract` function,
    * as that blacklists all OHM variants in treasury wallets, so that they are not added
    * to the market value
    */
@@ -663,14 +725,14 @@ export function getProtocolOwnedLiquiditySupplyRecords(
 
 /**
  * Returns TokenSupply records representing the OHM minted into the IncurDebt contract.
- * 
+ *
  * The value reported for each vault is based on the value of `totalOutstandingGlobalDebt()`.
- * 
+ *
  * Only applicable after `OLYMPUS_INCUR_DEBT_BLOCK`
- * 
- * @param timestamp 
- * @param blockNumber 
- * @returns 
+ *
+ * @param timestamp
+ * @param blockNumber
+ * @returns
  */
 export function getIncurDebtSupplyRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
   const records: TokenSupply[] = [];
@@ -718,12 +780,12 @@ export function getIncurDebtSupplyRecords(timestamp: BigInt, blockNumber: BigInt
 
 /**
  * Returns TokenSupply records representing the OHM minted into boosted liquidity vaults.
- * 
+ *
  * The value reported for each vault is the result of calling `getPoolOhmShare()`.
- * 
- * @param timestamp 
- * @param blockNumber 
- * @returns 
+ *
+ * @param timestamp
+ * @param blockNumber
+ * @returns
  */
 export function getBoostedLiquiditySupplyRecords(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
   const records: TokenSupply[] = [];
@@ -819,7 +881,7 @@ export function getTotalValueLocked(blockNumber: BigInt): BigDecimal {
  * this function returns the OHM backed supply.
  *
  * Backed supply is the quantity of OHM backed by treasury assets.
- * 
+ *
  * Backed supply is calculated as:
  * - OHM total supply
  * - minus: OHM in circulating supply wallets
@@ -902,7 +964,7 @@ export function getFloatingSupply(tokenSupplies: TokenSupply[], block: BigInt): 
  * - minus: pre-minted OHM for bonds
  * - minus: OHM user deposits for bonds
  * - minus: OHM in boosted liquidity vaults (before `BLV_INCLUSION_BLOCK`)
- * 
+ *
  * OHM represented by vesting bond tokens (type `TYPE_BONDS_VESTING_TOKENS`) is not included in the circulating supply, as it is
  * owned by users and not the protocol.
  */

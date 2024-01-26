@@ -86,6 +86,8 @@ const TIMESTAMP = BigInt.fromString("1000");
 const AUCTION_CLOSE_TIMESTAMP_PRE_EXPIRY = BigInt.fromString("999");
 const AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY = BigInt.fromString("980");
 
+const BLOCK_NUMBER = BigInt.fromString("18000000");
+
 function setUpGnosisAuction(auctionId: string = AUCTION_ID, payoutCapacity: BigDecimal = PAYOUT_CAPACITY, termSeconds: BigInt = BOND_TERM, bidQuantity: BigDecimal | null = null, auctionCloseTimestamp: BigInt | null = null, auctionOpenTimestamp: BigInt = AUCTION_OPEN_TIMESTAMP): void {
     const record = new GnosisAuction(auctionId);
     record.payoutCapacity = payoutCapacity;
@@ -101,10 +103,17 @@ function setUpGnosisAuction(auctionId: string = AUCTION_ID, payoutCapacity: BigD
     }
 
     record.save();
+}
 
-    const rootRecord = new GnosisAuctionRoot(GNOSIS_RECORD_ID);
-    rootRecord.markets = [BigInt.fromString(AUCTION_ID)];
-    rootRecord.save();
+function setGnosisAuctionMarkets(markets: string[]): void {
+    const marketIds: BigInt[] = [];
+    for (let i = 0; i < markets.length; i++) {
+        marketIds.push(BigInt.fromString(markets[i]));
+    }
+
+    const record = new GnosisAuctionRoot(GNOSIS_RECORD_ID);
+    record.markets = marketIds;
+    record.save();
 }
 
 function mockContracts(): void {
@@ -134,7 +143,7 @@ describe("Vesting Bonds", () => {
         mockContracts();
         mockContractBalances();
 
-        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BLOCK_NUMBER);
 
         // No supply impact
         assert.i32Equals(records.length, 0);
@@ -143,12 +152,13 @@ describe("Vesting Bonds", () => {
     test("open auction", () => {
         // Mock auction payoutCapacity (GnosisAuction)
         setUpGnosisAuction();
+        setGnosisAuctionMarkets([AUCTION_ID]);
 
         // Mock contract values for the BondManager
         mockContracts();
         mockContractBalances(BigDecimal.zero(), BigDecimal.zero(), PAYOUT_CAPACITY);
 
-        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BLOCK_NUMBER);
 
         // supply decreased by payoutCapacity in teller
         const tellerRecord: TokenSupply = records[0];
@@ -165,13 +175,14 @@ describe("Vesting Bonds", () => {
     test("open auction with deposits", () => {
         // Mock auction payoutCapacity (GnosisAuction)
         setUpGnosisAuction();
+        setGnosisAuctionMarkets([AUCTION_ID]);
 
         // Mock contract values for the BondManager and Gnosis deposit
         mockContracts();
         const gnosisBalance = BigDecimal.fromString("1000");
         mockContractBalances(gnosisBalance, BigDecimal.zero(), PAYOUT_CAPACITY);
 
-        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BLOCK_NUMBER);
 
         // supply decreased by payoutCapacity in teller
         const tellerRecord: TokenSupply = records[0];
@@ -188,12 +199,13 @@ describe("Vesting Bonds", () => {
     test("closed auction/before bond expiry/with balance in GnosisEasyAuction", () => {
         // Mock auction payoutCapacity and bidQuantity (GnosisAuction)
         setUpGnosisAuction(AUCTION_ID, PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_PRE_EXPIRY);
+        setGnosisAuctionMarkets([AUCTION_ID]);
 
         // Mock contract values for the BondManager
         mockContracts();
         mockContractBalances(BID_QUANTITY, BigDecimal.zero(), PAYOUT_CAPACITY);
 
-        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BLOCK_NUMBER);
 
         // supply decreased by payout capacity in bond teller due to vesting tokens
         const tellerRecord: TokenSupply = records[1];
@@ -215,12 +227,13 @@ describe("Vesting Bonds", () => {
     test("closed auction/before bond expiry/with balance in BondManager", () => {
         // Mock auction payoutCapacity and bidQuantity (GnosisAuction)
         setUpGnosisAuction(AUCTION_ID, PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_PRE_EXPIRY);
+        setGnosisAuctionMarkets([AUCTION_ID]);
 
         // Mock contract values for the BondManager
         mockContracts();
         mockContractBalances(BigDecimal.zero(), BID_QUANTITY, PAYOUT_CAPACITY);
 
-        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BLOCK_NUMBER);
 
         // supply decreased by payout capacity in bond teller due to vesting tokens
         const tellerRecord: TokenSupply = records[1];
@@ -242,12 +255,13 @@ describe("Vesting Bonds", () => {
     test("closed auction/after bond expiry", () => {
         // Mock auction payoutCapacity and bidQuantity (GnosisAuction)
         setUpGnosisAuction(AUCTION_ID, PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY);
+        setGnosisAuctionMarkets([AUCTION_ID]);
 
         // Mock contract values for the BondManager
         mockContracts();
         mockContractBalances(BigDecimal.zero(), BID_QUANTITY, PAYOUT_CAPACITY);
 
-        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BLOCK_NUMBER);
 
         // No effect on supply from the teller, as bond tokens are no longer vesting
 
@@ -264,12 +278,13 @@ describe("Vesting Bonds", () => {
     test("closed auction/after bond expiry/all burned", () => {
         // Mock auction payoutCapacity and bidQuantity (GnosisAuction)
         setUpGnosisAuction(AUCTION_ID, PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY);
+        setGnosisAuctionMarkets([AUCTION_ID]);
 
         // Mock contract values for the BondManager
         mockContracts();
         mockContractBalances(BigDecimal.zero(), BigDecimal.zero(), PAYOUT_CAPACITY); // Bid capacity is burned
 
-        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BLOCK_NUMBER);
 
         // No effect on supply from the teller, as bond tokens are no longer vesting
 
@@ -283,12 +298,13 @@ describe("Vesting Bonds", () => {
         // Mock auction payoutCapacity and bidQuantity (GnosisAuction)
         setUpGnosisAuction(AUCTION_ID, PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY);
         setUpGnosisAuction("2", PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY);
+        setGnosisAuctionMarkets([AUCTION_ID, "2"]);
 
         // Mock contract values for the BondManager
         mockContracts();
         mockContractBalances(BigDecimal.zero(), BigDecimal.zero(), PAYOUT_CAPACITY); // All of the bid capacity is burned
 
-        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BLOCK_NUMBER);
 
         // No effect on supply from the teller, as bond tokens are no longer vesting
 
@@ -302,12 +318,13 @@ describe("Vesting Bonds", () => {
         // Mock auction payoutCapacity and bidQuantity (GnosisAuction)
         setUpGnosisAuction(AUCTION_ID, PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY); // Will be burnable
         setUpGnosisAuction("2", PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY); // Will be burnable
+        setGnosisAuctionMarkets([AUCTION_ID, "2"]);
 
         // Mock contract values for the BondManager
         mockContracts();
         mockContractBalances(BigDecimal.zero(), BID_QUANTITY, PAYOUT_CAPACITY); // Half of the bid capacity is burned
 
-        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BLOCK_NUMBER);
 
         // Remaining payout capacity is split between the two
         const bondManagerRecord = records[0];
@@ -331,12 +348,13 @@ describe("Vesting Bonds", () => {
         // Mock auction payoutCapacity and bidQuantity (GnosisAuction)
         setUpGnosisAuction(AUCTION_ID, PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_PRE_EXPIRY); // Will be vesting
         setUpGnosisAuction("2", PAYOUT_CAPACITY, BOND_TERM, auctionTwoBidQuantity, AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY); // Will be burnable
+        setGnosisAuctionMarkets([AUCTION_ID, "2"]);
 
         // Mock contract values for the BondManager
         mockContracts();
         mockContractBalances(BigDecimal.zero(), BID_QUANTITY.plus(auctionTwoBidQuantity), PAYOUT_CAPACITY);
 
-        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BLOCK_NUMBER);
 
         const tellerRecordOne: TokenSupply = records[1];
         assert.stringEquals(getNonNullableString(tellerRecordOne.sourceAddress), CONTRACT_TELLER.toLowerCase());
@@ -354,7 +372,7 @@ describe("Vesting Bonds", () => {
         // Remaining payout capacity is burnable
         const bondManagerRecordTwo = records[2];
         assert.stringEquals(getNonNullableString(bondManagerRecordTwo.sourceAddress), BOND_MANAGER.toLowerCase());
-        assert.stringEquals(getNonNullableString(bondManagerRecordTwo.pool), AUCTION_ID);
+        assert.stringEquals(getNonNullableString(bondManagerRecordTwo.pool), "2");
         assert.stringEquals(bondManagerRecordTwo.supplyBalance.toString(), auctionTwoBidQuantity.times(BigDecimal.fromString("-1")).toString());
         assert.stringEquals(bondManagerRecordTwo.type, TYPE_BONDS_DEPOSITS);
 
@@ -368,12 +386,13 @@ describe("Vesting Bonds", () => {
         // Mock auction payoutCapacity and bidQuantity (GnosisAuction)
         setUpGnosisAuction(AUCTION_ID, PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_PRE_EXPIRY); // Will be vesting
         setUpGnosisAuction("2", PAYOUT_CAPACITY, BOND_TERM, auctionTwoBidQuantity, AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY); // Will be burnable
+        setGnosisAuctionMarkets([AUCTION_ID, "2"]);
 
         // Mock contract values for the BondManager
         mockContracts();
         mockContractBalances(BigDecimal.zero(), BID_QUANTITY.plus(remainingBidCapacity), PAYOUT_CAPACITY);
 
-        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BLOCK_NUMBER);
 
         const tellerRecordOne: TokenSupply = records[1];
         assert.stringEquals(getNonNullableString(tellerRecordOne.sourceAddress), CONTRACT_TELLER.toLowerCase());
@@ -391,7 +410,7 @@ describe("Vesting Bonds", () => {
         // Remaining payout capacity is partially burned
         const bondManagerRecordTwo = records[2];
         assert.stringEquals(getNonNullableString(bondManagerRecordTwo.sourceAddress), BOND_MANAGER.toLowerCase());
-        assert.stringEquals(getNonNullableString(bondManagerRecordTwo.pool), AUCTION_ID);
+        assert.stringEquals(getNonNullableString(bondManagerRecordTwo.pool), "2");
         assert.stringEquals(bondManagerRecordTwo.supplyBalance.toString(), remainingBidCapacity.times(BigDecimal.fromString("-1")).toString());
         assert.stringEquals(bondManagerRecordTwo.type, TYPE_BONDS_DEPOSITS);
 
@@ -404,12 +423,13 @@ describe("Vesting Bonds", () => {
         // Mock auction payoutCapacity and bidQuantity (GnosisAuction)
         setUpGnosisAuction(AUCTION_ID, PAYOUT_CAPACITY, BOND_TERM, BID_QUANTITY, AUCTION_CLOSE_TIMESTAMP_PRE_EXPIRY); // Will be vesting
         setUpGnosisAuction("2", PAYOUT_CAPACITY, BOND_TERM, auctionTwoBidQuantity, AUCTION_CLOSE_TIMESTAMP_POST_EXPIRY); // Will be burnable
+        setGnosisAuctionMarkets([AUCTION_ID, "2"]);
 
         // Mock contract values for the BondManager
         mockContracts();
         mockContractBalances(BigDecimal.zero(), BID_QUANTITY, PAYOUT_CAPACITY); // Burnable OHM is burned
 
-        const records = getVestingBondSupplyRecords(TIMESTAMP, BigInt.fromString("2"));
+        const records = getVestingBondSupplyRecords(TIMESTAMP, BLOCK_NUMBER);
 
         const tellerRecordOne: TokenSupply = records[1];
         assert.stringEquals(getNonNullableString(tellerRecordOne.sourceAddress), CONTRACT_TELLER.toLowerCase());
