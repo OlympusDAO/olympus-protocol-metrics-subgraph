@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 5.1.0 (2024-01-26)
+## 5.1.1 (2024-01-26)
 
 - Adds TRSRY v1.1
 - Adds support for recognising OHM burnt in the Bond Manager
