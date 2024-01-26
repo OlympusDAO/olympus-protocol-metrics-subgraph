@@ -16,7 +16,7 @@ import {
 import { getStablecoinBalances } from "./TokenStablecoins";
 import { getVolatileTokenBalances } from "./TokenVolatile";
 import { getAllERC4626Balances } from "./ERC4626";
-import { getClearinghouseBalances } from "../contracts/CoolerLoansClearinghouse";
+import { getClearinghouseReceivables } from "../contracts/CoolerLoansClearinghouse";
 
 /**
  * Returns the market value, which is composed of:
@@ -56,10 +56,10 @@ export function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): To
     getAllERC4626Balances(timestamp, blockNumber),
   );
 
-  // Get Clearinghouse balances
+  // Get Clearinghouse receivables
   pushTokenRecordArray(
     records,
-    getClearinghouseBalances(timestamp, blockNumber),
+    getClearinghouseReceivables(timestamp, blockNumber),
   );
 
   return records;

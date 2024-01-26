@@ -256,12 +256,12 @@ function getUniswapV2PairRecord(
   const pairToken = getUniswapV2Pair(pairAddress);
 
   // Get the balance of the pair's token in walletAddress
-  const pairTokenBalance = pairToken.balanceOf(Address.fromString(walletAddress));
-  if (pairTokenBalance.equals(BigInt.zero())) {
+  const pairTokenBalanceResult = pairToken.try_balanceOf(Address.fromString(walletAddress));
+  if (pairTokenBalanceResult.reverted || pairTokenBalanceResult.value.equals(BigInt.zero())) {
     return null;
   }
 
-  const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
+  const pairTokenBalanceDecimal = toDecimal(pairTokenBalanceResult.value, pairToken.decimals());
 
   return createTokenRecord(
     timestamp,

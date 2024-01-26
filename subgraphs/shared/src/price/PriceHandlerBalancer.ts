@@ -310,7 +310,12 @@ export class PriceHandlerBalancer implements PriceHandler {
       return BigDecimal.zero();
     }
 
-    return toDecimal(poolToken.balanceOf(Address.fromString(walletAddress)), poolToken.decimals());
+    const poolBalanceResult = poolToken.try_balanceOf(Address.fromString(walletAddress));
+    if (poolBalanceResult.reverted) {
+      return BigDecimal.zero();
+    }
+
+    return toDecimal(poolBalanceResult.value, poolToken.decimals());
   }
 
   private getTokenReserves(tokenAddress: string, block: BigInt): BigDecimal {
