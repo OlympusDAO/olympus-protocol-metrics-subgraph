@@ -183,7 +183,12 @@ function getFraxSwapPairTokenBalance(
   }
 
   const pairContract = FraxSwapPool.bind(Address.fromString(pairAddress));
-  return toDecimal(pairContract.balanceOf(Address.fromString(address)), poolSnapshot.decimals);
+  const pairTokenBalanceResult = pairContract.try_balanceOf(Address.fromString(address));
+  if (pairTokenBalanceResult.reverted) {
+    return BigDecimal.zero();
+  }
+
+  return toDecimal(pairTokenBalanceResult.value, poolSnapshot.decimals);
 }
 
 function getFraxSwapPairTokenRecord(

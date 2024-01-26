@@ -1,11 +1,16 @@
 # Subgraph Changelog
 
-## 5.0.0 (2023-10-11)
+## 5.0.5 (2023-10-17)
 
 - Improve indexing performance by using Bytes instead of String for entity ids
 - Improve indexing performance by shifting TokenRecord, TokenSupply and ProtocolMetric entities to be immutable
 - Change the indexing trigger to a polling block handler (every 8 hours), as the previous event trigger will be deprecated soon
+- Protect against reverts with balanceOf()
 - Re-index from 2022-05-01
+
+## 4.15.2 (2023-10-13)
+
+- Fix recognition of DAI and sDAI balances in Clearinghouses
 
 ## 4.14.2 (2023-10-05)
 

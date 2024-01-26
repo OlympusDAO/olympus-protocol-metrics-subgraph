@@ -145,12 +145,18 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
     const token0Contract = getERC20(token0, block);
     const token1Contract = getERC20(token1, block);
 
+    const token0ReservesResult = token0Contract.try_balanceOf(Address.fromString(this.poolAddress));
+    const token1ReservesResult = token1Contract.try_balanceOf(Address.fromString(this.poolAddress));
+    if (token0ReservesResult.reverted || token1ReservesResult.reverted) {
+      return null;
+    }
+
     const token0Reserves = toDecimal(
-      token0Contract.balanceOf(Address.fromString(this.poolAddress)),
+      token0ReservesResult.value,
       token0Contract.decimals(),
     );
     const token1Reserves = toDecimal(
-      token1Contract.balanceOf(Address.fromString(this.poolAddress)),
+      token1ReservesResult.value,
       token1Contract.decimals(),
     );
 

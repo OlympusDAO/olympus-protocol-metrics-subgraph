@@ -7,7 +7,15 @@ import { BLOCKCHAIN, ERC20_DAI, ERC20_TOKENS, getContractName } from "../utils/C
 import { getUSDRate } from "../utils/Price";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 
-export function getClearinghouseBalances(timestamp: BigInt, blockNumber: BigInt): TokenRecord[] {
+/**
+ * Generates records for the DAI receivables in the Clearinghouses. 
+ * 
+ * @param timestamp 
+ * @param blockNumber 
+ * @returns 
+ */
+export function getClearinghouseReceivables(timestamp: BigInt, blockNumber: BigInt): TokenRecord[] {
+  const FUNC = "getClearinghouseReceivables";
   const records: TokenRecord[] = [];
 
   const daiRate = getUSDRate(ERC20_DAI, blockNumber);
@@ -24,7 +32,7 @@ export function getClearinghouseBalances(timestamp: BigInt, blockNumber: BigInt)
     }
 
     const receivablesBalance = toDecimal(receivablesResult.value, 18);
-    log.info(`Cooler Loans Clearinghouse receivables balance: {}`, [receivablesBalance.toString()]);
+    log.info(`{}: Cooler Loans Clearinghouse receivables balance: {}`, [FUNC, receivablesBalance.toString()]);
 
     records.push(
       createTokenRecord(

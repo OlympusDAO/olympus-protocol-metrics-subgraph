@@ -25,8 +25,12 @@ export function getSiloSupply(timestamp: BigInt, blockNumber: BigInt): TokenSupp
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
 
-    const balance = toDecimal(
-      collateralTokenContract.balanceOf(Address.fromString(currentWallet)), collateralTokenDecimals);
+    const balanceResult = collateralTokenContract.try_balanceOf(Address.fromString(currentWallet));
+    if (balanceResult.reverted) {
+      continue;
+    }
+
+    const balance = toDecimal(balanceResult.value, collateralTokenDecimals);
     if (balance.equals(BigDecimal.zero())) {
       continue;
     }
