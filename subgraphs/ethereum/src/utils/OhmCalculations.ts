@@ -43,7 +43,6 @@ import {
   SILO_DEPLOYMENTS,
 } from "./Constants";
 import {
-  getERC20,
   getERC20DecimalBalance,
   getSOlympusERC20,
   getSOlympusERC20V2,
@@ -58,6 +57,14 @@ import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
 const MIGRATION_OFFSET = "2013";
+
+/**
+ * The block from which the bond depository was removed
+ * from the definition of protocol- and DAO-owned wallets.
+ * This results in any balances being considered part of circulating supply.
+ * This is accurate, as gOHM in the depository is considered user funds.
+ */
+const BOND_DEPOSITORY_BLOCK = "19070000";
 
 /**
  * The block from which the wallet of the Olympus Association
@@ -505,6 +512,11 @@ export function getTreasuryOHMRecords(timestamp: BigInt, blockNumber: BigInt): T
    */
   const wallets = new Array<string>();
   for (let i = 0; i < CIRCULATING_SUPPLY_WALLETS.length; i++) {
+    // Skip the Bond Depository wallet if after the milestone
+    if (blockNumber.gt(BigInt.fromString(BOND_DEPOSITORY_BLOCK))) {
+      continue;
+    }
+
     wallets.push(CIRCULATING_SUPPLY_WALLETS[i]);
   }
 

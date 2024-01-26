@@ -1,5 +1,11 @@
 # Subgraph Changelog
 
+## 5.1.0 (2024-01-26)
+
+- Adds TRSRY v1.1
+- Adds support for recognising OHM burnt in the Bond Manager
+- Removes the Bond Depository from protocol- and DAO-owned wallets going forward, as gOHM in the contract is considered user funds
+
 ## 5.0.0 (2023-10-11)
 
 - Improve indexing performance by using Bytes instead of String for entity ids

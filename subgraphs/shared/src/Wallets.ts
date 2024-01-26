@@ -50,6 +50,7 @@ export const COOLER_LOANS_CLEARINGHOUSES = [
 ];
 
 export const TRSRY = "0xa8687A15D4BE32CC8F0a8a7B9704a4C3993D9613".toLowerCase();
+export const TRSRY_V1_1 = "0xea1560F36F71a2F54deFA75ed9EaA15E8655bE22".toLowerCase();
 
 export const OTC_ESCROW = "0xe3312c3f1ab30878d9686452f7205ebe11e965eb".toLowerCase();
 export const MYSO_LENDING = "0xb339953fc028b9998775c00594a74dd1488ee2c6".toLowerCase();
@@ -58,7 +59,7 @@ export const VENDOR_LENDING = "0x83234a159dbd60a32457df158fafcbdf3d1ccc08".toLow
 /**
  * This set of wallet addresses is common across many tokens,
  * and can be used for balance lookups.
- * 
+ *
  * Myso and Vendor Finance contracts are NOT included in here, as the deployed amounts are hard-coded.
  */
 export const WALLET_ADDRESSES = [
