@@ -4,7 +4,7 @@ repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 features:
   - grafting
 graft:
-  base: QmUX8d1VHoBTPKf6z4anNt2y8ZSgFbeTqXN52LJ1q8FF5N
+  base: QmbucBqomBG2qDfizVV1cMGDudCLvW2h9KWHeD6YS6Bk7L
   block: 19050000 # 2024-01-20
 schema:
   file: ../../schema.graphql
