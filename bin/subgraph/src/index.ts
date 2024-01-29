@@ -243,7 +243,7 @@ program
 
         console.info("*** Running graph test");
         spawnProcess(
-          `yarn graph test --version 0.5.3 ${options.recompile == true ? "--recompile" : ""}`,
+          `yarn graph test --version 0.6.0 ${options.recompile == true ? "--recompile" : ""}`,
           (testExitCode: number) => {
             if (testExitCode > 0) {
               process.exit(testExitCode);

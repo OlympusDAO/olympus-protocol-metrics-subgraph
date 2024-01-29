@@ -2,7 +2,7 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 import { LendingMarketDeployment } from "../../../shared/src/utils/LendingMarketDeployment";
-import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, AURA_ALLOCATOR, AURA_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CONVEX_STAKING_PROXY_FRAXBP, CONVEX_STAKING_PROXY_OHM_FRAXBP, COOLER_LOANS_CLEARINGHOUSE_V1, COOLER_LOANS_CLEARINGHOUSE_V1_1, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, DAO_WORKING_CAPITAL, LUSD_ALLOCATOR, MAKER_DSR_ALLOCATOR, MAKER_DSR_ALLOCATOR_PROXY, MYSO_LENDING, OLYMPUS_ASSOCIATION_WALLET, OTC_ESCROW, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, TRSRY, VEFXS_ALLOCATOR, VENDOR_LENDING } from "../../../shared/src/Wallets";
+import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, AURA_ALLOCATOR, AURA_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CONVEX_STAKING_PROXY_FRAXBP, CONVEX_STAKING_PROXY_OHM_FRAXBP, COOLER_LOANS_CLEARINGHOUSE_V1, COOLER_LOANS_CLEARINGHOUSE_V1_1, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, DAO_WORKING_CAPITAL, LUSD_ALLOCATOR, MAKER_DSR_ALLOCATOR, MAKER_DSR_ALLOCATOR_PROXY, MYSO_LENDING, OLYMPUS_ASSOCIATION_WALLET, OTC_ESCROW, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, TRSRY, TRSRY_V1_1, VEFXS_ALLOCATOR, VENDOR_LENDING } from "../../../shared/src/Wallets";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 
 export const BLOCKCHAIN = "Ethereum";
@@ -19,10 +19,10 @@ export const OHMETHLPBOND_TOKEN = "OHM-WETH";
 
 /**
  * Holds OHM V1, wsOHM (V1) and gOHM
- * 
+ *
  * Any V1 assets in this contract were previously external to the protocol,
  * and should NOT be counted as protocol assets.
- * 
+ *
  * Any gOHM in this contract has been pre-minted
  * for migration from V1 assets, and should NOT be counted as protocol assets.
  */
@@ -126,12 +126,12 @@ export const SILO_ADDRESS = "0xb2374f84b3cEeFF6492943Df613C9BcF45322a0c".toLower
 
 /**
  * Defines the contract addresses that belong to the protocol & DAO treasuries.
- * 
+ *
  * This is normally deducted from total supply to determine circulating supply.
- * 
+ *
  * The following are not included:
  * - Myso and Vendor Finance: the deployed amounts are hard-coded.
- * - Migration Contract: the migration offset is used to indicate the protocol-owned OHM. 
+ * - Migration Contract: the migration offset is used to indicate the protocol-owned OHM.
  * Additionally, the OHM and gOHM in the migration contract is pre-minted for v1 -> v2 migrations,
  * and is not owned by the protocol or DAO.
  * - Olympus Association: not considered part of the protocol or DAO treasuries.
@@ -311,7 +311,7 @@ export const ERC4626_SDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA".toLower
 
 /**
  * Mapping between the contract address of an ERC4626 token and the TokenDefinition.
- * 
+ *
  * A price lookup path must be defined for the underlying token within `LIQUIDITY_POOL_TOKEN_LOOKUP`.
  */
 export const ERC4626_TOKENS = new Map<string, TokenDefinition>();
@@ -319,7 +319,7 @@ ERC4626_TOKENS.set(ERC4626_SDAI, new TokenDefinition(ERC4626_SDAI, TokenCategory
 
 /**
  * Mapping between the non-staked token and the token staked in Convex.
- * 
+ *
  * The staked token should NOT be listed in {ERC20_TOKENS}.
  */
 const CONVEX_STAKED_TOKENS = new Map<string, TokenDefinition>();
@@ -364,7 +364,7 @@ export const FRAX_LOCKING_CONTRACTS = [
 
 /**
  * Mapping between the non-staked token and the token staked in Frax.
- * 
+ *
  * The staked token should NOT be listed in {ERC20_TOKENS}.
  */
 const FRAX_STAKED_TOKENS = new Map<string, TokenDefinition>();
@@ -436,8 +436,8 @@ UNSTAKED_TOKEN_MAPPING.set(ERC20_FXS_VE, ERC20_FXS);
 /**
  * Often, staked/locked tokens have the same price as the original token. This
  * provides the address of the unstaked token.
- * 
- * @param contractAddress 
+ *
+ * @param contractAddress
  * @returns address of the unstaked token, or the original token address if not found
  */
 export const getUnstakedToken = (contractAddress: string): string => {
@@ -774,10 +774,10 @@ VENDOR_DEPLOYMENTS.set(ERC20_DAI, [
 
 /**
  * Returns Vendor Finance deployments for the given contract address.
- * 
+ *
  * The details of the deployment are manually recorded, as the deposited principal (e.g. DAI)
- * is what is recognised until a default takes place - irrespective of the actual balance of 
- * DAI and gOHM in the contract. 
+ * is what is recognised until a default takes place - irrespective of the actual balance of
+ * DAI and gOHM in the contract.
  */
 export function getVendorDeployments(contractAddress: string): LendingMarketDeployment[] {
   const contractAddressLower = contractAddress.toLowerCase();
@@ -795,10 +795,10 @@ MYSO_DEPLOYMENTS.set(ERC20_DAI.toLowerCase(), [
 
 /**
  * Returns Myso Finance deployments for the given contract address.
- * 
+ *
  * The details of the deployment are manually recorded, as the deposited principal (e.g. DAI)
- * is what is recognised until a default takes place - irrespective of the actual balance of 
- * DAI and gOHM in the contract. 
+ * is what is recognised until a default takes place - irrespective of the actual balance of
+ * DAI and gOHM in the contract.
  */
 export function getMysoDeployments(contractAddress: string): LendingMarketDeployment[] {
   const contractAddressLower = contractAddress.toLowerCase();
@@ -1108,6 +1108,7 @@ CONTRACT_NAME_MAP.set(TREASURY_ADDRESS_V1, "Treasury Wallet V1");
 CONTRACT_NAME_MAP.set(TREASURY_ADDRESS_V2, "Treasury Wallet V2");
 CONTRACT_NAME_MAP.set(TREASURY_ADDRESS_V3, "Treasury Wallet V3");
 CONTRACT_NAME_MAP.set(TRSRY, "Bophades Treasury");
+CONTRACT_NAME_MAP.set(TRSRY_V1_1, "Bophades Treasury v1.1");
 CONTRACT_NAME_MAP.set(VEFXS_ALLOCATOR, "VeFXS Allocator");
 CONTRACT_NAME_MAP.set(VENDOR_LENDING, "Vendor Finance");
 
