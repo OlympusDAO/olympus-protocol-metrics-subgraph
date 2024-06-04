@@ -1,4 +1,4 @@
-specVersion: 0.0.4
+specVersion: 0.0.8
 description: Olympus Protocol Metrics Subgraph - Base
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 schema:
