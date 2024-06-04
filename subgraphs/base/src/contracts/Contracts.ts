@@ -2,7 +2,7 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { BLOCKCHAIN, CONTRACT_ABBREVIATION_MAP, CONTRACT_NAME_MAP, ERC20_TOKENS_BASE, getWalletAddressesForContract } from "./Constants";
 import { TokenRecord } from "../../../shared/generated/schema";
 import { getERC20TokenRecordFromWallet } from "../../../shared/src/contracts/ERC20";
-import { ERC20 } from "../../generated/TokenRecords-base/ERC20";
+import { ERC20 } from "../../../shared/generated/Price/ERC20";
 
 export function getContractName(
   contractAddress: string,
