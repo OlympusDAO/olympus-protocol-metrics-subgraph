@@ -78,18 +78,23 @@ export function getProtocolOwnedLiquiditySupplyRecords(
   const wallets = PROTOCOL_ADDRESSES;
 
   for (let i = 0; i < PRICE_HANDLERS.length; i++) {
-    const pairHandler = PRICE_HANDLERS[i];
+    const priceHandler = PRICE_HANDLERS[i];
 
     for (let j = 0; j < ohmTokens.length; j++) {
       const currentOhmToken = ohmTokens[j];
       // We only want to look at pairs that contain an OHM token
-      if (!pairHandler.matches(currentOhmToken)) {
+      if (!priceHandler.matches(currentOhmToken)) {
+        continue;
+      }
+
+      // Ignore if the price handler is not available yet
+      if (!priceHandler.exists()) {
         continue;
       }
 
       for (let k = 0; k < wallets.length; k++) {
         const currentWallet = wallets[k];
-        const balance: BigDecimal = pairHandler.getUnderlyingTokenBalance(currentWallet, currentOhmToken, blockNumber);
+        const balance: BigDecimal = priceHandler.getUnderlyingTokenBalance(currentWallet, currentOhmToken, blockNumber);
         if (balance.equals(BigDecimal.zero())) {
           continue;
         }
@@ -99,8 +104,8 @@ export function getProtocolOwnedLiquiditySupplyRecords(
             timestamp,
             getContractName(currentOhmToken),
             currentOhmToken,
-            getContractName(pairHandler.getId()),
-            pairHandler.getId(),
+            getContractName(priceHandler.getId()),
+            priceHandler.getId(),
             getContractName(currentWallet),
             currentWallet,
             TYPE_LIQUIDITY,

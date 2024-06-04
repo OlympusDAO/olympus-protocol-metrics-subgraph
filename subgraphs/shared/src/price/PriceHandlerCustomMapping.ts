@@ -28,6 +28,10 @@ export class PriceHandlerCustomMapping implements PriceHandler {
     return `${this.tokenAddress}-${this.mappedTokenAddresses.join("/")}`;
   }
 
+  exists(): boolean {
+    return true;
+  }
+
   matches(tokenAddress: string): boolean {
     return arrayIncludesLoose(this.mappedTokenAddresses, tokenAddress);
   }

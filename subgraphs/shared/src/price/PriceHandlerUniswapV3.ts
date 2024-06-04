@@ -42,6 +42,10 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
     return this.poolAddress;
   }
 
+  exists(): boolean {
+    return this.getContract(BigInt.zero()) !== null;
+  }
+
   matches(tokenAddress: string): boolean {
     return arrayIncludesLoose(this.tokens, tokenAddress);
   }

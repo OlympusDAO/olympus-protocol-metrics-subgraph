@@ -1,4 +1,4 @@
-import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, dataSource, log } from "@graphprotocol/graph-ts";
 
 import { UniswapV2Pair } from "../../generated/Price/UniswapV2Pair";
 import { ContractNameLookup } from "../contracts/ContractLookup";
@@ -23,6 +23,10 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
 
   getId(): string {
     return this.poolAddress;
+  }
+
+  exists(): boolean {
+    return this.getContract(BigInt.zero()) !== null;
   }
 
   matches(tokenAddress: string): boolean {
