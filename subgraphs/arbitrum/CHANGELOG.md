@@ -1,5 +1,9 @@
 # Arbitrum Subgraph Changelog
 
+## 1.7.0 (2024-06-04)
+
+- Adds POL in Camelot
+
 ## 1.6.4 (2023-09-13)
 
 - Apply write-off of JonesDAO token, since it cannot be sold.
