@@ -10,6 +10,7 @@ Deployed at:
 - [Polygon](https://thegraph.com/explorer/subgraphs/aF7zBXagiSjwwM1yAUiyrWFJDhh5RLpVn2nuvVbKwDw?view=Overview&chain=arbitrum-one)
 - [Arbitrum](https://thegraph.com/explorer/subgraphs/8Zxb1kVv9ZBChHXEPSgtC5u5gjCijMn5k8ErpzRYWNgH?view=Overview&chain=arbitrum-one)
 - [Fantom](https://thegraph.com/hosted-service/subgraph/olympusdao/protocol-metrics-polygon)
+- TODO: [Base]()
 
 ## Initial Setup
 
