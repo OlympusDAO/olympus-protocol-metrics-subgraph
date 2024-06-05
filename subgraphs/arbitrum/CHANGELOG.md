@@ -1,6 +1,6 @@
 # Arbitrum Subgraph Changelog
 
-## 1.7.0 (2024-06-04)
+## 1.7.1 (2024-06-04)
 
 - Adds POL in Camelot
 
