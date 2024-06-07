@@ -37,6 +37,11 @@ export interface PriceHandler {
   getId(): string;
 
   /**
+   * @returns true if the liquidity pool exists at the current block
+   */
+  exists(): boolean;
+
+  /**
    * @returns true if {tokenAddress} can be handled
    */
   matches(tokenAddress: string): boolean;
@@ -74,17 +79,17 @@ export interface PriceHandler {
 
   /**
    * Returns the balance of the liquidity pool held by {walletAddress}.
-   * 
-   * @param walletAddress 
-   * @param block 
+   *
+   * @param walletAddress
+   * @param block
    */
   getBalance(walletAddress: string, block: BigInt): BigDecimal;
 
   /**
    * Returns the balance of the underlying token held by the liquidity pool.
-   * 
-   * @param tokenAddress 
-   * @param block 
+   *
+   * @param tokenAddress
+   * @param block
    */
   getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal;
 }

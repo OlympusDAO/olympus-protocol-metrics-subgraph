@@ -15,8 +15,13 @@ export class PriceHandlerStablecoin implements PriceHandler {
     this.addresses = addresses;
     this.contractLookup = contractLookup;
   }
+
   getId(): string {
     return "PriceHandlerStablecoin";
+  }
+
+  exists(): boolean {
+    return true;
   }
 
   matches(tokenAddress: string): boolean {
