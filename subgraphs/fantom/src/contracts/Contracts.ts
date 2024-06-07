@@ -3,13 +3,13 @@ import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { ERC20 } from "../../../shared/generated/Price/ERC20";
 import { TokenRecord } from "../../../shared/generated/schema";
 import { getERC20TokenRecordFromWallet } from "../../../shared/src/contracts/ERC20";
-import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 import {
   BLOCKCHAIN,
   CONTRACT_ABBREVIATION_MAP,
   CONTRACT_NAME_MAP,
   ERC20_TOKENS_FANTOM,
 } from "./Constants";
+import { FANTOM_PROTOCOL_ADDRESSES } from "./ProtocolAddresses";
 
 export function getContractName(
   contractAddress: string,
@@ -51,7 +51,7 @@ export const getWalletAddressesForContract = (contractAddress: string): string[]
   const nonTreasuryAddresses = NON_TREASURY_ASSET_WHITELIST.has(contractAddress.toLowerCase())
     ? NON_TREASURY_ASSET_WHITELIST.get(contractAddress.toLowerCase())
     : [];
-  const newAddresses = WALLET_ADDRESSES.slice(0);
+  const newAddresses = FANTOM_PROTOCOL_ADDRESSES.slice(0);
 
   // Add the values of nonTreasuryAddresses, but filter duplicates
   for (let i = 0; i < nonTreasuryAddresses.length; i++) {
