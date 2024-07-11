@@ -15,7 +15,7 @@ dataSources:
     name: TokenRecords-arbitrum
     network: arbitrum-one
     source:
-      address: "0x79daa21a44d1415306ec17c361e0090bdd4cfcbe" # COMP-USD feed, once per hour(-ish)
+      address: "0x5D041081725468Aa43e72ff0445Fde2Ad1aDE775" # FRAX-USD feed, once every 16 hours
       abi: ChainlinkAggregator
       startBlock: 10950000 # 2022-05-01
     mapping:
@@ -50,11 +50,7 @@ dataSources:
           file: abis/TreasureMining.json
         - name: ChainlinkAggregator
           file: abis/ChainlinkAggregator.json
-      blockHandlers:
-        - handler: handleBlock
-          filter:
-            kind: polling
-            # Every 8 hours
-            # 4 blocks per second * 60 seconds * 60 minutes * 8 hours
-            every: 115200
+      eventHandlers:
+        - event: NewRound(indexed uint256,indexed address,uint256)
+          handler: handleEvent
       file: ./src/treasury/Assets.ts
