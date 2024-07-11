@@ -4,7 +4,7 @@ import { TokenRecord } from "../../../shared/generated/schema";
 import { getERC20 } from "../../../shared/src/contracts/ERC20";
 import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { getTokensInCategory } from "../../../shared/src/utils/TokenRecordHelper";
-import { ERC20_TOKENS_ARBITRUM } from "../contracts/Constants";
+import { ERC20_LUSD, ERC20_TOKENS_ARBITRUM, LUSD_START_BLOCK } from "../contracts/Constants";
 import { getContractName, getERC20TokenRecordsFromWallets } from "../contracts/Contracts";
 import { getStakedBalances as getJonesStakedBalances } from "../contracts/JonesStaking";
 import { getStakedBalances as getTreasureStakedBalances } from "../contracts/TreasureMining";
@@ -37,6 +37,14 @@ function getTokenBalance(
       getContractName(contractAddress),
       blockNumber.toString(),
     ]);
+    return records;
+  }
+
+  // If the token is LUSD and the block number is less that the start block of the Chainlink feed, skip it
+  if (contractAddress.toLowerCase() == ERC20_LUSD.toLowerCase()
+    &&
+    blockNumber.lt(BigInt.fromString(LUSD_START_BLOCK))) {
+    log.info("getTokenBalance: Skipping {} token record at block {}", [getContractName(ERC20_LUSD), blockNumber.toString()]);
     return records;
   }
 
