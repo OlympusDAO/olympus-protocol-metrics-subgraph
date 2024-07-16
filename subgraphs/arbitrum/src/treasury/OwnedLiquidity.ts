@@ -7,8 +7,7 @@ import {
   createTokenRecord,
   getIsTokenLiquid,
 } from "../../../shared/src/utils/TokenRecordHelper";
-import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
-import { BLOCKCHAIN, ERC20_TOKENS_ARBITRUM, OHM_TOKENS } from "../contracts/Constants";
+import { BLOCKCHAIN, ERC20_TOKENS_ARBITRUM, getProtocolAddresses, OHM_TOKENS } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 import { getPriceRecursive, PRICE_HANDLERS } from "../price/PriceLookup";
 
@@ -51,8 +50,9 @@ function getOwnedLiquidityBalance(
     return records;
   }
 
-  for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
-    const currentWalletAddress = WALLET_ADDRESSES[i];
+  const allWallets = getProtocolAddresses();
+  for (let i = 0; i < allWallets.length; i++) {
+    const currentWalletAddress = allWallets[i];
 
     // Get the balance
     const balance = liquidityHandler.getBalance(currentWalletAddress, block);

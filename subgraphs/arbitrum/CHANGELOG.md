@@ -1,9 +1,10 @@
 # Arbitrum Subgraph Changelog
 
-## 1.7.5 (2024-07-XX)
+## 1.7.6 (2024-07-XX)
 
 - Adds POL in Camelot
 - Change the Chainlink price feed used as a trigger in order to increase indexing speed
+- Reduce code paths for determining protocol addresses
 
 ## 1.6.4 (2023-09-13)
 
