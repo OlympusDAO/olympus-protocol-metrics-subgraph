@@ -21,6 +21,7 @@ import {
   LP_BALANCER_POOL_OHM_USDC,
   LP_BALANCER_POOL_WETH_OHM,
   LP_BALANCER_POOL_WETH_VESTA,
+  LP_CAMELOT_OHM_WETH,
   LP_UNISWAP_V2_GOHM_WETH,
   LP_UNISWAP_V2_JONES_WETH,
   LP_UNISWAP_V2_LQTY_WETH,
@@ -43,6 +44,7 @@ export const PRICE_HANDLERS: PriceHandler[] = [
   new PriceHandlerUniswapV2([ERC20_MAGIC, ERC20_WETH], LP_UNISWAP_V2_MAGIC_WETH, getContractName),
   new PriceHandlerUniswapV3([ERC20_USDC, ERC20_WETH], LP_UNISWAP_V3_WETH_USDC, getContractName),
   new PriceHandlerUniswapV3([ERC20_ARB, ERC20_WETH], LP_UNISWAP_V3_ARB_WETH, getContractName),
+  new PriceHandlerUniswapV2([ERC20_OHM, ERC20_WETH], LP_CAMELOT_OHM_WETH, getContractName),
 ];
 
 /**
