@@ -7,8 +7,8 @@ import { getUSDRate } from "../utils/Price";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { getERC20Decimals } from "../contracts/ERC20";
 import { UniswapV3PositionManager } from "../../generated/ProtocolMetrics/UniswapV3PositionManager";
-import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
-import { TYPE_LIQUIDITY, createOrUpdateTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
+import { createTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
+import { TYPE_LIQUIDITY, createTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
 import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { getWalletAddressesForContract } from "../utils/ProtocolAddresses";
 
@@ -51,14 +51,16 @@ function getPairBalances(pairAddress: string, positionId: BigInt, blockNumber: B
 
   const token0Result = pair.try_token0();
   const token1Result = pair.try_token1();
-  if (token0Result.reverted || token1Result.reverted) {
+  const slot0Result = pair.try_slot0();
+  if (token0Result.reverted || token1Result.reverted || slot0Result.reverted) {
     log.debug("getPairBalances: Skipping UniswapV3 pair {} ({}) as token calls reverted", [pairAddress, getContractName(pairAddress)]);
     return null;
   }
 
-  const sqrtPriceX96 = pair.slot0().getSqrtPriceX96();
+  const slot0 = slot0Result.value;
+  const sqrtPriceX96 = slot0.getSqrtPriceX96();
   log.debug("getPairBalances: sqrtPriceX96: {}", [sqrtPriceX96.toString()]);
-  const currentTick = pair.slot0().getTick();
+  const currentTick = slot0.getTick();
   log.debug("getPairBalances: currentTick: {}", [currentTick.toString()]);
 
   // Position
@@ -153,7 +155,12 @@ export function getUniswapV3POLRecords(
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];
 
-    const positionCount = positionManager.balanceOf(Address.fromString(walletAddress));
+    const positionCountResult = positionManager.try_balanceOf(Address.fromString(walletAddress));
+    if (positionCountResult.reverted) {
+      continue;
+    }
+
+    const positionCount = positionCountResult.value;
     log.debug("getUniswapV3POLRecords: wallet {} ({}) position count: {}", [walletAddress, getContractName(walletAddress), positionCount.toString()]);
     for (let j: u32 = 0; j < positionCount.toU32(); j++) {
       const positionId = positionManager.tokenOfOwnerByIndex(Address.fromString(walletAddress), BigInt.fromU32(j));
@@ -185,7 +192,7 @@ export function getUniswapV3POLRecords(
       log.debug("getUniswapV3POLRecords: multiplier: {}", [multiplier.toString()]);
 
       records.push(
-        createOrUpdateTokenRecord(
+        createTokenRecord(
           timestamp,
           getContractName(pairAddress),
           pairAddress,
@@ -313,7 +320,12 @@ export function getUniswapV3OhmSupply(
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];
 
-    const positionCount = positionManager.balanceOf(Address.fromString(walletAddress));
+    const positionCountResult = positionManager.try_balanceOf(Address.fromString(walletAddress));
+    if (positionCountResult.reverted) {
+      continue;
+    }
+
+    const positionCount = positionCountResult.value;
     for (let j: u32 = 0; j < positionCount.toU32(); j++) {
       const positionId = positionManager.tokenOfOwnerByIndex(Address.fromString(walletAddress), BigInt.fromU32(j));
       log.debug("getUniswapV3PairRecords: positionId: {}", [positionId.toString()]);
@@ -326,7 +338,7 @@ export function getUniswapV3OhmSupply(
       const ohmBalance = balances[ohmIndex];
 
       records.push(
-        createOrUpdateTokenSupply(
+        createTokenSupply(
           timestamp,
           getContractName(tokenAddress),
           tokenAddress,

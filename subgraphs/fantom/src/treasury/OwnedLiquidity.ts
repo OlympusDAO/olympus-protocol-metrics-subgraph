@@ -4,13 +4,13 @@ import { TokenRecord } from "../../../shared/generated/schema";
 import { PriceHandler } from "../../../shared/src/price/PriceHandler";
 import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import {
-  createOrUpdateTokenRecord,
+  createTokenRecord,
   getIsTokenLiquid,
 } from "../../../shared/src/utils/TokenRecordHelper";
-import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 import { BLOCKCHAIN, ERC20_TOKENS_FANTOM, OHM_TOKENS } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 import { getPriceRecursive, HANDLERS } from "../price/PriceLookup";
+import { FANTOM_PROTOCOL_ADDRESSES } from "../contracts/ProtocolAddresses";
 
 /**
  * Returns the token records for a given token. This includes:
@@ -52,8 +52,8 @@ function getOwnedLiquidityBalance(
     return records;
   }
 
-  for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
-    const currentWalletAddress = WALLET_ADDRESSES[i];
+  for (let i = 0; i < FANTOM_PROTOCOL_ADDRESSES.length; i++) {
+    const currentWalletAddress = FANTOM_PROTOCOL_ADDRESSES[i];
 
     // Get the balance
     const balance = liquidityHandler.getBalance(currentWalletAddress, block);
@@ -62,7 +62,7 @@ function getOwnedLiquidityBalance(
     }
 
     // Create record
-    const record = createOrUpdateTokenRecord(
+    const record = createTokenRecord(
       timestamp,
       getContractName(liquidityHandler.getId()),
       liquidityHandler.getId(),

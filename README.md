@@ -4,7 +4,12 @@ Gathers data from bonds, liquidity and Olympus treasury.
 
 Used in the [Olympus Treasury Dashboard](https://app.olympusdao.finance/).
 
-Deployed at <https://thegraph.com/hosted-service/subgraph/olympusdao/olympus-protocol-metrics>
+Deployed at:
+
+- [Ethereum mainnet](https://thegraph.com/explorer/subgraphs/7jeChfyUTWRyp2JxPGuuzxvGt3fDKMkC9rLjm7sfLcNp?view=Overview&chain=arbitrum-one)
+- [Polygon](https://thegraph.com/explorer/subgraphs/aF7zBXagiSjwwM1yAUiyrWFJDhh5RLpVn2nuvVbKwDw?view=Overview&chain=arbitrum-one)
+- [Arbitrum](https://thegraph.com/explorer/subgraphs/8Zxb1kVv9ZBChHXEPSgtC5u5gjCijMn5k8ErpzRYWNgH?view=Overview&chain=arbitrum-one)
+- [Fantom](https://thegraph.com/hosted-service/subgraph/olympusdao/protocol-metrics-polygon)
 
 ## Initial Setup
 

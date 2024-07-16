@@ -5,6 +5,7 @@
 import { BigInt, log } from "@graphprotocol/graph-ts";
 import { ERC20_GOHM, ERC20_OHM_V1, ERC20_OHM_V2, ERC20_SOHM_V1, ERC20_SOHM_V2, ERC20_SOHM_V3 } from "./Constants";
 import { getTreasuryAddress } from "./Bophades";
+import { COOLER_LOANS_CLEARINGHOUSES, COOLER_LOANS_CLEARINGHOUSE_V1, COOLER_LOANS_CLEARINGHOUSE_V1_1 } from "../../../shared/src/Wallets";
 
 export const TREASURY_ADDRESS_V1 = "0x886CE997aa9ee4F8c2282E182aB72A705762399D".toLowerCase();
 export const TREASURY_ADDRESS_V2 = "0x31f8cc382c9898b273eff4e0b7626a6987c846e8".toLowerCase();
@@ -28,6 +29,8 @@ export const DAO_WORKING_CAPITAL = "0xF65A665D650B5De224F46D729e2bD0885EeA9dA5".
 export const OLYMPUS_ASSOCIATION_WALLET = "0x4c71db02aeeb336cbd8f3d2cc866911f6e2fbd94".toLowerCase();
 
 export const COOLER_LOANS_CLEARINGHOUSE = "0xD6A6E8d9e82534bD65821142fcCd91ec9cF31880".toLowerCase();
+export const TRSRY = "0xa8687A15D4BE32CC8F0a8a7B9704a4C3993D9613".toLowerCase();
+export const TRSRY_V1_1 = "0xea1560F36F71a2F54deFA75ed9EaA15E8655bE22".toLowerCase();
 
 export const OTC_ESCROW = "0xe3312c3f1ab30878d9686452f7205ebe11e965eb".toLowerCase();
 export const MYSO_LENDING = "0xb339953fc028b9998775c00594a74dd1488ee2c6".toLowerCase();
@@ -67,7 +70,7 @@ export const CONVEX_ALLOCATORS = [
 /**
  * This set of wallet addresses is common across many tokens,
  * and can be used for balance lookups.
- * 
+ *
  * Myso and Vendor Finance contracts are NOT included in here, as the deployed amounts are hard-coded.
  */
 const PROTOCOL_ADDRESSES = [
@@ -96,7 +99,10 @@ const PROTOCOL_ADDRESSES = [
   TREASURY_ADDRESS_V1,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
+  TRSRY,
   VEFXS_ALLOCATOR,
+  COOLER_LOANS_CLEARINGHOUSE_V1,
+  COOLER_LOANS_CLEARINGHOUSE_V1_1,
 ];
 
 const TREASURY_BLACKLIST = new Map<string, string[]>();

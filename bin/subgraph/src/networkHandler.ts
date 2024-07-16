@@ -7,7 +7,7 @@ export interface NetworkHandler {
   subgraphId: string;
   branch: string;
 
-  doLatestBlock(): void;
+  doLatestDate(): void;
   doQuery(): void;
   doComparison(): void;
 }
@@ -27,7 +27,7 @@ export class BaseNetworkHandler implements NetworkHandler {
     this.outputPath = outputPath;
   }
 
-  public async doLatestBlock(): Promise<void> {
+  public async doLatestDate(): Promise<void> {
     throw new Error("Method not implemented.");
   }
   public async doQuery(): Promise<void> {

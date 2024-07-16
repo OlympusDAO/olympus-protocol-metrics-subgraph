@@ -4,7 +4,7 @@ import { TokenSupply } from "../../../shared/generated/schema";
 import { ERC20_OHM } from "./Constants";
 import { ERC20 } from "../../generated/TokenRecords-arbitrum/ERC20";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { TYPE_LENDING, createOrUpdateTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
+import { TYPE_LENDING, createTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
 import { getContractName, getWalletAddressesForContract } from "./Contracts";
 
 // Hard-coding this for now. If we wanted this to be generalisable, we would use the Silo Repository contract.
@@ -25,15 +25,19 @@ export function getSiloSupply(timestamp: BigInt, blockNumber: BigInt): TokenSupp
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
 
-    const balance = toDecimal(
-      collateralTokenContract.balanceOf(Address.fromString(currentWallet)), collateralTokenDecimals);
+    const balanceResult = collateralTokenContract.try_balanceOf(Address.fromString(currentWallet));
+    if (balanceResult.reverted) {
+      continue;
+    }
+
+    const balance = toDecimal(balanceResult.value, collateralTokenDecimals);
     if (balance.equals(BigDecimal.zero())) {
       continue;
     }
 
     log.info("getSiloSupply: Silo OHM balance {} for wallet {}", [balance.toString(), getContractName(currentWallet)]);
     records.push(
-      createOrUpdateTokenSupply(
+      createTokenSupply(
         timestamp,
         getContractName(ERC20_OHM),
         ERC20_OHM,

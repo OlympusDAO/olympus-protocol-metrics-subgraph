@@ -1,35 +1,6 @@
-type DailyBond @entity {
-  id: ID!
-  timestamp: BigInt!
-  token: Token!
-  amount: BigDecimal!
-  value: BigDecimal!
-}
-
-type Rebase @entity {
-  id: ID!
-  amount: BigDecimal!
-  stakedOhms: BigDecimal!
-  percentage: BigDecimal!
-  contract: String!
-  timestamp: BigInt!
-  value: BigDecimal!
-}
-
-type DailyStakingReward @entity {
-  id: ID!
-  timestamp: BigInt!
-  amount: BigDecimal!
-  value: BigDecimal!
-}
-
-type Token @entity {
-  id: ID!
-}
-
 # Stores easily-calculated metrics related to the Olympus protocol
-type ProtocolMetric @entity {
-  id: ID! # YYYY-MM-DD
+type ProtocolMetric @entity(immutable: true) {
+  id: Bytes! # YYYY-MM-DD/<block>
   block: BigInt!
   currentAPY: BigDecimal!
   currentIndex: BigDecimal!
@@ -53,21 +24,9 @@ type ProtocolMetric @entity {
   treasuryMarketValue: BigDecimal
 }
 
-type BondDiscount @entity {
-  id: ID!
-  timestamp: BigInt!
-  dai_discount: BigDecimal!
-  ohmdai_discount: BigDecimal!
-  frax_discount: BigDecimal!
-  ohmfrax_discount: BigDecimal!
-  eth_discount: BigDecimal!
-  lusd_discount: BigDecimal!
-  ohmlusd_discount: BigDecimal!
-}
-
 # Represents the balance of a specific token in the treasury
-type TokenRecord @entity {
-  id: ID! # YYYY-MM-DD/<source>/<token>
+type TokenRecord @entity(immutable: true) {
+  id: Bytes! # YYYY-MM-DD/<block>/<source>/<token>
   block: BigInt!
   timestamp: BigInt! # Unix timestamp in UTC
   date: String!
@@ -87,8 +46,8 @@ type TokenRecord @entity {
 }
 
 # Represents a balance that affects the supply of OHM
-type TokenSupply @entity {
-  id: ID! # YYYY-MM-DD/<token>/<type>/<pool>/<source>
+type TokenSupply @entity(immutable: true) {
+  id: Bytes! # YYYY-MM-DD/<block>/<token>/<type>/<pool>/<source>
   block: BigInt!
   timestamp: BigInt! # Unix timestamp in UTC
   date: String! # YYYY-MM-DD
@@ -130,22 +89,15 @@ type GnosisAuction @entity {
 
 # Caching
 type ERC20TokenSnapshot @entity(immutable: true) {
-  id: ID! # address/block
+  id: Bytes! # address/block
   address: Bytes!
   decimals: Int!
   totalSupply: BigDecimal
 }
 
-type ConvexRewardPoolSnapshot @entity(immutable: true) {
-  id: ID! # lowercase address/block
-  block: BigInt!
-  address: Bytes!
-  stakingToken: Bytes!
-}
-
 # TODO migrate to PoolSnapshot
 type BalancerPoolSnapshot @entity(immutable: true) {
-  id: ID! # pool id/block
+  id: Bytes! # pool id/block
   block: BigInt!
   pool: Bytes!
   poolToken: Bytes!
@@ -157,7 +109,7 @@ type BalancerPoolSnapshot @entity(immutable: true) {
 }
 
 type PoolSnapshot @entity(immutable: true) {
-  id: ID! # pool/block
+  id: Bytes! # pool/block
   block: BigInt!
   pool: Bytes!
   poolToken: Bytes
@@ -169,14 +121,14 @@ type PoolSnapshot @entity(immutable: true) {
 }
 
 type TokenPriceSnapshot @entity(immutable: true) {
-  id: ID! # address/block
+  id: Bytes! # address/block
   block: BigInt!
   token: Bytes!
   price: BigDecimal!
 }
 
 type StakingPoolSnapshot @entity(immutable: true) {
-  id: ID! # address/block
+  id: Bytes! # address/block
   block: BigInt!
   contractAddress: Bytes!
   stakingToken: Bytes # Will not be set if the call reverts

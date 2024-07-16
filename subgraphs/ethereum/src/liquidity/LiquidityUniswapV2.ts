@@ -3,8 +3,8 @@ import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts
 import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
 import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
-import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
+import { createTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
+import { createTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { PoolSnapshot } from "../../generated/schema";
 import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
@@ -42,7 +42,8 @@ function getUniswapV2Pair(
  * @returns snapshot, or null if there was a contract revert
  */
 export function getOrCreateUniswapV2PoolSnapshot(pairAddress: string, blockNumber: BigInt): PoolSnapshot | null {
-  const snapshotId = `${pairAddress}/${blockNumber.toString()}`;
+  // pairAddress/blockNumber
+  const snapshotId = Bytes.fromHexString(pairAddress).concatI32(blockNumber.toI32());
   let snapshot = PoolSnapshot.load(snapshotId);
   if (snapshot == null) {
     log.debug("getOrCreateUniswapV2PoolSnapshot: Creating new snapshot for pool {} ({}) at block {}", [getContractName(pairAddress), pairAddress, blockNumber.toString()]);
@@ -255,14 +256,14 @@ function getUniswapV2PairRecord(
   const pairToken = getUniswapV2Pair(pairAddress);
 
   // Get the balance of the pair's token in walletAddress
-  const pairTokenBalance = pairToken.balanceOf(Address.fromString(walletAddress));
-  if (pairTokenBalance.equals(BigInt.zero())) {
+  const pairTokenBalanceResult = pairToken.try_balanceOf(Address.fromString(walletAddress));
+  if (pairTokenBalanceResult.reverted || pairTokenBalanceResult.value.equals(BigInt.zero())) {
     return null;
   }
 
-  const pairTokenBalanceDecimal = toDecimal(pairTokenBalance, pairToken.decimals());
+  const pairTokenBalanceDecimal = toDecimal(pairTokenBalanceResult.value, pairToken.decimals());
 
-  return createOrUpdateTokenRecord(
+  return createTokenRecord(
     timestamp,
     getContractName(pairAddress),
     pairAddress,
@@ -451,7 +452,7 @@ export function getUniswapV2PairTokenQuantity(
 
     const tokenBalance = totalQuantity.times(record.balance).div(poolTokenTotalSupply);
     records.push(
-      createOrUpdateTokenSupply(
+      createTokenSupply(
         timestamp,
         getContractName(tokenAddress),
         tokenAddress,

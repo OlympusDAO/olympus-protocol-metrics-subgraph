@@ -192,7 +192,10 @@ export function getUSDRateUniswapV3(
   }
 
   // TODO shift to snapshot
-  if (pair.try_token0().reverted) {
+  const token0Result = pair.try_token0();
+  const token1Result = pair.try_token1();
+  const slot0Result = pair.try_slot0();
+  if (token0Result.reverted || token1Result.reverted || slot0Result.reverted) {
     log.warning(
       "getUSDRateUniswapV3: UniswapV3 pair {} ({}) does not exist at block {}. Returning 0",
       [pairAddress, getContractName(pairAddress), blockNumber.toString()],
@@ -201,8 +204,8 @@ export function getUSDRateUniswapV3(
   }
 
   // Determine pair orientation
-  const token0 = pair.token0();
-  const token1 = pair.token1();
+  const token0 = token0Result.value;
+  const token1 = token1Result.value;
   const baseTokenOrientation = getBaseTokenOrientation(token0, token1);
   if (baseTokenOrientation === PairTokenBaseOrientation.UNKNOWN) {
     throw new Error(
@@ -214,7 +217,8 @@ export function getUSDRateUniswapV3(
   // slot0 = "The current price of the pool as a sqrt(token1/token0) Q64.96 value"
   // Source: https://docs.uniswap.org/protocol/reference/core/interfaces/pool/IUniswapV3PoolState#slot0
   // https://docs.uniswap.org/sdk/guides/fetching-prices
-  let priceETH = pair.slot0().value0.times(pair.slot0().value0).toBigDecimal();
+  const slot0 = slot0Result.value;
+  let priceETH = slot0.value0.times(slot0.value0).toBigDecimal();
   const priceDiv = BigInt.fromI32(2).pow(192).toBigDecimal();
   priceETH = priceETH.div(priceDiv);
 
@@ -611,7 +615,8 @@ function resolvePrice(contractAddress: string, blockNumber: BigInt): BigDecimal 
 }
 
 function getOrCreateTokenPriceSnapshot(address: string, blockNumber: BigInt): TokenPriceSnapshot {
-  const snapshotId = `${address.toLowerCase()}/${blockNumber.toString()}`;
+  // address/blockNumber
+  const snapshotId = Bytes.fromHexString(address).concatI32(blockNumber.toI32());
   let snapshot = TokenPriceSnapshot.load(snapshotId);
   if (snapshot == null) {
     snapshot = new TokenPriceSnapshot(snapshotId);

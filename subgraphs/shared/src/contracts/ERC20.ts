@@ -3,7 +3,7 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { ERC20 } from "../../generated/Price/ERC20";
 import { TokenRecord } from "../../generated/schema";
 import { toDecimal } from "../utils/Decimals";
-import { createOrUpdateTokenRecord, getIsTokenLiquid } from "../utils/TokenRecordHelper";
+import { createTokenRecord, getIsTokenLiquid } from "../utils/TokenRecordHelper";
 import { ContractNameLookup } from "./ContractLookup";
 import { TokenDefinition } from "./TokenDefinition";
 
@@ -41,7 +41,12 @@ export function getBalance(
     return BigInt.fromString("0");
   }
 
-  const balance = contract.balanceOf(Address.fromString(address));
+  const balanceResult = contract.try_balanceOf(Address.fromString(address));
+  if (balanceResult.reverted) {
+    return BigInt.zero();
+  }
+
+  const balance = balanceResult.value;
   log.debug(
     "getERC20Balance: Found balance {} in ERC20 contract {} ({}) for wallet {} ({}) at block number {}",
     [
@@ -58,9 +63,12 @@ export function getBalance(
 
 export function getERC20DecimalBalance(tokenAddress: string, sourceAddress: string, blockNumber: BigInt, contractLookup: ContractNameLookup): BigDecimal {
   const contract = ERC20.bind(Address.fromString(tokenAddress));
-  const balance: BigInt = contract.balanceOf(Address.fromString(sourceAddress));
+  const balanceResult = contract.try_balanceOf(Address.fromString(sourceAddress));
+  if (balanceResult.reverted) {
+    return BigDecimal.zero();
+  }
 
-  return toDecimal(balance, contract.decimals());
+  return toDecimal(balanceResult.value, contract.decimals());
 }
 
 /**
@@ -103,7 +111,7 @@ export function getERC20TokenRecordFromWallet(
   );
   if (!balance || balance.equals(BigDecimal.zero())) return null;
 
-  return createOrUpdateTokenRecord(
+  return createTokenRecord(
     timestamp,
     contractLookup(contractAddress),
     contractAddress,

@@ -13,8 +13,29 @@ const performQuery = async (subgraphId: string, query: string): Promise<any> => 
   return await gqlClient.query({ query: gql(query) });
 };
 
+export const getLatestBlock = async (subgraphId: string, date: string): Promise<string> => {
+  const query = `
+    {
+      tokenRecords(first: 1, orderBy: block, orderDirection: desc, where: {date: "${date}"}) {
+        block
+      }
+    }
+    `;
+  console.info(
+    `Fetching latest block on date ${date} for subgraph id ${subgraphId} with query: ${query}`,
+  );
+  const dayBeforeResults = await performQuery(subgraphId, query);
+  if (!dayBeforeResults.data) {
+    throw new Error("getTestBlock: day before latest block query returned no results");
+  }
+
+  const latestBlock = dayBeforeResults.data.tokenRecords[0].block;
+  console.info(`Received latest block ${latestBlock}`);
+  return latestBlock;
+}
+
 /**
- * Determines a block that can be used for testing.
+ * Determines a date that can be used for testing.
  *
  * Currently, this looks for the latest block that is available, and determines
  * the latest block for the previous day. The absolute latest block
@@ -24,7 +45,7 @@ const performQuery = async (subgraphId: string, query: string): Promise<any> => 
  * @returns
  * @throws Error if there are no results from the GraphQL query
  */
-export const getTestBlock = async (subgraphId: string): Promise<string> => {
+export const getTestDate = async (subgraphId: string): Promise<string> => {
   // We first fetch the latest block for the query
   const latestBlockQuery = `
     {
@@ -50,24 +71,8 @@ export const getTestBlock = async (subgraphId: string): Promise<string> => {
   const dayBeforeDate = new Date(latestBlockDate);
   dayBeforeDate.setTime(dayBeforeDate.getTime() - DAY_MS);
   const dayBeforeDateString = dayBeforeDate.toISOString().split("T")[0];
-  const dayBeforeQuery = `
-    {
-      tokenRecords(first: 1, orderBy: block, orderDirection: desc, where: {date: "${dayBeforeDateString}"}) {
-        block
-      }
-    }
-    `;
-  console.info(
-    `Fetching latest block on date ${dayBeforeDateString} for subgraph id ${subgraphId} with query: ${dayBeforeQuery}`,
-  );
-  const dayBeforeResults = await performQuery(subgraphId, dayBeforeQuery);
-  if (!dayBeforeResults.data) {
-    throw new Error("getTestBlock: day before latest block query returned no results");
-  }
 
-  const dayBeforeLatestBlock = dayBeforeResults.data.tokenRecords[0].block;
-  console.info(`Received latest block ${dayBeforeLatestBlock}`);
-  return dayBeforeLatestBlock;
+  return dayBeforeDateString;
 };
 
 export type TokenRecord = {
@@ -100,7 +105,7 @@ export const getTokenRecords = async (
 ): Promise<TokenRecord[]> => {
   const query = `
     {
-      tokenRecords(where: {block: ${block}}) {
+      tokenRecords(orderBy: token, where: {block: ${block}}) {
         id
         block
         date
@@ -153,11 +158,12 @@ export const getTokenSupplies = async (
 ): Promise<TokenSupply[]> => {
   const query = `
     {
-      tokenSupplies(where: {block: ${block}}) {
+      tokenSupplies(orderBy: token, where: {block: ${block}}) {
         id
         block
         date
         token
+        pool
         source
         balance
         supplyBalance

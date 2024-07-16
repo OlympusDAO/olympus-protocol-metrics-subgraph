@@ -4,7 +4,7 @@ import { TokenRecord } from "../../../shared/generated/schema";
 import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import {
-  createOrUpdateTokenRecord,
+  createTokenRecord,
   getIsTokenLiquid,
   getTokenCategory,
 } from "../../../shared/src/utils/TokenRecordHelper";
@@ -377,11 +377,11 @@ export function getUniswapV2PairBalance(
       address,
       currentBlockNumber.toString(),
     ]);
-    return BigInt.fromString("0");
+    return BigInt.zero();
   }
 
   if (tokenAddress && !liquidityPairHasToken(contract._address.toHexString(), tokenAddress)) {
-    return BigInt.fromString("0");
+    return BigInt.zero();
   }
 
   log.debug(
@@ -389,7 +389,12 @@ export function getUniswapV2PairBalance(
     [contract._address.toHexString(), address, currentBlockNumber.toString()],
   );
 
-  return contract.balanceOf(Address.fromString(address));
+  const balanceResult = contract.try_balanceOf(Address.fromString(address));
+  if (balanceResult.reverted) {
+    return BigInt.zero();
+  }
+
+  return balanceResult.value;
 }
 
 /**
@@ -506,7 +511,7 @@ export function getERC20TokenRecordFromWallet(
     getContractName(walletAddress),
     blockNumber.toString(),
   ]);
-  return createOrUpdateTokenRecord(
+  return createTokenRecord(
     timestamp,
     getContractName(contractAddress),
     contractAddress,
@@ -559,7 +564,7 @@ export function getVendorFinanceRecords(
     return records;
   }
 
-  records.push(createOrUpdateTokenRecord(
+  records.push(createTokenRecord(
     timestamp,
     getContractName(contractAddress),
     contractAddress,
@@ -614,7 +619,7 @@ export function getMysoFinanceRecords(
     return records;
   }
 
-  records.push(createOrUpdateTokenRecord(
+  records.push(createTokenRecord(
     timestamp,
     getContractName(contractAddress),
     contractAddress,
@@ -685,8 +690,13 @@ function getTokeStakedBalance(
   walletAddress: string,
   _blockNumber: BigInt,
 ): BigDecimal {
+  const balanceResult = stakingContract.try_balanceOf(Address.fromString(walletAddress));
+  if (balanceResult.reverted) {
+    return BigDecimal.zero();
+  }
+
   return toDecimal(
-    stakingContract.balanceOf(Address.fromString(walletAddress)),
+    balanceResult.value,
     tokenSnapshot.decimals,
   );
 }
@@ -742,7 +752,7 @@ export function getAuraLockedBalancesFromWallets(
     );
 
     records.push(
-      createOrUpdateTokenRecord(
+      createTokenRecord(
         timestamp,
         getContractName(ERC20_AURA_VL),
         ERC20_AURA_VL,
@@ -796,8 +806,12 @@ export function getBtrflyUnlockedBalancesFromWallets(
 
     // rlBTRFLY.balanceOf() returns the balance in active locks, so we only need to return unlocked balances
     // Source: https://github.com/redacted-cartel/contracts-v2/blob/7ef760ae4f4287caa0abf698060096c5cfebd0cf/contracts/core/RLBTRFLY.sol#L109
-    const lockedBalances = contract.lockedBalances(Address.fromString(currentWallet));
-    const balance: BigDecimal = toDecimal(lockedBalances.getUnlockable(), tokenSnapshot.decimals);
+    const lockedBalancesResult = contract.try_lockedBalances(Address.fromString(currentWallet));
+    if (lockedBalancesResult.reverted) {
+      continue;
+    }
+
+    const balance: BigDecimal = toDecimal(lockedBalancesResult.value.getUnlockable(), tokenSnapshot.decimals);
     if (balance.equals(BigDecimal.zero())) {
       continue;
     }
@@ -815,7 +829,7 @@ export function getBtrflyUnlockedBalancesFromWallets(
     );
 
     records.push(
-      createOrUpdateTokenRecord(
+      createTokenRecord(
         timestamp,
         getContractName(tokenAddress, "Unlocked"), // Needed to differentiate
         tokenAddress,
@@ -888,7 +902,7 @@ export function getTokeStakedBalancesFromWallets(
     );
 
     records.push(
-      createOrUpdateTokenRecord(
+      createTokenRecord(
         timestamp,
         getContractName(tokenAddress, "Staked"), // Needed to differentiate as there is no token for TOKE
         tokenAddress,
@@ -983,7 +997,7 @@ export function getLiquityStakedBalancesFromWallets(
     );
 
     records.push(
-      createOrUpdateTokenRecord(
+      createTokenRecord(
         timestamp,
         getContractName(tokenAddress, "Staked"), // Needed to differentiate as there is no token for LQTY
         tokenAddress,
@@ -1018,8 +1032,13 @@ function getBalancerGaugeBalance(
   walletAddress: string,
   _blockNumber: BigInt,
 ): BigDecimal {
+  const balanceResult = gaugeContract.try_balanceOf(Address.fromString(walletAddress));
+  if (balanceResult.reverted) {
+    return BigDecimal.zero();
+  }
+
   return toDecimal(
-    gaugeContract.balanceOf(Address.fromString(walletAddress)),
+    balanceResult.value,
     tokenSnapshot.decimals,
   );
 }
@@ -1040,8 +1059,13 @@ function getAuraStakedBalance(
   walletAddress: string,
   _blockNumber: BigInt,
 ): BigDecimal {
+  const balanceResult = stakingContract.try_balanceOf(Address.fromString(walletAddress));
+  if (balanceResult.reverted) {
+    return BigDecimal.zero();
+  }
+
   return toDecimal(
-    stakingContract.balanceOf(Address.fromString(walletAddress)),
+    balanceResult.value,
     tokenSnapshot.decimals,
   );
 }
@@ -1133,7 +1157,7 @@ export function getBalancerGaugeBalanceFromWallets(
     );
 
     records.push(
-      createOrUpdateTokenRecord(
+      createTokenRecord(
         timestamp,
         getContractName(tokenAddress, "Gauge Deposit"),
         tokenAddress,
@@ -1277,7 +1301,7 @@ export function getAuraStakedBalanceFromWallets(
     );
 
     records.push(
-      createOrUpdateTokenRecord(
+      createTokenRecord(
         timestamp,
         getContractName(tokenAddress, `Staked in ${getContractName(stakingAddress)}`),
         tokenAddress,
@@ -1338,7 +1362,7 @@ export function getAuraPoolEarnedRecords(timestamp: BigInt, contractAddress: str
       );
 
       records.push(
-        createOrUpdateTokenRecord(
+        createTokenRecord(
           timestamp,
           getContractName(contractAddress, `Rewards from ${getContractName(poolAddress)}`),
           contractAddress,
@@ -1457,7 +1481,7 @@ export function getTokeAllocatorRecords(
   if (!balance || balance.equals(BigDecimal.zero())) return records;
 
   records.push(
-    createOrUpdateTokenRecord(
+    createTokenRecord(
       timestamp,
       getContractName(tokenAddress),
       tokenAddress,
@@ -1551,7 +1575,7 @@ export function getRariAllocatorRecords(
   if (!balance || balance.equals(BigDecimal.zero())) return records;
 
   records.push(
-    createOrUpdateTokenRecord(
+    createTokenRecord(
       timestamp,
       getContractName(tokenAddress),
       tokenAddress,
@@ -1590,7 +1614,7 @@ export function getOnsenAllocatorRecords(
   if (!balance || balance.equals(BigDecimal.zero())) return records;
 
   records.push(
-    createOrUpdateTokenRecord(
+    createTokenRecord(
       timestamp,
       getContractName(tokenAddress),
       tokenAddress,
@@ -1644,8 +1668,12 @@ export function getConvexStakedBalance(
 
   // Get balance
   const stakingContract = ConvexBaseRewardPool.bind(Address.fromString(stakingAddress));
-  const balance = stakingContract.balanceOf(Address.fromString(allocatorAddress));
-  const decimalBalance = toDecimal(balance, tokenSnapshot.decimals);
+  const balanceResult = stakingContract.try_balanceOf(Address.fromString(allocatorAddress));
+  if (balanceResult.reverted) {
+    return null;
+  }
+
+  const decimalBalance = toDecimal(balanceResult.value, tokenSnapshot.decimals);
   log.debug(
     "getConvexStakedBalance: Balance of {} for staking token {} ({}) and allocator {} ({})",
     [
@@ -1762,7 +1790,7 @@ export function getConvexStakedRecords(
         blockNumber.ge(BigInt.fromString(CVX_CRV_WRITE_OFF_BLOCK))) {
         log.info("getConvexStakedRecords: Applying liquid backing multiplier of 0 to {} token record at block {}", [getContractName(ERC20_CVX_CRV), blockNumber.toString()]);
         records.push(
-          createOrUpdateTokenRecord(
+          createTokenRecord(
             timestamp,
             getContractName(tokenAddress, getContractName(stakingAddress)),
             tokenAddress,
@@ -1780,7 +1808,7 @@ export function getConvexStakedRecords(
       }
       else {
         records.push(
-          createOrUpdateTokenRecord(
+          createTokenRecord(
             timestamp,
             getContractName(tokenAddress, getContractName(stakingAddress)),
             tokenAddress,
@@ -1952,7 +1980,7 @@ export function getLiquityStabilityPoolRecords(
     );
 
     records.push(
-      createOrUpdateTokenRecord(
+      createTokenRecord(
         timestamp,
         getContractName(tokenAddress, "Stability Pool"),
         tokenAddress,
@@ -2033,7 +2061,7 @@ export function getVeFXSAllocatorRecords(
     [balance.toString(), getContractName(tokenAddress), blockNumber.toString()],
   );
   records.push(
-    createOrUpdateTokenRecord(
+    createTokenRecord(
       timestamp,
       getContractName(tokenAddress),
       tokenAddress,
@@ -2096,7 +2124,7 @@ export function getVlCvxUnlockedRecords(
     if (!balance || balance.equals(BigDecimal.zero())) continue;
 
     records.push(
-      createOrUpdateTokenRecord(
+      createTokenRecord(
         timestamp,
         "Convex - Unlocked (vlCVX)", // Manual override
         tokenAddress,
@@ -2145,7 +2173,7 @@ export function getMakerDSRRecords(
     if (!balance || balance.equals(BigDecimal.zero())) continue;
 
     records.push(
-      createOrUpdateTokenRecord(
+      createTokenRecord(
         timestamp,
         "DAI - Deposited in DSR", // Manual override
         tokenAddress,

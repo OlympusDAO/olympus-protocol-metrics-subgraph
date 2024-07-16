@@ -145,13 +145,13 @@ program
   .description("CLI for the deployment and testing of Olympus subgraphs");
 
 program
-  .command("latest-block")
-  .description("Determines the latest block for a subgraph")
+  .command("latest-date")
+  .description("Determines the latest date for a subgraph")
   .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
   .requiredOption("--deployment <deployment id>", "the deployment id (starts with 'Qm')", parseDeploymentId)
   .action(async (subgraph, options) => {
     const query = await getSubgraphHandler(subgraph, options.deployment, null);
-    query.doLatestBlock();
+    query.doLatestDate();
   });
 
 program
@@ -243,7 +243,7 @@ program
 
         console.info("*** Running graph test");
         spawnProcess(
-          `yarn graph test --version 0.5.3 ${options.recompile == true ? "--recompile" : ""}`,
+          `yarn graph test --version 0.6.0 ${options.recompile == true ? "--recompile" : ""}`,
           (testExitCode: number) => {
             if (testExitCode > 0) {
               process.exit(testExitCode);

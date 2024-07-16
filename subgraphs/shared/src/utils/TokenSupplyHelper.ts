@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts";
 
 import { TokenSupply } from "../../generated/schema";
 import { getISO8601DateStringFromTimestamp } from "./DateHelper";
@@ -21,7 +21,7 @@ export const TYPE_TREASURY = "Treasury";
  * and saves the record.
  * @returns
  */
-export function createOrUpdateTokenSupply(
+export function createTokenSupply(
   timestamp: BigInt,
   tokenName: string,
   tokenAddress: string,
@@ -40,12 +40,9 @@ export function createOrUpdateTokenSupply(
   const poolNameNotNull: string = poolName !== null ? poolName : "Unknown Pool";
   const sourceNameNotNull: string = sourceName !== null ? sourceName : "";
 
-  const recordId = `${dateString}/${tokenName}/${type}/${poolNameNotNull}/${sourceNameNotNull}`; // YYYY-MM-DD/<token>/<type>/<pool>/<source>
-
-  // Attempt to fetch the current day's record
-  const existingRecord = TokenSupply.load(recordId);
-
-  const record = existingRecord ? existingRecord : new TokenSupply(recordId);
+  // YYYY-MM-DD/<block>/<token>/<type>/<pool>/<source>
+  const recordId = Bytes.fromUTF8(dateString).concatI32(blockNumber.toI32()).concat(Bytes.fromUTF8(tokenName)).concat(Bytes.fromUTF8(type)).concat(Bytes.fromUTF8(poolNameNotNull)).concat(Bytes.fromUTF8(sourceNameNotNull)); `${dateString}/${tokenName}/${type}/${poolNameNotNull}/${sourceNameNotNull}`;
+  const record = new TokenSupply(recordId);
 
   record.block = blockNumber;
   record.date = dateString;

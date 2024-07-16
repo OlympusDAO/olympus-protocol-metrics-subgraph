@@ -4,8 +4,8 @@ import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
 import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { createOrUpdateTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
-import { createOrUpdateTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
+import { createTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
+import { createTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolToken";
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
 import { BalancerPoolSnapshot } from "../../generated/schema";
@@ -22,6 +22,7 @@ import {
   getBalancerGaugeBalancesFromWallets,
 } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
+import { getWalletAddressesForContract } from "../utils/ProtocolAddresses";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { getWalletAddressesForContract } from "../utils/ProtocolAddresses";
 
@@ -39,7 +40,8 @@ function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): BalancerV
  * @returns snapshot, or null if there was a contract revert
  */
 export function getOrCreateBalancerPoolSnapshot(poolId: string, vaultAddress: string, blockNumber: BigInt): BalancerPoolSnapshot | null {
-  const snapshotId = `${poolId}/${blockNumber.toString()}`;
+  // poolId-blockNumber
+  const snapshotId = Bytes.fromUTF8(poolId).concatI32(blockNumber.toI32());
   let snapshot = BalancerPoolSnapshot.load(snapshotId);
   if (snapshot == null) {
     log.debug("getOrCreateBalancerPoolSnapshot: Creating new snapshot for pool {} ({}) at block {}", [getContractName(poolId), poolId, blockNumber.toString()]);
@@ -214,8 +216,12 @@ function getBalancerPoolTokenBalance(
   }
 
   const contract = ERC20.bind(Address.fromString(contractAddress));
-  const balance = contract.balanceOf(Address.fromString(walletAddress));
-  const balanceDecimals = toDecimal(balance, contractSnapshot.decimals);
+  const balanceResult = contract.try_balanceOf(Address.fromString(walletAddress));
+  if (balanceResult.reverted) {
+    return BigDecimal.zero();
+  }
+
+  const balanceDecimals = toDecimal(balanceResult.value, contractSnapshot.decimals);
 
   // Don't spam
   if (!balanceDecimals.equals(BigDecimal.zero())) {
@@ -263,7 +269,7 @@ function getBalancerPoolTokenRecords(
       [getContractName(poolTokenAddress), balance.toString(), getContractName(walletAddress)],
     );
     records.push(
-      createOrUpdateTokenRecord(
+      createTokenRecord(
         timestamp,
         getContractName(poolTokenAddress),
         poolTokenAddress,
@@ -490,7 +496,7 @@ export function getBalancerPoolTokenQuantity(
 
     const tokenBalance = totalQuantity.times(record.balance).div(poolTokenTotalSupply);
     records.push(
-      createOrUpdateTokenSupply(
+      createTokenSupply(
         timestamp,
         getContractName(tokenAddress),
         tokenAddress,
