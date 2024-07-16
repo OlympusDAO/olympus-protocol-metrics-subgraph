@@ -59,7 +59,6 @@ describe("ETH-USD rate", () => {
 
       assert.stringEquals(getBaseEthUsdRate().toString(), "0");
     },
-    true,
   );
 });
 
