@@ -1,10 +1,11 @@
 # Arbitrum Subgraph Changelog
 
-## 1.7.8 (2024-07-16)
+## 1.7.9 (2024-07-17)
 
 - Adds POL in Camelot
 - Change the Chainlink price feed used as a trigger in order to increase indexing speed
 - Reduce code paths for determining protocol addresses
+- Modify Uniswap V2 PriceHandler to return 0 if the contract reverts
 
 ## 1.6.4 (2023-09-13)
 
