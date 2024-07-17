@@ -211,7 +211,7 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
   private getTokenReserves(tokenAddress: string, tokenIndex: number, block: BigInt): BigDecimal {
     const pair = this.getContract(block);
     if (!pair) {
-      throw new Error(`Unable to bind with UniswapV2 contract ${this.poolAddress} at block ${block.toString()}`);
+      return BigDecimal.zero();
     }
 
     const reserves = pair.getReserves();
@@ -233,7 +233,7 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
   private getTotalSupply(block: BigInt): BigDecimal {
     const pair = this.getContract(block);
     if (!pair) {
-      throw new Error(`Unable to bind with UniswapV2 contract ${this.poolAddress} at block ${block.toString()}`);
+      return BigDecimal.zero();
     }
 
     return toDecimal(pair.totalSupply(), pair.decimals());
@@ -242,7 +242,7 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
   getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal {
     const pair = this.getContract(block);
     if (!pair) {
-      throw new Error(`Unable to bind with UniswapV2 contract ${this.poolAddress} at block ${block.toString()}`);
+      return BigDecimal.zero();
     }
 
     const tokenIndex = this.getTokenIndex(tokenAddress, block);
