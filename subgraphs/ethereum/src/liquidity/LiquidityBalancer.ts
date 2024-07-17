@@ -24,7 +24,6 @@ import {
 import { getUSDRate } from "../utils/Price";
 import { getWalletAddressesForContract } from "../utils/ProtocolAddresses";
 import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
-import { getWalletAddressesForContract } from "../utils/ProtocolAddresses";
 
 function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): BalancerVault {
   return BalancerVault.bind(Address.fromString(vaultAddress));
