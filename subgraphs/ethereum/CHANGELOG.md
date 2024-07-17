@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 5.2.0 (2024-07-XX)
+
+- Dynamic lookup of the current TRSRY using the Bophades Kernel
+
 ## 5.1.3 (2024-01-26)
 
 - Adds TRSRY v1.1
