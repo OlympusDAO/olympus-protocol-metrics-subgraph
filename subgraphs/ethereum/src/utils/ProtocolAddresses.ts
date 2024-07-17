@@ -99,7 +99,6 @@ const PROTOCOL_ADDRESSES = [
   TREASURY_ADDRESS_V1,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
-  TRSRY,
   VEFXS_ALLOCATOR,
   COOLER_LOANS_CLEARINGHOUSE_V1,
   COOLER_LOANS_CLEARINGHOUSE_V1_1,
@@ -132,7 +131,7 @@ export const getWalletAddressesForContract = (contractAddress: string, blockNumb
   const walletAddresses = PROTOCOL_ADDRESSES.slice(0);
   const trsryAddress = getTreasuryAddress(blockNumber);
 
-  // // Add in the Bophades Treasury address, since that is dynamic
+  // Add in the Bophades Treasury address, since that is dynamic
   if (trsryAddress !== null) {
     log.info("getWalletAddressesForContract: adding treasury address: {}", [trsryAddress.toHexString()]);
     walletAddresses.push(trsryAddress.toHexString().toLowerCase());
