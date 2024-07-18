@@ -140,3 +140,9 @@ type BophadesModule @entity(immutable: true) {
   keycode: String!
   moduleAddress: Bytes!
 }
+
+type ClearinghouseAddress @entity(immutable: true) {
+  id: Bytes! # moduleAddress/block
+  block: BigInt!
+  addresses: [Bytes!]!
+}

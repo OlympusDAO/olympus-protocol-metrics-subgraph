@@ -126,6 +126,8 @@ dataSources:
           file: ./abis/BophadesKernel.json
         - name: BophadesTreasury
           file: ./abis/BophadesTreasury.json
+        - name: BophadesClearinghouseRegistry
+          file: ./abis/BophadesClearinghouseRegistry.json
       blockHandlers:
         - handler: handleMetricsBlock
           filter:

@@ -1,7 +1,8 @@
 import { Address, BigInt, ByteArray, Bytes, dataSource, log } from "@graphprotocol/graph-ts";
 import { BophadesKernel } from "../../generated/ProtocolMetrics/BophadesKernel";
 import { BophadesTreasury } from "../../generated/ProtocolMetrics/BophadesTreasury";
-import { BophadesModule } from "../../generated/schema";
+import { BophadesModule, ClearinghouseAddress } from "../../generated/schema";
+import { BophadesClearinghouseRegistry } from "../../generated/ProtocolMetrics/BophadesClearinghouseRegistry";
 
 const KERNEL_MAP = new Map<string, string>();
 KERNEL_MAP.set("mainnet", "0x2286d7f9639e8158FaD1169e76d1FbC38247f54b");
@@ -53,11 +54,11 @@ function getBophadesModuleAddress(keycode: string, blockNumber: BigInt): Address
 
 /**
  * Determines the Bophades treasury address.
- * 
+ *
  * This is done dynamically using the Bophades Kernel contract,
  * as the Treasury module can be upgraded and the Kernel is less likely to be.
- * 
- * @returns 
+ *
+ * @returns
  */
 export function getTreasuryAddress(blockNumber: BigInt): Address | null {
   return getBophadesModuleAddress("TRSRY", blockNumber);
@@ -70,4 +71,74 @@ export function getTRSRY(blockNumber: BigInt): BophadesTreasury | null {
   };
 
   return BophadesTreasury.bind(trsryAddress);
+}
+
+function getClearinghouseRegistryAddress(blockNumber: BigInt): Address | null {
+  return getBophadesModuleAddress("CHREG", blockNumber);
+}
+
+/**
+ * Obtains the addresses of all registered Clearinghouses.
+ *
+ * @param blockNumber
+ * @returns
+ */
+export function getClearinghouseAddresses(blockNumber: BigInt): Address[] {
+  const registryAddress = getClearinghouseRegistryAddress(blockNumber);
+
+  // If the module isn't registered, return an empty array
+  if (registryAddress === null) {
+    return [];
+  }
+
+  // If there is a result for the current block, return it
+  const recordId: Bytes = registryAddress.concatI32(blockNumber.toI32());
+  const existingAddresses = ClearinghouseAddress.load(recordId);
+  if (existingAddresses !== null) {
+    const addresses: Address[] = new Array<Address>();
+    for (let i = 0; i < existingAddresses.addresses.length; i++) {
+      addresses.push(Address.fromBytes(existingAddresses.addresses[i]));
+    }
+
+    log.info("getClearinghouseAddresses: using cached addresses for block: {}", [blockNumber.toString()]);
+    return addresses;
+  }
+
+  // Otherwise, get the addresses from the registry
+  const registryContract = BophadesClearinghouseRegistry.bind(registryAddress);
+
+  const addresses: Address[] = new Array<Address>();
+
+  // Get the number of clearinghouses
+  const clearinghouseCountResult = registryContract.try_registryCount();
+
+  // If it doesn't revert
+  if (!clearinghouseCountResult.reverted) {
+    // Iterate through the index and fetch the clearinghouse addresses
+    for (let i = 0; i < clearinghouseCountResult.value.toI32(); i++) {
+      const registeredAddress = registryContract.registry(BigInt.fromI32(i));
+      addresses.push(registeredAddress);
+    }
+    log.info("getClearinghouseAddresses: fetched addresses for block: {}", [blockNumber.toString()]);
+  }
+  // If it reverts
+  else {
+    // Most likely CHREG isn't yet available
+    log.warning("getClearinghouseAddresses: unable to get clearinghouse count for block: {}", [blockNumber.toString()]);
+  }
+
+  // Re-format as bytes array
+  const bytesAddresses: Bytes[] = new Array<Bytes>();
+  for (let i = 0; i < addresses.length; i++) {
+    bytesAddresses.push(addresses[i]);
+  }
+
+  // Create a record of the addresses
+  const record = new ClearinghouseAddress(recordId);
+  record.block = blockNumber;
+  record.addresses = bytesAddresses;
+  record.save();
+
+  log.info("getClearinghouseAddresses: cached addresses for block: {}", [blockNumber.toString()]);
+  return addresses;
 }

@@ -4,8 +4,7 @@
 
 import { BigInt, log } from "@graphprotocol/graph-ts";
 import { ERC20_GOHM, ERC20_OHM_V1, ERC20_OHM_V2, ERC20_SOHM_V1, ERC20_SOHM_V2, ERC20_SOHM_V3 } from "./Constants";
-import { getTreasuryAddress } from "./Bophades";
-import { COOLER_LOANS_CLEARINGHOUSES, COOLER_LOANS_CLEARINGHOUSE_V1, COOLER_LOANS_CLEARINGHOUSE_V1_1 } from "../../../shared/src/Wallets";
+import { getClearinghouseAddresses, getTreasuryAddress } from "./Bophades";
 
 export const TREASURY_ADDRESS_V1 = "0x886CE997aa9ee4F8c2282E182aB72A705762399D".toLowerCase();
 export const TREASURY_ADDRESS_V2 = "0x31f8cc382c9898b273eff4e0b7626a6987c846e8".toLowerCase();
@@ -100,8 +99,6 @@ const PROTOCOL_ADDRESSES = [
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
   VEFXS_ALLOCATOR,
-  COOLER_LOANS_CLEARINGHOUSE_V1,
-  COOLER_LOANS_CLEARINGHOUSE_V1_1,
 ];
 
 const TREASURY_BLACKLIST = new Map<string, string[]>();
@@ -135,6 +132,12 @@ export const getWalletAddressesForContract = (contractAddress: string, blockNumb
   if (trsryAddress !== null) {
     log.info("getWalletAddressesForContract: adding treasury address: {}", [trsryAddress.toHexString()]);
     walletAddresses.push(trsryAddress.toHexString().toLowerCase());
+  }
+
+  // Add in the Clearinghouse addresses, since that is dynamic
+  const clearinghouseAddresses = getClearinghouseAddresses(blockNumber);
+  for (let i = 0; i < clearinghouseAddresses.length; i++) {
+    walletAddresses.push(clearinghouseAddresses[i].toHexString().toLowerCase());
   }
 
   // If the contract isn't on the blacklist, return as normal
