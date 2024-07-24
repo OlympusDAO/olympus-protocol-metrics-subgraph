@@ -277,7 +277,7 @@ export function getFraxSwapPairRecords(
   // Calculate the unit rate of the LP
   const unitRate = getFraxSwapPairUnitRate(pairAddress, totalValue, blockNumber);
 
-  const wallets = getWalletAddressesForContract(pairAddress);
+  const wallets = getWalletAddressesForContract(pairAddress, blockNumber);
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];
 

@@ -1,5 +1,5 @@
-import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, describe, test } from "matchstick-as/assembly/index";
+import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, describe, test, log } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { DAO_WALLET, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
@@ -55,12 +55,17 @@ import {
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
+import { mockTreasuryAddressNull } from "./bophadesHelper";
 
 const TIMESTAMP = BigInt.fromString("1");
+const BLOCK_NUMBER: BigInt = BigInt.fromString("14000000");
 
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
+
+  // Do at the start, as it can be used by mock functions
+  mockTreasuryAddressNull();
 
   mockBalancerVaultZero();
   mockUniswapV2PairsZero();
@@ -150,7 +155,7 @@ describe("token quantity", () => {
     const expectedWalletBalance = BigDecimal.fromString("2");
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
-      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID, BLOCK_NUMBER),
     );
     mockWalletBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
@@ -168,7 +173,7 @@ describe("token quantity", () => {
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
       ERC20_OHM_V2,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     assert.stringEquals(expectedTokenBalance.toString(), records[0].balance.toString());
@@ -189,7 +194,7 @@ describe("token quantity", () => {
     const expectedWalletBalance = BigDecimal.fromString("2");
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
-      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID, BLOCK_NUMBER),
     );
     mockWalletBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
@@ -202,7 +207,7 @@ describe("token quantity", () => {
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
       ERC20_OHM_V1,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     // Should be empty records due to 0 balance of OHM V1
@@ -219,7 +224,7 @@ describe("token quantity", () => {
     const expectedWalletBalance = BigDecimal.fromString("2");
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
-      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID, BLOCK_NUMBER),
     );
     mockWalletBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
@@ -232,7 +237,7 @@ describe("token quantity", () => {
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
       ERC20_OHM_V2,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     // Should be empty records due to starting block
@@ -251,7 +256,7 @@ describe("get balancer records", () => {
     const expectedBalance = BigDecimal.fromString("2");
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
-      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID, BLOCK_NUMBER),
     );
     mockWalletBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
@@ -267,7 +272,7 @@ describe("get balancer records", () => {
       TIMESTAMP,
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
       null,
     );
 
@@ -303,7 +308,7 @@ describe("get balancer records", () => {
     const expectedBalance = BigDecimal.fromString("2");
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
-      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID, BLOCK_NUMBER),
     );
     mockWalletBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
@@ -319,7 +324,7 @@ describe("get balancer records", () => {
       TIMESTAMP,
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     assert.i32Equals(0, records.length);
@@ -335,7 +340,7 @@ describe("get balancer records", () => {
     const expectedBalance = BigDecimal.fromString("2");
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
-      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID, BLOCK_NUMBER),
     );
     mockWalletBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
@@ -351,7 +356,7 @@ describe("get balancer records", () => {
       TIMESTAMP,
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
       ERC20_DAI,
     );
 
@@ -396,7 +401,7 @@ describe("get balancer records", () => {
     const expectedBalance = BigDecimal.fromString("2");
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_DAI_WETH,
-      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID),
+      getWalletAddressesForContract(POOL_BALANCER_OHM_DAI_WETH_ID, BLOCK_NUMBER),
     );
     mockBalancerGaugeBalance(
       ERC20_BALANCER_OHM_DAI_WETH,
@@ -414,7 +419,7 @@ describe("get balancer records", () => {
       TIMESTAMP,
       BALANCER_VAULT,
       POOL_BALANCER_OHM_DAI_WETH_ID,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
     );
 
     // DAI * rate + WETH * rate (OHM excluded)
@@ -440,7 +445,7 @@ describe("get balancer records", () => {
   });
 
   test("WETH-FDT pool with no balance, with liquidity gauge", () => {
-    mockBalancerGaugeBalanceZero(getWalletAddressesForContract(ERC20_BALANCER_WETH_FDT));
+    mockBalancerGaugeBalanceZero(getWalletAddressesForContract(ERC20_BALANCER_WETH_FDT, BLOCK_NUMBER));
 
     // Mock the balancer
     mockBalancerVaultWethFdt();
@@ -449,7 +454,7 @@ describe("get balancer records", () => {
     const expectedBalance = BigDecimal.fromString("2");
     mockZeroWalletBalances(
       ERC20_BALANCER_WETH_FDT,
-      getWalletAddressesForContract(ERC20_BALANCER_WETH_FDT),
+      getWalletAddressesForContract(ERC20_BALANCER_WETH_FDT, BLOCK_NUMBER),
     );
 
     mockBalancerGaugeBalance(
@@ -468,7 +473,7 @@ describe("get balancer records", () => {
       TIMESTAMP,
       BALANCER_VAULT,
       POOL_BALANCER_WETH_FDT_ID,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
       null,
     );
 
@@ -485,7 +490,7 @@ describe("get balancer records", () => {
     const expectedBalance = BigDecimal.fromString("2");
     mockZeroWalletBalances(
       ERC20_BALANCER_OHM_BTRFLY_V2,
-      getWalletAddressesForContract(ERC20_BALANCER_OHM_BTRFLY_V2),
+      getWalletAddressesForContract(ERC20_BALANCER_OHM_BTRFLY_V2, BLOCK_NUMBER),
     );
     mockWalletBalance(
       ERC20_BALANCER_OHM_BTRFLY_V2,
@@ -502,7 +507,7 @@ describe("get balancer records", () => {
       TIMESTAMP,
       BALANCER_VAULT,
       POOL_BALANCER_OHM_V2_BTRFLY_V2_ID,
-      OHM_USD_RESERVE_BLOCK,
+      BLOCK_NUMBER,
       null,
     );
 

@@ -1,30 +1,31 @@
-import { Address, BigInt, log } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 import { TokenRecord } from "../../../shared/generated/schema";
 import { CoolerLoansClearinghouse } from "../../generated/ProtocolMetrics/CoolerLoansClearinghouse";
-import { COOLER_LOANS_CLEARINGHOUSES } from "../../../shared/src/Wallets";
 import { createTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { BLOCKCHAIN, ERC20_DAI, ERC20_TOKENS, getContractName } from "../utils/Constants";
 import { getUSDRate } from "../utils/Price";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { getClearinghouseAddresses } from "../utils/Bophades";
 
 /**
- * Generates records for the DAI receivables in the Clearinghouses. 
- * 
- * @param timestamp 
- * @param blockNumber 
- * @returns 
+ * Generates records for the DAI receivables in the Clearinghouses.
+ *
+ * @param timestamp
+ * @param blockNumber
+ * @returns
  */
 export function getClearinghouseReceivables(timestamp: BigInt, blockNumber: BigInt): TokenRecord[] {
   const FUNC = "getClearinghouseReceivables";
   const records: TokenRecord[] = [];
 
   const daiRate = getUSDRate(ERC20_DAI, blockNumber);
+  const clearinghouses = getClearinghouseAddresses(blockNumber);
 
-  for (let i = 0; i < COOLER_LOANS_CLEARINGHOUSES.length; i++) {
-    const clearinghouseAddress = COOLER_LOANS_CLEARINGHOUSES[i];
+  for (let i = 0; i < clearinghouses.length; i++) {
+    const clearinghouseAddress = clearinghouses[i];
 
     // Grab the receivables from the clearinghouse
-    const clearinghouseContract = CoolerLoansClearinghouse.bind(Address.fromString(clearinghouseAddress));
+    const clearinghouseContract = CoolerLoansClearinghouse.bind(clearinghouseAddress);
     const receivablesResult = clearinghouseContract.try_principalReceivables();
 
     if (receivablesResult.reverted) {
@@ -39,8 +40,8 @@ export function getClearinghouseReceivables(timestamp: BigInt, blockNumber: BigI
         timestamp,
         `${getContractName(ERC20_DAI)} - Borrowed Through Cooler Loans`,
         ERC20_DAI,
-        getContractName(clearinghouseAddress),
-        clearinghouseAddress,
+        getContractName(clearinghouseAddress.toHexString()),
+        clearinghouseAddress.toHexString(),
         daiRate,
         receivablesBalance,
         blockNumber,

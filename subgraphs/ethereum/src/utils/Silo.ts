@@ -20,7 +20,7 @@ export function getSiloSupply(timestamp: BigInt, blockNumber: BigInt): TokenSupp
   const collateralTokenDecimals = collateralTokenDecimalsResult.value;
 
   // Iterate over wallets to find the balances
-  const wallets = getWalletAddressesForContract(SILO_OHM_COLLATERAL_TOKEN);
+  const wallets = getWalletAddressesForContract(SILO_OHM_COLLATERAL_TOKEN, blockNumber);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
 

@@ -456,7 +456,7 @@ export function getCurvePairRecords(
   // Calculate the unit rate of the LP
   const unitRate = getCurvePairUnitRate(pairAddress, totalValue, blockNumber);
   // Some Curve tokens are in the DAO wallet, so we add that
-  const wallets = getWalletAddressesForContract(pairAddress);
+  const wallets = getWalletAddressesForContract(pairAddress, blockNumber);
 
   const pairToken = poolSnapshot.poolToken;
   const pairTokenAddress = pairToken === null ? "" : pairToken.toHexString();

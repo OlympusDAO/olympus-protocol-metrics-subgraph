@@ -250,7 +250,7 @@ function getBalancerPoolTokenRecords(
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
 
-  const wallets = getWalletAddressesForContract(poolId);
+  const wallets = getWalletAddressesForContract(poolId, blockNumber);
   const poolSnapshot = getOrCreateBalancerPoolSnapshot(poolId, vaultAddress, blockNumber);
   if (!poolSnapshot) {
     return records;

@@ -1,5 +1,5 @@
-import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
+import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, createMockedFunction, describe, test, log } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import {
@@ -48,6 +48,7 @@ import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import { mockAuraEarnedBalance, mockAuraEarnedBalanceZero, mockAuraLockedBalance, mockAuraLockedBalanceZero, mockBalancerGaugeBalance, mockBalancerGaugeBalanceZero, mockConvexStakedBalance, mockConvexStakedBalanceZero, mockEthUsdRate, mockLiquityStakedBalance, mockLiquityStakedBalanceZero, mockTokeStakedBalance, mockTokeStakedBalanceZero } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
+import { mockTreasuryAddressNull } from "./bophadesHelper";
 
 const TIMESTAMP: BigInt = BigInt.fromString("1");
 const DEFAULT_TOTAL_SUPPLY = BigDecimal.fromString("0");
@@ -55,6 +56,9 @@ const DEFAULT_TOTAL_SUPPLY = BigDecimal.fromString("0");
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
+
+  // Do at the start, as it can be used by mock functions
+  mockTreasuryAddressNull();
 
   mockEthUsdRate();
   mockStablecoinsPriceFeeds();
@@ -139,13 +143,13 @@ describe("Staked Convex", () => {
 
 describe("get ERC20 token records from wallets", () => {
   test("excludes token in DAO wallet on blacklist", () => {
-    mockZeroWalletBalances(ERC20_OHM_V2, getWalletAddressesForContract(ERC20_OHM_V2));
+    const blockNumber = BigInt.fromString("14000000");
+    mockZeroWalletBalances(ERC20_OHM_V2, getWalletAddressesForContract(ERC20_OHM_V2, blockNumber));
 
     // Set balance of the blacklist token
     mockWalletBalance(ERC20_OHM_V2, DAO_WALLET, toBigInt(BigDecimal.fromString("10")));
     mockERC20TotalSupply(ERC20_OHM_V2, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
 
-    const blockNumber = BigInt.fromString("14000000");
     const contract = getERC20(ERC20_OHM_V2, blockNumber);
     if (!contract) throw new Error("Expected ERC20 contract to be non-null");
 
@@ -161,14 +165,14 @@ describe("get ERC20 token records from wallets", () => {
   });
 
   test("includes token in DAO wallet not on blacklist", () => {
-    mockZeroWalletBalances(ERC20_WETH, getWalletAddressesForContract(ERC20_WETH));
+    const blockNumber = BigInt.fromString("14000000");
+    mockZeroWalletBalances(ERC20_WETH, getWalletAddressesForContract(ERC20_WETH, blockNumber));
 
     // Set balance of the whitelist token
     const tokenBalance = "10";
     mockWalletBalance(ERC20_WETH, DAO_WALLET, toBigInt(BigDecimal.fromString(tokenBalance)));
     mockERC20TotalSupply(ERC20_WETH, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
 
-    const blockNumber = BigInt.fromString("14000000");
     const contract = getERC20(ERC20_WETH, blockNumber);
     if (!contract) throw new Error("Expected ERC20 contract to be non-null");
 
@@ -186,7 +190,8 @@ describe("get ERC20 token records from wallets", () => {
   });
 
   test("excludes OHM in treasury wallet addresses", () => {
-    const walletAddresses = getWalletAddressesForContract(ERC20_OHM_V2);
+    const blockNumber = BigInt.fromString("14000000");
+    const walletAddresses = getWalletAddressesForContract(ERC20_OHM_V2, blockNumber);
     mockZeroWalletBalances(ERC20_OHM_V2, walletAddresses);
     mockERC20TotalSupply(ERC20_OHM_V2, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
 
@@ -194,7 +199,6 @@ describe("get ERC20 token records from wallets", () => {
       mockWalletBalance(ERC20_OHM_V2, walletAddresses[i], toBigInt(BigDecimal.fromString("10")));
     }
 
-    const blockNumber = BigInt.fromString("14000000");
     const contract = getERC20(ERC20_OHM_V2, blockNumber);
     if (!contract) throw new Error("Expected ERC20 contract to be non-null");
 
@@ -210,7 +214,8 @@ describe("get ERC20 token records from wallets", () => {
   });
 
   test("excludes gOHM in treasury wallet addresses", () => {
-    const walletAddresses = getWalletAddressesForContract(ERC20_OHM_V2);
+    const blockNumber = BigInt.fromString("14000000");
+    const walletAddresses = getWalletAddressesForContract(ERC20_OHM_V2, blockNumber);
     mockZeroWalletBalances(ERC20_GOHM, walletAddresses);
     mockERC20TotalSupply(ERC20_GOHM, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
 
@@ -218,7 +223,6 @@ describe("get ERC20 token records from wallets", () => {
       mockWalletBalance(ERC20_GOHM, walletAddresses[i], toBigInt(BigDecimal.fromString("10")));
     }
 
-    const blockNumber = BigInt.fromString("14000000");
     const contract = getERC20(ERC20_GOHM, blockNumber);
     if (!contract) throw new Error("Expected ERC20 contract to be non-null");
 
@@ -274,7 +278,8 @@ describe("get TOKE staked records", () => {
   });
 
   test("staking contract returns balance", () => {
-    mockTokeStakedBalanceZero(getWalletAddressesForContract(ERC20_TOKE));
+    const blockNumber = BigInt.fromString("14000000");
+    mockTokeStakedBalanceZero(getWalletAddressesForContract(ERC20_TOKE, blockNumber));
     // There is a balance
     mockTokeStakedBalance(
       ERC20_TOKE,
@@ -287,7 +292,7 @@ describe("get TOKE staked records", () => {
       TIMESTAMP,
       ERC20_TOKE,
       BigDecimal.fromString("2"),
-      BigInt.fromString("10"),
+      blockNumber,
     );
 
     const recordOne = records[0];
@@ -337,7 +342,8 @@ describe("get LQTY staked records", () => {
   });
 
   test("staking contract returns balance", () => {
-    mockLiquityStakedBalanceZero(getWalletAddressesForContract(ERC20_LQTY));
+    const blockNumber = BigInt.fromString("14000000");
+    mockLiquityStakedBalanceZero(getWalletAddressesForContract(ERC20_LQTY, blockNumber));
     // There is a balance
     mockLiquityStakedBalance(
       ERC20_LQTY,
@@ -350,7 +356,7 @@ describe("get LQTY staked records", () => {
       TIMESTAMP,
       ERC20_LQTY,
       BigDecimal.fromString("2"),
-      BigInt.fromString("10"),
+      blockNumber,
     );
 
     const recordOne = records[0];
@@ -404,7 +410,8 @@ describe("get Balancer liquidity gauge records", () => {
   });
 
   test("liquidity gauge contract returns balance", () => {
-    mockBalancerGaugeBalanceZero(getWalletAddressesForContract(ERC20_BALANCER_WETH_FDT));
+    const blockNumber = BigInt.fromString("14000000");
+    mockBalancerGaugeBalanceZero(getWalletAddressesForContract(ERC20_BALANCER_WETH_FDT, blockNumber));
     // There is a balance
     mockBalancerGaugeBalance(
       ERC20_BALANCER_WETH_FDT,
@@ -419,7 +426,7 @@ describe("get Balancer liquidity gauge records", () => {
       ERC20_BALANCER_WETH_FDT,
       BigDecimal.fromString("2"),
       BigDecimal.fromString("1"),
-      BigInt.fromString("10"),
+      blockNumber,
     );
 
     const recordOne = records[0];
@@ -468,7 +475,8 @@ export const mockUnlockedVlCvxBalance = (
 };
 
 export const mockUnlockedVlCvxBalanceZero = (): void => {
-  const wallets = getWalletAddressesForContract(ERC20_CVX_VL_V2);
+  const blockNumber = BigInt.fromString("14000000");
+  const wallets = getWalletAddressesForContract(ERC20_CVX_VL_V2, blockNumber);
   for (let i = 0; i < wallets.length; i++) {
     mockUnlockedVlCvxBalance(ERC20_CVX_VL_V2, 18, wallets[i], BigDecimal.zero(), BigDecimal.zero());
   }
@@ -526,12 +534,13 @@ describe("unlocked vlCVX", () => {
 
 describe("locked AURA", () => {
   test("balance", () => {
+    const blockNumber = BigInt.fromString("14000000");
     const balance = BigDecimal.fromString("10");
     const rate = BigDecimal.fromString("2");
-    mockAuraLockedBalanceZero(getWalletAddressesForContract(ERC20_AURA));
+    mockAuraLockedBalanceZero(getWalletAddressesForContract(ERC20_AURA, blockNumber));
     mockAuraLockedBalance(ERC20_AURA, AURA_ALLOCATOR_V2, ERC20_AURA_VL, toBigInt(balance, 18));
 
-    const records = getAuraLockedBalancesFromWallets(TIMESTAMP, ERC20_AURA, rate, BigInt.fromString("15000000"));
+    const records = getAuraLockedBalancesFromWallets(TIMESTAMP, ERC20_AURA, rate, blockNumber);
 
     const recordOne = records[0];
     assert.stringEquals("10", recordOne.balance.toString());
@@ -539,12 +548,13 @@ describe("locked AURA", () => {
   });
 
   test("balance for non-AURA token", () => {
+    const blockNumber = BigInt.fromString("14000000");
     const balance = BigDecimal.fromString("10");
     const rate = BigDecimal.fromString("2");
-    mockAuraLockedBalanceZero(getWalletAddressesForContract(ERC20_AURA));
+    mockAuraLockedBalanceZero(getWalletAddressesForContract(ERC20_AURA, blockNumber));
     mockAuraLockedBalance(ERC20_AURA, AURA_ALLOCATOR_V2, ERC20_AURA_VL, toBigInt(balance, 18));
 
-    const records = getAuraLockedBalancesFromWallets(TIMESTAMP, ERC20_TOKE, rate, BigInt.fromString("15000000"));
+    const records = getAuraLockedBalancesFromWallets(TIMESTAMP, ERC20_TOKE, rate, blockNumber);
 
     assert.i32Equals(0, records.length);
   });
@@ -552,12 +562,13 @@ describe("locked AURA", () => {
 
 describe("Aura earned rewards", () => {
   test("balance is correct", () => {
+    const blockNumber = BigInt.fromString("14000000");
     const balance = BigDecimal.fromString("10");
     const rate = BigDecimal.fromString("2");
-    mockAuraEarnedBalanceZero(ERC20_BAL, getWalletAddressesForContract(ERC20_BAL));
+    mockAuraEarnedBalanceZero(ERC20_BAL, getWalletAddressesForContract(ERC20_BAL, blockNumber));
     mockAuraEarnedBalance(ERC20_BAL, AURA_ALLOCATOR_V2, AURA_STAKING_AURA_BAL, toBigInt(balance, 18));
 
-    const records = getAuraPoolEarnedRecords(TIMESTAMP, ERC20_BAL, rate, BigInt.fromString("15000000"));
+    const records = getAuraPoolEarnedRecords(TIMESTAMP, ERC20_BAL, rate, blockNumber);
 
     const recordOne = records[0];
     assert.stringEquals("10", recordOne.balance.toString());
@@ -565,12 +576,13 @@ describe("Aura earned rewards", () => {
   });
 
   test("balance is 0 for different token", () => {
+    const blockNumber = BigInt.fromString("14000000");
     const balance = BigDecimal.fromString("10");
     const rate = BigDecimal.fromString("2");
-    mockAuraEarnedBalanceZero(ERC20_BAL, getWalletAddressesForContract(ERC20_BAL));
+    mockAuraEarnedBalanceZero(ERC20_BAL, getWalletAddressesForContract(ERC20_BAL, blockNumber));
     mockAuraEarnedBalance(ERC20_BAL, AURA_ALLOCATOR_V2, AURA_STAKING_AURA_BAL, toBigInt(balance, 18));
 
-    const records = getAuraPoolEarnedRecords(TIMESTAMP, ERC20_AURA, rate, BigInt.fromString("15000000"));
+    const records = getAuraPoolEarnedRecords(TIMESTAMP, ERC20_AURA, rate, blockNumber);
 
     assert.i32Equals(0, records.length);
   });

@@ -149,7 +149,7 @@ export function getUniswapV3POLRecords(
     return records;
   }
 
-  const wallets = getWalletAddressesForContract(pairAddress);
+  const wallets = getWalletAddressesForContract(pairAddress, blockNumber);
   const positionManager = UniswapV3PositionManager.bind(Address.fromString(UNISWAP_V3_POSITION_MANAGER));
 
   for (let i = 0; i < wallets.length; i++) {
@@ -314,7 +314,7 @@ export function getUniswapV3OhmSupply(
 
   const ohmIndex: u32 = token0.toLowerCase() == tokenAddress.toLowerCase() ? 0 : 1;
 
-  const wallets = getWalletAddressesForContract(pairAddress);
+  const wallets = getWalletAddressesForContract(pairAddress, blockNumber);
   const positionManager = UniswapV3PositionManager.bind(Address.fromString(UNISWAP_V3_POSITION_MANAGER));
 
   for (let i = 0; i < wallets.length; i++) {

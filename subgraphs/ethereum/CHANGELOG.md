@@ -1,5 +1,10 @@
 # Subgraph Changelog
 
+## 5.2.0 (2024-07-XX)
+
+- Dynamic lookup of the current TRSRY using the Bophades Kernel
+- Dynamic lookup of the Cooler Clearinghouses using the Bophades Kernel and CHREG module
+
 ## 5.1.3 (2024-01-26)
 
 - Adds TRSRY v1.1

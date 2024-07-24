@@ -324,7 +324,7 @@ export function getUniswapV2PairRecords(
 
   // Calculate the unit rate of the LP
   const unitRate = getUniswapV2PairUnitRate(pairAddress, totalValue, blockNumber);
-  const wallets = getWalletAddressesForContract(pairAddress);
+  const wallets = getWalletAddressesForContract(pairAddress, blockNumber);
 
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];

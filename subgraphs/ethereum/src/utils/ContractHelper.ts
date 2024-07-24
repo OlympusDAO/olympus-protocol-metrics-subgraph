@@ -655,7 +655,7 @@ export function getERC20TokenRecordsFromWallets(
   blockNumber: BigInt,
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
-  const wallets = getWalletAddressesForContract(contractAddress);
+  const wallets = getWalletAddressesForContract(contractAddress, blockNumber);
 
   for (let i = 0; i < wallets.length; i++) {
     const record = getERC20TokenRecordFromWallet(
@@ -729,7 +729,7 @@ export function getAuraLockedBalancesFromWallets(
 
   // Iterate over all relevant wallets
   const contract = AuraLocker.bind(Address.fromString(ERC20_AURA_VL));
-  const wallets = getWalletAddressesForContract(tokenAddress);
+  const wallets = getWalletAddressesForContract(tokenAddress, blockNumber);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
     const balanceResult = contract.lockedBalances(Address.fromString(currentWallet));
@@ -800,7 +800,7 @@ export function getBtrflyUnlockedBalancesFromWallets(
 
   // Iterate over all relevant wallets
   const contract = rlBTRFLY.bind(Address.fromString(tokenAddress));
-  const wallets = getWalletAddressesForContract(tokenAddress);
+  const wallets = getWalletAddressesForContract(tokenAddress, blockNumber);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
 
@@ -881,7 +881,7 @@ export function getTokeStakedBalancesFromWallets(
 
   // Iterate over all relevant wallets
   const contract = TokemakStaking.bind(Address.fromString(TOKE_STAKING));
-  const wallets = getWalletAddressesForContract(tokenAddress);
+  const wallets = getWalletAddressesForContract(tokenAddress, blockNumber);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
     const balance = getTokeStakedBalance(contract, tokenSnapshot, currentWallet, blockNumber);
@@ -976,7 +976,7 @@ export function getLiquityStakedBalancesFromWallets(
 
   // Iterate over all relevant wallets
   const contract = LQTYStaking.bind(Address.fromString(LQTY_STAKING));
-  const wallets = getWalletAddressesForContract(tokenAddress);
+  const wallets = getWalletAddressesForContract(tokenAddress, blockNumber);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
     const balance = getLiquityStakedBalance(contract, tokenSnapshot, currentWallet, blockNumber);
@@ -1126,7 +1126,7 @@ export function getBalancerGaugeBalanceFromWallets(
 
   // Iterate over all relevant wallets
   const contract = BalancerLiquidityGauge.bind(Address.fromString(gaugeContractAddress));
-  const wallets = getWalletAddressesForContract(tokenAddress);
+  const wallets = getWalletAddressesForContract(tokenAddress, blockNumber);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
     const balance = getBalancerGaugeBalance(contract, tokenSnapshot, currentWallet, blockNumber);
@@ -1270,7 +1270,7 @@ export function getAuraStakedBalanceFromWallets(
 
   // Iterate over all relevant wallets
   const contract = AuraStaking.bind(Address.fromString(stakingAddress));
-  const wallets = getWalletAddressesForContract(tokenAddress);
+  const wallets = getWalletAddressesForContract(tokenAddress, blockNumber);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
     const balance = getAuraStakedBalance(contract, tokenSnapshot, currentWallet, blockNumber);
@@ -1338,7 +1338,7 @@ export function getAuraPoolEarnedRecords(timestamp: BigInt, contractAddress: str
 
     // Iterate over all relevant wallets
     const rewardPool = AuraVirtualBalanceRewardPool.bind(Address.fromString(poolAddress));
-    const wallets = getWalletAddressesForContract(contractAddress);
+    const wallets = getWalletAddressesForContract(contractAddress, blockNumber);
     for (let i = 0; i < wallets.length; i++) {
       const currentWallet = wallets[i];
 
@@ -1958,7 +1958,7 @@ export function getLiquityStabilityPoolRecords(
 
   // Iterate over all relevant wallets
   const contract = LiquityStabilityPool.bind(Address.fromString(LIQUITY_STABILITY_POOL));
-  const wallets = getWalletAddressesForContract(tokenAddress);
+  const wallets = getWalletAddressesForContract(tokenAddress, blockNumber);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
 
@@ -2116,7 +2116,7 @@ export function getVlCvxUnlockedRecords(
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
 
-  const wallets = getWalletAddressesForContract(tokenAddress);
+  const wallets = getWalletAddressesForContract(tokenAddress, blockNumber);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
 
@@ -2165,7 +2165,7 @@ export function getMakerDSRRecords(
   }
 
   const dsrContract = MakerDSR.bind(Address.fromString(MAKER_DSR));
-  const wallets = getWalletAddressesForContract(tokenAddress);
+  const wallets = getWalletAddressesForContract(tokenAddress, blockNumber);
   for (let i = 0; i < wallets.length; i++) {
     const currentWallet = wallets[i];
 
