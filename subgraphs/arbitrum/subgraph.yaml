@@ -1,13 +1,13 @@
-specVersion: 0.0.4
+specVersion: 0.0.8
 description: Olympus Protocol Metrics Subgraph - Arbitrum
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 # Given the block speed of Arbitrum, it is abominably slow to index from scratch.
 # Avoid changing the schema, as it will require indexing from scratch.
-features:
-  - grafting
-graft:
-  base: QmXVMuS639JzTTq9ZVkRnGFTftiYJ8c6FPrB52qCshSnFa # 1.5.3
-  block: 130482707 # JonesDAO write-off
+# features:
+#   - grafting
+# graft:
+#   base: QmRf3fo7tVsXsj9cQZSgT3Y2R67Hv41T1Ph559oQAmTLe1 # 1.6.4
+#   block: 190428287 # POL deployment
 schema:
   file: ../../schema.graphql
 dataSources:
@@ -15,7 +15,7 @@ dataSources:
     name: TokenRecords-arbitrum
     network: arbitrum-one
     source:
-      address: "0x79daa21a44d1415306ec17c361e0090bdd4cfcbe" # COMP-USD feed, once per hour(-ish)
+      address: "0x5D041081725468Aa43e72ff0445Fde2Ad1aDE775" # FRAX-USD feed, once every 16 hours
       abi: ChainlinkAggregator
       startBlock: 10950000 # 2022-05-01
     mapping:
@@ -50,14 +50,6 @@ dataSources:
           file: abis/TreasureMining.json
         - name: ChainlinkAggregator
           file: abis/ChainlinkAggregator.json
-      # This can be re-enabled, but likely needs a reindexing from scratch
-      # blockHandlers:
-      #   - handler: handleBlock
-      #     filter:
-      #       kind: polling
-      #       # Every 4 hours
-      #       # 4 blocks per second * 60 seconds * 60 minutes * 4 hours
-      #       every: 57600
       eventHandlers:
         - event: NewRound(indexed uint256,indexed address,uint256)
           handler: handleEvent

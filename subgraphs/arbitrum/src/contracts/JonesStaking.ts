@@ -9,12 +9,12 @@ import {
   getIsTokenLiquid,
   getTokenRecordValue,
 } from "../../../shared/src/utils/TokenRecordHelper";
-import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 import { JONESStaking } from "../../generated/TokenRecords-arbitrum/JONESStaking";
 import { getPrice } from "../price/PriceLookup";
 import {
   BLOCKCHAIN,
   ERC20_TOKENS_ARBITRUM,
+  getProtocolAddresses,
   JONES_STAKING,
   JONES_STAKING_POOL_IDS,
   JONES_WRITE_OFF_BLOCK,
@@ -83,8 +83,9 @@ export const getStakedBalances = (
   const records: TokenRecord[] = [];
   let price: BigDecimal | null = null;
 
-  for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
-    const walletAddress = WALLET_ADDRESSES[i];
+  const allWallets = getProtocolAddresses();
+  for (let i = 0; i < allWallets.length; i++) {
+    const walletAddress = allWallets[i];
     for (let j = 0; j < JONES_STAKING_POOL_IDS.length; j++) {
       const balance = getStakedBalance(
         tokenAddress,

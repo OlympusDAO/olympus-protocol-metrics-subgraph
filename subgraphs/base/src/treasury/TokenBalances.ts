@@ -4,10 +4,8 @@ import { TokenRecord } from "../../../shared/generated/schema";
 import { getERC20 } from "../../../shared/src/contracts/ERC20";
 import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { getTokensInCategory } from "../../../shared/src/utils/TokenRecordHelper";
-import { ERC20_LUSD, ERC20_TOKENS_ARBITRUM, LUSD_START_BLOCK } from "../contracts/Constants";
+import { ERC20_TOKENS_BASE } from "../contracts/Constants";
 import { getContractName, getERC20TokenRecordsFromWallets } from "../contracts/Contracts";
-import { getStakedBalances as getJonesStakedBalances } from "../contracts/JonesStaking";
-import { getStakedBalances as getTreasureStakedBalances } from "../contracts/TreasureMining";
 import { getPrice } from "../price/PriceLookup";
 
 /**
@@ -40,14 +38,6 @@ function getTokenBalance(
     return records;
   }
 
-  // If the token is LUSD and the block number is less that the start block of the Chainlink feed, skip it
-  if (contractAddress.toLowerCase() == ERC20_LUSD.toLowerCase()
-    &&
-    blockNumber.lt(BigInt.fromString(LUSD_START_BLOCK))) {
-    log.info("getTokenBalance: Skipping {} token record at block {}", [getContractName(ERC20_LUSD), blockNumber.toString()]);
-    return records;
-  }
-
   const rate = getPrice(contractAddress, blockNumber);
 
   // Standard ERC20
@@ -55,12 +45,6 @@ function getTokenBalance(
     records,
     getERC20TokenRecordsFromWallets(timestamp, contractAddress, contract, rate, blockNumber),
   );
-
-  // Jones Staking
-  pushTokenRecordArray(records, getJonesStakedBalances(timestamp, contractAddress, blockNumber));
-
-  // TreasureDAO Staking
-  pushTokenRecordArray(records, getTreasureStakedBalances(timestamp, contractAddress, blockNumber));
 
   return records;
 }
@@ -79,7 +63,7 @@ export function getTokenBalances(
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
 
-  const categoryTokens = getTokensInCategory(category, ERC20_TOKENS_ARBITRUM);
+  const categoryTokens = getTokensInCategory(category, ERC20_TOKENS_BASE);
   for (let i = 0; i < categoryTokens.length; i++) {
     pushTokenRecordArray(records, getTokenBalance(timestamp, categoryTokens[i].getAddress(), blockNumber));
   }

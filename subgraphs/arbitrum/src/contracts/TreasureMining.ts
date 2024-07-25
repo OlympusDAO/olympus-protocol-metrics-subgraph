@@ -4,10 +4,9 @@ import { TokenRecord } from "../../../shared/generated/schema";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { addressesEqual } from "../../../shared/src/utils/StringHelper";
 import { createTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
-import { WALLET_ADDRESSES } from "../../../shared/src/Wallets";
 import { TreasureMining } from "../../generated/TokenRecords-arbitrum/TreasureMining";
 import { getPrice } from "../price/PriceLookup";
-import { BLOCKCHAIN, ERC20_MAGIC, ERC20_TOKENS_ARBITRUM, TREASURE_ATLAS_MINE } from "./Constants";
+import { BLOCKCHAIN, ERC20_MAGIC, ERC20_TOKENS_ARBITRUM, getProtocolAddresses, TREASURE_ATLAS_MINE } from "./Constants";
 import { getContractName } from "./Contracts";
 
 /**
@@ -89,8 +88,9 @@ export const getStakedBalances = (
 
   const contract = getStakingContract(block);
 
-  for (let i = 0; i < WALLET_ADDRESSES.length; i++) {
-    const walletAddress = WALLET_ADDRESSES[i];
+  const allWallets = getProtocolAddresses();
+  for (let i = 0; i < allWallets.length; i++) {
+    const walletAddress = allWallets[i];
     const depositIds = getUserDepositIds(walletAddress, contract, block);
 
     for (let j = 0; j < depositIds.length; j++) {

@@ -292,4 +292,19 @@ describe("getUnderlyingTokenBalance", () => {
     const balance = handler.getUnderlyingTokenBalance(CROSS_CHAIN_ARBITRUM, TOKEN0, BLOCK);
     assert.stringEquals(expectedBalance.toString(), balance.toString());
   });
+
+  test("returns 0 if the contract reverts", () => {
+    const contractLookup: ContractNameLookup = (tokenAddress: string): string => {
+      if (addressesEqual(tokenAddress, TOKEN0)) {
+        return "DAI";
+      }
+
+      return "OHM V2";
+    };
+
+    const handler = new PriceHandlerUniswapV2([TOKEN0, TOKEN1], PAIR_ADDRESS, contractLookup);
+
+    const balance = handler.getUnderlyingTokenBalance(CROSS_CHAIN_ARBITRUM, TOKEN0, BLOCK);
+    assert.stringEquals("0", balance.toString());
+  });
 });

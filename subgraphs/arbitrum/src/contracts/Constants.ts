@@ -27,6 +27,7 @@ export const LP_UNISWAP_V2_JONES_GOHM_GOHM = "0x292d1587a6bb37e34574c9ad5993f221
 export const LP_UNISWAP_V2_JONES_WETH = "0xe8ee01ae5959d3231506fcdef2d5f3e85987a39c".toLowerCase();
 export const LP_UNISWAP_V2_LQTY_WETH = "0x8e78f0f6d116f94252d3bcd73d8ade63d415c1bf".toLowerCase();
 export const LP_UNISWAP_V2_MAGIC_WETH = "0xb7e50106a5bd3cf21af210a755f9c8740890a8c9".toLowerCase();
+export const LP_CAMELOT_OHM_WETH = "0x8aCd42e4B5A5750B44A28C5fb50906eBfF145359".toLowerCase();
 export const LP_UNISWAP_V3_ARB_WETH = "0xc6f780497a95e246eb9449f5e4770916dcd6396a".toLowerCase();
 export const LP_UNISWAP_V3_WETH_USDC = "0xc31e54c7a869b9fcbecc14363cf510d1c41fa443".toLowerCase();
 
@@ -45,6 +46,7 @@ export const SILO_ADDRESS = "0x9992f660137979C1ca7f8b119Cd16361594E3681".toLower
 export const SENTIMENT_LTOKEN = "0x37E6a0EcB9e8E5D90104590049a0A197E1363b67".toLowerCase();
 
 export const JONES_WRITE_OFF_BLOCK = "130482707";
+export const LUSD_START_BLOCK = "80000000";
 
 export const SILO_DEPLOYMENTS = new Array<LendingMarketDeployment>();
 SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM, BigInt.fromString("99067079"), BigDecimal.fromString("25000"), SILO_ADDRESS)); // https://arbiscan.io/tx/0x55cabbd6cd41d2fa79a6c93743729bbfa85577ff3e92255f27bfd832344871f6
@@ -71,10 +73,18 @@ ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V2_GOHM_WETH, new TokenDefinition(LP_UNISWA
 ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V2_JONES_GOHM_GOHM, new TokenDefinition(LP_UNISWAP_V2_JONES_GOHM_GOHM, TokenCategoryPOL, true, false));
 ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V2_JONES_WETH, new TokenDefinition(LP_UNISWAP_V2_JONES_WETH, TokenCategoryPOL, true, false));
 ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V2_MAGIC_WETH, new TokenDefinition(LP_UNISWAP_V2_MAGIC_WETH, TokenCategoryPOL, true, false));
+ERC20_TOKENS_ARBITRUM.set(LP_CAMELOT_OHM_WETH, new TokenDefinition(LP_CAMELOT_OHM_WETH, TokenCategoryPOL, true, false));
 ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V3_ARB_WETH, new TokenDefinition(LP_UNISWAP_V3_ARB_WETH, TokenCategoryPOL, true, false));
 ERC20_TOKENS_ARBITRUM.set(LP_UNISWAP_V3_WETH_USDC, new TokenDefinition(LP_UNISWAP_V3_WETH_USDC, TokenCategoryPOL, true, false));
 
 export const OHM_TOKENS = [ERC20_GOHM_SYNAPSE, ERC20_OHM];
+
+export const DAO_MULTISIG = "0x012BBf0481b97170577745D2167ee14f63E2aD4C".toLowerCase();
+
+export const getProtocolAddresses = (): string[] => {
+  // Combine the wallet addresses with DAO multisig
+  return WALLET_ADDRESSES.concat([DAO_MULTISIG]);
+};
 
 const TREASURY_BLACKLIST = new Map<string, string[]>();
 
@@ -82,8 +92,8 @@ const TREASURY_BLACKLIST = new Map<string, string[]>();
  * OHM and gOHM in the following wallets are blacklisted (not indexed) as we do not want the value
  * being considered as part of the protocol or DAO treasuries.
  */
-TREASURY_BLACKLIST.set(ERC20_GOHM_SYNAPSE, WALLET_ADDRESSES);
-TREASURY_BLACKLIST.set(ERC20_OHM, WALLET_ADDRESSES);
+TREASURY_BLACKLIST.set(ERC20_GOHM_SYNAPSE, getProtocolAddresses());
+TREASURY_BLACKLIST.set(ERC20_OHM, getProtocolAddresses());
 
 /**
  * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
@@ -96,7 +106,7 @@ TREASURY_BLACKLIST.set(ERC20_OHM, WALLET_ADDRESSES);
  * @returns
  */
 export const getWalletAddressesForContract = (contractAddress: string): string[] => {
-  const walletAddresses = WALLET_ADDRESSES.slice(0);
+  const walletAddresses = getProtocolAddresses().slice(0);
 
   // If the contract isn't on the blacklist, return as normal
   if (!TREASURY_BLACKLIST.has(contractAddress.toLowerCase())) {
@@ -124,7 +134,7 @@ export const getWalletAddressesForContract = (contractAddress: string): string[]
 
 /**
  * Defines the contract addresses that belong to the protocol & DAO treasuries.
- * 
+ *
  * This is normally deducted from total supply to determine circulating supply.
  */
 export const CIRCULATING_SUPPLY_WALLETS = [
@@ -176,6 +186,7 @@ CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_JONES_GOHM_GOHM, "UniswapV2 jgOHM-gOHM Liqui
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_JONES_WETH, "UniswapV2 JONES-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_LQTY_WETH, "Ramses LQTY-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V2_MAGIC_WETH, "UniswapV2 MAGIC-wETH Liquidity Pool");
+CONTRACT_NAME_MAP.set(LP_CAMELOT_OHM_WETH, "Camelot OHM-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V3_ARB_WETH, "UniswapV3 ARB-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(LP_UNISWAP_V3_WETH_USDC, "UniswapV3 wETH-USDC Liquidity Pool");
 CONTRACT_NAME_MAP.set(LUSD_ALLOCATOR, "LUSD Allocator");
