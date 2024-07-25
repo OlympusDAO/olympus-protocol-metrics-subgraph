@@ -12,6 +12,10 @@ export class PriceHandlerCustom implements PriceHandler {
     this.returnValue = returnValue;
   }
 
+  exists(): boolean {
+    return true;
+  }
+
   getId(): string {
     return "PriceHandlerCustom";
   }

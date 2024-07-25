@@ -3,7 +3,7 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { ERC20 } from "../../../shared/generated/Price/ERC20";
 import { TokenRecord } from "../../../shared/generated/schema";
 import { getERC20TokenRecordFromWallet } from "../../../shared/src/contracts/ERC20";
-import { DAO_WALLET, WALLET_ADDRESSES } from "../../../shared/src/Wallets";
+import { DAO_WALLET } from "../../../shared/src/Wallets";
 import {
   BLOCKCHAIN,
   CONTRACT_ABBREVIATION_MAP,
@@ -12,6 +12,7 @@ import {
   ERC20_TOKENS_ARBITRUM,
   ERC20_WETH,
   JONES_WRITE_OFF_BLOCK,
+  getProtocolAddresses,
 } from "./Constants";
 import { getTokenRecordValue } from "../../../shared/src/utils/TokenRecordHelper";
 
@@ -56,7 +57,7 @@ export const getWalletAddressesForContract = (contractAddress: string): string[]
   const nonTreasuryAddresses = NON_TREASURY_ASSET_WHITELIST.has(contractAddress.toLowerCase())
     ? NON_TREASURY_ASSET_WHITELIST.get(contractAddress.toLowerCase())
     : [];
-  const newAddresses = WALLET_ADDRESSES.slice(0);
+  const newAddresses = getProtocolAddresses().slice(0);
 
   // Add the values of nonTreasuryAddresses, but filter duplicates
   for (let i = 0; i < nonTreasuryAddresses.length; i++) {
