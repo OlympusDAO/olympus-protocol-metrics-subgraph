@@ -30,7 +30,7 @@ import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { TokenCategoryPOL } from "../../shared/src/contracts/TokenDefinition";
 import { TYPE_LIQUIDITY } from "../../shared/src/utils/TokenSupplyHelper";
 import { mockUniswapV3PositionsZero, mockUniswapV3Pair, mockUniswapV3Positions, mockUniswapV3Position } from "./uniswapV3Helper";
-import { mockTreasuryAddressNull } from "./bophadesHelper";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 describe("UniswapV3 pair value", () => {
   beforeEach(() => {
@@ -39,6 +39,7 @@ describe("UniswapV3 pair value", () => {
 
     // Do at the start, as it can be used by mock functions
     mockTreasuryAddressNull();
+    mockClearinghouseRegistryAddressNull();
 
     mockBalancerVaultZero();
     mockFraxSwapPairZero();

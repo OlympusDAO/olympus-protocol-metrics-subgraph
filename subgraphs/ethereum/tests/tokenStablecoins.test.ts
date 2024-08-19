@@ -4,7 +4,7 @@ import { assert, beforeEach, clearStore, describe, test, log } from "matchstick-
 import { NATIVE_ETH } from "../src/utils/Constants";
 import { getStablecoinBalance } from "../src/utils/TokenStablecoins";
 import { mockEthUsdRate } from "./pairHelper";
-import { mockTreasuryAddressNull } from "./bophadesHelper";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 const TIMESTAMP = BigInt.fromString("1");
 
@@ -14,6 +14,7 @@ beforeEach(() => {
 
   // Do at the start, as it can be used by mock functions
   mockTreasuryAddressNull();
+  mockClearinghouseRegistryAddressNull();
 });
 
 describe("native ETH", () => {

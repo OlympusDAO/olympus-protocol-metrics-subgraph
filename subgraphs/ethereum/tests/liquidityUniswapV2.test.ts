@@ -44,7 +44,7 @@ import {
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
-import { mockTreasuryAddressNull } from "./bophadesHelper";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 // Limits the search to the OHM-DAI pairs, otherwise other pairs will be iterated over
 const pairArrayOverride: PairHandler[] = [
@@ -61,6 +61,7 @@ beforeEach(() => {
 
   // Do at the start, as it can be used by mock functions
   mockTreasuryAddressNull();
+  mockClearinghouseRegistryAddressNull();
 
   mockBalancerVaultZero();
   mockUniswapV2PairsZero();

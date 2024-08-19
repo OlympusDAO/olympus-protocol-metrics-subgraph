@@ -57,7 +57,7 @@ import {
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
-import { mockTreasuryAddressNull } from "./bophadesHelper";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 const PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY = BigDecimal.fromString("100");
 const TIMESTAMP = BigInt.fromString("1");
@@ -69,6 +69,7 @@ beforeEach(() => {
 
   // Do at the start, as it can be used by mock functions
   mockTreasuryAddressNull();
+  mockClearinghouseRegistryAddressNull();
 
   mockBalancerVaultZero();
   mockUniswapV2PairsZero();

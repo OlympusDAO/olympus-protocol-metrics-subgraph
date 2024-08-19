@@ -9,7 +9,7 @@ import {
 } from "../src/utils/ContractHelper";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
-import { mockTreasuryAddressNull } from "./bophadesHelper";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 const LUSD_BALANCE = "100";
 const LUSD_BALANCE_INT = toBigInt(BigDecimal.fromString(LUSD_BALANCE), ERC20_STANDARD_DECIMALS);
@@ -66,6 +66,7 @@ beforeEach(() => {
 
   // Do at the start, as it can be used by mock functions
   mockTreasuryAddressNull();
+  mockClearinghouseRegistryAddressNull();
 
   mockLiquityBalanceZero();
 });

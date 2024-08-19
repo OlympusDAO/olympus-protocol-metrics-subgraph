@@ -80,7 +80,7 @@ import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { UNISWAP_V3_POSITION_MANAGER } from "../src/liquidity/LiquidityUniswapV3";
 import { mockUniswapV3Pair, mockUniswapV3Positions, mockUniswapV3Position } from "./uniswapV3Helper";
 import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
-import { mockTreasuryAddressNull } from "./bophadesHelper";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 const BLOCK_NUMBER: BigInt = BigInt.fromString("14000000");
 
@@ -90,6 +90,7 @@ beforeEach(() => {
 
   // Do at the start, as it can be used by mock functions
   mockTreasuryAddressNull();
+  mockClearinghouseRegistryAddressNull();
 
   mockEthUsdRate();
   mockStablecoinsPriceFeeds();

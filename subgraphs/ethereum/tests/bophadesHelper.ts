@@ -16,3 +16,19 @@ export function mockTreasuryAddressNull(): void {
   ).reverts();
   log.debug("mockTreasuryAddressNull: mocked null TRSRY address", []);
 }
+
+export function mockClearinghouseRegistryAddressNull(): void {
+  // Mock the Bophades Kernel contract to revert and hence return null
+  const kernelAddress = Address.fromString("0x2286d7f9639e8158FaD1169e76d1FbC38247f54b");
+
+  createMockedFunction(
+    kernelAddress,
+    "getModuleForKeycode",
+    "getModuleForKeycode(bytes5):(address)"
+  ).withArgs(
+    [
+      ethereum.Value.fromFixedBytes(Bytes.fromUTF8("CHREG")),
+    ],
+  ).reverts();
+  log.debug("mockClearinghouseRegistryAddressNull: mocked null CHREG address", []);
+}

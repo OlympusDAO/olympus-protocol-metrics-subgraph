@@ -25,7 +25,7 @@ import {
   mockUsdOhmV2Rate,
   OHM_USD_RESERVE_BLOCK,
 } from "./pairHelper";
-import { mockTreasuryAddressNull } from "./bophadesHelper";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
@@ -33,6 +33,7 @@ beforeEach(() => {
 
   // Do at the start, as it can be used by mock functions
   mockTreasuryAddressNull();
+  mockClearinghouseRegistryAddressNull();
 
   // mockEthUsdRate();
   mockStablecoinsPriceFeeds();
