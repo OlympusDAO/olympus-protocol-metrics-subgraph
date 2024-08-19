@@ -4,6 +4,7 @@ import { assert, beforeEach, clearStore, createMockedFunction, describe, test, l
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import {
   AURA_ALLOCATOR_V2,
+  BUYBACK_MS,
   CONVEX_ALLOCATOR3,
   CONVEX_CVX_VL_ALLOCATOR,
   DAO_WALLET,
@@ -47,7 +48,7 @@ import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import { mockAuraEarnedBalance, mockAuraEarnedBalanceZero, mockAuraLockedBalance, mockAuraLockedBalanceZero, mockBalancerGaugeBalance, mockBalancerGaugeBalanceZero, mockConvexStakedBalance, mockConvexStakedBalanceZero, mockEthUsdRate, mockLiquityStakedBalance, mockLiquityStakedBalanceZero, mockTokeStakedBalance, mockTokeStakedBalanceZero } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
-import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
+import { getWalletAddressesForContract, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2 } from "../src/utils/ProtocolAddresses";
 import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 const TIMESTAMP: BigInt = BigInt.fromString("1");
@@ -196,9 +197,9 @@ describe("get ERC20 token records from wallets", () => {
     mockZeroWalletBalances(ERC20_OHM_V2, walletAddresses);
     mockERC20TotalSupply(ERC20_OHM_V2, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
 
-    for (let i = 0; i < walletAddresses.length; i++) {
-      mockWalletBalance(ERC20_OHM_V2, walletAddresses[i], toBigInt(BigDecimal.fromString("10")));
-    }
+    mockWalletBalance(ERC20_OHM_V2, TREASURY_ADDRESS_V1, toBigInt(BigDecimal.fromString("10")));
+    mockWalletBalance(ERC20_OHM_V2, TREASURY_ADDRESS_V2, toBigInt(BigDecimal.fromString("10")));
+    mockWalletBalance(ERC20_OHM_V2, TREASURY_ADDRESS_V3, toBigInt(BigDecimal.fromString("10")));
 
     const contract = getERC20(ERC20_OHM_V2, blockNumber);
     if (!contract) throw new Error("Expected ERC20 contract to be non-null");
@@ -216,13 +217,13 @@ describe("get ERC20 token records from wallets", () => {
 
   test("excludes gOHM in treasury wallet addresses", () => {
     const blockNumber = BigInt.fromString("14000000");
-    const walletAddresses = getWalletAddressesForContract(ERC20_OHM_V2, blockNumber);
+    const walletAddresses = getWalletAddressesForContract(ERC20_GOHM, blockNumber);
     mockZeroWalletBalances(ERC20_GOHM, walletAddresses);
     mockERC20TotalSupply(ERC20_GOHM, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
 
-    for (let i = 0; i < walletAddresses.length; i++) {
-      mockWalletBalance(ERC20_GOHM, walletAddresses[i], toBigInt(BigDecimal.fromString("10")));
-    }
+    mockWalletBalance(ERC20_GOHM, TREASURY_ADDRESS_V1, toBigInt(BigDecimal.fromString("10")));
+    mockWalletBalance(ERC20_GOHM, TREASURY_ADDRESS_V2, toBigInt(BigDecimal.fromString("10")));
+    mockWalletBalance(ERC20_GOHM, TREASURY_ADDRESS_V3, toBigInt(BigDecimal.fromString("10")));
 
     const contract = getERC20(ERC20_GOHM, blockNumber);
     if (!contract) throw new Error("Expected ERC20 contract to be non-null");
@@ -236,6 +237,104 @@ describe("get ERC20 token records from wallets", () => {
     );
 
     assert.i32Equals(0, records.length);
+  });
+
+  test("excludes gOHM in treasury wallet addresses after block 20514801", () => {
+    const blockNumber = BigInt.fromString("20514801");
+    const walletAddresses = getWalletAddressesForContract(ERC20_GOHM, blockNumber);
+    mockZeroWalletBalances(ERC20_GOHM, walletAddresses);
+    mockERC20TotalSupply(ERC20_GOHM, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
+
+    mockWalletBalance(ERC20_GOHM, TREASURY_ADDRESS_V1, toBigInt(BigDecimal.fromString("10")));
+    mockWalletBalance(ERC20_GOHM, TREASURY_ADDRESS_V2, toBigInt(BigDecimal.fromString("10")));
+    mockWalletBalance(ERC20_GOHM, TREASURY_ADDRESS_V3, toBigInt(BigDecimal.fromString("10")));
+
+    const contract = getERC20(ERC20_GOHM, blockNumber);
+    if (!contract) throw new Error("Expected ERC20 contract to be non-null");
+
+    const records = getERC20TokenRecordsFromWallets(
+      TIMESTAMP,
+      ERC20_GOHM,
+      contract,
+      BigDecimal.fromString("1"),
+      blockNumber,
+    );
+
+    assert.i32Equals(0, records.length);
+  });
+
+  test("includes gOHM in buyback MS after block 20514801", () => {
+    const blockNumber = BigInt.fromString("20514801");
+    const walletAddresses = getWalletAddressesForContract(ERC20_GOHM, blockNumber);
+    mockZeroWalletBalances(ERC20_GOHM, walletAddresses);
+    mockERC20TotalSupply(ERC20_GOHM, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
+
+    mockWalletBalance(ERC20_GOHM, BUYBACK_MS, toBigInt(BigDecimal.fromString("10")));
+
+    const contract = getERC20(ERC20_GOHM, blockNumber);
+    if (!contract) throw new Error("Expected ERC20 contract to be non-null");
+
+    const records = getERC20TokenRecordsFromWallets(
+      TIMESTAMP,
+      ERC20_GOHM,
+      contract,
+      BigDecimal.fromString("1"),
+      blockNumber,
+    );
+
+    const record = records[0];
+    assert.stringEquals("10", record.balance.toString());
+
+    assert.i32Equals(1, records.length);
+  });
+
+  test("excludes OHM in treasury wallet addresses after block 20514801", () => {
+    const blockNumber = BigInt.fromString("20514801");
+    const walletAddresses = getWalletAddressesForContract(ERC20_OHM_V2, blockNumber);
+    mockZeroWalletBalances(ERC20_OHM_V2, walletAddresses);
+    mockERC20TotalSupply(ERC20_OHM_V2, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
+
+    mockWalletBalance(ERC20_OHM_V2, TREASURY_ADDRESS_V1, toBigInt(BigDecimal.fromString("10")));
+    mockWalletBalance(ERC20_OHM_V2, TREASURY_ADDRESS_V2, toBigInt(BigDecimal.fromString("10")));
+    mockWalletBalance(ERC20_OHM_V2, TREASURY_ADDRESS_V3, toBigInt(BigDecimal.fromString("10")));
+
+    const contract = getERC20(ERC20_OHM_V2, blockNumber);
+    if (!contract) throw new Error("Expected ERC20 contract to be non-null");
+
+    const records = getERC20TokenRecordsFromWallets(
+      TIMESTAMP,
+      ERC20_OHM_V2,
+      contract,
+      BigDecimal.fromString("1"),
+      blockNumber,
+    );
+
+    assert.i32Equals(0, records.length);
+  });
+
+  test("includes OHM in buyback MS after block 20514801", () => {
+    const blockNumber = BigInt.fromString("20514801");
+    const walletAddresses = getWalletAddressesForContract(ERC20_OHM_V2, blockNumber);
+    mockZeroWalletBalances(ERC20_OHM_V2, walletAddresses);
+    mockERC20TotalSupply(ERC20_OHM_V2, ERC20_STANDARD_DECIMALS, toBigInt(DEFAULT_TOTAL_SUPPLY, ERC20_STANDARD_DECIMALS));
+
+    mockWalletBalance(ERC20_OHM_V2, BUYBACK_MS, toBigInt(BigDecimal.fromString("10")));
+
+    const contract = getERC20(ERC20_OHM_V2, blockNumber);
+    if (!contract) throw new Error("Expected ERC20 contract to be non-null");
+
+    const records = getERC20TokenRecordsFromWallets(
+      TIMESTAMP,
+      ERC20_OHM_V2,
+      contract,
+      BigDecimal.fromString("1"),
+      blockNumber,
+    );
+
+    const record = records[0];
+    assert.stringEquals("10", record.balance.toString());
+
+    assert.i32Equals(1, records.length);
   });
 });
 

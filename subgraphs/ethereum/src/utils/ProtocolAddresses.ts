@@ -5,6 +5,7 @@
 import { BigInt, log } from "@graphprotocol/graph-ts";
 import { ERC20_GOHM, ERC20_OHM_V1, ERC20_OHM_V2, ERC20_SOHM_V1, ERC20_SOHM_V2, ERC20_SOHM_V3 } from "./Constants";
 import { getClearinghouseAddresses, getTreasuryAddress } from "./Bophades";
+import { BUYBACK_MS } from "../../../shared/src/Wallets";
 
 export const TREASURY_ADDRESS_V1 = "0x886CE997aa9ee4F8c2282E182aB72A705762399D".toLowerCase();
 export const TREASURY_ADDRESS_V2 = "0x31f8cc382c9898b273eff4e0b7626a6987c846e8".toLowerCase();
@@ -80,6 +81,7 @@ const PROTOCOL_ADDRESSES = [
   BALANCER_ALLOCATOR,
   BONDS_DEPOSIT,
   BONDS_INVERSE_DEPOSIT,
+  BUYBACK_MS,
   CONVEX_ALLOCATOR1,
   CONVEX_ALLOCATOR2,
   CONVEX_ALLOCATOR3,
@@ -113,6 +115,8 @@ TREASURY_BLACKLIST.set(ERC20_GOHM, PROTOCOL_ADDRESSES);
 TREASURY_BLACKLIST.set(ERC20_SOHM_V1, PROTOCOL_ADDRESSES);
 TREASURY_BLACKLIST.set(ERC20_SOHM_V2, PROTOCOL_ADDRESSES);
 TREASURY_BLACKLIST.set(ERC20_SOHM_V3, PROTOCOL_ADDRESSES);
+
+const OHM_IN_MARKET_VALUE_BLOCK = BigInt.fromI32(20514801);
 
 /**
  * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
@@ -153,6 +157,11 @@ export const getWalletAddressesForContract = (contractAddress: string, blockNumb
     // If the blacklisted address is not in the array, skip
     const arrayIndex = walletAddresses.indexOf(walletBlacklist[i]);
     if (arrayIndex < 0) {
+      continue;
+    }
+
+    // If it is the buyback MS and the block is >= the inclusion block
+    if (walletBlacklist[i].toLowerCase() == BUYBACK_MS.toLowerCase() && blockNumber.ge(OHM_IN_MARKET_VALUE_BLOCK)) {
       continue;
     }
 
