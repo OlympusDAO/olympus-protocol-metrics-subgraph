@@ -7,6 +7,8 @@ import { PairHandler, PairHandlerTypes } from "./PairHandler";
 
 export const BLOCKCHAIN = "Ethereum";
 
+export const OHM_IN_MARKET_VALUE_BLOCK = BigInt.fromI32(20514801);
+
 // Tokens definition
 export const DAIBOND_TOKEN = "DAI";
 export const OHMDAILPBOND_TOKEN = "OHM-DAI";

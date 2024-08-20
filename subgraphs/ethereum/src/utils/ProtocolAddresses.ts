@@ -3,7 +3,7 @@
  */
 
 import { BigInt, log } from "@graphprotocol/graph-ts";
-import { ERC20_GOHM, ERC20_OHM_V1, ERC20_OHM_V2, ERC20_SOHM_V1, ERC20_SOHM_V2, ERC20_SOHM_V3 } from "./Constants";
+import { ERC20_GOHM, ERC20_OHM_V1, ERC20_OHM_V2, ERC20_SOHM_V1, ERC20_SOHM_V2, ERC20_SOHM_V3, OHM_IN_MARKET_VALUE_BLOCK } from "./Constants";
 import { getClearinghouseAddresses, getTreasuryAddress } from "./Bophades";
 import { BUYBACK_MS } from "../../../shared/src/Wallets";
 
@@ -115,8 +115,6 @@ TREASURY_BLACKLIST.set(ERC20_GOHM, PROTOCOL_ADDRESSES);
 TREASURY_BLACKLIST.set(ERC20_SOHM_V1, PROTOCOL_ADDRESSES);
 TREASURY_BLACKLIST.set(ERC20_SOHM_V2, PROTOCOL_ADDRESSES);
 TREASURY_BLACKLIST.set(ERC20_SOHM_V3, PROTOCOL_ADDRESSES);
-
-const OHM_IN_MARKET_VALUE_BLOCK = BigInt.fromI32(20514801);
 
 /**
  * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
