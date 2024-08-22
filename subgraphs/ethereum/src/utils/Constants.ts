@@ -288,12 +288,12 @@ ERC20_TOKENS.set(ERC20_FRAX_BP, new TokenDefinition(ERC20_FRAX_BP, TokenCategory
 ERC20_TOKENS.set(ERC20_FRAX, new TokenDefinition(ERC20_FRAX, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_FXS_VE, new TokenDefinition(ERC20_FXS_VE, TokenCategoryVolatile, false, false)); // Locked till 1787788800 (2026)
 ERC20_TOKENS.set(ERC20_FXS, new TokenDefinition(ERC20_FXS, TokenCategoryVolatile, true, false));
-ERC20_TOKENS.set(ERC20_GOHM, new TokenDefinition(ERC20_GOHM, TokenCategoryVolatile, false, false)); // Illiquid so it's excluded from LB
+ERC20_TOKENS.set(ERC20_GOHM, new TokenDefinition(ERC20_GOHM, TokenCategoryVolatile, true, false, BigDecimal.zero()));
 ERC20_TOKENS.set(ERC20_KP3R, new TokenDefinition(ERC20_KP3R, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_LDO, new TokenDefinition(ERC20_LDO, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_LQTY, new TokenDefinition(ERC20_LQTY, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_LUSD, new TokenDefinition(ERC20_LUSD, TokenCategoryStable, true, false));
-ERC20_TOKENS.set(ERC20_OHM_V2, new TokenDefinition(ERC20_OHM_V2, TokenCategoryVolatile, false, false)); // Illiquid so it's excluded from LB
+ERC20_TOKENS.set(ERC20_OHM_V2, new TokenDefinition(ERC20_OHM_V2, TokenCategoryVolatile, true, false, BigDecimal.zero()));
 ERC20_TOKENS.set(ERC20_PRIME, new TokenDefinition(ERC20_PRIME, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_SUSHI, new TokenDefinition(ERC20_SUSHI, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_SYN, new TokenDefinition(ERC20_SYN, TokenCategoryVolatile, true, false));

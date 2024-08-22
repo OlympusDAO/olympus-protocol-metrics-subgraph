@@ -15,14 +15,14 @@ describe("Treasury Market Value", () => {
         const records: TokenRecord[] = [
             createTokenRecord(
                 TIMESTAMP,
-                "OHM",
+                "OHM V2",
                 ERC20_OHM_V2,
                 "Buyback MS",
                 BUYBACK_MS,
                 BigDecimal.fromString("2"),
                 BigDecimal.fromString("10"),
                 INCLUSION_BLOCK,
-                false,
+                true,
                 ERC20_TOKENS,
                 BLOCKCHAIN,
             )
@@ -44,7 +44,7 @@ describe("Treasury Market Value", () => {
                 BigDecimal.fromString("2"),
                 BigDecimal.fromString("10"),
                 INCLUSION_BLOCK,
-                false,
+                true,
                 ERC20_TOKENS,
                 BLOCKCHAIN,
             )
@@ -59,14 +59,14 @@ describe("Treasury Market Value", () => {
         const records: TokenRecord[] = [
             createTokenRecord(
                 TIMESTAMP,
-                "OHM",
+                "OHM V2",
                 ERC20_OHM_V2,
                 "Treasury",
                 TREASURY_ADDRESS_V3,
                 BigDecimal.fromString("2"),
                 BigDecimal.fromString("10"),
                 INCLUSION_BLOCK,
-                false,
+                true,
                 ERC20_TOKENS,
                 BLOCKCHAIN,
             )
@@ -88,7 +88,7 @@ describe("Treasury Market Value", () => {
                 BigDecimal.fromString("2"),
                 BigDecimal.fromString("10"),
                 INCLUSION_BLOCK,
-                false,
+                true,
                 ERC20_TOKENS,
                 BLOCKCHAIN,
             )
@@ -103,7 +103,7 @@ describe("Treasury Market Value", () => {
         const records: TokenRecord[] = [
             createTokenRecord(
                 TIMESTAMP,
-                "OHM",
+                "OHM V2",
                 ERC20_OHM_V2,
                 "Buyback MS",
                 BUYBACK_MS,
@@ -147,7 +147,7 @@ describe("Treasury Market Value", () => {
         const records: TokenRecord[] = [
             createTokenRecord(
                 TIMESTAMP,
-                "OHM",
+                "OHM V2",
                 ERC20_OHM_V2,
                 "Treasury",
                 TREASURY_ADDRESS_V3,
@@ -193,14 +193,14 @@ describe("Treasury Liquid Backing", () => {
         const records: TokenRecord[] = [
             createTokenRecord(
                 TIMESTAMP,
-                "OHM",
+                "OHM V2",
                 ERC20_OHM_V2,
                 "Buyback MS",
                 BUYBACK_MS,
                 BigDecimal.fromString("2"),
                 BigDecimal.fromString("10"),
                 INCLUSION_BLOCK,
-                false,
+                true,
                 ERC20_TOKENS,
                 BLOCKCHAIN,
             )
@@ -222,7 +222,7 @@ describe("Treasury Liquid Backing", () => {
                 BigDecimal.fromString("2"),
                 BigDecimal.fromString("10"),
                 INCLUSION_BLOCK,
-                false,
+                true,
                 ERC20_TOKENS,
                 BLOCKCHAIN,
             )
@@ -237,14 +237,14 @@ describe("Treasury Liquid Backing", () => {
         const records: TokenRecord[] = [
             createTokenRecord(
                 TIMESTAMP,
-                "OHM",
+                "OHM V2",
                 ERC20_OHM_V2,
                 "Treasury",
                 TREASURY_ADDRESS_V3,
                 BigDecimal.fromString("2"),
                 BigDecimal.fromString("10"),
                 INCLUSION_BLOCK,
-                false,
+                true,
                 ERC20_TOKENS,
                 BLOCKCHAIN,
             )
@@ -266,7 +266,7 @@ describe("Treasury Liquid Backing", () => {
                 BigDecimal.fromString("2"),
                 BigDecimal.fromString("10"),
                 INCLUSION_BLOCK,
-                false,
+                true,
                 ERC20_TOKENS,
                 BLOCKCHAIN,
             )
@@ -281,7 +281,7 @@ describe("Treasury Liquid Backing", () => {
         const records: TokenRecord[] = [
             createTokenRecord(
                 TIMESTAMP,
-                "OHM",
+                "OHM V2",
                 ERC20_OHM_V2,
                 "Buyback MS",
                 BUYBACK_MS,
@@ -325,7 +325,7 @@ describe("Treasury Liquid Backing", () => {
         const records: TokenRecord[] = [
             createTokenRecord(
                 TIMESTAMP,
-                "OHM",
+                "OHM V2",
                 ERC20_OHM_V2,
                 "Treasury",
                 TREASURY_ADDRESS_V3,
