@@ -1,5 +1,5 @@
-import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, createMockedFunction, test } from "matchstick-as/assembly/index";
+import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, createMockedFunction, test, log } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { DAO_WALLET } from "../../shared/src/Wallets";
@@ -8,8 +8,8 @@ import {
   getLiquityStabilityPoolRecords,
 } from "../src/utils/ContractHelper";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
-import { OHM_USD_RESERVE_BLOCK } from "./pairHelper";
 import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 const LUSD_BALANCE = "100";
 const LUSD_BALANCE_INT = toBigInt(BigDecimal.fromString(LUSD_BALANCE), ERC20_STANDARD_DECIMALS);
@@ -19,6 +19,7 @@ const LQTY_BALANCE = "20";
 const LQTY_BALANCE_INT = toBigInt(BigDecimal.fromString(LQTY_BALANCE), ERC20_STANDARD_DECIMALS);
 
 const TIMESTAMP = BigInt.fromString("1");
+const BLOCK_NUMBER: BigInt = BigInt.fromString("14000000");
 
 function mockLiquityAllocator(
   address: string,
@@ -49,7 +50,7 @@ function mockLiquityAllocator(
 }
 
 function mockLiquityBalanceZero(): void {
-  const wallets = getWalletAddressesForContract(LIQUITY_STABILITY_POOL);
+  const wallets = getWalletAddressesForContract(LIQUITY_STABILITY_POOL, BLOCK_NUMBER);
   for (let i = 0; i < wallets.length; i++) {
     mockLiquityAllocator(wallets[i], BigInt.fromString("0"), BigInt.fromString("0"), BigInt.fromString("0"));
   }
@@ -62,6 +63,11 @@ function mockLiquityBalanceZero(): void {
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
+
+  // Do at the start, as it can be used by mock functions
+  mockTreasuryAddressNull();
+  mockClearinghouseRegistryAddressNull();
+
   mockLiquityBalanceZero();
 });
 
@@ -73,7 +79,7 @@ test("LUSD balance", () => {
     TIMESTAMP,
     ERC20_LUSD,
     rate,
-    OHM_USD_RESERVE_BLOCK,
+    BLOCK_NUMBER,
   );
 
   assert.stringEquals(LUSD_BALANCE, allocatorRecords[0].balance.toString());
@@ -88,7 +94,7 @@ test("wETH rewards", () => {
     TIMESTAMP,
     ERC20_WETH,
     rate,
-    OHM_USD_RESERVE_BLOCK,
+    BLOCK_NUMBER,
   );
 
   assert.stringEquals(WETH_BALANCE, allocatorRecords[0].balance.toString());
@@ -103,7 +109,7 @@ test("LQTY rewards", () => {
     TIMESTAMP,
     ERC20_LQTY,
     rate,
-    OHM_USD_RESERVE_BLOCK,
+    BLOCK_NUMBER,
   );
 
   assert.stringEquals(LQTY_BALANCE, allocatorRecords[0].balance.toString());
@@ -119,7 +125,7 @@ test("other token", () => {
     TIMESTAMP,
     ERC20_TRIBE,
     rate,
-    OHM_USD_RESERVE_BLOCK,
+    BLOCK_NUMBER,
   );
 
   assert.i32Equals(0, allocatorRecords.length);
@@ -133,7 +139,7 @@ test("LUSD records", () => {
     TIMESTAMP,
     ERC20_LUSD,
     rate,
-    OHM_USD_RESERVE_BLOCK,
+    BLOCK_NUMBER,
   );
 
   assert.stringEquals(

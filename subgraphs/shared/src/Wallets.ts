@@ -6,6 +6,7 @@ export const TREASURY_ADDRESS_V2 = "0x31f8cc382c9898b273eff4e0b7626a6987c846e8".
 export const TREASURY_ADDRESS_V3 = "0x9A315BdF513367C0377FB36545857d12e85813Ef".toLowerCase();
 
 export const BONDS_DEPOSIT = "0x9025046c6fb25Fb39e720d97a8FD881ED69a1Ef6".toLowerCase();
+export const BUYBACK_MS = "0xf7deb867e65306be0cb33918ac1b8f89a72109db".toLowerCase();
 
 /**
  * OHM in this contract is considered burned
@@ -42,12 +43,9 @@ export const DAO_WORKING_CAPITAL = "0xF65A665D650B5De224F46D729e2bD0885EeA9dA5".
  */
 export const OLYMPUS_ASSOCIATION_WALLET = "0x4c71db02aeeb336cbd8f3d2cc866911f6e2fbd94".toLowerCase();
 
+// Don't iterate through these addresses: use getClearinghouseAddresses() instead
 export const COOLER_LOANS_CLEARINGHOUSE_V1 = "0xD6A6E8d9e82534bD65821142fcCd91ec9cF31880".toLowerCase();
 export const COOLER_LOANS_CLEARINGHOUSE_V1_1 = "0xE6343ad0675C9b8D3f32679ae6aDbA0766A2ab4c".toLowerCase();
-export const COOLER_LOANS_CLEARINGHOUSES = [
-  COOLER_LOANS_CLEARINGHOUSE_V1,
-  COOLER_LOANS_CLEARINGHOUSE_V1_1,
-];
 
 export const TRSRY = "0xa8687A15D4BE32CC8F0a8a7B9704a4C3993D9613".toLowerCase();
 export const TRSRY_V1_1 = "0xea1560F36F71a2F54deFA75ed9EaA15E8655bE22".toLowerCase();
@@ -70,6 +68,7 @@ export const WALLET_ADDRESSES = [
   BALANCER_ALLOCATOR,
   BONDS_DEPOSIT,
   BONDS_INVERSE_DEPOSIT,
+  BUYBACK_MS,
   CONVEX_ALLOCATOR1,
   CONVEX_ALLOCATOR2,
   CONVEX_ALLOCATOR3,

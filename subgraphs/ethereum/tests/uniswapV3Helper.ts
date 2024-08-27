@@ -2,6 +2,8 @@ import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { createMockedFunction } from "matchstick-as";
 import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
+const BLOCK_NUMBER = BigInt.fromString("14000000");
+
 export function mockUniswapV3Positions(
   positionManager: string,
   walletAddress: string,
@@ -31,7 +33,7 @@ export function mockUniswapV3PositionsZero(
   positionManager: string,
 ): void {
   // Get all wallets
-  const wallets = getWalletAddressesForContract(positionManager);
+  const wallets = getWalletAddressesForContract(positionManager, BLOCK_NUMBER);
 
   for (let i = 0; i < wallets.length; i++) {
     mockUniswapV3Positions(positionManager, wallets[i], []);

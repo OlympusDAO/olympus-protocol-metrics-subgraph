@@ -2,9 +2,10 @@
  * Protocol addresses on Ethereum mainnet
  */
 
-import { log } from "@graphprotocol/graph-ts";
-import { ERC20_GOHM, ERC20_OHM_V1, ERC20_OHM_V2, ERC20_SOHM_V1, ERC20_SOHM_V2, ERC20_SOHM_V3 } from "./Constants";
-import { COOLER_LOANS_CLEARINGHOUSES, COOLER_LOANS_CLEARINGHOUSE_V1, COOLER_LOANS_CLEARINGHOUSE_V1_1 } from "../../../shared/src/Wallets";
+import { BigInt, log } from "@graphprotocol/graph-ts";
+import { ERC20_GOHM, ERC20_OHM_V1, ERC20_OHM_V2, ERC20_SOHM_V1, ERC20_SOHM_V2, ERC20_SOHM_V3, OHM_IN_MARKET_VALUE_BLOCK } from "./Constants";
+import { getClearinghouseAddresses, getTreasuryAddress } from "./Bophades";
+import { BUYBACK_MS } from "../../../shared/src/Wallets";
 
 export const TREASURY_ADDRESS_V1 = "0x886CE997aa9ee4F8c2282E182aB72A705762399D".toLowerCase();
 export const TREASURY_ADDRESS_V2 = "0x31f8cc382c9898b273eff4e0b7626a6987c846e8".toLowerCase();
@@ -72,7 +73,7 @@ export const CONVEX_ALLOCATORS = [
  *
  * Myso and Vendor Finance contracts are NOT included in here, as the deployed amounts are hard-coded.
  */
-export const PROTOCOL_ADDRESSES = [
+const PROTOCOL_ADDRESSES = [
   AAVE_ALLOCATOR_V2,
   AAVE_ALLOCATOR,
   AURA_ALLOCATOR_V2,
@@ -80,6 +81,7 @@ export const PROTOCOL_ADDRESSES = [
   BALANCER_ALLOCATOR,
   BONDS_DEPOSIT,
   BONDS_INVERSE_DEPOSIT,
+  BUYBACK_MS,
   CONVEX_ALLOCATOR1,
   CONVEX_ALLOCATOR2,
   CONVEX_ALLOCATOR3,
@@ -98,10 +100,7 @@ export const PROTOCOL_ADDRESSES = [
   TREASURY_ADDRESS_V1,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
-  TRSRY,
   VEFXS_ALLOCATOR,
-  COOLER_LOANS_CLEARINGHOUSE_V1,
-  COOLER_LOANS_CLEARINGHOUSE_V1_1,
 ];
 
 const TREASURY_BLACKLIST = new Map<string, string[]>();
@@ -127,8 +126,21 @@ TREASURY_BLACKLIST.set(ERC20_SOHM_V3, PROTOCOL_ADDRESSES);
  * @param contractAddress
  * @returns
  */
-export const getWalletAddressesForContract = (contractAddress: string): string[] => {
+export const getWalletAddressesForContract = (contractAddress: string, blockNumber: BigInt): string[] => {
   const walletAddresses = PROTOCOL_ADDRESSES.slice(0);
+  const trsryAddress = getTreasuryAddress(blockNumber);
+
+  // Add in the Bophades Treasury address, since that is dynamic
+  if (trsryAddress !== null) {
+    log.info("getWalletAddressesForContract: adding treasury address: {}", [trsryAddress.toHexString()]);
+    walletAddresses.push(trsryAddress.toHexString().toLowerCase());
+  }
+
+  // Add in the Clearinghouse addresses, since that is dynamic
+  const clearinghouseAddresses = getClearinghouseAddresses(blockNumber);
+  for (let i = 0; i < clearinghouseAddresses.length; i++) {
+    walletAddresses.push(clearinghouseAddresses[i].toHexString().toLowerCase());
+  }
 
   // If the contract isn't on the blacklist, return as normal
   if (!TREASURY_BLACKLIST.has(contractAddress.toLowerCase())) {
@@ -143,6 +155,11 @@ export const getWalletAddressesForContract = (contractAddress: string): string[]
     // If the blacklisted address is not in the array, skip
     const arrayIndex = walletAddresses.indexOf(walletBlacklist[i]);
     if (arrayIndex < 0) {
+      continue;
+    }
+
+    // If it is the buyback MS and the block is >= the inclusion block
+    if (walletBlacklist[i].toLowerCase() == BUYBACK_MS.toLowerCase() && blockNumber.ge(OHM_IN_MARKET_VALUE_BLOCK)) {
       continue;
     }
 

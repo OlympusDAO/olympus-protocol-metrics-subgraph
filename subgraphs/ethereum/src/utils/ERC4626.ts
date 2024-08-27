@@ -73,7 +73,7 @@ function getERC4626TokenRecordsFromWallets(
   rate: BigDecimal,
 ): TokenRecord[] {
   const records: TokenRecord[] = [];
-  const wallets = getWalletAddressesForContract(vaultContract._address.toHexString());
+  const wallets = getWalletAddressesForContract(vaultContract._address.toHexString(), blockNumber);
 
   for (let i = 0; i < wallets.length; i++) {
     const walletAddress = wallets[i];

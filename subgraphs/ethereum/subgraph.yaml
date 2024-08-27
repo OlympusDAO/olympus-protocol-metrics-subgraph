@@ -1,11 +1,11 @@
 specVersion: 0.0.8
 description: Olympus Protocol Metrics Subgraph
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
-features:
-  - grafting
-graft:
-  base: QmUX8d1VHoBTPKf6z4anNt2y8ZSgFbeTqXN52LJ1q8FF5N # 5.0.4
-  block: 15275000 # Previous failure
+# features:
+#   - grafting
+# graft:
+#   base: Qmd7wgnNTijSpV1JDM3yUE8Exy4EGG1jw3yyQKdTKvYiig # 5.1.3
+#   block: 20514801 # Buyback MS deployment
 schema:
   file: ../../schema.graphql
 dataSources:
@@ -121,6 +121,13 @@ dataSources:
         # Cooler Loans
         - name: CoolerLoansClearinghouse
           file: ./abis/CoolerLoansClearinghouse.json
+        # Bophades
+        - name: BophadesKernel
+          file: ./abis/BophadesKernel.json
+        - name: BophadesTreasury
+          file: ./abis/BophadesTreasury.json
+        - name: BophadesClearinghouseRegistry
+          file: ./abis/BophadesClearinghouseRegistry.json
       blockHandlers:
         - handler: handleMetricsBlock
           filter:

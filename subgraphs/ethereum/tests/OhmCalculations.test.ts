@@ -11,6 +11,7 @@ import { BOND_MANAGER, CIRCULATING_SUPPLY_WALLETS, ERC20_GOHM, ERC20_OHM_V2, ERC
 import { getMintedBorrowableOHMRecords, getTreasuryOHMRecords, getVestingBondSupplyRecords } from "../src/utils/OhmCalculations";
 import { mockERC20Balance, mockERC20TotalSupply } from "./erc20Helper";
 import { OHM_V2_DECIMALS } from "./pairHelper";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 const CONTRACT_GNOSIS = "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101".toLowerCase();
 const CONTRACT_TELLER = "0x007FE70dc9797C4198528aE43d8195ffF82Bdc95".toLowerCase();
@@ -134,6 +135,10 @@ function mockContracts(): void {
 beforeEach(() => {
     log.debug("beforeEach: Clearing store", []);
     clearStore();
+
+    // Do at the start, as it can be used by mock functions
+    mockTreasuryAddressNull();
+    mockClearinghouseRegistryAddressNull();
 
     mockERC20TotalSupply(ERC20_OHM_V2, OHM_V2_DECIMALS, toBigInt(BigDecimal.fromString("1000")));
 });

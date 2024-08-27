@@ -1,5 +1,12 @@
 # Subgraph Changelog
 
+## 5.2.6 (2024-08-22)
+
+- Dynamic lookup of the current TRSRY using the Bophades Kernel
+- Dynamic lookup of the Cooler Clearinghouses using the Bophades Kernel and CHREG module
+- Add the MS used for OHM buybacks
+- Include OHM/gOHM in the buyback MS in treasury market value
+
 ## 5.1.3 (2024-01-26)
 
 - Adds TRSRY v1.1

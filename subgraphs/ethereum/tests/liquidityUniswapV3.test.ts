@@ -1,5 +1,5 @@
-import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, describe, test } from "matchstick-as/assembly/index";
+import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, describe, test, log } from "matchstick-as/assembly/index";
 
 import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
 import { UNISWAP_V3_POSITION_MANAGER, getUniswapV3OhmSupply, getUniswapV3POLRecords, getUniswapV3PairTotalValue } from "../src/liquidity/LiquidityUniswapV3";
@@ -30,11 +30,16 @@ import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
 import { TokenCategoryPOL } from "../../shared/src/contracts/TokenDefinition";
 import { TYPE_LIQUIDITY } from "../../shared/src/utils/TokenSupplyHelper";
 import { mockUniswapV3PositionsZero, mockUniswapV3Pair, mockUniswapV3Positions, mockUniswapV3Position } from "./uniswapV3Helper";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 describe("UniswapV3 pair value", () => {
   beforeEach(() => {
     log.debug("beforeEach: Clearing store", []);
     clearStore();
+
+    // Do at the start, as it can be used by mock functions
+    mockTreasuryAddressNull();
+    mockClearinghouseRegistryAddressNull();
 
     mockBalancerVaultZero();
     mockFraxSwapPairZero();

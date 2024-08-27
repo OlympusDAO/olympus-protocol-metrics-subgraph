@@ -19,7 +19,6 @@ import { getUSDRate } from "../utils/Price";
 import { generateTokenRecords, generateTokenSupply } from "../utils/TreasuryCalculations";
 import { getAPY_Rebase, getNextOHMRebase } from "./Rebase";
 import { getMarketCap, getTreasuryLiquidBacking, getTreasuryLiquidBackingPerGOhmSynthetic, getTreasuryLiquidBackingPerOhmFloating, getTreasuryMarketValue } from "./TreasuryMetrics";
-import { NewRound } from "../../generated/ProtocolMetrics/ChainlinkPriceFeed";
 
 export function createProtocolMetric(timestamp: BigInt, blockNumber: BigInt): ProtocolMetric {
   const dateString = getISO8601DateStringFromTimestamp(timestamp);

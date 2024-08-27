@@ -133,3 +133,16 @@ type StakingPoolSnapshot @entity(immutable: true) {
   contractAddress: Bytes!
   stakingToken: Bytes # Will not be set if the call reverts
 }
+
+type BophadesModule @entity(immutable: true) {
+  id: Bytes! # module/block
+  block: BigInt!
+  keycode: String!
+  moduleAddress: Bytes!
+}
+
+type ClearinghouseAddress @entity(immutable: true) {
+  id: Bytes! # moduleAddress/block
+  block: BigInt!
+  addresses: [Bytes!]!
+}

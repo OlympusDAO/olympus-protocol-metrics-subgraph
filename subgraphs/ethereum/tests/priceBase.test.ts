@@ -1,4 +1,4 @@
-import { Address } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal } from "@graphprotocol/graph-ts";
 import { assert, beforeEach, clearStore, createMockedFunction, describe, log, test } from "matchstick-as";
 
 import {
@@ -25,12 +25,17 @@ import {
   mockUsdOhmV2Rate,
   OHM_USD_RESERVE_BLOCK,
 } from "./pairHelper";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
 
-  mockEthUsdRate();
+  // Do at the start, as it can be used by mock functions
+  mockTreasuryAddressNull();
+  mockClearinghouseRegistryAddressNull();
+
+  // mockEthUsdRate();
   mockStablecoinsPriceFeeds();
 });
 
@@ -43,7 +48,7 @@ describe("ETH-USD rate", () => {
   });
 
   test(
-    "should throw an error when the pair cannot be accessed",
+    "should return 0 when the pair cannot be accessed",
     () => {
       // UniswapV2Pair will return null if the pair doesn't exist at the current block
       const contractAddress = Address.fromString(PAIR_UNISWAP_V2_USDC_ETH);
@@ -51,11 +56,10 @@ describe("ETH-USD rate", () => {
         contractAddress,
         "getReserves",
         "getReserves():(uint112,uint112,uint32)",
-      ).returns([]);
+      ).reverts();
 
-      getBaseEthUsdRate();
+      assert.stringEquals(getBaseEthUsdRate().toString(), "0");
     },
-    true,
   );
 });
 

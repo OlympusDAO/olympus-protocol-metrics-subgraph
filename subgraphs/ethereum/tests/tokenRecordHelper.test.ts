@@ -1,5 +1,5 @@
-import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, describe, test } from "matchstick-as/assembly/index";
+import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { assert, beforeEach, clearStore, describe, log, test } from "matchstick-as/assembly/index";
 
 import { TokenRecord } from "../../shared/generated/schema";
 import {
@@ -20,6 +20,7 @@ import {
   ERC20_USDC,
   ERC20_WETH,
 } from "../src/utils/Constants";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 const TIMESTAMP = BigInt.fromString("1");
 
@@ -42,6 +43,10 @@ const createSampleTokenRecord = (): TokenRecord => {
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);
   clearStore();
+
+  // Do at the start, as it can be used by mock functions
+  mockTreasuryAddressNull();
+  mockClearinghouseRegistryAddressNull();
 });
 
 describe("constructor", () => {
