@@ -30,6 +30,7 @@ import {
   ERC20_SYN,
   ERC20_TRIBE,
   ERC20_USDC,
+  ERC20_USDS,
   ERC20_UST,
   ERC20_WETH,
   NATIVE_ETH,
@@ -283,6 +284,10 @@ describe("OHM-USD rate", () => {
 describe("get USD rate", () => {
   test("DAI returns 1", () => {
     assert.stringEquals(getUSDRate(ERC20_DAI, BLOCK_NUMBER).toString(), "1");
+  });
+
+  test("USDS returns 1", () => {
+    assert.stringEquals(getUSDRate(ERC20_USDS, BLOCK_NUMBER).toString(), "1");
   });
 
   test("FRAX returns 1", () => {

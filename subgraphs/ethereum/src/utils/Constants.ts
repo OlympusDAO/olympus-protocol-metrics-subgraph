@@ -241,6 +241,7 @@ export const ERC20_SYN = "0x0f2d719407fdbeff09d87557abb7232601fd9f29".toLowerCas
 export const ERC20_THOR = "0xa5f2211b9b8170f694421f2046281775e8468044".toLowerCase();
 export const ERC20_TOKE = "0x2e9d63788249371f1dfc918a52f8d799f4a38c94".toLowerCase();
 export const ERC20_TRIBE = "0xc7283b66Eb1EB5FB86327f08e1B5816b0720212B".toLowerCase();
+export const ERC20_USDS = "0xdC035D45d973E3EC169d2276DDab16f1e407384F".toLowerCase();
 export const ERC20_WBTC = "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599".toLowerCase();
 export const ERC20_WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2".toLowerCase();
 export const ERC20_WSTETH = "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0".toLowerCase();
@@ -301,6 +302,7 @@ ERC20_TOKENS.set(ERC20_THOR, new TokenDefinition(ERC20_THOR, TokenCategoryVolati
 ERC20_TOKENS.set(ERC20_TOKE, new TokenDefinition(ERC20_TOKE, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_TRIBE, new TokenDefinition(ERC20_TRIBE, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_USDC, new TokenDefinition(ERC20_USDC, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(ERC20_USDS, new TokenDefinition(ERC20_USDS, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_UST, new TokenDefinition(ERC20_UST, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_WBTC, new TokenDefinition(ERC20_WBTC, TokenCategoryVolatile, true, true));
 ERC20_TOKENS.set(ERC20_WETH, new TokenDefinition(ERC20_WETH, TokenCategoryVolatile, true, true));
@@ -311,6 +313,7 @@ ERC20_TOKENS.set(NATIVE_ETH, new TokenDefinition(NATIVE_ETH, TokenCategoryVolati
 // === ERC4626 ===
 
 export const ERC4626_SDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA".toLowerCase();
+export const ERC4626_SUSDS = "0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD".toLowerCase();
 
 /**
  * Mapping between the contract address of an ERC4626 token and the TokenDefinition.
@@ -319,6 +322,7 @@ export const ERC4626_SDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA".toLower
  */
 export const ERC4626_TOKENS = new Map<string, TokenDefinition>();
 ERC4626_TOKENS.set(ERC4626_SDAI, new TokenDefinition(ERC4626_SDAI, TokenCategoryStable, true, false));
+ERC4626_TOKENS.set(ERC4626_SUSDS, new TokenDefinition(ERC4626_SUSDS, TokenCategoryStable, true, false));
 
 /**
  * Mapping between the non-staked token and the token staked in Convex.
@@ -1022,12 +1026,14 @@ CONTRACT_NAME_MAP.set(ERC20_THOR, "THOR");
 CONTRACT_NAME_MAP.set(ERC20_TOKE, "TOKE");
 CONTRACT_NAME_MAP.set(ERC20_TRIBE, "TRIBE");
 CONTRACT_NAME_MAP.set(ERC20_USDC, "USDC");
+CONTRACT_NAME_MAP.set(ERC20_USDS, "USDS");
 CONTRACT_NAME_MAP.set(ERC20_UST, "UST");
 CONTRACT_NAME_MAP.set(ERC20_WBTC, "wBTC");
 CONTRACT_NAME_MAP.set(ERC20_WETH, "wETH");
 CONTRACT_NAME_MAP.set(ERC20_WSTETH, "wstETH");
 CONTRACT_NAME_MAP.set(ERC20_XSUSHI, "SUSHI - Staked");
 CONTRACT_NAME_MAP.set(ERC4626_SDAI, "Savings DAI");
+CONTRACT_NAME_MAP.set(ERC4626_SUSDS, "Savings USDS");
 CONTRACT_NAME_MAP.set(ETHBOND_CONTRACT1, "ETH Bond 1");
 CONTRACT_NAME_MAP.set(EULER_ADDRESS, "Euler Finance");
 CONTRACT_NAME_MAP.set(EULER_ADDRESS, "Euler Protocol");
