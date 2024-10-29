@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 5.3.0 (2024-10-15)
+
+- Adds support for USDS and sUSDS
+
 ## 5.2.6 (2024-08-22)
 
 - Dynamic lookup of the current TRSRY using the Bophades Kernel
