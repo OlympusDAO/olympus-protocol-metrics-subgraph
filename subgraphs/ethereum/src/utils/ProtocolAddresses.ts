@@ -139,6 +139,11 @@ export const getWalletAddressesForContract = (contractAddress: string, blockNumb
   // Add in the Clearinghouse addresses, since that is dynamic
   const clearinghouseAddresses = getClearinghouseAddresses(blockNumber);
   for (let i = 0; i < clearinghouseAddresses.length; i++) {
+    // If the address is already in the array, skip
+    if (walletAddresses.includes(clearinghouseAddresses[i].toHexString().toLowerCase())) {
+      continue;
+    }
+
     walletAddresses.push(clearinghouseAddresses[i].toHexString().toLowerCase());
   }
 
