@@ -46,6 +46,8 @@ import {
   PairTokenBaseOrientation,
 } from "./PriceBase";
 import { getUniswapV3PairTotalValue } from "../liquidity/LiquidityUniswapV3";
+import { ERC4626 } from "../../generated/ProtocolMetrics/ERC4626";
+import { getERC4626Rate } from "./ERC4626";
 
 /**
  * Determines the non-OHM value of the given pair.
@@ -384,7 +386,7 @@ export function getUSDRateBalancer(
  *
  * The sources for the price are defined in {OHM_PRICE_PAIRS}.
  * The pair with the greatest non-OHM reserves will be used.
- * 
+ *
  * With the current implementation, this function CANNOT use `getUSDRate` or `resolvePrice`, as it
  * would result in an infinite loop.
  *
@@ -540,6 +542,17 @@ function getUSDRateUniswapV2(
   return baseTokenNumerator.times(baseTokenUsdRate);
 }
 
+function getUSDRateERC4626(assetAddress: string, vaultAddress: string, blockNumber: BigInt): BigDecimal {
+  const vaultContract = ERC4626.bind(Address.fromString(vaultAddress));
+
+  const rate = getERC4626Rate(blockNumber, vaultContract);
+  if (!rate) {
+    throw new Error(`getUSDRateERC4626: No rate found for vault ${vaultAddress} at block ${blockNumber.toString()}`);
+  }
+
+  return rate;
+}
+
 /**
  * Determines the USD value of the given token.
  *
@@ -599,6 +612,10 @@ function resolvePrice(contractAddress: string, blockNumber: BigInt): BigDecimal 
 
   if (pairHandler.getType() === PairHandlerTypes.UniswapV3) {
     return getUSDRateUniswapV3(contractAddress, pairHandler.getContract(), blockNumber);
+  }
+
+  if (pairHandler.getType() === PairHandlerTypes.ERC4626) {
+    return getUSDRateERC4626(contractAddress, pairHandler.getContract(), blockNumber);
   }
 
   const balancerPoolId = pairHandler.getPool();

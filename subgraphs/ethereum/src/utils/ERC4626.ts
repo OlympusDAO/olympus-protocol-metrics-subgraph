@@ -10,13 +10,13 @@ import { getWalletAddressesForContract } from "./ProtocolAddresses";
 
 /**
  * Returns the balance of the ERC4626 token in the specified wallet.
- * 
- * @param timestamp 
- * @param blockNumber 
- * @param vaultContract 
- * @param walletAddress 
- * @param rate 
- * @returns 
+ *
+ * @param timestamp
+ * @param blockNumber
+ * @param vaultContract
+ * @param walletAddress
+ * @param rate
+ * @returns
  */
 function getERC4626TokenRecordFromWallets(
   timestamp: BigInt,
@@ -59,12 +59,12 @@ function getERC4626TokenRecordFromWallets(
 
 /**
  * Returns the balances of the ERC4626 token in all wallets.
- * 
- * @param timestamp 
- * @param blockNumber 
- * @param vaultContract 
- * @param rate 
- * @returns 
+ *
+ * @param timestamp
+ * @param blockNumber
+ * @param vaultContract
+ * @param rate
+ * @returns
  */
 function getERC4626TokenRecordsFromWallets(
   timestamp: BigInt,
@@ -95,15 +95,15 @@ function getERC4626TokenRecordsFromWallets(
 
 /**
  * Returns the rate of 1 ERC4626 token in USD.
- * 
+ *
  * To determine the rate, we need to find:
  * - The ratio of the shares to the underlying asset
  * - The price of the underlying asset
- * 
- * @param vaultContract 
- * @returns 
+ *
+ * @param vaultContract
+ * @returns
  */
-function getERC4626Rate(
+export function getERC4626Rate(
   blockNumber: BigInt,
   vaultContract: ERC4626,
 ): BigDecimal | null {
@@ -145,11 +145,11 @@ function getERC4626Rate(
 
 /**
  * Determines the balances of a specific ERC4626 token.
- * 
- * @param timestamp 
- * @param blockNumber 
- * @param vaultContractAddress 
- * @returns 
+ *
+ * @param timestamp
+ * @param blockNumber
+ * @param vaultContractAddress
+ * @returns
  */
 function getERC4626Balance(
   timestamp: BigInt,
