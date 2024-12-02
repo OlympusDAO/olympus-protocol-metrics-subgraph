@@ -1,5 +1,10 @@
 # Subgraph Changelog
 
+## 5.4.4 (2024-12-02)
+
+- Adds support for Uniswap V3 OHM-sUSDS pool
+- Explicitly include Cooler Loans Clearinghouse v2 (although it should be handled by the CHREG module)
+
 ## 5.3.0 (2024-10-15)
 
 - Adds support for USDS and sUSDS

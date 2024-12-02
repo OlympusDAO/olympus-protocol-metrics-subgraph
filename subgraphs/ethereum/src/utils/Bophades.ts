@@ -3,6 +3,7 @@ import { BophadesKernel } from "../../generated/ProtocolMetrics/BophadesKernel";
 import { BophadesTreasury } from "../../generated/ProtocolMetrics/BophadesTreasury";
 import { BophadesModule, ClearinghouseAddress } from "../../generated/schema";
 import { BophadesClearinghouseRegistry } from "../../generated/ProtocolMetrics/BophadesClearinghouseRegistry";
+import { COOLER_LOANS_CLEARINGHOUSE_V1, COOLER_LOANS_CLEARINGHOUSE_V1_1, COOLER_LOANS_CLEARINGHOUSE_V2 } from "../../../shared/src/Wallets";
 
 const KERNEL_MAP = new Map<string, string>();
 KERNEL_MAP.set("mainnet", "0x2286d7f9639e8158FaD1169e76d1FbC38247f54b");
@@ -125,6 +126,20 @@ export function getClearinghouseAddresses(blockNumber: BigInt): Address[] {
   else {
     // Most likely CHREG isn't yet available
     log.warning("getClearinghouseAddresses: unable to get clearinghouse count for block: {}", [blockNumber.toString()]);
+  }
+
+  // Make sure the known Clearinghouses are included
+  if (!addresses.includes(Address.fromString(COOLER_LOANS_CLEARINGHOUSE_V1))) {
+    log.info("getClearinghouseAddresses: adding Cooler Loans Clearinghouse V1", []);
+    addresses.push(Address.fromString(COOLER_LOANS_CLEARINGHOUSE_V1));
+  }
+  if (!addresses.includes(Address.fromString(COOLER_LOANS_CLEARINGHOUSE_V1_1))) {
+    log.info("getClearinghouseAddresses: adding Cooler Loans Clearinghouse V1.1", []);
+    addresses.push(Address.fromString(COOLER_LOANS_CLEARINGHOUSE_V1_1));
+  }
+  if (!addresses.includes(Address.fromString(COOLER_LOANS_CLEARINGHOUSE_V2))) {
+    log.info("getClearinghouseAddresses: adding Cooler Loans Clearinghouse V2", []);
+    addresses.push(Address.fromString(COOLER_LOANS_CLEARINGHOUSE_V2));
   }
 
   // Re-format as bytes array

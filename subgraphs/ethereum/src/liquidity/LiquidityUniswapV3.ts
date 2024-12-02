@@ -59,13 +59,12 @@ function getPairBalances(pairAddress: string, positionId: BigInt, blockNumber: B
 
   const slot0 = slot0Result.value;
   const sqrtPriceX96 = slot0.getSqrtPriceX96();
-  log.debug("getPairBalances: sqrtPriceX96: {}", [sqrtPriceX96.toString()]);
+  log.debug("getPairBalances: positionId: {}, sqrtPriceX96: {}", [positionId.toString(), sqrtPriceX96.toString()]);
   const currentTick = slot0.getTick();
-  log.debug("getPairBalances: currentTick: {}", [currentTick.toString()]);
+  log.debug("getPairBalances: positionId: {}, currentTick: {}", [positionId.toString(), currentTick.toString()]);
 
   // Position
   const positionManager = UniswapV3PositionManager.bind(Address.fromString(UNISWAP_V3_POSITION_MANAGER));
-  log.debug("getPairBalances: positionId: {}", [positionId.toString()]);
   const position = positionManager.positions(positionId);
   const token0 = position.getToken0();
   const token1 = position.getToken1();
@@ -78,25 +77,25 @@ function getPairBalances(pairAddress: string, positionId: BigInt, blockNumber: B
 
   // Ticks
   const tickLower = position.getTickLower();
-  log.debug("getPairBalances: tickLower: {}", [tickLower.toString()]);
+  log.debug("getPairBalances: positionId: {}, tickLower: {}", [positionId.toString(), tickLower.toString()]);
   const sqrtRatioA: BigInt = getSqrtRatioAtTick(tickLower);
-  log.debug("getPairBalances: sqrtRatioA: {}", [sqrtRatioA.toString()]);
+  log.debug("getPairBalances: positionId: {}, sqrtRatioA: {}", [positionId.toString(), sqrtRatioA.toString()]);
 
   const tickUpper = position.getTickUpper();
-  log.debug("getUniswapV3PairRecords: tickUpper: {}", [tickUpper.toString()]);
+  log.debug("getPairBalances: positionId: {}, tickUpper: {}", [positionId.toString(), tickUpper.toString()]);
   const sqrtRatioB: BigInt = getSqrtRatioAtTick(tickUpper);
-  log.debug("getUniswapV3PairRecords: sqrtRatioB: {}", [sqrtRatioB.toString()]);
+  log.debug("getPairBalances: positionId: {}, sqrtRatioB: {}", [positionId.toString(), sqrtRatioB.toString()]);
 
   // If a position has no liquidity, we don't want to record details
   const liquidity: BigInt = position.getLiquidity();
   if (liquidity.equals(BigInt.zero())) {
-    log.debug("getPairBalances: Skipping position with zero liquidity", []);
+    log.debug("getPairBalances: Skipping position id {} with zero liquidity", [positionId.toString()]);
     return null;
   }
-  log.debug("getPairBalances: liquidity: {}", [liquidity.toString()]);
+  log.debug("getPairBalances: positionId: {}, liquidity: {}", [positionId.toString(), liquidity.toString()]);
 
   const sqrtPrice: BigInt = sqrtPriceX96.div(Q96);
-  log.debug("getPairBalances: sqrtPrice: {}", [sqrtPrice.toString()]);
+  log.debug("getPairBalances: positionId: {}, sqrtPrice: {}", [positionId.toString(), sqrtPrice.toString()]);
 
   const token0Amount: BigInt = getToken0Amount(liquidity, sqrtPrice, sqrtRatioA, sqrtRatioB);
   const token1Amount: BigInt = getToken1Amount(liquidity, sqrtPrice, sqrtRatioA, sqrtRatioB);
@@ -106,7 +105,7 @@ function getPairBalances(pairAddress: string, positionId: BigInt, blockNumber: B
 
   const token0Balance = toDecimal(token0Amount, token0Decimals);
   const token1Balance = toDecimal(token1Amount, token1Decimals);
-  log.debug("getPairBalances: token0Balance: {}, token1Balance: {}", [token0Balance.toString(), token1Balance.toString()]);
+  log.debug("getPairBalances: positionId: {}, token0Balance: {}, token1Balance: {}", [positionId.toString(), token0Balance.toString(), token1Balance.toString()]);
 
   return [token0Balance, token1Balance];
 }
@@ -216,13 +215,13 @@ export function getUniswapV3POLRecords(
 
 /**
  * The TVL of a UniswapV3 pool.
- * 
+ *
  * To avoid circular dependencies, this CANNOT be used by getUniswapV3OhmSupply or getUniswapV3POLRecords
- * 
- * @param pairAddress 
- * @param excludeOhmValue 
- * @param blockNumber 
- * @returns 
+ *
+ * @param pairAddress
+ * @param excludeOhmValue
+ * @param blockNumber
+ * @returns
  */
 export function getUniswapV3PairTotalValue(pairAddress: string, excludeOhmValue: boolean, blockNumber: BigInt): BigDecimal {
   log.info("getUniswapV3PairTotalValue: Calculating total value of pair {} ({}). excludeOhmValue? {}", [getContractName(pairAddress), pairAddress, excludeOhmValue.toString()]);

@@ -5,6 +5,7 @@ export const enum PairHandlerTypes {
   Curve,
   Balancer,
   FraxSwap,
+  ERC4626,
 }
 
 /**
