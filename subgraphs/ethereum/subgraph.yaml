@@ -1,11 +1,11 @@
 specVersion: 0.0.8
 description: Olympus Protocol Metrics Subgraph
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
-# features:
-#   - grafting
-# graft:
-#   base: Qmd7wgnNTijSpV1JDM3yUE8Exy4EGG1jw3yyQKdTKvYiig # 5.1.3
-#   block: 20514801 # Buyback MS deployment
+features:
+  - grafting
+graft:
+  base: Qmcw9E6pTyUyGzdwi1tvRBdrDrnjcXVngLeuTkruuM2t8g # 5.3.0
+  block: 21302749 # Clearinghouse V2 activation
 schema:
   file: ../../schema.graphql
 dataSources:
