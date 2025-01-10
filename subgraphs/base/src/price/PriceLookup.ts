@@ -6,13 +6,19 @@ import { getUSDRate } from "../../../shared/src/price/PriceRouter";
 import {
   ERC20_OHM,
   ERC20_WETH,
-  LP_UNISWAP_V2_OHM_WETH
+  ERC4626_SUSDS,
+  LP_UNISWAP_V2_OHM_WETH,
+  LP_UNISWAP_V3_OHM_SUSDS
 } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 import { getBaseTokenRate, isBaseToken } from "./PriceBase";
+import { PriceHandlerUniswapV3 } from "../../../shared/src/price/PriceHandlerUniswapV3";
+import { PriceHandlerERC4626 } from "../../../shared/src/price/PriceHandlerERC4626";
 
 export const PRICE_HANDLERS: PriceHandler[] = [
   new PriceHandlerUniswapV2([ERC20_OHM, ERC20_WETH], LP_UNISWAP_V2_OHM_WETH, getContractName),
+  new PriceHandlerUniswapV3([ERC20_OHM, ERC4626_SUSDS], LP_UNISWAP_V3_OHM_SUSDS, getContractName),
+  new PriceHandlerERC4626(ERC4626_SUSDS, ERC20_USDS, getContractName),
 ];
 
 /**
