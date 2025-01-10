@@ -46,6 +46,9 @@ function getOwnedLiquidityBalanceUniswapV3(
 
     // Calculate the total value of the underlying tokens
     const totalValue = token0Balance.times(token0Price).plus(token1Balance.times(token1Price));
+    if (totalValue.equals(BigDecimal.zero())) {
+      continue;
+    }
 
     // Calculate the multiplier used when excluding the OHM token(s)
     const multiplier = (token0IsOhm ? BigDecimal.fromString("0") : token0Balance.times(token0Price)).plus(token1IsOhm ? BigDecimal.fromString("0") : token1Balance.times(token1Price)).div(totalValue);
