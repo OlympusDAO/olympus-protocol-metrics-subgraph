@@ -9,8 +9,8 @@ import {
 } from "../../../shared/src/utils/TokenRecordHelper";
 import { BLOCKCHAIN, ERC20_TOKENS_FANTOM, OHM_TOKENS } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
-import { getPriceRecursive, HANDLERS } from "../price/PriceLookup";
 import { FANTOM_PROTOCOL_ADDRESSES } from "../contracts/ProtocolAddresses";
+import { getPriceRecursive, HANDLERS } from "../price/PriceLookup";
 
 /**
  * Returns the token records for a given token. This includes:

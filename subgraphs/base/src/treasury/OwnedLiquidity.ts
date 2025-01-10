@@ -1,15 +1,77 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
+import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { PriceHandler } from "../../../shared/src/price/PriceHandler";
-import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
+import { PriceHandlerUniswapV3 } from "../../../shared/src/price/PriceHandlerUniswapV3";
+import { arrayIncludesLoose, pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import {
   createTokenRecord,
   getIsTokenLiquid,
 } from "../../../shared/src/utils/TokenRecordHelper";
 import { BLOCKCHAIN, ERC20_TOKENS_BASE, OHM_TOKENS, PROTOCOL_ADDRESSES } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
-import { getPriceRecursive, PRICE_HANDLERS } from "../price/PriceLookup";
+import { getPrice, getPriceRecursive, PRICE_HANDLERS } from "../price/PriceLookup";
+
+function getOwnedLiquidityBalanceUniswapV3(
+  timestamp: BigInt,
+  liquidityHandler: PriceHandlerUniswapV3,
+  block: BigInt,
+): TokenRecord[] {
+  const records: TokenRecord[] = [];
+
+  const tokens = liquidityHandler.getTokens();
+  const token0IsOhm = arrayIncludesLoose(OHM_TOKENS, tokens[0]);
+  const token1IsOhm = arrayIncludesLoose(OHM_TOKENS, tokens[1]);
+
+  // Determine the prices of the underlying tokens
+  const token0Price = getPrice(tokens[0], block);
+  const token1Price = getPrice(tokens[1], block);
+
+  // Iterate over the protocol addresses
+  for (let i = 0; i < PROTOCOL_ADDRESSES.length; i++) {
+    const currentWalletAddress = PROTOCOL_ADDRESSES[i];
+
+    // Get the balance of the underlying tokens
+    const token0Balance = liquidityHandler.getUnderlyingTokenBalance(
+      currentWalletAddress,
+      tokens[0],
+      block,
+    );
+    const token1Balance = liquidityHandler.getUnderlyingTokenBalance(
+      currentWalletAddress,
+      tokens[1],
+      block,
+    );
+
+    // Calculate the total value of the underlying tokens
+    const totalValue = token0Balance.times(token0Price).plus(token1Balance.times(token1Price));
+
+    // Calculate the multiplier used when excluding the OHM token(s)
+    const multiplier = (token0IsOhm ? BigDecimal.fromString("0") : token0Balance.times(token0Price)).plus(token1IsOhm ? BigDecimal.fromString("0") : token1Balance.times(token1Price)).div(totalValue);
+
+    // Create the record
+    records.push(
+      createTokenRecord(
+        timestamp,
+        getContractName(liquidityHandler.getId()),
+        liquidityHandler.getId(),
+        getContractName(currentWalletAddress),
+        currentWalletAddress,
+        totalValue,
+        BigDecimal.fromString("1"),
+        block,
+        true,
+        ERC20_TOKENS_BASE,
+        BLOCKCHAIN,
+        multiplier,
+        TokenCategoryPOL,
+      )
+    );
+  }
+
+  return records;
+}
 
 /**
  * Returns the token records for a given token. This includes:
@@ -32,6 +94,11 @@ function getOwnedLiquidityBalance(
     block.toString(),
   ]);
   const records: TokenRecord[] = [];
+
+  // If the handler is UniswapV3, the approach is slightly different
+  if (liquidityHandler instanceof PriceHandlerUniswapV3) {
+    return getOwnedLiquidityBalanceUniswapV3(timestamp, liquidityHandler as PriceHandlerUniswapV3, block);
+  }
 
   // Calculate the multiplier
   const totalValue = liquidityHandler.getTotalValue([], getPriceRecursive, block);

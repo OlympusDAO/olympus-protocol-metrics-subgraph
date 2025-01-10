@@ -75,7 +75,7 @@ export class PriceHandlerERC4626 implements PriceHandler {
 
         // Get 1 share in terms of the underlying token
         const decimals = vault.decimals();
-        const sharesToUnderlying = toDecimal(vault.convertToAssets(BigInt.fromU32(10).pow(decimals)), decimals);
+        const sharesToUnderlying = toDecimal(vault.convertToAssets(BigInt.fromU32(10).pow(<u8>decimals)), decimals);
         log.info("{}: 1 share of {} is {} of the underlying", [
             FUNCTION,
             this.contractLookup(this.vaultAddress),

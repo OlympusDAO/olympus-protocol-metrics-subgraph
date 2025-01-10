@@ -24,6 +24,8 @@ export const OHM_TOKENS = [ERC20_OHM];
 
 export const DAO_MULTISIG = "0x18a390bD45bCc92652b9A91AD51Aed7f1c1358f5".toLowerCase();
 
+export const UNISWAP_V3_POSITION_MANAGER = "0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1".toLowerCase();
+
 export const PROTOCOL_ADDRESSES = [
     DAO_MULTISIG
 ];

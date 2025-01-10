@@ -44,6 +44,9 @@ dataSources:
           file: ./abis/UniswapV2Pair.json
         - name: UniswapV3Pair
           file: ./abis/UniswapV3Pair.json
+        - name: UniswapV3PositionManager
+          file: ./abis/UniswapV3PositionManager.json
       blockHandlers:
         - handler: handleAssets
       file: ./src/Dummy.ts
+
