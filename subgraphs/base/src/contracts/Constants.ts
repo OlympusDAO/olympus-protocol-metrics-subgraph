@@ -66,7 +66,7 @@ export const getWalletAddressesForContract = (contractAddress: string): string[]
   };
 
 export const CONTRACT_NAME_MAP = new Map<string, string>();
-CONTRACT_NAME_MAP.set(DAO_MULTISIG, "DAO Multisig");
+CONTRACT_NAME_MAP.set(DAO_MULTISIG, "DAO MS (Base)");
 CONTRACT_NAME_MAP.set(ERC20_OHM, "OHM");
 CONTRACT_NAME_MAP.set(ERC20_USDS, "USDS");
 CONTRACT_NAME_MAP.set(ERC20_WETH, "Wrapped Ether");
