@@ -7,6 +7,7 @@ import { PriceHandlerUniswapV3 } from "../../../shared/src/price/PriceHandlerUni
 import { getUSDRate } from "../../../shared/src/price/PriceRouter";
 import {
   ERC20_OHM,
+  ERC20_USDS,
   ERC20_WETH,
   ERC4626_SUSDS,
   LP_UNISWAP_V2_OHM_WETH,
