@@ -1,4 +1,5 @@
 import { log } from "@graphprotocol/graph-ts";
+
 import { TokenCategoryPOL, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 
 export const BLOCKCHAIN = "Base";

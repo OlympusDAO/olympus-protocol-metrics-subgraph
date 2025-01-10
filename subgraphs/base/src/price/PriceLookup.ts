@@ -1,7 +1,9 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { PriceHandler, PriceLookupResult } from "../../../shared/src/price/PriceHandler";
+import { PriceHandlerERC4626 } from "../../../shared/src/price/PriceHandlerERC4626";
 import { PriceHandlerUniswapV2 } from "../../../shared/src/price/PriceHandlerUniswapV2";
+import { PriceHandlerUniswapV3 } from "../../../shared/src/price/PriceHandlerUniswapV3";
 import { getUSDRate } from "../../../shared/src/price/PriceRouter";
 import {
   ERC20_OHM,
@@ -12,8 +14,6 @@ import {
 } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 import { getBaseTokenRate, isBaseToken } from "./PriceBase";
-import { PriceHandlerUniswapV3 } from "../../../shared/src/price/PriceHandlerUniswapV3";
-import { PriceHandlerERC4626 } from "../../../shared/src/price/PriceHandlerERC4626";
 
 export const PRICE_HANDLERS: PriceHandler[] = [
   new PriceHandlerUniswapV2([ERC20_OHM, ERC20_WETH], LP_UNISWAP_V2_OHM_WETH, getContractName),

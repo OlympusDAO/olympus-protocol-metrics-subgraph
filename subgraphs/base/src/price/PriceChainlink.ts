@@ -1,9 +1,9 @@
 import { Address, BigDecimal } from "@graphprotocol/graph-ts";
 
+import { ERC20_USDS } from "../../../ethereum/src/utils/Constants";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { ChainlinkPriceFeed } from "../../generated/TokenRecords-base/ChainlinkPriceFeed";
 import { ERC20_WETH } from "../contracts/Constants";
-import { ERC20_USDS } from "../../../ethereum/src/utils/Constants";
 
 const tokenPriceFeedMap: Map<string, string> = new Map<string, string>();
 tokenPriceFeedMap.set(ERC20_WETH, "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70".toLowerCase());
