@@ -1,10 +1,11 @@
 import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { Address } from "@graphprotocol/graph-ts";
+
 import { ERC4626 } from "../../generated/Price/ERC4626";
 import { ContractNameLookup } from "../contracts/ContractLookup";
-import { PriceHandler, PriceLookup, PriceLookupResult } from "./PriceHandler";
-import { addressesEqual } from "../utils/StringHelper";
 import { toDecimal } from "../utils/Decimals";
+import { addressesEqual } from "../utils/StringHelper";
+import { PriceHandler, PriceLookup, PriceLookupResult } from "./PriceHandler";
 
 const CLASS = "PriceHandlerERC4626";
 
