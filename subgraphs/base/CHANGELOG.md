@@ -1,6 +1,6 @@
 # Base Subgraph Changelog
 
-## 1.0.1 (2025-01-10)
+## 1.0.2 (2025-01-10)
 
 - Adds price handler for ERC4626 tokens
 - Adds price handler for Uniswap V3 (specifically, underlying token balances)

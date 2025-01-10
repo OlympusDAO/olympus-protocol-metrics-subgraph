@@ -103,6 +103,16 @@ function getOwnedLiquidityBalance(
     return getOwnedLiquidityBalanceUniswapV3(timestamp, liquidityHandler as PriceHandlerUniswapV3, block);
   }
 
+  // Check that there is a balance before doing any calculations
+  let totalBalance = BigDecimal.zero();
+  for (let i = 0; i < PROTOCOL_ADDRESSES.length; i++) {
+    const currentWalletAddress = PROTOCOL_ADDRESSES[i];
+    totalBalance = totalBalance.plus(liquidityHandler.getBalance(currentWalletAddress, block));
+  }
+  if (totalBalance.equals(BigDecimal.zero())) {
+    return records;
+  }
+
   // Calculate the multiplier
   const totalValue = liquidityHandler.getTotalValue([], getPriceRecursive, block);
   if (!totalValue || totalValue.equals(BigDecimal.zero())) {

@@ -105,7 +105,12 @@ export class PriceHandlerERC4626 implements PriceHandler {
     }
 
     getBalance(walletAddress: string, block: BigInt): BigDecimal {
-        throw new Error(`${CLASS}: getBalance: not implemented`);
+        const vault = this.getVault(block);
+        if (vault === null) {
+            return BigDecimal.zero();
+        }
+
+        return toDecimal(vault.balanceOf(Address.fromString(walletAddress)), vault.decimals());
     }
 
     getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal {
