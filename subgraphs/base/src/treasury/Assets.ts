@@ -18,7 +18,6 @@ function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): TokenReco
     getTokenBalances(timestamp, TokenCategoryStable, blockNumber),
   );
 
-
   pushTokenRecordArray(
     records,
     getTokenBalances(timestamp, TokenCategoryVolatile, blockNumber)

@@ -1,6 +1,6 @@
 import { log } from "@graphprotocol/graph-ts";
 
-import { TokenCategoryPOL, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
+import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 
 export const BLOCKCHAIN = "Base";
 
@@ -14,8 +14,11 @@ export const LP_UNISWAP_V2_OHM_WETH = "0x5ab4b9e96aeed4820e4be267f42411d72298548
 export const LP_UNISWAP_V3_OHM_SUSDS = "0x8cda2eae542a93ea7496f015c6b908e53adcb41a".toLowerCase();
 
 export const ERC20_TOKENS_BASE = new Map<string, TokenDefinition>();
+ERC20_TOKENS_BASE.set(ERC20_USDS, new TokenDefinition(ERC20_USDS, TokenCategoryStable, true, false));
 ERC20_TOKENS_BASE.set(ERC20_WETH, new TokenDefinition(ERC20_WETH, TokenCategoryVolatile, true, true));
+ERC20_TOKENS_BASE.set(ERC4626_SUSDS, new TokenDefinition(ERC4626_SUSDS, TokenCategoryStable, true, false));
 ERC20_TOKENS_BASE.set(LP_UNISWAP_V2_OHM_WETH, new TokenDefinition(LP_UNISWAP_V2_OHM_WETH, TokenCategoryPOL, true, false));
+ERC20_TOKENS_BASE.set(LP_UNISWAP_V3_OHM_SUSDS, new TokenDefinition(LP_UNISWAP_V3_OHM_SUSDS, TokenCategoryPOL, true, false));
 
 export const OHM_TOKENS = [ERC20_OHM];
 
