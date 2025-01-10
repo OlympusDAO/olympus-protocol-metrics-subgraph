@@ -1,7 +1,8 @@
-import { assert, createMockedFunction, describe, test } from "matchstick-as";
-import { PriceLookup, PriceLookupResult } from "../../src/price/PriceHandler";
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
+import { assert, createMockedFunction, describe, test } from "matchstick-as";
+
 import { ContractNameLookup } from "../../src/contracts/ContractLookup";
+import { PriceLookup, PriceLookupResult } from "../../src/price/PriceHandler";
 import { PriceHandlerERC4626 } from "../../src/price/PriceHandlerERC4626";
 import { toBigInt, toDecimal } from "../../src/utils/Decimals";
 
