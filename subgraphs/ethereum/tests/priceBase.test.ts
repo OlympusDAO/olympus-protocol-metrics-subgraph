@@ -17,6 +17,7 @@ import {
   getBaseTokenUSDRate,
   PairTokenBaseOrientation,
 } from "../src/utils/PriceBase";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 import { mockStablecoinsPriceFeeds } from "./chainlink";
 import {
   getEthUsdRate,
@@ -25,7 +26,6 @@ import {
   mockUsdOhmV2Rate,
   OHM_USD_RESERVE_BLOCK,
 } from "./pairHelper";
-import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 beforeEach(() => {
   log.debug("beforeEach: Clearing store", []);

@@ -1,9 +1,13 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, describe, test, log } from "matchstick-as/assembly/index";
+import { assert, beforeEach, clearStore, describe, log,test } from "matchstick-as/assembly/index";
 
+import { TokenCategoryPOL } from "../../shared/src/contracts/TokenDefinition";
 import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
-import { UNISWAP_V3_POSITION_MANAGER, getUniswapV3OhmSupply, getUniswapV3POLRecords, getUniswapV3PairTotalValue } from "../src/liquidity/LiquidityUniswapV3";
+import { TYPE_LIQUIDITY } from "../../shared/src/utils/TokenSupplyHelper";
+import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
+import { getUniswapV3OhmSupply, getUniswapV3PairTotalValue,getUniswapV3POLRecords, UNISWAP_V3_POSITION_MANAGER } from "../src/liquidity/LiquidityUniswapV3";
 import { ERC20_OHM_V2, ERC20_WETH, PAIR_UNISWAP_V3_FXS_ETH, PAIR_UNISWAP_V3_WETH_OHM } from "../src/utils/Constants";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS, mockERC20Balance } from "./erc20Helper";
 import {
@@ -11,7 +15,6 @@ import {
   ETH_USD_RESERVE_BLOCK,
   FXS_ETH_BALANCE_ETH,
   FXS_ETH_BALANCE_FXS,
-  OHM_V2_DECIMALS,
   getEthUsdRate,
   getFxsUsdRate,
   getOhmUsdRate,
@@ -25,12 +28,9 @@ import {
   mockUniswapV2PairsZero,
   mockUniswapV3PairsZero,
   mockUsdOhmV2Rate,
+  OHM_V2_DECIMALS,
 } from "./pairHelper";
-import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
-import { TokenCategoryPOL } from "../../shared/src/contracts/TokenDefinition";
-import { TYPE_LIQUIDITY } from "../../shared/src/utils/TokenSupplyHelper";
-import { mockUniswapV3PositionsZero, mockUniswapV3Pair, mockUniswapV3Positions, mockUniswapV3Position } from "./uniswapV3Helper";
-import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
+import { mockUniswapV3Pair, mockUniswapV3Position,mockUniswapV3Positions, mockUniswapV3PositionsZero } from "./uniswapV3Helper";
 
 describe("UniswapV3 pair value", () => {
   beforeEach(() => {

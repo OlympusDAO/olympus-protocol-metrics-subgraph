@@ -1,10 +1,10 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenSupply } from "../../../shared/generated/schema";
-import { ERC20_OHM } from "./Constants";
-import { ERC20 } from "../../generated/TokenRecords-arbitrum/ERC20";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { TYPE_LENDING, createTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
+import { createTokenSupply,TYPE_LENDING } from "../../../shared/src/utils/TokenSupplyHelper";
+import { ERC20 } from "../../generated/TokenRecords-arbitrum/ERC20";
+import { ERC20_OHM } from "./Constants";
 import { getContractName, getWalletAddressesForContract } from "./Contracts";
 
 // Hard-coding this for now. If we wanted this to be generalisable, we would use the Silo Repository contract.

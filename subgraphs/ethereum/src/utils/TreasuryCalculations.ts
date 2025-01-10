@@ -3,7 +3,9 @@ import { BigInt } from "@graphprotocol/graph-ts";
 import { TokenRecord } from "../../../shared/generated/schema";
 import { TokenSupply } from "../../../shared/generated/schema";
 import { pushTokenRecordArray, pushTokenSupplyArray } from "../../../shared/src/utils/ArrayHelper";
+import { getClearinghouseReceivables } from "../contracts/CoolerLoansClearinghouse";
 import { getOwnedLiquidityPoolValue } from "../liquidity/LiquidityCalculations";
+import { getAllERC4626Balances } from "./ERC4626";
 import {
   getBoostedLiquiditySupplyRecords,
   getIncurDebtSupplyRecords,
@@ -15,8 +17,6 @@ import {
 } from "./OhmCalculations";
 import { getStablecoinBalances } from "./TokenStablecoins";
 import { getVolatileTokenBalances } from "./TokenVolatile";
-import { getAllERC4626Balances } from "./ERC4626";
-import { getClearinghouseReceivables } from "../contracts/CoolerLoansClearinghouse";
 
 /**
  * Returns the market value, which is composed of:

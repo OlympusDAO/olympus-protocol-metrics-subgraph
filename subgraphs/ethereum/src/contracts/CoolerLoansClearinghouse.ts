@@ -1,11 +1,12 @@
 import { BigInt, log } from "@graphprotocol/graph-ts";
+
 import { TokenRecord } from "../../../shared/generated/schema";
-import { CoolerLoansClearinghouse } from "../../generated/ProtocolMetrics/CoolerLoansClearinghouse";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
+import { CoolerLoansClearinghouse } from "../../generated/ProtocolMetrics/CoolerLoansClearinghouse";
+import { getClearinghouseAddresses } from "../utils/Bophades";
 import { BLOCKCHAIN, ERC20_DAI, ERC20_TOKENS, getContractName } from "../utils/Constants";
 import { getUSDRate } from "../utils/Price";
-import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { getClearinghouseAddresses } from "../utils/Bophades";
 
 /**
  * Generates records for the DAI receivables in the Clearinghouses.

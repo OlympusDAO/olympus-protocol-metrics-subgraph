@@ -95,10 +95,10 @@ import {
   POOL_BALANCER_WETH_FDT_ID,
   TOKE_STAKING,
 } from "../src/utils/Constants";
+import { CONVEX_ALLOCATORS, getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 import { mockPriceFeed, mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import { mockZeroWalletBalances } from "./walletHelper";
-import { CONVEX_ALLOCATORS, getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 export const ETH_TRIBE_RESERVE_TRIBE = BigInt.fromString("40963255589554358793575");
 export const ETH_TRIBE_RESERVE_ETH = BigInt.fromString("4956325030062526848");

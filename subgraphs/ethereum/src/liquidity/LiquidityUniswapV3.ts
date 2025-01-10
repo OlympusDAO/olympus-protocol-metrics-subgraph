@@ -1,15 +1,15 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord, TokenSupply } from "../../../shared/generated/schema";
+import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { createTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
+import { createTokenSupply,TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
+import { UniswapV3PositionManager } from "../../generated/ProtocolMetrics/UniswapV3PositionManager";
+import { getERC20Decimals } from "../contracts/ERC20";
 import { BLOCKCHAIN, ERC20_OHM_V2, ERC20_TOKENS, getContractName, liquidityPairHasToken } from "../utils/Constants";
 import { getERC20DecimalBalance, getUniswapV3Pair } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
-import { toDecimal } from "../../../shared/src/utils/Decimals";
-import { getERC20Decimals } from "../contracts/ERC20";
-import { UniswapV3PositionManager } from "../../generated/ProtocolMetrics/UniswapV3PositionManager";
-import { createTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
-import { TYPE_LIQUIDITY, createTokenSupply } from "../../../shared/src/utils/TokenSupplyHelper";
-import { TokenCategoryPOL } from "../../../shared/src/contracts/TokenDefinition";
 import { getWalletAddressesForContract } from "../utils/ProtocolAddresses";
 
 export const UNISWAP_V3_POSITION_MANAGER = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88";

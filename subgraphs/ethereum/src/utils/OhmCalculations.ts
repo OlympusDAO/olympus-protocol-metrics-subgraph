@@ -8,10 +8,12 @@ import { LendingMarketDeployment } from "../../../shared/src/utils/LendingMarket
 import { createTokenSupply, TYPE_BONDS_DEPOSITS, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_VESTING_TOKENS, TYPE_BOOSTED_LIQUIDITY_VAULT, TYPE_LENDING, TYPE_LIQUIDITY, TYPE_OFFSET, TYPE_TOTAL_SUPPLY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { OLYMPUS_ASSOCIATION_WALLET } from "../../../shared/src/Wallets";
 import { BondManager } from "../../generated/ProtocolMetrics/BondManager";
+import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { IncurDebt } from "../../generated/ProtocolMetrics/IncurDebt";
 import { OlympusBoostedLiquidityRegistry } from "../../generated/ProtocolMetrics/OlympusBoostedLiquidityRegistry";
 import { OlympusBoostedLiquidityVaultLido } from "../../generated/ProtocolMetrics/OlympusBoostedLiquidityVaultLido";
 import { sOlympusERC20V3 } from "../../generated/ProtocolMetrics/sOlympusERC20V3";
+import { wsOHM } from "../../generated/ProtocolMetrics/wsOHM";
 import { GnosisAuction, GnosisAuctionRoot } from "../../generated/schema";
 import { getERC20Decimals, getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import { GNOSIS_RECORD_ID } from "../GnosisAuction";
@@ -19,6 +21,7 @@ import { getBalancerPoolTokenQuantity } from "../liquidity/LiquidityBalancer";
 import { getCurvePairTokenQuantityRecords } from "../liquidity/LiquidityCurve";
 import { getFraxSwapPairTokenQuantityRecords } from "../liquidity/LiquidityFraxSwap";
 import { getUniswapV2PairTokenQuantity } from "../liquidity/LiquidityUniswapV2";
+import { getUniswapV3OhmSupply } from "../liquidity/LiquidityUniswapV3";
 import {
   BOND_MANAGER,
   CIRCULATING_SUPPLY_WALLETS,
@@ -50,11 +53,8 @@ import {
 } from "./ContractHelper";
 import { PairHandlerTypes } from "./PairHandler";
 import { getUSDRate } from "./Price";
-import { getUniswapV3OhmSupply } from "../liquidity/LiquidityUniswapV3";
-import { getSiloSupply } from "./Silo";
-import { wsOHM } from "../../generated/ProtocolMetrics/wsOHM";
-import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { BONDS_DEPOSIT } from "./ProtocolAddresses";
+import { getSiloSupply } from "./Silo";
 
 const MIGRATION_OFFSET_STARTING_BLOCK = "14381564";
 const MIGRATION_OFFSET = "2013";

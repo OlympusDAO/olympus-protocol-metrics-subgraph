@@ -1,9 +1,10 @@
 import { Address, BigInt, ByteArray, Bytes, dataSource, log } from "@graphprotocol/graph-ts";
+
+import { COOLER_LOANS_CLEARINGHOUSE_V1, COOLER_LOANS_CLEARINGHOUSE_V1_1, COOLER_LOANS_CLEARINGHOUSE_V2 } from "../../../shared/src/Wallets";
+import { BophadesClearinghouseRegistry } from "../../generated/ProtocolMetrics/BophadesClearinghouseRegistry";
 import { BophadesKernel } from "../../generated/ProtocolMetrics/BophadesKernel";
 import { BophadesTreasury } from "../../generated/ProtocolMetrics/BophadesTreasury";
 import { BophadesModule, ClearinghouseAddress } from "../../generated/schema";
-import { BophadesClearinghouseRegistry } from "../../generated/ProtocolMetrics/BophadesClearinghouseRegistry";
-import { COOLER_LOANS_CLEARINGHOUSE_V1, COOLER_LOANS_CLEARINGHOUSE_V1_1, COOLER_LOANS_CLEARINGHOUSE_V2 } from "../../../shared/src/Wallets";
 
 const KERNEL_MAP = new Map<string, string>();
 KERNEL_MAP.set("mainnet", "0x2286d7f9639e8158FaD1169e76d1FbC38247f54b");
@@ -69,7 +70,7 @@ export function getTRSRY(blockNumber: BigInt): BophadesTreasury | null {
   const trsryAddress = getTreasuryAddress(blockNumber);
   if (trsryAddress === null) {
     return null;
-  };
+  }
 
   return BophadesTreasury.bind(trsryAddress);
 }
