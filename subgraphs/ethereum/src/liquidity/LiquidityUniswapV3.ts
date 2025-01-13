@@ -159,6 +159,9 @@ export function getUniswapV3POLRecords(
       continue;
     }
 
+    let totalValue = BigDecimal.zero();
+    let includedValue = BigDecimal.zero();
+
     const positionCount = positionCountResult.value;
     log.debug("getUniswapV3POLRecords: wallet {} ({}) position count: {}", [walletAddress, getContractName(walletAddress), positionCount.toString()]);
     for (let j: u32 = 0; j < positionCount.toU32(); j++) {
@@ -181,33 +184,41 @@ export function getUniswapV3POLRecords(
       const token0Value = token0Balance.times(token0Price);
       const token1Value = token1Balance.times(token1Price);
 
-      const totalValue = token0Value.plus(token1Value);
-      log.debug("getUniswapV3POLRecords: totalValue: {}", [totalValue.toString()]);
-
       const token0IncludedValue = token0Result.value.equals(Address.fromString(ERC20_OHM_V2)) ? BigDecimal.fromString("0") : token0Value;
       const token1IncludedValue = token1Result.value.equals(Address.fromString(ERC20_OHM_V2)) ? BigDecimal.fromString("0") : token1Value;
-      const includedValue = token0IncludedValue.plus(token1IncludedValue);
-      const multiplier = includedValue.div(totalValue);
-      log.debug("getUniswapV3POLRecords: multiplier: {}", [multiplier.toString()]);
 
-      records.push(
-        createTokenRecord(
-          timestamp,
-          getContractName(pairAddress),
-          pairAddress,
-          getContractName(walletAddress),
-          walletAddress,
-          totalValue,
-          BigDecimal.fromString("1"),
-          blockNumber,
-          true,
-          ERC20_TOKENS,
-          BLOCKCHAIN,
-          multiplier,
-          TokenCategoryPOL,
-        )
-      );
+      // Add to the running totals
+      includedValue = includedValue.plus(token0IncludedValue).plus(token1IncludedValue);
+      totalValue = totalValue.plus(token0Value).plus(token1Value);
     }
+
+    if (totalValue.equals(BigDecimal.zero())) {
+      continue;
+    }
+
+    // Calculate the multiplier used when excluding the OHM token(s)
+    const multiplier = includedValue.div(totalValue);
+    log.debug("getUniswapV3POLRecords: multiplier: {}", [multiplier.toString()]);
+
+    // Create the record
+    // One record per wallet, since this code block aggregates the underlying token balance across all positions
+    records.push(
+      createTokenRecord(
+        timestamp,
+        getContractName(pairAddress),
+        pairAddress,
+        getContractName(walletAddress),
+        walletAddress,
+        totalValue,
+        BigDecimal.fromString("1"),
+        blockNumber,
+        true,
+        ERC20_TOKENS,
+        BLOCKCHAIN,
+        multiplier,
+        TokenCategoryPOL,
+      )
+    );
   }
 
   return records;
@@ -324,6 +335,8 @@ export function getUniswapV3OhmSupply(
       continue;
     }
 
+    let ohmBalance = BigDecimal.zero();
+
     const positionCount = positionCountResult.value;
     for (let j: u32 = 0; j < positionCount.toU32(); j++) {
       const positionId = positionManager.tokenOfOwnerByIndex(Address.fromString(walletAddress), BigInt.fromU32(j));
@@ -334,24 +347,30 @@ export function getUniswapV3OhmSupply(
         continue;
       }
 
-      const ohmBalance = balances[ohmIndex];
-
-      records.push(
-        createTokenSupply(
-          timestamp,
-          getContractName(tokenAddress),
-          tokenAddress,
-          getContractName(pairAddress),
-          pairAddress,
-          getContractName(walletAddress),
-          walletAddress,
-          TYPE_LIQUIDITY,
-          ohmBalance,
-          blockNumber,
-          -1,
-        )
-      );
+      ohmBalance = ohmBalance.plus(balances[ohmIndex]);
     }
+
+    if (ohmBalance.equals(BigDecimal.zero())) {
+      continue;
+    }
+
+    // Create the record
+    // One record per wallet, since this code block aggregates the underlying token balance across all positions
+    records.push(
+      createTokenSupply(
+        timestamp,
+        getContractName(tokenAddress),
+        tokenAddress,
+        getContractName(pairAddress),
+        pairAddress,
+        getContractName(walletAddress),
+        walletAddress,
+        TYPE_LIQUIDITY,
+        ohmBalance,
+        blockNumber,
+        -1,
+      )
+    );
   }
 
   return records;

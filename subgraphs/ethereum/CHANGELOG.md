@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 5.4.5 (2025-01-10)
+## 5.4.8 (2025-01-13)
 
 - Fixes a record ID conflict when there are multiple positions of a specific liquidity pool
 
