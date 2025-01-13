@@ -54,6 +54,7 @@ function getOwnedLiquidityBalanceUniswapV3(
     const multiplier = (token0IsOhm ? BigDecimal.fromString("0") : token0Balance.times(token0Price)).plus(token1IsOhm ? BigDecimal.fromString("0") : token1Balance.times(token1Price)).div(totalValue);
 
     // Create the record
+    // One record per wallet, since the price handler aggregates the underlying token balance across all positions
     records.push(
       createTokenRecord(
         timestamp,

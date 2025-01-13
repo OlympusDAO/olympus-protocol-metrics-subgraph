@@ -99,6 +99,7 @@ export function getProtocolOwnedLiquiditySupplyRecords(
           continue;
         }
 
+        // One record per wallet, since the price handler aggregates the underlying token balance across all positions
         records.push(
           createTokenSupply(
             timestamp,
