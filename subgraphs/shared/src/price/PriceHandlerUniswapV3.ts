@@ -2,24 +2,40 @@ import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { log } from "matchstick-as";
 
 import { UniswapV3Pair } from "../../generated/Price/UniswapV3Pair";
+import { UniswapV3PositionManager } from "../../generated/Price/UniswapV3PositionManager";
 import { ContractNameLookup } from "../contracts/ContractLookup";
-import { getERC20 } from "../contracts/ERC20";
+import { getDecimals, getERC20 } from "../contracts/ERC20";
 import { arrayIncludesLoose } from "../utils/ArrayHelper";
 import { toDecimal } from "../utils/Decimals";
 import { addressesEqual } from "../utils/StringHelper";
 import { PriceHandler, PriceLookup, PriceLookupResult } from "./PriceHandler";
 
 const CLASS = "PriceHandlerUniswapV3";
+const Q96 = BigInt.fromI32(2).pow(96);
+
+function min(a: BigInt, b: BigInt): BigInt {
+  return a.lt(b) ? a : b;
+}
+
+function max(a: BigInt, b: BigInt): BigInt {
+  return a.gt(b) ? a : b;
+}
 
 export class PriceHandlerUniswapV3 implements PriceHandler {
+  protected positionManager: string;
   protected tokens: string[];
   protected poolAddress: string;
   protected contractLookup: ContractNameLookup;
 
-  constructor(tokens: string[], poolAddress: string, contractLookup: ContractNameLookup) {
+  constructor(tokens: string[], poolAddress: string, positionManager: string, contractLookup: ContractNameLookup) {
     this.tokens = tokens;
     this.poolAddress = poolAddress;
+    this.positionManager = positionManager;
     this.contractLookup = contractLookup;
+  }
+
+  public getTokens(): string[] {
+    return this.tokens;
   }
 
   private getContract(block: BigInt): UniswapV3Pair | null {
@@ -50,6 +66,17 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
     return arrayIncludesLoose(this.tokens, tokenAddress);
   }
 
+  private getPair(): UniswapV3Pair | null {
+    const FUNCTION = `${CLASS}: getPair:`;
+
+    const pair = UniswapV3Pair.bind(Address.fromString(this.poolAddress));
+    if (pair === null || pair.try_token0().reverted || pair.try_token1().reverted) {
+      return null;
+    }
+
+    return pair;
+  }
+
   getPrice(
     tokenAddress: string,
     priceLookup: PriceLookup,
@@ -57,8 +84,8 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
   ): PriceLookupResult | null {
     const FUNCTION = `${CLASS}: lookup:`;
 
-    const pair = UniswapV3Pair.bind(Address.fromString(this.poolAddress));
-    if (pair === null || pair.try_token0().reverted || pair.try_token1().reverted) {
+    const pair = this.getPair();
+    if (pair === null) {
       log.debug("{} Cannot determine value as the contract ({}) reverted at block {}", [
         FUNCTION,
         this.contractLookup(this.poolAddress),
@@ -202,7 +229,128 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
     return BigDecimal.zero();
   }
 
+  private getToken0Amount(liquidity: BigInt, sqrtPrice: BigInt, sqrtRatioA: BigInt, sqrtRatioB: BigInt): BigInt {
+    const newSqrtPrice = max(min(sqrtPrice, sqrtRatioB), sqrtRatioA);
+
+    return liquidity.times(sqrtRatioB.minus(newSqrtPrice)).div(newSqrtPrice.times(sqrtRatioB));
+  }
+
+  private getToken1Amount(liquidity: BigInt, sqrtPrice: BigInt, sqrtRatioA: BigInt, sqrtRatioB: BigInt): BigInt {
+    const newSqrtPrice = max(min(sqrtPrice, sqrtRatioB), sqrtRatioA);
+
+    return liquidity.times(newSqrtPrice.minus(sqrtRatioA));
+  }
+
+  private getSqrtRatioAtTick(tick: number): BigInt {
+    const sqrtRatio = BigInt.fromU64(u64(sqrt(1.0001 ** tick)));
+    log.debug("getSqrtRatioAtTick: sqrtRatio: {}", [sqrtRatio.toString()]);
+
+    return sqrtRatio;
+  }
+
+  private getPairBalances(positionId: BigInt, block: BigInt): BigDecimal[] | null {
+    const FUNCTION = `${CLASS}: getPairBalances:`;
+    const pair = this.getPair();
+    if (!pair) {
+      return null;
+    }
+
+    const pairToken0 = pair.token0();
+    const pairToken1 = pair.token1();
+    const pairSlot0 = pair.slot0();
+    const sqrtPriceX96 = pairSlot0.getSqrtPriceX96();
+    log.debug("getPairBalances: positionId: {}, sqrtPriceX96: {}", [positionId.toString(), sqrtPriceX96.toString()]);
+    const currentTick = pairSlot0.getTick();
+    log.debug("getPairBalances: positionId: {}, currentTick: {}", [positionId.toString(), currentTick.toString()]);
+
+    const positionManager = UniswapV3PositionManager.bind(Address.fromString(this.positionManager));
+    const position = positionManager.positions(positionId);
+    const token0 = position.getToken0();
+    const token1 = position.getToken1();
+
+    // Check that the position is for the pair we are looking for
+    if (!token0.equals(pairToken0) || !token1.equals(pairToken1)) {
+      log.debug("getPairBalances: Skipping position {} that does not match tokens in pair address {}", [positionId.toString(), this.poolAddress])
+      return null;
+    }
+
+    // Ticks
+    const tickLower = position.getTickLower();
+    log.debug("getPairBalances: positionId: {}, tickLower: {}", [positionId.toString(), tickLower.toString()]);
+    const sqrtRatioA: BigInt = this.getSqrtRatioAtTick(tickLower);
+    log.debug("getPairBalances: positionId: {}, sqrtRatioA: {}", [positionId.toString(), sqrtRatioA.toString()]);
+
+    const tickUpper = position.getTickUpper();
+    log.debug("getPairBalances: positionId: {}, tickUpper: {}", [positionId.toString(), tickUpper.toString()]);
+    const sqrtRatioB: BigInt = this.getSqrtRatioAtTick(tickUpper);
+    log.debug("getPairBalances: positionId: {}, sqrtRatioB: {}", [positionId.toString(), sqrtRatioB.toString()]);
+
+    // If a position has no liquidity, we don't want to record details
+    const liquidity: BigInt = position.getLiquidity();
+    if (liquidity.equals(BigInt.zero())) {
+      log.debug("getPairBalances: Skipping position id {} with zero liquidity", [positionId.toString()]);
+      return null;
+    }
+    log.debug("getPairBalances: positionId: {}, liquidity: {}", [positionId.toString(), liquidity.toString()]);
+
+    const sqrtPrice: BigInt = sqrtPriceX96.div(Q96);
+    log.debug("getPairBalances: positionId: {}, sqrtPrice: {}", [positionId.toString(), sqrtPrice.toString()]);
+
+    const token0Amount: BigInt = this.getToken0Amount(liquidity, sqrtPrice, sqrtRatioA, sqrtRatioB);
+    const token1Amount: BigInt = this.getToken1Amount(liquidity, sqrtPrice, sqrtRatioA, sqrtRatioB);
+
+    const token0Decimals = getDecimals(token0.toHexString(), block);
+    const token1Decimals = getDecimals(token1.toHexString(), block);
+
+    const token0Balance = toDecimal(token0Amount, token0Decimals);
+    const token1Balance = toDecimal(token1Amount, token1Decimals);
+    log.debug("getPairBalances: positionId: {}, token0Balance: {}, token1Balance: {}", [positionId.toString(), token0Balance.toString(), token1Balance.toString()]);
+
+    return [token0Balance, token1Balance];
+  }
+
   getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal {
-    throw new Error("Method not implemented.");
+    const FUNCTION = `${CLASS}: getUnderlyingTokenBalance:`;
+    const pair = this.getPair();
+    if (!pair) {
+      return BigDecimal.zero();
+    }
+
+    // Check that tokenAddress is either token0 or token1
+    if (!addressesEqual(tokenAddress, pair.token0().toHexString()) && !addressesEqual(tokenAddress, pair.token1().toHexString())) {
+      throw new Error(`${FUNCTION} token ${this.contractLookup(tokenAddress)} (${tokenAddress}) does not belong to LP ${this.contractLookup(this.poolAddress)} (${this.poolAddress})`);
+    }
+
+    const positionManager = UniswapV3PositionManager.bind(Address.fromString(this.positionManager));
+    const positionCountResult = positionManager.try_balanceOf(Address.fromString(walletAddress));
+    if (positionCountResult.reverted) {
+      return BigDecimal.zero();
+    }
+
+    // Figure out which token to return
+    const tokenIndex = addressesEqual(tokenAddress, pair.token0().toHexString()) ? 0 : 1;
+
+    const positionCount = positionCountResult.value;
+    log.debug("{} wallet {} ({}) position count: {}", [FUNCTION, this.contractLookup(walletAddress), walletAddress, positionCount.toString()]);
+
+    let tokenBalance = BigDecimal.zero();
+
+    for (let i: u32 = 0; i < positionCount.toU32(); i++) {
+      const positionId = positionManager.tokenOfOwnerByIndex(Address.fromString(walletAddress), BigInt.fromU32(i));
+      log.debug("{} positionId: {}", [FUNCTION, positionId.toString()]);
+
+      const balances = this.getPairBalances(positionId, block);
+      if (!balances) {
+        continue;
+      }
+
+      if (tokenIndex === 0) {
+        tokenBalance = tokenBalance.plus(balances[0]);
+      } else {
+        tokenBalance = tokenBalance.plus(balances[1]);
+      }
+    }
+
+    return tokenBalance;
   }
 }

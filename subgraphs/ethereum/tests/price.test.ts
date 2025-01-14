@@ -5,11 +5,13 @@ import {
   clearStore,
   createMockedFunction,
   describe,
-  test,
   log,
+  test,
 } from "matchstick-as/assembly/index";
 
 import { DEFAULT_DECIMALS, toBigInt } from "../../shared/src/utils/Decimals";
+import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
+import { UNISWAP_V3_POSITION_MANAGER } from "../src/liquidity/LiquidityUniswapV3";
 import {
   BALANCER_VAULT,
   ERC20_AURA,
@@ -49,6 +51,8 @@ import {
   POOL_BALANCER_WETH_FDT_ID,
 } from "../src/utils/Constants";
 import { getUSDRate, getUSDRateBalancer } from "../src/utils/Price";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS, mockERC20Balance } from "./erc20Helper";
 import {
@@ -77,11 +81,7 @@ import {
   OHM_V2_DECIMALS,
   USDC_DECIMALS,
 } from "./pairHelper";
-import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
-import { UNISWAP_V3_POSITION_MANAGER } from "../src/liquidity/LiquidityUniswapV3";
-import { mockUniswapV3Pair, mockUniswapV3Positions, mockUniswapV3Position } from "./uniswapV3Helper";
-import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
-import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
+import { mockUniswapV3Pair, mockUniswapV3Position,mockUniswapV3Positions } from "./uniswapV3Helper";
 
 const BLOCK_NUMBER: BigInt = BigInt.fromString("14000000");
 

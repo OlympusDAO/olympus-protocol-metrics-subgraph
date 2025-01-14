@@ -1,5 +1,5 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, createMockedFunction, describe, test, log } from "matchstick-as/assembly/index";
+import { assert, beforeEach, clearStore, createMockedFunction, describe, log,test } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import {
@@ -44,12 +44,12 @@ import {
   getTokeStakedBalancesFromWallets,
   getVlCvxUnlockedRecords,
 } from "../src/utils/ContractHelper";
+import { getWalletAddressesForContract, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2 } from "../src/utils/ProtocolAddresses";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import { mockAuraEarnedBalance, mockAuraEarnedBalanceZero, mockAuraLockedBalance, mockAuraLockedBalanceZero, mockBalancerGaugeBalance, mockBalancerGaugeBalanceZero, mockConvexStakedBalance, mockConvexStakedBalanceZero, mockEthUsdRate, mockLiquityStakedBalance, mockLiquityStakedBalanceZero, mockTokeStakedBalance, mockTokeStakedBalanceZero } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
-import { getWalletAddressesForContract, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2 } from "../src/utils/ProtocolAddresses";
-import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 const TIMESTAMP: BigInt = BigInt.fromString("1");
 const DEFAULT_TOTAL_SUPPLY = BigDecimal.fromString("0");

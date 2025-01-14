@@ -4,8 +4,8 @@ repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 features:
   - grafting
 graft:
-  base: Qmcw9E6pTyUyGzdwi1tvRBdrDrnjcXVngLeuTkruuM2t8g # 5.3.0
-  block: 21302749 # Clearinghouse V2 activation
+  base: QmZtg5fzQiLw3z74wqZZHE4roD23Mz2Jzu2zW5RafNfhff # 5.4.4
+  block: 21596466 # OHM-sUSDS position updates
 schema:
   file: ../../schema.graphql
 dataSources:

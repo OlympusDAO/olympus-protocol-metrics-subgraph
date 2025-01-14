@@ -9,7 +9,8 @@ import { addressesEqual } from "../../src/utils/StringHelper";
 
 const mockRateUniswapV3 = (
   pairAddress: string,
-  slot0Value: BigInt,
+  sqrtPriceX96: BigInt,
+  tick: i32,
   token0Address: string,
   token1Address: string,
   token0Decimals: i32,
@@ -24,8 +25,8 @@ const mockRateUniswapV3 = (
     "slot0",
     "slot0():(uint160,int24,uint16,uint16,uint16,uint8,bool)",
   ).returns([
-    ethereum.Value.fromUnsignedBigInt(slot0Value),
-    ethereum.Value.fromI32(-57778),
+    ethereum.Value.fromUnsignedBigInt(sqrtPriceX96),
+    ethereum.Value.fromI32(tick),
     ethereum.Value.fromI32(1),
     ethereum.Value.fromI32(2),
     ethereum.Value.fromI32(2),
@@ -66,18 +67,34 @@ const mockRateUniswapV3 = (
     .returns([ethereum.Value.fromUnsignedBigInt(token1Balance)]);
 };
 
+const UNISWAP_V3_POSITION_MANAGER = "0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1".toLowerCase();
 const LP_UNISWAP_V3_FPIS_FRAX = "0x8fe536c7dc019455cce34746755c64bbe2aa163b".toLowerCase();
 const ERC20_FRAX = "0x853d955acef822db058eb8505911ed77f175b99e".toLowerCase();
 const ERC20_FPIS = "0xc2544a32872a91f4a553b404c6950e89de901fdb".toLowerCase();
-const SLOT0 = "74413935457348545615865577209"; // Copied from FPIS
+const FPIS_FRAX_SQRTPRICEX96 = BigInt.fromString("74413935457348545615865577209"); // Copied from FPIS
+const FPIS_FRAX_TICK: i32 = -57778;
 const FRAX_BALANCE = BigDecimal.fromString("10");
 const FPIS_BALANCE = BigDecimal.fromString("15");
 const BLOCK = BigInt.fromString("1");
 
+const WALLET_ADDRESS = "0x18a390bD45bCc92652b9A91AD51Aed7f1c1358f5".toLowerCase();
+
+const ERC20_OHM = "0x64aa3364F17a4D01c6f1751Fd97C2BD3D7e7f1D5".toLowerCase();
+const ERC20_WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2".toLowerCase();
+
+const OHM_WETH_POOL = "0x88051b0eea095007d3bef21ab287be961f3d8598".toLowerCase();
+const OHM_WETH_SQRTPRICEX96 = BigInt.fromString("198259033222864761237442349019430");
+const OHM_WETH_TICK: i32 = 156507;
+const OHM_WETH_POSITION_ID = BigInt.fromString("222");
+const OHM_WETH_POSITION_TICK_LOWER: i32 = -887220;
+const OHM_WETH_POSITION_TICK_UPPER: i32 = 887220;
+const OHM_WETH_POSITION_LIQUIDITY = BigInt.fromString("346355586036686019");
+
 export const mockFpisFraxPair = (): void => {
   mockRateUniswapV3(
     LP_UNISWAP_V3_FPIS_FRAX,
-    BigInt.fromString(SLOT0),
+    FPIS_FRAX_SQRTPRICEX96,
+    FPIS_FRAX_TICK,
     ERC20_FRAX,
     ERC20_FPIS,
     18,
@@ -85,6 +102,62 @@ export const mockFpisFraxPair = (): void => {
     toBigInt(FRAX_BALANCE),
     toBigInt(FPIS_BALANCE),
   );
+};
+
+export const mockOhmWethPair = (): void => {
+  mockRateUniswapV3(
+    OHM_WETH_POOL,
+    OHM_WETH_SQRTPRICEX96,
+    OHM_WETH_TICK,
+    ERC20_OHM,
+    ERC20_WETH,
+    9,
+    18,
+    toBigInt(BigDecimal.fromString("139219.0068728")),
+    toBigInt(BigDecimal.fromString("871.50742434")),
+  );
+};
+
+export const mockOhmWethPosition = (): void => {
+  // positionManager.balanceOf()
+  createMockedFunction(
+    Address.fromString(UNISWAP_V3_POSITION_MANAGER),
+    "balanceOf",
+    "balanceOf(address):(uint256)",
+  )
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(WALLET_ADDRESS))])
+    .returns([ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(1))]);
+
+  // positionManager.tokenOfOwnerByIndex()
+  createMockedFunction(
+    Address.fromString(UNISWAP_V3_POSITION_MANAGER),
+    "tokenOfOwnerByIndex",
+    "tokenOfOwnerByIndex(address,uint256):(uint256)",
+  )
+    .withArgs([ethereum.Value.fromAddress(Address.fromString(WALLET_ADDRESS)), ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(0))])
+    .returns([ethereum.Value.fromUnsignedBigInt(OHM_WETH_POSITION_ID)]);
+
+  // positionManager.positions()
+  createMockedFunction(
+    Address.fromString(UNISWAP_V3_POSITION_MANAGER),
+    "positions",
+    "positions(uint256):(uint96,address,address,address,uint24,int24,int24,uint128,uint256,uint256,uint128,uint128)",
+  )
+    .withArgs([ethereum.Value.fromUnsignedBigInt(OHM_WETH_POSITION_ID)])
+    .returns([
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(0)), // nonce
+      ethereum.Value.fromAddress(Address.zero()), // operator
+      ethereum.Value.fromAddress(Address.fromString(ERC20_OHM)), // token0
+      ethereum.Value.fromAddress(Address.fromString(ERC20_WETH)), // token1
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(3000)), // fee
+      ethereum.Value.fromI32(OHM_WETH_POSITION_TICK_LOWER), // tickLower
+      ethereum.Value.fromI32(OHM_WETH_POSITION_TICK_UPPER), // tickUpper
+      ethereum.Value.fromUnsignedBigInt(OHM_WETH_POSITION_LIQUIDITY), // liquidity
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(0)), // feeGrowthInside0X128
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(0)), // feeGrowthInside1X128
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(0)), // tokensOwed0
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(0)), // tokensOwed1
+    ]);
 };
 
 const FPIS_RATE = BigDecimal.fromString("1.13357594386");
@@ -108,6 +181,7 @@ describe("getPrice", () => {
     const handler = new PriceHandlerUniswapV3(
       [ERC20_FPIS],
       LP_UNISWAP_V3_FPIS_FRAX,
+      UNISWAP_V3_POSITION_MANAGER,
       contractLookup,
     );
 
@@ -149,6 +223,7 @@ describe("getTotalValue", () => {
     const handler = new PriceHandlerUniswapV3(
       [ERC20_FRAX, ERC20_FPIS],
       LP_UNISWAP_V3_FPIS_FRAX,
+      UNISWAP_V3_POSITION_MANAGER,
       contractLookup,
     );
 
@@ -187,6 +262,7 @@ describe("getTotalValue", () => {
     const handler = new PriceHandlerUniswapV3(
       [ERC20_FRAX, ERC20_FPIS],
       LP_UNISWAP_V3_FPIS_FRAX,
+      UNISWAP_V3_POSITION_MANAGER,
       contractLookup,
     );
 
@@ -227,6 +303,7 @@ describe("getUnitPrice", () => {
     const handler = new PriceHandlerUniswapV3(
       [ERC20_FRAX, ERC20_FPIS],
       LP_UNISWAP_V3_FPIS_FRAX,
+      UNISWAP_V3_POSITION_MANAGER,
       contractLookup,
     );
 
@@ -236,5 +313,42 @@ describe("getUnitPrice", () => {
     // We can't count the unit price of a V3 pool (no total supply), so total supply is 1 and total value = unit price
     const unitPrice = handler.getUnitPrice(priceLookup, BLOCK);
     assert.stringEquals(expectedValue.toString(), unitPrice ? unitPrice.toString() : "");
+  });
+});
+
+describe("getUnderlyingTokenBalance", () => {
+  test("underlying token balance is correct", () => {
+    const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
+      if (addressesEqual(tokenAddress, ERC20_WETH)) {
+        return {
+          liquidity: BigDecimal.fromString("1"),
+          price: BigDecimal.fromString("3600"),
+        };
+      }
+
+      return {
+        liquidity: BigDecimal.fromString("1"),
+        price: BigDecimal.fromString("21"),
+      };
+    };
+
+    const contractLookup: ContractNameLookup = (tokenAddress: string): string => {
+      if (addressesEqual(tokenAddress, ERC20_WETH)) {
+        return "wETH";
+      }
+
+      return "OHM";
+    };
+
+    mockOhmWethPair();
+    mockOhmWethPosition();
+
+    const handler = new PriceHandlerUniswapV3([ERC20_OHM, ERC20_WETH], OHM_WETH_POOL, UNISWAP_V3_POSITION_MANAGER, contractLookup);
+
+    const ohmBalance = handler.getUnderlyingTokenBalance(WALLET_ADDRESS, ERC20_OHM, BLOCK);
+    const wethBalance = handler.getUnderlyingTokenBalance(WALLET_ADDRESS, ERC20_WETH, BLOCK);
+
+    assert.stringEquals("138431.489223295", ohmBalance.toString());
+    assert.stringEquals("866.581676263788419538", wethBalance.toString());
   });
 });

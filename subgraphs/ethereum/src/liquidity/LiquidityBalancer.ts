@@ -8,6 +8,7 @@ import { createTokenRecord } from "../../../shared/src/utils/TokenRecordHelper";
 import { createTokenSupply, TYPE_LIQUIDITY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { BalancerPoolToken } from "../../generated/ProtocolMetrics/BalancerPoolToken";
 import { BalancerVault } from "../../generated/ProtocolMetrics/BalancerVault";
+import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 import { BalancerPoolSnapshot } from "../../generated/schema";
 import { getERC20Decimals, getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import {
@@ -23,7 +24,6 @@ import {
 } from "../utils/ContractHelper";
 import { getUSDRate } from "../utils/Price";
 import { getWalletAddressesForContract } from "../utils/ProtocolAddresses";
-import { ERC20 } from "../../generated/ProtocolMetrics/ERC20";
 
 function getBalancerVault(vaultAddress: string, _blockNumber: BigInt): BalancerVault {
   return BalancerVault.bind(Address.fromString(vaultAddress));

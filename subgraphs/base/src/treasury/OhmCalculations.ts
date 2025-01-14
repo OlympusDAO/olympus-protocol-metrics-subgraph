@@ -5,7 +5,7 @@ import { getERC20DecimalBalance } from "../../../shared/src/contracts/ERC20";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createTokenSupply, TYPE_LIQUIDITY, TYPE_TOTAL_SUPPLY, TYPE_TREASURY } from "../../../shared/src/utils/TokenSupplyHelper";
 import { ERC20 } from "../../generated/TokenRecords-base/ERC20";
-import { PROTOCOL_ADDRESSES, ERC20_OHM } from "../contracts/Constants";
+import { ERC20_OHM,PROTOCOL_ADDRESSES } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 import { PRICE_HANDLERS } from "../price/PriceLookup";
 
@@ -99,6 +99,7 @@ export function getProtocolOwnedLiquiditySupplyRecords(
           continue;
         }
 
+        // One record per wallet, since the price handler aggregates the underlying token balance across all positions
         records.push(
           createTokenSupply(
             timestamp,

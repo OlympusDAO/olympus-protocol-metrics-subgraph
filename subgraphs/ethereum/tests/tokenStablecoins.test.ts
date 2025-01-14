@@ -1,10 +1,10 @@
 import { BigInt } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, describe, test, log } from "matchstick-as/assembly/index";
+import { assert, beforeEach, clearStore, describe, log,test } from "matchstick-as/assembly/index";
 
 import { NATIVE_ETH } from "../src/utils/Constants";
 import { getStablecoinBalance } from "../src/utils/TokenStablecoins";
-import { mockEthUsdRate } from "./pairHelper";
 import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
+import { mockEthUsdRate } from "./pairHelper";
 
 const TIMESTAMP = BigInt.fromString("1");
 

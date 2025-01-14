@@ -3,6 +3,7 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { ERC20 } from "../../../shared/generated/Price/ERC20";
 import { TokenRecord } from "../../../shared/generated/schema";
 import { getERC20TokenRecordFromWallet } from "../../../shared/src/contracts/ERC20";
+import { getTokenRecordValue } from "../../../shared/src/utils/TokenRecordHelper";
 import { DAO_WALLET } from "../../../shared/src/Wallets";
 import {
   BLOCKCHAIN,
@@ -11,10 +12,9 @@ import {
   ERC20_JONES,
   ERC20_TOKENS_ARBITRUM,
   ERC20_WETH,
-  JONES_WRITE_OFF_BLOCK,
   getProtocolAddresses,
+  JONES_WRITE_OFF_BLOCK,
 } from "./Constants";
-import { getTokenRecordValue } from "../../../shared/src/utils/TokenRecordHelper";
 
 export function getContractName(
   contractAddress: string,

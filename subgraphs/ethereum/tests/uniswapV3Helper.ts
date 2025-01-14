@@ -1,5 +1,6 @@
 import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts";
 import { createMockedFunction } from "matchstick-as";
+
 import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 
 const BLOCK_NUMBER = BigInt.fromString("14000000");
@@ -107,4 +108,4 @@ export function mockUniswapV3Position(
       ethereum.Value.fromUnsignedBigInt(BigInt.zero()), // TokensOwed0
       ethereum.Value.fromUnsignedBigInt(BigInt.zero()), // TokensOwed1
     ]);
-};
+}

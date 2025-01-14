@@ -1,5 +1,5 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, createMockedFunction, test, log } from "matchstick-as/assembly/index";
+import { assert, beforeEach, clearStore, createMockedFunction, log,test } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { DAO_WALLET } from "../../shared/src/Wallets";
@@ -7,9 +7,9 @@ import { ERC20_LQTY, ERC20_LUSD, ERC20_TRIBE, ERC20_WETH, LIQUITY_STABILITY_POOL
 import {
   getLiquityStabilityPoolRecords,
 } from "../src/utils/ContractHelper";
-import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
+import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 
 const LUSD_BALANCE = "100";
 const LUSD_BALANCE_INT = toBigInt(BigDecimal.fromString(LUSD_BALANCE), ERC20_STANDARD_DECIMALS);

@@ -7,11 +7,13 @@ import { toDecimal } from "../../../shared/src/utils/Decimals";
 import {
   isTokenAddressInCategory,
 } from "../../../shared/src/utils/TokenRecordHelper";
+import { ERC4626 } from "../../generated/ProtocolMetrics/ERC4626";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { TokenPriceSnapshot } from "../../generated/schema";
 import { getOrCreateERC20TokenSnapshot } from "../contracts/ERC20";
 import { getBalancerPoolTotalValue, getOrCreateBalancerPoolSnapshot } from "../liquidity/LiquidityBalancer";
 import { getOrCreateUniswapV2PoolSnapshot, getUniswapV2PairTotalValue } from "../liquidity/LiquidityUniswapV2";
+import { getUniswapV3PairTotalValue } from "../liquidity/LiquidityUniswapV3";
 import {
   BALANCER_VAULT,
   ERC20_BB_A_USD,
@@ -34,6 +36,7 @@ import {
   OHM_PRICE_PAIRS,
 } from "./Constants";
 import { getERC20Decimals, getUniswapV3Pair } from "./ContractHelper";
+import { getERC4626Rate } from "./ERC4626";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 import {
   BASE_TOKEN_UNKNOWN,
@@ -45,9 +48,6 @@ import {
   isBaseToken,
   PairTokenBaseOrientation,
 } from "./PriceBase";
-import { getUniswapV3PairTotalValue } from "../liquidity/LiquidityUniswapV3";
-import { ERC4626 } from "../../generated/ProtocolMetrics/ERC4626";
-import { getERC4626Rate } from "./ERC4626";
 
 /**
  * Determines the non-OHM value of the given pair.

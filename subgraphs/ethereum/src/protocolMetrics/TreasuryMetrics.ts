@@ -1,8 +1,8 @@
 import { BigDecimal, log } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
-import { ERC20_GOHM, ERC20_OHM_V1, ERC20_OHM_V2, OHM_IN_MARKET_VALUE_BLOCK } from "../utils/Constants";
 import { BUYBACK_MS } from "../../../shared/src/Wallets";
+import { ERC20_GOHM, ERC20_OHM_V1, ERC20_OHM_V2, OHM_IN_MARKET_VALUE_BLOCK } from "../utils/Constants";
 
 /**
  * OHM price * circulating supply

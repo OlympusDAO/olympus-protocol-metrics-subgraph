@@ -24,6 +24,8 @@ dataSources:
       abis:
         - name: ERC20
           file: ./abis/ERC20.json
+        - name: ERC4626
+          file: ./abis/ERC4626.json
         - name: gOHM
           file: ./abis/gOHM.json
         # OHM Calculations
@@ -42,6 +44,9 @@ dataSources:
           file: ./abis/UniswapV2Pair.json
         - name: UniswapV3Pair
           file: ./abis/UniswapV3Pair.json
+        - name: UniswapV3PositionManager
+          file: ./abis/UniswapV3PositionManager.json
       blockHandlers:
         - handler: handleAssets
       file: ./src/Dummy.ts
+

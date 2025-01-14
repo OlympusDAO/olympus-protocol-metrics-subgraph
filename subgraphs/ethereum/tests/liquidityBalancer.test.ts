@@ -1,5 +1,5 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, describe, test, log } from "matchstick-as/assembly/index";
+import { assert, beforeEach, clearStore, describe, log,test } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { DAO_WALLET, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
@@ -24,6 +24,8 @@ import {
   POOL_BALANCER_OHM_V2_BTRFLY_V2_ID,
   POOL_BALANCER_WETH_FDT_ID,
 } from "../src/utils/Constants";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
 import {
@@ -54,8 +56,6 @@ import {
   OHM_USD_RESERVE_BLOCK,
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
-import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
-import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 const TIMESTAMP = BigInt.fromString("1");
 const BLOCK_NUMBER: BigInt = BigInt.fromString("14000000");

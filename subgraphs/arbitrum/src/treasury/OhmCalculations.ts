@@ -10,9 +10,9 @@ import { ERC20 } from "../../generated/TokenRecords-arbitrum/ERC20";
 import { OlympusLender } from "../../generated/TokenRecords-arbitrum/OlympusLender";
 import { CIRCULATING_SUPPLY_WALLETS, ERC20_GOHM_SYNAPSE, ERC20_OHM, OLYMPUS_LENDER, SENTIMENT_DEPLOYMENTS, SENTIMENT_LTOKEN, SILO_ADDRESS, SILO_DEPLOYMENTS } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
-import { PRICE_HANDLERS } from "../price/PriceLookup";
-import { getSiloSupply } from "../contracts/Silo";
 import { getSentimentSupply } from "../contracts/Sentiment";
+import { getSiloSupply } from "../contracts/Silo";
+import { PRICE_HANDLERS } from "../price/PriceLookup";
 
 /**
  * Block after which the Silo repository will be used, instead of manual deployments.

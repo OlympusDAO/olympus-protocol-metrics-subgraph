@@ -1,11 +1,12 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
-import { ERC4626 } from "../../generated/ProtocolMetrics/ERC4626";
-import { BLOCKCHAIN, ERC4626_TOKENS, getContractName } from "./Constants";
+
+import { TokenRecord } from "../../../shared/generated/schema";
 import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { createTokenRecord, getIsTokenLiquid } from "../../../shared/src/utils/TokenRecordHelper";
+import { ERC4626 } from "../../generated/ProtocolMetrics/ERC4626";
+import { BLOCKCHAIN, ERC4626_TOKENS, getContractName } from "./Constants";
 import { getUSDRate } from "./Price";
-import { TokenRecord } from "../../../shared/generated/schema";
 import { getWalletAddressesForContract } from "./ProtocolAddresses";
 
 /**
@@ -55,7 +56,7 @@ function getERC4626TokenRecordFromWallets(
     ERC4626_TOKENS,
     BLOCKCHAIN,
   );
-};
+}
 
 /**
  * Returns the balances of the ERC4626 token in all wallets.
@@ -91,7 +92,7 @@ function getERC4626TokenRecordsFromWallets(
   }
 
   return records;
-};
+}
 
 /**
  * Returns the rate of 1 ERC4626 token in USD.

@@ -1,11 +1,12 @@
-import { assert, describe, test } from "matchstick-as";
-import { BLOCKCHAIN, ERC20_GOHM, ERC20_OHM_V2, ERC20_TOKENS } from "../src/utils/Constants";
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { assert, describe, test } from "matchstick-as";
+
+import { TokenRecord } from "../../shared/generated/schema";
+import { createTokenRecord } from "../../shared/src/utils/TokenRecordHelper";
 import { BUYBACK_MS } from "../../shared/src/Wallets";
 import { getTreasuryLiquidBacking, getTreasuryMarketValue } from "../src/protocolMetrics/TreasuryMetrics";
+import { BLOCKCHAIN, ERC20_GOHM, ERC20_OHM_V2, ERC20_TOKENS } from "../src/utils/Constants";
 import { TREASURY_ADDRESS_V3 } from "../src/utils/ProtocolAddresses";
-import { createTokenRecord } from "../../shared/src/utils/TokenRecordHelper";
-import { TokenRecord } from "../../shared/generated/schema";
 
 const TIMESTAMP = BigInt.fromString("1");
 const INCLUSION_BLOCK = BigInt.fromI32(20514801);

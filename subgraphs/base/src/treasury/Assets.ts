@@ -6,9 +6,9 @@ import {
   TokenCategoryVolatile,
 } from "../../../shared/src/contracts/TokenDefinition";
 import { pushTokenRecordArray, pushTokenSupplyArray } from "../../../shared/src/utils/ArrayHelper";
-import { getTokenBalances } from "./TokenBalances";
 import { getProtocolOwnedLiquiditySupplyRecords, getTotalSupply, getTreasuryOHMRecords } from "./OhmCalculations";
 import { getOwnedLiquidityBalances } from "./OwnedLiquidity";
+import { getTokenBalances } from "./TokenBalances";
 
 function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): TokenRecord[] {
   const records: TokenRecord[] = [];
@@ -17,7 +17,6 @@ function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): TokenReco
     records,
     getTokenBalances(timestamp, TokenCategoryStable, blockNumber),
   );
-
 
   pushTokenRecordArray(
     records,

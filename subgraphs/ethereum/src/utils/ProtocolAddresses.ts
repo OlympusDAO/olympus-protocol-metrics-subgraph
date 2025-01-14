@@ -3,9 +3,10 @@
  */
 
 import { BigInt, log } from "@graphprotocol/graph-ts";
-import { ERC20_GOHM, ERC20_OHM_V1, ERC20_OHM_V2, ERC20_SOHM_V1, ERC20_SOHM_V2, ERC20_SOHM_V3, OHM_IN_MARKET_VALUE_BLOCK } from "./Constants";
-import { getClearinghouseAddresses, getTreasuryAddress } from "./Bophades";
+
 import { BUYBACK_MS } from "../../../shared/src/Wallets";
+import { getClearinghouseAddresses, getTreasuryAddress } from "./Bophades";
+import { ERC20_GOHM, ERC20_OHM_V1, ERC20_OHM_V2, ERC20_SOHM_V1, ERC20_SOHM_V2, ERC20_SOHM_V3, OHM_IN_MARKET_VALUE_BLOCK } from "./Constants";
 
 export const TREASURY_ADDRESS_V1 = "0x886CE997aa9ee4F8c2282E182aB72A705762399D".toLowerCase();
 export const TREASURY_ADDRESS_V2 = "0x31f8cc382c9898b273eff4e0b7626a6987c846e8".toLowerCase();

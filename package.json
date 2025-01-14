@@ -14,7 +14,8 @@
     "remove-local": "graph remove --node http://localhost:8020/ olympus",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 olympus",
     "ls-deadcode": "yarn ts-prune -p tsconfig.ts-prune.json | grep -v 'used in module'",
-    "subgraph": "yarn ts-node bin/subgraph/src/index.ts"
+    "subgraph": "yarn ts-node bin/subgraph/src/index.ts",
+    "lint": "eslint --fix ."
   },
   "dependencies": {
     "@apollo/client": "^3.8.4",

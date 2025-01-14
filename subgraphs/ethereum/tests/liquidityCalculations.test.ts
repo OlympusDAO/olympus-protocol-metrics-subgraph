@@ -1,5 +1,5 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, describe, test, log } from "matchstick-as/assembly/index";
+import { assert, beforeEach, clearStore, describe, log,test } from "matchstick-as/assembly/index";
 
 import { toBigInt } from "../../shared/src/utils/Decimals";
 import { DAO_WALLET, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
@@ -15,6 +15,8 @@ import {
   PAIR_FRAXSWAP_V1_OHM_FRAX,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
 } from "../src/utils/Constants";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS, mockERC20TotalSupply } from "./erc20Helper";
 import {
@@ -34,8 +36,6 @@ import {
   OHM_V2_DECIMALS,
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
-import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
-import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 const PAIR_CURVE_OHM_ETH_TOTAL_SUPPLY = BigDecimal.fromString("100");
 const TIMESTAMP = BigInt.fromString("1");

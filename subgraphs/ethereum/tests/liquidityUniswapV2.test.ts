@@ -1,5 +1,5 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, describe, test, log } from "matchstick-as/assembly/index";
+import { assert, beforeEach, clearStore, describe, log,test } from "matchstick-as/assembly/index";
 
 import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
 import { TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
@@ -21,6 +21,8 @@ import {
   PAIR_UNISWAP_V2_OHM_ETH_V2,
 } from "../src/utils/Constants";
 import { PairHandler, PairHandlerTypes } from "../src/utils/PairHandler";
+import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
+import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 import { mockStablecoinsPriceFeeds } from "./chainlink";
 import { ERC20_STANDARD_DECIMALS } from "./erc20Helper";
 import {
@@ -43,8 +45,6 @@ import {
   OHM_V2_DECIMALS,
 } from "./pairHelper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
-import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
-import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 
 // Limits the search to the OHM-DAI pairs, otherwise other pairs will be iterated over
 const pairArrayOverride: PairHandler[] = [

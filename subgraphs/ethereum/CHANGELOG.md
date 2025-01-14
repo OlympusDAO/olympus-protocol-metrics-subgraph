@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 5.4.8 (2025-01-13)
+
+- Fixes a record ID conflict when there are multiple positions of a specific liquidity pool
+
 ## 5.4.4 (2024-12-02)
 
 - Adds support for Uniswap V3 OHM-sUSDS pool
