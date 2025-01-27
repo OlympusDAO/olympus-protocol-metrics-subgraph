@@ -28,10 +28,11 @@ export class PriceHandlerERC4626 implements PriceHandler {
         const FUNCTION = `${CLASS}: getVault:`;
         const vault = ERC4626.bind(Address.fromString(this.vaultAddress));
 
-        if (vault === null || vault.try_asset().reverted) {
-            log.debug("{} contract ({}) reverted at block {}", [
+        if (vault === null || vault.try_decimals().reverted) {
+            log.debug("{} contract {} ({}) reverted at block {}", [
                 FUNCTION,
                 this.contractLookup(this.vaultAddress),
+                this.vaultAddress,
                 block.toString(),
             ]);
             return null;
