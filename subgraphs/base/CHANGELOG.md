@@ -1,6 +1,6 @@
 # Base Subgraph Changelog
 
-## 1.0.3 (2025-01-27)
+## 1.0.4 (2025-01-27)
 
 - Fixes issue with price resolution for USDS
 
