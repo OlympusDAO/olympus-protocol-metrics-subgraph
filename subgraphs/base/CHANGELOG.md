@@ -1,5 +1,9 @@
 # Base Subgraph Changelog
 
+## 1.0.3 (2025-01-27)
+
+- Fixes issue with price resolution for USDS
+
 ## 1.0.2 (2025-01-10)
 
 - Adds price handler for ERC4626 tokens
