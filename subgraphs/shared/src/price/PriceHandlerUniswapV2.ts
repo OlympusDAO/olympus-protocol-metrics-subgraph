@@ -102,10 +102,11 @@ export class PriceHandlerUniswapV2 implements PriceHandler {
       : token0Reserves.div(token1Reserves);
 
     const tokenPrice = baseTokenNumerator.times(secondaryTokenPrice.price);
+    const totalValue = this.getTotalValue([], priceLookup, block);
 
     return {
       price: tokenPrice,
-      liquidity: BigDecimal.zero(), // TODO set liquidity
+      liquidity: totalValue === null ? BigDecimal.zero() : totalValue,
     };
   }
 

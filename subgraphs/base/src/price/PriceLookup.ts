@@ -70,10 +70,10 @@ export function getPrice(tokenAddress: string, block: BigInt): BigDecimal {
   const priceResult = getPriceRecursive(tokenAddress, block, null);
 
   if (priceResult === null) {
-    log.warning("Unable to determine price for token {} ({}) at block {}", [getContractName(tokenAddress), tokenAddress, block.toString()]);
+    log.warning("{}: Unable to determine price for token {} ({}) at block {}", [FUNC, getContractName(tokenAddress), tokenAddress, block.toString()]);
     return BigDecimal.zero();
   }
 
-  log.debug("Price for {} ({}) at block {} was: {}", [getContractName(tokenAddress), tokenAddress, block.toString(), priceResult.price.toString()]);
+  log.debug("{}: Price for {} ({}) at block {} was: {}", [FUNC, getContractName(tokenAddress), tokenAddress, block.toString(), priceResult.price.toString()]);
   return priceResult.price;
 }
