@@ -1,8 +1,9 @@
 # Base Subgraph Changelog
 
-## 1.0.5 (2025-01-27)
+## 1.0.6 (2025-01-28)
 
-- Fixes issue with price resolution for USDS
+- Removes tracking of USDS, sUSDS and OHM-sUSDS LP
+- Adds tracking of USDC and OHM-USDC LP
 - Set liquidity for Uniswap V2 and V3 price handlers
 
 ## 1.0.2 (2025-01-10)

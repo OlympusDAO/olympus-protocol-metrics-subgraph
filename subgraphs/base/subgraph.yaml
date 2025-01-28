@@ -26,8 +26,6 @@ dataSources:
       abis:
         - name: ERC20
           file: ../shared/abis/ERC20.json
-        - name: ERC4626
-          file: ../shared/abis/ERC4626.json
         # Price Lookup
         - name: UniswapV2Pair
           file: ../shared/abis/UniswapV2Pair.json
