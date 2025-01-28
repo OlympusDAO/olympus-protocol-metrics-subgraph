@@ -274,15 +274,17 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
       return null;
     }
 
+    // The tick calculations are based on the following: https://ethereum.stackexchange.com/a/140264
+
     // Ticks
     const tickLower = position.getTickLower();
     log.debug("getPairBalances: positionId: {}, tickLower: {}", [positionId.toString(), tickLower.toString()]);
-    const sqrtRatioA: BigInt = this.getSqrtRatioAtTick(tickLower);
+    const sqrtRatioA: BigDecimal = BigDecimal.fromString(Math.sqrt(1.0001 ** tickLower).toString());
     log.debug("getPairBalances: positionId: {}, sqrtRatioA: {}", [positionId.toString(), sqrtRatioA.toString()]);
 
     const tickUpper = position.getTickUpper();
     log.debug("getPairBalances: positionId: {}, tickUpper: {}", [positionId.toString(), tickUpper.toString()]);
-    const sqrtRatioB: BigInt = this.getSqrtRatioAtTick(tickUpper);
+    const sqrtRatioB: BigDecimal = BigDecimal.fromString(Math.sqrt(1.0001 ** tickUpper).toString());
     log.debug("getPairBalances: positionId: {}, sqrtRatioB: {}", [positionId.toString(), sqrtRatioB.toString()]);
 
     // If a position has no liquidity, we don't want to record details
@@ -293,17 +295,28 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
     }
     log.debug("getPairBalances: positionId: {}, liquidity: {}", [positionId.toString(), liquidity.toString()]);
 
-    const sqrtPrice: BigInt = sqrtPriceX96.div(Q96);
+    const sqrtPrice: BigDecimal = sqrtPriceX96.toBigDecimal().div(Q96.toBigDecimal());
     log.debug("getPairBalances: positionId: {}, sqrtPrice: {}", [positionId.toString(), sqrtPrice.toString()]);
 
-    const token0Amount: BigInt = this.getToken0Amount(liquidity, sqrtPrice, sqrtRatioA, sqrtRatioB);
-    const token1Amount: BigInt = this.getToken1Amount(liquidity, sqrtPrice, sqrtRatioA, sqrtRatioB);
+    let token0Amount: BigDecimal = BigDecimal.zero();
+    let token1Amount: BigDecimal = BigDecimal.zero();
 
-    const token0Decimals = getDecimals(token0.toHexString(), block);
-    const token1Decimals = getDecimals(token1.toHexString(), block);
+    if (currentTick <= tickLower) {
+      token0Amount = liquidity.toBigDecimal().times(((sqrtRatioB.minus(sqrtRatioA)).div(sqrtRatioA.times(sqrtRatioB))));
+    }
+    else if (currentTick >= tickUpper) {
+      token1Amount = liquidity.toBigDecimal().times((sqrtRatioB.minus(sqrtRatioA)));
+    }
+    else if (currentTick > tickLower && currentTick < tickUpper) {
+      token0Amount = liquidity.toBigDecimal().times(((sqrtRatioB.minus(sqrtPrice)).div(sqrtPrice.times(sqrtRatioB))));
+      token1Amount = liquidity.toBigDecimal().times(((sqrtPrice.minus(sqrtRatioA))));
+    }
 
-    const token0Balance = toDecimal(token0Amount, token0Decimals);
-    const token1Balance = toDecimal(token1Amount, token1Decimals);
+    const token0Decimals: i32 = i32(getDecimals(token0.toHexString(), block));
+    const token1Decimals: i32 = i32(getDecimals(token1.toHexString(), block));
+
+    const token0Balance = token0Amount.div(BigInt.fromI32(10).pow(u8(token0Decimals)).toBigDecimal());
+    const token1Balance = token1Amount.div(BigInt.fromI32(10).pow(u8(token1Decimals)).toBigDecimal());
     log.debug("getPairBalances: positionId: {}, token0Balance: {}, token1Balance: {}", [positionId.toString(), token0Balance.toString(), token1Balance.toString()]);
 
     return [token0Balance, token1Balance];

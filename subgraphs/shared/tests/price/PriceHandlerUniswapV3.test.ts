@@ -413,8 +413,8 @@ describe("getUnderlyingTokenBalance", () => {
     const ohmBalance = handler.getUnderlyingTokenBalance(WALLET_ADDRESS, ERC20_OHM, BLOCK);
     const wethBalance = handler.getUnderlyingTokenBalance(WALLET_ADDRESS, ERC20_WETH, BLOCK);
 
-    assert.stringEquals("138431.489223295", ohmBalance.toString());
-    assert.stringEquals("866.581676263788419538", wethBalance.toString());
+    assert.stringEquals("138410.423", ohmBalance.truncate(4).toString());
+    assert.stringEquals("866.7135", wethBalance.truncate(4).toString());
   });
 
   test("OHM-USDC balances are correct", () => {
@@ -434,7 +434,7 @@ describe("getUnderlyingTokenBalance", () => {
     const ohmBalance = handler.getUnderlyingTokenBalance(WALLET_ADDRESS, ERC20_OHM, BLOCK);
     const usdcBalance = handler.getUnderlyingTokenBalance(WALLET_ADDRESS, ERC20_USDC, BLOCK);
 
-    assert.stringEquals("75484.2795", ohmBalance.toString());
-    assert.stringEquals("445136.342", usdcBalance.toString());
+    assert.stringEquals("75484.2794", ohmBalance.truncate(4).toString());
+    assert.stringEquals("445136.3419", usdcBalance.truncate(4).toString());
   });
 });
