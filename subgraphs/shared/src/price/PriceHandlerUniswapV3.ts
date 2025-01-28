@@ -152,11 +152,10 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
     }
 
     const finalUsdRate = adjustedNumerator.times(otherTokenPriceResult.price);
-    const totalValue = this.getTotalValue([], priceLookup, block);
 
     return {
       price: finalUsdRate,
-      liquidity: totalValue === null ? BigDecimal.zero() : totalValue,
+      liquidity: BigDecimal.zero(), // TODO set liquidity
     };
   }
 
