@@ -1,13 +1,12 @@
 import { Address, BigDecimal } from "@graphprotocol/graph-ts";
 
-import { ERC20_USDS } from "../../../ethereum/src/utils/Constants";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { ChainlinkPriceFeed } from "../../generated/TokenRecords-base/ChainlinkPriceFeed";
-import { ERC20_WETH } from "../contracts/Constants";
+import { ERC20_USDC,ERC20_WETH } from "../contracts/Constants";
 
 const tokenPriceFeedMap: Map<string, string> = new Map<string, string>();
 tokenPriceFeedMap.set(ERC20_WETH, "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70".toLowerCase());
-tokenPriceFeedMap.set(ERC20_USDS, "0x591e79239a7d679378eC8c847e5038150364C78F".toLowerCase()); // DAI feed, 1:1 interchangeable with USDS
+tokenPriceFeedMap.set(ERC20_USDC, "0x7e860098F58bBFC8648a4311b374B1D669a2bc6B".toLowerCase());
 
 export function getPriceFeedTokens(): string[] {
     return tokenPriceFeedMap.keys();

@@ -1,6 +1,11 @@
 specVersion: 0.0.8
 description: Olympus Protocol Metrics Subgraph - Base
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
+features:
+  - grafting
+graft:
+  base: QmYgw9fWpiriYBj6NL8U8952Gsrxfvdfe3hxHE25UJm56A # 1.0.2
+  block: 25311259 # POL updates
 schema:
   file: ../../schema.graphql
 dataSources:
@@ -21,8 +26,6 @@ dataSources:
       abis:
         - name: ERC20
           file: ../shared/abis/ERC20.json
-        - name: ERC4626
-          file: ../shared/abis/ERC4626.json
         # Price Lookup
         - name: UniswapV2Pair
           file: ../shared/abis/UniswapV2Pair.json
