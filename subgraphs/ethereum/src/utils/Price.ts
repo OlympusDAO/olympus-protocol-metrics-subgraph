@@ -93,8 +93,15 @@ function getPairHandlerNonOhmValue(
       [getContractName(pairHandler.getContract()), pairHandler.getContract(), blockNumber.toString()],
     );
 
-    const totalValue = getUniswapV3PairTotalValue(pairHandler.getContract(), true, blockNumber);
+    const result = getUniswapV3PairTotalValue(pairHandler.getContract(), true, blockNumber);
+    const totalValue = result.totalValue;
+    const ohmBalance = result.ohmBalance;
     if (totalValue.equals(BigDecimal.zero())) {
+      return null;
+    }
+
+    // Ensure that the pair does have a non-zero OHM value
+    if (ohmBalance.equals(BigDecimal.zero())) {
       return null;
     }
 
