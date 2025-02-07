@@ -4,6 +4,9 @@ import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefi
 
 export const BLOCKCHAIN = "Berachain";
 
+// TODO add iBERA
+// TODO add fatBERA
+
 // Tokens
 export const ERC20_OHM = "0x18878Df23e2a36f81e820e4b47b4A40576D3159C".toLowerCase();
 export const ERC20_IBERA = "0x9b6761bf2397Bb5a6624a856cC84A3A14Dcd3fe5".toLowerCase();
@@ -17,7 +20,7 @@ export const LP_UNISWAP_V3_WBERA_HONEY = "0x1127f801cb3ab7bdf8923272949aa7dba94b
 
 // Token definitions
 export const ERC20_TOKENS_BERACHAIN = new Map<string, TokenDefinition>();
-ERC20_TOKENS_BERACHAIN.set(ERC20_IBERA, new TokenDefinition(ERC20_IBERA, TokenCategoryVolatile, true, false));
+// ERC20_TOKENS_BERACHAIN.set(ERC20_IBERA, new TokenDefinition(ERC20_IBERA, TokenCategoryVolatile, true, false));
 ERC20_TOKENS_BERACHAIN.set(ERC20_STARGATE_USDC, new TokenDefinition(ERC20_STARGATE_USDC, TokenCategoryStable, true, false));
 ERC20_TOKENS_BERACHAIN.set(ERC20_HONEY, new TokenDefinition(ERC20_HONEY, TokenCategoryStable, true, false));
 ERC20_TOKENS_BERACHAIN.set(LP_UNISWAP_V3_WBERA_HONEY, new TokenDefinition(LP_UNISWAP_V3_WBERA_HONEY, TokenCategoryPOL, true, false));
