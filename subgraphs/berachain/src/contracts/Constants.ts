@@ -28,17 +28,19 @@ ERC20_TOKENS_BERACHAIN.set(LP_UNISWAP_V3_WBERA_HONEY, new TokenDefinition(LP_UNI
 
 export const OHM_TOKENS = [ERC20_OHM];
 
+export const TRSRY = "0xb1fA0Ac44d399b778B14af0AAF4bCF8af3437ad1".toLowerCase();
 export const DAO_MULTISIG = "0x91494D1BC2286343D51c55E46AE80C9356D099b5".toLowerCase();
 
 // Kodiak
 export const UNISWAP_V3_POSITION_MANAGER = "0xFE5E8C83FFE4d9627A75EaA7Fee864768dB989bD".toLowerCase();
 
 export const PROTOCOL_ADDRESSES = [
-    DAO_MULTISIG
+    DAO_MULTISIG,
+    TRSRY
 ];
 
 const TREASURY_BLACKLIST = new Map<string, string[]>();
-TREASURY_BLACKLIST.set(ERC20_OHM, [DAO_MULTISIG]);
+TREASURY_BLACKLIST.set(ERC20_OHM, [DAO_MULTISIG, TRSRY]);
 
 /**
  * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
@@ -84,6 +86,7 @@ CONTRACT_NAME_MAP.set(ERC20_IBERA, "Infrared BERA");
 CONTRACT_NAME_MAP.set(ERC20_STARGATE_USDC, "Bridged USDC (Stargate)");
 CONTRACT_NAME_MAP.set(ERC20_HONEY, "Honey");
 CONTRACT_NAME_MAP.set(ERC20_WBERA, "Wrapped BERA");
+CONTRACT_NAME_MAP.set(TRSRY, "TRSRY Module");
 
 export const CONTRACT_ABBREVIATION_MAP = new Map<string, string>();
 CONTRACT_ABBREVIATION_MAP.set(ERC20_OHM, "OHM");
