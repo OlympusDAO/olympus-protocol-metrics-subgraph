@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 5.4.10 (2025-02-05)
+
+- Adds support for sUSDS as a base token
+
 ## 5.4.8 (2025-01-13)
 
 - Fixes a record ID conflict when there are multiple positions of a specific liquidity pool

@@ -224,6 +224,16 @@ export function getUniswapV3POLRecords(
   return records;
 }
 
+class UniswapV3PairTotalValue {
+  public totalValue: BigDecimal;
+  public ohmBalance: BigDecimal;
+
+  constructor(totalValue: BigDecimal, ohmBalance: BigDecimal) {
+    this.totalValue = totalValue;
+    this.ohmBalance = ohmBalance;
+  }
+}
+
 /**
  * The TVL of a UniswapV3 pool.
  *
@@ -232,9 +242,9 @@ export function getUniswapV3POLRecords(
  * @param pairAddress
  * @param excludeOhmValue
  * @param blockNumber
- * @returns
+ * @returns total value, OHM balance
  */
-export function getUniswapV3PairTotalValue(pairAddress: string, excludeOhmValue: boolean, blockNumber: BigInt): BigDecimal {
+export function getUniswapV3PairTotalValue(pairAddress: string, excludeOhmValue: boolean, blockNumber: BigInt): UniswapV3PairTotalValue {
   log.info("getUniswapV3PairTotalValue: Calculating total value of pair {} ({}). excludeOhmValue? {}", [getContractName(pairAddress), pairAddress, excludeOhmValue.toString()]);
 
   const pair = getUniswapV3Pair(pairAddress, blockNumber);
@@ -243,7 +253,7 @@ export function getUniswapV3PairTotalValue(pairAddress: string, excludeOhmValue:
       "getUniswapV3PairTotalValue: Cannot determine total value as the UniswapV3 pool {} does not exist yet",
       [getContractName(pairAddress)],
     );
-    return BigDecimal.zero();
+    return new UniswapV3PairTotalValue(BigDecimal.zero(), BigDecimal.zero());
   }
 
   const token0Result = pair.try_token0();
@@ -253,15 +263,23 @@ export function getUniswapV3PairTotalValue(pairAddress: string, excludeOhmValue:
       "getUniswapV3PairTotalValue: Cannot determine total value as the UniswapV3 pool {} does not exist yet",
       [getContractName(pairAddress)],
     );
-    return BigDecimal.zero();
+    return new UniswapV3PairTotalValue(BigDecimal.zero(), BigDecimal.zero());
   }
 
   const poolTokens = [token0Result.value.toHexString(), token1Result.value.toHexString()];
   let totalValue = BigDecimal.zero();
+  let ohmBalance = BigDecimal.zero();
 
   for (let i = 0; i < poolTokens.length; i++) {
     const currentToken = poolTokens[i];
     log.debug("getUniswapV3PairTotalValue: Checking token {}", [getContractName(currentToken)]);
+
+    const currentBalance = getERC20DecimalBalance(currentToken, pairAddress, blockNumber);
+
+    // If the token is OHM, add the balance to the OHM balance
+    if (currentToken.toLowerCase() == ERC20_OHM_V2.toLowerCase()) {
+      ohmBalance = ohmBalance.plus(currentBalance);
+    }
 
     // Skip if OHM is excluded
     if (excludeOhmValue && currentToken.toLowerCase() == ERC20_OHM_V2.toLowerCase()) {
@@ -269,7 +287,6 @@ export function getUniswapV3PairTotalValue(pairAddress: string, excludeOhmValue:
       continue;
     }
 
-    const currentBalance = getERC20DecimalBalance(currentToken, pairAddress, blockNumber);
     log.debug("getUniswapV3PairTotalValue: balance of token {} is {}", [getContractName(currentToken), currentBalance.toString()]);
     const currentRate = getUSDRate(currentToken, blockNumber);
     const currentValue = currentBalance.times(currentRate);
@@ -282,7 +299,7 @@ export function getUniswapV3PairTotalValue(pairAddress: string, excludeOhmValue:
     totalValue.toString(),
     excludeOhmValue.toString(),
   ]);
-  return totalValue;
+  return new UniswapV3PairTotalValue(totalValue, ohmBalance);
 }
 
 export function getUniswapV3OhmSupply(

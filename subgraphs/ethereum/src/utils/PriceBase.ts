@@ -8,9 +8,11 @@
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
-import { ERC20_WETH, PAIR_UNISWAP_V2_USDC_ETH } from "./Constants";
+import { ERC20_WETH, ERC4626_SUSDS, PAIR_UNISWAP_V2_USDC_ETH } from "./Constants";
 import { getContractName } from "./Constants";
 import { getPriceFeedTokens, getPriceFeedValue } from "./PriceChainlink";
+import { getERC4626Rate } from "./ERC4626";
+import { ERC4626 } from "../../generated/ProtocolMetrics/ERC4626";
 
 const BIG_DECIMAL_1E12 = BigDecimal.fromString("1e12");
 
@@ -23,10 +25,28 @@ export enum PairTokenBaseOrientation {
 
 export const BASE_TOKEN_UNKNOWN = -1;
 
+const BASE_ERC4626_TOKENS = [
+  ERC4626_SUSDS,
+];
+
+function isBaseERC4626Token(baseToken: string): boolean {
+  const baseTokenLower = baseToken.toLowerCase();
+
+  if (BASE_ERC4626_TOKENS.includes(baseTokenLower)) {
+    return true;
+  }
+
+  return false;
+}
+
 export function isBaseToken(baseToken: string): boolean {
   const baseTokenLower = baseToken.toLowerCase();
 
   if (getPriceFeedTokens().includes(baseTokenLower)) {
+    return true;
+  }
+
+  if (BASE_ERC4626_TOKENS.includes(baseTokenLower)) {
     return true;
   }
 
@@ -150,7 +170,15 @@ export function getBaseTokenRate(
     );
   }
 
-  const usdRate = getPriceFeedValue(baseTokenAddress);
+  let usdRate: BigDecimal | null = null;
+
+  if (isBaseERC4626Token(baseTokenAddress)) {
+    const vaultContract = ERC4626.bind(Address.fromString(baseTokenAddress));
+    usdRate = getERC4626Rate(_blockNumber, vaultContract);
+  }
+  else {
+    usdRate = getPriceFeedValue(baseTokenAddress);
+  }
 
   if (usdRate === null || usdRate.equals(BigDecimal.zero())) {
     throw new Error(`Unable to determine USD rate for token ${getContractName(baseTokenAddress)} (${baseTokenAddress}) at block ${_blockNumber.toString()}`);
