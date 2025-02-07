@@ -1,0 +1,40 @@
+specVersion: 0.0.8
+description: Olympus Protocol Metrics Subgraph - Berachain
+repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
+schema:
+  file: ../../schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: TokenRecords-berachain
+    network: berachain
+    source:
+      address: "0x18878Df23e2a36f81e820e4b47b4A40576D3159C" # OHM
+      abi: ERC20
+      startBlock: 780014 # Deployment
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - TokenRecord
+        - TokenSupply
+      abis:
+        - name: ERC20
+          file: ../shared/abis/ERC20.json
+        # Price Lookup
+        - name: UniswapV2Pair
+          file: ../shared/abis/UniswapV2Pair.json
+        - name: UniswapV3Pair
+          file: ../shared/abis/UniswapV3Pair.json
+        - name: UniswapV3PositionManager
+          file: ../shared/abis/UniswapV3PositionManager.json
+        - name: ChainlinkPriceFeed
+          file: ../shared/abis/ChainlinkPriceFeed.json
+      blockHandlers:
+        - handler: handleBlock
+          filter:
+            kind: polling
+            # Every 8 hours
+            # 0.5 blocks every second * 60 seconds * 60 minutes * 8 hours
+            every: 7200
+      file: ./src/treasury/Assets.ts
