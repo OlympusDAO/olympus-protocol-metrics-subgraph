@@ -7,7 +7,8 @@ import {
   Entity,
   ethereum,
   JSONValue,
-  TypedMap} from "@graphprotocol/graph-ts";
+  TypedMap,
+} from "@graphprotocol/graph-ts";
 
 export class Approval extends ethereum.Event {
   get params(): Approval__Params {
@@ -84,7 +85,7 @@ export class ERC20 extends ethereum.SmartContract {
   approve(_spender: Address, _value: BigInt): boolean {
     const result = super.call("approve", "approve(address,uint256):(bool)", [
       ethereum.Value.fromAddress(_spender),
-      ethereum.Value.fromUnsignedBigInt(_value)
+      ethereum.Value.fromUnsignedBigInt(_value),
     ]);
 
     return result[0].toBoolean();
@@ -93,7 +94,7 @@ export class ERC20 extends ethereum.SmartContract {
   try_approve(_spender: Address, _value: BigInt): ethereum.CallResult<boolean> {
     const result = super.tryCall("approve", "approve(address,uint256):(bool)", [
       ethereum.Value.fromAddress(_spender),
-      ethereum.Value.fromUnsignedBigInt(_value)
+      ethereum.Value.fromUnsignedBigInt(_value),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -124,8 +125,8 @@ export class ERC20 extends ethereum.SmartContract {
       [
         ethereum.Value.fromAddress(_from),
         ethereum.Value.fromAddress(_to),
-        ethereum.Value.fromUnsignedBigInt(_value)
-      ]
+        ethereum.Value.fromUnsignedBigInt(_value),
+      ],
     );
 
     return result[0].toBoolean();
@@ -134,7 +135,7 @@ export class ERC20 extends ethereum.SmartContract {
   try_transferFrom(
     _from: Address,
     _to: Address,
-    _value: BigInt
+    _value: BigInt,
   ): ethereum.CallResult<boolean> {
     const result = super.tryCall(
       "transferFrom",
@@ -142,8 +143,8 @@ export class ERC20 extends ethereum.SmartContract {
       [
         ethereum.Value.fromAddress(_from),
         ethereum.Value.fromAddress(_to),
-        ethereum.Value.fromUnsignedBigInt(_value)
-      ]
+        ethereum.Value.fromUnsignedBigInt(_value),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -169,7 +170,7 @@ export class ERC20 extends ethereum.SmartContract {
 
   balanceOf(_owner: Address): BigInt {
     const result = super.call("balanceOf", "balanceOf(address):(uint256)", [
-      ethereum.Value.fromAddress(_owner)
+      ethereum.Value.fromAddress(_owner),
     ]);
 
     return result[0].toBigInt();
@@ -177,7 +178,7 @@ export class ERC20 extends ethereum.SmartContract {
 
   try_balanceOf(_owner: Address): ethereum.CallResult<BigInt> {
     const result = super.tryCall("balanceOf", "balanceOf(address):(uint256)", [
-      ethereum.Value.fromAddress(_owner)
+      ethereum.Value.fromAddress(_owner),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -204,7 +205,7 @@ export class ERC20 extends ethereum.SmartContract {
   transfer(_to: Address, _value: BigInt): boolean {
     const result = super.call("transfer", "transfer(address,uint256):(bool)", [
       ethereum.Value.fromAddress(_to),
-      ethereum.Value.fromUnsignedBigInt(_value)
+      ethereum.Value.fromUnsignedBigInt(_value),
     ]);
 
     return result[0].toBoolean();
@@ -213,7 +214,7 @@ export class ERC20 extends ethereum.SmartContract {
   try_transfer(_to: Address, _value: BigInt): ethereum.CallResult<boolean> {
     const result = super.tryCall("transfer", "transfer(address,uint256):(bool)", [
       ethereum.Value.fromAddress(_to),
-      ethereum.Value.fromUnsignedBigInt(_value)
+      ethereum.Value.fromUnsignedBigInt(_value),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -226,7 +227,10 @@ export class ERC20 extends ethereum.SmartContract {
     const result = super.call(
       "allowance",
       "allowance(address,address):(uint256)",
-      [ethereum.Value.fromAddress(_owner), ethereum.Value.fromAddress(_spender)]
+      [
+        ethereum.Value.fromAddress(_owner),
+        ethereum.Value.fromAddress(_spender),
+      ],
     );
 
     return result[0].toBigInt();
@@ -234,12 +238,15 @@ export class ERC20 extends ethereum.SmartContract {
 
   try_allowance(
     _owner: Address,
-    _spender: Address
+    _spender: Address,
   ): ethereum.CallResult<BigInt> {
     const result = super.tryCall(
       "allowance",
       "allowance(address,address):(uint256)",
-      [ethereum.Value.fromAddress(_owner), ethereum.Value.fromAddress(_spender)]
+      [
+        ethereum.Value.fromAddress(_owner),
+        ethereum.Value.fromAddress(_spender),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();

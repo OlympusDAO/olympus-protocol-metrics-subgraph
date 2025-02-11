@@ -46,6 +46,10 @@ dataSources:
           file: ./abis/UniswapV3Pair.json
         - name: UniswapV3PositionManager
           file: ./abis/UniswapV3PositionManager.json
+        - name: KodiakIsland
+          file: ./abis/KodiakIsland.json
+        - name: UniswapV3Quoter
+          file: ./abis/UniswapV3Quoter.json
       blockHandlers:
         - handler: handleAssets
       file: ./src/Dummy.ts

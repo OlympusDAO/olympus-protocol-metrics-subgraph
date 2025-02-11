@@ -7,7 +7,8 @@ import {
   Entity,
   ethereum,
   JSONValue,
-  TypedMap} from "@graphprotocol/graph-ts";
+  TypedMap,
+} from "@graphprotocol/graph-ts";
 
 export class AuthorizerChanged extends ethereum.Event {
   get params(): AuthorizerChanged__Params {
@@ -379,7 +380,7 @@ export class BalancerVault__getPoolResult {
     map.set("value0", ethereum.Value.fromAddress(this.value0));
     map.set(
       "value1",
-      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(this.value1))
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(this.value1)),
     );
     return map;
   }
@@ -526,7 +527,7 @@ export class BalancerVault extends ethereum.SmartContract {
 
   getActionId(selector: Bytes): Bytes {
     const result = super.call("getActionId", "getActionId(bytes4):(bytes32)", [
-      ethereum.Value.fromFixedBytes(selector)
+      ethereum.Value.fromFixedBytes(selector),
     ]);
 
     return result[0].toBytes();
@@ -534,7 +535,7 @@ export class BalancerVault extends ethereum.SmartContract {
 
   try_getActionId(selector: Bytes): ethereum.CallResult<Bytes> {
     const result = super.tryCall("getActionId", "getActionId(bytes4):(bytes32)", [
-      ethereum.Value.fromFixedBytes(selector)
+      ethereum.Value.fromFixedBytes(selector),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -553,7 +554,7 @@ export class BalancerVault extends ethereum.SmartContract {
     const result = super.tryCall(
       "getAuthorizer",
       "getAuthorizer():(address)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -566,7 +567,7 @@ export class BalancerVault extends ethereum.SmartContract {
     const result = super.call(
       "getDomainSeparator",
       "getDomainSeparator():(bytes32)",
-      []
+      [],
     );
 
     return result[0].toBytes();
@@ -576,7 +577,7 @@ export class BalancerVault extends ethereum.SmartContract {
     const result = super.tryCall(
       "getDomainSeparator",
       "getDomainSeparator():(bytes32)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -591,8 +592,8 @@ export class BalancerVault extends ethereum.SmartContract {
       "getInternalBalance(address,address[]):(uint256[])",
       [
         ethereum.Value.fromAddress(user),
-        ethereum.Value.fromAddressArray(tokens)
-      ]
+        ethereum.Value.fromAddressArray(tokens),
+      ],
     );
 
     return result[0].toBigIntArray();
@@ -600,15 +601,15 @@ export class BalancerVault extends ethereum.SmartContract {
 
   try_getInternalBalance(
     user: Address,
-    tokens: Array<Address>
+    tokens: Array<Address>,
   ): ethereum.CallResult<Array<BigInt>> {
     const result = super.tryCall(
       "getInternalBalance",
       "getInternalBalance(address,address[]):(uint256[])",
       [
         ethereum.Value.fromAddress(user),
-        ethereum.Value.fromAddressArray(tokens)
-      ]
+        ethereum.Value.fromAddressArray(tokens),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -619,7 +620,7 @@ export class BalancerVault extends ethereum.SmartContract {
 
   getNextNonce(user: Address): BigInt {
     const result = super.call("getNextNonce", "getNextNonce(address):(uint256)", [
-      ethereum.Value.fromAddress(user)
+      ethereum.Value.fromAddress(user),
     ]);
 
     return result[0].toBigInt();
@@ -629,7 +630,7 @@ export class BalancerVault extends ethereum.SmartContract {
     const result = super.tryCall(
       "getNextNonce",
       "getNextNonce(address):(uint256)",
-      [ethereum.Value.fromAddress(user)]
+      [ethereum.Value.fromAddress(user)],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -642,23 +643,21 @@ export class BalancerVault extends ethereum.SmartContract {
     const result = super.call(
       "getPausedState",
       "getPausedState():(bool,uint256,uint256)",
-      []
+      [],
     );
 
     return new BalancerVault__getPausedStateResult(
       result[0].toBoolean(),
       result[1].toBigInt(),
-      result[2].toBigInt()
+      result[2].toBigInt(),
     );
   }
 
-  try_getPausedState(): ethereum.CallResult<
-    BalancerVault__getPausedStateResult
-  > {
+  try_getPausedState(): ethereum.CallResult<BalancerVault__getPausedStateResult> {
     const result = super.tryCall(
       "getPausedState",
       "getPausedState():(bool,uint256,uint256)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -668,63 +667,69 @@ export class BalancerVault extends ethereum.SmartContract {
       new BalancerVault__getPausedStateResult(
         value[0].toBoolean(),
         value[1].toBigInt(),
-        value[2].toBigInt()
-      )
+        value[2].toBigInt(),
+      ),
     );
   }
 
   getPool(poolId: Bytes): BalancerVault__getPoolResult {
     const result = super.call("getPool", "getPool(bytes32):(address,uint8)", [
-      ethereum.Value.fromFixedBytes(poolId)
+      ethereum.Value.fromFixedBytes(poolId),
     ]);
 
     return new BalancerVault__getPoolResult(
       result[0].toAddress(),
-      result[1].toI32()
+      result[1].toI32(),
     );
   }
 
   try_getPool(
-    poolId: Bytes
+    poolId: Bytes,
   ): ethereum.CallResult<BalancerVault__getPoolResult> {
     const result = super.tryCall("getPool", "getPool(bytes32):(address,uint8)", [
-      ethereum.Value.fromFixedBytes(poolId)
+      ethereum.Value.fromFixedBytes(poolId),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
     }
     const value = result.value;
     return ethereum.CallResult.fromValue(
-      new BalancerVault__getPoolResult(value[0].toAddress(), value[1].toI32())
+      new BalancerVault__getPoolResult(value[0].toAddress(), value[1].toI32()),
     );
   }
 
   getPoolTokenInfo(
     poolId: Bytes,
-    token: Address
+    token: Address,
   ): BalancerVault__getPoolTokenInfoResult {
     const result = super.call(
       "getPoolTokenInfo",
       "getPoolTokenInfo(bytes32,address):(uint256,uint256,uint256,address)",
-      [ethereum.Value.fromFixedBytes(poolId), ethereum.Value.fromAddress(token)]
+      [
+        ethereum.Value.fromFixedBytes(poolId),
+        ethereum.Value.fromAddress(token),
+      ],
     );
 
     return new BalancerVault__getPoolTokenInfoResult(
       result[0].toBigInt(),
       result[1].toBigInt(),
       result[2].toBigInt(),
-      result[3].toAddress()
+      result[3].toAddress(),
     );
   }
 
   try_getPoolTokenInfo(
     poolId: Bytes,
-    token: Address
+    token: Address,
   ): ethereum.CallResult<BalancerVault__getPoolTokenInfoResult> {
     const result = super.tryCall(
       "getPoolTokenInfo",
       "getPoolTokenInfo(bytes32,address):(uint256,uint256,uint256,address)",
-      [ethereum.Value.fromFixedBytes(poolId), ethereum.Value.fromAddress(token)]
+      [
+        ethereum.Value.fromFixedBytes(poolId),
+        ethereum.Value.fromAddress(token),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -735,8 +740,8 @@ export class BalancerVault extends ethereum.SmartContract {
         value[0].toBigInt(),
         value[1].toBigInt(),
         value[2].toBigInt(),
-        value[3].toAddress()
-      )
+        value[3].toAddress(),
+      ),
     );
   }
 
@@ -744,23 +749,23 @@ export class BalancerVault extends ethereum.SmartContract {
     const result = super.call(
       "getPoolTokens",
       "getPoolTokens(bytes32):(address[],uint256[],uint256)",
-      [ethereum.Value.fromFixedBytes(poolId)]
+      [ethereum.Value.fromFixedBytes(poolId)],
     );
 
     return new BalancerVault__getPoolTokensResult(
       result[0].toAddressArray(),
       result[1].toBigIntArray(),
-      result[2].toBigInt()
+      result[2].toBigInt(),
     );
   }
 
   try_getPoolTokens(
-    poolId: Bytes
+    poolId: Bytes,
   ): ethereum.CallResult<BalancerVault__getPoolTokensResult> {
     const result = super.tryCall(
       "getPoolTokens",
       "getPoolTokens(bytes32):(address[],uint256[],uint256)",
-      [ethereum.Value.fromFixedBytes(poolId)]
+      [ethereum.Value.fromFixedBytes(poolId)],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -770,8 +775,8 @@ export class BalancerVault extends ethereum.SmartContract {
       new BalancerVault__getPoolTokensResult(
         value[0].toAddressArray(),
         value[1].toBigIntArray(),
-        value[2].toBigInt()
-      )
+        value[2].toBigInt(),
+      ),
     );
   }
 
@@ -779,7 +784,7 @@ export class BalancerVault extends ethereum.SmartContract {
     const result = super.call(
       "getProtocolFeesCollector",
       "getProtocolFeesCollector():(address)",
-      []
+      [],
     );
 
     return result[0].toAddress();
@@ -789,7 +794,7 @@ export class BalancerVault extends ethereum.SmartContract {
     const result = super.tryCall(
       "getProtocolFeesCollector",
       "getProtocolFeesCollector():(address)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -802,7 +807,7 @@ export class BalancerVault extends ethereum.SmartContract {
     const result = super.call(
       "hasApprovedRelayer",
       "hasApprovedRelayer(address,address):(bool)",
-      [ethereum.Value.fromAddress(user), ethereum.Value.fromAddress(relayer)]
+      [ethereum.Value.fromAddress(user), ethereum.Value.fromAddress(relayer)],
     );
 
     return result[0].toBoolean();
@@ -810,12 +815,12 @@ export class BalancerVault extends ethereum.SmartContract {
 
   try_hasApprovedRelayer(
     user: Address,
-    relayer: Address
+    relayer: Address,
   ): ethereum.CallResult<boolean> {
     const result = super.tryCall(
       "hasApprovedRelayer",
       "hasApprovedRelayer(address,address):(bool)",
-      [ethereum.Value.fromAddress(user), ethereum.Value.fromAddress(relayer)]
+      [ethereum.Value.fromAddress(user), ethereum.Value.fromAddress(relayer)],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -828,7 +833,7 @@ export class BalancerVault extends ethereum.SmartContract {
     kind: i32,
     swaps: Array<BalancerVault__queryBatchSwapInputSwapsStruct>,
     assets: Array<Address>,
-    funds: BalancerVault__queryBatchSwapInputFundsStruct
+    funds: BalancerVault__queryBatchSwapInputFundsStruct,
   ): Array<BigInt> {
     const result = super.call(
       "queryBatchSwap",
@@ -837,8 +842,8 @@ export class BalancerVault extends ethereum.SmartContract {
         ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(kind)),
         ethereum.Value.fromTupleArray(swaps),
         ethereum.Value.fromAddressArray(assets),
-        ethereum.Value.fromTuple(funds)
-      ]
+        ethereum.Value.fromTuple(funds),
+      ],
     );
 
     return result[0].toBigIntArray();
@@ -848,7 +853,7 @@ export class BalancerVault extends ethereum.SmartContract {
     kind: i32,
     swaps: Array<BalancerVault__queryBatchSwapInputSwapsStruct>,
     assets: Array<Address>,
-    funds: BalancerVault__queryBatchSwapInputFundsStruct
+    funds: BalancerVault__queryBatchSwapInputFundsStruct,
   ): ethereum.CallResult<Array<BigInt>> {
     const result = super.tryCall(
       "queryBatchSwap",
@@ -857,8 +862,8 @@ export class BalancerVault extends ethereum.SmartContract {
         ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(kind)),
         ethereum.Value.fromTupleArray(swaps),
         ethereum.Value.fromAddressArray(assets),
-        ethereum.Value.fromTuple(funds)
-      ]
+        ethereum.Value.fromTuple(funds),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -869,7 +874,7 @@ export class BalancerVault extends ethereum.SmartContract {
 
   registerPool(specialization: i32): Bytes {
     const result = super.call("registerPool", "registerPool(uint8):(bytes32)", [
-      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(specialization))
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(specialization)),
     ]);
 
     return result[0].toBytes();
@@ -879,7 +884,7 @@ export class BalancerVault extends ethereum.SmartContract {
     const result = super.tryCall(
       "registerPool",
       "registerPool(uint8):(bytes32)",
-      [ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(specialization))]
+      [ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(specialization))],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -953,9 +958,7 @@ export class BatchSwapCall__Inputs {
   }
 
   get swaps(): Array<BatchSwapCallSwapsStruct> {
-    return this._call.inputValues[1].value.toTupleArray<
-      BatchSwapCallSwapsStruct
-    >();
+    return this._call.inputValues[1].value.toTupleArray<BatchSwapCallSwapsStruct>();
   }
 
   get assets(): Array<Address> {
@@ -964,7 +967,7 @@ export class BatchSwapCall__Inputs {
 
   get funds(): BatchSwapCallFundsStruct {
     return changetype<BatchSwapCallFundsStruct>(
-      this._call.inputValues[3].value.toTuple()
+      this._call.inputValues[3].value.toTuple(),
     );
   }
 
@@ -1094,7 +1097,7 @@ export class ExitPoolCall__Inputs {
 
   get request(): ExitPoolCallRequestStruct {
     return changetype<ExitPoolCallRequestStruct>(
-      this._call.inputValues[3].value.toTuple()
+      this._call.inputValues[3].value.toTuple(),
     );
   }
 }
@@ -1198,7 +1201,7 @@ export class JoinPoolCall__Inputs {
 
   get request(): JoinPoolCallRequestStruct {
     return changetype<JoinPoolCallRequestStruct>(
-      this._call.inputValues[3].value.toTuple()
+      this._call.inputValues[3].value.toTuple(),
     );
   }
 }
@@ -1247,9 +1250,7 @@ export class ManagePoolBalanceCall__Inputs {
   }
 
   get ops(): Array<ManagePoolBalanceCallOpsStruct> {
-    return this._call.inputValues[0].value.toTupleArray<
-      ManagePoolBalanceCallOpsStruct
-    >();
+    return this._call.inputValues[0].value.toTupleArray<ManagePoolBalanceCallOpsStruct>();
   }
 }
 
@@ -1297,9 +1298,7 @@ export class ManageUserBalanceCall__Inputs {
   }
 
   get ops(): Array<ManageUserBalanceCallOpsStruct> {
-    return this._call.inputValues[0].value.toTupleArray<
-      ManageUserBalanceCallOpsStruct
-    >();
+    return this._call.inputValues[0].value.toTupleArray<ManageUserBalanceCallOpsStruct>();
   }
 }
 
@@ -1355,9 +1354,7 @@ export class QueryBatchSwapCall__Inputs {
   }
 
   get swaps(): Array<QueryBatchSwapCallSwapsStruct> {
-    return this._call.inputValues[1].value.toTupleArray<
-      QueryBatchSwapCallSwapsStruct
-    >();
+    return this._call.inputValues[1].value.toTupleArray<QueryBatchSwapCallSwapsStruct>();
   }
 
   get assets(): Array<Address> {
@@ -1366,7 +1363,7 @@ export class QueryBatchSwapCall__Inputs {
 
   get funds(): QueryBatchSwapCallFundsStruct {
     return changetype<QueryBatchSwapCallFundsStruct>(
-      this._call.inputValues[3].value.toTuple()
+      this._call.inputValues[3].value.toTuple(),
     );
   }
 }
@@ -1612,13 +1609,13 @@ export class SwapCall__Inputs {
 
   get singleSwap(): SwapCallSingleSwapStruct {
     return changetype<SwapCallSingleSwapStruct>(
-      this._call.inputValues[0].value.toTuple()
+      this._call.inputValues[0].value.toTuple(),
     );
   }
 
   get funds(): SwapCallFundsStruct {
     return changetype<SwapCallFundsStruct>(
-      this._call.inputValues[1].value.toTuple()
+      this._call.inputValues[1].value.toTuple(),
     );
   }
 

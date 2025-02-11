@@ -7,7 +7,8 @@ import {
   Entity,
   ethereum,
   JSONValue,
-  TypedMap} from "@graphprotocol/graph-ts";
+  TypedMap,
+} from "@graphprotocol/graph-ts";
 
 export class Burn extends ethereum.Event {
   get params(): Burn__Params {
@@ -487,7 +488,7 @@ export class UniswapV3Pair__positionsResult {
     value1: BigInt,
     value2: BigInt,
     value3: BigInt,
-    value4: BigInt
+    value4: BigInt,
   ) {
     this.value0 = value0;
     this.value1 = value1;
@@ -568,7 +569,7 @@ export class UniswapV3Pair__slot0Result {
     value3: i32,
     value4: i32,
     value5: i32,
-    value6: boolean
+    value6: boolean,
   ) {
     this.value0 = value0;
     this.value1 = value1;
@@ -585,19 +586,19 @@ export class UniswapV3Pair__slot0Result {
     map.set("value1", ethereum.Value.fromI32(this.value1));
     map.set(
       "value2",
-      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(this.value2))
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(this.value2)),
     );
     map.set(
       "value3",
-      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(this.value3))
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(this.value3)),
     );
     map.set(
       "value4",
-      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(this.value4))
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(this.value4)),
     );
     map.set(
       "value5",
-      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(this.value5))
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(this.value5)),
     );
     map.set("value6", ethereum.Value.fromBoolean(this.value6));
     return map;
@@ -707,7 +708,7 @@ export class UniswapV3Pair__ticksResult {
     value4: BigInt,
     value5: BigInt,
     value6: BigInt,
-    value7: boolean
+    value7: boolean,
   ) {
     this.value0 = value0;
     this.value1 = value1;
@@ -773,7 +774,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
   burn(
     tickLower: i32,
     tickUpper: i32,
-    amount: BigInt
+    amount: BigInt,
   ): UniswapV3Pair__burnResult {
     const result = super.call(
       "burn",
@@ -781,20 +782,20 @@ export class UniswapV3Pair extends ethereum.SmartContract {
       [
         ethereum.Value.fromI32(tickLower),
         ethereum.Value.fromI32(tickUpper),
-        ethereum.Value.fromUnsignedBigInt(amount)
-      ]
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ],
     );
 
     return new UniswapV3Pair__burnResult(
       result[0].toBigInt(),
-      result[1].toBigInt()
+      result[1].toBigInt(),
     );
   }
 
   try_burn(
     tickLower: i32,
     tickUpper: i32,
-    amount: BigInt
+    amount: BigInt,
   ): ethereum.CallResult<UniswapV3Pair__burnResult> {
     const result = super.tryCall(
       "burn",
@@ -802,15 +803,15 @@ export class UniswapV3Pair extends ethereum.SmartContract {
       [
         ethereum.Value.fromI32(tickLower),
         ethereum.Value.fromI32(tickUpper),
-        ethereum.Value.fromUnsignedBigInt(amount)
-      ]
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
     }
     const value = result.value;
     return ethereum.CallResult.fromValue(
-      new UniswapV3Pair__burnResult(value[0].toBigInt(), value[1].toBigInt())
+      new UniswapV3Pair__burnResult(value[0].toBigInt(), value[1].toBigInt()),
     );
   }
 
@@ -819,7 +820,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     tickLower: i32,
     tickUpper: i32,
     amount0Requested: BigInt,
-    amount1Requested: BigInt
+    amount1Requested: BigInt,
   ): UniswapV3Pair__collectResult {
     const result = super.call(
       "collect",
@@ -829,13 +830,13 @@ export class UniswapV3Pair extends ethereum.SmartContract {
         ethereum.Value.fromI32(tickLower),
         ethereum.Value.fromI32(tickUpper),
         ethereum.Value.fromUnsignedBigInt(amount0Requested),
-        ethereum.Value.fromUnsignedBigInt(amount1Requested)
-      ]
+        ethereum.Value.fromUnsignedBigInt(amount1Requested),
+      ],
     );
 
     return new UniswapV3Pair__collectResult(
       result[0].toBigInt(),
-      result[1].toBigInt()
+      result[1].toBigInt(),
     );
   }
 
@@ -844,7 +845,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     tickLower: i32,
     tickUpper: i32,
     amount0Requested: BigInt,
-    amount1Requested: BigInt
+    amount1Requested: BigInt,
   ): ethereum.CallResult<UniswapV3Pair__collectResult> {
     const result = super.tryCall(
       "collect",
@@ -854,22 +855,25 @@ export class UniswapV3Pair extends ethereum.SmartContract {
         ethereum.Value.fromI32(tickLower),
         ethereum.Value.fromI32(tickUpper),
         ethereum.Value.fromUnsignedBigInt(amount0Requested),
-        ethereum.Value.fromUnsignedBigInt(amount1Requested)
-      ]
+        ethereum.Value.fromUnsignedBigInt(amount1Requested),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
     }
     const value = result.value;
     return ethereum.CallResult.fromValue(
-      new UniswapV3Pair__collectResult(value[0].toBigInt(), value[1].toBigInt())
+      new UniswapV3Pair__collectResult(
+        value[0].toBigInt(),
+        value[1].toBigInt(),
+      ),
     );
   }
 
   collectProtocol(
     recipient: Address,
     amount0Requested: BigInt,
-    amount1Requested: BigInt
+    amount1Requested: BigInt,
   ): UniswapV3Pair__collectProtocolResult {
     const result = super.call(
       "collectProtocol",
@@ -877,20 +881,20 @@ export class UniswapV3Pair extends ethereum.SmartContract {
       [
         ethereum.Value.fromAddress(recipient),
         ethereum.Value.fromUnsignedBigInt(amount0Requested),
-        ethereum.Value.fromUnsignedBigInt(amount1Requested)
-      ]
+        ethereum.Value.fromUnsignedBigInt(amount1Requested),
+      ],
     );
 
     return new UniswapV3Pair__collectProtocolResult(
       result[0].toBigInt(),
-      result[1].toBigInt()
+      result[1].toBigInt(),
     );
   }
 
   try_collectProtocol(
     recipient: Address,
     amount0Requested: BigInt,
-    amount1Requested: BigInt
+    amount1Requested: BigInt,
   ): ethereum.CallResult<UniswapV3Pair__collectProtocolResult> {
     const result = super.tryCall(
       "collectProtocol",
@@ -898,8 +902,8 @@ export class UniswapV3Pair extends ethereum.SmartContract {
       [
         ethereum.Value.fromAddress(recipient),
         ethereum.Value.fromUnsignedBigInt(amount0Requested),
-        ethereum.Value.fromUnsignedBigInt(amount1Requested)
-      ]
+        ethereum.Value.fromUnsignedBigInt(amount1Requested),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -908,8 +912,8 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(
       new UniswapV3Pair__collectProtocolResult(
         value[0].toBigInt(),
-        value[1].toBigInt()
-      )
+        value[1].toBigInt(),
+      ),
     );
   }
 
@@ -947,7 +951,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     const result = super.call(
       "feeGrowthGlobal0X128",
       "feeGrowthGlobal0X128():(uint256)",
-      []
+      [],
     );
 
     return result[0].toBigInt();
@@ -957,7 +961,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     const result = super.tryCall(
       "feeGrowthGlobal0X128",
       "feeGrowthGlobal0X128():(uint256)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -970,7 +974,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     const result = super.call(
       "feeGrowthGlobal1X128",
       "feeGrowthGlobal1X128():(uint256)",
-      []
+      [],
     );
 
     return result[0].toBigInt();
@@ -980,7 +984,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     const result = super.tryCall(
       "feeGrowthGlobal1X128",
       "feeGrowthGlobal1X128():(uint256)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -1008,7 +1012,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     const result = super.call(
       "maxLiquidityPerTick",
       "maxLiquidityPerTick():(uint128)",
-      []
+      [],
     );
 
     return result[0].toBigInt();
@@ -1018,7 +1022,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     const result = super.tryCall(
       "maxLiquidityPerTick",
       "maxLiquidityPerTick():(uint128)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -1032,7 +1036,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     tickLower: i32,
     tickUpper: i32,
     amount: BigInt,
-    data: Bytes
+    data: Bytes,
   ): UniswapV3Pair__mintResult {
     const result = super.call(
       "mint",
@@ -1042,13 +1046,13 @@ export class UniswapV3Pair extends ethereum.SmartContract {
         ethereum.Value.fromI32(tickLower),
         ethereum.Value.fromI32(tickUpper),
         ethereum.Value.fromUnsignedBigInt(amount),
-        ethereum.Value.fromBytes(data)
-      ]
+        ethereum.Value.fromBytes(data),
+      ],
     );
 
     return new UniswapV3Pair__mintResult(
       result[0].toBigInt(),
-      result[1].toBigInt()
+      result[1].toBigInt(),
     );
   }
 
@@ -1057,7 +1061,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     tickLower: i32,
     tickUpper: i32,
     amount: BigInt,
-    data: Bytes
+    data: Bytes,
   ): ethereum.CallResult<UniswapV3Pair__mintResult> {
     const result = super.tryCall(
       "mint",
@@ -1067,15 +1071,15 @@ export class UniswapV3Pair extends ethereum.SmartContract {
         ethereum.Value.fromI32(tickLower),
         ethereum.Value.fromI32(tickUpper),
         ethereum.Value.fromUnsignedBigInt(amount),
-        ethereum.Value.fromBytes(data)
-      ]
+        ethereum.Value.fromBytes(data),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
     }
     const value = result.value;
     return ethereum.CallResult.fromValue(
-      new UniswapV3Pair__mintResult(value[0].toBigInt(), value[1].toBigInt())
+      new UniswapV3Pair__mintResult(value[0].toBigInt(), value[1].toBigInt()),
     );
   }
 
@@ -1083,24 +1087,24 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     const result = super.call(
       "observations",
       "observations(uint256):(uint32,int56,uint160,bool)",
-      [ethereum.Value.fromUnsignedBigInt(param0)]
+      [ethereum.Value.fromUnsignedBigInt(param0)],
     );
 
     return new UniswapV3Pair__observationsResult(
       result[0].toBigInt(),
       result[1].toBigInt(),
       result[2].toBigInt(),
-      result[3].toBoolean()
+      result[3].toBoolean(),
     );
   }
 
   try_observations(
-    param0: BigInt
+    param0: BigInt,
   ): ethereum.CallResult<UniswapV3Pair__observationsResult> {
     const result = super.tryCall(
       "observations",
       "observations(uint256):(uint32,int56,uint160,bool)",
-      [ethereum.Value.fromUnsignedBigInt(param0)]
+      [ethereum.Value.fromUnsignedBigInt(param0)],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -1111,8 +1115,8 @@ export class UniswapV3Pair extends ethereum.SmartContract {
         value[0].toBigInt(),
         value[1].toBigInt(),
         value[2].toBigInt(),
-        value[3].toBoolean()
-      )
+        value[3].toBoolean(),
+      ),
     );
   }
 
@@ -1120,22 +1124,22 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     const result = super.call(
       "observe",
       "observe(uint32[]):(int56[],uint160[])",
-      [ethereum.Value.fromUnsignedBigIntArray(secondsAgos)]
+      [ethereum.Value.fromUnsignedBigIntArray(secondsAgos)],
     );
 
     return new UniswapV3Pair__observeResult(
       result[0].toBigIntArray(),
-      result[1].toBigIntArray()
+      result[1].toBigIntArray(),
     );
   }
 
   try_observe(
-    secondsAgos: Array<BigInt>
+    secondsAgos: Array<BigInt>,
   ): ethereum.CallResult<UniswapV3Pair__observeResult> {
     const result = super.tryCall(
       "observe",
       "observe(uint32[]):(int56[],uint160[])",
-      [ethereum.Value.fromUnsignedBigIntArray(secondsAgos)]
+      [ethereum.Value.fromUnsignedBigIntArray(secondsAgos)],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -1144,8 +1148,8 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(
       new UniswapV3Pair__observeResult(
         value[0].toBigIntArray(),
-        value[1].toBigIntArray()
-      )
+        value[1].toBigIntArray(),
+      ),
     );
   }
 
@@ -1153,7 +1157,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     const result = super.call(
       "positions",
       "positions(bytes32):(uint128,uint256,uint256,uint128,uint128)",
-      [ethereum.Value.fromFixedBytes(param0)]
+      [ethereum.Value.fromFixedBytes(param0)],
     );
 
     return new UniswapV3Pair__positionsResult(
@@ -1161,17 +1165,17 @@ export class UniswapV3Pair extends ethereum.SmartContract {
       result[1].toBigInt(),
       result[2].toBigInt(),
       result[3].toBigInt(),
-      result[4].toBigInt()
+      result[4].toBigInt(),
     );
   }
 
   try_positions(
-    param0: Bytes
+    param0: Bytes,
   ): ethereum.CallResult<UniswapV3Pair__positionsResult> {
     const result = super.tryCall(
       "positions",
       "positions(bytes32):(uint128,uint256,uint256,uint128,uint128)",
-      [ethereum.Value.fromFixedBytes(param0)]
+      [ethereum.Value.fromFixedBytes(param0)],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -1183,8 +1187,8 @@ export class UniswapV3Pair extends ethereum.SmartContract {
         value[1].toBigInt(),
         value[2].toBigInt(),
         value[3].toBigInt(),
-        value[4].toBigInt()
-      )
+        value[4].toBigInt(),
+      ),
     );
   }
 
@@ -1192,12 +1196,12 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     const result = super.call(
       "protocolFees",
       "protocolFees():(uint128,uint128)",
-      []
+      [],
     );
 
     return new UniswapV3Pair__protocolFeesResult(
       result[0].toBigInt(),
-      result[1].toBigInt()
+      result[1].toBigInt(),
     );
   }
 
@@ -1205,7 +1209,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     const result = super.tryCall(
       "protocolFees",
       "protocolFees():(uint128,uint128)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -1214,8 +1218,8 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(
       new UniswapV3Pair__protocolFeesResult(
         value[0].toBigInt(),
-        value[1].toBigInt()
-      )
+        value[1].toBigInt(),
+      ),
     );
   }
 
@@ -1223,7 +1227,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     const result = super.call(
       "slot0",
       "slot0():(uint160,int24,uint16,uint16,uint16,uint8,bool)",
-      []
+      [],
     );
 
     return new UniswapV3Pair__slot0Result(
@@ -1233,7 +1237,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
       result[3].toI32(),
       result[4].toI32(),
       result[5].toI32(),
-      result[6].toBoolean()
+      result[6].toBoolean(),
     );
   }
 
@@ -1241,7 +1245,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     const result = super.tryCall(
       "slot0",
       "slot0():(uint160,int24,uint16,uint16,uint16,uint8,bool)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -1255,36 +1259,36 @@ export class UniswapV3Pair extends ethereum.SmartContract {
         value[3].toI32(),
         value[4].toI32(),
         value[5].toI32(),
-        value[6].toBoolean()
-      )
+        value[6].toBoolean(),
+      ),
     );
   }
 
   snapshotCumulativesInside(
     tickLower: i32,
-    tickUpper: i32
+    tickUpper: i32,
   ): UniswapV3Pair__snapshotCumulativesInsideResult {
     const result = super.call(
       "snapshotCumulativesInside",
       "snapshotCumulativesInside(int24,int24):(int56,uint160,uint32)",
-      [ethereum.Value.fromI32(tickLower), ethereum.Value.fromI32(tickUpper)]
+      [ethereum.Value.fromI32(tickLower), ethereum.Value.fromI32(tickUpper)],
     );
 
     return new UniswapV3Pair__snapshotCumulativesInsideResult(
       result[0].toBigInt(),
       result[1].toBigInt(),
-      result[2].toBigInt()
+      result[2].toBigInt(),
     );
   }
 
   try_snapshotCumulativesInside(
     tickLower: i32,
-    tickUpper: i32
+    tickUpper: i32,
   ): ethereum.CallResult<UniswapV3Pair__snapshotCumulativesInsideResult> {
     const result = super.tryCall(
       "snapshotCumulativesInside",
       "snapshotCumulativesInside(int24,int24):(int56,uint160,uint32)",
-      [ethereum.Value.fromI32(tickLower), ethereum.Value.fromI32(tickUpper)]
+      [ethereum.Value.fromI32(tickLower), ethereum.Value.fromI32(tickUpper)],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -1294,8 +1298,8 @@ export class UniswapV3Pair extends ethereum.SmartContract {
       new UniswapV3Pair__snapshotCumulativesInsideResult(
         value[0].toBigInt(),
         value[1].toBigInt(),
-        value[2].toBigInt()
-      )
+        value[2].toBigInt(),
+      ),
     );
   }
 
@@ -1304,7 +1308,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     zeroForOne: boolean,
     amountSpecified: BigInt,
     sqrtPriceLimitX96: BigInt,
-    data: Bytes
+    data: Bytes,
   ): UniswapV3Pair__swapResult {
     const result = super.call(
       "swap",
@@ -1314,13 +1318,13 @@ export class UniswapV3Pair extends ethereum.SmartContract {
         ethereum.Value.fromBoolean(zeroForOne),
         ethereum.Value.fromSignedBigInt(amountSpecified),
         ethereum.Value.fromUnsignedBigInt(sqrtPriceLimitX96),
-        ethereum.Value.fromBytes(data)
-      ]
+        ethereum.Value.fromBytes(data),
+      ],
     );
 
     return new UniswapV3Pair__swapResult(
       result[0].toBigInt(),
-      result[1].toBigInt()
+      result[1].toBigInt(),
     );
   }
 
@@ -1329,7 +1333,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     zeroForOne: boolean,
     amountSpecified: BigInt,
     sqrtPriceLimitX96: BigInt,
-    data: Bytes
+    data: Bytes,
   ): ethereum.CallResult<UniswapV3Pair__swapResult> {
     const result = super.tryCall(
       "swap",
@@ -1339,21 +1343,21 @@ export class UniswapV3Pair extends ethereum.SmartContract {
         ethereum.Value.fromBoolean(zeroForOne),
         ethereum.Value.fromSignedBigInt(amountSpecified),
         ethereum.Value.fromUnsignedBigInt(sqrtPriceLimitX96),
-        ethereum.Value.fromBytes(data)
-      ]
+        ethereum.Value.fromBytes(data),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
     }
     const value = result.value;
     return ethereum.CallResult.fromValue(
-      new UniswapV3Pair__swapResult(value[0].toBigInt(), value[1].toBigInt())
+      new UniswapV3Pair__swapResult(value[0].toBigInt(), value[1].toBigInt()),
     );
   }
 
   tickBitmap(param0: i32): BigInt {
     const result = super.call("tickBitmap", "tickBitmap(int16):(uint256)", [
-      ethereum.Value.fromI32(param0)
+      ethereum.Value.fromI32(param0),
     ]);
 
     return result[0].toBigInt();
@@ -1361,7 +1365,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
 
   try_tickBitmap(param0: i32): ethereum.CallResult<BigInt> {
     const result = super.tryCall("tickBitmap", "tickBitmap(int16):(uint256)", [
-      ethereum.Value.fromI32(param0)
+      ethereum.Value.fromI32(param0),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -1389,7 +1393,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     const result = super.call(
       "ticks",
       "ticks(int24):(uint128,int128,uint256,uint256,int56,uint160,uint32,bool)",
-      [ethereum.Value.fromI32(param0)]
+      [ethereum.Value.fromI32(param0)],
     );
 
     return new UniswapV3Pair__ticksResult(
@@ -1400,7 +1404,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
       result[4].toBigInt(),
       result[5].toBigInt(),
       result[6].toBigInt(),
-      result[7].toBoolean()
+      result[7].toBoolean(),
     );
   }
 
@@ -1408,7 +1412,7 @@ export class UniswapV3Pair extends ethereum.SmartContract {
     const result = super.tryCall(
       "ticks",
       "ticks(int24):(uint128,int128,uint256,uint256,int56,uint160,uint32,bool)",
-      [ethereum.Value.fromI32(param0)]
+      [ethereum.Value.fromI32(param0)],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -1423,8 +1427,8 @@ export class UniswapV3Pair extends ethereum.SmartContract {
         value[4].toBigInt(),
         value[5].toBigInt(),
         value[6].toBigInt(),
-        value[7].toBoolean()
-      )
+        value[7].toBoolean(),
+      ),
     );
   }
 

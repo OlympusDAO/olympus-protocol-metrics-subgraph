@@ -7,7 +7,8 @@ import {
   Entity,
   ethereum,
   JSONValue,
-  TypedMap} from "@graphprotocol/graph-ts";
+  TypedMap,
+} from "@graphprotocol/graph-ts";
 
 export class Approval extends ethereum.Event {
   get params(): Approval__Params {
@@ -243,7 +244,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
     const result = super.call(
       "DOMAIN_SEPARATOR",
       "DOMAIN_SEPARATOR():(bytes32)",
-      []
+      [],
     );
 
     return result[0].toBytes();
@@ -253,7 +254,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
     const result = super.tryCall(
       "DOMAIN_SEPARATOR",
       "DOMAIN_SEPARATOR():(bytes32)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -266,7 +267,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
     const result = super.call(
       "MINIMUM_LIQUIDITY",
       "MINIMUM_LIQUIDITY():(uint256)",
-      []
+      [],
     );
 
     return result[0].toBigInt();
@@ -276,7 +277,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
     const result = super.tryCall(
       "MINIMUM_LIQUIDITY",
       "MINIMUM_LIQUIDITY():(uint256)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -289,7 +290,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
     const result = super.call(
       "PERMIT_TYPEHASH",
       "PERMIT_TYPEHASH():(bytes32)",
-      []
+      [],
     );
 
     return result[0].toBytes();
@@ -299,7 +300,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
     const result = super.tryCall(
       "PERMIT_TYPEHASH",
       "PERMIT_TYPEHASH():(bytes32)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -312,7 +313,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
     const result = super.call(
       "allowance",
       "allowance(address,address):(uint256)",
-      [ethereum.Value.fromAddress(param0), ethereum.Value.fromAddress(param1)]
+      [ethereum.Value.fromAddress(param0), ethereum.Value.fromAddress(param1)],
     );
 
     return result[0].toBigInt();
@@ -322,7 +323,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
     const result = super.tryCall(
       "allowance",
       "allowance(address,address):(uint256)",
-      [ethereum.Value.fromAddress(param0), ethereum.Value.fromAddress(param1)]
+      [ethereum.Value.fromAddress(param0), ethereum.Value.fromAddress(param1)],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -334,7 +335,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
   approve(spender: Address, value: BigInt): boolean {
     const result = super.call("approve", "approve(address,uint256):(bool)", [
       ethereum.Value.fromAddress(spender),
-      ethereum.Value.fromUnsignedBigInt(value)
+      ethereum.Value.fromUnsignedBigInt(value),
     ]);
 
     return result[0].toBoolean();
@@ -343,7 +344,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
   try_approve(spender: Address, value: BigInt): ethereum.CallResult<boolean> {
     const result = super.tryCall("approve", "approve(address,uint256):(bool)", [
       ethereum.Value.fromAddress(spender),
-      ethereum.Value.fromUnsignedBigInt(value)
+      ethereum.Value.fromUnsignedBigInt(value),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -354,7 +355,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
 
   balanceOf(param0: Address): BigInt {
     const result = super.call("balanceOf", "balanceOf(address):(uint256)", [
-      ethereum.Value.fromAddress(param0)
+      ethereum.Value.fromAddress(param0),
     ]);
 
     return result[0].toBigInt();
@@ -362,7 +363,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
 
   try_balanceOf(param0: Address): ethereum.CallResult<BigInt> {
     const result = super.tryCall("balanceOf", "balanceOf(address):(uint256)", [
-      ethereum.Value.fromAddress(param0)
+      ethereum.Value.fromAddress(param0),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -373,25 +374,25 @@ export class UniswapV2Pair extends ethereum.SmartContract {
 
   burn(to: Address): UniswapV2Pair__burnResult {
     const result = super.call("burn", "burn(address):(uint256,uint256)", [
-      ethereum.Value.fromAddress(to)
+      ethereum.Value.fromAddress(to),
     ]);
 
     return new UniswapV2Pair__burnResult(
       result[0].toBigInt(),
-      result[1].toBigInt()
+      result[1].toBigInt(),
     );
   }
 
   try_burn(to: Address): ethereum.CallResult<UniswapV2Pair__burnResult> {
     const result = super.tryCall("burn", "burn(address):(uint256,uint256)", [
-      ethereum.Value.fromAddress(to)
+      ethereum.Value.fromAddress(to),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
     }
     const value = result.value;
     return ethereum.CallResult.fromValue(
-      new UniswapV2Pair__burnResult(value[0].toBigInt(), value[1].toBigInt())
+      new UniswapV2Pair__burnResult(value[0].toBigInt(), value[1].toBigInt()),
     );
   }
 
@@ -429,13 +430,13 @@ export class UniswapV2Pair extends ethereum.SmartContract {
     const result = super.call(
       "getReserves",
       "getReserves():(uint112,uint112,uint32)",
-      []
+      [],
     );
 
     return new UniswapV2Pair__getReservesResult(
       result[0].toBigInt(),
       result[1].toBigInt(),
-      result[2].toBigInt()
+      result[2].toBigInt(),
     );
   }
 
@@ -443,7 +444,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
     const result = super.tryCall(
       "getReserves",
       "getReserves():(uint112,uint112,uint32)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -453,8 +454,8 @@ export class UniswapV2Pair extends ethereum.SmartContract {
       new UniswapV2Pair__getReservesResult(
         value[0].toBigInt(),
         value[1].toBigInt(),
-        value[2].toBigInt()
-      )
+        value[2].toBigInt(),
+      ),
     );
   }
 
@@ -475,7 +476,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
 
   mint(to: Address): BigInt {
     const result = super.call("mint", "mint(address):(uint256)", [
-      ethereum.Value.fromAddress(to)
+      ethereum.Value.fromAddress(to),
     ]);
 
     return result[0].toBigInt();
@@ -483,7 +484,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
 
   try_mint(to: Address): ethereum.CallResult<BigInt> {
     const result = super.tryCall("mint", "mint(address):(uint256)", [
-      ethereum.Value.fromAddress(to)
+      ethereum.Value.fromAddress(to),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -509,7 +510,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
 
   nonces(param0: Address): BigInt {
     const result = super.call("nonces", "nonces(address):(uint256)", [
-      ethereum.Value.fromAddress(param0)
+      ethereum.Value.fromAddress(param0),
     ]);
 
     return result[0].toBigInt();
@@ -517,7 +518,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
 
   try_nonces(param0: Address): ethereum.CallResult<BigInt> {
     const result = super.tryCall("nonces", "nonces(address):(uint256)", [
-      ethereum.Value.fromAddress(param0)
+      ethereum.Value.fromAddress(param0),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -530,7 +531,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
     const result = super.call(
       "price0CumulativeLast",
       "price0CumulativeLast():(uint256)",
-      []
+      [],
     );
 
     return result[0].toBigInt();
@@ -540,7 +541,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
     const result = super.tryCall(
       "price0CumulativeLast",
       "price0CumulativeLast():(uint256)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -553,7 +554,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
     const result = super.call(
       "price1CumulativeLast",
       "price1CumulativeLast():(uint256)",
-      []
+      [],
     );
 
     return result[0].toBigInt();
@@ -563,7 +564,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
     const result = super.tryCall(
       "price1CumulativeLast",
       "price1CumulativeLast():(uint256)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -635,7 +636,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
   transfer(to: Address, value: BigInt): boolean {
     const result = super.call("transfer", "transfer(address,uint256):(bool)", [
       ethereum.Value.fromAddress(to),
-      ethereum.Value.fromUnsignedBigInt(value)
+      ethereum.Value.fromUnsignedBigInt(value),
     ]);
 
     return result[0].toBoolean();
@@ -644,7 +645,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
   try_transfer(to: Address, value: BigInt): ethereum.CallResult<boolean> {
     const result = super.tryCall("transfer", "transfer(address,uint256):(bool)", [
       ethereum.Value.fromAddress(to),
-      ethereum.Value.fromUnsignedBigInt(value)
+      ethereum.Value.fromUnsignedBigInt(value),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -660,8 +661,8 @@ export class UniswapV2Pair extends ethereum.SmartContract {
       [
         ethereum.Value.fromAddress(from),
         ethereum.Value.fromAddress(to),
-        ethereum.Value.fromUnsignedBigInt(value)
-      ]
+        ethereum.Value.fromUnsignedBigInt(value),
+      ],
     );
 
     return result[0].toBoolean();
@@ -670,7 +671,7 @@ export class UniswapV2Pair extends ethereum.SmartContract {
   try_transferFrom(
     from: Address,
     to: Address,
-    value: BigInt
+    value: BigInt,
   ): ethereum.CallResult<boolean> {
     const result = super.tryCall(
       "transferFrom",
@@ -678,8 +679,8 @@ export class UniswapV2Pair extends ethereum.SmartContract {
       [
         ethereum.Value.fromAddress(from),
         ethereum.Value.fromAddress(to),
-        ethereum.Value.fromUnsignedBigInt(value)
-      ]
+        ethereum.Value.fromUnsignedBigInt(value),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();

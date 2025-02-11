@@ -7,7 +7,8 @@ import {
   Entity,
   ethereum,
   JSONValue,
-  TypedMap} from "@graphprotocol/graph-ts";
+  TypedMap,
+} from "@graphprotocol/graph-ts";
 
 export class Approval extends ethereum.Event {
   get params(): Approval__Params {
@@ -143,7 +144,7 @@ export class sOlympusERC20V3__rebasesResult {
     value3: BigInt,
     value4: BigInt,
     value5: BigInt,
-    value6: BigInt
+    value6: BigInt,
   ) {
     this.value0 = value0;
     this.value1 = value1;
@@ -204,7 +205,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
     const result = super.call(
       "DOMAIN_SEPARATOR",
       "DOMAIN_SEPARATOR():(bytes32)",
-      []
+      [],
     );
 
     return result[0].toBytes();
@@ -214,7 +215,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
     const result = super.tryCall(
       "DOMAIN_SEPARATOR",
       "DOMAIN_SEPARATOR():(bytes32)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -227,7 +228,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
     const result = super.call(
       "allowance",
       "allowance(address,address):(uint256)",
-      [ethereum.Value.fromAddress(owner_), ethereum.Value.fromAddress(spender)]
+      [ethereum.Value.fromAddress(owner_), ethereum.Value.fromAddress(spender)],
     );
 
     return result[0].toBigInt();
@@ -235,12 +236,12 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
 
   try_allowance(
     owner_: Address,
-    spender: Address
+    spender: Address,
   ): ethereum.CallResult<BigInt> {
     const result = super.tryCall(
       "allowance",
       "allowance(address,address):(uint256)",
-      [ethereum.Value.fromAddress(owner_), ethereum.Value.fromAddress(spender)]
+      [ethereum.Value.fromAddress(owner_), ethereum.Value.fromAddress(spender)],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -252,7 +253,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
   approve(spender: Address, value: BigInt): boolean {
     const result = super.call("approve", "approve(address,uint256):(bool)", [
       ethereum.Value.fromAddress(spender),
-      ethereum.Value.fromUnsignedBigInt(value)
+      ethereum.Value.fromUnsignedBigInt(value),
     ]);
 
     return result[0].toBoolean();
@@ -261,7 +262,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
   try_approve(spender: Address, value: BigInt): ethereum.CallResult<boolean> {
     const result = super.tryCall("approve", "approve(address,uint256):(bool)", [
       ethereum.Value.fromAddress(spender),
-      ethereum.Value.fromUnsignedBigInt(value)
+      ethereum.Value.fromUnsignedBigInt(value),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -274,7 +275,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
     const result = super.call(
       "balanceForGons",
       "balanceForGons(uint256):(uint256)",
-      [ethereum.Value.fromUnsignedBigInt(gons)]
+      [ethereum.Value.fromUnsignedBigInt(gons)],
     );
 
     return result[0].toBigInt();
@@ -284,7 +285,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
     const result = super.tryCall(
       "balanceForGons",
       "balanceForGons(uint256):(uint256)",
-      [ethereum.Value.fromUnsignedBigInt(gons)]
+      [ethereum.Value.fromUnsignedBigInt(gons)],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -295,7 +296,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
 
   balanceOf(who: Address): BigInt {
     const result = super.call("balanceOf", "balanceOf(address):(uint256)", [
-      ethereum.Value.fromAddress(who)
+      ethereum.Value.fromAddress(who),
     ]);
 
     return result[0].toBigInt();
@@ -303,7 +304,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
 
   try_balanceOf(who: Address): ethereum.CallResult<BigInt> {
     const result = super.tryCall("balanceOf", "balanceOf(address):(uint256)", [
-      ethereum.Value.fromAddress(who)
+      ethereum.Value.fromAddress(who),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -316,7 +317,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
     const result = super.call(
       "circulatingSupply",
       "circulatingSupply():(uint256)",
-      []
+      [],
     );
 
     return result[0].toBigInt();
@@ -326,7 +327,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
     const result = super.tryCall(
       "circulatingSupply",
       "circulatingSupply():(uint256)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -337,7 +338,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
 
   debtBalances(param0: Address): BigInt {
     const result = super.call("debtBalances", "debtBalances(address):(uint256)", [
-      ethereum.Value.fromAddress(param0)
+      ethereum.Value.fromAddress(param0),
     ]);
 
     return result[0].toBigInt();
@@ -347,7 +348,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
     const result = super.tryCall(
       "debtBalances",
       "debtBalances(address):(uint256)",
-      [ethereum.Value.fromAddress(param0)]
+      [ethereum.Value.fromAddress(param0)],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -377,8 +378,8 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
       "decreaseAllowance(address,uint256):(bool)",
       [
         ethereum.Value.fromAddress(spender),
-        ethereum.Value.fromUnsignedBigInt(subtractedValue)
-      ]
+        ethereum.Value.fromUnsignedBigInt(subtractedValue),
+      ],
     );
 
     return result[0].toBoolean();
@@ -386,15 +387,15 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
 
   try_decreaseAllowance(
     spender: Address,
-    subtractedValue: BigInt
+    subtractedValue: BigInt,
   ): ethereum.CallResult<boolean> {
     const result = super.tryCall(
       "decreaseAllowance",
       "decreaseAllowance(address,uint256):(bool)",
       [
         ethereum.Value.fromAddress(spender),
-        ethereum.Value.fromUnsignedBigInt(subtractedValue)
-      ]
+        ethereum.Value.fromUnsignedBigInt(subtractedValue),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -405,7 +406,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
 
   fromG(amount: BigInt): BigInt {
     const result = super.call("fromG", "fromG(uint256):(uint256)", [
-      ethereum.Value.fromUnsignedBigInt(amount)
+      ethereum.Value.fromUnsignedBigInt(amount),
     ]);
 
     return result[0].toBigInt();
@@ -413,7 +414,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
 
   try_fromG(amount: BigInt): ethereum.CallResult<BigInt> {
     const result = super.tryCall("fromG", "fromG(uint256):(uint256)", [
-      ethereum.Value.fromUnsignedBigInt(amount)
+      ethereum.Value.fromUnsignedBigInt(amount),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -441,7 +442,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
     const result = super.call(
       "gonsForBalance",
       "gonsForBalance(uint256):(uint256)",
-      [ethereum.Value.fromUnsignedBigInt(amount)]
+      [ethereum.Value.fromUnsignedBigInt(amount)],
     );
 
     return result[0].toBigInt();
@@ -451,7 +452,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
     const result = super.tryCall(
       "gonsForBalance",
       "gonsForBalance(uint256):(uint256)",
-      [ethereum.Value.fromUnsignedBigInt(amount)]
+      [ethereum.Value.fromUnsignedBigInt(amount)],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -466,8 +467,8 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
       "increaseAllowance(address,uint256):(bool)",
       [
         ethereum.Value.fromAddress(spender),
-        ethereum.Value.fromUnsignedBigInt(addedValue)
-      ]
+        ethereum.Value.fromUnsignedBigInt(addedValue),
+      ],
     );
 
     return result[0].toBoolean();
@@ -475,15 +476,15 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
 
   try_increaseAllowance(
     spender: Address,
-    addedValue: BigInt
+    addedValue: BigInt,
   ): ethereum.CallResult<boolean> {
     const result = super.tryCall(
       "increaseAllowance",
       "increaseAllowance(address,uint256):(bool)",
       [
         ethereum.Value.fromAddress(spender),
-        ethereum.Value.fromUnsignedBigInt(addedValue)
-      ]
+        ethereum.Value.fromUnsignedBigInt(addedValue),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -524,7 +525,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
 
   nonces(owner: Address): BigInt {
     const result = super.call("nonces", "nonces(address):(uint256)", [
-      ethereum.Value.fromAddress(owner)
+      ethereum.Value.fromAddress(owner),
     ]);
 
     return result[0].toBigInt();
@@ -532,7 +533,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
 
   try_nonces(owner: Address): ethereum.CallResult<BigInt> {
     const result = super.tryCall("nonces", "nonces(address):(uint256)", [
-      ethereum.Value.fromAddress(owner)
+      ethereum.Value.fromAddress(owner),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -544,7 +545,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
   rebase(profit_: BigInt, epoch_: BigInt): BigInt {
     const result = super.call("rebase", "rebase(uint256,uint256):(uint256)", [
       ethereum.Value.fromUnsignedBigInt(profit_),
-      ethereum.Value.fromUnsignedBigInt(epoch_)
+      ethereum.Value.fromUnsignedBigInt(epoch_),
     ]);
 
     return result[0].toBigInt();
@@ -553,7 +554,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
   try_rebase(profit_: BigInt, epoch_: BigInt): ethereum.CallResult<BigInt> {
     const result = super.tryCall("rebase", "rebase(uint256,uint256):(uint256)", [
       ethereum.Value.fromUnsignedBigInt(profit_),
-      ethereum.Value.fromUnsignedBigInt(epoch_)
+      ethereum.Value.fromUnsignedBigInt(epoch_),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -566,7 +567,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
     const result = super.call(
       "rebases",
       "rebases(uint256):(uint256,uint256,uint256,uint256,uint256,uint256,uint256)",
-      [ethereum.Value.fromUnsignedBigInt(param0)]
+      [ethereum.Value.fromUnsignedBigInt(param0)],
     );
 
     return new sOlympusERC20V3__rebasesResult(
@@ -576,17 +577,17 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
       result[3].toBigInt(),
       result[4].toBigInt(),
       result[5].toBigInt(),
-      result[6].toBigInt()
+      result[6].toBigInt(),
     );
   }
 
   try_rebases(
-    param0: BigInt
+    param0: BigInt,
   ): ethereum.CallResult<sOlympusERC20V3__rebasesResult> {
     const result = super.tryCall(
       "rebases",
       "rebases(uint256):(uint256,uint256,uint256,uint256,uint256,uint256,uint256)",
-      [ethereum.Value.fromUnsignedBigInt(param0)]
+      [ethereum.Value.fromUnsignedBigInt(param0)],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -600,8 +601,8 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
         value[3].toBigInt(),
         value[4].toBigInt(),
         value[5].toBigInt(),
-        value[6].toBigInt()
-      )
+        value[6].toBigInt(),
+      ),
     );
   }
 
@@ -609,7 +610,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
     const result = super.call(
       "stakingContract",
       "stakingContract():(address)",
-      []
+      [],
     );
 
     return result[0].toAddress();
@@ -619,7 +620,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
     const result = super.tryCall(
       "stakingContract",
       "stakingContract():(address)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -645,7 +646,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
 
   toG(amount: BigInt): BigInt {
     const result = super.call("toG", "toG(uint256):(uint256)", [
-      ethereum.Value.fromUnsignedBigInt(amount)
+      ethereum.Value.fromUnsignedBigInt(amount),
     ]);
 
     return result[0].toBigInt();
@@ -653,7 +654,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
 
   try_toG(amount: BigInt): ethereum.CallResult<BigInt> {
     const result = super.tryCall("toG", "toG(uint256):(uint256)", [
-      ethereum.Value.fromUnsignedBigInt(amount)
+      ethereum.Value.fromUnsignedBigInt(amount),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -680,7 +681,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
   transfer(to: Address, value: BigInt): boolean {
     const result = super.call("transfer", "transfer(address,uint256):(bool)", [
       ethereum.Value.fromAddress(to),
-      ethereum.Value.fromUnsignedBigInt(value)
+      ethereum.Value.fromUnsignedBigInt(value),
     ]);
 
     return result[0].toBoolean();
@@ -689,7 +690,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
   try_transfer(to: Address, value: BigInt): ethereum.CallResult<boolean> {
     const result = super.tryCall("transfer", "transfer(address,uint256):(bool)", [
       ethereum.Value.fromAddress(to),
-      ethereum.Value.fromUnsignedBigInt(value)
+      ethereum.Value.fromUnsignedBigInt(value),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -705,8 +706,8 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
       [
         ethereum.Value.fromAddress(from),
         ethereum.Value.fromAddress(to),
-        ethereum.Value.fromUnsignedBigInt(value)
-      ]
+        ethereum.Value.fromUnsignedBigInt(value),
+      ],
     );
 
     return result[0].toBoolean();
@@ -715,7 +716,7 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
   try_transferFrom(
     from: Address,
     to: Address,
-    value: BigInt
+    value: BigInt,
   ): ethereum.CallResult<boolean> {
     const result = super.tryCall(
       "transferFrom",
@@ -723,8 +724,8 @@ export class sOlympusERC20V3 extends ethereum.SmartContract {
       [
         ethereum.Value.fromAddress(from),
         ethereum.Value.fromAddress(to),
-        ethereum.Value.fromUnsignedBigInt(value)
-      ]
+        ethereum.Value.fromUnsignedBigInt(value),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
