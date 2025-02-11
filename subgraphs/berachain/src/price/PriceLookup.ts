@@ -2,25 +2,26 @@ import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { PriceHandler, PriceLookupResult } from "../../../shared/src/price/PriceHandler";
 import { PriceHandlerKodiakIsland } from "../../../shared/src/price/PriceHandlerKodiakIsland";
-import { PriceHandlerUniswapV3 } from "../../../shared/src/price/PriceHandlerUniswapV3";
+import { PriceHandlerUniswapV3Quoter } from "../../../shared/src/price/PriceHandlerUniswapV3Quoter";
 import { getUSDRate } from "../../../shared/src/price/PriceRouter";
 import {
   ERC20_HONEY,
+  ERC20_IBERA,
   ERC20_OHM,
   ERC20_WBERA,
+  LP_KODIAK_IBERA_WBERA,
   LP_KODIAK_OHM_HONEY,
-  LP_UNISWAP_V3_WBERA_HONEY,
-  UNISWAP_V3_POSITION_MANAGER
-} from "../contracts/Constants";
+  LP_UNISWAP_V3_WBERA_HONEY} from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 import { getBaseTokenRate, isBaseToken } from "./PriceBase";
 
 const KODIAK_QUOTER = "0x644C8D6E501f7C994B74F5ceA96abe65d0BA662B".toLowerCase();
 
+// Price lookup is enabled for these tokens
 export const PRICE_HANDLERS: PriceHandler[] = [
-  // TODO add IBERA pool
-  new PriceHandlerUniswapV3([ERC20_HONEY, ERC20_WBERA], LP_UNISWAP_V3_WBERA_HONEY, UNISWAP_V3_POSITION_MANAGER, getContractName),
+  new PriceHandlerUniswapV3Quoter([ERC20_HONEY, ERC20_WBERA], KODIAK_QUOTER, LP_UNISWAP_V3_WBERA_HONEY, getContractName),
   new PriceHandlerKodiakIsland([ERC20_HONEY, ERC20_OHM], KODIAK_QUOTER, LP_KODIAK_OHM_HONEY, getContractName),
+  new PriceHandlerUniswapV3Quoter([ERC20_IBERA, ERC20_WBERA], KODIAK_QUOTER, LP_KODIAK_IBERA_WBERA, getContractName),
 ];
 
 /**
@@ -51,7 +52,7 @@ export function getPriceRecursive(
     }
   }
 
-  log.debug("{}: Determining price for {} ({}) and current pool id {}", [FUNC, getContractName(tokenAddress), tokenAddress, currentPool ? currentPool : ""]);
+  log.info("{}: Determining price for {} ({}) and current pool id {}", [FUNC, getContractName(tokenAddress), tokenAddress, currentPool ? currentPool : ""]);
   return getUSDRate(tokenAddress, PRICE_HANDLERS, getPriceRecursive, block, currentPool);
 }
 
@@ -65,7 +66,7 @@ export function getPriceRecursive(
  */
 export function getPrice(tokenAddress: string, block: BigInt): BigDecimal {
   const FUNC = "getPrice";
-  log.debug(`${FUNC}: Determining price for ${getContractName(tokenAddress)} (${tokenAddress}) at block ${block.toString()}`, []);
+  log.info(`${FUNC}: Determining price for ${getContractName(tokenAddress)} (${tokenAddress}) at block ${block.toString()}`, []);
 
   const priceResult = getPriceRecursive(tokenAddress, block, null);
 
@@ -74,6 +75,6 @@ export function getPrice(tokenAddress: string, block: BigInt): BigDecimal {
     return BigDecimal.zero();
   }
 
-  log.debug("{}: Price for {} ({}) at block {} was: {}", [FUNC, getContractName(tokenAddress), tokenAddress, block.toString(), priceResult.price.toString()]);
+  log.info("{}: Price for {} ({}) at block {} was: {}", [FUNC, getContractName(tokenAddress), tokenAddress, block.toString(), priceResult.price.toString()]);
   return priceResult.price;
 }

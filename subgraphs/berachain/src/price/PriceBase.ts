@@ -39,6 +39,7 @@ export function getBaseTokenRate(
     );
   }
 
+  log.info("{} Getting USD rate for token {} ({})", [FUNC, getContractName(baseTokenAddress), baseTokenAddress]);
   const usdRate = getPriceFeedValue(baseTokenAddress);
   if (usdRate === null || usdRate.equals(BigDecimal.zero())) {
     throw new Error(`${FUNC}: Unable to determine USD rate for token ${getContractName(baseTokenAddress)} (${baseTokenAddress}) at block ${blockNumber.toString()}`);

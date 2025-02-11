@@ -1,6 +1,5 @@
-import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, ethereum,log } from "@graphprotocol/graph-ts";
 
-import { KodiakIsland } from "../../generated/Price/KodiakIsland";
 import { UniswapV3Pair } from "../../generated/Price/UniswapV3Pair";
 import { UniswapV3Quoter, UniswapV3Quoter__quoteExactInputSingleInputParamsStruct } from "../../generated/Price/UniswapV3Quoter";
 import { ContractNameLookup } from "../contracts/ContractLookup";
@@ -10,9 +9,9 @@ import { toDecimal } from "../utils/Decimals";
 import { addressesEqual } from "../utils/StringHelper";
 import { PriceHandler, PriceLookup, PriceLookupResult } from "./PriceHandler";
 
-const CLASS = "PriceHandlerKodiakIsland";
+const CLASS = "PriceHandlerUniswapV3Quoter";
 
-export class PriceHandlerKodiakIsland implements PriceHandler {
+export class PriceHandlerUniswapV3Quoter implements PriceHandler {
     protected tokens: string[];
     protected quoter: string;
     protected poolAddress: string;
@@ -25,9 +24,9 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
         this.contractLookup = contractLookup;
     }
 
-    private getContract(block: BigInt): KodiakIsland | null {
+    private getContract(block: BigInt): UniswapV3Pair | null {
         const FUNCTION = `${CLASS}: getContract:`;
-        const contract = KodiakIsland.bind(Address.fromString(this.poolAddress));
+        const contract = UniswapV3Pair.bind(Address.fromString(this.poolAddress));
 
         if (contract === null || contract.try_token0().reverted || contract.try_token1().reverted) {
             log.debug("{} contract ({}) reverted at block {}", [
@@ -54,7 +53,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     }
 
     getPrice(tokenAddress: string, priceLookup: PriceLookup, block: BigInt): PriceLookupResult | null {
-        const FUNCTION = `${CLASS}: getPrice:`;
+        const FUNCTION = `${CLASS}: ${this.getId()}: getPrice:`;
 
         // Get the contract
         const contract = this.getContract(block);
@@ -84,7 +83,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
         }
 
         // Get the pool fee
-        const poolFee = UniswapV3Pair.bind(contract.pool()).fee();
+        const poolFee = contract.fee();
 
         // Get the quoter contract
         const quoter = UniswapV3Quoter.bind(Address.fromString(this.quoter));
@@ -102,12 +101,22 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
         quoteSingleInputParams[1] = ethereum.Value.fromAddress(otherToken);
         quoteSingleInputParams[2] = ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(10).pow(u8(desiredTokenDecimals)));
         quoteSingleInputParams[3] = ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(poolFee));
-        quoteSingleInputParams[4] = ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(2).pow(96)); // sqrtPriceLimitX96 max value
+        quoteSingleInputParams[4] = ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(0)); // no limit
 
-        const quoteOutputResult = quoter.quoteExactInputSingle(quoteSingleInputParams);
-        const quoteOutputInt = quoteOutputResult.getAmountOut();
+        const quoteOutputResult = quoter.try_quoteExactInputSingle(quoteSingleInputParams);
+        if (quoteOutputResult.reverted) {
+            log.warning("{} Unable to determine price of {} ({}) at block {} due to reverted quoteExactInputSingle call", [
+                FUNCTION,
+                this.contractLookup(otherToken.toHexString()),
+                otherToken.toHexString(),
+                block.toString(),
+            ]);
+            return null;
+        }
+
+        const quoteOutputInt = quoteOutputResult.value.getAmountOut();
         const quoteOutput = toDecimal(quoteOutputInt, otherTokenDecimals);
-        log.debug(
+        log.info(
             "{} Determined price of {} ({}) to be valued at {} per {} ({}) tokens",
             [
                 FUNCTION,
@@ -146,124 +155,18 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     }
 
     getTotalValue(excludedTokens: string[], priceLookup: PriceLookup, block: BigInt): BigDecimal | null {
-        const FUNCTION = `${CLASS}: getTotalValue:`;
-        const contract = this.getContract(block);
-        if (!contract) {
-            return null;
-        }
-
-        const token0 = contract.token0().toHexString();
-        const token1 = contract.token1().toHexString();
-        const reserves = contract.getUnderlyingBalances();
-
-        const token0Rate = priceLookup(token0, block, null);
-        if (!token0Rate) {
-            log.warning("{} Unable to determine total value as the price of {} ({}) was null at block {}", [
-                FUNCTION,
-                this.contractLookup(token0),
-                token0,
-                block.toString(),
-            ]);
-            return null;
-        }
-
-        const token1Rate = priceLookup(token1, block, null);
-        if (!token1Rate) {
-            log.warning("{} Unable to determine total value as the price of {} ({}) was null at block {}", [
-                FUNCTION,
-                this.contractLookup(token1),
-                token1,
-                block.toString(),
-            ]);
-            return null;
-        }
-
-        // If the token is in {excludedTokens}, don't include its value
-        const token0Value = arrayIncludesLoose(excludedTokens, token0)
-            ? BigDecimal.zero()
-            : toDecimal(reserves.getAmount0Current(), getERC20(token0, block).decimals()).times(token0Rate.price);
-        const token1Value = arrayIncludesLoose(excludedTokens, token1)
-            ? BigDecimal.zero()
-            : toDecimal(reserves.getAmount1Current(), getERC20(token1, block).decimals()).times(token1Rate.price);
-
-        return token0Value.plus(token1Value);
+        return null;
     }
 
     getUnitPrice(priceLookup: PriceLookup, block: BigInt): BigDecimal | null {
-        const FUNCTION = `${CLASS}: getUnitPrice:`;
-        const contract = this.getContract(block);
-        if (!contract) {
-            return null;
-        }
-
-        const totalSupply = toDecimal(contract.totalSupply(), contract.decimals());
-        const totalValue = this.getTotalValue([], priceLookup, block);
-        if (!totalValue) {
-            log.warning("{} Unable to determine unit rate as total value was null at block {}", [
-                FUNCTION,
-                block.toString(),
-            ]);
-            return null;
-        }
-
-        return totalValue.div(totalSupply);
+        return null;
     }
 
     getBalance(walletAddress: string, block: BigInt): BigDecimal {
-        const FUNCTION = `${CLASS}: getBalance:`;
-        const contract = this.getContract(block);
-        if (!contract) {
-            log.warning("{} Unable to determine balance as the contract ({}) reverted at block {}", [
-                FUNCTION,
-                this.contractLookup(this.poolAddress),
-                block.toString(),
-            ]);
-            return BigDecimal.zero();
-        }
-
-        const balance = toDecimal(contract.balanceOf(Address.fromString(walletAddress)), contract.decimals());
-        log.info("{} Balance of {} ({}) in {} ({}) is {}", [
-            FUNCTION,
-            this.contractLookup(this.poolAddress),
-            this.poolAddress,
-            this.contractLookup(walletAddress),
-            walletAddress,
-            balance.toString(),
-        ]);
-
-        return balance;
+        return BigDecimal.zero();
     }
 
     getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal {
-        const FUNCTION = `${CLASS}: getUnderlyingTokenBalance:`;
-        const contract = this.getContract(block);
-        if (!contract) {
-            return BigDecimal.zero();
-        }
-
-        // Check that tokenAddress is either token0 or token1
-        if (!addressesEqual(tokenAddress, contract.token0().toHexString()) && !addressesEqual(tokenAddress, contract.token1().toHexString())) {
-            throw new Error(`${FUNCTION} token ${this.contractLookup(tokenAddress)} (${tokenAddress}) does not belong to LP ${this.contractLookup(this.poolAddress)} (${this.poolAddress})`);
-        }
-
-        // Get the proportional balance of the token supply
-        const contractDecimals = contract.decimals();
-        const walletBalance = toDecimal(contract.balanceOf(Address.fromString(walletAddress)), contractDecimals);
-        const totalSupply = toDecimal(contract.totalSupply(), contractDecimals);
-        const proportionalBalance: BigDecimal = walletBalance.div(totalSupply);
-
-        // Calculate the balance of the underlying token
-        const reserves = contract.getUnderlyingBalances();
-        let underlyingBalanceInt: BigInt;
-        if (tokenAddress == contract.token0().toHexString()) {
-            underlyingBalanceInt = reserves.getAmount0Current();
-        } else {
-            underlyingBalanceInt = reserves.getAmount1Current();
-        }
-
-        const tokenContract = getERC20(tokenAddress, block);
-        const underlyingBalance = toDecimal(underlyingBalanceInt, tokenContract.decimals());
-
-        return proportionalBalance.times(underlyingBalance);
+        return BigDecimal.zero();
     }
 }
