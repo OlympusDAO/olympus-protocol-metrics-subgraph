@@ -30,13 +30,15 @@ export const OHM_TOKENS = [ERC20_OHM];
 
 export const TRSRY = "0xb1fA0Ac44d399b778B14af0AAF4bCF8af3437ad1".toLowerCase();
 export const DAO_MULTISIG = "0x91494D1BC2286343D51c55E46AE80C9356D099b5".toLowerCase();
+export const DAO_OPS_MULTISIG = "0xe22b2d431838528BcaD52d11C4744EfCdc907a1c".toLowerCase();
 
 // Kodiak
 export const UNISWAP_V3_POSITION_MANAGER = "0xFE5E8C83FFE4d9627A75EaA7Fee864768dB989bD".toLowerCase();
 
 export const PROTOCOL_ADDRESSES = [
     DAO_MULTISIG,
-    TRSRY
+    TRSRY,
+    DAO_OPS_MULTISIG
 ];
 
 const TREASURY_BLACKLIST = new Map<string, string[]>();
@@ -81,6 +83,7 @@ export const getWalletAddressesForContract = (contractAddress: string): string[]
 
 export const CONTRACT_NAME_MAP = new Map<string, string>();
 CONTRACT_NAME_MAP.set(DAO_MULTISIG, "DAO MS (Berachain)");
+CONTRACT_NAME_MAP.set(DAO_OPS_MULTISIG, "DAO OPS MS (Berachain)");
 CONTRACT_NAME_MAP.set(ERC20_OHM, "OHM");
 CONTRACT_NAME_MAP.set(ERC20_IBERA, "Infrared BERA");
 CONTRACT_NAME_MAP.set(ERC20_STARGATE_USDC, "Bridged USDC (Stargate)");
