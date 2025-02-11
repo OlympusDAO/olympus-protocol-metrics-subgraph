@@ -5,8 +5,8 @@ import { ChainlinkPriceFeed } from "../../generated/TokenRecords-berachain/Chain
 import { ERC20_HONEY, ERC20_STARGATE_USDC } from "../contracts/Constants";
 
 const tokenPriceFeedMap: Map<string, string> = new Map<string, string>();
-tokenPriceFeedMap.set(ERC20_HONEY, "0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce".toLowerCase()); // Redstone USDC (since 1:1 with USDC)
-tokenPriceFeedMap.set(ERC20_STARGATE_USDC, "0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce".toLowerCase()); // Redstone USDC
+tokenPriceFeedMap.set(ERC20_HONEY, "0x4BAD96DD1C7D541270a0C92e1D4e5f12EEEA7a57".toLowerCase()); // Redstone USDC (since 1:1 with USDC)
+tokenPriceFeedMap.set(ERC20_STARGATE_USDC, "0x4BAD96DD1C7D541270a0C92e1D4e5f12EEEA7a57".toLowerCase()); // Redstone USDC
 
 export function getPriceFeedTokens(): string[] {
     return tokenPriceFeedMap.keys();
