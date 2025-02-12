@@ -65,9 +65,9 @@ describe("UniswapV3 pair value", () => {
       .times(getFxsUsdRate())
       .plus(toDecimal(FXS_ETH_BALANCE_ETH, ERC20_STANDARD_DECIMALS).times(getEthUsdRate()));
     log.debug("calculated value: {}", [calculatedValue.toString()]);
-    log.debug("pairValue: {}", [pairValue.toString()]);
+    log.debug("pairValue: {}", [pairValue.totalValue.toString()]);
 
-    assert.stringEquals(calculatedValue.truncate(4).toString(), pairValue.truncate(4).toString());
+    assert.stringEquals(calculatedValue.truncate(4).toString(), pairValue.totalValue.truncate(4).toString());
   });
 
   test("wETH-OHM pair value is correct", () => {
@@ -93,16 +93,16 @@ describe("UniswapV3 pair value", () => {
       .times(BigDecimal.fromString(ETH_PRICE))
       .plus(ohmBalance.times(BigDecimal.fromString("13.3835")));
     log.debug("calculated value: {}", [calculatedValue.toString()]);
-    log.debug("pairValue: {}", [pairValue.toString()]);
+    log.debug("pairValue: {}", [pairValue.totalValue.toString()]);
 
 
     // Check that the actual value is += 200 of the expected value
     const supportedDifference = BigDecimal.fromString("50");
     log.debug("expected value: {}", [calculatedValue.toString()]);
-    log.debug("actual value: {}", [pairValue.toString()]);
+    log.debug("actual value: {}", [pairValue.totalValue.toString()]);
     assert.assertTrue(
-      pairValue.minus(calculatedValue) < supportedDifference &&
-      pairValue.minus(calculatedValue) > supportedDifference.times(BigDecimal.fromString("-1")));
+      pairValue.totalValue.minus(calculatedValue) < supportedDifference &&
+      pairValue.totalValue.minus(calculatedValue) > supportedDifference.times(BigDecimal.fromString("-1")));
   });
 
   test("wETH-OHM pair value excluding OHM is correct", () => {
@@ -126,9 +126,9 @@ describe("UniswapV3 pair value", () => {
     const calculatedValue = ethBalance
       .times(BigDecimal.fromString(ETH_PRICE));
     log.debug("calculated value: {}", [calculatedValue.toString()]);
-    log.debug("pairValue: {}", [pairValue.toString()]);
+    log.debug("pairValue: {}", [pairValue.totalValue.toString()]);
 
-    assert.stringEquals(calculatedValue.truncate(4).toString(), pairValue.truncate(4).toString());
+    assert.stringEquals(calculatedValue.truncate(4).toString(), pairValue.totalValue.truncate(4).toString());
   });
 
   // test("pair balance value is correct", () => {
