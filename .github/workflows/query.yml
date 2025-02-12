@@ -7,7 +7,7 @@ jobs:
   test-branch:
     strategy:
       matrix:
-        subgraph: [ethereum, arbitrum, polygon, fantom]
+        subgraph: [ethereum, arbitrum, polygon, fantom, base, berachain]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -41,7 +41,7 @@ jobs:
   test-base:
     strategy:
       matrix:
-        subgraph: [ethereum, arbitrum, polygon, fantom]
+        subgraph: [ethereum, arbitrum, polygon, fantom, base, berachain]
     runs-on: ubuntu-latest
     needs: [test-branch]
     steps:
@@ -78,7 +78,7 @@ jobs:
   compare:
     strategy:
       matrix:
-        subgraph: [ethereum, arbitrum, polygon, fantom]
+        subgraph: [ethereum, arbitrum, polygon, fantom, base, berachain]
     runs-on: ubuntu-latest
     needs: [test-branch, test-base]
     steps:
