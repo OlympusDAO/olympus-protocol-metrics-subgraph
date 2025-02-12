@@ -36,7 +36,7 @@ jobs:
         run: |
           yarn subgraph query ${{ matrix.subgraph }} --branch branch --deployment ${{ env.DEPLOYMENT_ID }}
       - name: Upload Results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: results-${{ matrix.subgraph }}
           path: build/results-${{ matrix.subgraph }}.json
