@@ -8,7 +8,9 @@ jobs:
     strategy:
       matrix:
         subgraph: [ethereum, arbitrum, polygon, fantom, base, berachain]
-    runs-on: ubuntu-latest
+    # Pin the runner to ubuntu-22.04 to avoid an incompatibility with ubuntu 24 and graph test
+    # https://github.com/graphprotocol/graph-tooling/issues/1546
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v3
