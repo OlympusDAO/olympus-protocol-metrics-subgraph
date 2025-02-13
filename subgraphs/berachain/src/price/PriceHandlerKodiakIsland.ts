@@ -9,26 +9,51 @@ import { arrayIncludesLoose } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { addressesEqual } from "../../../shared/src/utils/StringHelper";
 import { KodiakIsland } from "../../generated/TokenRecords-berachain/KodiakIsland";
+import { BeradromeKodiakIslandRewardVault } from "../../generated/TokenRecords-berachain/BeradromeKodiakIslandRewardVault";
 
 export class PriceHandlerKodiakIsland implements PriceHandler {
     protected static readonly CLASS: string = "PriceHandlerKodiakIsland";
     protected tokens: string[];
     protected quoter: string;
     protected poolAddress: string;
+    protected rewardVault: string | null;
     protected contractLookup: ContractNameLookup;
 
-    constructor(tokens: string[], quoter: string, poolAddress: string, contractLookup: ContractNameLookup) {
+    constructor(tokens: string[], quoter: string, poolAddress: string, rewardVault: string | null, contractLookup: ContractNameLookup) {
         this.tokens = tokens;
         this.quoter = quoter;
         this.poolAddress = poolAddress;
+        this.rewardVault = rewardVault;
         this.contractLookup = contractLookup;
     }
 
-    protected getContract(block: BigInt): KodiakIsland | null {
+    protected getPoolTokenContract(block: BigInt): KodiakIsland | null {
         const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getContract:`;
         const contract = KodiakIsland.bind(Address.fromString(this.poolAddress));
 
         if (contract === null || contract.try_token0().reverted || contract.try_token1().reverted) {
+            log.debug("{} contract ({}) reverted at block {}", [
+                FUNCTION,
+                this.contractLookup(this.poolAddress),
+                block.toString(),
+            ]);
+            return null;
+        }
+
+        return contract;
+    }
+
+    private getRewardVaultContract(block: BigInt): BeradromeKodiakIslandRewardVault | null {
+        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getRewardVaultContract:`;
+
+        const rewardVault = this.rewardVault;
+        if (rewardVault === null) {
+            return null;
+        }
+
+        const contract = BeradromeKodiakIslandRewardVault.bind(Address.fromString(rewardVault));
+
+        if (contract === null || contract.try_stakeToken().reverted) {
             log.debug("{} contract ({}) reverted at block {}", [
                 FUNCTION,
                 this.contractLookup(this.poolAddress),
@@ -45,7 +70,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     }
 
     exists(): boolean {
-        return this.getContract(BigInt.zero()) !== null;
+        return this.getPoolTokenContract(BigInt.zero()) !== null;
     }
 
     matches(tokenAddress: string): boolean {
@@ -56,7 +81,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
         const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getPrice:`;
 
         // Get the contract
-        const contract = this.getContract(block);
+        const contract = this.getPoolTokenContract(block);
         if (contract === null) {
           log.debug("{} Cannot determine value as the contract ({}) reverted at block {}", [
             FUNCTION,
@@ -146,7 +171,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
 
     getTotalValue(excludedTokens: string[], priceLookup: PriceLookup, block: BigInt): BigDecimal | null {
         const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getTotalValue:`;
-        const contract = this.getContract(block);
+        const contract = this.getPoolTokenContract(block);
         if (!contract) {
             return null;
         }
@@ -190,7 +215,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
 
     getUnitPrice(priceLookup: PriceLookup, block: BigInt): BigDecimal | null {
         const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getUnitPrice:`;
-        const contract = this.getContract(block);
+        const contract = this.getPoolTokenContract(block);
         if (!contract) {
             return null;
         }
@@ -210,8 +235,8 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
 
     getBalance(walletAddress: string, block: BigInt): BigDecimal {
         const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getBalance:`;
-        const contract = this.getContract(block);
-        if (!contract) {
+        const poolTokenContract = this.getPoolTokenContract(block);
+        if (!poolTokenContract) {
             log.warning("{} Unable to determine balance as the contract ({}) reverted at block {}", [
                 FUNCTION,
                 this.contractLookup(this.poolAddress),
@@ -220,7 +245,19 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
             return BigDecimal.zero();
         }
 
-        const balance = toDecimal(contract.balanceOf(Address.fromString(walletAddress)), contract.decimals());
+        let balance: BigDecimal;
+
+        // If there is a reward vault, use the balance from that
+        const rewardVaultContract = this.getRewardVaultContract(block);
+        if (rewardVaultContract !== null) {
+            log.info("{} Using reward vault to determine balance, as it is set", [
+                FUNCTION,
+            ]);
+            balance = toDecimal(rewardVaultContract.balanceOf(Address.fromString(walletAddress)), poolTokenContract.decimals());
+        } else {
+            balance = toDecimal(poolTokenContract.balanceOf(Address.fromString(walletAddress)), poolTokenContract.decimals());
+        }
+
         log.info("{} Balance of {} ({}) in {} ({}) is {}", [
             FUNCTION,
             this.contractLookup(this.poolAddress),
@@ -235,7 +272,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
 
     getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal {
         const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getUnderlyingTokenBalance:`;
-        const contract = this.getContract(block);
+        const contract = this.getPoolTokenContract(block);
         if (!contract) {
             return BigDecimal.zero();
         }
