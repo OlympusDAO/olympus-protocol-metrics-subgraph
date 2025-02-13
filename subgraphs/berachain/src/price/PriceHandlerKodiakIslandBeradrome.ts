@@ -1,9 +1,9 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { ContractNameLookup } from "../../../shared/src/contracts/ContractLookup";
-import { PriceHandlerKodiakIsland } from "../../../shared/src/price/PriceHandlerKodiakIsland";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { BeradromeKodiakIslandRewardVault } from "../../generated/TokenRecords-berachain/BeradromeKodiakIslandRewardVault";
+import { PriceHandlerKodiakIsland } from "./PriceHandlerKodiakIsland";
 
 export class PriceHandlerKodiakIslandBeradrome extends PriceHandlerKodiakIsland {
     protected static readonly CLASS: string = "PriceHandlerKodiakIslandBeradrome";

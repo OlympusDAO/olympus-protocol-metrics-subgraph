@@ -1,14 +1,14 @@
 import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
-import { KodiakIsland } from "../../generated/Price/KodiakIsland";
-import { UniswapV3Pair } from "../../generated/Price/UniswapV3Pair";
-import { UniswapV3Quoter, UniswapV3Quoter__quoteExactInputSingleInputParamsStruct } from "../../generated/Price/UniswapV3Quoter";
-import { ContractNameLookup } from "../contracts/ContractLookup";
-import { getERC20 } from "../contracts/ERC20";
-import { arrayIncludesLoose } from "../utils/ArrayHelper";
-import { toDecimal } from "../utils/Decimals";
-import { addressesEqual } from "../utils/StringHelper";
-import { PriceHandler, PriceLookup, PriceLookupResult } from "./PriceHandler";
+import { UniswapV3Pair } from "../../../shared/generated/Price/UniswapV3Pair";
+import { UniswapV3Quoter, UniswapV3Quoter__quoteExactInputSingleInputParamsStruct } from "../../../shared/generated/Price/UniswapV3Quoter";
+import { ContractNameLookup } from "../../../shared/src/contracts/ContractLookup";
+import { getERC20 } from "../../../shared/src/contracts/ERC20";
+import { PriceHandler, PriceLookup, PriceLookupResult } from "../../../shared/src/price/PriceHandler";
+import { arrayIncludesLoose } from "../../../shared/src/utils/ArrayHelper";
+import { toDecimal } from "../../../shared/src/utils/Decimals";
+import { addressesEqual } from "../../../shared/src/utils/StringHelper";
+import { KodiakIsland } from "../../generated/TokenRecords-berachain/KodiakIsland";
 
 export class PriceHandlerKodiakIsland implements PriceHandler {
     protected static readonly CLASS: string = "PriceHandlerKodiakIsland";
