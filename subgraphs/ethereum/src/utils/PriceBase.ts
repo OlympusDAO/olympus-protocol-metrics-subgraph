@@ -7,12 +7,12 @@
 
 import { Address, BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 
+import { ERC4626 } from "../../generated/ProtocolMetrics/ERC4626";
 import { UniswapV2Pair } from "../../generated/ProtocolMetrics/UniswapV2Pair";
 import { ERC20_WETH, ERC4626_SUSDS, PAIR_UNISWAP_V2_USDC_ETH } from "./Constants";
 import { getContractName } from "./Constants";
-import { getPriceFeedTokens, getPriceFeedValue } from "./PriceChainlink";
 import { getERC4626Rate } from "./ERC4626";
-import { ERC4626 } from "../../generated/ProtocolMetrics/ERC4626";
+import { getPriceFeedTokens, getPriceFeedValue } from "./PriceChainlink";
 
 const BIG_DECIMAL_1E12 = BigDecimal.fromString("1e12");
 
