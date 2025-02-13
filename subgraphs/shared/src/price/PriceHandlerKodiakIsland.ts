@@ -10,9 +10,8 @@ import { toDecimal } from "../utils/Decimals";
 import { addressesEqual } from "../utils/StringHelper";
 import { PriceHandler, PriceLookup, PriceLookupResult } from "./PriceHandler";
 
-const CLASS = "PriceHandlerKodiakIsland";
-
 export class PriceHandlerKodiakIsland implements PriceHandler {
+    protected static readonly CLASS: string = "PriceHandlerKodiakIsland";
     protected tokens: string[];
     protected quoter: string;
     protected poolAddress: string;
@@ -25,8 +24,8 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
         this.contractLookup = contractLookup;
     }
 
-    private getContract(block: BigInt): KodiakIsland | null {
-        const FUNCTION = `${CLASS}: getContract:`;
+    protected getContract(block: BigInt): KodiakIsland | null {
+        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getContract:`;
         const contract = KodiakIsland.bind(Address.fromString(this.poolAddress));
 
         if (contract === null || contract.try_token0().reverted || contract.try_token1().reverted) {
@@ -54,7 +53,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     }
 
     getPrice(tokenAddress: string, priceLookup: PriceLookup, block: BigInt): PriceLookupResult | null {
-        const FUNCTION = `${CLASS}: getPrice:`;
+        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getPrice:`;
 
         // Get the contract
         const contract = this.getContract(block);
@@ -146,7 +145,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     }
 
     getTotalValue(excludedTokens: string[], priceLookup: PriceLookup, block: BigInt): BigDecimal | null {
-        const FUNCTION = `${CLASS}: getTotalValue:`;
+        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getTotalValue:`;
         const contract = this.getContract(block);
         if (!contract) {
             return null;
@@ -190,7 +189,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     }
 
     getUnitPrice(priceLookup: PriceLookup, block: BigInt): BigDecimal | null {
-        const FUNCTION = `${CLASS}: getUnitPrice:`;
+        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getUnitPrice:`;
         const contract = this.getContract(block);
         if (!contract) {
             return null;
@@ -210,7 +209,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     }
 
     getBalance(walletAddress: string, block: BigInt): BigDecimal {
-        const FUNCTION = `${CLASS}: getBalance:`;
+        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getBalance:`;
         const contract = this.getContract(block);
         if (!contract) {
             log.warning("{} Unable to determine balance as the contract ({}) reverted at block {}", [
@@ -235,7 +234,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     }
 
     getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal {
-        const FUNCTION = `${CLASS}: getUnderlyingTokenBalance:`;
+        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getUnderlyingTokenBalance:`;
         const contract = this.getContract(block);
         if (!contract) {
             return BigDecimal.zero();
@@ -246,9 +245,11 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
             throw new Error(`${FUNCTION} token ${this.contractLookup(tokenAddress)} (${tokenAddress}) does not belong to LP ${this.contractLookup(this.poolAddress)} (${this.poolAddress})`);
         }
 
+        // Get the balance of the pool token
+        const walletBalance = this.getBalance(walletAddress, block);
+
         // Get the proportional balance of the token supply
         const contractDecimals = contract.decimals();
-        const walletBalance = toDecimal(contract.balanceOf(Address.fromString(walletAddress)), contractDecimals);
         const totalSupply = toDecimal(contract.totalSupply(), contractDecimals);
         const proportionalBalance: BigDecimal = walletBalance.div(totalSupply);
 
