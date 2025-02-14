@@ -32,6 +32,8 @@ import {
 import { getContractName } from "../contracts/Contracts";
 import { getBaseTokenRate, isBaseToken } from "./PriceBase";
 
+const UNISWAP_V3_POSITION_MANAGER = "0xC36442b4a4522E871399CD717aBDD847Ab11FE88".toLowerCase();
+
 export const PRICE_HANDLERS: PriceHandler[] = [
   // new PriceHandlerBalancer([ERC20_MAGIC, ERC20_USDC], BALANCER_VAULT, LP_BALANCER_POOL_MAGIC_USDC, getContractName), // DO NOT enable: will cause infinite loop: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph/issues/94
   new PriceHandlerBalancer([ERC20_WETH, ERC20_VSTA], BALANCER_VAULT, LP_BALANCER_POOL_WETH_VESTA, getContractName),
@@ -42,9 +44,9 @@ export const PRICE_HANDLERS: PriceHandler[] = [
   new PriceHandlerUniswapV2([ERC20_JONES, ERC20_WETH], LP_UNISWAP_V2_JONES_WETH, getContractName),
   new PriceHandlerUniswapV2([ERC20_LQTY, ERC20_WETH], LP_UNISWAP_V2_LQTY_WETH, getContractName),
   new PriceHandlerUniswapV2([ERC20_MAGIC, ERC20_WETH], LP_UNISWAP_V2_MAGIC_WETH, getContractName),
-  new PriceHandlerUniswapV3([ERC20_USDC, ERC20_WETH], LP_UNISWAP_V3_WETH_USDC, getContractName),
-  new PriceHandlerUniswapV3([ERC20_ARB, ERC20_WETH], LP_UNISWAP_V3_ARB_WETH, getContractName),
   new PriceHandlerUniswapV2([ERC20_OHM, ERC20_WETH], LP_CAMELOT_OHM_WETH, getContractName),
+  new PriceHandlerUniswapV3([ERC20_USDC, ERC20_WETH], LP_UNISWAP_V3_WETH_USDC, UNISWAP_V3_POSITION_MANAGER, getContractName),
+  new PriceHandlerUniswapV3([ERC20_ARB, ERC20_WETH], LP_UNISWAP_V3_ARB_WETH, UNISWAP_V3_POSITION_MANAGER, getContractName),
 ];
 
 /**

@@ -7,7 +7,8 @@ import {
   Entity,
   ethereum,
   JSONValue,
-  TypedMap} from "@graphprotocol/graph-ts";
+  TypedMap,
+} from "@graphprotocol/graph-ts";
 
 export class Approval extends ethereum.Event {
   get params(): Approval__Params {
@@ -276,7 +277,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     const result = super.call(
       "DOMAIN_SEPARATOR",
       "DOMAIN_SEPARATOR():(bytes32)",
-      []
+      [],
     );
 
     return result[0].toBytes();
@@ -286,7 +287,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     const result = super.tryCall(
       "DOMAIN_SEPARATOR",
       "DOMAIN_SEPARATOR():(bytes32)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -299,7 +300,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     const result = super.call(
       "allowance",
       "allowance(address,address):(uint256)",
-      [ethereum.Value.fromAddress(owner), ethereum.Value.fromAddress(spender)]
+      [ethereum.Value.fromAddress(owner), ethereum.Value.fromAddress(spender)],
     );
 
     return result[0].toBigInt();
@@ -309,7 +310,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     const result = super.tryCall(
       "allowance",
       "allowance(address,address):(uint256)",
-      [ethereum.Value.fromAddress(owner), ethereum.Value.fromAddress(spender)]
+      [ethereum.Value.fromAddress(owner), ethereum.Value.fromAddress(spender)],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -321,7 +322,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
   approve(spender: Address, amount: BigInt): boolean {
     const result = super.call("approve", "approve(address,uint256):(bool)", [
       ethereum.Value.fromAddress(spender),
-      ethereum.Value.fromUnsignedBigInt(amount)
+      ethereum.Value.fromUnsignedBigInt(amount),
     ]);
 
     return result[0].toBoolean();
@@ -330,7 +331,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
   try_approve(spender: Address, amount: BigInt): ethereum.CallResult<boolean> {
     const result = super.tryCall("approve", "approve(address,uint256):(bool)", [
       ethereum.Value.fromAddress(spender),
-      ethereum.Value.fromUnsignedBigInt(amount)
+      ethereum.Value.fromUnsignedBigInt(amount),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -341,7 +342,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
 
   balanceOf(account: Address): BigInt {
     const result = super.call("balanceOf", "balanceOf(address):(uint256)", [
-      ethereum.Value.fromAddress(account)
+      ethereum.Value.fromAddress(account),
     ]);
 
     return result[0].toBigInt();
@@ -349,7 +350,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
 
   try_balanceOf(account: Address): ethereum.CallResult<BigInt> {
     const result = super.tryCall("balanceOf", "balanceOf(address):(uint256)", [
-      ethereum.Value.fromAddress(account)
+      ethereum.Value.fromAddress(account),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -379,8 +380,8 @@ export class BalancerPoolToken extends ethereum.SmartContract {
       "decreaseApproval(address,uint256):(bool)",
       [
         ethereum.Value.fromAddress(spender),
-        ethereum.Value.fromUnsignedBigInt(amount)
-      ]
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ],
     );
 
     return result[0].toBoolean();
@@ -388,15 +389,15 @@ export class BalancerPoolToken extends ethereum.SmartContract {
 
   try_decreaseApproval(
     spender: Address,
-    amount: BigInt
+    amount: BigInt,
   ): ethereum.CallResult<boolean> {
     const result = super.tryCall(
       "decreaseApproval",
       "decreaseApproval(address,uint256):(bool)",
       [
         ethereum.Value.fromAddress(spender),
-        ethereum.Value.fromUnsignedBigInt(amount)
-      ]
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -407,7 +408,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
 
   getActionId(selector: Bytes): Bytes {
     const result = super.call("getActionId", "getActionId(bytes4):(bytes32)", [
-      ethereum.Value.fromFixedBytes(selector)
+      ethereum.Value.fromFixedBytes(selector),
     ]);
 
     return result[0].toBytes();
@@ -415,7 +416,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
 
   try_getActionId(selector: Bytes): ethereum.CallResult<Bytes> {
     const result = super.tryCall("getActionId", "getActionId(bytes4):(bytes32)", [
-      ethereum.Value.fromFixedBytes(selector)
+      ethereum.Value.fromFixedBytes(selector),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -434,7 +435,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     const result = super.tryCall(
       "getAuthorizer",
       "getAuthorizer():(address)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -462,7 +463,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     const result = super.call(
       "getLastInvariant",
       "getLastInvariant():(uint256)",
-      []
+      [],
     );
 
     return result[0].toBigInt();
@@ -472,7 +473,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     const result = super.tryCall(
       "getLastInvariant",
       "getLastInvariant():(uint256)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -485,7 +486,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     const result = super.call(
       "getNormalizedWeights",
       "getNormalizedWeights():(uint256[])",
-      []
+      [],
     );
 
     return result[0].toBigIntArray();
@@ -495,7 +496,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     const result = super.tryCall(
       "getNormalizedWeights",
       "getNormalizedWeights():(uint256[])",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -523,23 +524,21 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     const result = super.call(
       "getPausedState",
       "getPausedState():(bool,uint256,uint256)",
-      []
+      [],
     );
 
     return new BalancerPoolToken__getPausedStateResult(
       result[0].toBoolean(),
       result[1].toBigInt(),
-      result[2].toBigInt()
+      result[2].toBigInt(),
     );
   }
 
-  try_getPausedState(): ethereum.CallResult<
-    BalancerPoolToken__getPausedStateResult
-  > {
+  try_getPausedState(): ethereum.CallResult<BalancerPoolToken__getPausedStateResult> {
     const result = super.tryCall(
       "getPausedState",
       "getPausedState():(bool,uint256,uint256)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -549,8 +548,8 @@ export class BalancerPoolToken extends ethereum.SmartContract {
       new BalancerPoolToken__getPausedStateResult(
         value[0].toBoolean(),
         value[1].toBigInt(),
-        value[2].toBigInt()
-      )
+        value[2].toBigInt(),
+      ),
     );
   }
 
@@ -588,7 +587,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     const result = super.call(
       "getSwapFeePercentage",
       "getSwapFeePercentage():(uint256)",
-      []
+      [],
     );
 
     return result[0].toBigInt();
@@ -598,7 +597,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     const result = super.tryCall(
       "getSwapFeePercentage",
       "getSwapFeePercentage():(uint256)",
-      []
+      [],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -628,8 +627,8 @@ export class BalancerPoolToken extends ethereum.SmartContract {
       "increaseApproval(address,uint256):(bool)",
       [
         ethereum.Value.fromAddress(spender),
-        ethereum.Value.fromUnsignedBigInt(amount)
-      ]
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ],
     );
 
     return result[0].toBoolean();
@@ -637,15 +636,15 @@ export class BalancerPoolToken extends ethereum.SmartContract {
 
   try_increaseApproval(
     spender: Address,
-    amount: BigInt
+    amount: BigInt,
   ): ethereum.CallResult<boolean> {
     const result = super.tryCall(
       "increaseApproval",
       "increaseApproval(address,uint256):(bool)",
       [
         ethereum.Value.fromAddress(spender),
-        ethereum.Value.fromUnsignedBigInt(amount)
-      ]
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -671,7 +670,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
 
   nonces(owner: Address): BigInt {
     const result = super.call("nonces", "nonces(address):(uint256)", [
-      ethereum.Value.fromAddress(owner)
+      ethereum.Value.fromAddress(owner),
     ]);
 
     return result[0].toBigInt();
@@ -679,7 +678,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
 
   try_nonces(owner: Address): ethereum.CallResult<BigInt> {
     const result = super.tryCall("nonces", "nonces(address):(uint256)", [
-      ethereum.Value.fromAddress(owner)
+      ethereum.Value.fromAddress(owner),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -695,7 +694,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     balances: Array<BigInt>,
     lastChangeBlock: BigInt,
     protocolSwapFeePercentage: BigInt,
-    userData: Bytes
+    userData: Bytes,
   ): BalancerPoolToken__onExitPoolResult {
     const result = super.call(
       "onExitPool",
@@ -707,13 +706,13 @@ export class BalancerPoolToken extends ethereum.SmartContract {
         ethereum.Value.fromUnsignedBigIntArray(balances),
         ethereum.Value.fromUnsignedBigInt(lastChangeBlock),
         ethereum.Value.fromUnsignedBigInt(protocolSwapFeePercentage),
-        ethereum.Value.fromBytes(userData)
-      ]
+        ethereum.Value.fromBytes(userData),
+      ],
     );
 
     return new BalancerPoolToken__onExitPoolResult(
       result[0].toBigIntArray(),
-      result[1].toBigIntArray()
+      result[1].toBigIntArray(),
     );
   }
 
@@ -724,7 +723,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     balances: Array<BigInt>,
     lastChangeBlock: BigInt,
     protocolSwapFeePercentage: BigInt,
-    userData: Bytes
+    userData: Bytes,
   ): ethereum.CallResult<BalancerPoolToken__onExitPoolResult> {
     const result = super.tryCall(
       "onExitPool",
@@ -736,8 +735,8 @@ export class BalancerPoolToken extends ethereum.SmartContract {
         ethereum.Value.fromUnsignedBigIntArray(balances),
         ethereum.Value.fromUnsignedBigInt(lastChangeBlock),
         ethereum.Value.fromUnsignedBigInt(protocolSwapFeePercentage),
-        ethereum.Value.fromBytes(userData)
-      ]
+        ethereum.Value.fromBytes(userData),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -746,8 +745,8 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(
       new BalancerPoolToken__onExitPoolResult(
         value[0].toBigIntArray(),
-        value[1].toBigIntArray()
-      )
+        value[1].toBigIntArray(),
+      ),
     );
   }
 
@@ -758,7 +757,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     balances: Array<BigInt>,
     lastChangeBlock: BigInt,
     protocolSwapFeePercentage: BigInt,
-    userData: Bytes
+    userData: Bytes,
   ): BalancerPoolToken__onJoinPoolResult {
     const result = super.call(
       "onJoinPool",
@@ -770,13 +769,13 @@ export class BalancerPoolToken extends ethereum.SmartContract {
         ethereum.Value.fromUnsignedBigIntArray(balances),
         ethereum.Value.fromUnsignedBigInt(lastChangeBlock),
         ethereum.Value.fromUnsignedBigInt(protocolSwapFeePercentage),
-        ethereum.Value.fromBytes(userData)
-      ]
+        ethereum.Value.fromBytes(userData),
+      ],
     );
 
     return new BalancerPoolToken__onJoinPoolResult(
       result[0].toBigIntArray(),
-      result[1].toBigIntArray()
+      result[1].toBigIntArray(),
     );
   }
 
@@ -787,7 +786,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     balances: Array<BigInt>,
     lastChangeBlock: BigInt,
     protocolSwapFeePercentage: BigInt,
-    userData: Bytes
+    userData: Bytes,
   ): ethereum.CallResult<BalancerPoolToken__onJoinPoolResult> {
     const result = super.tryCall(
       "onJoinPool",
@@ -799,8 +798,8 @@ export class BalancerPoolToken extends ethereum.SmartContract {
         ethereum.Value.fromUnsignedBigIntArray(balances),
         ethereum.Value.fromUnsignedBigInt(lastChangeBlock),
         ethereum.Value.fromUnsignedBigInt(protocolSwapFeePercentage),
-        ethereum.Value.fromBytes(userData)
-      ]
+        ethereum.Value.fromBytes(userData),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -809,15 +808,15 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(
       new BalancerPoolToken__onJoinPoolResult(
         value[0].toBigIntArray(),
-        value[1].toBigIntArray()
-      )
+        value[1].toBigIntArray(),
+      ),
     );
   }
 
   onSwap(
     request: BalancerPoolToken__onSwapInputRequestStruct,
     balanceTokenIn: BigInt,
-    balanceTokenOut: BigInt
+    balanceTokenOut: BigInt,
   ): BigInt {
     const result = super.call(
       "onSwap",
@@ -825,8 +824,8 @@ export class BalancerPoolToken extends ethereum.SmartContract {
       [
         ethereum.Value.fromTuple(request),
         ethereum.Value.fromUnsignedBigInt(balanceTokenIn),
-        ethereum.Value.fromUnsignedBigInt(balanceTokenOut)
-      ]
+        ethereum.Value.fromUnsignedBigInt(balanceTokenOut),
+      ],
     );
 
     return result[0].toBigInt();
@@ -835,7 +834,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
   try_onSwap(
     request: BalancerPoolToken__onSwapInputRequestStruct,
     balanceTokenIn: BigInt,
-    balanceTokenOut: BigInt
+    balanceTokenOut: BigInt,
   ): ethereum.CallResult<BigInt> {
     const result = super.tryCall(
       "onSwap",
@@ -843,8 +842,8 @@ export class BalancerPoolToken extends ethereum.SmartContract {
       [
         ethereum.Value.fromTuple(request),
         ethereum.Value.fromUnsignedBigInt(balanceTokenIn),
-        ethereum.Value.fromUnsignedBigInt(balanceTokenOut)
-      ]
+        ethereum.Value.fromUnsignedBigInt(balanceTokenOut),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -860,7 +859,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     balances: Array<BigInt>,
     lastChangeBlock: BigInt,
     protocolSwapFeePercentage: BigInt,
-    userData: Bytes
+    userData: Bytes,
   ): BalancerPoolToken__queryExitResult {
     const result = super.call(
       "queryExit",
@@ -872,13 +871,13 @@ export class BalancerPoolToken extends ethereum.SmartContract {
         ethereum.Value.fromUnsignedBigIntArray(balances),
         ethereum.Value.fromUnsignedBigInt(lastChangeBlock),
         ethereum.Value.fromUnsignedBigInt(protocolSwapFeePercentage),
-        ethereum.Value.fromBytes(userData)
-      ]
+        ethereum.Value.fromBytes(userData),
+      ],
     );
 
     return new BalancerPoolToken__queryExitResult(
       result[0].toBigInt(),
-      result[1].toBigIntArray()
+      result[1].toBigIntArray(),
     );
   }
 
@@ -889,7 +888,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     balances: Array<BigInt>,
     lastChangeBlock: BigInt,
     protocolSwapFeePercentage: BigInt,
-    userData: Bytes
+    userData: Bytes,
   ): ethereum.CallResult<BalancerPoolToken__queryExitResult> {
     const result = super.tryCall(
       "queryExit",
@@ -901,8 +900,8 @@ export class BalancerPoolToken extends ethereum.SmartContract {
         ethereum.Value.fromUnsignedBigIntArray(balances),
         ethereum.Value.fromUnsignedBigInt(lastChangeBlock),
         ethereum.Value.fromUnsignedBigInt(protocolSwapFeePercentage),
-        ethereum.Value.fromBytes(userData)
-      ]
+        ethereum.Value.fromBytes(userData),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -911,8 +910,8 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(
       new BalancerPoolToken__queryExitResult(
         value[0].toBigInt(),
-        value[1].toBigIntArray()
-      )
+        value[1].toBigIntArray(),
+      ),
     );
   }
 
@@ -923,7 +922,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     balances: Array<BigInt>,
     lastChangeBlock: BigInt,
     protocolSwapFeePercentage: BigInt,
-    userData: Bytes
+    userData: Bytes,
   ): BalancerPoolToken__queryJoinResult {
     const result = super.call(
       "queryJoin",
@@ -935,13 +934,13 @@ export class BalancerPoolToken extends ethereum.SmartContract {
         ethereum.Value.fromUnsignedBigIntArray(balances),
         ethereum.Value.fromUnsignedBigInt(lastChangeBlock),
         ethereum.Value.fromUnsignedBigInt(protocolSwapFeePercentage),
-        ethereum.Value.fromBytes(userData)
-      ]
+        ethereum.Value.fromBytes(userData),
+      ],
     );
 
     return new BalancerPoolToken__queryJoinResult(
       result[0].toBigInt(),
-      result[1].toBigIntArray()
+      result[1].toBigIntArray(),
     );
   }
 
@@ -952,7 +951,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     balances: Array<BigInt>,
     lastChangeBlock: BigInt,
     protocolSwapFeePercentage: BigInt,
-    userData: Bytes
+    userData: Bytes,
   ): ethereum.CallResult<BalancerPoolToken__queryJoinResult> {
     const result = super.tryCall(
       "queryJoin",
@@ -964,8 +963,8 @@ export class BalancerPoolToken extends ethereum.SmartContract {
         ethereum.Value.fromUnsignedBigIntArray(balances),
         ethereum.Value.fromUnsignedBigInt(lastChangeBlock),
         ethereum.Value.fromUnsignedBigInt(protocolSwapFeePercentage),
-        ethereum.Value.fromBytes(userData)
-      ]
+        ethereum.Value.fromBytes(userData),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -974,8 +973,8 @@ export class BalancerPoolToken extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(
       new BalancerPoolToken__queryJoinResult(
         value[0].toBigInt(),
-        value[1].toBigIntArray()
-      )
+        value[1].toBigIntArray(),
+      ),
     );
   }
 
@@ -1012,7 +1011,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
   transfer(recipient: Address, amount: BigInt): boolean {
     const result = super.call("transfer", "transfer(address,uint256):(bool)", [
       ethereum.Value.fromAddress(recipient),
-      ethereum.Value.fromUnsignedBigInt(amount)
+      ethereum.Value.fromUnsignedBigInt(amount),
     ]);
 
     return result[0].toBoolean();
@@ -1020,11 +1019,11 @@ export class BalancerPoolToken extends ethereum.SmartContract {
 
   try_transfer(
     recipient: Address,
-    amount: BigInt
+    amount: BigInt,
   ): ethereum.CallResult<boolean> {
     const result = super.tryCall("transfer", "transfer(address,uint256):(bool)", [
       ethereum.Value.fromAddress(recipient),
-      ethereum.Value.fromUnsignedBigInt(amount)
+      ethereum.Value.fromUnsignedBigInt(amount),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -1040,8 +1039,8 @@ export class BalancerPoolToken extends ethereum.SmartContract {
       [
         ethereum.Value.fromAddress(sender),
         ethereum.Value.fromAddress(recipient),
-        ethereum.Value.fromUnsignedBigInt(amount)
-      ]
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ],
     );
 
     return result[0].toBoolean();
@@ -1050,7 +1049,7 @@ export class BalancerPoolToken extends ethereum.SmartContract {
   try_transferFrom(
     sender: Address,
     recipient: Address,
-    amount: BigInt
+    amount: BigInt,
   ): ethereum.CallResult<boolean> {
     const result = super.tryCall(
       "transferFrom",
@@ -1058,8 +1057,8 @@ export class BalancerPoolToken extends ethereum.SmartContract {
       [
         ethereum.Value.fromAddress(sender),
         ethereum.Value.fromAddress(recipient),
-        ethereum.Value.fromUnsignedBigInt(amount)
-      ]
+        ethereum.Value.fromUnsignedBigInt(amount),
+      ],
     );
     if (result.reverted) {
       return new ethereum.CallResult();
