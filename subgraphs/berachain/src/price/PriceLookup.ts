@@ -9,6 +9,7 @@ import {
   ERC20_IBERA,
   ERC20_OHM,
   ERC20_WBERA,
+  LP_BERADROME_KODIAK_OHM_HONEY,
   LP_KODIAK_IBERA_WBERA,
   LP_KODIAK_OHM_HONEY,
   LP_UNISWAP_V3_WBERA_HONEY} from "../contracts/Constants";
@@ -21,8 +22,8 @@ const KODIAK_QUOTER = "0x644C8D6E501f7C994B74F5ceA96abe65d0BA662B".toLowerCase()
 // Price lookup is enabled for these tokens
 export const PRICE_HANDLERS: PriceHandler[] = [
   new PriceHandlerUniswapV3Quoter([ERC20_HONEY, ERC20_WBERA], KODIAK_QUOTER, LP_UNISWAP_V3_WBERA_HONEY, getContractName),
-  new PriceHandlerKodiakIsland([ERC20_HONEY, ERC20_OHM], KODIAK_QUOTER, LP_KODIAK_OHM_HONEY, null, getContractName),
-  new PriceHandlerKodiakIsland([ERC20_HONEY, ERC20_OHM], KODIAK_QUOTER, LP_KODIAK_OHM_HONEY, BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT, getContractName),
+  new PriceHandlerKodiakIsland([ERC20_HONEY, ERC20_OHM], KODIAK_QUOTER, LP_KODIAK_OHM_HONEY, null, null, getContractName),
+  new PriceHandlerKodiakIsland([ERC20_HONEY, ERC20_OHM], KODIAK_QUOTER, LP_KODIAK_OHM_HONEY, BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT, LP_BERADROME_KODIAK_OHM_HONEY, getContractName),
   new PriceHandlerUniswapV3Quoter([ERC20_IBERA, ERC20_WBERA], KODIAK_QUOTER, LP_KODIAK_IBERA_WBERA, getContractName),
 ];
 

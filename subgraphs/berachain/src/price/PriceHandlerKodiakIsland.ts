@@ -17,13 +17,25 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     protected quoter: string;
     protected poolAddress: string;
     protected rewardVault: string | null;
+    protected rewardVaultToken: string | null;
     protected contractLookup: ContractNameLookup;
 
-    constructor(tokens: string[], quoter: string, poolAddress: string, rewardVault: string | null, contractLookup: ContractNameLookup) {
+    constructor(tokens: string[], quoter: string, poolAddress: string, rewardVault: string | null, rewardVaultToken: string | null, contractLookup: ContractNameLookup) {
+        // If the reward vault is set, the reward vault token must be set
+        if (rewardVault !== null && rewardVaultToken === null) {
+            throw new Error(`${PriceHandlerKodiakIsland.CLASS}: rewardVaultToken is null, but rewardVault is set`);
+        }
+
+        // If the reward vault is not set, the reward vault token must not be set
+        if (rewardVault === null && rewardVaultToken !== null) {
+            throw new Error(`${PriceHandlerKodiakIsland.CLASS}: rewardVaultToken is set, but rewardVault is not set`);
+        }
+
         this.tokens = tokens;
         this.quoter = quoter;
         this.poolAddress = poolAddress;
         this.rewardVault = rewardVault;
+        this.rewardVaultToken = rewardVaultToken;
         this.contractLookup = contractLookup;
     }
 
@@ -65,7 +77,20 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
         return contract;
     }
 
+    /**
+     * Returns the unique identifier for the pool.
+     *
+     * This implementation returns the pool address by default.
+     * If a reward vault is set, it will return the reward vault token.
+     *
+     * @returns
+     */
     getId(): string {
+        if (this.rewardVault !== null) {
+            const rewardVaultToken = this.rewardVaultToken;
+            return rewardVaultToken === null ? "Unknown" : rewardVaultToken;
+        }
+
         return this.poolAddress;
     }
 
