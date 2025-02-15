@@ -1,4 +1,4 @@
-import { log } from "@graphprotocol/graph-ts";
+import { Address,log } from "@graphprotocol/graph-ts";
 
 import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
 
@@ -10,6 +10,7 @@ export const ERC20_IBERA = "0x9b6761bf2397Bb5a6624a856cC84A3A14Dcd3fe5".toLowerC
 export const ERC20_STARGATE_USDC = "0x549943e04f40284185054145c6E4e9568C1D3241".toLowerCase();
 export const ERC20_HONEY = "0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce".toLowerCase();
 export const ERC20_WBERA = "0x6969696969696969696969696969696969696969".toLowerCase();
+export const NATIVE_BERA =  Address.zero().toHexString().toLowerCase();
 
 // LP tokens
 export const LP_UNISWAP_V3_WBERA_HONEY = "0x1127f801cb3ab7bdf8923272949aa7dba94b5805".toLowerCase();
@@ -22,6 +23,8 @@ export const ERC20_TOKENS_BERACHAIN = new Map<string, TokenDefinition>();
 ERC20_TOKENS_BERACHAIN.set(ERC20_IBERA, new TokenDefinition(ERC20_IBERA, TokenCategoryVolatile, false, false)); // Illiquid
 ERC20_TOKENS_BERACHAIN.set(ERC20_STARGATE_USDC, new TokenDefinition(ERC20_STARGATE_USDC, TokenCategoryStable, true, false));
 ERC20_TOKENS_BERACHAIN.set(ERC20_HONEY, new TokenDefinition(ERC20_HONEY, TokenCategoryStable, true, false));
+ERC20_TOKENS_BERACHAIN.set(ERC20_WBERA, new TokenDefinition(ERC20_WBERA, TokenCategoryVolatile, true, false));
+ERC20_TOKENS_BERACHAIN.set(NATIVE_BERA, new TokenDefinition(NATIVE_BERA, TokenCategoryVolatile, true, true));
 ERC20_TOKENS_BERACHAIN.set(LP_KODIAK_OHM_HONEY, new TokenDefinition(LP_KODIAK_OHM_HONEY, TokenCategoryPOL, true, false));
 ERC20_TOKENS_BERACHAIN.set(LP_BERADROME_KODIAK_OHM_HONEY, new TokenDefinition(LP_BERADROME_KODIAK_OHM_HONEY, TokenCategoryPOL, true, false));
 
@@ -93,6 +96,7 @@ CONTRACT_NAME_MAP.set(ERC20_IBERA, "Infrared BERA");
 CONTRACT_NAME_MAP.set(ERC20_STARGATE_USDC, "Bridged USDC (Stargate)");
 CONTRACT_NAME_MAP.set(ERC20_HONEY, "Honey");
 CONTRACT_NAME_MAP.set(ERC20_WBERA, "Wrapped BERA");
+CONTRACT_NAME_MAP.set(NATIVE_BERA, "BERA");
 CONTRACT_NAME_MAP.set(LP_KODIAK_OHM_HONEY, "Kodiak OHM-HONEY LP");
 CONTRACT_NAME_MAP.set(LP_BERADROME_KODIAK_OHM_HONEY, "Beradrome Kodiak OHM-HONEY LP");
 CONTRACT_NAME_MAP.set(TRSRY, "TRSRY Module");
@@ -103,3 +107,4 @@ export const CONTRACT_ABBREVIATION_MAP = new Map<string, string>();
 CONTRACT_ABBREVIATION_MAP.set(ERC20_IBERA, "iBERA");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_STARGATE_USDC, "USDC.e");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_WBERA, "wBERA");
+CONTRACT_ABBREVIATION_MAP.set(NATIVE_BERA, "BERA");

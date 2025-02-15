@@ -3,9 +3,10 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { TokenRecord } from "../../../shared/generated/schema";
 import { TokenCategoryVolatile } from "../../../shared/src/contracts/TokenDefinition";
 import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
+import { getNativeTokenBalances } from "../../../shared/src/utils/TokenNative";
 import { getTokensInCategory } from "../../../shared/src/utils/TokenRecordHelper";
 import { getLiquidityBalances } from "../liquidity/LiquidityCalculations";
-import { ERC20_AURA, ERC20_FXS_VE, ERC20_LQTY, ERC20_TOKE, ERC20_TOKENS, getContractName } from "./Constants";
+import {BLOCKCHAIN, ERC20_AURA, ERC20_FXS_VE, ERC20_LQTY, ERC20_TOKE, ERC20_TOKENS, getContractName, NATIVE_ETH} from "./Constants";
 import {
   getAuraLockedBalancesFromWallets,
   getAuraPoolEarnedRecords,
@@ -181,10 +182,14 @@ export function getVolatileTokenBalances(
       continue;
     }
 
-    pushTokenRecordArray(
-      records,
-      getVolatileTokenBalance(timestamp, currentTokenAddress, includeLiquidity, blockNumber),
-    );
+    if (currentTokenAddress == NATIVE_ETH) {
+      pushTokenRecordArray(records, getNativeTokenBalances(timestamp, blockNumber, BLOCKCHAIN));
+    } else {
+      pushTokenRecordArray(
+        records,
+        getVolatileTokenBalance(timestamp, currentTokenAddress, includeLiquidity, blockNumber),
+      );
+    }
   }
 
   return records;

@@ -13,7 +13,7 @@ dataSources:
       startBlock: 780014 # Deployment
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.9
       language: wasm/assemblyscript
       entities:
         - TokenRecord
