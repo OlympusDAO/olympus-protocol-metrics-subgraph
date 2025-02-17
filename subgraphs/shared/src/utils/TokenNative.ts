@@ -4,6 +4,7 @@ import { getContractName } from "../../../ethereum/src/utils/Constants";
 import { getUSDRate } from "../../../ethereum/src/utils/Price";
 import { getWalletAddressesForContract } from "../../../ethereum/src/utils/ProtocolAddresses";
 import { TokenRecord } from "../../generated/schema";
+import { toDecimal } from "./Decimals";
 import { createTokenRecord } from "./TokenRecordHelper";
 import { getTokensForChain } from "./TokensForChain";
 
@@ -36,6 +37,8 @@ export function getNativeTokenBalances(
       continue;
     }
 
+    const decimalBalance = toDecimal(balance);
+
     const record = createTokenRecord(
       timestamp,
       getContractName(zeroAddress),
@@ -43,7 +46,7 @@ export function getNativeTokenBalances(
       getContractName(wallets[i]),
       wallets[i],
       rate,
-      balance.toBigDecimal(),
+      decimalBalance,
       blockNumber,
       true,
       tokensForChain,
