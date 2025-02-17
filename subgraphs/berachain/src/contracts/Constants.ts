@@ -23,7 +23,7 @@ export const ERC20_TOKENS_BERACHAIN = new Map<string, TokenDefinition>();
 ERC20_TOKENS_BERACHAIN.set(ERC20_IBERA, new TokenDefinition(ERC20_IBERA, TokenCategoryVolatile, false, false)); // Illiquid
 ERC20_TOKENS_BERACHAIN.set(ERC20_STARGATE_USDC, new TokenDefinition(ERC20_STARGATE_USDC, TokenCategoryStable, true, false));
 ERC20_TOKENS_BERACHAIN.set(ERC20_HONEY, new TokenDefinition(ERC20_HONEY, TokenCategoryStable, true, false));
-ERC20_TOKENS_BERACHAIN.set(ERC20_WBERA, new TokenDefinition(ERC20_WBERA, TokenCategoryVolatile, true, false));
+ERC20_TOKENS_BERACHAIN.set(ERC20_WBERA, new TokenDefinition(ERC20_WBERA, TokenCategoryVolatile, true, true));
 ERC20_TOKENS_BERACHAIN.set(NATIVE_BERA, new TokenDefinition(NATIVE_BERA, TokenCategoryVolatile, true, true));
 ERC20_TOKENS_BERACHAIN.set(LP_KODIAK_OHM_HONEY, new TokenDefinition(LP_KODIAK_OHM_HONEY, TokenCategoryPOL, true, false));
 ERC20_TOKENS_BERACHAIN.set(LP_BERADROME_KODIAK_OHM_HONEY, new TokenDefinition(LP_BERADROME_KODIAK_OHM_HONEY, TokenCategoryPOL, true, false));
