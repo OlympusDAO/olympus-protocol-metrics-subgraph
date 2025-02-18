@@ -5,7 +5,7 @@ features:
   - grafting
 graft:
   base: QmdGqRrQD4FehyTYTmoK9RvveuR3e4vPDsyuqAYF4Nrmfv # 5.4.10
-  block: 21596466 # OHM-sUSDS position updates
+  block: 21810000 # Inclusion of native ETH
 schema:
   file: ../../schema.graphql
 dataSources:

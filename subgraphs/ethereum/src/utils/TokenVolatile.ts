@@ -6,7 +6,7 @@ import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { getNativeTokenBalances } from "../../../shared/src/utils/TokenNative";
 import { getTokensInCategory } from "../../../shared/src/utils/TokenRecordHelper";
 import { getLiquidityBalances } from "../liquidity/LiquidityCalculations";
-import {BLOCKCHAIN, ERC20_AURA, ERC20_FXS_VE, ERC20_LQTY, ERC20_TOKE, ERC20_TOKENS, getContractName, NATIVE_ETH} from "./Constants";
+import {BLOCKCHAIN, ERC20_AURA, ERC20_FXS_VE, ERC20_LQTY, ERC20_TOKE, ERC20_TOKENS, getContractName, NATIVE_ETH, NATIVE_ETH_BLOCK} from "./Constants";
 import {
   getAuraLockedBalancesFromWallets,
   getAuraPoolEarnedRecords,
@@ -182,14 +182,23 @@ export function getVolatileTokenBalances(
       continue;
     }
 
-    if (currentTokenAddress == NATIVE_ETH) {
-      pushTokenRecordArray(records, getNativeTokenBalances(timestamp, blockNumber, BLOCKCHAIN));
-    } else {
-      pushTokenRecordArray(
-        records,
-        getVolatileTokenBalance(timestamp, currentTokenAddress, includeLiquidity, blockNumber),
-      );
+    // Handle native ETH
+    if (currentTokenAddress.toLowerCase() === NATIVE_ETH.toLowerCase()) {
+      if (blockNumber.lt(BigInt.fromString(NATIVE_ETH_BLOCK))) {
+        log.debug("Skipping native ETH balance for block number {} because it is before the block number {}", [blockNumber.toString(), NATIVE_ETH_BLOCK]);
+
+        continue;
+      } else {
+        log.debug("Adding native ETH balance for block number {} because it is after the block number {}", [blockNumber.toString(), NATIVE_ETH_BLOCK]);
+
+        pushTokenRecordArray(records, getNativeTokenBalances(timestamp, blockNumber, BLOCKCHAIN));
+      }
     }
+
+    pushTokenRecordArray(
+      records,
+      getVolatileTokenBalance(timestamp, currentTokenAddress, includeLiquidity, blockNumber),
+    );
   }
 
   return records;

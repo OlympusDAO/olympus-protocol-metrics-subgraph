@@ -248,6 +248,8 @@ export const ERC20_WSTETH = "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0".toLower
 export const ERC20_XSUSHI = "0x8798249c2e607446efb7ad49ec89dd1865ff4272".toLowerCase();
 export const NATIVE_ETH = Address.zero().toHexString().toLowerCase();
 
+export const NATIVE_ETH_BLOCK = "21810000"; // 2025-02-09
+
 export const ERC20_TOKENS = new Map<string, TokenDefinition>();
 // ERC20_TOKENS.set(ERC20_STETH, new TokenDefinition(ERC20_STETH, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_ADAI, new TokenDefinition(ERC20_ADAI, TokenCategoryStable, true, false));
