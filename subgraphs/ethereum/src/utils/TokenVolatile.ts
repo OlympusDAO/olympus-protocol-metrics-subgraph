@@ -164,7 +164,8 @@ export function getVolatileTokenBalances(
   includeBlueChip: boolean,
   blockNumber: BigInt,
 ): TokenRecord[] {
-  log.info("Calculating volatile token value", []);
+  const FUNC = "getVolatileTokenBalances";
+  log.info("{}: Calculating volatile token value", [FUNC]);
   const records: TokenRecord[] = [];
 
   const volatileTokens = getTokensInCategory(TokenCategoryVolatile, ERC20_TOKENS);
@@ -172,26 +173,33 @@ export function getVolatileTokenBalances(
   for (let i = 0; i < volatileTokens.length; i++) {
     const currentToken = volatileTokens[i];
     const currentTokenAddress = currentToken.getAddress();
+    log.info("{}: Processing token: {} ({})", [FUNC, getContractName(currentTokenAddress), currentTokenAddress]);
+
     if (liquidOnly && !currentToken.getIsLiquid()) {
-      log.debug("liquidOnly is true, so skipping illiquid asset: {}", [currentTokenAddress]);
+      log.debug("{}: liquidOnly is true, so skipping illiquid asset: {}", [FUNC, currentTokenAddress]);
       continue;
     }
 
     if (!includeBlueChip && currentToken.getIsVolatileBluechip()) {
-      log.debug("includeBlueChip is false, so skipping blue chip asset: {}", [currentTokenAddress]);
+      log.debug("{}: includeBlueChip is false, so skipping blue chip asset: {}", [FUNC, currentTokenAddress]);
       continue;
     }
 
+    log.info("{}: NATIVE_ETH: {}", [FUNC, NATIVE_ETH]);
+
     // Handle native ETH
-    if (currentTokenAddress.toLowerCase() === NATIVE_ETH.toLowerCase()) {
+    if (currentTokenAddress.toLowerCase() == NATIVE_ETH.toLowerCase()) {
+      log.info("{}: Checking native ETH balance for block number {}", [FUNC, blockNumber.toString()]);
+
       if (blockNumber.lt(BigInt.fromString(NATIVE_ETH_BLOCK))) {
-        log.debug("Skipping native ETH balance for block number {} because it is before the block number {}", [blockNumber.toString(), NATIVE_ETH_BLOCK]);
+        log.info("{}: Skipping native ETH balance for block number {} because it is before the block number {}", [FUNC, blockNumber.toString(), NATIVE_ETH_BLOCK]);
 
         continue;
       } else {
-        log.debug("Adding native ETH balance for block number {} because it is after the block number {}", [blockNumber.toString(), NATIVE_ETH_BLOCK]);
+        log.info("{}: Adding native ETH balance for block number {} because it is after the block number {}", [FUNC, blockNumber.toString(), NATIVE_ETH_BLOCK]);
 
         pushTokenRecordArray(records, getNativeTokenBalances(timestamp, blockNumber, BLOCKCHAIN));
+        continue;
       }
     }
 
