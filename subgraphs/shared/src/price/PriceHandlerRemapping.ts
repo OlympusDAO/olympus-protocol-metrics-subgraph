@@ -1,4 +1,5 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+
 import { ContractNameLookup } from "../contracts/ContractLookup";
 import { addressesEqual } from "../utils/StringHelper";
 import { PriceHandler, PriceLookup, PriceLookupResult } from "./PriceHandler";

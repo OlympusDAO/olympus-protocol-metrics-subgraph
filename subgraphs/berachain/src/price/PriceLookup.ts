@@ -1,6 +1,7 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { PriceHandler, PriceLookupResult } from "../../../shared/src/price/PriceHandler";
+import { PriceHandlerRemapping } from "../../../shared/src/price/PriceHandlerRemapping";
 import { PriceHandlerUniswapV3Quoter } from "../../../shared/src/price/PriceHandlerUniswapV3Quoter";
 import { getUSDRate } from "../../../shared/src/price/PriceRouter";
 import {
@@ -17,7 +18,6 @@ import {
 import { getContractName } from "../contracts/Contracts";
 import { getBaseTokenRate, isBaseToken } from "./PriceBase";
 import { PriceHandlerKodiakIsland } from "./PriceHandlerKodiakIsland";
-import { PriceHandlerRemapping } from "../../../shared/src/price/PriceHandlerRemapping";
 
 const KODIAK_QUOTER = "0x644C8D6E501f7C994B74F5ceA96abe65d0BA662B".toLowerCase();
 

@@ -8,8 +8,8 @@ import { PriceHandler, PriceLookup, PriceLookupResult } from "../../../shared/sr
 import { arrayIncludesLoose } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { addressesEqual } from "../../../shared/src/utils/StringHelper";
-import { KodiakIsland } from "../../generated/TokenRecords-berachain/KodiakIsland";
 import { BeradromeKodiakIslandRewardVault } from "../../generated/TokenRecords-berachain/BeradromeKodiakIslandRewardVault";
+import { KodiakIsland } from "../../generated/TokenRecords-berachain/KodiakIsland";
 
 export class PriceHandlerKodiakIsland implements PriceHandler {
     protected static readonly CLASS: string = "PriceHandlerKodiakIsland";
