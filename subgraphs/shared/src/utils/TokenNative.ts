@@ -1,12 +1,12 @@
-import { Address, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
 
-import { getContractName } from "../../../ethereum/src/utils/Constants";
-import { getUSDRate } from "../../../ethereum/src/utils/Price";
-import { getWalletAddressesForContract } from "../../../ethereum/src/utils/ProtocolAddresses";
 import { TokenRecord } from "../../generated/schema";
+import { ContractNameLookup } from "../contracts/ContractLookup";
 import { toDecimal } from "./Decimals";
 import { createTokenRecord } from "./TokenRecordHelper";
 import { getTokensForChain } from "./TokensForChain";
+
+export type GetPrice = (tokenAddress: string, blockNumber: BigInt) => BigDecimal;
 
 /**
  * Get the native network curren balances for a given timestamp and block number
@@ -15,16 +15,17 @@ import { getTokensForChain } from "./TokensForChain";
  * @param blockchain - The blockchain to get the native balances for
  * @returns An array of TokenRecord objects representing the native balances
  */
-
 export function getNativeTokenBalances(
   timestamp: BigInt,
   blockNumber: BigInt,
   blockchain: string,
+  wallets: string[],
+  priceLookup: GetPrice,
+  getContractName: ContractNameLookup,
 ): TokenRecord[] {
   const zeroAddress = Address.zero().toHexString().toLowerCase();
 
-  const wallets = getWalletAddressesForContract(zeroAddress, blockNumber);
-  const rate = getUSDRate(zeroAddress, blockNumber);
+  const rate = priceLookup(zeroAddress, blockNumber);
   const records: TokenRecord[] = [];
 
   const tokensForChain = getTokensForChain(blockchain);

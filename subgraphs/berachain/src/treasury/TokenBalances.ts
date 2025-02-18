@@ -5,7 +5,7 @@ import { getERC20 } from "../../../shared/src/contracts/ERC20";
 import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
 import { getNativeTokenBalances } from "../../../shared/src/utils/TokenNative";
 import { getTokensInCategory } from "../../../shared/src/utils/TokenRecordHelper";
-import { BLOCKCHAIN, ERC20_TOKENS_BERACHAIN, NATIVE_BERA } from "../contracts/Constants";
+import { BLOCKCHAIN, ERC20_TOKENS_BERACHAIN, getWalletAddressesForContract, NATIVE_BERA } from "../contracts/Constants";
 import { getContractName, getERC20TokenRecordsFromWallets } from "../contracts/Contracts";
 import { getPrice } from "../price/PriceLookup";
 
@@ -69,7 +69,7 @@ export function getTokenBalances(
     const tokenAddress = categoryTokens[i].getAddress();
 
     if (tokenAddress.toLowerCase() == NATIVE_BERA.toLowerCase()) {
-      pushTokenRecordArray(records, getNativeTokenBalances(timestamp, blockNumber, BLOCKCHAIN));
+      pushTokenRecordArray(records, getNativeTokenBalances(timestamp, blockNumber, BLOCKCHAIN, getWalletAddressesForContract(NATIVE_BERA), getPrice, getContractName));
     } else {
       pushTokenRecordArray(records, getTokenBalance(timestamp, tokenAddress, blockNumber));
     }

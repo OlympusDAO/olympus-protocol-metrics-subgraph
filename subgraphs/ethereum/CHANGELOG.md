@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 5.5.3 (2025-02-18)
+## 5.5.4 (2025-02-18)
 
 - Adds support for indexing native ETH
 

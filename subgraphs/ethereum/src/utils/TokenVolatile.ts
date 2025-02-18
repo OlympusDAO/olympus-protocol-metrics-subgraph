@@ -27,6 +27,7 @@ import {
   getVlCvxUnlockedRecords,
 } from "./ContractHelper";
 import { getUSDRate } from "./Price";
+import { getWalletAddressesForContract } from "./ProtocolAddresses";
 
 /**
  * Returns the token records for a given volatile token. This includes:
@@ -198,7 +199,7 @@ export function getVolatileTokenBalances(
       } else {
         log.info("{}: Adding native ETH balance for block number {} because it is after the block number {}", [FUNC, blockNumber.toString(), NATIVE_ETH_BLOCK]);
 
-        pushTokenRecordArray(records, getNativeTokenBalances(timestamp, blockNumber, BLOCKCHAIN));
+        pushTokenRecordArray(records, getNativeTokenBalances(timestamp, blockNumber, BLOCKCHAIN, getWalletAddressesForContract(NATIVE_ETH, blockNumber), getUSDRate, getContractName));
         continue;
       }
     }
