@@ -3,9 +3,10 @@ import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 import { TokenRecord } from "../../../shared/generated/schema";
 import { TokenCategoryVolatile } from "../../../shared/src/contracts/TokenDefinition";
 import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
+import { getNativeTokenBalances } from "../../../shared/src/utils/TokenNative";
 import { getTokensInCategory } from "../../../shared/src/utils/TokenRecordHelper";
 import { getLiquidityBalances } from "../liquidity/LiquidityCalculations";
-import { ERC20_AURA, ERC20_FXS_VE, ERC20_LQTY, ERC20_TOKE, ERC20_TOKENS, getContractName } from "./Constants";
+import {BLOCKCHAIN, ERC20_AURA, ERC20_FXS_VE, ERC20_LQTY, ERC20_TOKE, ERC20_TOKENS, getContractName, NATIVE_ETH, NATIVE_ETH_BLOCK} from "./Constants";
 import {
   getAuraLockedBalancesFromWallets,
   getAuraPoolEarnedRecords,
@@ -26,6 +27,7 @@ import {
   getVlCvxUnlockedRecords,
 } from "./ContractHelper";
 import { getUSDRate } from "./Price";
+import { getWalletAddressesForContract } from "./ProtocolAddresses";
 
 /**
  * Returns the token records for a given volatile token. This includes:
@@ -163,7 +165,8 @@ export function getVolatileTokenBalances(
   includeBlueChip: boolean,
   blockNumber: BigInt,
 ): TokenRecord[] {
-  log.info("Calculating volatile token value", []);
+  const FUNC = "getVolatileTokenBalances";
+  log.info("{}: Calculating volatile token value", [FUNC]);
   const records: TokenRecord[] = [];
 
   const volatileTokens = getTokensInCategory(TokenCategoryVolatile, ERC20_TOKENS);
@@ -171,14 +174,34 @@ export function getVolatileTokenBalances(
   for (let i = 0; i < volatileTokens.length; i++) {
     const currentToken = volatileTokens[i];
     const currentTokenAddress = currentToken.getAddress();
+    log.info("{}: Processing token: {} ({})", [FUNC, getContractName(currentTokenAddress), currentTokenAddress]);
+
     if (liquidOnly && !currentToken.getIsLiquid()) {
-      log.debug("liquidOnly is true, so skipping illiquid asset: {}", [currentTokenAddress]);
+      log.debug("{}: liquidOnly is true, so skipping illiquid asset: {}", [FUNC, currentTokenAddress]);
       continue;
     }
 
     if (!includeBlueChip && currentToken.getIsVolatileBluechip()) {
-      log.debug("includeBlueChip is false, so skipping blue chip asset: {}", [currentTokenAddress]);
+      log.debug("{}: includeBlueChip is false, so skipping blue chip asset: {}", [FUNC, currentTokenAddress]);
       continue;
+    }
+
+    log.info("{}: NATIVE_ETH: {}", [FUNC, NATIVE_ETH]);
+
+    // Handle native ETH
+    if (currentTokenAddress.toLowerCase() == NATIVE_ETH.toLowerCase()) {
+      log.info("{}: Checking native ETH balance for block number {}", [FUNC, blockNumber.toString()]);
+
+      if (blockNumber.lt(BigInt.fromString(NATIVE_ETH_BLOCK))) {
+        log.info("{}: Skipping native ETH balance for block number {} because it is before the block number {}", [FUNC, blockNumber.toString(), NATIVE_ETH_BLOCK]);
+
+        continue;
+      } else {
+        log.info("{}: Adding native ETH balance for block number {} because it is after the block number {}", [FUNC, blockNumber.toString(), NATIVE_ETH_BLOCK]);
+
+        pushTokenRecordArray(records, getNativeTokenBalances(timestamp, blockNumber, BLOCKCHAIN, getWalletAddressesForContract(NATIVE_ETH, blockNumber), getUSDRate, getContractName));
+        continue;
+      }
     }
 
     pushTokenRecordArray(

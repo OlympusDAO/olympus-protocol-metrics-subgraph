@@ -248,6 +248,8 @@ export const ERC20_WSTETH = "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0".toLower
 export const ERC20_XSUSHI = "0x8798249c2e607446efb7ad49ec89dd1865ff4272".toLowerCase();
 export const NATIVE_ETH = Address.zero().toHexString().toLowerCase();
 
+export const NATIVE_ETH_BLOCK = "21810000"; // 2025-02-09
+
 export const ERC20_TOKENS = new Map<string, TokenDefinition>();
 // ERC20_TOKENS.set(ERC20_STETH, new TokenDefinition(ERC20_STETH, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_ADAI, new TokenDefinition(ERC20_ADAI, TokenCategoryStable, true, false));
@@ -576,6 +578,7 @@ LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_TRIBE, [new PairHandler(PairHandlerTypes.U
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_UST, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_UST_ETH)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_WBTC, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_ETH_WBTC)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_WETH, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_USDC_ETH)]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(NATIVE_ETH, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_USDC_ETH)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_WSTETH, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WETH_WSTETH)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_XSUSHI, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_XSUSHI_ETH)]);
 
@@ -907,6 +910,7 @@ CONTRACT_ABBREVIATION_MAP.set(ERC20_PRIME, "D2D");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_SUSHI, "SUSHI");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_XSUSHI, "xSUSHI");
 CONTRACT_ABBREVIATION_MAP.set(ERC4626_SDAI, "sDAI");
+CONTRACT_ABBREVIATION_MAP.set(NATIVE_ETH, "ETH");
 
 export function getContractAbbreviation(
   contractAddress: string,

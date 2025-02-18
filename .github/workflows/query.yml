@@ -65,7 +65,7 @@ jobs:
           [[ ! -z "$DEPLOYMENT_ID" ]] && echo "deployment id is set" || (echo "::error::deployment id is not set in config.json" && exit 1)
           echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
       - name: Download Results
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: results-${{ matrix.subgraph }}
           path: build/
@@ -73,7 +73,7 @@ jobs:
         run: |
           yarn subgraph query ${{ matrix.subgraph }} --branch base --deployment ${{ env.DEPLOYMENT_ID }}
       - name: Upload Results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: results-${{ matrix.subgraph }}
           path: build/results-${{ matrix.subgraph }}.json
@@ -104,7 +104,7 @@ jobs:
         run: |
           yarn install --frozen-lockfile
       - name: Download Results
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: results-${{ matrix.subgraph }}
           path: build/
@@ -112,7 +112,7 @@ jobs:
         run: |
           yarn subgraph compare ${{ matrix.subgraph }}
       - name: Upload Results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: results-${{ matrix.subgraph }}
           path: build/results-${{ matrix.subgraph }}.json

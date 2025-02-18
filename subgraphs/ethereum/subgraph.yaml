@@ -4,8 +4,8 @@ repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 features:
   - grafting
 graft:
-  base: QmZtg5fzQiLw3z74wqZZHE4roD23Mz2Jzu2zW5RafNfhff # 5.4.4
-  block: 21596466 # OHM-sUSDS position updates
+  base: QmdGqRrQD4FehyTYTmoK9RvveuR3e4vPDsyuqAYF4Nrmfv # 5.4.10
+  block: 21810000 # Inclusion of native ETH
 schema:
   file: ../../schema.graphql
 dataSources:
@@ -18,7 +18,7 @@ dataSources:
       startBlock: 14690000
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.9
       language: wasm/assemblyscript
       entities:
         - ProtocolMetric
@@ -148,7 +148,7 @@ dataSources:
       startBlock: 16226955
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.9
       language: wasm/assemblyscript
       entities:
         - GnosisAuctionRoot
@@ -169,7 +169,7 @@ dataSources:
       startBlock: 16226955 # Same as BondManager
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.9
       language: wasm/assemblyscript
       entities:
         - GnosisAuction

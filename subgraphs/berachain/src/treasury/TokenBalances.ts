@@ -3,8 +3,9 @@ import { BigInt, log } from "@graphprotocol/graph-ts";
 import { TokenRecord } from "../../../shared/generated/schema";
 import { getERC20 } from "../../../shared/src/contracts/ERC20";
 import { pushTokenRecordArray } from "../../../shared/src/utils/ArrayHelper";
+import { getNativeTokenBalances } from "../../../shared/src/utils/TokenNative";
 import { getTokensInCategory } from "../../../shared/src/utils/TokenRecordHelper";
-import { ERC20_TOKENS_BERACHAIN } from "../contracts/Constants";
+import { BLOCKCHAIN, ERC20_TOKENS_BERACHAIN, getWalletAddressesForContract, NATIVE_BERA } from "../contracts/Constants";
 import { getContractName, getERC20TokenRecordsFromWallets } from "../contracts/Contracts";
 import { getPrice } from "../price/PriceLookup";
 
@@ -65,7 +66,13 @@ export function getTokenBalances(
 
   const categoryTokens = getTokensInCategory(category, ERC20_TOKENS_BERACHAIN);
   for (let i = 0; i < categoryTokens.length; i++) {
-    pushTokenRecordArray(records, getTokenBalance(timestamp, categoryTokens[i].getAddress(), blockNumber));
+    const tokenAddress = categoryTokens[i].getAddress();
+
+    if (tokenAddress.toLowerCase() == NATIVE_BERA.toLowerCase()) {
+      pushTokenRecordArray(records, getNativeTokenBalances(timestamp, blockNumber, BLOCKCHAIN, getWalletAddressesForContract(NATIVE_BERA), getPrice, getContractName));
+    } else {
+      pushTokenRecordArray(records, getTokenBalance(timestamp, tokenAddress, blockNumber));
+    }
   }
 
   return records;

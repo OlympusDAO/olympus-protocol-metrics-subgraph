@@ -8,8 +8,8 @@ import { PriceHandler, PriceLookup, PriceLookupResult } from "../../../shared/sr
 import { arrayIncludesLoose } from "../../../shared/src/utils/ArrayHelper";
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { addressesEqual } from "../../../shared/src/utils/StringHelper";
-import { KodiakIsland } from "../../generated/TokenRecords-berachain/KodiakIsland";
 import { BeradromeKodiakIslandRewardVault } from "../../generated/TokenRecords-berachain/BeradromeKodiakIslandRewardVault";
+import { KodiakIsland } from "../../generated/TokenRecords-berachain/KodiakIsland";
 
 export class PriceHandlerKodiakIsland implements PriceHandler {
     protected static readonly CLASS: string = "PriceHandlerKodiakIsland";
@@ -273,13 +273,21 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
         let balance: BigDecimal;
 
         // If there is a reward vault, use the balance from that
-        const rewardVaultContract = this.getRewardVaultContract(block);
-        if (rewardVaultContract !== null) {
+        if (this.rewardVault !== null) {
             log.info("{} Using reward vault to determine balance, as it is set", [
                 FUNCTION,
             ]);
+
+            // Get the reward vault contract, which may not exist yet
+            const rewardVaultContract = this.getRewardVaultContract(block);
+            if (!rewardVaultContract) {
+                return BigDecimal.zero();
+            }
+
+            // Get the balance of the reward vault
             balance = toDecimal(rewardVaultContract.balanceOf(Address.fromString(walletAddress)), poolTokenContract.decimals());
         } else {
+            // Get the balance of the pool token
             balance = toDecimal(poolTokenContract.balanceOf(Address.fromString(walletAddress)), poolTokenContract.decimals());
         }
 

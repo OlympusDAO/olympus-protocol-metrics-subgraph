@@ -11,7 +11,8 @@ import {
 } from "../../../shared/src/utils/TokenRecordHelper";
 import { BLOCKCHAIN, ERC20_TOKENS_BERACHAIN, OHM_TOKENS, PROTOCOL_ADDRESSES } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
-import { getPrice, getPriceRecursive, PRICE_HANDLERS } from "../price/PriceLookup";
+import { OWNED_LIQUIDITY_HANDLERS } from "../contracts/LiquidityConstants";
+import { getPrice, getPriceRecursive } from "../price/PriceLookup";
 
 function getOwnedLiquidityBalanceUniswapV3(
   timestamp: BigInt,
@@ -171,8 +172,8 @@ function getOwnedLiquidityBalance(
 export function getOwnedLiquidityBalances(timestamp: BigInt, blockNumber: BigInt): TokenRecord[] {
   const records: TokenRecord[] = [];
 
-  for (let i = 0; i < PRICE_HANDLERS.length; i++) {
-    pushTokenRecordArray(records, getOwnedLiquidityBalance(timestamp, PRICE_HANDLERS[i], blockNumber));
+  for (let i = 0; i < OWNED_LIQUIDITY_HANDLERS.length; i++) {
+    pushTokenRecordArray(records, getOwnedLiquidityBalance(timestamp, OWNED_LIQUIDITY_HANDLERS[i], blockNumber));
   }
 
   return records;
