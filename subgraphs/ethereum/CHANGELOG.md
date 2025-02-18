@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 5.5.3 (2025-02-18)
+
+- Adds support for indexing native ETH
+
 ## 5.4.10 (2025-02-05)
 
 - Adds support for sUSDS as a base token
