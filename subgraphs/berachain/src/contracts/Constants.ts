@@ -1,6 +1,7 @@
 import { Address,log } from "@graphprotocol/graph-ts";
 
 import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
+import { PriceHandlerKodiakIsland } from "../price/PriceHandlerKodiakIsland";
 
 export const BLOCKCHAIN = "Berachain";
 

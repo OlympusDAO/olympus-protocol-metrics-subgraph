@@ -7,7 +7,7 @@ import { createTokenSupply, TYPE_LIQUIDITY, TYPE_TOTAL_SUPPLY, TYPE_TREASURY } f
 import { ERC20 } from "../../generated/TokenRecords-berachain/ERC20";
 import { ERC20_OHM,PROTOCOL_ADDRESSES } from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
-import { PRICE_HANDLERS } from "../price/PriceLookup";
+import { OWNED_LIQUIDITY_HANDLERS } from "../contracts/LiquidityConstants";
 
 export function getTotalSupply(timestamp: BigInt, blockNumber: BigInt): TokenSupply[] {
   const contract = ERC20.bind(Address.fromString(ERC20_OHM));
@@ -77,8 +77,8 @@ export function getProtocolOwnedLiquiditySupplyRecords(
   const ohmTokens = [ERC20_OHM];
   const wallets = PROTOCOL_ADDRESSES;
 
-  for (let i = 0; i < PRICE_HANDLERS.length; i++) {
-    const priceHandler = PRICE_HANDLERS[i];
+  for (let i = 0; i < OWNED_LIQUIDITY_HANDLERS.length; i++) {
+    const priceHandler = OWNED_LIQUIDITY_HANDLERS[i];
 
     for (let j = 0; j < ohmTokens.length; j++) {
       const currentOhmToken = ohmTokens[j];
