@@ -68,7 +68,7 @@ export function getTokenBalances(
   for (let i = 0; i < categoryTokens.length; i++) {
     const tokenAddress = categoryTokens[i].getAddress();
 
-    if (tokenAddress === NATIVE_BERA) {
+    if (tokenAddress.toLowerCase() == NATIVE_BERA.toLowerCase()) {
       pushTokenRecordArray(records, getNativeTokenBalances(timestamp, blockNumber, BLOCKCHAIN));
     } else {
       pushTokenRecordArray(records, getTokenBalance(timestamp, tokenAddress, blockNumber));
