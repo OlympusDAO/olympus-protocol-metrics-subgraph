@@ -12,10 +12,12 @@ import {
   LP_BERADROME_KODIAK_OHM_HONEY,
   LP_KODIAK_IBERA_WBERA,
   LP_KODIAK_OHM_HONEY,
-  LP_UNISWAP_V3_WBERA_HONEY} from "../contracts/Constants";
+  LP_UNISWAP_V3_WBERA_HONEY,
+  NATIVE_BERA} from "../contracts/Constants";
 import { getContractName } from "../contracts/Contracts";
 import { getBaseTokenRate, isBaseToken } from "./PriceBase";
 import { PriceHandlerKodiakIsland } from "./PriceHandlerKodiakIsland";
+import { PriceHandlerRemapping } from "../../../shared/src/price/PriceHandlerRemapping";
 
 const KODIAK_QUOTER = "0x644C8D6E501f7C994B74F5ceA96abe65d0BA662B".toLowerCase();
 
@@ -25,6 +27,7 @@ export const PRICE_HANDLERS: PriceHandler[] = [
   new PriceHandlerKodiakIsland([ERC20_HONEY, ERC20_OHM], KODIAK_QUOTER, LP_KODIAK_OHM_HONEY, null, null, getContractName),
   new PriceHandlerKodiakIsland([ERC20_HONEY, ERC20_OHM], KODIAK_QUOTER, LP_KODIAK_OHM_HONEY, BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT, LP_BERADROME_KODIAK_OHM_HONEY, getContractName),
   new PriceHandlerUniswapV3Quoter([ERC20_IBERA, ERC20_WBERA], KODIAK_QUOTER, LP_KODIAK_IBERA_WBERA, getContractName),
+  new PriceHandlerRemapping(NATIVE_BERA, ERC20_WBERA, getContractName),
 ];
 
 /**
