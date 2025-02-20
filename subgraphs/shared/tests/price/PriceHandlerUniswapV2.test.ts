@@ -2,6 +2,7 @@ import { Address, BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph
 import { assert, beforeEach, clearStore, createMockedFunction, describe, test } from "matchstick-as/assembly/index";
 
 import { CIRCULATING_SUPPLY_WALLETS, getWalletAddressesForContract } from "../../../arbitrum/src/contracts/Constants";
+import { mockZeroWalletBalances } from "../../../ethereum/tests/walletHelper";
 import { ContractNameLookup } from "../../src/contracts/ContractLookup";
 import { PriceLookup, PriceLookupResult } from "../../src/price/PriceHandler";
 import { PriceHandlerUniswapV2 } from "../../src/price/PriceHandlerUniswapV2";
@@ -9,7 +10,6 @@ import { toDecimal } from "../../src/utils/Decimals";
 import { addressesEqual } from "../../src/utils/StringHelper";
 import { CROSS_CHAIN_ARBITRUM } from "../../src/Wallets";
 import { mockERC20Balance, mockERC20Balances } from "../ERC20Helper";
-import { mockZeroWalletBalances } from "../../../ethereum/tests/walletHelper";
 
 const mockUniswapV2Pair = (
   token0Address: string,
