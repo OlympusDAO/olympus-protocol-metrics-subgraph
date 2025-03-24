@@ -304,7 +304,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     }
 
     getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal {
-        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getUnderlyingTokenBalance:`;
+        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getUnderlyingTokenBalance:${this.getId()}:`;
         const contract = this.getPoolTokenContract(block);
         if (!contract) {
             return BigDecimal.zero();
