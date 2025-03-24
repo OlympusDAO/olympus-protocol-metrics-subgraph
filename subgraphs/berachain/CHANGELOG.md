@@ -1,5 +1,9 @@
 # Berachain Subgraph Changelog
 
+## 1.1.4 (2025-02-20)
+
+- Adds support for Beradrome Kodiak OHM-HONEY Reward Vault v2
+
 ## 1.1.3 (2025-02-18)
 
 - Adds support for indexing native BERA

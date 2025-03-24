@@ -1,7 +1,6 @@
 import { Address,log } from "@graphprotocol/graph-ts";
 
 import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
-import { PriceHandlerKodiakIsland } from "../price/PriceHandlerKodiakIsland";
 
 export const BLOCKCHAIN = "Berachain";
 
@@ -39,7 +38,8 @@ export const INFRARED_CUSTODIAN = "0xb65e74f6b2c0633e30ba1be75db818bb9522a81a".t
 
 // Kodiak
 export const UNISWAP_V3_POSITION_MANAGER = "0xFE5E8C83FFE4d9627A75EaA7Fee864768dB989bD".toLowerCase();
-export const BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT = "0x017B4DD27782E2FE3421e71F33ce54801aF696F8".toLowerCase();
+export const BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1 = "0x017B4DD27782E2FE3421e71F33ce54801aF696F8".toLowerCase();
+export const BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2 = "0x8e5b2DF607B43C8D0F28035210D4e1aD1E72b8ed".toLowerCase();
 
 export const PROTOCOL_ADDRESSES = [
     DAO_MULTISIG,
@@ -90,19 +90,21 @@ export const getWalletAddressesForContract = (contractAddress: string): string[]
   };
 
 export const CONTRACT_NAME_MAP = new Map<string, string>();
+CONTRACT_NAME_MAP.set(BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1, "Beradrome Kodiak OHM-HONEY Reward Vault V1");
+CONTRACT_NAME_MAP.set(BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2, "Beradrome Kodiak OHM-HONEY Reward Vault V2");
 CONTRACT_NAME_MAP.set(DAO_MULTISIG, "DAO MS (Berachain)");
 CONTRACT_NAME_MAP.set(DAO_OPS_MULTISIG, "DAO Operations MS (Berachain)");
-CONTRACT_NAME_MAP.set(ERC20_OHM, "OHM");
-CONTRACT_NAME_MAP.set(ERC20_IBERA, "Infrared BERA");
-CONTRACT_NAME_MAP.set(ERC20_STARGATE_USDC, "Bridged USDC (Stargate)");
 CONTRACT_NAME_MAP.set(ERC20_HONEY, "Honey");
+CONTRACT_NAME_MAP.set(ERC20_IBERA, "Infrared BERA");
+CONTRACT_NAME_MAP.set(ERC20_OHM, "OHM");
+CONTRACT_NAME_MAP.set(ERC20_STARGATE_USDC, "Bridged USDC (Stargate)");
 CONTRACT_NAME_MAP.set(ERC20_WBERA, "Wrapped BERA");
-CONTRACT_NAME_MAP.set(NATIVE_BERA, "BERA");
-CONTRACT_NAME_MAP.set(LP_KODIAK_OHM_HONEY, "Kodiak OHM-HONEY LP");
-CONTRACT_NAME_MAP.set(LP_BERADROME_KODIAK_OHM_HONEY, "Beradrome Kodiak OHM-HONEY LP");
-CONTRACT_NAME_MAP.set(TRSRY, "TRSRY Module");
-CONTRACT_NAME_MAP.set(THJ_CUSTODIAN, "THJ Custodian");
 CONTRACT_NAME_MAP.set(INFRARED_CUSTODIAN, "Infrared Custodian");
+CONTRACT_NAME_MAP.set(LP_BERADROME_KODIAK_OHM_HONEY, "Beradrome Kodiak OHM-HONEY LP");
+CONTRACT_NAME_MAP.set(LP_KODIAK_OHM_HONEY, "Kodiak OHM-HONEY LP");
+CONTRACT_NAME_MAP.set(NATIVE_BERA, "BERA");
+CONTRACT_NAME_MAP.set(THJ_CUSTODIAN, "THJ Custodian");
+CONTRACT_NAME_MAP.set(TRSRY, "TRSRY Module");
 
 export const CONTRACT_ABBREVIATION_MAP = new Map<string, string>();
 CONTRACT_ABBREVIATION_MAP.set(ERC20_IBERA, "iBERA");
