@@ -255,30 +255,6 @@ program
   });
 
 program
-  .command("deploy:hosted")
-  .description("Deploy subgraph to the Hosted Service")
-  .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
-  .action((subgraph: string) => {
-    const config = readConfig(getSubgraphConfigurationFilePath(subgraph));
-    assertConfig(config);
-
-    const subgraphSafe = subgraph.replace("-", "_");
-
-    console.info("*** Deploying to Hosted Service");
-    spawnProcess(
-      `yarn graph deploy --deploy-key ${process.env[`GRAPH_TOKEN_${subgraphSafe}`]
-      } --product hosted-service --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ --output-dir ${getBuildOutputDirectory(
-        subgraph,
-      )} ${config.org}/${config.name} ${getSubgraphManifestFilePath(subgraph)}`,
-      (codegenExitCode: number) => {
-        if (codegenExitCode > 0) {
-          process.exit(codegenExitCode);
-        }
-      },
-    );
-  });
-
-program
   .command("deploy:studio")
   .description("Deploy subgraph to Subgraph Studio")
   .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
@@ -289,7 +265,7 @@ program
     console.info("*** Deploying to Subgraph Studio");
     spawnProcess(
       `yarn graph deploy --deploy-key ${process.env[`GRAPH_STUDIO_TOKEN`]
-      } --product subgraph-studio --version-label ${config.version
+      } --version-label ${config.version
       } --output-dir ${getBuildOutputDirectory(subgraph)} ${config.name
       } ${getSubgraphManifestFilePath(subgraph)}`,
       (codegenExitCode: number) => {
