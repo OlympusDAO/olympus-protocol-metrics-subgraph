@@ -1,6 +1,6 @@
 # Berachain Subgraph Changelog
 
-## 1.2.2 (2025-03-24)
+## 1.2.8 (2025-03-25)
 
 - Adds support for Infrared Kodiak OHM-HONEY Reward Vault
 
