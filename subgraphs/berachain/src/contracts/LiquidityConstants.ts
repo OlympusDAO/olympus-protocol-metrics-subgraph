@@ -11,7 +11,7 @@ const KODIAK_QUOTER = "0x644C8D6E501f7C994B74F5ceA96abe65d0BA662B".toLowerCase()
 const kodiakOhmHoney = new PriceHandlerKodiakIsland([ERC20_HONEY, ERC20_OHM], KODIAK_QUOTER, LP_KODIAK_OHM_HONEY, null, null, getContractName);
 const beradromeKodiakOhmHoneyV1 = new PriceHandlerKodiakIsland([ERC20_HONEY, ERC20_OHM], KODIAK_QUOTER, LP_KODIAK_OHM_HONEY, BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1, LP_BERADROME_KODIAK_OHM_HONEY, getContractName);
 const beradromeKodiakOhmHoneyV2 = new PriceHandlerKodiakIsland([ERC20_HONEY, ERC20_OHM], KODIAK_QUOTER, LP_KODIAK_OHM_HONEY, BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2, LP_BERADROME_KODIAK_OHM_HONEY, getContractName);
-const infraredKodiakOhmHoney = new PriceHandlerKodiakIsland([ERC20_HONEY, ERC20_OHM], KODIAK_QUOTER, LP_KODIAK_OHM_HONEY, INFRARED_KODIAK_OHM_HONEY_VAULT, null, getContractName);
+const infraredKodiakOhmHoney = new PriceHandlerKodiakIsland([ERC20_HONEY, ERC20_OHM], KODIAK_QUOTER, LP_KODIAK_OHM_HONEY, INFRARED_KODIAK_OHM_HONEY_VAULT, INFRARED_KODIAK_OHM_HONEY_VAULT, getContractName);
 export const OWNED_LIQUIDITY_HANDLERS = [kodiakOhmHoney, beradromeKodiakOhmHoneyV1, beradromeKodiakOhmHoneyV2, infraredKodiakOhmHoney];
 
 // Price handlers
