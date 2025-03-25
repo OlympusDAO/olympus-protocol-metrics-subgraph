@@ -8,6 +8,7 @@ export const BLOCKCHAIN = "Berachain";
 export const ERC20_BGT = "0x656b95E550C07a9ffe548bd4085c72418Ceb1dba".toLowerCase();
 export const ERC20_OHM = "0x18878Df23e2a36f81e820e4b47b4A40576D3159C".toLowerCase();
 export const ERC20_IBERA = "0x9b6761bf2397Bb5a6624a856cC84A3A14Dcd3fe5".toLowerCase();
+export const ERC20_IBGT = "0xac03CABA51e17c86c921E1f6CBFBdC91F8BB2E6b".toLowerCase();
 export const ERC20_STARGATE_USDC = "0x549943e04f40284185054145c6E4e9568C1D3241".toLowerCase();
 export const ERC20_HONEY = "0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce".toLowerCase();
 export const ERC20_WBERA = "0x6969696969696969696969696969696969696969".toLowerCase();
@@ -18,16 +19,7 @@ export const LP_UNISWAP_V3_WBERA_HONEY = "0x1127f801cb3ab7bdf8923272949aa7dba94b
 export const LP_KODIAK_OHM_HONEY = "0x98bDEEde9A45C28d229285d9d6e9139e9F505391".toLowerCase();
 export const LP_BERADROME_KODIAK_OHM_HONEY = "0x555BAd9EC18dB19dED0057D2517242399d1c5D87".toLowerCase();
 export const LP_KODIAK_IBERA_WBERA = "0x8dD1C3e5fB96ca0E45Fe3c3CC521Ad44e12F3e47".toLowerCase();
-
-// Token definitions
-export const ERC20_TOKENS_BERACHAIN = new Map<string, TokenDefinition>();
-ERC20_TOKENS_BERACHAIN.set(ERC20_IBERA, new TokenDefinition(ERC20_IBERA, TokenCategoryVolatile, false, false)); // Illiquid
-ERC20_TOKENS_BERACHAIN.set(ERC20_STARGATE_USDC, new TokenDefinition(ERC20_STARGATE_USDC, TokenCategoryStable, true, false));
-ERC20_TOKENS_BERACHAIN.set(ERC20_HONEY, new TokenDefinition(ERC20_HONEY, TokenCategoryStable, true, false));
-ERC20_TOKENS_BERACHAIN.set(ERC20_WBERA, new TokenDefinition(ERC20_WBERA, TokenCategoryVolatile, true, true));
-ERC20_TOKENS_BERACHAIN.set(NATIVE_BERA, new TokenDefinition(NATIVE_BERA, TokenCategoryVolatile, true, true));
-ERC20_TOKENS_BERACHAIN.set(LP_KODIAK_OHM_HONEY, new TokenDefinition(LP_KODIAK_OHM_HONEY, TokenCategoryPOL, true, false));
-ERC20_TOKENS_BERACHAIN.set(LP_BERADROME_KODIAK_OHM_HONEY, new TokenDefinition(LP_BERADROME_KODIAK_OHM_HONEY, TokenCategoryPOL, true, false));
+export const LP_KODIAK_IBGT_WBERA = "0x12bf773F18cEC56F14e7cb91d82984eF5A3148EE".toLowerCase();
 
 export const OHM_TOKENS = [ERC20_OHM];
 
@@ -42,6 +34,18 @@ export const UNISWAP_V3_POSITION_MANAGER = "0xFE5E8C83FFE4d9627A75EaA7Fee864768d
 export const BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1 = "0x017B4DD27782E2FE3421e71F33ce54801aF696F8".toLowerCase();
 export const BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2 = "0x8e5b2DF607B43C8D0F28035210D4e1aD1E72b8ed".toLowerCase();
 export const INFRARED_KODIAK_OHM_HONEY_VAULT = "0xa57Cb177Beebc35A1A26A286951a306d9B752524".toLowerCase();
+
+// Token definitions
+export const ERC20_TOKENS_BERACHAIN = new Map<string, TokenDefinition>();
+ERC20_TOKENS_BERACHAIN.set(ERC20_IBERA, new TokenDefinition(ERC20_IBERA, TokenCategoryVolatile, false, false)); // Illiquid
+ERC20_TOKENS_BERACHAIN.set(ERC20_IBGT, new TokenDefinition(ERC20_IBGT, TokenCategoryVolatile, false, false)); // Illiquid
+ERC20_TOKENS_BERACHAIN.set(ERC20_STARGATE_USDC, new TokenDefinition(ERC20_STARGATE_USDC, TokenCategoryStable, true, false));
+ERC20_TOKENS_BERACHAIN.set(ERC20_HONEY, new TokenDefinition(ERC20_HONEY, TokenCategoryStable, true, false));
+ERC20_TOKENS_BERACHAIN.set(ERC20_WBERA, new TokenDefinition(ERC20_WBERA, TokenCategoryVolatile, true, true));
+ERC20_TOKENS_BERACHAIN.set(NATIVE_BERA, new TokenDefinition(NATIVE_BERA, TokenCategoryVolatile, true, true));
+ERC20_TOKENS_BERACHAIN.set(LP_KODIAK_OHM_HONEY, new TokenDefinition(LP_KODIAK_OHM_HONEY, TokenCategoryPOL, true, false));
+ERC20_TOKENS_BERACHAIN.set(LP_BERADROME_KODIAK_OHM_HONEY, new TokenDefinition(LP_BERADROME_KODIAK_OHM_HONEY, TokenCategoryPOL, true, false));
+ERC20_TOKENS_BERACHAIN.set(INFRARED_KODIAK_OHM_HONEY_VAULT, new TokenDefinition(INFRARED_KODIAK_OHM_HONEY_VAULT, TokenCategoryPOL, true, false));
 
 export const PROTOCOL_ADDRESSES = [
     DAO_MULTISIG,
@@ -99,11 +103,12 @@ CONTRACT_NAME_MAP.set(DAO_MULTISIG, "DAO MS (Berachain)");
 CONTRACT_NAME_MAP.set(DAO_OPS_MULTISIG, "DAO Operations MS (Berachain)");
 CONTRACT_NAME_MAP.set(ERC20_HONEY, "Honey");
 CONTRACT_NAME_MAP.set(ERC20_IBERA, "Infrared BERA");
+CONTRACT_NAME_MAP.set(ERC20_IBGT, "Infrared BGT");
 CONTRACT_NAME_MAP.set(ERC20_OHM, "OHM");
 CONTRACT_NAME_MAP.set(ERC20_STARGATE_USDC, "Bridged USDC (Stargate)");
 CONTRACT_NAME_MAP.set(ERC20_WBERA, "Wrapped BERA");
 CONTRACT_NAME_MAP.set(INFRARED_CUSTODIAN, "Infrared Custodian");
-CONTRACT_NAME_MAP.set(INFRARED_KODIAK_OHM_HONEY_VAULT, "Infrared Kodiak OHM-HONEY Vault");
+CONTRACT_NAME_MAP.set(INFRARED_KODIAK_OHM_HONEY_VAULT, "Infrared Kodiak OHM-HONEY Reward Vault");
 CONTRACT_NAME_MAP.set(LP_BERADROME_KODIAK_OHM_HONEY, "Beradrome Kodiak OHM-HONEY LP");
 CONTRACT_NAME_MAP.set(LP_KODIAK_OHM_HONEY, "Kodiak OHM-HONEY LP");
 CONTRACT_NAME_MAP.set(NATIVE_BERA, "BERA");
@@ -112,6 +117,7 @@ CONTRACT_NAME_MAP.set(TRSRY, "TRSRY Module");
 
 export const CONTRACT_ABBREVIATION_MAP = new Map<string, string>();
 CONTRACT_ABBREVIATION_MAP.set(ERC20_IBERA, "iBERA");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_IBGT, "iBGT");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_STARGATE_USDC, "USDC.e");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_WBERA, "wBERA");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_BGT, "BGT");

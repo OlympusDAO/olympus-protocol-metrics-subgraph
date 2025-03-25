@@ -21,15 +21,15 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     protected contractLookup: ContractNameLookup;
 
     constructor(tokens: string[], quoter: string, poolAddress: string, rewardVault: string | null, rewardVaultToken: string | null, contractLookup: ContractNameLookup) {
-        // If the reward vault is set, the reward vault token must be set
-        if (rewardVault !== null && rewardVaultToken === null) {
-            throw new Error(`${PriceHandlerKodiakIsland.CLASS}: rewardVaultToken is null, but rewardVault is set`);
-        }
+        // // If the reward vault is set, the reward vault token must be set
+        // if (rewardVault !== null && rewardVaultToken === null) {
+        //     throw new Error(`${PriceHandlerKodiakIsland.CLASS}: rewardVaultToken is null, but rewardVault is set`);
+        // }
 
-        // If the reward vault is not set, the reward vault token must not be set
-        if (rewardVault === null && rewardVaultToken !== null) {
-            throw new Error(`${PriceHandlerKodiakIsland.CLASS}: rewardVaultToken is set, but rewardVault is not set`);
-        }
+        // // If the reward vault is not set, the reward vault token must not be set
+        // if (rewardVault === null && rewardVaultToken !== null) {
+        //     throw new Error(`${PriceHandlerKodiakIsland.CLASS}: rewardVaultToken is set, but rewardVault is not set`);
+        // }
 
         this.tokens = tokens;
         this.quoter = quoter;
@@ -65,7 +65,8 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
 
         const contract = BeradromeKodiakIslandRewardVault.bind(Address.fromString(rewardVault));
 
-        if (contract === null || contract.try_stakeToken().reverted) {
+        // balanceOf() shared between Beradrome and Infrared, and is what is actually used
+        if (contract === null || contract.try_balanceOf(Address.zero()).reverted) {
             log.debug("{} contract ({}) reverted at block {}", [
                 FUNCTION,
                 this.contractLookup(this.poolAddress),
@@ -86,9 +87,9 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
      * @returns
      */
     getId(): string {
-        const rewardVault = this.rewardVault;
-        if (rewardVault !== null) {
-            return rewardVault;
+        const rewardVaultToken = this.rewardVaultToken;
+        if (rewardVaultToken !== null) {
+            return rewardVaultToken;
         }
 
         return this.poolAddress;
