@@ -41,6 +41,10 @@ dataSources:
           file: ../shared/abis/UniswapV3PositionManager.json
         - name: ChainlinkPriceFeed
           file: ../shared/abis/ChainlinkPriceFeed.json
+        - name: BalancerVault
+          file: ../shared/abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ../shared/abis/BalancerPoolToken.json
       blockHandlers:
         - handler: handleBlock
           filter:

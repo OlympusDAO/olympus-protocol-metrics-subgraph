@@ -1,6 +1,6 @@
 # Berachain Subgraph Changelog
 
-## 1.3.0 (2025-04-03)
+## 1.3.2 (2025-04-03)
 
 - Adds support for BEX OHM-HONEY Reward Vault
 - Adds support for lBGT
