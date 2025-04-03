@@ -1,5 +1,10 @@
 # Berachain Subgraph Changelog
 
+## 1.3.2 (2025-04-03)
+
+- Adds support for BEX OHM-HONEY Reward Vault
+- Adds support for lBGT
+
 ## 1.2.8 (2025-03-25)
 
 - Adds support for Infrared Kodiak OHM-HONEY Reward Vault
