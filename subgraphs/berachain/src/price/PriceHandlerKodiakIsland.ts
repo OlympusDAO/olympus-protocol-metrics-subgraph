@@ -21,15 +21,15 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     protected contractLookup: ContractNameLookup;
 
     constructor(tokens: string[], quoter: string, poolAddress: string, rewardVault: string | null, rewardVaultToken: string | null, contractLookup: ContractNameLookup) {
-        // If the reward vault is set, the reward vault token must be set
-        if (rewardVault !== null && rewardVaultToken === null) {
-            throw new Error(`${PriceHandlerKodiakIsland.CLASS}: rewardVaultToken is null, but rewardVault is set`);
-        }
+        // // If the reward vault is set, the reward vault token must be set
+        // if (rewardVault !== null && rewardVaultToken === null) {
+        //     throw new Error(`${PriceHandlerKodiakIsland.CLASS}: rewardVaultToken is null, but rewardVault is set`);
+        // }
 
-        // If the reward vault is not set, the reward vault token must not be set
-        if (rewardVault === null && rewardVaultToken !== null) {
-            throw new Error(`${PriceHandlerKodiakIsland.CLASS}: rewardVaultToken is set, but rewardVault is not set`);
-        }
+        // // If the reward vault is not set, the reward vault token must not be set
+        // if (rewardVault === null && rewardVaultToken !== null) {
+        //     throw new Error(`${PriceHandlerKodiakIsland.CLASS}: rewardVaultToken is set, but rewardVault is not set`);
+        // }
 
         this.tokens = tokens;
         this.quoter = quoter;
@@ -65,7 +65,8 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
 
         const contract = BeradromeKodiakIslandRewardVault.bind(Address.fromString(rewardVault));
 
-        if (contract === null || contract.try_stakeToken().reverted) {
+        // balanceOf() shared between Beradrome and Infrared, and is what is actually used
+        if (contract === null || contract.try_balanceOf(Address.zero()).reverted) {
             log.debug("{} contract ({}) reverted at block {}", [
                 FUNCTION,
                 this.contractLookup(this.poolAddress),
@@ -81,14 +82,14 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
      * Returns the unique identifier for the pool.
      *
      * This implementation returns the pool address by default.
-     * If a reward vault is set, it will return the reward vault token.
+     * If a reward vault is set, it will return the reward vault.
      *
      * @returns
      */
     getId(): string {
-        if (this.rewardVault !== null) {
-            const rewardVaultToken = this.rewardVaultToken;
-            return rewardVaultToken === null ? "Unknown" : rewardVaultToken;
+        const rewardVaultToken = this.rewardVaultToken;
+        if (rewardVaultToken !== null) {
+            return rewardVaultToken;
         }
 
         return this.poolAddress;
@@ -103,7 +104,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     }
 
     getPrice(tokenAddress: string, priceLookup: PriceLookup, block: BigInt): PriceLookupResult | null {
-        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getPrice:`;
+        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getPrice:${this.getId()}:`;
 
         // Get the contract
         const contract = this.getPoolTokenContract(block);
@@ -195,7 +196,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     }
 
     getTotalValue(excludedTokens: string[], priceLookup: PriceLookup, block: BigInt): BigDecimal | null {
-        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getTotalValue:`;
+        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getTotalValue:${this.getId()}:`;
         const contract = this.getPoolTokenContract(block);
         if (!contract) {
             return null;
@@ -239,7 +240,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     }
 
     getUnitPrice(priceLookup: PriceLookup, block: BigInt): BigDecimal | null {
-        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getUnitPrice:`;
+        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getUnitPrice:${this.getId()}:`;
         const contract = this.getPoolTokenContract(block);
         if (!contract) {
             return null;
@@ -259,7 +260,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     }
 
     getBalance(walletAddress: string, block: BigInt): BigDecimal {
-        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getBalance:`;
+        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getBalance:${this.getId()}:`;
         const poolTokenContract = this.getPoolTokenContract(block);
         if (!poolTokenContract) {
             log.warning("{} Unable to determine balance as the contract ({}) reverted at block {}", [
@@ -304,7 +305,7 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
     }
 
     getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal {
-        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getUnderlyingTokenBalance:`;
+        const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getUnderlyingTokenBalance:${this.getId()}:`;
         const contract = this.getPoolTokenContract(block);
         if (!contract) {
             return BigDecimal.zero();
