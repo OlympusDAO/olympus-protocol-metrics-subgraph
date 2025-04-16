@@ -73,7 +73,7 @@ import {
   TOKE_STAKING,
 } from "./Constants";
 import { getUSDRate } from "./Price";
-import { CONVEX_ALLOCATORS, getWalletAddressesForContract } from "./ProtocolAddresses";
+import { getConvexAllocators, getWalletAddressesForContract } from "./ProtocolAddresses";
 
 /**
  * The Graph recommends only binding a contract once
@@ -1767,7 +1767,7 @@ export function getConvexStakedRecords(
   const records: TokenRecord[] = [];
 
   // Loop through allocators
-  const convexAllocators = CONVEX_ALLOCATORS;
+  const convexAllocators = getConvexAllocators(blockNumber);
   for (let i = 0; i < convexAllocators.length; i++) {
     const allocatorAddress = convexAllocators[i];
 

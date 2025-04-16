@@ -316,6 +316,7 @@ ERC20_TOKENS.set(NATIVE_ETH, new TokenDefinition(NATIVE_ETH, TokenCategoryVolati
 
 export const ERC4626_SDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA".toLowerCase();
 export const ERC4626_SUSDS = "0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD".toLowerCase();
+export const ERC4626_GAUNTLET_SUSDS_VAULT = "0x3365184e87d2Bd75961780454A5810BEc956F0dD".toLowerCase();
 
 /**
  * Mapping between the contract address of an ERC4626 token and the TokenDefinition.
@@ -325,6 +326,7 @@ export const ERC4626_SUSDS = "0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD".toLowe
 export const ERC4626_TOKENS = new Map<string, TokenDefinition>();
 ERC4626_TOKENS.set(ERC4626_SDAI, new TokenDefinition(ERC4626_SDAI, TokenCategoryStable, true, false));
 ERC4626_TOKENS.set(ERC4626_SUSDS, new TokenDefinition(ERC4626_SUSDS, TokenCategoryStable, true, false));
+ERC4626_TOKENS.set(ERC4626_GAUNTLET_SUSDS_VAULT, new TokenDefinition(ERC4626_GAUNTLET_SUSDS_VAULT, TokenCategoryStable, true, false));
 
 /**
  * Mapping between the non-staked token and the token staked in Convex.
@@ -571,6 +573,7 @@ LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC4626_SDAI, [new PairHandler(PairHandlerTypes.
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_SUSHI, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_SUSHI_ETH)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_STETH, [new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_ETH_STETH)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC4626_SUSDS, [new PairHandler(PairHandlerTypes.ERC4626, ERC4626_SUSDS)]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC4626_GAUNTLET_SUSDS_VAULT, [new PairHandler(PairHandlerTypes.ERC4626, ERC4626_GAUNTLET_SUSDS_VAULT)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_SYN, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_SYN_FRAX)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_THOR, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_THOR_ETH)]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_TOKE, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_TOKE_ETH)]);
@@ -1048,6 +1051,7 @@ CONTRACT_NAME_MAP.set(ERC20_WSTETH, "wstETH");
 CONTRACT_NAME_MAP.set(ERC20_XSUSHI, "SUSHI - Staked");
 CONTRACT_NAME_MAP.set(ERC4626_SDAI, "Savings DAI");
 CONTRACT_NAME_MAP.set(ERC4626_SUSDS, "Savings USDS");
+CONTRACT_NAME_MAP.set(ERC4626_GAUNTLET_SUSDS_VAULT, "Gauntlet sUSDS Vault");
 CONTRACT_NAME_MAP.set(ETHBOND_CONTRACT1, "ETH Bond 1");
 CONTRACT_NAME_MAP.set(EULER_ADDRESS, "Euler Finance");
 CONTRACT_NAME_MAP.set(EULER_ADDRESS, "Euler Protocol");
