@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 5.6.0 (2025-04-16)
+
+- Adds support for Guardian Olympus sUSDS Vault
+
 ## 5.5.4 (2025-02-18)
 
 - Adds support for indexing native ETH
