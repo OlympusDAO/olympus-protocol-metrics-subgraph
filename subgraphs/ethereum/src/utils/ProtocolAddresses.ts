@@ -68,6 +68,26 @@ export const CONVEX_ALLOCATORS = [
   DAO_WALLET,
 ];
 
+export const getConvexAllocators = (blockNumber: BigInt): string[] => {
+  // If before the exclusion block, return all allocators
+  if (blockNumber.lt(BigInt.fromString(CONVEX_ALLOCATOR_DEATH))) {
+    return CONVEX_ALLOCATORS;
+  }
+
+  // Otherwise remove the bricked allocator
+  const allocators = CONVEX_ALLOCATORS.slice(0);
+  for (let i = 0; i < allocators.length; i++) {
+    if (allocators[i].toLowerCase() == CONVEX_CVX_ALLOCATOR.toLowerCase()) {
+      log.debug("getConvexAllocators: removing bricked allocator: {}", [CONVEX_CVX_ALLOCATOR]);
+      allocators.splice(i, 1);
+      break;
+    }
+  }
+
+  // Return the allocators
+  return allocators;
+}
+
 /**
  * This set of wallet addresses is common across many tokens,
  * and can be used for balance lookups.
@@ -155,14 +175,14 @@ export const getWalletAddressesForContract = (contractAddress: string, blockNumb
   if (blockNumber.ge(BigInt.fromString(CONVEX_ALLOCATOR_DEATH))) {
     for (let i = 0; i < walletAddresses.length; i++) {
       // Check address
-      if (walletAddresses[i].toLowerCase() != CONVEX_ALLOCATOR1.toLowerCase()) continue;
+      if (walletAddresses[i].toLowerCase() != CONVEX_CVX_ALLOCATOR.toLowerCase()) continue;
 
       // Check exclusion block
       if (blockNumber.lt(BigInt.fromString(CONVEX_ALLOCATOR_DEATH))) continue;
 
       // Remove the address in-place
       walletAddresses.splice(i, 1);
-      log.debug("getWalletAddressesForContract: removed convex allocator: {}", [CONVEX_ALLOCATOR1]);
+      log.debug("getWalletAddressesForContract: removed convex allocator: {}", [CONVEX_CVX_ALLOCATOR]);
       break;
     }
   }
