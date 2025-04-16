@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 5.6.0 (2025-04-16)
+## 5.6.4 (2025-04-16)
 
 - Adds support for Guardian Olympus sUSDS Vault
 - Exclude balances from the Convex Allocator going forward (bricked)
