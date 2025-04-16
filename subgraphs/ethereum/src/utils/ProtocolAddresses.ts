@@ -117,6 +117,8 @@ TREASURY_BLACKLIST.set(ERC20_SOHM_V1, PROTOCOL_ADDRESSES);
 TREASURY_BLACKLIST.set(ERC20_SOHM_V2, PROTOCOL_ADDRESSES);
 TREASURY_BLACKLIST.set(ERC20_SOHM_V3, PROTOCOL_ADDRESSES);
 
+const CONVEX_ALLOCATOR_DEATH = "22280778";
+
 /**
  * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
  * For this reason, the wallets to be used differ on a per-contract basis.
@@ -146,6 +148,23 @@ export const getWalletAddressesForContract = (contractAddress: string, blockNumb
     }
 
     walletAddresses.push(clearinghouseAddresses[i].toHexString().toLowerCase());
+  }
+
+  // If after the exclusion block, remove the convex allocator
+  // Reason: funds in it are bricked
+  if (blockNumber.ge(BigInt.fromString(CONVEX_ALLOCATOR_DEATH))) {
+    for (let i = 0; i < walletAddresses.length; i++) {
+      // Check address
+      if (walletAddresses[i].toLowerCase() != CONVEX_ALLOCATOR1.toLowerCase()) continue;
+
+      // Check exclusion block
+      if (blockNumber.lt(BigInt.fromString(CONVEX_ALLOCATOR_DEATH))) continue;
+
+      // Remove the address in-place
+      walletAddresses.splice(i, 1);
+      log.debug("getWalletAddressesForContract: removed convex allocator: {}", [CONVEX_ALLOCATOR1]);
+      break;
+    }
   }
 
   // If the contract isn't on the blacklist, return as normal
