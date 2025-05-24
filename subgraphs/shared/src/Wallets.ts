@@ -55,6 +55,8 @@ export const OTC_ESCROW = "0xe3312c3f1ab30878d9686452f7205ebe11e965eb".toLowerCa
 export const MYSO_LENDING = "0xb339953fc028b9998775c00594a74dd1488ee2c6".toLowerCase();
 export const VENDOR_LENDING = "0x83234a159dbd60a32457df158fafcbdf3d1ccc08".toLowerCase();
 
+export const COOLER_LOANS_V2_MONOCOOLER = "0xdb591Ea2e5Db886dA872654D58f6cc584b68e7cC".toLowerCase();
+
 /**
  * This set of wallet addresses is common across many tokens,
  * and can be used for balance lookups.
@@ -96,4 +98,5 @@ export const WALLET_ADDRESSES = [
   COOLER_LOANS_CLEARINGHOUSE_V1,
   COOLER_LOANS_CLEARINGHOUSE_V1_1,
   COOLER_LOANS_CLEARINGHOUSE_V2,
+  COOLER_LOANS_V2_MONOCOOLER,
 ];
