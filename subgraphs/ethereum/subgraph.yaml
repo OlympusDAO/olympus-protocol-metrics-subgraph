@@ -121,6 +121,8 @@ dataSources:
         # Cooler Loans
         - name: CoolerLoansClearinghouse
           file: ./abis/CoolerLoansClearinghouse.json
+        - name: CoolerLoansMonoCooler
+          file: ./abis/CoolerLoansMonoCooler.json
         # Bophades
         - name: BophadesKernel
           file: ./abis/BophadesKernel.json
