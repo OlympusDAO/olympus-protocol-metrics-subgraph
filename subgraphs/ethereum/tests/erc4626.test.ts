@@ -3,7 +3,7 @@ import { assert, beforeEach, clearStore, createMockedFunction, describe, log,tes
 
 import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
 import { TREASURY_ADDRESS_V3 } from "../../shared/src/Wallets";
-import { ERC20_USDS, ERC4626_SUSDS } from "../src/utils/Constants";
+import { ERC20_USDS, ERC4626_GAUNTLET_SUSDS_VAULT, ERC4626_SUSDS } from "../src/utils/Constants";
 import { getAllERC4626Balances } from "../src/utils/ERC4626";
 import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
@@ -51,6 +51,7 @@ const mockERC4626Token = (
 const mockERC4626Tokens = (): void => {
   mockERC4626Token(SDAI, DAI, SDAI_ASSETS_TO_SHARES, 18);
   mockERC4626Token(ERC4626_SUSDS, ERC20_USDS, SUSDS_ASSETS_TO_SHARES, 18);
+  mockERC4626Token(ERC4626_GAUNTLET_SUSDS_VAULT, ERC20_USDS, SUSDS_ASSETS_TO_SHARES, 18);
 };
 
 const mockPriceFeeds = (): void => {
@@ -74,6 +75,9 @@ describe("ERC4626", () => {
     mockZeroWalletBalances(
       ERC4626_SUSDS,
       getWalletAddressesForContract(ERC4626_SUSDS, BLOCK_NUMBER));
+    mockZeroWalletBalances(
+      ERC4626_GAUNTLET_SUSDS_VAULT,
+      getWalletAddressesForContract(ERC4626_GAUNTLET_SUSDS_VAULT, BLOCK_NUMBER));
   });
 
   test("handles contract revert", () => {
@@ -83,6 +87,7 @@ describe("ERC4626", () => {
     // ERC4626 contract reverts
     mockERC4626Reverts(SDAI);
     mockERC4626Reverts(ERC4626_SUSDS);
+    mockERC4626Reverts(ERC4626_GAUNTLET_SUSDS_VAULT);
 
     // Mock balance
     mockWalletBalance(SDAI, TREASURY_ADDRESS_V3, toBigInt(BigDecimal.fromString("100"), 18));

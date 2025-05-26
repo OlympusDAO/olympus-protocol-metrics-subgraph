@@ -68,6 +68,26 @@ export const CONVEX_ALLOCATORS = [
   DAO_WALLET,
 ];
 
+export const getConvexAllocators = (blockNumber: BigInt): string[] => {
+  // If before the exclusion block, return all allocators
+  if (blockNumber.lt(BigInt.fromString(CONVEX_ALLOCATOR_DEATH))) {
+    return CONVEX_ALLOCATORS;
+  }
+
+  // Otherwise remove the bricked allocator
+  const allocators = CONVEX_ALLOCATORS.slice(0);
+  for (let i = 0; i < allocators.length; i++) {
+    if (allocators[i].toLowerCase() == CONVEX_CVX_ALLOCATOR.toLowerCase()) {
+      log.debug("getConvexAllocators: removing bricked allocator: {}", [CONVEX_CVX_ALLOCATOR]);
+      allocators.splice(i, 1);
+      break;
+    }
+  }
+
+  // Return the allocators
+  return allocators;
+}
+
 /**
  * This set of wallet addresses is common across many tokens,
  * and can be used for balance lookups.
@@ -117,6 +137,8 @@ TREASURY_BLACKLIST.set(ERC20_SOHM_V1, PROTOCOL_ADDRESSES);
 TREASURY_BLACKLIST.set(ERC20_SOHM_V2, PROTOCOL_ADDRESSES);
 TREASURY_BLACKLIST.set(ERC20_SOHM_V3, PROTOCOL_ADDRESSES);
 
+const CONVEX_ALLOCATOR_DEATH = "22278800";
+
 /**
  * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.
  * For this reason, the wallets to be used differ on a per-contract basis.
@@ -146,6 +168,23 @@ export const getWalletAddressesForContract = (contractAddress: string, blockNumb
     }
 
     walletAddresses.push(clearinghouseAddresses[i].toHexString().toLowerCase());
+  }
+
+  // If after the exclusion block, remove the convex allocator
+  // Reason: funds in it are bricked
+  if (blockNumber.ge(BigInt.fromString(CONVEX_ALLOCATOR_DEATH))) {
+    for (let i = 0; i < walletAddresses.length; i++) {
+      // Check address
+      if (walletAddresses[i].toLowerCase() != CONVEX_CVX_ALLOCATOR.toLowerCase()) continue;
+
+      // Check exclusion block
+      if (blockNumber.lt(BigInt.fromString(CONVEX_ALLOCATOR_DEATH))) continue;
+
+      // Remove the address in-place
+      walletAddresses.splice(i, 1);
+      log.debug("getWalletAddressesForContract: removed convex allocator: {}", [CONVEX_CVX_ALLOCATOR]);
+      break;
+    }
   }
 
   // If the contract isn't on the blacklist, return as normal
