@@ -1,6 +1,11 @@
 specVersion: 0.0.8
 description: Olympus Protocol Metrics Subgraph - Berachain
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
+features:
+  - grafting
+graft:
+  base: QmWkca2atv4YwqUaEJcowWSmAXsvxNieKqXNwtFoVGdX7A # 1.1.4
+  block: 2735780 # Infrared vault deployment
 schema:
   file: ../../schema.graphql
 dataSources:
@@ -36,6 +41,10 @@ dataSources:
           file: ../shared/abis/UniswapV3PositionManager.json
         - name: ChainlinkPriceFeed
           file: ../shared/abis/ChainlinkPriceFeed.json
+        - name: BalancerVault
+          file: ../shared/abis/BalancerVault.json
+        - name: BalancerPoolToken
+          file: ../shared/abis/BalancerPoolToken.json
       blockHandlers:
         - handler: handleBlock
           filter:

@@ -11,6 +11,7 @@ Deployed at:
 - [Arbitrum](https://thegraph.com/explorer/subgraphs/8Zxb1kVv9ZBChHXEPSgtC5u5gjCijMn5k8ErpzRYWNgH?view=Overview&chain=arbitrum-one)
 - [Fantom](https://thegraph.com/explorer/subgraphs/3qSJTWdWJETFzht814HVV9rVafwRLQp3k9mZhCF39bYd?v=1&view=Query&chain=arbitrum-one)
 - [Base](https://thegraph.com/explorer/subgraphs/3YAC1Gj2AUFCQ8wd4DaBQmqU3DJZjKyr45dQykAtXuMU?view=Overview&chain=arbitrum-one)
+- [Berachain](https://thegraph.com/explorer/subgraphs/5KjntDTvo4DumbAkXdkrzNBdta2NujCc73TRYwgTdVun?view=Query&chain=arbitrum-one)
 
 ## Initial Setup
 

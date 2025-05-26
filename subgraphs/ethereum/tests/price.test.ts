@@ -216,6 +216,7 @@ describe("OHM-USD rate", () => {
     mockERC20Balance(ERC20_WETH, PAIR_UNISWAP_V3_WETH_OHM, toBigInt(ethBalance, ERC20_STANDARD_DECIMALS));
 
     // 919.574080927401380445 * 1898.01397374 / 130454.081369749 = 13.3791479512
+    // TODO figure out why this is not being returned
     const calculatedRate = BigDecimal.fromString("13.3835");
 
     assert.stringEquals(

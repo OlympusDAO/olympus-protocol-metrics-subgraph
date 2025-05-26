@@ -1,5 +1,10 @@
 # Subgraph Changelog
 
+## 5.6.4 (2025-04-16)
+
+- Adds support for Guardian Olympus sUSDS Vault
+- Exclude balances from the Convex Allocator going forward (bricked)
+
 ## 5.5.4 (2025-02-18)
 
 - Adds support for indexing native ETH
