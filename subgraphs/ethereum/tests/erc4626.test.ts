@@ -75,6 +75,9 @@ describe("ERC4626", () => {
     mockZeroWalletBalances(
       ERC4626_SUSDS,
       getWalletAddressesForContract(ERC4626_SUSDS, BLOCK_NUMBER));
+    mockZeroWalletBalances(
+      ERC4626_GAUNTLET_SUSDS_VAULT,
+      getWalletAddressesForContract(ERC4626_GAUNTLET_SUSDS_VAULT, BLOCK_NUMBER));
   });
 
   test("handles contract revert", () => {
@@ -84,6 +87,7 @@ describe("ERC4626", () => {
     // ERC4626 contract reverts
     mockERC4626Reverts(SDAI);
     mockERC4626Reverts(ERC4626_SUSDS);
+    mockERC4626Reverts(ERC4626_GAUNTLET_SUSDS_VAULT);
 
     // Mock balance
     mockWalletBalance(SDAI, TREASURY_ADDRESS_V3, toBigInt(BigDecimal.fromString("100"), 18));
