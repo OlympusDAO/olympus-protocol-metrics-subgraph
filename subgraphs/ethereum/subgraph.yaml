@@ -5,7 +5,7 @@ features:
   - grafting
 graft:
   base: QmdeAd2f79EHqki57gBcd8jbNK2xGyaYCHSV4YK4vouPCe # 5.6.4
-  block: 22423121 # Deployment of Cooler V2
+  block: 22560000 # Activation of Cooler V2
 schema:
   file: ../../schema.graphql
 dataSources:
