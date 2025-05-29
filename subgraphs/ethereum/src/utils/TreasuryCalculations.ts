@@ -4,6 +4,7 @@ import { TokenRecord } from "../../../shared/generated/schema";
 import { TokenSupply } from "../../../shared/generated/schema";
 import { pushTokenRecordArray, pushTokenSupplyArray } from "../../../shared/src/utils/ArrayHelper";
 import { getClearinghouseReceivables } from "../contracts/CoolerLoansClearinghouse";
+import { getCoolerV2Receivables } from "../contracts/CoolerLoansV2Monocooler";
 import { getOwnedLiquidityPoolValue } from "../liquidity/LiquidityCalculations";
 import { getAllERC4626Balances } from "./ERC4626";
 import {
@@ -60,6 +61,12 @@ export function generateTokenRecords(timestamp: BigInt, blockNumber: BigInt): To
   pushTokenRecordArray(
     records,
     getClearinghouseReceivables(timestamp, blockNumber),
+  );
+
+  // Get CoolerV2 receivables
+  pushTokenRecordArray(
+    records,
+    getCoolerV2Receivables(timestamp, blockNumber),
   );
 
   return records;

@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 5.7.1 (2025-05-26)
+
+- Adds support for USDS lent through Cooler V2
+
 ## 5.6.4 (2025-04-16)
 
 - Adds support for Guardian Olympus sUSDS Vault
