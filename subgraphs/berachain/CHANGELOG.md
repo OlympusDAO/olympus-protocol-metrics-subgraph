@@ -1,5 +1,9 @@
 # Berachain Subgraph Changelog
 
+## 1.3.3 (2025-09-15)
+
+- Amend price lookup route for IBERA for greater accuracy
+
 ## 1.3.2 (2025-04-03)
 
 - Adds support for BEX OHM-HONEY Reward Vault
