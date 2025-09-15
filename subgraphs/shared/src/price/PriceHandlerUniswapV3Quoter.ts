@@ -152,9 +152,23 @@ export class PriceHandlerUniswapV3Quoter implements PriceHandler {
             desiredTokenPrice.toString(),
         ]);
 
+        // Calculate liquidity depth as otherTokenPrice * otherTokenBalance
+        const otherTokenContract = getERC20(otherToken.toHexString(), block);
+        const otherTokenBalance = toDecimal(otherTokenContract.balanceOf(Address.fromString(this.poolAddress)), otherTokenDecimals);
+        const liquidityDepth = otherTokenPrice.price.times(otherTokenBalance);
+
+        log.debug("{} Liquidity depth for {} ({}) is {} (otherTokenPrice: {}, otherTokenBalance: {})", [
+            FUNCTION,
+            this.contractLookup(tokenAddress),
+            tokenAddress,
+            liquidityDepth.toString(),
+            otherTokenPrice.price.toString(),
+            otherTokenBalance.toString(),
+        ]);
+
         return {
             price: desiredTokenPrice,
-            liquidity: BigDecimal.zero(), // TODO set liquidity
+            liquidity: liquidityDepth,
         }
     }
 
