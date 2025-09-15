@@ -7,7 +7,7 @@ import { PriceHandlerUniswapV3 } from "../../src/price/PriceHandlerUniswapV3";
 import { toBigInt } from "../../src/utils/Decimals";
 import { addressesEqual } from "../../src/utils/StringHelper";
 
-const mockRateUniswapV3 = (
+export const mockRateUniswapV3 = (
   pairAddress: string,
   sqrtPriceX96: BigInt,
   tick: i32,
