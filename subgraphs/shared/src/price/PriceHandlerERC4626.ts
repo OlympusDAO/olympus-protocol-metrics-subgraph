@@ -50,6 +50,10 @@ export class PriceHandlerERC4626 implements PriceHandler {
         return addressesEqual(this.vaultAddress, tokenAddress);
     }
 
+    getTokens(): string[] {
+        return [this.vaultAddress, this.assetAddress];
+    }
+
     getPrice(tokenAddress: string, priceLookup: PriceLookup, block: BigInt): PriceLookupResult | null {
         const FUNCTION = `${CLASS}: getPrice:`;
 

@@ -36,6 +36,10 @@ export class PriceHandlerCustomMapping implements PriceHandler {
     return arrayIncludesLoose(this.mappedTokenAddresses, tokenAddress);
   }
 
+  getTokens(): string[] {
+    return this.mappedTokenAddresses;
+  }
+
   getPrice(
     tokenAddress: string,
     priceLookup: PriceLookup,

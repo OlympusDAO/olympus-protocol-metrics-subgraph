@@ -47,6 +47,11 @@ export interface PriceHandler {
   matches(tokenAddress: string): boolean;
 
   /**
+   * @returns array of token addresses that this handler supports
+   */
+  getTokens(): string[];
+
+  /**
    * Determines the price of {tokenAddress} in USD.
    *
    * Implementations will support the price lookup of tokens other than {tokenAddress}

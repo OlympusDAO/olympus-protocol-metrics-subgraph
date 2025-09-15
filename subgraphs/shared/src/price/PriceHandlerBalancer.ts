@@ -86,6 +86,10 @@ export class PriceHandlerBalancer implements PriceHandler {
     return arrayIncludesLoose(this.tokens, tokenAddress);
   }
 
+  getTokens(): string[] {
+    return this.tokens;
+  }
+
   getPrice(
     tokenAddress: string,
     priceLookup: PriceLookup,

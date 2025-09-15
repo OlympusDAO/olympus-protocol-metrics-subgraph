@@ -29,6 +29,10 @@ export class PriceHandlerRemapping implements PriceHandler {
         return addressesEqual(this.assetAddress, tokenAddress);
     }
 
+    getTokens(): string[] {
+        return [this.assetAddress];
+    }
+
     getPrice(tokenAddress: string, priceLookup: PriceLookup, block: BigInt): PriceLookupResult | null {
         // Look up the price of the destination token and return that
         return priceLookup(this.destinationTokenAddress, block, this.getId());
