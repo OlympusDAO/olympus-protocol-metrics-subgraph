@@ -29,6 +29,7 @@ import {
   ERC20_FXS,
   ERC20_OHM_V1,
   ERC20_OHM_V2,
+  ERC20_OHM_V2_BLOCK,
   ERC20_SYN,
   ERC20_TRIBE,
   ERC20_USDC,
@@ -54,7 +55,7 @@ import { getUSDRate, getUSDRateBalancer } from "../src/utils/Price";
 import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
 import { mockStablecoinsPriceFeeds } from "./chainlink";
-import { ERC20_STANDARD_DECIMALS, mockERC20Balance } from "./erc20Helper";
+import { ERC20_STANDARD_DECIMALS, mockERC20Balance, mockERC20TotalSupply } from "./erc20Helper";
 import {
   getERC20UsdRate,
   getEthUsdRate,
@@ -215,13 +216,16 @@ describe("OHM-USD rate", () => {
     mockERC20Balance(ERC20_OHM_V2, PAIR_UNISWAP_V3_WETH_OHM, toBigInt(ohmBalance, OHM_V2_DECIMALS));
     mockERC20Balance(ERC20_WETH, PAIR_UNISWAP_V3_WETH_OHM, toBigInt(ethBalance, ERC20_STANDARD_DECIMALS));
 
+    // Mock total supply (required by Uniswap V3 handler)
+    mockERC20TotalSupply(ERC20_OHM_V2, OHM_V2_DECIMALS, toBigInt(ohmBalance, OHM_V2_DECIMALS));
+
     // 919.574080927401380445 * 1898.01397374 / 130454.081369749 = 13.3791479512
     // TODO figure out why this is not being returned
     const calculatedRate = BigDecimal.fromString("13.3835");
 
     assert.stringEquals(
       calculatedRate.truncate(4).toString(),
-      getUSDRate(ERC20_OHM_V2, BigInt.zero()).truncate(4).toString(),
+      getUSDRate(ERC20_OHM_V2, BigInt.fromString(ERC20_OHM_V2_BLOCK)).truncate(4).toString(),
     );
   });
 
