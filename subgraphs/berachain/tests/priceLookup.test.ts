@@ -10,7 +10,7 @@ import {
 import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
 import { mockBalancerVault } from "../../shared/tests/price/PriceHandlerBalancer.test";
 import { mockRateUniswapV3 } from "../../shared/tests/price/PriceHandlerUniswapV3.test";
-import { BEX_VAULT, ERC20_HONEY, ERC20_IBERA, ERC20_IBGT, ERC20_LBGT, ERC20_WBERA, LP_BEX_LBGT_WBERA, LP_BEX_LBGT_WBERA_ID, LP_KODIAK_IBERA_WBERA, LP_KODIAK_IBGT_WBERA, LP_UNISWAP_V3_WBERA_HONEY } from "../src/contracts/Constants";
+import { BEX_VAULT, ERC20_HONEY, ERC20_IBERA, ERC20_IBGT, ERC20_LBGT, ERC20_WBERA, LP_BEX_LBGT_WBERA, LP_BEX_LBGT_WBERA_ID, LP_KODIAK_IBERA_WBERA_500, LP_KODIAK_IBERA_WBERA_3000, LP_KODIAK_IBGT_WBERA, LP_UNISWAP_V3_WBERA_HONEY } from "../src/contracts/Constants";
 import { KODIAK_QUOTER } from "../src/contracts/LiquidityConstants";
 import { getPriceFeed } from "../src/price/PriceChainlink";
 import { getPrice } from "../src/price/PriceLookup";
@@ -166,9 +166,9 @@ describe("priceLookup", () => {
       WBERA_HONEY_AMOUNT_OUT,
     );
 
-    // Mock IBERA-WBERA pool
+    // Mock IBERA-WBERA pool (3000 fee)
     mockRateUniswapV3Quoter(
-      LP_KODIAK_IBERA_WBERA,
+      LP_KODIAK_IBERA_WBERA_3000,
       IBERA_WBERA_SQRT_PRICE_X96,
       IBERA_WBERA_TICK,
       ERC20_WBERA,
@@ -177,10 +177,27 @@ describe("priceLookup", () => {
       18,
       IBERA_WBERA_TOKEN0_BALANCE,
       IBERA_WBERA_TOKEN1_BALANCE,
-      IBERA_WBERA_FEE,
+      3000,
       ERC20_IBERA,
       ERC20_WBERA,
       IBERA_WBERA_AMOUNT_OUT,
+    );
+
+    // Mock IBERA-WBERA pool (500 fee)
+    mockRateUniswapV3Quoter(
+      LP_KODIAK_IBERA_WBERA_500,
+      IBERA_WBERA_SQRT_PRICE_X96,
+      IBERA_WBERA_TICK,
+      ERC20_WBERA,
+      ERC20_IBERA,
+      18,
+      18,
+      BigInt.fromString("0"),
+      BigInt.fromString("0"),
+      500,
+      ERC20_IBERA,
+      ERC20_WBERA,
+      BigInt.fromI32(1),
     );
 
     // Mock IBGT-WBERA pool
