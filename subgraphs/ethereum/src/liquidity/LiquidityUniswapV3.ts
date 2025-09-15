@@ -278,6 +278,7 @@ export function getUniswapV3PairTotalValue(pairAddress: string, excludeOhmValue:
 
     // If the token is OHM, add the balance to the OHM balance
     if (currentToken.toLowerCase() == ERC20_OHM_V2.toLowerCase()) {
+      log.debug("getUniswapV3PairTotalValue: Adding OHM balance for pair {}: {}", [getContractName(pairAddress), ohmBalance.toString()])
       ohmBalance = ohmBalance.plus(currentBalance);
     }
 

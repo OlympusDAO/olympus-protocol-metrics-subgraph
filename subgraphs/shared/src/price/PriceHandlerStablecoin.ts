@@ -28,6 +28,10 @@ export class PriceHandlerStablecoin implements PriceHandler {
     return arrayIncludesLoose(this.addresses, tokenAddress);
   }
 
+  getTokens(): string[] {
+    return this.addresses;
+  }
+
   getPrice(tokenAddress: string, _priceLookup: PriceLookup, _block: BigInt): PriceLookupResult {
     if (!this.matches(tokenAddress)) {
       throw new Error(

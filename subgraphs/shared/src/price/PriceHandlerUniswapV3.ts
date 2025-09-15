@@ -152,9 +152,23 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
 
     const finalUsdRate = adjustedNumerator.times(otherTokenPriceResult.price);
 
+    // Calculate liquidity depth as otherTokenPrice * otherTokenBalance
+    const otherToken = otherTokenIsToken0 ? token0Contract : token1Contract;
+    const otherTokenBalance = toDecimal(otherToken.balanceOf(Address.fromString(this.poolAddress)), otherToken.decimals());
+    const liquidityDepth = otherTokenPriceResult.price.times(otherTokenBalance);
+
+    log.debug("{} Liquidity depth for {} ({}) is {} (otherTokenPrice: {}, otherTokenBalance: {})", [
+      FUNCTION,
+      this.contractLookup(tokenAddress),
+      tokenAddress,
+      liquidityDepth.toString(),
+      otherTokenPriceResult.price.toString(),
+      otherTokenBalance.toString(),
+    ]);
+
     return {
       price: finalUsdRate,
-      liquidity: BigDecimal.zero(), // TODO set liquidity
+      liquidity: liquidityDepth,
     };
   }
 

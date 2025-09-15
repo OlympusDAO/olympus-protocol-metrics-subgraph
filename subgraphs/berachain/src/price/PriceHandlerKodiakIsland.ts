@@ -103,6 +103,10 @@ export class PriceHandlerKodiakIsland implements PriceHandler {
         return arrayIncludesLoose(this.tokens, tokenAddress);
     }
 
+    getTokens(): string[] {
+        return this.tokens;
+    }
+
     getPrice(tokenAddress: string, priceLookup: PriceLookup, block: BigInt): PriceLookupResult | null {
         const FUNCTION = `${PriceHandlerKodiakIsland.CLASS}: getPrice:${this.getId()}:`;
 

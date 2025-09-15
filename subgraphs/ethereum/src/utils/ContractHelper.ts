@@ -344,11 +344,13 @@ export function getERC20DecimalBalance(tokenAddress: string, walletAddress: stri
   const tokenSnapshot = getOrCreateERC20TokenSnapshot(tokenAddress, blockNumber);
   const tokenContract = getERC20(tokenAddress, blockNumber);
   if (tokenContract === null || tokenSnapshot.totalSupply === null) {
+    log.info("getERC20DecimalBalance: totalSupply is zero. Token: {}", [getContractName(tokenAddress)]);
     return BigDecimal.zero();
   }
 
   const balanceResult = tokenContract.try_balanceOf(Address.fromString(walletAddress));
   if (balanceResult.reverted) {
+    log.info("getERC20DecimalBalance: balanceOf() reverted. Token: {}, wallet: {}, block: {}", [getContractName(tokenAddress), getContractName(walletAddress), blockNumber.toString()]);
     return BigDecimal.zero();
   }
 
@@ -529,12 +531,12 @@ export function getERC20TokenRecordFromWallet(
 /**
  * Generates TokenRecord objects for the given ERC20 token, representing deposits into a
  * Vendor Finance market.
- * 
- * @param timestamp 
- * @param contractAddress 
- * @param rate 
- * @param blockNumber 
- * @returns 
+ *
+ * @param timestamp
+ * @param contractAddress
+ * @param rate
+ * @param blockNumber
+ * @returns
  */
 export function getVendorFinanceRecords(
   timestamp: BigInt,
@@ -584,12 +586,12 @@ export function getVendorFinanceRecords(
 /**
  * Generates TokenRecord objects for the given ERC20 token, representing deposits into a
  * Myso Finance market.
- * 
- * @param timestamp 
- * @param contractAddress 
- * @param rate 
- * @param blockNumber 
- * @returns 
+ *
+ * @param timestamp
+ * @param contractAddress
+ * @param rate
+ * @param blockNumber
+ * @returns
  */
 export function getMysoFinanceRecords(
   timestamp: BigInt,

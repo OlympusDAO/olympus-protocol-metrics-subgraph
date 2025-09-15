@@ -4,7 +4,7 @@ repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 features:
   - grafting
 graft:
-  base: QmWkca2atv4YwqUaEJcowWSmAXsvxNieKqXNwtFoVGdX7A # 1.1.4
+  base: QmUboX4f6C2Hb5mZT88NcFg32rXkci6SVAj4qkpgKLHz4V # 1.3.2
   block: 2735780 # Infrared vault deployment
 schema:
   file: ../../schema.graphql
