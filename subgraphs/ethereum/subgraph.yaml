@@ -4,8 +4,8 @@ repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 features:
   - grafting
 graft:
-  base: QmdeAd2f79EHqki57gBcd8jbNK2xGyaYCHSV4YK4vouPCe # 5.6.4
-  block: 22560000 # Activation of Cooler V2
+  base: QmaM7BAJbf6P6vNcyYVWwpDD3QBktvu2A9ktZn9v4fKEG5 # 5.7.1
+  block: 23570000 # sUSDe migration
 schema:
   file: ../../schema.graphql
 dataSources:
