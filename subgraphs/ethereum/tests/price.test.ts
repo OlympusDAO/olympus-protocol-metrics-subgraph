@@ -35,6 +35,7 @@ import {
   ERC20_USDC,
   ERC20_USDS,
   ERC20_UST,
+  ERC20_WEETH,
   ERC20_WETH,
   NATIVE_ETH,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
@@ -75,6 +76,7 @@ import {
   mockUniswapV2PairsZero,
   mockUniswapV3PairsZero,
   mockUsdOhmV2Rate,
+  mockWeethWethRate,
   OHM_DAI_ETH_BALANCE_DAI,
   OHM_DAI_ETH_BALANCE_OHM,
   OHM_DAI_ETH_WEIGHT_DAI,
@@ -541,6 +543,17 @@ describe("get USD rate", () => {
 
     // Revert, so 0 is returned
     assert.stringEquals("0", usdRate.toString());
+  });
+
+  test("weETH (UniswapV3) returns correct value", () => {
+    mockEthUsdRate();
+    mockWeethWethRate();
+
+    const weethUsdRate = getUSDRate(ERC20_WEETH, BLOCK_NUMBER);
+    // wETH = 1898.01397374
+    const calculatedRate = BigDecimal.fromString("1759.8685");
+
+    assert.stringEquals(weethUsdRate.truncate(4).toString(), calculatedRate.truncate(4).toString());
   });
 
   test("FXS (UniswapV3) returns correct value for FXS", () => {
