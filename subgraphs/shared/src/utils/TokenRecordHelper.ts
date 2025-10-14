@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, Bytes } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../generated/schema";
 import { TokenDefinition } from "../contracts/TokenDefinition";
@@ -57,11 +57,11 @@ export function getTokenRecordValue(record: TokenRecord, nonOhmMultiplier: boole
  * - if {nonOhmMultiplier} is set (commonly with POL), it is used
  * - if the TokenDefinition has a liquidBackingMultiplier set, it is used
  * - otherwise a multiplier of 1 is used
- * 
- * @param tokenAddress 
- * @param tokenDefinitions 
- * @param nonOhmMultiplier 
- * @returns 
+ *
+ * @param tokenAddress
+ * @param tokenDefinitions
+ * @param nonOhmMultiplier
+ * @returns
  */
 function getTokenMultiplier(tokenAddress: string, tokenDefinitions: Map<string, TokenDefinition>, nonOhmMultiplier: BigDecimal | null): BigDecimal {
   if (nonOhmMultiplier !== null) {

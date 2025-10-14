@@ -719,7 +719,7 @@ export const mockAuraStakedBalance = (
   ]);
 };
 
-export const mockAuraStakedBalanceZero = (wallets: string[]): void => {
+export const mockAuraStakedBalanceZero = (_wallets: string[]): void => {
   const stakingPairs: string[][] = [
     [ERC20_BALANCER_OHM_DAI_WETH_AURA, AURA_STAKING_OHM_DAI_WETH],
     [ERC20_BALANCER_OHM_WETH_AURA, AURA_STAKING_OHM_WETH],

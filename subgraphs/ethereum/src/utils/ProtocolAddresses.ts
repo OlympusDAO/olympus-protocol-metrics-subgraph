@@ -68,6 +68,8 @@ export const CONVEX_ALLOCATORS = [
   DAO_WALLET,
 ];
 
+const CONVEX_ALLOCATOR_DEATH = "22278800";
+
 export const getConvexAllocators = (blockNumber: BigInt): string[] => {
   // If before the exclusion block, return all allocators
   if (blockNumber.lt(BigInt.fromString(CONVEX_ALLOCATOR_DEATH))) {
@@ -136,8 +138,6 @@ TREASURY_BLACKLIST.set(ERC20_GOHM, PROTOCOL_ADDRESSES);
 TREASURY_BLACKLIST.set(ERC20_SOHM_V1, PROTOCOL_ADDRESSES);
 TREASURY_BLACKLIST.set(ERC20_SOHM_V2, PROTOCOL_ADDRESSES);
 TREASURY_BLACKLIST.set(ERC20_SOHM_V3, PROTOCOL_ADDRESSES);
-
-const CONVEX_ALLOCATOR_DEATH = "22278800";
 
 /**
  * Some wallets (e.g. {DAO_WALLET}) have specific treasury assets mixed into them.

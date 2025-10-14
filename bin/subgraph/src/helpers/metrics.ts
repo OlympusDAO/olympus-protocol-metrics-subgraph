@@ -4,7 +4,6 @@ import { TokenRecord, TokenSupply } from "../subgraph";
 const TYPE_BONDS_DEPOSITS = "OHM Bonds (Burnable Deposits)";
 const TYPE_BONDS_PREMINTED = "OHM Bonds (Pre-minted)";
 const TYPE_BONDS_VESTING_DEPOSITS = "OHM Bonds (Vesting Deposits)";
-const TYPE_BONDS_VESTING_TOKENS = "OHM Bonds (Vesting Tokens)";
 const TYPE_BOOSTED_LIQUIDITY_VAULT = "Boosted Liquidity Vault";
 const TYPE_LENDING = "Lending";
 const TYPE_LIQUIDITY = "Liquidity";

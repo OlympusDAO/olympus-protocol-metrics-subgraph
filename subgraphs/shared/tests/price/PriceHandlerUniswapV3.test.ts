@@ -383,20 +383,6 @@ describe("getUnitPrice", () => {
 
 describe("getUnderlyingTokenBalance", () => {
   test("underlying token balance is correct", () => {
-    const priceLookup: PriceLookup = (tokenAddress: string, _block: BigInt): PriceLookupResult => {
-      if (addressesEqual(tokenAddress, ERC20_WETH)) {
-        return {
-          liquidity: BigDecimal.fromString("1"),
-          price: BigDecimal.fromString("3600"),
-        };
-      }
-
-      return {
-        liquidity: BigDecimal.fromString("1"),
-        price: BigDecimal.fromString("21"),
-      };
-    };
-
     const contractLookup: ContractNameLookup = (tokenAddress: string): string => {
       if (addressesEqual(tokenAddress, ERC20_WETH)) {
         return "wETH";

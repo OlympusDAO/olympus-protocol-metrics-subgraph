@@ -52,7 +52,7 @@ export class PriceHandlerCustom implements PriceHandler {
     throw new Error("Method not implemented.");
   }
 
-  getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal {
+  getUnderlyingTokenBalance(_walletAddress: string, _tokenAddress: string, _block: BigInt): BigDecimal {
     throw new Error("Method not implemented.");
   }
 }

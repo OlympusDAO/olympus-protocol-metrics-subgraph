@@ -1,4 +1,4 @@
-import { Address, BigDecimal } from "@graphprotocol/graph-ts";
+import { Address } from "@graphprotocol/graph-ts";
 import { assert, beforeEach, clearStore, createMockedFunction, describe, log, test } from "matchstick-as";
 
 import {

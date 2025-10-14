@@ -66,8 +66,6 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
   }
 
   private getPair(): UniswapV3Pair | null {
-    const FUNCTION = `${CLASS}: getPair:`;
-
     const pair = UniswapV3Pair.bind(Address.fromString(this.poolAddress));
     if (pair === null || pair.try_token0().reverted || pair.try_token1().reverted) {
       return null;
@@ -237,7 +235,7 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
     return this.getTotalValue([], priceLookup, block);
   }
 
-  getBalance(walletAddress: string, block: BigInt): BigDecimal {
+  getBalance(_walletAddress: string, _block: BigInt): BigDecimal {
     // TODO determine how to get the "balance"/ownership of the pool using the V3 position NFT
     return BigDecimal.zero();
   }
@@ -272,9 +270,9 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
     const pairToken1 = pair.token1();
     const pairSlot0 = pair.slot0();
     const sqrtPriceX96 = pairSlot0.getSqrtPriceX96();
-    log.debug("getPairBalances: positionId: {}, sqrtPriceX96: {}", [positionId.toString(), sqrtPriceX96.toString()]);
+    log.debug("{} positionId: {}, sqrtPriceX96: {}", [FUNCTION, positionId.toString(), sqrtPriceX96.toString()]);
     const currentTick = pairSlot0.getTick();
-    log.debug("getPairBalances: positionId: {}, currentTick: {}", [positionId.toString(), currentTick.toString()]);
+    log.debug("{} positionId: {}, currentTick: {}", [FUNCTION, positionId.toString(), currentTick.toString()]);
 
     const positionManager = UniswapV3PositionManager.bind(Address.fromString(this.positionManager));
     const position = positionManager.positions(positionId);
@@ -283,7 +281,7 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
 
     // Check that the position is for the pair we are looking for
     if (!token0.equals(pairToken0) || !token1.equals(pairToken1)) {
-      log.debug("getPairBalances: Skipping position {} that does not match tokens in pair address {}", [positionId.toString(), this.poolAddress])
+      log.debug("{} Skipping position {} that does not match tokens in pair address {}", [FUNCTION, positionId.toString(), this.poolAddress])
       return null;
     }
 
@@ -291,25 +289,25 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
 
     // Ticks
     const tickLower = position.getTickLower();
-    log.debug("getPairBalances: positionId: {}, tickLower: {}", [positionId.toString(), tickLower.toString()]);
+    log.debug("{} positionId: {}, tickLower: {}", [FUNCTION, positionId.toString(), tickLower.toString()]);
     const sqrtRatioA: BigDecimal = BigDecimal.fromString(Math.sqrt(1.0001 ** tickLower).toString());
-    log.debug("getPairBalances: positionId: {}, sqrtRatioA: {}", [positionId.toString(), sqrtRatioA.toString()]);
+    log.debug("{} positionId: {}, sqrtRatioA: {}", [FUNCTION, positionId.toString(), sqrtRatioA.toString()]);
 
     const tickUpper = position.getTickUpper();
-    log.debug("getPairBalances: positionId: {}, tickUpper: {}", [positionId.toString(), tickUpper.toString()]);
+    log.debug("{} positionId: {}, tickUpper: {}", [FUNCTION, positionId.toString(), tickUpper.toString()]);
     const sqrtRatioB: BigDecimal = BigDecimal.fromString(Math.sqrt(1.0001 ** tickUpper).toString());
-    log.debug("getPairBalances: positionId: {}, sqrtRatioB: {}", [positionId.toString(), sqrtRatioB.toString()]);
+    log.debug("{} positionId: {}, sqrtRatioB: {}", [FUNCTION, positionId.toString(), sqrtRatioB.toString()]);
 
     // If a position has no liquidity, we don't want to record details
     const liquidity: BigInt = position.getLiquidity();
     if (liquidity.equals(BigInt.zero())) {
-      log.debug("getPairBalances: Skipping position id {} with zero liquidity", [positionId.toString()]);
+      log.debug("{} Skipping position id {} with zero liquidity", [FUNCTION, positionId.toString()]);
       return null;
     }
-    log.debug("getPairBalances: positionId: {}, liquidity: {}", [positionId.toString(), liquidity.toString()]);
+    log.debug("{} positionId: {}, liquidity: {}", [FUNCTION, positionId.toString(), liquidity.toString()]);
 
     const sqrtPrice: BigDecimal = sqrtPriceX96.toBigDecimal().div(Q96.toBigDecimal());
-    log.debug("getPairBalances: positionId: {}, sqrtPrice: {}", [positionId.toString(), sqrtPrice.toString()]);
+    log.debug("{} positionId: {}, sqrtPrice: {}", [FUNCTION, positionId.toString(), sqrtPrice.toString()]);
 
     let token0Amount: BigDecimal = BigDecimal.zero();
     let token1Amount: BigDecimal = BigDecimal.zero();
@@ -330,7 +328,7 @@ export class PriceHandlerUniswapV3 implements PriceHandler {
 
     const token0Balance = token0Amount.div(BigInt.fromI32(10).pow(u8(token0Decimals)).toBigDecimal());
     const token1Balance = token1Amount.div(BigInt.fromI32(10).pow(u8(token1Decimals)).toBigDecimal());
-    log.debug("getPairBalances: positionId: {}, token0Balance: {}, token1Balance: {}", [positionId.toString(), token0Balance.toString(), token1Balance.toString()]);
+    log.debug("{} positionId: {}, token0Balance: {}, token1Balance: {}", [FUNCTION, positionId.toString(), token0Balance.toString(), token1Balance.toString()]);
 
     return [token0Balance, token1Balance];
   }
