@@ -7,6 +7,7 @@ import { COOLER_LOANS_V2_MONOCOOLER } from "../../../shared/src/Wallets";
 import { CoolerLoansMonoCooler } from "../../generated/ProtocolMetrics/CoolerLoansMonoCooler";
 import {
   BLOCKCHAIN,
+  COOLER_LOANS_V2_MONOCOOLER_START_BLOCK,
   ERC20_DAI,
   ERC20_TOKENS,
   ERC20_USDS,
@@ -24,6 +25,11 @@ import { getUSDRate } from "../utils/Price";
 export function getCoolerV2Receivables(timestamp: BigInt, blockNumber: BigInt): TokenRecord[] {
   const FUNC = "getCoolerV2Receivables";
   const records: TokenRecord[] = [];
+
+  // If before the start block, return an empty array
+  if (blockNumber.lt(BigInt.fromString(COOLER_LOANS_V2_MONOCOOLER_START_BLOCK))) {
+    return records;
+  }
 
   const daiRate = getUSDRate(ERC20_DAI, blockNumber);
   const coolerV2Monocooler = COOLER_LOANS_V2_MONOCOOLER;
