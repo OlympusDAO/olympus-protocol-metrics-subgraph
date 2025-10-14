@@ -12,6 +12,10 @@ export class PriceHandlerCustom implements PriceHandler {
     this.returnValue = returnValue;
   }
 
+  getTokens(): string[] {
+    return [];
+  }
+
   exists(): boolean {
     return true;
   }
