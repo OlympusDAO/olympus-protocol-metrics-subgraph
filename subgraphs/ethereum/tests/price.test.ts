@@ -36,6 +36,7 @@ import {
   ERC20_USDS,
   ERC20_UST,
   ERC20_WEETH,
+  ERC20_WEETH_START_BLOCK,
   ERC20_WETH,
   NATIVE_ETH,
   PAIR_UNISWAP_V2_OHM_DAI_V2,
@@ -549,7 +550,7 @@ describe("get USD rate", () => {
     mockEthUsdRate();
     mockWeethWethRate();
 
-    const weethUsdRate = getUSDRate(ERC20_WEETH, BLOCK_NUMBER);
+    const weethUsdRate = getUSDRate(ERC20_WEETH, BigInt.fromString(ERC20_WEETH_START_BLOCK));
     // wETH = 1898.01397374
     const calculatedRate = BigDecimal.fromString("1759.8685");
 
