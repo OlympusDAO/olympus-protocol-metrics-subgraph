@@ -5,7 +5,7 @@ features:
   - grafting
 graft:
   base: QmaM7BAJbf6P6vNcyYVWwpDD3QBktvu2A9ktZn9v4fKEG5 # 5.7.1
-  block: 23570000 # sUSDe migration
+  block: 22560000 # Activation of Cooler V2
 schema:
   file: ../../schema.graphql
 dataSources:
