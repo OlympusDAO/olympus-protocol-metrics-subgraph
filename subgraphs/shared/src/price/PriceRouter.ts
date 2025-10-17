@@ -1,6 +1,5 @@
 import { BigInt, log } from "@graphprotocol/graph-ts";
 
-import { arrayIncludesLoose } from "../utils/ArrayHelper";
 import { PriceHandler, PriceLookup, PriceLookupResult } from "./PriceHandler";
 
 /**

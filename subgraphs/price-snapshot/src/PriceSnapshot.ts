@@ -1,4 +1,4 @@
-import { BigDecimal, BigInt, ethereum, log } from "@graphprotocol/graph-ts";
+import { BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
 import { ERC20_OHM_V2 } from "../../ethereum/src/utils/Constants";
 import { getUSDRate } from "../../ethereum/src/utils/Price";
@@ -57,11 +57,11 @@ function getPreviousPriceSnapshot(date: Date): PriceSnapshot | null {
 
 /**
  * Returns the delta between the OHM-USD price in the current snapshot and the latest snapshot from the previous day.
- * 
+ *
  * Delta is calculated as: (current price/previous price) - 1
- * 
- * @param currentSnapshot 
- * @param previousSnapshot 
+ *
+ * @param currentSnapshot
+ * @param previousSnapshot
  * @returns Price delta or null (if the previous price is missing)
  */
 export function getPriceDelta(currentSnapshot: PriceSnapshot, previousSnapshot: PriceSnapshot | null): BigDecimal | null {
@@ -74,10 +74,10 @@ export function getPriceDelta(currentSnapshot: PriceSnapshot, previousSnapshot: 
 
 /**
  * Returns the volatility of OHM-USD using standard deviation.
- * 
- * @param currentSnapshot 
- * @param currentDate 
- * @param days 
+ *
+ * @param currentSnapshot
+ * @param currentDate
+ * @param days
  * @returns Price volatility or null (if there are not enough values)
  */
 export function getPriceVolatility(currentSnapshot: PriceSnapshot, currentDate: Date, days: i32): BigDecimal | null {
@@ -108,9 +108,9 @@ export function getPriceVolatility(currentSnapshot: PriceSnapshot, currentDate: 
  * - gOHM-USD price
  * - Price delta against the latest price for the previous day, or null
  * - Price volatility over the previous 30 days (using the standard deviation of the 1d price delta), or null
- * 
+ *
  * @param event
- * @returns 
+ * @returns
  */
 export function handleEvent(event: NewRound): void {
     const block = event.block;

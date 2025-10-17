@@ -908,7 +908,7 @@ export function getTotalValueLocked(blockNumber: BigInt): BigDecimal {
  * - minus: OHM in boosted liquidity vaults
  * - minus: OHM minted and deployed into lending markets
  */
-export function getBackedSupply(tokenSupplies: TokenSupply[], block: BigInt): BigDecimal {
+export function getBackedSupply(tokenSupplies: TokenSupply[], _block: BigInt): BigDecimal {
   let total = BigDecimal.zero();
 
   const includedTypes = [TYPE_TOTAL_SUPPLY, TYPE_TREASURY, TYPE_OFFSET, TYPE_BONDS_PREMINTED, TYPE_BONDS_VESTING_DEPOSITS, TYPE_BONDS_DEPOSITS, TYPE_LIQUIDITY, TYPE_BOOSTED_LIQUIDITY_VAULT, TYPE_LENDING];

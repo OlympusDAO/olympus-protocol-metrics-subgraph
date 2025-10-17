@@ -30,9 +30,13 @@ jobs:
           [[ ! -z "$DEPLOYMENT_ID" ]] && echo "deployment id is set" || (echo "::error::deployment id is not set in config.json" && exit 1)
           echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
       - name: Get Latest Date
+        env:
+          GRAPH_API_KEY: ${{ secrets.GRAPH_API_KEY }}
         run: |
           yarn subgraph latest-date ${{ matrix.subgraph }} --deployment ${{ env.DEPLOYMENT_ID }}
       - name: Get Token Records
+        env:
+          GRAPH_API_KEY: ${{ secrets.GRAPH_API_KEY }}
         run: |
           yarn subgraph query ${{ matrix.subgraph }} --branch branch --deployment ${{ env.DEPLOYMENT_ID }}
       - name: Upload Results
@@ -70,6 +74,8 @@ jobs:
           name: results-${{ matrix.subgraph }}
           path: build/
       - name: Get Token Records
+        env:
+          GRAPH_API_KEY: ${{ secrets.GRAPH_API_KEY }}
         run: |
           yarn subgraph query ${{ matrix.subgraph }} --branch base --deployment ${{ env.DEPLOYMENT_ID }}
       - name: Upload Results

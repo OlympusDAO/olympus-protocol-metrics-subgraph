@@ -1,4 +1,4 @@
-import { BigDecimal, log } from "@graphprotocol/graph-ts";
+import { BigDecimal } from "@graphprotocol/graph-ts";
 
 import { TokenRecord } from "../../../shared/generated/schema";
 import { BUYBACK_MS } from "../../../shared/src/Wallets";

@@ -61,7 +61,7 @@ export function getBalance(
   return balance;
 }
 
-export function getERC20DecimalBalance(tokenAddress: string, sourceAddress: string, blockNumber: BigInt, contractLookup: ContractNameLookup): BigDecimal {
+export function getERC20DecimalBalance(tokenAddress: string, sourceAddress: string, _blockNumber: BigInt, _contractLookup: ContractNameLookup): BigDecimal {
   const contract = ERC20.bind(Address.fromString(tokenAddress));
   const balanceResult = contract.try_balanceOf(Address.fromString(sourceAddress));
   if (balanceResult.reverted) {

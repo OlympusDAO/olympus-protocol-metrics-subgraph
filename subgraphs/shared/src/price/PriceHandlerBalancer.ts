@@ -66,7 +66,6 @@ export class PriceHandlerBalancer implements PriceHandler {
   }
 
   private getPoolToken(block: BigInt): BalancerPoolToken | null {
-    const FUNCTION = `${CLASS}: getPoolToken:`;
     const vault = this.getVault(block);
     if (!vault) {
       return null;

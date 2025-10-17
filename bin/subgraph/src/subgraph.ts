@@ -1,9 +1,17 @@
 import { ApolloClient, gql, HttpLink, InMemoryCache } from "@apollo/client/core";
 import { fetch } from "cross-fetch";
 
+// Get the subgraph URL with the API key
+const getSubgraphUrl = (subgraphId: string): string => {
+  const apiKey = process.env.GRAPH_API_KEY;
+  if (!apiKey) {
+    throw new Error("GRAPH_API_KEY is not set in the environment variables");
+  }
+  return `https://gateway.thegraph.com/api/${apiKey}/deployments/id/${subgraphId}`;
+};
+
 const performQuery = async (subgraphId: string, query: string): Promise<any> => {
-  const SUBGRAPH_BASE = "https://api.thegraph.com/subgraphs/id/";
-  const SUBGRAPH_URL = `${SUBGRAPH_BASE}${subgraphId}`;
+  const SUBGRAPH_URL = getSubgraphUrl(subgraphId);
   console.info(`Working with subgraph id ${subgraphId} and URL ${SUBGRAPH_URL}`);
   const gqlClient = new ApolloClient({
     cache: new InMemoryCache(),

@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 5.8.0 (2025-09-14)
+
+- Adds support for USDe, sUSDe and weETH
+
 ## 5.7.1 (2025-05-26)
 
 - Adds support for USDS lent through Cooler V2

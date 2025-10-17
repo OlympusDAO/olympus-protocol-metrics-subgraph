@@ -101,11 +101,11 @@ export class PriceHandlerERC4626 implements PriceHandler {
         };
     }
 
-    getTotalValue(excludedTokens: string[], priceLookup: PriceLookup, block: BigInt): BigDecimal | null {
+    getTotalValue(_excludedTokens: string[], _priceLookup: PriceLookup, _block: BigInt): BigDecimal | null {
         throw new Error(`${CLASS}: getTotalValue: not implemented`);
     }
 
-    getUnitPrice(priceLookup: PriceLookup, block: BigInt): BigDecimal | null {
+    getUnitPrice(_priceLookup: PriceLookup, _block: BigInt): BigDecimal | null {
         throw new Error(`${CLASS}: getUnitPrice: not implemented`);
     }
 
@@ -118,7 +118,7 @@ export class PriceHandlerERC4626 implements PriceHandler {
         return toDecimal(vault.balanceOf(Address.fromString(walletAddress)), vault.decimals());
     }
 
-    getUnderlyingTokenBalance(walletAddress: string, tokenAddress: string, block: BigInt): BigDecimal {
+    getUnderlyingTokenBalance(_walletAddress: string, _tokenAddress: string, _block: BigInt): BigDecimal {
         throw new Error(`${CLASS}: getUnderlyingTokenBalance: not implemented`);
     }
 }
