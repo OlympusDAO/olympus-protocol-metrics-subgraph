@@ -35,7 +35,7 @@ import {
   NATIVE_ETH,
   OHM_PRICE_PAIRS,
 } from "./Constants";
-import { getERC20Decimals, getUniswapV3Pair } from "./ContractHelper";
+import { contractExistsAtBlock, getERC20Decimals, getUniswapV3Pair } from "./ContractHelper";
 import { getERC4626Rate } from "./ERC4626";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 import {
@@ -581,7 +581,13 @@ function resolvePrice(contractAddress: string, blockNumber: BigInt): BigDecimal 
     contractAddress.toLowerCase() == ERC20_UST.toLowerCase() &&
     blockNumber.gt(BigInt.fromString(ERC20_UST_BLOCK_DEATH))
   ) {
-    log.debug("getUSDRate: Returning $0 for UST after collapse", []);
+    log.debug("resolvePrice: Returning $0 for UST after collapse", []);
+    return BigDecimal.fromString("0");
+  }
+
+  // If before the starting block for the contract, return 0
+  if (!contractExistsAtBlock(contractAddress, blockNumber)) {
+    log.debug("resolvePrice: Contract {} does not exist at block {}. Returning 0", [contractAddress, blockNumber.toString()]);
     return BigDecimal.fromString("0");
   }
 
@@ -593,7 +599,7 @@ function resolvePrice(contractAddress: string, blockNumber: BigInt): BigDecimal 
 
   // Handle OHM separately, as we have multiple liquidity pools
   if (arrayIncludesLoose([ERC20_OHM_V1, ERC20_OHM_V2], contractAddress)) {
-    log.debug("getUSDRate: Contract address {} is OHM. Returning OHM rate.", [contractAddress]);
+    log.debug("resolvePrice: Contract address {} is OHM. Returning OHM rate.", [contractAddress]);
     return getBaseOhmUsdRate(blockNumber);
   }
 
@@ -611,7 +617,7 @@ function resolvePrice(contractAddress: string, blockNumber: BigInt): BigDecimal 
   const pairHandler = getPairHandler(contractAddress);
   if (!pairHandler) {
     throw new Error(
-      "getUSDRate: Unable to find liquidity pool handler for contract: " + contractAddress,
+      "resolvePrice: Unable to find liquidity pool handler for contract: " + contractAddress,
     );
   }
 
@@ -633,7 +639,7 @@ function resolvePrice(contractAddress: string, blockNumber: BigInt): BigDecimal 
   }
 
   throw new Error(
-    "getUSDRate: Unsupported liquidity pool handler type (" +
+    "resolvePrice: Unsupported liquidity pool handler type (" +
     pairHandler.getType().toString() +
     ") for contract: " +
     contractAddress,
