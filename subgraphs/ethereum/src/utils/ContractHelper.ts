@@ -104,20 +104,23 @@ const contractsVeFXS = new Map<string, VeFXS>();
  * @param blockNumber
  */
 export function contractExistsAtBlock(contractAddress: string, blockNumber: BigInt): boolean {
+  const contractAddressLowerCase = contractAddress.toLowerCase();
+
   // Assuming the starting block is much earlier
-  if (!CONTRACT_STARTING_BLOCK_MAP.has(contractAddress)) {
-    log.debug("contractExistsAtBlock: Contract {} does not have a defined starting block. Returning true.", [contractAddress]);
+  if (!CONTRACT_STARTING_BLOCK_MAP.has(contractAddressLowerCase)) {
+    log.debug("contractExistsAtBlock: Contract {} does not have a defined starting block. Returning true.", [contractAddressLowerCase]);
     return true;
   }
 
   // Current block is before the starting block
-  const startingBlock: string = CONTRACT_STARTING_BLOCK_MAP.get(contractAddress) || "N/A";
+  const startingBlock: string = CONTRACT_STARTING_BLOCK_MAP.get(contractAddressLowerCase) || "N/A";
+  log.debug("contractExistsAtBlock: Starting block for contract {} is {}.", [contractAddressLowerCase, startingBlock]);
   if (blockNumber < BigInt.fromString(startingBlock)) {
-    log.debug("contractExistsAtBlock: Contract {} does not exist at block {}. Returning false.", [contractAddress, blockNumber.toString()]);
+    log.debug("contractExistsAtBlock: Contract {} does not exist at block {}. Returning false.", [contractAddressLowerCase, blockNumber.toString()]);
     return false;
   }
 
-  log.debug("contractExistsAtBlock: Contract {} exists at block {}. Returning true.", [contractAddress, blockNumber.toString()]);
+  log.debug("contractExistsAtBlock: Contract {} exists at block {}. Returning true.", [contractAddressLowerCase, blockNumber.toString()]);
   return true;
 }
 
