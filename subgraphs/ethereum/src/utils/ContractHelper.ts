@@ -106,7 +106,7 @@ const contractsVeFXS = new Map<string, VeFXS>();
 export function contractExistsAtBlock(contractAddress: string, blockNumber: BigInt): boolean {
   // Assuming the starting block is much earlier
   if (!CONTRACT_STARTING_BLOCK_MAP.has(contractAddress)) {
-    log.debug("contractExistsAtBlock: Contract {} does not exist at block {}. Returning true.", [contractAddress, blockNumber.toString()]);
+    log.debug("contractExistsAtBlock: Contract {} does not have a defined starting block. Returning true.", [contractAddress]);
     return true;
   }
 
