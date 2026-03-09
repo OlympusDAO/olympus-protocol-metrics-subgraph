@@ -1,9 +1,8 @@
 # Subgraph Changelog
 
-## 5.8.4 (2026-03-02)
+## 5.9.0 (2026-03-09)
 
 - Removes migration offset after gOHM was removed from the migration contract (block 24550660)
-- Grafted on top of 5.8.3
 
 ## 5.8.0 (2025-09-14)
 
