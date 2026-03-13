@@ -76,8 +76,8 @@ export const LUSDBOND_CONTRACT1_BLOCK = "13264217";
 export const OHMLUSDBOND_CONTRACT1 = "0xfb1776299e7804dd8016303df9c07a65c80f67b6".toLowerCase();
 export const OHMLUSDBOND_CONTRACT1_BLOCK = "13348034";
 export const ERC20_WEETH_START_BLOCK = "18961223";
-export const ERC20_USDE_START_BLOCK = "19711161";
-export const ERC20_SUSDE_START_BLOCK = "19711161";
+export const ERC20_USDE_START_BLOCK = "20289094"; // USDe price feed was updated at this block
+export const ERC20_SUSDE_START_BLOCK = "20289094"; // USDe price feed was updated at this block
 export const COOLER_LOANS_V2_MONOCOOLER_START_BLOCK = "22423121";
 
 export const CIRCULATING_SUPPLY_CONTRACT = "0x0EFFf9199Aa1Ac3C3E34E957567C1BE8bF295034".toLowerCase();

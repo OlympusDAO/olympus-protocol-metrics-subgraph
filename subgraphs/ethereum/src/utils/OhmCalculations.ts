@@ -107,6 +107,12 @@ const SILO_TOKEN_BLOCK = "18121728";
 const SOHM_V2_INDEX_BLOCK = "18260000";
 
 /**
+ * The block from which the migration offset is no longer applied,
+ * as gOHM has been removed from the migration contract.
+ */
+const MIGRATION_OFFSET_REMOVAL_BLOCK = "24550660";
+
+/**
  * Returns the total supply of the latest version of the OHM contract
  * at the given block number.
  *
@@ -181,7 +187,13 @@ export function getTotalSupplyRecord(timestamp: BigInt, blockNumber: BigInt): To
  * @returns
  */
 function getMigrationOffsetRecord(timestamp: BigInt, blockNumber: BigInt): TokenSupply | null {
+  // Don't apply the offset if before the starting block
   if (blockNumber.lt(BigInt.fromString(MIGRATION_OFFSET_STARTING_BLOCK))) {
+    return null;
+  }
+
+  // Don't apply the offset if after the removal block (gOHM removed from migration contract)
+  if (blockNumber.ge(BigInt.fromString(MIGRATION_OFFSET_REMOVAL_BLOCK))) {
     return null;
   }
 

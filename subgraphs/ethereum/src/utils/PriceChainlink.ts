@@ -1,4 +1,4 @@
-import { Address, BigDecimal } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, log } from "@graphprotocol/graph-ts";
 
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { ChainlinkPriceFeed } from "../../generated/ProtocolMetrics/ChainlinkPriceFeed";
@@ -30,6 +30,7 @@ export function getPriceFeed(token: string): string | null {
 export function getPriceFeedValue(tokenAddress: string): BigDecimal | null {
     const tokenAddressLower = tokenAddress.toLowerCase();
     if (!tokenPriceFeedMap.has(tokenAddressLower)) {
+        log.debug("getPriceFeedValue: Token {} does not have a price feed.", [tokenAddressLower]);
         return null;
     }
 
@@ -39,6 +40,7 @@ export function getPriceFeedValue(tokenAddress: string): BigDecimal | null {
     const answerResult = priceFeed.try_latestAnswer();
 
     if (decimalsResult.reverted || answerResult.reverted) {
+        log.debug("getPriceFeedValue: Token {} price feed reverted.", [tokenAddressLower]);
         return null;
     }
 

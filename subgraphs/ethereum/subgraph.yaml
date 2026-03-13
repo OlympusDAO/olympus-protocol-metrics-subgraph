@@ -1,11 +1,11 @@
 specVersion: 0.0.8
 description: Olympus Protocol Metrics Subgraph
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
-features:
-  - grafting
-graft:
-  base: QmaM7BAJbf6P6vNcyYVWwpDD3QBktvu2A9ktZn9v4fKEG5 # 5.7.1
-  block: 22560000 # Activation of Cooler V2
+# features:
+#   - grafting
+# graft:
+#   base: QmXVhEmBrM69CqyE1Urw6jCMsXEGJKH3s8fnro6xnqeXwf # 5.8.3
+#   block: 24550660 # Migration offset removal
 schema:
   file: ../../schema.graphql
 dataSources:

@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 5.9.0 (2026-03-09)
+
+- Removes migration offset after gOHM was removed from the migration contract (block 24550660)
+
 ## 5.8.0 (2025-09-14)
 
 - Adds support for USDe, sUSDe and weETH
