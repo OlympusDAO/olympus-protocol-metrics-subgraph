@@ -4,7 +4,7 @@
 
 import { BigInt, log } from "@graphprotocol/graph-ts";
 
-import { BUYBACK_MS } from "../../../shared/src/Wallets";
+import { BUYBACK_MS, YIELD_FARMING_MS } from "../../../shared/src/Wallets";
 import { getClearinghouseAddresses, getTreasuryAddress } from "./Bophades";
 import { ERC20_GOHM, ERC20_OHM_V1, ERC20_OHM_V2, ERC20_SOHM_V1, ERC20_SOHM_V2, ERC20_SOHM_V3, OHM_IN_MARKET_VALUE_BLOCK } from "./Constants";
 
@@ -124,6 +124,7 @@ const PROTOCOL_ADDRESSES = [
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
   VEFXS_ALLOCATOR,
+  YIELD_FARMING_MS,
 ];
 
 const TREASURY_BLACKLIST = new Map<string, string[]>();

@@ -2,10 +2,15 @@ import { Address, BigDecimal, log } from "@graphprotocol/graph-ts";
 
 import { toDecimal } from "../../../shared/src/utils/Decimals";
 import { ChainlinkPriceFeed } from "../../generated/ProtocolMetrics/ChainlinkPriceFeed";
-import { ERC20_ADAI, ERC20_DAI, ERC20_FRAX, ERC20_LUSD, ERC20_USDC, ERC20_USDE, ERC20_USDS, ERC20_WETH } from "./Constants";
+import { ERC20_ADAI, ERC20_AETH_USDE, ERC20_DAI, ERC20_FRAX, ERC20_LUSD, ERC20_USDC, ERC20_USDE, ERC20_USDS, ERC20_VARIABLE_DEBT_ETH_USDC, ERC20_VARIABLE_DEBT_ETH_USDT, ERC20_WETH } from "./Constants";
 
 const tokenPriceFeedMap: Map<string, string> = new Map<string, string>();
 tokenPriceFeedMap.set(ERC20_ADAI, "0xaed0c38402a5d19df6e4c03f4e2dced6e29c1ee9".toLowerCase());
+// aEthSUSDe is NOT priced here — its underlying is sUSDe (not USDe), so it uses the ERC4626 handler
+// via LIQUIDITY_POOL_TOKEN_LOOKUP in Constants.ts to call sUSDe.convertToAssets()
+tokenPriceFeedMap.set(ERC20_AETH_USDE, "0xa569d910839ae8865da8f8e70fffb0cba869f961".toLowerCase()); // USDe price feed (~$1)
+tokenPriceFeedMap.set(ERC20_VARIABLE_DEBT_ETH_USDT, "0x3e7d1eab13ad0104d2750b8863b489d65364e32d".toLowerCase()); // USDT price feed (~$1)
+tokenPriceFeedMap.set(ERC20_VARIABLE_DEBT_ETH_USDC, "0x8fffffd4afb6115b954bd326cbe7b4ba576818f6".toLowerCase()); // USDC price feed (~$1)
 tokenPriceFeedMap.set(ERC20_DAI, "0xaed0c38402a5d19df6e4c03f4e2dced6e29c1ee9".toLowerCase());
 tokenPriceFeedMap.set(ERC20_FRAX, "0xb9e1e3a9feff48998e45fa90847ed4d467e8bcfd".toLowerCase());
 tokenPriceFeedMap.set(ERC20_LUSD, "0x3D7aE7E594f2f2091Ad8798313450130d0Aba3a0".toLowerCase());
