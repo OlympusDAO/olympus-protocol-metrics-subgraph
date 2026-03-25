@@ -37,6 +37,17 @@ export const getIsTokenLiquid = (
     : true;
 };
 
+export const getIsLiability = (
+  tokenAddress: string,
+  tokenDefinitions: Map<string, TokenDefinition>,
+): boolean => {
+  const tokenAddressLower = tokenAddress.toLowerCase();
+
+  return tokenDefinitions.has(tokenAddressLower)
+    ? tokenDefinitions.get(tokenAddressLower).getIsLiability()
+    : false;
+};
+
 /**
  * Returns the value of the given TokenRecord.
  *
@@ -46,7 +57,10 @@ export const getIsTokenLiquid = (
  * @returns
  */
 // eslint-disable-next-line @typescript-eslint/no-inferrable-types
-export function getTokenRecordValue(record: TokenRecord, nonOhmMultiplier: boolean = false): BigDecimal {
+export function getTokenRecordValue(
+  record: TokenRecord,
+  nonOhmMultiplier: boolean = false,
+): BigDecimal {
   return record.balance
     .times(record.rate)
     .times(nonOhmMultiplier ? record.multiplier : BigDecimal.fromString("1"));
@@ -63,7 +77,11 @@ export function getTokenRecordValue(record: TokenRecord, nonOhmMultiplier: boole
  * @param nonOhmMultiplier
  * @returns
  */
-function getTokenMultiplier(tokenAddress: string, tokenDefinitions: Map<string, TokenDefinition>, nonOhmMultiplier: BigDecimal | null): BigDecimal {
+function getTokenMultiplier(
+  tokenAddress: string,
+  tokenDefinitions: Map<string, TokenDefinition>,
+  nonOhmMultiplier: BigDecimal | null,
+): BigDecimal {
   if (nonOhmMultiplier !== null) {
     return nonOhmMultiplier;
   }
@@ -119,7 +137,10 @@ export function createTokenRecord(
 ): TokenRecord {
   const dateString = getISO8601DateStringFromTimestamp(timestamp);
   // YYYY-MM-DD/<block>/<token>/<source>
-  const recordId = Bytes.fromUTF8(dateString).concatI32(blockNumber.toI32()).concat(Bytes.fromUTF8(sourceName)).concat(Bytes.fromUTF8(tokenName));
+  const recordId = Bytes.fromUTF8(dateString)
+    .concatI32(blockNumber.toI32())
+    .concat(Bytes.fromUTF8(sourceName))
+    .concat(Bytes.fromUTF8(tokenName));
   const record = new TokenRecord(recordId);
 
   record.block = blockNumber;
@@ -132,14 +153,29 @@ export function createTokenRecord(
   record.rate = rate;
   record.balance = balance;
 
+  const isLiability = getIsLiability(tokenAddress, tokenDefinitions);
+
   // Multiplier used to set valueExcludingOhm (which should really be "liquidBackingValue")
   record.multiplier = getTokenMultiplier(tokenAddress, tokenDefinitions, nonOhmMultiplier);
   record.category = category !== null ? category : getTokenCategory(tokenAddress, tokenDefinitions);
   record.isLiquid = isLiquid;
   record.isBluechip = getIsTokenVolatileBluechip(tokenAddress, tokenDefinitions);
   record.blockchain = blockchain;
-  record.value = getTokenRecordValue(record);
-  record.valueExcludingOhm = getTokenRecordValue(record, true);
+
+  const baseValue = record.balance.times(record.rate);
+
+  if (isLiability) {
+    // For liabilities: both value and valueExcludingOhm are negative
+    // Multiplier only applies to valueExcludingOhm
+    record.value = baseValue.times(BigDecimal.fromString("-1"));
+    record.valueExcludingOhm = baseValue
+      .times(record.multiplier)
+      .times(BigDecimal.fromString("-1"));
+  } else {
+    // Current behavior: multiplier only applies to valueExcludingOhm
+    record.value = baseValue;
+    record.valueExcludingOhm = baseValue.times(record.multiplier);
+  }
 
   record.save();
 

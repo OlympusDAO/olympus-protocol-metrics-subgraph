@@ -135,7 +135,16 @@ describe("value", () => {
 
   test("liquidBackingMultiplier specified", () => {
     const tokenDefinitions = new Map<string, TokenDefinition>();
-    tokenDefinitions.set(ERC20_ALCX, new TokenDefinition(ERC20_ALCX, TokenCategoryVolatile, true, false, BigDecimal.fromString("0.5")));
+    tokenDefinitions.set(
+      ERC20_ALCX,
+      new TokenDefinition(
+        ERC20_ALCX,
+        TokenCategoryVolatile,
+        true,
+        false,
+        BigDecimal.fromString("0.5"),
+      ),
+    );
 
     const record = createTokenRecord(
       TIMESTAMP,
@@ -159,7 +168,16 @@ describe("value", () => {
 
   test("liquidBackingMultiplier specified, nonOhmMultiplier overrides", () => {
     const tokenDefinitions = new Map<string, TokenDefinition>();
-    tokenDefinitions.set(ERC20_ALCX, new TokenDefinition(ERC20_ALCX, TokenCategoryVolatile, true, false, BigDecimal.fromString("0.5")));
+    tokenDefinitions.set(
+      ERC20_ALCX,
+      new TokenDefinition(
+        ERC20_ALCX,
+        TokenCategoryVolatile,
+        true,
+        false,
+        BigDecimal.fromString("0.5"),
+      ),
+    );
 
     const record = createTokenRecord(
       TIMESTAMP,
@@ -180,6 +198,98 @@ describe("value", () => {
     assert.stringEquals("6", record.value.toString());
     // 2 * 3 * 1 * 0.75
     assert.stringEquals("4.5", record.valueExcludingOhm.toString());
+  });
+
+  test("liquidBackingMultiplier is positive in TokenRecord", () => {
+    const tokenDefinitions = new Map<string, TokenDefinition>();
+    tokenDefinitions.set(
+      ERC20_ALCX,
+      new TokenDefinition(
+        ERC20_ALCX,
+        TokenCategoryStable,
+        true,
+        false,
+        BigDecimal.fromString("0.5"),
+        false,
+      ),
+    );
+
+    const record = createTokenRecord(
+      TIMESTAMP,
+      "Token",
+      ERC20_ALCX,
+      "source",
+      "address",
+      BigDecimal.fromString("1"),
+      BigDecimal.fromString("100"),
+      BigInt.fromString("1"),
+      true,
+      tokenDefinitions,
+      BLOCKCHAIN,
+    );
+
+    assert.stringEquals("0.5", record.multiplier.toString());
+    assert.stringEquals("100", record.value.toString());
+    assert.stringEquals("50", record.valueExcludingOhm.toString());
+  });
+
+  test("isLiability with multiplier: both values negative, multiplier only on valueExcludingOhm", () => {
+    const tokenDefinitions = new Map<string, TokenDefinition>();
+    tokenDefinitions.set(
+      ERC20_ALCX,
+      new TokenDefinition(
+        ERC20_ALCX,
+        TokenCategoryStable,
+        true,
+        false,
+        BigDecimal.fromString("0.5"),
+        true,
+      ),
+    );
+
+    const record = createTokenRecord(
+      TIMESTAMP,
+      "Variable Debt",
+      ERC20_ALCX,
+      "source",
+      "address",
+      BigDecimal.fromString("1"),
+      BigDecimal.fromString("100"),
+      BigInt.fromString("1"),
+      true,
+      tokenDefinitions,
+      BLOCKCHAIN,
+    );
+
+    assert.stringEquals("0.5", record.multiplier.toString());
+    assert.stringEquals("-100", record.value.toString());
+    assert.stringEquals("-50", record.valueExcludingOhm.toString());
+  });
+
+  test("isLiability with no multiplier: both values negative, multiplier = 1", () => {
+    const tokenDefinitions = new Map<string, TokenDefinition>();
+    tokenDefinitions.set(
+      ERC20_ALCX,
+      new TokenDefinition(ERC20_ALCX, TokenCategoryStable, true, false, null, true),
+    );
+
+    const record = createTokenRecord(
+      TIMESTAMP,
+      "Variable Debt",
+      ERC20_ALCX,
+      "source",
+      "address",
+      BigDecimal.fromString("1"),
+      BigDecimal.fromString("100"),
+      BigInt.fromString("1"),
+      true,
+      tokenDefinitions,
+      BLOCKCHAIN,
+    );
+
+    assert.stringEquals("1", record.multiplier.toString());
+    assert.stringEquals("-100", record.value.toString());
+    assert.stringEquals("-100", record.valueExcludingOhm.toString());
   });
 });
 
@@ -236,5 +346,36 @@ describe("isTokenAddressInCategory", () => {
     assert.assertTrue(
       isTokenAddressInCategory(ERC20_WETH, TokenCategoryStable, ERC20_TOKENS) == false,
     );
+  });
+});
+
+describe("TokenDefinition multiplier validation", () => {
+  test("accepts null multiplier", () => {
+    const def = new TokenDefinition(ERC20_DAI, TokenCategoryStable, true, false, null, false);
+    assert.assertTrue(def.getLiquidBackingMultiplier() === null);
+  });
+
+  test("accepts zero multiplier", () => {
+    const def = new TokenDefinition(
+      ERC20_DAI,
+      TokenCategoryStable,
+      true,
+      false,
+      BigDecimal.fromString("0"),
+      false,
+    );
+    assert.stringEquals("0", def.getLiquidBackingMultiplier()!.toString());
+  });
+
+  test("accepts positive multiplier", () => {
+    const def = new TokenDefinition(
+      ERC20_DAI,
+      TokenCategoryStable,
+      true,
+      false,
+      BigDecimal.fromString("0.5"),
+      false,
+    );
+    assert.stringEquals("0.5", def.getLiquidBackingMultiplier()!.toString());
   });
 });

@@ -1,9 +1,23 @@
 import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, createMockedFunction, describe, log, test } from "matchstick-as/assembly/index";
+import {
+  assert,
+  beforeEach,
+  clearStore,
+  createMockedFunction,
+  describe,
+  log,
+  test,
+} from "matchstick-as/assembly/index";
 
 import { toBigInt, toDecimal } from "../../shared/src/utils/Decimals";
 import { YIELD_FARMING_MS } from "../../shared/src/Wallets";
-import { AURA_REWARDS_CONTRACTS, CONVEX_STAKING_CONTRACTS, ERC20_AETH_SUSDE, ERC20_USDE, ERC4626_SUSDE } from "../src/utils/Constants";
+import {
+  AURA_REWARDS_CONTRACTS,
+  CONVEX_STAKING_CONTRACTS,
+  ERC20_AETH_SUSDE,
+  ERC20_USDE,
+  ERC4626_SUSDE,
+} from "../src/utils/Constants";
 import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 import { getStablecoinBalance } from "../src/utils/TokenStablecoins";
 import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
@@ -12,8 +26,8 @@ import { mockERC20TotalSupply } from "./erc20Helper";
 import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 
 const TIMESTAMP = BigInt.fromString("1");
-// Block 24701224 is an on-chain anchor: aEthSUSDe mint of 125.2562 tokens for YIELD_FARMING_MS
-const BLOCK_NUMBER = BigInt.fromString("24701224");
+// Block 24707147 is the creation block of Yield Farming MS (start block for aEthSUSDe)
+const BLOCK_NUMBER = BigInt.fromString("24707147");
 
 // sUSDe NAV: 1 sUSDe share = 1.0500 USDe (test value approximating real NAV ~1.2248)
 const SUSDE_ASSETS_TO_SHARES = toDecimal(BigInt.fromString("1050000000000000000"), 18);
@@ -142,10 +156,7 @@ describe("aEthSUSDe - Yield Farming MS", () => {
 
     // Every returned record must be for YIELD_FARMING_MS only
     for (let i = 0; i < records.length; i++) {
-      assert.stringEquals(
-        records[i].sourceAddress.toLowerCase(),
-        YIELD_FARMING_MS.toLowerCase(),
-      );
+      assert.stringEquals(records[i].sourceAddress.toLowerCase(), YIELD_FARMING_MS.toLowerCase());
     }
   });
 
