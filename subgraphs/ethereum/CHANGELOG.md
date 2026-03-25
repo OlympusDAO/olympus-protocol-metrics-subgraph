@@ -1,5 +1,10 @@
 # Subgraph Changelog
 
+## 5.10.1 (2026-03-25)
+
+- Adds isLiability flag to TokenDefinition for representing debt/liabilities with negative values
+- Adds assertion that liquidBackingMultiplier must be >= 0
+
 ## 5.10.0 (2026-03-25)
 
 - Adds support for Aave v3 sUSDe looping strategy (aEthSUSDe, aEthUSDe, variable debt tokens)
