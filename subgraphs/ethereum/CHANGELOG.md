@@ -1,15 +1,12 @@
 # Subgraph Changelog
 
-## 5.10.1 (2026-03-25)
-
-- Adds isLiability flag to TokenDefinition for representing debt/liabilities with negative values
-- Adds assertion that liquidBackingMultiplier must be >= 0
-
-## 5.10.0 (2026-03-25)
+## 5.10.2 (2026-03-25)
 
 - Adds support for Aave v3 sUSDe looping strategy (aEthSUSDe, aEthUSDe, variable debt tokens)
 - Adds Yield Farming MS wallet
 - Grafting enabled from block 24707147 (creation block of Yield Farming MS)
+- Adds isLiability flag to TokenDefinition for representing debt/liabilities with negative values
+- Adds assertion that liquidBackingMultiplier must be >= 0
 
 ## 5.9.0 (2026-03-09)
 
