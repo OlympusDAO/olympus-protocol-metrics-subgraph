@@ -1,5 +1,11 @@
 # Subgraph Changelog
 
+## 5.10.0 (2026-03-25)
+
+- Adds support for Aave v3 sUSDe looping strategy (aEthSUSDe, aEthUSDe, variable debt tokens)
+- Adds Yield Farming MS wallet
+- Grafting enabled from block 24707147 (creation block of Yield Farming MS)
+
 ## 5.9.0 (2026-03-09)
 
 - Removes migration offset after gOHM was removed from the migration contract (block 24550660)
@@ -150,7 +156,7 @@
 ## 4.1.0 (2023-03-16)
 
 - Add the ability to define a multiplier used in calculating liquid backing. This is used for tokens where the protocol
-owns a significant percentage of the token's total supply, and exchanging the token would incur considerable slippage. Currently, these are: BOND, KLIMA, JONES, rlBTRFLY, VSTA.
+  owns a significant percentage of the token's total supply, and exchanging the token would incur considerable slippage. Currently, these are: BOND, KLIMA, JONES, rlBTRFLY, VSTA.
 
 ## 4.0.2 (2023-03-13)
 

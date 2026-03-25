@@ -79,7 +79,7 @@ export const ERC20_WEETH_START_BLOCK = "18961223";
 export const ERC20_USDE_START_BLOCK = "20289094"; // USDe price feed was updated at this block
 export const ERC20_SUSDE_START_BLOCK = "20289094"; // USDe price feed was updated at this block
 export const COOLER_LOANS_V2_MONOCOOLER_START_BLOCK = "22423121";
-export const ERC20_AETH_SUSDE_START_BLOCK = "22423121"; // March 2026 - Aave v3 sUSDe looping strategy
+export const ERC20_AETH_SUSDE_START_BLOCK = "24707147"; // Creation block of Yield Farming MS
 
 export const CIRCULATING_SUPPLY_CONTRACT = "0x0EFFf9199Aa1Ac3C3E34E957567C1BE8bF295034".toLowerCase();
 export const CIRCULATING_SUPPLY_CONTRACT_BLOCK = "12236262";
