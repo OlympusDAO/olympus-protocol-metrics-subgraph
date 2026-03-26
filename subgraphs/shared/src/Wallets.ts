@@ -57,6 +57,8 @@ export const VENDOR_LENDING = "0x83234a159dbd60a32457df158fafcbdf3d1ccc08".toLow
 
 export const COOLER_LOANS_V2_MONOCOOLER = "0xdb591Ea2e5Db886dA872654D58f6cc584b68e7cC".toLowerCase();
 
+export const YIELD_FARMING_MS = "0x2075e3b46470cfcE124Daaf52b46Dcf965727Dd1".toLowerCase();
+
 /**
  * This set of wallet addresses is common across many tokens,
  * and can be used for balance lookups.
@@ -99,4 +101,5 @@ export const WALLET_ADDRESSES = [
   COOLER_LOANS_CLEARINGHOUSE_V1_1,
   COOLER_LOANS_CLEARINGHOUSE_V2,
   COOLER_LOANS_V2_MONOCOOLER,
+  YIELD_FARMING_MS,
 ];

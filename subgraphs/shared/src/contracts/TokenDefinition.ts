@@ -10,6 +10,7 @@ export class TokenDefinition {
   protected isLiquid: boolean;
   protected isVolatileBluechip: boolean;
   protected liquidBackingMultiplier: BigDecimal | null;
+  protected isLiability: boolean;
 
   /**
    * Creates a new token definition.
@@ -19,13 +20,27 @@ export class TokenDefinition {
    * @param category
    * @param isLiquid
    * @param isVolatileBluechip
+   * @param liquidBackingMultiplier Multiplier applied to valueExcludingOhm (must be >= 0)
+   * @param isLiability If true, both value and valueExcludingOhm will be negative
    */
-  constructor(address: string, category: string, isLiquid: boolean, isVolatileBluechip: boolean, liquidBackingMultiplier: BigDecimal | null = null) {
+  constructor(
+    address: string,
+    category: string,
+    isLiquid: boolean,
+    isVolatileBluechip: boolean,
+    liquidBackingMultiplier: BigDecimal | null = null,
+    isLiability: boolean = false,
+  ) {
+    assert(
+      liquidBackingMultiplier === null || liquidBackingMultiplier.ge(BigDecimal.fromString("0")),
+      "liquidBackingMultiplier must be >= 0",
+    );
     this.address = address.toLowerCase();
     this.category = category;
     this.isLiquid = isLiquid;
     this.isVolatileBluechip = isVolatileBluechip;
     this.liquidBackingMultiplier = liquidBackingMultiplier;
+    this.isLiability = isLiability;
   }
 
   getAddress(): string {
@@ -46,5 +61,9 @@ export class TokenDefinition {
 
   getLiquidBackingMultiplier(): BigDecimal | null {
     return this.liquidBackingMultiplier;
+  }
+
+  getIsLiability(): boolean {
+    return this.isLiability;
   }
 }

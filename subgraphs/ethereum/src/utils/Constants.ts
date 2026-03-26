@@ -1,8 +1,53 @@
 import { Address, BigDecimal, BigInt, log } from "@graphprotocol/graph-ts";
 
-import { TokenCategoryPOL, TokenCategoryStable, TokenCategoryVolatile, TokenDefinition } from "../../../shared/src/contracts/TokenDefinition";
+import {
+  TokenCategoryPOL,
+  TokenCategoryStable,
+  TokenCategoryVolatile,
+  TokenDefinition,
+} from "../../../shared/src/contracts/TokenDefinition";
 import { LendingMarketDeployment } from "../../../shared/src/utils/LendingMarketDeployment";
-import { AAVE_ALLOCATOR, AAVE_ALLOCATOR_V2, AURA_ALLOCATOR, AURA_ALLOCATOR_V2, BALANCER_ALLOCATOR, BONDS_DEPOSIT, BONDS_INVERSE_DEPOSIT, BUYBACK_MS, CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR3, CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR, CONVEX_STAKING_PROXY_FRAXBP, CONVEX_STAKING_PROXY_OHM_FRAXBP, COOLER_LOANS_CLEARINGHOUSE_V1, COOLER_LOANS_CLEARINGHOUSE_V1_1, COOLER_LOANS_CLEARINGHOUSE_V2, COOLER_LOANS_V2_MONOCOOLER, CROSS_CHAIN_ARBITRUM, CROSS_CHAIN_FANTOM, CROSS_CHAIN_POLYGON, DAO_WALLET, DAO_WORKING_CAPITAL, LUSD_ALLOCATOR, MAKER_DSR_ALLOCATOR, MAKER_DSR_ALLOCATOR_PROXY, MYSO_LENDING, OLYMPUS_ASSOCIATION_WALLET, OTC_ESCROW, RARI_ALLOCATOR, TREASURY_ADDRESS_V1, TREASURY_ADDRESS_V2, TREASURY_ADDRESS_V3, TRSRY, TRSRY_V1_1, VEFXS_ALLOCATOR, VENDOR_LENDING } from "../../../shared/src/Wallets";
+import {
+  AAVE_ALLOCATOR,
+  AAVE_ALLOCATOR_V2,
+  AURA_ALLOCATOR,
+  AURA_ALLOCATOR_V2,
+  BALANCER_ALLOCATOR,
+  BONDS_DEPOSIT,
+  BONDS_INVERSE_DEPOSIT,
+  BUYBACK_MS,
+  CONVEX_ALLOCATOR1,
+  CONVEX_ALLOCATOR2,
+  CONVEX_ALLOCATOR3,
+  CONVEX_CVX_ALLOCATOR,
+  CONVEX_CVX_VL_ALLOCATOR,
+  CONVEX_STAKING_PROXY_FRAXBP,
+  CONVEX_STAKING_PROXY_OHM_FRAXBP,
+  COOLER_LOANS_CLEARINGHOUSE_V1,
+  COOLER_LOANS_CLEARINGHOUSE_V1_1,
+  COOLER_LOANS_CLEARINGHOUSE_V2,
+  COOLER_LOANS_V2_MONOCOOLER,
+  CROSS_CHAIN_ARBITRUM,
+  CROSS_CHAIN_FANTOM,
+  CROSS_CHAIN_POLYGON,
+  DAO_WALLET,
+  DAO_WORKING_CAPITAL,
+  LUSD_ALLOCATOR,
+  MAKER_DSR_ALLOCATOR,
+  MAKER_DSR_ALLOCATOR_PROXY,
+  MYSO_LENDING,
+  OLYMPUS_ASSOCIATION_WALLET,
+  OTC_ESCROW,
+  RARI_ALLOCATOR,
+  TREASURY_ADDRESS_V1,
+  TREASURY_ADDRESS_V2,
+  TREASURY_ADDRESS_V3,
+  TRSRY,
+  TRSRY_V1_1,
+  VEFXS_ALLOCATOR,
+  VENDOR_LENDING,
+  YIELD_FARMING_MS,
+} from "../../../shared/src/Wallets";
 import { PairHandler, PairHandlerTypes } from "./PairHandler";
 
 export const BLOCKCHAIN = "Ethereum";
@@ -41,11 +86,16 @@ export const OHMDAI_ONSEN_ID = 185;
 export const OHMLUSD_ONSEN_ID = 323;
 export const ONSEN_ALLOCATOR = "0x0316508a1b5abf1CAe42912Dc2C8B9774b682fFC".toLowerCase();
 export const SUSHI_MASTERCHEF = "0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd".toLowerCase();
-export const CONVEX_STAKING_CRV_REWARD_POOL = "0x3fe65692bfcd0e6cf84cb1e7d24108e434a7587e".toLowerCase();
-export const CONVEX_STAKING_FRAX_3CRV_REWARD_POOL = "0xB900EF131301B307dB5eFcbed9DBb50A3e209B2e".toLowerCase();
-export const CONVEX_STAKING_FRAX_USDC_REWARD_POOL = "0x7e880867363A7e321f5d260Cade2B0Bb2F717B02".toLowerCase();
-export const CONVEX_STAKING_OHM_ETH_REWARD_POOL = "0xd683C7051a28fA150EB3F4BD92263865D4a67778".toLowerCase();
-export const CONVEX_STAKING_OHM_FRAXBP_REWARD_POOL = "0x27A8c58e3DE84280826d615D80ddb33930383fE9".toLowerCase();
+export const CONVEX_STAKING_CRV_REWARD_POOL =
+  "0x3fe65692bfcd0e6cf84cb1e7d24108e434a7587e".toLowerCase();
+export const CONVEX_STAKING_FRAX_3CRV_REWARD_POOL =
+  "0xB900EF131301B307dB5eFcbed9DBb50A3e209B2e".toLowerCase();
+export const CONVEX_STAKING_FRAX_USDC_REWARD_POOL =
+  "0x7e880867363A7e321f5d260Cade2B0Bb2F717B02".toLowerCase();
+export const CONVEX_STAKING_OHM_ETH_REWARD_POOL =
+  "0xd683C7051a28fA150EB3F4BD92263865D4a67778".toLowerCase();
+export const CONVEX_STAKING_OHM_FRAXBP_REWARD_POOL =
+  "0x27A8c58e3DE84280826d615D80ddb33930383fE9".toLowerCase();
 export const FRAX_LOCKING_FRAX_USDC = "0x963f487796d54d2f27bA6F3Fbe91154cA103b199".toLowerCase();
 export const FRAX_LOCKING_OHM_FRAXBP = "0xc96e1a26264D965078bd01eaceB129A65C09FFE7".toLowerCase();
 
@@ -79,8 +129,10 @@ export const ERC20_WEETH_START_BLOCK = "18961223";
 export const ERC20_USDE_START_BLOCK = "20289094"; // USDe price feed was updated at this block
 export const ERC20_SUSDE_START_BLOCK = "20289094"; // USDe price feed was updated at this block
 export const COOLER_LOANS_V2_MONOCOOLER_START_BLOCK = "22423121";
+export const ERC20_AETH_SUSDE_START_BLOCK = "24707147"; // Creation block of Yield Farming MS
 
-export const CIRCULATING_SUPPLY_CONTRACT = "0x0EFFf9199Aa1Ac3C3E34E957567C1BE8bF295034".toLowerCase();
+export const CIRCULATING_SUPPLY_CONTRACT =
+  "0x0EFFf9199Aa1Ac3C3E34E957567C1BE8bF295034".toLowerCase();
 export const CIRCULATING_SUPPLY_CONTRACT_BLOCK = "12236262";
 
 export const STAKING_CONTRACT_V1 = "0x0822f3c03dcc24d200aff33493dc08d0e1f274a2".toLowerCase();
@@ -105,16 +157,28 @@ export const TOKE_STAKING = "0x96f98ed74639689c3a11daf38ef86e59f43417d3".toLower
 
 export const BALANCER_VAULT = "0xba12222222228d8ba445958a75a0704d566bf2c8".toLowerCase();
 
-export const OLYMPUS_BOOSTED_LIQUIDITY_REGISTRY = "0x375E06C694B5E50aF8be8FB03495A612eA3e2275".toLowerCase();
+export const OLYMPUS_BOOSTED_LIQUIDITY_REGISTRY =
+  "0x375E06C694B5E50aF8be8FB03495A612eA3e2275".toLowerCase();
 
 export const OLYMPUS_INCUR_DEBT = "0xd9d87586774fb9d036fa95a5991474513ff6c96e".toLowerCase();
 
-export const BALANCER_LIQUIDITY_GAUGE_OHM_DAI = "0x107A2209883621aFe2968da31C03190e0B2782C2".toLowerCase();
-export const BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH = "0x852CF729dEF9beB9De2f18c97a0ea6bf93a7dF8B".toLowerCase();
-export const BALANCER_LIQUIDITY_GAUGE_OHM_WETH = "0x5f2c3422a675860f0e019Ddd78C6fA681bE84bd4".toLowerCase();
-export const BALANCER_LIQUIDITY_GAUGE_OHM_WSTETH = "0xE879f17910E77c01952b97E4A098B0ED15B6295c".toLowerCase();
-export const BALANCER_LIQUIDITY_GAUGE_WETH_FDT = "0xbd0dae90cb4a0e08f1101929c2a01eb165045660".toLowerCase();
-export const BALANCER_LIQUIDITY_GAUGES = [BALANCER_LIQUIDITY_GAUGE_WETH_FDT, BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH, BALANCER_LIQUIDITY_GAUGE_OHM_WETH, BALANCER_LIQUIDITY_GAUGE_OHM_DAI, BALANCER_LIQUIDITY_GAUGE_OHM_WSTETH];
+export const BALANCER_LIQUIDITY_GAUGE_OHM_DAI =
+  "0x107A2209883621aFe2968da31C03190e0B2782C2".toLowerCase();
+export const BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH =
+  "0x852CF729dEF9beB9De2f18c97a0ea6bf93a7dF8B".toLowerCase();
+export const BALANCER_LIQUIDITY_GAUGE_OHM_WETH =
+  "0x5f2c3422a675860f0e019Ddd78C6fA681bE84bd4".toLowerCase();
+export const BALANCER_LIQUIDITY_GAUGE_OHM_WSTETH =
+  "0xE879f17910E77c01952b97E4A098B0ED15B6295c".toLowerCase();
+export const BALANCER_LIQUIDITY_GAUGE_WETH_FDT =
+  "0xbd0dae90cb4a0e08f1101929c2a01eb165045660".toLowerCase();
+export const BALANCER_LIQUIDITY_GAUGES = [
+  BALANCER_LIQUIDITY_GAUGE_WETH_FDT,
+  BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
+  BALANCER_LIQUIDITY_GAUGE_OHM_WETH,
+  BALANCER_LIQUIDITY_GAUGE_OHM_DAI,
+  BALANCER_LIQUIDITY_GAUGE_OHM_WSTETH,
+];
 
 export const AURA_STABLE_REWARD_POOL = "0x62D7d772b2d909A0779d15299F4FC87e34513c6d".toLowerCase();
 export const AURA_STAKING_AURA_BAL = "0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2".toLowerCase();
@@ -168,6 +232,12 @@ export const ERC20_WSOHM = "0xCa76543Cf381ebBB277bE79574059e32108e3E65".toLowerC
 
 // Stablecoin tokens
 export const ERC20_ADAI = "0x028171bca77440897b824ca71d1c56cac55b68a3".toLowerCase();
+export const ERC20_AETH_SUSDE = "0x4579a27af00a62c0eb156349f31b345c08386419".toLowerCase(); // Aave v3 sUSDe supply receipt token (aEthSUSDe)
+export const ERC20_AETH_USDE = "0x4f5923fc5fd4a93352581b38b7cd26943012decf".toLowerCase(); // Aave v3 USDe supply receipt token (aEthUSDe)
+export const ERC20_VARIABLE_DEBT_ETH_USDT =
+  "0x6df1c1e379bc5a00a7b4c6e67a203333772f45a8".toLowerCase(); // Aave v3 variable debt USDT (yield farming loop liability)
+export const ERC20_VARIABLE_DEBT_ETH_USDC =
+  "0x72e95b8931767c79ba4eee721354d6e99a61d004".toLowerCase(); // Aave v3 variable debt USDC (yield farming loop liability)
 export const ERC20_CVX_FRAX_3CRV = "0xbe0f6478e0e4894cfb14f32855603a083a57c7da".toLowerCase(); // Staked version of ERC20_FRAX_3CRV
 export const ERC20_DAI = "0x6b175474e89094c44da98b954eedeac495271d0f".toLowerCase();
 export const ERC20_FEI = "0x956F47F50A910163D8BF957Cf5846D573E7f87CA".toLowerCase();
@@ -192,19 +262,28 @@ export const ERC20_AURA_VL = "0x3Fa73f1E5d8A792C80F426fc8F84FBF7Ce9bBCAC".toLowe
 export const ERC20_BAL = "0xba100000625a3754423978a60c9317c58a424e3d".toLowerCase();
 export const ERC20_BALANCER_AURA_WETH = "0xc29562b045D80fD77c69Bec09541F5c16fe20d9d".toLowerCase();
 export const ERC20_BALANCER_BAL_WETH = "0x5c6Ee304399DBdB9C8Ef030aB642B10820DB8F56".toLowerCase();
-export const ERC20_BALANCER_BB_A_WSTETH = "0x25accb7943fd73dda5e23ba6329085a3c24bfb6a".toLowerCase();
-export const ERC20_BALANCER_GRAVIAURA_AURABAL_WETH = "0x0578292CB20a443bA1CdE459c985CE14Ca2bDEe5".toLowerCase();
-export const ERC20_BALANCER_OHM_BTRFLY_V2 = "0x2de32a7c98c3ef6ec79e703500e8ca5b2ec819aa".toLowerCase();
+export const ERC20_BALANCER_BB_A_WSTETH =
+  "0x25accb7943fd73dda5e23ba6329085a3c24bfb6a".toLowerCase();
+export const ERC20_BALANCER_GRAVIAURA_AURABAL_WETH =
+  "0x0578292CB20a443bA1CdE459c985CE14Ca2bDEe5".toLowerCase();
+export const ERC20_BALANCER_OHM_BTRFLY_V2 =
+  "0x2de32a7c98c3ef6ec79e703500e8ca5b2ec819aa".toLowerCase();
 export const ERC20_BALANCER_OHM_DAI = "0x76FCf0e8C7Ff37A47a799FA2cd4c13cDe0D981C9".toLowerCase();
-export const ERC20_BALANCER_OHM_DAI_AURA = "0xB23Dfc0C4502a271976F1ee65321C51Be2529640".toLowerCase();
-export const ERC20_BALANCER_OHM_DAI_WETH = "0xc45D42f801105e861e86658648e3678aD7aa70f9".toLowerCase(); // Balancer pool token
-export const ERC20_BALANCER_OHM_DAI_WETH_AURA = "0x622A725a79C7fE37AD839C640cD62d546712B3A9".toLowerCase();
+export const ERC20_BALANCER_OHM_DAI_AURA =
+  "0xB23Dfc0C4502a271976F1ee65321C51Be2529640".toLowerCase();
+export const ERC20_BALANCER_OHM_DAI_WETH =
+  "0xc45D42f801105e861e86658648e3678aD7aa70f9".toLowerCase(); // Balancer pool token
+export const ERC20_BALANCER_OHM_DAI_WETH_AURA =
+  "0x622A725a79C7fE37AD839C640cD62d546712B3A9".toLowerCase();
 export const ERC20_BALANCER_OHM_WETH = "0xD1eC5e215E8148D76F4460e4097FD3d5ae0A3558".toLowerCase();
-export const ERC20_BALANCER_OHM_WETH_AURA = "0xA02D8861FBFD0bA3D8EbaFA447Fe7680a3FA9a93".toLowerCase();
+export const ERC20_BALANCER_OHM_WETH_AURA =
+  "0xA02D8861FBFD0bA3D8EbaFA447Fe7680a3FA9a93".toLowerCase();
 export const ERC20_BALANCER_OHM_WSTETH = "0xd4f79CA0Ac83192693bce4699d0c10C66Aa6Cf0F".toLowerCase();
-export const ERC20_BALANCER_OHM_WSTETH_AURA = "0x0EF97ef0e20F84e82ec2D79CBD9Eda923C3DAF09".toLowerCase();
+export const ERC20_BALANCER_OHM_WSTETH_AURA =
+  "0x0EF97ef0e20F84e82ec2D79CBD9Eda923C3DAF09".toLowerCase();
 export const ERC20_BALANCER_WETH_FDT = "0x2D344A84BaC123660b021EEbE4eB6F12ba25fe86".toLowerCase();
-export const ERC20_BALANCER_WSTETH_WETH = "0x32296969ef14eb0c6d29669c550d4a0449130230".toLowerCase();
+export const ERC20_BALANCER_WSTETH_WETH =
+  "0x32296969ef14eb0c6d29669c550d4a0449130230".toLowerCase();
 export const ERC20_BARNBRIDGE = "0x0391D2021f89DC339F60Fff84546EA23E337750f".toLowerCase();
 export const ERC20_BTRFLY_V1 = "0xc0d4ceb216b3ba9c3701b291766fdcba977cec3a".toLowerCase();
 export const ERC20_BTRFLY_V1_STAKED = "0xCC94Faf235cC5D3Bf4bEd3a30db5984306c86aBC".toLowerCase();
@@ -219,10 +298,12 @@ export const ERC20_CVX = "0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b".toLowerCas
 export const ERC20_CVX_BLOCK = "12460000";
 export const ERC20_CVX_CRV = "0x62b9c7356a2dc64a1969e19c23e4f579f9810aa7".toLowerCase();
 export const ERC20_CVX_FRAX_USDC = "0x117A0bab81F25e60900787d98061cCFae023560c".toLowerCase();
-export const ERC20_CVX_FRAX_USDC_STAKED = "0x8a53ee42FB458D4897e15cc7dEa3F75D0F1c3475".toLowerCase();
+export const ERC20_CVX_FRAX_USDC_STAKED =
+  "0x8a53ee42FB458D4897e15cc7dEa3F75D0F1c3475".toLowerCase();
 export const ERC20_CVX_FXS = "0xfeef77d3f69374f66429c91d732a244f074bdf74".toLowerCase();
 export const ERC20_CVX_OHM_FRAXBP = "0xd8F1B275c320819c7D752ef79988d0780bf00446".toLowerCase();
-export const ERC20_CVX_OHM_FRAXBP_STAKED = "0x81b0dCDa53482A2EA9eb496342dC787643323e95".toLowerCase();
+export const ERC20_CVX_OHM_FRAXBP_STAKED =
+  "0x81b0dCDa53482A2EA9eb496342dC787643323e95".toLowerCase();
 export const ERC20_CVX_OHMETH = "0x9bb0daf4361e1b84f5a44914595c46f07e9d12a4".toLowerCase(); // Staked ERC20_CRV_OHMETH
 export const ERC20_CVX_VL_V1 = "0xd18140b4b819b895a3dba5442f959fa44994af50".toLowerCase();
 export const ERC20_CVX_VL_V1_BLOCK = "13153663";
@@ -259,50 +340,160 @@ export const NATIVE_ETH_BLOCK = "21810000"; // 2025-02-09
 export const ERC20_TOKENS = new Map<string, TokenDefinition>();
 // ERC20_TOKENS.set(ERC20_STETH, new TokenDefinition(ERC20_STETH, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_ADAI, new TokenDefinition(ERC20_ADAI, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(
+  ERC20_AETH_SUSDE,
+  new TokenDefinition(ERC20_AETH_SUSDE, TokenCategoryStable, true, false),
+);
+ERC20_TOKENS.set(
+  ERC20_AETH_USDE,
+  new TokenDefinition(ERC20_AETH_USDE, TokenCategoryStable, true, false),
+);
+// Debt tokens are marked as liabilities so their value subtracts from treasury backing (net neutral loop)
+ERC20_TOKENS.set(
+  ERC20_VARIABLE_DEBT_ETH_USDT,
+  new TokenDefinition(ERC20_VARIABLE_DEBT_ETH_USDT, TokenCategoryStable, true, false, null, true),
+);
+ERC20_TOKENS.set(
+  ERC20_VARIABLE_DEBT_ETH_USDC,
+  new TokenDefinition(ERC20_VARIABLE_DEBT_ETH_USDC, TokenCategoryStable, true, false, null, true),
+);
 ERC20_TOKENS.set(ERC20_AGEUR, new TokenDefinition(ERC20_AGEUR, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_ALCX, new TokenDefinition(ERC20_ALCX, TokenCategoryVolatile, true, false));
-ERC20_TOKENS.set(ERC20_AURA_BAL, new TokenDefinition(ERC20_AURA_BAL, TokenCategoryVolatile, true, false));
-ERC20_TOKENS.set(ERC20_AURA_VL, new TokenDefinition(ERC20_AURA_VL, TokenCategoryVolatile, true, false)); // Locked for 16 weeks only
+ERC20_TOKENS.set(
+  ERC20_AURA_BAL,
+  new TokenDefinition(ERC20_AURA_BAL, TokenCategoryVolatile, true, false),
+);
+ERC20_TOKENS.set(
+  ERC20_AURA_VL,
+  new TokenDefinition(ERC20_AURA_VL, TokenCategoryVolatile, true, false),
+); // Locked for 16 weeks only
 ERC20_TOKENS.set(ERC20_AURA, new TokenDefinition(ERC20_AURA, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_BAL, new TokenDefinition(ERC20_BAL, TokenCategoryVolatile, true, false));
-ERC20_TOKENS.set(ERC20_BALANCER_OHM_DAI_AURA, new TokenDefinition(ERC20_BALANCER_OHM_DAI_AURA, TokenCategoryPOL, true, false));
-ERC20_TOKENS.set(ERC20_BALANCER_OHM_DAI_WETH_AURA, new TokenDefinition(ERC20_BALANCER_OHM_DAI_WETH_AURA, TokenCategoryPOL, true, false));
-ERC20_TOKENS.set(ERC20_BALANCER_OHM_DAI_WETH, new TokenDefinition(ERC20_BALANCER_OHM_DAI_WETH, TokenCategoryPOL, true, false));
-ERC20_TOKENS.set(ERC20_BALANCER_OHM_DAI, new TokenDefinition(ERC20_BALANCER_OHM_DAI, TokenCategoryPOL, true, false));
-ERC20_TOKENS.set(ERC20_BALANCER_OHM_WETH_AURA, new TokenDefinition(ERC20_BALANCER_OHM_WETH_AURA, TokenCategoryPOL, true, false));
-ERC20_TOKENS.set(ERC20_BALANCER_OHM_WETH, new TokenDefinition(ERC20_BALANCER_OHM_WETH, TokenCategoryPOL, true, false));
-ERC20_TOKENS.set(ERC20_BALANCER_OHM_WSTETH_AURA, new TokenDefinition(ERC20_BALANCER_OHM_WSTETH_AURA, TokenCategoryPOL, true, false));
-ERC20_TOKENS.set(ERC20_BALANCER_OHM_WSTETH, new TokenDefinition(ERC20_BALANCER_OHM_WSTETH, TokenCategoryPOL, true, false));
-ERC20_TOKENS.set(ERC20_BALANCER_WSTETH_WETH, new TokenDefinition(ERC20_BALANCER_WSTETH_WETH, TokenCategoryPOL, true, false));
-ERC20_TOKENS.set(ERC20_BARNBRIDGE, new TokenDefinition(ERC20_BARNBRIDGE, TokenCategoryVolatile, true, false, BigDecimal.fromString("0.77")));
-ERC20_TOKENS.set(ERC20_BB_A_USD, new TokenDefinition(ERC20_BB_A_USD, TokenCategoryStable, true, false));
-ERC20_TOKENS.set(ERC20_BTRFLY_V1_STAKED, new TokenDefinition(ERC20_BTRFLY_V1_STAKED, TokenCategoryVolatile, true, false));
-ERC20_TOKENS.set(ERC20_BTRFLY_V1, new TokenDefinition(ERC20_BTRFLY_V1, TokenCategoryVolatile, true, false));
-ERC20_TOKENS.set(ERC20_BTRFLY_V2_RL, new TokenDefinition(ERC20_BTRFLY_V2_RL, TokenCategoryVolatile, false, false, BigDecimal.fromString("0.89")));
-ERC20_TOKENS.set(ERC20_BTRFLY_V2, new TokenDefinition(ERC20_BTRFLY_V2, TokenCategoryVolatile, true, false));
-ERC20_TOKENS.set(ERC20_CRV_3POOL, new TokenDefinition(ERC20_CRV_3POOL, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(
+  ERC20_BALANCER_OHM_DAI_AURA,
+  new TokenDefinition(ERC20_BALANCER_OHM_DAI_AURA, TokenCategoryPOL, true, false),
+);
+ERC20_TOKENS.set(
+  ERC20_BALANCER_OHM_DAI_WETH_AURA,
+  new TokenDefinition(ERC20_BALANCER_OHM_DAI_WETH_AURA, TokenCategoryPOL, true, false),
+);
+ERC20_TOKENS.set(
+  ERC20_BALANCER_OHM_DAI_WETH,
+  new TokenDefinition(ERC20_BALANCER_OHM_DAI_WETH, TokenCategoryPOL, true, false),
+);
+ERC20_TOKENS.set(
+  ERC20_BALANCER_OHM_DAI,
+  new TokenDefinition(ERC20_BALANCER_OHM_DAI, TokenCategoryPOL, true, false),
+);
+ERC20_TOKENS.set(
+  ERC20_BALANCER_OHM_WETH_AURA,
+  new TokenDefinition(ERC20_BALANCER_OHM_WETH_AURA, TokenCategoryPOL, true, false),
+);
+ERC20_TOKENS.set(
+  ERC20_BALANCER_OHM_WETH,
+  new TokenDefinition(ERC20_BALANCER_OHM_WETH, TokenCategoryPOL, true, false),
+);
+ERC20_TOKENS.set(
+  ERC20_BALANCER_OHM_WSTETH_AURA,
+  new TokenDefinition(ERC20_BALANCER_OHM_WSTETH_AURA, TokenCategoryPOL, true, false),
+);
+ERC20_TOKENS.set(
+  ERC20_BALANCER_OHM_WSTETH,
+  new TokenDefinition(ERC20_BALANCER_OHM_WSTETH, TokenCategoryPOL, true, false),
+);
+ERC20_TOKENS.set(
+  ERC20_BALANCER_WSTETH_WETH,
+  new TokenDefinition(ERC20_BALANCER_WSTETH_WETH, TokenCategoryPOL, true, false),
+);
+ERC20_TOKENS.set(
+  ERC20_BARNBRIDGE,
+  new TokenDefinition(
+    ERC20_BARNBRIDGE,
+    TokenCategoryVolatile,
+    true,
+    false,
+    BigDecimal.fromString("0.77"),
+  ),
+);
+ERC20_TOKENS.set(
+  ERC20_BB_A_USD,
+  new TokenDefinition(ERC20_BB_A_USD, TokenCategoryStable, true, false),
+);
+ERC20_TOKENS.set(
+  ERC20_BTRFLY_V1_STAKED,
+  new TokenDefinition(ERC20_BTRFLY_V1_STAKED, TokenCategoryVolatile, true, false),
+);
+ERC20_TOKENS.set(
+  ERC20_BTRFLY_V1,
+  new TokenDefinition(ERC20_BTRFLY_V1, TokenCategoryVolatile, true, false),
+);
+ERC20_TOKENS.set(
+  ERC20_BTRFLY_V2_RL,
+  new TokenDefinition(
+    ERC20_BTRFLY_V2_RL,
+    TokenCategoryVolatile,
+    false,
+    false,
+    BigDecimal.fromString("0.89"),
+  ),
+);
+ERC20_TOKENS.set(
+  ERC20_BTRFLY_V2,
+  new TokenDefinition(ERC20_BTRFLY_V2, TokenCategoryVolatile, true, false),
+);
+ERC20_TOKENS.set(
+  ERC20_CRV_3POOL,
+  new TokenDefinition(ERC20_CRV_3POOL, TokenCategoryVolatile, true, false),
+);
 ERC20_TOKENS.set(ERC20_CRV, new TokenDefinition(ERC20_CRV, TokenCategoryVolatile, true, false));
-ERC20_TOKENS.set(ERC20_CVX_CRV, new TokenDefinition(ERC20_CVX_CRV, TokenCategoryVolatile, true, false)); // Ensures that it gets indexed, since it's not POL
-ERC20_TOKENS.set(ERC20_CVX_FRAX_3CRV, new TokenDefinition(ERC20_CVX_FRAX_3CRV, TokenCategoryStable, true, false)); // Ensures that it gets indexed, since it's not POL
-ERC20_TOKENS.set(ERC20_CVX_VL_V1, new TokenDefinition(ERC20_CVX_VL_V1, TokenCategoryVolatile, true, false)); // Locked for a few months only
-ERC20_TOKENS.set(ERC20_CVX_VL_V2, new TokenDefinition(ERC20_CVX_VL_V2, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(
+  ERC20_CVX_CRV,
+  new TokenDefinition(ERC20_CVX_CRV, TokenCategoryVolatile, true, false),
+); // Ensures that it gets indexed, since it's not POL
+ERC20_TOKENS.set(
+  ERC20_CVX_FRAX_3CRV,
+  new TokenDefinition(ERC20_CVX_FRAX_3CRV, TokenCategoryStable, true, false),
+); // Ensures that it gets indexed, since it's not POL
+ERC20_TOKENS.set(
+  ERC20_CVX_VL_V1,
+  new TokenDefinition(ERC20_CVX_VL_V1, TokenCategoryVolatile, true, false),
+); // Locked for a few months only
+ERC20_TOKENS.set(
+  ERC20_CVX_VL_V2,
+  new TokenDefinition(ERC20_CVX_VL_V2, TokenCategoryVolatile, true, false),
+);
 ERC20_TOKENS.set(ERC20_CVX, new TokenDefinition(ERC20_CVX, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_DAI, new TokenDefinition(ERC20_DAI, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_FDT, new TokenDefinition(ERC20_FDT, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_FEI, new TokenDefinition(ERC20_FEI, TokenCategoryStable, true, false));
 ERC20_TOKENS.set(ERC20_FOX, new TokenDefinition(ERC20_FOX, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_FPIS, new TokenDefinition(ERC20_FPIS, TokenCategoryVolatile, true, false));
-ERC20_TOKENS.set(ERC20_FRAX_3CRV, new TokenDefinition(ERC20_FRAX_3CRV, TokenCategoryStable, true, false));
-ERC20_TOKENS.set(ERC20_FRAX_BP, new TokenDefinition(ERC20_FRAX_BP, TokenCategoryStable, true, false));
+ERC20_TOKENS.set(
+  ERC20_FRAX_3CRV,
+  new TokenDefinition(ERC20_FRAX_3CRV, TokenCategoryStable, true, false),
+);
+ERC20_TOKENS.set(
+  ERC20_FRAX_BP,
+  new TokenDefinition(ERC20_FRAX_BP, TokenCategoryStable, true, false),
+);
 ERC20_TOKENS.set(ERC20_FRAX, new TokenDefinition(ERC20_FRAX, TokenCategoryStable, true, false));
-ERC20_TOKENS.set(ERC20_FXS_VE, new TokenDefinition(ERC20_FXS_VE, TokenCategoryVolatile, false, false)); // Locked till 1787788800 (2026)
+ERC20_TOKENS.set(
+  ERC20_FXS_VE,
+  new TokenDefinition(ERC20_FXS_VE, TokenCategoryVolatile, false, false),
+); // Locked till 1787788800 (2026)
 ERC20_TOKENS.set(ERC20_FXS, new TokenDefinition(ERC20_FXS, TokenCategoryVolatile, true, false));
-ERC20_TOKENS.set(ERC20_GOHM, new TokenDefinition(ERC20_GOHM, TokenCategoryVolatile, true, false, BigDecimal.zero()));
+ERC20_TOKENS.set(
+  ERC20_GOHM,
+  new TokenDefinition(ERC20_GOHM, TokenCategoryVolatile, true, false, BigDecimal.zero()),
+);
 ERC20_TOKENS.set(ERC20_KP3R, new TokenDefinition(ERC20_KP3R, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_LDO, new TokenDefinition(ERC20_LDO, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_LQTY, new TokenDefinition(ERC20_LQTY, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_LUSD, new TokenDefinition(ERC20_LUSD, TokenCategoryStable, true, false));
-ERC20_TOKENS.set(ERC20_OHM_V2, new TokenDefinition(ERC20_OHM_V2, TokenCategoryVolatile, true, false, BigDecimal.zero()));
+ERC20_TOKENS.set(
+  ERC20_OHM_V2,
+  new TokenDefinition(ERC20_OHM_V2, TokenCategoryVolatile, true, false, BigDecimal.zero()),
+);
 ERC20_TOKENS.set(ERC20_PRIME, new TokenDefinition(ERC20_PRIME, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_SUSHI, new TokenDefinition(ERC20_SUSHI, TokenCategoryVolatile, true, false));
 ERC20_TOKENS.set(ERC20_SYN, new TokenDefinition(ERC20_SYN, TokenCategoryVolatile, true, false));
@@ -316,8 +507,14 @@ ERC20_TOKENS.set(ERC20_UST, new TokenDefinition(ERC20_UST, TokenCategoryStable, 
 ERC20_TOKENS.set(ERC20_WBTC, new TokenDefinition(ERC20_WBTC, TokenCategoryVolatile, true, true));
 ERC20_TOKENS.set(ERC20_WEETH, new TokenDefinition(ERC20_WEETH, TokenCategoryVolatile, true, true));
 ERC20_TOKENS.set(ERC20_WETH, new TokenDefinition(ERC20_WETH, TokenCategoryVolatile, true, true));
-ERC20_TOKENS.set(ERC20_WSTETH, new TokenDefinition(ERC20_WSTETH, TokenCategoryVolatile, true, true));
-ERC20_TOKENS.set(ERC20_XSUSHI, new TokenDefinition(ERC20_XSUSHI, TokenCategoryVolatile, true, false));
+ERC20_TOKENS.set(
+  ERC20_WSTETH,
+  new TokenDefinition(ERC20_WSTETH, TokenCategoryVolatile, true, true),
+);
+ERC20_TOKENS.set(
+  ERC20_XSUSHI,
+  new TokenDefinition(ERC20_XSUSHI, TokenCategoryVolatile, true, false),
+);
 ERC20_TOKENS.set(NATIVE_ETH, new TokenDefinition(NATIVE_ETH, TokenCategoryVolatile, true, true));
 
 // === ERC4626 ===
@@ -325,7 +522,8 @@ ERC20_TOKENS.set(NATIVE_ETH, new TokenDefinition(NATIVE_ETH, TokenCategoryVolati
 export const ERC4626_SDAI = "0x83F20F44975D03b1b09e64809B757c47f942BEeA".toLowerCase();
 export const ERC4626_SUSDE = "0x9D39A5DE30e57443BfF2A8307A4256c8797A3497".toLowerCase();
 export const ERC4626_SUSDS = "0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD".toLowerCase();
-export const ERC4626_GAUNTLET_SUSDS_VAULT = "0x3365184e87d2Bd75961780454A5810BEc956F0dD".toLowerCase();
+export const ERC4626_GAUNTLET_SUSDS_VAULT =
+  "0x3365184e87d2Bd75961780454A5810BEc956F0dD".toLowerCase();
 
 /**
  * Mapping between the contract address of an ERC4626 token and the TokenDefinition.
@@ -333,10 +531,22 @@ export const ERC4626_GAUNTLET_SUSDS_VAULT = "0x3365184e87d2Bd75961780454A5810BEc
  * A price lookup path must be defined for the underlying token within `LIQUIDITY_POOL_TOKEN_LOOKUP`.
  */
 export const ERC4626_TOKENS = new Map<string, TokenDefinition>();
-ERC4626_TOKENS.set(ERC4626_SDAI, new TokenDefinition(ERC4626_SDAI, TokenCategoryStable, true, false));
-ERC4626_TOKENS.set(ERC4626_SUSDE, new TokenDefinition(ERC4626_SUSDE, TokenCategoryStable, true, false));
-ERC4626_TOKENS.set(ERC4626_SUSDS, new TokenDefinition(ERC4626_SUSDS, TokenCategoryStable, true, false));
-ERC4626_TOKENS.set(ERC4626_GAUNTLET_SUSDS_VAULT, new TokenDefinition(ERC4626_GAUNTLET_SUSDS_VAULT, TokenCategoryStable, true, false));
+ERC4626_TOKENS.set(
+  ERC4626_SDAI,
+  new TokenDefinition(ERC4626_SDAI, TokenCategoryStable, true, false),
+);
+ERC4626_TOKENS.set(
+  ERC4626_SUSDE,
+  new TokenDefinition(ERC4626_SUSDE, TokenCategoryStable, true, false),
+);
+ERC4626_TOKENS.set(
+  ERC4626_SUSDS,
+  new TokenDefinition(ERC4626_SUSDS, TokenCategoryStable, true, false),
+);
+ERC4626_TOKENS.set(
+  ERC4626_GAUNTLET_SUSDS_VAULT,
+  new TokenDefinition(ERC4626_GAUNTLET_SUSDS_VAULT, TokenCategoryStable, true, false),
+);
 
 /**
  * Mapping between the non-staked token and the token staked in Convex.
@@ -344,12 +554,30 @@ ERC4626_TOKENS.set(ERC4626_GAUNTLET_SUSDS_VAULT, new TokenDefinition(ERC4626_GAU
  * The staked token should NOT be listed in {ERC20_TOKENS}.
  */
 const CONVEX_STAKED_TOKENS = new Map<string, TokenDefinition>();
-CONVEX_STAKED_TOKENS.set(ERC20_CRV_FRAX_USDC, new TokenDefinition(ERC20_CVX_FRAX_USDC, TokenCategoryStable, true, false));
-CONVEX_STAKED_TOKENS.set(ERC20_CRV_OHMETH, new TokenDefinition(ERC20_CVX_OHMETH, TokenCategoryPOL, true, false));
-CONVEX_STAKED_TOKENS.set(ERC20_CRV_OHMFRAXBP, new TokenDefinition(ERC20_CVX_OHM_FRAXBP, TokenCategoryPOL, true, false));
-CONVEX_STAKED_TOKENS.set(ERC20_CRV, new TokenDefinition(ERC20_CVX_CRV, TokenCategoryVolatile, true, false));
-CONVEX_STAKED_TOKENS.set(ERC20_FRAX_3CRV, new TokenDefinition(ERC20_CVX_FRAX_3CRV, TokenCategoryStable, true, false));
-CONVEX_STAKED_TOKENS.set(ERC20_FXS, new TokenDefinition(ERC20_CVX_FXS, TokenCategoryVolatile, true, false));
+CONVEX_STAKED_TOKENS.set(
+  ERC20_CRV_FRAX_USDC,
+  new TokenDefinition(ERC20_CVX_FRAX_USDC, TokenCategoryStable, true, false),
+);
+CONVEX_STAKED_TOKENS.set(
+  ERC20_CRV_OHMETH,
+  new TokenDefinition(ERC20_CVX_OHMETH, TokenCategoryPOL, true, false),
+);
+CONVEX_STAKED_TOKENS.set(
+  ERC20_CRV_OHMFRAXBP,
+  new TokenDefinition(ERC20_CVX_OHM_FRAXBP, TokenCategoryPOL, true, false),
+);
+CONVEX_STAKED_TOKENS.set(
+  ERC20_CRV,
+  new TokenDefinition(ERC20_CVX_CRV, TokenCategoryVolatile, true, false),
+);
+CONVEX_STAKED_TOKENS.set(
+  ERC20_FRAX_3CRV,
+  new TokenDefinition(ERC20_CVX_FRAX_3CRV, TokenCategoryStable, true, false),
+);
+CONVEX_STAKED_TOKENS.set(
+  ERC20_FXS,
+  new TokenDefinition(ERC20_CVX_FXS, TokenCategoryVolatile, true, false),
+);
 
 /**
  * Gets the staked Convex version of the given token.
@@ -378,10 +606,7 @@ export const CONVEX_STAKING_CONTRACTS = [
 /**
  * Frax locking contracts
  */
-export const FRAX_LOCKING_CONTRACTS = [
-  FRAX_LOCKING_FRAX_USDC,
-  FRAX_LOCKING_OHM_FRAXBP,
-];
+export const FRAX_LOCKING_CONTRACTS = [FRAX_LOCKING_FRAX_USDC, FRAX_LOCKING_OHM_FRAXBP];
 
 /**
  * Mapping between the non-staked token and the token staked in Frax.
@@ -389,8 +614,14 @@ export const FRAX_LOCKING_CONTRACTS = [
  * The staked token should NOT be listed in {ERC20_TOKENS}.
  */
 const FRAX_STAKED_TOKENS = new Map<string, TokenDefinition>();
-FRAX_STAKED_TOKENS.set(ERC20_CRV_FRAX_USDC, new TokenDefinition(ERC20_CVX_FRAX_USDC_STAKED, TokenCategoryStable, true, false));
-FRAX_STAKED_TOKENS.set(ERC20_CRV_OHMFRAXBP, new TokenDefinition(ERC20_CVX_OHM_FRAXBP_STAKED, TokenCategoryPOL, true, false));
+FRAX_STAKED_TOKENS.set(
+  ERC20_CRV_FRAX_USDC,
+  new TokenDefinition(ERC20_CVX_FRAX_USDC_STAKED, TokenCategoryStable, true, false),
+);
+FRAX_STAKED_TOKENS.set(
+  ERC20_CRV_OHMFRAXBP,
+  new TokenDefinition(ERC20_CVX_OHM_FRAXBP_STAKED, TokenCategoryPOL, true, false),
+);
 
 /**
  * Gets the staked Frax version of the given token.
@@ -468,7 +699,7 @@ export const getUnstakedToken = (contractAddress: string): string => {
   }
 
   return UNSTAKED_TOKEN_MAPPING.get(contractAddressLower);
-}
+};
 
 // Liquidity Pools
 export const PAIR_CURVE_ETH_STETH = "0xdc24316b9ae028f1497c275eb9192a3ea0f67022".toLowerCase();
@@ -481,26 +712,32 @@ export const PAIR_FRAXSWAP_V2_OHM_FRAX = "0x5769071665eb8Db80e7e9226F92336Bb2897
 export const PAIR_UNISWAP_V2_ALCX_ETH = "0xc3f279090a47e80990fe3a9c30d24cb117ef91a8".toLowerCase();
 export const PAIR_UNISWAP_V2_BOND_USDC = "0x6591c4bcd6d7a1eb4e537da8b78676c1576ba244".toLowerCase();
 export const PAIR_UNISWAP_V2_CRV_ETH = "0x58dc5a51fe44589beb22e8ce67720b5bc5378009".toLowerCase();
-export const PAIR_UNISWAP_V2_CVX_CRV_ETH = "0x4b893b0e9c2fe8bf5d531d0c9c603b1483b4ce30".toLowerCase();
+export const PAIR_UNISWAP_V2_CVX_CRV_ETH =
+  "0x4b893b0e9c2fe8bf5d531d0c9c603b1483b4ce30".toLowerCase();
 export const PAIR_UNISWAP_V2_CVX_ETH = "0x05767d9ef41dc40689678ffca0608878fb3de906".toLowerCase();
 export const PAIR_UNISWAP_V2_ETH_WBTC = "0xceff51756c56ceffca006cd410b03ffc46dd3a58".toLowerCase();
 export const PAIR_UNISWAP_V2_FOX_ETH = "0x470e8de2ebaef52014a47cb5e6af86884947f08c".toLowerCase();
 export const PAIR_UNISWAP_V2_KP3R_ETH = "0xaf988aff99d3d0cb870812c325c588d8d8cb7de8".toLowerCase();
-export const PAIR_UNISWAP_V2_OHM_BTRFLY_V1 = "0xe9ab8038ee6dd4fcc7612997fe28d4e22019c4b4".toLowerCase();
+export const PAIR_UNISWAP_V2_OHM_BTRFLY_V1 =
+  "0xe9ab8038ee6dd4fcc7612997fe28d4e22019c4b4".toLowerCase();
 export const PAIR_UNISWAP_V2_OHM_DAI = "0x34d7d7Aaf50AD4944B70B320aCB24C95fa2def7c".toLowerCase();
-export const PAIR_UNISWAP_V2_OHM_DAI_V2 = "0x055475920a8c93cffb64d039a8205f7acc7722d3".toLowerCase();
+export const PAIR_UNISWAP_V2_OHM_DAI_V2 =
+  "0x055475920a8c93cffb64d039a8205f7acc7722d3".toLowerCase();
 export const PAIR_UNISWAP_V2_OHM_DAI_V2_BLOCK = "13827000";
 export const PAIR_UNISWAP_V2_OHM_ETH = "0xfffae4a0f4ac251f4705717cd24cadccc9f33e06".toLowerCase();
 export const PAIR_UNISWAP_V2_OHM_ETH_BLOCK = "12310798";
-export const PAIR_UNISWAP_V2_OHM_ETH_V2 = "0x69b81152c5a8d35a67b32a4d3772795d96cae4da".toLowerCase();
+export const PAIR_UNISWAP_V2_OHM_ETH_V2 =
+  "0x69b81152c5a8d35a67b32a4d3772795d96cae4da".toLowerCase();
 export const PAIR_UNISWAP_V2_OHM_ETH_V2_BLOCK = "13805112";
 export const PAIR_UNISWAP_V2_OHM_FRAX = "0x2dce0dda1c2f98e0f171de8333c3c6fe1bbf4877".toLowerCase();
 export const PAIR_UNISWAP_V2_OHM_FRAX_BLOCK = "12563434";
-export const PAIR_UNISWAP_V2_OHM_FRAX_V2 = "0xb612c37688861f1f90761dc7f382c2af3a50cc39".toLowerCase();
+export const PAIR_UNISWAP_V2_OHM_FRAX_V2 =
+  "0xb612c37688861f1f90761dc7f382c2af3a50cc39".toLowerCase();
 export const PAIR_UNISWAP_V2_OHM_FRAX_V2_BLOCK = "13824000";
 export const PAIR_UNISWAP_V2_OHM_LUSD = "0xfdf12d1f85b5082877a6e070524f50f6c84faa6b".toLowerCase();
 export const PAIR_UNISWAP_V2_OHM_LUSD_BLOCK = "13327921";
-export const PAIR_UNISWAP_V2_OHM_LUSD_V2 = "0x46E4D8A1322B9448905225E52F914094dBd6dDdF".toLowerCase();
+export const PAIR_UNISWAP_V2_OHM_LUSD_V2 =
+  "0x46E4D8A1322B9448905225E52F914094dBd6dDdF".toLowerCase();
 export const PAIR_UNISWAP_V2_OHM_LUSD_V2_BLOCK = "14381693";
 export const PAIR_UNISWAP_V2_SUSHI_ETH = "0x795065dcc9f64b5614c407a6efdc400da6221fb0".toLowerCase();
 export const PAIR_UNISWAP_V2_SYN_FRAX = "0x9fae36a18ef8ac2b43186ade5e2b07403dc742b1".toLowerCase();
@@ -509,9 +746,11 @@ export const PAIR_UNISWAP_V2_TOKE_ETH = "0xd4e7a6e2d03e4e48dfc27dd3f46df1c176647
 export const PAIR_UNISWAP_V2_TRIBE_ETH = "0x7ce01885a13c652241ae02ea7369ee8d466802eb".toLowerCase();
 export const PAIR_UNISWAP_V2_USDC_ETH = "0x397ff1542f962076d0bfe58ea045ffa2d347aca0".toLowerCase();
 export const PAIR_UNISWAP_V2_UST_ETH = "0x8B00eE8606CC70c2dce68dea0CEfe632CCA0fB7b".toLowerCase();
-export const PAIR_UNISWAP_V2_XSUSHI_ETH = "0x36e2fcccc59e5747ff63a03ea2e5c0c2c14911e7".toLowerCase();
+export const PAIR_UNISWAP_V2_XSUSHI_ETH =
+  "0x36e2fcccc59e5747ff63a03ea2e5c0c2c14911e7".toLowerCase();
 export const PAIR_UNISWAP_V3_3CRV_USD = "0x5f7f44c304d016fe8cad589aaadba366528f0ad0".toLowerCase();
-export const PAIR_UNISWAP_V3_AGEUR_USDC = "0x735a26a57a0a0069dfabd41595a970faf5e1ee8b".toLowerCase();
+export const PAIR_UNISWAP_V3_AGEUR_USDC =
+  "0x735a26a57a0a0069dfabd41595a970faf5e1ee8b".toLowerCase();
 export const PAIR_UNISWAP_V3_FEI_USDC = "0xdf50fbde8180c8785842c8e316ebe06f542d3443".toLowerCase();
 export const PAIR_UNISWAP_V3_FPIS_FRAX = "0x8fe536c7dc019455cce34746755c64bbe2aa163b".toLowerCase();
 export const PAIR_UNISWAP_V3_FXS_ETH = "0xcd8286b48936cdac20518247dbd310ab681a9fbf".toLowerCase();
@@ -521,22 +760,37 @@ export const PAIR_UNISWAP_V3_LQTY_LUSD = "0xd251dff33e31bb98d5587e5b1004ff01a5a4
 export const PAIR_UNISWAP_V3_LQTY_WETH = "0xd1d5a4c0ea98971894772dcd6d2f1dc71083c44e".toLowerCase();
 export const PAIR_UNISWAP_V3_LUSD_USDC = "0x9902affdd3b8ef60304958c60377110c6d6ab1df".toLowerCase();
 export const PAIR_UNISWAP_V3_OHM_SUSDS = "0x0858e2B0F9D75f7300B38D64482aC2C8DF06a755".toLowerCase();
-export const PAIR_UNISWAP_V3_WETH_BTRFLY_V1 = "0xdf9ab3c649005ebfdf682d2302ca1f673e0d37a2".toLowerCase();
-export const PAIR_UNISWAP_V3_WETH_BTRFLY_V2 = "0x3e6e23198679419cd73bb6376518dcc5168c8260".toLowerCase();
-export const PAIR_UNISWAP_V3_WEETH_WETH = "0x202A6012894Ae5c288eA824cbc8A9bfb26A49b93".toLowerCase();
+export const PAIR_UNISWAP_V3_WETH_BTRFLY_V1 =
+  "0xdf9ab3c649005ebfdf682d2302ca1f673e0d37a2".toLowerCase();
+export const PAIR_UNISWAP_V3_WETH_BTRFLY_V2 =
+  "0x3e6e23198679419cd73bb6376518dcc5168c8260".toLowerCase();
+export const PAIR_UNISWAP_V3_WEETH_WETH =
+  "0x202A6012894Ae5c288eA824cbc8A9bfb26A49b93".toLowerCase();
 export const PAIR_UNISWAP_V3_WETH_OHM = "0x88051b0eea095007d3bef21ab287be961f3d8598".toLowerCase();
-export const PAIR_UNISWAP_V3_WETH_WSTETH = "0x109830a1aaad605bbf02a9dfa7b0b92ec2fb7daa".toLowerCase();
-export const POOL_BALANCER_AURA_WETH_ID = "0xc29562b045d80fd77c69bec09541f5c16fe20d9d000200000000000000000251";
-export const POOL_BALANCER_BAL_WETH_ID = "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014";
-export const POOL_BALANCER_D2D_USDC_ID = "0x27c9f71cc31464b906e0006d4fcbc8900f48f15f00020000000000000000010f";
-export const POOL_BALANCER_GRAVIAURA_AURABAL_WETH_ID = "0x0578292cb20a443ba1cde459c985ce14ca2bdee5000100000000000000000269";
-export const POOL_BALANCER_OHM_DAI = "0x76fcf0e8c7ff37a47a799fa2cd4c13cde0d981c90002000000000000000003d2";
-export const POOL_BALANCER_OHM_DAI_WETH_ID = "0xc45d42f801105e861e86658648e3678ad7aa70f900010000000000000000011e"; // Pool ID, not a contract address
-export const POOL_BALANCER_OHM_V2_BTRFLY_V2_ID = "0x2de32a7c98c3ef6ec79e703500e8ca5b2ec819aa00020000000000000000031c".toLowerCase();
-export const POOL_BALANCER_OHM_WETH = "0xd1ec5e215e8148d76f4460e4097fd3d5ae0a35580002000000000000000003d3";
-export const POOL_BALANCER_OHM_WSTETH_ID = "0xd4f79ca0ac83192693bce4699d0c10c66aa6cf0f00020000000000000000047e";
-export const POOL_BALANCER_WETH_FDT_ID = "0x2d344a84bac123660b021eebe4eb6f12ba25fe8600020000000000000000018a"; // Pool ID
-export const POOL_BALANCER_WSTETH_WETH_ID = "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080";
+export const PAIR_UNISWAP_V3_WETH_WSTETH =
+  "0x109830a1aaad605bbf02a9dfa7b0b92ec2fb7daa".toLowerCase();
+export const POOL_BALANCER_AURA_WETH_ID =
+  "0xc29562b045d80fd77c69bec09541f5c16fe20d9d000200000000000000000251";
+export const POOL_BALANCER_BAL_WETH_ID =
+  "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014";
+export const POOL_BALANCER_D2D_USDC_ID =
+  "0x27c9f71cc31464b906e0006d4fcbc8900f48f15f00020000000000000000010f";
+export const POOL_BALANCER_GRAVIAURA_AURABAL_WETH_ID =
+  "0x0578292cb20a443ba1cde459c985ce14ca2bdee5000100000000000000000269";
+export const POOL_BALANCER_OHM_DAI =
+  "0x76fcf0e8c7ff37a47a799fa2cd4c13cde0d981c90002000000000000000003d2";
+export const POOL_BALANCER_OHM_DAI_WETH_ID =
+  "0xc45d42f801105e861e86658648e3678ad7aa70f900010000000000000000011e"; // Pool ID, not a contract address
+export const POOL_BALANCER_OHM_V2_BTRFLY_V2_ID =
+  "0x2de32a7c98c3ef6ec79e703500e8ca5b2ec819aa00020000000000000000031c".toLowerCase();
+export const POOL_BALANCER_OHM_WETH =
+  "0xd1ec5e215e8148d76f4460e4097fd3d5ae0a35580002000000000000000003d3";
+export const POOL_BALANCER_OHM_WSTETH_ID =
+  "0xd4f79ca0ac83192693bce4699d0c10c66aa6cf0f00020000000000000000047e";
+export const POOL_BALANCER_WETH_FDT_ID =
+  "0x2d344a84bac123660b021eebe4eb6f12ba25fe8600020000000000000000018a"; // Pool ID
+export const POOL_BALANCER_WSTETH_WETH_ID =
+  "0x32296969ef14eb0c6d29669c550d4a0449130230000200000000000000000080";
 
 const pairHandlerAuraWEth = new PairHandler(
   PairHandlerTypes.Balancer,
@@ -548,55 +802,158 @@ const pairHandlerAuraWEth = new PairHandler(
  * Maps an ERC20 token with an array of liquidity pairs that can be used for price lookup.
  */
 const LIQUIDITY_POOL_TOKEN_LOOKUP = new Map<string, PairHandler[]>();
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AGEUR, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_AGEUR_USDC)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_ALCX, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_ALCX_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA_BAL, [new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_GRAVIAURA_AURABAL_WETH_ID)]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AGEUR, [
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_AGEUR_USDC),
+]);
+// aEthSUSDe: underlying is sUSDe (ERC4626 vault). Price via convertToAssets() on sUSDe vault.
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AETH_SUSDE, [
+  new PairHandler(PairHandlerTypes.ERC4626, ERC4626_SUSDE),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_ALCX, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_ALCX_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA_BAL, [
+  new PairHandler(
+    PairHandlerTypes.Balancer,
+    BALANCER_VAULT,
+    POOL_BALANCER_GRAVIAURA_AURABAL_WETH_ID,
+  ),
+]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA_VL, [pairHandlerAuraWEth]);
 LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_AURA, [pairHandlerAuraWEth]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BAL, [new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_BAL_WETH_ID)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BARNBRIDGE, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_BOND_USDC)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BTRFLY_V1_STAKED, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WETH_BTRFLY_V1)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BTRFLY_V1, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WETH_BTRFLY_V1)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BTRFLY_V2_RL, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WETH_BTRFLY_V2)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BTRFLY_V2, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WETH_BTRFLY_V2)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CRV_3POOL, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_3CRV_USD)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CRV_OHMFRAXBP, [new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_OHM_FRAXBP)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CRV, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CRV_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_CRV, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_CRV_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_FXS, [new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_FXS_CVX_FXS)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_VL_V1, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_VL_V2, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH)]); // TODO is this correct?
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_DAI, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI), new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI_V2)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FDT, [new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_WETH_FDT_ID)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FEI, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FEI_USDC)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FOX, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_FOX_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FPIS, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FPIS_FRAX)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FRAX_BP, [new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_FRAX_USDC)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FXS_VE, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FXS_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FXS, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FXS_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_KP3R, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_KP3R_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_LDO, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_LDO_WETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_LQTY, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_LQTY_WETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_LUSD, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_LUSD_USDC)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_PRIME, [new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_D2D_USDC_ID)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_STETH, [new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_ETH_STETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_SUSHI, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_SUSHI_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_SYN, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_SYN_FRAX)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_THOR, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_THOR_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_TOKE, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_TOKE_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_TRIBE, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_TRIBE_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_UST, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_UST_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_WBTC, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_ETH_WBTC)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_WEETH, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WEETH_WETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_WETH, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_USDC_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_WSTETH, [new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WETH_WSTETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_XSUSHI, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_XSUSHI_ETH)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC4626_GAUNTLET_SUSDS_VAULT, [new PairHandler(PairHandlerTypes.ERC4626, ERC4626_GAUNTLET_SUSDS_VAULT)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC4626_SDAI, [new PairHandler(PairHandlerTypes.ERC4626, ERC4626_SDAI)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC4626_SUSDE, [new PairHandler(PairHandlerTypes.ERC4626, ERC4626_SUSDE)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC4626_SUSDS, [new PairHandler(PairHandlerTypes.ERC4626, ERC4626_SUSDS)]);
-LIQUIDITY_POOL_TOKEN_LOOKUP.set(NATIVE_ETH, [new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_USDC_ETH)]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BAL, [
+  new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_BAL_WETH_ID),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BARNBRIDGE, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_BOND_USDC),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BTRFLY_V1_STAKED, [
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WETH_BTRFLY_V1),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BTRFLY_V1, [
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WETH_BTRFLY_V1),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BTRFLY_V2_RL, [
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WETH_BTRFLY_V2),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_BTRFLY_V2, [
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WETH_BTRFLY_V2),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CRV_3POOL, [
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_3CRV_USD),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CRV_OHMFRAXBP, [
+  new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_OHM_FRAXBP),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CRV, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CRV_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_CRV, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_CRV_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_FXS, [
+  new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_FXS_CVX_FXS),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_VL_V1, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX_VL_V2, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH),
+]); // TODO is this correct?
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_CVX, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_CVX_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_DAI, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI),
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_OHM_DAI_V2),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FDT, [
+  new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_WETH_FDT_ID),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FEI, [
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FEI_USDC),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FOX, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_FOX_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FPIS, [
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FPIS_FRAX),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FRAX_BP, [
+  new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_FRAX_USDC),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FXS_VE, [
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FXS_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_FXS, [
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_FXS_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_KP3R, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_KP3R_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_LDO, [
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_LDO_WETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_LQTY, [
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_LQTY_WETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_LUSD, [
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_LUSD_USDC),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_PRIME, [
+  new PairHandler(PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_D2D_USDC_ID),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_STETH, [
+  new PairHandler(PairHandlerTypes.Curve, PAIR_CURVE_ETH_STETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_SUSHI, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_SUSHI_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_SYN, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_SYN_FRAX),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_THOR, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_THOR_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_TOKE, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_TOKE_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_TRIBE, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_TRIBE_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_UST, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_UST_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_WBTC, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_ETH_WBTC),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_WEETH, [
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WEETH_WETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_WETH, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_USDC_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_WSTETH, [
+  new PairHandler(PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WETH_WSTETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC20_XSUSHI, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_XSUSHI_ETH),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC4626_GAUNTLET_SUSDS_VAULT, [
+  new PairHandler(PairHandlerTypes.ERC4626, ERC4626_GAUNTLET_SUSDS_VAULT),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC4626_SDAI, [
+  new PairHandler(PairHandlerTypes.ERC4626, ERC4626_SDAI),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC4626_SUSDE, [
+  new PairHandler(PairHandlerTypes.ERC4626, ERC4626_SUSDE),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(ERC4626_SUSDS, [
+  new PairHandler(PairHandlerTypes.ERC4626, ERC4626_SUSDS),
+]);
+LIQUIDITY_POOL_TOKEN_LOOKUP.set(NATIVE_ETH, [
+  new PairHandler(PairHandlerTypes.UniswapV2, PAIR_UNISWAP_V2_USDC_ETH),
+]);
 
 /**
  * OHM price lookup
@@ -613,22 +970,34 @@ const pairHandlerUniswapV2OhmDaiV2 = new PairHandler(
 );
 
 const pairHandlerBalancerOhmDai = new PairHandler(
-  PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_OHM_DAI,
+  PairHandlerTypes.Balancer,
+  BALANCER_VAULT,
+  POOL_BALANCER_OHM_DAI,
 );
 
 const pairHandlerBalancerOhmWEth = new PairHandler(
-  PairHandlerTypes.Balancer, BALANCER_VAULT, POOL_BALANCER_OHM_WETH,
+  PairHandlerTypes.Balancer,
+  BALANCER_VAULT,
+  POOL_BALANCER_OHM_WETH,
 );
 
 const pairHandlerUniswapV3WethOhm = new PairHandler(
-  PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_WETH_OHM
+  PairHandlerTypes.UniswapV3,
+  PAIR_UNISWAP_V3_WETH_OHM,
 );
 
 const pairHandlerUniswapV3OhmSusds = new PairHandler(
-  PairHandlerTypes.UniswapV3, PAIR_UNISWAP_V3_OHM_SUSDS
+  PairHandlerTypes.UniswapV3,
+  PAIR_UNISWAP_V3_OHM_SUSDS,
 );
 
-export const OHM_PRICE_PAIRS = [pairHandlerUniswapV2OhmDaiV2, pairHandlerBalancerOhmDaiEth, pairHandlerBalancerOhmDai, pairHandlerUniswapV3WethOhm, pairHandlerUniswapV3OhmSusds];
+export const OHM_PRICE_PAIRS = [
+  pairHandlerUniswapV2OhmDaiV2,
+  pairHandlerBalancerOhmDaiEth,
+  pairHandlerBalancerOhmDai,
+  pairHandlerUniswapV3WethOhm,
+  pairHandlerUniswapV3OhmSusds,
+];
 
 /**
  * Returns the first handler for a liquidity pair. These pairs
@@ -716,7 +1085,11 @@ LIQUIDITY_PAIR_TOKENS.set(PAIR_UNISWAP_V3_WETH_OHM, [ERC20_OHM_V2, ERC20_WETH]);
 LIQUIDITY_PAIR_TOKENS.set(PAIR_UNISWAP_V3_WETH_WSTETH, [ERC20_WETH, ERC20_WSTETH]);
 LIQUIDITY_PAIR_TOKENS.set(POOL_BALANCER_AURA_WETH_ID, [ERC20_WETH, ERC20_AURA]);
 LIQUIDITY_PAIR_TOKENS.set(POOL_BALANCER_BAL_WETH_ID, [ERC20_BAL, ERC20_WETH]);
-LIQUIDITY_PAIR_TOKENS.set(POOL_BALANCER_GRAVIAURA_AURABAL_WETH_ID, [ERC20_AURA_BAL, ERC20_AURA_GRAVI, ERC20_WETH]);
+LIQUIDITY_PAIR_TOKENS.set(POOL_BALANCER_GRAVIAURA_AURABAL_WETH_ID, [
+  ERC20_AURA_BAL,
+  ERC20_AURA_GRAVI,
+  ERC20_WETH,
+]);
 LIQUIDITY_PAIR_TOKENS.set(POOL_BALANCER_OHM_DAI_WETH_ID, [ERC20_WETH, ERC20_OHM_V2, ERC20_DAI]);
 LIQUIDITY_PAIR_TOKENS.set(POOL_BALANCER_OHM_DAI, [ERC20_OHM_V2, ERC20_DAI]);
 LIQUIDITY_PAIR_TOKENS.set(POOL_BALANCER_OHM_V2_BTRFLY_V2_ID, [ERC20_OHM_V2, ERC20_BTRFLY_V2]);
@@ -804,8 +1177,18 @@ export const getRariAllocatorId = (contractAddress: string): i32 => {
 
 const VENDOR_DEPLOYMENTS = new Map<string, LendingMarketDeployment[]>();
 VENDOR_DEPLOYMENTS.set(ERC20_DAI, [
-  new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("16897393"), BigDecimal.fromString("500000"), VENDOR_LENDING), // https://etherscan.io/tx/0x0d4a3d19f4c35d8635793760050c3be4f54e1e2b43fb857282c4db992bce1469
-  new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("18227657"), BigDecimal.fromString("-500000"), VENDOR_LENDING), // https://etherscan.io/tx/0x627259b9fef9a188184bbdcb5f7ccf18ee55a91f8c437d6ebc637ec62e202b44
+  new LendingMarketDeployment(
+    ERC20_DAI,
+    BigInt.fromString("16897393"),
+    BigDecimal.fromString("500000"),
+    VENDOR_LENDING,
+  ), // https://etherscan.io/tx/0x0d4a3d19f4c35d8635793760050c3be4f54e1e2b43fb857282c4db992bce1469
+  new LendingMarketDeployment(
+    ERC20_DAI,
+    BigInt.fromString("18227657"),
+    BigDecimal.fromString("-500000"),
+    VENDOR_LENDING,
+  ), // https://etherscan.io/tx/0x627259b9fef9a188184bbdcb5f7ccf18ee55a91f8c437d6ebc637ec62e202b44
 ]);
 
 /**
@@ -824,9 +1207,24 @@ export function getVendorDeployments(contractAddress: string): LendingMarketDepl
 
 const MYSO_DEPLOYMENTS = new Map<string, LendingMarketDeployment[]>();
 MYSO_DEPLOYMENTS.set(ERC20_DAI.toLowerCase(), [
-  new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("16898161"), BigDecimal.fromString("500000"), MYSO_LENDING), // https://etherscan.io/tx/0xe26e451b069fcc387eb71c1dc86a05307e58e918ad5ca2fcc13baf3887795e24
-  new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("16975846"), BigDecimal.fromString("-471186.4848231525"), MYSO_LENDING), // https://etherscan.io/tx/0xdd9b3cdde143e1bdf1ba1af14c388dc0e2f6d61a5a58b9cc270f961e83d9f22b
-  new LendingMarketDeployment(ERC20_DAI, BigInt.fromString("18185779"), BigDecimal.fromString("-28813.5151768475"), MYSO_LENDING), // Write-off
+  new LendingMarketDeployment(
+    ERC20_DAI,
+    BigInt.fromString("16898161"),
+    BigDecimal.fromString("500000"),
+    MYSO_LENDING,
+  ), // https://etherscan.io/tx/0xe26e451b069fcc387eb71c1dc86a05307e58e918ad5ca2fcc13baf3887795e24
+  new LendingMarketDeployment(
+    ERC20_DAI,
+    BigInt.fromString("16975846"),
+    BigDecimal.fromString("-471186.4848231525"),
+    MYSO_LENDING,
+  ), // https://etherscan.io/tx/0xdd9b3cdde143e1bdf1ba1af14c388dc0e2f6d61a5a58b9cc270f961e83d9f22b
+  new LendingMarketDeployment(
+    ERC20_DAI,
+    BigInt.fromString("18185779"),
+    BigDecimal.fromString("-28813.5151768475"),
+    MYSO_LENDING,
+  ), // Write-off
 ]);
 
 /**
@@ -844,15 +1242,64 @@ export function getMysoDeployments(contractAddress: string): LendingMarketDeploy
 }
 
 export const SILO_DEPLOYMENTS = new Array<LendingMarketDeployment>();
-SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("16627144"), BigDecimal.fromString("20000"), SILO_ADDRESS)); // https://etherscan.io/tx/0xf9bbcc923182fb6406e97fce0f92c22c87a284d55812eeae41dc484759422b4a
-SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("16834221"), BigDecimal.fromString("28081.19399535"), SILO_ADDRESS)); // https://etherscan.io/tx/0x4676080481af6128cd1eef788bf7526632509176fb28d9bc69a4276c05c58349
-SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("17016622"), BigDecimal.fromString("25000"), SILO_ADDRESS)); // https://etherscan.io/tx/0x8d71fa055470f4654cf52e64452aebf02b2dd3c3b338c0a3edaae4ac7a4376a0
-SILO_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("17464332"), BigDecimal.fromString("-25000"), SILO_ADDRESS)); // https://etherscan.io/tx/0x6b429c97403c5e8c60396c07248138cf6cab5d224e3984e1a5159f3ee525b6f6
+SILO_DEPLOYMENTS.push(
+  new LendingMarketDeployment(
+    ERC20_OHM_V2,
+    BigInt.fromString("16627144"),
+    BigDecimal.fromString("20000"),
+    SILO_ADDRESS,
+  ),
+); // https://etherscan.io/tx/0xf9bbcc923182fb6406e97fce0f92c22c87a284d55812eeae41dc484759422b4a
+SILO_DEPLOYMENTS.push(
+  new LendingMarketDeployment(
+    ERC20_OHM_V2,
+    BigInt.fromString("16834221"),
+    BigDecimal.fromString("28081.19399535"),
+    SILO_ADDRESS,
+  ),
+); // https://etherscan.io/tx/0x4676080481af6128cd1eef788bf7526632509176fb28d9bc69a4276c05c58349
+SILO_DEPLOYMENTS.push(
+  new LendingMarketDeployment(
+    ERC20_OHM_V2,
+    BigInt.fromString("17016622"),
+    BigDecimal.fromString("25000"),
+    SILO_ADDRESS,
+  ),
+); // https://etherscan.io/tx/0x8d71fa055470f4654cf52e64452aebf02b2dd3c3b338c0a3edaae4ac7a4376a0
+SILO_DEPLOYMENTS.push(
+  new LendingMarketDeployment(
+    ERC20_OHM_V2,
+    BigInt.fromString("17464332"),
+    BigDecimal.fromString("-25000"),
+    SILO_ADDRESS,
+  ),
+); // https://etherscan.io/tx/0x6b429c97403c5e8c60396c07248138cf6cab5d224e3984e1a5159f3ee525b6f6
 
 export const EULER_DEPLOYMENTS = new Array<LendingMarketDeployment>();
-EULER_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("16627152"), BigDecimal.fromString("30000"), EULER_ADDRESS)); // https://etherscan.io/tx/0xa7495eba745bd67279969c1b8687f816e0d83a60bf0c8b43900ef1dfaf97277e
-EULER_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("16818299"), BigDecimal.fromString("-27239.193995359"), EULER_ADDRESS)); // https://etherscan.io/tx/0x54bb9ecb66c66aaa6bca677cff8fe8d64fcdbb44a7f00a0ee32f1670526e1c23
-EULER_DEPLOYMENTS.push(new LendingMarketDeployment(ERC20_OHM_V2, BigInt.fromString("17348446"), BigDecimal.fromString("-2760.806004641"), EULER_ADDRESS)); // https://etherscan.io/tx/0x8fac17c10e7d3b077344809c9f7c70ee2afcae99323c8f81b81a0e50a327a722 // Settlement in ETH/USDC. This entry balances out the remaining deployed OHM.
+EULER_DEPLOYMENTS.push(
+  new LendingMarketDeployment(
+    ERC20_OHM_V2,
+    BigInt.fromString("16627152"),
+    BigDecimal.fromString("30000"),
+    EULER_ADDRESS,
+  ),
+); // https://etherscan.io/tx/0xa7495eba745bd67279969c1b8687f816e0d83a60bf0c8b43900ef1dfaf97277e
+EULER_DEPLOYMENTS.push(
+  new LendingMarketDeployment(
+    ERC20_OHM_V2,
+    BigInt.fromString("16818299"),
+    BigDecimal.fromString("-27239.193995359"),
+    EULER_ADDRESS,
+  ),
+); // https://etherscan.io/tx/0x54bb9ecb66c66aaa6bca677cff8fe8d64fcdbb44a7f00a0ee32f1670526e1c23
+EULER_DEPLOYMENTS.push(
+  new LendingMarketDeployment(
+    ERC20_OHM_V2,
+    BigInt.fromString("17348446"),
+    BigDecimal.fromString("-2760.806004641"),
+    EULER_ADDRESS,
+  ),
+); // https://etherscan.io/tx/0x8fac17c10e7d3b077344809c9f7c70ee2afcae99323c8f81b81a0e50a327a722 // Settlement in ETH/USDC. This entry balances out the remaining deployed OHM.
 
 export const CONTRACT_STARTING_BLOCK_MAP = new Map<string, string>();
 CONTRACT_STARTING_BLOCK_MAP.set(AAVE_ALLOCATOR_V2, AAVE_ALLOCATOR_V2_BLOCK);
@@ -862,6 +1309,11 @@ CONTRACT_STARTING_BLOCK_MAP.set(CONVEX_ALLOCATOR1, CONVEX_ALLOCATOR1_BLOCK);
 CONTRACT_STARTING_BLOCK_MAP.set(CONVEX_ALLOCATOR2, CONVEX_ALLOCATOR2_BLOCK);
 CONTRACT_STARTING_BLOCK_MAP.set(CONVEX_ALLOCATOR3, CONVEX_ALLOCATOR3_BLOCK);
 CONTRACT_STARTING_BLOCK_MAP.set(COOLER_LOANS_V2_MONOCOOLER, COOLER_LOANS_V2_MONOCOOLER_START_BLOCK);
+CONTRACT_STARTING_BLOCK_MAP.set(ERC20_AETH_SUSDE, ERC20_AETH_SUSDE_START_BLOCK);
+CONTRACT_STARTING_BLOCK_MAP.set(ERC20_AETH_USDE, ERC20_AETH_SUSDE_START_BLOCK);
+CONTRACT_STARTING_BLOCK_MAP.set(ERC20_VARIABLE_DEBT_ETH_USDT, ERC20_AETH_SUSDE_START_BLOCK);
+CONTRACT_STARTING_BLOCK_MAP.set(ERC20_VARIABLE_DEBT_ETH_USDC, ERC20_AETH_SUSDE_START_BLOCK);
+CONTRACT_STARTING_BLOCK_MAP.set(YIELD_FARMING_MS, ERC20_AETH_SUSDE_START_BLOCK);
 CONTRACT_STARTING_BLOCK_MAP.set(DAIBOND_CONTRACTS1, DAIBOND_CONTRACTS1_BLOCK);
 CONTRACT_STARTING_BLOCK_MAP.set(DAIBOND_CONTRACTS2, DAIBOND_CONTRACTS2_BLOCK);
 CONTRACT_STARTING_BLOCK_MAP.set(DAIBOND_CONTRACTS3, DAIBOND_CONTRACTS3_BLOCK);
@@ -905,6 +1357,10 @@ CONTRACT_STARTING_BLOCK_MAP.set(TREASURY_ADDRESS_V3, TREASURY_ADDRESS_V3_BLOCK);
 
 const CONTRACT_ABBREVIATION_MAP = new Map<string, string>();
 CONTRACT_ABBREVIATION_MAP.set(ERC20_ADAI, "aDAI");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_AETH_SUSDE, "aEthSUSDe");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_AETH_USDE, "aEthUSDe");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_VARIABLE_DEBT_ETH_USDT, "varDebtEthUSDT");
+CONTRACT_ABBREVIATION_MAP.set(ERC20_VARIABLE_DEBT_ETH_USDC, "varDebtEthUSDC");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_ALCX, "ALCX");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_AURA_VL, "vlAURA");
 CONTRACT_ABBREVIATION_MAP.set(ERC20_AURA, "AURA");
@@ -934,9 +1390,7 @@ CONTRACT_ABBREVIATION_MAP.set(ERC20_XSUSHI, "xSUSHI");
 CONTRACT_ABBREVIATION_MAP.set(ERC4626_SDAI, "sDAI");
 CONTRACT_ABBREVIATION_MAP.set(NATIVE_ETH, "ETH");
 
-export function getContractAbbreviation(
-  contractAddress: string,
-): string | null {
+export function getContractAbbreviation(contractAddress: string): string | null {
   const contractAddressLower = contractAddress.toLowerCase();
 
   return CONTRACT_ABBREVIATION_MAP.has(contractAddressLower)
@@ -955,7 +1409,10 @@ CONTRACT_NAME_MAP.set(AURA_STAKING_OHM_DAI, "Aura OHM-DAI Deposit Vault");
 CONTRACT_NAME_MAP.set(AURA_STAKING_OHM_WETH, "Aura OHM-wETH Deposit Vault");
 CONTRACT_NAME_MAP.set(AURA_STAKING_OHM_WSTETH, "Aura OHM-wstETH Deposit Vault");
 CONTRACT_NAME_MAP.set(BALANCER_ALLOCATOR, "Balancer Allocator");
-CONTRACT_NAME_MAP.set(BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH, "Balancer Liquidity Gauge OHM-DAI-wETH");
+CONTRACT_NAME_MAP.set(
+  BALANCER_LIQUIDITY_GAUGE_OHM_DAI_WETH,
+  "Balancer Liquidity Gauge OHM-DAI-wETH",
+);
 CONTRACT_NAME_MAP.set(BALANCER_LIQUIDITY_GAUGE_OHM_DAI, "Balancer Liquidity Gauge OHM-DAI");
 CONTRACT_NAME_MAP.set(BALANCER_LIQUIDITY_GAUGE_OHM_WETH, "Balancer Liquidity Gauge OHM-wETH");
 CONTRACT_NAME_MAP.set(BALANCER_LIQUIDITY_GAUGE_OHM_WSTETH, "Balancer Liquidity Gauge OHM-wstETH");
@@ -968,6 +1425,7 @@ CONTRACT_NAME_MAP.set(BONDS_DEPOSIT, "Bond Depository");
 CONTRACT_NAME_MAP.set(BONDS_INVERSE_DEPOSIT, "Bond (Inverse) Depository");
 CONTRACT_NAME_MAP.set(BUYBACK_MS, "Buyback MS");
 CONTRACT_NAME_MAP.set(CIRCULATING_SUPPLY_CONTRACT, "Circulating Supply");
+CONTRACT_NAME_MAP.set(YIELD_FARMING_MS, "Yield Farming MS");
 CONTRACT_NAME_MAP.set(CONVEX_ALLOCATOR1, "Convex Allocator 1");
 CONTRACT_NAME_MAP.set(CONVEX_ALLOCATOR2, "Convex Allocator 2");
 CONTRACT_NAME_MAP.set(CONVEX_ALLOCATOR3, "Convex Allocator 3");
@@ -991,6 +1449,10 @@ CONTRACT_NAME_MAP.set(DAIBOND_CONTRACTS3, "DAI Bond 3");
 CONTRACT_NAME_MAP.set(DAO_WALLET, "Treasury MS (Formerly DAO Wallet)");
 CONTRACT_NAME_MAP.set(DAO_WORKING_CAPITAL, "DAO Working Capital");
 CONTRACT_NAME_MAP.set(ERC20_ADAI, "DAI - Aave");
+CONTRACT_NAME_MAP.set(ERC20_AETH_SUSDE, "sUSDe - Aave");
+CONTRACT_NAME_MAP.set(ERC20_AETH_USDE, "USDe - Aave");
+CONTRACT_NAME_MAP.set(ERC20_VARIABLE_DEBT_ETH_USDT, "Variable Debt USDT - Aave");
+CONTRACT_NAME_MAP.set(ERC20_VARIABLE_DEBT_ETH_USDC, "Variable Debt USDC - Aave");
 CONTRACT_NAME_MAP.set(ERC20_AGEUR, "agEUR");
 CONTRACT_NAME_MAP.set(ERC20_ALCX, "Alchemix");
 CONTRACT_NAME_MAP.set(ERC20_AURA_BAL, "auraBAL");
@@ -1001,7 +1463,10 @@ CONTRACT_NAME_MAP.set(ERC20_BAL, "Balancer");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_AURA_WETH, "Balancer AURA-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_BAL_WETH, "Balancer BAL-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_BB_A_WSTETH, "Balancer BB-A-wstETH Liquidity Pool");
-CONTRACT_NAME_MAP.set(ERC20_BALANCER_GRAVIAURA_AURABAL_WETH, "Balancer graviAURA-auraBAL-wETH Liquidity Pool");
+CONTRACT_NAME_MAP.set(
+  ERC20_BALANCER_GRAVIAURA_AURABAL_WETH,
+  "Balancer graviAURA-auraBAL-wETH Liquidity Pool",
+);
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_BTRFLY_V2, "Balancer OHM V2-BTRFLY V2 Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_DAI_AURA, "Balancer OHM-DAI Liquidity Pool");
 CONTRACT_NAME_MAP.set(ERC20_BALANCER_OHM_DAI_WETH_AURA, "Balancer OHM-DAI-wETH Liquidity Pool");
@@ -1142,10 +1607,16 @@ CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_WETH_OHM, "Uniswap V3 wETH-OHM Liquidity P
 CONTRACT_NAME_MAP.set(PAIR_UNISWAP_V3_WETH_WSTETH, "Uniswap V3 wETH-wstETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_AURA_WETH_ID, "Balancer AURA-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_BAL_WETH_ID, "Balancer BAL-wETH Liquidity Pool");
-CONTRACT_NAME_MAP.set(POOL_BALANCER_GRAVIAURA_AURABAL_WETH_ID, "Balancer graviAURA-auraBAL-wETH Liquidity Pool");
+CONTRACT_NAME_MAP.set(
+  POOL_BALANCER_GRAVIAURA_AURABAL_WETH_ID,
+  "Balancer graviAURA-auraBAL-wETH Liquidity Pool",
+);
 CONTRACT_NAME_MAP.set(POOL_BALANCER_OHM_DAI_WETH_ID, "Balancer OHM-DAI-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_OHM_DAI, "Balancer OHM-DAI Liquidity Pool");
-CONTRACT_NAME_MAP.set(POOL_BALANCER_OHM_V2_BTRFLY_V2_ID, "Balancer OHM V2-BTRFLY V2 Liquidity Pool");
+CONTRACT_NAME_MAP.set(
+  POOL_BALANCER_OHM_V2_BTRFLY_V2_ID,
+  "Balancer OHM V2-BTRFLY V2 Liquidity Pool",
+);
 CONTRACT_NAME_MAP.set(POOL_BALANCER_OHM_WETH, "Balancer OHM-wETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_OHM_WSTETH_ID, "Balancer OHM-wstETH Liquidity Pool");
 CONTRACT_NAME_MAP.set(POOL_BALANCER_WETH_FDT_ID, "Balancer wETH-FDT Liquidity Pool");
@@ -1177,7 +1648,11 @@ CONTRACT_NAME_MAP.set(VENDOR_LENDING, "Vendor Finance");
  * @param suffix optional suffix to be appended after the contract name and before the abbreviation
  * @returns
  */
-export const getContractName = (contractAddress: string, suffix: string | null = null, abbreviation: string | null = null): string => {
+export const getContractName = (
+  contractAddress: string,
+  suffix: string | null = null,
+  abbreviation: string | null = null,
+): string => {
   const contractAddressLower = contractAddress.toLowerCase();
 
   // Assemble the first part
@@ -1192,8 +1667,8 @@ export const getContractName = (contractAddress: string, suffix: string | null =
   const contractAbbreviation = abbreviation
     ? ` (${abbreviation})`
     : CONTRACT_ABBREVIATION_MAP.has(contractAddressLower)
-      ? ` (${CONTRACT_ABBREVIATION_MAP.get(contractAddressLower)})`
-      : "";
+    ? ` (${CONTRACT_ABBREVIATION_MAP.get(contractAddressLower)})`
+    : "";
 
   return `${contractName}${contractSuffix}${contractAbbreviation}`;
 };
