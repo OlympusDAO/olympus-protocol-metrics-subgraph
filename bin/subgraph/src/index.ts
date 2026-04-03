@@ -141,7 +141,7 @@ const getSubgraphHandler = async (
 const subgraphNames = getSubgraphs();
 
 program
-  .name("yarn subgraph")
+  .name("pnpm subgraph")
   .description("CLI for the deployment and testing of Olympus subgraphs");
 
 program
@@ -190,7 +190,7 @@ program
 
         console.info("*** Running codegen");
         spawnProcess(
-          `yarn graph codegen ${getSubgraphManifestFilePath(subgraph)} --output-dir ${generatedDir}`,
+          `pnpm exec graph codegen ${getSubgraphManifestFilePath(subgraph)} --output-dir ${generatedDir}`,
           (codegenExitCode: number) => {
             if (codegenExitCode > 0) {
               process.exit(codegenExitCode);
@@ -198,7 +198,7 @@ program
 
             console.info("*** Running lint");
             spawnProcess(
-              `yarn eslint --config ./.eslintrc.json --fix ${generatedDir}`,
+              `pnpm exec eslint --config ./.eslintrc.json --fix ${generatedDir}`,
               (lintExitCode: number) => {
                 if (lintExitCode > 0) {
                   process.exit(lintExitCode);
@@ -217,7 +217,7 @@ program
   .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
   .action((subgraph) => {
     const childProcess = exec(
-      `yarn graph build ${getSubgraphManifestFilePath(
+      `pnpm exec graph build ${getSubgraphManifestFilePath(
         subgraph,
       )} --output-dir ${getBuildOutputDirectory(subgraph)}`,
     );
@@ -235,7 +235,7 @@ program
     spawnProcess(
       `echo '${JSON.stringify({
         subgraph: subgraph,
-      })}' | yarn -s mustache - matchstick.template.yaml > matchstick.yaml`,
+      })}' | pnpm exec mustache - matchstick.template.yaml > matchstick.yaml`,
       (mustacheExitCode: number) => {
         if (mustacheExitCode > 0) {
           process.exit(mustacheExitCode);
@@ -243,7 +243,7 @@ program
 
         console.info("*** Running graph test");
         spawnProcess(
-          `yarn graph test --version 0.6.0 ${options.recompile == true ? "--recompile" : ""}`,
+          `pnpm exec graph test --version 0.6.0 ${options.recompile == true ? "--recompile" : ""}`,
           (testExitCode: number) => {
             if (testExitCode > 0) {
               process.exit(testExitCode);
@@ -264,7 +264,7 @@ program
 
     console.info("*** Deploying to Subgraph Studio");
     spawnProcess(
-      `yarn graph deploy --deploy-key ${process.env[`GRAPH_STUDIO_TOKEN`]
+      `pnpm exec graph deploy --deploy-key ${process.env[`GRAPH_STUDIO_TOKEN`]
       } --version-label ${config.version
       } --output-dir ${getBuildOutputDirectory(subgraph)} ${config.name
       } ${getSubgraphManifestFilePath(subgraph)}`,

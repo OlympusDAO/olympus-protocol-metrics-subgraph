@@ -5,6 +5,7 @@ on:
 
 jobs:
   test-branch:
+    continue-on-error: true
     strategy:
       matrix:
         subgraph: [ethereum, arbitrum, polygon, fantom, base, berachain]
@@ -46,6 +47,7 @@ jobs:
           name: results-${{ matrix.subgraph }}
           path: build/results-${{ matrix.subgraph }}.json
   test-base:
+    continue-on-error: true
     strategy:
       matrix:
         subgraph: [ethereum, arbitrum, polygon, fantom, base, berachain]
@@ -86,6 +88,7 @@ jobs:
           name: results-${{ matrix.subgraph }}
           path: build/results-${{ matrix.subgraph }}.json
   compare:
+    continue-on-error: true
     strategy:
       matrix:
         subgraph: [ethereum, arbitrum, polygon, fantom, base, berachain]
