@@ -56,6 +56,13 @@ export default class EthereumHandler extends BaseNetworkHandler {
     const tokenSuppliesBase = comparisonFile.records.tokenSupplies.base;
     const tokenSuppliesBranch = comparisonFile.records.tokenSupplies.branch;
 
+    if (!tokenRecordsBase || !tokenRecordsBranch || !tokenSuppliesBase || !tokenSuppliesBranch) {
+      comparisonFile.results.output =
+        `### ${this.network}\n\n⚠️ Skipped comparison because base/branch query results were unavailable.`;
+      writeComparisonFile(comparisonFile, this.outputPath);
+      return;
+    }
+
     compareMarketValueRecords(tokenRecordsBase, tokenRecordsBranch, comparisonFile);
     compareLiquidBackingRecords(tokenRecordsBase, tokenRecordsBranch, comparisonFile);
 

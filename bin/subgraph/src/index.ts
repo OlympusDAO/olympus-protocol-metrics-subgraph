@@ -3,7 +3,8 @@
 import { exec } from "child_process";
 import { InvalidArgumentError, program } from "commander";
 import * as dotenv from "dotenv";
-import { existsSync } from "fs";
+import { existsSync, mkdirSync, writeFileSync } from "fs";
+import { dirname } from "path";
 
 import { getDirectories } from "./helpers/fs";
 import { spawnProcess } from "./helpers/process";
@@ -74,6 +75,28 @@ const getImportFilePath = (subgraph: string): string => {
  */
 const getResultsFilePath = (subgraph: string): string => {
   return `build/results-${subgraph}.json`;
+};
+
+const writeSkippedResults = (subgraph: string, reason: string): void => {
+  const resultsFilePath = getResultsFilePath(subgraph);
+  mkdirSync(dirname(resultsFilePath), { recursive: true });
+  writeFileSync(
+    resultsFilePath,
+    JSON.stringify(
+      {
+        branches: {},
+        records: {
+          tokenRecords: {},
+          tokenSupplies: {},
+        },
+        results: {
+          output: `Skipping ${subgraph} query checks: ${reason}`,
+        },
+      },
+      null,
+      2,
+    ),
+  );
 };
 
 /**
@@ -150,8 +173,19 @@ program
   .argument("<subgraph>", `the subgraph to use, one of: ${subgraphNames.join(", ")}`, parseSubgraph)
   .requiredOption("--deployment <deployment id>", "the deployment id (starts with 'Qm')", parseDeploymentId)
   .action(async (subgraph, options) => {
-    const query = await getSubgraphHandler(subgraph, options.deployment, null);
-    query.doLatestDate();
+    try {
+      const query = await getSubgraphHandler(subgraph, options.deployment, null);
+      await query.doLatestDate();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("subgraph not found: no allocations")) {
+        console.warn(`Skipping latest-date for ${subgraph}: ${message}`);
+        writeSkippedResults(subgraph, message);
+        return;
+      }
+
+      throw error;
+    }
   });
 
 program
@@ -161,8 +195,19 @@ program
   .requiredOption("--deployment <deployment id>", "the deployment id (starts with 'Qm')", parseDeploymentId)
   .requiredOption("--branch <base | branch>", "the branch", parseBranch)
   .action(async (subgraph, options) => {
-    const query = await getSubgraphHandler(subgraph, options.deployment, options.branch);
-    query.doQuery();
+    try {
+      const query = await getSubgraphHandler(subgraph, options.deployment, options.branch);
+      await query.doQuery();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("subgraph not found: no allocations")) {
+        console.warn(`Skipping query for ${subgraph}: ${message}`);
+        writeSkippedResults(subgraph, message);
+        return;
+      }
+
+      throw error;
+    }
   });
 
 program
