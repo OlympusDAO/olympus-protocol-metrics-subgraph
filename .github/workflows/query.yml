@@ -20,7 +20,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "20"
-          cache: "pnpm"
+      - name: Install pnpm
+        uses: pnpm/action-setup@v5
       - name: Install
         run: |
           pnpm install --frozen-lockfile
@@ -59,7 +60,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "20"
-          cache: "pnpm"
+      - name: Install pnpm
+        uses: pnpm/action-setup@v5
       - name: Install
         run: |
           pnpm install --frozen-lockfile
@@ -98,7 +100,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: "20"
-          cache: "pnpm"
+      - name: Install pnpm
+        uses: pnpm/action-setup@v5
       # Looks for an existing comment, so it can be updated
       - name: Find Existing Comment
         uses: peter-evans/find-comment@v2
