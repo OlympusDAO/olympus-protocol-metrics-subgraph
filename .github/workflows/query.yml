@@ -34,12 +34,12 @@ jobs:
         env:
           GRAPH_API_KEY: ${{ secrets.GRAPH_API_KEY }}
         run: |
-          yarn subgraph latest-date ${{ matrix.subgraph }} --deployment ${{ env.DEPLOYMENT_ID }}
+          pnpm ts-node bin/subgraph/src/index.ts latest-date ${{ matrix.subgraph }} --deployment ${{ env.DEPLOYMENT_ID }}
       - name: Get Token Records
         env:
           GRAPH_API_KEY: ${{ secrets.GRAPH_API_KEY }}
         run: |
-          yarn subgraph query ${{ matrix.subgraph }} --branch branch --deployment ${{ env.DEPLOYMENT_ID }}
+          pnpm ts-node bin/subgraph/src/index.ts query ${{ matrix.subgraph }} --branch branch --deployment ${{ env.DEPLOYMENT_ID }}
       - name: Upload Results
         uses: actions/upload-artifact@v4
         with:
@@ -79,7 +79,7 @@ jobs:
         env:
           GRAPH_API_KEY: ${{ secrets.GRAPH_API_KEY }}
         run: |
-          yarn subgraph query ${{ matrix.subgraph }} --branch base --deployment ${{ env.DEPLOYMENT_ID }}
+          pnpm ts-node bin/subgraph/src/index.ts query ${{ matrix.subgraph }} --branch base --deployment ${{ env.DEPLOYMENT_ID }}
       - name: Upload Results
         uses: actions/upload-artifact@v4
         with:
@@ -119,7 +119,7 @@ jobs:
           path: build/
       - name: Compare Token Records
         run: |
-          yarn subgraph compare ${{ matrix.subgraph }}
+          pnpm ts-node bin/subgraph/src/index.ts compare ${{ matrix.subgraph }}
       - name: Upload Results
         uses: actions/upload-artifact@v4
         with:
