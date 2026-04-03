@@ -42,8 +42,8 @@ jobs:
 
       # Run build
       - name: Build
-        run: pnpm ts-node bin/subgraph/src/index.ts build ${{ matrix.subgraph }}
+        run: pnpm subgraph build ${{ matrix.subgraph }}
 
       # Run tests
       - name: Unit Tests
-        run: pnpm ts-node bin/subgraph/src/index.ts test ${{ matrix.subgraph }}
+        run: pnpm subgraph test ${{ matrix.subgraph }}
