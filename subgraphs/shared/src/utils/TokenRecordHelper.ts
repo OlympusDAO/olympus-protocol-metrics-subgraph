@@ -56,10 +56,9 @@ export const getIsLiability = (
  * @param record
  * @returns
  */
-// eslint-disable-next-line @typescript-eslint/no-inferrable-types
 export function getTokenRecordValue(
   record: TokenRecord,
-  nonOhmMultiplier: boolean = false,
+  nonOhmMultiplier = false,
 ): BigDecimal {
   return record.balance
     .times(record.rate)
