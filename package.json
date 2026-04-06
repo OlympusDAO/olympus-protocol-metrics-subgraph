@@ -34,11 +34,11 @@
   "devDependencies": {
     "@types/json-diff": "^0.7.0",
     "@types/node": "^20",
-    "@typescript-eslint/eslint-plugin": "^5.44.0",
-    "@typescript-eslint/parser": "^5.44.0",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
+    "@typescript-eslint/parser": "^8.58.0",
     "assemblyscript": "0.19.10",
-    "eslint": "^8.57.1",
-    "eslint-plugin-simple-import-sort": "^8.0.0",
+    "eslint": "^9.22.0",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
     "json-diff": "^0.9.0",
     "matchstick-as": "^0.5.0",
     "mustache": "^4.2.0",
@@ -61,8 +61,8 @@
   },
   "pnpm": {
     "overrides": {
-      "ajv": "6.12.6",
-      "ajv@<6.14.0": "6.12.6",
+      "ajv": "6.14.0",
+      "ajv@<6.14.0": "6.14.0",
       "axios": ">=0.30.3",
       "axios@<0.30.0": ">=0.30.0",
       "axios@<=0.30.2": ">=0.30.3",
