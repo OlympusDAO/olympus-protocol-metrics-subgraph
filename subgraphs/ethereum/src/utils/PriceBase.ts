@@ -16,7 +16,7 @@ import { getPriceFeedTokens, getPriceFeedValue } from "./PriceChainlink";
 
 const BIG_DECIMAL_1E12 = BigDecimal.fromString("1e12");
 
-// eslint-disable-next-line no-shadow
+ 
 export enum PairTokenBaseOrientation {
   TOKEN0,
   TOKEN1,

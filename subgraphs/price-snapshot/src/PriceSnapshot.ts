@@ -95,7 +95,7 @@ export function getPriceVolatility(currentSnapshot: PriceSnapshot, currentDate: 
 
         if (snapshot !== null && snapshot.ohmUsdPrice1dDelta !== null) {
             // Workaround for null checking in AssemblyScript
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+             
             priceDeltas.push(snapshot.ohmUsdPrice1dDelta!);
         }
     }
