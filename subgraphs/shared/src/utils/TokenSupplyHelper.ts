@@ -32,7 +32,7 @@ export function createTokenSupply(
   type: string,
   balance: BigDecimal,
   blockNumber: BigInt,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   multiplier: i32 = 1,
 ): TokenSupply {
   const dateString = getISO8601DateStringFromTimestamp(timestamp);
@@ -41,7 +41,12 @@ export function createTokenSupply(
   const sourceNameNotNull: string = sourceName !== null ? sourceName : "";
 
   // YYYY-MM-DD/<block>/<token>/<type>/<pool>/<source>
-  const recordId = Bytes.fromUTF8(dateString).concatI32(blockNumber.toI32()).concat(Bytes.fromUTF8(tokenName)).concat(Bytes.fromUTF8(type)).concat(Bytes.fromUTF8(poolNameNotNull)).concat(Bytes.fromUTF8(sourceNameNotNull)); `${dateString}/${tokenName}/${type}/${poolNameNotNull}/${sourceNameNotNull}`;
+  const recordId = Bytes.fromUTF8(dateString)
+    .concatI32(blockNumber.toI32())
+    .concat(Bytes.fromUTF8(tokenName))
+    .concat(Bytes.fromUTF8(type))
+    .concat(Bytes.fromUTF8(poolNameNotNull))
+    .concat(Bytes.fromUTF8(sourceNameNotNull));
   const record = new TokenSupply(recordId);
 
   record.block = blockNumber;

@@ -29,7 +29,7 @@ export class TokenDefinition {
     isLiquid: boolean,
     isVolatileBluechip: boolean,
     liquidBackingMultiplier: BigDecimal | null = null,
-    isLiability = false,
+    isLiability: boolean = false,
   ) {
     assert(
       liquidBackingMultiplier === null || liquidBackingMultiplier.ge(BigDecimal.fromString("0")),
