@@ -17,7 +17,7 @@
     "subgraph": "ts-node bin/subgraph/src/index.ts",
     "lint": "eslint --fix .",
     "lint:check": "eslint --max-warnings 0 .",
-    "preinstall": "npx only-allow pnpm"
+    "preinstall": "npx only-allow@1.2.2 pnpm"
   },
   "dependencies": {
     "@apollo/client": "^3.8.4",
