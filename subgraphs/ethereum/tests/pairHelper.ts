@@ -280,7 +280,7 @@ export const mockRateUniswapV3 = (
   token1Decimals: i32,
   token0Balance: BigInt,
   token1Balance: BigInt,
-  // eslint-disable-next-line @typescript-eslint/no-inferrable-types
+   
   shouldRevert: boolean = false,
 ): void => {
   log.info("Mocking rate for UniswapV3 pair {}", [pairAddress]);
