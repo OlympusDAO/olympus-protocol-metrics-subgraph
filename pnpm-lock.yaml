@@ -12,7 +12,9 @@ overrides:
   yargs-parser: ^18.1.1
   ajv: 6.14.0
   ajv@<6.14.0: 6.14.0
-  axios: '>=0.30.3'
+  axios: '>=1.15.0'
+  axios@<1.15.0: '>=1.15.0'
+  apisauce>axios: '>=1.15.0'
   axios@<0.30.0: '>=0.30.0'
   axios@<=0.30.2: '>=0.30.3'
   axios@>=0.8.1 <0.28.0: '>=0.28.0'
@@ -744,8 +746,8 @@ packages:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
 
-  axios@1.14.0:
-    resolution: {integrity: sha512-3Y8yrqLSwjuzpXuZ0oIYZ/XGgLwUIBU3uLvbcpb0pidD9ctpShJd43KSlEEkVQg6DS0G9NKyzOvBfUtDKEyHvQ==}
+  axios@1.15.0:
+    resolution: {integrity: sha512-wWyJDlAatxk30ZJer+GeCWS209sA42X+N5jU2jy6oHTp7ufw8uzUTVFBX9+wTfAlhiJXGS0Bq7X6efruWjuK9Q==}
 
   balanced-match@4.0.4:
     resolution: {integrity: sha512-BLrgEcRTwX2o6gGxGOCNyMvGSp35YofuYzw9h1IMTRmKqttAZZVU67bdb9Pr2vUHA8+j3i2tJfjO6C6+4myGTA==}
@@ -2997,7 +2999,7 @@ snapshots:
 
   apisauce@2.1.6(debug@4.4.0):
     dependencies:
-      axios: 1.14.0(debug@4.4.0)
+      axios: 1.15.0(debug@4.4.0)
     transitivePeerDependencies:
       - debug
 
@@ -3028,7 +3030,7 @@ snapshots:
     dependencies:
       possible-typed-array-names: 1.1.0
 
-  axios@1.14.0(debug@4.4.0):
+  axios@1.15.0(debug@4.4.0):
     dependencies:
       follow-redirects: 1.15.11(debug@4.4.0)
       form-data: 4.0.5
