@@ -13,20 +13,12 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.head_ref }}
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - name: Install pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: 10.33.0
-      - name: Install
-        run: |
-          pnpm install --frozen-lockfile
+
+      - name: Bootstrap
+        uses: ./.github/actions/bootstrap
       - name: Check Variables
         run: |
           DEPLOYMENT_ID=$(jq -r .id subgraphs/${{ matrix.subgraph }}/config.json)
@@ -43,7 +35,7 @@ jobs:
         run: |
           pnpm subgraph query ${{ matrix.subgraph }} --branch branch --deployment ${{ env.DEPLOYMENT_ID }}
       - name: Upload Results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: results-${{ matrix.subgraph }}
           path: build/results-${{ matrix.subgraph }}.json
@@ -55,27 +47,19 @@ jobs:
     needs: [test-branch]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.base_ref }}
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - name: Install pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: 10.33.0
-      - name: Install
-        run: |
-          pnpm install --frozen-lockfile
+
+      - name: Bootstrap
+        uses: ./.github/actions/bootstrap
       - name: Check Variables
         run: |
           DEPLOYMENT_ID=$(jq -r .id subgraphs/${{ matrix.subgraph }}/config.json)
           [[ ! -z "$DEPLOYMENT_ID" ]] && echo "deployment id is set" || (echo "::error::deployment id is not set in config.json" && exit 1)
           echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
       - name: Download Results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: results-${{ matrix.subgraph }}
           path: build/
@@ -85,7 +69,7 @@ jobs:
         run: |
           pnpm subgraph query ${{ matrix.subgraph }} --branch base --deployment ${{ env.DEPLOYMENT_ID }}
       - name: Upload Results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: results-${{ matrix.subgraph }}
           path: build/results-${{ matrix.subgraph }}.json
@@ -97,29 +81,20 @@ jobs:
     needs: [test-branch, test-base]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ github.ref }}
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - name: Install pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: 10.33.0
-      # Looks for an existing comment, so it can be updated
+
+      - name: Bootstrap
+        uses: ./.github/actions/bootstrap
       - name: Find Existing Comment
-        uses: peter-evans/find-comment@v2
+        uses: peter-evans/find-comment@a54c31d7fa095754bfef525c0c8e5e5674c4b4b1 # v2
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body-includes: ${{ matrix.subgraph }}
-      - name: Install
-        run: |
-          pnpm install --frozen-lockfile
       - name: Download Results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: results-${{ matrix.subgraph }}
           path: build/
@@ -127,7 +102,7 @@ jobs:
         run: |
           pnpm subgraph compare ${{ matrix.subgraph }}
       - name: Upload Results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: results-${{ matrix.subgraph }}
           path: build/results-${{ matrix.subgraph }}.json
@@ -139,7 +114,7 @@ jobs:
           echo "$(jq -r .results.output build/results-${{ matrix.subgraph }}.json)" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
       - name: Post Comment
-        uses: peter-evans/create-or-update-comment@v3
+        uses: peter-evans/create-or-update-comment@23ff15729ef2fc348714a3bb66d2f655ca9066f2 # v3
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }} # If no comment exists, a new comment will be created
           issue-number: ${{ github.event.pull_request.number }}
@@ -152,13 +127,13 @@ jobs:
     needs: [compare]
     steps:
       - name: Find Existing Skip Note
-        uses: peter-evans/find-comment@v2
+        uses: peter-evans/find-comment@a54c31d7fa095754bfef525c0c8e5e5674c4b4b1 # v2
         id: fc
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body-includes: Query checks skipped networks
       - name: Post Skip Note
-        uses: peter-evans/create-or-update-comment@v3
+        uses: peter-evans/create-or-update-comment@23ff15729ef2fc348714a3bb66d2f655ca9066f2 # v3
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
           issue-number: ${{ github.event.pull_request.number }}
