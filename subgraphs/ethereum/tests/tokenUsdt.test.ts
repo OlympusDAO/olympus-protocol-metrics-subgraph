@@ -1,7 +1,7 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, beforeEach, clearStore, createMockedFunction, describe, log, test } from "matchstick-as/assembly/index";
 
-import { Address, ethereum } from "@graphprotocol/graph-ts";
+import { Address } from "@graphprotocol/graph-ts";
 
 import { YIELD_FARMING_MS } from "../../shared/src/Wallets";
 import { AURA_REWARDS_CONTRACTS, CONVEX_STAKING_CONTRACTS, ERC20_USDT } from "../src/utils/Constants";
