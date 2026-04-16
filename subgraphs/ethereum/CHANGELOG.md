@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 5.10.3 (2026-04-15)
+
+- Adds support for indexing USDT balances held directly in the Yield Farming MS
+
 ## 5.10.2 (2026-03-25)
 
 - Adds support for Aave v3 sUSDe looping strategy (aEthSUSDe, aEthUSDe, variable debt tokens)
