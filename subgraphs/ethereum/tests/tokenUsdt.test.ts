@@ -1,8 +1,10 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
-import { assert, beforeEach, clearStore, describe, log, test } from "matchstick-as/assembly/index";
+import { assert, beforeEach, clearStore, createMockedFunction, describe, log, test } from "matchstick-as/assembly/index";
+
+import { Address, ethereum } from "@graphprotocol/graph-ts";
 
 import { YIELD_FARMING_MS } from "../../shared/src/Wallets";
-import { ERC20_USDT } from "../src/utils/Constants";
+import { AURA_REWARDS_CONTRACTS, CONVEX_STAKING_CONTRACTS, ERC20_USDT } from "../src/utils/Constants";
 import { getWalletAddressesForContract } from "../src/utils/ProtocolAddresses";
 import { getStablecoinBalance } from "../src/utils/TokenStablecoins";
 import { mockClearinghouseRegistryAddressNull, mockTreasuryAddressNull } from "./bophadesHelper";
@@ -13,6 +15,26 @@ import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 const TIMESTAMP = BigInt.fromString("1");
 const BLOCK_NUMBER = BigInt.fromString("24889372");
 const BEFORE_START_BLOCK = BigInt.fromString("24707146");
+
+function mockConvexStakingContractsRevert(): void {
+  for (let i = 0; i < CONVEX_STAKING_CONTRACTS.length; i++) {
+    createMockedFunction(
+      Address.fromString(CONVEX_STAKING_CONTRACTS[i]),
+      "stakingToken",
+      "stakingToken():(address)",
+    ).reverts();
+  }
+}
+
+function mockAuraRewardContractsRevert(): void {
+  for (let i = 0; i < AURA_REWARDS_CONTRACTS.length; i++) {
+    createMockedFunction(
+      Address.fromString(AURA_REWARDS_CONTRACTS[i]),
+      "rewardToken",
+      "rewardToken():(address)",
+    ).reverts();
+  }
+}
 
 describe("USDT - Yield Farming MS", () => {
   beforeEach(() => {
@@ -27,6 +49,9 @@ describe("USDT - Yield Farming MS", () => {
       ERC20_USDT,
       getWalletAddressesForContract(ERC20_USDT, BLOCK_NUMBER),
     );
+
+    mockConvexStakingContractsRevert();
+    mockAuraRewardContractsRevert();
   });
 
   test("getStablecoinBalance returns correct USDT balance for Yield Farming MS", () => {
