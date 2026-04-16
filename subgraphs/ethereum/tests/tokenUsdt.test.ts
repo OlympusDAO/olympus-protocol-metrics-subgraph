@@ -1,7 +1,5 @@
-import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
+import { Address, BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import { assert, beforeEach, clearStore, createMockedFunction, describe, log, test } from "matchstick-as/assembly/index";
-
-import { Address } from "@graphprotocol/graph-ts";
 
 import { YIELD_FARMING_MS } from "../../shared/src/Wallets";
 import { AURA_REWARDS_CONTRACTS, CONVEX_STAKING_CONTRACTS, ERC20_USDT } from "../src/utils/Constants";
@@ -14,7 +12,7 @@ import { mockWalletBalance, mockZeroWalletBalances } from "./walletHelper";
 
 const TIMESTAMP = BigInt.fromString("1");
 const BLOCK_NUMBER = BigInt.fromString("24889372");
-const BEFORE_START_BLOCK = BigInt.fromString("24707146");
+const BEFORE_START_BLOCK = BigInt.fromString("4634876");
 
 function mockConvexStakingContractsRevert(): void {
   for (let i = 0; i < CONVEX_STAKING_CONTRACTS.length; i++) {

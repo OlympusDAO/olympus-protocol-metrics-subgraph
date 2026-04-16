@@ -2,7 +2,7 @@
 
 ## 5.10.3 (2026-04-15)
 
-- Adds support for indexing USDT balances held directly in the Yield Farming MS
+- Adds support for indexing USDT balances
 
 ## 5.10.2 (2026-03-25)
 

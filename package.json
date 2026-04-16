@@ -1,6 +1,6 @@
 {
   "name": "olympus-subgraph",
-  "version": "0.1.1",
+  "version": "0.1.0",
   "description": "Subgraphs for OlympusDAO. NOTE: This does not build a package.",
   "author": {
     "name": "Jem",
