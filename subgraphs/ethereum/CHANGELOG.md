@@ -1,6 +1,6 @@
 # Subgraph Changelog
 
-## 5.10.3 (2026-04-15)
+## 5.10.4 (2026-05-06)
 
 - Adds support for indexing USDT balances
 
