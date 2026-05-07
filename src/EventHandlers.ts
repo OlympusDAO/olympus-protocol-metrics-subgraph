@@ -1,5 +1,15 @@
-import { BigDecimal, onBlock, type TokenRecord, type TokenSupply } from "generated";
+import {
+  ArbitrumSnapshotAnchor,
+  BerachainSnapshotAnchor,
+  BigDecimal,
+  onBlock,
+  type TokenRecord,
+  type TokenSupply,
+} from "generated";
 import { getSnapshot, type Snapshot } from "./snapshot";
+
+ArbitrumSnapshotAnchor.Transfer.handler(async () => {});
+BerachainSnapshotAnchor.Transfer.handler(async () => {});
 
 const BLOCK_HANDLERS = [
   {
