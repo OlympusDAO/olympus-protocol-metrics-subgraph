@@ -17,6 +17,8 @@
     "remove-local": "graph remove --node http://localhost:8020/ olympus",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 olympus",
     "envio": "envio",
+    "envio:dev": "TUI_OFF=${TUI_OFF:-true} ENVIO_INDEXING_MAX_BUFFER_SIZE=${ENVIO_INDEXING_MAX_BUFFER_SIZE:-8} envio dev",
+    "envio:start": "ENVIO_INDEXING_MAX_BUFFER_SIZE=${ENVIO_INDEXING_MAX_BUFFER_SIZE:-8} envio start",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "ls-deadcode": "yarn ts-prune -p tsconfig.ts-prune.json | grep -v 'used in module'",

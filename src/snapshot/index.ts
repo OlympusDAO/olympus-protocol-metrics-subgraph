@@ -15,7 +15,7 @@ export const getSnapshot = createEffect(
     input: { chainId: S.number, blockNumber: S.number },
     output: S.unknown,
     rateLimit: false,
-    cache: true,
+    cache: false,
   },
   async ({ input }) => {
     const config = CHAIN_CONFIGS[input.chainId];

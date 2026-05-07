@@ -113,6 +113,16 @@ A set of Docker containers is pre-configured to enable local testing of the subg
 4. Deploy the subgraph: `yarn deploy-local --version-label 0.1.0`
 5. Access the GraphQL query interface: <http://localhost:8000/subgraphs/name/olympus/graphql>
 
+### HyperIndex - Local
+
+The Envio indexer is configured for sparse 8-hour block snapshots. Run local indexing with:
+
+```sh
+pnpm run envio:dev
+```
+
+`ENVIO_INDEXING_MAX_BUFFER_SIZE` defaults to `8` in that script. This keeps Envio from scanning too large a historical block range before the first sparse block-handler items are queued.
+
 ## Constants
 
 ### Tokens
