@@ -11,7 +11,7 @@ import {
 } from "../contracts";
 import { same, toDecimal, ZERO } from "../math";
 import type { LiquidityHandler } from "../types";
-import { BasePriceHandler, type PriceLookup } from "./types";
+import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";
 
 export class BalancerPriceHandler extends BasePriceHandler<
   Extract<LiquidityHandler, { kind: "balancer" }>
@@ -20,7 +20,7 @@ export class BalancerPriceHandler extends BasePriceHandler<
     tokenAddress: string,
     priceLookup: PriceLookup,
     blockNumber: bigint,
-  ): Promise<BigNumber | null> {
+  ): Promise<PriceLookupResult | null> {
     const pool = await getBalancerPool(this.config, this.client, this.handler, blockNumber);
     if (!pool) return null;
     const poolToken = await getBalancerPoolToken(this.client, this.handler, blockNumber);
@@ -51,10 +51,11 @@ export class BalancerPriceHandler extends BasePriceHandler<
       );
       const lookupWeight = toDecimal(weights[lookupIndex], decimals);
       const secondaryWeight = toDecimal(weights[i], decimals);
-      return secondaryReserve
+      const price = secondaryReserve
         .div(secondaryWeight)
         .div(lookupReserve.div(lookupWeight))
         .times(secondaryPrice);
+      return { price, liquidity: ZERO };
     }
     return null;
   }
@@ -83,11 +84,8 @@ export class BalancerPriceHandler extends BasePriceHandler<
     const totalValue = await this.getTotalValue([], priceLookup, blockNumber);
     if (!totalValue) return null;
     const poolToken = await getBalancerPoolToken(this.client, this.handler, blockNumber);
-    const supply = await getErc20TotalSupply(
-      this.client,
-      poolToken ?? this.handler.id,
-      blockNumber,
-    );
+    if (!poolToken) return null;
+    const supply = await getErc20TotalSupply(this.client, poolToken, blockNumber);
     return supply.eq(ZERO) ? null : totalValue.div(supply);
   }
 
@@ -102,11 +100,8 @@ export class BalancerPriceHandler extends BasePriceHandler<
     blockNumber: bigint,
   ): Promise<BigNumber> {
     const poolToken = await getBalancerPoolToken(this.client, this.handler, blockNumber);
-    const totalSupply = await getErc20TotalSupply(
-      this.client,
-      poolToken ?? this.handler.id,
-      blockNumber,
-    );
+    if (!poolToken) return ZERO;
+    const totalSupply = await getErc20TotalSupply(this.client, poolToken, blockNumber);
     if (totalSupply.eq(ZERO)) return ZERO;
     const walletBalance = await this.getBalance(wallet, blockNumber);
     if (walletBalance.eq(ZERO)) return ZERO;

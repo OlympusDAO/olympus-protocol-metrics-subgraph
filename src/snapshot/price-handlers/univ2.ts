@@ -4,7 +4,7 @@ import { UNIV2_ABI } from "../abis/univ2";
 import { getDecimals, getErc20DecimalBalance, getErc20TotalSupply, safeRead } from "../contracts";
 import { addr, same, toDecimal, ZERO } from "../math";
 import type { LiquidityHandler } from "../types";
-import { BasePriceHandler, type PriceLookup } from "./types";
+import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";
 
 export class Univ2PriceHandler extends BasePriceHandler<
   Extract<LiquidityHandler, { kind: "univ2" }>
@@ -13,7 +13,7 @@ export class Univ2PriceHandler extends BasePriceHandler<
     tokenAddress: string,
     priceLookup: PriceLookup,
     blockNumber: bigint,
-  ): Promise<BigNumber | null> {
+  ): Promise<PriceLookupResult | null> {
     const [token0, token1, reserves] = await Promise.all([
       safeRead(this.client, this.handler.id, UNIV2_ABI, "token0", [], blockNumber),
       safeRead(this.client, this.handler.id, UNIV2_ABI, "token1", [], blockNumber),
@@ -32,9 +32,10 @@ export class Univ2PriceHandler extends BasePriceHandler<
       reserves[1],
       await getDecimals(this.client, addr(token1), blockNumber),
     );
-    return (
+    const price = (
       lookupIsToken0 ? token1Reserve.div(token0Reserve) : token0Reserve.div(token1Reserve)
     ).times(secondaryPrice);
+    return { price, liquidity: ZERO };
   }
 
   async getTotalValue(

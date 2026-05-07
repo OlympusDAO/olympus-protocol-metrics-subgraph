@@ -22,6 +22,17 @@ const clients = new Map<number, PublicClient>();
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_RPC_ATTEMPTS = 6;
 const BASE_RETRY_DELAY_MS = 1_000;
+let activeContractReadCache: Map<string, Promise<unknown>> | null = null;
+
+export async function withContractReadCache<T>(operation: () => Promise<T>): Promise<T> {
+  const previousCache = activeContractReadCache;
+  activeContractReadCache = new Map();
+  try {
+    return await operation();
+  } finally {
+    activeContractReadCache = previousCache;
+  }
+}
 
 export function getClient(config: ChainConfig) {
   const existing = clients.get(config.chainId);
@@ -74,19 +85,60 @@ export async function safeRead<
   args: TArgs,
   blockNumber: bigint,
 ): Promise<ReadContractReturnType<TAbi, TFunctionName, TArgs> | null> {
+  const cache = activeContractReadCache;
+  const cacheKey = getContractReadCacheKey(client, address, functionName, args, blockNumber);
+  const cached = cache?.get(cacheKey);
+  if (cached) {
+    try {
+      return (await cached) as ReadContractReturnType<TAbi, TFunctionName, TArgs>;
+    } catch {
+      return null;
+    }
+  }
+
+  const read = retryRpc(() =>
+    client.readContract({
+      address: getAddress(address),
+      abi,
+      functionName,
+      args,
+      blockNumber,
+    }),
+  );
+  cache?.set(cacheKey, read);
+
   try {
-    return await retryRpc(() =>
-      client.readContract({
-        address: getAddress(address),
-        abi,
-        functionName,
-        args,
-        blockNumber,
-      }),
-    );
+    return await read;
   } catch {
     return null;
   }
+}
+
+function getContractReadCacheKey(
+  client: PublicClient,
+  address: string,
+  functionName: string,
+  args: unknown,
+  blockNumber: bigint,
+): string {
+  return JSON.stringify([
+    client.chain?.id ?? "unknown",
+    getAddress(address).toLowerCase(),
+    String(functionName),
+    blockNumber.toString(),
+    normalizeCacheValue(args),
+  ]);
+}
+
+function normalizeCacheValue(value: unknown): unknown {
+  if (typeof value === "bigint") return `${value.toString()}n`;
+  if (Array.isArray(value)) return value.map((item) => normalizeCacheValue(item));
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, entry]) => [key, normalizeCacheValue(entry)]),
+  );
 }
 
 function isRetryableRpcError(error: unknown): boolean {
@@ -112,7 +164,7 @@ export async function getBalancerPool(
     handler.vault,
     BALANCER_VAULT_ABI,
     "getPoolTokens",
-    [handler.id as `0x${string}`],
+    [handler.id],
     blockNumber,
   );
   if (!result) return null;
@@ -129,7 +181,7 @@ export async function getBalancerPoolToken(
     handler.vault,
     BALANCER_VAULT_ABI,
     "getPool",
-    [handler.id as `0x${string}`],
+    [handler.id],
     blockNumber,
   );
   return result ? addr(result[0]) : null;

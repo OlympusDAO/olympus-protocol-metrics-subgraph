@@ -9,6 +9,11 @@ export type PriceLookup = (
   currentPool: string | null,
 ) => Promise<BigNumber>;
 
+export type PriceLookupResult = {
+  price: BigNumber;
+  liquidity: BigNumber;
+};
+
 export interface PriceHandler {
   getId(): string;
   matches(tokenAddress: string): boolean;
@@ -16,7 +21,7 @@ export interface PriceHandler {
     tokenAddress: string,
     priceLookup: PriceLookup,
     blockNumber: bigint,
-  ): Promise<BigNumber | null>;
+  ): Promise<PriceLookupResult | null>;
   getTotalValue(
     excludedTokens: string[],
     priceLookup: PriceLookup,
@@ -50,7 +55,7 @@ export abstract class BasePriceHandler<THandler extends LiquidityHandler> implem
     tokenAddress: string,
     priceLookup: PriceLookup,
     blockNumber: bigint,
-  ): Promise<BigNumber | null>;
+  ): Promise<PriceLookupResult | null>;
 
   abstract getTotalValue(
     excludedTokens: string[],

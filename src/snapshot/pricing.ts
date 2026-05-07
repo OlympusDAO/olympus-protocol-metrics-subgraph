@@ -20,6 +20,8 @@ export async function getPrice(
     currentPool === null
       ? null
       : (config.liquidityHandlers.find((handler) => handler.id === currentPool) ?? null);
+  let selectedPrice: BigNumber | null = null;
+  let selectedLiquidity: BigNumber | null = null;
 
   for (const handlerConfig of config.liquidityHandlers) {
     const handler = createPriceHandler(config, client, handlerConfig);
@@ -33,9 +35,12 @@ export async function getPrice(
         getPrice(config, client, lookupToken, lookupBlock, lookupPool),
       blockNumber,
     );
-    if (price) return price;
+    if (!price) continue;
+    if (selectedLiquidity?.gt(price.liquidity)) continue;
+    selectedPrice = price.price;
+    selectedLiquidity = price.liquidity;
   }
-  return ZERO;
+  return selectedPrice ?? ZERO;
 }
 
 export async function getTotalValue(

@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 
-import type { LiquidityHandler, TokenDefinition } from "./types";
+import type { Bytes32, LiquidityHandler, TokenDefinition } from "./types";
 
 export const ZERO = new BigNumber(0);
 export const ONE = new BigNumber(1);
@@ -25,6 +25,13 @@ export function isoDate(timestamp: bigint) {
 
 export function addr(value: string) {
   return value.toLowerCase();
+}
+
+export function bytes32(value: string): Bytes32 {
+  if (!/^0x[0-9a-fA-F]{64}$/.test(value)) {
+    throw new Error(`Invalid bytes32 value: ${value}`);
+  }
+  return value.toLowerCase() as Bytes32;
 }
 
 export function same(left: string, right: string) {

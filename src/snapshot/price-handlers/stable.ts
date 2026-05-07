@@ -2,7 +2,7 @@ import type BigNumber from "bignumber.js";
 
 import { ONE, ZERO } from "../math";
 import type { LiquidityHandler } from "../types";
-import { BasePriceHandler, type PriceLookup } from "./types";
+import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";
 
 export class StablePriceHandler extends BasePriceHandler<
   Extract<LiquidityHandler, { kind: "stable" }>
@@ -11,8 +11,8 @@ export class StablePriceHandler extends BasePriceHandler<
     _tokenAddress: string,
     _priceLookup: PriceLookup,
     _blockNumber: bigint,
-  ): Promise<BigNumber | null> {
-    return ONE;
+  ): Promise<PriceLookupResult> {
+    return { price: ONE, liquidity: ZERO };
   }
 
   async getTotalValue(

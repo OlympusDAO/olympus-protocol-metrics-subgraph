@@ -1,7 +1,7 @@
 import { createEffect, S } from "envio";
 
 import { CHAIN_CONFIGS } from "./chains";
-import { getBlock, getClient } from "./contracts";
+import { getBlock, getClient, withContractReadCache } from "./contracts";
 import { pushArbitrumLendingSupply } from "./lending/arbitrum";
 import { pushOwnedLiquidityRecords, pushTokenBalanceRecords } from "./token-records";
 import { pushOwnedLiquiditySupply, pushTotalSupply, pushTreasuryOhm } from "./token-supplies";
@@ -22,7 +22,9 @@ export const getSnapshot = createEffect(
     if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
     const startedAt = Date.now();
     context.log.info(`Starting getSnapshot for ${config.blockchain} block ${input.blockNumber}`);
-    const snapshot = await generateSnapshot(config, BigInt(input.blockNumber));
+    const snapshot = await withContractReadCache(() =>
+      generateSnapshot(config, BigInt(input.blockNumber)),
+    );
     context.log.info(
       `Finished getSnapshot for ${config.blockchain} block ${input.blockNumber} in ${
         Date.now() - startedAt

@@ -1,23 +1,58 @@
 import type BigNumber from "bignumber.js";
 
 import { KODIAK_ABI } from "../abis/kodiak";
+import { UNIV3_ABI } from "../abis/univ3";
+import { UNIV3_QUOTER_ABI } from "../abis/univ3-quoter";
 import { getDecimals, getErc20DecimalBalance, getErc20TotalSupply, safeRead } from "../contracts";
 import { addr, same, toDecimal, ZERO } from "../math";
 import type { LiquidityHandler } from "../types";
-import { BasePriceHandler, type PriceLookup } from "./types";
+import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";
+
+const SQRT_PRICE_LIMIT_X96 = 2n ** 96n;
 
 export class KodiakPriceHandler extends BasePriceHandler<
   Extract<LiquidityHandler, { kind: "kodiak" }>
 > {
   async getPrice(
-    _tokenAddress: string,
+    tokenAddress: string,
     priceLookup: PriceLookup,
     blockNumber: bigint,
-  ): Promise<BigNumber | null> {
-    const total = await this.getTotalValue([], priceLookup, blockNumber);
-    const supply = await getErc20TotalSupply(this.client, this.handler.pool, blockNumber);
-    if (!total || supply.eq(ZERO)) return null;
-    return total.div(supply);
+  ): Promise<PriceLookupResult | null> {
+    const [token0, token1, underlyingPool] = await Promise.all([
+      safeRead(this.client, this.handler.pool, KODIAK_ABI, "token0", [], blockNumber),
+      safeRead(this.client, this.handler.pool, KODIAK_ABI, "token1", [], blockNumber),
+      safeRead(this.client, this.handler.pool, KODIAK_ABI, "pool", [], blockNumber),
+    ]);
+    if (!token0 || !token1 || !underlyingPool) return null;
+    const lookupIsToken0 = same(tokenAddress, token0);
+    const secondaryToken = lookupIsToken0 ? addr(token1) : addr(token0);
+    const [fee, tokenDecimals, secondaryDecimals] = await Promise.all([
+      safeRead(this.client, addr(underlyingPool), UNIV3_ABI, "fee", [], blockNumber),
+      getDecimals(this.client, tokenAddress, blockNumber),
+      getDecimals(this.client, secondaryToken, blockNumber),
+    ]);
+    if (fee === null) return null;
+    const quote = await safeRead(
+      this.client,
+      this.handler.quoter,
+      UNIV3_QUOTER_ABI,
+      "quoteExactInputSingle",
+      [
+        {
+          tokenIn: tokenAddress as `0x${string}`,
+          tokenOut: secondaryToken as `0x${string}`,
+          amountIn: 10n ** BigInt(tokenDecimals),
+          fee,
+          sqrtPriceLimitX96: SQRT_PRICE_LIMIT_X96,
+        },
+      ],
+      blockNumber,
+    );
+    if (!quote) return null;
+    const secondaryPrice = await priceLookup(secondaryToken, blockNumber, this.getId());
+    if (secondaryPrice.eq(ZERO)) return null;
+    const price = toDecimal(quote[0], secondaryDecimals).times(secondaryPrice);
+    return { price, liquidity: ZERO };
   }
 
   async getTotalValue(

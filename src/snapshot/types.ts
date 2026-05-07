@@ -48,6 +48,9 @@ export type TokenDefinition = {
   isLiability?: boolean;
 };
 
+declare const bytes32Brand: unique symbol;
+export type Bytes32 = `0x${string}` & { readonly [bytes32Brand]: true };
+
 export type ChainConfig = {
   chainId: 42161 | 80094;
   blockchain: string;
@@ -69,11 +72,13 @@ export type LiquidityHandler =
   | { kind: "stable"; id: string; tokens: string[] }
   | { kind: "univ2"; id: string; tokens: string[] }
   | { kind: "univ3"; id: string; tokens: string[] }
-  | { kind: "balancer"; id: string; vault: string; tokens: string[] }
+  | { kind: "univ3-quoter"; id: string; quoter: string; tokens: string[] }
+  | { kind: "balancer"; id: Bytes32; vault: string; tokens: string[] }
   | {
       kind: "kodiak";
       id: string;
       pool: string;
+      quoter: string;
       rewardVault?: string;
       tokens: string[];
     };
