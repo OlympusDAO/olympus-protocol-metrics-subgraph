@@ -1,5 +1,9 @@
 # Arbitrum Subgraph Changelog
 
+## 1.7.10 (2026-05-07)
+
+- Add a bounded FRAX/USD Chainlink aggregator trigger for the April 2026 aggregator rotation.
+
 ## 1.7.9 (2024-07-17)
 
 - Adds POL in Camelot
