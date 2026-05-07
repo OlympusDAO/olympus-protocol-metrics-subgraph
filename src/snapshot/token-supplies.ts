@@ -38,8 +38,14 @@ export async function pushTreasuryOhm(
   timestamp: bigint,
   blockNumber: bigint,
 ) {
-  for (const wallet of config.circulatingSupplyWallets) {
-    const balance = await getErc20DecimalBalance(client, config.ohmToken, wallet, blockNumber);
+  const balances = await Promise.all(
+    config.circulatingSupplyWallets.map(async (wallet) => ({
+      wallet,
+      balance: await getErc20DecimalBalance(client, config.ohmToken, wallet, blockNumber),
+    })),
+  );
+
+  for (const { wallet, balance } of balances) {
     if (balance.eq(ZERO)) continue;
     snapshot.tokenSupplies.push(
       createTokenSupply(
@@ -69,15 +75,21 @@ export async function pushOwnedLiquiditySupply(
 ) {
   for (const handler of config.ownedLiquidityHandlers) {
     if (!matches(handler, config.ohmToken)) continue;
-    for (const wallet of config.circulatingSupplyWallets) {
-      const balance = await getUnderlyingTokenBalance(
-        config,
-        client,
-        handler,
+    const balances = await Promise.all(
+      config.circulatingSupplyWallets.map(async (wallet) => ({
         wallet,
-        config.ohmToken,
-        blockNumber,
-      );
+        balance: await getUnderlyingTokenBalance(
+          config,
+          client,
+          handler,
+          wallet,
+          config.ohmToken,
+          blockNumber,
+        ),
+      })),
+    );
+
+    for (const { wallet, balance } of balances) {
       if (balance.eq(ZERO)) continue;
       snapshot.tokenSupplies.push(
         createTokenSupply(
@@ -107,8 +119,14 @@ export async function pushMarketSupply(
   blockNumber: bigint,
   market: { name: string; address: string },
 ) {
-  for (const wallet of getWalletAddressesForContract(config, market.address)) {
-    const balance = await getErc20DecimalBalance(client, market.address, wallet, blockNumber);
+  const balances = await Promise.all(
+    getWalletAddressesForContract(config, market.address).map(async (wallet) => ({
+      wallet,
+      balance: await getErc20DecimalBalance(client, market.address, wallet, blockNumber),
+    })),
+  );
+
+  for (const { wallet, balance } of balances) {
     if (balance.eq(ZERO)) continue;
     snapshot.tokenSupplies.push(
       createTokenSupply(

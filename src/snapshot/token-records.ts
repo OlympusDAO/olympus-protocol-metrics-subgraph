@@ -18,11 +18,17 @@ export async function pushTokenBalanceRecords(
   const rate = await getPrice(config, client, definition.address, blockNumber, null);
   if (rate.eq(ZERO)) return;
 
-  for (const wallet of wallets) {
-    const balance =
-      definition.address === config.nativeToken
-        ? toDecimal(await getNativeBalance(client, wallet as Address, blockNumber), 18)
-        : await getErc20DecimalBalance(client, definition.address, wallet, blockNumber);
+  const balances = await Promise.all(
+    wallets.map(async (wallet) => ({
+      wallet,
+      balance:
+        definition.address === config.nativeToken
+          ? toDecimal(await getNativeBalance(client, wallet as Address, blockNumber), 18)
+          : await getErc20DecimalBalance(client, definition.address, wallet, blockNumber),
+    })),
+  );
+
+  for (const { wallet, balance } of balances) {
     if (balance.eq(ZERO)) continue;
     snapshot.tokenRecords.push(
       createTokenRecord(
@@ -62,8 +68,14 @@ export async function pushOwnedLiquidityRecords(
   const unitRate = await getUnitPrice(config, client, handler, blockNumber);
   if (!unitRate) return;
 
-  for (const wallet of config.protocolAddresses) {
-    const balance = await getLiquidityBalance(config, client, handler, wallet, blockNumber);
+  const balances = await Promise.all(
+    config.protocolAddresses.map(async (wallet) => ({
+      wallet,
+      balance: await getLiquidityBalance(config, client, handler, wallet, blockNumber),
+    })),
+  );
+
+  for (const { wallet, balance } of balances) {
     if (balance.eq(ZERO)) continue;
     snapshot.tokenRecords.push(
       createTokenRecord(

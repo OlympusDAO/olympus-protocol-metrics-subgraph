@@ -22,11 +22,12 @@ const clients = new Map<number, PublicClient>();
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_RPC_ATTEMPTS = 6;
 const BASE_RETRY_DELAY_MS = 1_000;
+const MULTICALL3_ADDRESS = "0xca11bde05977b3631167028862be2a173976ca11";
 
 export function getClient(config: ChainConfig) {
   const existing = clients.get(config.chainId);
   if (existing) return existing;
-  const transports = config.rpcUrls.map((url) => http(url, { retryCount: 0 }));
+  const transports = config.rpcUrls.map((url) => http(url, { batch: true, retryCount: 0 }));
   const client = createPublicClient({
     chain:
       config.chainId === 42161
@@ -36,7 +37,14 @@ export function getClient(config: ChainConfig) {
             name: "Berachain",
             nativeCurrency: { name: "BERA", symbol: "BERA", decimals: 18 },
             rpcUrls: { default: { http: config.rpcUrls } },
+            contracts: {
+              multicall3: {
+                address: MULTICALL3_ADDRESS,
+                blockCreated: 0,
+              },
+            },
           },
+    batch: { multicall: { batchSize: 8_192 } },
     transport: transports.length === 1 ? transports[0] : fallback(transports),
   });
   clients.set(config.chainId, client);
