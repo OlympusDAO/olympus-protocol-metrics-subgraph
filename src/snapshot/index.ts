@@ -17,10 +17,22 @@ export const getSnapshot = createEffect(
     rateLimit: { calls: 1, per: "second" },
     cache: false,
   },
-  async ({ input }) => {
+  async ({ input, context }) => {
     const config = CHAIN_CONFIGS[input.chainId];
     if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
-    return generateSnapshot(config, BigInt(input.blockNumber));
+    const startedAt = Date.now();
+    context.log.info(`Starting getSnapshot for ${config.blockchain} block ${input.blockNumber}`);
+    const snapshot = await generateSnapshot(config, BigInt(input.blockNumber));
+    context.log.info(
+      `Finished getSnapshot for ${config.blockchain} block ${input.blockNumber} in ${
+        Date.now() - startedAt
+      }ms`,
+      {
+        tokenRecords: snapshot.tokenRecords.length,
+        tokenSupplies: snapshot.tokenSupplies.length,
+      },
+    );
+    return snapshot;
   },
 );
 

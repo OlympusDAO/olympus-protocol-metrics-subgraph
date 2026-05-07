@@ -59,6 +59,8 @@ async function processSnapshot(
   chainId: number,
   context: handlerContext,
 ): Promise<void> {
+  if (context.isPreload) return;
+
   context.log.info(`Processing ${name} block ${blockNumber} on chain ${chainId}`);
 
   const snapshot = (await context.effect(getSnapshot, {

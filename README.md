@@ -121,9 +121,9 @@ The Envio indexer is configured for sparse 8-hour block snapshots. Run local ind
 pnpm run envio:dev
 ```
 
-Snapshot handlers perform archive RPC reads for balances, pool state, and price feeds. Set `ARBITRUM_RPC_URL` and `BERACHAIN_RPC_URL` to paid archive endpoints for full historical backfills. Optional comma-separated fallback endpoints can be provided through `ARBITRUM_FALLBACK_RPC_URLS` and `BERACHAIN_FALLBACK_RPC_URLS`. The checked-in defaults use public RPCs and are useful for smoke tests, but they may rate-limit before current-date catch-up.
+Snapshot handlers perform archive RPC reads for balances, pool state, and price feeds. Set `ARBITRUM_RPC_URL` and `BERACHAIN_RPC_URL` to paid archive endpoints for full historical backfills. If a primary RPC URL is not configured, the indexer falls back to the checked-in public RPC and logs that choice without printing the URL. Optional comma-separated fallback endpoints can be provided through `ARBITRUM_FALLBACK_RPC_URLS` and `BERACHAIN_FALLBACK_RPC_URLS`.
 
-`ENVIO_INDEXING_MAX_BUFFER_SIZE` defaults to `8` in that script. This keeps Envio from scanning too large a historical block range before the first sparse block-handler items are queued.
+`MAX_BATCH_SIZE` defaults to `1` and `ENVIO_INDEXING_MAX_BUFFER_SIZE` defaults to `8` in those scripts. Snapshot generation does many archive reads, so processing one block/event per batch keeps progress commits frequent and makes long RPC calls visible in logs.
 
 The snapshot RPC work runs through the `getSnapshot` Envio effect with effect caching disabled. Each scheduled block is processed once, and the durable output is the `TokenRecord` and `TokenSupply` entity rows written by the handler. Caching the full snapshot would add a second database write for every 8-hour block without reuse benefit during backfill.
 
