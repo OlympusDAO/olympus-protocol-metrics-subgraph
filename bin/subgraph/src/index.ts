@@ -198,7 +198,7 @@ program
 
             console.info("*** Running lint");
             spawnProcess(
-              `pnpm exec eslint --config ./.eslintrc.json --fix ${generatedDir}`,
+              `pnpm exec eslint --config ./eslint.config.js --no-ignore --fix ${generatedDir}`,
               (lintExitCode: number) => {
                 if (lintExitCode > 0) {
                   process.exit(lintExitCode);
