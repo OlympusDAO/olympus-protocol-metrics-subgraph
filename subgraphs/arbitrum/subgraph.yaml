@@ -1,4 +1,4 @@
-specVersion: 0.0.8
+specVersion: 0.0.9
 description: Olympus Protocol Metrics Subgraph - Arbitrum
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 # Given the block speed of Arbitrum, it is abominably slow to index from scratch.
