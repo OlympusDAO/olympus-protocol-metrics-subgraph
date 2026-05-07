@@ -4,13 +4,20 @@ description: Olympus protocol metrics for Arbitrum and Berachain
 
 networks:
   - id: 42161 # Arbitrum One
-    start_block: 450500720 # 2026-04-09 00:00:00 UTC
+    start_block: 10950000 # 2022-05-01
     contracts:
-      - name: ArbitrumSnapshotAnchor
-        address: "0xf0cb2dc0db5e6c66b9a70ac27b06b878da017028" # OHM
+      - name: ArbitrumFraxUsdTriggerOld
+        address: "0x5d041081725468aa43e72ff0445fde2ad1ade775" # FRAX-USD aggregator, stopped updating around 2026-04-10
+        start_block: 10950000 # 2022-05-01
         handler: src/EventHandlers.ts
         events:
-          - event: "Transfer(address indexed from, address indexed to, uint256 value)"
+          - event: "NewRound(uint256 indexed roundId, address indexed startedBy, uint256 startedAt)"
+      - name: ArbitrumFraxUsdTriggerNew
+        address: "0x767802a8610c3d34cbec9d064028eaca976daba0" # FRAX-USD aggregator after April 2026 rotation
+        start_block: 451191255 # 2026-04-11 00:00:00 UTC
+        handler: src/EventHandlers.ts
+        events:
+          - event: "NewRound(uint256 indexed roundId, address indexed startedBy, uint256 startedAt)"
   - id: 80094 # Berachain
     start_block: 799194 # 2025-02-07 00:00:00 UTC
     contracts:
