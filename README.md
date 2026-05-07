@@ -51,7 +51,7 @@ Each network has an independent subgraph, as required by the Graph Protocol. For
 
 Each subgraph has a different trigger, specified in the respective `subgraph.yaml` file:
 
-- Arbitrum: triggered on every block (unfortunately), but indexes only every 14,400th block (~8 hours).
+- Arbitrum: triggered by `NewRound` events on bounded FRAX/USD Chainlink aggregators.
 - Ethereum: triggered by the `stake()` function call on OlympusStakingV3
 - Fantom: triggered by the `rebase()` function call on FantOHM's staking contract (since we don't have a staking contract on Fantom)
 - Polygon: triggered on every block (unfortunately), but indexes only every 14,400th block (~8 hours).
