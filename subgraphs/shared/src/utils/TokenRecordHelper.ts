@@ -58,7 +58,7 @@ export const getIsLiability = (
  */
 export function getTokenRecordValue(
   record: TokenRecord,
-  nonOhmMultiplier = false,
+  nonOhmMultiplier: boolean = false,
 ): BigDecimal {
   return record.balance
     .times(record.rate)
