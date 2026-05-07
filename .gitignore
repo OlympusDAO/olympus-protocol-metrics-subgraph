@@ -65,6 +65,7 @@ typings/
 **/**/tests/.bin/
 **/**/tests/.latest.json
 **/**/build/
+generated/
 
 # query-test
 **/**/records-base.json
