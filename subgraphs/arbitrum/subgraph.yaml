@@ -3,11 +3,11 @@ description: Olympus Protocol Metrics Subgraph - Arbitrum
 repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 # Given the block speed of Arbitrum, it is abominably slow to index from scratch.
 # Avoid changing the schema, as it will require indexing from scratch.
-# features:
-#   - grafting
-# graft:
-#   base: QmRf3fo7tVsXsj9cQZSgT3Y2R67Hv41T1Ph559oQAmTLe1 # 1.6.4
-#   block: 190428287 # POL deployment
+features:
+  - grafting
+graft:
+  base: QmNQfMN2GjnGYx2mGo92gAc7z47fMbTMRR9M1gGEUjLZHX # 1.7.9
+  block: 450845846 # 2026-04-10 00:00:00 UTC
 schema:
   file: ../../schema.graphql
 dataSources:
