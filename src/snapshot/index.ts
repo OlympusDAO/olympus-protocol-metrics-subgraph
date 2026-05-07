@@ -1,7 +1,7 @@
 import { createEffect, S } from "envio";
 
 import { CHAIN_CONFIGS } from "./chains";
-import { getClient } from "./contracts";
+import { getBlock, getClient } from "./contracts";
 import { pushArbitrumLendingSupply } from "./lending/arbitrum";
 import { pushOwnedLiquidityRecords, pushTokenBalanceRecords } from "./token-records";
 import { pushOwnedLiquiditySupply, pushTotalSupply, pushTreasuryOhm } from "./token-supplies";
@@ -14,7 +14,7 @@ export const getSnapshot = createEffect(
     name: "getSnapshot",
     input: { chainId: S.number, blockNumber: S.number },
     output: S.unknown,
-    rateLimit: false,
+    rateLimit: { calls: 1, per: "second" },
     cache: false,
   },
   async ({ input }) => {
@@ -26,7 +26,7 @@ export const getSnapshot = createEffect(
 
 async function generateSnapshot(config: ChainConfig, blockNumber: bigint): Promise<Snapshot> {
   const client = getClient(config);
-  const block = await client.getBlock({ blockNumber });
+  const block = await getBlock(client, blockNumber);
   const timestamp = block.timestamp;
   const snapshot: Snapshot = { tokenRecords: [], tokenSupplies: [] };
 

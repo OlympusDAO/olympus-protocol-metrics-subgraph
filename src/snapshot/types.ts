@@ -51,7 +51,7 @@ export type TokenDefinition = {
 export type ChainConfig = {
   chainId: 42161 | 80094;
   blockchain: string;
-  rpcUrl: string;
+  rpcUrls: string[];
   tokens: TokenDefinition[];
   names: Record<string, string>;
   abbreviations: Record<string, string>;

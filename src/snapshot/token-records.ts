@@ -1,6 +1,6 @@
 import type { Address, PublicClient } from "viem";
 
-import { getErc20DecimalBalance } from "./contracts";
+import { getErc20DecimalBalance, getNativeBalance } from "./contracts";
 import { toDecimal, ZERO } from "./math";
 import { getLiquidityBalance, getPrice, getTotalValue, getUnitPrice } from "./pricing";
 import { createTokenRecord, getContractName, getWalletAddressesForContract } from "./records";
@@ -21,7 +21,7 @@ export async function pushTokenBalanceRecords(
   for (const wallet of wallets) {
     const balance =
       definition.address === config.nativeToken
-        ? toDecimal(await client.getBalance({ address: wallet as Address, blockNumber }), 18)
+        ? toDecimal(await getNativeBalance(client, wallet as Address, blockNumber), 18)
         : await getErc20DecimalBalance(client, definition.address, wallet, blockNumber);
     if (balance.eq(ZERO)) continue;
     snapshot.tokenRecords.push(

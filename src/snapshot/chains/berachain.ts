@@ -2,6 +2,7 @@ import { zeroAddress } from "viem";
 
 import { addr, token } from "../math";
 import type { ChainConfig, LiquidityHandler } from "../types";
+import { rpcUrls } from "./rpc";
 
 const ERC20_OHM = addr("0x18878Df23e2a36f81e820e4b47b4A40576D3159C");
 const ERC20_IBERA = addr("0x9b6761bf2397Bb5a6624a856cC84A3A14Dcd3fe5");
@@ -107,7 +108,7 @@ const ownedLiquidityHandlers: LiquidityHandler[] = [
 export const BERACHAIN: ChainConfig = {
   chainId: 80094,
   blockchain: "Berachain",
-  rpcUrl: "https://rpc.berachain.com",
+  rpcUrls: rpcUrls("BERACHAIN", "https://rpc.berachain.com"),
   ohmToken: ERC20_OHM,
   nativeToken: NATIVE_BERA,
   tokens: [

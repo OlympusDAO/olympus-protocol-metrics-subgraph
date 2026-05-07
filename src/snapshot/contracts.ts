@@ -4,6 +4,7 @@ import {
   type ContractFunctionArgs,
   type ContractFunctionName,
   createPublicClient,
+  fallback,
   getAddress,
   http,
   type PublicClient,
@@ -18,10 +19,14 @@ import { addr, toDecimal, ZERO } from "./math";
 import type { ChainConfig, LiquidityHandler } from "./types";
 
 const clients = new Map<number, PublicClient>();
+const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
+const MAX_RPC_ATTEMPTS = 6;
+const BASE_RETRY_DELAY_MS = 1_000;
 
 export function getClient(config: ChainConfig) {
   const existing = clients.get(config.chainId);
   if (existing) return existing;
+  const transports = config.rpcUrls.map((url) => http(url, { retryCount: 0 }));
   const client = createPublicClient({
     chain:
       config.chainId === 42161
@@ -30,12 +35,38 @@ export function getClient(config: ChainConfig) {
             id: 80094,
             name: "Berachain",
             nativeCurrency: { name: "BERA", symbol: "BERA", decimals: 18 },
-            rpcUrls: { default: { http: [config.rpcUrl] } },
+            rpcUrls: { default: { http: config.rpcUrls } },
           },
-    transport: http(config.rpcUrl),
+    transport: transports.length === 1 ? transports[0] : fallback(transports),
   });
   clients.set(config.chainId, client);
   return client;
+}
+
+export async function retryRpc<T>(operation: () => Promise<T>): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= MAX_RPC_ATTEMPTS; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (!isRetryableRpcError(error) || attempt === MAX_RPC_ATTEMPTS) break;
+      await sleep(BASE_RETRY_DELAY_MS * 2 ** (attempt - 1));
+    }
+  }
+  throw lastError;
+}
+
+export async function getBlock(client: PublicClient, blockNumber: bigint) {
+  return retryRpc(() => client.getBlock({ blockNumber }));
+}
+
+export async function getNativeBalance(
+  client: PublicClient,
+  address: Address,
+  blockNumber: bigint,
+) {
+  return retryRpc(() => client.getBalance({ address, blockNumber }));
 }
 
 export async function safeRead<
@@ -51,16 +82,30 @@ export async function safeRead<
   blockNumber: bigint,
 ): Promise<ReadContractReturnType<TAbi, TFunctionName, TArgs> | null> {
   try {
-    return await client.readContract({
-      address: getAddress(address),
-      abi,
-      functionName,
-      args,
-      blockNumber,
-    });
+    return await retryRpc(() =>
+      client.readContract({
+        address: getAddress(address),
+        abi,
+        functionName,
+        args,
+        blockNumber,
+      }),
+    );
   } catch {
     return null;
   }
+}
+
+function isRetryableRpcError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const status = "status" in error ? Number(error.status) : undefined;
+  if (status && RETRYABLE_STATUSES.has(status)) return true;
+  const details = "details" in error ? String(error.details) : "";
+  return details.includes("Too Many Requests");
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function getBalancerPool(

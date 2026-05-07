@@ -1,5 +1,6 @@
 import { addr, token } from "../math";
 import type { ChainConfig, LiquidityHandler } from "../types";
+import { rpcUrls } from "./rpc";
 
 const DAO_WALLET = addr("0x245cc372c84b3645bf0ffe6538620b04a217988b");
 const DAO_WORKING_CAPITAL = addr("0xF65A665D650B5De224F46D729e2bD0885EeA9dA5");
@@ -16,7 +17,6 @@ const AAVE_ALLOCATOR_V2 = addr("0x0d33c811d0fcc711bcb388dfb3a152de445be66f");
 const AAVE_ALLOCATOR = addr("0x0e1177e47151Be72e5992E0975000E73Ab5fd9D4");
 const BALANCER_ALLOCATOR = addr("0xa9b52a2d0ffdbabdb2cb23ebb7cd879cac6618a6");
 const BUYBACK_MS = addr("0xf7deb867e65306be0cb33918ac1b8f89a72109db");
-const DAO_MULTISIG = addr("0x012BBf0481b97170577745D2167ee14f63E2aD4C");
 export const OLYMPUS_LENDER = addr("0x868C3ae18Fdea85bBb7a303e379c5B7e23b30F03");
 export const SILO_COLLATERAL = addr("0xD8102963c400fEDBbc23Fe92f1b09c0C561e77Ae");
 export const SENTIMENT_LTOKEN = addr("0x37E6a0EcB9e8E5D90104590049a0A197E1363b67");
@@ -64,7 +64,6 @@ export const ARBITRUM_PROTOCOL_ADDRESSES = [
   TREASURY_ADDRESS_V1,
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
-  DAO_MULTISIG,
 ];
 
 const names: Record<string, string> = {
@@ -78,7 +77,6 @@ const names: Record<string, string> = {
   [CROSS_CHAIN_ARBITRUM]: "Cross-Chain Arbitrum",
   [CROSS_CHAIN_FANTOM]: "Cross-Chain Fantom",
   [CROSS_CHAIN_POLYGON]: "Cross-Chain Polygon",
-  [DAO_MULTISIG]: "DAO MS (Arbitrum)",
   [DAO_WALLET]: "Treasury MS (Formerly DAO Wallet)",
   [DAO_WORKING_CAPITAL]: "DAO Working Capital",
   [ERC20_ARB]: "Arbitrum",
@@ -143,7 +141,7 @@ const liquidityHandlers: LiquidityHandler[] = [
 export const ARBITRUM: ChainConfig = {
   chainId: 42161,
   blockchain: "Arbitrum",
-  rpcUrl: "https://arb1.arbitrum.io/rpc",
+  rpcUrls: rpcUrls("ARBITRUM", "https://arb1.arbitrum.io/rpc"),
   ohmToken: ERC20_OHM,
   tokens: [
     token(ERC20_ARB, "Volatile", true, false),
