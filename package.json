@@ -10,28 +10,37 @@
   "private": true,
   "repository": "https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph",
   "scripts": {
+    "build": "tsc --noEmit",
+    "check": "biome check .",
+    "codegen": "envio codegen",
     "create-local": "graph create --node http://localhost:8020/ olympus",
     "remove-local": "graph remove --node http://localhost:8020/ olympus",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 olympus",
+    "envio": "envio",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
     "ls-deadcode": "yarn ts-prune -p tsconfig.ts-prune.json | grep -v 'used in module'",
     "subgraph": "ts-node bin/subgraph/src/index.ts",
-    "lint": "eslint --fix .",
-    "lint:check": "eslint --max-warnings 0 .",
-    "preinstall": "npx only-allow@1.2.2 pnpm"
+    "lint": "biome lint --write .",
+    "lint:check": "biome lint ."
   },
   "dependencies": {
     "@apollo/client": "^3.8.4",
     "@graphprotocol/graph-cli": "^0.96.0",
     "@graphprotocol/graph-ts": "^0.35.0",
     "assemblyscript-json": "^1.1.0",
+    "bignumber.js": "9.1.2",
     "commander": "^9.4.0",
     "cross-fetch": "^4.0.0",
     "dotenv": "^16.0.2",
+    "envio": "2.32.12",
     "graphql": "^16.8.1",
     "node-fetch": "^2.6.7",
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.1",
+    "viem": "2.21.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.4.14",
     "@types/json-diff": "^0.7.0",
     "@types/node": "^20",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
@@ -44,7 +53,10 @@
     "mustache": "^4.2.0",
     "prettier": "^2.6.2",
     "ts-prune": "^0.10.3",
-    "typescript": "^4.9.3"
+    "typescript": "^5.2.2"
+  },
+  "optionalDependencies": {
+    "generated": "./generated"
   },
   "resolutions": {
     "ejs": "^3.1.7",

@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: olympus-protocol-metrics
+description: Olympus protocol metrics for Arbitrum and Berachain
+
+networks:
+  - id: 42161 # Arbitrum One
+    start_block: 450845846 # 2026-04-10 00:00:00 UTC
+    contracts:
+      - name: ArbitrumSnapshotAnchor
+        address: "0xf0cb2dc0db5e6c66b9a70ac27b06b878da017028" # OHM
+        handler: src/EventHandlers.ts
+        events:
+          - event: "Transfer(address indexed from, address indexed to, uint256 value)"
+  - id: 80094 # Berachain
+    start_block: 799194 # 2025-02-07 00:00:00 UTC
+    contracts:
+      - name: BerachainSnapshotAnchor
+        address: "0x18878df23e2a36f81e820e4b47b4a40576d3159c" # OHM
+        handler: src/EventHandlers.ts
+        events:
+          - event: "Transfer(address indexed from, address indexed to, uint256 value)"
+
+unordered_multichain_mode: true
+preload_handlers: true
+address_format: lowercase
