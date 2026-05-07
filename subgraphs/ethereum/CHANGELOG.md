@@ -1,5 +1,9 @@
 # Subgraph Changelog
 
+## 5.10.4 (2026-05-06)
+
+- Adds support for indexing USDT balances
+
 ## 5.10.2 (2026-03-25)
 
 - Adds support for Aave v3 sUSDe looping strategy (aEthSUSDe, aEthUSDe, variable debt tokens)

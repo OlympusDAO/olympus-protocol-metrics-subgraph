@@ -4,7 +4,7 @@ repository: https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph
 features:
   - grafting
 graft:
-  base: QmVtgXo23FtsPunsQxnG6W8gSvpXDb7gq6epKZG9KnCR62 # 5.9.0
+  base: QmToGXtryBXFX1bx1mfu9RoXxD3kKia1jbRzwkKj6EGDMn # 5.10.2
   block: 24707147 # Creation block of Yield Farming MS
 schema:
   file: ../../schema.graphql
