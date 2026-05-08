@@ -3,6 +3,7 @@ import { createEffect, S } from "envio";
 import { CHAIN_CONFIGS } from "./chains";
 import { getBlock, getClient, withContractReadCache } from "./contracts";
 import { pushArbitrumLendingSupply } from "./lending/arbitrum";
+import { pushArbitrumStakingRecords } from "./staking/arbitrum";
 import { pushOwnedLiquidityRecords, pushTokenBalanceRecords } from "./token-records";
 import { pushOwnedLiquiditySupply, pushTotalSupply, pushTreasuryOhm } from "./token-supplies";
 import type { ChainConfig, Snapshot } from "./types";
@@ -47,6 +48,16 @@ async function generateSnapshot(config: ChainConfig, blockNumber: bigint): Promi
   for (const category of ["Stable", "Volatile"]) {
     for (const definition of config.tokens.filter((value) => value.category === category)) {
       await pushTokenBalanceRecords(snapshot, config, client, definition, timestamp, blockNumber);
+      if (config.chainId === 42161) {
+        await pushArbitrumStakingRecords(
+          snapshot,
+          config,
+          client,
+          definition,
+          timestamp,
+          blockNumber,
+        );
+      }
     }
   }
 

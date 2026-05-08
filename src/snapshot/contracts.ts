@@ -137,7 +137,8 @@ function isRetryableRpcError(error: unknown): boolean {
   const status = "status" in error ? Number(error.status) : undefined;
   if (status && RETRYABLE_STATUSES.has(status)) return true;
   const details = "details" in error ? String(error.details) : "";
-  return details.includes("Too Many Requests");
+  if (details.includes("Too Many Requests")) return true;
+  return "cause" in error ? isRetryableRpcError(error.cause) : false;
 }
 
 function sleep(ms: number): Promise<void> {
