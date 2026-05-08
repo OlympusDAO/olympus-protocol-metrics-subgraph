@@ -58,19 +58,19 @@ export function getClient(config: ChainConfig) {
 }
 
 function getHttpBatchSize(): number {
-  const configured = Number(process.env.RPC_HTTP_BATCH_SIZE);
+  const configured = Number(process.env.ENVIO_RPC_HTTP_BATCH_SIZE);
   if (Number.isInteger(configured) && configured > 0) return configured;
   return DEFAULT_HTTP_BATCH_SIZE;
 }
 
 function getMulticallBatchSize(): number {
-  const configured = Number(process.env.RPC_MULTICALL_BATCH_SIZE);
+  const configured = Number(process.env.ENVIO_RPC_MULTICALL_BATCH_SIZE);
   if (Number.isInteger(configured) && configured > 0) return configured;
   return DEFAULT_MULTICALL_BATCH_SIZE;
 }
 
 function getRpcTimeoutMs(): number {
-  const configured = Number(process.env.RPC_TIMEOUT_MS);
+  const configured = Number(process.env.ENVIO_RPC_TIMEOUT_MS);
   if (Number.isInteger(configured) && configured > 0) return configured;
   return DEFAULT_RPC_TIMEOUT_MS;
 }
