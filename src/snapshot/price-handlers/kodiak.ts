@@ -8,6 +8,7 @@ import {
   getErc20DecimalBalance,
   getErc20TotalSupply,
   readContract,
+  readInvariantContract,
 } from "../contracts";
 import { addr, same, toDecimal, ZERO } from "../math";
 import type { LiquidityHandler } from "../types";
@@ -25,14 +26,14 @@ export class KodiakPriceHandler extends BasePriceHandler<
   ): Promise<PriceLookupResult | null> {
     if (!this.isActive(blockNumber)) return null;
     const [token0, token1, underlyingPool] = await Promise.all([
-      readContract(this.client, this.handler.pool, KODIAK_ABI, "token0", [], blockNumber),
-      readContract(this.client, this.handler.pool, KODIAK_ABI, "token1", [], blockNumber),
-      readContract(this.client, this.handler.pool, KODIAK_ABI, "pool", [], blockNumber),
+      readInvariantContract(this.client, this.handler.pool, KODIAK_ABI, "token0", [], blockNumber),
+      readInvariantContract(this.client, this.handler.pool, KODIAK_ABI, "token1", [], blockNumber),
+      readInvariantContract(this.client, this.handler.pool, KODIAK_ABI, "pool", [], blockNumber),
     ]);
     const lookupIsToken0 = same(tokenAddress, token0);
     const secondaryToken = lookupIsToken0 ? addr(token1) : addr(token0);
     const [fee, tokenDecimals, secondaryDecimals] = await Promise.all([
-      readContract(this.client, addr(underlyingPool), UNIV3_ABI, "fee", [], blockNumber),
+      readInvariantContract(this.client, addr(underlyingPool), UNIV3_ABI, "fee", [], blockNumber),
       getDecimals(this.client, tokenAddress, blockNumber),
       getDecimals(this.client, secondaryToken, blockNumber),
     ]);
@@ -65,8 +66,8 @@ export class KodiakPriceHandler extends BasePriceHandler<
   ): Promise<BigNumber | null> {
     if (!this.isActive(blockNumber)) return null;
     const [token0, token1, reserves] = await Promise.all([
-      readContract(this.client, this.handler.pool, KODIAK_ABI, "token0", [], blockNumber),
-      readContract(this.client, this.handler.pool, KODIAK_ABI, "token1", [], blockNumber),
+      readInvariantContract(this.client, this.handler.pool, KODIAK_ABI, "token0", [], blockNumber),
+      readInvariantContract(this.client, this.handler.pool, KODIAK_ABI, "token1", [], blockNumber),
       readContract(
         this.client,
         this.handler.pool,
@@ -119,7 +120,7 @@ export class KodiakPriceHandler extends BasePriceHandler<
     const walletBalance = await this.getBalance(wallet, blockNumber);
     if (walletBalance.eq(ZERO)) return ZERO;
     const [token0, reserves] = await Promise.all([
-      readContract(this.client, this.handler.pool, KODIAK_ABI, "token0", [], blockNumber),
+      readInvariantContract(this.client, this.handler.pool, KODIAK_ABI, "token0", [], blockNumber),
       readContract(
         this.client,
         this.handler.pool,

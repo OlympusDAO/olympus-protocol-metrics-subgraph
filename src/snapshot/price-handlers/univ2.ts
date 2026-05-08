@@ -6,6 +6,7 @@ import {
   getErc20DecimalBalance,
   getErc20TotalSupply,
   readContract,
+  readInvariantContract,
 } from "../contracts";
 import { addr, same, toDecimal, ZERO } from "../math";
 import type { LiquidityHandler } from "../types";
@@ -21,8 +22,8 @@ export class Univ2PriceHandler extends BasePriceHandler<
   ): Promise<PriceLookupResult | null> {
     if (!this.isActive(blockNumber)) return null;
     const [token0, token1, reserves] = await Promise.all([
-      readContract(this.client, this.handler.id, UNIV2_ABI, "token0", [], blockNumber),
-      readContract(this.client, this.handler.id, UNIV2_ABI, "token1", [], blockNumber),
+      readInvariantContract(this.client, this.handler.id, UNIV2_ABI, "token0", [], blockNumber),
+      readInvariantContract(this.client, this.handler.id, UNIV2_ABI, "token1", [], blockNumber),
       readContract(this.client, this.handler.id, UNIV2_ABI, "getReserves", [], blockNumber),
     ]);
     const lookupIsToken0 = same(tokenAddress, token0);
@@ -50,8 +51,8 @@ export class Univ2PriceHandler extends BasePriceHandler<
   ): Promise<BigNumber | null> {
     if (!this.isActive(blockNumber)) return null;
     const [token0, token1, reserves] = await Promise.all([
-      readContract(this.client, this.handler.id, UNIV2_ABI, "token0", [], blockNumber),
-      readContract(this.client, this.handler.id, UNIV2_ABI, "token1", [], blockNumber),
+      readInvariantContract(this.client, this.handler.id, UNIV2_ABI, "token0", [], blockNumber),
+      readInvariantContract(this.client, this.handler.id, UNIV2_ABI, "token1", [], blockNumber),
       readContract(this.client, this.handler.id, UNIV2_ABI, "getReserves", [], blockNumber),
     ]);
     const tokens = [addr(token0), addr(token1)];
@@ -86,7 +87,7 @@ export class Univ2PriceHandler extends BasePriceHandler<
     const walletBalance = await this.getBalance(wallet, blockNumber);
     if (walletBalance.eq(ZERO)) return ZERO;
     const [token0, reserves] = await Promise.all([
-      readContract(this.client, this.handler.id, UNIV2_ABI, "token0", [], blockNumber),
+      readInvariantContract(this.client, this.handler.id, UNIV2_ABI, "token0", [], blockNumber),
       readContract(this.client, this.handler.id, UNIV2_ABI, "getReserves", [], blockNumber),
     ]);
     const reserve = same(tokenAddress, token0)

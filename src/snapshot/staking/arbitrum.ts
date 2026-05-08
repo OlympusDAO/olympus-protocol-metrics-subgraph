@@ -11,7 +11,7 @@ import {
   JONES_STAKING_CREATION_BLOCK,
   TREASURE_ATLAS_MINE,
 } from "../chains/arbitrum";
-import { getDecimals, readContract } from "../contracts";
+import { getDecimals, readContract, readInvariantContract } from "../contracts";
 import { isActive, same, toDecimal, ZERO } from "../math";
 import { getPrice } from "../pricing";
 import { createTokenRecord, getContractName } from "../records";
@@ -136,7 +136,7 @@ async function pushTreasureStakingRecords(
       wallet,
       blockNumber: blockNumber.toString(),
     });
-    const depositIds = await readContract(
+    const depositIds = await readInvariantContract(
       client,
       TREASURE_ATLAS_MINE,
       TREASURE_MINING_ABI,

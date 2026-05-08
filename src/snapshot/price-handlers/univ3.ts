@@ -2,7 +2,12 @@ import BigNumber from "bignumber.js";
 
 import { UNIV3_ABI } from "../abis/univ3";
 import { UNIV3_QUOTER_ABI } from "../abis/univ3-quoter";
-import { getDecimals, getErc20DecimalBalance, readContract } from "../contracts";
+import {
+  getDecimals,
+  getErc20DecimalBalance,
+  readContract,
+  readInvariantContract,
+} from "../contracts";
 import { addr, ONE, same, toDecimal, ZERO } from "../math";
 import type { LiquidityHandler } from "../types";
 import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";
@@ -19,8 +24,8 @@ export class Univ3PriceHandler extends BasePriceHandler<
   ): Promise<PriceLookupResult | null> {
     if (!this.isActive(blockNumber)) return null;
     const [token0, token1, slot0] = await Promise.all([
-      readContract(this.client, this.handler.id, UNIV3_ABI, "token0", [], blockNumber),
-      readContract(this.client, this.handler.id, UNIV3_ABI, "token1", [], blockNumber),
+      readInvariantContract(this.client, this.handler.id, UNIV3_ABI, "token0", [], blockNumber),
+      readInvariantContract(this.client, this.handler.id, UNIV3_ABI, "token1", [], blockNumber),
       readContract(this.client, this.handler.id, UNIV3_ABI, "slot0", [], blockNumber),
     ]);
     const lookupIsToken1 = same(tokenAddress, token1);
@@ -52,8 +57,8 @@ export class Univ3PriceHandler extends BasePriceHandler<
   ): Promise<BigNumber | null> {
     if (!this.isActive(blockNumber)) return null;
     const [token0, token1] = await Promise.all([
-      readContract(this.client, this.handler.id, UNIV3_ABI, "token0", [], blockNumber),
-      readContract(this.client, this.handler.id, UNIV3_ABI, "token1", [], blockNumber),
+      readInvariantContract(this.client, this.handler.id, UNIV3_ABI, "token0", [], blockNumber),
+      readInvariantContract(this.client, this.handler.id, UNIV3_ABI, "token1", [], blockNumber),
     ]);
     const tokens = [addr(token0), addr(token1)];
     const balances = [
@@ -97,9 +102,9 @@ export class Univ3QuoterPriceHandler extends BasePriceHandler<
   ): Promise<PriceLookupResult | null> {
     if (!this.isActive(blockNumber)) return null;
     const [token0, token1, fee] = await Promise.all([
-      readContract(this.client, this.handler.id, UNIV3_ABI, "token0", [], blockNumber),
-      readContract(this.client, this.handler.id, UNIV3_ABI, "token1", [], blockNumber),
-      readContract(this.client, this.handler.id, UNIV3_ABI, "fee", [], blockNumber),
+      readInvariantContract(this.client, this.handler.id, UNIV3_ABI, "token0", [], blockNumber),
+      readInvariantContract(this.client, this.handler.id, UNIV3_ABI, "token1", [], blockNumber),
+      readInvariantContract(this.client, this.handler.id, UNIV3_ABI, "fee", [], blockNumber),
     ]);
     const secondaryToken = same(tokenAddress, token0) ? addr(token1) : addr(token0);
     const [tokenDecimals, secondaryDecimals] = await Promise.all([

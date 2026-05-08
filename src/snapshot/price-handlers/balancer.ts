@@ -7,7 +7,7 @@ import {
   getDecimals,
   getErc20DecimalBalance,
   getErc20TotalSupply,
-  readContract,
+  readInvariantContract,
 } from "../contracts";
 import { same, toDecimal, ZERO } from "../math";
 import type { LiquidityHandler } from "../types";
@@ -26,7 +26,7 @@ export class BalancerPriceHandler extends BasePriceHandler<
     if (!pool) return null;
     const poolToken = await getBalancerPoolToken(this.client, this.handler, blockNumber);
     if (!poolToken) return null;
-    const weights = await readContract(
+    const weights = await readInvariantContract(
       this.client,
       poolToken,
       BALANCER_POOL_TOKEN_ABI,

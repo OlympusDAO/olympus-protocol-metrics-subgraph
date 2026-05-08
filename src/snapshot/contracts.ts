@@ -26,6 +26,7 @@ const DEFAULT_HTTP_BATCH_SIZE = 1;
 const DEFAULT_MULTICALL_BATCH_SIZE = 128;
 const DEFAULT_RPC_TIMEOUT_MS = 30_000;
 let activeContractReadCache: Map<string, Promise<unknown>> | null = null;
+const invariantContractReadCache = new Map<string, Promise<unknown>>();
 
 export async function withContractReadCache<T>(operation: () => Promise<T>): Promise<T> {
   const previousCache = activeContractReadCache;
@@ -127,8 +128,39 @@ export async function readContract<
       args,
       blockNumber,
     }),
-  );
+  ).catch((error: unknown) => {
+    cache?.delete(cacheKey);
+    throw error;
+  });
   cache?.set(cacheKey, read);
+  return await read;
+}
+
+export async function readInvariantContract<
+  const TAbi extends Abi,
+  const TFunctionName extends ContractFunctionName<TAbi, "pure" | "view">,
+  const TArgs extends ContractFunctionArgs<TAbi, "pure" | "view", TFunctionName>,
+>(
+  client: PublicClient,
+  address: string,
+  abi: TAbi,
+  functionName: TFunctionName,
+  args: TArgs,
+  blockNumber: bigint,
+): Promise<ReadContractReturnType<TAbi, TFunctionName, TArgs>> {
+  const cacheKey = getInvariantContractReadCacheKey(client, address, functionName, args);
+  const cached = invariantContractReadCache.get(cacheKey);
+  if (cached) {
+    return (await cached) as ReadContractReturnType<TAbi, TFunctionName, TArgs>;
+  }
+
+  const read = readContract(client, address, abi, functionName, args, blockNumber).catch(
+    (error: unknown) => {
+      invariantContractReadCache.delete(cacheKey);
+      throw error;
+    },
+  );
+  invariantContractReadCache.set(cacheKey, read);
   return await read;
 }
 
@@ -144,6 +176,20 @@ function getContractReadCacheKey(
     getAddress(address).toLowerCase(),
     String(functionName),
     blockNumber.toString(),
+    normalizeCacheValue(args),
+  ]);
+}
+
+function getInvariantContractReadCacheKey(
+  client: PublicClient,
+  address: string,
+  functionName: string,
+  args: unknown,
+): string {
+  return JSON.stringify([
+    client.chain?.id ?? "unknown",
+    getAddress(address).toLowerCase(),
+    String(functionName),
     normalizeCacheValue(args),
   ]);
 }
@@ -179,7 +225,7 @@ export async function getBalancerPool(
   blockNumber: bigint,
 ) {
   if (!isActive(handler, blockNumber)) return null;
-  const result = await readContract(
+  const result = await readInvariantContract(
     client,
     handler.vault,
     BALANCER_VAULT_ABI,
@@ -217,7 +263,7 @@ export async function getBaseTokenRate(
   if (!feed) return null;
   if (!isActive(feed, blockNumber)) return null;
   const [decimals, answer] = await Promise.all([
-    readContract(client, feed.address, CHAINLINK_ABI, "decimals", [], blockNumber),
+    readInvariantContract(client, feed.address, CHAINLINK_ABI, "decimals", [], blockNumber),
     readContract(client, feed.address, CHAINLINK_ABI, "latestAnswer", [], blockNumber),
   ]);
   if (answer <= 0n) return null;
@@ -250,5 +296,7 @@ export async function getErc20TotalSupply(
 }
 
 export async function getDecimals(client: PublicClient, tokenAddress: string, blockNumber: bigint) {
-  return Number(await readContract(client, tokenAddress, ERC20_ABI, "decimals", [], blockNumber));
+  return Number(
+    await readInvariantContract(client, tokenAddress, ERC20_ABI, "decimals", [], blockNumber),
+  );
 }
