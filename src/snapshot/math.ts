@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 
-import type { Bytes32, LiquidityHandler, TokenDefinition } from "./types";
+import type { BasePriceFeed, Bytes32, LiquidityHandler, TokenDefinition } from "./types";
 
 export const ZERO = new BigNumber(0);
 export const ONE = new BigNumber(1);
@@ -11,8 +11,13 @@ export function token(
   isLiquid: boolean,
   isBluechip: boolean,
   multiplier?: string,
+  options: { startBlock?: number } = {},
 ): TokenDefinition {
-  return { address: addr(address), category, isLiquid, isBluechip, multiplier };
+  return { address: addr(address), category, isLiquid, isBluechip, multiplier, ...options };
+}
+
+export function feed(address: string, startBlock?: number): BasePriceFeed {
+  return { address: addr(address), startBlock };
 }
 
 export function toDecimal(value: bigint, decimals: number) {
@@ -40,4 +45,8 @@ export function same(left: string, right: string) {
 
 export function matches(handler: LiquidityHandler, tokenAddress: string) {
   return handler.tokens.some((value) => same(value, tokenAddress));
+}
+
+export function isActive(definition: { startBlock?: number }, blockNumber: bigint) {
+  return definition.startBlock === undefined || blockNumber >= BigInt(definition.startBlock);
 }

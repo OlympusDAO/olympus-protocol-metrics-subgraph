@@ -1,4 +1,4 @@
-import { addr, bytes32, token } from "../math";
+import { addr, bytes32, feed, token } from "../math";
 import type { ChainConfig, LiquidityHandler } from "../types";
 import { rpcUrls } from "./rpc";
 
@@ -50,6 +50,17 @@ const LP_UNISWAP_V2_MAGIC_WETH = addr("0xb7e50106a5bd3cf21af210a755f9c8740890a8c
 const LP_CAMELOT_OHM_WETH = addr("0x8aCd42e4B5A5750B44A28C5fb50906eBfF145359");
 const LP_UNISWAP_V3_ARB_WETH = addr("0xc6f780497a95e246eb9449f5e4770916dcd6396a");
 const LP_UNISWAP_V3_WETH_USDC = addr("0xc31e54c7a869b9fcbecc14363cf510d1c41fa443");
+const ARBITRUM_START_BLOCK = 10_950_000;
+const ARB_CREATION_BLOCK = 70_398_215;
+const OHM_CREATION_BLOCK = 85_886_493;
+const LQTY_CREATION_BLOCK = 68_940_603;
+const LUSD_CREATION_BLOCK = 20_063_879;
+const LUSD_FEED_CREATION_BLOCK = 73_250_559;
+const LP_BALANCER_WETH_OHM_CREATION_BLOCK = 87_570_545;
+const LP_BALANCER_OHM_USDC_CREATION_BLOCK = 87_572_753;
+const LP_UNISWAP_V2_LQTY_WETH_CREATION_BLOCK = 70_190_173;
+const LP_CAMELOT_OHM_WETH_CREATION_BLOCK = 209_392_712;
+const LP_UNISWAP_V3_ARB_WETH_CREATION_BLOCK = 73_240_629;
 
 export const ARBITRUM_PROTOCOL_ADDRESSES = [
   AAVE_ALLOCATOR_V2,
@@ -124,21 +135,56 @@ const liquidityHandlers: LiquidityHandler[] = [
     tokens: [ERC20_WETH, ERC20_OHM],
     vault: BALANCER_VAULT,
     id: LP_BALANCER_POOL_WETH_OHM,
+    startBlock: LP_BALANCER_WETH_OHM_CREATION_BLOCK,
   },
   {
     kind: "balancer",
     tokens: [ERC20_OHM, ERC20_USDC],
     vault: BALANCER_VAULT,
     id: LP_BALANCER_POOL_OHM_USDC,
+    startBlock: LP_BALANCER_OHM_USDC_CREATION_BLOCK,
   },
   { kind: "stable", tokens: [ERC20_FRAX, ERC20_USDC], id: "frax-usdc" },
-  { kind: "univ2", tokens: [ERC20_GOHM_SYNAPSE, ERC20_WETH], id: LP_UNISWAP_V2_GOHM_WETH },
-  { kind: "univ2", tokens: [ERC20_JONES, ERC20_WETH], id: LP_UNISWAP_V2_JONES_WETH },
-  { kind: "univ2", tokens: [ERC20_LQTY, ERC20_WETH], id: LP_UNISWAP_V2_LQTY_WETH },
-  { kind: "univ2", tokens: [ERC20_MAGIC, ERC20_WETH], id: LP_UNISWAP_V2_MAGIC_WETH },
-  { kind: "univ2", tokens: [ERC20_OHM, ERC20_WETH], id: LP_CAMELOT_OHM_WETH },
-  { kind: "univ3", tokens: [ERC20_USDC, ERC20_WETH], id: LP_UNISWAP_V3_WETH_USDC },
-  { kind: "univ3", tokens: [ERC20_ARB, ERC20_WETH], id: LP_UNISWAP_V3_ARB_WETH },
+  {
+    kind: "univ2",
+    tokens: [ERC20_GOHM_SYNAPSE, ERC20_WETH],
+    id: LP_UNISWAP_V2_GOHM_WETH,
+    startBlock: ARBITRUM_START_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_JONES, ERC20_WETH],
+    id: LP_UNISWAP_V2_JONES_WETH,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_LQTY, ERC20_WETH],
+    id: LP_UNISWAP_V2_LQTY_WETH,
+    startBlock: LP_UNISWAP_V2_LQTY_WETH_CREATION_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_MAGIC, ERC20_WETH],
+    id: LP_UNISWAP_V2_MAGIC_WETH,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_OHM, ERC20_WETH],
+    id: LP_CAMELOT_OHM_WETH,
+    startBlock: LP_CAMELOT_OHM_WETH_CREATION_BLOCK,
+  },
+  {
+    kind: "univ3",
+    tokens: [ERC20_USDC, ERC20_WETH],
+    id: LP_UNISWAP_V3_WETH_USDC,
+    startBlock: ARBITRUM_START_BLOCK,
+  },
+  {
+    kind: "univ3",
+    tokens: [ERC20_ARB, ERC20_WETH],
+    id: LP_UNISWAP_V3_ARB_WETH,
+    startBlock: LP_UNISWAP_V3_ARB_WETH_CREATION_BLOCK,
+  },
 ];
 
 export const ARBITRUM: ChainConfig = {
@@ -146,25 +192,38 @@ export const ARBITRUM: ChainConfig = {
   blockchain: "Arbitrum",
   rpcUrls: rpcUrls("ARBITRUM", "https://arb1.arbitrum.io/rpc"),
   ohmToken: ERC20_OHM,
+  ohmStartBlock: OHM_CREATION_BLOCK,
   tokens: [
-    token(ERC20_ARB, "Volatile", true, false),
+    token(ERC20_ARB, "Volatile", true, false, undefined, { startBlock: ARB_CREATION_BLOCK }),
     token(ERC20_FRAX, "Stable", true, false),
     token(ERC20_JONES, "Volatile", true, false, "0.83"),
-    token(ERC20_LQTY, "Volatile", true, false),
-    token(ERC20_LUSD, "Stable", true, false),
+    token(ERC20_LQTY, "Volatile", true, false, undefined, { startBlock: LQTY_CREATION_BLOCK }),
+    token(ERC20_LUSD, "Stable", true, false, undefined, { startBlock: LUSD_CREATION_BLOCK }),
     token(ERC20_MAGIC, "Volatile", true, false),
     token(ERC20_USDC, "Stable", true, false),
     token(ERC20_VSTA, "Volatile", true, false, "0.77"),
     token(ERC20_WETH, "Volatile", true, true),
     token(LP_BALANCER_POOL_WETH_VESTA, "Protocol-Owned Liquidity", true, false),
-    token(LP_BALANCER_POOL_WETH_OHM, "Protocol-Owned Liquidity", true, false),
-    token(LP_BALANCER_POOL_OHM_USDC, "Protocol-Owned Liquidity", true, false),
-    token(LP_UNISWAP_V2_GOHM_WETH, "Protocol-Owned Liquidity", true, false),
+    token(LP_BALANCER_POOL_WETH_OHM, "Protocol-Owned Liquidity", true, false, undefined, {
+      startBlock: LP_BALANCER_WETH_OHM_CREATION_BLOCK,
+    }),
+    token(LP_BALANCER_POOL_OHM_USDC, "Protocol-Owned Liquidity", true, false, undefined, {
+      startBlock: LP_BALANCER_OHM_USDC_CREATION_BLOCK,
+    }),
+    token(LP_UNISWAP_V2_GOHM_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
+      startBlock: ARBITRUM_START_BLOCK,
+    }),
     token(LP_UNISWAP_V2_JONES_WETH, "Protocol-Owned Liquidity", true, false),
     token(LP_UNISWAP_V2_MAGIC_WETH, "Protocol-Owned Liquidity", true, false),
-    token(LP_CAMELOT_OHM_WETH, "Protocol-Owned Liquidity", true, false),
-    token(LP_UNISWAP_V3_ARB_WETH, "Protocol-Owned Liquidity", true, false),
-    token(LP_UNISWAP_V3_WETH_USDC, "Protocol-Owned Liquidity", true, false),
+    token(LP_CAMELOT_OHM_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
+      startBlock: LP_CAMELOT_OHM_WETH_CREATION_BLOCK,
+    }),
+    token(LP_UNISWAP_V3_ARB_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
+      startBlock: LP_UNISWAP_V3_ARB_WETH_CREATION_BLOCK,
+    }),
+    token(LP_UNISWAP_V3_WETH_USDC, "Protocol-Owned Liquidity", true, false, undefined, {
+      startBlock: ARBITRUM_START_BLOCK,
+    }),
   ],
   names,
   abbreviations: {
@@ -194,9 +253,9 @@ export const ARBITRUM: ChainConfig = {
     [ERC20_GOHM_SYNAPSE]: ARBITRUM_PROTOCOL_ADDRESSES,
   },
   basePriceFeeds: {
-    [ERC20_LUSD]: addr("0x0411d28c94d85a36bc72cb0f875dfa8371d8ffff"),
-    [ERC20_USDC]: addr("0x50834f3163758fcc1df9973b6e91f0f0f0434ad3"),
-    [ERC20_WETH]: addr("0x639fe6ab55c921f74e7fac1ee960c0b6293ba612"),
+    [ERC20_LUSD]: feed("0x0411d28c94d85a36bc72cb0f875dfa8371d8ffff", LUSD_FEED_CREATION_BLOCK),
+    [ERC20_USDC]: feed("0x50834f3163758fcc1df9973b6e91f0f0f0434ad3"),
+    [ERC20_WETH]: feed("0x639fe6ab55c921f74e7fac1ee960c0b6293ba612"),
   },
   liquidityHandlers,
   ownedLiquidityHandlers: liquidityHandlers,

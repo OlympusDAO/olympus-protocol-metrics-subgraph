@@ -1,7 +1,12 @@
 import type BigNumber from "bignumber.js";
 
 import { UNIV2_ABI } from "../abis/univ2";
-import { getDecimals, getErc20DecimalBalance, getErc20TotalSupply, safeRead } from "../contracts";
+import {
+  getDecimals,
+  getErc20DecimalBalance,
+  getErc20TotalSupply,
+  readContract,
+} from "../contracts";
 import { addr, same, toDecimal, ZERO } from "../math";
 import type { LiquidityHandler } from "../types";
 import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";
@@ -14,12 +19,12 @@ export class Univ2PriceHandler extends BasePriceHandler<
     priceLookup: PriceLookup,
     blockNumber: bigint,
   ): Promise<PriceLookupResult | null> {
+    if (!this.isActive(blockNumber)) return null;
     const [token0, token1, reserves] = await Promise.all([
-      safeRead(this.client, this.handler.id, UNIV2_ABI, "token0", [], blockNumber),
-      safeRead(this.client, this.handler.id, UNIV2_ABI, "token1", [], blockNumber),
-      safeRead(this.client, this.handler.id, UNIV2_ABI, "getReserves", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV2_ABI, "token0", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV2_ABI, "token1", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV2_ABI, "getReserves", [], blockNumber),
     ]);
-    if (!token0 || !token1 || !reserves) return null;
     const lookupIsToken0 = same(tokenAddress, token0);
     const secondaryToken = lookupIsToken0 ? addr(token1) : addr(token0);
     const secondaryPrice = await priceLookup(secondaryToken, blockNumber, this.getId());
@@ -43,12 +48,12 @@ export class Univ2PriceHandler extends BasePriceHandler<
     priceLookup: PriceLookup,
     blockNumber: bigint,
   ): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
     const [token0, token1, reserves] = await Promise.all([
-      safeRead(this.client, this.handler.id, UNIV2_ABI, "token0", [], blockNumber),
-      safeRead(this.client, this.handler.id, UNIV2_ABI, "token1", [], blockNumber),
-      safeRead(this.client, this.handler.id, UNIV2_ABI, "getReserves", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV2_ABI, "token0", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV2_ABI, "token1", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV2_ABI, "getReserves", [], blockNumber),
     ]);
-    if (!token0 || !token1 || !reserves) return null;
     const tokens = [addr(token0), addr(token1)];
     const balances = [
       toDecimal(reserves[0], await getDecimals(this.client, addr(token0), blockNumber)),
@@ -58,6 +63,7 @@ export class Univ2PriceHandler extends BasePriceHandler<
   }
 
   async getUnitPrice(priceLookup: PriceLookup, blockNumber: bigint): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
     const totalValue = await this.getTotalValue([], priceLookup, blockNumber);
     if (!totalValue) return null;
     const supply = await getErc20TotalSupply(this.client, this.handler.id, blockNumber);
@@ -65,6 +71,7 @@ export class Univ2PriceHandler extends BasePriceHandler<
   }
 
   async getBalance(wallet: string, blockNumber: bigint): Promise<BigNumber> {
+    if (!this.isActive(blockNumber)) return ZERO;
     return getErc20DecimalBalance(this.client, this.handler.id, wallet, blockNumber);
   }
 
@@ -73,15 +80,15 @@ export class Univ2PriceHandler extends BasePriceHandler<
     tokenAddress: string,
     blockNumber: bigint,
   ): Promise<BigNumber> {
+    if (!this.isActive(blockNumber)) return ZERO;
     const totalSupply = await getErc20TotalSupply(this.client, this.handler.id, blockNumber);
     if (totalSupply.eq(ZERO)) return ZERO;
     const walletBalance = await this.getBalance(wallet, blockNumber);
     if (walletBalance.eq(ZERO)) return ZERO;
     const [token0, reserves] = await Promise.all([
-      safeRead(this.client, this.handler.id, UNIV2_ABI, "token0", [], blockNumber),
-      safeRead(this.client, this.handler.id, UNIV2_ABI, "getReserves", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV2_ABI, "token0", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV2_ABI, "getReserves", [], blockNumber),
     ]);
-    if (!token0 || !reserves) return ZERO;
     const reserve = same(tokenAddress, token0)
       ? toDecimal(reserves[0], await getDecimals(this.client, tokenAddress, blockNumber))
       : toDecimal(reserves[1], await getDecimals(this.client, tokenAddress, blockNumber));

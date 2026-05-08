@@ -3,7 +3,12 @@ import type BigNumber from "bignumber.js";
 import { KODIAK_ABI } from "../abis/kodiak";
 import { UNIV3_ABI } from "../abis/univ3";
 import { UNIV3_QUOTER_ABI } from "../abis/univ3-quoter";
-import { getDecimals, getErc20DecimalBalance, getErc20TotalSupply, safeRead } from "../contracts";
+import {
+  getDecimals,
+  getErc20DecimalBalance,
+  getErc20TotalSupply,
+  readContract,
+} from "../contracts";
 import { addr, same, toDecimal, ZERO } from "../math";
 import type { LiquidityHandler } from "../types";
 import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";
@@ -18,21 +23,20 @@ export class KodiakPriceHandler extends BasePriceHandler<
     priceLookup: PriceLookup,
     blockNumber: bigint,
   ): Promise<PriceLookupResult | null> {
+    if (!this.isActive(blockNumber)) return null;
     const [token0, token1, underlyingPool] = await Promise.all([
-      safeRead(this.client, this.handler.pool, KODIAK_ABI, "token0", [], blockNumber),
-      safeRead(this.client, this.handler.pool, KODIAK_ABI, "token1", [], blockNumber),
-      safeRead(this.client, this.handler.pool, KODIAK_ABI, "pool", [], blockNumber),
+      readContract(this.client, this.handler.pool, KODIAK_ABI, "token0", [], blockNumber),
+      readContract(this.client, this.handler.pool, KODIAK_ABI, "token1", [], blockNumber),
+      readContract(this.client, this.handler.pool, KODIAK_ABI, "pool", [], blockNumber),
     ]);
-    if (!token0 || !token1 || !underlyingPool) return null;
     const lookupIsToken0 = same(tokenAddress, token0);
     const secondaryToken = lookupIsToken0 ? addr(token1) : addr(token0);
     const [fee, tokenDecimals, secondaryDecimals] = await Promise.all([
-      safeRead(this.client, addr(underlyingPool), UNIV3_ABI, "fee", [], blockNumber),
+      readContract(this.client, addr(underlyingPool), UNIV3_ABI, "fee", [], blockNumber),
       getDecimals(this.client, tokenAddress, blockNumber),
       getDecimals(this.client, secondaryToken, blockNumber),
     ]);
-    if (fee === null) return null;
-    const quote = await safeRead(
+    const quote = await readContract(
       this.client,
       this.handler.quoter,
       UNIV3_QUOTER_ABI,
@@ -48,7 +52,6 @@ export class KodiakPriceHandler extends BasePriceHandler<
       ],
       blockNumber,
     );
-    if (!quote) return null;
     const secondaryPrice = await priceLookup(secondaryToken, blockNumber, this.getId());
     if (secondaryPrice.eq(ZERO)) return null;
     const price = toDecimal(quote[0], secondaryDecimals).times(secondaryPrice);
@@ -60,10 +63,11 @@ export class KodiakPriceHandler extends BasePriceHandler<
     priceLookup: PriceLookup,
     blockNumber: bigint,
   ): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
     const [token0, token1, reserves] = await Promise.all([
-      safeRead(this.client, this.handler.pool, KODIAK_ABI, "token0", [], blockNumber),
-      safeRead(this.client, this.handler.pool, KODIAK_ABI, "token1", [], blockNumber),
-      safeRead(
+      readContract(this.client, this.handler.pool, KODIAK_ABI, "token0", [], blockNumber),
+      readContract(this.client, this.handler.pool, KODIAK_ABI, "token1", [], blockNumber),
+      readContract(
         this.client,
         this.handler.pool,
         KODIAK_ABI,
@@ -72,7 +76,6 @@ export class KodiakPriceHandler extends BasePriceHandler<
         blockNumber,
       ),
     ]);
-    if (!token0 || !token1 || !reserves) return null;
     const tokens = [addr(token0), addr(token1)];
     const balances = [
       toDecimal(reserves[0], await getDecimals(this.client, addr(token0), blockNumber)),
@@ -88,6 +91,7 @@ export class KodiakPriceHandler extends BasePriceHandler<
   }
 
   async getUnitPrice(priceLookup: PriceLookup, blockNumber: bigint): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
     const totalValue = await this.getTotalValue([], priceLookup, blockNumber);
     if (!totalValue) return null;
     const supply = await getErc20TotalSupply(this.client, this.handler.pool, blockNumber);
@@ -95,6 +99,7 @@ export class KodiakPriceHandler extends BasePriceHandler<
   }
 
   async getBalance(wallet: string, blockNumber: bigint): Promise<BigNumber> {
+    if (!this.isActive(blockNumber)) return ZERO;
     return getErc20DecimalBalance(
       this.client,
       this.handler.rewardVault ?? this.handler.pool,
@@ -108,13 +113,14 @@ export class KodiakPriceHandler extends BasePriceHandler<
     tokenAddress: string,
     blockNumber: bigint,
   ): Promise<BigNumber> {
+    if (!this.isActive(blockNumber)) return ZERO;
     const totalSupply = await getErc20TotalSupply(this.client, this.handler.pool, blockNumber);
     if (totalSupply.eq(ZERO)) return ZERO;
     const walletBalance = await this.getBalance(wallet, blockNumber);
     if (walletBalance.eq(ZERO)) return ZERO;
     const [token0, reserves] = await Promise.all([
-      safeRead(this.client, this.handler.pool, KODIAK_ABI, "token0", [], blockNumber),
-      safeRead(
+      readContract(this.client, this.handler.pool, KODIAK_ABI, "token0", [], blockNumber),
+      readContract(
         this.client,
         this.handler.pool,
         KODIAK_ABI,
@@ -123,7 +129,6 @@ export class KodiakPriceHandler extends BasePriceHandler<
         blockNumber,
       ),
     ]);
-    if (!token0 || !reserves) return ZERO;
     const reserve = same(tokenAddress, token0)
       ? toDecimal(reserves[0], await getDecimals(this.client, tokenAddress, blockNumber))
       : toDecimal(reserves[1], await getDecimals(this.client, tokenAddress, blockNumber));

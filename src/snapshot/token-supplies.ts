@@ -1,7 +1,7 @@
 import type { PublicClient } from "viem";
 
 import { getErc20DecimalBalance, getErc20TotalSupply } from "./contracts";
-import { matches, ZERO } from "./math";
+import { isActive, matches, ZERO } from "./math";
 import { getUnderlyingTokenBalance } from "./pricing";
 import { createTokenSupply, getContractName, getWalletAddressesForContract } from "./records";
 import type { ChainConfig, Snapshot } from "./types";
@@ -13,6 +13,7 @@ export async function pushTotalSupply(
   timestamp: bigint,
   blockNumber: bigint,
 ) {
+  if (config.ohmStartBlock && !isActive({ startBlock: config.ohmStartBlock }, blockNumber)) return;
   const balance = await getErc20TotalSupply(client, config.ohmToken, blockNumber);
   snapshot.tokenSupplies.push(
     createTokenSupply(
@@ -38,6 +39,7 @@ export async function pushTreasuryOhm(
   timestamp: bigint,
   blockNumber: bigint,
 ) {
+  if (config.ohmStartBlock && !isActive({ startBlock: config.ohmStartBlock }, blockNumber)) return;
   const balances = await Promise.all(
     config.circulatingSupplyWallets.map(async (wallet) => ({
       wallet,
@@ -74,6 +76,7 @@ export async function pushOwnedLiquiditySupply(
   blockNumber: bigint,
 ) {
   for (const handler of config.ownedLiquidityHandlers) {
+    if (!isActive(handler, blockNumber)) continue;
     if (!matches(handler, config.ohmToken)) continue;
     const balances = await Promise.all(
       config.circulatingSupplyWallets.map(async (wallet) => ({
@@ -119,6 +122,8 @@ export async function pushMarketSupply(
   blockNumber: bigint,
   market: { name: string; address: string },
 ) {
+  const marketToken = config.tokens.find((token) => token.address === market.address);
+  if (marketToken && !isActive(marketToken, blockNumber)) return;
   const balances = await Promise.all(
     getWalletAddressesForContract(config, market.address).map(async (wallet) => ({
       wallet,

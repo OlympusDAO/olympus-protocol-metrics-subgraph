@@ -2,7 +2,7 @@ import BigNumber from "bignumber.js";
 
 import { UNIV3_ABI } from "../abis/univ3";
 import { UNIV3_QUOTER_ABI } from "../abis/univ3-quoter";
-import { getDecimals, getErc20DecimalBalance, safeRead } from "../contracts";
+import { getDecimals, getErc20DecimalBalance, readContract } from "../contracts";
 import { addr, ONE, same, toDecimal, ZERO } from "../math";
 import type { LiquidityHandler } from "../types";
 import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";
@@ -17,12 +17,12 @@ export class Univ3PriceHandler extends BasePriceHandler<
     priceLookup: PriceLookup,
     blockNumber: bigint,
   ): Promise<PriceLookupResult | null> {
+    if (!this.isActive(blockNumber)) return null;
     const [token0, token1, slot0] = await Promise.all([
-      safeRead(this.client, this.handler.id, UNIV3_ABI, "token0", [], blockNumber),
-      safeRead(this.client, this.handler.id, UNIV3_ABI, "token1", [], blockNumber),
-      safeRead(this.client, this.handler.id, UNIV3_ABI, "slot0", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV3_ABI, "token0", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV3_ABI, "token1", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV3_ABI, "slot0", [], blockNumber),
     ]);
-    if (!token0 || !token1 || !slot0) return null;
     const lookupIsToken1 = same(tokenAddress, token1);
     const otherToken = lookupIsToken1 ? addr(token0) : addr(token1);
     const otherPrice = await priceLookup(otherToken, blockNumber, this.getId());
@@ -50,11 +50,11 @@ export class Univ3PriceHandler extends BasePriceHandler<
     priceLookup: PriceLookup,
     blockNumber: bigint,
   ): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
     const [token0, token1] = await Promise.all([
-      safeRead(this.client, this.handler.id, UNIV3_ABI, "token0", [], blockNumber),
-      safeRead(this.client, this.handler.id, UNIV3_ABI, "token1", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV3_ABI, "token0", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV3_ABI, "token1", [], blockNumber),
     ]);
-    if (!token0 || !token1) return null;
     const tokens = [addr(token0), addr(token1)];
     const balances = [
       await getErc20DecimalBalance(this.client, addr(token0), this.handler.id, blockNumber),
@@ -70,6 +70,7 @@ export class Univ3PriceHandler extends BasePriceHandler<
   }
 
   async getUnitPrice(priceLookup: PriceLookup, blockNumber: bigint): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
     return this.getTotalValue([], priceLookup, blockNumber);
   }
 
@@ -94,18 +95,18 @@ export class Univ3QuoterPriceHandler extends BasePriceHandler<
     priceLookup: PriceLookup,
     blockNumber: bigint,
   ): Promise<PriceLookupResult | null> {
+    if (!this.isActive(blockNumber)) return null;
     const [token0, token1, fee] = await Promise.all([
-      safeRead(this.client, this.handler.id, UNIV3_ABI, "token0", [], blockNumber),
-      safeRead(this.client, this.handler.id, UNIV3_ABI, "token1", [], blockNumber),
-      safeRead(this.client, this.handler.id, UNIV3_ABI, "fee", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV3_ABI, "token0", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV3_ABI, "token1", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV3_ABI, "fee", [], blockNumber),
     ]);
-    if (!token0 || !token1 || fee === null) return null;
     const secondaryToken = same(tokenAddress, token0) ? addr(token1) : addr(token0);
     const [tokenDecimals, secondaryDecimals] = await Promise.all([
       getDecimals(this.client, tokenAddress, blockNumber),
       getDecimals(this.client, secondaryToken, blockNumber),
     ]);
-    const quote = await safeRead(
+    const quote = await readContract(
       this.client,
       this.handler.quoter,
       UNIV3_QUOTER_ABI,
@@ -121,7 +122,6 @@ export class Univ3QuoterPriceHandler extends BasePriceHandler<
       ],
       blockNumber,
     );
-    if (!quote) return null;
     const secondaryPrice = await priceLookup(secondaryToken, blockNumber, this.getId());
     if (secondaryPrice.eq(ZERO)) return null;
     const price = toDecimal(quote[0], secondaryDecimals).times(secondaryPrice);

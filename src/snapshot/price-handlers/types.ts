@@ -1,6 +1,7 @@
 import type BigNumber from "bignumber.js";
 import type { PublicClient } from "viem";
 
+import { isActive } from "../math";
 import type { ChainConfig, LiquidityHandler } from "../types";
 
 export type PriceLookup = (
@@ -49,6 +50,10 @@ export abstract class BasePriceHandler<THandler extends LiquidityHandler> implem
 
   matches(tokenAddress: string): boolean {
     return this.handler.tokens.some((value) => value.toLowerCase() === tokenAddress.toLowerCase());
+  }
+
+  protected isActive(blockNumber: bigint): boolean {
+    return isActive(this.handler, blockNumber);
   }
 
   abstract getPrice(

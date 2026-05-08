@@ -12,6 +12,7 @@ export class RemapPriceHandler extends BasePriceHandler<
     priceLookup: PriceLookup,
     blockNumber: bigint,
   ): Promise<PriceLookupResult | null> {
+    if (!this.isActive(blockNumber)) return null;
     const price = await priceLookup(this.handler.target, blockNumber, this.getId());
     if (price.eq(ZERO)) return null;
     return { price, liquidity: ZERO };

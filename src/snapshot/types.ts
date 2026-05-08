@@ -46,6 +46,12 @@ export type TokenDefinition = {
   isBluechip: boolean;
   multiplier?: string;
   isLiability?: boolean;
+  startBlock?: number;
+};
+
+export type BasePriceFeed = {
+  address: string;
+  startBlock?: number;
 };
 
 declare const bytes32Brand: unique symbol;
@@ -61,20 +67,21 @@ export type ChainConfig = {
   protocolAddresses: string[];
   circulatingSupplyWallets: string[];
   treasuryBlacklist: Record<string, string[]>;
-  basePriceFeeds: Record<string, string>;
+  basePriceFeeds: Record<string, BasePriceFeed>;
   ohmToken: string;
+  ohmStartBlock?: number;
   nativeToken?: string;
   liquidityHandlers: LiquidityHandler[];
   ownedLiquidityHandlers: LiquidityHandler[];
 };
 
 export type LiquidityHandler =
-  | { kind: "stable"; id: string; tokens: string[] }
-  | { kind: "remap"; id: string; tokens: string[]; target: string }
-  | { kind: "univ2"; id: string; tokens: string[] }
-  | { kind: "univ3"; id: string; tokens: string[] }
-  | { kind: "univ3-quoter"; id: string; quoter: string; tokens: string[] }
-  | { kind: "balancer"; id: Bytes32; vault: string; tokens: string[] }
+  | { kind: "stable"; id: string; tokens: string[]; startBlock?: number }
+  | { kind: "remap"; id: string; tokens: string[]; target: string; startBlock?: number }
+  | { kind: "univ2"; id: string; tokens: string[]; startBlock?: number }
+  | { kind: "univ3"; id: string; tokens: string[]; startBlock?: number }
+  | { kind: "univ3-quoter"; id: string; quoter: string; tokens: string[]; startBlock?: number }
+  | { kind: "balancer"; id: Bytes32; vault: string; tokens: string[]; startBlock?: number }
   | {
       kind: "kodiak";
       id: string;
@@ -82,4 +89,5 @@ export type LiquidityHandler =
       quoter: string;
       rewardVault?: string;
       tokens: string[];
+      startBlock?: number;
     };

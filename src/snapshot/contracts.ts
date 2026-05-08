@@ -15,7 +15,7 @@ import { arbitrum, berachain } from "viem/chains";
 import { BALANCER_VAULT_ABI } from "./abis/balancer";
 import { CHAINLINK_ABI } from "./abis/chainlink";
 import { ERC20_ABI } from "./abis/erc20";
-import { addr, toDecimal, ZERO } from "./math";
+import { addr, isActive, toDecimal } from "./math";
 import type { ChainConfig, LiquidityHandler } from "./types";
 
 const clients = new Map<number, PublicClient>();
@@ -73,7 +73,7 @@ export async function getNativeBalance(
   return retryRpc(() => client.getBalance({ address, blockNumber }));
 }
 
-export async function safeRead<
+export async function readContract<
   const TAbi extends Abi,
   const TFunctionName extends ContractFunctionName<TAbi, "pure" | "view">,
   const TArgs extends ContractFunctionArgs<TAbi, "pure" | "view", TFunctionName>,
@@ -84,16 +84,12 @@ export async function safeRead<
   functionName: TFunctionName,
   args: TArgs,
   blockNumber: bigint,
-): Promise<ReadContractReturnType<TAbi, TFunctionName, TArgs> | null> {
+): Promise<ReadContractReturnType<TAbi, TFunctionName, TArgs>> {
   const cache = activeContractReadCache;
   const cacheKey = getContractReadCacheKey(client, address, functionName, args, blockNumber);
   const cached = cache?.get(cacheKey);
   if (cached) {
-    try {
-      return (await cached) as ReadContractReturnType<TAbi, TFunctionName, TArgs>;
-    } catch {
-      return null;
-    }
+    return (await cached) as ReadContractReturnType<TAbi, TFunctionName, TArgs>;
   }
 
   const read = retryRpc(() =>
@@ -106,12 +102,7 @@ export async function safeRead<
     }),
   );
   cache?.set(cacheKey, read);
-
-  try {
-    return await read;
-  } catch {
-    return null;
-  }
+  return await read;
 }
 
 function getContractReadCacheKey(
@@ -159,7 +150,8 @@ export async function getBalancerPool(
   handler: Extract<LiquidityHandler, { kind: "balancer" }>,
   blockNumber: bigint,
 ) {
-  const result = await safeRead(
+  if (!isActive(handler, blockNumber)) return null;
+  const result = await readContract(
     client,
     handler.vault,
     BALANCER_VAULT_ABI,
@@ -167,7 +159,6 @@ export async function getBalancerPool(
     [handler.id],
     blockNumber,
   );
-  if (!result) return null;
   return { tokens: result[0].map((value: string) => addr(value)), balances: result[1] as bigint[] };
 }
 
@@ -176,7 +167,8 @@ export async function getBalancerPoolToken(
   handler: Extract<LiquidityHandler, { kind: "balancer" }>,
   blockNumber: bigint,
 ) {
-  const result = await safeRead(
+  if (!isActive(handler, blockNumber)) return null;
+  const result = await readContract(
     client,
     handler.vault,
     BALANCER_VAULT_ABI,
@@ -184,7 +176,7 @@ export async function getBalancerPoolToken(
     [handler.id],
     blockNumber,
   );
-  return result ? addr(result[0]) : null;
+  return addr(result[0]);
 }
 
 export async function getBaseTokenRate(
@@ -195,11 +187,12 @@ export async function getBaseTokenRate(
 ) {
   const feed = config.basePriceFeeds[addr(tokenAddress)];
   if (!feed) return null;
+  if (!isActive(feed, blockNumber)) return null;
   const [decimals, answer] = await Promise.all([
-    safeRead(client, feed, CHAINLINK_ABI, "decimals", [], blockNumber),
-    safeRead(client, feed, CHAINLINK_ABI, "latestAnswer", [], blockNumber),
+    readContract(client, feed.address, CHAINLINK_ABI, "decimals", [], blockNumber),
+    readContract(client, feed.address, CHAINLINK_ABI, "latestAnswer", [], blockNumber),
   ]);
-  if (decimals === null || answer === null || answer <= 0n) return null;
+  if (answer <= 0n) return null;
   return toDecimal(answer, Number(decimals));
 }
 
@@ -211,9 +204,9 @@ export async function getErc20DecimalBalance(
 ) {
   const [decimals, balance] = await Promise.all([
     getDecimals(client, tokenAddress, blockNumber),
-    safeRead(client, tokenAddress, ERC20_ABI, "balanceOf", [wallet as Address], blockNumber),
+    readContract(client, tokenAddress, ERC20_ABI, "balanceOf", [wallet as Address], blockNumber),
   ]);
-  return balance ? toDecimal(balance, decimals) : ZERO;
+  return toDecimal(balance, decimals);
 }
 
 export async function getErc20TotalSupply(
@@ -223,12 +216,11 @@ export async function getErc20TotalSupply(
 ) {
   const [decimals, totalSupply] = await Promise.all([
     getDecimals(client, tokenAddress, blockNumber),
-    safeRead(client, tokenAddress, ERC20_ABI, "totalSupply", [], blockNumber),
+    readContract(client, tokenAddress, ERC20_ABI, "totalSupply", [], blockNumber),
   ]);
-  return totalSupply ? toDecimal(totalSupply, decimals) : ZERO;
+  return toDecimal(totalSupply, decimals);
 }
 
 export async function getDecimals(client: PublicClient, tokenAddress: string, blockNumber: bigint) {
-  const value = await safeRead(client, tokenAddress, ERC20_ABI, "decimals", [], blockNumber);
-  return value === null ? 18 : Number(value);
+  return Number(await readContract(client, tokenAddress, ERC20_ABI, "decimals", [], blockNumber));
 }

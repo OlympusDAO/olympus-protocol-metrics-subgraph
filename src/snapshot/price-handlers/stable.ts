@@ -10,20 +10,23 @@ export class StablePriceHandler extends BasePriceHandler<
   async getPrice(
     _tokenAddress: string,
     _priceLookup: PriceLookup,
-    _blockNumber: bigint,
-  ): Promise<PriceLookupResult> {
+    blockNumber: bigint,
+  ): Promise<PriceLookupResult | null> {
+    if (!this.isActive(blockNumber)) return null;
     return { price: ONE, liquidity: ZERO };
   }
 
   async getTotalValue(
     _excludedTokens: string[],
     _priceLookup: PriceLookup,
-    _blockNumber: bigint,
+    blockNumber: bigint,
   ): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
     return ONE;
   }
 
-  async getUnitPrice(_priceLookup: PriceLookup, _blockNumber: bigint): Promise<BigNumber | null> {
+  async getUnitPrice(_priceLookup: PriceLookup, blockNumber: bigint): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
     return ONE;
   }
 

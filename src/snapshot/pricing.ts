@@ -2,7 +2,7 @@ import type BigNumber from "bignumber.js";
 import type { PublicClient } from "viem";
 
 import { getBaseTokenRate } from "./contracts";
-import { ZERO } from "./math";
+import { isActive, ZERO } from "./math";
 import { createPriceHandler } from "./price-handlers";
 import type { ChainConfig, LiquidityHandler } from "./types";
 
@@ -13,6 +13,8 @@ export async function getPrice(
   blockNumber: bigint,
   currentPool: string | null,
 ): Promise<BigNumber> {
+  const token = config.tokens.find((value) => value.address === tokenAddress.toLowerCase());
+  if (token && !isActive(token, blockNumber)) return ZERO;
   const base = await getBaseTokenRate(config, client, tokenAddress, blockNumber);
   if (base) return base;
 
@@ -24,6 +26,7 @@ export async function getPrice(
   let selectedLiquidity: BigNumber | null = null;
 
   for (const handlerConfig of config.liquidityHandlers) {
+    if (!isActive(handlerConfig, blockNumber)) continue;
     const handler = createPriceHandler(config, client, handlerConfig);
     if (!handler.matches(tokenAddress)) continue;
     if (handler.getId() === currentPool) continue;

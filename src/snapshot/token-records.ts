@@ -1,7 +1,7 @@
 import type { Address, PublicClient } from "viem";
 
 import { getErc20DecimalBalance, getNativeBalance } from "./contracts";
-import { toDecimal, ZERO } from "./math";
+import { isActive, toDecimal, ZERO } from "./math";
 import { getLiquidityBalance, getPrice, getTotalValue, getUnitPrice } from "./pricing";
 import { createTokenRecord, getContractName, getWalletAddressesForContract } from "./records";
 import type { ChainConfig, LiquidityHandler, Snapshot, TokenDefinition } from "./types";
@@ -14,6 +14,7 @@ export async function pushTokenBalanceRecords(
   timestamp: bigint,
   blockNumber: bigint,
 ) {
+  if (!isActive(definition, blockNumber)) return;
   const wallets = getWalletAddressesForContract(config, definition.address);
   const rate = await getPrice(config, client, definition.address, blockNumber, null);
   if (rate.eq(ZERO)) return;
@@ -54,6 +55,7 @@ export async function pushOwnedLiquidityRecords(
   timestamp: bigint,
   blockNumber: bigint,
 ) {
+  if (!isActive(handler, blockNumber)) return;
   const totalValue = await getTotalValue(config, client, handler, [], blockNumber);
   if (!totalValue || totalValue.eq(ZERO)) return;
   const includedValue = await getTotalValue(

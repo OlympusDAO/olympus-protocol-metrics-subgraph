@@ -7,7 +7,7 @@ import {
   getDecimals,
   getErc20DecimalBalance,
   getErc20TotalSupply,
-  safeRead,
+  readContract,
 } from "../contracts";
 import { same, toDecimal, ZERO } from "../math";
 import type { LiquidityHandler } from "../types";
@@ -21,11 +21,12 @@ export class BalancerPriceHandler extends BasePriceHandler<
     priceLookup: PriceLookup,
     blockNumber: bigint,
   ): Promise<PriceLookupResult | null> {
+    if (!this.isActive(blockNumber)) return null;
     const pool = await getBalancerPool(this.config, this.client, this.handler, blockNumber);
     if (!pool) return null;
     const poolToken = await getBalancerPoolToken(this.client, this.handler, blockNumber);
     if (!poolToken) return null;
-    const weights = await safeRead(
+    const weights = await readContract(
       this.client,
       poolToken,
       BALANCER_POOL_TOKEN_ABI,
@@ -65,6 +66,7 @@ export class BalancerPriceHandler extends BasePriceHandler<
     priceLookup: PriceLookup,
     blockNumber: bigint,
   ): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
     const pool = await getBalancerPool(this.config, this.client, this.handler, blockNumber);
     if (!pool) return null;
     let total = ZERO;
@@ -81,6 +83,7 @@ export class BalancerPriceHandler extends BasePriceHandler<
   }
 
   async getUnitPrice(priceLookup: PriceLookup, blockNumber: bigint): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
     const totalValue = await this.getTotalValue([], priceLookup, blockNumber);
     if (!totalValue) return null;
     const poolToken = await getBalancerPoolToken(this.client, this.handler, blockNumber);
@@ -90,6 +93,7 @@ export class BalancerPriceHandler extends BasePriceHandler<
   }
 
   async getBalance(wallet: string, blockNumber: bigint): Promise<BigNumber> {
+    if (!this.isActive(blockNumber)) return ZERO;
     const poolToken = await getBalancerPoolToken(this.client, this.handler, blockNumber);
     return poolToken ? getErc20DecimalBalance(this.client, poolToken, wallet, blockNumber) : ZERO;
   }
@@ -99,6 +103,7 @@ export class BalancerPriceHandler extends BasePriceHandler<
     tokenAddress: string,
     blockNumber: bigint,
   ): Promise<BigNumber> {
+    if (!this.isActive(blockNumber)) return ZERO;
     const poolToken = await getBalancerPoolToken(this.client, this.handler, blockNumber);
     if (!poolToken) return ZERO;
     const totalSupply = await getErc20TotalSupply(this.client, poolToken, blockNumber);

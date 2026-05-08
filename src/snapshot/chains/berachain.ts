@@ -1,6 +1,6 @@
 import { zeroAddress } from "viem";
 
-import { addr, bytes32, token } from "../math";
+import { addr, bytes32, feed, token } from "../math";
 import type { ChainConfig, LiquidityHandler } from "../types";
 import { rpcUrls } from "./rpc";
 
@@ -31,6 +31,17 @@ const BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2 = addr(
 );
 const INFRARED_KODIAK_OHM_HONEY_VAULT = addr("0xa57Cb177Beebc35A1A26A286951a306d9B752524");
 const BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT = addr("0x815596fa7c4d983d1ca5304e5b48978424c1b448");
+const BERACHAIN_START_BLOCK = 799194;
+const LP_KODIAK_OHM_HONEY_CREATION_BLOCK = 969521;
+const LP_BERADROME_KODIAK_OHM_HONEY_CREATION_BLOCK = 1052333;
+const LP_KODIAK_IBERA_WBERA_500_CREATION_BLOCK = 929297;
+const LP_KODIAK_IBGT_WBERA_CREATION_BLOCK = 1226972;
+const LBGT_CREATION_BLOCK = 1586863;
+const BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1_CREATION_BLOCK = 1052333;
+const BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2_CREATION_BLOCK = 1272921;
+const INFRARED_KODIAK_OHM_HONEY_VAULT_CREATION_BLOCK = 1184484;
+const BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT_CREATION_BLOCK = 1006689;
+const LP_BEX_LBGT_WBERA_CREATION_BLOCK = 1592960;
 
 const DAO_MULTISIG = addr("0x91494D1BC2286343D51c55E46AE80C9356D099b5");
 const TRSRY = addr("0xb1fA0Ac44d399b778B14af0AAF4bCF8af3437ad1");
@@ -75,6 +86,7 @@ const kodiak: LiquidityHandler = {
   pool: LP_KODIAK_OHM_HONEY,
   quoter: KODIAK_QUOTER,
   tokens: [ERC20_HONEY, ERC20_OHM],
+  startBlock: LP_KODIAK_OHM_HONEY_CREATION_BLOCK,
 };
 const beradromeKodiakOhmHoneyV1: LiquidityHandler = {
   kind: "kodiak",
@@ -83,6 +95,7 @@ const beradromeKodiakOhmHoneyV1: LiquidityHandler = {
   quoter: KODIAK_QUOTER,
   rewardVault: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1,
   tokens: [ERC20_HONEY, ERC20_OHM],
+  startBlock: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1_CREATION_BLOCK,
 };
 const beradromeKodiakOhmHoneyV2: LiquidityHandler = {
   kind: "kodiak",
@@ -91,6 +104,7 @@ const beradromeKodiakOhmHoneyV2: LiquidityHandler = {
   quoter: KODIAK_QUOTER,
   rewardVault: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2,
   tokens: [ERC20_HONEY, ERC20_OHM],
+  startBlock: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2_CREATION_BLOCK,
 };
 const infraredKodiakOhmHoney: LiquidityHandler = {
   kind: "kodiak",
@@ -99,6 +113,7 @@ const infraredKodiakOhmHoney: LiquidityHandler = {
   quoter: KODIAK_QUOTER,
   rewardVault: INFRARED_KODIAK_OHM_HONEY_VAULT,
   tokens: [ERC20_HONEY, ERC20_OHM],
+  startBlock: INFRARED_KODIAK_OHM_HONEY_VAULT_CREATION_BLOCK,
 };
 const beraHubKodiakOhmHoney: LiquidityHandler = {
   kind: "kodiak",
@@ -107,6 +122,7 @@ const beraHubKodiakOhmHoney: LiquidityHandler = {
   quoter: KODIAK_QUOTER,
   rewardVault: BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT,
   tokens: [ERC20_HONEY, ERC20_OHM],
+  startBlock: BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT_CREATION_BLOCK,
 };
 
 const ownedLiquidityHandlers: LiquidityHandler[] = [
@@ -122,19 +138,39 @@ export const BERACHAIN: ChainConfig = {
   blockchain: "Berachain",
   rpcUrls: rpcUrls("BERACHAIN", "https://rpc.berachain.com"),
   ohmToken: ERC20_OHM,
+  ohmStartBlock: BERACHAIN_START_BLOCK,
   nativeToken: NATIVE_BERA,
   tokens: [
     token(ERC20_IBERA, "Volatile", false, false),
-    token(ERC20_IBGT, "Volatile", false, false),
-    token(ERC20_LBGT, "Volatile", false, false),
+    token(ERC20_IBGT, "Volatile", false, false, undefined, {
+      startBlock: BERACHAIN_START_BLOCK,
+    }),
+    token(ERC20_LBGT, "Volatile", false, false, undefined, {
+      startBlock: LBGT_CREATION_BLOCK,
+    }),
     token(ERC20_STARGATE_USDC, "Stable", true, false),
     token(ERC20_HONEY, "Stable", true, false),
     token(ERC20_WBERA, "Volatile", true, true),
     token(NATIVE_BERA, "Volatile", true, true),
-    token(LP_KODIAK_OHM_HONEY, "Protocol-Owned Liquidity", true, false),
-    token(LP_BERADROME_KODIAK_OHM_HONEY, "Protocol-Owned Liquidity", true, false),
-    token(INFRARED_KODIAK_OHM_HONEY_VAULT, "Protocol-Owned Liquidity", true, false),
-    token(BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT, "Protocol-Owned Liquidity", true, false),
+    token(LP_KODIAK_OHM_HONEY, "Protocol-Owned Liquidity", true, false, undefined, {
+      startBlock: LP_KODIAK_OHM_HONEY_CREATION_BLOCK,
+    }),
+    token(LP_BERADROME_KODIAK_OHM_HONEY, "Protocol-Owned Liquidity", true, false, undefined, {
+      startBlock: LP_BERADROME_KODIAK_OHM_HONEY_CREATION_BLOCK,
+    }),
+    token(INFRARED_KODIAK_OHM_HONEY_VAULT, "Protocol-Owned Liquidity", true, false, undefined, {
+      startBlock: INFRARED_KODIAK_OHM_HONEY_VAULT_CREATION_BLOCK,
+    }),
+    token(
+      BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT,
+      "Protocol-Owned Liquidity",
+      true,
+      false,
+      undefined,
+      {
+        startBlock: BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT_CREATION_BLOCK,
+      },
+    ),
   ],
   names,
   abbreviations: {
@@ -149,8 +185,11 @@ export const BERACHAIN: ChainConfig = {
   circulatingSupplyWallets: PROTOCOL_ADDRESSES,
   treasuryBlacklist: { [ERC20_OHM]: [DAO_MULTISIG, DAO_OPS_MULTISIG, TRSRY] },
   basePriceFeeds: {
-    [ERC20_HONEY]: addr("0x4BAD96DD1C7D541270a0C92e1D4e5f12EEEA7a57"),
-    [ERC20_STARGATE_USDC]: addr("0x4BAD96DD1C7D541270a0C92e1D4e5f12EEEA7a57"),
+    [ERC20_HONEY]: feed("0x4BAD96DD1C7D541270a0C92e1D4e5f12EEEA7a57", BERACHAIN_START_BLOCK),
+    [ERC20_STARGATE_USDC]: feed(
+      "0x4BAD96DD1C7D541270a0C92e1D4e5f12EEEA7a57",
+      BERACHAIN_START_BLOCK,
+    ),
   },
   liquidityHandlers: [
     {
@@ -170,6 +209,7 @@ export const BERACHAIN: ChainConfig = {
       tokens: [ERC20_IBERA, ERC20_WBERA],
       id: LP_KODIAK_IBERA_WBERA_500,
       quoter: KODIAK_QUOTER,
+      startBlock: LP_KODIAK_IBERA_WBERA_500_CREATION_BLOCK,
     },
     kodiak,
     beradromeKodiakOhmHoneyV1,
@@ -180,6 +220,7 @@ export const BERACHAIN: ChainConfig = {
       tokens: [ERC20_IBGT, ERC20_WBERA],
       id: LP_KODIAK_IBGT_WBERA,
       quoter: KODIAK_QUOTER,
+      startBlock: LP_KODIAK_IBGT_WBERA_CREATION_BLOCK,
     },
     { kind: "remap", tokens: [NATIVE_BERA], id: NATIVE_BERA, target: ERC20_WBERA },
     {
@@ -187,6 +228,7 @@ export const BERACHAIN: ChainConfig = {
       tokens: [ERC20_LBGT, ERC20_WBERA],
       vault: BEX_VAULT,
       id: LP_BEX_LBGT_WBERA_ID,
+      startBlock: LP_BEX_LBGT_WBERA_CREATION_BLOCK,
     },
   ],
   ownedLiquidityHandlers,
