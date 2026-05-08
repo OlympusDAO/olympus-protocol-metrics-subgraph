@@ -84,7 +84,7 @@ async function processSnapshot(
   );
 
   context.log.info(
-    `Writing snapshot entities for ${name} block ${blockNumber} on chain ${chainId}`,
+    `Queueing snapshot entities for ${name} block ${blockNumber} on chain ${chainId}`,
     {
       tokenRecords: snapshot.tokenRecords.length,
       tokenSupplies: snapshot.tokenSupplies.length,
@@ -123,6 +123,6 @@ async function processSnapshot(
     context.TokenSupply.set(entity);
   }
   context.log.info(
-    `Finished writing snapshot entities for ${name} block ${blockNumber} on chain ${chainId}`,
+    `Finished queueing snapshot entities for ${name} block ${blockNumber} on chain ${chainId}; Envio will persist them when the batch commits`,
   );
 }

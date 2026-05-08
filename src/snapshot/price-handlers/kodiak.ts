@@ -101,12 +101,22 @@ export class KodiakPriceHandler extends BasePriceHandler<
 
   async getBalance(wallet: string, blockNumber: bigint): Promise<BigNumber> {
     if (!this.isActive(blockNumber)) return ZERO;
-    return getErc20DecimalBalance(
-      this.client,
-      this.handler.rewardVault ?? this.handler.pool,
-      wallet,
-      blockNumber,
-    );
+    if (!this.handler.rewardVault) {
+      return getErc20DecimalBalance(this.client, this.handler.pool, wallet, blockNumber);
+    }
+
+    const [poolDecimals, balance] = await Promise.all([
+      getDecimals(this.client, this.handler.pool, blockNumber),
+      readContract(
+        this.client,
+        this.handler.rewardVault,
+        KODIAK_ABI,
+        "balanceOf",
+        [wallet as `0x${string}`],
+        blockNumber,
+      ),
+    ]);
+    return toDecimal(balance, poolDecimals);
   }
 
   async getUnderlyingTokenBalance(
