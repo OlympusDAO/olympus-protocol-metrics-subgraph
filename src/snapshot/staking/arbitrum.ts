@@ -8,6 +8,7 @@ import {
   ERC20_JONES,
   ERC20_MAGIC,
   JONES_STAKING,
+  JONES_STAKING_CREATION_BLOCK,
   TREASURE_ATLAS_MINE,
 } from "../chains/arbitrum";
 import { getDecimals, readContract } from "../contracts";
@@ -18,6 +19,7 @@ import type { ChainConfig, Snapshot, TokenDefinition } from "../types";
 
 const JONES_STAKING_POOL_IDS = [0n];
 const JONES_WRITE_OFF_BLOCK = 130_482_707n;
+type SnapshotLogger = (message: string, metadata?: Record<string, unknown>) => void;
 
 function getContractNameWithSuffix(
   config: ChainConfig,
@@ -38,6 +40,7 @@ export async function pushArbitrumStakingRecords(
   definition: TokenDefinition,
   timestamp: bigint,
   blockNumber: bigint,
+  log?: SnapshotLogger,
 ) {
   if (!isActive({ startBlock: ARBITRUM_START_BLOCK }, blockNumber)) return;
 
@@ -46,7 +49,15 @@ export async function pushArbitrumStakingRecords(
   }
 
   if (same(definition.address, ERC20_MAGIC)) {
-    await pushTreasureStakingRecords(snapshot, config, client, definition, timestamp, blockNumber);
+    await pushTreasureStakingRecords(
+      snapshot,
+      config,
+      client,
+      definition,
+      timestamp,
+      blockNumber,
+      log,
+    );
   }
 }
 
@@ -58,6 +69,8 @@ async function pushJonesStakingRecords(
   timestamp: bigint,
   blockNumber: bigint,
 ) {
+  if (!isActive({ startBlock: JONES_STAKING_CREATION_BLOCK }, blockNumber)) return;
+
   let rate: BigNumber | null = null;
   const decimals = await getDecimals(client, definition.address, blockNumber);
 
@@ -114,10 +127,15 @@ async function pushTreasureStakingRecords(
   definition: TokenDefinition,
   timestamp: bigint,
   blockNumber: bigint,
+  log?: SnapshotLogger,
 ) {
   let rate: BigNumber | null = null;
 
   for (const wallet of config.protocolAddresses) {
+    log?.("Starting Treasure staking deposit id read", {
+      wallet,
+      blockNumber: blockNumber.toString(),
+    });
     const depositIds = await readContract(
       client,
       TREASURE_ATLAS_MINE,
@@ -126,8 +144,18 @@ async function pushTreasureStakingRecords(
       [wallet as Address],
       blockNumber,
     );
+    log?.("Finished Treasure staking deposit id read", {
+      wallet,
+      depositIds: depositIds.length,
+      blockNumber: blockNumber.toString(),
+    });
 
     for (const depositId of depositIds) {
+      log?.("Starting Treasure staking user info read", {
+        wallet,
+        depositId: depositId.toString(),
+        blockNumber: blockNumber.toString(),
+      });
       const userInfo = await readContract(
         client,
         TREASURE_ATLAS_MINE,
@@ -136,6 +164,11 @@ async function pushTreasureStakingRecords(
         [wallet as Address, depositId],
         blockNumber,
       );
+      log?.("Finished Treasure staking user info read", {
+        wallet,
+        depositId: depositId.toString(),
+        blockNumber: blockNumber.toString(),
+      });
       const balance = toDecimal(userInfo[1], 18);
       if (balance.eq(ZERO)) continue;
 

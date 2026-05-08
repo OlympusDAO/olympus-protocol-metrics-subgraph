@@ -22,6 +22,9 @@ const clients = new Map<number, PublicClient>();
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_RPC_ATTEMPTS = 6;
 const BASE_RETRY_DELAY_MS = 1_000;
+const DEFAULT_HTTP_BATCH_SIZE = 1;
+const DEFAULT_MULTICALL_BATCH_SIZE = 128;
+const DEFAULT_RPC_TIMEOUT_MS = 30_000;
 let activeContractReadCache: Map<string, Promise<unknown>> | null = null;
 
 export async function withContractReadCache<T>(operation: () => Promise<T>): Promise<T> {
@@ -37,14 +40,38 @@ export async function withContractReadCache<T>(operation: () => Promise<T>): Pro
 export function getClient(config: ChainConfig) {
   const existing = clients.get(config.chainId);
   if (existing) return existing;
-  const transports = config.rpcUrls.map((url) => http(url, { batch: true, retryCount: 0 }));
+  const transports = config.rpcUrls.map((url) =>
+    http(url, {
+      batch: { batchSize: getHttpBatchSize() },
+      retryCount: 0,
+      timeout: getRpcTimeoutMs(),
+    }),
+  );
   const client = createPublicClient({
     chain: config.chainId === 42161 ? arbitrum : berachain,
-    batch: { multicall: { batchSize: 8_192 } },
+    batch: { multicall: { batchSize: getMulticallBatchSize() } },
     transport: transports.length === 1 ? transports[0] : fallback(transports),
   });
   clients.set(config.chainId, client);
   return client;
+}
+
+function getHttpBatchSize(): number {
+  const configured = Number(process.env.RPC_HTTP_BATCH_SIZE);
+  if (Number.isInteger(configured) && configured > 0) return configured;
+  return DEFAULT_HTTP_BATCH_SIZE;
+}
+
+function getMulticallBatchSize(): number {
+  const configured = Number(process.env.RPC_MULTICALL_BATCH_SIZE);
+  if (Number.isInteger(configured) && configured > 0) return configured;
+  return DEFAULT_MULTICALL_BATCH_SIZE;
+}
+
+function getRpcTimeoutMs(): number {
+  const configured = Number(process.env.RPC_TIMEOUT_MS);
+  if (Number.isInteger(configured) && configured > 0) return configured;
+  return DEFAULT_RPC_TIMEOUT_MS;
 }
 
 export async function retryRpc<T>(operation: () => Promise<T>): Promise<T> {

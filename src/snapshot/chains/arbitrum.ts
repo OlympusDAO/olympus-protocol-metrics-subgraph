@@ -74,15 +74,25 @@ const LP_UNISWAP_V3_ARB_WETH = addr("0xc6f780497a95e246eb9449f5e4770916dcd6396a"
 const LP_UNISWAP_V3_WETH_USDC = addr("0xc31e54c7a869b9fcbecc14363cf510d1c41fa443");
 export const ARBITRUM_START_BLOCK = 10_950_000;
 const ARB_CREATION_BLOCK = 70_398_215;
+const FRAX_CREATION_BLOCK = 1_693_791;
 const OHM_CREATION_BLOCK = 85_886_493;
+const JONES_CREATION_BLOCK = 4_936_079;
 const LQTY_CREATION_BLOCK = 68_940_603;
 const LUSD_CREATION_BLOCK = 20_063_879;
 const LUSD_FEED_CREATION_BLOCK = 73_250_559;
+const MAGIC_CREATION_BLOCK = 2_028_077;
+const USDC_CREATION_BLOCK = 2_609;
+const VSTA_CREATION_BLOCK = 5_160_918;
+const WETH_CREATION_BLOCK = 55;
+const LP_BALANCER_WETH_VSTA_CREATION_BLOCK = 5_671_673;
 const LP_BALANCER_WETH_OHM_CREATION_BLOCK = 87_570_545;
 const LP_BALANCER_OHM_USDC_CREATION_BLOCK = 87_572_753;
+const LP_UNISWAP_V2_JONES_WETH_CREATION_BLOCK = 5_236_927;
 const LP_UNISWAP_V2_LQTY_WETH_CREATION_BLOCK = 70_190_173;
+const LP_UNISWAP_V2_MAGIC_WETH_CREATION_BLOCK = 2_260_276;
 const LP_CAMELOT_OHM_WETH_CREATION_BLOCK = 209_392_712;
 const LP_UNISWAP_V3_ARB_WETH_CREATION_BLOCK = 73_240_629;
+export const JONES_STAKING_CREATION_BLOCK = 11_264_445;
 
 export const ARBITRUM_PROTOCOL_ADDRESSES = [
   AAVE_ALLOCATOR_V2,
@@ -180,6 +190,7 @@ const liquidityHandlers: LiquidityHandler[] = [
     tokens: [ERC20_WETH, ERC20_VSTA],
     vault: BALANCER_VAULT,
     id: LP_BALANCER_POOL_WETH_VESTA,
+    startBlock: LP_BALANCER_WETH_VSTA_CREATION_BLOCK,
   },
   {
     kind: "balancer",
@@ -206,6 +217,7 @@ const liquidityHandlers: LiquidityHandler[] = [
     kind: "univ2",
     tokens: [ERC20_JONES, ERC20_WETH],
     id: LP_UNISWAP_V2_JONES_WETH,
+    startBlock: LP_UNISWAP_V2_JONES_WETH_CREATION_BLOCK,
   },
   {
     kind: "univ2",
@@ -217,6 +229,7 @@ const liquidityHandlers: LiquidityHandler[] = [
     kind: "univ2",
     tokens: [ERC20_MAGIC, ERC20_WETH],
     id: LP_UNISWAP_V2_MAGIC_WETH,
+    startBlock: LP_UNISWAP_V2_MAGIC_WETH_CREATION_BLOCK,
   },
   {
     kind: "univ2",
@@ -241,20 +254,32 @@ const liquidityHandlers: LiquidityHandler[] = [
 export const ARBITRUM: ChainConfig = {
   chainId: 42161,
   blockchain: "Arbitrum",
-  rpcUrls: rpcUrls("ARBITRUM", "https://arb1.arbitrum.io/rpc"),
+  rpcUrls: rpcUrls("ARBITRUM", "https://arbitrum.rpc.subquery.network/public", [
+    "https://arbitrum-one.public.blastapi.io",
+  ]),
   ohmToken: ERC20_OHM,
   ohmStartBlock: OHM_CREATION_BLOCK,
   tokens: [
     token(ERC20_ARB, "Volatile", true, false, undefined, { startBlock: ARB_CREATION_BLOCK }),
-    token(ERC20_FRAX, "Stable", true, false),
-    token(ERC20_JONES, "Volatile", true, false, "0.83"),
+    token(ERC20_FRAX, "Stable", true, false, undefined, {
+      startBlock: FRAX_CREATION_BLOCK,
+    }),
+    token(ERC20_JONES, "Volatile", true, false, "0.83", {
+      startBlock: JONES_CREATION_BLOCK,
+    }),
     token(ERC20_LQTY, "Volatile", true, false, undefined, { startBlock: LQTY_CREATION_BLOCK }),
     token(ERC20_LUSD, "Stable", true, false, undefined, { startBlock: LUSD_CREATION_BLOCK }),
-    token(ERC20_MAGIC, "Volatile", true, false),
-    token(ERC20_USDC, "Stable", true, false),
-    token(ERC20_VSTA, "Volatile", true, false, "0.77"),
-    token(ERC20_WETH, "Volatile", true, true),
-    token(LP_BALANCER_POOL_WETH_VESTA, "Protocol-Owned Liquidity", true, false),
+    token(ERC20_MAGIC, "Volatile", true, false, undefined, {
+      startBlock: MAGIC_CREATION_BLOCK,
+    }),
+    token(ERC20_USDC, "Stable", true, false, undefined, { startBlock: USDC_CREATION_BLOCK }),
+    token(ERC20_VSTA, "Volatile", true, false, "0.77", {
+      startBlock: VSTA_CREATION_BLOCK,
+    }),
+    token(ERC20_WETH, "Volatile", true, true, undefined, { startBlock: WETH_CREATION_BLOCK }),
+    token(LP_BALANCER_POOL_WETH_VESTA, "Protocol-Owned Liquidity", true, false, undefined, {
+      startBlock: LP_BALANCER_WETH_VSTA_CREATION_BLOCK,
+    }),
     token(LP_BALANCER_POOL_WETH_OHM, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: LP_BALANCER_WETH_OHM_CREATION_BLOCK,
     }),
@@ -264,8 +289,12 @@ export const ARBITRUM: ChainConfig = {
     token(LP_UNISWAP_V2_GOHM_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: ARBITRUM_START_BLOCK,
     }),
-    token(LP_UNISWAP_V2_JONES_WETH, "Protocol-Owned Liquidity", true, false),
-    token(LP_UNISWAP_V2_MAGIC_WETH, "Protocol-Owned Liquidity", true, false),
+    token(LP_UNISWAP_V2_JONES_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
+      startBlock: LP_UNISWAP_V2_JONES_WETH_CREATION_BLOCK,
+    }),
+    token(LP_UNISWAP_V2_MAGIC_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
+      startBlock: LP_UNISWAP_V2_MAGIC_WETH_CREATION_BLOCK,
+    }),
     token(LP_CAMELOT_OHM_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: LP_CAMELOT_OHM_WETH_CREATION_BLOCK,
     }),

@@ -121,9 +121,9 @@ The Envio indexer is configured for sparse 8-hour block snapshots. Run local ind
 pnpm run envio:dev
 ```
 
-Snapshot handlers perform archive RPC reads for balances, pool state, and price feeds. Set `ARBITRUM_RPC_URL` and `BERACHAIN_RPC_URL` to paid archive endpoints for full historical backfills. If a primary RPC URL is not configured, the indexer falls back to the checked-in public RPC and logs that choice without printing the URL. Optional comma-separated fallback endpoints can be provided through `ARBITRUM_FALLBACK_RPC_URLS` and `BERACHAIN_FALLBACK_RPC_URLS`.
+Snapshot handlers perform archive RPC reads for balances, pool state, and price feeds. The checked-in Arbitrum defaults use SubQuery first because the historical snapshots start at block `10950000`, and the default Arbitrum public RPC does not serve archive state that far back. A public Blast RPC is configured as the fallback because SubQuery's public endpoint can rate-limit local smoke runs. Set `ARBITRUM_RPC_URL` and `BERACHAIN_RPC_URL` to paid archive endpoints for reliable full historical backfills. Optional comma-separated fallback endpoints can be provided through `ARBITRUM_FALLBACK_RPC_URLS` and `BERACHAIN_FALLBACK_RPC_URLS`.
 
-`MAX_BATCH_SIZE` defaults to `1` and `ENVIO_INDEXING_MAX_BUFFER_SIZE` defaults to `8` in those scripts. Snapshot generation does many archive reads, so processing one block/event per batch keeps progress commits frequent and makes long RPC calls visible in logs.
+`full_batch_size` is set to `1` in `config.yaml` as a conservative backfill setting, not because larger batches are impossible. Each matched block runs a full treasury snapshot with many archive reads; one block per batch keeps progress commits frequent and limits replay to a single snapshot after an RPC failure. If a production archive RPC proves stable, this can be raised and benchmarked.
 
 The snapshot RPC work runs through the `getSnapshot` Envio effect with effect caching disabled. Each scheduled block is processed once, and the durable output is the `TokenRecord` and `TokenSupply` entity rows written by the handler. Caching the full snapshot would add a second database write for every 8-hour block without reuse benefit during backfill.
 

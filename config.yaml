@@ -2,24 +2,19 @@
 name: olympus-protocol-metrics
 description: Olympus protocol metrics for Arbitrum and Berachain
 
-networks:
+chains:
   - id: 42161 # Arbitrum One
     start_block: 10950000 # 2022-05-01
-    contracts:
-      - name: ArbitrumSnapshotAnchor
-        address: "0xf0cb2dc0db5e6c66b9a70ac27b06b878da017028" # OHM
-        handler: src/EventHandlers.ts
-        events:
-          - event: "SnapshotAnchor()"
+    rpc:
+      - url: ${ARBITRUM_RPC_URL:-https://arbitrum.rpc.subquery.network/public}
+        for: sync
+      - url: ${ARBITRUM_FALLBACK_RPC_URL:-https://arbitrum-one.public.blastapi.io}
+        for: sync
   - id: 80094 # Berachain
     start_block: 799194 # 2025-02-07 00:00:00 UTC
-    contracts:
-      - name: BerachainSnapshotAnchor
-        address: "0x18878df23e2a36f81e820e4b47b4a40576d3159c" # OHM
-        handler: src/EventHandlers.ts
-        events:
-          - event: "SnapshotAnchor()"
+    rpc:
+      - url: ${BERACHAIN_RPC_URL:-https://rpc.berachain.com}
+        for: sync
 
-unordered_multichain_mode: true
-preload_handlers: true
+full_batch_size: 1
 address_format: lowercase

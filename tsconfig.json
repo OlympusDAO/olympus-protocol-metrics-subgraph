@@ -10,8 +10,10 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "module": "CommonJS"
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"]
   },
-  "include": ["src", "test"],
-  "exclude": ["node_modules", "generated"]
+  "include": ["envio-env.d.ts", "src", "test"],
+  "exclude": ["node_modules", "generated", ".envio"]
 }

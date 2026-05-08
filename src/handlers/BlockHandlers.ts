@@ -1,16 +1,12 @@
 import {
-  ArbitrumSnapshotAnchor,
-  BerachainSnapshotAnchor,
   BigDecimal,
-  onBlock,
-  type handlerContext,
+  type EvmOnBlockContext,
+  indexer,
   type TokenRecord,
   type TokenSupply,
-} from "generated";
-import { getSnapshot, type Snapshot } from "./snapshot";
+} from "envio";
 
-ArbitrumSnapshotAnchor.SnapshotAnchor.handler(async () => {});
-BerachainSnapshotAnchor.SnapshotAnchor.handler(async () => {});
+import { getSnapshot, type Snapshot } from "../snapshot";
 
 const BLOCK_HANDLERS = [
   {
@@ -27,25 +23,40 @@ const BLOCK_HANDLERS = [
   },
 ];
 
-BLOCK_HANDLERS.forEach(({ name, chain, startBlock, interval }) => {
-  onBlock(
-    {
-      name,
-      chain,
-      startBlock,
-      interval,
+indexer.onBlock(
+  {
+    name: "EightHourSnapshot",
+    where: ({ chain }) => {
+      const handler = BLOCK_HANDLERS.find((value) => value.chain === chain.id);
+      if (!handler) {
+        throw new Error(`Unsupported chain ${chain.id} for EightHourSnapshot block handler`);
+      }
+      return {
+        block: {
+          number: {
+            _gte: handler.startBlock,
+            _every: handler.interval,
+          },
+        },
+      };
     },
-    async ({ block, context }) => {
-      await processSnapshot(name, block.number, block.chainId, context);
-    },
-  );
-});
+  },
+  async ({ block, context }) => {
+    const handler = BLOCK_HANDLERS.find((value) => value.chain === context.chain.id);
+    if (!handler) {
+      throw new Error(
+        `Unsupported chain ${context.chain.id} for EightHourSnapshot block ${block.number}`,
+      );
+    }
+    await processSnapshot(handler.name, block.number, context.chain.id, context);
+  },
+);
 
 async function processSnapshot(
   name: string,
   blockNumber: number,
   chainId: number,
-  context: handlerContext,
+  context: EvmOnBlockContext,
 ): Promise<void> {
   if (context.isPreload) {
     context.log.info(`Skipping ${name} block ${blockNumber} on chain ${chainId}: preload phase`);
