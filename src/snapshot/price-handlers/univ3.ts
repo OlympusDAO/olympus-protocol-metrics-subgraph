@@ -101,11 +101,13 @@ export class Univ3QuoterPriceHandler extends BasePriceHandler<
     blockNumber: bigint,
   ): Promise<PriceLookupResult | null> {
     if (!this.isActive(blockNumber)) return null;
-    const [token0, token1, fee] = await Promise.all([
+    const [token0, token1, fee, liquidity] = await Promise.all([
       readInvariantContract(this.client, this.handler.id, UNIV3_ABI, "token0", [], blockNumber),
       readInvariantContract(this.client, this.handler.id, UNIV3_ABI, "token1", [], blockNumber),
       readInvariantContract(this.client, this.handler.id, UNIV3_ABI, "fee", [], blockNumber),
+      readContract(this.client, this.handler.id, UNIV3_ABI, "liquidity", [], blockNumber),
     ]);
+    if (liquidity === 0n) return null;
     const secondaryToken = same(tokenAddress, token0) ? addr(token1) : addr(token0);
     const [tokenDecimals, secondaryDecimals] = await Promise.all([
       getDecimals(this.client, tokenAddress, blockNumber),
