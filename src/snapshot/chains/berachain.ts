@@ -76,41 +76,45 @@ const kodiak: LiquidityHandler = {
   quoter: KODIAK_QUOTER,
   tokens: [ERC20_HONEY, ERC20_OHM],
 };
+const beradromeKodiakOhmHoneyV1: LiquidityHandler = {
+  kind: "kodiak",
+  id: LP_BERADROME_KODIAK_OHM_HONEY,
+  pool: LP_KODIAK_OHM_HONEY,
+  quoter: KODIAK_QUOTER,
+  rewardVault: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1,
+  tokens: [ERC20_HONEY, ERC20_OHM],
+};
+const beradromeKodiakOhmHoneyV2: LiquidityHandler = {
+  kind: "kodiak",
+  id: LP_BERADROME_KODIAK_OHM_HONEY,
+  pool: LP_KODIAK_OHM_HONEY,
+  quoter: KODIAK_QUOTER,
+  rewardVault: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2,
+  tokens: [ERC20_HONEY, ERC20_OHM],
+};
+const infraredKodiakOhmHoney: LiquidityHandler = {
+  kind: "kodiak",
+  id: INFRARED_KODIAK_OHM_HONEY_VAULT,
+  pool: LP_KODIAK_OHM_HONEY,
+  quoter: KODIAK_QUOTER,
+  rewardVault: INFRARED_KODIAK_OHM_HONEY_VAULT,
+  tokens: [ERC20_HONEY, ERC20_OHM],
+};
+const beraHubKodiakOhmHoney: LiquidityHandler = {
+  kind: "kodiak",
+  id: BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT,
+  pool: LP_KODIAK_OHM_HONEY,
+  quoter: KODIAK_QUOTER,
+  rewardVault: BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT,
+  tokens: [ERC20_HONEY, ERC20_OHM],
+};
 
 const ownedLiquidityHandlers: LiquidityHandler[] = [
   kodiak,
-  {
-    kind: "kodiak",
-    id: LP_BERADROME_KODIAK_OHM_HONEY,
-    pool: LP_KODIAK_OHM_HONEY,
-    quoter: KODIAK_QUOTER,
-    rewardVault: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1,
-    tokens: [ERC20_HONEY, ERC20_OHM],
-  },
-  {
-    kind: "kodiak",
-    id: LP_BERADROME_KODIAK_OHM_HONEY,
-    pool: LP_KODIAK_OHM_HONEY,
-    quoter: KODIAK_QUOTER,
-    rewardVault: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2,
-    tokens: [ERC20_HONEY, ERC20_OHM],
-  },
-  {
-    kind: "kodiak",
-    id: INFRARED_KODIAK_OHM_HONEY_VAULT,
-    pool: LP_KODIAK_OHM_HONEY,
-    quoter: KODIAK_QUOTER,
-    rewardVault: INFRARED_KODIAK_OHM_HONEY_VAULT,
-    tokens: [ERC20_HONEY, ERC20_OHM],
-  },
-  {
-    kind: "kodiak",
-    id: BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT,
-    pool: LP_KODIAK_OHM_HONEY,
-    quoter: KODIAK_QUOTER,
-    rewardVault: BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT,
-    tokens: [ERC20_HONEY, ERC20_OHM],
-  },
+  beradromeKodiakOhmHoneyV1,
+  beradromeKodiakOhmHoneyV2,
+  infraredKodiakOhmHoney,
+  beraHubKodiakOhmHoney,
 ];
 
 export const BERACHAIN: ChainConfig = {
@@ -167,14 +171,17 @@ export const BERACHAIN: ChainConfig = {
       id: LP_KODIAK_IBERA_WBERA_500,
       quoter: KODIAK_QUOTER,
     },
-    ...ownedLiquidityHandlers,
+    kodiak,
+    beradromeKodiakOhmHoneyV1,
+    beradromeKodiakOhmHoneyV2,
+    beraHubKodiakOhmHoney,
     {
       kind: "univ3-quoter",
       tokens: [ERC20_IBGT, ERC20_WBERA],
       id: LP_KODIAK_IBGT_WBERA,
       quoter: KODIAK_QUOTER,
     },
-    { kind: "stable", tokens: [NATIVE_BERA, ERC20_WBERA], id: "bera-wbera" },
+    { kind: "remap", tokens: [NATIVE_BERA], id: NATIVE_BERA, target: ERC20_WBERA },
     {
       kind: "balancer",
       tokens: [ERC20_LBGT, ERC20_WBERA],

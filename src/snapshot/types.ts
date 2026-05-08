@@ -70,6 +70,7 @@ export type ChainConfig = {
 
 export type LiquidityHandler =
   | { kind: "stable"; id: string; tokens: string[] }
+  | { kind: "remap"; id: string; tokens: string[]; target: string }
   | { kind: "univ2"; id: string; tokens: string[] }
   | { kind: "univ3"; id: string; tokens: string[] }
   | { kind: "univ3-quoter"; id: string; quoter: string; tokens: string[] }
