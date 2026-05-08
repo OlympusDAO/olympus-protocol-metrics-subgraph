@@ -25,8 +25,14 @@ const BASE_RETRY_DELAY_MS = 1_000;
 const DEFAULT_HTTP_BATCH_SIZE = 1;
 const DEFAULT_MULTICALL_BATCH_SIZE = 128;
 const DEFAULT_RPC_TIMEOUT_MS = 30_000;
+const DEFAULT_RPC_REQUESTS_PER_SECOND = 0;
+const DEFAULT_CHAIN_RPC_REQUESTS_PER_SECOND: Record<number, number> = {
+  42161: 5,
+  80094: 5,
+};
 let activeContractReadCache: Map<string, Promise<unknown>> | null = null;
 const invariantContractReadCache = new Map<string, Promise<unknown>>();
+const rpcRateLimiters = new Map<number, RpcRateLimiter | null>();
 
 export async function withContractReadCache<T>(operation: () => Promise<T>): Promise<T> {
   const previousCache = activeContractReadCache;
@@ -41,9 +47,11 @@ export async function withContractReadCache<T>(operation: () => Promise<T>): Pro
 export function getClient(config: ChainConfig) {
   const existing = clients.get(config.chainId);
   if (existing) return existing;
+  const rateLimitedFetch = getRateLimitedFetch(config);
   const transports = config.rpcUrls.map((url) =>
     http(url, {
       batch: { batchSize: getHttpBatchSize() },
+      fetchFn: rateLimitedFetch,
       retryCount: 0,
       timeout: getRpcTimeoutMs(),
     }),
@@ -73,6 +81,58 @@ function getRpcTimeoutMs(): number {
   const configured = Number(process.env.ENVIO_RPC_TIMEOUT_MS);
   if (Number.isInteger(configured) && configured > 0) return configured;
   return DEFAULT_RPC_TIMEOUT_MS;
+}
+
+function getRateLimitedFetch(config: ChainConfig): typeof fetch | undefined {
+  const limiter = getRpcRateLimiter(config);
+  if (!limiter) return undefined;
+  return async (input, init) => {
+    await limiter.wait();
+    return fetch(input, init);
+  };
+}
+
+function getRpcRateLimiter(config: ChainConfig): RpcRateLimiter | null {
+  if (rpcRateLimiters.has(config.chainId)) return rpcRateLimiters.get(config.chainId) ?? null;
+  const requestsPerSecond = getRpcRequestsPerSecond(config);
+  const limiter = requestsPerSecond > 0 ? new RpcRateLimiter(requestsPerSecond) : null;
+  rpcRateLimiters.set(config.chainId, limiter);
+  return limiter;
+}
+
+function getRpcRequestsPerSecond(config: ChainConfig): number {
+  const chainSpecificKey = `ENVIO_${config.blockchain.toUpperCase()}_RPC_REQUESTS_PER_SECOND`;
+  const configured = getConfiguredNumber(
+    process.env[chainSpecificKey] ?? process.env.ENVIO_RPC_REQUESTS_PER_SECOND,
+  );
+  if (configured !== null) return configured;
+  return DEFAULT_CHAIN_RPC_REQUESTS_PER_SECOND[config.chainId] ?? DEFAULT_RPC_REQUESTS_PER_SECOND;
+}
+
+function getConfiguredNumber(value: string | undefined): number | null {
+  if (value === undefined || value.trim() === "") return null;
+  const configured = Number(value);
+  return Number.isFinite(configured) && configured >= 0 ? configured : null;
+}
+
+class RpcRateLimiter {
+  private readonly intervalMs: number;
+  private nextAvailableAt = 0;
+  private queue = Promise.resolve();
+
+  constructor(requestsPerSecond: number) {
+    this.intervalMs = Math.ceil(1_000 / requestsPerSecond);
+  }
+
+  wait(): Promise<void> {
+    this.queue = this.queue.then(async () => {
+      const now = Date.now();
+      const delayMs = Math.max(0, this.nextAvailableAt - now);
+      if (delayMs > 0) await sleep(delayMs);
+      this.nextAvailableAt = Date.now() + this.intervalMs;
+    });
+    return this.queue;
+  }
 }
 
 export async function retryRpc<T>(operation: () => Promise<T>): Promise<T> {
@@ -210,7 +270,10 @@ function isRetryableRpcError(error: unknown): boolean {
   const status = "status" in error ? Number(error.status) : undefined;
   if (status && RETRYABLE_STATUSES.has(status)) return true;
   const details = "details" in error ? String(error.details) : "";
+  const message = "message" in error ? String(error.message) : "";
   if (details.includes("Too Many Requests")) return true;
+  if (details.includes("compute units per second capacity")) return true;
+  if (message.includes("compute units per second capacity")) return true;
   return "cause" in error ? isRetryableRpcError(error.cause) : false;
 }
 
