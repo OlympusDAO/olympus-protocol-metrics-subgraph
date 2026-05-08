@@ -58,11 +58,6 @@ async function processSnapshot(
   chainId: number,
   context: EvmOnBlockContext,
 ): Promise<void> {
-  if (context.isPreload) {
-    context.log.info(`Skipping ${name} block ${blockNumber} on chain ${chainId}: preload phase`);
-    return;
-  }
-
   context.log.info(`Processing ${name} block ${blockNumber} on chain ${chainId}`);
 
   const effectStartedAt = Date.now();
