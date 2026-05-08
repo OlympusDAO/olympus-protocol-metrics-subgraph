@@ -1,36 +1,24 @@
 import {
-  ArbitrumFraxUsdTriggerNew,
-  ArbitrumFraxUsdTriggerOld,
+  ArbitrumSnapshotAnchor,
   BerachainSnapshotAnchor,
   BigDecimal,
   onBlock,
-  type ArbitrumFraxUsdTriggerNew_NewRound_handlerArgs,
-  type ArbitrumFraxUsdTriggerOld_NewRound_handlerArgs,
   type handlerContext,
   type TokenRecord,
   type TokenSupply,
 } from "generated";
 import { getSnapshot, type Snapshot } from "./snapshot";
 
-BerachainSnapshotAnchor.Transfer.handler(async () => {});
-
-const ARBITRUM_TRIGGER_SWITCH_BLOCK = 451191255;
-
-ArbitrumFraxUsdTriggerOld.NewRound.handler(
-  async ({ event, context }: ArbitrumFraxUsdTriggerOld_NewRound_handlerArgs) => {
-    if (event.block.number >= ARBITRUM_TRIGGER_SWITCH_BLOCK) return;
-    await processSnapshot("ArbitrumFraxUsdTriggerOld", event.block.number, event.chainId, context);
-  },
-);
-
-ArbitrumFraxUsdTriggerNew.NewRound.handler(
-  async ({ event, context }: ArbitrumFraxUsdTriggerNew_NewRound_handlerArgs) => {
-    if (event.block.number < ARBITRUM_TRIGGER_SWITCH_BLOCK) return;
-    await processSnapshot("ArbitrumFraxUsdTriggerNew", event.block.number, event.chainId, context);
-  },
-);
+ArbitrumSnapshotAnchor.SnapshotAnchor.handler(async () => {});
+BerachainSnapshotAnchor.SnapshotAnchor.handler(async () => {});
 
 const BLOCK_HANDLERS = [
+  {
+    name: "ArbitrumEightHourSnapshot",
+    chain: 42161 as const,
+    startBlock: 450845846,
+    interval: 115200,
+  },
   {
     name: "BerachainEightHourSnapshot",
     chain: 80094 as const,
@@ -59,15 +47,38 @@ async function processSnapshot(
   chainId: number,
   context: handlerContext,
 ): Promise<void> {
-  if (context.isPreload) return;
+  if (context.isPreload) {
+    context.log.info(`Skipping ${name} block ${blockNumber} on chain ${chainId}: preload phase`);
+    return;
+  }
 
   context.log.info(`Processing ${name} block ${blockNumber} on chain ${chainId}`);
 
+  const effectStartedAt = Date.now();
+  context.log.info(
+    `Calling getSnapshot effect for ${name} block ${blockNumber} on chain ${chainId}`,
+  );
   const snapshot = (await context.effect(getSnapshot, {
     chainId,
     blockNumber: Number(blockNumber),
   })) as Snapshot;
+  context.log.info(
+    `Finished getSnapshot effect for ${name} block ${blockNumber} on chain ${chainId} in ${
+      Date.now() - effectStartedAt
+    }ms`,
+    {
+      tokenRecords: snapshot.tokenRecords.length,
+      tokenSupplies: snapshot.tokenSupplies.length,
+    },
+  );
 
+  context.log.info(
+    `Writing snapshot entities for ${name} block ${blockNumber} on chain ${chainId}`,
+    {
+      tokenRecords: snapshot.tokenRecords.length,
+      tokenSupplies: snapshot.tokenSupplies.length,
+    },
+  );
   for (const record of snapshot.tokenRecords) {
     const entity: TokenRecord = {
       ...record,
@@ -100,4 +111,7 @@ async function processSnapshot(
     };
     context.TokenSupply.set(entity);
   }
+  context.log.info(
+    `Finished writing snapshot entities for ${name} block ${blockNumber} on chain ${chainId}`,
+  );
 }
