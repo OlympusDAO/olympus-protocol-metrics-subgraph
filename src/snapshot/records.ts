@@ -55,14 +55,14 @@ export function createTokenSupply(
   poolAddress: string | undefined,
   sourceName: string | undefined,
   sourceAddress: string | undefined,
-  recordType: string,
+  type: string,
   balance: BigNumber,
   blockNumber: bigint,
   multiplier = 1,
 ): SerializedTokenSupply {
   const date = isoDate(timestamp);
   return {
-    id: `${config.chainId}-${date}/${blockNumber}/${tokenName}/${recordType}/${poolName ?? "Unknown Pool"}/${sourceName ?? ""}`,
+    id: `${config.chainId}-${date}/${blockNumber}/${tokenName}/${type}/${poolName ?? "Unknown Pool"}/${sourceName ?? ""}`,
     block: blockNumber.toString(),
     timestamp: timestamp.toString(),
     date,
@@ -72,7 +72,7 @@ export function createTokenSupply(
     poolAddress,
     source: sourceName,
     sourceAddress,
-    recordType,
+    type,
     balance: balance.toString(10),
     supplyBalance: balance.times(multiplier).toString(10),
   };

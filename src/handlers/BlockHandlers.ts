@@ -116,7 +116,7 @@ async function processSnapshot(
       poolAddress: supply.poolAddress,
       source: supply.source,
       sourceAddress: supply.sourceAddress,
-      recordType: supply.recordType,
+      type: supply.type,
       balance: new BigDecimal(supply.balance),
       supplyBalance: new BigDecimal(supply.supplyBalance),
     };

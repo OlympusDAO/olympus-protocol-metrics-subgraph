@@ -57,7 +57,7 @@ type TokenSupply {
   poolAddress: String
   source: String # e.g. a wallet
   sourceAddress: String
-  recordType: String! # e.g. total supply
+  type: String! # e.g. total supply
   balance: BigDecimal!
   supplyBalance: BigDecimal! # may be negative to represent the token being taken out of circulation
 }

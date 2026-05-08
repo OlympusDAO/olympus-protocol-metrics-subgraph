@@ -29,7 +29,7 @@ export type SerializedTokenSupply = {
   poolAddress?: string;
   source?: string;
   sourceAddress?: string;
-  recordType: string;
+  type: string;
   balance: string;
   supplyBalance: string;
 };
