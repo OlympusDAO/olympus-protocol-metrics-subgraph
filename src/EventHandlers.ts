@@ -16,7 +16,7 @@ const BLOCK_HANDLERS = [
   {
     name: "ArbitrumEightHourSnapshot",
     chain: 42161 as const,
-    startBlock: 450845846,
+    startBlock: 10950000,
     interval: 115200,
   },
   {

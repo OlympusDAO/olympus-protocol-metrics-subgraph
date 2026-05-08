@@ -4,7 +4,7 @@ description: Olympus protocol metrics for Arbitrum and Berachain
 
 networks:
   - id: 42161 # Arbitrum One
-    start_block: 450845846 # 2026-04-10 00:00:00 UTC
+    start_block: 10950000 # 2022-05-01
     contracts:
       - name: ArbitrumSnapshotAnchor
         address: "0xf0cb2dc0db5e6c66b9a70ac27b06b878da017028" # OHM
