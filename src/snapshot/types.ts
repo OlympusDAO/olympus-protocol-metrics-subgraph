@@ -39,6 +39,12 @@ export type Snapshot = {
   tokenSupplies: SerializedTokenSupply[];
 };
 
+export type TrackedTokenBalanceInput = {
+  tokenAddress: string;
+  walletAddress: string;
+  balance: string;
+};
+
 export type TokenDefinition = {
   address: string;
   category: string;
@@ -60,6 +66,7 @@ export type Bytes32 = `0x${string}` & { readonly [bytes32Brand]: true };
 export type ChainConfig = {
   chainId: 42161 | 80094;
   blockchain: string;
+  startBlock: number;
   rpcUrls: string[];
   tokens: TokenDefinition[];
   names: Record<string, string>;

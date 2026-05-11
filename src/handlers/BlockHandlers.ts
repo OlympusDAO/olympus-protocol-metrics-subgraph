@@ -7,6 +7,8 @@ import {
 } from "envio";
 
 import { getSnapshot, type Snapshot } from "../snapshot";
+import { CHAIN_CONFIGS } from "../snapshot/chains";
+import { getTrackedTokenBalancesForSnapshot } from "./TokenBalanceSnapshots";
 
 const BLOCK_HANDLERS = [
   {
@@ -64,9 +66,17 @@ async function processSnapshot(
   context.log.info(
     `Calling getSnapshot effect for ${name} block ${blockNumber} on chain ${chainId}`,
   );
+  const config = CHAIN_CONFIGS[chainId];
+  if (!config) throw new Error(`Unsupported chain ${chainId} for ${name} block ${blockNumber}`);
+  const trackedTokenBalances = await getTrackedTokenBalancesForSnapshot(
+    context,
+    config,
+    BigInt(blockNumber),
+  );
   const snapshot = (await context.effect(getSnapshot, {
     chainId,
     blockNumber: Number(blockNumber),
+    trackedTokenBalances,
   })) as Snapshot;
   context.log.info(
     `Finished getSnapshot effect for ${name} block ${blockNumber} on chain ${chainId} in ${

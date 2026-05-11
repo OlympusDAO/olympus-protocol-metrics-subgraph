@@ -161,6 +161,7 @@ const liquidityHandlers: LiquidityHandler[] = [
 export const ARBITRUM: ChainConfig = {
   chainId: 42161,
   blockchain: "Arbitrum",
+  startBlock: ARBITRUM_START_BLOCK,
   rpcUrls: rpcUrls("ARBITRUM", "https://arbitrum.rpc.subquery.network/public", [
     "https://arbitrum-one.public.blastapi.io",
   ]),

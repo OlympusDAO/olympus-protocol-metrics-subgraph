@@ -346,6 +346,22 @@ export async function getErc20DecimalBalance(
   return toDecimal(balance, decimals);
 }
 
+export async function getErc20RawBalance(
+  client: PublicClient,
+  tokenAddress: string,
+  wallet: string,
+  blockNumber: bigint,
+) {
+  return readContract(
+    client,
+    tokenAddress,
+    ERC20_ABI,
+    "balanceOf",
+    [wallet as Address],
+    blockNumber,
+  );
+}
+
 export async function getErc20TotalSupply(
   client: PublicClient,
   tokenAddress: string,

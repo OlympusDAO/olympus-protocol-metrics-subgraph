@@ -2,16 +2,44 @@
 name: olympus-protocol-metrics
 description: Olympus protocol metrics for Arbitrum and Berachain
 
+contracts:
+  - name: TrackedERC20
+    events:
+      - event: Transfer(address indexed from, address indexed to, uint256 value)
+
 chains:
   - id: 42161 # Arbitrum One
     start_block: 10950000 # 2022-05-01
     rpc:
       - url: ${ENVIO_ARBITRUM_RPC_URL:-https://arbitrum.rpc.subquery.network/public}
         for: fallback
+    contracts:
+      - name: TrackedERC20
+        address:
+          - 0x912ce59144191c1204e64559fe8253a0e49e6548 # ARB
+          - 0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F # FRAX
+          - 0xf0cb2dc0db5e6c66B9a70Ac27B06b878da017028 # OHM
+          - 0x10393c20975cf177a3513071bc110f7962cd67da # JONES
+          - 0xfb9E5D956D889D91a82737B9bFCDaC1DCE3e1449 # LQTY
+          - 0x93b346b6bc2548da6a1e7d98e9a421b42541425b # LUSD
+          - 0x539bde0d7dbd336b79148aa742883198bbf60342 # MAGIC
+          - 0xff970a61a04b1ca14834a43f5de4533ebddb5cc8 # USDC
+          - 0xa684cd057951541187f288294a1e1c2646aa2d24 # VSTA
+          - 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1 # WETH
   - id: 80094 # Berachain
     start_block: 799194 # 2025-02-07 00:00:00 UTC
     rpc:
       - url: ${ENVIO_BERACHAIN_RPC_URL:-https://rpc.berachain.com}
         for: fallback
+    contracts:
+      - name: TrackedERC20
+        address:
+          - 0x18878Df23e2a36f81e820e4b47b4A40576D3159C # OHM
+          - 0x9b6761bf2397Bb5a6624a856cC84A3A14Dcd3fe5 # iBERA
+          - 0xac03CABA51e17c86c921E1f6CBFBdC91F8BB2E6b # iBGT
+          - 0xBaadCC2962417C01Af99fb2B7C75706B9bd6Babe # lBGT
+          - 0x549943e04f40284185054145c6E4e9568C1D3241 # USDC.e
+          - 0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce # HONEY
+          - 0x6969696969696969696969696969696969696969 # wBERA
 
 address_format: lowercase

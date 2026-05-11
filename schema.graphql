@@ -62,6 +62,24 @@ type TokenSupply {
   supplyBalance: BigDecimal! # may be negative to represent the token being taken out of circulation
 }
 
+# Immutable balance checkpoints for monitored ERC20 token/wallet pairs.
+# Rows are written at initialization and whenever a monitored transfer changes the balance.
+type TrackedTokenBalanceSnapshot {
+  id: ID! # chain/token/wallet/block/logIndex
+  lookupKey: String! @index # chain/token/wallet
+  chainId: Int! @index
+  tokenAddress: String! @index
+  walletAddress: String! @index
+  block: BigInt! @index
+  logIndex: Int!
+  decimals: Int!
+  balanceRaw: BigInt!
+  balance: BigDecimal!
+  deltaRaw: BigInt!
+  delta: BigDecimal!
+  source: String!
+}
+
 type PriceSnapshot {
   id: ID!
   block: BigInt!

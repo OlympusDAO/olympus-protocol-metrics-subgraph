@@ -4,6 +4,7 @@ import { getErc20DecimalBalance, getNativeBalance } from "./contracts";
 import { isActive, toDecimal, ZERO } from "./math";
 import { getLiquidityBalance, getPrice, getTotalValue, getUnitPrice } from "./pricing";
 import { createTokenRecord, getContractName, getWalletAddressesForContract } from "./records";
+import { getTrackedBalance, type TrackedBalanceMap } from "./tracked-balances";
 import type { ChainConfig, LiquidityHandler, Snapshot, TokenDefinition } from "./types";
 
 export async function pushTokenBalanceRecords(
@@ -13,6 +14,7 @@ export async function pushTokenBalanceRecords(
   definition: TokenDefinition,
   timestamp: bigint,
   blockNumber: bigint,
+  trackedBalances?: TrackedBalanceMap,
 ) {
   if (!isActive(definition, blockNumber)) return;
   const wallets = getWalletAddressesForContract(config, definition.address);
@@ -20,9 +22,10 @@ export async function pushTokenBalanceRecords(
     wallets.map(async (wallet) => ({
       wallet,
       balance:
-        definition.address === config.nativeToken
+        getTrackedBalance(trackedBalances, definition.address, wallet) ??
+        (definition.address === config.nativeToken
           ? toDecimal(await getNativeBalance(client, wallet as Address, blockNumber), 18)
-          : await getErc20DecimalBalance(client, definition.address, wallet, blockNumber),
+          : await getErc20DecimalBalance(client, definition.address, wallet, blockNumber)),
     })),
   );
   if (balances.every(({ balance }) => balance.eq(ZERO))) return;

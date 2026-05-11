@@ -136,6 +136,7 @@ const ownedLiquidityHandlers: LiquidityHandler[] = [
 export const BERACHAIN: ChainConfig = {
   chainId: 80094,
   blockchain: "Berachain",
+  startBlock: BERACHAIN_START_BLOCK,
   rpcUrls: rpcUrls("BERACHAIN", "https://rpc.berachain.com"),
   ohmToken: ERC20_OHM,
   ohmStartBlock: BERACHAIN_START_BLOCK,

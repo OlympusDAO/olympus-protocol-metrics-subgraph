@@ -4,6 +4,7 @@ import { getErc20DecimalBalance, getErc20TotalSupply } from "./contracts";
 import { isActive, matches, ZERO } from "./math";
 import { getUnderlyingTokenBalance } from "./pricing";
 import { createTokenSupply, getContractName, getWalletAddressesForContract } from "./records";
+import { getTrackedBalance, type TrackedBalanceMap } from "./tracked-balances";
 import type { ChainConfig, Snapshot } from "./types";
 
 export async function pushTotalSupply(
@@ -38,12 +39,15 @@ export async function pushTreasuryOhm(
   client: PublicClient,
   timestamp: bigint,
   blockNumber: bigint,
+  trackedBalances?: TrackedBalanceMap,
 ) {
   if (config.ohmStartBlock && !isActive({ startBlock: config.ohmStartBlock }, blockNumber)) return;
   const balances = await Promise.all(
     config.circulatingSupplyWallets.map(async (wallet) => ({
       wallet,
-      balance: await getErc20DecimalBalance(client, config.ohmToken, wallet, blockNumber),
+      balance:
+        getTrackedBalance(trackedBalances, config.ohmToken, wallet) ??
+        (await getErc20DecimalBalance(client, config.ohmToken, wallet, blockNumber)),
     })),
   );
 

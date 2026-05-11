@@ -8,14 +8,27 @@ import { getContractName } from "./records";
 import { pushArbitrumStakingRecords } from "./staking/arbitrum";
 import { pushOwnedLiquidityRecords, pushTokenBalanceRecords } from "./token-records";
 import { pushOwnedLiquiditySupply, pushTotalSupply, pushTreasuryOhm } from "./token-supplies";
-import type { ChainConfig, Snapshot } from "./types";
+import { toTrackedBalanceMap } from "./tracked-balances";
+import type { ChainConfig, Snapshot, TrackedTokenBalanceInput } from "./types";
 
 export type { Snapshot } from "./types";
 
 export const getSnapshot = createEffect(
   {
     name: "getSnapshot",
-    input: { chainId: S.number, blockNumber: S.number },
+    input: {
+      chainId: S.number,
+      blockNumber: S.number,
+      trackedTokenBalances: S.optional(
+        S.array(
+          S.object(({ field }) => ({
+            tokenAddress: field("tokenAddress", S.string),
+            walletAddress: field("walletAddress", S.string),
+            balance: field("balance", S.string),
+          })),
+        ),
+      ),
+    },
     output: S.unknown,
     rateLimit: { calls: 1_000_000, per: "second" },
     cache: false,
@@ -27,8 +40,11 @@ export const getSnapshot = createEffect(
     context.log.info(`Starting getSnapshot for ${config.blockchain} block ${input.blockNumber}`);
     const snapshot = await withContractReadCache(() =>
       withPricingCache(() =>
-        generateSnapshot(config, BigInt(input.blockNumber), (message, metadata) =>
-          context.log.info(message, metadata),
+        generateSnapshot(
+          config,
+          BigInt(input.blockNumber),
+          (message, metadata) => context.log.info(message, metadata),
+          input.trackedTokenBalances,
         ),
       ),
     );
@@ -51,6 +67,7 @@ async function generateSnapshot(
   config: ChainConfig,
   blockNumber: bigint,
   log: SnapshotLogger,
+  trackedTokenBalances?: TrackedTokenBalanceInput[],
 ): Promise<Snapshot> {
   const client = getClient(config);
   const block = await runSnapshotStep(
@@ -61,6 +78,7 @@ async function generateSnapshot(
   );
   const timestamp = block.timestamp;
   const snapshot: Snapshot = { tokenRecords: [], tokenSupplies: [] };
+  const trackedBalances = toTrackedBalanceMap(trackedTokenBalances);
 
   for (const category of ["Stable", "Volatile"]) {
     for (const definition of config.tokens.filter((value) => value.category === category)) {
@@ -71,7 +89,15 @@ async function generateSnapshot(
         blockNumber: blockNumber.toString(),
       };
       await runSnapshotStep(log, "push token balance records", tokenMetadata, () =>
-        pushTokenBalanceRecords(snapshot, config, client, definition, timestamp, blockNumber),
+        pushTokenBalanceRecords(
+          snapshot,
+          config,
+          client,
+          definition,
+          timestamp,
+          blockNumber,
+          trackedBalances,
+        ),
       );
       if (config.chainId === 42161) {
         await runSnapshotStep(log, "push Arbitrum staking records", tokenMetadata, () =>
@@ -109,7 +135,7 @@ async function generateSnapshot(
     log,
     "push treasury OHM supply",
     { blockNumber: blockNumber.toString() },
-    () => pushTreasuryOhm(snapshot, config, client, timestamp, blockNumber),
+    () => pushTreasuryOhm(snapshot, config, client, timestamp, blockNumber, trackedBalances),
   );
   await runSnapshotStep(
     log,
