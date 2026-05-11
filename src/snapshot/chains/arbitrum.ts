@@ -206,7 +206,7 @@ const liquidityHandlers: LiquidityHandler[] = [
     id: LP_BALANCER_POOL_OHM_USDC,
     startBlock: LP_BALANCER_OHM_USDC_CREATION_BLOCK,
   },
-  { kind: "stable", tokens: [ERC20_FRAX, ERC20_USDC], id: "frax-usdc" },
+  { kind: "stable", tokens: [ERC20_FRAX, ERC20_USDC, ERC20_LUSD], id: "stable-usd" },
   {
     kind: "univ2",
     tokens: [ERC20_GOHM_SYNAPSE, ERC20_WETH],
@@ -260,49 +260,84 @@ export const ARBITRUM: ChainConfig = {
   ohmToken: ERC20_OHM,
   ohmStartBlock: OHM_CREATION_BLOCK,
   tokens: [
-    token(ERC20_ARB, "Volatile", true, false, undefined, { startBlock: ARB_CREATION_BLOCK }),
+    token(ERC20_ARB, "Volatile", true, false, undefined, {
+      startBlock: ARB_CREATION_BLOCK,
+      decimals: 18,
+    }),
     token(ERC20_FRAX, "Stable", true, false, undefined, {
       startBlock: FRAX_CREATION_BLOCK,
+      decimals: 18,
     }),
     token(ERC20_JONES, "Volatile", true, false, "0.83", {
       startBlock: JONES_CREATION_BLOCK,
+      decimals: 18,
     }),
-    token(ERC20_LQTY, "Volatile", true, false, undefined, { startBlock: LQTY_CREATION_BLOCK }),
-    token(ERC20_LUSD, "Stable", true, false, undefined, { startBlock: LUSD_CREATION_BLOCK }),
+    token(ERC20_LQTY, "Volatile", true, false, undefined, {
+      startBlock: LQTY_CREATION_BLOCK,
+      decimals: 18,
+    }),
+    token(ERC20_LUSD, "Stable", true, false, undefined, {
+      startBlock: LUSD_CREATION_BLOCK,
+      decimals: 18,
+    }),
     token(ERC20_MAGIC, "Volatile", true, false, undefined, {
       startBlock: MAGIC_CREATION_BLOCK,
+      decimals: 18,
     }),
-    token(ERC20_USDC, "Stable", true, false, undefined, { startBlock: USDC_CREATION_BLOCK }),
+    token(ERC20_USDC, "Stable", true, false, undefined, {
+      startBlock: USDC_CREATION_BLOCK,
+      decimals: 6,
+    }),
     token(ERC20_VSTA, "Volatile", true, false, "0.77", {
       startBlock: VSTA_CREATION_BLOCK,
+      decimals: 18,
     }),
-    token(ERC20_WETH, "Volatile", true, true, undefined, { startBlock: WETH_CREATION_BLOCK }),
+    token(ERC20_WETH, "Volatile", true, true, undefined, {
+      startBlock: WETH_CREATION_BLOCK,
+      decimals: 18,
+    }),
+    token(ERC20_OHM, "Volatile", true, false, undefined, {
+      startBlock: OHM_CREATION_BLOCK,
+      decimals: 9,
+    }),
+    token(ERC20_GOHM_SYNAPSE, "Volatile", true, false, undefined, {
+      decimals: 18,
+    }),
     token(LP_BALANCER_POOL_WETH_VESTA, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: LP_BALANCER_WETH_VSTA_CREATION_BLOCK,
+      decimals: 18,
     }),
     token(LP_BALANCER_POOL_WETH_OHM, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: LP_BALANCER_WETH_OHM_CREATION_BLOCK,
+      decimals: 18,
     }),
     token(LP_BALANCER_POOL_OHM_USDC, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: LP_BALANCER_OHM_USDC_CREATION_BLOCK,
+      decimals: 18,
     }),
     token(LP_UNISWAP_V2_GOHM_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: ARBITRUM_START_BLOCK,
+      decimals: 18,
     }),
     token(LP_UNISWAP_V2_JONES_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: LP_UNISWAP_V2_JONES_WETH_CREATION_BLOCK,
+      decimals: 18,
     }),
     token(LP_UNISWAP_V2_MAGIC_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: LP_UNISWAP_V2_MAGIC_WETH_CREATION_BLOCK,
+      decimals: 18,
     }),
     token(LP_CAMELOT_OHM_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: LP_CAMELOT_OHM_WETH_CREATION_BLOCK,
+      decimals: 18,
     }),
     token(LP_UNISWAP_V3_ARB_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: LP_UNISWAP_V3_ARB_WETH_CREATION_BLOCK,
+      decimals: 18,
     }),
     token(LP_UNISWAP_V3_WETH_USDC, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: ARBITRUM_START_BLOCK,
+      decimals: 18,
     }),
   ],
   names,
@@ -332,11 +367,10 @@ export const ARBITRUM: ChainConfig = {
     [ERC20_OHM]: ARBITRUM_PROTOCOL_ADDRESSES,
     [ERC20_GOHM_SYNAPSE]: ARBITRUM_PROTOCOL_ADDRESSES,
   },
-  basePriceFeeds: {
-    [ERC20_LUSD]: feed("0x0411d28c94d85a36bc72cb0f875dfa8371d8ffff", LUSD_FEED_CREATION_BLOCK),
-    [ERC20_USDC]: feed("0x50834f3163758fcc1df9973b6e91f0f0f0434ad3"),
-    [ERC20_WETH]: feed("0x639fe6ab55c921f74e7fac1ee960c0b6293ba612"),
-  },
+  // USDC and LUSD are priced via the "stable-usd" handler ($1). WETH is priced
+  // via the WETH/USDC UniV3 pool, which is in liquidityHandlers below. The
+  // previous Chainlink lookups are removed so pricing is fully RPC-free.
+  basePriceFeeds: {},
   liquidityHandlers,
   ownedLiquidityHandlers: liquidityHandlers,
 };

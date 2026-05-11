@@ -2,16 +2,182 @@
 name: olympus-protocol-metrics
 description: Olympus protocol metrics for Arbitrum and Berachain
 
+# Reusable contract definitions shared across chains. Each `events` entry is the
+# Solidity event signature with parameter names so HyperIndex codegen produces
+# typed `event.params` access.
+contracts:
+  - name: TreasuryERC20
+    events:
+      - event: "Transfer(address indexed from, address indexed to, uint256 value)"
+
+  - name: OhmERC20
+    events:
+      - event: "Transfer(address indexed from, address indexed to, uint256 value)"
+
+  - name: LpERC20
+    events:
+      - event: "Transfer(address indexed from, address indexed to, uint256 value)"
+
+  - name: OlympusLender
+    events:
+      - event: "AMOAdded(address indexed amo)"
+      - event: "AMORemoved(address indexed amo)"
+
+  - name: JonesStaking
+    events:
+      - event: "Deposit(address indexed user, uint256 indexed pid, uint256 amount)"
+      - event: "Withdraw(address indexed user, uint256 indexed pid, uint256 amount)"
+      - event: "EmergencyWithdraw(address indexed user, uint256 indexed pid, uint256 amount)"
+
+  - name: TreasureMining
+    events:
+      - event: "Deposit(address indexed user, uint256 indexed index, uint256 amount, uint8 lock)"
+      - event: "Withdraw(address indexed user, uint256 indexed index, uint256 amount)"
+
+  - name: UniswapV2Pool
+    # Univ2 pairs ARE the LP token, so they also emit ERC20 Transfer events.
+    # Both event handlers live under one contract so the address only gets
+    # registered once with Envio's address table.
+    events:
+      - event: "Sync(uint112 reserve0, uint112 reserve1)"
+      - event: "Transfer(address indexed from, address indexed to, uint256 value)"
+
+  - name: UniswapV3Pool
+    events:
+      - event: "Initialize(uint160 sqrtPriceX96, int24 tick)"
+      - event: "Swap(address indexed sender, address indexed recipient, int256 amount0, int256 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick)"
+
+  # Kodiak LP wraps a UniswapV3 pool. We subscribe to ERC20 Transfer (for
+  # treasury balance + totalSupply) AND use contractRegister to dynamically
+  # subscribe the underlying UniV3 pool's Swap events for pure-math pricing.
+  - name: KodiakLp
+    events:
+      - event: "Transfer(address indexed from, address indexed to, uint256 value)"
+
+  # Balancer V2 Vault is one contract per chain that holds ALL pools. We filter
+  # events by the poolIds we care about so HyperSync only delivers what's
+  # relevant.
+  - name: BalancerVault
+    events:
+      - event: "TokensRegistered(bytes32 indexed poolId, address[] tokens, address[] assetManagers)"
+      - event: "PoolBalanceChanged(bytes32 indexed poolId, address indexed liquidityProvider, address[] tokens, int256[] deltas, uint256[] protocolFeeAmounts)"
+      - event: "Swap(bytes32 indexed poolId, address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut)"
+
 chains:
   - id: 42161 # Arbitrum One
     start_block: 10950000 # 2022-05-01
     rpc:
       - url: ${ENVIO_ARBITRUM_RPC_URL:-https://arbitrum.rpc.subquery.network/public}
         for: fallback
+
+    contracts:
+      # ---- Treasury-held ERC20s: Transfer events filtered to treasury wallets only.
+      # The `where` filter is applied at handler registration time (see Erc20Transfers.ts).
+      - name: TreasuryERC20
+        address:
+          - "0x912ce59144191c1204e64559fe8253a0e49e6548" # ARB
+          - "0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F" # FRAX
+          - "0x10393c20975cf177a3513071bc110f7962cd67da" # JONES
+          - "0xfb9E5D956D889D91a82737B9bFCDaC1DCE3e1449" # LQTY
+          - "0x93b346b6bc2548da6a1e7d98e9a421b42541425b" # LUSD
+          - "0x539bde0d7dbd336b79148aa742883198bbf60342" # MAGIC
+          - "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8" # USDC
+          - "0xa684cd057951541187f288294a1e1c2646aa2d24" # VSTA
+          - "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1" # WETH
+          - "0x8D9bA570D6cb60C7e3e0F31343Efe75AB8E65FB1" # gOHM (Synapse)
+          - "0xD8102963c400fEDBbc23Fe92f1b09c0C561e77Ae" # Silo OHM Collateral
+          - "0x37E6a0EcB9e8E5D90104590049a0A197E1363b67" # Sentiment lToken
+
+      # ---- OHM ERC20: also need from/to-zero transfers to track totalSupply.
+      - name: OhmERC20
+        address:
+          - "0xf0cb2dc0db5e6c66B9a70Ac27B06b878da017028" # OHM
+
+      # ---- LP tokens that are NOT Univ2 pairs. Univ2 pair Transfer events are
+      # handled under the UniswapV2Pool contract so the same pair address isn't
+      # registered twice.
+      - name: LpERC20
+        address:
+          - "0xc61ff48f94d801c1ceface0289085197b5ec44f0" # Balancer wETH-VSTA BPT
+          - "0x89dc7e71e362faf88d92288fe2311d25c6a1b5e0" # Balancer wETH-OHM BPT
+          - "0xce6195089b302633ed60f3f427d1380f6a2bfbc7" # Balancer OHM-USDC BPT
+
+      - name: OlympusLender
+        address:
+          - "0x868C3ae18Fdea85bBb7a303e379c5B7e23b30F03"
+
+      - name: JonesStaking
+        address:
+          - "0xb94d1959084081c5a11C460012Ab522F5a0FD756"
+
+      - name: TreasureMining
+        address:
+          - "0xa0a89db1c899c49f98e6326b764bafcf167fc2ce"
+
+      # Univ2 pairs (Sync events drive reserves)
+      - name: UniswapV2Pool
+        address:
+          - "0xaa5bd49f2162ffdc15634c87a77ac67bd51c6a6d" # UniV2 gOHM-wETH
+          - "0xe8ee01ae5959d3231506fcdef2d5f3e85987a39c" # UniV2 JONES-wETH
+          - "0x8e78f0f6d116f94252d3bcd73d8ade63d415c1bf" # Ramses LQTY-wETH
+          - "0xb7e50106a5bd3cf21af210a755f9c8740890a8c9" # UniV2 MAGIC-wETH
+          - "0x8aCd42e4B5A5750B44A28C5fb50906eBfF145359" # Camelot OHM-wETH
+
+      # Univ3 pools used for pricing (Swap/Initialize drive sqrtPriceX96)
+      - name: UniswapV3Pool
+        address:
+          - "0xc31e54c7a869b9fcbecc14363cf510d1c41fa443" # UniV3 wETH-USDC
+          - "0xc6f780497a95e246eb9449f5e4770916dcd6396a" # UniV3 ARB-wETH
+
+      - name: BalancerVault
+        address:
+          - "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
+
   - id: 80094 # Berachain
     start_block: 799194 # 2025-02-07 00:00:00 UTC
     rpc:
       - url: ${ENVIO_BERACHAIN_RPC_URL:-https://rpc.berachain.com}
         for: fallback
+
+    contracts:
+      - name: TreasuryERC20
+        address:
+          - "0x9b6761bf2397Bb5a6624a856cC84A3A14Dcd3fe5" # iBERA
+          - "0xac03CABA51e17c86c921E1f6CBFBdC91F8BB2E6b" # iBGT
+          - "0xBaadCC2962417C01Af99fb2B7C75706B9bd6Babe" # lBGT
+          - "0x549943e04f40284185054145c6E4e9568C1D3241" # Stargate USDC.e
+          - "0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce" # HONEY
+          - "0x6969696969696969696969696969696969696969" # wBERA
+
+      - name: OhmERC20
+        address:
+          - "0x18878Df23e2a36f81e820e4b47b4A40576D3159C" # OHM (Berachain)
+
+      # LP tokens that are NOT Kodiak LPs (those get their own contract entry
+      # so we can attach a contractRegister handler for the underlying UniV3
+      # pool). The reward vault tokens listed here behave as plain ERC20s for
+      # treasury accounting purposes.
+      - name: LpERC20
+        address:
+          - "0x017B4DD27782E2FE3421e71F33ce54801aF696F8" # Beradrome Kodiak OHM-HONEY reward vault V1
+          - "0x8e5b2DF607B43C8D0F28035210D4e1aD1E72b8ed" # Beradrome Kodiak OHM-HONEY reward vault V2
+          - "0xa57Cb177Beebc35A1A26A286951a306d9B752524" # Infrared Kodiak OHM-HONEY vault token
+          - "0x815596fa7c4d983d1ca5304e5b48978424c1b448" # BeraHub Kodiak OHM-HONEY reward vault token
+
+      - name: KodiakLp
+        address:
+          - "0x98bDEEde9A45C28d229285d9d6e9139e9F505391" # Kodiak OHM-HONEY (LP)
+
+      # Univ3 pools used for pricing on Berachain
+      - name: UniswapV3Pool
+        address:
+          - "0x1127f801cb3ab7bdf8923272949aa7dba94b5805" # UniV3 wBERA-HONEY
+          - "0x8dD1C3e5fB96ca0E45Fe3c3CC521Ad44e12F3e47" # Kodiak iBERA-wBERA 3000
+          - "0xfcb24b3b7e87e3810b150d25d5964c566d9a2b6f" # Kodiak iBERA-wBERA 500
+          - "0x12bf773F18cEC56F14e7cb91d82984eF5A3148EE" # Kodiak iBGT-wBERA
+
+      - name: BalancerVault
+        address:
+          - "0x4Be03f781C497A489E3cB0287833452cA9B9E80B"
 
 address_format: lowercase

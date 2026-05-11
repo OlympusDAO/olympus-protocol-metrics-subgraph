@@ -141,25 +141,34 @@ export const BERACHAIN: ChainConfig = {
   ohmStartBlock: BERACHAIN_START_BLOCK,
   nativeToken: NATIVE_BERA,
   tokens: [
-    token(ERC20_IBERA, "Volatile", false, false),
+    token(ERC20_IBERA, "Volatile", false, false, undefined, { decimals: 18 }),
     token(ERC20_IBGT, "Volatile", false, false, undefined, {
       startBlock: BERACHAIN_START_BLOCK,
+      decimals: 18,
     }),
     token(ERC20_LBGT, "Volatile", false, false, undefined, {
       startBlock: LBGT_CREATION_BLOCK,
+      decimals: 18,
     }),
-    token(ERC20_STARGATE_USDC, "Stable", true, false),
-    token(ERC20_HONEY, "Stable", true, false),
-    token(ERC20_WBERA, "Volatile", true, true),
-    token(NATIVE_BERA, "Volatile", true, true),
+    token(ERC20_STARGATE_USDC, "Stable", true, false, undefined, { decimals: 6 }),
+    token(ERC20_HONEY, "Stable", true, false, undefined, { decimals: 18 }),
+    token(ERC20_WBERA, "Volatile", true, true, undefined, { decimals: 18 }),
+    token(NATIVE_BERA, "Volatile", true, true, undefined, { decimals: 18 }),
+    token(ERC20_OHM, "Volatile", true, false, undefined, {
+      startBlock: BERACHAIN_START_BLOCK,
+      decimals: 9,
+    }),
     token(LP_KODIAK_OHM_HONEY, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: LP_KODIAK_OHM_HONEY_CREATION_BLOCK,
+      decimals: 18,
     }),
     token(LP_BERADROME_KODIAK_OHM_HONEY, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: LP_BERADROME_KODIAK_OHM_HONEY_CREATION_BLOCK,
+      decimals: 18,
     }),
     token(INFRARED_KODIAK_OHM_HONEY_VAULT, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: INFRARED_KODIAK_OHM_HONEY_VAULT_CREATION_BLOCK,
+      decimals: 18,
     }),
     token(
       BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT,
@@ -169,6 +178,7 @@ export const BERACHAIN: ChainConfig = {
       undefined,
       {
         startBlock: BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT_CREATION_BLOCK,
+        decimals: 18,
       },
     ),
   ],
@@ -184,14 +194,11 @@ export const BERACHAIN: ChainConfig = {
   protocolAddresses: PROTOCOL_ADDRESSES,
   circulatingSupplyWallets: PROTOCOL_ADDRESSES,
   treasuryBlacklist: { [ERC20_OHM]: [DAO_MULTISIG, DAO_OPS_MULTISIG, TRSRY] },
-  basePriceFeeds: {
-    [ERC20_HONEY]: feed("0x4BAD96DD1C7D541270a0C92e1D4e5f12EEEA7a57", BERACHAIN_START_BLOCK),
-    [ERC20_STARGATE_USDC]: feed(
-      "0x4BAD96DD1C7D541270a0C92e1D4e5f12EEEA7a57",
-      BERACHAIN_START_BLOCK,
-    ),
-  },
+  // HONEY and STARGATE_USDC are priced via the "stable-usd" handler below ($1).
+  // The previous Chainlink lookups are removed so pricing is fully RPC-free.
+  basePriceFeeds: {},
   liquidityHandlers: [
+    { kind: "stable", tokens: [ERC20_HONEY, ERC20_STARGATE_USDC], id: "stable-usd" },
     {
       kind: "univ3-quoter",
       tokens: [ERC20_HONEY, ERC20_WBERA],

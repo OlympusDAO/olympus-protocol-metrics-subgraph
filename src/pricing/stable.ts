@@ -1,7 +1,7 @@
 import type BigNumber from "bignumber.js";
 
-import { ONE, ZERO } from "../math";
-import type { LiquidityHandler } from "../types";
+import { ONE, ZERO } from "../snapshot/math";
+import type { LiquidityHandler } from "../snapshot/types";
 import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";
 
 export class StablePriceHandler extends BasePriceHandler<
@@ -28,10 +28,6 @@ export class StablePriceHandler extends BasePriceHandler<
   async getUnitPrice(_priceLookup: PriceLookup, blockNumber: bigint): Promise<BigNumber | null> {
     if (!this.isActive(blockNumber)) return null;
     return ONE;
-  }
-
-  async getBalance(_wallet: string, _blockNumber: bigint): Promise<BigNumber> {
-    return ZERO;
   }
 
   async getUnderlyingTokenBalance(

@@ -22,14 +22,14 @@ const clients = new Map<number, PublicClient>();
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
 const MAX_RPC_ATTEMPTS = 6;
 const BASE_RETRY_DELAY_MS = 1_000;
-const DEFAULT_HTTP_BATCH_SIZE = 1;
+const DEFAULT_HTTP_BATCH_SIZE = 10;
 const DEFAULT_MULTICALL_BATCH_SIZE = 128;
 const DEFAULT_RPC_TIMEOUT_MS = 30_000;
+// After the event-driven migration almost all snapshot data comes from
+// HyperSync-backed entities; only a handful of cached effects still hit RPC.
+// Per-chain rate limiting is no longer needed by default.
 const DEFAULT_RPC_REQUESTS_PER_SECOND = 0;
-const DEFAULT_CHAIN_RPC_REQUESTS_PER_SECOND: Record<number, number> = {
-  42161: 5,
-  80094: 5,
-};
+const DEFAULT_CHAIN_RPC_REQUESTS_PER_SECOND: Record<number, number> = {};
 let activeContractReadCache: Map<string, Promise<unknown>> | null = null;
 const invariantContractReadCache = new Map<string, Promise<unknown>>();
 const rpcRateLimiters = new Map<number, RpcRateLimiter | null>();

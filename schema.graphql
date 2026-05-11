@@ -146,3 +146,106 @@ type ClearinghouseAddress {
   block: BigInt!
   addresses: [Bytes!]!
 }
+
+# ---- Event-derived state used to build each snapshot without RPC ----
+
+# Running ERC20 balance of a wallet for a token. Maintained from Transfer events.
+# Used in place of balanceOf RPC reads at snapshot time.
+# Native balances (e.g. BERA) are not represented here. TODO(native-balances).
+type TokenBalance {
+  id: ID! # chainId-tokenAddress-walletAddress (all lowercase)
+  chainId: Int!
+  tokenAddress: String!
+  walletAddress: String!
+  balance: BigInt! # raw token units; apply decimals when consumed
+  updatedAtBlock: BigInt!
+}
+
+# Running ERC20 totalSupply. Maintained from Transfer-from-zero (mint) and Transfer-to-zero (burn).
+type Erc20Supply {
+  id: ID! # chainId-tokenAddress
+  chainId: Int!
+  tokenAddress: String!
+  totalSupply: BigInt!
+  updatedAtBlock: BigInt!
+}
+
+# Whether an Olympus Lender AMO is currently active and its running deployed-OHM
+# balance. Maintained from AMOAdded / AMORemoved plus OHM Transfer events whose
+# from/to is this AMO (replaces the per-snapshot getDeployedOhm RPC call).
+type LenderAmo {
+  id: ID! # chainId-amoAddress
+  chainId: Int! @index
+  amoAddress: String!
+  active: Boolean! @index
+  deployedOhm: BigInt!
+  updatedAtBlock: BigInt!
+}
+
+# Running stake of a wallet in a Jones Staking pool. Maintained from Deposit / Withdraw /
+# EmergencyWithdraw events.
+type JonesStakingPosition {
+  id: ID! # chainId-poolId-walletAddress
+  chainId: Int!
+  poolId: BigInt!
+  walletAddress: String!
+  amount: BigInt!
+  updatedAtBlock: BigInt!
+}
+
+# Univ2 pool reserves. Maintained from Sync events.
+type Univ2PoolState {
+  id: ID! # chainId-poolAddress
+  chainId: Int!
+  poolAddress: String!
+  reserve0: BigInt!
+  reserve1: BigInt!
+  updatedAtBlock: BigInt!
+}
+
+# Balancer V2 pool token balances. Tokens array is set on the first event seen
+# (TokensRegistered, PoolBalanceChanged, or Swap) — for pools that were created
+# before the chain's start_block, the balances are seeded via a one-shot cached
+# effect (vault.getPoolTokens) so the running entity is correct from then on.
+type BalancerPoolState {
+  id: ID! # chainId-poolId
+  chainId: Int!
+  poolId: String!
+  tokens: [String!]!
+  balances: [BigInt!]!
+  updatedAtBlock: BigInt!
+}
+
+# Maps a Kodiak LP wrapper to its underlying UniswapV3 pool. Populated once per
+# Kodiak LP from the first Transfer event we observe (paired with a
+# contractRegister handler that dynamically subscribes the underlying pool's
+# Swap/Initialize events so it flows through Univ3PoolState).
+type KodiakPool {
+  id: ID! # chainId-kodiakLpAddress
+  chainId: Int!
+  kodiakLpAddress: String!
+  underlyingPoolAddress: String!
+  updatedAtBlock: BigInt!
+}
+
+# Univ3 pool spot state. Maintained from Initialize and Swap events.
+type Univ3PoolState {
+  id: ID! # chainId-poolAddress
+  chainId: Int!
+  poolAddress: String!
+  sqrtPriceX96: BigInt!
+  tick: BigInt!
+  liquidity: BigInt!
+  updatedAtBlock: BigInt!
+}
+
+# Running deposit on the Treasure Atlas Mine, keyed by user and deposit index.
+# Maintained from Deposit / Withdraw events.
+type TreasureDeposit {
+  id: ID! # chainId-walletAddress-depositId
+  chainId: Int! @index
+  walletAddress: String! @index
+  depositId: BigInt!
+  amount: BigInt!
+  updatedAtBlock: BigInt!
+}

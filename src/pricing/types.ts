@@ -1,8 +1,9 @@
 import type BigNumber from "bignumber.js";
+import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 
-import { isActive } from "../math";
-import type { ChainConfig, LiquidityHandler } from "../types";
+import { isActive } from "../snapshot/math";
+import type { ChainConfig, LiquidityHandler } from "../snapshot/types";
 
 export type PriceLookup = (
   tokenAddress: string,
@@ -29,7 +30,6 @@ export interface PriceHandler {
     blockNumber: bigint,
   ): Promise<BigNumber | null>;
   getUnitPrice(priceLookup: PriceLookup, blockNumber: bigint): Promise<BigNumber | null>;
-  getBalance(wallet: string, blockNumber: bigint): Promise<BigNumber>;
   getUnderlyingTokenBalance(
     wallet: string,
     tokenAddress: string,
@@ -40,6 +40,7 @@ export interface PriceHandler {
 export abstract class BasePriceHandler<THandler extends LiquidityHandler> implements PriceHandler {
   constructor(
     protected readonly config: ChainConfig,
+    protected readonly context: EvmOnBlockContext,
     protected readonly client: PublicClient,
     protected readonly handler: THandler,
   ) {}
@@ -61,17 +62,15 @@ export abstract class BasePriceHandler<THandler extends LiquidityHandler> implem
     priceLookup: PriceLookup,
     blockNumber: bigint,
   ): Promise<PriceLookupResult | null>;
-
   abstract getTotalValue(
     excludedTokens: string[],
     priceLookup: PriceLookup,
     blockNumber: bigint,
   ): Promise<BigNumber | null>;
-
-  abstract getUnitPrice(priceLookup: PriceLookup, blockNumber: bigint): Promise<BigNumber | null>;
-
-  abstract getBalance(wallet: string, blockNumber: bigint): Promise<BigNumber>;
-
+  abstract getUnitPrice(
+    priceLookup: PriceLookup,
+    blockNumber: bigint,
+  ): Promise<BigNumber | null>;
   abstract getUnderlyingTokenBalance(
     wallet: string,
     tokenAddress: string,
