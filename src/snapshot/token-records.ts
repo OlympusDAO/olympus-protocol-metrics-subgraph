@@ -16,9 +16,6 @@ export async function pushTokenBalanceRecords(
 ) {
   if (!isActive(definition, blockNumber)) return;
   const wallets = getWalletAddressesForContract(config, definition.address);
-  const rate = await getPrice(config, client, definition.address, blockNumber, null);
-  if (rate.eq(ZERO)) return;
-
   const balances = await Promise.all(
     wallets.map(async (wallet) => ({
       wallet,
@@ -28,6 +25,10 @@ export async function pushTokenBalanceRecords(
           : await getErc20DecimalBalance(client, definition.address, wallet, blockNumber),
     })),
   );
+  if (balances.every(({ balance }) => balance.eq(ZERO))) return;
+
+  const rate = await getPrice(config, client, definition.address, blockNumber, null);
+  if (rate.eq(ZERO)) return;
 
   for (const { wallet, balance } of balances) {
     if (balance.eq(ZERO)) continue;
@@ -56,6 +57,15 @@ export async function pushOwnedLiquidityRecords(
   blockNumber: bigint,
 ) {
   if (!isActive(handler, blockNumber)) return;
+
+  const balances = await Promise.all(
+    config.protocolAddresses.map(async (wallet) => ({
+      wallet,
+      balance: await getLiquidityBalance(config, client, handler, wallet, blockNumber),
+    })),
+  );
+  if (balances.every(({ balance }) => balance.eq(ZERO))) return;
+
   const totalValue = await getTotalValue(config, client, handler, [], blockNumber);
   if (!totalValue || totalValue.eq(ZERO)) return;
   const includedValue = await getTotalValue(
@@ -69,13 +79,6 @@ export async function pushOwnedLiquidityRecords(
   const multiplier = includedValue.div(totalValue);
   const unitRate = await getUnitPrice(config, client, handler, blockNumber);
   if (!unitRate) return;
-
-  const balances = await Promise.all(
-    config.protocolAddresses.map(async (wallet) => ({
-      wallet,
-      balance: await getLiquidityBalance(config, client, handler, wallet, blockNumber),
-    })),
-  );
 
   for (const { wallet, balance } of balances) {
     if (balance.eq(ZERO)) continue;

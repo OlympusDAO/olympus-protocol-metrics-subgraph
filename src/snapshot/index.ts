@@ -3,6 +3,7 @@ import { createEffect, S } from "envio";
 import { CHAIN_CONFIGS } from "./chains";
 import { getBlock, getClient, withContractReadCache } from "./contracts";
 import { pushArbitrumLendingSupply } from "./lending/arbitrum";
+import { withPricingCache } from "./pricing";
 import { getContractName } from "./records";
 import { pushArbitrumStakingRecords } from "./staking/arbitrum";
 import { pushOwnedLiquidityRecords, pushTokenBalanceRecords } from "./token-records";
@@ -25,8 +26,10 @@ export const getSnapshot = createEffect(
     const startedAt = Date.now();
     context.log.info(`Starting getSnapshot for ${config.blockchain} block ${input.blockNumber}`);
     const snapshot = await withContractReadCache(() =>
-      generateSnapshot(config, BigInt(input.blockNumber), (message, metadata) =>
-        context.log.info(message, metadata),
+      withPricingCache(() =>
+        generateSnapshot(config, BigInt(input.blockNumber), (message, metadata) =>
+          context.log.info(message, metadata),
+        ),
       ),
     );
     context.log.info(

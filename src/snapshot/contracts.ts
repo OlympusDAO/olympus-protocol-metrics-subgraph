@@ -288,7 +288,7 @@ export async function getBalancerPool(
   blockNumber: bigint,
 ) {
   if (!isActive(handler, blockNumber)) return null;
-  const result = await readInvariantContract(
+  const result = await readContract(
     client,
     handler.vault,
     BALANCER_VAULT_ABI,
@@ -305,7 +305,7 @@ export async function getBalancerPoolToken(
   blockNumber: bigint,
 ) {
   if (!isActive(handler, blockNumber)) return null;
-  const result = await readContract(
+  const result = await readInvariantContract(
     client,
     handler.vault,
     BALANCER_VAULT_ABI,

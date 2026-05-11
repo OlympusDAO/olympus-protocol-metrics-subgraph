@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 
 import { ARBITRUM } from "./chains/arbitrum";
 import { BERACHAIN } from "./chains/berachain";
-import { getPrice } from "./pricing";
+import { getPrice, withPricingCache } from "./pricing";
 import type { ChainConfig, LiquidityHandler, TokenDefinition } from "./types";
 
 const ARBITRUM_BLOCK = 500_000_000n;
@@ -41,7 +41,11 @@ function contractResponses(entries: readonly (readonly [string, unknown])[]): Co
   return new Map(entries);
 }
 
-function mockClient(chainId: number, responses: ContractResponseMap) {
+function mockClient(
+  chainId: number,
+  responses: ContractResponseMap,
+  onRead?: (key: string) => void,
+) {
   return {
     chain: { id: chainId },
     readContract: async ({
@@ -55,6 +59,7 @@ function mockClient(chainId: number, responses: ContractResponseMap) {
     }) => {
       const specific = key(address, functionName, args);
       const generic = key(address, functionName);
+      onRead?.(specific);
       if (responses.has(specific)) return responses.get(specific);
       if (responses.has(generic)) return responses.get(generic);
       throw new Error(`Unhandled readContract mock: ${specific}`);
@@ -236,6 +241,30 @@ describe("Arbitrum Envio snapshot parity", () => {
     await expect(getPrice(ARBITRUM, client, WETH, ARBITRUM_BLOCK, null)).resolves.toSatisfy(
       (price) => price.eq("3000"),
     );
+  });
+
+  test("caches repeated price derivations within a snapshot", async () => {
+    let reads = 0;
+    const client = mockClient(
+      ARBITRUM.chainId,
+      contractResponses(arbitrumWethFeedResponses()),
+      () => {
+        reads++;
+      },
+    );
+
+    await withPricingCache(async () => {
+      await expect(getPrice(ARBITRUM, client, WETH, ARBITRUM_BLOCK, null)).resolves.toSatisfy(
+        (price) => price.eq("3000"),
+      );
+      const readsAfterFirstLookup = reads;
+      await expect(getPrice(ARBITRUM, client, WETH, ARBITRUM_BLOCK, null)).resolves.toSatisfy(
+        (price) => price.eq("3000"),
+      );
+      expect(reads).toBe(readsAfterFirstLookup);
+    });
+
+    expect(reads).toBeGreaterThan(0);
   });
 
   test("derives ARB through the ARB-WETH Uniswap V3 handler", async () => {
