@@ -24,6 +24,8 @@
     "format:check": "biome format .",
     "ls-deadcode": "yarn ts-prune -p tsconfig.ts-prune.json | grep -v 'used in module'",
     "subgraph": "tsx bin/subgraph/src/index.ts",
+    "test": "vitest run src",
+    "validate": "pnpm run format:check && pnpm run lint:check && pnpm run build && pnpm test",
     "lint": "biome lint --write .",
     "lint:check": "biome lint ."
   },
