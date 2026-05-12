@@ -6,11 +6,6 @@ import {
   type TokenRecord,
   type TokenSupply,
 } from "envio";
-
-import { CHAIN_CONFIGS } from "../snapshot/chains";
-import { OLYMPUS_LENDER, SENTIMENT_LTOKEN, SILO_COLLATERAL } from "../snapshot/chains/arbitrum";
-import { getClient, withContractReadCache } from "../snapshot/contracts";
-import { addr, getTokenDecimals, isActive, matches, toDecimal, ZERO } from "../snapshot/math";
 import {
   getPrice,
   getTotalValue,
@@ -18,6 +13,10 @@ import {
   getUnitPrice,
   withPricingCache,
 } from "../pricing";
+import { CHAIN_CONFIGS } from "../snapshot/chains";
+import { OLYMPUS_LENDER, SENTIMENT_LTOKEN, SILO_COLLATERAL } from "../snapshot/chains/arbitrum";
+import { getClient, withContractReadCache } from "../snapshot/contracts";
+import { addr, getTokenDecimals, isActive, matches, toDecimal, ZERO } from "../snapshot/math";
 import {
   createTokenRecord,
   createTokenSupply,
