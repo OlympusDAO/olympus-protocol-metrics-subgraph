@@ -1,22 +1,28 @@
+import BigNumber from "bignumber.js";
+import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 import { describe, expect, test } from "vitest";
 
 import { ARBITRUM } from "./chains/arbitrum";
 import { BERACHAIN } from "./chains/berachain";
-import { getPrice, withPricingCache } from "./pricing";
+import { getPrice, withPricingCache } from "../pricing";
 import type { ChainConfig, LiquidityHandler, TokenDefinition } from "./types";
 
 const ARBITRUM_BLOCK = 500_000_000n;
 const BERACHAIN_BLOCK = 1_000_000n;
 const ONE_TO_ONE_SQRT_PRICE_X96 = 79_228_162_514_264_337_593_543_950_336n;
+const WBERA_HONEY_SQRT_PRICE_X96 = 120_642_670_411_427_278_599_524_957_623n;
+const IBERA_WBERA_SQRT_PRICE_X96 = 78_340_306_083_374_187_368_106_177_700n;
 
 const ARB = "0x912ce59144191c1204e64559fe8253a0e49e6548";
 const FRAX = "0x17fc002b466eec40dae837fc4be5c67993ddbd6f";
 const MAGIC = "0x539bde0d7dbd336b79148aa742883198bbf60342";
 const USDC_ARBITRUM = "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8";
 const WETH = "0x82af49447d8a07e3bd95bd0d56f35241523fbab1";
+const WETH_USDC_POOL = "0xc31e54c7a869b9fcbecc14363cf510d1c41fa443";
 const ARB_WETH_POOL = "0xc6f780497a95e246eb9449f5e4770916dcd6396a";
 const MAGIC_WETH_POOL = "0xb7e50106a5bd3cf21af210a755f9c8740890a8c9";
+const WETH_USDC_SQRT_PRICE_X96 = 4_339_505_179_874_779_489_431_521n;
 
 const HONEY = "0xfcbd14dc51f0a4d49d5e53c2e0950e0bc26d0dce";
 const IBERA = "0x9b6761bf2397bb5a6624a856cc84a3a14dcd3fe5";
@@ -27,23 +33,17 @@ const USDC_BERACHAIN = "0x549943e04f40284185054145c6e4e9568c1d3241";
 const WBERA = "0x6969696969696969696969696969696969696969";
 const WBERA_HONEY_POOL = "0x1127f801cb3ab7bdf8923272949aa7dba94b5805";
 const IBERA_WBERA_POOL_3000 = "0x8dd1c3e5fb96ca0e45fe3c3cc521ad44e12f3e47";
-const IBERA_WBERA_POOL_500 = "0xfcb24b3b7e87e3810b150d25d5964c566d9a2b6f";
-const KODIAK_QUOTER = "0x644c8d6e501f7c994b74f5cea96abe65d0ba662b";
 const KODIAK_OHM_HONEY = "0x98bdeede9a45c28d229285d9d6e9139e9f505391";
 const WBERA_HONEY_AMOUNT_OUT = 2_318_690_143_565_703_750n;
 const IBERA_WBERA_AMOUNT_OUT = 1_022_795_101_522_250_064n;
-const WBERA_PRICE = "2.31869014356570375";
-const IBERA_PRICE = "2.37154492078692454299068672164254";
-
-type ContractResponseMap = Map<string, unknown>;
-
-function contractResponses(entries: readonly (readonly [string, unknown])[]): ContractResponseMap {
-  return new Map(entries);
-}
+const WBERA_PRICE = decimalFromWei(WBERA_HONEY_AMOUNT_OUT);
+const IBERA_PRICE = new BigNumber(WBERA_PRICE)
+  .times(decimalFromWei(IBERA_WBERA_AMOUNT_OUT))
+  .toFixed();
 
 function mockClient(
   chainId: number,
-  responses: ContractResponseMap,
+  responses: Map<string, unknown>,
   onRead?: (key: string) => void,
 ) {
   return {
@@ -65,6 +65,36 @@ function mockClient(
       throw new Error(`Unhandled readContract mock: ${specific}`);
     },
   } as unknown as PublicClient;
+}
+
+function mockContext({
+  univ2 = [],
+  univ3 = [],
+}: {
+  univ2?: readonly (readonly [string, unknown])[];
+  univ3?: readonly (readonly [string, unknown])[];
+} = {}): EvmOnBlockContext {
+  const univ2States = new Map(univ2);
+  const univ3States = new Map(univ3);
+  return {
+    BalancerPoolState: { get: async () => undefined },
+    KodiakPool: { get: async () => undefined },
+    Univ2PoolState: { get: async (id: string) => univ2States.get(id) },
+    Univ3PoolState: { get: async (id: string) => univ3States.get(id) },
+    Erc20Supply: { get: async () => undefined },
+    TokenBalance: { get: async () => undefined },
+  } as unknown as EvmOnBlockContext;
+}
+
+function poolStateId(config: ChainConfig, poolAddress: string) {
+  return `${config.chainId}-${poolAddress.toLowerCase()}`;
+}
+
+function decimalFromWei(amount: bigint): string {
+  const scale = 1_000_000_000_000_000_000n;
+  const whole = amount / scale;
+  const fraction = amount % scale;
+  return `${whole}.${fraction.toString().padStart(18, "0").replace(/0+$/, "")}`;
 }
 
 function key(address: string, functionName: string, args: unknown[] = []) {
@@ -94,125 +124,6 @@ function handler(config: ChainConfig, id: string): LiquidityHandler {
   return definition;
 }
 
-function feedResponses(config: ChainConfig, tokenAddress: string, price: bigint, decimals = 8) {
-  const feed = config.basePriceFeeds[tokenAddress.toLowerCase()];
-  if (!feed) throw new Error(`Missing price feed for ${tokenAddress}`);
-  return [
-    [key(feed.address, "decimals"), decimals],
-    [key(feed.address, "latestAnswer"), price],
-  ] as const;
-}
-
-function erc20Decimals(address: string, decimals = 18) {
-  return [key(address, "decimals"), decimals] as const;
-}
-
-function erc20Balance(tokenAddress: string, walletAddress: string, balance: bigint) {
-  return [key(tokenAddress, "balanceOf", [walletAddress.toLowerCase()]), balance] as const;
-}
-
-function quote(
-  tokenIn: string,
-  tokenOut: string,
-  amountIn: bigint,
-  fee: number,
-  amountOut: bigint,
-) {
-  return [
-    key(KODIAK_QUOTER, "quoteExactInputSingle", [
-      {
-        tokenIn,
-        tokenOut,
-        amountIn,
-        fee,
-        sqrtPriceLimitX96: 0n,
-      },
-    ]),
-    [amountOut, 0n, 0, 0n],
-  ] as const;
-}
-
-function arbitrumWethFeedResponses() {
-  return feedResponses(ARBITRUM, WETH, 300_000_000_000n);
-}
-
-function arbitrumArbWethResponses() {
-  return [
-    ...arbitrumWethFeedResponses(),
-    [key(ARB_WETH_POOL, "token0"), WETH],
-    [key(ARB_WETH_POOL, "token1"), ARB],
-    [key(ARB_WETH_POOL, "slot0"), [ONE_TO_ONE_SQRT_PRICE_X96, 0, 0, 0, 0, 0, true]],
-    erc20Decimals(ARB),
-    erc20Decimals(WETH),
-    erc20Balance(WETH, ARB_WETH_POOL, 1_000_000_000_000_000_000_000n),
-  ] as const;
-}
-
-function arbitrumMagicWethResponses() {
-  return [
-    ...arbitrumWethFeedResponses(),
-    [key(MAGIC_WETH_POOL, "token0"), MAGIC],
-    [key(MAGIC_WETH_POOL, "token1"), WETH],
-    [
-      key(MAGIC_WETH_POOL, "getReserves"),
-      [10_000_000_000_000_000_000_000n, 10_000_000_000_000_000_000n, 0],
-    ],
-    erc20Decimals(MAGIC),
-    erc20Decimals(WETH),
-  ] as const;
-}
-
-function berachainHoneyFeedResponses() {
-  return feedResponses(BERACHAIN, HONEY, 100_000_000n);
-}
-
-function berachainWberaHoneyResponses() {
-  return [
-    ...berachainHoneyFeedResponses(),
-    [key(WBERA_HONEY_POOL, "token0"), WBERA],
-    [key(WBERA_HONEY_POOL, "token1"), HONEY],
-    [key(WBERA_HONEY_POOL, "fee"), 3000],
-    [key(WBERA_HONEY_POOL, "liquidity"), 1_000_000n],
-    [key(IBERA_WBERA_POOL_3000, "token0"), WBERA],
-    [key(IBERA_WBERA_POOL_3000, "token1"), IBERA],
-    [key(IBERA_WBERA_POOL_3000, "fee"), 3000],
-    [key(IBERA_WBERA_POOL_3000, "liquidity"), 0n],
-    [key(IBERA_WBERA_POOL_500, "token0"), WBERA],
-    [key(IBERA_WBERA_POOL_500, "token1"), IBERA],
-    [key(IBERA_WBERA_POOL_500, "fee"), 500],
-    [key(IBERA_WBERA_POOL_500, "liquidity"), 0n],
-    erc20Decimals(WBERA),
-    erc20Decimals(HONEY),
-    quote(WBERA, HONEY, 1_000_000_000_000_000_000n, 3000, WBERA_HONEY_AMOUNT_OUT),
-    erc20Balance(HONEY, WBERA_HONEY_POOL, 2_000_000_000_000_000_000_000n),
-  ] as const;
-}
-
-function berachainIberaWberaResponses() {
-  return [
-    ...berachainHoneyFeedResponses(),
-    [key(WBERA_HONEY_POOL, "token0"), WBERA],
-    [key(WBERA_HONEY_POOL, "token1"), HONEY],
-    [key(WBERA_HONEY_POOL, "fee"), 3000],
-    [key(WBERA_HONEY_POOL, "liquidity"), 1_000_000n],
-    quote(WBERA, HONEY, 1_000_000_000_000_000_000n, 3000, WBERA_HONEY_AMOUNT_OUT),
-    erc20Balance(HONEY, WBERA_HONEY_POOL, 2_000_000_000_000_000_000_000n),
-    [key(IBERA_WBERA_POOL_3000, "token0"), WBERA],
-    [key(IBERA_WBERA_POOL_3000, "token1"), IBERA],
-    [key(IBERA_WBERA_POOL_3000, "fee"), 3000],
-    [key(IBERA_WBERA_POOL_3000, "liquidity"), 1_000_000n],
-    quote(IBERA, WBERA, 1_000_000_000_000_000_000n, 3000, IBERA_WBERA_AMOUNT_OUT),
-    erc20Balance(WBERA, IBERA_WBERA_POOL_3000, 5_000_000_000_000_000_000_000n),
-    [key(IBERA_WBERA_POOL_500, "token0"), WBERA],
-    [key(IBERA_WBERA_POOL_500, "token1"), IBERA],
-    [key(IBERA_WBERA_POOL_500, "fee"), 500],
-    [key(IBERA_WBERA_POOL_500, "liquidity"), 0n],
-    erc20Decimals(WBERA),
-    erc20Decimals(HONEY),
-    erc20Decimals(IBERA),
-  ] as const;
-}
-
 describe("Arbitrum Envio snapshot parity", () => {
   test("recognizes the Graph-era asset categories and liquidity flags", () => {
     expect(token(ARBITRUM, FRAX)).toMatchObject({ category: "Stable", isLiquid: true });
@@ -231,54 +142,95 @@ describe("Arbitrum Envio snapshot parity", () => {
 
   test("derives FRAX through the stablecoin handler", async () => {
     const client = mockClient(ARBITRUM.chainId, new Map<string, unknown>());
-    await expect(getPrice(ARBITRUM, client, FRAX, ARBITRUM_BLOCK, null)).resolves.toSatisfy(
-      (price) => price.eq("1"),
-    );
+    await expect(
+      getPrice(ARBITRUM, mockContext(), client, FRAX, ARBITRUM_BLOCK, null),
+    ).resolves.toSatisfy((price) => price.eq("1"));
   });
 
-  test("derives WETH through the Chainlink base-price feed", async () => {
-    const client = mockClient(ARBITRUM.chainId, contractResponses(arbitrumWethFeedResponses()));
-    await expect(getPrice(ARBITRUM, client, WETH, ARBITRUM_BLOCK, null)).resolves.toSatisfy(
-      (price) => price.eq("3000"),
-    );
+  test("derives WETH through the WETH-USDC Uniswap V3 pool state", async () => {
+    const client = mockClient(ARBITRUM.chainId, new Map<string, unknown>());
+    const context = mockContext({
+      univ3: [
+        [
+          poolStateId(ARBITRUM, WETH_USDC_POOL),
+          { sqrtPriceX96: WETH_USDC_SQRT_PRICE_X96, liquidity: 1_000_000n },
+        ],
+      ],
+    });
+    await expect(
+      getPrice(ARBITRUM, context, client, WETH, ARBITRUM_BLOCK, null),
+    ).resolves.toSatisfy((price) => price.eq("3000"));
   });
 
   test("caches repeated price derivations within a snapshot", async () => {
     let reads = 0;
-    const client = mockClient(
-      ARBITRUM.chainId,
-      contractResponses(arbitrumWethFeedResponses()),
-      () => {
-        reads++;
-      },
-    );
+    const client = mockClient(ARBITRUM.chainId, new Map<string, unknown>(), () => {
+      reads++;
+    });
+    const context = mockContext({
+      univ3: [
+        [
+          poolStateId(ARBITRUM, WETH_USDC_POOL),
+          { sqrtPriceX96: WETH_USDC_SQRT_PRICE_X96, liquidity: 1_000_000n },
+        ],
+      ],
+    });
 
     await withPricingCache(async () => {
-      await expect(getPrice(ARBITRUM, client, WETH, ARBITRUM_BLOCK, null)).resolves.toSatisfy(
-        (price) => price.eq("3000"),
-      );
+      await expect(
+        getPrice(ARBITRUM, context, client, WETH, ARBITRUM_BLOCK, null),
+      ).resolves.toSatisfy((price) => price.eq("3000"));
       const readsAfterFirstLookup = reads;
-      await expect(getPrice(ARBITRUM, client, WETH, ARBITRUM_BLOCK, null)).resolves.toSatisfy(
-        (price) => price.eq("3000"),
-      );
+      await expect(
+        getPrice(ARBITRUM, context, client, WETH, ARBITRUM_BLOCK, null),
+      ).resolves.toSatisfy((price) => price.eq("3000"));
       expect(reads).toBe(readsAfterFirstLookup);
     });
 
-    expect(reads).toBeGreaterThan(0);
+    expect(reads).toBe(0);
   });
 
   test("derives ARB through the ARB-WETH Uniswap V3 handler", async () => {
-    const client = mockClient(ARBITRUM.chainId, contractResponses(arbitrumArbWethResponses()));
-    await expect(getPrice(ARBITRUM, client, ARB, ARBITRUM_BLOCK, null)).resolves.toSatisfy(
+    const client = mockClient(ARBITRUM.chainId, new Map<string, unknown>());
+    const context = mockContext({
+      univ3: [
+        [
+          poolStateId(ARBITRUM, WETH_USDC_POOL),
+          { sqrtPriceX96: WETH_USDC_SQRT_PRICE_X96, liquidity: 1_000_000n },
+        ],
+        [
+          poolStateId(ARBITRUM, ARB_WETH_POOL),
+          { sqrtPriceX96: ONE_TO_ONE_SQRT_PRICE_X96, liquidity: 1_000_000n },
+        ],
+      ],
+    });
+    await expect(getPrice(ARBITRUM, context, client, ARB, ARBITRUM_BLOCK, null)).resolves.toSatisfy(
       (price) => price.eq("3000"),
     );
   });
 
   test("derives MAGIC through the MAGIC-WETH Uniswap V2 handler", async () => {
-    const client = mockClient(ARBITRUM.chainId, contractResponses(arbitrumMagicWethResponses()));
-    await expect(getPrice(ARBITRUM, client, MAGIC, ARBITRUM_BLOCK, null)).resolves.toSatisfy(
-      (price) => price.eq("3"),
-    );
+    const client = mockClient(ARBITRUM.chainId, new Map<string, unknown>());
+    const context = mockContext({
+      univ3: [
+        [
+          poolStateId(ARBITRUM, WETH_USDC_POOL),
+          { sqrtPriceX96: WETH_USDC_SQRT_PRICE_X96, liquidity: 1_000_000n },
+        ],
+      ],
+      univ2: [
+        [
+          poolStateId(ARBITRUM, MAGIC_WETH_POOL),
+          {
+            reserve0: 10_000_000_000_000_000_000_000n,
+            reserve1: 10_000_000_000_000_000_000n,
+          },
+        ],
+      ],
+    });
+    await expect(
+      getPrice(ARBITRUM, context, client, MAGIC, ARBITRUM_BLOCK, null),
+    ).resolves.toSatisfy((price) => price.eq("3"));
   });
 });
 
@@ -305,40 +257,68 @@ describe("Berachain Envio snapshot parity", () => {
     });
   });
 
-  test("derives HONEY through the Chainlink base-price feed", async () => {
-    const client = mockClient(BERACHAIN.chainId, contractResponses(berachainHoneyFeedResponses()));
-    await expect(getPrice(BERACHAIN, client, HONEY, BERACHAIN_BLOCK, null)).resolves.toSatisfy(
-      (price) => price.eq("1"),
-    );
-  });
-
-  test("derives USDC.e through the Chainlink base-price feed", async () => {
-    const client = mockClient(BERACHAIN.chainId, contractResponses(berachainHoneyFeedResponses()));
+  test("derives HONEY through the stablecoin handler", async () => {
+    const client = mockClient(BERACHAIN.chainId, new Map<string, unknown>());
     await expect(
-      getPrice(BERACHAIN, client, USDC_BERACHAIN, BERACHAIN_BLOCK, null),
+      getPrice(BERACHAIN, mockContext(), client, HONEY, BERACHAIN_BLOCK, null),
     ).resolves.toSatisfy((price) => price.eq("1"));
   });
 
-  test("derives WBERA through the WBERA-HONEY quoter handler", async () => {
-    const client = mockClient(BERACHAIN.chainId, contractResponses(berachainWberaHoneyResponses()));
-    await expect(getPrice(BERACHAIN, client, WBERA, BERACHAIN_BLOCK, null)).resolves.toSatisfy(
-      (price) => price.eq(WBERA_PRICE),
-    );
+  test("derives USDC.e through the stablecoin handler", async () => {
+    const client = mockClient(BERACHAIN.chainId, new Map<string, unknown>());
+    await expect(
+      getPrice(BERACHAIN, mockContext(), client, USDC_BERACHAIN, BERACHAIN_BLOCK, null),
+    ).resolves.toSatisfy((price) => price.eq("1"));
+  });
+
+  test("derives WBERA through the WBERA-HONEY Uniswap V3 pool state", async () => {
+    const client = mockClient(BERACHAIN.chainId, new Map<string, unknown>());
+    const context = mockContext({
+      univ3: [
+        [
+          poolStateId(BERACHAIN, WBERA_HONEY_POOL),
+          { sqrtPriceX96: WBERA_HONEY_SQRT_PRICE_X96, liquidity: 1_000_000n },
+        ],
+      ],
+    });
+    await expect(
+      getPrice(BERACHAIN, context, client, WBERA, BERACHAIN_BLOCK, null),
+    ).resolves.toSatisfy((price) => price.eq(WBERA_PRICE));
   });
 
   test("keeps native BERA remapped to WBERA instead of pricing it at one dollar", async () => {
-    const client = mockClient(BERACHAIN.chainId, contractResponses(berachainWberaHoneyResponses()));
+    const client = mockClient(BERACHAIN.chainId, new Map<string, unknown>());
+    const context = mockContext({
+      univ3: [
+        [
+          poolStateId(BERACHAIN, WBERA_HONEY_POOL),
+          { sqrtPriceX96: WBERA_HONEY_SQRT_PRICE_X96, liquidity: 1_000_000n },
+        ],
+      ],
+    });
     await expect(
-      getPrice(BERACHAIN, client, NATIVE_BERA, BERACHAIN_BLOCK, null),
+      getPrice(BERACHAIN, context, client, NATIVE_BERA, BERACHAIN_BLOCK, null),
     ).resolves.toSatisfy((price) => price.eq(WBERA_PRICE));
   });
 
   test("uses the highest-liquidity IBERA-WBERA handler and recurses through WBERA-HONEY", async () => {
-    const client = mockClient(BERACHAIN.chainId, contractResponses(berachainIberaWberaResponses()));
+    const client = mockClient(BERACHAIN.chainId, new Map<string, unknown>());
+    const context = mockContext({
+      univ3: [
+        [
+          poolStateId(BERACHAIN, WBERA_HONEY_POOL),
+          { sqrtPriceX96: WBERA_HONEY_SQRT_PRICE_X96, liquidity: 1_000_000n },
+        ],
+        [
+          poolStateId(BERACHAIN, IBERA_WBERA_POOL_3000),
+          { sqrtPriceX96: IBERA_WBERA_SQRT_PRICE_X96, liquidity: 1_000_000n },
+        ],
+      ],
+    });
 
-    await expect(getPrice(BERACHAIN, client, IBERA, BERACHAIN_BLOCK, null)).resolves.toSatisfy(
-      (price) => price.eq(IBERA_PRICE),
-    );
+    await expect(
+      getPrice(BERACHAIN, context, client, IBERA, BERACHAIN_BLOCK, null),
+    ).resolves.toSatisfy((price) => price.eq(IBERA_PRICE));
 
     expect(handler(BERACHAIN, IBERA_WBERA_POOL_3000)).toMatchObject({
       kind: "univ3-quoter",

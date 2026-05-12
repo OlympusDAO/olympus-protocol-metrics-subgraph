@@ -11,9 +11,26 @@ export function token(
   isLiquid: boolean,
   isBluechip: boolean,
   multiplier?: string,
-  options: { startBlock?: number } = {},
+  options: { startBlock?: number; decimals?: number } = {},
 ): TokenDefinition {
-  return { address: addr(address), category, isLiquid, isBluechip, multiplier, ...options };
+  return {
+    address: addr(address),
+    category,
+    isLiquid,
+    isBluechip,
+    multiplier,
+    decimals: options.decimals ?? 18,
+    startBlock: options.startBlock,
+  };
+}
+
+export function getTokenDecimals(
+  tokens: TokenDefinition[],
+  address: string,
+  fallback = 18,
+): number {
+  const lower = addr(address);
+  return tokens.find((value) => value.address === lower)?.decimals ?? fallback;
 }
 
 export function feed(address: string, startBlock?: number): BasePriceFeed {

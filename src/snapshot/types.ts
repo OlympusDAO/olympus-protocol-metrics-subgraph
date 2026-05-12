@@ -50,6 +50,7 @@ export type TokenDefinition = {
   category: string;
   isLiquid: boolean;
   isBluechip: boolean;
+  decimals: number;
   multiplier?: string;
   isLiability?: boolean;
   startBlock?: number;
