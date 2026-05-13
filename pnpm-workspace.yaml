@@ -3,3 +3,5 @@ preferFrozenLockfile: true
 engineStrict: true
 strictDepBuilds: true
 blockExoticSubdeps: true
+onlyBuiltDependencies:
+  - "es5-ext@0.10.64"
