@@ -392,6 +392,46 @@ export const readErc4626AssetsPerShare = createEffect(
   },
 );
 
+// Cached effect that reads `circulatingSupply()` on the sOHM V3 contract.
+// Result is in OHM raw units (9 decimals). Reverts surface as "".
+const SOHM_V3_ABI = [
+  {
+    inputs: [],
+    name: "circulatingSupply",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+export const readSOhmCirculatingSupply = createEffect(
+  {
+    name: "readSOhmCirculatingSupply",
+    input: { chainId: S.number, sOhm: S.string, atBlock: S.number },
+    output: S.string,
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    try {
+      const value = (await retryRpc(() =>
+        client.readContract({
+          address: getAddress(input.sOhm),
+          abi: SOHM_V3_ABI,
+          functionName: "circulatingSupply",
+          blockNumber: BigInt(input.atBlock),
+        }),
+      )) as bigint;
+      return value.toString();
+    } catch {
+      return "";
+    }
+  },
+);
+
 // Cached effect that resolves a Kodiak LP wrapper's underlying UniswapV3 pool.
 // Invariant across blocks; called once per Kodiak LP per indexer process. The
 // returned address feeds both a contractRegister call (so the underlying

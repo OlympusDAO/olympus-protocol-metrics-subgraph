@@ -17,6 +17,7 @@ import {
   readBondManagerState,
   readCoolerPrincipalReceivables,
   readMonoCoolerTotalDebt,
+  readSOhmCirculatingSupply,
   snapshotBlvRegistry,
 } from "../effects";
 import {
@@ -217,7 +218,15 @@ async function processSnapshot(
   // existing GlobalMetricChainValues entities.
   await withContractReadCache(() =>
     withPricingCache(() =>
-      updateGlobalMetricSnapshot(context, config, client, blockNumber, timestamp, records, supplies),
+      updateGlobalMetricSnapshot(
+        context,
+        config,
+        client,
+        blockNumber,
+        timestamp,
+        records,
+        supplies,
+      ),
     ),
   );
 
@@ -327,11 +336,24 @@ async function updateGlobalMetricSnapshot(
   // their entries will source from the canonical Ethereum snapshot once
   // the parity harness reads the aggregate.
   let ohmPrice = new BigNumberCtor("0");
+  let sOhmCirculatingSupply = new BigNumberCtor("0");
   if (config.chainId === 1) {
     const result = await getPrice(config, context, client, config.ohmToken, blockNumber, null);
     ohmPrice = result.price;
+    if (config.migrationOffset?.sOhmAddress) {
+      const raw = (await context.effect(readSOhmCirculatingSupply, {
+        chainId: config.chainId,
+        sOhm: config.migrationOffset.sOhmAddress,
+        atBlock: Number(blockNumber),
+      })) as string;
+      if (raw !== "") {
+        // sOHM has 9 decimals (same as OHM).
+        sOhmCirculatingSupply = new BigNumberCtor(raw).div(new BigNumberCtor("1000000000"));
+      }
+    }
   }
   const gOhmPrice = ohmPrice.times(ohmIndex);
+  const sOhmTotalValueLocked = sOhmCirculatingSupply.times(ohmPrice);
   const ratios = computeDerivedRatios(aggregate, ohmPrice, ohmIndex);
 
   context.GlobalMetricSnapshot.set({
@@ -352,8 +374,8 @@ async function updateGlobalMetricSnapshot(
     ohmApy: new BigDecimal("0"),
     ohmPrice: new BigDecimal(ohmPrice.toString(10)),
     gOhmPrice: new BigDecimal(gOhmPrice.toString(10)),
-    sOhmCirculatingSupply: new BigDecimal("0"),
-    sOhmTotalValueLocked: new BigDecimal("0"),
+    sOhmCirculatingSupply: new BigDecimal(sOhmCirculatingSupply.toString(10)),
+    sOhmTotalValueLocked: new BigDecimal(sOhmTotalValueLocked.toString(10)),
     marketCap: new BigDecimal(ratios.marketCap.toString(10)),
     treasuryLiquidBackingPerOhmFloating: new BigDecimal(
       ratios.treasuryLiquidBackingPerOhmFloating.toString(10),
