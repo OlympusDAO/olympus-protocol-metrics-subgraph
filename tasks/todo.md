@@ -62,6 +62,8 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
 - [x] `59d1539` — `feat(handlers): wire NativeBalanceState via snapshot-time getBalance`. Closes inherited TODO #2. Wires native ETH on Arbitrum + Base, native BERA on Berachain (was already configured but skipped), native FTM on Fantom. Polygon native MATIC deferred (no convenient WMATIC pricing pool currently in config).
 - [ ] Add Ethereum — largest surface, treated as its own sub-phase:
   - [x] `288bb04` — `feat(chains): add Ethereum baseline`. 13 tokens (7 stables + 4 bluechips + 2 OHMs + gOHM + native ETH), 36-wallet shared list, 7 Chainlink feeds (USDS reuses DAI feed), 3 UniV3 pricing pools (WETH-OHM, WETH-wstETH, weETH-WETH), native ETH remap to WETH. OHM tokens excluded from treasury MV pending Buyback MS / Bophades refinements.
+  - [x] `d5e6d52` — `feat(chains-ethereum): add long-tail volatile tokens with UniV3 pricing`. FXS, LDO, LQTY, BTRFLY V1/V2, xBTRFLY remap, rlBTRFLY with 0.89 multiplier.
+  - [x] `3e681dc` — `feat(chains-ethereum): add Aave receipt + variable-debt tokens`. aDAI + aEthUSDe receipts share their underlying Chainlink feeds; varDebtEthUSDC + varDebtEthUSDT carry `isLiability: true` so balances subtract from treasury MV. `token()` helper extended with `isLiability` option; ERC20_AAVE_V3_BLOCK corrected to 16_291_127 (Aave V3 launch).
   - [ ] Bophades dynamic kernel resolution (TRSRY + clearinghouse addresses from Kernel events).
   - [ ] Cooler clearinghouse receivables (V1, V1.1, V2, MonoCooler) — verify CoolerV2 USDS bug per Phase 1 decision #5.
   - [ ] BLV vault registry.
