@@ -1,6 +1,7 @@
 import BigNumberCtor, { type default as BigNumber } from "bignumber.js";
 import {
   aggregateAcrossChains,
+  computeApy,
   computeDerivedRatios,
   computePerChainAggregate,
 } from "../snapshot/global";
@@ -17,6 +18,7 @@ import {
   readBondManagerState,
   readCoolerPrincipalReceivables,
   readMonoCoolerTotalDebt,
+  readNextOhmDistribution,
   readSOhmCirculatingSupply,
   snapshotBlvRegistry,
 } from "../effects";
@@ -356,6 +358,25 @@ async function updateGlobalMetricSnapshot(
   const sOhmTotalValueLocked = sOhmCirculatingSupply.times(ohmPrice);
   const ratios = computeDerivedRatios(aggregate, ohmPrice, ohmIndex);
 
+  // APY: read the next-epoch OHM distribution from active staking contracts,
+  // then compute (1 + rebase/100)^(365*3) - 1.
+  let ohmApy = new BigNumberCtor("0");
+  if (config.chainId === 1 && config.stakingContracts) {
+    const stakingRaw = (await context.effect(readNextOhmDistribution, {
+      chainId: config.chainId,
+      stakingV1: config.stakingContracts.v1,
+      stakingV2: config.stakingContracts.v2,
+      stakingV2StartBlock: config.stakingContracts.v2StartBlock,
+      stakingV3: config.stakingContracts.v3,
+      stakingV3StartBlock: config.stakingContracts.v3StartBlock,
+      atBlock: Number(blockNumber),
+    })) as string;
+    if (stakingRaw !== "" && stakingRaw !== "0") {
+      const distributedOhm = new BigNumberCtor(stakingRaw).div(new BigNumberCtor("1000000000"));
+      ohmApy = computeApy(distributedOhm, sOhmCirculatingSupply).currentApy;
+    }
+  }
+
   context.GlobalMetricSnapshot.set({
     id: snapshotId,
     date,
@@ -371,7 +392,7 @@ async function updateGlobalMetricSnapshot(
     treasuryMarketValue: new BigDecimal(aggregate.treasuryMarketValue.toString(10)),
     treasuryLiquidBacking: new BigDecimal(aggregate.treasuryLiquidBacking.toString(10)),
     ohmIndex: new BigDecimal(ohmIndex.toString(10)),
-    ohmApy: new BigDecimal("0"),
+    ohmApy: new BigDecimal(ohmApy.toString(10)),
     ohmPrice: new BigDecimal(ohmPrice.toString(10)),
     gOhmPrice: new BigDecimal(gOhmPrice.toString(10)),
     sOhmCirculatingSupply: new BigDecimal(sOhmCirculatingSupply.toString(10)),

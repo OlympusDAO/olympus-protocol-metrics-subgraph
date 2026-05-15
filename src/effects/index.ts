@@ -432,6 +432,109 @@ export const readSOhmCirculatingSupply = createEffect(
   },
 );
 
+// Cached effect that snapshots the "next OHM distribution" across the active
+// staking contracts at a given block. V1 always tried; V2/V3 only after their
+// respective start blocks. Returns the sum as a stringified 9-decimal raw
+// OHM amount. Reverts skip the contributing contract — matches legacy
+// try_/getOrSet pattern.
+const OLYMPUS_STAKING_V1_ABI = [
+  {
+    inputs: [],
+    name: "ohmToDistributeNextEpoch",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+const OLYMPUS_STAKING_V2_V3_ABI = [
+  {
+    inputs: [],
+    name: "epoch",
+    outputs: [
+      { internalType: "uint256", name: "length", type: "uint256" },
+      { internalType: "uint256", name: "number", type: "uint256" },
+      { internalType: "uint256", name: "endTime", type: "uint256" },
+      { internalType: "uint256", name: "distribute", type: "uint256" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+export const readNextOhmDistribution = createEffect(
+  {
+    name: "readNextOhmDistribution",
+    input: {
+      chainId: S.number,
+      stakingV1: S.string,
+      stakingV2: S.string,
+      stakingV2StartBlock: S.number,
+      stakingV3: S.string,
+      stakingV3StartBlock: S.number,
+      atBlock: S.number,
+    },
+    output: S.string,
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    const blockNumber = BigInt(input.atBlock);
+    let total = 0n;
+
+    try {
+      const v1 = (await retryRpc(() =>
+        client.readContract({
+          address: getAddress(input.stakingV1),
+          abi: OLYMPUS_STAKING_V1_ABI,
+          functionName: "ohmToDistributeNextEpoch",
+          blockNumber,
+        }),
+      )) as bigint;
+      total += v1;
+    } catch {
+      /* V1 revert — skip; matches legacy try_ behavior */
+    }
+
+    if (input.atBlock > input.stakingV2StartBlock) {
+      try {
+        const v2 = (await retryRpc(() =>
+          client.readContract({
+            address: getAddress(input.stakingV2),
+            abi: OLYMPUS_STAKING_V2_V3_ABI,
+            functionName: "epoch",
+            blockNumber,
+          }),
+        )) as readonly [bigint, bigint, bigint, bigint];
+        total += v2[3];
+      } catch {
+        /* V2 revert — skip */
+      }
+    }
+
+    if (input.atBlock > input.stakingV3StartBlock) {
+      try {
+        const v3 = (await retryRpc(() =>
+          client.readContract({
+            address: getAddress(input.stakingV3),
+            abi: OLYMPUS_STAKING_V2_V3_ABI,
+            functionName: "epoch",
+            blockNumber,
+          }),
+        )) as readonly [bigint, bigint, bigint, bigint];
+        total += v3[3];
+      } catch {
+        /* V3 revert — skip */
+      }
+    }
+
+    return total.toString();
+  },
+);
+
 // Cached effect that resolves a Kodiak LP wrapper's underlying UniswapV3 pool.
 // Invariant across blocks; called once per Kodiak LP per indexer process. The
 // returned address feeds both a contractRegister call (so the underlying

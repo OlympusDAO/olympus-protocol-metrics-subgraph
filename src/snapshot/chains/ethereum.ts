@@ -602,6 +602,16 @@ export const ETHEREUM: ChainConfig = {
     startBlock: 14_381_564,
     endBlock: 24_550_660,
   },
+  // Olympus staking contracts (per inventory §8 + Constants.ts:139-143). The
+  // APY effect reads the per-epoch distribution from whichever versions are
+  // active at the snapshot block (V1 always tried; V2/V3 gated).
+  stakingContracts: {
+    v1: addr("0x0822f3c03dcc24d200aff33493dc08d0e1f274a2"),
+    v2: addr("0xfd31c7d00ca47653c6ce64af53c1571f9c36566a"),
+    v2StartBlock: 12_622_679,
+    v3: addr("0xB63cac384247597756545b500253ff8E607a8020"),
+    v3StartBlock: 13_804_019,
+  },
   liquidityHandlers,
   ownedLiquidityHandlers,
 };

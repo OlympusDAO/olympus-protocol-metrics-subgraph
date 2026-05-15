@@ -117,6 +117,16 @@ export type ChainConfig = {
     startBlock: number; // 14_381_564
     endBlock: number; // 24_550_660 (exclusive)
   };
+  // Olympus staking contracts. Used to read the per-epoch OHM distribution
+  // for the APY calculation. V1 is always tried; V2/V3 are gated on their
+  // respective start blocks.
+  stakingContracts?: {
+    v1: string;
+    v2: string;
+    v2StartBlock: number;
+    v3: string;
+    v3StartBlock: number;
+  };
   liquidityHandlers: LiquidityHandler[];
   ownedLiquidityHandlers: LiquidityHandler[];
 };

@@ -257,4 +257,24 @@ export function computeDerivedRatios(
   };
 }
 
+// APY = ((1 + nextEpochRebase/100)^(365×3) − 1) × 100
+// where nextEpochRebase = distributedOhm / sOhmCirculatingSupply × 100.
+// Returns 0 when either input is zero (matches legacy default).
+export function computeApy(
+  distributedOhm: BigNumber,
+  sOhmCirculatingSupply: BigNumber,
+): { nextEpochRebase: BigNumber; currentApy: BigNumber } {
+  if (sOhmCirculatingSupply.eq(ZERO) || distributedOhm.eq(ZERO)) {
+    return { nextEpochRebase: ZERO, currentApy: ZERO };
+  }
+  const nextEpochRebase = distributedOhm.div(sOhmCirculatingSupply).times(new BigNumber("100"));
+  // Legacy uses JS Math.pow which loses precision past ~15 digits; we mirror
+  // that exactly so the parity diff produces zero. Compounded 3× daily over
+  // 365 days = 1095 rebases.
+  const rebaseRatio = nextEpochRebase.div(new BigNumber("100")).plus(new BigNumber("1"));
+  const compounded = Math.pow(Number(rebaseRatio.toString()), 365 * 3);
+  const currentApy = new BigNumber((compounded - 1).toString()).times(new BigNumber("100"));
+  return { nextEpochRebase, currentApy };
+}
+
 export { ZERO, ONE };

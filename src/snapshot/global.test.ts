@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 
 import {
   aggregateAcrossChains,
+  computeApy,
   computeDerivedRatios,
   computePerChainAggregate,
   TYPE_BLV,
@@ -248,5 +249,28 @@ describe("computeDerivedRatios", () => {
     expect(ratios.marketCap.toString()).toBe("0");
     expect(ratios.gOhmBackedSupply.toString()).toBe("0");
     expect(ratios.treasuryLiquidBackingPerOhmFloating.toString()).toBe("0");
+  });
+});
+
+describe("computeApy", () => {
+  test("computes nextEpochRebase + currentApy with the 3-rebase/day compounding", () => {
+    // distributedOhm = 1000, sOhm = 1_000_000 → nextEpochRebase = 0.1%
+    // currentApy = ((1.001)^1095 − 1) × 100 ≈ 198.8%
+    const result = computeApy(new BigNumber("1000"), new BigNumber("1000000"));
+    expect(result.nextEpochRebase.toString()).toBe("0.1");
+    // Use a 1-decimal tolerance since Math.pow loses precision.
+    expect(Number(result.currentApy.toString())).toBeGreaterThan(195);
+    expect(Number(result.currentApy.toString())).toBeLessThan(205);
+  });
+
+  test("returns ZERO when sOHM circulating supply is zero", () => {
+    const result = computeApy(new BigNumber("1000"), new BigNumber("0"));
+    expect(result.nextEpochRebase.toString()).toBe("0");
+    expect(result.currentApy.toString()).toBe("0");
+  });
+
+  test("returns ZERO when distributed OHM is zero", () => {
+    const result = computeApy(new BigNumber("0"), new BigNumber("1000000"));
+    expect(result.currentApy.toString()).toBe("0");
   });
 });
