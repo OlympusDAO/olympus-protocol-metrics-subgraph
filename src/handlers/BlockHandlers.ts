@@ -8,7 +8,11 @@ import {
   type TokenSupply,
 } from "envio";
 import { getAddress, type PublicClient } from "viem";
-import { readCoolerPrincipalReceivables, readMonoCoolerTotalDebt } from "../effects";
+import {
+  readCoolerPrincipalReceivables,
+  readMonoCoolerTotalDebt,
+  snapshotBlvRegistry,
+} from "../effects";
 import {
   getPrice,
   getTotalValue,
@@ -152,6 +156,9 @@ async function processSnapshot(
         await pushOwnedLiquiditySupply(context, config, client, supplies, timestamp, blockNumber);
         if (config.chainId === 42161) {
           await pushArbitrumLendingSupply(context, config, supplies, timestamp, blockNumber);
+        }
+        if (config.blvRegistry) {
+          await pushBlvSupply(context, config, supplies, timestamp, blockNumber);
         }
       }
     }),
@@ -467,6 +474,52 @@ async function pushCoolerReceivables(
         rate,
         receivable,
         blockNumber,
+      ),
+    );
+  }
+}
+
+// ----- Boosted Liquidity Vault supplies (Ethereum) -----
+
+const BLV_OHM_DECIMALS = 9;
+
+async function pushBlvSupply(
+  context: EvmOnBlockContext,
+  config: ChainConfig,
+  supplies: SerializedTokenSupply[],
+  timestamp: bigint,
+  blockNumber: bigint,
+): Promise<void> {
+  const registry = config.blvRegistry;
+  if (!registry) return;
+  if (blockNumber < BigInt(registry.startBlock)) return;
+
+  const snapshot = (await context.effect(snapshotBlvRegistry, {
+    chainId: config.chainId,
+    registry: registry.address,
+    atBlock: Number(blockNumber),
+  })) as { vaults: string[]; ohmShares: string[] };
+
+  for (let i = 0; i < snapshot.vaults.length; i++) {
+    const raw = snapshot.ohmShares[i];
+    if (!raw || raw === "0") continue;
+    const balance = toDecimal(BigInt(raw), BLV_OHM_DECIMALS);
+    if (balance.eq(ZERO)) continue;
+    const vault = snapshot.vaults[i];
+    supplies.push(
+      createTokenSupply(
+        config,
+        timestamp,
+        getContractName(config, config.ohmToken),
+        config.ohmToken,
+        undefined,
+        undefined,
+        vault,
+        vault,
+        "Boosted Liquidity Vault",
+        balance,
+        blockNumber,
+        -1,
       ),
     );
   }

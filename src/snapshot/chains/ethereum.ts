@@ -500,6 +500,13 @@ export const ETHEREUM: ChainConfig = {
   },
   basePriceFeeds: {},
   coolerClearinghouses,
+  // Olympus Boosted Liquidity Vault registry (per inventory §8). The effect
+  // iterates active vaults and reads getPoolOhmShare() per vault. Active
+  // after the OHM_INCUR_DEBT_BLOCK = 17_620_000 gate.
+  blvRegistry: {
+    address: addr("0x375E06C694B5E50aF8be8FB03495A612eA3e2275"),
+    startBlock: 17_620_000,
+  },
   liquidityHandlers,
   ownedLiquidityHandlers,
 };

@@ -186,6 +186,101 @@ export const readMonoCoolerTotalDebt = createEffect(
   },
 );
 
+// Cached effect that snapshots the Olympus Boosted Liquidity Vault registry:
+// iterates `activeVaultCount()` + `activeVaults(i)` and, for each active vault,
+// reads `getPoolOhmShare()`. Returns lists of vault addresses + raw OHM shares
+// (9-decimal stringified) in matching order. Cached per (registry, atBlock)
+// so each snapshot block triggers one RPC roundtrip per vault.
+const BLV_REGISTRY_ABI = [
+  {
+    inputs: [],
+    name: "activeVaultCount",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    name: "activeVaults",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+const BLV_VAULT_ABI = [
+  {
+    inputs: [],
+    name: "getPoolOhmShare",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+export const snapshotBlvRegistry = createEffect(
+  {
+    name: "snapshotBlvRegistry",
+    input: { chainId: S.number, registry: S.string, atBlock: S.number },
+    output: S.schema({
+      vaults: S.array(S.string),
+      ohmShares: S.array(S.string),
+    }),
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    const registry = getAddress(input.registry);
+    const blockNumber = BigInt(input.atBlock);
+
+    let count: bigint;
+    try {
+      count = await retryRpc(() =>
+        client.readContract({
+          address: registry,
+          abi: BLV_REGISTRY_ABI,
+          functionName: "activeVaultCount",
+          blockNumber,
+        }),
+      );
+    } catch {
+      return { vaults: [], ohmShares: [] };
+    }
+
+    const vaults: string[] = [];
+    const ohmShares: string[] = [];
+    for (let i = 0n; i < count; i++) {
+      try {
+        const vault = (await retryRpc(() =>
+          client.readContract({
+            address: registry,
+            abi: BLV_REGISTRY_ABI,
+            functionName: "activeVaults",
+            args: [i],
+            blockNumber,
+          }),
+        )) as string;
+        const share = (await retryRpc(() =>
+          client.readContract({
+            address: getAddress(vault),
+            abi: BLV_VAULT_ABI,
+            functionName: "getPoolOhmShare",
+            blockNumber,
+          }),
+        )) as bigint;
+        vaults.push(vault.toLowerCase());
+        ohmShares.push(share.toString());
+      } catch {
+        // Per-vault revert (e.g. paused vault) — skip but keep iterating.
+      }
+    }
+    return { vaults, ohmShares };
+  },
+);
+
 // Cached effect that resolves a Kodiak LP wrapper's underlying UniswapV3 pool.
 // Invariant across blocks; called once per Kodiak LP per indexer process. The
 // returned address feeds both a contractRegister call (so the underlying

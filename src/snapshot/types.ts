@@ -105,6 +105,7 @@ export type ChainConfig = {
   ohmStartBlock?: number;
   nativeToken?: string;
   coolerClearinghouses?: CoolerClearinghouse[];
+  blvRegistry?: { address: string; startBlock: number };
   liquidityHandlers: LiquidityHandler[];
   ownedLiquidityHandlers: LiquidityHandler[];
 };

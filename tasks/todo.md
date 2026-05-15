@@ -67,7 +67,7 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
   - [x] `634112a` — `fix(chains-ethereum): restore Aave V3 start block to Olympus deployment`. ERC20_AAVE_V3_BLOCK = 24_707_147 (Olympus position deployment + legacy graft block per inventory §2). Reverts the earlier "fix" that conflated this with Aave V3 protocol launch.
   - [x] `109e583` — `feat(pricing): add GohmPriceHandler driven by sOHM V3 LogRebase`. New `OhmIndexState` entity + `SOhmV3.LogRebase` handler + `gohm` LiquidityHandler kind. gOHM price = OHM_price × index/1e9 via recursive lookup, GOHM_PRIORITY tiebreaker. 6 new tests.
   - [x] `751a47f` — `feat(handlers): event-driven Bophades module tracking via Kernel.ActionExecuted`. Redesigned BophadesModule (chainId-keycode) + ClearinghouseAddress entities; new `resolveBophadesKeycode` effect; Kernel handler writes BophadesModule on InstallModule/UpgradeModule; TRSRY V1.1 added to wallets. 7 new tests.
-  - [ ] Cooler clearinghouse receivables (V1, V1.1, V2, MonoCooler) — verify CoolerV2 USDS bug per Phase 1 decision #5.
+  - [x] `1036f4b` — `feat(chains-ethereum): port Cooler Loans receivables to snapshot`. `ChainConfig.coolerClearinghouses` + two cached effects (`readCoolerPrincipalReceivables`, `readMonoCoolerTotalDebt`) + `pushCoolerReceivables` snapshot hook. Ethereum registers V1/V1.1/V2/MonoCooler; MonoCooler carries `priceToken: ERC20_DAI` per Phase 1 decision #5 (USDS-debt-priced-as-DAI quirk).
   - [ ] BLV vault registry.
   - [ ] GnosisAuction cross-data-source state.
   - [ ] OHM v1→v2 migration offset rules (7 block-windowed corrections).
