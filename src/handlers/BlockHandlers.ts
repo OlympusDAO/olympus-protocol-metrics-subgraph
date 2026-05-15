@@ -21,6 +21,7 @@ import {
   readNextOhmDistribution,
   readSOhmCirculatingSupply,
   snapshotBlvRegistry,
+  snapshotUniv3NftPositions,
 } from "../effects";
 import {
   getPrice,
@@ -32,7 +33,15 @@ import {
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { OLYMPUS_LENDER, SENTIMENT_LTOKEN, SILO_COLLATERAL } from "../snapshot/chains/arbitrum";
 import { getClient, getNativeBalance, withContractReadCache } from "../snapshot/contracts";
-import { addr, getTokenDecimals, isActive, matches, toDecimal, ZERO } from "../snapshot/math";
+import {
+  addr,
+  getTokenDecimals,
+  isActive,
+  matches,
+  toDecimal,
+  univ3PositionAmounts,
+  ZERO,
+} from "../snapshot/math";
 import {
   createTokenRecord,
   createTokenSupply,
@@ -155,6 +164,9 @@ async function processSnapshot(
       }
       if (config.coolerClearinghouses && config.coolerClearinghouses.length > 0) {
         await pushCoolerReceivables(context, config, client, records, timestamp, blockNumber);
+      }
+      if (config.univ3PositionManager) {
+        await pushUniv3NftPol(context, config, client, records, timestamp, blockNumber);
       }
 
       // Polygon and Fantom legacy subgraphs declared the TokenSupply entity
@@ -640,6 +652,112 @@ async function pushTreasureStakingRecords(
       );
       record.isLiquid = false;
       records.push(record);
+    }
+  }
+}
+
+// ----- UniV3 NFT POL (Ethereum) -----
+
+async function pushUniv3NftPol(
+  context: EvmOnBlockContext,
+  config: ChainConfig,
+  client: PublicClient,
+  records: SerializedTokenRecord[],
+  timestamp: bigint,
+  blockNumber: bigint,
+): Promise<void> {
+  const manager = config.univ3PositionManager;
+  if (!manager) return;
+  if (blockNumber < BigInt(manager.startBlock)) return;
+
+  // Build a token-pair → pool lookup from this chain's univ3 handlers so we
+  // can match each NFT position to a pool we know about (and have indexed
+  // sqrtPriceX96 for).
+  const univ3Pools = new Map<string, { id: string; tokens: string[] }>();
+  for (const handler of config.liquidityHandlers) {
+    if (handler.kind !== "univ3") continue;
+    const sorted = [handler.tokens[0]?.toLowerCase(), handler.tokens[1]?.toLowerCase()]
+      .filter(Boolean)
+      .sort()
+      .join("/");
+    univ3Pools.set(sorted, { id: handler.id, tokens: handler.tokens });
+  }
+  if (univ3Pools.size === 0) return;
+
+  for (const wallet of config.protocolAddresses) {
+    const result = (await context.effect(snapshotUniv3NftPositions, {
+      chainId: config.chainId,
+      positionManager: manager.address,
+      wallet,
+      atBlock: Number(blockNumber),
+    })) as {
+      positions: Array<{
+        token0: string;
+        token1: string;
+        fee: number;
+        tickLower: number;
+        tickUpper: number;
+        liquidity: string;
+      }>;
+    };
+    if (result.positions.length === 0) continue;
+
+    for (const position of result.positions) {
+      const pairKey = [position.token0, position.token1].sort().join("/");
+      const pool = univ3Pools.get(pairKey);
+      if (!pool) continue;
+
+      // sqrtPriceX96 sourced from indexed Univ3PoolState (no RPC).
+      const state = await context.Univ3PoolState.get(`${config.chainId}-${addr(pool.id)}`);
+      if (!state || state.sqrtPriceX96 === 0n) continue;
+
+      const amounts = univ3PositionAmounts(
+        BigInt(position.liquidity),
+        state.sqrtPriceX96,
+        position.tickLower,
+        position.tickUpper,
+      );
+
+      const decimals0 = getTokenDecimals(config.tokens, position.token0);
+      const decimals1 = getTokenDecimals(config.tokens, position.token1);
+      const balance0 = toDecimal(amounts.amount0, decimals0);
+      const balance1 = toDecimal(amounts.amount1, decimals1);
+
+      // Emit one TokenRecord per token in the position. Skip dust.
+      if (!balance0.eq(ZERO)) {
+        const rate0 = (await getPrice(config, context, client, position.token0, blockNumber, null))
+          .price;
+        records.push(
+          createTokenRecord(
+            config,
+            timestamp,
+            `${getContractName(config, position.token0)} - UniV3 POL (${getContractName(config, pool.id)})`,
+            position.token0,
+            getContractName(config, wallet),
+            wallet,
+            rate0,
+            balance0,
+            blockNumber,
+          ),
+        );
+      }
+      if (!balance1.eq(ZERO)) {
+        const rate1 = (await getPrice(config, context, client, position.token1, blockNumber, null))
+          .price;
+        records.push(
+          createTokenRecord(
+            config,
+            timestamp,
+            `${getContractName(config, position.token1)} - UniV3 POL (${getContractName(config, pool.id)})`,
+            position.token1,
+            getContractName(config, wallet),
+            wallet,
+            rate1,
+            balance1,
+            blockNumber,
+          ),
+        );
+      }
     }
   }
 }

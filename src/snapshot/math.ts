@@ -68,3 +68,33 @@ export function matches(handler: LiquidityHandler, tokenAddress: string) {
 export function isActive(definition: { startBlock?: number }, blockNumber: bigint) {
   return definition.startBlock === undefined || blockNumber >= BigInt(definition.startBlock);
 }
+
+// UniV3 token amounts from L + sqrtPrice + tick bounds. Mirrors legacy
+// `getPairBalances` exactly — uses lossy Math.pow on the tick → sqrt-ratio
+// conversion so historical parity stays exact. Output is in raw token units
+// (apply each token's decimals when consumed).
+export function univ3PositionAmounts(
+  liquidity: bigint,
+  sqrtPriceX96: bigint,
+  tickLower: number,
+  tickUpper: number,
+): { amount0: bigint; amount1: bigint } {
+  const sqrtPrice = Number(sqrtPriceX96) / 2 ** 96;
+  const sqrtLower = Math.sqrt(1.0001 ** tickLower);
+  const sqrtUpper = Math.sqrt(1.0001 ** tickUpper);
+  const L = Number(liquidity);
+  let amount0Float = 0;
+  let amount1Float = 0;
+  if (sqrtPrice <= sqrtLower) {
+    amount0Float = L * ((sqrtUpper - sqrtLower) / (sqrtUpper * sqrtLower));
+  } else if (sqrtPrice >= sqrtUpper) {
+    amount1Float = L * (sqrtUpper - sqrtLower);
+  } else {
+    amount0Float = L * ((sqrtUpper - sqrtPrice) / (sqrtUpper * sqrtPrice));
+    amount1Float = L * (sqrtPrice - sqrtLower);
+  }
+  return {
+    amount0: BigInt(Math.max(0, Math.floor(amount0Float))),
+    amount1: BigInt(Math.max(0, Math.floor(amount1Float))),
+  };
+}

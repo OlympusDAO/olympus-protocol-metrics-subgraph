@@ -127,6 +127,10 @@ export type ChainConfig = {
     v3: string;
     v3StartBlock: number;
   };
+  // UniV3 NFT POL: NonfungiblePositionManager address. When set, each
+  // protocol wallet is iterated for NFT positions per snapshot and each
+  // position's amounts are derived from Univ3PoolState sqrtPriceX96.
+  univ3PositionManager?: { address: string; startBlock: number };
   liquidityHandlers: LiquidityHandler[];
   ownedLiquidityHandlers: LiquidityHandler[];
 };

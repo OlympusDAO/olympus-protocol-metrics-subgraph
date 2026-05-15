@@ -745,6 +745,12 @@ export const ETHEREUM: ChainConfig = {
     v3: addr("0xB63cac384247597756545b500253ff8E607a8020"),
     v3StartBlock: 13_804_019,
   },
+  // UniV3 NonfungiblePositionManager (per inventory §5). Treasury POL via
+  // UniV3 NFTs (WETH-OHM, OHM-sUSDS) is enumerated per snapshot.
+  univ3PositionManager: {
+    address: addr("0xC36442b4a4522E871399CD717aBDD847Ab11FE88"),
+    startBlock: ERC20_OHM_V2_BLOCK,
+  },
   liquidityHandlers,
   ownedLiquidityHandlers,
 };

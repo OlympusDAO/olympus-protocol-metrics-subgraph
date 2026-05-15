@@ -694,6 +694,166 @@ export const snapshotFraxSwapPool = createEffect(
   },
 );
 
+// Cached effect that enumerates UniV3 NFT positions held by a wallet and
+// returns the raw position data (token0, token1, tickLower, tickUpper,
+// liquidity). Token amounts are computed downstream from indexed
+// Univ3PoolState.sqrtPriceX96 — that way each pool's spot price comes from
+// the event-driven indexer state instead of an extra RPC call.
+const POSITION_MANAGER_ABI = [
+  {
+    inputs: [{ internalType: "address", name: "owner", type: "address" }],
+    name: "balanceOf",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "owner", type: "address" },
+      { internalType: "uint256", name: "index", type: "uint256" },
+    ],
+    name: "tokenOfOwnerByIndex",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "tokenId", type: "uint256" }],
+    name: "positions",
+    outputs: [
+      { internalType: "uint96", name: "nonce", type: "uint96" },
+      { internalType: "address", name: "operator", type: "address" },
+      { internalType: "address", name: "token0", type: "address" },
+      { internalType: "address", name: "token1", type: "address" },
+      { internalType: "uint24", name: "fee", type: "uint24" },
+      { internalType: "int24", name: "tickLower", type: "int24" },
+      { internalType: "int24", name: "tickUpper", type: "int24" },
+      { internalType: "uint128", name: "liquidity", type: "uint128" },
+      { internalType: "uint256", name: "feeGrowthInside0LastX128", type: "uint256" },
+      { internalType: "uint256", name: "feeGrowthInside1LastX128", type: "uint256" },
+      { internalType: "uint128", name: "tokensOwed0", type: "uint128" },
+      { internalType: "uint128", name: "tokensOwed1", type: "uint128" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+export const snapshotUniv3NftPositions = createEffect(
+  {
+    name: "snapshotUniv3NftPositions",
+    input: {
+      chainId: S.number,
+      positionManager: S.string,
+      wallet: S.string,
+      atBlock: S.number,
+    },
+    output: S.schema({
+      positions: S.array(
+        S.schema({
+          token0: S.string,
+          token1: S.string,
+          fee: S.number,
+          tickLower: S.number,
+          tickUpper: S.number,
+          liquidity: S.string,
+        }),
+      ),
+    }),
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    const positionManager = getAddress(input.positionManager);
+    const wallet = getAddress(input.wallet);
+    const blockNumber = BigInt(input.atBlock);
+    const positions: Array<{
+      token0: string;
+      token1: string;
+      fee: number;
+      tickLower: number;
+      tickUpper: number;
+      liquidity: string;
+    }> = [];
+
+    let count = 0n;
+    try {
+      count = (await retryRpc(() =>
+        client.readContract({
+          address: positionManager,
+          abi: POSITION_MANAGER_ABI,
+          functionName: "balanceOf",
+          args: [wallet],
+          blockNumber,
+        }),
+      )) as bigint;
+    } catch {
+      return { positions };
+    }
+    if (count === 0n) return { positions };
+
+    // Cap iteration to keep runaway misconfigured wallets bounded.
+    const limit = count > 50n ? 50n : count;
+    for (let i = 0n; i < limit; i++) {
+      let tokenId: bigint;
+      try {
+        tokenId = (await retryRpc(() =>
+          client.readContract({
+            address: positionManager,
+            abi: POSITION_MANAGER_ABI,
+            functionName: "tokenOfOwnerByIndex",
+            args: [wallet, i],
+            blockNumber,
+          }),
+        )) as bigint;
+      } catch {
+        continue;
+      }
+
+      try {
+        const pos = (await retryRpc(() =>
+          client.readContract({
+            address: positionManager,
+            abi: POSITION_MANAGER_ABI,
+            functionName: "positions",
+            args: [tokenId],
+            blockNumber,
+          }),
+        )) as readonly [
+          bigint,
+          string,
+          string,
+          string,
+          number,
+          number,
+          number,
+          bigint,
+          bigint,
+          bigint,
+          bigint,
+          bigint,
+        ];
+        const liquidity = pos[7];
+        if (liquidity === 0n) continue;
+        positions.push({
+          token0: (pos[2] as string).toLowerCase(),
+          token1: (pos[3] as string).toLowerCase(),
+          fee: Number(pos[4]),
+          tickLower: Number(pos[5]),
+          tickUpper: Number(pos[6]),
+          liquidity: liquidity.toString(),
+        });
+      } catch {
+        /* per-position revert; skip */
+      }
+    }
+    return { positions };
+  },
+);
+
 // Cached effect that resolves a Kodiak LP wrapper's underlying UniswapV3 pool.
 // Invariant across blocks; called once per Kodiak LP per indexer process. The
 // returned address feeds both a contractRegister call (so the underlying
