@@ -95,6 +95,13 @@ const CURVE_FRAX_USDC_COINS = [ERC20_FRAX, ERC20_USDC];
 const LP_FRAXSWAP_V1_OHM_FRAX = addr("0x38633ed142bcc8128b45ab04a2e4a6e53774699f");
 const LP_FRAXSWAP_V2_OHM_FRAX = addr("0x5769071665eb8Db80e7e9226F92336Bb2897DCFA");
 
+// Convex BaseRewardPool wrappers — 1:1 ERC20 wrappers of staked Curve LP
+// tokens. Pricing recurses through the `remap` handlers below back to the
+// underlying Curve LP pool. Per inventory §5.
+const CONVEX_REWARD_OHM_ETH = addr("0xd683C7051a28fA150EB3F4BD92263865D4a67778"); // wraps Curve OHM-ETH LP
+const CONVEX_REWARD_OHM_FRAXBP = addr("0x27A8c58e3DE84280826d615D80ddb33930383fE9"); // wraps Curve OHM-FraxBP LP
+const CONVEX_REWARD_FRAX_USDC = addr("0x7e880867363A7e321f5d260Cade2B0Bb2F717B02"); // wraps Curve FRAX-USDC LP
+
 const LP_UNISWAP_V3_WETH_OHM = addr("0x88051b0eea095007d3bef21ab287be961f3d8598");
 const LP_UNISWAP_V3_WETH_WSTETH = addr("0x109830a1aaad605bbf02a9dfa7b0b92ec2fb7daa");
 const LP_UNISWAP_V3_WEETH_WETH = addr("0x202A6012894Ae5c288eA824cbc8A9bfb26A49b93");
@@ -140,6 +147,14 @@ const ERC20_AAVE_V3_BLOCK = 24_707_147;
 const PROTOCOL_ADDRESSES = WALLET_ADDRESSES;
 
 const names: Record<string, string> = {
+  [CONVEX_REWARD_OHM_ETH]: "Convex Staked Curve OHM-ETH",
+  [CONVEX_REWARD_OHM_FRAXBP]: "Convex Staked Curve OHM-FraxBP",
+  [CONVEX_REWARD_FRAX_USDC]: "Convex Staked Curve FRAX-USDC",
+  [LP_CURVE_OHM_ETH]: "Curve OHM-ETH",
+  [LP_CURVE_OHM_FRAXBP]: "Curve OHM-FraxBP",
+  [LP_CURVE_FRAX_USDC_LP]: "Curve FRAX-USDC",
+  [LP_FRAXSWAP_V1_OHM_FRAX]: "FraxSwap V1 OHM-FRAX",
+  [LP_FRAXSWAP_V2_OHM_FRAX]: "FraxSwap V2 OHM-FRAX",
   [ERC20_SDAI]: "Savings DAI",
   [ERC20_SUSDE]: "Staked USDe",
   [ERC20_SUSDS]: "Savings USDS",
@@ -179,6 +194,9 @@ const names: Record<string, string> = {
 };
 
 const abbreviations: Record<string, string> = {
+  [CONVEX_REWARD_OHM_ETH]: "cvxCurveOhmEth",
+  [CONVEX_REWARD_OHM_FRAXBP]: "cvxCurveOhmFraxBp",
+  [CONVEX_REWARD_FRAX_USDC]: "cvxFraxUsdc",
   [ERC20_SDAI]: "sDAI",
   [ERC20_SUSDE]: "sUSDe",
   [ERC20_SUSDS]: "sUSDS",
@@ -393,6 +411,27 @@ const liquidityHandlers: LiquidityHandler[] = [
     id: ERC20_BTRFLY_V2_RL,
     target: ERC20_BTRFLY_V2,
   },
+  // Convex staked-LP wrappers — 1:1 ERC20 wrappers of underlying Curve LPs.
+  // Treasury balances of these come in via TreasuryERC20 Transfer events;
+  // pricing routes through the underlying Curve handler. Per inventory §5.
+  {
+    kind: "remap",
+    tokens: [CONVEX_REWARD_OHM_ETH],
+    id: CONVEX_REWARD_OHM_ETH,
+    target: LP_CURVE_OHM_ETH,
+  },
+  {
+    kind: "remap",
+    tokens: [CONVEX_REWARD_OHM_FRAXBP],
+    id: CONVEX_REWARD_OHM_FRAXBP,
+    target: LP_CURVE_OHM_FRAXBP,
+  },
+  {
+    kind: "remap",
+    tokens: [CONVEX_REWARD_FRAX_USDC],
+    id: CONVEX_REWARD_FRAX_USDC,
+    target: LP_CURVE_FRAX_USDC_LP,
+  },
   // ERC4626 yield-bearing vault shares (sDAI / sUSDe / sUSDS / gauntlet
   // sUSDS). `convertToAssets()` provides the share→asset rate; underlying
   // recurses to its Chainlink feed. Carries Chainlink-equivalent priority.
@@ -580,6 +619,20 @@ export const ETHEREUM: ChainConfig = {
     }),
     token(ERC20_GAUNTLET_SUSDS_VAULT, "Stable", true, false, undefined, {
       startBlock: ERC20_GAUNTLET_SUSDS_VAULT_BLOCK,
+      decimals: 18,
+    }),
+    // Convex staked-LP wrappers (POL category — protocol-owned liquidity).
+    // Pricing routes through the underlying Curve LP via `remap` handlers.
+    token(CONVEX_REWARD_OHM_ETH, "POL", false, false, undefined, {
+      startBlock: LP_CURVE_OHM_ETH_BLOCK,
+      decimals: 18,
+    }),
+    token(CONVEX_REWARD_OHM_FRAXBP, "POL", false, false, undefined, {
+      startBlock: LP_CURVE_OHM_FRAXBP_BLOCK,
+      decimals: 18,
+    }),
+    token(CONVEX_REWARD_FRAX_USDC, "POL", false, false, undefined, {
+      startBlock: LP_CURVE_FRAX_USDC_BLOCK,
       decimals: 18,
     }),
     token(ERC20_WETH, "Volatile", true, true, undefined, {

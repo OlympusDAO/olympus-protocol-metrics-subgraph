@@ -73,7 +73,7 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
   - [x] `e8ee912` — `feat(chains-ethereum): port OHM V1→V2 migration offset`. `ChainConfig.migrationOffset` (start/end blocks + sOhmAddress + offsetOhm) → `pushMigrationOffsetSupply` writes one OHM_MIGRATION_OFFSET row sourced from OhmIndexState (no RPC).
   - [ ] Aura/Convex wrapper handlers.
   - [x] `c5e05f0` — `feat(pricing): add Erc4626PriceHandler for sDAI / sUSDe / sUSDS / Gauntlet sUSDS`. New `erc4626` LiquidityHandler kind + cached `readErc4626AssetsPerShare` effect + Ethereum config wiring for 4 vaults.
-  - [ ] Curve / FraxSwap handlers.
+  - [x] `2f9bee9` — `feat(pricing): add Curve + FraxSwap LP pricing handlers`. New `curve` + `fraxswap` LiquidityHandler kinds; `snapshotCurvePool` + `snapshotFraxSwapPool` effects; Ethereum registers 3 Curve + 2 FraxSwap LPs. 4 new tests.
   - [ ] Univ3 NFT POL positions.
 - [ ] Per-chain snapshot validation tests (1+ test per chain asserting at least one TokenRecord row builds correctly).
 

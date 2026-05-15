@@ -368,6 +368,10 @@ chains:
           - "0xCC94Faf235cC5D3Bf4bEd3a30db5984306c86aBC" # xBTRFLY
           - "0xc55126051b22ebb829d00368f4b12bde432de5da" # BTRFLY V2
           - "0x742B70151cd3Bc7ab598aAFF1d54B90c3ebC6027" # rlBTRFLY
+          # Convex BaseRewardPool wrappers (priced via Curve LP remap)
+          - "0xd683C7051a28fA150EB3F4BD92263865D4a67778" # cvxCurveOhmEth
+          - "0x27A8c58e3DE84280826d615D80ddb33930383fE9" # cvxCurveOhmFraxBp
+          - "0x7e880867363A7e321f5d260Cade2B0Bb2F717B02" # cvxFraxUsdc
 
       # ---- OHM ERC20s.
       - name: OhmERC20
