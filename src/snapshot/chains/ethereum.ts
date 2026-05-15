@@ -78,6 +78,23 @@ const CHAINLINK_FEED_ETH_USD = addr("0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419"
 
 // ---- Pricing pools (per inventory section 5). ----
 
+// Curve POL pools (per inventory §5).
+const LP_CURVE_OHM_ETH = addr("0x6ec38b3228251a0C5D491Faf66858e2E23d7728B");
+const LP_CURVE_OHM_FRAXBP = addr("0xFc1e8bf3E81383Ef07Be24c3FD146745719DE48D");
+const LP_CURVE_FRAX_USDC_POOL = addr("0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2");
+// FraxBP LP token (separate from the pool address per Curve V2 lp_token()).
+const LP_CURVE_FRAX_USDC_LP = addr("0x3175Df0976dFA876431C2E9eE6Bc45b65d3473CC");
+
+// Curve OHM-ETH uses native ETH (sentinel address) as coin 1. FraxBP coins
+// are FRAX and USDC. Coin order per Curve registry.
+const CURVE_OHM_ETH_COINS = [ERC20_OHM_V2, NATIVE_ETH];
+const CURVE_OHM_FRAXBP_COINS = [ERC20_OHM_V2, LP_CURVE_FRAX_USDC_LP];
+const CURVE_FRAX_USDC_COINS = [ERC20_FRAX, ERC20_USDC];
+
+// FraxSwap pools (per inventory §5).
+const LP_FRAXSWAP_V1_OHM_FRAX = addr("0x38633ed142bcc8128b45ab04a2e4a6e53774699f");
+const LP_FRAXSWAP_V2_OHM_FRAX = addr("0x5769071665eb8Db80e7e9226F92336Bb2897DCFA");
+
 const LP_UNISWAP_V3_WETH_OHM = addr("0x88051b0eea095007d3bef21ab287be961f3d8598");
 const LP_UNISWAP_V3_WETH_WSTETH = addr("0x109830a1aaad605bbf02a9dfa7b0b92ec2fb7daa");
 const LP_UNISWAP_V3_WEETH_WETH = addr("0x202A6012894Ae5c288eA824cbc8A9bfb26A49b93");
@@ -86,6 +103,16 @@ const LP_UNISWAP_V3_LDO_WETH = addr("0xa3f558aebaecaf0e11ca4b2199cc5ed341edfd74"
 const LP_UNISWAP_V3_LQTY_WETH = addr("0xd1d5a4c0ea98971894772dcd6d2f1dc71083c44e");
 const LP_UNISWAP_V3_WETH_BTRFLY_V1 = addr("0xdf9ab3c649005ebfdf682d2302ca1f673e0d37a2");
 const LP_UNISWAP_V3_WETH_BTRFLY_V2 = addr("0x3e6e23198679419cd73bb6376518dcc5168c8260");
+
+// Curve / FraxSwap pool deployment blocks. These pools' POL contributions
+// only start at the listed blocks; before that the effect's revert handling
+// makes the contribution zero anyway, but startBlock keeps the indexer
+// from doing useless RPC calls.
+const LP_CURVE_OHM_ETH_BLOCK = 14_490_000; // ~2022-03-22
+const LP_CURVE_OHM_FRAXBP_BLOCK = 15_300_000; // ~2022-08-15
+const LP_CURVE_FRAX_USDC_BLOCK = 14_950_000; // ~2022-05-28
+const LP_FRAXSWAP_V1_OHM_FRAX_BLOCK = 14_490_000;
+const LP_FRAXSWAP_V2_OHM_FRAX_BLOCK = 17_000_000;
 
 // ---- Block windows (per inventory section 2.1). ----
 
@@ -404,6 +431,59 @@ const liquidityHandlers: LiquidityHandler[] = [
     decimals: 18,
     underlyingDecimals: 18,
     startBlock: ERC20_GAUNTLET_SUSDS_VAULT_BLOCK,
+  },
+  // Curve pools (POL). LP-token price = (Σ balance × coin price) / totalSupply.
+  // Native ETH appears as a coin in the OHM-ETH pool; remap entry above
+  // resolves it to WETH for pricing.
+  {
+    kind: "curve",
+    tokens: [LP_CURVE_OHM_ETH],
+    id: LP_CURVE_OHM_ETH,
+    lpToken: LP_CURVE_OHM_ETH,
+    coins: CURVE_OHM_ETH_COINS,
+    coinDecimals: [9, 18],
+    startBlock: LP_CURVE_OHM_ETH_BLOCK,
+  },
+  {
+    kind: "curve",
+    tokens: [LP_CURVE_OHM_FRAXBP],
+    id: LP_CURVE_OHM_FRAXBP,
+    lpToken: LP_CURVE_OHM_FRAXBP,
+    coins: CURVE_OHM_FRAXBP_COINS,
+    coinDecimals: [9, 18],
+    startBlock: LP_CURVE_OHM_FRAXBP_BLOCK,
+  },
+  {
+    kind: "curve",
+    tokens: [LP_CURVE_FRAX_USDC_LP],
+    id: LP_CURVE_FRAX_USDC_POOL,
+    // FRAX-USDC is a Curve V2 pool — LP token lives at a separate address
+    // (returned by lp_token() in legacy; hard-coded here).
+    lpToken: LP_CURVE_FRAX_USDC_LP,
+    coins: CURVE_FRAX_USDC_COINS,
+    coinDecimals: [18, 6],
+    startBlock: LP_CURVE_FRAX_USDC_BLOCK,
+  },
+  // FraxSwap V1/V2 OHM-FRAX (TWAMM, UniV2-compatible reserves).
+  {
+    kind: "fraxswap",
+    tokens: [LP_FRAXSWAP_V1_OHM_FRAX],
+    id: LP_FRAXSWAP_V1_OHM_FRAX,
+    token0: ERC20_OHM_V2,
+    token1: ERC20_FRAX,
+    decimals0: 9,
+    decimals1: 18,
+    startBlock: LP_FRAXSWAP_V1_OHM_FRAX_BLOCK,
+  },
+  {
+    kind: "fraxswap",
+    tokens: [LP_FRAXSWAP_V2_OHM_FRAX],
+    id: LP_FRAXSWAP_V2_OHM_FRAX,
+    token0: ERC20_OHM_V2,
+    token1: ERC20_FRAX,
+    decimals0: 9,
+    decimals1: 18,
+    startBlock: LP_FRAXSWAP_V2_OHM_FRAX_BLOCK,
   },
   // Native ETH prices via WETH (1:1).
   { kind: "remap", tokens: [NATIVE_ETH], id: NATIVE_ETH, target: ERC20_WETH },

@@ -535,6 +535,165 @@ export const readNextOhmDistribution = createEffect(
   },
 );
 
+// Cached effect that snapshots a Curve pool's coin balances and the LP
+// totalSupply at a given block. Returns `{ balances: string[], totalSupply: string }`
+// with raw uint256 strings. Empty arrays + "0" totalSupply on revert
+// (matches legacy try_ behavior).
+const CURVE_POOL_ABI = [
+  {
+    inputs: [{ internalType: "uint256", name: "i", type: "uint256" }],
+    name: "balances",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+const ERC20_TOTAL_SUPPLY_ABI = [
+  {
+    inputs: [],
+    name: "totalSupply",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+export const snapshotCurvePool = createEffect(
+  {
+    name: "snapshotCurvePool",
+    input: {
+      chainId: S.number,
+      pool: S.string,
+      lpToken: S.string,
+      coinCount: S.number,
+      atBlock: S.number,
+    },
+    output: S.schema({
+      balances: S.array(S.string),
+      totalSupply: S.string,
+    }),
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    const pool = getAddress(input.pool);
+    const lp = getAddress(input.lpToken);
+    const blockNumber = BigInt(input.atBlock);
+    const balances: string[] = [];
+    let totalSupply = "0";
+
+    for (let i = 0; i < input.coinCount; i++) {
+      try {
+        const b = (await retryRpc(() =>
+          client.readContract({
+            address: pool,
+            abi: CURVE_POOL_ABI,
+            functionName: "balances",
+            args: [BigInt(i)],
+            blockNumber,
+          }),
+        )) as bigint;
+        balances.push(b.toString());
+      } catch {
+        balances.push("0");
+      }
+    }
+
+    try {
+      const ts = (await retryRpc(() =>
+        client.readContract({
+          address: lp,
+          abi: ERC20_TOTAL_SUPPLY_ABI,
+          functionName: "totalSupply",
+          blockNumber,
+        }),
+      )) as bigint;
+      totalSupply = ts.toString();
+    } catch {
+      /* revert; keep "0" */
+    }
+
+    return { balances, totalSupply };
+  },
+);
+
+// Cached effect that snapshots a FraxSwap pair (UniV2-compatible
+// `getReserves()` + ERC20 `totalSupply()`). Returns reserves and total
+// supply as raw uint strings.
+const UNIV2_GET_RESERVES_ABI = [
+  {
+    inputs: [],
+    name: "getReserves",
+    outputs: [
+      { internalType: "uint112", name: "reserve0", type: "uint112" },
+      { internalType: "uint112", name: "reserve1", type: "uint112" },
+      { internalType: "uint32", name: "blockTimestampLast", type: "uint32" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+export const snapshotFraxSwapPool = createEffect(
+  {
+    name: "snapshotFraxSwapPool",
+    input: { chainId: S.number, pool: S.string, atBlock: S.number },
+    output: S.schema({
+      reserve0: S.string,
+      reserve1: S.string,
+      totalSupply: S.string,
+    }),
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    const pool = getAddress(input.pool);
+    const blockNumber = BigInt(input.atBlock);
+
+    let reserve0 = "0";
+    let reserve1 = "0";
+    let totalSupply = "0";
+
+    try {
+      const reserves = (await retryRpc(() =>
+        client.readContract({
+          address: pool,
+          abi: UNIV2_GET_RESERVES_ABI,
+          functionName: "getReserves",
+          blockNumber,
+        }),
+      )) as readonly [bigint, bigint, number];
+      reserve0 = reserves[0].toString();
+      reserve1 = reserves[1].toString();
+    } catch {
+      /* revert; keep "0"s */
+    }
+
+    try {
+      const ts = (await retryRpc(() =>
+        client.readContract({
+          address: pool,
+          abi: ERC20_TOTAL_SUPPLY_ABI,
+          functionName: "totalSupply",
+          blockNumber,
+        }),
+      )) as bigint;
+      totalSupply = ts.toString();
+    } catch {
+      /* revert; keep "0" */
+    }
+
+    return { reserve0, reserve1, totalSupply };
+  },
+);
+
 // Cached effect that resolves a Kodiak LP wrapper's underlying UniswapV3 pool.
 // Invariant across blocks; called once per Kodiak LP per indexer process. The
 // returned address feeds both a contractRegister call (so the underlying

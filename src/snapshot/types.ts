@@ -157,6 +157,25 @@ export type LiquidityHandler =
       underlyingDecimals: number; // underlying asset decimals (used to normalize convertToAssets result)
       startBlock?: number;
     }
+  | {
+      kind: "curve";
+      id: string; // pool address (also the LP token for V1 pools; for V2 lpToken differs)
+      tokens: string[]; // [LP token address] — what we price
+      lpToken: string; // LP token address (== id for V1; lp_token() for V2)
+      coins: string[]; // underlying coin addresses in pool index order
+      coinDecimals: number[]; // raw decimals for each coin
+      startBlock?: number;
+    }
+  | {
+      kind: "fraxswap";
+      id: string; // pool / LP token address (UniV2-like — pair *is* the LP)
+      tokens: string[]; // [pool address]
+      token0: string;
+      token1: string;
+      decimals0: number;
+      decimals1: number;
+      startBlock?: number;
+    }
   | { kind: "univ2"; id: string; tokens: string[]; startBlock?: number }
   | { kind: "univ3"; id: string; tokens: string[]; startBlock?: number }
   | { kind: "univ3-quoter"; id: string; quoter: string; tokens: string[]; startBlock?: number }
