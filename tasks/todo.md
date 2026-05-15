@@ -2,7 +2,7 @@
 
 Tracking the migration described in `envio-multichain-migration-plan.md` (root). Update as we go; mark items `[x]` when actually done (tests/build/parity proof, not just code-written).
 
-## Phase 0 — Baseline (in progress)
+## Phase 0 — Baseline (done)
 
 - [x] Verify branch `feat/envio` includes PR #313 merge (commit `330e9f3`)
 - [x] `pnpm install` clean
@@ -13,26 +13,32 @@ Tracking the migration described in `envio-multichain-migration-plan.md` (root).
 - [x] `pnpm lint:check` clean
 - [x] Document inherited TODOs → `docs/envio-migration/inherited-todos.md`
 
-## Phase 1 — Inventory legacy behavior
+## Phase 1 — Inventory legacy behavior (done)
 
-- [ ] `docs/envio-migration/inventory.md` — per-chain rules (tokens, wallets, categories, deprecated windows, price/base-token paths, manual offsets, POL, bonds, clearinghouse receivables, boosted liquidity)
-  - [ ] Arbitrum
-  - [ ] Base
-  - [ ] Berachain
-  - [ ] Ethereum (largest surface — most quirks)
-  - [ ] Fantom
-  - [ ] Polygon
-  - [ ] Shared helpers (Constants, Wallets, price routers, supply helpers)
-- [ ] Treasury-subgraph `metricHelper.ts` formula inventory (separate repo, may defer)
-- [ ] **Checkpoint with user before Phase 2**
+- [x] `docs/envio-migration/inventory.md` — master cross-chain matrix + 8 open decisions (composed by user during Phase 1 review)
+  - [x] Arbitrum → `inventory-arbitrum.md` (418 lines)
+  - [x] Base → `inventory-base.md` (269 lines)
+  - [x] Berachain → `inventory-berachain.md` (304 lines)
+  - [x] Ethereum → `inventory-ethereum.md` (789 lines, biggest surface)
+  - [x] Fantom → `inventory-fantom.md` (273 lines)
+  - [x] Polygon → `inventory-polygon.md` (314 lines)
+  - [x] Shared helpers → `inventory-shared.md` (599 lines)
+- [x] Treasury-subgraph `metricHelper.ts` formula inventory → `inventory-treasury-subgraph.md` (proposes 26 + 6 ChainValues fields for `GlobalMetricSnapshot`)
+- [x] Checkpoint with user — 10 decisions recorded below
 
-## Phase 2 — Schema + state scaffolding (not started)
+Branch moved from `feat/envio` to `envio-multichain-migration` after Phase 2 commit 1 (per plan).
 
-- [ ] Add `chainId` + `blockchain` to `TokenRecord`, `TokenSupply`
-- [ ] Add `GlobalMetricSnapshot` (id = YYYY-MM-DD, completeness metadata)
-- [ ] Add state entities: `TokenBalance`, `Erc20Supply`, pool states, `ChainlinkPriceState`, staking, lender, protocol-specific
-- [ ] Update record builders + ID format
-- [ ] Codegen + build green
+## Phase 2 — Schema + state scaffolding (done)
+
+All commits on branch `envio-multichain-migration`:
+
+- [x] `bb2f46e` — TokenRecord chainId + TokenSupply chainId/blockchain. Codegen + build + 12/12 tests green.
+- [x] `4fbeafa` — `GlobalMetricSnapshot` + `GlobalMetricChainValues` + `GlobalMetricSupplyCategory` scaffold. Uses `@derivedFrom` for parent→child relations.
+- [x] `49fe96a` — `NativeBalanceState` (closes inherited TODO #2) + `ChainlinkPriceState` (replaces snapshot-time Chainlink RPC).
+- [x] `5ff5e1a` — Phase 0 + Phase 1 docs (4,100 lines) + `docs/envio-migration/schema.md`.
+- [x] `01fa73a` — Remove 6 unused cache entities (ERC20TokenSnapshot, BalancerPoolSnapshot, PoolSnapshot, TokenPriceSnapshot, StakingPoolSnapshot, PriceSnapshot). Held: BophadesModule, ClearinghouseAddress, GnosisAuctionRoot, GnosisAuction, ProtocolMetric for Phase 4.
+
+Deferred to Phase 4 (Ethereum porting): `BophadesAddressState`, `BlvVaultRegistry`, `MigrationOffsetState`, `CoolerLoanState`, GnosisAuction cross-data-source ordering markers. Their shape gets pinned by the actual porting work, not designed in a vacuum.
 
 ## Phase 3 — Recursive pricing port (TDD)
 
@@ -90,3 +96,9 @@ See `docs/envio-migration/inherited-todos.md`.
 8. **`ohmSupplyCategories`** — preserve nested with both `balance` (raw on-chain) and `supplyBalance` (signed contribution). Required for exact-match parity.
 9. **Canonical chain for `protocolMetrics[0]`-derived fields** — Ethereum is canonical for `ohmIndex`/`ohmApy`/`ohmPrice`/`gOhmPrice`/`sOhmCirculatingSupply`/`totalValueLocked`. Schema reads these from the Ethereum-specific snapshot row, not from a merged array.
 10. **`crossChainComplete: Boolean!`** — set at write time, true iff Arbitrum and Ethereum have both produced a snapshot for that UTC date (other chains optional). Mirrors legacy `crossChainDataComplete` query gate.
+
+### Phase 2 decisions (2026-05-14)
+
+11. **Legacy cache entity cleanup** — remove the 6 pure cache snapshots (ERC20TokenSnapshot, BalancerPoolSnapshot, PoolSnapshot, TokenPriceSnapshot, StakingPoolSnapshot, PriceSnapshot) — zero refs in `src/`, fully replaced by event-driven state. Keep BophadesModule, ClearinghouseAddress, GnosisAuctionRoot, GnosisAuction, ProtocolMetric for Phase 4.
+12. **Branch hygiene** — work lives on `envio-multichain-migration` branched off `origin/feat/envio` (per plan). `feat/envio` rewound to remote after the first commit accidentally landed there.
+13. **No co-author trailers** — saved as a persistent feedback memory; commits are user-authored only.
