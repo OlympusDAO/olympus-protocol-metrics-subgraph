@@ -31,6 +31,15 @@ const ERC20_WETH = addr("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2");
 const ERC20_WSTETH = addr("0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0");
 const ERC20_WEETH = addr("0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee");
 
+// Long-tail volatiles (per inventory §2.2).
+const ERC20_FXS = addr("0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0");
+const ERC20_LDO = addr("0x5a98fcbea516cf06857215779fd812ca3bef1b32");
+const ERC20_LQTY = addr("0x6dea81c8171d0ba574754ef6f8b412f2ed88c54d");
+const ERC20_BTRFLY_V1 = addr("0xc0d4ceb216b3ba9c3701b291766fdcba977cec3a");
+const ERC20_BTRFLY_V1_STAKED = addr("0xCC94Faf235cC5D3Bf4bEd3a30db5984306c86aBC"); // xBTRFLY
+const ERC20_BTRFLY_V2 = addr("0xc55126051b22ebb829d00368f4b12bde432de5da");
+const ERC20_BTRFLY_V2_RL = addr("0x742B70151cd3Bc7ab598aAFF1d54B90c3ebC6027"); // rlBTRFLY
+
 const NATIVE_ETH = "0x0000000000000000000000000000000000000000";
 
 // ---- Chainlink feeds (per inventory section 4.1). ----
@@ -48,6 +57,11 @@ const CHAINLINK_FEED_ETH_USD = addr("0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419"
 const LP_UNISWAP_V3_WETH_OHM = addr("0x88051b0eea095007d3bef21ab287be961f3d8598");
 const LP_UNISWAP_V3_WETH_WSTETH = addr("0x109830a1aaad605bbf02a9dfa7b0b92ec2fb7daa");
 const LP_UNISWAP_V3_WEETH_WETH = addr("0x202A6012894Ae5c288eA824cbc8A9bfb26A49b93");
+const LP_UNISWAP_V3_FXS_ETH = addr("0xcd8286b48936cdac20518247dbd310ab681a9fbf");
+const LP_UNISWAP_V3_LDO_WETH = addr("0xa3f558aebaecaf0e11ca4b2199cc5ed341edfd74");
+const LP_UNISWAP_V3_LQTY_WETH = addr("0xd1d5a4c0ea98971894772dcd6d2f1dc71083c44e");
+const LP_UNISWAP_V3_WETH_BTRFLY_V1 = addr("0xdf9ab3c649005ebfdf682d2302ca1f673e0d37a2");
+const LP_UNISWAP_V3_WETH_BTRFLY_V2 = addr("0x3e6e23198679419cd73bb6376518dcc5168c8260");
 
 // ---- Block windows (per inventory section 2.1). ----
 
@@ -56,13 +70,21 @@ const ERC20_OHM_V2_BLOCK = 13_782_589;
 const ERC20_USDE_BLOCK = 20_289_094;
 const ERC20_WEETH_BLOCK = 18_961_223;
 const NATIVE_ETH_BLOCK = 21_810_000;
+const ERC20_FXS_BLOCK = 11_465_584;
 
 const PROTOCOL_ADDRESSES = WALLET_ADDRESSES;
 
 const names: Record<string, string> = {
+  [ERC20_BTRFLY_V1]: "BTRFLY",
+  [ERC20_BTRFLY_V1_STAKED]: "Staked BTRFLY",
+  [ERC20_BTRFLY_V2]: "BTRFLY V2",
+  [ERC20_BTRFLY_V2_RL]: "Revenue-Locked BTRFLY",
   [ERC20_DAI]: "DAI",
   [ERC20_FRAX]: "FRAX",
+  [ERC20_FXS]: "Frax Share",
   [ERC20_GOHM]: "Governance OHM",
+  [ERC20_LDO]: "Lido DAO",
+  [ERC20_LQTY]: "Liquity",
   [ERC20_LUSD]: "Liquity USD",
   [ERC20_OHM_V1]: "OHM (V1)",
   [ERC20_OHM_V2]: "OHM",
@@ -73,13 +95,25 @@ const names: Record<string, string> = {
   [ERC20_WEETH]: "Wrapped eETH",
   [ERC20_WETH]: "Wrapped ETH",
   [ERC20_WSTETH]: "Wrapped staked ETH",
+  [LP_UNISWAP_V3_FXS_ETH]: "UniswapV3 FXS-ETH",
+  [LP_UNISWAP_V3_LDO_WETH]: "UniswapV3 LDO-WETH",
+  [LP_UNISWAP_V3_LQTY_WETH]: "UniswapV3 LQTY-WETH",
   [LP_UNISWAP_V3_WEETH_WETH]: "UniswapV3 weETH-WETH",
+  [LP_UNISWAP_V3_WETH_BTRFLY_V1]: "UniswapV3 WETH-BTRFLY V1",
+  [LP_UNISWAP_V3_WETH_BTRFLY_V2]: "UniswapV3 WETH-BTRFLY V2",
   [LP_UNISWAP_V3_WETH_OHM]: "UniswapV3 WETH-OHM",
   [LP_UNISWAP_V3_WETH_WSTETH]: "UniswapV3 WETH-wstETH",
 };
 
 const abbreviations: Record<string, string> = {
+  [ERC20_BTRFLY_V1]: "BTRFLY",
+  [ERC20_BTRFLY_V1_STAKED]: "xBTRFLY",
+  [ERC20_BTRFLY_V2]: "BTRFLY",
+  [ERC20_BTRFLY_V2_RL]: "rlBTRFLY",
+  [ERC20_FXS]: "FXS",
   [ERC20_GOHM]: "gOHM",
+  [ERC20_LDO]: "LDO",
+  [ERC20_LQTY]: "LQTY",
   [ERC20_OHM_V1]: "OHM V1",
   [ERC20_OHM_V2]: "OHM",
   [ERC20_USDE]: "USDe",
@@ -182,6 +216,53 @@ const liquidityHandlers: LiquidityHandler[] = [
     id: LP_UNISWAP_V3_WEETH_WETH,
     startBlock: ERC20_WEETH_BLOCK,
   },
+  // Long-tail volatiles priced via WETH UniV3 pools (each recurses to WETH
+  // Chainlink). xBTRFLY and rlBTRFLY remap to their respective unwrapped/
+  // unlocked equivalents; rlBTRFLY's 0.89 illiquid multiplier is encoded on
+  // its TokenDefinition.
+  {
+    kind: "univ3",
+    tokens: [ERC20_FXS, ERC20_WETH],
+    id: LP_UNISWAP_V3_FXS_ETH,
+    startBlock: ERC20_FXS_BLOCK,
+  },
+  {
+    kind: "univ3",
+    tokens: [ERC20_LDO, ERC20_WETH],
+    id: LP_UNISWAP_V3_LDO_WETH,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "univ3",
+    tokens: [ERC20_LQTY, ERC20_WETH],
+    id: LP_UNISWAP_V3_LQTY_WETH,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "univ3",
+    tokens: [ERC20_WETH, ERC20_BTRFLY_V1],
+    id: LP_UNISWAP_V3_WETH_BTRFLY_V1,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "univ3",
+    tokens: [ERC20_WETH, ERC20_BTRFLY_V2],
+    id: LP_UNISWAP_V3_WETH_BTRFLY_V2,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  // Staked / locked variants remap to their base tokens for pricing.
+  {
+    kind: "remap",
+    tokens: [ERC20_BTRFLY_V1_STAKED],
+    id: ERC20_BTRFLY_V1_STAKED,
+    target: ERC20_BTRFLY_V1,
+  },
+  {
+    kind: "remap",
+    tokens: [ERC20_BTRFLY_V2_RL],
+    id: ERC20_BTRFLY_V2_RL,
+    target: ERC20_BTRFLY_V2,
+  },
   // Native ETH prices via WETH (1:1).
   { kind: "remap", tokens: [NATIVE_ETH], id: NATIVE_ETH, target: ERC20_WETH },
   // gOHM price = OHM price × index — implemented as a follow-up; for now
@@ -239,6 +320,37 @@ export const ETHEREUM: ChainConfig = {
     }),
     token(ERC20_WEETH, "Volatile", true, true, undefined, {
       startBlock: ERC20_WEETH_BLOCK,
+      decimals: 18,
+    }),
+    // Long-tail volatiles (no hard-coded multiplier).
+    token(ERC20_FXS, "Volatile", true, false, undefined, {
+      startBlock: ERC20_FXS_BLOCK,
+      decimals: 18,
+    }),
+    token(ERC20_LDO, "Volatile", true, false, undefined, {
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token(ERC20_LQTY, "Volatile", true, false, undefined, {
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token(ERC20_BTRFLY_V1, "Volatile", true, false, undefined, {
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token(ERC20_BTRFLY_V1_STAKED, "Volatile", true, false, undefined, {
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token(ERC20_BTRFLY_V2, "Volatile", true, false, undefined, {
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    // rlBTRFLY carries the legacy 0.89 illiquid multiplier (per inventory §2.2,
+    // PriceHandlerCustomMapping legacy hard-code).
+    token(ERC20_BTRFLY_V2_RL, "Volatile", false, false, "0.89", {
+      startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
     }),
     // OHM V1 and V2 are tracked but value-excluded from treasury MV when held

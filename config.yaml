@@ -302,9 +302,9 @@ chains:
         for: fallback
 
     contracts:
-      # ---- Treasury-held ERC20s (baseline set: stables + bluechips).
-      # Phase 4 follow-ups add the long-tail volatiles, ERC4626 vaults, and
-      # variable-debt receipt tokens flagged in inventory-ethereum.md §2.
+      # ---- Treasury-held ERC20s. Stables + bluechips + long-tail volatiles.
+      # Phase 4 follow-ups add ERC4626 vaults, variable-debt receipt tokens,
+      # and Aura/Convex/Curve staked LP positions per inventory-ethereum.md §2.
       - name: TreasuryERC20
         address:
           - "0x6b175474e89094c44da98b954eedeac495271d0f" # DAI
@@ -317,6 +317,13 @@ chains:
           - "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" # WETH
           - "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0" # wstETH
           - "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee" # weETH
+          - "0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0" # FXS
+          - "0x5a98fcbea516cf06857215779fd812ca3bef1b32" # LDO
+          - "0x6dea81c8171d0ba574754ef6f8b412f2ed88c54d" # LQTY
+          - "0xc0d4ceb216b3ba9c3701b291766fdcba977cec3a" # BTRFLY V1
+          - "0xCC94Faf235cC5D3Bf4bEd3a30db5984306c86aBC" # xBTRFLY
+          - "0xc55126051b22ebb829d00368f4b12bde432de5da" # BTRFLY V2
+          - "0x742B70151cd3Bc7ab598aAFF1d54B90c3ebC6027" # rlBTRFLY
 
       # ---- OHM ERC20s.
       - name: OhmERC20
@@ -325,12 +332,17 @@ chains:
           - "0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5" # OHM V2
           - "0x0ab87046fBb341D058F17CBC4c1133F25a20a52f" # gOHM
 
-      # ---- Univ3 pricing pools (baseline: WETH-OHM + WETH-wstETH + weETH-WETH).
+      # ---- Univ3 pricing pools (bluechips + long-tail volatiles).
       - name: UniswapV3Pool
         address:
           - "0x88051b0eea095007d3bef21ab287be961f3d8598" # WETH-OHM
           - "0x109830a1aaad605bbf02a9dfa7b0b92ec2fb7daa" # WETH-wstETH
           - "0x202A6012894Ae5c288eA824cbc8A9bfb26A49b93" # weETH-WETH
+          - "0xcd8286b48936cdac20518247dbd310ab681a9fbf" # FXS-ETH
+          - "0xa3f558aebaecaf0e11ca4b2199cc5ed341edfd74" # LDO-WETH
+          - "0xd1d5a4c0ea98971894772dcd6d2f1dc71083c44e" # LQTY-WETH
+          - "0xdf9ab3c649005ebfdf682d2302ca1f673e0d37a2" # WETH-BTRFLY V1
+          - "0x3e6e23198679419cd73bb6376518dcc5168c8260" # WETH-BTRFLY V2
 
       # ---- Chainlink feeds (8 baseline; full set is 12 per inventory §4.1).
       - name: ChainlinkAggregator
