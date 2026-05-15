@@ -79,9 +79,12 @@ const ERC20_USDE_BLOCK = 20_289_094;
 const ERC20_WEETH_BLOCK = 18_961_223;
 const NATIVE_ETH_BLOCK = 21_810_000;
 const ERC20_FXS_BLOCK = 11_465_584;
-// Aave V3 deployment block on Ethereum (also used for the variable-debt and
-// aEth* receipt tokens that came online with V3, 2023-01-27).
-const ERC20_AAVE_V3_BLOCK = 16_291_127;
+// Olympus's Aave V3 position deployment block on Ethereum (per
+// inventory-ethereum.md §2 + §5: aEthUSDe, varDebtEth USDC/USDT, aEthSUSDe).
+// Also the graft block on the legacy subgraph; matches when the treasury first
+// took an Aave V3 position. Indexing earlier yields no Transfers to/from
+// treasury wallets so it's pure waste.
+const ERC20_AAVE_V3_BLOCK = 24_707_147;
 
 const PROTOCOL_ADDRESSES = WALLET_ADDRESSES;
 
