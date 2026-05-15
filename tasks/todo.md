@@ -80,13 +80,16 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
 ## Phase 5 — Global snapshot
 
 - [x] `b5dbd31` — `feat(snapshot): wire GlobalMetricSnapshot aggregation per-snapshot (Phase 5 v1)`. New `src/snapshot/global.ts` (pure functions) + `updateGlobalMetricSnapshot` in BlockHandlers + `date @index` on TokenRecord/TokenSupply. Per-chain MV/LB/supply aggregation, cross-chain summation with chainsIndexed/chainsMissing/crossChainComplete, derived ratios, Ethereum BLV inclusion-block rule, Buyback MS OHM-in-MV gate. 7 new tests.
-- [ ] Canonical fields: ohmPrice / gOhmPrice / sOhmCirculatingSupply / sOhmTotalValueLocked / ohmApy (need snapshot-time price lookup + sOHM rebase indexing).
+- [x] `4fc070d` — `feat(snapshot): resolve canonical ohmPrice/gOhmPrice in GlobalMetricSnapshot`. Ethereum's recursive pricing router resolves OHM USD price; gOhmPrice = ohmPrice × ohmIndex. Wrapped in pricing cache.
+- [x] `8decad7` — `feat(snapshot): sOhmCirculatingSupply + sOhmTotalValueLocked canonical fields`. `readSOhmCirculatingSupply` effect + sOhmTotalValueLocked = sOhmCirculatingSupply × ohmPrice. ohmApy still 0 with TODO (needs distributor.nextRewardFor + rebase tracking).
+- [ ] ohmApy canonical (distributor.nextRewardFor + sOHM LogRebase rebase amount).
 - [ ] Tests: complete / single-chain / late-day-update / missing-chain (integration-level)
 
 ## Phase 6 — Parity harness
 
-- [ ] Diff script vs treasury endpoint
-- [ ] Exact-match starting expectation; only relax with explicit approval
+- [x] `8decad7` — `scripts/parity-diff.ts` lands the diff CLI. Fetches both endpoints' Metric arrays for a date or date range, normalizes numerics, emits CSV per (date, field) where the diff exceeds tolerance (default 0). Exit code 2 on any non-zero diff for CI gating. Needs deployment of the Envio indexer before it can run end-to-end.
+- [ ] Run against the real endpoints (blocked on indexer deployment).
+- [x] Exact-match starting expectation encoded as default `--tolerance 0`; relax only with explicit approval.
 
 ## Phase 7 — Performance validation
 
