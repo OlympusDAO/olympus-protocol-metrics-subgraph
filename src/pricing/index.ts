@@ -7,6 +7,7 @@ import { isActive, ZERO } from "../snapshot/math";
 import type { ChainConfig, LiquidityHandler } from "../snapshot/types";
 import { BalancerPriceHandler } from "./balancer";
 import { ChainlinkPriceHandler } from "./chainlink";
+import { Erc4626PriceHandler } from "./erc4626";
 import { GohmPriceHandler } from "./gohm";
 import { KodiakPriceHandler } from "./kodiak";
 import { RemapPriceHandler } from "./remap";
@@ -29,6 +30,9 @@ export function createPriceHandler(
     return new ChainlinkPriceHandler(config, context, client, handler);
   }
   if (handler.kind === "gohm") return new GohmPriceHandler(config, context, client, handler);
+  if (handler.kind === "erc4626") {
+    return new Erc4626PriceHandler(config, context, client, handler);
+  }
   if (handler.kind === "univ2") return new Univ2PriceHandler(config, context, client, handler);
   if (handler.kind === "univ3") return new Univ3PriceHandler(config, context, client, handler);
   if (handler.kind === "univ3-quoter") {

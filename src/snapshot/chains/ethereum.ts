@@ -34,6 +34,15 @@ const ERC20_USDT = addr("0xdAC17F958D2ee523a2206206994597C13D831ec7");
 const ERC20_USDE = addr("0x4c9EDD5852cd905f086C759E8383e09bff1E68B3");
 const ERC20_USDS = addr("0xdC035D45d973E3EC169d2276DDab16f1e407384F");
 
+// ERC4626 yield-bearing vault tokens (per inventory §2.3 + §5).
+// `convertToAssets()` provides the share→asset rate; the underlying is
+// independently priced via Chainlink. Prices recurse through their
+// underlying asset.
+const ERC20_SDAI = addr("0x83F20F44975D03b1b09e64809B757c47f942BEeA");
+const ERC20_SUSDE = addr("0x9D39A5DE30e57443BfF2A8307A4256c8797A3497");
+const ERC20_SUSDS = addr("0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD");
+const ERC20_GAUNTLET_SUSDS_VAULT = addr("0x0Eb5B03c0303f2F47cD81d7BE4275AF8Ed347576");
+
 // Aave receipt tokens (assets) + variable-debt tokens (liabilities). Receipts
 // price at the underlying asset's rate; variable-debt tokens carry
 // isLiability=true so their value subtracts from treasury MV.
@@ -86,6 +95,10 @@ const ERC20_OHM_V2_BLOCK = 13_782_589;
 // feeds OhmIndexState; gOHM pricing becomes available once the first rebase
 // after this block is observed.
 const ERC20_SOHM_V3_BLOCK = 13_806_000;
+const ERC20_SDAI_BLOCK = 17_675_440;
+const ERC20_SUSDE_BLOCK = 20_265_440;
+const ERC20_SUSDS_BLOCK = 20_722_900;
+const ERC20_GAUNTLET_SUSDS_VAULT_BLOCK = 21_300_000;
 const ERC20_USDE_BLOCK = 20_289_094;
 const ERC20_WEETH_BLOCK = 18_961_223;
 const NATIVE_ETH_BLOCK = 21_810_000;
@@ -100,6 +113,10 @@ const ERC20_AAVE_V3_BLOCK = 24_707_147;
 const PROTOCOL_ADDRESSES = WALLET_ADDRESSES;
 
 const names: Record<string, string> = {
+  [ERC20_SDAI]: "Savings DAI",
+  [ERC20_SUSDE]: "Staked USDe",
+  [ERC20_SUSDS]: "Savings USDS",
+  [ERC20_GAUNTLET_SUSDS_VAULT]: "Gauntlet sUSDS Vault",
   [ERC20_ADAI]: "Aave DAI",
   [ERC20_AETH_USDE]: "Aave Ethereum USDe",
   [ERC20_VAR_DEBT_ETH_USDC]: "Aave Ethereum Variable Debt USDC",
@@ -135,6 +152,10 @@ const names: Record<string, string> = {
 };
 
 const abbreviations: Record<string, string> = {
+  [ERC20_SDAI]: "sDAI",
+  [ERC20_SUSDE]: "sUSDe",
+  [ERC20_SUSDS]: "sUSDS",
+  [ERC20_GAUNTLET_SUSDS_VAULT]: "gtSUSDS",
   [ERC20_ADAI]: "aDAI",
   [ERC20_AETH_USDE]: "aEthUSDe",
   [ERC20_VAR_DEBT_ETH_USDC]: "variableDebtEthUSDC",
@@ -345,6 +366,45 @@ const liquidityHandlers: LiquidityHandler[] = [
     id: ERC20_BTRFLY_V2_RL,
     target: ERC20_BTRFLY_V2,
   },
+  // ERC4626 yield-bearing vault shares (sDAI / sUSDe / sUSDS / gauntlet
+  // sUSDS). `convertToAssets()` provides the share→asset rate; underlying
+  // recurses to its Chainlink feed. Carries Chainlink-equivalent priority.
+  {
+    kind: "erc4626",
+    tokens: [ERC20_SDAI],
+    id: ERC20_SDAI,
+    underlying: ERC20_DAI,
+    decimals: 18,
+    underlyingDecimals: 18,
+    startBlock: ERC20_SDAI_BLOCK,
+  },
+  {
+    kind: "erc4626",
+    tokens: [ERC20_SUSDE],
+    id: ERC20_SUSDE,
+    underlying: ERC20_USDE,
+    decimals: 18,
+    underlyingDecimals: 18,
+    startBlock: ERC20_SUSDE_BLOCK,
+  },
+  {
+    kind: "erc4626",
+    tokens: [ERC20_SUSDS],
+    id: ERC20_SUSDS,
+    underlying: ERC20_USDS,
+    decimals: 18,
+    underlyingDecimals: 18,
+    startBlock: ERC20_SUSDS_BLOCK,
+  },
+  {
+    kind: "erc4626",
+    tokens: [ERC20_GAUNTLET_SUSDS_VAULT],
+    id: ERC20_GAUNTLET_SUSDS_VAULT,
+    underlying: ERC20_USDS,
+    decimals: 18,
+    underlyingDecimals: 18,
+    startBlock: ERC20_GAUNTLET_SUSDS_VAULT_BLOCK,
+  },
   // Native ETH prices via WETH (1:1).
   { kind: "remap", tokens: [NATIVE_ETH], id: NATIVE_ETH, target: ERC20_WETH },
   // gOHM = OHM × sOHM-V3 rebase index. The handler reads OhmIndexState
@@ -423,6 +483,24 @@ export const ETHEREUM: ChainConfig = {
       startBlock: ERC20_AAVE_V3_BLOCK,
       decimals: 6,
       isLiability: true,
+    }),
+    // ERC4626 yield-bearing stables. Underlying price comes from Chainlink;
+    // share→asset rate from `convertToAssets()` via Erc4626PriceHandler.
+    token(ERC20_SDAI, "Stable", true, false, undefined, {
+      startBlock: ERC20_SDAI_BLOCK,
+      decimals: 18,
+    }),
+    token(ERC20_SUSDE, "Stable", true, false, undefined, {
+      startBlock: ERC20_SUSDE_BLOCK,
+      decimals: 18,
+    }),
+    token(ERC20_SUSDS, "Stable", true, false, undefined, {
+      startBlock: ERC20_SUSDS_BLOCK,
+      decimals: 18,
+    }),
+    token(ERC20_GAUNTLET_SUSDS_VAULT, "Stable", true, false, undefined, {
+      startBlock: ERC20_GAUNTLET_SUSDS_VAULT_BLOCK,
+      decimals: 18,
     }),
     token(ERC20_WETH, "Volatile", true, true, undefined, {
       startBlock: ETHEREUM_START_BLOCK,

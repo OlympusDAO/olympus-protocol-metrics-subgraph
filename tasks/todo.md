@@ -70,7 +70,7 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
   - [x] `1036f4b` — `feat(chains-ethereum): port Cooler Loans receivables to snapshot`. `ChainConfig.coolerClearinghouses` + two cached effects (`readCoolerPrincipalReceivables`, `readMonoCoolerTotalDebt`) + `pushCoolerReceivables` snapshot hook. Ethereum registers V1/V1.1/V2/MonoCooler; MonoCooler carries `priceToken: ERC20_DAI` per Phase 1 decision #5 (USDS-debt-priced-as-DAI quirk).
   - [x] `a7f91df` — `feat(chains-ethereum): port Boosted Liquidity Vault supply tracking`. `ChainConfig.blvRegistry` + `snapshotBlvRegistry` effect iterates active vaults + reads `getPoolOhmShare()` per vault. `pushBlvSupply` writes one TokenSupply per vault with `type="Boosted Liquidity Vault"` and supplyBalance multiplier -1.
   - [x] `e1f39d3` — `feat(handlers): port Olympus V1 bond auction supply tracking`. GnosisAuction now chainId-scoped; BondManager.GnosisAuctionLaunched + GnosisEasyAuction.AuctionCleared handlers; `pushGnosisAuctionSupply` snapshot path emits PREMINTED/VESTING/DEPOSITS rows; `readBondManagerState` effect; BondManager OHM balance from TokenBalance for partial-burn adjustment. 4 new tests.
-  - [ ] OHM v1→v2 migration offset rules (7 block-windowed corrections).
+  - [x] `e8ee912` — `feat(chains-ethereum): port OHM V1→V2 migration offset`. `ChainConfig.migrationOffset` (start/end blocks + sOhmAddress + offsetOhm) → `pushMigrationOffsetSupply` writes one OHM_MIGRATION_OFFSET row sourced from OhmIndexState (no RPC).
   - [ ] Aura/Convex wrapper handlers.
   - [ ] Curve / FraxSwap / ERC4626 vault handlers.
   - [ ] Univ3 NFT POL positions.

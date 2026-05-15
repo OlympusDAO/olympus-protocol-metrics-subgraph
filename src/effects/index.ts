@@ -343,6 +343,55 @@ export const readBondManagerState = createEffect(
   },
 );
 
+// Cached effect that reads `convertToAssets(10^decimals)` on an ERC4626 vault.
+// Returns the assets-per-share ratio as a stringified bigint in underlying
+// units. The vault decimals are passed in so the input scales to "one share".
+// Result is cached per (vault, atBlock); reverts surface as "" (skip pricing).
+const ERC4626_ABI = [
+  {
+    inputs: [{ internalType: "uint256", name: "shares", type: "uint256" }],
+    name: "convertToAssets",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+export const readErc4626AssetsPerShare = createEffect(
+  {
+    name: "readErc4626AssetsPerShare",
+    input: {
+      chainId: S.number,
+      vault: S.string,
+      shareDecimals: S.number,
+      atBlock: S.number,
+    },
+    output: S.string,
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    try {
+      const oneShare = 10n ** BigInt(input.shareDecimals);
+      const assets = (await retryRpc(() =>
+        client.readContract({
+          address: getAddress(input.vault),
+          abi: ERC4626_ABI,
+          functionName: "convertToAssets",
+          args: [oneShare],
+          blockNumber: BigInt(input.atBlock),
+        }),
+      )) as bigint;
+      return assets.toString();
+    } catch {
+      return "";
+    }
+  },
+);
+
 // Cached effect that resolves a Kodiak LP wrapper's underlying UniswapV3 pool.
 // Invariant across blocks; called once per Kodiak LP per indexer process. The
 // returned address feeds both a contractRegister call (so the underlying

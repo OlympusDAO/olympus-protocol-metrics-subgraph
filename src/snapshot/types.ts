@@ -138,6 +138,15 @@ export type LiquidityHandler =
       ohmToken: string; // OHM address used for recursive base-price lookup
       startBlock?: number;
     }
+  | {
+      kind: "erc4626";
+      id: string; // vault token address — also the share token tracked by TokenBalance
+      tokens: string[]; // [vault address]
+      underlying: string; // asset() — underlying token address used for recursive base-price lookup
+      decimals: number; // share token decimals (passed as input to convertToAssets)
+      underlyingDecimals: number; // underlying asset decimals (used to normalize convertToAssets result)
+      startBlock?: number;
+    }
   | { kind: "univ2"; id: string; tokens: string[]; startBlock?: number }
   | { kind: "univ3"; id: string; tokens: string[]; startBlock?: number }
   | { kind: "univ3-quoter"; id: string; quoter: string; tokens: string[]; startBlock?: number }
