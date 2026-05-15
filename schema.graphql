@@ -149,15 +149,6 @@ type TokenSupply {
   supplyBalance: BigDecimal! # may be negative to represent the token being taken out of circulation
 }
 
-type PriceSnapshot {
-  id: ID!
-  block: BigInt!
-  timestamp: BigInt!
-  date: String!
-  priceOhm: BigDecimal!
-  priceGOhm: BigDecimal!
-}
-
 # Should be a single entry
 # Used for tracking markets
 type GnosisAuctionRoot {
@@ -172,53 +163,6 @@ type GnosisAuction {
   termSeconds: BigInt!
   bidQuantity: BigDecimal # Is set later, so should not be required
   auctionCloseTimestamp: BigInt
-}
-
-# Caching
-type ERC20TokenSnapshot {
-  id: ID! # address/block
-  address: Bytes!
-  decimals: Int!
-  totalSupply: BigDecimal
-}
-
-# TODO migrate to PoolSnapshot
-type BalancerPoolSnapshot {
-  id: ID! # pool id/block
-  block: BigInt!
-  pool: Bytes!
-  poolToken: Bytes!
-  decimals: Int!
-  totalSupply: BigDecimal!
-  tokens: [Bytes!]!
-  balances: [BigDecimal!]!
-  weights: [BigDecimal!]!
-}
-
-type PoolSnapshot {
-  id: ID! # pool/block
-  block: BigInt!
-  pool: Bytes!
-  poolToken: Bytes
-  decimals: Int!
-  totalSupply: BigDecimal!
-  tokens: [Bytes!]!
-  balances: [BigDecimal!]!
-  weights: [BigDecimal!]
-}
-
-type TokenPriceSnapshot {
-  id: ID! # address/block
-  block: BigInt!
-  token: Bytes!
-  price: BigDecimal!
-}
-
-type StakingPoolSnapshot {
-  id: ID! # address/block
-  block: BigInt!
-  contractAddress: Bytes!
-  stakingToken: Bytes # Will not be set if the call reverts
 }
 
 type BophadesModule {

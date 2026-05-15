@@ -77,11 +77,16 @@ Maintained from on-chain events. Snapshot handlers read from these in place of p
 | **`NativeBalanceState`** (Phase 2) | `chainId-walletAddress` | snapshot-time `getBalance` (no events) | closes [inherited-todos.md](inherited-todos.md) #2 |
 | **`ChainlinkPriceState`** (Phase 2) | `chainId-feedAddress` | Chainlink aggregator `AnswerUpdated` | base case for the recursive price router |
 
-## Cache snapshots (legacy carry-overs)
+## Held-for-Phase-4 entities (zero references in `src/`)
 
-Currently zero references in `src/`. Carried over from the legacy Graph subgraph schema. Candidates for cleanup pending Phase 4 audit (some — `BophadesModule`, `ClearinghouseAddress`, `GnosisAuction*` — may be re-used for Ethereum-specific state).
+Carried over from the legacy Graph subgraph schema and likely re-used during Phase 4 Ethereum porting:
 
-`ERC20TokenSnapshot`, `BalancerPoolSnapshot`, `PoolSnapshot`, `TokenPriceSnapshot`, `StakingPoolSnapshot`, `PriceSnapshot`, `BophadesModule`, `ClearinghouseAddress`, `GnosisAuctionRoot`, `GnosisAuction`, `ProtocolMetric`.
+- `BophadesModule` — Bophades Kernel module installs (ports cleanly into the dynamic-address-resolution pattern)
+- `ClearinghouseAddress` — Cooler clearinghouse addresses resolved at Kernel events
+- `GnosisAuctionRoot`, `GnosisAuction` — cross-data-source GnosisAuction state singletons
+- `ProtocolMetric` — legacy per-chain protocol metric; likely superseded by `GlobalMetricSnapshot` but kept until Phase 5 confirms
+
+The 6 pure cache snapshots from the legacy schema (`ERC20TokenSnapshot`, `BalancerPoolSnapshot`, `PoolSnapshot`, `TokenPriceSnapshot`, `StakingPoolSnapshot`, `PriceSnapshot`) were removed in Phase 2 — they were unused and replaced entirely by the event-driven state entities listed above.
 
 ## Deferred state entities (designed in Phase 4 when porting Ethereum)
 
