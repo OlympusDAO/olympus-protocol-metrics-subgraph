@@ -218,13 +218,7 @@ async function pushTokenBalanceRecords(
       for (const wallet of wallets) {
         const balance = isNative
           ? await readNativeBalance(context, client, config.chainId, wallet, decimals, blockNumber)
-          : await readTokenBalance(
-              context,
-              config.chainId,
-              definition.address,
-              wallet,
-              decimals,
-            );
+          : await readTokenBalance(context, config.chainId, definition.address, wallet, decimals);
         if (balance.eq(ZERO)) continue;
         records.push(
           createTokenRecord(
@@ -352,8 +346,7 @@ async function pushJonesStakingRecords(
     const entity = await context.JonesStakingPosition.get(id);
     if (!entity || entity.amount === 0n) continue;
 
-    rate ??= (await getPrice(config, context, client, jonesToken.address, blockNumber, null))
-      .price;
+    rate ??= (await getPrice(config, context, client, jonesToken.address, blockNumber, null)).price;
     if (rate.eq(ZERO)) continue;
 
     const balance = toDecimal(entity.amount, 18); // JONES is 18 decimals

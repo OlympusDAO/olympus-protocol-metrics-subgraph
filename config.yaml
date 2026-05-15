@@ -72,6 +72,14 @@ contracts:
     events:
       - event: "AnswerUpdated(int256 indexed current, uint256 indexed roundId, uint256 updatedAt)"
 
+  # sOHM V3 emits LogRebase on every staking-epoch rebase. The handler
+  # persists the new `index` into OhmIndexState; the gOHM pricing handler
+  # reads it to compute gOHM_price = OHM_price * index/1e9. Currently
+  # Ethereum-only (sOHM is not deployed on the L2s).
+  - name: SOhmV3
+    events:
+      - event: "LogRebase(uint256 indexed epoch, uint256 rebase, uint256 index)"
+
 chains:
   - id: 42161 # Arbitrum One
     start_block: 10950000 # 2022-05-01
@@ -358,5 +366,10 @@ chains:
           - "0x3e7d1eab13ad0104d2750b8863b489d65364e32d" # USDT/USD
           - "0xa569d910839Ae8865Da8F8e70FfFb0cBA869F961" # USDe/USD
           - "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419" # ETH/USD
+
+      # ---- sOHM V3 LogRebase drives OhmIndexState; consumed by GohmPriceHandler.
+      - name: SOhmV3
+        address:
+          - "0x04906695D6D12CF5459975d7C3C03356E4Ccd460" # sOHM V3
 
 address_format: lowercase

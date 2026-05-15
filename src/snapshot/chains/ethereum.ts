@@ -18,6 +18,7 @@ import { rpcUrls } from "./rpc";
 const ERC20_OHM_V1 = addr("0x383518188c0c6d7730d91b2c03a03c837814a899");
 const ERC20_OHM_V2 = addr("0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5");
 const ERC20_GOHM = addr("0x0ab87046fBb341D058F17CBC4c1133F25a20a52f");
+const ERC20_SOHM_V3 = addr("0x04906695D6D12CF5459975d7C3C03356E4Ccd460");
 
 const ERC20_DAI = addr("0x6b175474e89094c44da98b954eedeac495271d0f");
 const ERC20_FRAX = addr("0x853d955acef822db058eb8505911ed77f175b99e");
@@ -75,6 +76,10 @@ const LP_UNISWAP_V3_WETH_BTRFLY_V2 = addr("0x3e6e23198679419cd73bb6376518dcc5168
 
 const ETHEREUM_START_BLOCK = 12_000_000; // ~2021-04-29, before Treasury V2 (12525281).
 const ERC20_OHM_V2_BLOCK = 13_782_589;
+// sOHM V3 deployment (per inventory-ethereum.md §2.1). LogRebase from sOHM V3
+// feeds OhmIndexState; gOHM pricing becomes available once the first rebase
+// after this block is observed.
+const ERC20_SOHM_V3_BLOCK = 13_806_000;
 const ERC20_USDE_BLOCK = 20_289_094;
 const ERC20_WEETH_BLOCK = 18_961_223;
 const NATIVE_ETH_BLOCK = 21_810_000;
@@ -290,8 +295,17 @@ const liquidityHandlers: LiquidityHandler[] = [
   },
   // Native ETH prices via WETH (1:1).
   { kind: "remap", tokens: [NATIVE_ETH], id: NATIVE_ETH, target: ERC20_WETH },
-  // gOHM price = OHM price × index — implemented as a follow-up; for now
-  // gOHM falls through and prices at 0 unless a pool handler covers it.
+  // gOHM = OHM × sOHM-V3 rebase index. The handler reads OhmIndexState
+  // (populated by SOhmV3.LogRebase) and recurses to the OHM price via the
+  // WETH-OHM UniV3 pool. Carries GOHM_PRIORITY so the deterministic formula
+  // wins over any pool-derived gOHM quote (matches legacy resolvePrice).
+  {
+    kind: "gohm",
+    tokens: [ERC20_GOHM],
+    id: ERC20_SOHM_V3,
+    ohmToken: ERC20_OHM_V2,
+    startBlock: ERC20_SOHM_V3_BLOCK,
+  },
 ];
 
 export const ETHEREUM: ChainConfig = {

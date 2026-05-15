@@ -104,6 +104,13 @@ export type LiquidityHandler =
       decimals: number; // feed decimals (8 for USD pairs, 18 for ETH pairs)
       startBlock?: number;
     }
+  | {
+      kind: "gohm";
+      id: string; // sOHM contract address — also used as OhmIndexState lookup key
+      tokens: string[]; // exactly one token: gOHM address
+      ohmToken: string; // OHM address used for recursive base-price lookup
+      startBlock?: number;
+    }
   | { kind: "univ2"; id: string; tokens: string[]; startBlock?: number }
   | { kind: "univ3"; id: string; tokens: string[]; startBlock?: number }
   | { kind: "univ3-quoter"; id: string; quoter: string; tokens: string[]; startBlock?: number }

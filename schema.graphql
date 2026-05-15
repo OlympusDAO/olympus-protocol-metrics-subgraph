@@ -314,3 +314,24 @@ type ChainlinkPriceState {
   updatedAtBlock: BigInt!
   updatedAtTimestamp: BigInt!
 }
+
+# Latest sOHM (rebasing) index per chain. The sOHM V3 contract emits
+# LogRebase(epoch, rebase, index) on every staking-epoch rebase; we persist
+# the latest `index` so the gOHM pricing handler can compute
+# gOHM_price = OHM_price × (index / 10^9) without a snapshot-time RPC.
+# Legacy reads this via sOHMv3.index() in `getCurrentIndex` — see
+# inventory-ethereum.md §4 "gOHM Price Routing".
+#
+# `sOhmAddress` is the contract that emits LogRebase. Currently Ethereum-only
+# (sOHM V3 = 0x04906695D6D12CF5459975d7C3C03356E4Ccd460); other chains will
+# share Ethereum's index value when GlobalMetricSnapshot ports the canonical
+# `ohmIndex` field per Phase 1 decision #9.
+type OhmIndexState {
+  id: ID! # chainId-sOhmAddress
+  chainId: Int! @index
+  sOhmAddress: String! @index
+  index: BigInt! # raw index at 9 decimals (e.g. 131283291432 = 131.28...)
+  epoch: BigInt!
+  updatedAtBlock: BigInt!
+  updatedAtTimestamp: BigInt!
+}
