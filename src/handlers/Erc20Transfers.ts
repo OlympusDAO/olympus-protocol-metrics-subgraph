@@ -2,10 +2,9 @@ import { type Erc20Supply, indexer, type LenderAmo, type TokenBalance } from "en
 
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { addr } from "../snapshot/math";
+import type { ChainId } from "../snapshot/types";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
-
-type ChainId = 42161 | 80094;
 
 function treasuryWalletsForChain(chainId: number): `0x${string}`[] {
   const config = CHAIN_CONFIGS[chainId as ChainId];

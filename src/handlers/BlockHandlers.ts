@@ -25,6 +25,7 @@ import {
 } from "../snapshot/records";
 import type {
   ChainConfig,
+  ChainId,
   LiquidityHandler,
   SerializedTokenRecord,
   SerializedTokenSupply,
@@ -49,6 +50,12 @@ const BLOCK_HANDLERS = [
     chain: 80094 as const,
     startBlock: 799194,
     interval: 14917,
+  },
+  {
+    name: "BaseEightHourSnapshot",
+    chain: 8453 as const,
+    startBlock: 13204827, // 2024-04-15, OHM deployment block (matches BASE config)
+    interval: 14400, // ~8h at Base's ~2s block time
   },
 ];
 
@@ -88,7 +95,7 @@ async function processSnapshot(
   context: EvmOnBlockContext,
 ): Promise<void> {
   context.log.info(`Processing ${name} block ${blockNumberInput} on chain ${chainId}`);
-  const config = CHAIN_CONFIGS[chainId as 42161 | 80094];
+  const config = CHAIN_CONFIGS[chainId as ChainId];
   if (!config) {
     throw new Error(`Unsupported chain ${chainId}`);
   }

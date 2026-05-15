@@ -5,6 +5,7 @@ import { BALANCER_VAULT_ABI } from "../snapshot/abis/balancer";
 import { KODIAK_ABI } from "../snapshot/abis/kodiak";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { getClient, retryRpc } from "../snapshot/contracts";
+import type { ChainId } from "../snapshot/types";
 
 // Cached effect that reads `vault.getPoolTokens(poolId)` once at the block of
 // the first event we observe for a given pool. Used to seed BalancerPoolState
@@ -28,7 +29,7 @@ export const seedBalancerPool = createEffect(
     cache: true,
   },
   async ({ input }) => {
-    const config = CHAIN_CONFIGS[input.chainId as 42161 | 80094];
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
     if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
     const client = getClient(config);
     const result = await retryRpc(() =>
@@ -61,7 +62,7 @@ export const resolveKodiakUnderlyingPool = createEffect(
     cache: true,
   },
   async ({ input }) => {
-    const config = CHAIN_CONFIGS[input.chainId as 42161 | 80094];
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
     if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
     const client = getClient(config);
     const underlying = await retryRpc(() =>

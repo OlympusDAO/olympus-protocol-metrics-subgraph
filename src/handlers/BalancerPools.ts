@@ -3,13 +3,14 @@ import { type BalancerPoolState, type EvmOnEventContext, indexer } from "envio";
 import { seedBalancerPool } from "../effects";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { addr } from "../snapshot/math";
+import type { ChainId } from "../snapshot/types";
 
 // The Balancer V2 Vault is one shared contract per chain that hosts *every*
 // pool. Without an event-level filter on poolId, HyperSync would deliver every
 // Swap on every Balancer pool — millions of events. We narrow to the pools
 // we actually care about (from the chain config's `kind: "balancer"` handlers).
 function poolIdsForChain(chainId: number): `0x${string}`[] {
-  const config = CHAIN_CONFIGS[chainId as 42161 | 80094];
+  const config = CHAIN_CONFIGS[chainId as ChainId];
   if (!config) return [];
   return config.liquidityHandlers
     .filter((handler) => handler.kind === "balancer")

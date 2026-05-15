@@ -6,6 +6,7 @@ import { KODIAK_ABI } from "../snapshot/abis/kodiak";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { getClient, readInvariantContract } from "../snapshot/contracts";
 import { addr } from "../snapshot/math";
+import type { ChainId } from "../snapshot/types";
 import { buildLpTransferWhere, handleLpTransfer } from "./Erc20Transfers";
 
 // Treasury balance + totalSupply tracking — identical to the LpERC20 handler.
@@ -52,7 +53,7 @@ indexer.contractRegister(
     event: "Transfer",
   },
   async ({ event, context }) => {
-    const config = CHAIN_CONFIGS[event.chainId as 42161 | 80094];
+    const config = CHAIN_CONFIGS[event.chainId as ChainId];
     if (!config) return;
     const client = getClient(config);
     const underlying = await readInvariantContract(

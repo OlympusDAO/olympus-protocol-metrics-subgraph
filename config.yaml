@@ -196,4 +196,39 @@ chains:
         address:
           - "0x4Be03f781C497A489E3cB0287833452cA9B9E80B"
 
+  - id: 8453 # Base
+    start_block: 13204827 # 2024-04-15, OHM deployment on Base (no graft, per Phase 1 decision #3)
+    rpc:
+      - url: ${ENVIO_BASE_RPC_URL:-https://base.llamarpc.com}
+        for: fallback
+
+    contracts:
+      # ---- Treasury-held ERC20s on Base.
+      - name: TreasuryERC20
+        address:
+          - "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" # USDC
+          - "0x4200000000000000000000000000000000000006" # WETH
+
+      # ---- OHM ERC20: Transfer events drive treasury balance + totalSupply.
+      - name: OhmERC20
+        address:
+          - "0x060cb087a9730e13aa191f31a6d86bff8dfcdcc0" # OHM (Base)
+
+      # ---- Univ2 pair (Sync events drive reserves; Transfer drives LP totalSupply).
+      - name: UniswapV2Pool
+        address:
+          - "0x5ab4b9e96aeed4820e4be267f42411d722985482" # UniV2 OHM-WETH
+
+      # ---- Univ3 pool (Swap/Initialize drive sqrtPriceX96 + liquidity).
+      - name: UniswapV3Pool
+        address:
+          - "0x183ea22691c54806fe96555436dd312b6befac2f" # UniV3 OHM-USDC
+
+      # Chainlink USD feeds. Each entry has a matching `chainlink` handler in
+      # the BASE config's liquidityHandlers carrying tokenAddress + decimals.
+      - name: ChainlinkAggregator
+        address:
+          - "0x71041dddad3595f9ced3dccfbe3d1f4b0a16bb70" # ETH/USD
+          - "0x7e860098f58bbfc8648a4311b374b1d669a2bc6b" # USDC/USD
+
 address_format: lowercase

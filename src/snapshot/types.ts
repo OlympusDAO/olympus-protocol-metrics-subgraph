@@ -67,8 +67,10 @@ export type BasePriceFeed = {
 declare const bytes32Brand: unique symbol;
 export type Bytes32 = `0x${string}` & { readonly [bytes32Brand]: true };
 
+export type ChainId = 42161 | 80094 | 8453;
+
 export type ChainConfig = {
-  chainId: 42161 | 80094;
+  chainId: ChainId;
   blockchain: string;
   startBlock: number;
   rpcUrls: string[];
