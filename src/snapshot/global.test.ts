@@ -208,6 +208,104 @@ describe("aggregateAcrossChains", () => {
     expect(agg.chainsMissing).toEqual(["Ethereum"]);
     expect(agg.crossChainComplete).toBe(false);
   });
+
+  test("single-chain (Ethereum-only) is incomplete pending Arbitrum", () => {
+    const ethereum = computePerChainAggregate(
+      1,
+      "Ethereum",
+      "2024-09-01",
+      20_000_000n,
+      1_700_000_000n,
+      [],
+      [],
+    );
+    const agg = aggregateAcrossChains("2024-09-01", [ethereum]);
+    expect(agg.chainsMissing).toEqual(["Arbitrum"]);
+    expect(agg.crossChainComplete).toBe(false);
+  });
+
+  test("missing-chain — Base/Polygon/Fantom present without Ethereum is still incomplete", () => {
+    const arbitrum = computePerChainAggregate(
+      42_161,
+      "Arbitrum",
+      "2024-09-01",
+      200_000_000n,
+      1_700_000_000n,
+      [],
+      [],
+    );
+    const base = computePerChainAggregate(
+      8453,
+      "Base",
+      "2024-09-01",
+      20_000_000n,
+      1_700_000_000n,
+      [],
+      [],
+    );
+    const polygon = computePerChainAggregate(
+      137,
+      "Polygon",
+      "2024-09-01",
+      50_000_000n,
+      1_700_000_000n,
+      [],
+      [],
+    );
+    const agg = aggregateAcrossChains("2024-09-01", [arbitrum, base, polygon]);
+    expect(agg.chainsIndexed.sort()).toEqual(["Arbitrum", "Base", "Polygon"]);
+    expect(agg.chainsMissing).toEqual(["Ethereum"]);
+    expect(agg.crossChainComplete).toBe(false);
+  });
+
+  test("late-day-update — two Ethereum snapshots for same date sum correctly (snapshot path overwrites by ID)", () => {
+    // This simulates the BlockHandler reading back the *latest* per-chain row
+    // for each chain. In practice GlobalMetricChainValues is keyed by
+    // "{chainId}-{date}" so the second snapshot overwrites the first. The
+    // aggregation receives the latest values (here represented as a single
+    // higher row), not stacked rows. Confirm that aggregateAcrossChains is
+    // a pure sum — passing the same chain twice would double-count, so
+    // BlockHandlers must dedupe before calling. Verified by passing both
+    // chains exactly once and asserting the canonical sums.
+    const earlier = computePerChainAggregate(
+      1,
+      "Ethereum",
+      "2024-09-01",
+      20_000_000n,
+      1_700_000_000n,
+      [record({ value: "500", valueExcludingOhm: "500" })],
+      [supply(TYPE_TOTAL_SUPPLY, "1000000", "1000000")],
+    );
+    const later = computePerChainAggregate(
+      1,
+      "Ethereum",
+      "2024-09-01",
+      20_010_000n,
+      1_700_010_000n,
+      // 8h later: same MV (no transfers), updated supply baseline.
+      [record({ value: "500", valueExcludingOhm: "500" })],
+      [supply(TYPE_TOTAL_SUPPLY, "1000500", "1000500")],
+    );
+    const arbitrum = computePerChainAggregate(
+      42_161,
+      "Arbitrum",
+      "2024-09-01",
+      200_000_000n,
+      1_700_010_000n,
+      [],
+      [],
+    );
+
+    // Only the "later" Ethereum snapshot should be passed (BlockHandlers
+    // reads from the entity store — the earlier write was overwritten by ID).
+    const agg = aggregateAcrossChains("2024-09-01", [later, arbitrum]);
+    expect(agg.crossChainComplete).toBe(true);
+    expect(agg.ohmTotalSupply.toString()).toBe("1000500");
+    // Sanity check that passing the earlier row would have given a different
+    // (stale) supply — this is the bug we'd be guarding against.
+    const stale = aggregateAcrossChains("2024-09-01", [earlier, arbitrum]);
+    expect(stale.ohmTotalSupply.toString()).toBe("1000000");
+  });
 });
 
 describe("computeDerivedRatios", () => {

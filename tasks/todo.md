@@ -71,10 +71,11 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
   - [x] `a7f91df` — `feat(chains-ethereum): port Boosted Liquidity Vault supply tracking`. `ChainConfig.blvRegistry` + `snapshotBlvRegistry` effect iterates active vaults + reads `getPoolOhmShare()` per vault. `pushBlvSupply` writes one TokenSupply per vault with `type="Boosted Liquidity Vault"` and supplyBalance multiplier -1.
   - [x] `e1f39d3` — `feat(handlers): port Olympus V1 bond auction supply tracking`. GnosisAuction now chainId-scoped; BondManager.GnosisAuctionLaunched + GnosisEasyAuction.AuctionCleared handlers; `pushGnosisAuctionSupply` snapshot path emits PREMINTED/VESTING/DEPOSITS rows; `readBondManagerState` effect; BondManager OHM balance from TokenBalance for partial-burn adjustment. 4 new tests.
   - [x] `e8ee912` — `feat(chains-ethereum): port OHM V1→V2 migration offset`. `ChainConfig.migrationOffset` (start/end blocks + sOhmAddress + offsetOhm) → `pushMigrationOffsetSupply` writes one OHM_MIGRATION_OFFSET row sourced from OhmIndexState (no RPC).
-  - [ ] Aura/Convex wrapper handlers.
+  - [x] `b3eb3d9` — `feat(chains-ethereum): wrap Convex staked-LP positions via remap`. 3 Convex BaseRewardPool wrappers as remap → underlying Curve LP (no separate effect needed; transfers flow through TreasuryERC20 pipeline).
+  - [ ] Aura BPT wrappers (deferred pending Balancer POL pricing).
   - [x] `c5e05f0` — `feat(pricing): add Erc4626PriceHandler for sDAI / sUSDe / sUSDS / Gauntlet sUSDS`. New `erc4626` LiquidityHandler kind + cached `readErc4626AssetsPerShare` effect + Ethereum config wiring for 4 vaults.
   - [x] `2f9bee9` — `feat(pricing): add Curve + FraxSwap LP pricing handlers`. New `curve` + `fraxswap` LiquidityHandler kinds; `snapshotCurvePool` + `snapshotFraxSwapPool` effects; Ethereum registers 3 Curve + 2 FraxSwap LPs. 4 new tests.
-  - [ ] Univ3 NFT POL positions.
+  - [x] `3985064` — `feat(chains-ethereum): port UniV3 NFT POL position enumeration`. `ChainConfig.univ3PositionManager` + `snapshotUniv3NftPositions` effect + `univ3PositionAmounts` math helper + `pushUniv3NftPol` snapshot path. Reads sqrtPriceX96 from indexed Univ3PoolState (no RPC). 4 new tests.
 - [ ] Per-chain snapshot validation tests (1+ test per chain asserting at least one TokenRecord row builds correctly).
 
 ## Phase 5 — Global snapshot
