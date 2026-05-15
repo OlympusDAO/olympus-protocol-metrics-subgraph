@@ -2,8 +2,8 @@ import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 import { describe, expect, test } from "vitest";
 
-import type { ChainConfig, LiquidityHandler } from "../snapshot/types";
-import { getPrice } from ".";
+import type { ChainConfig, LiquidityHandler } from "../../src/snapshot/types";
+import { getPrice } from "../../src/pricing";
 
 const CHAIN_ID = 42161;
 const ETH_USD_FEED = "0x639fe6ab55c921f74e7fac1ee960c0b6293ba612";

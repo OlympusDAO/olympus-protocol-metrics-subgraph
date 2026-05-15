@@ -2,8 +2,8 @@ import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 import { describe, expect, test } from "vitest";
 
-import type { ChainConfig, LiquidityHandler, TokenDefinition } from "../snapshot/types";
-import { getPrice } from ".";
+import type { ChainConfig, LiquidityHandler, TokenDefinition } from "../../src/snapshot/types";
+import { getPrice } from "../../src/pricing";
 
 // Synthetic test fixtures so the cycle / recursion guards can be exercised
 // in isolation from any chain's real config. The router lives in

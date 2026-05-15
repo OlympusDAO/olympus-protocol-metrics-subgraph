@@ -3,8 +3,8 @@ import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 import { describe, expect, test, vi } from "vitest";
 
-import type { ChainConfig, LiquidityHandler } from "../snapshot/types";
-import { getPrice } from ".";
+import type { ChainConfig, LiquidityHandler } from "../../src/snapshot/types";
+import { getPrice } from "../../src/pricing";
 
 const CHAIN_ID = 1;
 const SDAI = "0x83f20f44975d03b1b09e64809b757c47f942beea";

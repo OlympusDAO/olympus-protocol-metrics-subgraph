@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { decodeKeycode } from "./index";
+import { decodeKeycode } from "../../src/effects/index";
 
 describe("decodeKeycode", () => {
   test("decodes a 5-character ASCII keycode (TRSRY)", () => {

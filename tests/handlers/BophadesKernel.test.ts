@@ -1,7 +1,7 @@
 import type { BophadesModule, EvmOnEventContext } from "envio";
 import { describe, expect, test, vi } from "vitest";
 
-import { applyKernelActionExecuted } from "./BophadesKernel";
+import { applyKernelActionExecuted } from "../../src/handlers/BophadesKernel";
 
 const ETHEREUM_CHAIN_ID = 1;
 const TRSRY_V1 = "0xa8687a15d4be32cc8f0a8a7b9704a4c3993d9613";

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { univ3PositionAmounts } from "./math";
+import { univ3PositionAmounts } from "../../src/snapshot/math";
 
 // sqrtPriceX96 for an in-range position. Constructed so the math is easy to
 // reason about: sqrtPriceX96 / 2^96 ≈ 1.0 (price ratio of 1 between tokens).

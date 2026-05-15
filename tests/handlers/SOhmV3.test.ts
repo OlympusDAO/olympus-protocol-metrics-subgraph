@@ -1,7 +1,7 @@
 import type { OhmIndexState } from "envio";
 import { describe, expect, test, vi } from "vitest";
 
-import { applyLogRebase } from "./SOhmV3";
+import { applyLogRebase } from "../../src/handlers/SOhmV3";
 
 const ETHEREUM_CHAIN_ID = 1;
 const SOHM_V3 = "0x04906695d6d12cf5459975d7c3c03356e4ccd460";

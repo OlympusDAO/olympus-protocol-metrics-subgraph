@@ -1,7 +1,7 @@
 import type { ChainlinkPriceState } from "envio";
 import { describe, expect, test, vi } from "vitest";
 
-import { applyAnswerUpdated } from "./ChainlinkAggregator";
+import { applyAnswerUpdated } from "../../src/handlers/ChainlinkAggregator";
 
 const ARBITRUM_CHAIN_ID = 42161;
 const ETH_USD_FEED = "0x639fe6ab55c921f74e7fac1ee960c0b6293ba612";

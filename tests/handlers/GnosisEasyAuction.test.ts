@@ -1,7 +1,7 @@
 import { BigDecimal, type EvmOnEventContext, type GnosisAuction } from "envio";
 import { describe, expect, test, vi } from "vitest";
 
-import { applyAuctionCleared } from "./GnosisEasyAuction";
+import { applyAuctionCleared } from "../../src/handlers/GnosisEasyAuction";
 
 const ETHEREUM_CHAIN_ID = 1;
 

@@ -6,7 +6,7 @@ import {
 } from "envio";
 import { describe, expect, test, vi } from "vitest";
 
-import { applyGnosisAuctionLaunched } from "./BondManager";
+import { applyGnosisAuctionLaunched } from "../../src/handlers/BondManager";
 
 const ETHEREUM_CHAIN_ID = 1;
 const TOKEN = "0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5";

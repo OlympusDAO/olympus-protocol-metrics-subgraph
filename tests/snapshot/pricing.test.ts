@@ -2,10 +2,10 @@ import BigNumber from "bignumber.js";
 import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 import { describe, expect, test } from "vitest";
-import { getPrice, withPricingCache } from "../pricing";
-import { ARBITRUM } from "./chains/arbitrum";
-import { BERACHAIN } from "./chains/berachain";
-import type { ChainConfig, LiquidityHandler, TokenDefinition } from "./types";
+import { getPrice, withPricingCache } from "../../src/pricing";
+import { ARBITRUM } from "../../src/snapshot/chains/arbitrum";
+import { BERACHAIN } from "../../src/snapshot/chains/berachain";
+import type { ChainConfig, LiquidityHandler, TokenDefinition } from "../../src/snapshot/types";
 
 const ARBITRUM_BLOCK = 500_000_000n;
 const BERACHAIN_BLOCK = 1_000_000n;

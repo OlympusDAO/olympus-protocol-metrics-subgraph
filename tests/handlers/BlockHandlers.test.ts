@@ -2,10 +2,10 @@ import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 import { describe, expect, test, vi } from "vitest";
 
-import { CHAIN_CONFIGS } from "../snapshot/chains";
-import { addr } from "../snapshot/math";
-import type { SerializedTokenRecord } from "../snapshot/types";
-import { pushTokenBalanceRecords } from "./BlockHandlers";
+import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
+import { addr } from "../../src/snapshot/math";
+import type { SerializedTokenRecord } from "../../src/snapshot/types";
+import { pushTokenBalanceRecords } from "../../src/handlers/BlockHandlers";
 
 // Per-chain snapshot validation. Each test wires a minimal mock context
 // with one TokenBalance + ChainlinkPriceState row, calls

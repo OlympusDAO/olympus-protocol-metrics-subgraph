@@ -14,6 +14,6 @@
     "moduleResolution": "Bundler",
     "types": ["node"]
   },
-  "include": ["envio-env.d.ts", "src", "test"],
+  "include": ["envio-env.d.ts", "src", "tests"],
   "exclude": ["node_modules", "generated", ".envio"]
 }

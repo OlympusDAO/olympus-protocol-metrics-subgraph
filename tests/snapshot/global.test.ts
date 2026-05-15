@@ -10,8 +10,8 @@ import {
   TYPE_LIQUIDITY,
   TYPE_TOTAL_SUPPLY,
   TYPE_TREASURY,
-} from "./global";
-import type { SerializedTokenRecord, SerializedTokenSupply } from "./types";
+} from "../../src/snapshot/global";
+import type { SerializedTokenRecord, SerializedTokenSupply } from "../../src/snapshot/types";
 
 const DAI = "0x6b175474e89094c44da98b954eedeac495271d0f";
 const OHM = "0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5";
