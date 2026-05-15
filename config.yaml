@@ -88,6 +88,21 @@ contracts:
     events:
       - event: "ActionExecuted(uint8 action, address indexed target_)"
 
+  # Olympus V1 BondManager emits GnosisAuctionLaunched whenever a new bond
+  # auction is opened. The handler creates a GnosisAuction record so the
+  # snapshot path can attribute pre-minted / vesting / vested OHM correctly.
+  - name: BondManager
+    events:
+      - event: "GnosisAuctionLaunched(uint256 marketId, address auctionToken, uint96 capacity, uint48 bondTerm)"
+
+  # Gnosis EasyAuction is the matching engine behind Olympus bond auctions.
+  # AuctionCleared completes the GnosisAuction record with the cleared bid
+  # quantity (= OHM sold) so the snapshot can switch the auction from
+  # "open / pre-minted" to "closed / vesting" accounting.
+  - name: GnosisEasyAuction
+    events:
+      - event: "AuctionCleared(uint256 indexed auctionId, uint96 soldAuctioningTokens, uint96 soldBiddingTokens, bytes32 clearingPriceOrder)"
+
   # ClearinghouseRegistry events are tracked via dynamic contract registration
   # once the Kernel handler observes the CHREG module address (see Phase 4
   # follow-up). For now the 3 known Cooler clearinghouses are hardcoded in
@@ -391,6 +406,16 @@ chains:
       - name: BophadesKernel
         address:
           - "0x2286d7f9639e8158FaD1169e76d1FbC38247f54b" # Kernel (mainnet)
+
+      # ---- Olympus V1 BondManager + Gnosis EasyAuction. Driver of
+      # GnosisAuctionLaunched / AuctionCleared events that feed GnosisAuction.
+      - name: BondManager
+        address:
+          - "0xf577c77ee3578c7f216327f41b5d7221ead2b2a3" # BondManager (mainnet)
+
+      - name: GnosisEasyAuction
+        address:
+          - "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101" # Gnosis EasyAuction (mainnet)
 
       # CHREG (ClearinghouseRegistry) is registered dynamically once
       # observed via Kernel.ActionExecuted — its address isn't hardcoded in

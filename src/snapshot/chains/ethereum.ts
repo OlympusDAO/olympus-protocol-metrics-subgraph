@@ -507,6 +507,13 @@ export const ETHEREUM: ChainConfig = {
     address: addr("0x375E06C694B5E50aF8be8FB03495A612eA3e2275"),
     startBlock: 17_620_000,
   },
+  // Olympus V1 BondManager + Gnosis EasyAuction. Drives the bond
+  // pre-minted / vesting / vested supply rows. Indexer-side runtime is
+  // gated by the BOND_MANAGER_BLOCK = 16_226_955.
+  bondManager: {
+    address: addr("0xf577c77ee3578c7f216327f41b5d7221ead2b2a3"),
+    startBlock: 16_226_955,
+  },
   liquidityHandlers,
   ownedLiquidityHandlers,
 };

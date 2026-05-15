@@ -281,6 +281,68 @@ export const snapshotBlvRegistry = createEffect(
   },
 );
 
+// Cached effect that reads BondManager.isActive() + fixedExpiryTeller() in
+// one shot. Returns `{ isActive: false, teller: "" }` on revert. Cached per
+// (manager, atBlock) so the snapshot path can call cheaply.
+const BOND_MANAGER_ABI = [
+  {
+    inputs: [],
+    name: "isActive",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "fixedExpiryTeller",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+export const readBondManagerState = createEffect(
+  {
+    name: "readBondManagerState",
+    input: { chainId: S.number, bondManager: S.string, atBlock: S.number },
+    output: S.schema({
+      isActive: S.boolean,
+      teller: S.string,
+    }),
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    const bondManager = getAddress(input.bondManager);
+    const blockNumber = BigInt(input.atBlock);
+    try {
+      const isActive = (await retryRpc(() =>
+        client.readContract({
+          address: bondManager,
+          abi: BOND_MANAGER_ABI,
+          functionName: "isActive",
+          blockNumber,
+        }),
+      )) as boolean;
+      if (!isActive) return { isActive: false, teller: "" };
+      const teller = (await retryRpc(() =>
+        client.readContract({
+          address: bondManager,
+          abi: BOND_MANAGER_ABI,
+          functionName: "fixedExpiryTeller",
+          blockNumber,
+        }),
+      )) as string;
+      return { isActive: true, teller: teller.toLowerCase() };
+    } catch {
+      return { isActive: false, teller: "" };
+    }
+  },
+);
+
 // Cached effect that resolves a Kodiak LP wrapper's underlying UniswapV3 pool.
 // Invariant across blocks; called once per Kodiak LP per indexer process. The
 // returned address feeds both a contractRegister call (so the underlying

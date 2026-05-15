@@ -68,7 +68,7 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
   - [x] `109e583` — `feat(pricing): add GohmPriceHandler driven by sOHM V3 LogRebase`. New `OhmIndexState` entity + `SOhmV3.LogRebase` handler + `gohm` LiquidityHandler kind. gOHM price = OHM_price × index/1e9 via recursive lookup, GOHM_PRIORITY tiebreaker. 6 new tests.
   - [x] `751a47f` — `feat(handlers): event-driven Bophades module tracking via Kernel.ActionExecuted`. Redesigned BophadesModule (chainId-keycode) + ClearinghouseAddress entities; new `resolveBophadesKeycode` effect; Kernel handler writes BophadesModule on InstallModule/UpgradeModule; TRSRY V1.1 added to wallets. 7 new tests.
   - [x] `1036f4b` — `feat(chains-ethereum): port Cooler Loans receivables to snapshot`. `ChainConfig.coolerClearinghouses` + two cached effects (`readCoolerPrincipalReceivables`, `readMonoCoolerTotalDebt`) + `pushCoolerReceivables` snapshot hook. Ethereum registers V1/V1.1/V2/MonoCooler; MonoCooler carries `priceToken: ERC20_DAI` per Phase 1 decision #5 (USDS-debt-priced-as-DAI quirk).
-  - [ ] BLV vault registry.
+  - [x] `a7f91df` — `feat(chains-ethereum): port Boosted Liquidity Vault supply tracking`. `ChainConfig.blvRegistry` + `snapshotBlvRegistry` effect iterates active vaults + reads `getPoolOhmShare()` per vault. `pushBlvSupply` writes one TokenSupply per vault with `type="Boosted Liquidity Vault"` and supplyBalance multiplier -1.
   - [ ] GnosisAuction cross-data-source state.
   - [ ] OHM v1→v2 migration offset rules (7 block-windowed corrections).
   - [ ] Aura/Convex wrapper handlers.
