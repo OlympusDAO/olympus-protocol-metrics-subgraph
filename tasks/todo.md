@@ -76,7 +76,7 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
   - [x] `c5e05f0` — `feat(pricing): add Erc4626PriceHandler for sDAI / sUSDe / sUSDS / Gauntlet sUSDS`. New `erc4626` LiquidityHandler kind + cached `readErc4626AssetsPerShare` effect + Ethereum config wiring for 4 vaults.
   - [x] `2f9bee9` — `feat(pricing): add Curve + FraxSwap LP pricing handlers`. New `curve` + `fraxswap` LiquidityHandler kinds; `snapshotCurvePool` + `snapshotFraxSwapPool` effects; Ethereum registers 3 Curve + 2 FraxSwap LPs. 4 new tests.
   - [x] `3985064` — `feat(chains-ethereum): port UniV3 NFT POL position enumeration`. `ChainConfig.univ3PositionManager` + `snapshotUniv3NftPositions` effect + `univ3PositionAmounts` math helper + `pushUniv3NftPol` snapshot path. Reads sqrtPriceX96 from indexed Univ3PoolState (no RPC). 4 new tests.
-- [ ] Per-chain snapshot validation tests (1+ test per chain asserting at least one TokenRecord row builds correctly).
+- [x] `b5cf1d4` — `test(handlers): per-chain snapshot validation tests + fix EIP-55 checksums`. Smoke tests for Arbitrum / Base / Ethereum each wiring a minimal context + asserting one TokenRecord row builds correctly. Also fixed 4 ERC4626 addresses missing EIP-55 checksums in config.yaml.
 
 ## Phase 5 — Global snapshot
 

@@ -1,4 +1,4 @@
-import { addr, token } from "../math";
+import { addr, bytes32, token } from "../math";
 import type { ChainConfig, CoolerClearinghouse, LiquidityHandler } from "../types";
 import {
   COOLER_LOANS_CLEARINGHOUSE_V1,
@@ -102,6 +102,35 @@ const CONVEX_REWARD_OHM_ETH = addr("0xd683C7051a28fA150EB3F4BD92263865D4a67778")
 const CONVEX_REWARD_OHM_FRAXBP = addr("0x27A8c58e3DE84280826d615D80ddb33930383fE9"); // wraps Curve OHM-FraxBP LP
 const CONVEX_REWARD_FRAX_USDC = addr("0x7e880867363A7e321f5d260Cade2B0Bb2F717B02"); // wraps Curve FRAX-USDC LP
 
+// Balancer V2 Vault.
+const BALANCER_VAULT = addr("0xba12222222228d8ba445958a75a0704d566bf2c8");
+
+// Balancer pools + BPTs (per inventory §5). For Balancer V2 weighted pools,
+// the first 20 bytes of poolId == the BPT address.
+const LP_BALANCER_POOL_OHM_WETH = bytes32(
+  "0xd1ec5e215e8148d76f4460e4097fd3d5ae0a35580002000000000000000003d3",
+);
+const LP_BALANCER_POOL_OHM_DAI = bytes32(
+  "0x76fcf0e8c7ff37a47a799fa2cd4c13cde0d981c90002000000000000000003d2",
+);
+const LP_BALANCER_POOL_OHM_DAI_WETH = bytes32(
+  "0xc45d42f801105e861e86658648e3678ad7aa70f900010000000000000000011e",
+);
+const LP_BALANCER_POOL_OHM_WSTETH = bytes32(
+  "0xd4f79ca0ac83192693bce4699d0c10c66aa6cf0f00020000000000000000047e",
+);
+const BPT_OHM_WETH = addr("0xd1ec5e215e8148d76f4460e4097fd3d5ae0a3558");
+const BPT_OHM_DAI = addr("0x76fcf0e8c7ff37a47a799fa2cd4c13cde0d981c9");
+const BPT_OHM_DAI_WETH = addr("0xc45d42f801105e861e86658648e3678ad7aa70f9");
+const BPT_OHM_WSTETH = addr("0xd4f79ca0ac83192693bce4699d0c10c66aa6cf0f");
+
+// Aura vault wrappers (per inventory §5 "Aura Staking Contracts"). 1:1 ERC20
+// wrappers of the underlying BPT — priced via `remap` to the BPT.
+const AURA_VAULT_OHM_WETH = addr("0x978653c02f2fbbdfd67cbc7f45c42262f213e0b5");
+const AURA_VAULT_OHM_DAI = addr("0xB9D6ED734Ccbdd0b9CadFED712Cf8AC6D0917EcD");
+const AURA_VAULT_OHM_DAI_WETH = addr("0xF01e29461f1FCEdD82f5258Da006295E23b4Fab3");
+const AURA_VAULT_OHM_WSTETH = addr("0x636024f9ddef77e625161b2ccf3a2adfbfad3615");
+
 const LP_UNISWAP_V3_WETH_OHM = addr("0x88051b0eea095007d3bef21ab287be961f3d8598");
 const LP_UNISWAP_V3_WETH_WSTETH = addr("0x109830a1aaad605bbf02a9dfa7b0b92ec2fb7daa");
 const LP_UNISWAP_V3_WEETH_WETH = addr("0x202A6012894Ae5c288eA824cbc8A9bfb26A49b93");
@@ -120,6 +149,13 @@ const LP_CURVE_OHM_FRAXBP_BLOCK = 15_300_000; // ~2022-08-15
 const LP_CURVE_FRAX_USDC_BLOCK = 14_950_000; // ~2022-05-28
 const LP_FRAXSWAP_V1_OHM_FRAX_BLOCK = 14_490_000;
 const LP_FRAXSWAP_V2_OHM_FRAX_BLOCK = 17_000_000;
+
+// Balancer + Aura deployment blocks (approximate; effect reverts before
+// the actual creation gracefully zero out).
+const LP_BALANCER_OHM_WETH_BLOCK = 15_650_000;
+const LP_BALANCER_OHM_DAI_BLOCK = 15_650_000;
+const LP_BALANCER_OHM_DAI_WETH_BLOCK = 14_790_000;
+const LP_BALANCER_OHM_WSTETH_BLOCK = 16_800_000;
 
 // ---- Block windows (per inventory section 2.1). ----
 
@@ -150,6 +186,14 @@ const names: Record<string, string> = {
   [CONVEX_REWARD_OHM_ETH]: "Convex Staked Curve OHM-ETH",
   [CONVEX_REWARD_OHM_FRAXBP]: "Convex Staked Curve OHM-FraxBP",
   [CONVEX_REWARD_FRAX_USDC]: "Convex Staked Curve FRAX-USDC",
+  [BPT_OHM_WETH]: "Balancer OHM-WETH BPT",
+  [BPT_OHM_DAI]: "Balancer OHM-DAI BPT",
+  [BPT_OHM_DAI_WETH]: "Balancer OHM-DAI-WETH BPT",
+  [BPT_OHM_WSTETH]: "Balancer OHM-wstETH BPT",
+  [AURA_VAULT_OHM_WETH]: "Aura Staked OHM-WETH",
+  [AURA_VAULT_OHM_DAI]: "Aura Staked OHM-DAI",
+  [AURA_VAULT_OHM_DAI_WETH]: "Aura Staked OHM-DAI-WETH",
+  [AURA_VAULT_OHM_WSTETH]: "Aura Staked OHM-wstETH",
   [LP_CURVE_OHM_ETH]: "Curve OHM-ETH",
   [LP_CURVE_OHM_FRAXBP]: "Curve OHM-FraxBP",
   [LP_CURVE_FRAX_USDC_LP]: "Curve FRAX-USDC",
@@ -197,6 +241,10 @@ const abbreviations: Record<string, string> = {
   [CONVEX_REWARD_OHM_ETH]: "cvxCurveOhmEth",
   [CONVEX_REWARD_OHM_FRAXBP]: "cvxCurveOhmFraxBp",
   [CONVEX_REWARD_FRAX_USDC]: "cvxFraxUsdc",
+  [AURA_VAULT_OHM_WETH]: "auraOhmWeth",
+  [AURA_VAULT_OHM_DAI]: "auraOhmDai",
+  [AURA_VAULT_OHM_DAI_WETH]: "auraOhmDaiWeth",
+  [AURA_VAULT_OHM_WSTETH]: "auraOhmWsteth",
   [ERC20_SDAI]: "sDAI",
   [ERC20_SUSDE]: "sUSDe",
   [ERC20_SUSDS]: "sUSDS",
@@ -410,6 +458,62 @@ const liquidityHandlers: LiquidityHandler[] = [
     tokens: [ERC20_BTRFLY_V2_RL],
     id: ERC20_BTRFLY_V2_RL,
     target: ERC20_BTRFLY_V2,
+  },
+  // Balancer V2 POL pools. BPT pricing is handled by getPrice when the
+  // requested token == bptAddressFromPoolId(handler.id).
+  {
+    kind: "balancer",
+    tokens: [ERC20_OHM_V2, ERC20_WETH],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_OHM_WETH,
+    startBlock: LP_BALANCER_OHM_WETH_BLOCK,
+  },
+  {
+    kind: "balancer",
+    tokens: [ERC20_OHM_V2, ERC20_DAI],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_OHM_DAI,
+    startBlock: LP_BALANCER_OHM_DAI_BLOCK,
+  },
+  {
+    kind: "balancer",
+    tokens: [ERC20_OHM_V2, ERC20_DAI, ERC20_WETH],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_OHM_DAI_WETH,
+    startBlock: LP_BALANCER_OHM_DAI_WETH_BLOCK,
+  },
+  {
+    kind: "balancer",
+    tokens: [ERC20_OHM_V2, ERC20_WSTETH],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_OHM_WSTETH,
+    startBlock: LP_BALANCER_OHM_WSTETH_BLOCK,
+  },
+  // Aura vault wrappers — 1:1 ERC20 wrappers of underlying BPTs. Pricing
+  // routes through the Balancer handler via the BPT address.
+  {
+    kind: "remap",
+    tokens: [AURA_VAULT_OHM_WETH],
+    id: AURA_VAULT_OHM_WETH,
+    target: BPT_OHM_WETH,
+  },
+  {
+    kind: "remap",
+    tokens: [AURA_VAULT_OHM_DAI],
+    id: AURA_VAULT_OHM_DAI,
+    target: BPT_OHM_DAI,
+  },
+  {
+    kind: "remap",
+    tokens: [AURA_VAULT_OHM_DAI_WETH],
+    id: AURA_VAULT_OHM_DAI_WETH,
+    target: BPT_OHM_DAI_WETH,
+  },
+  {
+    kind: "remap",
+    tokens: [AURA_VAULT_OHM_WSTETH],
+    id: AURA_VAULT_OHM_WSTETH,
+    target: BPT_OHM_WSTETH,
   },
   // Convex staked-LP wrappers — 1:1 ERC20 wrappers of underlying Curve LPs.
   // Treasury balances of these come in via TreasuryERC20 Transfer events;
@@ -633,6 +737,23 @@ export const ETHEREUM: ChainConfig = {
     }),
     token(CONVEX_REWARD_FRAX_USDC, "POL", false, false, undefined, {
       startBlock: LP_CURVE_FRAX_USDC_BLOCK,
+      decimals: 18,
+    }),
+    // Aura vault wrappers (POL). Pricing routes through Balancer BPT remap.
+    token(AURA_VAULT_OHM_WETH, "POL", false, false, undefined, {
+      startBlock: LP_BALANCER_OHM_WETH_BLOCK,
+      decimals: 18,
+    }),
+    token(AURA_VAULT_OHM_DAI, "POL", false, false, undefined, {
+      startBlock: LP_BALANCER_OHM_DAI_BLOCK,
+      decimals: 18,
+    }),
+    token(AURA_VAULT_OHM_DAI_WETH, "POL", false, false, undefined, {
+      startBlock: LP_BALANCER_OHM_DAI_WETH_BLOCK,
+      decimals: 18,
+    }),
+    token(AURA_VAULT_OHM_WSTETH, "POL", false, false, undefined, {
+      startBlock: LP_BALANCER_OHM_WSTETH_BLOCK,
       decimals: 18,
     }),
     token(ERC20_WETH, "Volatile", true, true, undefined, {

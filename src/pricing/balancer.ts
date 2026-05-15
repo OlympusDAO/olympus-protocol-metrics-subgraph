@@ -50,6 +50,22 @@ export class BalancerPriceHandler extends BasePriceHandler<
     if (!this.isActive(blockNumber)) return null;
     const state = await this.getState();
     if (!state) return null;
+
+    // BPT pricing: when the lookup is for the pool's own LP token (BPT),
+    // derive price = totalValue / totalSupply via getUnitPrice. Liquidity
+    // tiebreaker = totalValue so this beats any pool-derived alternative.
+    const bpt = bptAddressFromPoolId(this.handler.id);
+    if (same(tokenAddress, bpt)) {
+      const totalValue = await this.getTotalValue([], priceLookup, blockNumber);
+      if (!totalValue || totalValue.eq(ZERO)) return null;
+      const supplyEntity = await this.context.Erc20Supply.get(`${this.config.chainId}-${bpt}`);
+      if (!supplyEntity || supplyEntity.totalSupply === 0n) return null;
+      const bptDecimals = getTokenDecimals(this.config.tokens, bpt);
+      const supply = toDecimal(supplyEntity.totalSupply, bptDecimals);
+      if (supply.eq(ZERO)) return null;
+      return { price: totalValue.div(supply), liquidity: totalValue };
+    }
+
     const meta = await this.getWeightsAndDecimals(blockNumber);
     if (!meta) return null;
     const { weights, decimals } = meta;
