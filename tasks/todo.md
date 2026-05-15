@@ -82,7 +82,7 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
 - [x] `b5dbd31` — `feat(snapshot): wire GlobalMetricSnapshot aggregation per-snapshot (Phase 5 v1)`. New `src/snapshot/global.ts` (pure functions) + `updateGlobalMetricSnapshot` in BlockHandlers + `date @index` on TokenRecord/TokenSupply. Per-chain MV/LB/supply aggregation, cross-chain summation with chainsIndexed/chainsMissing/crossChainComplete, derived ratios, Ethereum BLV inclusion-block rule, Buyback MS OHM-in-MV gate. 7 new tests.
 - [x] `4fc070d` — `feat(snapshot): resolve canonical ohmPrice/gOhmPrice in GlobalMetricSnapshot`. Ethereum's recursive pricing router resolves OHM USD price; gOhmPrice = ohmPrice × ohmIndex. Wrapped in pricing cache.
 - [x] `8decad7` — `feat(snapshot): sOhmCirculatingSupply + sOhmTotalValueLocked canonical fields`. `readSOhmCirculatingSupply` effect + sOhmTotalValueLocked = sOhmCirculatingSupply × ohmPrice. ohmApy still 0 with TODO (needs distributor.nextRewardFor + rebase tracking).
-- [ ] ohmApy canonical (distributor.nextRewardFor + sOHM LogRebase rebase amount).
+- [x] `eee4485` — `feat(snapshot): port ohmApy canonical field (sums staking V1/V2/V3 epochs)`. `readNextOhmDistribution` effect + `computeApy` pure helper + `stakingContracts` ChainConfig. All seven Phase-1 canonical fields now populated.
 - [ ] Tests: complete / single-chain / late-day-update / missing-chain (integration-level)
 
 ## Phase 6 — Parity harness
