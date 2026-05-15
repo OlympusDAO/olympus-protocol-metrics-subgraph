@@ -69,17 +69,21 @@ function mockClient(
 function mockContext({
   univ2 = [],
   univ3 = [],
+  chainlink = [],
 }: {
   univ2?: readonly (readonly [string, unknown])[];
   univ3?: readonly (readonly [string, unknown])[];
+  chainlink?: readonly (readonly [string, unknown])[];
 } = {}): EvmOnBlockContext {
   const univ2States = new Map(univ2);
   const univ3States = new Map(univ3);
+  const chainlinkStates = new Map(chainlink);
   return {
     BalancerPoolState: { get: async () => undefined },
     KodiakPool: { get: async () => undefined },
     Univ2PoolState: { get: async (id: string) => univ2States.get(id) },
     Univ3PoolState: { get: async (id: string) => univ3States.get(id) },
+    ChainlinkPriceState: { get: async (id: string) => chainlinkStates.get(id) },
     Erc20Supply: { get: async () => undefined },
     TokenBalance: { get: async () => undefined },
   } as unknown as EvmOnBlockContext;

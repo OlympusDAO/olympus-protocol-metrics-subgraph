@@ -63,6 +63,15 @@ contracts:
       - event: "PoolBalanceChanged(bytes32 indexed poolId, address indexed liquidityProvider, address[] tokens, int256[] deltas, uint256[] protocolFeeAmounts)"
       - event: "Swap(bytes32 indexed poolId, address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut)"
 
+  # Chainlink AggregatorV3 feeds. Each AnswerUpdated emits the new oracle
+  # price; the handler maps src feed address -> tokenAddress via the per-chain
+  # chainlink LiquidityHandler config and writes ChainlinkPriceState. Phase 4
+  # wires per-chain feed addresses; this entry just declares the event shape so
+  # codegen produces the typed handler.
+  - name: ChainlinkAggregator
+    events:
+      - event: "AnswerUpdated(int256 indexed current, uint256 indexed roundId, uint256 updatedAt)"
+
 chains:
   - id: 42161 # Arbitrum One
     start_block: 10950000 # 2022-05-01
@@ -128,6 +137,13 @@ chains:
         address:
           - "0xc31e54c7a869b9fcbecc14363cf510d1c41fa443" # UniV3 wETH-USDC
           - "0xc6f780497a95e246eb9449f5e4770916dcd6396a" # UniV3 ARB-wETH
+
+      # Chainlink feeds. Each address must have a matching `chainlink` entry in
+      # the ARBITRUM liquidityHandlers (chains/arbitrum.ts) carrying tokenAddress
+      # + feed decimals. Phase 4 expands this list per chain.
+      - name: ChainlinkAggregator
+        address:
+          - "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612" # ETH/USD
 
       - name: BalancerVault
         address:
