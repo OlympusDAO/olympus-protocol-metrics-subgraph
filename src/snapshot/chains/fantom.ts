@@ -136,8 +136,6 @@ export const FANTOM: ChainConfig = {
   ohmToken: ERC20_GOHM, // Fantom's OHM-family token is gOHM (no native OHM bridged).
   ohmStartBlock: FANTOM_START_BLOCK,
   nativeToken: NATIVE_FTM,
-  // Phase 1 decision #1: match legacy and emit no TokenSupply rows.
-  emitsTokenSupply: false,
   tokens: [
     token(NATIVE_FTM, "Volatile", true, true, undefined, {
       startBlock: FANTOM_START_BLOCK,

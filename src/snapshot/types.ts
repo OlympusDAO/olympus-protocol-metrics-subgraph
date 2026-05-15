@@ -69,11 +69,6 @@ export type Bytes32 = `0x${string}` & { readonly [bytes32Brand]: true };
 
 export type ChainId = 1 | 42161 | 80094 | 8453 | 137 | 250;
 
-// Per-chain feature flags. `emitsTokenSupply` controls whether the snapshot
-// path writes TokenSupply rows. Polygon and Fantom legacy subgraphs declare
-// the entity but never emit any rows (Phase 1 decision #1 — match legacy);
-// other chains emit. Default = true when the field is omitted.
-
 // Cooler Loans receivable source. Each clearinghouse exposes a single
 // receivable value via either `principalReceivables()` (V1/V1.1/V2) or
 // `totalDebt()` (MonoCooler V2). Per Phase 1 decision #5 we mirror legacy
@@ -93,7 +88,6 @@ export type ChainConfig = {
   blockchain: string;
   startBlock: number;
   rpcUrls: string[];
-  emitsTokenSupply?: boolean;
   tokens: TokenDefinition[];
   names: Record<string, string>;
   abbreviations: Record<string, string>;

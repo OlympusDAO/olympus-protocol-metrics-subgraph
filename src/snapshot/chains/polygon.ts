@@ -92,8 +92,6 @@ export const POLYGON: ChainConfig = {
   rpcUrls: rpcUrls("POLYGON", "https://polygon-rpc.com"),
   ohmToken: ERC20_GOHM, // Polygon's "OHM-family" token is gOHM (no native OHM bridged).
   ohmStartBlock: POLYGON_START_BLOCK,
-  // Phase 1 decision #1: match legacy and emit no TokenSupply rows on Polygon.
-  emitsTokenSupply: false,
   // Native MATIC tracking deferred to the NativeBalanceState wiring commit
   // (matches legacy Polygon, which also doesn't track native).
   tokens: [

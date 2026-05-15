@@ -169,24 +169,24 @@ async function processSnapshot(
         await pushUniv3NftPol(context, config, client, records, timestamp, blockNumber);
       }
 
-      // Polygon and Fantom legacy subgraphs declared the TokenSupply entity
-      // but never emitted any rows (Phase 1 decision #1 — match legacy).
-      if (config.emitsTokenSupply !== false) {
-        await pushTotalSupply(context, config, supplies, timestamp, blockNumber);
-        await pushTreasuryOhm(context, config, supplies, timestamp, blockNumber);
-        await pushOwnedLiquiditySupply(context, config, client, supplies, timestamp, blockNumber);
-        if (config.chainId === 42161) {
-          await pushArbitrumLendingSupply(context, config, supplies, timestamp, blockNumber);
-        }
-        if (config.blvRegistry) {
-          await pushBlvSupply(context, config, supplies, timestamp, blockNumber);
-        }
-        if (config.bondManager) {
-          await pushGnosisAuctionSupply(context, config, supplies, timestamp, blockNumber);
-        }
-        if (config.migrationOffset) {
-          await pushMigrationOffsetSupply(context, config, supplies, timestamp, blockNumber);
-        }
+      // Per @0xJem on PR #315: emit TokenSupply rows on every chain, even
+      // Polygon/Fantom (legacy declared the entity but never populated it —
+      // intentional reversal of Phase 1 decision #1 since the data is
+      // useful and the cost is bounded).
+      await pushTotalSupply(context, config, supplies, timestamp, blockNumber);
+      await pushTreasuryOhm(context, config, supplies, timestamp, blockNumber);
+      await pushOwnedLiquiditySupply(context, config, client, supplies, timestamp, blockNumber);
+      if (config.chainId === 42161) {
+        await pushArbitrumLendingSupply(context, config, supplies, timestamp, blockNumber);
+      }
+      if (config.blvRegistry) {
+        await pushBlvSupply(context, config, supplies, timestamp, blockNumber);
+      }
+      if (config.bondManager) {
+        await pushGnosisAuctionSupply(context, config, supplies, timestamp, blockNumber);
+      }
+      if (config.migrationOffset) {
+        await pushMigrationOffsetSupply(context, config, supplies, timestamp, blockNumber);
       }
     }),
   );
