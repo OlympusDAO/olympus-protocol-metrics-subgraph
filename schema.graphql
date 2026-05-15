@@ -336,3 +336,37 @@ type TreasureDeposit {
   amount: BigInt!
   updatedAtBlock: BigInt!
 }
+
+# Native asset balance per protocol wallet. Maintained via bounded `getBalance`
+# RPC at snapshot time — native assets emit no Transfer event so cannot be
+# event-driven. Closes inherited TODO(native-balances) so chains that hold
+# material native asset balances (e.g. Berachain BERA, Ethereum ETH) are
+# represented in TokenRecord. Phase 4 wires up the snapshot-time read.
+type NativeBalanceState {
+  id: ID! # chainId-walletAddress
+  chainId: Int! @index
+  walletAddress: String! @index
+  balance: BigInt! # raw wei (18 decimals on every supported chain)
+  updatedAtBlock: BigInt!
+}
+
+# Chainlink feed answer maintained from AnswerUpdated aggregator events.
+# Replaces snapshot-time latestAnswer / latestRoundData RPC calls in the
+# legacy subgraphs (subgraphs/*/src/price/PriceChainlink.ts). The recursive
+# pricing router (Phase 3) reads from this entity as a base case rather than
+# calling the feed contract per snapshot.
+#
+# tokenAddress is the asset the feed prices (e.g. for ETH/USD on Arbitrum,
+# tokenAddress = WETH on Arbitrum). decimals is the feed's `decimals()` —
+# seeded once per feed via cached effect or AnswerUpdated metadata.
+type ChainlinkPriceState {
+  id: ID! # chainId-feedAddress
+  chainId: Int! @index
+  feedAddress: String! @index
+  tokenAddress: String! @index
+  answer: BigInt! # raw answer; apply `decimals` when consumed
+  decimals: Int!
+  roundId: BigInt!
+  updatedAtBlock: BigInt!
+  updatedAtTimestamp: BigInt!
+}
