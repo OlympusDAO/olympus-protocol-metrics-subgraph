@@ -40,13 +40,16 @@ All commits on branch `envio-multichain-migration`:
 
 Deferred to Phase 4 (Ethereum porting): `BophadesAddressState`, `BlvVaultRegistry`, `MigrationOffsetState`, `CoolerLoanState`, GnosisAuction cross-data-source ordering markers. Their shape gets pinned by the actual porting work, not designed in a vacuum.
 
-## Phase 3 — Recursive pricing port (TDD)
+## Phase 3 — Recursive pricing port (done)
 
-- [ ] Port L2 price-router tests to Vitest **first**
-- [ ] Port `getPrice` / `getUSDRate` recursive lookup with `currentPool` guard + same-token-set guard
-- [ ] Port handler interface (Stable, Remap, Chainlink, Univ2, Univ3, Balancer, Kodiak)
-- [ ] Wire `ChainlinkPriceState` as base-token lookup
-- [ ] Cycle/recursion tests for same-token-set pools
+All commits on `envio-multichain-migration`. 21/21 tests pass.
+
+- [x] `70a7316` — `feat(pricing): add ChainlinkPriceHandler` (with 3 unit tests). New `chainlink` kind on `LiquidityHandler`. CHAINLINK_PRIORITY (10^30) liquidity for oracle-over-pool tiebreaking.
+- [x] `b9e7da3` + `c28d34d` — `feat(handlers): index Chainlink AnswerUpdated`. ChainlinkAggregator contract def + Arbitrum ETH/USD feed wiring + `applyAnswerUpdated` helper + 3 helper tests.
+- [x] `340b571` — `fix(pricing): match legacy per-handler liquidity behavior`. PriceLookup signature change (returns PriceLookupResult). Remap pass-through, UniV3/Quoter/Kodiak use indexed `state.liquidity`, others remain ZERO matching legacy.
+- [x] `2e7e1d4` — `test(pricing): explicit cycle/recursion guards for the router`. 3 synthetic-config tests pinning currentPool guard, hasSameTokenSet guard, broken-pool fallback.
+
+Deferred to Phase 4: ERC4626 (Ethereum-only, U64.MAX_VALUE liquidity pattern). UniV3 token balance tracking via Mint/Burn/Swap deltas (TODO(univ3-balances)). UniV3 liquidity uses indexed `state.liquidity` proxy instead — tracks legacy selection in practice, documented divergence.
 
 ## Phase 4 — Per-chain rollout
 
