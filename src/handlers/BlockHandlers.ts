@@ -215,7 +215,11 @@ async function processSnapshot(
   // chain's per-day aggregate is recomputed in-memory from the records we
   // just produced; other chains' per-day aggregates are read back from the
   // existing GlobalMetricChainValues entities.
-  await updateGlobalMetricSnapshot(context, config, blockNumber, timestamp, records, supplies);
+  await withContractReadCache(() =>
+    withPricingCache(() =>
+      updateGlobalMetricSnapshot(context, config, client, blockNumber, timestamp, records, supplies),
+    ),
+  );
 
   context.log.info(
     `Finished ${name} block ${blockNumberInput} on chain ${chainId} in ${Date.now() - startedAt}ms`,
@@ -228,6 +232,7 @@ async function processSnapshot(
 async function updateGlobalMetricSnapshot(
   context: EvmOnBlockContext,
   config: ChainConfig,
+  client: PublicClient,
   blockNumber: bigint,
   timestamp: bigint,
   records: SerializedTokenRecord[],
@@ -301,11 +306,11 @@ async function updateGlobalMetricSnapshot(
 
   const aggregate = aggregateAcrossChains(date, perChainAggregates);
 
-  // Canonical (Ethereum-only) fields. ohmIndex sourced from OhmIndexState;
-  // the rest stay at 0 for now and get filled in by follow-up commits
-  // (ohmApy needs rebase data; ohmPrice/gOhmPrice need a snapshot-time
-  // pricing path that we'll plumb when the global aggregate is consumed
-  // by the Phase 6 parity harness).
+  // Canonical (Ethereum-only) fields. ohmIndex sourced from OhmIndexState
+  // (event-driven). ohmPrice resolved through the recursive pricing router.
+  // ohmApy / sOhmCirculatingSupply / sOhmTotalValueLocked stay at 0 — they
+  // need additional indexing (sOHM `LogRebase.rebase` for APY; sOHM
+  // `Transfer` from/to-zero for circulating supply). Tracked in todo.md.
   let ohmIndex = new BigNumberCtor("0");
   if (config.migrationOffset?.sOhmAddress) {
     const indexState = await context.OhmIndexState.get(
@@ -317,7 +322,15 @@ async function updateGlobalMetricSnapshot(
       );
     }
   }
-  const ohmPrice = new BigNumberCtor("0");
+  // ohmPrice: only Ethereum currently has a complete OHM pricing path
+  // (Phase 4 ported the WETH-OHM UniV3 pool there). Skip on other chains;
+  // their entries will source from the canonical Ethereum snapshot once
+  // the parity harness reads the aggregate.
+  let ohmPrice = new BigNumberCtor("0");
+  if (config.chainId === 1) {
+    const result = await getPrice(config, context, client, config.ohmToken, blockNumber, null);
+    ohmPrice = result.price;
+  }
   const gOhmPrice = ohmPrice.times(ohmIndex);
   const ratios = computeDerivedRatios(aggregate, ohmPrice, ohmIndex);
 
