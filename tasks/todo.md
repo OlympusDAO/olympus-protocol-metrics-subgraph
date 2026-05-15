@@ -59,8 +59,17 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
 - [x] `93c0ea5` — `feat(chains): add Base (chainId 8453)`. 5 ERC20s, 1 wallet (DAO MS), 2 POL pools, Chainlink ETH/USD + USDC/USD feeds, OHM in DAO MS blacklisted from treasury balance.
 - [x] `a875d14` — `feat(chains): add Polygon (chainId 137) + emitsTokenSupply flag`. 8 ERC20s + 1 POL (UniV2 wETH-gOHM), 36 inherited wallets, no Chainlink, KLIMA + Staked KLIMA carry 0.85 multiplier, Staked KLIMA remaps to KLIMA.
 - [x] `00a86e9` — `feat(chains): add Fantom (chainId 250)`. 11 ERC20s + 1 POL (UniV2 wFTM-gOHM), 2 wallets, no Chainlink, fixed legacy abbreviation/name-map bugs (L2/L3) by using separate `names`/`abbreviations` maps.
-- [ ] Wire `NativeBalanceState` to snapshot-time `getBalance` RPC. Closes inherited TODO #2. Applies to all chains that hold native (Arbitrum ETH, Base ETH, Berachain BERA, Polygon MATIC, Fantom FTM, Ethereum ETH).
-- [ ] Add Ethereum (largest surface — Curve, FraxSwap, ERC4626, BLV, Cooler clearinghouse, boosted liq, GnosisAuction, Bophades dynamic resolution, OHM v1→v2 migration offsets).
+- [x] `59d1539` — `feat(handlers): wire NativeBalanceState via snapshot-time getBalance`. Closes inherited TODO #2. Wires native ETH on Arbitrum + Base, native BERA on Berachain (was already configured but skipped), native FTM on Fantom. Polygon native MATIC deferred (no convenient WMATIC pricing pool currently in config).
+- [ ] Add Ethereum — largest surface, treated as its own sub-phase:
+  - [ ] Baseline: tokens, wallets, Univ3 OHM pricing pools, 12 Chainlink feeds.
+  - [ ] Bophades dynamic kernel resolution (TRSRY + clearinghouse addresses from Kernel events).
+  - [ ] Cooler clearinghouse receivables (V1, V1.1, V2, MonoCooler) — verify CoolerV2 USDS bug per Phase 1 decision #5.
+  - [ ] BLV vault registry.
+  - [ ] GnosisAuction cross-data-source state.
+  - [ ] OHM v1→v2 migration offset rules (7 block-windowed corrections).
+  - [ ] Aura/Convex wrapper handlers.
+  - [ ] Curve / FraxSwap / ERC4626 vault handlers.
+  - [ ] Univ3 NFT POL positions.
 - [ ] Per-chain snapshot validation tests (1+ test per chain asserting at least one TokenRecord row builds correctly).
 
 ## Phase 5 — Global snapshot
