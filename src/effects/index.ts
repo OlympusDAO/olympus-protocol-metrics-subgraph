@@ -101,6 +101,91 @@ export function decodeKeycode(raw: `0x${string}`): string {
   return out;
 }
 
+// Cached effect that reads `principalReceivables()` on a Cooler Loans
+// Clearinghouse (V1, V1.1, V2). Returned as a string-stringified uint256 in
+// raw 18-decimal DAI units. Reverts (e.g. before clearinghouse deployment)
+// surface as `null` so the snapshot path can skip without failing.
+const CLEARINGHOUSE_ABI = [
+  {
+    inputs: [],
+    name: "principalReceivables",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+export const readCoolerPrincipalReceivables = createEffect(
+  {
+    name: "readCoolerPrincipalReceivables",
+    input: { chainId: S.number, clearinghouse: S.string, atBlock: S.number },
+    output: S.string,
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    try {
+      const value = await retryRpc(() =>
+        client.readContract({
+          address: getAddress(input.clearinghouse),
+          abi: CLEARINGHOUSE_ABI,
+          functionName: "principalReceivables",
+          blockNumber: BigInt(input.atBlock),
+        }),
+      );
+      return (value as bigint).toString();
+    } catch {
+      // Effect outputs can't be null with the available schema primitives, so
+      // we signal "no value" with an empty string. Consumers check for === "".
+      return "";
+    }
+  },
+);
+
+// Cached effect that reads `totalDebt()` on the MonoCooler clearinghouse.
+// MonoCooler debt is denominated in USDS but priced via the DAI Chainlink
+// rate (legacy quirk — see Phase 1 decision #5 / inventory open question #3).
+const MONOCOOLER_ABI = [
+  {
+    inputs: [],
+    name: "totalDebt",
+    outputs: [{ internalType: "uint128", name: "", type: "uint128" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+export const readMonoCoolerTotalDebt = createEffect(
+  {
+    name: "readMonoCoolerTotalDebt",
+    input: { chainId: S.number, monoCooler: S.string, atBlock: S.number },
+    output: S.string,
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    try {
+      const value = await retryRpc(() =>
+        client.readContract({
+          address: getAddress(input.monoCooler),
+          abi: MONOCOOLER_ABI,
+          functionName: "totalDebt",
+          blockNumber: BigInt(input.atBlock),
+        }),
+      );
+      return (value as bigint).toString();
+    } catch {
+      return "";
+    }
+  },
+);
+
 // Cached effect that resolves a Kodiak LP wrapper's underlying UniswapV3 pool.
 // Invariant across blocks; called once per Kodiak LP per indexer process. The
 // returned address feeds both a contractRegister call (so the underlying

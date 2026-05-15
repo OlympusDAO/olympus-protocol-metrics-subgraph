@@ -1,6 +1,12 @@
 import { addr, token } from "../math";
-import type { ChainConfig, LiquidityHandler } from "../types";
-import { WALLET_ADDRESSES } from "../wallets";
+import type { ChainConfig, CoolerClearinghouse, LiquidityHandler } from "../types";
+import {
+  COOLER_LOANS_CLEARINGHOUSE_V1,
+  COOLER_LOANS_CLEARINGHOUSE_V1_1,
+  COOLER_LOANS_CLEARINGHOUSE_V2,
+  COOLER_LOANS_V2_MONOCOOLER,
+  WALLET_ADDRESSES,
+} from "../wallets";
 import { rpcUrls } from "./rpc";
 
 // Ethereum mainnet — the largest surface in the migration. This file is the
@@ -162,6 +168,52 @@ const univ3WethOhm: LiquidityHandler = {
 };
 
 const ownedLiquidityHandlers: LiquidityHandler[] = [univ3WethOhm];
+
+// Cooler Loans clearinghouses. Each clearinghouse's principal receivable is
+// added to the snapshot as a DAI / USDS TokenRecord priced via the
+// corresponding Chainlink feed. Start blocks are the approximate deployment
+// windows from inventory-ethereum.md §3 "Clearinghouse Addresses"; the
+// underlying RPC call gracefully returns null on revert (pre-deploy) so an
+// over-broad start block is harmless.
+const COOLER_LOANS_V1_BLOCK = 18_539_800;
+const COOLER_LOANS_V1_1_BLOCK = 18_794_000;
+const COOLER_LOANS_V2_BLOCK = 19_620_000;
+const COOLER_LOANS_V2_MONOCOOLER_BLOCK = 22_423_121;
+
+const coolerClearinghouses: CoolerClearinghouse[] = [
+  {
+    address: COOLER_LOANS_CLEARINGHOUSE_V1,
+    kind: "clearinghouse",
+    name: "Cooler Loans Clearinghouse V1",
+    receivableToken: ERC20_DAI,
+    startBlock: COOLER_LOANS_V1_BLOCK,
+  },
+  {
+    address: COOLER_LOANS_CLEARINGHOUSE_V1_1,
+    kind: "clearinghouse",
+    name: "Cooler Loans Clearinghouse V1.1",
+    receivableToken: ERC20_DAI,
+    startBlock: COOLER_LOANS_V1_1_BLOCK,
+  },
+  {
+    address: COOLER_LOANS_CLEARINGHOUSE_V2,
+    kind: "clearinghouse",
+    name: "Cooler Loans Clearinghouse V2",
+    receivableToken: ERC20_DAI,
+    startBlock: COOLER_LOANS_V2_BLOCK,
+  },
+  {
+    address: COOLER_LOANS_V2_MONOCOOLER,
+    kind: "monocooler",
+    name: "Cooler Loans V2 MonoCooler",
+    receivableToken: ERC20_USDS,
+    // Per Phase 1 decision #5: MonoCooler debt is USDS-denominated but legacy
+    // prices it via the DAI Chainlink rate. Preserve the exact behavior for
+    // parity; flag for review in the Phase 6 changelog.
+    priceToken: ERC20_DAI,
+    startBlock: COOLER_LOANS_V2_MONOCOOLER_BLOCK,
+  },
+];
 
 const liquidityHandlers: LiquidityHandler[] = [
   // Chainlink feeds (highest priority via CHAINLINK_PRIORITY = 10^30).
@@ -447,6 +499,7 @@ export const ETHEREUM: ChainConfig = {
     [ERC20_GOHM]: PROTOCOL_ADDRESSES,
   },
   basePriceFeeds: {},
+  coolerClearinghouses,
   liquidityHandlers,
   ownedLiquidityHandlers,
 };

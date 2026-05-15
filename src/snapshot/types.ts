@@ -74,6 +74,20 @@ export type ChainId = 1 | 42161 | 80094 | 8453 | 137 | 250;
 // the entity but never emit any rows (Phase 1 decision #1 — match legacy);
 // other chains emit. Default = true when the field is omitted.
 
+// Cooler Loans receivable source. Each clearinghouse exposes a single
+// receivable value via either `principalReceivables()` (V1/V1.1/V2) or
+// `totalDebt()` (MonoCooler V2). Per Phase 1 decision #5 we mirror legacy
+// behavior exactly, including the quirk where MonoCooler USDS receivables
+// price via the DAI Chainlink rate (inventory open question #3).
+export type CoolerClearinghouse = {
+  address: string;
+  kind: "clearinghouse" | "monocooler";
+  name: string;
+  receivableToken: string; // ERC20 the receivable is denominated in (DAI for V1/V1.1/V2; USDS for MonoCooler)
+  priceToken?: string; // optional override for the price lookup (MonoCooler uses DAI rate even though debt is USDS)
+  startBlock?: number;
+};
+
 export type ChainConfig = {
   chainId: ChainId;
   blockchain: string;
@@ -90,6 +104,7 @@ export type ChainConfig = {
   ohmToken: string;
   ohmStartBlock?: number;
   nativeToken?: string;
+  coolerClearinghouses?: CoolerClearinghouse[];
   liquidityHandlers: LiquidityHandler[];
   ownedLiquidityHandlers: LiquidityHandler[];
 };

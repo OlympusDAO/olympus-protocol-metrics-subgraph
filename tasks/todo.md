@@ -66,7 +66,7 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
   - [x] `3e681dc` — `feat(chains-ethereum): add Aave receipt + variable-debt tokens`. aDAI + aEthUSDe receipts share their underlying Chainlink feeds; varDebtEthUSDC + varDebtEthUSDT carry `isLiability: true` so balances subtract from treasury MV. `token()` helper extended with `isLiability` option.
   - [x] `634112a` — `fix(chains-ethereum): restore Aave V3 start block to Olympus deployment`. ERC20_AAVE_V3_BLOCK = 24_707_147 (Olympus position deployment + legacy graft block per inventory §2). Reverts the earlier "fix" that conflated this with Aave V3 protocol launch.
   - [x] `109e583` — `feat(pricing): add GohmPriceHandler driven by sOHM V3 LogRebase`. New `OhmIndexState` entity + `SOhmV3.LogRebase` handler + `gohm` LiquidityHandler kind. gOHM price = OHM_price × index/1e9 via recursive lookup, GOHM_PRIORITY tiebreaker. 6 new tests.
-  - [ ] Bophades dynamic kernel resolution (TRSRY + clearinghouse addresses from Kernel events).
+  - [x] `751a47f` — `feat(handlers): event-driven Bophades module tracking via Kernel.ActionExecuted`. Redesigned BophadesModule (chainId-keycode) + ClearinghouseAddress entities; new `resolveBophadesKeycode` effect; Kernel handler writes BophadesModule on InstallModule/UpgradeModule; TRSRY V1.1 added to wallets. 7 new tests.
   - [ ] Cooler clearinghouse receivables (V1, V1.1, V2, MonoCooler) — verify CoolerV2 USDS bug per Phase 1 decision #5.
   - [ ] BLV vault registry.
   - [ ] GnosisAuction cross-data-source state.

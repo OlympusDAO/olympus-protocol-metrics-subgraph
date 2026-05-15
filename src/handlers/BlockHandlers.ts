@@ -7,7 +7,8 @@ import {
   type TokenRecord,
   type TokenSupply,
 } from "envio";
-import { getAddress } from "viem";
+import { getAddress, type PublicClient } from "viem";
+import { readCoolerPrincipalReceivables, readMonoCoolerTotalDebt } from "../effects";
 import {
   getPrice,
   getTotalValue,
@@ -138,6 +139,9 @@ async function processSnapshot(
       await pushOwnedLiquidityRecords(context, config, client, records, timestamp, blockNumber);
       if (config.chainId === 42161) {
         await pushArbitrumStakingRecords(context, config, records, timestamp, blockNumber);
+      }
+      if (config.coolerClearinghouses && config.coolerClearinghouses.length > 0) {
+        await pushCoolerReceivables(context, config, client, records, timestamp, blockNumber);
       }
 
       // Polygon and Fantom legacy subgraphs declared the TokenSupply entity
@@ -410,6 +414,61 @@ async function pushTreasureStakingRecords(
       record.isLiquid = false;
       records.push(record);
     }
+  }
+}
+
+// ----- Cooler Loans receivables (Ethereum) -----
+
+async function pushCoolerReceivables(
+  context: EvmOnBlockContext,
+  config: ChainConfig,
+  client: PublicClient,
+  records: SerializedTokenRecord[],
+  timestamp: bigint,
+  blockNumber: bigint,
+): Promise<void> {
+  const clearinghouses = config.coolerClearinghouses ?? [];
+  if (clearinghouses.length === 0) return;
+
+  for (const clearinghouse of clearinghouses) {
+    if (clearinghouse.startBlock && blockNumber < BigInt(clearinghouse.startBlock)) continue;
+
+    const raw =
+      clearinghouse.kind === "monocooler"
+        ? ((await context.effect(readMonoCoolerTotalDebt, {
+            chainId: config.chainId,
+            monoCooler: clearinghouse.address,
+            atBlock: Number(blockNumber),
+          })) as string)
+        : ((await context.effect(readCoolerPrincipalReceivables, {
+            chainId: config.chainId,
+            clearinghouse: clearinghouse.address,
+            atBlock: Number(blockNumber),
+          })) as string);
+    if (raw === "") continue;
+
+    const receivable = toDecimal(BigInt(raw), 18);
+    if (receivable.eq(ZERO)) continue;
+
+    const priceLookupToken = clearinghouse.priceToken ?? clearinghouse.receivableToken;
+    const rate = (await getPrice(config, context, client, priceLookupToken, blockNumber, null))
+      .price;
+    if (rate.eq(ZERO)) continue;
+
+    const receivableTokenLabel = `${getContractName(config, clearinghouse.receivableToken)} - Borrowed Through ${clearinghouse.name}`;
+    records.push(
+      createTokenRecord(
+        config,
+        timestamp,
+        receivableTokenLabel,
+        clearinghouse.receivableToken,
+        clearinghouse.name,
+        clearinghouse.address,
+        rate,
+        receivable,
+        blockNumber,
+      ),
+    );
   }
 }
 
