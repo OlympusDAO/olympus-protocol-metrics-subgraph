@@ -57,6 +57,12 @@ const BLOCK_HANDLERS = [
     startBlock: 13204827, // 2024-04-15, OHM deployment block (matches BASE config)
     interval: 14400, // ~8h at Base's ~2s block time
   },
+  {
+    name: "PolygonEightHourSnapshot",
+    chain: 137 as const,
+    startBlock: 23000000, // ~2021-09-22, matches POLYGON config
+    interval: 14400, // ~8h at Polygon's ~2s block time
+  },
 ];
 
 indexer.onBlock(
@@ -120,11 +126,15 @@ async function processSnapshot(
         await pushArbitrumStakingRecords(context, config, records, timestamp, blockNumber);
       }
 
-      await pushTotalSupply(context, config, supplies, timestamp, blockNumber);
-      await pushTreasuryOhm(context, config, supplies, timestamp, blockNumber);
-      await pushOwnedLiquiditySupply(context, config, client, supplies, timestamp, blockNumber);
-      if (config.chainId === 42161) {
-        await pushArbitrumLendingSupply(context, config, supplies, timestamp, blockNumber);
+      // Polygon and Fantom legacy subgraphs declared the TokenSupply entity
+      // but never emitted any rows (Phase 1 decision #1 — match legacy).
+      if (config.emitsTokenSupply !== false) {
+        await pushTotalSupply(context, config, supplies, timestamp, blockNumber);
+        await pushTreasuryOhm(context, config, supplies, timestamp, blockNumber);
+        await pushOwnedLiquiditySupply(context, config, client, supplies, timestamp, blockNumber);
+        if (config.chainId === 42161) {
+          await pushArbitrumLendingSupply(context, config, supplies, timestamp, blockNumber);
+        }
       }
     }),
   );

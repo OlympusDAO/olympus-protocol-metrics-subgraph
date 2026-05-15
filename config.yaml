@@ -231,4 +231,33 @@ chains:
           - "0x71041dddad3595f9ced3dccfbe3d1f4b0a16bb70" # ETH/USD
           - "0x7e860098f58bbfc8648a4311b374b1d669a2bc6b" # USDC/USD
 
+  - id: 137 # Polygon
+    start_block: 23000000 # ~2021-09-22, no graft per Phase 1 decision #3
+    rpc:
+      - url: ${ENVIO_POLYGON_RPC_URL:-https://polygon-rpc.com}
+        for: fallback
+
+    contracts:
+      # ---- Treasury-held ERC20s on Polygon.
+      - name: TreasuryERC20
+        address:
+          - "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" # DAI
+          - "0x45c32fA6DF82ead1e2EF74d17b76547EDdFaFF89" # FRAX
+          - "0x4e78011ce80ee02d2c3e649fb657e45898257815" # KLIMA
+          - "0xb0C22d8D350C67420f06F48936654f567C73E8C8" # Staked KLIMA
+          - "0x50B728D8D964fd00C2d0AAD81718b71311feF68a" # SYN
+          - "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174" # USDC
+          - "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619" # WETH
+          - "0xd8cA34fd379d9ca3C6Ee3b3905678320F5b45195" # gOHM (Polygon)
+
+      # ---- Univ2 pricing pools (Sync drives reserves; OHM-pair Transfers drive POL totalSupply).
+      - name: UniswapV2Pool
+        address:
+          - "0x1549e0e8127d380080aab448b82d280433ce4030" # UniV2 wETH-gOHM (POL)
+          - "0x5786b267d35f9d011c4750e0b0ba584e1fdbead1" # UniV2 KLIMA-USDC (pricing only)
+          - "0x4a86c01d67965f8cb3d0aaa2c655705e64097c31" # UniV2 SYN-wETH (pricing only)
+          - "0x853ee4b2a13f8a742d64c8f088be7ba2131f670d" # UniV2 USDC-wETH (pricing only)
+
+      # No Chainlink feeds on Polygon (legacy used UniV2 + stable handlers only).
+
 address_format: lowercase

@@ -67,13 +67,19 @@ export type BasePriceFeed = {
 declare const bytes32Brand: unique symbol;
 export type Bytes32 = `0x${string}` & { readonly [bytes32Brand]: true };
 
-export type ChainId = 42161 | 80094 | 8453;
+export type ChainId = 42161 | 80094 | 8453 | 137;
+
+// Per-chain feature flags. `emitsTokenSupply` controls whether the snapshot
+// path writes TokenSupply rows. Polygon and Fantom legacy subgraphs declare
+// the entity but never emit any rows (Phase 1 decision #1 — match legacy);
+// other chains emit. Default = true when the field is omitted.
 
 export type ChainConfig = {
   chainId: ChainId;
   blockchain: string;
   startBlock: number;
   rpcUrls: string[];
+  emitsTokenSupply?: boolean;
   tokens: TokenDefinition[];
   names: Record<string, string>;
   abbreviations: Record<string, string>;
