@@ -1,3 +1,87 @@
+# Daily UTC global snapshot aggregating per-chain TokenRecord/TokenSupply rows
+# into the metrics surface that the legacy treasury-subgraph middleware exposes.
+# Upserted whenever a chain writes a new 8-hour snapshot for this date.
+# Phase 2: scaffold only. Phase 5 fills in the upsert logic and parity test
+# against the treasury endpoint. Field set mirrors the legacy `Metric` GraphQL
+# type (treasury-subgraph/apps/server/src/graphql/schema.ts) — see
+# docs/envio-migration/inventory-treasury-subgraph.md section 12.
+type GlobalMetricSnapshot {
+  id: ID! # YYYY-MM-DD (UTC)
+  date: String!
+  updatedAtTimestamp: BigInt!
+
+  # Completeness — `crossChainComplete` is true iff Arbitrum and Ethereum both
+  # produced a chain snapshot for this date. Mirrors the legacy
+  # `crossChainDataComplete` query gate, which only checks those two chains.
+  crossChainComplete: Boolean! @index
+  chainsIndexed: [String!]!
+  chainsMissing: [String!]!
+
+  # Per-chain breakdowns
+  chainValues: [GlobalMetricChainValues!]! @derivedFrom(field: "snapshot")
+  supplyCategories: [GlobalMetricSupplyCategory!]! @derivedFrom(field: "snapshot")
+
+  # Aggregate scalars (sum across chains with data for this date)
+  ohmTotalSupply: BigDecimal!
+  ohmCirculatingSupply: BigDecimal!
+  ohmFloatingSupply: BigDecimal!
+  ohmBackedSupply: BigDecimal!
+  gOhmBackedSupply: BigDecimal! # ohmBackedSupply / ohmIndex
+  treasuryMarketValue: BigDecimal!
+  treasuryLiquidBacking: BigDecimal!
+
+  # Canonical-chain scalars — sourced from the Ethereum chain snapshot only,
+  # matching legacy `protocolMetrics[0]` dominance behavior. If Ethereum has
+  # not produced a snapshot yet for this date, these fields hold the previous
+  # canonical values until it does.
+  ohmIndex: BigDecimal!
+  ohmApy: BigDecimal!
+  ohmPrice: BigDecimal!
+  gOhmPrice: BigDecimal!
+  sOhmCirculatingSupply: BigDecimal!
+  sOhmTotalValueLocked: BigDecimal!
+
+  # Derived
+  marketCap: BigDecimal! # ohmPrice * ohmCirculatingSupply
+  treasuryLiquidBackingPerOhmFloating: BigDecimal!
+  treasuryLiquidBackingPerOhmBacked: BigDecimal!
+  treasuryLiquidBackingPerGOhmBacked: BigDecimal!
+}
+
+# Per-chain breakdown attached to GlobalMetricSnapshot. One row per chain that
+# has produced a snapshot for the date. Mirrors the legacy `ChainValues` struct
+# but as an entity (Envio has no embedded value-object type).
+type GlobalMetricChainValues {
+  id: ID! # <chainId>-YYYY-MM-DD
+  snapshot: GlobalMetricSnapshot!
+  chainId: Int! @index
+  blockchain: String!
+  date: String!
+  block: BigInt!
+  timestamp: BigInt!
+
+  ohmTotalSupply: BigDecimal!
+  ohmCirculatingSupply: BigDecimal!
+  ohmFloatingSupply: BigDecimal!
+  ohmBackedSupply: BigDecimal!
+  treasuryMarketValue: BigDecimal!
+  treasuryLiquidBacking: BigDecimal!
+}
+
+# Cross-chain aggregate of OHM supply broken down by category. Mirrors the
+# legacy `SupplyCategoryValues` struct, with the user's Phase 1 decision to
+# preserve both `balance` (raw on-chain) and `supplyBalance` (signed
+# contribution to circulating/floating/backed totals) per category.
+# 10 rows per GlobalMetricSnapshot.
+type GlobalMetricSupplyCategory {
+  id: ID! # YYYY-MM-DD-<category>
+  snapshot: GlobalMetricSnapshot!
+  date: String!
+  category: String! @index # BondsDeposits, BondsPreminted, BondsVestingDeposits, BondsVestingTokens, BoostedLiquidityVault, LendingMarkets, ProtocolOwnedLiquidity, MigrationOffset, TotalSupply, Treasury
+  balance: BigDecimal!
+  supplyBalance: BigDecimal!
+}
+
 # Stores easily-calculated metrics related to the Olympus protocol
 type ProtocolMetric {
   id: ID! # YYYY-MM-DD/<block>
