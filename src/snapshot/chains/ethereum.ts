@@ -27,6 +27,14 @@ const ERC20_USDT = addr("0xdAC17F958D2ee523a2206206994597C13D831ec7");
 const ERC20_USDE = addr("0x4c9EDD5852cd905f086C759E8383e09bff1E68B3");
 const ERC20_USDS = addr("0xdC035D45d973E3EC169d2276DDab16f1e407384F");
 
+// Aave receipt tokens (assets) + variable-debt tokens (liabilities). Receipts
+// price at the underlying asset's rate; variable-debt tokens carry
+// isLiability=true so their value subtracts from treasury MV.
+const ERC20_ADAI = addr("0x028171bca77440897b824ca71d1c56cac55b68a3");
+const ERC20_AETH_USDE = addr("0x4f5923fc5fd4a93352581b38b7cd26943012decf");
+const ERC20_VAR_DEBT_ETH_USDT = addr("0x6df1c1e379bc5a00a7b4c6e67a203333772f45a8");
+const ERC20_VAR_DEBT_ETH_USDC = addr("0x72e95b8931767c79ba4eee721354d6e99a61d004");
+
 const ERC20_WETH = addr("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2");
 const ERC20_WSTETH = addr("0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0");
 const ERC20_WEETH = addr("0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee");
@@ -71,10 +79,17 @@ const ERC20_USDE_BLOCK = 20_289_094;
 const ERC20_WEETH_BLOCK = 18_961_223;
 const NATIVE_ETH_BLOCK = 21_810_000;
 const ERC20_FXS_BLOCK = 11_465_584;
+// Aave V3 deployment block on Ethereum (also used for the variable-debt and
+// aEth* receipt tokens that came online with V3, 2023-01-27).
+const ERC20_AAVE_V3_BLOCK = 16_291_127;
 
 const PROTOCOL_ADDRESSES = WALLET_ADDRESSES;
 
 const names: Record<string, string> = {
+  [ERC20_ADAI]: "Aave DAI",
+  [ERC20_AETH_USDE]: "Aave Ethereum USDe",
+  [ERC20_VAR_DEBT_ETH_USDC]: "Aave Ethereum Variable Debt USDC",
+  [ERC20_VAR_DEBT_ETH_USDT]: "Aave Ethereum Variable Debt USDT",
   [ERC20_BTRFLY_V1]: "BTRFLY",
   [ERC20_BTRFLY_V1_STAKED]: "Staked BTRFLY",
   [ERC20_BTRFLY_V2]: "BTRFLY V2",
@@ -106,6 +121,10 @@ const names: Record<string, string> = {
 };
 
 const abbreviations: Record<string, string> = {
+  [ERC20_ADAI]: "aDAI",
+  [ERC20_AETH_USDE]: "aEthUSDe",
+  [ERC20_VAR_DEBT_ETH_USDC]: "variableDebtEthUSDC",
+  [ERC20_VAR_DEBT_ETH_USDT]: "variableDebtEthUSDT",
   [ERC20_BTRFLY_V1]: "BTRFLY",
   [ERC20_BTRFLY_V1_STAKED]: "xBTRFLY",
   [ERC20_BTRFLY_V2]: "BTRFLY",
@@ -138,9 +157,12 @@ const ownedLiquidityHandlers: LiquidityHandler[] = [univ3WethOhm];
 
 const liquidityHandlers: LiquidityHandler[] = [
   // Chainlink feeds (highest priority via CHAINLINK_PRIORITY = 10^30).
+  // aDAI / aEthUSDe / varDebtEthUSDT / varDebtEthUSDC piggyback the same
+  // feeds as their underlyings — one feed serves many tokens via the
+  // handler's `tokens` array.
   {
     kind: "chainlink",
-    tokens: [ERC20_DAI],
+    tokens: [ERC20_DAI, ERC20_ADAI],
     id: CHAINLINK_FEED_DAI_USD,
     decimals: 8,
     startBlock: ETHEREUM_START_BLOCK,
@@ -161,21 +183,21 @@ const liquidityHandlers: LiquidityHandler[] = [
   },
   {
     kind: "chainlink",
-    tokens: [ERC20_USDC],
+    tokens: [ERC20_USDC, ERC20_VAR_DEBT_ETH_USDC],
     id: CHAINLINK_FEED_USDC_USD,
     decimals: 8,
     startBlock: ETHEREUM_START_BLOCK,
   },
   {
     kind: "chainlink",
-    tokens: [ERC20_USDT],
+    tokens: [ERC20_USDT, ERC20_VAR_DEBT_ETH_USDT],
     id: CHAINLINK_FEED_USDT_USD,
     decimals: 8,
     startBlock: ETHEREUM_START_BLOCK,
   },
   {
     kind: "chainlink",
-    tokens: [ERC20_USDE],
+    tokens: [ERC20_USDE, ERC20_AETH_USDE],
     id: CHAINLINK_FEED_USDE_USD,
     decimals: 8,
     startBlock: ERC20_USDE_BLOCK,
@@ -309,6 +331,29 @@ export const ETHEREUM: ChainConfig = {
     token(ERC20_USDS, "Stable", true, false, undefined, {
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
+    }),
+    // Aave V2 aDAI receipt (matches underlying DAI rate via shared Chainlink feed).
+    token(ERC20_ADAI, "Stable", true, false, undefined, {
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    // Aave V3 aEthUSDe receipt (matches underlying USDe rate via shared feed).
+    token(ERC20_AETH_USDE, "Stable", true, false, undefined, {
+      startBlock: ERC20_AAVE_V3_BLOCK,
+      decimals: 18,
+    }),
+    // Aave V3 variable-debt receipts — liabilities (subtract from treasury MV).
+    // Underlying tokens are 6-decimal USDC/USDT, so the debt tokens share those
+    // decimals.
+    token(ERC20_VAR_DEBT_ETH_USDC, "Stable", true, false, undefined, {
+      startBlock: ERC20_AAVE_V3_BLOCK,
+      decimals: 6,
+      isLiability: true,
+    }),
+    token(ERC20_VAR_DEBT_ETH_USDT, "Stable", true, false, undefined, {
+      startBlock: ERC20_AAVE_V3_BLOCK,
+      decimals: 6,
+      isLiability: true,
     }),
     token(ERC20_WETH, "Volatile", true, true, undefined, {
       startBlock: ETHEREUM_START_BLOCK,

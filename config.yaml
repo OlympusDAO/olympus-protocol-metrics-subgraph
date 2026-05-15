@@ -314,6 +314,10 @@ chains:
           - "0xdAC17F958D2ee523a2206206994597C13D831ec7" # USDT
           - "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3" # USDe
           - "0xdC035D45d973E3EC169d2276DDab16f1e407384F" # USDS
+          - "0x028171bca77440897b824ca71d1c56cac55b68a3" # aDAI (Aave V2 receipt)
+          - "0x4f5923fc5fd4a93352581b38b7cd26943012decf" # aEthUSDe (Aave V3 receipt)
+          - "0x72e95b8931767c79ba4eee721354d6e99a61d004" # variableDebtEthUSDC (Aave V3 liability)
+          - "0x6df1c1e379bc5a00a7b4c6e67a203333772f45a8" # variableDebtEthUSDT (Aave V3 liability)
           - "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" # WETH
           - "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0" # wstETH
           - "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee" # weETH
