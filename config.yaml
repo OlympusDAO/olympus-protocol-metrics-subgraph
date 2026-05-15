@@ -80,6 +80,19 @@ contracts:
     events:
       - event: "LogRebase(uint256 indexed epoch, uint256 rebase, uint256 index)"
 
+  # Bophades Kernel. ActionExecuted fires on InstallModule / UpgradeModule /
+  # ActivatePolicy / DeactivatePolicy / ChangeExecutor / MigrateKernel.
+  # The handler tracks module installs/upgrades to maintain BophadesModule —
+  # the event-driven replacement for legacy's per-block kernel.getModuleForKeycode().
+  - name: BophadesKernel
+    events:
+      - event: "ActionExecuted(uint8 action, address indexed target_)"
+
+  # ClearinghouseRegistry events are tracked via dynamic contract registration
+  # once the Kernel handler observes the CHREG module address (see Phase 4
+  # follow-up). For now the 3 known Cooler clearinghouses are hardcoded in
+  # `src/snapshot/wallets.ts` so Cooler-receivable accounting still works.
+
 chains:
   - id: 42161 # Arbitrum One
     start_block: 10950000 # 2022-05-01
@@ -371,5 +384,16 @@ chains:
       - name: SOhmV3
         address:
           - "0x04906695D6D12CF5459975d7C3C03356E4Ccd460" # sOHM V3
+
+      # ---- Bophades Kernel. ActionExecuted writes BophadesModule whenever
+      # a module is installed or upgraded — keeps the event-driven CHREG /
+      # TRSRY pointers fresh without an RPC call at snapshot time.
+      - name: BophadesKernel
+        address:
+          - "0x2286d7f9639e8158FaD1169e76d1FbC38247f54b" # Kernel (mainnet)
+
+      # CHREG (ClearinghouseRegistry) is registered dynamically once
+      # observed via Kernel.ActionExecuted — its address isn't hardcoded in
+      # the legacy subgraph either (resolved per-block via Kernel).
 
 address_format: lowercase

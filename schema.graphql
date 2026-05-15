@@ -165,17 +165,30 @@ type GnosisAuction {
   auctionCloseTimestamp: BigInt
 }
 
+# Latest Bophades-Kernel module assignment per keycode. Maintained from
+# Kernel `ActionExecuted` events (InstallModule / UpgradeModule). The snapshot
+# path reads this to learn the currently-active TRSRY / CHREG / etc. modules
+# without an RPC call. Per inventory-ethereum.md §8 "Bophades Treasury Module".
 type BophadesModule {
-  id: ID! # module/block
-  block: BigInt!
-  keycode: String!
-  moduleAddress: Bytes!
+  id: ID! # chainId-keycode
+  chainId: Int! @index
+  keycode: String! @index
+  moduleAddress: String!
+  installedAtBlock: BigInt!
+  installedAtTimestamp: BigInt!
 }
 
+# Cooler clearinghouse registry membership. Maintained from
+# ClearinghouseRegistry activation/deactivation events. `deregisteredAtBlock`
+# is null while a clearinghouse is currently registered.
 type ClearinghouseAddress {
-  id: ID! # moduleAddress/block
-  block: BigInt!
-  addresses: [Bytes!]!
+  id: ID! # chainId-clearinghouseAddress
+  chainId: Int! @index
+  clearinghouseAddress: String! @index
+  registeredAtBlock: BigInt!
+  registeredAtTimestamp: BigInt!
+  deregisteredAtBlock: BigInt
+  deregisteredAtTimestamp: BigInt
 }
 
 # ---- Event-derived state used to build each snapshot without RPC ----

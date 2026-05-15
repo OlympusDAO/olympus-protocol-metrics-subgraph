@@ -17,7 +17,13 @@ export const TREASURY_ADDRESS_V2 = addr("0x31f8cc382c9898b273eff4e0b7626a6987c84
 export const TREASURY_ADDRESS_V3 = addr("0x9A315BdF513367C0377FB36545857d12e85813Ef");
 export const DAO_WALLET = addr("0x245cc372c84b3645bf0ffe6538620b04a217988b");
 export const DAO_WORKING_CAPITAL = addr("0xF65A665D650B5De224F46D729e2bD0885EeA9dA5");
+// Bophades TRSRY module — two historical versions. Legacy resolves the
+// "active" one via `kernel.getModuleForKeycode("TRSRY")` at snapshot time;
+// since Envio tracks Transfer events to both, the active one will simply
+// hold the balance and the inactive one will read zero. Bophades Kernel
+// upgrade events get tracked separately (see src/handlers/Kernel.ts).
 export const TRSRY = addr("0xa8687A15D4BE32CC8F0a8a7B9704a4C3993D9613");
+export const TRSRY_V1_1 = addr("0xea1560F36F71a2F54deFA75ed9EaA15E8655bE22");
 
 export const BUYBACK_MS = addr("0xf7deb867e65306be0cb33918ac1b8f89a72109db");
 export const YIELD_FARMING_MS = addr("0x2075e3b46470cfcE124Daaf52b46Dcf965727Dd1");
@@ -87,6 +93,7 @@ export const WALLET_ADDRESSES = [
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
   TRSRY,
+  TRSRY_V1_1,
   VEFXS_ALLOCATOR,
   COOLER_LOANS_CLEARINGHOUSE_V1,
   COOLER_LOANS_CLEARINGHOUSE_V1_1,

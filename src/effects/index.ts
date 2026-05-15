@@ -48,6 +48,59 @@ export const seedBalancerPool = createEffect(
   },
 );
 
+// Cached effect that reads `KEYCODE()` on a Bophades module address. Bophades
+// modules expose their 4-byte ASCII keycode (e.g. "TRSRY", "CHREG") via this
+// view. The Kernel `ActionExecuted` handler calls this once per
+// InstallModule / UpgradeModule action to learn which module slot was
+// reassigned, then writes BophadesModule keyed by chainId+keycode. The
+// keycode of a given module address is invariant for the module's lifetime,
+// so caching is safe.
+const BOPHADES_MODULE_ABI = [
+  {
+    inputs: [],
+    name: "KEYCODE",
+    outputs: [{ internalType: "bytes5", name: "", type: "bytes5" }],
+    stateMutability: "pure",
+    type: "function",
+  },
+] as const;
+
+export const resolveBophadesKeycode = createEffect(
+  {
+    name: "resolveBophadesKeycode",
+    input: { chainId: S.number, moduleAddress: S.string },
+    output: S.string,
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    const raw = await retryRpc(() =>
+      client.readContract({
+        address: getAddress(input.moduleAddress),
+        abi: BOPHADES_MODULE_ABI,
+        functionName: "KEYCODE",
+      }),
+    );
+    // bytes5 is padded with zero bytes when the keycode is shorter than 5
+    // characters; strip those to keep the entity field human-readable.
+    return decodeKeycode(raw as `0x${string}`);
+  },
+);
+
+export function decodeKeycode(raw: `0x${string}`): string {
+  const hex = raw.slice(2);
+  let out = "";
+  for (let i = 0; i < hex.length; i += 2) {
+    const byte = Number.parseInt(hex.slice(i, i + 2), 16);
+    if (byte === 0) break;
+    out += String.fromCharCode(byte);
+  }
+  return out;
+}
+
 // Cached effect that resolves a Kodiak LP wrapper's underlying UniswapV3 pool.
 // Invariant across blocks; called once per Kodiak LP per indexer process. The
 // returned address feeds both a contractRegister call (so the underlying
