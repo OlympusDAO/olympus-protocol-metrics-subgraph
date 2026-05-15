@@ -47,8 +47,13 @@ export class Univ2PriceHandler extends BasePriceHandler<
     const price = (lookupIsToken0 ? reserve1.div(reserve0) : reserve0.div(reserve1)).times(
       secondary.price,
     );
-    // Univ2 legacy returns liquidity = 0 (PriceHandlerUniswapV2.ts:112).
-    return { price, liquidity: ZERO };
+    // Liquidity = USD depth on the secondary side. UniV2 pools are 50/50 by
+    // value at equilibrium, so this is half the pool TVL — sufficient for
+    // tiebreaking among Univ2/Univ3/Balancer handlers (the Chainlink/gOHM/
+    // ERC4626 priority constants are 10^30 and dominate regardless).
+    const secondaryReserve = lookupIsToken0 ? reserve1 : reserve0;
+    const liquidity = secondaryReserve.times(secondary.price);
+    return { price, liquidity };
   }
 
   async getTotalValue(

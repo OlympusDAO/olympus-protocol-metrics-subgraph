@@ -92,8 +92,13 @@ export class BalancerPriceHandler extends BasePriceHandler<
         .div(secondaryWeight)
         .div(lookupReserve.div(lookupWeight))
         .times(secondary.price);
-      // Balancer legacy returns liquidity = 0 (PriceHandlerBalancer.ts:216).
-      return { price, liquidity: ZERO };
+      // Liquidity = total pool TVL in USD, derived from the secondary leg:
+      //   secondaryReserve × secondaryPrice / secondaryWeight
+      // For an 80/20 pool with the secondary at 80%, this scales the
+      // 80% leg up by 1/0.8 to recover the full invariant value. Matches
+      // the metric Balancer's own SDK uses for "totalLiquidity".
+      const liquidity = secondaryReserve.times(secondary.price).div(secondaryWeight);
+      return { price, liquidity };
     }
     return null;
   }
