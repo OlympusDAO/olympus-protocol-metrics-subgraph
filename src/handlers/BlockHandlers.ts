@@ -63,6 +63,12 @@ const BLOCK_HANDLERS = [
     startBlock: 23000000, // ~2021-09-22, matches POLYGON config
     interval: 14400, // ~8h at Polygon's ~2s block time
   },
+  {
+    name: "FantomEightHourSnapshot",
+    chain: 250 as const,
+    startBlock: 37320000, // 2022-05-01, matches FANTOM config (legacy parity)
+    interval: 24000, // ~8h at Fantom's ~1.2s block time
+  },
 ];
 
 indexer.onBlock(

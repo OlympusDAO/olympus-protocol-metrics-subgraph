@@ -260,4 +260,39 @@ chains:
 
       # No Chainlink feeds on Polygon (legacy used UniV2 + stable handlers only).
 
+  - id: 250 # Fantom
+    start_block: 37320000 # 2022-05-01, matches legacy Fantom start (no graft per Phase 1 decision #3)
+    rpc:
+      - url: ${ENVIO_FANTOM_RPC_URL:-https://rpc.ftm.tools}
+        for: fallback
+
+    contracts:
+      # ---- Treasury-held ERC20s on Fantom.
+      - name: TreasuryERC20
+        address:
+          - "0xf24bcf4d1e507740041c9cfd2dddb29585adce1e" # BEETS
+          - "0x841fad6eae12c286d1fd18d1d525dffa75c7effe" # BOO
+          - "0x8D11eC38a3EB5E956B052f67Da8Bdc9bef8Abf3E" # DAI
+          - "0xDE1E704dae0B4051e80DAbB26ab6ad6c12262DA0" # DEI
+          - "0xdc301622e621166BD8E82f2cA0A26c13Ad0BE355" # FRAX
+          - "0x91fa20244Fb509e8289CA630E5db3E9166233FDc" # gOHM (Fantom)
+          - "0x10b620b2dbAC4Faa7D7FFD71Da486f5D44cd86f9" # LQDR
+          - "0xc5A9848b9d145965d821AaeC8fA32aaEE026492d" # OXD
+          - "0x04068da6c83afcfa0e13ba15a6696662335d5b75" # USDC
+          - "0x74b23882a30290451a17c44f4f05243b6b58c76d" # WETH (Multichain-bridged)
+          - "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83" # WFTM
+
+      # ---- Univ2 pricing pools (Sync drives reserves; Transfer of POL drives totalSupply).
+      - name: UniswapV2Pool
+        address:
+          - "0xae9bba22e87866e48ccacff0689afaa41eb94995" # UniV2 wFTM-gOHM (POL)
+          - "0xec7178f4c41f346b2721907f5cf7628e388a7a58" # UniV2 BOO-wFTM
+          - "0x4fe6f19031239f105f753d1df8a0d24857d0caa2" # UniV2 LQDR-wFTM
+          - "0x648a7452da25b4fb4bdb79badf374a8f8a5ea2b5" # UniV2 wFTM-BEETS
+          - "0xf0702249f4d3a25cd3ded7859a165693685ab577" # UniV2 wFTM-ETH
+          - "0xcb6eab779780c7fd6d014ab90d8b10e97a1227e2" # UniV2 wFTM-OXD
+          - "0x2b4c76d0dc16be1c31d4c1dc53bf9b45987fc75c" # UniV2 wFTM-USDC
+
+      # No Chainlink feeds on Fantom (legacy used UniV2 + stable only).
+
 address_format: lowercase

@@ -67,7 +67,7 @@ export type BasePriceFeed = {
 declare const bytes32Brand: unique symbol;
 export type Bytes32 = `0x${string}` & { readonly [bytes32Brand]: true };
 
-export type ChainId = 42161 | 80094 | 8453 | 137;
+export type ChainId = 42161 | 80094 | 8453 | 137 | 250;
 
 // Per-chain feature flags. `emitsTokenSupply` controls whether the snapshot
 // path writes TokenSupply rows. Polygon and Fantom legacy subgraphs declare
