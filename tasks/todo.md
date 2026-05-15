@@ -51,15 +51,17 @@ All commits on `envio-multichain-migration`. 21/21 tests pass.
 
 Deferred to Phase 4: ERC4626 (Ethereum-only, U64.MAX_VALUE liquidity pattern). UniV3 token balance tracking via Mint/Burn/Swap deltas (TODO(univ3-balances)). UniV3 liquidity uses indexed `state.liquidity` proxy instead — tracks legacy selection in practice, documented divergence.
 
-## Phase 4 — Per-chain rollout
+## Phase 4 — Per-chain rollout (in progress)
 
-- [ ] Generalize Arbitrum/Berachain into config-driven handlers
-- [ ] Add Base
-- [ ] Add Polygon
-- [ ] Add Fantom
-- [ ] Add Ethereum (last — Curve, FraxSwap, ERC4626, clearinghouse, boosted liq, custom mappings)
-- [ ] `buildChainSnapshot(chainConfig, block)` per chain
-- [ ] 8-hour snapshot cadence per chain
+All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21 tests green at every step.
+
+- [x] Generalize: introduced `ChainId` type alias (replaces inline `42161 | 80094` narrows) + `emitsTokenSupply` flag (Polygon/Fantom set false to match legacy no-emit). Wallets module mirrors shared `WALLET_ADDRESSES` for cross-chain reuse.
+- [x] `93c0ea5` — `feat(chains): add Base (chainId 8453)`. 5 ERC20s, 1 wallet (DAO MS), 2 POL pools, Chainlink ETH/USD + USDC/USD feeds, OHM in DAO MS blacklisted from treasury balance.
+- [x] `a875d14` — `feat(chains): add Polygon (chainId 137) + emitsTokenSupply flag`. 8 ERC20s + 1 POL (UniV2 wETH-gOHM), 36 inherited wallets, no Chainlink, KLIMA + Staked KLIMA carry 0.85 multiplier, Staked KLIMA remaps to KLIMA.
+- [x] `00a86e9` — `feat(chains): add Fantom (chainId 250)`. 11 ERC20s + 1 POL (UniV2 wFTM-gOHM), 2 wallets, no Chainlink, fixed legacy abbreviation/name-map bugs (L2/L3) by using separate `names`/`abbreviations` maps.
+- [ ] Wire `NativeBalanceState` to snapshot-time `getBalance` RPC. Closes inherited TODO #2. Applies to all chains that hold native (Arbitrum ETH, Base ETH, Berachain BERA, Polygon MATIC, Fantom FTM, Ethereum ETH).
+- [ ] Add Ethereum (largest surface — Curve, FraxSwap, ERC4626, BLV, Cooler clearinghouse, boosted liq, GnosisAuction, Bophades dynamic resolution, OHM v1→v2 migration offsets).
+- [ ] Per-chain snapshot validation tests (1+ test per chain asserting at least one TokenRecord row builds correctly).
 
 ## Phase 5 — Global snapshot
 
