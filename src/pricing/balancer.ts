@@ -59,8 +59,8 @@ export class BalancerPriceHandler extends BasePriceHandler<
 
     for (let i = 0; i < state.tokens.length; i++) {
       if (i === lookupIndex) continue;
-      const secondaryPrice = await priceLookup(state.tokens[i], blockNumber, this.getId());
-      if (secondaryPrice.eq(ZERO)) continue;
+      const secondary = await priceLookup(state.tokens[i], blockNumber, this.getId());
+      if (secondary.price.eq(ZERO)) continue;
       const lookupReserve = toDecimal(
         state.balances[lookupIndex],
         getTokenDecimals(this.config.tokens, state.tokens[lookupIndex]),
@@ -75,7 +75,8 @@ export class BalancerPriceHandler extends BasePriceHandler<
       const price = secondaryReserve
         .div(secondaryWeight)
         .div(lookupReserve.div(lookupWeight))
-        .times(secondaryPrice);
+        .times(secondary.price);
+      // Balancer legacy returns liquidity = 0 (PriceHandlerBalancer.ts:216).
       return { price, liquidity: ZERO };
     }
     return null;
@@ -97,8 +98,8 @@ export class BalancerPriceHandler extends BasePriceHandler<
         state.balances[i],
         getTokenDecimals(this.config.tokens, state.tokens[i]),
       );
-      const price = await priceLookup(state.tokens[i], blockNumber, null);
-      total = total.plus(balance.times(price));
+      const result = await priceLookup(state.tokens[i], blockNumber, null);
+      total = total.plus(balance.times(result.price));
     }
     return total;
   }

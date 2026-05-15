@@ -58,15 +58,21 @@ abstract class Univ3PriceHandlerBase<
     const { token0, token1 } = this.getSortedTokens();
     const lookupIsToken0 = same(tokenAddress, token0);
     const secondaryToken = lookupIsToken0 ? token1 : token0;
-    const secondaryPrice = await priceLookup(secondaryToken, blockNumber, this.getId());
-    if (secondaryPrice.eq(ZERO)) return null;
+    const secondary = await priceLookup(secondaryToken, blockNumber, this.getId());
+    if (secondary.price.eq(ZERO)) return null;
 
     const decimals0 = getTokenDecimals(this.config.tokens, token0);
     const decimals1 = getTokenDecimals(this.config.tokens, token1);
     const raw = priceToken0InToken1(state.sqrtPriceX96);
     const adjusted = applyDecimalAdjustment(raw, decimals0, decimals1, lookupIsToken0);
-    const price = adjusted.times(secondaryPrice);
-    return { price, liquidity: ZERO };
+    const price = adjusted.times(secondary.price);
+    // Use the indexed active-range L parameter as the tiebreaker for two
+    // competing UniV3 pools (e.g. IBERA-WBERA 3000 vs 500 fee tier). Differs
+    // from legacy `otherTokenPrice * otherTokenBalance` (PriceHandlerUniswapV3.ts:156)
+    // which uses `balanceOf(poolAddress)` RPC — not available in the
+    // event-driven Envio model. Higher-L pools generally have higher
+    // total balance, so selection result tracks legacy in practice.
+    return { price, liquidity: new BigNumber(state.liquidity.toString()) };
   }
 
   // Total reserve value for Univ3 requires the actual token balances in the pool,

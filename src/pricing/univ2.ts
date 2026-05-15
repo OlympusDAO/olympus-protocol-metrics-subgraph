@@ -35,8 +35,8 @@ export class Univ2PriceHandler extends BasePriceHandler<
     const { token0, token1 } = this.getSortedTokens();
     const lookupIsToken0 = same(tokenAddress, token0);
     const secondaryToken = lookupIsToken0 ? token1 : token0;
-    const secondaryPrice = await priceLookup(secondaryToken, blockNumber, this.getId());
-    if (secondaryPrice.eq(ZERO)) return null;
+    const secondary = await priceLookup(secondaryToken, blockNumber, this.getId());
+    if (secondary.price.eq(ZERO)) return null;
 
     const decimals0 = getTokenDecimals(this.config.tokens, token0);
     const decimals1 = getTokenDecimals(this.config.tokens, token1);
@@ -45,8 +45,9 @@ export class Univ2PriceHandler extends BasePriceHandler<
     if (reserve0.eq(ZERO) || reserve1.eq(ZERO)) return null;
 
     const price = (lookupIsToken0 ? reserve1.div(reserve0) : reserve0.div(reserve1)).times(
-      secondaryPrice,
+      secondary.price,
     );
+    // Univ2 legacy returns liquidity = 0 (PriceHandlerUniswapV2.ts:112).
     return { price, liquidity: ZERO };
   }
 
@@ -68,8 +69,8 @@ export class Univ2PriceHandler extends BasePriceHandler<
     let total = ZERO;
     for (let i = 0; i < tokens.length; i++) {
       if (excludedTokens.some((excluded) => same(excluded, tokens[i]))) continue;
-      const price = await priceLookup(tokens[i], blockNumber, null);
-      total = total.plus(balances[i].times(price));
+      const result = await priceLookup(tokens[i], blockNumber, null);
+      total = total.plus(balances[i].times(result.price));
     }
     return total;
   }

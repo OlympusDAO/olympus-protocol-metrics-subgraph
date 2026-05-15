@@ -184,7 +184,8 @@ async function pushTokenBalanceRecords(
         continue;
       }
 
-      const rate = await getPrice(config, context, client, definition.address, blockNumber, null);
+      const rate = (await getPrice(config, context, client, definition.address, blockNumber, null))
+        .price;
       if (rate.eq(ZERO)) continue;
 
       const wallets = getWalletAddressesForContract(config, definition.address);
@@ -301,7 +302,8 @@ async function pushJonesStakingRecords(
     const entity = await context.JonesStakingPosition.get(id);
     if (!entity || entity.amount === 0n) continue;
 
-    rate ??= await getPrice(config, context, client, jonesToken.address, blockNumber, null);
+    rate ??= (await getPrice(config, context, client, jonesToken.address, blockNumber, null))
+      .price;
     if (rate.eq(ZERO)) continue;
 
     const balance = toDecimal(entity.amount, 18); // JONES is 18 decimals
@@ -346,7 +348,8 @@ async function pushTreasureStakingRecords(
       if (deposit.chainId !== config.chainId) continue;
       if (deposit.amount === 0n) continue;
 
-      rate ??= await getPrice(config, context, client, magicToken.address, blockNumber, null);
+      rate ??= (await getPrice(config, context, client, magicToken.address, blockNumber, null))
+        .price;
       if (rate.eq(ZERO)) break;
 
       const balance = toDecimal(deposit.amount, TREASURE_STAKED_LP_DECIMALS);

@@ -78,8 +78,8 @@ describe("ChainlinkPriceHandler", () => {
         },
       ],
     ]);
-    const price = await getPrice(config, context, mockClient(), WETH, BLOCK, null);
-    expect(price.eq("2000")).toBe(true);
+    const result = await getPrice(config, context, mockClient(), WETH, BLOCK, null);
+    expect(result.price.eq("2000")).toBe(true);
   });
 
   test("returns ZERO when no ChainlinkPriceState row exists for the feed", async () => {
@@ -87,8 +87,8 @@ describe("ChainlinkPriceHandler", () => {
       { kind: "chainlink", id: ETH_USD_FEED, tokens: [WETH], decimals: 8 },
     ]);
     const context = mockContext();
-    const price = await getPrice(config, context, mockClient(), WETH, BLOCK, null);
-    expect(price.eq("0")).toBe(true);
+    const result = await getPrice(config, context, mockClient(), WETH, BLOCK, null);
+    expect(result.price.eq("0")).toBe(true);
   });
 
   test("returns ZERO when the handler is not yet active at this block", async () => {
@@ -113,7 +113,7 @@ describe("ChainlinkPriceHandler", () => {
         },
       ],
     ]);
-    const price = await getPrice(config, context, mockClient(), WETH, BLOCK, null);
-    expect(price.eq("0")).toBe(true);
+    const result = await getPrice(config, context, mockClient(), WETH, BLOCK, null);
+    expect(result.price.eq("0")).toBe(true);
   });
 });
