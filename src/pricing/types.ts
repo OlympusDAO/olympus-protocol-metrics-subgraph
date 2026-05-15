@@ -5,16 +5,21 @@ import type { PublicClient } from "viem";
 import { isActive } from "../snapshot/math";
 import type { ChainConfig, LiquidityHandler } from "../snapshot/types";
 
-export type PriceLookup = (
-  tokenAddress: string,
-  blockNumber: bigint,
-  currentPool: string | null,
-) => Promise<BigNumber>;
-
 export type PriceLookupResult = {
   price: BigNumber;
   liquidity: BigNumber;
 };
+
+// PriceLookup returns the full PriceLookupResult so handlers that pass through
+// the inner lookup (Remap) can preserve the inner liquidity untouched. Handlers
+// that only need the price (Univ2/Univ3/Balancer/Kodiak when looking up a
+// secondary token) extract `.price` at the call site. Returns
+// `{ price: ZERO, liquidity: ZERO }` when no handler matches the token.
+export type PriceLookup = (
+  tokenAddress: string,
+  blockNumber: bigint,
+  currentPool: string | null,
+) => Promise<PriceLookupResult>;
 
 export interface PriceHandler {
   getId(): string;

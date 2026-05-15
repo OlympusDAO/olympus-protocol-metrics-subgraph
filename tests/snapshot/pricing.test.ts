@@ -2,10 +2,10 @@ import BigNumber from "bignumber.js";
 import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 import { describe, expect, test } from "vitest";
-import { getPrice, withPricingCache } from "../pricing";
-import { ARBITRUM } from "./chains/arbitrum";
-import { BERACHAIN } from "./chains/berachain";
-import type { ChainConfig, LiquidityHandler, TokenDefinition } from "./types";
+import { getPrice, withPricingCache } from "../../src/pricing";
+import { ARBITRUM } from "../../src/snapshot/chains/arbitrum";
+import { BERACHAIN } from "../../src/snapshot/chains/berachain";
+import type { ChainConfig, LiquidityHandler, TokenDefinition } from "../../src/snapshot/types";
 
 const ARBITRUM_BLOCK = 500_000_000n;
 const BERACHAIN_BLOCK = 1_000_000n;
@@ -69,17 +69,21 @@ function mockClient(
 function mockContext({
   univ2 = [],
   univ3 = [],
+  chainlink = [],
 }: {
   univ2?: readonly (readonly [string, unknown])[];
   univ3?: readonly (readonly [string, unknown])[];
+  chainlink?: readonly (readonly [string, unknown])[];
 } = {}): EvmOnBlockContext {
   const univ2States = new Map(univ2);
   const univ3States = new Map(univ3);
+  const chainlinkStates = new Map(chainlink);
   return {
     BalancerPoolState: { get: async () => undefined },
     KodiakPool: { get: async () => undefined },
     Univ2PoolState: { get: async (id: string) => univ2States.get(id) },
     Univ3PoolState: { get: async (id: string) => univ3States.get(id) },
+    ChainlinkPriceState: { get: async (id: string) => chainlinkStates.get(id) },
     Erc20Supply: { get: async () => undefined },
     TokenBalance: { get: async () => undefined },
   } as unknown as EvmOnBlockContext;
@@ -143,7 +147,7 @@ describe("Arbitrum Envio snapshot parity", () => {
     const client = mockClient(ARBITRUM.chainId, new Map<string, unknown>());
     await expect(
       getPrice(ARBITRUM, mockContext(), client, FRAX, ARBITRUM_BLOCK, null),
-    ).resolves.toSatisfy((price) => price.eq("1"));
+    ).resolves.toSatisfy((result) => result.price.eq("1"));
   });
 
   test("derives WETH through the WETH-USDC Uniswap V3 pool state", async () => {
@@ -158,7 +162,7 @@ describe("Arbitrum Envio snapshot parity", () => {
     });
     await expect(
       getPrice(ARBITRUM, context, client, WETH, ARBITRUM_BLOCK, null),
-    ).resolves.toSatisfy((price) => price.eq("3000"));
+    ).resolves.toSatisfy((result) => result.price.eq("3000"));
   });
 
   test("caches repeated price derivations within a snapshot", async () => {
@@ -178,11 +182,11 @@ describe("Arbitrum Envio snapshot parity", () => {
     await withPricingCache(async () => {
       await expect(
         getPrice(ARBITRUM, context, client, WETH, ARBITRUM_BLOCK, null),
-      ).resolves.toSatisfy((price) => price.eq("3000"));
+      ).resolves.toSatisfy((result) => result.price.eq("3000"));
       const readsAfterFirstLookup = reads;
       await expect(
         getPrice(ARBITRUM, context, client, WETH, ARBITRUM_BLOCK, null),
-      ).resolves.toSatisfy((price) => price.eq("3000"));
+      ).resolves.toSatisfy((result) => result.price.eq("3000"));
       expect(reads).toBe(readsAfterFirstLookup);
     });
 
@@ -204,7 +208,7 @@ describe("Arbitrum Envio snapshot parity", () => {
       ],
     });
     await expect(getPrice(ARBITRUM, context, client, ARB, ARBITRUM_BLOCK, null)).resolves.toSatisfy(
-      (price) => price.eq("3000"),
+      (result) => result.price.eq("3000"),
     );
   });
 
@@ -229,7 +233,7 @@ describe("Arbitrum Envio snapshot parity", () => {
     });
     await expect(
       getPrice(ARBITRUM, context, client, MAGIC, ARBITRUM_BLOCK, null),
-    ).resolves.toSatisfy((price) => price.eq("3"));
+    ).resolves.toSatisfy((result) => result.price.eq("3"));
   });
 });
 
@@ -260,14 +264,14 @@ describe("Berachain Envio snapshot parity", () => {
     const client = mockClient(BERACHAIN.chainId, new Map<string, unknown>());
     await expect(
       getPrice(BERACHAIN, mockContext(), client, HONEY, BERACHAIN_BLOCK, null),
-    ).resolves.toSatisfy((price) => price.eq("1"));
+    ).resolves.toSatisfy((result) => result.price.eq("1"));
   });
 
   test("derives USDC.e through the stablecoin handler", async () => {
     const client = mockClient(BERACHAIN.chainId, new Map<string, unknown>());
     await expect(
       getPrice(BERACHAIN, mockContext(), client, USDC_BERACHAIN, BERACHAIN_BLOCK, null),
-    ).resolves.toSatisfy((price) => price.eq("1"));
+    ).resolves.toSatisfy((result) => result.price.eq("1"));
   });
 
   test("derives WBERA through the WBERA-HONEY Uniswap V3 pool state", async () => {
@@ -282,7 +286,7 @@ describe("Berachain Envio snapshot parity", () => {
     });
     await expect(
       getPrice(BERACHAIN, context, client, WBERA, BERACHAIN_BLOCK, null),
-    ).resolves.toSatisfy((price) => price.eq(WBERA_PRICE));
+    ).resolves.toSatisfy((result) => result.price.eq(WBERA_PRICE));
   });
 
   test("keeps native BERA remapped to WBERA instead of pricing it at one dollar", async () => {
@@ -297,7 +301,7 @@ describe("Berachain Envio snapshot parity", () => {
     });
     await expect(
       getPrice(BERACHAIN, context, client, NATIVE_BERA, BERACHAIN_BLOCK, null),
-    ).resolves.toSatisfy((price) => price.eq(WBERA_PRICE));
+    ).resolves.toSatisfy((result) => result.price.eq(WBERA_PRICE));
   });
 
   test("uses the highest-liquidity IBERA-WBERA handler and recurses through WBERA-HONEY", async () => {
@@ -317,7 +321,7 @@ describe("Berachain Envio snapshot parity", () => {
 
     await expect(
       getPrice(BERACHAIN, context, client, IBERA, BERACHAIN_BLOCK, null),
-    ).resolves.toSatisfy((price) => price.eq(IBERA_PRICE));
+    ).resolves.toSatisfy((result) => result.price.eq(IBERA_PRICE));
 
     expect(handler(BERACHAIN, IBERA_WBERA_POOL_3000)).toMatchObject({
       kind: "univ3-quoter",

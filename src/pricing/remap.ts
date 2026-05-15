@@ -13,9 +13,12 @@ export class RemapPriceHandler extends BasePriceHandler<
     blockNumber: bigint,
   ): Promise<PriceLookupResult | null> {
     if (!this.isActive(blockNumber)) return null;
-    const price = await priceLookup(this.handler.target, blockNumber, this.getId());
-    if (price.eq(ZERO)) return null;
-    return { price, liquidity: ZERO };
+    // Pass through the inner lookup verbatim so the chosen downstream
+    // handler's liquidity propagates to the router's tiebreaker. Matches
+    // legacy PriceHandlerRemapping.ts:36.
+    const result = await priceLookup(this.handler.target, blockNumber, this.getId());
+    if (result.price.eq(ZERO)) return null;
+    return result;
   }
 
   async getTotalValue(): Promise<BigNumber | null> {

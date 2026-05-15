@@ -6,12 +6,19 @@ import type { PublicClient } from "viem";
 import { isActive, ZERO } from "../snapshot/math";
 import type { ChainConfig, LiquidityHandler } from "../snapshot/types";
 import { BalancerPriceHandler } from "./balancer";
+import { ChainlinkPriceHandler } from "./chainlink";
+import { CurvePriceHandler } from "./curve";
+import { Erc4626PriceHandler } from "./erc4626";
+import { FraxSwapPriceHandler } from "./fraxswap";
+import { GohmPriceHandler } from "./gohm";
 import { KodiakPriceHandler } from "./kodiak";
 import { RemapPriceHandler } from "./remap";
 import { StablePriceHandler } from "./stable";
-import type { PriceHandler } from "./types";
+import type { PriceHandler, PriceLookupResult } from "./types";
 import { Univ2PriceHandler } from "./univ2";
 import { Univ3PriceHandler, Univ3QuoterPriceHandler } from "./univ3";
+
+const ZERO_RESULT: PriceLookupResult = { price: ZERO, liquidity: ZERO };
 
 export function createPriceHandler(
   config: ChainConfig,
@@ -21,6 +28,17 @@ export function createPriceHandler(
 ): PriceHandler {
   if (handler.kind === "stable") return new StablePriceHandler(config, context, client, handler);
   if (handler.kind === "remap") return new RemapPriceHandler(config, context, client, handler);
+  if (handler.kind === "chainlink") {
+    return new ChainlinkPriceHandler(config, context, client, handler);
+  }
+  if (handler.kind === "gohm") return new GohmPriceHandler(config, context, client, handler);
+  if (handler.kind === "erc4626") {
+    return new Erc4626PriceHandler(config, context, client, handler);
+  }
+  if (handler.kind === "curve") return new CurvePriceHandler(config, context, client, handler);
+  if (handler.kind === "fraxswap") {
+    return new FraxSwapPriceHandler(config, context, client, handler);
+  }
   if (handler.kind === "univ2") return new Univ2PriceHandler(config, context, client, handler);
   if (handler.kind === "univ3") return new Univ3PriceHandler(config, context, client, handler);
   if (handler.kind === "univ3-quoter") {
@@ -45,7 +63,7 @@ export async function getPrice(
   tokenAddress: string,
   blockNumber: bigint,
   currentPool: string | null,
-): Promise<BigNumber> {
+): Promise<PriceLookupResult> {
   return cachedPricingLookup(
     ["price", config.chainId, blockNumber.toString(), tokenAddress, currentPool],
     () => derivePrice(config, context, client, tokenAddress, blockNumber, currentPool),
@@ -59,16 +77,15 @@ async function derivePrice(
   tokenAddress: string,
   blockNumber: bigint,
   currentPool: string | null,
-): Promise<BigNumber> {
+): Promise<PriceLookupResult> {
   const token = config.tokens.find((value) => value.address === tokenAddress.toLowerCase());
-  if (token && !isActive(token, blockNumber)) return ZERO;
+  if (token && !isActive(token, blockNumber)) return ZERO_RESULT;
 
   const currentPoolHandler =
     currentPool === null
       ? null
       : (config.liquidityHandlers.find((handler) => handler.id === currentPool) ?? null);
-  let selectedPrice: BigNumber | null = null;
-  let selectedLiquidity: BigNumber | null = null;
+  let selected: PriceLookupResult | null = null;
 
   for (const handlerConfig of config.liquidityHandlers) {
     if (!isActive(handlerConfig, blockNumber)) continue;
@@ -77,18 +94,17 @@ async function derivePrice(
     if (handler.getId() === currentPool) continue;
     if (currentPoolHandler && hasSameTokenSet(handlerConfig, currentPoolHandler)) continue;
 
-    const price = await handler.getPrice(
+    const result = await handler.getPrice(
       tokenAddress,
       (lookupToken, lookupBlock, lookupPool) =>
         getPrice(config, context, client, lookupToken, lookupBlock, lookupPool),
       blockNumber,
     );
-    if (!price) continue;
-    if (selectedLiquidity?.gt(price.liquidity)) continue;
-    selectedPrice = price.price;
-    selectedLiquidity = price.liquidity;
+    if (!result) continue;
+    if (selected && selected.liquidity.gt(result.liquidity)) continue;
+    selected = result;
   }
-  return selectedPrice ?? ZERO;
+  return selected ?? ZERO_RESULT;
 }
 
 export async function getTotalValue(

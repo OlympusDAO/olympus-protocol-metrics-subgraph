@@ -59,15 +59,17 @@ export class KodiakPriceHandler extends BasePriceHandler<
     const [token0, token1] = sortTokens(this.handler.tokens);
     const lookupIsToken0 = same(tokenAddress, token0);
     const secondaryToken = lookupIsToken0 ? token1 : token0;
-    const secondaryPrice = await priceLookup(secondaryToken, blockNumber, this.getId());
-    if (secondaryPrice.eq(ZERO)) return null;
+    const secondary = await priceLookup(secondaryToken, blockNumber, this.getId());
+    if (secondary.price.eq(ZERO)) return null;
 
     const decimals0 = getTokenDecimals(this.config.tokens, token0);
     const decimals1 = getTokenDecimals(this.config.tokens, token1);
     const raw = priceToken0InToken1(state.sqrtPriceX96);
     const adjusted = applyDecimalAdjustment(raw, decimals0, decimals1, lookupIsToken0);
-    const price = adjusted.times(secondaryPrice);
-    return { price, liquidity: ZERO };
+    const price = adjusted.times(secondary.price);
+    // Same liquidity treatment as Univ3 — Kodiak Islands wrap a UniV3 pool
+    // and the underlying state.liquidity is the meaningful tiebreaker.
+    return { price, liquidity: new BigNumber(state.liquidity.toString()) };
   }
 
   // getUnderlyingBalances would require tracking the Kodiak LP's

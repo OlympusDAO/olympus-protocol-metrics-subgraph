@@ -27,6 +27,8 @@ export function createTokenRecord(
     : baseValue.times(multiplier);
   return {
     id: `${config.chainId}-${date}/${blockNumber}/${sourceName}/${tokenName}`,
+    chainId: config.chainId,
+    blockchain: config.blockchain,
     block: blockNumber.toString(),
     timestamp: timestamp.toString(),
     date,
@@ -42,7 +44,6 @@ export function createTokenRecord(
     category: category ?? definition?.category ?? "Unknown",
     isLiquid: definition?.isLiquid ?? true,
     isBluechip: definition?.isBluechip ?? false,
-    blockchain: config.blockchain,
   };
 }
 
@@ -63,6 +64,8 @@ export function createTokenSupply(
   const date = isoDate(timestamp);
   return {
     id: `${config.chainId}-${date}/${blockNumber}/${tokenName}/${type}/${poolName ?? "Unknown Pool"}/${sourceName ?? ""}`,
+    chainId: config.chainId,
+    blockchain: config.blockchain,
     block: blockNumber.toString(),
     timestamp: timestamp.toString(),
     date,

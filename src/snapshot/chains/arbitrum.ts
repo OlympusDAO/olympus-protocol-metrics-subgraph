@@ -38,6 +38,8 @@ const LP_UNISWAP_V2_MAGIC_WETH = addr("0xb7e50106a5bd3cf21af210a755f9c8740890a8c
 const LP_CAMELOT_OHM_WETH = addr("0x8aCd42e4B5A5750B44A28C5fb50906eBfF145359");
 const LP_UNISWAP_V3_ARB_WETH = addr("0xc6f780497a95e246eb9449f5e4770916dcd6396a");
 const LP_UNISWAP_V3_WETH_USDC = addr("0xc31e54c7a869b9fcbecc14363cf510d1c41fa443");
+const CHAINLINK_FEED_ETH_USD = addr("0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612");
+const NATIVE_ETH = "0x0000000000000000000000000000000000000000";
 export const ARBITRUM_START_BLOCK = 10_950_000;
 const ARB_CREATION_BLOCK = 70_398_215;
 const FRAX_CREATION_BLOCK = 1_693_791;
@@ -113,6 +115,16 @@ const liquidityHandlers: LiquidityHandler[] = [
     startBlock: LP_BALANCER_OHM_USDC_CREATION_BLOCK,
   },
   { kind: "stable", tokens: [ERC20_FRAX, ERC20_USDC, ERC20_LUSD], id: "stable-usd" },
+  // Chainlink ETH/USD — authoritative WETH price. Wins over the WETH-USDC
+  // UniV3 pool via CHAINLINK_PRIORITY when the feed has a ChainlinkPriceState
+  // row (populated by AnswerUpdated events).
+  {
+    kind: "chainlink",
+    tokens: [ERC20_WETH],
+    id: CHAINLINK_FEED_ETH_USD,
+    decimals: 8,
+    startBlock: ARBITRUM_START_BLOCK,
+  },
   {
     kind: "univ2",
     tokens: [ERC20_GOHM_SYNAPSE, ERC20_WETH],
@@ -155,6 +167,9 @@ const liquidityHandlers: LiquidityHandler[] = [
     id: LP_UNISWAP_V3_ARB_WETH,
     startBlock: LP_UNISWAP_V3_ARB_WETH_CREATION_BLOCK,
   },
+  // Native ETH prices via WETH (1:1). NativeBalanceState is populated at
+  // snapshot time via getBalance.
+  { kind: "remap", tokens: [NATIVE_ETH], id: NATIVE_ETH, target: ERC20_WETH },
 ];
 
 export const ARBITRUM: ChainConfig = {
@@ -166,7 +181,12 @@ export const ARBITRUM: ChainConfig = {
   ]),
   ohmToken: ERC20_OHM,
   ohmStartBlock: OHM_CREATION_BLOCK,
+  nativeToken: NATIVE_ETH,
   tokens: [
+    token(NATIVE_ETH, "Volatile", true, true, undefined, {
+      startBlock: ARBITRUM_START_BLOCK,
+      decimals: 18,
+    }),
     token(ERC20_ARB, "Volatile", true, false, undefined, {
       startBlock: ARB_CREATION_BLOCK,
       decimals: 18,

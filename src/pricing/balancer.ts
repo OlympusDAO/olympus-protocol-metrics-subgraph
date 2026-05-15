@@ -50,6 +50,22 @@ export class BalancerPriceHandler extends BasePriceHandler<
     if (!this.isActive(blockNumber)) return null;
     const state = await this.getState();
     if (!state) return null;
+
+    // BPT pricing: when the lookup is for the pool's own LP token (BPT),
+    // derive price = totalValue / totalSupply via getUnitPrice. Liquidity
+    // tiebreaker = totalValue so this beats any pool-derived alternative.
+    const bpt = bptAddressFromPoolId(this.handler.id);
+    if (same(tokenAddress, bpt)) {
+      const totalValue = await this.getTotalValue([], priceLookup, blockNumber);
+      if (!totalValue || totalValue.eq(ZERO)) return null;
+      const supplyEntity = await this.context.Erc20Supply.get(`${this.config.chainId}-${bpt}`);
+      if (!supplyEntity || supplyEntity.totalSupply === 0n) return null;
+      const bptDecimals = getTokenDecimals(this.config.tokens, bpt);
+      const supply = toDecimal(supplyEntity.totalSupply, bptDecimals);
+      if (supply.eq(ZERO)) return null;
+      return { price: totalValue.div(supply), liquidity: totalValue };
+    }
+
     const meta = await this.getWeightsAndDecimals(blockNumber);
     if (!meta) return null;
     const { weights, decimals } = meta;
@@ -59,8 +75,8 @@ export class BalancerPriceHandler extends BasePriceHandler<
 
     for (let i = 0; i < state.tokens.length; i++) {
       if (i === lookupIndex) continue;
-      const secondaryPrice = await priceLookup(state.tokens[i], blockNumber, this.getId());
-      if (secondaryPrice.eq(ZERO)) continue;
+      const secondary = await priceLookup(state.tokens[i], blockNumber, this.getId());
+      if (secondary.price.eq(ZERO)) continue;
       const lookupReserve = toDecimal(
         state.balances[lookupIndex],
         getTokenDecimals(this.config.tokens, state.tokens[lookupIndex]),
@@ -75,8 +91,14 @@ export class BalancerPriceHandler extends BasePriceHandler<
       const price = secondaryReserve
         .div(secondaryWeight)
         .div(lookupReserve.div(lookupWeight))
-        .times(secondaryPrice);
-      return { price, liquidity: ZERO };
+        .times(secondary.price);
+      // Liquidity = total pool TVL in USD, derived from the secondary leg:
+      //   secondaryReserve × secondaryPrice / secondaryWeight
+      // For an 80/20 pool with the secondary at 80%, this scales the
+      // 80% leg up by 1/0.8 to recover the full invariant value. Matches
+      // the metric Balancer's own SDK uses for "totalLiquidity".
+      const liquidity = secondaryReserve.times(secondary.price).div(secondaryWeight);
+      return { price, liquidity };
     }
     return null;
   }
@@ -97,8 +119,8 @@ export class BalancerPriceHandler extends BasePriceHandler<
         state.balances[i],
         getTokenDecimals(this.config.tokens, state.tokens[i]),
       );
-      const price = await priceLookup(state.tokens[i], blockNumber, null);
-      total = total.plus(balance.times(price));
+      const result = await priceLookup(state.tokens[i], blockNumber, null);
+      total = total.plus(balance.times(result.price));
     }
     return total;
   }

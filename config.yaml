@@ -63,6 +63,51 @@ contracts:
       - event: "PoolBalanceChanged(bytes32 indexed poolId, address indexed liquidityProvider, address[] tokens, int256[] deltas, uint256[] protocolFeeAmounts)"
       - event: "Swap(bytes32 indexed poolId, address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut)"
 
+  # Chainlink AggregatorV3 feeds. Each AnswerUpdated emits the new oracle
+  # price; the handler maps src feed address -> tokenAddress via the per-chain
+  # chainlink LiquidityHandler config and writes ChainlinkPriceState. Phase 4
+  # wires per-chain feed addresses; this entry just declares the event shape so
+  # codegen produces the typed handler.
+  - name: ChainlinkAggregator
+    events:
+      - event: "AnswerUpdated(int256 indexed current, uint256 indexed roundId, uint256 updatedAt)"
+
+  # sOHM V3 emits LogRebase on every staking-epoch rebase. The handler
+  # persists the new `index` into OhmIndexState; the gOHM pricing handler
+  # reads it to compute gOHM_price = OHM_price * index/1e9. Currently
+  # Ethereum-only (sOHM is not deployed on the L2s).
+  - name: SOhmV3
+    events:
+      - event: "LogRebase(uint256 indexed epoch, uint256 rebase, uint256 index)"
+
+  # Bophades Kernel. ActionExecuted fires on InstallModule / UpgradeModule /
+  # ActivatePolicy / DeactivatePolicy / ChangeExecutor / MigrateKernel.
+  # The handler tracks module installs/upgrades to maintain BophadesModule —
+  # the event-driven replacement for legacy's per-block kernel.getModuleForKeycode().
+  - name: BophadesKernel
+    events:
+      - event: "ActionExecuted(uint8 action, address indexed target_)"
+
+  # Olympus V1 BondManager emits GnosisAuctionLaunched whenever a new bond
+  # auction is opened. The handler creates a GnosisAuction record so the
+  # snapshot path can attribute pre-minted / vesting / vested OHM correctly.
+  - name: BondManager
+    events:
+      - event: "GnosisAuctionLaunched(uint256 marketId, address auctionToken, uint96 capacity, uint48 bondTerm)"
+
+  # Gnosis EasyAuction is the matching engine behind Olympus bond auctions.
+  # AuctionCleared completes the GnosisAuction record with the cleared bid
+  # quantity (= OHM sold) so the snapshot can switch the auction from
+  # "open / pre-minted" to "closed / vesting" accounting.
+  - name: GnosisEasyAuction
+    events:
+      - event: "AuctionCleared(uint256 indexed auctionId, uint96 soldAuctioningTokens, uint96 soldBiddingTokens, bytes32 clearingPriceOrder)"
+
+  # ClearinghouseRegistry events are tracked via dynamic contract registration
+  # once the Kernel handler observes the CHREG module address (see Phase 4
+  # follow-up). For now the 3 known Cooler clearinghouses are hardcoded in
+  # `src/snapshot/wallets.ts` so Cooler-receivable accounting still works.
+
 chains:
   - id: 42161 # Arbitrum One
     start_block: 10950000 # 2022-05-01
@@ -129,6 +174,13 @@ chains:
           - "0xc31e54c7a869b9fcbecc14363cf510d1c41fa443" # UniV3 wETH-USDC
           - "0xc6f780497a95e246eb9449f5e4770916dcd6396a" # UniV3 ARB-wETH
 
+      # Chainlink feeds. Each address must have a matching `chainlink` entry in
+      # the ARBITRUM liquidityHandlers (chains/arbitrum.ts) carrying tokenAddress
+      # + feed decimals. Phase 4 expands this list per chain.
+      - name: ChainlinkAggregator
+        address:
+          - "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612" # ETH/USD
+
       - name: BalancerVault
         address:
           - "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
@@ -179,5 +231,214 @@ chains:
       - name: BalancerVault
         address:
           - "0x4Be03f781C497A489E3cB0287833452cA9B9E80B"
+
+  - id: 8453 # Base
+    start_block: 13204827 # 2024-04-15, OHM deployment on Base (no graft, per Phase 1 decision #3)
+    rpc:
+      - url: ${ENVIO_BASE_RPC_URL:-https://base.llamarpc.com}
+        for: fallback
+
+    contracts:
+      # ---- Treasury-held ERC20s on Base.
+      - name: TreasuryERC20
+        address:
+          - "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" # USDC
+          - "0x4200000000000000000000000000000000000006" # WETH
+
+      # ---- OHM ERC20: Transfer events drive treasury balance + totalSupply.
+      - name: OhmERC20
+        address:
+          - "0x060cb087a9730e13aa191f31a6d86bff8dfcdcc0" # OHM (Base)
+
+      # ---- Univ2 pair (Sync events drive reserves; Transfer drives LP totalSupply).
+      - name: UniswapV2Pool
+        address:
+          - "0x5ab4b9e96aeed4820e4be267f42411d722985482" # UniV2 OHM-WETH
+
+      # ---- Univ3 pool (Swap/Initialize drive sqrtPriceX96 + liquidity).
+      - name: UniswapV3Pool
+        address:
+          - "0x183ea22691c54806fe96555436dd312b6befac2f" # UniV3 OHM-USDC
+
+      # Chainlink USD feeds. Each entry has a matching `chainlink` handler in
+      # the BASE config's liquidityHandlers carrying tokenAddress + decimals.
+      - name: ChainlinkAggregator
+        address:
+          - "0x71041dddad3595f9ced3dccfbe3d1f4b0a16bb70" # ETH/USD
+          - "0x7e860098f58bbfc8648a4311b374b1d669a2bc6b" # USDC/USD
+
+  - id: 137 # Polygon
+    start_block: 23000000 # ~2021-09-22, no graft per Phase 1 decision #3
+    rpc:
+      - url: ${ENVIO_POLYGON_RPC_URL:-https://polygon-rpc.com}
+        for: fallback
+
+    contracts:
+      # ---- Treasury-held ERC20s on Polygon.
+      - name: TreasuryERC20
+        address:
+          - "0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063" # DAI
+          - "0x45c32fA6DF82ead1e2EF74d17b76547EDdFaFF89" # FRAX
+          - "0x4e78011ce80ee02d2c3e649fb657e45898257815" # KLIMA
+          - "0xb0C22d8D350C67420f06F48936654f567C73E8C8" # Staked KLIMA
+          - "0x50B728D8D964fd00C2d0AAD81718b71311feF68a" # SYN
+          - "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174" # USDC
+          - "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619" # WETH
+          - "0xd8cA34fd379d9ca3C6Ee3b3905678320F5b45195" # gOHM (Polygon)
+
+      # ---- Univ2 pricing pools (Sync drives reserves; OHM-pair Transfers drive POL totalSupply).
+      - name: UniswapV2Pool
+        address:
+          - "0x1549e0e8127d380080aab448b82d280433ce4030" # UniV2 wETH-gOHM (POL)
+          - "0x5786b267d35f9d011c4750e0b0ba584e1fdbead1" # UniV2 KLIMA-USDC (pricing only)
+          - "0x4a86c01d67965f8cb3d0aaa2c655705e64097c31" # UniV2 SYN-wETH (pricing only)
+          - "0x853ee4b2a13f8a742d64c8f088be7ba2131f670d" # UniV2 USDC-wETH (pricing only)
+
+      # No Chainlink feeds on Polygon (legacy used UniV2 + stable handlers only).
+
+  - id: 250 # Fantom
+    start_block: 37320000 # 2022-05-01, matches legacy Fantom start (no graft per Phase 1 decision #3)
+    rpc:
+      - url: ${ENVIO_FANTOM_RPC_URL:-https://rpc.ftm.tools}
+        for: fallback
+
+    contracts:
+      # ---- Treasury-held ERC20s on Fantom.
+      - name: TreasuryERC20
+        address:
+          - "0xf24bcf4d1e507740041c9cfd2dddb29585adce1e" # BEETS
+          - "0x841fad6eae12c286d1fd18d1d525dffa75c7effe" # BOO
+          - "0x8D11eC38a3EB5E956B052f67Da8Bdc9bef8Abf3E" # DAI
+          - "0xDE1E704dae0B4051e80DAbB26ab6ad6c12262DA0" # DEI
+          - "0xdc301622e621166BD8E82f2cA0A26c13Ad0BE355" # FRAX
+          - "0x91fa20244Fb509e8289CA630E5db3E9166233FDc" # gOHM (Fantom)
+          - "0x10b620b2dbAC4Faa7D7FFD71Da486f5D44cd86f9" # LQDR
+          - "0xc5A9848b9d145965d821AaeC8fA32aaEE026492d" # OXD
+          - "0x04068da6c83afcfa0e13ba15a6696662335d5b75" # USDC
+          - "0x74b23882a30290451a17c44f4f05243b6b58c76d" # WETH (Multichain-bridged)
+          - "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83" # WFTM
+
+      # ---- Univ2 pricing pools (Sync drives reserves; Transfer of POL drives totalSupply).
+      - name: UniswapV2Pool
+        address:
+          - "0xae9bba22e87866e48ccacff0689afaa41eb94995" # UniV2 wFTM-gOHM (POL)
+          - "0xec7178f4c41f346b2721907f5cf7628e388a7a58" # UniV2 BOO-wFTM
+          - "0x4fe6f19031239f105f753d1df8a0d24857d0caa2" # UniV2 LQDR-wFTM
+          - "0x648a7452da25b4fb4bdb79badf374a8f8a5ea2b5" # UniV2 wFTM-BEETS
+          - "0xf0702249f4d3a25cd3ded7859a165693685ab577" # UniV2 wFTM-ETH
+          - "0xcb6eab779780c7fd6d014ab90d8b10e97a1227e2" # UniV2 wFTM-OXD
+          - "0x2b4c76d0dc16be1c31d4c1dc53bf9b45987fc75c" # UniV2 wFTM-USDC
+
+      # No Chainlink feeds on Fantom (legacy used UniV2 + stable only).
+
+  - id: 1 # Ethereum
+    start_block: 12000000 # ~2021-04-29; before Treasury V2 (12525281)
+    rpc:
+      - url: ${ENVIO_ETHEREUM_RPC_URL:-https://eth.llamarpc.com}
+        for: fallback
+
+    contracts:
+      # ---- Treasury-held ERC20s. Stables + bluechips + long-tail volatiles.
+      # Phase 4 follow-ups add ERC4626 vaults, variable-debt receipt tokens,
+      # and Aura/Convex/Curve staked LP positions per inventory-ethereum.md §2.
+      - name: TreasuryERC20
+        address:
+          - "0x6b175474e89094c44da98b954eedeac495271d0f" # DAI
+          - "0x853d955acef822db058eb8505911ed77f175b99e" # FRAX
+          - "0x5f98805a4e8be255a32880fdec7f6728c6568ba0" # LUSD
+          - "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" # USDC
+          - "0xdAC17F958D2ee523a2206206994597C13D831ec7" # USDT
+          - "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3" # USDe
+          - "0xdC035D45d973E3EC169d2276DDab16f1e407384F" # USDS
+          - "0x028171bca77440897b824ca71d1c56cac55b68a3" # aDAI (Aave V2 receipt)
+          - "0x4f5923fc5fd4a93352581b38b7cd26943012decf" # aEthUSDe (Aave V3 receipt)
+          - "0x72e95b8931767c79ba4eee721354d6e99a61d004" # variableDebtEthUSDC (Aave V3 liability)
+          - "0x6df1c1e379bc5a00a7b4c6e67a203333772f45a8" # variableDebtEthUSDT (Aave V3 liability)
+          - "0x83f20f44975d03b1b09e64809b757c47f942beea" # sDAI (ERC4626)
+          - "0x9d39a5de30e57443bff2a8307a4256c8797a3497" # sUSDe (ERC4626)
+          - "0xa3931d71877c0e7a3148cb7eb4463524fec27fbd" # sUSDS (ERC4626)
+          - "0x0eb5b03c0303f2f47cd81d7be4275af8ed347576" # Gauntlet sUSDS Vault (ERC4626)
+          - "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" # WETH
+          - "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0" # wstETH
+          - "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee" # weETH
+          - "0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0" # FXS
+          - "0x5a98fcbea516cf06857215779fd812ca3bef1b32" # LDO
+          - "0x6dea81c8171d0ba574754ef6f8b412f2ed88c54d" # LQTY
+          - "0xc0d4ceb216b3ba9c3701b291766fdcba977cec3a" # BTRFLY V1
+          - "0xCC94Faf235cC5D3Bf4bEd3a30db5984306c86aBC" # xBTRFLY
+          - "0xc55126051b22ebb829d00368f4b12bde432de5da" # BTRFLY V2
+          - "0x742B70151cd3Bc7ab598aAFF1d54B90c3ebC6027" # rlBTRFLY
+          # Convex BaseRewardPool wrappers (priced via Curve LP remap)
+          - "0xd683c7051a28fa150eb3f4bd92263865d4a67778" # cvxCurveOhmEth
+          - "0x27a8c58e3de84280826d615d80ddb33930383fe9" # cvxCurveOhmFraxBp
+          - "0x7e880867363a7e321f5d260cade2b0bb2f717b02" # cvxFraxUsdc
+          # Aura vault wrappers (priced via Balancer BPT remap)
+          - "0x978653c02f2fbbdfd67cbc7f45c42262f213e0b5" # auraOhmWeth
+          - "0xb9d6ed734ccbdd0b9cadfed712cf8ac6d0917ecd" # auraOhmDai
+          - "0xf01e29461f1fcedd82f5258da006295e23b4fab3" # auraOhmDaiWeth
+          - "0x636024f9ddef77e625161b2ccf3a2adfbfad3615" # auraOhmWsteth
+
+      # ---- OHM ERC20s.
+      - name: OhmERC20
+        address:
+          - "0x383518188c0c6d7730d91b2c03a03c837814a899" # OHM V1
+          - "0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5" # OHM V2
+          - "0x0ab87046fBb341D058F17CBC4c1133F25a20a52f" # gOHM
+
+      # ---- Univ3 pricing pools (bluechips + long-tail volatiles).
+      - name: UniswapV3Pool
+        address:
+          - "0x88051b0eea095007d3bef21ab287be961f3d8598" # WETH-OHM
+          - "0x109830a1aaad605bbf02a9dfa7b0b92ec2fb7daa" # WETH-wstETH
+          - "0x202A6012894Ae5c288eA824cbc8A9bfb26A49b93" # weETH-WETH
+          - "0xcd8286b48936cdac20518247dbd310ab681a9fbf" # FXS-ETH
+          - "0xa3f558aebaecaf0e11ca4b2199cc5ed341edfd74" # LDO-WETH
+          - "0xd1d5a4c0ea98971894772dcd6d2f1dc71083c44e" # LQTY-WETH
+          - "0xdf9ab3c649005ebfdf682d2302ca1f673e0d37a2" # WETH-BTRFLY V1
+          - "0x3e6e23198679419cd73bb6376518dcc5168c8260" # WETH-BTRFLY V2
+
+      # ---- Chainlink feeds (8 baseline; full set is 12 per inventory §4.1).
+      - name: ChainlinkAggregator
+        address:
+          - "0xaed0c38402a5d19df6e4c03f4e2dced6e29c1ee9" # DAI/USD (also used for USDS)
+          - "0xb9e1e3a9feff48998e45fa90847ed4d467e8bcfd" # FRAX/USD
+          - "0x3D7aE7E594f2f2091Ad8798313450130d0Aba3a0" # LUSD/USD
+          - "0x8fffffd4afb6115b954bd326cbe7b4ba576818f6" # USDC/USD
+          - "0x3e7d1eab13ad0104d2750b8863b489d65364e32d" # USDT/USD
+          - "0xa569d910839Ae8865Da8F8e70FfFb0cBA869F961" # USDe/USD
+          - "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419" # ETH/USD
+
+      # ---- sOHM V3 LogRebase drives OhmIndexState; consumed by GohmPriceHandler.
+      - name: SOhmV3
+        address:
+          - "0x04906695D6D12CF5459975d7C3C03356E4Ccd460" # sOHM V3
+
+      # ---- Balancer V2 Vault — single contract hosting all pools. The
+      # handler filters events by poolId from the chain config's balancer
+      # handlers so HyperSync only delivers events for OHM pools.
+      - name: BalancerVault
+        address:
+          - "0xba12222222228d8ba445958a75a0704d566bf2c8"
+
+      # ---- Bophades Kernel. ActionExecuted writes BophadesModule whenever
+      # a module is installed or upgraded — keeps the event-driven CHREG /
+      # TRSRY pointers fresh without an RPC call at snapshot time.
+      - name: BophadesKernel
+        address:
+          - "0x2286d7f9639e8158FaD1169e76d1FbC38247f54b" # Kernel (mainnet)
+
+      # ---- Olympus V1 BondManager + Gnosis EasyAuction. Driver of
+      # GnosisAuctionLaunched / AuctionCleared events that feed GnosisAuction.
+      - name: BondManager
+        address:
+          - "0xf577c77ee3578c7f216327f41b5d7221ead2b2a3" # BondManager (mainnet)
+
+      - name: GnosisEasyAuction
+        address:
+          - "0x0b7ffc1f4ad541a4ed16b40d8c37f0929158d101" # Gnosis EasyAuction (mainnet)
+
+      # CHREG (ClearinghouseRegistry) is registered dynamically once
+      # observed via Kernel.ActionExecuted — its address isn't hardcoded in
+      # the legacy subgraph either (resolved per-block via Kernel).
 
 address_format: lowercase
