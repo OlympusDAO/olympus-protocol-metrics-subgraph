@@ -79,10 +79,9 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
 
 ## Phase 5 — Global snapshot
 
-- [ ] Port treasury-subgraph metric formulas
-- [ ] Upsert `GlobalMetricSnapshot(YYYY-MM-DD)` on each chain snapshot
-- [ ] Partial-chain completeness metadata
-- [ ] Tests: complete / single-chain / late-day-update / missing-chain
+- [x] `b5dbd31` — `feat(snapshot): wire GlobalMetricSnapshot aggregation per-snapshot (Phase 5 v1)`. New `src/snapshot/global.ts` (pure functions) + `updateGlobalMetricSnapshot` in BlockHandlers + `date @index` on TokenRecord/TokenSupply. Per-chain MV/LB/supply aggregation, cross-chain summation with chainsIndexed/chainsMissing/crossChainComplete, derived ratios, Ethereum BLV inclusion-block rule, Buyback MS OHM-in-MV gate. 7 new tests.
+- [ ] Canonical fields: ohmPrice / gOhmPrice / sOhmCirculatingSupply / sOhmTotalValueLocked / ohmApy (need snapshot-time price lookup + sOHM rebase indexing).
+- [ ] Tests: complete / single-chain / late-day-update / missing-chain (integration-level)
 
 ## Phase 6 — Parity harness
 
