@@ -295,4 +295,52 @@ chains:
 
       # No Chainlink feeds on Fantom (legacy used UniV2 + stable only).
 
+  - id: 1 # Ethereum
+    start_block: 12000000 # ~2021-04-29; before Treasury V2 (12525281)
+    rpc:
+      - url: ${ENVIO_ETHEREUM_RPC_URL:-https://eth.llamarpc.com}
+        for: fallback
+
+    contracts:
+      # ---- Treasury-held ERC20s (baseline set: stables + bluechips).
+      # Phase 4 follow-ups add the long-tail volatiles, ERC4626 vaults, and
+      # variable-debt receipt tokens flagged in inventory-ethereum.md §2.
+      - name: TreasuryERC20
+        address:
+          - "0x6b175474e89094c44da98b954eedeac495271d0f" # DAI
+          - "0x853d955acef822db058eb8505911ed77f175b99e" # FRAX
+          - "0x5f98805a4e8be255a32880fdec7f6728c6568ba0" # LUSD
+          - "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" # USDC
+          - "0xdAC17F958D2ee523a2206206994597C13D831ec7" # USDT
+          - "0x4c9EDD5852cd905f086C759E8383e09bff1E68B3" # USDe
+          - "0xdC035D45d973E3EC169d2276DDab16f1e407384F" # USDS
+          - "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" # WETH
+          - "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0" # wstETH
+          - "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee" # weETH
+
+      # ---- OHM ERC20s.
+      - name: OhmERC20
+        address:
+          - "0x383518188c0c6d7730d91b2c03a03c837814a899" # OHM V1
+          - "0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5" # OHM V2
+          - "0x0ab87046fBb341D058F17CBC4c1133F25a20a52f" # gOHM
+
+      # ---- Univ3 pricing pools (baseline: WETH-OHM + WETH-wstETH + weETH-WETH).
+      - name: UniswapV3Pool
+        address:
+          - "0x88051b0eea095007d3bef21ab287be961f3d8598" # WETH-OHM
+          - "0x109830a1aaad605bbf02a9dfa7b0b92ec2fb7daa" # WETH-wstETH
+          - "0x202A6012894Ae5c288eA824cbc8A9bfb26A49b93" # weETH-WETH
+
+      # ---- Chainlink feeds (8 baseline; full set is 12 per inventory §4.1).
+      - name: ChainlinkAggregator
+        address:
+          - "0xaed0c38402a5d19df6e4c03f4e2dced6e29c1ee9" # DAI/USD (also used for USDS)
+          - "0xb9e1e3a9feff48998e45fa90847ed4d467e8bcfd" # FRAX/USD
+          - "0x3D7aE7E594f2f2091Ad8798313450130d0Aba3a0" # LUSD/USD
+          - "0x8fffffd4afb6115b954bd326cbe7b4ba576818f6" # USDC/USD
+          - "0x3e7d1eab13ad0104d2750b8863b489d65364e32d" # USDT/USD
+          - "0xa569d910839Ae8865Da8F8e70FfFb0cBA869F961" # USDe/USD
+          - "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419" # ETH/USD
+
 address_format: lowercase

@@ -71,6 +71,12 @@ const BLOCK_HANDLERS = [
     startBlock: 37320000, // 2022-05-01, matches FANTOM config (legacy parity)
     interval: 24000, // ~8h at Fantom's ~1.2s block time
   },
+  {
+    name: "EthereumEightHourSnapshot",
+    chain: 1 as const,
+    startBlock: 12000000, // ~2021-04-29, matches ETHEREUM config
+    interval: 2400, // ~8h at Ethereum's ~12s block time
+  },
 ];
 
 indexer.onBlock(
