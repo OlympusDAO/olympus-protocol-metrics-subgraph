@@ -139,6 +139,8 @@ async function processSnapshot(
   for (const supply of supplies) {
     const entity: TokenSupply = {
       id: supply.id,
+      chainId: supply.chainId,
+      blockchain: supply.blockchain,
       block: BigInt(supply.block),
       date: supply.date,
       timestamp: BigInt(supply.timestamp),

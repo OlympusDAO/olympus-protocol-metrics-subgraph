@@ -26,7 +26,9 @@ type ProtocolMetric {
 
 # Represents the balance of a specific token in the treasury
 type TokenRecord {
-  id: ID! # YYYY-MM-DD/<block>/<source>/<token>
+  id: ID! # <chainId>-YYYY-MM-DD/<block>/<source>/<token>
+  chainId: Int! @index
+  blockchain: String!
   block: BigInt!
   timestamp: BigInt! # Unix timestamp in UTC
   date: String!
@@ -42,12 +44,13 @@ type TokenRecord {
   category: String!
   isLiquid: Boolean!
   isBluechip: Boolean!
-  blockchain: String!
 }
 
 # Represents a balance that affects the supply of OHM
 type TokenSupply {
-  id: ID! # YYYY-MM-DD/<block>/<token>/<type>/<pool>/<source>
+  id: ID! # <chainId>-YYYY-MM-DD/<block>/<token>/<type>/<pool>/<source>
+  chainId: Int! @index
+  blockchain: String!
   block: BigInt!
   timestamp: BigInt! # Unix timestamp in UTC
   date: String! # YYYY-MM-DD

@@ -1,5 +1,7 @@
 export type SerializedTokenRecord = {
   id: string;
+  chainId: number;
+  blockchain: string;
   block: string;
   timestamp: string;
   date: string;
@@ -15,11 +17,12 @@ export type SerializedTokenRecord = {
   category: string;
   isLiquid: boolean;
   isBluechip: boolean;
-  blockchain: string;
 };
 
 export type SerializedTokenSupply = {
   id: string;
+  chainId: number;
+  blockchain: string;
   block: string;
   timestamp: string;
   date: string;
