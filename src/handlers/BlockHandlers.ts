@@ -1,5 +1,10 @@
 import BigNumberCtor, { type default as BigNumber } from "bignumber.js";
 import {
+  aggregateAcrossChains,
+  computeDerivedRatios,
+  computePerChainAggregate,
+} from "../snapshot/global";
+import {
   BigDecimal,
   type EvmOnBlockContext,
   indexer,
@@ -133,13 +138,13 @@ async function processSnapshot(
   const records: SerializedTokenRecord[] = [];
   const supplies: SerializedTokenSupply[] = [];
 
+  // TODO(timestamp): use the chain's block timestamp once Envio's onBlock
+  // handler surfaces it. For now we use the block number as the timestamp
+  // value so the snapshot record IDs stay unique and the field is populated.
+  const timestamp = blockNumber;
+
   await withContractReadCache(() =>
     withPricingCache(async () => {
-      // TODO(timestamp): use the chain's block timestamp once Envio's onBlock
-      // handler surfaces it. For now we use the block number as the timestamp
-      // value so the snapshot record IDs stay unique and the field is populated.
-      const timestamp = blockNumber;
-
       await pushTokenBalanceRecords(context, config, client, records, timestamp, blockNumber);
       await pushOwnedLiquidityRecords(context, config, client, records, timestamp, blockNumber);
       if (config.chainId === 42161) {
@@ -206,10 +211,162 @@ async function processSnapshot(
     context.TokenSupply.set(entity);
   }
 
+  // Update the cross-chain GlobalMetricSnapshot for this date. The current
+  // chain's per-day aggregate is recomputed in-memory from the records we
+  // just produced; other chains' per-day aggregates are read back from the
+  // existing GlobalMetricChainValues entities.
+  await updateGlobalMetricSnapshot(context, config, blockNumber, timestamp, records, supplies);
+
   context.log.info(
     `Finished ${name} block ${blockNumberInput} on chain ${chainId} in ${Date.now() - startedAt}ms`,
     { tokenRecords: records.length, tokenSupplies: supplies.length },
   );
+}
+
+// ----- Global metric snapshot (Phase 5) -----
+
+async function updateGlobalMetricSnapshot(
+  context: EvmOnBlockContext,
+  config: ChainConfig,
+  blockNumber: bigint,
+  timestamp: bigint,
+  records: SerializedTokenRecord[],
+  supplies: SerializedTokenSupply[],
+): Promise<void> {
+  // All records share the same date — pull it from the first one. If both
+  // arrays are empty we have nothing to aggregate; skip.
+  const date = records[0]?.date ?? supplies[0]?.date;
+  if (!date) return;
+
+  // Compute this chain's per-day aggregate from the records we just pushed.
+  const thisChain = computePerChainAggregate(
+    config.chainId,
+    config.blockchain,
+    date,
+    blockNumber,
+    timestamp,
+    records,
+    supplies,
+  );
+
+  // Persist the per-chain values entity. ID is "{chainId}-YYYY-MM-DD" so
+  // repeat snapshots for the same UTC date overwrite cleanly.
+  const chainValuesId = `${config.chainId}-${date}`;
+  const snapshotId = date;
+  context.GlobalMetricChainValues.set({
+    id: chainValuesId,
+    snapshot_id: snapshotId,
+    chainId: config.chainId,
+    blockchain: config.blockchain,
+    date,
+    block: blockNumber,
+    timestamp,
+    ohmTotalSupply: new BigDecimal(thisChain.ohmTotalSupply.toString(10)),
+    ohmCirculatingSupply: new BigDecimal(thisChain.ohmCirculatingSupply.toString(10)),
+    ohmFloatingSupply: new BigDecimal(thisChain.ohmFloatingSupply.toString(10)),
+    ohmBackedSupply: new BigDecimal(thisChain.ohmBackedSupply.toString(10)),
+    treasuryMarketValue: new BigDecimal(thisChain.treasuryMarketValue.toString(10)),
+    treasuryLiquidBacking: new BigDecimal(thisChain.treasuryLiquidBacking.toString(10)),
+  });
+
+  // Pull other chains' values back from the store. We rebuild per-chain
+  // PerChainAggregate objects from the stored fields, keeping supplyCategories
+  // empty for non-current chains (categories are recomputed cross-chain below
+  // from this chain's supplies plus stored category rows).
+  const allChainValues = await context.GlobalMetricChainValues.getWhere({
+    date: { _eq: date },
+  });
+  const perChainAggregates = allChainValues.map((entity) => {
+    if (entity.chainId === config.chainId) return thisChain;
+    return {
+      chainId: entity.chainId,
+      blockchain: entity.blockchain,
+      date: entity.date,
+      block: entity.block,
+      timestamp: entity.timestamp,
+      ohmTotalSupply: new BigNumberCtor(entity.ohmTotalSupply.toString()),
+      ohmCirculatingSupply: new BigNumberCtor(entity.ohmCirculatingSupply.toString()),
+      ohmFloatingSupply: new BigNumberCtor(entity.ohmFloatingSupply.toString()),
+      ohmBackedSupply: new BigNumberCtor(entity.ohmBackedSupply.toString()),
+      treasuryMarketValue: new BigNumberCtor(entity.treasuryMarketValue.toString()),
+      treasuryLiquidBacking: new BigNumberCtor(entity.treasuryLiquidBacking.toString()),
+      supplyCategories: new Map<string, { balance: BigNumber; supplyBalance: BigNumber }>(),
+    };
+  });
+  // Ensure this chain's entry is present (getWhere may have a slight read
+  // delay between the set we just performed and the read).
+  if (!perChainAggregates.some((agg) => agg.chainId === config.chainId)) {
+    perChainAggregates.push(thisChain);
+  }
+
+  const aggregate = aggregateAcrossChains(date, perChainAggregates);
+
+  // Canonical (Ethereum-only) fields. ohmIndex sourced from OhmIndexState;
+  // the rest stay at 0 for now and get filled in by follow-up commits
+  // (ohmApy needs rebase data; ohmPrice/gOhmPrice need a snapshot-time
+  // pricing path that we'll plumb when the global aggregate is consumed
+  // by the Phase 6 parity harness).
+  let ohmIndex = new BigNumberCtor("0");
+  if (config.migrationOffset?.sOhmAddress) {
+    const indexState = await context.OhmIndexState.get(
+      `${config.chainId}-${addr(config.migrationOffset.sOhmAddress)}`,
+    );
+    if (indexState && indexState.index > 0n) {
+      ohmIndex = new BigNumberCtor(indexState.index.toString()).div(
+        new BigNumberCtor("1000000000"),
+      );
+    }
+  }
+  const ohmPrice = new BigNumberCtor("0");
+  const gOhmPrice = ohmPrice.times(ohmIndex);
+  const ratios = computeDerivedRatios(aggregate, ohmPrice, ohmIndex);
+
+  context.GlobalMetricSnapshot.set({
+    id: snapshotId,
+    date,
+    updatedAtTimestamp: timestamp,
+    crossChainComplete: aggregate.crossChainComplete,
+    chainsIndexed: aggregate.chainsIndexed,
+    chainsMissing: aggregate.chainsMissing,
+    ohmTotalSupply: new BigDecimal(aggregate.ohmTotalSupply.toString(10)),
+    ohmCirculatingSupply: new BigDecimal(aggregate.ohmCirculatingSupply.toString(10)),
+    ohmFloatingSupply: new BigDecimal(aggregate.ohmFloatingSupply.toString(10)),
+    ohmBackedSupply: new BigDecimal(aggregate.ohmBackedSupply.toString(10)),
+    gOhmBackedSupply: new BigDecimal(ratios.gOhmBackedSupply.toString(10)),
+    treasuryMarketValue: new BigDecimal(aggregate.treasuryMarketValue.toString(10)),
+    treasuryLiquidBacking: new BigDecimal(aggregate.treasuryLiquidBacking.toString(10)),
+    ohmIndex: new BigDecimal(ohmIndex.toString(10)),
+    ohmApy: new BigDecimal("0"),
+    ohmPrice: new BigDecimal(ohmPrice.toString(10)),
+    gOhmPrice: new BigDecimal(gOhmPrice.toString(10)),
+    sOhmCirculatingSupply: new BigDecimal("0"),
+    sOhmTotalValueLocked: new BigDecimal("0"),
+    marketCap: new BigDecimal(ratios.marketCap.toString(10)),
+    treasuryLiquidBackingPerOhmFloating: new BigDecimal(
+      ratios.treasuryLiquidBackingPerOhmFloating.toString(10),
+    ),
+    treasuryLiquidBackingPerOhmBacked: new BigDecimal(
+      ratios.treasuryLiquidBackingPerOhmBacked.toString(10),
+    ),
+    treasuryLiquidBackingPerGOhmBacked: new BigDecimal(
+      ratios.treasuryLiquidBackingPerGOhmBacked.toString(10),
+    ),
+  });
+
+  // Write GlobalMetricSupplyCategory rows from this chain's supplies. Each
+  // (date, category) row carries both `balance` (raw on-chain) and
+  // `supplyBalance` (signed contribution to circulating). Cross-chain
+  // aggregation across multiple chains' category rows is a follow-up.
+  for (const [type, bucket] of thisChain.supplyCategories) {
+    context.GlobalMetricSupplyCategory.set({
+      id: `${date}-${type}-${config.chainId}`,
+      snapshot_id: snapshotId,
+      date,
+      category: type,
+      balance: new BigDecimal(bucket.balance.toString(10)),
+      supplyBalance: new BigDecimal(bucket.supplyBalance.toString(10)),
+    });
+  }
 }
 
 // ----- Token records (treasury balances) -----

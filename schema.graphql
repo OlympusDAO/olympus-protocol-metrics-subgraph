@@ -115,7 +115,7 @@ type TokenRecord {
   blockchain: String!
   block: BigInt!
   timestamp: BigInt! # Unix timestamp in UTC
-  date: String!
+  date: String! @index
   token: String!
   tokenAddress: String!
   source: String!
@@ -137,7 +137,7 @@ type TokenSupply {
   blockchain: String!
   block: BigInt!
   timestamp: BigInt! # Unix timestamp in UTC
-  date: String! # YYYY-MM-DD
+  date: String! @index # YYYY-MM-DD
   token: String!
   tokenAddress: String!
   pool: String

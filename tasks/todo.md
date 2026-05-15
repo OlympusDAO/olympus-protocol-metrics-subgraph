@@ -72,7 +72,8 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
   - [x] `e1f39d3` — `feat(handlers): port Olympus V1 bond auction supply tracking`. GnosisAuction now chainId-scoped; BondManager.GnosisAuctionLaunched + GnosisEasyAuction.AuctionCleared handlers; `pushGnosisAuctionSupply` snapshot path emits PREMINTED/VESTING/DEPOSITS rows; `readBondManagerState` effect; BondManager OHM balance from TokenBalance for partial-burn adjustment. 4 new tests.
   - [x] `e8ee912` — `feat(chains-ethereum): port OHM V1→V2 migration offset`. `ChainConfig.migrationOffset` (start/end blocks + sOhmAddress + offsetOhm) → `pushMigrationOffsetSupply` writes one OHM_MIGRATION_OFFSET row sourced from OhmIndexState (no RPC).
   - [ ] Aura/Convex wrapper handlers.
-  - [ ] Curve / FraxSwap / ERC4626 vault handlers.
+  - [x] `c5e05f0` — `feat(pricing): add Erc4626PriceHandler for sDAI / sUSDe / sUSDS / Gauntlet sUSDS`. New `erc4626` LiquidityHandler kind + cached `readErc4626AssetsPerShare` effect + Ethereum config wiring for 4 vaults.
+  - [ ] Curve / FraxSwap handlers.
   - [ ] Univ3 NFT POL positions.
 - [ ] Per-chain snapshot validation tests (1+ test per chain asserting at least one TokenRecord row builds correctly).
 
