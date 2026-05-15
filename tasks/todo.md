@@ -61,7 +61,7 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
 - [x] `00a86e9` — `feat(chains): add Fantom (chainId 250)`. 11 ERC20s + 1 POL (UniV2 wFTM-gOHM), 2 wallets, no Chainlink, fixed legacy abbreviation/name-map bugs (L2/L3) by using separate `names`/`abbreviations` maps.
 - [x] `59d1539` — `feat(handlers): wire NativeBalanceState via snapshot-time getBalance`. Closes inherited TODO #2. Wires native ETH on Arbitrum + Base, native BERA on Berachain (was already configured but skipped), native FTM on Fantom. Polygon native MATIC deferred (no convenient WMATIC pricing pool currently in config).
 - [ ] Add Ethereum — largest surface, treated as its own sub-phase:
-  - [ ] Baseline: tokens, wallets, Univ3 OHM pricing pools, 12 Chainlink feeds.
+  - [x] `288bb04` — `feat(chains): add Ethereum baseline`. 13 tokens (7 stables + 4 bluechips + 2 OHMs + gOHM + native ETH), 36-wallet shared list, 7 Chainlink feeds (USDS reuses DAI feed), 3 UniV3 pricing pools (WETH-OHM, WETH-wstETH, weETH-WETH), native ETH remap to WETH. OHM tokens excluded from treasury MV pending Buyback MS / Bophades refinements.
   - [ ] Bophades dynamic kernel resolution (TRSRY + clearinghouse addresses from Kernel events).
   - [ ] Cooler clearinghouse receivables (V1, V1.1, V2, MonoCooler) — verify CoolerV2 USDS bug per Phase 1 decision #5.
   - [ ] BLV vault registry.
