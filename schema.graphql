@@ -205,7 +205,9 @@ type ClearinghouseAddress {
 # ---- Event-derived state used to build each snapshot without RPC ----
 
 # Running ERC20 balance of a wallet for a token. Maintained from Transfer events.
-# Used in place of balanceOf RPC reads at snapshot time.
+# Used in place of balanceOf RPC reads at snapshot time. Per @0xJem on PR #315
+# every event-driven state entity also has an immutable `XxxUpdate` companion
+# (one row per event) for historical / time-travel queries.
 # Native balances (e.g. BERA) are not represented here. TODO(native-balances).
 type TokenBalance {
   id: ID! # chainId-tokenAddress-walletAddress (all lowercase)
@@ -216,6 +218,17 @@ type TokenBalance {
   updatedAtBlock: BigInt!
 }
 
+type TokenBalanceUpdate {
+  id: ID! # chainId-tokenAddress-walletAddress-block-logIndex
+  chainId: Int! @index
+  tokenAddress: String! @index
+  walletAddress: String! @index
+  delta: BigInt! # signed change applied to the running balance for this event
+  balance: BigInt! # running balance AFTER applying the delta
+  block: BigInt! @index
+  timestamp: BigInt!
+}
+
 # Running ERC20 totalSupply. Maintained from Transfer-from-zero (mint) and Transfer-to-zero (burn).
 type Erc20Supply {
   id: ID! # chainId-tokenAddress
@@ -223,6 +236,16 @@ type Erc20Supply {
   tokenAddress: String!
   totalSupply: BigInt!
   updatedAtBlock: BigInt!
+}
+
+type Erc20SupplyUpdate {
+  id: ID! # chainId-tokenAddress-block-logIndex
+  chainId: Int! @index
+  tokenAddress: String! @index
+  delta: BigInt! # signed change applied to the running total supply
+  totalSupply: BigInt! # running total supply AFTER applying the delta
+  block: BigInt! @index
+  timestamp: BigInt!
 }
 
 # Whether an Olympus Lender AMO is currently active and its running deployed-OHM
@@ -258,6 +281,16 @@ type Univ2PoolState {
   updatedAtBlock: BigInt!
 }
 
+type Univ2PoolUpdate {
+  id: ID! # chainId-poolAddress-block-logIndex
+  chainId: Int! @index
+  poolAddress: String! @index
+  reserve0: BigInt!
+  reserve1: BigInt!
+  block: BigInt! @index
+  timestamp: BigInt!
+}
+
 # Balancer V2 pool token balances. Tokens array is set on the first event seen
 # (TokensRegistered, PoolBalanceChanged, or Swap) — for pools that were created
 # before the chain's start_block, the balances are seeded via a one-shot cached
@@ -269,6 +302,16 @@ type BalancerPoolState {
   tokens: [String!]!
   balances: [BigInt!]!
   updatedAtBlock: BigInt!
+}
+
+type BalancerPoolUpdate {
+  id: ID! # chainId-poolId-block-logIndex
+  chainId: Int! @index
+  poolId: String! @index
+  tokens: [String!]!
+  balances: [BigInt!]!
+  block: BigInt! @index
+  timestamp: BigInt!
 }
 
 # Maps a Kodiak LP wrapper to its underlying UniswapV3 pool. Populated once per
@@ -292,6 +335,17 @@ type Univ3PoolState {
   tick: BigInt!
   liquidity: BigInt!
   updatedAtBlock: BigInt!
+}
+
+type Univ3PoolUpdate {
+  id: ID! # chainId-poolAddress-block-logIndex
+  chainId: Int! @index
+  poolAddress: String! @index
+  sqrtPriceX96: BigInt!
+  tick: BigInt!
+  liquidity: BigInt!
+  block: BigInt! @index
+  timestamp: BigInt!
 }
 
 # Running deposit on the Treasure Atlas Mine, keyed by user and deposit index.
@@ -320,9 +374,16 @@ type NativeBalanceState {
 
 # Chainlink feed answer maintained from AnswerUpdated aggregator events.
 # Replaces snapshot-time latestAnswer / latestRoundData RPC calls in the
-# legacy subgraphs (subgraphs/*/src/price/PriceChainlink.ts). The recursive
-# pricing router (Phase 3) reads from this entity as a base case rather than
-# calling the feed contract per snapshot.
+# legacy subgraphs (subgraphs/*/src/price/PriceChainlink.ts).
+#
+# Two-tier persistence (per @0xJem on PR #315):
+# - `ChainlinkPriceUpdate`: immutable, one row per AnswerUpdated event,
+#   keyed by (chainId, feedAddress, block, logIndex). Consumers can query
+#   the historical price at any block via a `block_lte` filter.
+# - `ChainlinkPriceState`: mutable "latest" pointer keyed by
+#   (chainId, feedAddress). Snapshot path reads from this for O(1)
+#   lookup; Envio's within-chain event ordering guarantees it reflects
+#   all prior events at the snapshot block.
 #
 # tokenAddress is the asset the feed prices (e.g. for ETH/USD on Arbitrum,
 # tokenAddress = WETH on Arbitrum). decimals is the feed's `decimals()` —
@@ -337,6 +398,18 @@ type ChainlinkPriceState {
   roundId: BigInt!
   updatedAtBlock: BigInt!
   updatedAtTimestamp: BigInt!
+}
+
+type ChainlinkPriceUpdate {
+  id: ID! # chainId-feedAddress-block-logIndex
+  chainId: Int! @index
+  feedAddress: String! @index
+  tokenAddress: String! @index
+  answer: BigInt!
+  decimals: Int!
+  roundId: BigInt!
+  block: BigInt! @index
+  timestamp: BigInt!
 }
 
 # Latest sOHM (rebasing) index per chain. The sOHM V3 contract emits
@@ -358,4 +431,14 @@ type OhmIndexState {
   epoch: BigInt!
   updatedAtBlock: BigInt!
   updatedAtTimestamp: BigInt!
+}
+
+type OhmIndexUpdate {
+  id: ID! # chainId-sOhmAddress-block-logIndex
+  chainId: Int! @index
+  sOhmAddress: String! @index
+  index: BigInt!
+  epoch: BigInt!
+  block: BigInt! @index
+  timestamp: BigInt!
 }

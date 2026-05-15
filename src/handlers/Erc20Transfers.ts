@@ -1,4 +1,11 @@
-import { type Erc20Supply, indexer, type LenderAmo, type TokenBalance } from "envio";
+import {
+  type Erc20Supply,
+  type Erc20SupplyUpdate,
+  indexer,
+  type LenderAmo,
+  type TokenBalance,
+  type TokenBalanceUpdate,
+} from "envio";
 
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { addr } from "../snapshot/math";
@@ -22,30 +29,51 @@ function erc20SupplyId(chainId: number, tokenAddress: string): string {
   return `${chainId}-${addr(tokenAddress)}`;
 }
 
+// Per @0xJem on PR #315: every state mutation also persists an immutable
+// `XxxUpdate` row keyed by (..., block, logIndex). The mutable XxxState
+// row is the snapshot's fast O(1) latest pointer.
+type EventMeta = { block: number; timestamp: number; logIndex: number };
+
 async function applyTransferToWalletBalance(
   context: {
     TokenBalance: {
       get: (id: string) => Promise<TokenBalance | undefined>;
       set: (entity: TokenBalance) => void;
     };
+    TokenBalanceUpdate: { set: (entity: TokenBalanceUpdate) => void };
   },
   chainId: number,
   tokenAddress: string,
   walletAddress: string,
   delta: bigint,
-  blockNumber: number,
+  meta: EventMeta,
 ): Promise<void> {
   const id = tokenBalanceId(chainId, tokenAddress, walletAddress);
   const existing = await context.TokenBalance.get(id);
   const previous = existing?.balance ?? 0n;
   const next = previous + delta;
+  const block = BigInt(meta.block);
+  const tokenLower = addr(tokenAddress);
+  const walletLower = addr(walletAddress);
+
+  context.TokenBalanceUpdate.set({
+    id: `${chainId}-${tokenLower}-${walletLower}-${block}-${meta.logIndex}`,
+    chainId,
+    tokenAddress: tokenLower,
+    walletAddress: walletLower,
+    delta,
+    balance: next,
+    block,
+    timestamp: BigInt(meta.timestamp),
+  });
+
   context.TokenBalance.set({
     id,
     chainId,
-    tokenAddress: addr(tokenAddress),
-    walletAddress: addr(walletAddress),
+    tokenAddress: tokenLower,
+    walletAddress: walletLower,
     balance: next,
-    updatedAtBlock: BigInt(blockNumber),
+    updatedAtBlock: block,
   });
 }
 
@@ -78,22 +106,37 @@ async function applyMintBurnToSupply(
       get: (id: string) => Promise<Erc20Supply | undefined>;
       set: (entity: Erc20Supply) => void;
     };
+    Erc20SupplyUpdate: { set: (entity: Erc20SupplyUpdate) => void };
   },
   chainId: number,
   tokenAddress: string,
   delta: bigint,
-  blockNumber: number,
+  meta: EventMeta,
 ): Promise<void> {
   const id = erc20SupplyId(chainId, tokenAddress);
   const existing = await context.Erc20Supply.get(id);
   const previous = existing?.totalSupply ?? 0n;
-  const next = previous + delta;
+  const nextRaw = previous + delta;
+  const next = nextRaw < 0n ? 0n : nextRaw;
+  const block = BigInt(meta.block);
+  const tokenLower = addr(tokenAddress);
+
+  context.Erc20SupplyUpdate.set({
+    id: `${chainId}-${tokenLower}-${block}-${meta.logIndex}`,
+    chainId,
+    tokenAddress: tokenLower,
+    delta,
+    totalSupply: next,
+    block,
+    timestamp: BigInt(meta.timestamp),
+  });
+
   context.Erc20Supply.set({
     id,
     chainId,
-    tokenAddress: addr(tokenAddress),
-    totalSupply: next < 0n ? 0n : next,
-    updatedAtBlock: BigInt(blockNumber),
+    tokenAddress: tokenLower,
+    totalSupply: next,
+    updatedAtBlock: block,
   });
 }
 
@@ -116,26 +159,17 @@ indexer.onEvent(
     const to = addr(event.params.to);
     const value = event.params.value;
     const token = addr(event.srcAddress);
+    const meta: EventMeta = {
+      block: event.block.number,
+      timestamp: event.block.timestamp,
+      logIndex: event.logIndex,
+    };
 
     if (wallets.has(from)) {
-      await applyTransferToWalletBalance(
-        context,
-        event.chainId,
-        token,
-        from,
-        -value,
-        event.block.number,
-      );
+      await applyTransferToWalletBalance(context, event.chainId, token, from, -value, meta);
     }
     if (wallets.has(to)) {
-      await applyTransferToWalletBalance(
-        context,
-        event.chainId,
-        token,
-        to,
-        value,
-        event.block.number,
-      );
+      await applyTransferToWalletBalance(context, event.chainId, token, to, value, meta);
     }
   },
 );
@@ -164,36 +198,27 @@ indexer.onEvent(
     const to = addr(event.params.to);
     const value = event.params.value;
     const token = addr(event.srcAddress);
+    const meta: EventMeta = {
+      block: event.block.number,
+      timestamp: event.block.timestamp,
+      logIndex: event.logIndex,
+    };
 
     if (from === ZERO_ADDRESS) {
-      await applyMintBurnToSupply(context, event.chainId, token, value, event.block.number);
+      await applyMintBurnToSupply(context, event.chainId, token, value, meta);
       // Mint to an active Lender AMO → deployedOhm += value. Replaces the
       // per-snapshot getDeployedOhm RPC call.
       await applyDeployedOhmDelta(context, event.chainId, to, value, event.block.number);
     } else if (wallets.has(from)) {
-      await applyTransferToWalletBalance(
-        context,
-        event.chainId,
-        token,
-        from,
-        -value,
-        event.block.number,
-      );
+      await applyTransferToWalletBalance(context, event.chainId, token, from, -value, meta);
     }
 
     if (to === ZERO_ADDRESS) {
-      await applyMintBurnToSupply(context, event.chainId, token, -value, event.block.number);
+      await applyMintBurnToSupply(context, event.chainId, token, -value, meta);
       // Burn from an active Lender AMO → deployedOhm -= value.
       await applyDeployedOhmDelta(context, event.chainId, from, -value, event.block.number);
     } else if (wallets.has(to)) {
-      await applyTransferToWalletBalance(
-        context,
-        event.chainId,
-        token,
-        to,
-        value,
-        event.block.number,
-      );
+      await applyTransferToWalletBalance(context, event.chainId, token, to, value, meta);
     }
   },
 );
@@ -218,7 +243,8 @@ export async function handleLpTransfer(args: {
   event: {
     chainId: number;
     srcAddress: string;
-    block: { number: number };
+    logIndex: number;
+    block: { number: number; timestamp: number };
     params: { from: string; to: string; value: bigint };
   };
   context: Parameters<typeof applyTransferToWalletBalance>[0] &
@@ -230,31 +256,22 @@ export async function handleLpTransfer(args: {
   const to = addr(event.params.to);
   const value = event.params.value;
   const token = addr(event.srcAddress);
+  const meta: EventMeta = {
+    block: event.block.number,
+    timestamp: event.block.timestamp,
+    logIndex: event.logIndex,
+  };
 
   if (from === ZERO_ADDRESS) {
-    await applyMintBurnToSupply(context, event.chainId, token, value, event.block.number);
+    await applyMintBurnToSupply(context, event.chainId, token, value, meta);
   } else if (wallets.has(from)) {
-    await applyTransferToWalletBalance(
-      context,
-      event.chainId,
-      token,
-      from,
-      -value,
-      event.block.number,
-    );
+    await applyTransferToWalletBalance(context, event.chainId, token, from, -value, meta);
   }
 
   if (to === ZERO_ADDRESS) {
-    await applyMintBurnToSupply(context, event.chainId, token, -value, event.block.number);
+    await applyMintBurnToSupply(context, event.chainId, token, -value, meta);
   } else if (wallets.has(to)) {
-    await applyTransferToWalletBalance(
-      context,
-      event.chainId,
-      token,
-      to,
-      value,
-      event.block.number,
-    );
+    await applyTransferToWalletBalance(context, event.chainId, token, to, value, meta);
   }
 }
 

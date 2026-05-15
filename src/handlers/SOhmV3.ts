@@ -1,13 +1,14 @@
-import { type OhmIndexState, indexer } from "envio";
+import { type OhmIndexState, type OhmIndexUpdate, indexer } from "envio";
 
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { addr } from "../snapshot/math";
 
 // sOHM V3 emits LogRebase(epoch, rebase, index) on every staking-epoch
-// rebase. We persist the latest `index` into OhmIndexState so the gOHM
-// pricing handler can compute gOHM_price = OHM_price * index / 10^9 without
-// a snapshot-time RPC. Legacy reads sOHMv3.index() directly via
-// `getCurrentIndex` (subgraphs/shared/src/supply/OhmCalculations.ts).
+// rebase. Per @0xJem on PR #315 we persist two entities:
+// - `OhmIndexUpdate`: immutable per-event record (block-keyed) for
+//   historical / time-travel queries of the rebase index.
+// - `OhmIndexState`: mutable "latest" pointer used by the gOHM pricing
+//   handler for O(1) snapshot-time reads.
 //
 // Source addresses not declared on any chain's `gohm` LiquidityHandler are
 // silently ignored — config.yaml gates which contracts even reach this
@@ -18,6 +19,7 @@ export async function applyLogRebase(
   event: {
     chainId: number;
     srcAddress: string;
+    logIndex: number;
     block: { number: number; timestamp: number };
     params: { epoch: bigint; rebase: bigint; index: bigint };
   },
@@ -26,6 +28,7 @@ export async function applyLogRebase(
       get: (id: string) => Promise<OhmIndexState | undefined>;
       set: (entity: OhmIndexState) => void;
     };
+    OhmIndexUpdate: { set: (entity: OhmIndexUpdate) => void };
   },
 ): Promise<void> {
   const chainConfig = CHAIN_CONFIGS[event.chainId as keyof typeof CHAIN_CONFIGS];
@@ -37,14 +40,27 @@ export async function applyLogRebase(
   );
   if (!handler || handler.kind !== "gohm") return;
 
+  const block = BigInt(event.block.number);
+  const timestamp = BigInt(event.block.timestamp);
+
+  context.OhmIndexUpdate.set({
+    id: `${event.chainId}-${sOhmAddress}-${block}-${event.logIndex}`,
+    chainId: event.chainId,
+    sOhmAddress,
+    index: event.params.index,
+    epoch: event.params.epoch,
+    block,
+    timestamp,
+  } satisfies OhmIndexUpdate);
+
   context.OhmIndexState.set({
     id: `${event.chainId}-${sOhmAddress}`,
     chainId: event.chainId,
     sOhmAddress,
     index: event.params.index,
     epoch: event.params.epoch,
-    updatedAtBlock: BigInt(event.block.number),
-    updatedAtTimestamp: BigInt(event.block.timestamp),
+    updatedAtBlock: block,
+    updatedAtTimestamp: timestamp,
   } satisfies OhmIndexState);
 }
 

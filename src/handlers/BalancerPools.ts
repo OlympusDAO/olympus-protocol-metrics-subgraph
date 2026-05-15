@@ -1,9 +1,36 @@
-import { type BalancerPoolState, type EvmOnEventContext, indexer } from "envio";
+import {
+  type BalancerPoolState,
+  type BalancerPoolUpdate,
+  type EvmOnEventContext,
+  indexer,
+} from "envio";
 
 import { seedBalancerPool } from "../effects";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { addr } from "../snapshot/math";
 import type { ChainId } from "../snapshot/types";
+
+// Per @0xJem on PR #315 every state mutation also persists an immutable
+// `BalancerPoolUpdate` row keyed by (chainId, poolId, block, logIndex).
+function setBalancerPoolBoth(
+  context: {
+    BalancerPoolState: { set: (entity: BalancerPoolState) => void };
+    BalancerPoolUpdate: { set: (entity: BalancerPoolUpdate) => void };
+  },
+  state: BalancerPoolState,
+  meta: { block: bigint; timestamp: bigint; logIndex: number },
+): void {
+  context.BalancerPoolUpdate.set({
+    id: `${state.chainId}-${state.poolId}-${meta.block}-${meta.logIndex}`,
+    chainId: state.chainId,
+    poolId: state.poolId,
+    tokens: state.tokens,
+    balances: state.balances,
+    block: meta.block,
+    timestamp: meta.timestamp,
+  });
+  context.BalancerPoolState.set(state);
+}
 
 // The Balancer V2 Vault is one shared contract per chain that hosts *every*
 // pool. Without an event-level filter on poolId, HyperSync would deliver every
@@ -32,7 +59,7 @@ async function ensurePoolState(
   chainId: number,
   vault: string,
   poolId: string,
-  blockNumber: number,
+  meta: { block: bigint; timestamp: bigint; logIndex: number },
 ): Promise<{ state: BalancerPoolState; isSeed: boolean }> {
   const id = balancerPoolStateId(chainId, poolId);
   const existing = await context.BalancerPoolState.get(id);
@@ -45,7 +72,7 @@ async function ensurePoolState(
     chainId,
     vault: addr(vault),
     poolId: poolId.toLowerCase(),
-    atBlock: blockNumber,
+    atBlock: Number(meta.block),
   })) as { tokens: string[]; balances: string[] };
 
   const state: BalancerPoolState = {
@@ -54,9 +81,9 @@ async function ensurePoolState(
     poolId: poolId.toLowerCase(),
     tokens: seed.tokens,
     balances: seed.balances.map((value) => BigInt(value)),
-    updatedAtBlock: BigInt(blockNumber),
+    updatedAtBlock: meta.block,
   };
-  context.BalancerPoolState.set(state);
+  setBalancerPoolBoth(context, state, meta);
   return { state, isSeed: true };
 }
 
@@ -85,14 +112,19 @@ indexer.onEvent(
       // we don't expect this to fire twice — log and skip.
       return;
     }
-    context.BalancerPoolState.set({
-      id,
-      chainId: event.chainId,
-      poolId,
-      tokens,
-      balances: tokens.map(() => 0n),
-      updatedAtBlock: BigInt(event.block.number),
-    });
+    const block = BigInt(event.block.number);
+    setBalancerPoolBoth(
+      context,
+      {
+        id,
+        chainId: event.chainId,
+        poolId,
+        tokens,
+        balances: tokens.map(() => 0n),
+        updatedAtBlock: block,
+      },
+      { block, timestamp: BigInt(event.block.timestamp), logIndex: event.logIndex },
+    );
   },
 );
 
@@ -106,12 +138,14 @@ indexer.onEvent(
     where: buildBalancerPoolIdWhere,
   },
   async ({ event, context }) => {
+    const block = BigInt(event.block.number);
+    const meta = { block, timestamp: BigInt(event.block.timestamp), logIndex: event.logIndex };
     const { state, isSeed } = await ensurePoolState(
       context,
       event.chainId,
       event.srcAddress,
       event.params.poolId,
-      event.block.number,
+      meta,
     );
     // The seed read used the same block as the event so the new balances are
     // already reflected in the seed. Skip applying the delta to avoid
@@ -128,11 +162,15 @@ indexer.onEvent(
       balances[idx] = balances[idx] + deltas[i] - fees[i];
     }
 
-    context.BalancerPoolState.set({
-      ...state,
-      balances,
-      updatedAtBlock: BigInt(event.block.number),
-    });
+    setBalancerPoolBoth(
+      context,
+      {
+        ...state,
+        balances,
+        updatedAtBlock: block,
+      },
+      meta,
+    );
   },
 );
 
@@ -146,12 +184,14 @@ indexer.onEvent(
     where: buildBalancerPoolIdWhere,
   },
   async ({ event, context }) => {
+    const block = BigInt(event.block.number);
+    const meta = { block, timestamp: BigInt(event.block.timestamp), logIndex: event.logIndex };
     const { state, isSeed } = await ensurePoolState(
       context,
       event.chainId,
       event.srcAddress,
       event.params.poolId,
-      event.block.number,
+      meta,
     );
     if (isSeed) return;
 
@@ -163,10 +203,14 @@ indexer.onEvent(
     balances[idxIn] = balances[idxIn] + event.params.amountIn;
     balances[idxOut] = balances[idxOut] - event.params.amountOut;
 
-    context.BalancerPoolState.set({
-      ...state,
-      balances,
-      updatedAtBlock: BigInt(event.block.number),
-    });
+    setBalancerPoolBoth(
+      context,
+      {
+        ...state,
+        balances,
+        updatedAtBlock: block,
+      },
+      meta,
+    );
   },
 );
