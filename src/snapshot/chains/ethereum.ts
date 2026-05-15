@@ -514,6 +514,16 @@ export const ETHEREUM: ChainConfig = {
     address: addr("0xf577c77ee3578c7f216327f41b5d7221ead2b2a3"),
     startBlock: 16_226_955,
   },
+  // OHM V1 → V2 migration offset. Per inventory §7: 2013 × sOHM-V3 index
+  // OHM is subtracted from total supply between [14_381_564, 24_550_660)
+  // to account for stranded gOHM pre-minted for OHM V1 LP migrations.
+  migrationOffset: {
+    migrationContract: addr("0x184f3fad8618a6f458c16bae63f70c426fe784b3"),
+    sOhmAddress: ERC20_SOHM_V3,
+    offsetOhm: "2013",
+    startBlock: 14_381_564,
+    endBlock: 24_550_660,
+  },
   liquidityHandlers,
   ownedLiquidityHandlers,
 };

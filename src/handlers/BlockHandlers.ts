@@ -164,6 +164,9 @@ async function processSnapshot(
         if (config.bondManager) {
           await pushGnosisAuctionSupply(context, config, supplies, timestamp, blockNumber);
         }
+        if (config.migrationOffset) {
+          await pushMigrationOffsetSupply(context, config, supplies, timestamp, blockNumber);
+        }
       }
     }),
   );
@@ -527,6 +530,51 @@ async function pushBlvSupply(
       ),
     );
   }
+}
+
+// ----- Migration offset supply (Ethereum) -----
+
+const SOHM_INDEX_DECIMALS = 9;
+const TYPE_OFFSET = "OHM Migration Offset";
+
+async function pushMigrationOffsetSupply(
+  context: EvmOnBlockContext,
+  config: ChainConfig,
+  supplies: SerializedTokenSupply[],
+  timestamp: bigint,
+  blockNumber: bigint,
+): Promise<void> {
+  const offset = config.migrationOffset;
+  if (!offset) return;
+  if (blockNumber < BigInt(offset.startBlock)) return;
+  if (blockNumber >= BigInt(offset.endBlock)) return;
+
+  const indexState = await context.OhmIndexState.get(
+    `${config.chainId}-${addr(offset.sOhmAddress)}`,
+  );
+  if (!indexState || indexState.index === 0n) return;
+
+  const index = toDecimal(indexState.index, SOHM_INDEX_DECIMALS);
+  const offsetOhm = new BigNumberCtor(offset.offsetOhm);
+  const offsetAmount = offsetOhm.times(index);
+  if (offsetAmount.eq(ZERO)) return;
+
+  supplies.push(
+    createTokenSupply(
+      config,
+      timestamp,
+      getContractName(config, config.ohmToken),
+      config.ohmToken,
+      undefined,
+      undefined,
+      getContractName(config, offset.migrationContract),
+      offset.migrationContract,
+      TYPE_OFFSET,
+      offsetAmount,
+      blockNumber,
+      -1,
+    ),
+  );
 }
 
 // ----- GnosisAuction bond supplies (Ethereum) -----

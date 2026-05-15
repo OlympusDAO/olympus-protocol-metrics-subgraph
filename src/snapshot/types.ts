@@ -107,6 +107,16 @@ export type ChainConfig = {
   coolerClearinghouses?: CoolerClearinghouse[];
   blvRegistry?: { address: string; startBlock: number };
   bondManager?: { address: string; startBlock: number };
+  // OHM V1 → V2 migration offset. Subtracts `offsetOhm × current sOHM index`
+  // OHM from supply between [startBlock, endBlock). Source: legacy
+  // OhmCalculations.getMigrationOffsetRecord.
+  migrationOffset?: {
+    migrationContract: string;
+    sOhmAddress: string; // sOHM V3 — used to look up OhmIndexState
+    offsetOhm: string; // 2013 (per inventory §7); read as BigDecimal
+    startBlock: number; // 14_381_564
+    endBlock: number; // 24_550_660 (exclusive)
+  };
   liquidityHandlers: LiquidityHandler[];
   ownedLiquidityHandlers: LiquidityHandler[];
 };
