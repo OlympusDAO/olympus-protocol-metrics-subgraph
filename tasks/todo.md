@@ -84,7 +84,7 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
 - [x] `4fc070d` — `feat(snapshot): resolve canonical ohmPrice/gOhmPrice in GlobalMetricSnapshot`. Ethereum's recursive pricing router resolves OHM USD price; gOhmPrice = ohmPrice × ohmIndex. Wrapped in pricing cache.
 - [x] `8decad7` — `feat(snapshot): sOhmCirculatingSupply + sOhmTotalValueLocked canonical fields`. `readSOhmCirculatingSupply` effect + sOhmTotalValueLocked = sOhmCirculatingSupply × ohmPrice. ohmApy still 0 with TODO (needs distributor.nextRewardFor + rebase tracking).
 - [x] `eee4485` — `feat(snapshot): port ohmApy canonical field (sums staking V1/V2/V3 epochs)`. `readNextOhmDistribution` effect + `computeApy` pure helper + `stakingContracts` ChainConfig. All seven Phase-1 canonical fields now populated.
-- [ ] Tests: complete / single-chain / late-day-update / missing-chain (integration-level)
+- [x] `dfe9e8c` — `test(snapshot): cover Phase 5 integration scenarios in aggregateAcrossChains`. All four named scenarios (complete / single-chain / late-day-update / missing-chain) covered. 61/61 tests green.
 
 ## Phase 6 — Parity harness
 

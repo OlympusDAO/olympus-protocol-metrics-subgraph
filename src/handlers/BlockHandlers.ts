@@ -439,7 +439,7 @@ async function updateGlobalMetricSnapshot(
 
 // ----- Token records (treasury balances) -----
 
-async function pushTokenBalanceRecords(
+export async function pushTokenBalanceRecords(
   context: EvmOnBlockContext,
   config: ChainConfig,
   client: ReturnType<typeof getClient>,

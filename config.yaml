@@ -354,10 +354,10 @@ chains:
           - "0x4f5923fc5fd4a93352581b38b7cd26943012decf" # aEthUSDe (Aave V3 receipt)
           - "0x72e95b8931767c79ba4eee721354d6e99a61d004" # variableDebtEthUSDC (Aave V3 liability)
           - "0x6df1c1e379bc5a00a7b4c6e67a203333772f45a8" # variableDebtEthUSDT (Aave V3 liability)
-          - "0x83F20F44975D03b1b09e64809B757c47f942BEeA" # sDAI (ERC4626)
-          - "0x9D39A5DE30e57443BfF2A8307A4256c8797A3497" # sUSDe (ERC4626)
-          - "0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD" # sUSDS (ERC4626)
-          - "0x0Eb5B03c0303f2F47cD81d7BE4275AF8Ed347576" # Gauntlet sUSDS Vault (ERC4626)
+          - "0x83f20f44975d03b1b09e64809b757c47f942beea" # sDAI (ERC4626)
+          - "0x9d39a5de30e57443bff2a8307a4256c8797a3497" # sUSDe (ERC4626)
+          - "0xa3931d71877c0e7a3148cb7eb4463524fec27fbd" # sUSDS (ERC4626)
+          - "0x0eb5b03c0303f2f47cd81d7be4275af8ed347576" # Gauntlet sUSDS Vault (ERC4626)
           - "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" # WETH
           - "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0" # wstETH
           - "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee" # weETH
