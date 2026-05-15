@@ -16,6 +16,7 @@ const ERC20_OXD = addr("0xc5A9848b9d145965d821AaeC8fA32aaEE026492d");
 const ERC20_USDC = addr("0x04068da6c83afcfa0e13ba15a6696662335d5b75");
 const ERC20_WETH = addr("0x74b23882a30290451a17c44f4f05243b6b58c76d"); // Multichain-bridged WETH on Fantom
 const ERC20_WFTM = addr("0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83");
+const NATIVE_FTM = "0x0000000000000000000000000000000000000000";
 
 // Pool addresses used for pricing on Fantom.
 const LP_UNISWAP_V2_BOO_WFTM = addr("0xec7178f4c41f346b2721907f5cf7628e388a7a58");
@@ -123,6 +124,8 @@ const liquidityHandlers: LiquidityHandler[] = [
     id: LP_UNISWAP_V2_WFTM_OXD,
     startBlock: FANTOM_START_BLOCK,
   },
+  // Native FTM prices via wFTM (1:1).
+  { kind: "remap", tokens: [NATIVE_FTM], id: NATIVE_FTM, target: ERC20_WFTM },
 ];
 
 export const FANTOM: ChainConfig = {
@@ -132,10 +135,14 @@ export const FANTOM: ChainConfig = {
   rpcUrls: rpcUrls("FANTOM", "https://rpc.ftm.tools"),
   ohmToken: ERC20_GOHM, // Fantom's OHM-family token is gOHM (no native OHM bridged).
   ohmStartBlock: FANTOM_START_BLOCK,
+  nativeToken: NATIVE_FTM,
   // Phase 1 decision #1: match legacy and emit no TokenSupply rows.
   emitsTokenSupply: false,
-  // Native FTM tracking deferred to the NativeBalanceState wiring commit.
   tokens: [
+    token(NATIVE_FTM, "Volatile", true, true, undefined, {
+      startBlock: FANTOM_START_BLOCK,
+      decimals: 18,
+    }),
     token(ERC20_BEETS, "Volatile", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,

@@ -13,6 +13,9 @@ const LP_UNISWAP_V3_OHM_USDC = addr("0x183ea22691c54806fe96555436dd312b6befac2f"
 const CHAINLINK_FEED_ETH_USD = addr("0x71041dddad3595f9ced3dccfbe3d1f4b0a16bb70");
 const CHAINLINK_FEED_USDC_USD = addr("0x7e860098f58bbfc8648a4311b374b1d669a2bc6b");
 
+// Native ETH (no token contract; balance read via getBalance).
+const NATIVE_ETH = "0x0000000000000000000000000000000000000000";
+
 // Protocol wallets.
 const DAO_MULTISIG = addr("0x18a390bd45bcc92652b9a91ad51aed7f1c1358f5");
 
@@ -68,6 +71,8 @@ const liquidityHandlers: LiquidityHandler[] = [
   { kind: "stable", tokens: [ERC20_USDC], id: "stable-usd" },
   univ2OhmWeth,
   univ3OhmUsdc,
+  // Native ETH prices via WETH (1:1).
+  { kind: "remap", tokens: [NATIVE_ETH], id: NATIVE_ETH, target: ERC20_WETH },
 ];
 
 export const BASE: ChainConfig = {
@@ -77,10 +82,12 @@ export const BASE: ChainConfig = {
   rpcUrls: rpcUrls("BASE", "https://base.llamarpc.com"),
   ohmToken: ERC20_OHM,
   ohmStartBlock: BASE_START_BLOCK,
-  // Native ETH tracking deferred to the NativeBalanceState wiring commit.
-  // The legacy Base subgraph could track native ETH but treasury holds
-  // wrapped WETH in practice (DAO MS interactions), so the gap is small.
+  nativeToken: NATIVE_ETH,
   tokens: [
+    token(NATIVE_ETH, "Volatile", true, true, undefined, {
+      startBlock: BASE_START_BLOCK,
+      decimals: 18,
+    }),
     token(ERC20_USDC, "Stable", true, false, undefined, {
       startBlock: BASE_START_BLOCK,
       decimals: 6,

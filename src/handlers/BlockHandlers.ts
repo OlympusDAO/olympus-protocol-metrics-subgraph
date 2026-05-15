@@ -3,9 +3,11 @@ import {
   BigDecimal,
   type EvmOnBlockContext,
   indexer,
+  type NativeBalanceState,
   type TokenRecord,
   type TokenSupply,
 } from "envio";
+import { getAddress } from "viem";
 import {
   getPrice,
   getTotalValue,
@@ -15,7 +17,7 @@ import {
 } from "../pricing";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { OLYMPUS_LENDER, SENTIMENT_LTOKEN, SILO_COLLATERAL } from "../snapshot/chains/arbitrum";
-import { getClient, withContractReadCache } from "../snapshot/contracts";
+import { getClient, getNativeBalance, withContractReadCache } from "../snapshot/contracts";
 import { addr, getTokenDecimals, isActive, matches, toDecimal, ZERO } from "../snapshot/math";
 import {
   createTokenRecord,
@@ -200,27 +202,23 @@ async function pushTokenBalanceRecords(
     for (const definition of config.tokens.filter((value) => value.category === category)) {
       if (!isActive(definition, blockNumber)) continue;
 
-      if (definition.address === config.nativeToken) {
-        // TODO(native-balances): native BERA balance has no Transfer event, so it
-        // is not maintained in TokenBalance. Skip for now; revisit by adding a
-        // bounded RPC `getBalance` per protocol address at snapshot time.
-        continue;
-      }
-
       const rate = (await getPrice(config, context, client, definition.address, blockNumber, null))
         .price;
       if (rate.eq(ZERO)) continue;
 
       const wallets = getWalletAddressesForContract(config, definition.address);
       const decimals = getTokenDecimals(config.tokens, definition.address);
+      const isNative = definition.address === config.nativeToken;
       for (const wallet of wallets) {
-        const balance = await readTokenBalance(
-          context,
-          config.chainId,
-          definition.address,
-          wallet,
-          decimals,
-        );
+        const balance = isNative
+          ? await readNativeBalance(context, client, config.chainId, wallet, decimals, blockNumber)
+          : await readTokenBalance(
+              context,
+              config.chainId,
+              definition.address,
+              wallet,
+              decimals,
+            );
         if (balance.eq(ZERO)) continue;
         records.push(
           createTokenRecord(
@@ -238,6 +236,29 @@ async function pushTokenBalanceRecords(
       }
     }
   }
+}
+
+// Bounded snapshot-time getBalance per protocol wallet. Closes inherited
+// TODO(native-balances) — native assets emit no Transfer event so they
+// can't be event-driven. Persists to NativeBalanceState so consumers can
+// query the running native balance per chain/wallet.
+async function readNativeBalance(
+  context: EvmOnBlockContext,
+  client: ReturnType<typeof getClient>,
+  chainId: number,
+  wallet: string,
+  decimals: number,
+  blockNumber: bigint,
+): Promise<BigNumber> {
+  const rawBalance = await getNativeBalance(client, getAddress(wallet), blockNumber);
+  context.NativeBalanceState.set({
+    id: `${chainId}-${addr(wallet)}`,
+    chainId,
+    walletAddress: addr(wallet),
+    balance: rawBalance,
+    updatedAtBlock: blockNumber,
+  } satisfies NativeBalanceState);
+  return toDecimal(rawBalance, decimals);
 }
 
 // ----- Owned-liquidity records (LP balances from entities, prices via RPC) -----
