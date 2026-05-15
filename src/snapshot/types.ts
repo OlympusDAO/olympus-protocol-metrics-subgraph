@@ -89,6 +89,13 @@ export type ChainConfig = {
 export type LiquidityHandler =
   | { kind: "stable"; id: string; tokens: string[]; startBlock?: number }
   | { kind: "remap"; id: string; tokens: string[]; target: string; startBlock?: number }
+  | {
+      kind: "chainlink";
+      id: string; // feed (aggregator) address — also used as ChainlinkPriceState lookup key
+      tokens: string[]; // exactly one token: the asset this feed prices
+      decimals: number; // feed decimals (8 for USD pairs, 18 for ETH pairs)
+      startBlock?: number;
+    }
   | { kind: "univ2"; id: string; tokens: string[]; startBlock?: number }
   | { kind: "univ3"; id: string; tokens: string[]; startBlock?: number }
   | { kind: "univ3-quoter"; id: string; quoter: string; tokens: string[]; startBlock?: number }

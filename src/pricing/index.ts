@@ -6,6 +6,7 @@ import type { PublicClient } from "viem";
 import { isActive, ZERO } from "../snapshot/math";
 import type { ChainConfig, LiquidityHandler } from "../snapshot/types";
 import { BalancerPriceHandler } from "./balancer";
+import { ChainlinkPriceHandler } from "./chainlink";
 import { KodiakPriceHandler } from "./kodiak";
 import { RemapPriceHandler } from "./remap";
 import { StablePriceHandler } from "./stable";
@@ -21,6 +22,9 @@ export function createPriceHandler(
 ): PriceHandler {
   if (handler.kind === "stable") return new StablePriceHandler(config, context, client, handler);
   if (handler.kind === "remap") return new RemapPriceHandler(config, context, client, handler);
+  if (handler.kind === "chainlink") {
+    return new ChainlinkPriceHandler(config, context, client, handler);
+  }
   if (handler.kind === "univ2") return new Univ2PriceHandler(config, context, client, handler);
   if (handler.kind === "univ3") return new Univ3PriceHandler(config, context, client, handler);
   if (handler.kind === "univ3-quoter") {
