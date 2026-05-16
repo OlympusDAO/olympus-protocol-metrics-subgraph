@@ -56,7 +56,7 @@ type GlobalMetricChainValues {
   snapshot: GlobalMetricSnapshot!
   chainId: Int! @index
   blockchain: String!
-  date: String!
+  date: String! @index
   block: BigInt!
   timestamp: BigInt!
 
