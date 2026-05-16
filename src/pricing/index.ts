@@ -50,10 +50,21 @@ export function createPriceHandler(
   return new KodiakPriceHandler(config, context, client, handler);
 }
 
-const pricingCacheStorage = new AsyncLocalStorage<Map<string, Promise<unknown>>>();
+// `cache` memoizes in-flight + resolved lookups so concurrent calls share work.
+// `inFlight` separately tracks keys whose Promise hasn't settled yet, so a
+// recursive lookup that hits the same key can short-circuit instead of
+// awaiting a Promise that's transitively awaiting itself (which would
+// deadlock — the symptom that wedged the indexer; see tasks/envio-bug-report.md
+// for the original investigation).
+type PricingCacheStore = {
+  cache: Map<string, Promise<unknown>>;
+  inFlight: Set<string>;
+};
+
+const pricingCacheStorage = new AsyncLocalStorage<PricingCacheStore>();
 
 export async function withPricingCache<T>(operation: () => Promise<T>): Promise<T> {
-  return pricingCacheStorage.run(new Map(), operation);
+  return pricingCacheStorage.run({ cache: new Map(), inFlight: new Set() }, operation);
 }
 
 export async function getPrice(
@@ -67,6 +78,7 @@ export async function getPrice(
   return cachedPricingLookup(
     ["price", config.chainId, blockNumber.toString(), tokenAddress, currentPool],
     () => derivePrice(config, context, client, tokenAddress, blockNumber, currentPool),
+    ZERO_RESULT,
   );
 }
 
@@ -131,6 +143,7 @@ export async function getTotalValue(
           getPrice(config, context, client, lookupToken, lookupBlock, lookupPool),
         blockNumber,
       ),
+    null,
   );
 }
 
@@ -149,6 +162,7 @@ export async function getUnitPrice(
           getPrice(config, context, client, lookupToken, lookupBlock, lookupPool),
         blockNumber,
       ),
+    null,
   );
 }
 
@@ -175,19 +189,39 @@ function hasSameTokenSet(left: LiquidityHandler, right: LiquidityHandler) {
   return leftTokens.every((token, index) => token === rightTokens[index]);
 }
 
-async function cachedPricingLookup<T>(parts: unknown[], lookup: () => Promise<T>): Promise<T> {
-  const cache = pricingCacheStorage.getStore();
-  if (!cache) return lookup();
+async function cachedPricingLookup<T>(
+  parts: unknown[],
+  lookup: () => Promise<T>,
+  cycleFallback: T,
+): Promise<T> {
+  const store = pricingCacheStorage.getStore();
+  if (!store) return lookup();
 
   const cacheKey = JSON.stringify(normalizeCacheValue(parts));
-  const cached = cache.get(cacheKey);
+
+  // Cycle: this exact lookup is already on the stack above us. Awaiting the
+  // cached Promise would deadlock because it's waiting on us. Break the cycle
+  // by contributing the fallback value to whoever called us — the upstream
+  // resolver picks the highest-liquidity result so a zero contribution from
+  // one branch doesn't poison the answer, it just gets ignored.
+  if (store.inFlight.has(cacheKey)) {
+    console.warn(`[pricing] cycle detected for ${cacheKey} — returning fallback`);
+    return cycleFallback;
+  }
+
+  const cached = store.cache.get(cacheKey);
   if (cached) return (await cached) as T;
 
-  const result = lookup().catch((error: unknown) => {
-    cache.delete(cacheKey);
-    throw error;
-  });
-  cache.set(cacheKey, result);
+  store.inFlight.add(cacheKey);
+  const result = lookup()
+    .catch((error: unknown) => {
+      store.cache.delete(cacheKey);
+      throw error;
+    })
+    .finally(() => {
+      store.inFlight.delete(cacheKey);
+    });
+  store.cache.set(cacheKey, result);
   return await result;
 }
 

@@ -3,7 +3,7 @@ import type { PublicClient } from "viem";
 import { describe, expect, test } from "vitest";
 
 import type { ChainConfig, LiquidityHandler, TokenDefinition } from "../../src/snapshot/types";
-import { getPrice } from "../../src/pricing";
+import { getPrice, withPricingCache } from "../../src/pricing";
 
 // Synthetic test fixtures so the cycle / recursion guards can be exercised
 // in isolation from any chain's real config. The router lives in
@@ -211,5 +211,64 @@ describe("recursive router guards", () => {
     // not from the broken pool — so the tiebreaker is meaningful even when
     // some candidates fail.
     expect(result.liquidity.eq("42")).toBe(true);
+  });
+
+  test("inFlight cycle guard: 3-pool ring A↔B↔C↔A resolves without deadlocking", async () => {
+    // A topology the existing currentPool and hasSameTokenSet guards do NOT
+    // catch: three pools forming a ring (A/B, B/C, C/A) with different token
+    // sets. Walking through:
+    //   getPrice(A, null)            → cached
+    //   ↓ POOL_AB asks B (currentPool=POOL_AB)
+    //   getPrice(B, POOL_AB)         → cached
+    //   ↓ POOL_BC asks C (currentPool=POOL_BC)
+    //   getPrice(C, POOL_BC)         → cached
+    //   ↓ POOL_CA asks A (currentPool=POOL_CA)
+    //   getPrice(A, POOL_CA)         → cached (different key from initial!)
+    //   ↓ POOL_AB asks B (currentPool=POOL_AB)
+    //   getPrice(B, POOL_AB)         ← THIS KEY IS ALREADY IN FLIGHT — cycle!
+    //
+    // Without the inFlight guard the cached Promise for (B, POOL_AB) is
+    // awaited, which is waiting on (C, POOL_BC), which is waiting on (A,
+    // POOL_CA), which is waiting on (B, POOL_AB). Eternal deadlock — the test
+    // would hang until vitest's timeout. With the guard the recursive lookup
+    // returns ZERO_RESULT and the resolution unwinds.
+    const TOKEN_B = "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    const TOKEN_C = "0xcccccccccccccccccccccccccccccccccccccccc";
+    const POOL_AB = "0x1111111111111111111111111111111111111111";
+    const POOL_BC = "0x2222222222222222222222222222222222222222";
+    const POOL_CA = "0x3333333333333333333333333333333333333333";
+
+    const config = buildConfig(
+      [
+        { kind: "univ3", id: POOL_AB, tokens: [TOKEN_A, TOKEN_B] },
+        { kind: "univ3", id: POOL_BC, tokens: [TOKEN_B, TOKEN_C] },
+        { kind: "univ3", id: POOL_CA, tokens: [TOKEN_C, TOKEN_A] },
+      ],
+      [
+        { address: TOKEN_A, spec: VOLATILE },
+        { address: TOKEN_B, spec: VOLATILE },
+        { address: TOKEN_C, spec: VOLATILE },
+      ],
+    );
+    const context = mockContext([
+      [univ3PoolStateId(POOL_AB), { sqrtPriceX96: ONE_TO_ONE_SQRT_PRICE_X96, liquidity: 1n }],
+      [univ3PoolStateId(POOL_BC), { sqrtPriceX96: ONE_TO_ONE_SQRT_PRICE_X96, liquidity: 1n }],
+      [univ3PoolStateId(POOL_CA), { sqrtPriceX96: ONE_TO_ONE_SQRT_PRICE_X96, liquidity: 1n }],
+    ]);
+
+    // Must wrap in withPricingCache for the inFlight set to exist. Use a
+    // tight test-level timeout so a regression manifests as a fast failure
+    // instead of vitest's default 5s hang.
+    const result = await Promise.race([
+      withPricingCache(() => getPrice(config, context, mockClient(), TOKEN_A, BLOCK, null)),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("cycle guard failed — getPrice deadlocked")), 1000),
+      ),
+    ]);
+
+    // No stable/chainlink anchor exists, so the entire ring evaluates to ZERO.
+    // The point of this test is liveness, not the numeric answer — if we get
+    // here at all, the deadlock is broken.
+    expect(result.price.eq("0")).toBe(true);
   });
 });
