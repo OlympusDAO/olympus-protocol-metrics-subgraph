@@ -38,7 +38,7 @@
     "commander": "^9.4.0",
     "cross-fetch": "^4.0.0",
     "dotenv": "^16.0.2",
-    "envio": "3.0.0-rc.0",
+    "envio": "3.0.1",
     "graphql": "^16.8.1",
     "node-fetch": "^2.6.7",
     "viem": "2.48.8"
