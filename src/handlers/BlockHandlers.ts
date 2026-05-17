@@ -15,6 +15,7 @@ import {
 } from "envio";
 import { getAddress, type PublicClient } from "viem";
 import {
+  readBlockTimestamp,
   readBondManagerState,
   readCoolerPrincipalReceivables,
   readMonoCoolerTotalDebt,
@@ -150,10 +151,15 @@ async function processSnapshot(
   const records: SerializedTokenRecord[] = [];
   const supplies: SerializedTokenSupply[] = [];
 
-  // TODO(timestamp): use the chain's block timestamp once Envio's onBlock
-  // handler surfaces it. For now we use the block number as the timestamp
-  // value so the snapshot record IDs stay unique and the field is populated.
-  const timestamp = blockNumber;
+  // Envio's onBlock callback only passes the block number, so we look up the
+  // real block timestamp via RPC (effect is cached + immutable per (chain,
+  // block), so each unique snapshot block costs one RPC call ever). Required
+  // for snapshot record IDs and the YYYY-MM-DD `date` field to be meaningful.
+  const blockTimestamp = await context.effect(readBlockTimestamp, {
+    chainId,
+    blockNumber: blockNumberInput,
+  });
+  const timestamp = BigInt(blockTimestamp);
 
   await withContractReadCache(() =>
     withPricingCache(async () => {

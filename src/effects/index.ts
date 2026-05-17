@@ -881,3 +881,29 @@ export const resolveKodiakUnderlyingPool = createEffect(
     return (underlying as string).toLowerCase();
   },
 );
+
+// Envio's onBlock handler only surfaces `block.number` — `block.timestamp` is
+// stripped from the args even though the runtime data exists for normal event
+// handlers. Per `EventProcessing.res.mjs` in envio 3.0.1, onBlock callbacks
+// are invoked as `handler(makeOnBlockArgs(blockNumber, …))` — no timestamp
+// passed. We look it up via RPC; cached + immutable per (chain, block) so
+// each unique snapshot block costs one RPC call ever (~18/day total at our
+// snapshot cadence of 3/day × 6 chains).
+export const readBlockTimestamp = createEffect(
+  {
+    name: "readBlockTimestamp",
+    input: { chainId: S.number, blockNumber: S.number },
+    output: S.number,
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    const block = await retryRpc(() =>
+      client.getBlock({ blockNumber: BigInt(input.blockNumber) }),
+    );
+    return Number(block.timestamp);
+  },
+);
