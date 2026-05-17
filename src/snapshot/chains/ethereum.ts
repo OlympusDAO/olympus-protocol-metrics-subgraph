@@ -346,14 +346,18 @@ const liquidityHandlers: LiquidityHandler[] = [
     tokens: [ERC20_FRAX],
     id: CHAINLINK_FEED_FRAX_USD,
     decimals: 8,
-    startBlock: ETHEREUM_START_BLOCK,
+    // Proxy deployment block (verified via eth_getCode binary search).
+    // Before this block the contract doesn't exist and `latestAnswer()`
+    // reverts; the try/catch in the effect handles it, but skipping the call
+    // entirely avoids ~63s of retryRpc backoff per pre-deployment snapshot.
+    startBlock: 12_974_035,
   },
   {
     kind: "chainlink",
     tokens: [ERC20_LUSD],
     id: CHAINLINK_FEED_LUSD_USD,
     decimals: 8,
-    startBlock: ETHEREUM_START_BLOCK,
+    startBlock: 13_038_711,
   },
   {
     kind: "chainlink",
