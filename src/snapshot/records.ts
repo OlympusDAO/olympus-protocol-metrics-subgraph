@@ -95,6 +95,15 @@ export function getTokenDefinition(config: ChainConfig, tokenAddress: string) {
 export function getContractName(config: ChainConfig, contractAddress: string) {
   const lower = addr(contractAddress);
   const name = config.names[lower] ?? lower;
-  const abbreviation = config.abbreviations[lower] ? ` (${config.abbreviations[lower]})` : "";
+  const abbreviationValue = config.abbreviations[lower];
+  // Skip the parenthetical when the abbreviation is just the name repeated
+  // (case-insensitive). Otherwise we render "USDS (USDS)" / "OHM (OHM)" etc.
+  // while legacy renders just "USDS" / "OHM". Useful abbreviations like
+  // "Revenue-Locked BTRFLY (rlBTRFLY)" are preserved because they differ
+  // from the name. Matches legacy `Contracts.getContractName` shape.
+  const abbreviation =
+    abbreviationValue && abbreviationValue.toLowerCase() !== name.toLowerCase()
+      ? ` (${abbreviationValue})`
+      : "";
   return `${name}${abbreviation}`;
 }

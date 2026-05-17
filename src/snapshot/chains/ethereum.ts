@@ -1,10 +1,21 @@
 import { addr, bytes32, token } from "../math";
 import type { ChainConfig, CoolerClearinghouse, LiquidityHandler } from "../types";
 import {
+  AAVE_ALLOCATOR,
+  AAVE_ALLOCATOR_V2,
+  BONDS_DEPOSIT,
+  BONDS_INVERSE_DEPOSIT,
+  BUYBACK_MS,
+  CONVEX_CVX_VL_ALLOCATOR,
   COOLER_LOANS_CLEARINGHOUSE_V1,
   COOLER_LOANS_CLEARINGHOUSE_V1_1,
   COOLER_LOANS_CLEARINGHOUSE_V2,
   COOLER_LOANS_V2_MONOCOOLER,
+  DAO_WALLET,
+  RARI_ALLOCATOR,
+  TREASURY_ADDRESS_V2,
+  TREASURY_ADDRESS_V3,
+  TRSRY,
   WALLET_ADDRESSES,
 } from "../wallets";
 import { rpcUrls } from "./rpc";
@@ -41,7 +52,12 @@ const ERC20_USDS = addr("0xdC035D45d973E3EC169d2276DDab16f1e407384F");
 const ERC20_SDAI = addr("0x83F20F44975D03b1b09e64809B757c47f942BEeA");
 const ERC20_SUSDE = addr("0x9D39A5DE30e57443BfF2A8307A4256c8797A3497");
 const ERC20_SUSDS = addr("0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD");
-const ERC20_GAUNTLET_SUSDS_VAULT = addr("0x0Eb5B03c0303f2F47cD81d7BE4275AF8Ed347576");
+// Real Gauntlet Olympus sUSDS Vault — ERC4626 on Ethereum. The earlier
+// address `0x0Eb5B03c0303f2F47cD81d7BE4275AF8Ed347576` here was a Gnosis Safe
+// (Olympus Treasury MS) and reverted on every ERC20 method, silently zeroing
+// the position in the rollup. Legacy uses this address at
+// subgraphs/ethereum/src/utils/Constants.ts ERC4626_GAUNTLET_SUSDS_VAULT.
+const ERC20_GAUNTLET_SUSDS_VAULT = addr("0x3365184e87d2Bd75961780454A5810BEc956F0dD");
 
 // Aave receipt tokens (assets) + variable-debt tokens (liabilities). Receipts
 // price at the underlying asset's rate; variable-debt tokens carry
@@ -132,6 +148,7 @@ const AURA_VAULT_OHM_DAI_WETH = addr("0xF01e29461f1FCEdD82f5258Da006295E23b4Fab3
 const AURA_VAULT_OHM_WSTETH = addr("0x636024f9ddef77e625161b2ccf3a2adfbfad3615");
 
 const LP_UNISWAP_V3_WETH_OHM = addr("0x88051b0eea095007d3bef21ab287be961f3d8598");
+const LP_UNISWAP_V3_OHM_SUSDS = addr("0x0858e2B0F9D75f7300B38D64482aC2C8DF06a755");
 const LP_UNISWAP_V3_WETH_WSTETH = addr("0x109830a1aaad605bbf02a9dfa7b0b92ec2fb7daa");
 const LP_UNISWAP_V3_WEETH_WETH = addr("0x202A6012894Ae5c288eA824cbc8A9bfb26A49b93");
 const LP_UNISWAP_V3_FXS_ETH = addr("0xcd8286b48936cdac20518247dbd310ab681a9fbf");
@@ -168,7 +185,7 @@ const ERC20_SOHM_V3_BLOCK = 13_806_000;
 const ERC20_SDAI_BLOCK = 17_675_440;
 const ERC20_SUSDE_BLOCK = 20_265_440;
 const ERC20_SUSDS_BLOCK = 20_722_900;
-const ERC20_GAUNTLET_SUSDS_VAULT_BLOCK = 21_300_000;
+const ERC20_GAUNTLET_SUSDS_VAULT_BLOCK = 21_924_854;
 const ERC20_USDE_BLOCK = 20_289_094;
 const ERC20_WEETH_BLOCK = 18_961_223;
 const NATIVE_ETH_BLOCK = 21_810_000;
@@ -183,6 +200,25 @@ const ERC20_AAVE_V3_BLOCK = 24_707_147;
 const PROTOCOL_ADDRESSES = WALLET_ADDRESSES;
 
 const names: Record<string, string> = {
+  // Treasury / protocol wallets — names mirror legacy
+  // subgraphs/ethereum/src/utils/Constants.ts CONTRACT_NAME_MAP so consumers
+  // (parity diffs, dashboards, frontend tables) see the same source labels.
+  [AAVE_ALLOCATOR]: "Aave Allocator V1",
+  [AAVE_ALLOCATOR_V2]: "Aave Allocator V2",
+  [BONDS_DEPOSIT]: "Bond Depository",
+  [BONDS_INVERSE_DEPOSIT]: "Bond (Inverse) Depository",
+  [BUYBACK_MS]: "Buyback MS",
+  [CONVEX_CVX_VL_ALLOCATOR]: "Convex vlCVX Allocator",
+  [COOLER_LOANS_CLEARINGHOUSE_V1]: "Cooler Loans Clearinghouse V1",
+  [COOLER_LOANS_CLEARINGHOUSE_V1_1]: "Cooler Loans Clearinghouse V1.1",
+  [COOLER_LOANS_CLEARINGHOUSE_V2]: "Cooler Loans Clearinghouse V2",
+  [COOLER_LOANS_V2_MONOCOOLER]: "Cooler Loans V2 MonoCooler",
+  [DAO_WALLET]: "Treasury MS (Formerly DAO Wallet)",
+  [RARI_ALLOCATOR]: "Rari Allocator",
+  [TREASURY_ADDRESS_V2]: "Treasury Wallet V2",
+  [TREASURY_ADDRESS_V3]: "Treasury Wallet V3",
+  [TRSRY]: "Bophades Treasury",
+  // Tokens and pools
   [CONVEX_REWARD_OHM_ETH]: "Convex Staked Curve OHM-ETH",
   [CONVEX_REWARD_OHM_FRAXBP]: "Convex Staked Curve OHM-FraxBP",
   [CONVEX_REWARD_FRAX_USDC]: "Convex Staked Curve FRAX-USDC",
@@ -234,6 +270,7 @@ const names: Record<string, string> = {
   [LP_UNISWAP_V3_WETH_BTRFLY_V1]: "UniswapV3 WETH-BTRFLY V1",
   [LP_UNISWAP_V3_WETH_BTRFLY_V2]: "UniswapV3 WETH-BTRFLY V2",
   [LP_UNISWAP_V3_WETH_OHM]: "UniswapV3 WETH-OHM",
+  [LP_UNISWAP_V3_OHM_SUSDS]: "UniswapV3 OHM-sUSDS",
   [LP_UNISWAP_V3_WETH_WSTETH]: "UniswapV3 WETH-wstETH",
 };
 
@@ -281,7 +318,19 @@ const univ3WethOhm: LiquidityHandler = {
   startBlock: ERC20_OHM_V2_BLOCK,
 };
 
-const ownedLiquidityHandlers: LiquidityHandler[] = [univ3WethOhm];
+// OHM-sUSDS UniV3 pool (per inventory-ethereum.md §6). Treasury holds NFT
+// positions in this pool, so it counts as POL — pushUniv3NftPol matches the
+// pool by token pair against this list. Pool deployment block from on-chain
+// eth_getCode binary search.
+const LP_UNISWAP_V3_OHM_SUSDS_BLOCK = 21_309_466;
+const univ3OhmSusds: LiquidityHandler = {
+  kind: "univ3",
+  tokens: [ERC20_OHM_V2, ERC20_SUSDS],
+  id: LP_UNISWAP_V3_OHM_SUSDS,
+  startBlock: LP_UNISWAP_V3_OHM_SUSDS_BLOCK,
+};
+
+const ownedLiquidityHandlers: LiquidityHandler[] = [univ3WethOhm, univ3OhmSusds];
 
 // Cooler Loans clearinghouses. Each clearinghouse's principal receivable is
 // added to the snapshot as a DAI / USDS TokenRecord priced via the
@@ -403,6 +452,11 @@ const liquidityHandlers: LiquidityHandler[] = [
   },
   // OHM pricing via the WETH-OHM UniV3 pool (recurses to WETH via Chainlink).
   univ3WethOhm,
+  // OHM-sUSDS UniV3 pool — both a price candidate and an owned-liquidity
+  // (POL) source. Listed here so the router can use it for OHM pricing in
+  // addition to WETH-OHM, and so pushUniv3NftPol recognizes the pair when
+  // matching NFT positions. Inventory: docs/envio-migration/inventory-ethereum.md §6.
+  univ3OhmSusds,
   // wstETH and weETH price via their WETH UniV3 pools.
   {
     kind: "univ3",

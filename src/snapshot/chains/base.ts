@@ -121,6 +121,14 @@ export const BASE: ChainConfig = {
   // off-circulating supply.
   treasuryBlacklist: { [ERC20_OHM]: [DAO_MULTISIG] },
   basePriceFeeds: {},
+  // Base UniswapV3 NonfungiblePositionManager (per inventory-base.md §3 +
+  // legacy subgraphs/base/src/contracts/Constants.ts:24). pushUniv3NftPol
+  // requires this to enumerate NFT positions held by protocol wallets;
+  // without it, the OHM-USDC POL was silently missing from the rollup.
+  univ3PositionManager: {
+    address: addr("0x03a520b32C04BF3bEEf7BEb72E919cf822Ed34f1"),
+    startBlock: 1_371_714,
+  },
   liquidityHandlers,
   ownedLiquidityHandlers,
 };
