@@ -126,6 +126,20 @@ See `docs/envio-migration/inherited-todos.md`.
 
 ## Open issues to investigate
 
+- [x] **Cooler V1.1 receivable: $4.9M new vs $9.15M legacy.** **FALSE ALARM.** Same-date diff on 2026-05-17 (legacy @ block 25,115,600, envio @ 25,116,000): V1.1 legacy=$4,898,041 vs envio=$4,897,705 — $337 gap, pure block-timing noise. All 4 clearinghouses match within $9K total (V1: $2, V1.1: $337, V2: $42, MonoCooler: $8,373). The original "$9.38M mystery" came from comparing pre-deploy snapshots — the deployed endpoint (`84753f4`) predates commits 8f9e85b/1d2bc88/e255be6/2e3c87e.
+
+- [ ] **Real same-date MV gap on 2026-05-17: $11,997,221 (envio under).** Itemized:
+  - **Ethereum: -$11.04M** (will mostly close on next deploy):
+    - `Uniswap V3 OHM-sUSDS POL @ Treasury MS = $10,936,429` — fixed in unmerged commit 8f9e85b (config.yaml + ethereum.ts).
+    - `veFXS staked-FXS = $81,011` — fixed in unmerged 1d2bc88.
+    - `cvxCRV @ vlCVX Allocator = $17,817` — fixed in unmerged 2e3c87e.
+    - `wETH-OHM UniV3 POL`: layout difference (legacy=1 combined row $4.50M, envio=2 split rows summing to $4.49M); ~$5K block-timing noise.
+    - Remaining $20K spread across block-timing rate drift (DAI/USDS rate moved 0.0001 between blocks 25,115,600 and 25,116,000).
+  - **Base: -$921,482** — `Uniswap V3 OHM-USDC LP @ DAO MS = $921,781` missing from deployed envio. **Already fixed** in unmerged commit 8f9e85b (`univ3PositionManager` wiring for `pushUniv3NftPol`); closes on next deploy.
+  - **Berachain: -$274,530** — `Beradrome Kodiak OHM-HONEY LP @ DAO MS = $268,566` fixed in unmerged commit e255be6; will close on next deploy. Tiny $6K of additional iBERA/BERA price-timing noise.
+  - **Arbitrum: +$259,366 (envio OVER) — LEGACY is wrong here, not envio.** Verified on-chain at block 463,907,057 that Cross-Chain Arbitrum (`0x012BBf04…`) holds: 100% of the Camelot OHM-wETH LP (6,963 OHM + 54.6 WETH ≈ $309K) and 333,000 JONES in the JonesStaking contract. Envio correctly tracks both; legacy doesn't snapshot Arbitrum at all on this date (`legacy block: (none)`). The only true envio-side bug here was phantom-negative FRAX/MAGIC, **fixed this session** by flagging both as `nonStandardBalance: true`.
+  - **Polygon: +$15,102 (envio negative)** — sKLIMA phantom-negative $-15K, **fixed in this session's commit ca7cec3** (nonStandardBalance flag); will close on next deploy.
+
 - [x] **Fantom/Polygon gOHM `TokenBalance` drift.** Confirmed same root cause as the broader non-standard-balance class (bridge mint credits balance without a standard Transfer event). Worked around 2026-05-17 by flagging `ERC20_GOHM` as `nonStandardBalance: true` on both chains and threading the flag through `pushTreasuryOhm` so snapshot-time `balanceOf` (cached via `readErc20BalanceOf` effect) replaces the drifting `TokenBalance` entity. See 2026-05-17 entry in `tasks/lessons.md`.
   - **Note: the underlying ledger is still wrong.** `nonStandardBalance` is a snapshot-time read-around, not a fix — `TokenBalance` rows for bridged gOHM on Fantom/Polygon (and the bridge-mint sources on those chains: WETH, DAI, FRAX, sKLIMA) remain incorrect for any consumer that queries them directly. The snapshot path is the only consumer today, so this is acceptable, but a real fix would require either (a) indexing the bridge-mint events that mutate balance, or (b) deriving `TokenBalance` from `balanceOf` instead of from Transfer accumulation. Track if a downstream consumer ever needs raw `TokenBalance` correctness.
 

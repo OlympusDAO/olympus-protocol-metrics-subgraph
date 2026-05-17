@@ -191,9 +191,13 @@ export const ARBITRUM: ChainConfig = {
       startBlock: ARB_CREATION_BLOCK,
       decimals: 18,
     }),
+    // Multichain-bridged FRAX on Arbitrum — bridge mints/burns mutate balance
+    // without standard Transfer events, so the TokenBalance ledger drifts
+    // negative for Olympus wallets. Read balanceOf at snapshot time.
     token(ERC20_FRAX, "Stable", true, false, undefined, {
       startBlock: FRAX_CREATION_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     token(ERC20_JONES, "Volatile", true, false, "0.83", {
       startBlock: JONES_CREATION_BLOCK,
@@ -207,9 +211,13 @@ export const ARBITRUM: ChainConfig = {
       startBlock: LUSD_CREATION_BLOCK,
       decimals: 18,
     }),
+    // MAGIC on Arbitrum is bridged via TreasureDAO's L1↔Arbitrum native bridge;
+    // mints credit balance without a standard Transfer event, so TokenBalance
+    // drifts negative for Olympus wallets that received bridged MAGIC.
     token(ERC20_MAGIC, "Volatile", true, false, undefined, {
       startBlock: MAGIC_CREATION_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     token(ERC20_USDC, "Stable", true, false, undefined, {
       startBlock: USDC_CREATION_BLOCK,
