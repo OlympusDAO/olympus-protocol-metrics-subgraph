@@ -18,6 +18,7 @@ import {
   readBlockTimestamp,
   readBondManagerState,
   readCoolerPrincipalReceivables,
+  readErc20BalanceOf,
   readMonoCoolerTotalDebt,
   readNextOhmDistribution,
   readSOhmCirculatingSupply,
@@ -47,6 +48,7 @@ import {
   createTokenRecord,
   createTokenSupply,
   getContractName,
+  getTokenDefinition,
   getWalletAddressesForContract,
 } from "../snapshot/records";
 import type {
@@ -258,7 +260,7 @@ async function processSnapshot(
 
 // ----- Global metric snapshot (Phase 5) -----
 
-async function updateGlobalMetricSnapshot(
+export async function updateGlobalMetricSnapshot(
   context: EvmOnBlockContext,
   config: ChainConfig,
   client: PublicClient,
@@ -335,29 +337,37 @@ async function updateGlobalMetricSnapshot(
 
   const aggregate = aggregateAcrossChains(date, perChainAggregates);
 
-  // Canonical (Ethereum-only) fields. ohmIndex sourced from OhmIndexState
-  // (event-driven). ohmPrice resolved through the recursive pricing router.
-  // ohmApy / sOhmCirculatingSupply / sOhmTotalValueLocked stay at 0 — they
-  // need additional indexing (sOHM `LogRebase.rebase` for APY; sOHM
-  // `Transfer` from/to-zero for circulating supply). Tracked in todo.md.
+  // GlobalMetricSnapshot is keyed by `date` so every chain's snapshot for the
+  // same UTC day writes to one shared row. The canonical OHM-protocol fields
+  // (ohmIndex / ohmPrice / sOhmCirculatingSupply / ohmApy) are only knowable
+  // from Ethereum, so non-Ethereum chains must avoid clobbering them with
+  // zeros. We preserve them by reading back what's there before writing.
+  const existing = await context.GlobalMetricSnapshot.get(snapshotId);
+  const isCanonicalChain = config.chainId === 1;
+
+  // ohmIndex is the only canonical field that can be read cross-chain —
+  // OhmIndexState lives in the shared Hasura schema, keyed by Ethereum's
+  // chainId. Reading it from any chain's snapshot gives the latest sOHM-V3
+  // rebase, so we always populate it (independent of write ordering).
   let ohmIndex = new BigNumberCtor("0");
-  if (config.migrationOffset?.sOhmAddress) {
-    const indexState = await context.OhmIndexState.get(
-      `${config.chainId}-${addr(config.migrationOffset.sOhmAddress)}`,
-    );
+  const ethereumConfig = CHAIN_CONFIGS[1];
+  const canonicalSOhm = ethereumConfig?.migrationOffset?.sOhmAddress;
+  if (canonicalSOhm) {
+    const indexState = await context.OhmIndexState.get(`1-${addr(canonicalSOhm)}`);
     if (indexState && indexState.index > 0n) {
       ohmIndex = new BigNumberCtor(indexState.index.toString()).div(
         new BigNumberCtor("1000000000"),
       );
     }
   }
-  // ohmPrice: only Ethereum currently has a complete OHM pricing path
-  // (Phase 4 ported the WETH-OHM UniV3 pool there). Skip on other chains;
-  // their entries will source from the canonical Ethereum snapshot once
-  // the parity harness reads the aggregate.
+
+  // ohmPrice / sOhmCirculatingSupply: only Ethereum currently has a complete
+  // OHM pricing path (Phase 4 ported the WETH-OHM UniV3 pool) and the
+  // sOhmCirculatingSupply RPC. From non-Ethereum chains, preserve the
+  // existing values instead of overwriting with zeros.
   let ohmPrice = new BigNumberCtor("0");
   let sOhmCirculatingSupply = new BigNumberCtor("0");
-  if (config.chainId === 1) {
+  if (isCanonicalChain) {
     const result = await getPrice(config, context, client, config.ohmToken, blockNumber, null);
     ohmPrice = result.price;
     if (config.migrationOffset?.sOhmAddress) {
@@ -371,15 +381,16 @@ async function updateGlobalMetricSnapshot(
         sOhmCirculatingSupply = new BigNumberCtor(raw).div(new BigNumberCtor("1000000000"));
       }
     }
+  } else if (existing) {
+    ohmPrice = new BigNumberCtor(existing.ohmPrice.toString());
+    sOhmCirculatingSupply = new BigNumberCtor(existing.sOhmCirculatingSupply.toString());
   }
-  const gOhmPrice = ohmPrice.times(ohmIndex);
-  const sOhmTotalValueLocked = sOhmCirculatingSupply.times(ohmPrice);
-  const ratios = computeDerivedRatios(aggregate, ohmPrice, ohmIndex);
 
   // APY: read the next-epoch OHM distribution from active staking contracts,
-  // then compute (1 + rebase/100)^(365*3) - 1.
+  // then compute (1 + rebase/100)^(365*3) - 1. Only Ethereum has the staking
+  // contracts; preserve from existing on other chains.
   let ohmApy = new BigNumberCtor("0");
-  if (config.chainId === 1 && config.stakingContracts) {
+  if (isCanonicalChain && config.stakingContracts) {
     const stakingRaw = (await context.effect(readNextOhmDistribution, {
       chainId: config.chainId,
       stakingV1: config.stakingContracts.v1,
@@ -393,7 +404,16 @@ async function updateGlobalMetricSnapshot(
       const distributedOhm = new BigNumberCtor(stakingRaw).div(new BigNumberCtor("1000000000"));
       ohmApy = computeApy(distributedOhm, sOhmCirculatingSupply).currentApy;
     }
+  } else if (!isCanonicalChain && existing) {
+    ohmApy = new BigNumberCtor(existing.ohmApy.toString());
   }
+
+  // Derived fields are recomputed every write — they depend on the
+  // freshly-aggregated rollup (ohmCirculatingSupply etc. that may have just
+  // changed) combined with the (possibly preserved) canonical canonical inputs.
+  const gOhmPrice = ohmPrice.times(ohmIndex);
+  const sOhmTotalValueLocked = sOhmCirculatingSupply.times(ohmPrice);
+  const ratios = computeDerivedRatios(aggregate, ohmPrice, ohmIndex);
 
   context.GlobalMetricSnapshot.set({
     id: snapshotId,
@@ -467,7 +487,16 @@ export async function pushTokenBalanceRecords(
       for (const wallet of wallets) {
         const balance = isNative
           ? await readNativeBalance(context, client, config.chainId, wallet, decimals, blockNumber)
-          : await readTokenBalance(context, config.chainId, definition.address, wallet, decimals);
+          : definition.nonStandardBalance
+            ? await readNonStandardBalance(
+                context,
+                config.chainId,
+                definition.address,
+                wallet,
+                decimals,
+                blockNumber,
+              )
+            : await readTokenBalance(context, config.chainId, definition.address, wallet, decimals);
         if (balance.eq(ZERO)) continue;
         records.push(
           createTokenRecord(
@@ -1075,7 +1104,29 @@ function bigDecimalToBigNumber(value: BigDecimal | string | null | undefined): B
 
 // ----- Token supplies (OHM total / treasury / liquidity / lending) -----
 
-async function pushTotalSupply(
+// Returns the multiplier needed to convert `config.ohmToken` amounts into
+// OHM-equivalent units before they flow into the cross-chain supply rollup.
+// OHM-native chains (Ethereum, Arbitrum, Base, Berachain) return 1. On chains
+// where `ohmToken` is gOHM (Fantom, Polygon) we multiply by the current sOHM
+// V3 rebase index — read from Ethereum's OhmIndexState as the single source —
+// so 1 gOHM contributes its OHM-backed equivalent. Returns null when the
+// index isn't available yet; callers must skip emission (rather than emit
+// gOHM units that would poison the OHM-denominated rollup).
+async function getOhmEquivalentMultiplier(
+  context: EvmOnBlockContext,
+  config: ChainConfig,
+): Promise<BigNumber | null> {
+  const decimals = getTokenDecimals(config.tokens, config.ohmToken);
+  if (decimals === 9) return new BigNumberCtor(1);
+  const ethereum = CHAIN_CONFIGS[1];
+  const sOhm = ethereum?.migrationOffset?.sOhmAddress;
+  if (!sOhm) return null;
+  const indexState = await context.OhmIndexState.get(`1-${addr(sOhm)}`);
+  if (!indexState || indexState.index === 0n) return null;
+  return toDecimal(indexState.index, SOHM_INDEX_DECIMALS);
+}
+
+export async function pushTotalSupply(
   context: EvmOnBlockContext,
   config: ChainConfig,
   supplies: SerializedTokenSupply[],
@@ -1087,7 +1138,12 @@ async function pushTotalSupply(
   const entity = await context.Erc20Supply.get(`${config.chainId}-${addr(config.ohmToken)}`);
   if (!entity) return;
 
-  const balance = toDecimal(entity.totalSupply, 9); // OHM is 9 decimals on Arbitrum and Berachain
+  const decimals = getTokenDecimals(config.tokens, config.ohmToken);
+  const multiplier = await getOhmEquivalentMultiplier(context, config);
+  if (!multiplier) return;
+
+  const balance = toDecimal(entity.totalSupply, decimals).times(multiplier);
+  if (balance.eq(ZERO)) return;
   supplies.push(
     createTokenSupply(
       config,
@@ -1105,7 +1161,7 @@ async function pushTotalSupply(
   );
 }
 
-async function pushTreasuryOhm(
+export async function pushTreasuryOhm(
   context: EvmOnBlockContext,
   config: ChainConfig,
   supplies: SerializedTokenSupply[],
@@ -1114,8 +1170,37 @@ async function pushTreasuryOhm(
 ): Promise<void> {
   if (config.ohmStartBlock && blockNumber < BigInt(config.ohmStartBlock)) return;
 
+  const decimals = getTokenDecimals(config.tokens, config.ohmToken);
+  const multiplier = await getOhmEquivalentMultiplier(context, config);
+  if (!multiplier) return;
+
+  // Bridged gOHM on Fantom/Polygon mints without a standard Transfer event,
+  // so the event-driven TokenBalance ledger drifts negative for protocol
+  // wallets. When the token definition is flagged `nonStandardBalance`, fall
+  // back to a snapshot-time balanceOf RPC (cached per (chain, token, wallet,
+  // block) via the readErc20BalanceOf effect).
+  const ohmTokenDef = getTokenDefinition(config, config.ohmToken);
+  const useOnChainBalance = ohmTokenDef?.nonStandardBalance === true;
+
   for (const wallet of config.circulatingSupplyWallets) {
-    const balance = await readTokenBalance(context, config.chainId, config.ohmToken, wallet, 9);
+    const rawBalance = useOnChainBalance
+      ? await readNonStandardBalance(
+          context,
+          config.chainId,
+          config.ohmToken,
+          wallet,
+          decimals,
+          blockNumber,
+        )
+      : await readTokenBalance(
+          context,
+          config.chainId,
+          config.ohmToken,
+          wallet,
+          decimals,
+        );
+    if (rawBalance.eq(ZERO)) continue;
+    const balance = rawBalance.times(multiplier);
     if (balance.eq(ZERO)) continue;
     supplies.push(
       createTokenSupply(
@@ -1147,12 +1232,15 @@ async function pushOwnedLiquiditySupply(
   // Univ2 / Kodiak resolve the pool ratio from event-sourced state. Balancer /
   // Kodiak underlying pool calls still hit cached RPC until Phase 2B replaces
   // Balancer with event-driven pool state.
+  const multiplier = await getOhmEquivalentMultiplier(context, config);
+  if (!multiplier) return;
+
   for (const handler of config.ownedLiquidityHandlers) {
     if (!isActive(handler, blockNumber)) continue;
     if (!matches(handler, config.ohmToken)) continue;
 
     for (const wallet of config.circulatingSupplyWallets) {
-      const balance = await getUnderlyingTokenBalance(
+      const rawBalance = await getUnderlyingTokenBalance(
         config,
         context,
         client,
@@ -1161,6 +1249,8 @@ async function pushOwnedLiquiditySupply(
         config.ohmToken,
         blockNumber,
       );
+      if (rawBalance.eq(ZERO)) continue;
+      const balance = rawBalance.times(multiplier);
       if (balance.eq(ZERO)) continue;
       supplies.push(
         createTokenSupply(
@@ -1273,6 +1363,30 @@ async function readTokenBalance(
   const entity = await context.TokenBalance.get(id);
   if (!entity || entity.balance === 0n) return ZERO;
   return toDecimal(entity.balance, decimals);
+}
+
+// Snapshot-time `balanceOf(wallet)` fallback for tokens flagged
+// `nonStandardBalance: true` in the config. Goes through the cached
+// `readErc20BalanceOf` effect so each (chain, token, wallet, block) is one
+// RPC ever, regardless of how many snapshots reference it. See the effect
+// definition in `src/effects/index.ts` for the why.
+async function readNonStandardBalance(
+  context: EvmOnBlockContext,
+  chainId: number,
+  tokenAddress: string,
+  walletAddress: string,
+  decimals: number,
+  blockNumber: bigint,
+): Promise<BigNumber> {
+  const raw = await context.effect(readErc20BalanceOf, {
+    chainId,
+    tokenAddress,
+    walletAddress,
+    atBlock: Number(blockNumber),
+  });
+  const rawBigInt = BigInt(raw);
+  if (rawBigInt === 0n) return ZERO;
+  return toDecimal(rawBigInt, decimals);
 }
 
 function getLpTokenForHandler(handler: LiquidityHandler): string | null {

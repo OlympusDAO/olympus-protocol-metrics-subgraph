@@ -57,6 +57,17 @@ export type TokenDefinition = {
   multiplier?: string;
   isLiability?: boolean;
   startBlock?: number;
+  // When true, snapshot-time balance is read via `balanceOf(wallet)` RPC
+  // instead of the event-driven TokenBalance ledger. Required for tokens
+  // that mutate balances without emitting `Transfer` events:
+  //   - ERC4626 vaults like sDAI that only emit `Deposit`/`Withdraw`
+  //   - WETH9-style wrappers that emit `Deposit`/`Withdrawal`
+  //   - Rebasing receipts (Aave aTokens, staked tokens) where balanceOf
+  //     accrues interest silently
+  // For these tokens the Transfer-summation tracker drifts and can go
+  // negative, polluting downstream rollups. See tasks/lessons.md
+  // "2026-05-17 — Tokens that mutate balance without Transfer events".
+  nonStandardBalance?: boolean;
 };
 
 export type BasePriceFeed = {

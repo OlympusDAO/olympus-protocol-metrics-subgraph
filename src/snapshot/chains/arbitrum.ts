@@ -219,9 +219,11 @@ export const ARBITRUM: ChainConfig = {
       startBlock: VSTA_CREATION_BLOCK,
       decimals: 18,
     }),
+    // Arbitrum WETH9 fork — Deposit/Withdrawal events, no Transfer on wrap/unwrap.
     token(ERC20_WETH, "Volatile", true, true, undefined, {
       startBlock: WETH_CREATION_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     token(ERC20_OHM, "Volatile", true, false, undefined, {
       startBlock: OHM_CREATION_BLOCK,

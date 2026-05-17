@@ -11,7 +11,12 @@ export function token(
   isLiquid: boolean,
   isBluechip: boolean,
   multiplier?: string,
-  options: { startBlock?: number; decimals?: number; isLiability?: boolean } = {},
+  options: {
+    startBlock?: number;
+    decimals?: number;
+    isLiability?: boolean;
+    nonStandardBalance?: boolean;
+  } = {},
 ): TokenDefinition {
   return {
     address: addr(address),
@@ -22,6 +27,7 @@ export function token(
     decimals: options.decimals ?? 18,
     startBlock: options.startBlock,
     isLiability: options.isLiability,
+    nonStandardBalance: options.nonStandardBalance,
   };
 }
 

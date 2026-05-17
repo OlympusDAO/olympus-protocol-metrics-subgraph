@@ -121,13 +121,19 @@ export const POLYGON: ChainConfig = {
       startBlock: POLYGON_START_BLOCK,
       decimals: 6,
     }),
+    // Polygon PoS-bridged WETH. Bridge mints may not emit Transfer; safer to
+    // read balanceOf at snapshot than rely on event accumulation.
     token(ERC20_WETH, "Volatile", true, true, undefined, {
       startBlock: POLYGON_START_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
+    // Bridged gOHM on Polygon: same non-Transfer bridge-mint pattern as on
+    // Fantom. Read via balanceOf at snapshot time.
     token(ERC20_GOHM, "Volatile", true, false, undefined, {
       startBlock: POLYGON_START_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     token(LP_UNISWAP_V2_WETH_GOHM, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: POLYGON_START_BLOCK,

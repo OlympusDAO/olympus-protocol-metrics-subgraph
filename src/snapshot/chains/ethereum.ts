@@ -689,45 +689,59 @@ export const ETHEREUM: ChainConfig = {
       decimals: 18,
     }),
     // Aave V2 aDAI receipt (matches underlying DAI rate via shared Chainlink feed).
+    // Rebases via interest accrual without emitting Transfer events — must use
+    // snapshot-time balanceOf to avoid drift.
     token(ERC20_ADAI, "Stable", true, false, undefined, {
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     // Aave V3 aEthUSDe receipt (matches underlying USDe rate via shared feed).
+    // Same rebase pattern as aDAI.
     token(ERC20_AETH_USDE, "Stable", true, false, undefined, {
       startBlock: ERC20_AAVE_V3_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     // Aave V3 variable-debt receipts — liabilities (subtract from treasury MV).
     // Underlying tokens are 6-decimal USDC/USDT, so the debt tokens share those
-    // decimals.
+    // decimals. Aave debt tokens also rebase silently — use snapshot balanceOf.
     token(ERC20_VAR_DEBT_ETH_USDC, "Stable", true, false, undefined, {
       startBlock: ERC20_AAVE_V3_BLOCK,
       decimals: 6,
       isLiability: true,
+      nonStandardBalance: true,
     }),
     token(ERC20_VAR_DEBT_ETH_USDT, "Stable", true, false, undefined, {
       startBlock: ERC20_AAVE_V3_BLOCK,
       decimals: 6,
       isLiability: true,
+      nonStandardBalance: true,
     }),
     // ERC4626 yield-bearing stables. Underlying price comes from Chainlink;
-    // share→asset rate from `convertToAssets()` via Erc4626PriceHandler.
+    // share→asset rate from `convertToAssets()` via Erc4626PriceHandler. sDAI
+    // is confirmed to mint shares without emitting Transfer(0x0, recipient) —
+    // only ERC4626 Deposit. We treat the whole family as non-standard so the
+    // snapshot reads balanceOf at the block.
     token(ERC20_SDAI, "Stable", true, false, undefined, {
       startBlock: ERC20_SDAI_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     token(ERC20_SUSDE, "Stable", true, false, undefined, {
       startBlock: ERC20_SUSDE_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     token(ERC20_SUSDS, "Stable", true, false, undefined, {
       startBlock: ERC20_SUSDS_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     token(ERC20_GAUNTLET_SUSDS_VAULT, "Stable", true, false, undefined, {
       startBlock: ERC20_GAUNTLET_SUSDS_VAULT_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     // Convex staked-LP wrappers (POL category — protocol-owned liquidity).
     // Pricing routes through the underlying Curve LP via `remap` handlers.
@@ -760,9 +774,14 @@ export const ETHEREUM: ChainConfig = {
       startBlock: LP_BALANCER_OHM_WSTETH_BLOCK,
       decimals: 18,
     }),
+    // WETH9: `deposit()` (wrap ETH) emits Deposit(dst, wad), `withdraw()`
+    // emits Withdrawal(src, wad) — neither emits Transfer. Wallets that hold
+    // wrapped ETH from a `weth.deposit{value:...}()` flow will drift in the
+    // event-driven ledger. Use snapshot-time balanceOf.
     token(ERC20_WETH, "Volatile", true, true, undefined, {
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     token(ERC20_WSTETH, "Volatile", true, true, undefined, {
       startBlock: ETHEREUM_START_BLOCK,
@@ -789,9 +808,11 @@ export const ETHEREUM: ChainConfig = {
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
     }),
+    // xBTRFLY is a staking-rebase receipt — balanceOf accrues silently.
     token(ERC20_BTRFLY_V1_STAKED, "Volatile", true, false, undefined, {
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     token(ERC20_BTRFLY_V2, "Volatile", true, false, undefined, {
       startBlock: ETHEREUM_START_BLOCK,

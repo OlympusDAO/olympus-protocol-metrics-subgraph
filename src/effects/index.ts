@@ -909,6 +909,57 @@ export const readBlockTimestamp = createEffect(
   },
 );
 
+// Read `ERC20.balanceOf(wallet)` at a specific block. Used for tokens flagged
+// `nonStandardBalance: true` in the chain config — sDAI, WETH9 wrappers, Aave
+// aTokens, staked rebase receipts — which mutate balances without emitting a
+// `Transfer` event, leaving our event-driven `TokenBalance` ledger drifting
+// (often negative). The effect cache keys per (chain, token, wallet, block)
+// so each unique snapshot lookup is one RPC ever. Returns "0" on revert /
+// pre-deployment so callers can treat absent state the same as zero balance.
+const ERC20_BALANCE_OF_ABI = [
+  {
+    inputs: [{ internalType: "address", name: "account", type: "address" }],
+    name: "balanceOf",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+export const readErc20BalanceOf = createEffect(
+  {
+    name: "readErc20BalanceOf",
+    input: {
+      chainId: S.number,
+      tokenAddress: S.string,
+      walletAddress: S.string,
+      atBlock: S.number,
+    },
+    output: S.string,
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    try {
+      const balance = await retryRpc(() =>
+        client.readContract({
+          address: getAddress(input.tokenAddress),
+          abi: ERC20_BALANCE_OF_ABI,
+          functionName: "balanceOf",
+          args: [getAddress(input.walletAddress)],
+          blockNumber: BigInt(input.atBlock),
+        }),
+      );
+      return (balance as bigint).toString();
+    } catch {
+      return "0";
+    }
+  },
+);
+
 // Read the latest Chainlink answer at a specific block via `latestAnswer()`
 // on the EACAggregatorProxy. Falls back to RPC because the proxy contract
 // doesn't emit AnswerUpdated events — only the underlying aggregator does,
