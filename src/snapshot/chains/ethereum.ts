@@ -16,6 +16,7 @@ import {
   TREASURY_ADDRESS_V2,
   TREASURY_ADDRESS_V3,
   TRSRY,
+  VEFXS_ALLOCATOR,
   WALLET_ADDRESSES,
 } from "../wallets";
 import { rpcUrls } from "./rpc";
@@ -73,6 +74,11 @@ const ERC20_WEETH = addr("0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee");
 
 // Long-tail volatiles (per inventory §2.2).
 const ERC20_FXS = addr("0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0");
+// veFXS: vote-escrow FXS lock receipt. Olympus's VeFXS Allocator holds these
+// (legacy CONTRACT_NAME_MAP "FXS - Staked" / abbrev "veFXS"). Price 1:1 with
+// FXS via remap. Lock-decay changes balanceOf without emitting Transfer →
+// nonStandardBalance.
+const ERC20_FXS_VE = addr("0xc8418af6358ffdda74e09ca9cc3fe03ca6adc5b0");
 const ERC20_LDO = addr("0x5a98fcbea516cf06857215779fd812ca3bef1b32");
 const ERC20_LQTY = addr("0x6dea81c8171d0ba574754ef6f8b412f2ed88c54d");
 const ERC20_BTRFLY_V1 = addr("0xc0d4ceb216b3ba9c3701b291766fdcba977cec3a");
@@ -190,6 +196,7 @@ const ERC20_USDE_BLOCK = 20_289_094;
 const ERC20_WEETH_BLOCK = 18_961_223;
 const NATIVE_ETH_BLOCK = 21_810_000;
 const ERC20_FXS_BLOCK = 11_465_584;
+const ERC20_FXS_VE_BLOCK = 13_833_298;
 // Olympus's Aave V3 position deployment block on Ethereum (per
 // inventory-ethereum.md §2 + §5: aEthUSDe, varDebtEth USDC/USDT, aEthSUSDe).
 // Also the graft block on the legacy subgraph; matches when the treasury first
@@ -218,6 +225,7 @@ const names: Record<string, string> = {
   [TREASURY_ADDRESS_V2]: "Treasury Wallet V2",
   [TREASURY_ADDRESS_V3]: "Treasury Wallet V3",
   [TRSRY]: "Bophades Treasury",
+  [VEFXS_ALLOCATOR]: "VeFXS Allocator",
   // Tokens and pools
   [CONVEX_REWARD_OHM_ETH]: "Convex Staked Curve OHM-ETH",
   [CONVEX_REWARD_OHM_FRAXBP]: "Convex Staked Curve OHM-FraxBP",
@@ -250,6 +258,7 @@ const names: Record<string, string> = {
   [ERC20_DAI]: "DAI",
   [ERC20_FRAX]: "FRAX",
   [ERC20_FXS]: "Frax Share",
+  [ERC20_FXS_VE]: "FXS - Staked",
   [ERC20_GOHM]: "Governance OHM",
   [ERC20_LDO]: "Lido DAO",
   [ERC20_LQTY]: "Liquity",
@@ -295,6 +304,7 @@ const abbreviations: Record<string, string> = {
   [ERC20_BTRFLY_V2]: "BTRFLY",
   [ERC20_BTRFLY_V2_RL]: "rlBTRFLY",
   [ERC20_FXS]: "FXS",
+  [ERC20_FXS_VE]: "veFXS",
   [ERC20_GOHM]: "gOHM",
   [ERC20_LDO]: "LDO",
   [ERC20_LQTY]: "LQTY",
@@ -594,6 +604,9 @@ const liquidityHandlers: LiquidityHandler[] = [
     id: CONVEX_REWARD_FRAX_USDC,
     target: LP_CURVE_FRAX_USDC_LP,
   },
+  // veFXS prices 1:1 with FXS (locked FXS, same underlying). Legacy uses
+  // UNSTAKED_TOKEN_MAPPING(ERC20_FXS_VE → ERC20_FXS) to drive its price.
+  { kind: "remap", tokens: [ERC20_FXS_VE], id: ERC20_FXS_VE, target: ERC20_FXS },
   // ERC4626 yield-bearing vault shares (sDAI / sUSDe / sUSDS / gauntlet
   // sUSDS). `convertToAssets()` provides the share→asset rate; underlying
   // recurses to its Chainlink feed. Carries Chainlink-equivalent priority.
@@ -849,6 +862,15 @@ export const ETHEREUM: ChainConfig = {
     token(ERC20_FXS, "Volatile", true, false, undefined, {
       startBlock: ERC20_FXS_BLOCK,
       decimals: 18,
+    }),
+    // veFXS — vote-escrow FXS lock receipt. Held in VeFXS Allocator.
+    // Categorized Volatile/isLiquid=false (legacy parity); the lock-decay
+    // changes balanceOf without emitting Transfer, so use snapshot-time
+    // balanceOf. Priced 1:1 with FXS via the remap LiquidityHandler.
+    token(ERC20_FXS_VE, "Volatile", false, false, undefined, {
+      startBlock: ERC20_FXS_VE_BLOCK,
+      decimals: 18,
+      nonStandardBalance: true,
     }),
     token(ERC20_LDO, "Volatile", true, false, undefined, {
       startBlock: ETHEREUM_START_BLOCK,

@@ -362,6 +362,7 @@ chains:
           - "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0" # wstETH
           - "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee" # weETH
           - "0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0" # FXS
+          - "0xc8418af6358ffdda74e09ca9cc3fe03ca6adc5b0" # veFXS (lock receipt; balance via nonStandardBalance RPC)
           - "0x5a98fcbea516cf06857215779fd812ca3bef1b32" # LDO
           - "0x6dea81c8171d0ba574754ef6f8b412f2ed88c54d" # LQTY
           - "0xc0d4ceb216b3ba9c3701b291766fdcba977cec3a" # BTRFLY V1
