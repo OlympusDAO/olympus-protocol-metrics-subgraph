@@ -127,12 +127,19 @@ async function fetchTreasury(
   startDate: string,
   endDate: string,
 ): Promise<MetricRow[]> {
-  // Legacy treasury-subgraph endpoint surfaces the `metrics(startDate, endDate)`
-  // GraphQL query that returns the Metric[] array. See
-  // treasury-subgraph/apps/server/src/graphql/schema.ts.
+  // Legacy treasury-subgraph exposes `paginatedMetrics(startDate, dateOffset)`
+  // — not `metrics(startDate, endDate)`. See
+  // treasury-subgraph/apps/server/src/graphql/schema.ts:220. The endpoint
+  // returns rows starting from `startDate` going forward; we set dateOffset
+  // to cover the requested range. crossChainDataComplete is intentionally
+  // omitted so incomplete dates surface in the diff as `_meta MISSING`
+  // rather than silently being filtered out.
+  const startMs = Date.parse(`${startDate}T00:00:00Z`);
+  const endMs = Date.parse(`${endDate}T00:00:00Z`);
+  const dateOffset = Math.max(1, Math.round((endMs - startMs) / 86400000) + 1);
   const query = `
-    query Metrics($start: String!, $end: String!) {
-      metrics(startDate: $start, endDate: $end) {
+    query Metrics($start: String!, $offset: Int!) {
+      paginatedMetrics(startDate: $start, dateOffset: $offset) {
         date
         ohmIndex
         ohmApy
@@ -157,13 +164,17 @@ async function fetchTreasury(
   const response = await fetch(url, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ query, variables: { start: startDate, end: endDate } }),
+    body: JSON.stringify({ query, variables: { start: startDate, offset: dateOffset } }),
   });
   if (!response.ok) {
     throw new Error(`Treasury fetch failed: ${response.status} ${await response.text()}`);
   }
-  const body = (await response.json()) as { data?: { metrics?: MetricRow[] } };
-  return body.data?.metrics ?? [];
+  const body = (await response.json()) as { data?: { paginatedMetrics?: MetricRow[] } };
+  // Clamp to the requested window — `paginatedMetrics` may return rows
+  // beyond `endDate` depending on how many days the offset spans.
+  return (body.data?.paginatedMetrics ?? []).filter(
+    (row) => row.date >= startDate && row.date <= endDate,
+  );
 }
 
 function diffRows(
