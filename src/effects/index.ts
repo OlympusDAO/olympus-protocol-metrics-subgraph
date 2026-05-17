@@ -931,14 +931,24 @@ export const readChainlinkLatestAnswer = createEffect(
     const config = CHAIN_CONFIGS[input.chainId as ChainId];
     if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
     const client = getClient(config);
-    const answer = await retryRpc(() =>
-      client.readContract({
-        address: getAddress(input.feedAddress),
-        abi: CHAINLINK_ABI,
-        functionName: "latestAnswer",
-        blockNumber: BigInt(input.atBlock),
-      }),
-    );
-    return (answer as bigint).toString();
+    try {
+      const answer = await retryRpc(() =>
+        client.readContract({
+          address: getAddress(input.feedAddress),
+          abi: CHAINLINK_ABI,
+          functionName: "latestAnswer",
+          blockNumber: BigInt(input.atBlock),
+        }),
+      );
+      return (answer as bigint).toString();
+    } catch {
+      // Contract not deployed at this block, or feed reverted (Chainlink
+      // proxies sometimes return empty data before their first phase is
+      // initialised). Caller treats "0" as "no price available" and the
+      // router falls through to other handlers. Matches the legacy
+      // treasury-subgraph behaviour where missing feed reads degraded
+      // gracefully instead of crashing the whole snapshot.
+      return "0";
+    }
   },
 );
