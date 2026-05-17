@@ -167,6 +167,36 @@ export const BERACHAIN: ChainConfig = {
       startBlock: LP_BERADROME_KODIAK_OHM_HONEY_CREATION_BLOCK,
       decimals: 18,
     }),
+    // Beradrome V1 + V2 reward vault stake tokens — these are what DAO MS
+    // actually holds (not the LP receipt directly). Beradrome's `stake()`
+    // updates internal storage without emitting Transfer, so the event-driven
+    // TokenBalance never sees deposits → reads as zero. Flag as
+    // nonStandardBalance so pushOwnedLiquidityRecords routes through
+    // snapshot-time balanceOf.
+    token(
+      BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1,
+      "Protocol-Owned Liquidity",
+      true,
+      false,
+      undefined,
+      {
+        startBlock: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1_CREATION_BLOCK,
+        decimals: 18,
+        nonStandardBalance: true,
+      },
+    ),
+    token(
+      BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2,
+      "Protocol-Owned Liquidity",
+      true,
+      false,
+      undefined,
+      {
+        startBlock: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2_CREATION_BLOCK,
+        decimals: 18,
+        nonStandardBalance: true,
+      },
+    ),
     token(INFRARED_KODIAK_OHM_HONEY_VAULT, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: INFRARED_KODIAK_OHM_HONEY_VAULT_CREATION_BLOCK,
       decimals: 18,

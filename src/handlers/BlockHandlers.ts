@@ -570,8 +570,23 @@ async function pushOwnedLiquidityRecords(
     if (!unitRate) continue;
 
     const lpDecimals = getTokenDecimals(config.tokens, lpToken);
+    // Some POL LPs (e.g. Beradrome reward vault stake tokens on Berachain)
+    // mint without emitting Transfer — `stake()` updates internal storage
+    // only. Their token definition carries `nonStandardBalance: true`; route
+    // through readErc20BalanceOf so the snapshot sees the real position.
+    const lpTokenDef = getTokenDefinition(config, lpToken);
+    const useOnChainBalance = lpTokenDef?.nonStandardBalance === true;
     for (const wallet of config.protocolAddresses) {
-      const balance = await readTokenBalance(context, config.chainId, lpToken, wallet, lpDecimals);
+      const balance = useOnChainBalance
+        ? await readNonStandardBalance(
+            context,
+            config.chainId,
+            lpToken,
+            wallet,
+            lpDecimals,
+            blockNumber,
+          )
+        : await readTokenBalance(context, config.chainId, lpToken, wallet, lpDecimals);
       if (balance.eq(ZERO)) continue;
       records.push(
         createTokenRecord(
