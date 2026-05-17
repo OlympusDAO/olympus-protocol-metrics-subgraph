@@ -2,6 +2,7 @@ import { createEffect, S } from "envio";
 import { getAddress } from "viem";
 
 import { BALANCER_VAULT_ABI } from "../snapshot/abis/balancer";
+import { CHAINLINK_ABI } from "../snapshot/abis/chainlink";
 import { KODIAK_ABI } from "../snapshot/abis/kodiak";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { getClient, retryRpc } from "../snapshot/contracts";
@@ -905,5 +906,39 @@ export const readBlockTimestamp = createEffect(
       client.getBlock({ blockNumber: BigInt(input.blockNumber) }),
     );
     return Number(block.timestamp);
+  },
+);
+
+// Read the latest Chainlink answer at a specific block via `latestAnswer()`
+// on the EACAggregatorProxy. Falls back to RPC because the proxy contract
+// doesn't emit AnswerUpdated events — only the underlying aggregator does,
+// and its address rotates via Chainlink phase transitions. Subscribing to the
+// proxy address (what we tried in the event-driven refactor) leaves the
+// ChainlinkPriceState empty and breaks every Chainlink-priced token. Going
+// back to RPC matches the legacy treasury-subgraph behaviour exactly and
+// costs ~90 calls/day total at our 8h snapshot cadence × ~30 feeds. Effect
+// cache keys per (chain, feed, block) so identical lookups within a snapshot
+// dedup.
+export const readChainlinkLatestAnswer = createEffect(
+  {
+    name: "readChainlinkLatestAnswer",
+    input: { chainId: S.number, feedAddress: S.string, atBlock: S.number },
+    output: S.string,
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    const answer = await retryRpc(() =>
+      client.readContract({
+        address: getAddress(input.feedAddress),
+        abi: CHAINLINK_ABI,
+        functionName: "latestAnswer",
+        blockNumber: BigInt(input.atBlock),
+      }),
+    );
+    return (answer as bigint).toString();
   },
 );

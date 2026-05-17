@@ -1,6 +1,7 @@
 import BigNumber from "bignumber.js";
 
-import { addr, toDecimal, ZERO } from "../snapshot/math";
+import { readChainlinkLatestAnswer } from "../effects";
+import { toDecimal, ZERO } from "../snapshot/math";
 import type { LiquidityHandler } from "../snapshot/types";
 import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";
 
@@ -19,11 +20,20 @@ export class ChainlinkPriceHandler extends BasePriceHandler<
     blockNumber: bigint,
   ): Promise<PriceLookupResult | null> {
     if (!this.isActive(blockNumber)) return null;
-    const state = await this.context.ChainlinkPriceState.get(
-      `${this.config.chainId}-${addr(this.handler.id)}`,
-    );
-    if (!state || state.answer === 0n) return null;
-    return { price: toDecimal(state.answer, this.handler.decimals), liquidity: CHAINLINK_PRIORITY };
+    // Read the proxy's `latestAnswer()` at the snapshot block via cached
+    // effect. We can't subscribe to AnswerUpdated events on the proxy
+    // (only the dynamic underlying aggregator emits them and we'd need to
+    // chase Chainlink phase transitions to subscribe correctly), so this
+    // matches legacy treasury-subgraph behaviour exactly: one RPC per
+    // (chain, feed, block), cached so identical lookups in a snapshot dedup.
+    const raw = await this.context.effect(readChainlinkLatestAnswer, {
+      chainId: this.config.chainId,
+      feedAddress: this.handler.id,
+      atBlock: Number(blockNumber),
+    });
+    const answer = BigInt(raw);
+    if (answer === 0n) return null;
+    return { price: toDecimal(answer, this.handler.decimals), liquidity: CHAINLINK_PRIORITY };
   }
 
   async getTotalValue(): Promise<BigNumber | null> {

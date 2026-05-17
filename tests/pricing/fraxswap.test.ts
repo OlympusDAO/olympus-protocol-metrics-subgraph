@@ -25,8 +25,17 @@ function mockContext(
   snapshot: { reserve0: string; reserve1: string; totalSupply: string } | null,
 ): EvmOnBlockContext {
   const map = new Map(chainlinkStates);
+  const effect = vi.fn(
+    async (_effectDef: unknown, input: { chainId?: number; feedAddress?: string }) => {
+      if (input.feedAddress !== undefined && input.chainId !== undefined) {
+        const stateId = `${input.chainId}-${input.feedAddress.toLowerCase()}`;
+        const state = map.get(stateId) as { answer?: bigint } | undefined;
+        return (state?.answer ?? 0n).toString();
+      }
+      return snapshot ?? { reserve0: "0", reserve1: "0", totalSupply: "0" };
+    },
+  );
   return {
-    ChainlinkPriceState: { get: async (id: string) => map.get(id) },
     OhmIndexState: { get: async () => undefined },
     Univ2PoolState: { get: async () => undefined },
     Univ3PoolState: { get: async () => undefined },
@@ -34,7 +43,7 @@ function mockContext(
     KodiakPool: { get: async () => undefined },
     Erc20Supply: { get: async () => undefined },
     TokenBalance: { get: async () => undefined },
-    effect: vi.fn(async () => snapshot ?? { reserve0: "0", reserve1: "0", totalSupply: "0" }),
+    effect,
   } as unknown as EvmOnBlockContext;
 }
 

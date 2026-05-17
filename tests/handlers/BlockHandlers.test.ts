@@ -61,7 +61,6 @@ function buildMockContext(seed: {
   }
 
   return {
-    ChainlinkPriceState: { get: async (id: string) => chainlinkStates.get(id) },
     OhmIndexState: { get: async () => undefined },
     TokenBalance: { get: async (id: string) => tokenBalances.get(id) },
     Univ2PoolState: { get: async () => undefined },
@@ -71,7 +70,16 @@ function buildMockContext(seed: {
     Erc20Supply: { get: async () => undefined },
     NativeBalanceState: { set: vi.fn() },
     log: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
-    effect: vi.fn(async () => ""),
+    effect: vi.fn(
+      async (_effectDef: unknown, input: { chainId?: number; feedAddress?: string }) => {
+        if (input.feedAddress !== undefined && input.chainId !== undefined) {
+          const stateId = `${input.chainId}-${input.feedAddress.toLowerCase()}`;
+          const state = chainlinkStates.get(stateId) as { answer?: bigint } | undefined;
+          return (state?.answer ?? 0n).toString();
+        }
+        return "";
+      },
+    ),
   } as unknown as EvmOnBlockContext;
 }
 

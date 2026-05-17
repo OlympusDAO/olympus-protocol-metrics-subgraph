@@ -83,9 +83,16 @@ function mockContext({
     KodiakPool: { get: async () => undefined },
     Univ2PoolState: { get: async (id: string) => univ2States.get(id) },
     Univ3PoolState: { get: async (id: string) => univ3States.get(id) },
-    ChainlinkPriceState: { get: async (id: string) => chainlinkStates.get(id) },
     Erc20Supply: { get: async () => undefined },
     TokenBalance: { get: async () => undefined },
+    effect: async (_effectDef: unknown, input: { chainId?: number; feedAddress?: string }) => {
+      if (input.feedAddress !== undefined && input.chainId !== undefined) {
+        const stateId = `${input.chainId}-${input.feedAddress.toLowerCase()}`;
+        const state = chainlinkStates.get(stateId) as { answer?: bigint } | undefined;
+        return (state?.answer ?? 0n).toString();
+      }
+      throw new Error("pricing.test mockContext: unhandled effect call");
+    },
   } as unknown as EvmOnBlockContext;
 }
 

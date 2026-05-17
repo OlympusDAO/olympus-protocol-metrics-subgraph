@@ -2,8 +2,8 @@ import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 import { describe, expect, test } from "vitest";
 
-import type { ChainConfig, LiquidityHandler } from "../../src/snapshot/types";
 import { getPrice } from "../../src/pricing";
+import type { ChainConfig, LiquidityHandler } from "../../src/snapshot/types";
 
 const CHAIN_ID = 42161;
 const ETH_USD_FEED = "0x639fe6ab55c921f74e7fac1ee960c0b6293ba612";
@@ -14,17 +14,22 @@ function mockClient(): PublicClient {
   return {
     chain: { id: CHAIN_ID },
     readContract: async () => {
-      throw new Error("ChainlinkPriceHandler must not perform RPC reads");
+      throw new Error("ChainlinkPriceHandler must go through context.effect, not direct RPC");
     },
   } as unknown as PublicClient;
 }
 
-function mockContext(
-  chainlinkStates: ReadonlyArray<readonly [string, unknown]> = [],
-): EvmOnBlockContext {
-  const map = new Map(chainlinkStates);
+// The effect call is the new boundary; we mock it instead of ChainlinkPriceState.
+// Returning the answer as a stringified bigint matches the effect's S.string output.
+function mockContext(answerByFeed: Record<string, bigint | null> = {}): EvmOnBlockContext {
   return {
-    ChainlinkPriceState: { get: async (id: string) => map.get(id) },
+    effect: async (_effect: unknown, input: { feedAddress: string }) => {
+      const value = answerByFeed[input.feedAddress.toLowerCase()];
+      if (value === undefined || value === null) {
+        throw new Error(`mockContext.effect: no answer configured for ${input.feedAddress}`);
+      }
+      return value.toString();
+    },
     Univ2PoolState: { get: async () => undefined },
     Univ3PoolState: { get: async () => undefined },
     BalancerPoolState: { get: async () => undefined },
@@ -62,31 +67,20 @@ function buildConfig(handlers: LiquidityHandler[]): ChainConfig {
 }
 
 describe("ChainlinkPriceHandler", () => {
-  test("returns the indexed Chainlink answer with feed decimals applied", async () => {
+  test("returns the RPC latestAnswer with feed decimals applied", async () => {
     const config = buildConfig([
       { kind: "chainlink", id: ETH_USD_FEED, tokens: [WETH], decimals: 8 },
     ]);
-    const context = mockContext([
-      [
-        `${CHAIN_ID}-${ETH_USD_FEED.toLowerCase()}`,
-        {
-          answer: 200_000_000_000n, // $2000.00 at 8 decimals
-          decimals: 8,
-          roundId: 1n,
-          updatedAtBlock: BLOCK,
-          updatedAtTimestamp: 1_700_000_000n,
-        },
-      ],
-    ]);
+    const context = mockContext({ [ETH_USD_FEED]: 200_000_000_000n }); // $2000.00 at 8 decimals
     const result = await getPrice(config, context, mockClient(), WETH, BLOCK, null);
     expect(result.price.eq("2000")).toBe(true);
   });
 
-  test("returns ZERO when no ChainlinkPriceState row exists for the feed", async () => {
+  test("returns ZERO when the RPC answer is 0 (stale/uninitialised feed)", async () => {
     const config = buildConfig([
       { kind: "chainlink", id: ETH_USD_FEED, tokens: [WETH], decimals: 8 },
     ]);
-    const context = mockContext();
+    const context = mockContext({ [ETH_USD_FEED]: 0n });
     const result = await getPrice(config, context, mockClient(), WETH, BLOCK, null);
     expect(result.price.eq("0")).toBe(true);
   });
@@ -101,18 +95,9 @@ describe("ChainlinkPriceHandler", () => {
         startBlock: 200_000_000,
       },
     ]);
-    const context = mockContext([
-      [
-        `${CHAIN_ID}-${ETH_USD_FEED.toLowerCase()}`,
-        {
-          answer: 200_000_000_000n,
-          decimals: 8,
-          roundId: 1n,
-          updatedAtBlock: BLOCK,
-          updatedAtTimestamp: 1_700_000_000n,
-        },
-      ],
-    ]);
+    // Effect should never be called because isActive guard short-circuits;
+    // configuring no answer ensures the test fails loudly if that changes.
+    const context = mockContext();
     const result = await getPrice(config, context, mockClient(), WETH, BLOCK, null);
     expect(result.price.eq("0")).toBe(true);
   });

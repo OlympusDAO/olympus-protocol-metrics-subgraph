@@ -26,8 +26,17 @@ function mockContext(
   vaultRate: string | null,
 ): EvmOnBlockContext {
   const chainlinkMap = new Map(chainlinkStates);
+  const effect = vi.fn(
+    async (_effectDef: unknown, input: { chainId?: number; feedAddress?: string }) => {
+      if (input.feedAddress !== undefined && input.chainId !== undefined) {
+        const stateId = `${input.chainId}-${input.feedAddress.toLowerCase()}`;
+        const state = chainlinkMap.get(stateId) as { answer?: bigint } | undefined;
+        return (state?.answer ?? 0n).toString();
+      }
+      return vaultRate ?? "";
+    },
+  );
   return {
-    ChainlinkPriceState: { get: async (id: string) => chainlinkMap.get(id) },
     OhmIndexState: { get: async () => undefined },
     Univ2PoolState: { get: async () => undefined },
     Univ3PoolState: { get: async () => undefined },
@@ -35,7 +44,7 @@ function mockContext(
     KodiakPool: { get: async () => undefined },
     Erc20Supply: { get: async () => undefined },
     TokenBalance: { get: async () => undefined },
-    effect: vi.fn(async () => vaultRate ?? ""),
+    effect,
   } as unknown as EvmOnBlockContext;
 }
 

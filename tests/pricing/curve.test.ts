@@ -25,8 +25,20 @@ function mockContext(
   curveSnapshot: { balances: string[]; totalSupply: string } | null,
 ): EvmOnBlockContext {
   const map = new Map(chainlinkStates);
+  // The effect mock dispatches by input shape: readChainlinkLatestAnswer
+  // carries `feedAddress`, the curve snapshot effect doesn't. Chainlink
+  // returns the answer stringified to match the real effect's S.string output.
+  const effect = vi.fn(
+    async (_effectDef: unknown, input: { chainId?: number; feedAddress?: string }) => {
+      if (input.feedAddress !== undefined && input.chainId !== undefined) {
+        const stateId = `${input.chainId}-${input.feedAddress.toLowerCase()}`;
+        const state = map.get(stateId) as { answer?: bigint } | undefined;
+        return (state?.answer ?? 0n).toString();
+      }
+      return curveSnapshot ?? { balances: [], totalSupply: "0" };
+    },
+  );
   return {
-    ChainlinkPriceState: { get: async (id: string) => map.get(id) },
     OhmIndexState: { get: async () => undefined },
     Univ2PoolState: { get: async () => undefined },
     Univ3PoolState: { get: async () => undefined },
@@ -34,7 +46,7 @@ function mockContext(
     KodiakPool: { get: async () => undefined },
     Erc20Supply: { get: async () => undefined },
     TokenBalance: { get: async () => undefined },
-    effect: vi.fn(async () => curveSnapshot ?? { balances: [], totalSupply: "0" }),
+    effect,
   } as unknown as EvmOnBlockContext;
 }
 
