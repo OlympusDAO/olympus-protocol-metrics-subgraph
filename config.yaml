@@ -363,6 +363,7 @@ chains:
           - "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee" # weETH
           - "0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0" # FXS
           - "0xc8418af6358ffdda74e09ca9cc3fe03ca6adc5b0" # veFXS (lock receipt; balance via nonStandardBalance RPC)
+          - "0x62b9c7356a2dc64a1969e19c23e4f579f9810aa7" # cvxCRV (Convex CRV reward wrapper)
           - "0x5a98fcbea516cf06857215779fd812ca3bef1b32" # LDO
           - "0x6dea81c8171d0ba574754ef6f8b412f2ed88c54d" # LQTY
           - "0xc0d4ceb216b3ba9c3701b291766fdcba977cec3a" # BTRFLY V1
@@ -398,6 +399,11 @@ chains:
           - "0xd1d5a4c0ea98971894772dcd6d2f1dc71083c44e" # LQTY-WETH
           - "0xdf9ab3c649005ebfdf682d2302ca1f673e0d37a2" # WETH-BTRFLY V1
           - "0x3e6e23198679419cd73bb6376518dcc5168c8260" # WETH-BTRFLY V2
+
+      # ---- Univ2 pricing pools.
+      - name: UniswapV2Pool
+        address:
+          - "0x4b893b0e9c2fe8bf5d531d0c9c603b1483b4ce30" # cvxCRV-ETH (prices cvxCRV)
 
       # ---- Chainlink feeds (8 baseline; full set is 12 per inventory §4.1).
       - name: ChainlinkAggregator

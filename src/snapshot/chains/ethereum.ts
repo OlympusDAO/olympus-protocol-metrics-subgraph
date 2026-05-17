@@ -85,6 +85,12 @@ const ERC20_BTRFLY_V1 = addr("0xc0d4ceb216b3ba9c3701b291766fdcba977cec3a");
 const ERC20_BTRFLY_V1_STAKED = addr("0xCC94Faf235cC5D3Bf4bEd3a30db5984306c86aBC"); // xBTRFLY
 const ERC20_BTRFLY_V2 = addr("0xc55126051b22ebb829d00368f4b12bde432de5da");
 const ERC20_BTRFLY_V2_RL = addr("0x742B70151cd3Bc7ab598aAFF1d54B90c3ebC6027"); // rlBTRFLY
+// cvxCRV — Convex's liquid wrapper of staked CRV. Held by Convex vlCVX
+// Allocator as a reward-accrual token; priced via the UniswapV2 cvxCRV-ETH
+// pool (recurses to ETH/USD via Chainlink). Standard ERC20 — `_mint`
+// emits Transfer, so the event-driven ledger works.
+const ERC20_CVX_CRV = addr("0x62b9c7356a2dc64a1969e19c23e4f579f9810aa7");
+const LP_UNISWAP_V2_CVX_CRV_ETH = addr("0x4b893b0e9c2fe8bf5d531d0c9c603b1483b4ce30");
 
 const NATIVE_ETH = "0x0000000000000000000000000000000000000000";
 
@@ -197,6 +203,10 @@ const ERC20_WEETH_BLOCK = 18_961_223;
 const NATIVE_ETH_BLOCK = 21_810_000;
 const ERC20_FXS_BLOCK = 11_465_584;
 const ERC20_FXS_VE_BLOCK = 13_833_298;
+// cvxCRV token + cvxCRV-ETH UniV2 pool deployment blocks (eth_getCode
+// binary search).
+const ERC20_CVX_CRV_BLOCK = 12_451_018;
+const LP_UNISWAP_V2_CVX_CRV_ETH_BLOCK = 12_496_006;
 // Olympus's Aave V3 position deployment block on Ethereum (per
 // inventory-ethereum.md §2 + §5: aEthUSDe, varDebtEth USDC/USDT, aEthSUSDe).
 // Also the graft block on the legacy subgraph; matches when the treasury first
@@ -256,9 +266,11 @@ const names: Record<string, string> = {
   [ERC20_BTRFLY_V2]: "BTRFLY V2",
   [ERC20_BTRFLY_V2_RL]: "Revenue-Locked BTRFLY",
   [ERC20_DAI]: "DAI",
+  [ERC20_CVX_CRV]: "Curve - Convex CRV Reward Pool",
   [ERC20_FRAX]: "FRAX",
   [ERC20_FXS]: "Frax Share",
   [ERC20_FXS_VE]: "FXS - Staked",
+  [LP_UNISWAP_V2_CVX_CRV_ETH]: "Uniswap V2 cvxCRV-ETH Liquidity Pool",
   [ERC20_GOHM]: "Governance OHM",
   [ERC20_LDO]: "Lido DAO",
   [ERC20_LQTY]: "Liquity",
@@ -303,6 +315,7 @@ const abbreviations: Record<string, string> = {
   [ERC20_BTRFLY_V1_STAKED]: "xBTRFLY",
   [ERC20_BTRFLY_V2]: "BTRFLY",
   [ERC20_BTRFLY_V2_RL]: "rlBTRFLY",
+  [ERC20_CVX_CRV]: "cvxCRV",
   [ERC20_FXS]: "FXS",
   [ERC20_FXS_VE]: "veFXS",
   [ERC20_GOHM]: "gOHM",
@@ -513,6 +526,16 @@ const liquidityHandlers: LiquidityHandler[] = [
     tokens: [ERC20_WETH, ERC20_BTRFLY_V2],
     id: LP_UNISWAP_V3_WETH_BTRFLY_V2,
     startBlock: ETHEREUM_START_BLOCK,
+  },
+  // cvxCRV — Convex's liquid staked-CRV wrapper. Held by Convex vlCVX
+  // Allocator; pricing via the cvxCRV-ETH UniV2 pool (recurses to ETH via
+  // Chainlink). Legacy: LIQUIDITY_POOL_TOKEN_LOOKUP[ERC20_CVX_CRV] =
+  // PairHandler(UniswapV2, PAIR_UNISWAP_V2_CVX_CRV_ETH).
+  {
+    kind: "univ2",
+    tokens: [ERC20_CVX_CRV, ERC20_WETH],
+    id: LP_UNISWAP_V2_CVX_CRV_ETH,
+    startBlock: LP_UNISWAP_V2_CVX_CRV_ETH_BLOCK,
   },
   // Staked / locked variants remap to their base tokens for pricing.
   {
@@ -871,6 +894,13 @@ export const ETHEREUM: ChainConfig = {
       startBlock: ERC20_FXS_VE_BLOCK,
       decimals: 18,
       nonStandardBalance: true,
+    }),
+    // cvxCRV — Convex's liquid staked-CRV wrapper. Standard ERC20 (mints
+    // emit Transfer), so the event-driven TokenBalance is correct — no
+    // nonStandardBalance flag needed. Priced via cvxCRV-ETH UniV2 handler.
+    token(ERC20_CVX_CRV, "Volatile", true, false, undefined, {
+      startBlock: ERC20_CVX_CRV_BLOCK,
+      decimals: 18,
     }),
     token(ERC20_LDO, "Volatile", true, false, undefined, {
       startBlock: ETHEREUM_START_BLOCK,
