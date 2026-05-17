@@ -149,17 +149,23 @@ export const FANTOM: ChainConfig = {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
     }),
+    // Multichain-bridged DAI on Fantom. The bridge credits balance without a
+    // standard Transfer event, so the indexer's TokenBalance ledger drifts
+    // negative; read balanceOf at snapshot time to stay correct.
     token(ERC20_DAI, "Stable", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     token(ERC20_DEI, "Stable", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
     }),
+    // Multichain-bridged FRAX on Fantom — same bridge-mint issue as DAI.
     token(ERC20_FRAX, "Stable", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     token(ERC20_LQDR, "Volatile", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,

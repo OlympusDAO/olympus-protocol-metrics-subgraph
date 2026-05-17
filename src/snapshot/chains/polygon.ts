@@ -112,9 +112,13 @@ export const POLYGON: ChainConfig = {
       startBlock: POLYGON_START_BLOCK,
       decimals: 9,
     }),
+    // Staked KLIMA (sKLIMA) accrues rebase yield by mutating balanceOf without
+    // emitting Transfer, so the indexer's TokenBalance ledger drifts negative
+    // over time. Read balanceOf at snapshot time to stay correct.
     token(ERC20_KLIMA_STAKED, "Volatile", true, false, "0.85", {
       startBlock: POLYGON_START_BLOCK,
       decimals: 9,
+      nonStandardBalance: true,
     }),
     token(ERC20_SYN, "Volatile", true, false, undefined, {
       startBlock: POLYGON_START_BLOCK,
