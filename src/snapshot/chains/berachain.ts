@@ -151,8 +151,20 @@ export const BERACHAIN: ChainConfig = {
       startBlock: LBGT_CREATION_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_STARGATE_USDC, "Stable", true, false, undefined, { decimals: 6 }),
-    token(ERC20_HONEY, "Stable", true, false, undefined, { decimals: 18 }),
+    // Stargate-bridged USDC and Berachain HONEY both mutate balance through
+    // non-Transfer paths (Stargate composer hook, HONEY mint/redeem via the
+    // Honey Factory). Without nonStandardBalance the indexer's TokenBalance
+    // ledger drifts — DAO MS shows a phantom -$440K USDC.e / +$440K HONEY pair
+    // that nets to ~0 but spams the records. Reading balanceOf at snapshot
+    // time matches the on-chain truth (both currently 0 for DAO MS).
+    token(ERC20_STARGATE_USDC, "Stable", true, false, undefined, {
+      decimals: 6,
+      nonStandardBalance: true,
+    }),
+    token(ERC20_HONEY, "Stable", true, false, undefined, {
+      decimals: 18,
+      nonStandardBalance: true,
+    }),
     token(ERC20_WBERA, "Volatile", true, true, undefined, { decimals: 18 }),
     token(NATIVE_BERA, "Volatile", true, true, undefined, { decimals: 18 }),
     token(ERC20_OHM, "Volatile", true, false, undefined, {

@@ -72,17 +72,56 @@ export class KodiakPriceHandler extends BasePriceHandler<
     return { price, liquidity: new BigNumber(state.liquidity.toString()) };
   }
 
-  // getUnderlyingBalances would require tracking the Kodiak LP's
-  // pool-share-of-Univ3 math. The treasury never holds the bare underlying
-  // UniV3 reserves through Kodiak — only the wrapping LP — so reporting a
-  // pooled total value here is not needed for the current snapshot output.
-  // Returning null is consistent with the Univ3 handler.
-  async getTotalValue(): Promise<BigNumber | null> {
-    return null;
+  // Pool TVL from the Kodiak Island's active-range reserves (RPC, cached per
+  // block by readContract). pushOwnedLiquidityRecords needs this — without it
+  // the kodiak handler short-circuits before reaching balanceOf, and POL rows
+  // for Beradrome / Infrared / BeraHub vaults never get emitted.
+  async getTotalValue(
+    excludedTokens: string[],
+    priceLookup: PriceLookup,
+    blockNumber: bigint,
+  ): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
+    const [token0, token1] = sortTokens(this.handler.tokens);
+    const decimals0 = getTokenDecimals(this.config.tokens, token0);
+    const decimals1 = getTokenDecimals(this.config.tokens, token1);
+    const reserves = await readContract(
+      this.client,
+      this.handler.pool,
+      KODIAK_ABI,
+      "getUnderlyingBalances",
+      [],
+      blockNumber,
+    );
+    const reserve0 = toDecimal(reserves[0], decimals0);
+    const reserve1 = toDecimal(reserves[1], decimals1);
+    const excluded = new Set(excludedTokens.map((t) => addr(t)));
+    let total = ZERO;
+    if (!excluded.has(token0)) {
+      const lookup0 = await priceLookup(token0, blockNumber, this.getId());
+      total = total.plus(reserve0.times(lookup0.price));
+    }
+    if (!excluded.has(token1)) {
+      const lookup1 = await priceLookup(token1, blockNumber, this.getId());
+      total = total.plus(reserve1.times(lookup1.price));
+    }
+    return total;
   }
 
-  async getUnitPrice(): Promise<BigNumber | null> {
-    return null;
+  // Per-LP unit price = pool TVL / pool totalSupply. Multiplied by the wallet's
+  // (real or reward-vault-mirrored) LP balance in pushOwnedLiquidityRecords.
+  async getUnitPrice(priceLookup: PriceLookup, blockNumber: bigint): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
+    const supplyEntity = await this.context.Erc20Supply.get(
+      `${this.config.chainId}-${addr(this.handler.pool)}`,
+    );
+    if (!supplyEntity || supplyEntity.totalSupply === 0n) return null;
+    const lpDecimals = getTokenDecimals(this.config.tokens, this.handler.pool);
+    const totalSupply = toDecimal(supplyEntity.totalSupply, lpDecimals);
+    if (totalSupply.eq(ZERO)) return null;
+    const totalValue = await this.getTotalValue([], priceLookup, blockNumber);
+    if (!totalValue || totalValue.eq(ZERO)) return null;
+    return totalValue.div(totalSupply);
   }
 
   async getUnderlyingTokenBalance(

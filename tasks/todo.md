@@ -128,7 +128,14 @@ See `docs/envio-migration/inherited-todos.md`.
 
 - [x] **Cooler V1.1 receivable: $4.9M new vs $9.15M legacy.** **FALSE ALARM.** Same-date diff on 2026-05-17 (legacy @ block 25,115,600, envio @ 25,116,000): V1.1 legacy=$4,898,041 vs envio=$4,897,705 — $337 gap, pure block-timing noise. All 4 clearinghouses match within $9K total (V1: $2, V1.1: $337, V2: $42, MonoCooler: $8,373). The original "$9.38M mystery" came from comparing pre-deploy snapshots — the deployed endpoint (`84753f4`) predates commits 8f9e85b/1d2bc88/e255be6/2e3c87e.
 
-- [ ] **Real same-date MV gap on 2026-05-17: $11,997,221 (envio under).** Itemized:
+- [x] **Post-deploy MV gap on 2026-05-17 (full-sync verified): $145,235 (envio over).** Down from $11,997,221 pre-deploy. All originally-flagged items resolved or accounted for:
+  - Ethereum gap closed to $99K (envio over, layout-difference noise — legacy emits single combined POL row, envio splits into per-token rows; sums within 0.7%).
+  - Base gap closed to $414 (essentially identical).
+  - Polygon gap closed to $2 (essentially identical).
+  - Arbitrum +$259K — confirmed legacy is wrong (legacy doesn't snapshot Arbitrum; envio correctly tracks Camelot OHM-wETH LP + JONES staking).
+  - Berachain residual $222K → fixed in 2026-05-18 commit (Kodiak POL pricing + Stargate USDC/HONEY nonStandardBalance).
+
+- [ ] **Original $11.99M same-date MV gap (pre-deploy, 2026-05-17).** Resolved on full sync. Original itemization preserved below for reference:
   - **Ethereum: -$11.04M** (will mostly close on next deploy):
     - `Uniswap V3 OHM-sUSDS POL @ Treasury MS = $10,936,429` — fixed in unmerged commit 8f9e85b (config.yaml + ethereum.ts).
     - `veFXS staked-FXS = $81,011` — fixed in unmerged 1d2bc88.
