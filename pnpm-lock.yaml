@@ -80,8 +80,8 @@ importers:
         specifier: ^8.58.0
         version: 8.58.0(eslint@9.39.4)(typescript@4.9.5)
       assemblyscript:
-        specifier: 0.19.10
-        version: 0.19.10
+        specifier: 0.28.17
+        version: 0.28.17
       eslint:
         specifier: ^9.22.0
         version: 9.39.4
@@ -709,6 +709,11 @@ packages:
     resolution: {integrity: sha512-fwOQNZVTMga5KRsfY80g7cpOl4PsFQczMwHzdtgoqLXaYhkhavufKb0sB0l3T1DUxpAufA0KNhlbpuuhZUwxMA==}
     hasBin: true
 
+  assemblyscript@0.28.17:
+    resolution: {integrity: sha512-+S0Y7pwLiJngik0bt63XAswcN3Mu0szjvl2aCRWJ9U+5214e93HIt1waTBGFq0yLa8LJBBziw95BaAs5FNfz5Q==}
+    engines: {node: '>=20', npm: '>=10'}
+    hasBin: true
+
   async@3.2.6:
     resolution: {integrity: sha512-htCUDlxyyCLMgaM3xXg0C0LW2xqfuQ6p05pCEIsXuyQ+a1koYKTuBMzRNwmybfLgvJDMd0r1LTn4+E0Ti6C2AA==}
 
@@ -734,6 +739,10 @@ packages:
 
   binaryen@102.0.0-nightly.20211028:
     resolution: {integrity: sha512-GCJBVB5exbxzzvyt8MGDv/MeUjs6gkXDvf4xOIItRBptYl0Tz5sm1o/uG95YK0L0VeG5ajDu3hRtkBP2kzqC5w==}
+    hasBin: true
+
+  binaryen@129.0.0-nightly.20260428:
+    resolution: {integrity: sha512-RpjRVPZw8NOhkGzx3tTaKYdv4C+zO1VVI0VB9GSCNLM81flHOAZUwRJTLDM3Hqco3OmwB8hTLpkkpMSJjUfHXw==}
     hasBin: true
 
   blob-to-it@2.0.10:
@@ -2159,6 +2168,7 @@ packages:
 
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   v8-compile-cache-lib@3.0.1:
@@ -3023,6 +3033,11 @@ snapshots:
       long: 5.3.2
       source-map-support: 0.5.21
 
+  assemblyscript@0.28.17:
+    dependencies:
+      binaryen: 129.0.0-nightly.20260428
+      long: 5.3.2
+
   async@3.2.6: {}
 
   asynckit@0.4.0: {}
@@ -3046,6 +3061,8 @@ snapshots:
   binaryen@101.0.0-nightly.20210723: {}
 
   binaryen@102.0.0-nightly.20211028: {}
+
+  binaryen@129.0.0-nightly.20260428: {}
 
   blob-to-it@2.0.10:
     dependencies:

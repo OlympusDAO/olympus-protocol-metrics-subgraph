@@ -36,7 +36,7 @@
     "@types/node": "^20",
     "@typescript-eslint/eslint-plugin": "^8.58.0",
     "@typescript-eslint/parser": "^8.58.0",
-    "assemblyscript": "0.19.10",
+    "assemblyscript": "0.28.17",
     "eslint": "^9.22.0",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "json-diff": "^0.9.0",
