@@ -38,7 +38,7 @@ importers:
     dependencies:
       '@apollo/client':
         specifier: ^3.8.4
-        version: 3.14.1(graphql@16.13.2)
+        version: 3.14.1(graphql@16.14.0)
       '@graphprotocol/graph-cli':
         specifier: ^0.96.0
         version: 0.96.0(@types/node@20.19.39)(typescript@4.9.5)(zod@3.25.76)
@@ -58,8 +58,8 @@ importers:
         specifier: ^16.0.2
         version: 16.6.1
       graphql:
-        specifier: ^16.8.1
-        version: 16.13.2
+        specifier: ^16.14.0
+        version: 16.14.0
       node-fetch:
         specifier: ^2.6.7
         version: 2.7.0(encoding@0.1.13)
@@ -1278,8 +1278,8 @@ packages:
     resolution: {integrity: sha512-AjqGKbDGUFRKIRCP9tCKiIGHyriz2oHEbPIbEtcSLSs4YjReZOIPQQWek4+6hjw62H9QShXHyaGivGiYVLeYFQ==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
 
-  graphql@16.13.2:
-    resolution: {integrity: sha512-5bJ+nf/UCpAjHM8i06fl7eLyVC9iuNAjm9qzkiu2ZGhM0VscSvS6WDPfAwkdkBuoXGM9FJSbKl6wylMwP9Ktig==}
+  graphql@16.14.0:
+    resolution: {integrity: sha512-BBvQ/406p+4CZbTpCbVPSxfzrZrbnuWSP1ELYgyS6B+hNeKzgrdB4JczCa5VZUBQrDa9hUngm0KnexY6pJRN5Q==}
     engines: {node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0}
 
   has-flag@3.0.0:
@@ -2159,6 +2159,7 @@ packages:
 
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   v8-compile-cache-lib@3.0.1:
@@ -2276,14 +2277,14 @@ packages:
 
 snapshots:
 
-  '@apollo/client@3.14.1(graphql@16.13.2)':
+  '@apollo/client@3.14.1(graphql@16.14.0)':
     dependencies:
-      '@graphql-typed-document-node/core': 3.2.0(graphql@16.13.2)
+      '@graphql-typed-document-node/core': 3.2.0(graphql@16.14.0)
       '@wry/caches': 1.0.1
       '@wry/equality': 0.5.7
       '@wry/trie': 0.5.0
-      graphql: 16.13.2
-      graphql-tag: 2.12.6(graphql@16.13.2)
+      graphql: 16.14.0
+      graphql-tag: 2.12.6(graphql@16.14.0)
       hoist-non-react-statics: 3.3.2
       optimism: 0.18.1
       prop-types: 15.8.1
@@ -2369,8 +2370,8 @@ snapshots:
   '@float-capital/float-subgraph-uncrashable@0.0.0-internal-testing.5':
     dependencies:
       '@rescript/std': 9.0.0
-      graphql: 16.13.2
-      graphql-import-node: 0.0.5(graphql@16.13.2)
+      graphql: 16.14.0
+      graphql-import-node: 0.0.5(graphql@16.14.0)
       js-yaml: 4.1.1
 
   '@graphprotocol/graph-cli@0.96.0(@types/node@20.19.39)(typescript@4.9.5)(zod@3.25.76)':
@@ -2413,9 +2414,9 @@ snapshots:
     dependencies:
       assemblyscript: 0.19.10
 
-  '@graphql-typed-document-node/core@3.2.0(graphql@16.13.2)':
+  '@graphql-typed-document-node/core@3.2.0(graphql@16.14.0)':
     dependencies:
-      graphql: 16.13.2
+      graphql: 16.14.0
 
   '@humanfs/core@0.19.1': {}
 
@@ -3647,18 +3648,18 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  graphql-import-node@0.0.5(graphql@16.13.2):
+  graphql-import-node@0.0.5(graphql@16.14.0):
     dependencies:
-      graphql: 16.13.2
+      graphql: 16.14.0
 
-  graphql-tag@2.12.6(graphql@16.13.2):
+  graphql-tag@2.12.6(graphql@16.14.0):
     dependencies:
-      graphql: 16.13.2
+      graphql: 16.14.0
       tslib: 2.8.1
 
   graphql@16.10.0: {}
 
-  graphql@16.13.2: {}
+  graphql@16.14.0: {}
 
   has-flag@3.0.0: {}
 
