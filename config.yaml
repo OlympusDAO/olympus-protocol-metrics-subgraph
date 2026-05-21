@@ -98,15 +98,6 @@ contracts:
       - event: "PoolBalanceChanged(bytes32 indexed poolId, address indexed liquidityProvider, address[] tokens, int256[] deltas, uint256[] protocolFeeAmounts)"
       - event: "Swap(bytes32 indexed poolId, address indexed tokenIn, address indexed tokenOut, uint256 amountIn, uint256 amountOut)"
 
-  # Chainlink AggregatorV3 feeds. Each AnswerUpdated emits the new oracle
-  # price; the handler maps src feed address -> tokenAddress via the per-chain
-  # chainlink LiquidityHandler config and writes ChainlinkPriceState. Phase 4
-  # wires per-chain feed addresses; this entry just declares the event shape so
-  # codegen produces the typed handler.
-  - name: ChainlinkAggregator
-    events:
-      - event: "AnswerUpdated(int256 indexed current, uint256 indexed roundId, uint256 updatedAt)"
-
   # sOHM V3 emits LogRebase on every staking-epoch rebase. The handler
   # persists the new `index` into OhmIndexState; the gOHM pricing handler
   # reads it to compute gOHM_price = OHM_price * index/1e9. Currently
@@ -214,13 +205,6 @@ chains:
           - "0xc31e54c7a869b9fcbecc14363cf510d1c41fa443" # UniV3 wETH-USDC
           - "0xc6f780497a95e246eb9449f5e4770916dcd6396a" # UniV3 ARB-wETH
 
-      # Chainlink feeds. Each address must have a matching `chainlink` entry in
-      # the ARBITRUM liquidityHandlers (chains/arbitrum.ts) carrying tokenAddress
-      # + feed decimals. Phase 4 expands this list per chain.
-      - name: ChainlinkAggregator
-        address:
-          - "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612" # ETH/USD
-
       - name: BalancerVault
         address:
           - "0xBA12222222228d8Ba445958a75a0704d566BF2C8"
@@ -312,13 +296,6 @@ chains:
       - name: UniswapV3Pool
         address:
           - "0x183ea22691c54806fe96555436dd312b6befac2f" # UniV3 OHM-USDC
-
-      # Chainlink USD feeds. Each entry has a matching `chainlink` handler in
-      # the BASE config's liquidityHandlers carrying tokenAddress + decimals.
-      - name: ChainlinkAggregator
-        address:
-          - "0x71041dddad3595f9ced3dccfbe3d1f4b0a16bb70" # ETH/USD
-          - "0x7e860098f58bbfc8648a4311b374b1d669a2bc6b" # USDC/USD
 
   - id: 137 # Polygon
     start_block: 23000000 # ~2021-09-22, no graft per Phase 1 decision #3
@@ -475,17 +452,6 @@ chains:
       - name: UniswapV2Pool
         address:
           - "0x4b893b0e9c2fe8bf5d531d0c9c603b1483b4ce30" # cvxCRV-ETH (prices cvxCRV)
-
-      # ---- Chainlink feeds (8 baseline; full set is 12 per inventory §4.1).
-      - name: ChainlinkAggregator
-        address:
-          - "0xaed0c38402a5d19df6e4c03f4e2dced6e29c1ee9" # DAI/USD (also used for USDS)
-          - "0xb9e1e3a9feff48998e45fa90847ed4d467e8bcfd" # FRAX/USD
-          - "0x3D7aE7E594f2f2091Ad8798313450130d0Aba3a0" # LUSD/USD
-          - "0x8fffffd4afb6115b954bd326cbe7b4ba576818f6" # USDC/USD
-          - "0x3e7d1eab13ad0104d2750b8863b489d65364e32d" # USDT/USD
-          - "0xa569d910839Ae8865Da8F8e70FfFb0cBA869F961" # USDe/USD
-          - "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419" # ETH/USD
 
       # ---- sOHM V3 LogRebase drives OhmIndexState; consumed by GohmPriceHandler.
       - name: SOhmV3

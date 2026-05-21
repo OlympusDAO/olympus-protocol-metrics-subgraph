@@ -372,45 +372,12 @@ type NativeBalanceState {
   updatedAtBlock: BigInt!
 }
 
-# Chainlink feed answer maintained from AnswerUpdated aggregator events.
-# Replaces snapshot-time latestAnswer / latestRoundData RPC calls in the
-# legacy subgraphs (subgraphs/*/src/price/PriceChainlink.ts).
-#
-# Two-tier persistence (per @0xJem on PR #315):
-# - `ChainlinkPriceUpdate`: immutable, one row per AnswerUpdated event,
-#   keyed by (chainId, feedAddress, block, logIndex). Consumers can query
-#   the historical price at any block via a `block_lte` filter.
-# - `ChainlinkPriceState`: mutable "latest" pointer keyed by
-#   (chainId, feedAddress). Snapshot path reads from this for O(1)
-#   lookup; Envio's within-chain event ordering guarantees it reflects
-#   all prior events at the snapshot block.
-#
-# tokenAddress is the asset the feed prices (e.g. for ETH/USD on Arbitrum,
-# tokenAddress = WETH on Arbitrum). decimals is the feed's `decimals()` —
-# seeded once per feed via cached effect or AnswerUpdated metadata.
-type ChainlinkPriceState {
-  id: ID! # chainId-feedAddress
-  chainId: Int! @index
-  feedAddress: String! @index
-  tokenAddress: String! @index
-  answer: BigInt! # raw answer; apply `decimals` when consumed
-  decimals: Int!
-  roundId: BigInt!
-  updatedAtBlock: BigInt!
-  updatedAtTimestamp: BigInt!
-}
-
-type ChainlinkPriceUpdate {
-  id: ID! # chainId-feedAddress-block-logIndex
-  chainId: Int! @index
-  feedAddress: String! @index
-  tokenAddress: String! @index
-  answer: BigInt!
-  decimals: Int!
-  roundId: BigInt!
-  block: BigInt! @index
-  timestamp: BigInt!
-}
+# (ChainlinkPriceState / ChainlinkPriceUpdate removed: AnswerUpdated never
+# fires from the EACAggregatorProxy addresses we register — the underlying
+# aggregator emits them and its address rotates via Chainlink phase
+# transitions. ChainlinkPriceHandler now reads `latestAnswer()` via the
+# `readChainlinkLatestAnswer` cached effect; legacy parity preserved at the
+# cost of ~90 RPCs/day at our 8h snapshot cadence. See commit 6bf06fa.)
 
 # Latest sOHM (rebasing) index per chain. The sOHM V3 contract emits
 # LogRebase(epoch, rebase, index) on every staking-epoch rebase; we persist
