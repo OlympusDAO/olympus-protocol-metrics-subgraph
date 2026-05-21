@@ -151,20 +151,16 @@ export const BERACHAIN: ChainConfig = {
       startBlock: LBGT_CREATION_BLOCK,
       decimals: 18,
     }),
-    // Stargate-bridged USDC and Berachain HONEY both mutate balance through
-    // non-Transfer paths (Stargate composer hook, HONEY mint/redeem via the
-    // Honey Factory). Without nonStandardBalance the indexer's TokenBalance
-    // ledger drifts — DAO MS shows a phantom -$440K USDC.e / +$440K HONEY pair
-    // that nets to ~0 but spams the records. Reading balanceOf at snapshot
-    // time matches the on-chain truth (both currently 0 for DAO MS).
-    token(ERC20_STARGATE_USDC, "Stable", true, false, undefined, {
-      decimals: 6,
-      nonStandardBalance: true,
-    }),
-    token(ERC20_HONEY, "Stable", true, false, undefined, {
-      decimals: 18,
-      nonStandardBalance: true,
-    }),
+    // Stargate-bridged USDC.e and Berachain HONEY both emit standard
+    // Transfer-from-zero on mint and Transfer-to-zero on burn (verified
+    // against on-chain logs at the FiatToken/HoneyFactory mint sites and via
+    // entity-vs-balanceOf parity across all 5 Berachain treasury wallets —
+    // every (wallet, token) pair matches exactly with plain Transfer
+    // indexing). The earlier nonStandardBalance flag was added based on a
+    // transient -440K/+440K ledger drift that turned out to be a misread of
+    // older deploy state; the current ledger is correct via Transfer alone.
+    token(ERC20_STARGATE_USDC, "Stable", true, false, undefined, { decimals: 6 }),
+    token(ERC20_HONEY, "Stable", true, false, undefined, { decimals: 18 }),
     token(ERC20_WBERA, "Volatile", true, true, undefined, { decimals: 18 }),
     token(NATIVE_BERA, "Volatile", true, true, undefined, { decimals: 18 }),
     token(ERC20_OHM, "Volatile", true, false, undefined, {
