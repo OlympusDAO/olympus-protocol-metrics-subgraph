@@ -42,6 +42,17 @@ contracts:
       - event: "Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares)"
       - event: "Withdraw(address indexed sender, address indexed receiver, address indexed owner, uint256 assets, uint256 shares)"
 
+  # Synthetix-style StakingRewards vaults (Beradrome reward vaults on Berachain,
+  # plus Infrared / BeraHub variants of the Kodiak OHM-HONEY position). The
+  # vault contract IS the "stake token" address — `balanceOf(user)` returns the
+  # user's _balances[user] entry, but stake()/withdraw() only emit
+  # Staked/Withdrawn events; no Transfer for the stake-balance mutation. We
+  # treat Staked as +amount to user and Withdrawn as -amount from user.
+  - name: StakingRewardsVault
+    events:
+      - event: "Staked(address indexed user, uint256 amount)"
+      - event: "Withdrawn(address indexed user, uint256 amount)"
+
   - name: OlympusLender
     events:
       - event: "AMOAdded(address indexed amo)"
@@ -248,6 +259,14 @@ chains:
       - name: KodiakLp
         address:
           - "0x98bDEEde9A45C28d229285d9d6e9139e9F505391" # Kodiak OHM-HONEY (LP)
+
+      # Synthetix-style StakingRewards vaults — stake/withdraw without Transfer.
+      - name: StakingRewardsVault
+        address:
+          - "0x017B4DD27782E2FE3421e71F33ce54801aF696F8" # Beradrome Kodiak OHM-HONEY reward vault V1
+          - "0x8e5b2DF607B43C8D0F28035210D4e1aD1E72b8ed" # Beradrome Kodiak OHM-HONEY reward vault V2
+          - "0xa57Cb177Beebc35A1A26A286951a306d9B752524" # Infrared Kodiak OHM-HONEY vault
+          - "0x815596fa7c4d983d1ca5304e5b48978424c1b448" # BeraHub Kodiak OHM-HONEY reward vault
 
       # Univ3 pools used for pricing on Berachain
       - name: UniswapV3Pool

@@ -455,3 +455,84 @@ indexer.onEvent(
   { contract: "Erc4626Vault", event: "Withdraw", where: buildErc4626WithdrawWhere },
   handleErc4626Withdraw,
 );
+
+// Synthetix-style StakingRewards vault Staked: credits the `user`'s stake
+// balance without emitting Transfer. The vault contract IS the "stake token"
+// address — balanceOf(user) returns the internal _balances[user] entry that
+// stake() bumps. Used by Beradrome / Infrared / BeraHub OHM-HONEY vaults.
+export async function handleStakingRewardsStaked(args: {
+  event: {
+    chainId: number;
+    srcAddress: string;
+    logIndex: number;
+    block: { number: number; timestamp: number };
+    params: { user: string; amount: bigint };
+  };
+  context: Parameters<typeof applyTransferToWalletBalance>[0];
+}): Promise<void> {
+  const { event, context } = args;
+  const wallets = new Set<string>(treasuryWalletsForChain(event.chainId));
+  const user = addr(event.params.user);
+  if (!wallets.has(user)) return;
+  const token = addr(event.srcAddress);
+  const meta: EventMeta = {
+    block: event.block.number,
+    timestamp: event.block.timestamp,
+    logIndex: event.logIndex,
+  };
+  await applyTransferToWalletBalance(
+    context,
+    event.chainId,
+    token,
+    user,
+    event.params.amount,
+    meta,
+  );
+}
+
+// Synthetix-style Withdrawn — debits the `user`'s stake balance.
+export async function handleStakingRewardsWithdrawn(args: {
+  event: {
+    chainId: number;
+    srcAddress: string;
+    logIndex: number;
+    block: { number: number; timestamp: number };
+    params: { user: string; amount: bigint };
+  };
+  context: Parameters<typeof applyTransferToWalletBalance>[0];
+}): Promise<void> {
+  const { event, context } = args;
+  const wallets = new Set<string>(treasuryWalletsForChain(event.chainId));
+  const user = addr(event.params.user);
+  if (!wallets.has(user)) return;
+  const token = addr(event.srcAddress);
+  const meta: EventMeta = {
+    block: event.block.number,
+    timestamp: event.block.timestamp,
+    logIndex: event.logIndex,
+  };
+  await applyTransferToWalletBalance(
+    context,
+    event.chainId,
+    token,
+    user,
+    -event.params.amount,
+    meta,
+  );
+}
+
+const buildStakingRewardsWhere = ({ chain }: { chain: { id: number } }) => {
+  const wallets = treasuryWalletsForChain(chain.id);
+  if (wallets.length === 0) return false as const;
+  return { params: [{ user: wallets }] };
+};
+
+indexer.onEvent(
+  { contract: "StakingRewardsVault", event: "Staked", where: buildStakingRewardsWhere },
+  handleStakingRewardsStaked,
+);
+
+indexer.onEvent(
+  { contract: "StakingRewardsVault", event: "Withdrawn", where: buildStakingRewardsWhere },
+  handleStakingRewardsWithdrawn,
+);

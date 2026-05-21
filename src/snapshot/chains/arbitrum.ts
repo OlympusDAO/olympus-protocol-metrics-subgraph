@@ -212,13 +212,14 @@ export const ARBITRUM: ChainConfig = {
       startBlock: LUSD_CREATION_BLOCK,
       decimals: 18,
     }),
-    // MAGIC on Arbitrum is bridged via TreasureDAO's L1↔Arbitrum native bridge;
-    // mints credit balance without a standard Transfer event, so TokenBalance
-    // drifts negative for Olympus wallets that received bridged MAGIC.
+    // MAGIC on Arbitrum: Cross-Chain Arbitrum held 22,090 MAGIC at chain
+    // start (verified on-chain) — pure Class A. Earlier comment cited
+    // "non-standard bridge mint" but the actual mechanism is standard
+    // Transfer (verified by validating backfill + envio == on-chain).
+    // BackfillTokenBalances seeds the pre-existing balance.
     token(ERC20_MAGIC, "Volatile", true, false, undefined, {
       startBlock: MAGIC_CREATION_BLOCK,
       decimals: 18,
-      nonStandardBalance: true,
     }),
     token(ERC20_USDC, "Stable", true, false, undefined, {
       startBlock: USDC_CREATION_BLOCK,

@@ -182,12 +182,13 @@ export const FANTOM: ChainConfig = {
       startBlock: FANTOM_START_BLOCK,
       decimals: 6,
     }),
-    // Multichain-bridged WETH. Bridge mints may not emit Transfer; read
-    // balanceOf at snapshot to stay correct regardless of bridge mechanics.
+    // Multichain-bridged WETH on Fantom (anyWETH). Verified 2026-05-20 that
+    // envio's Transfer-only ledger matches on-chain balanceOf exactly for
+    // Cross-Chain Fantom (~2.67 wETH) — the bridge emits standard Transfer
+    // for mints/burns alongside its LogAnySwapIn/Out events. No flag needed.
     token(ERC20_WETH, "Volatile", true, true, undefined, {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
-      nonStandardBalance: true,
     }),
     // Cross-Chain Fantom held 5,198 wFTM before chain start (block
     // 37,320,000). BackfillTokenBalances seeds the pre-existing balance

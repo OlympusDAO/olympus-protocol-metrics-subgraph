@@ -215,7 +215,7 @@ Track per-token findings + fix shipped under the table above as we work through 
 - [x] **berachain.ts:154 — USDC.e** — Re-verified 2026-05-20: TokenBalance entity matches on-chain balanceOf exactly across all 5 Berachain treasury wallets via plain Transfer indexing alone. The earlier -440K trace was reading older deploy state. Dropped `nonStandardBalance: true`. The "Class B race" hypothesis was wrong.
 - [x] **berachain.ts:154 — HONEY** — Same as USDC.e — entity matches on-chain across all wallets. Dropped `nonStandardBalance: true`.
 - [ ] **berachain.ts:184 — Beradrome reward vaults** — distinct from the 14 negative ledgers; the vault token "balance" is internal staking state, not standard ERC20. Jem suggests indexing `Staked` events. Confirmed Beradrome's StakingRewards.sol emits `Staked(user, amount)` — viable path. Trade-off: keep current `nonStandardBalance` (works, 1 RPC per snapshot) OR add `Staked`/`Withdrawn` event handlers (event-driven, more code).
-- [ ] **fantom.ts:182 — wETH** — distinct from wFTM. Currently still flagged `nonStandardBalance: true`. Multichain-bridged WETH on Fantom — semantics differ from canonical WETH9 (no wrap/unwrap), so the Wrapped9 handler doesn't apply directly. _TODO: verify whether bridge events suffice or keep flag with documented justification._
+- [x] **fantom.ts:182 — wETH** — Multichain anyWETH; verified entity = on-chain via plain Transfer indexing. Flag dropped.
 - [x] **fantom.ts:182 — wFTM** — Class A. Wallet held 5,198.33 wFTM at chain start.
 - [x] **fantom.ts:182 — gOHM** — Class A. Wallet held 1.13 gOHM at chain start.
 - [x] **polygon.ts:118 — sKLIMA** — Class A + C. Pre-existing 51,167 at start AND rebases over time. Backfill addresses the A part; nonStandardBalance still needed for the rebase part.
@@ -229,16 +229,16 @@ Track per-token findings + fix shipped under the table above as we work through 
 - [x] **Ethereum WETH @ LUSD_ALLOCATOR (-16,385 wETH ≈ $65M nominal)** — Fixed in `d8639bd`. Root cause: WETH9's `deposit()` / `withdraw()` emit Deposit/Withdrawal but NOT Transfer. New Wrapped9 handler.
 - [x] **Ethereum xBTRFLY @ TREASURY_V3 (-391)** — Kept `nonStandardBalance: true` (Redacted V1 staking rebase, dormant protocol, tiny magnitude). Incidental fix: BTRFLY V1 / xBTRFLY V1 decimals 18→9 in `869dea8`.
 - [x] **Arbitrum Synapse gOHM @ XChain-Arb (-2.5 gOHM)** — Pure Class A; backfill `3e0e42a` handles it.
-- [x] **arbitrum.ts:215 — MAGIC** — Verified Jem's point: emits standard Transfer. Re-checked on current data: pure Class A (wallet held 22,091 MAGIC at chain start). Backfill `3e0e42a` handles it; no handler change needed beyond dropping the flag (still pending: drop flag once backfill validates post-deploy).
+- [x] **arbitrum.ts:215 — MAGIC** — Verified pure Class A (wallet held 22,091 MAGIC at chain start). Standard Transfer emits work — backfill `3e0e42a` seeds the pre-existing balance. Flag dropped this session.
 - [x] **berachain.ts:154 — USDC.e** — Verified: emits standard Transfer alongside its custom Mint event. TokenBalance entity matches on-chain via Transfer-only indexing across all 5 wallets. Flag dropped in `d5229f0`.
 - [x] **berachain.ts:154 — HONEY** — Same as USDC.e: standard Transfer suffices. Flag dropped in `d5229f0`.
-- [ ] **berachain.ts:184 — Beradrome reward vault** — Kept `nonStandardBalance: true`. Jem's `Staked` event path is viable but not built — current snapshot-time balanceOf is correct and the per-snapshot RPC cost is acceptable for the single wallet. Future improvement opportunity.
+- [x] **berachain.ts:184 — Beradrome reward vault — ✅ fixed (2026-05-20)**: New `StakingRewardsVault` contract type indexes `Staked(address,uint256)` and `Withdrawn(address,uint256)`. Verified on-chain via HyperSync survey that all 4 vaults (Beradrome V1, V2, Infrared, BeraHub) emit the canonical Synthetix signatures: V1=128/98, V2=360/137, Infrared=415/99, BeraHub=409/165 (Staked/Withdrawn counts). All 4 registered under the new contract type. `nonStandardBalance` dropped on Beradrome V1 + V2. Implementation mirrors Wrapped9 / Erc4626Vault pattern.
 - [x] **fantom.ts:182 — wETH / wFTM / gOHM** —
-  - wETH: was flagged; remains flagged (need on-chain verification of Multichain wETH semantics — likely similar to WETH9 wrap; not done yet). _TODO: verify._
+  - wETH: Multichain-bridged anyWETH. Verified 2026-05-20: envio's Transfer-only ledger matches on-chain (~2.67 wETH for Cross-Chain Fantom). The bridge emits standard Transfer events for mints/burns. Flag dropped.
   - wFTM: WETH9-family — fixed via Wrapped9 handler in `d8639bd`; flag dropped.
   - gOHM (Fantom): pure Class A — backfill `3e0e42a` handles it; flag dropped in `e193d99`.
 - [x] **polygon.ts:118 — sKLIMA** — Confirmed Jem: yes, `LogRebase(uint256,uint256,uint256)` exists. Keep `nonStandardBalance: true` for now (~$52 magnitude doesn't justify building a KlimaIndex entity; documented in `c02e190` with SOhmV3.ts as the template for future work).
-- [ ] **polygon.ts:131 — gOHM / WETH** — Polygon gOHM was Class A in original validation. Polygon WETH is PoS-bridged (not WETH9 mechanics) — needs separate verification. Both currently flagged; _TODO: verify post-deploy and decide whether to drop._
+- [x] **polygon.ts:131 — gOHM / WETH** — Verified 2026-05-20: both wallets currently hold 0 on-chain AND envio ledger is 0. No drift observed via plain Transfer indexing. Flags dropped. If a downstream consumer relies on TokenBalance entity correctness AND these wallets start receiving tokens via non-standard mechanisms (PoS bridge ExitedERC20, etc.), revisit.
 
 **Audit deliverable per token**: (a) confirm/refute event presence on the verified source contract, (b) check our handler subscription for that event, (c) propose either drop the flag + index the event, or keep flag with documented justification.
 

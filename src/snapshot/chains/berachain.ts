@@ -175,12 +175,13 @@ export const BERACHAIN: ChainConfig = {
       startBlock: LP_BERADROME_KODIAK_OHM_HONEY_CREATION_BLOCK,
       decimals: 18,
     }),
-    // Beradrome V1 + V2 reward vault stake tokens — these are what DAO MS
-    // actually holds (not the LP receipt directly). Beradrome's `stake()`
-    // updates internal storage without emitting Transfer, so the event-driven
-    // TokenBalance never sees deposits → reads as zero. Flag as
-    // nonStandardBalance so pushOwnedLiquidityRecords routes through
-    // snapshot-time balanceOf.
+    // Beradrome V1 + V2 reward vault stake tokens — Synthetix-style
+    // StakingRewards. The vault contract IS the "stake token" address; its
+    // `stake()` / `withdraw()` mutate `_balances[user]` internally and emit
+    // only Staked/Withdrawn events (no Transfer). The StakingRewardsVault
+    // handler in Erc20Transfers.ts catches both events and routes them
+    // through applyTransferToWalletBalance, so plain event-driven accounting
+    // is correct — no nonStandardBalance fallback needed.
     token(
       BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1,
       "Protocol-Owned Liquidity",
@@ -190,7 +191,6 @@ export const BERACHAIN: ChainConfig = {
       {
         startBlock: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1_CREATION_BLOCK,
         decimals: 18,
-        nonStandardBalance: true,
       },
     ),
     token(
@@ -202,7 +202,6 @@ export const BERACHAIN: ChainConfig = {
       {
         startBlock: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2_CREATION_BLOCK,
         decimals: 18,
-        nonStandardBalance: true,
       },
     ),
     token(INFRARED_KODIAK_OHM_HONEY_VAULT, "Protocol-Owned Liquidity", true, false, undefined, {
