@@ -112,9 +112,14 @@ export const POLYGON: ChainConfig = {
       startBlock: POLYGON_START_BLOCK,
       decimals: 9,
     }),
-    // Staked KLIMA (sKLIMA) accrues rebase yield by mutating balanceOf without
-    // emitting Transfer, so the indexer's TokenBalance ledger drifts negative
-    // over time. Read balanceOf at snapshot time to stay correct.
+    // Staked KLIMA — sOHM-style rebase token. balanceOf grows silently via
+    // LogRebase events without emitting Transfer. A proper event-driven fix
+    // would mirror our OhmIndexState pattern: index sKLIMA.LogRebase into a
+    // KlimaIndex entity and compute balance = scaledBalance × index. Not built
+    // because Cross-Chain Polygon's sKLIMA position is ~52 tokens (~$52
+    // nominal) — the 1 RPC per snapshot to balanceOf is cheaper than the
+    // indexing infrastructure. If KLIMA holdings ever grow, build the index
+    // entity (see SOhmV3.ts for the equivalent pattern on Ethereum).
     token(ERC20_KLIMA_STAKED, "Volatile", true, false, "0.85", {
       startBlock: POLYGON_START_BLOCK,
       decimals: 9,

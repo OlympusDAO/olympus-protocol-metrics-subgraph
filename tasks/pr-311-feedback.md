@@ -167,9 +167,20 @@ The earlier endpoint (`3d20ed8`) had Berachain USDC.e at -440K and HONEY at +440
    - **Fix shipped**: new `Erc4626Vault` contract type indexing `Deposit(sender,owner,assets,shares)` and `Withdraw(sender,receiver,owner,assets,shares)`. Handlers credit/debit `owner`'s TokenBalance with `shares` (not assets) via the existing helper. Registered on Ethereum for sDAI, sUSDe, sUSDS, Gauntlet sUSDS Vault. `nonStandardBalance` dropped on all 4.
    - 6 new tests cover both directions, full cycle, no-op for non-treasury owners.
    - **Same fix applies opportunistically to**: sUSDe, sUSDS, Gauntlet sUSDS — they likely had the same drift pattern even if not visible as negative balances (drift could be positive depending on net deposit/withdraw history).
-4. **Eth xBTRFLY @ TREASURY_V3** — small magnitude, low priority but cheap to investigate.
-5. **Fan DAI** — Multichain bridge event subscription.
-6. **Pol sKLIMA** — sOHM-style rebase event. Mirrors existing OhmIndexState pattern.
+4. **Eth xBTRFLY @ TREASURY_V3 — ✅ partial fix (2026-05-20)**: Discovered along the way that BTRFLY V1 and xBTRFLY V1 were configured as `decimals: 18` but are actually 9 decimals on-chain — committed `869dea8` to fix. xBTRFLY itself is a Redacted V1 staking-rebase receipt; flag kept with comment noting the dead-protocol justification.
+
+5. **Fan DAI + Fan FRAX — ✅ reclassified Class A (2026-05-20)**: Original Class B diagnosis was a script bug — my validation used Cross-Chain Polygon's address (`0xe06efa3d`) for the Fantom rows instead of Cross-Chain Fantom's (`0x2bc001ff`). Re-verified with correct wallet: balanceOf at chain start = 80,100 DAI / 45,036 FRAX. Pure Class A. `nonStandardBalance` flags dropped in commit `5f4f969`; backfill (`3e0e42a`) seeds the pre-existing balance.
+
+6. **Pol sKLIMA — ✅ documented keep-flag (2026-05-20)**: Confirmed sKLIMA emits `LogRebase(uint256,uint256,uint256)` (sOHM-style). Cross-Chain Polygon holds ~52 sKLIMA (~$52 nominal). A full event-driven fix would mirror the existing `OhmIndexState` pattern (index LogRebase → KlimaIndex entity → compute balance = scaledBalance × index). Not worth building for this magnitude; flag kept with explicit comment pointing to SOhmV3.ts as the template for future expansion.
+
+### Class B summary — final tally
+
+Of the 6 originally suspected "Class B" tokens:
+- **2 fixed via new event handlers**: Eth WETH @ LUSD (Wrapped9), Eth sDAI @ TRSRY (Erc4626Vault). Same pattern applied opportunistically to 7 other tokens (Arb/Base WETH, Fan wFTM, sUSDe, sUSDS, Gauntlet sUSDS).
+- **2 reclassified Class A**: Fan DAI / Fan FRAX. Backfill alone handles them.
+- **2 reclassified flag-removal**: Berachain USDC.e / HONEY. Entity already correct; flag was unnecessary.
+- **2 documented keep-flag with precise justification**: Eth aDAI v1+v2 (scaled-balance + liquidityIndex), Pol sKLIMA (sOHM-style rebase, low magnitude).
+- **1 incidental decimals bug fix**: BTRFLY V1 / xBTRFLY V1 (18 → 9).
 
 Track per-token findings + fix shipped under the table above as we work through each.
 
