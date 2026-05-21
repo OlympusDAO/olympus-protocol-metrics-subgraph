@@ -1,6 +1,25 @@
 import { indexer, type JonesStakingPosition, type TreasureDeposit } from "envio";
 
+import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { addr } from "../snapshot/math";
+import type { ChainId } from "../snapshot/types";
+
+// JonesStaking and TreasureMining are SHARED multi-user contracts on Arbitrum
+// — every user in the protocol stakes there. We only care about deposits/
+// withdrawals by Olympus treasury wallets. Filtering at the HyperSync layer
+// (via the `user` indexed param) drops the event volume from thousands per
+// day to a handful.
+function treasuryWalletsForChain(chainId: number): `0x${string}`[] {
+  const config = CHAIN_CONFIGS[chainId as ChainId];
+  if (!config) return [];
+  return config.protocolAddresses as `0x${string}`[];
+}
+
+const buildStakingUserWhere = ({ chain }: { chain: { id: number } }) => {
+  const wallets = treasuryWalletsForChain(chain.id);
+  if (wallets.length === 0) return false as const;
+  return { params: [{ user: wallets }] };
+};
 
 function jonesPositionId(chainId: number, poolId: bigint, walletAddress: string): string {
   return `${chainId}-${poolId.toString()}-${addr(walletAddress)}`;
@@ -69,6 +88,7 @@ indexer.onEvent(
   {
     contract: "JonesStaking",
     event: "Deposit",
+    where: buildStakingUserWhere,
   },
   async ({ event, context }) => {
     await applyJonesDelta(
@@ -86,6 +106,7 @@ indexer.onEvent(
   {
     contract: "JonesStaking",
     event: "Withdraw",
+    where: buildStakingUserWhere,
   },
   async ({ event, context }) => {
     await applyJonesDelta(
@@ -103,6 +124,7 @@ indexer.onEvent(
   {
     contract: "JonesStaking",
     event: "EmergencyWithdraw",
+    where: buildStakingUserWhere,
   },
   async ({ event, context }) => {
     await applyJonesDelta(
@@ -121,6 +143,7 @@ indexer.onEvent(
   {
     contract: "TreasureMining",
     event: "Deposit",
+    where: buildStakingUserWhere,
   },
   async ({ event, context }) => {
     await applyTreasureDelta(
@@ -138,6 +161,7 @@ indexer.onEvent(
   {
     contract: "TreasureMining",
     event: "Withdraw",
+    where: buildStakingUserWhere,
   },
   async ({ event, context }) => {
     await applyTreasureDelta(
