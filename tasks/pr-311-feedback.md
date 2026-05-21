@@ -195,7 +195,7 @@ Track per-token findings + fix shipped under the table above as we work through 
 
 ### Open mid-work items (don't lose track)
 
-- [ ] **8 local commits ready to push** (Class A + Class B work, in order):
+- [ ] **10 local commits ready to push** (full Step 1, in order):
   1. `3e0e42a` — Class A backfill at chain start (seeds 7 pure-A tokens)
   2. `e193d99` — Drop nonStandardBalance on 3 Class A tokens
   3. `d8639bd` — Wrapped9 handler (WETH9 wrap/unwrap), drop 4 WETH-family flags
@@ -204,6 +204,8 @@ Track per-token findings + fix shipped under the table above as we work through 
   6. `869dea8` — BTRFLY V1 / xBTRFLY V1 decimals 18→9 (incidental bug)
   7. `5f4f969` — Drop Fan DAI/FRAX flags (reclassified Class A)
   8. `c02e190` — Polygon sKLIMA docs + Class B close-out
+  9. `6faf9ac` — Plan tracker updates
+  10. `7345f7d` — StakingRewardsVault handler (Beradrome) + drop 6 more flags
 - [ ] After push + re-sync, re-run the 14-token scan to confirm: Class A tokens resolve to 0 residual; Class B fixed tokens (WETH @ LUSD, sDAI @ TRSRY) drop off the negative-balance list entirely.
 - [x] Class B investigation complete — see "Class B summary — final tally" below.
 - **Class C (2-3 tokens)**: keep `nonStandardBalance: true` as the cleanest path; document that aDAI / sKLIMA fundamentally have non-Transfer balance mutations. Alternative is to index Aave `ReserveDataUpdated` + sOHM-style index entity, but the RPC fallback is cheaper for these low-touch wallets.
@@ -214,7 +216,7 @@ Track per-token findings + fix shipped under the table above as we work through 
 - [x] **arbitrum.ts:215 — MAGIC** — Class A (primary). Wallet held 22,091 MAGIC at chain start; some Class B contribution from later activity.
 - [x] **berachain.ts:154 — USDC.e** — Re-verified 2026-05-20: TokenBalance entity matches on-chain balanceOf exactly across all 5 Berachain treasury wallets via plain Transfer indexing alone. The earlier -440K trace was reading older deploy state. Dropped `nonStandardBalance: true`. The "Class B race" hypothesis was wrong.
 - [x] **berachain.ts:154 — HONEY** — Same as USDC.e — entity matches on-chain across all wallets. Dropped `nonStandardBalance: true`.
-- [ ] **berachain.ts:184 — Beradrome reward vaults** — distinct from the 14 negative ledgers; the vault token "balance" is internal staking state, not standard ERC20. Jem suggests indexing `Staked` events. Confirmed Beradrome's StakingRewards.sol emits `Staked(user, amount)` — viable path. Trade-off: keep current `nonStandardBalance` (works, 1 RPC per snapshot) OR add `Staked`/`Withdrawn` event handlers (event-driven, more code).
+- [x] **berachain.ts:184 — Beradrome reward vaults** — Fixed in `7345f7d`. Built `StakingRewardsVault` handler indexing `Staked(address,uint256)` + `Withdrawn(address,uint256)`. Verified signatures on-chain for all 4 vaults (V1=128/98, V2=360/137, Infrared=415/99, BeraHub=409/165 Staked/Withdrawn counts). Flags dropped on Beradrome V1+V2.
 - [x] **fantom.ts:182 — wETH** — Multichain anyWETH; verified entity = on-chain via plain Transfer indexing. Flag dropped.
 - [x] **fantom.ts:182 — wFTM** — Class A. Wallet held 5,198.33 wFTM at chain start.
 - [x] **fantom.ts:182 — gOHM** — Class A. Wallet held 1.13 gOHM at chain start.
