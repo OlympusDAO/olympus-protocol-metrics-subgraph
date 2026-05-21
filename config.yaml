@@ -25,8 +25,12 @@ contracts:
   # for wallets that wrap-and-forward (see Eth WETH @ LUSD_ALLOCATOR trace in
   # tasks/pr-311-feedback.md). Handler in Erc20Transfers.ts treats Deposit as a
   # synthetic "Transfer from 0x0" (+wad) and Withdrawal as "Transfer to 0x0" (-wad).
+  # Transfer is also subscribed here so the WETH address can be registered under
+  # a single contract (Envio's envio_addresses table keys on (chainId, address),
+  # so the same address cannot appear under two separate contract names).
   - name: Wrapped9
     events:
+      - event: "Transfer(address indexed from, address indexed to, uint256 value)"
       - event: "Deposit(address indexed dst, uint256 wad)"
       - event: "Withdrawal(address indexed src, uint256 wad)"
 
@@ -37,8 +41,11 @@ contracts:
   # fires on redeem). Without subscribing to these, wallets that deposit/redeem
   # show only the direct Transfer activity between wallets, and the ledger drifts.
   # Handler treats Deposit as +shares to owner and Withdraw as -shares from owner.
+  # Transfer is also subscribed here so the vault address can be registered under
+  # a single contract (see Wrapped9 note re: envio_addresses table PK).
   - name: Erc4626Vault
     events:
+      - event: "Transfer(address indexed from, address indexed to, uint256 value)"
       - event: "Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares)"
       - event: "Withdraw(address indexed sender, address indexed receiver, address indexed owner, uint256 assets, uint256 shares)"
 
@@ -48,8 +55,13 @@ contracts:
   # user's _balances[user] entry, but stake()/withdraw() only emit
   # Staked/Withdrawn events; no Transfer for the stake-balance mutation. We
   # treat Staked as +amount to user and Withdrawn as -amount from user.
+  # Transfer is also subscribed here so the vault address can be registered under
+  # a single contract (see Wrapped9 note re: envio_addresses table PK); the
+  # Transfer handler keeps treasury balances and the receipt-token totalSupply
+  # in sync on direct vault-token transfers between wallets.
   - name: StakingRewardsVault
     events:
+      - event: "Transfer(address indexed from, address indexed to, uint256 value)"
       - event: "Staked(address indexed user, uint256 amount)"
       - event: "Withdrawn(address indexed user, uint256 amount)"
 
@@ -154,7 +166,7 @@ chains:
           - "0x539bde0d7dbd336b79148aa742883198bbf60342" # MAGIC
           - "0xff970a61a04b1ca14834a43f5de4533ebddb5cc8" # USDC
           - "0xa684cd057951541187f288294a1e1c2646aa2d24" # VSTA
-          - "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1" # WETH
+          # WETH registered under Wrapped9 contract (Transfer + Deposit + Withdrawal).
           - "0x8D9bA570D6cb60C7e3e0F31343Efe75AB8E65FB1" # gOHM (Synapse)
           - "0xD8102963c400fEDBbc23Fe92f1b09c0C561e77Ae" # Silo OHM Collateral
           - "0x37E6a0EcB9e8E5D90104590049a0A197E1363b67" # Sentiment lToken
@@ -229,16 +241,11 @@ chains:
         address:
           - "0x18878Df23e2a36f81e820e4b47b4A40576D3159C" # OHM (Berachain)
 
-      # LP tokens that are NOT Kodiak LPs (those get their own contract entry
-      # so we can attach a contractRegister handler for the underlying UniV3
-      # pool). The reward vault tokens listed here behave as plain ERC20s for
-      # treasury accounting purposes.
-      - name: LpERC20
-        address:
-          - "0x017B4DD27782E2FE3421e71F33ce54801aF696F8" # Beradrome Kodiak OHM-HONEY reward vault V1
-          - "0x8e5b2DF607B43C8D0F28035210D4e1aD1E72b8ed" # Beradrome Kodiak OHM-HONEY reward vault V2
-          - "0xa57Cb177Beebc35A1A26A286951a306d9B752524" # Infrared Kodiak OHM-HONEY vault token
-          - "0x815596fa7c4d983d1ca5304e5b48978424c1b448" # BeraHub Kodiak OHM-HONEY reward vault token
+      # The Beradrome / Infrared / BeraHub reward vault stake tokens are
+      # registered under StakingRewardsVault below — that contract subscribes to
+      # Transfer + Staked + Withdrawn so the address is registered once with
+      # Envio's address table. No standalone LpERC20 entries are needed on
+      # Berachain (the Kodiak LP itself is registered under KodiakLp).
 
       - name: KodiakLp
         address:
@@ -275,7 +282,7 @@ chains:
       - name: TreasuryERC20
         address:
           - "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" # USDC
-          - "0x4200000000000000000000000000000000000006" # WETH
+          # WETH registered under Wrapped9 contract (Transfer + Deposit + Withdrawal).
 
       # Base predeploy WETH9 — wrap/unwrap via Deposit/Withdrawal, no Transfer.
       - name: Wrapped9
@@ -346,7 +353,7 @@ chains:
           - "0xc5A9848b9d145965d821AaeC8fA32aaEE026492d" # OXD
           - "0x04068da6c83afcfa0e13ba15a6696662335d5b75" # USDC
           - "0x74b23882a30290451a17c44f4f05243b6b58c76d" # WETH (Multichain-bridged)
-          - "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83" # WFTM
+          # WFTM registered under Wrapped9 contract (Transfer + Deposit + Withdrawal).
 
       # wFTM is the canonical Fantom WETH9 fork — wrap/unwrap via Deposit/Withdrawal.
       - name: Wrapped9
@@ -389,11 +396,8 @@ chains:
           - "0x4f5923fc5fd4a93352581b38b7cd26943012decf" # aEthUSDe (Aave V3 receipt)
           - "0x72e95b8931767c79ba4eee721354d6e99a61d004" # variableDebtEthUSDC (Aave V3 liability)
           - "0x6df1c1e379bc5a00a7b4c6e67a203333772f45a8" # variableDebtEthUSDT (Aave V3 liability)
-          - "0x83f20f44975d03b1b09e64809b757c47f942beea" # sDAI (ERC4626)
-          - "0x9d39a5de30e57443bff2a8307a4256c8797a3497" # sUSDe (ERC4626)
-          - "0xa3931d71877c0e7a3148cb7eb4463524fec27fbd" # sUSDS (ERC4626)
-          - "0x3365184e87d2bd75961780454a5810bec956f0dd" # Gauntlet Olympus sUSDS Vault (ERC4626)
-          - "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" # WETH
+          # sDAI / sUSDe / sUSDS / Gauntlet sUSDS registered under Erc4626Vault.
+          # WETH registered under Wrapped9.
           - "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0" # wstETH
           - "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee" # weETH
           - "0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0" # FXS

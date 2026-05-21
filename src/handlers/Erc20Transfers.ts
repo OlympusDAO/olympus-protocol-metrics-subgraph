@@ -143,35 +143,71 @@ async function applyMintBurnToSupply(
 // Treasury-only ERC20 Transfer: maintain TokenBalance for treasury wallets only.
 // HyperSync filtering keeps the event firehose tiny — these contracts (USDC, WETH,
 // etc.) emit millions of transfers; we only see the ones touching us.
+// Reused by Wrapped9 + Erc4626Vault contracts because Envio's address table keys
+// on (chainId, address), so each address must live under exactly one contract
+// definition. WETH / WFTM / sDAI / etc. live under Wrapped9 / Erc4626Vault and
+// reuse this same Transfer logic.
+export const buildTreasuryTransferWhere = ({ chain }: { chain: { id: number } }) => {
+  const wallets = treasuryWalletsForChain(chain.id);
+  if (wallets.length === 0) return false as const;
+  return { params: [{ from: wallets }, { to: wallets }] };
+};
+
+export async function handleTreasuryTransfer(args: {
+  event: {
+    chainId: number;
+    srcAddress: string;
+    logIndex: number;
+    block: { number: number; timestamp: number };
+    params: { from: string; to: string; value: bigint };
+  };
+  context: Parameters<typeof applyTransferToWalletBalance>[0];
+}): Promise<void> {
+  const { event, context } = args;
+  const wallets = new Set<string>(treasuryWalletsForChain(event.chainId));
+  const from = addr(event.params.from);
+  const to = addr(event.params.to);
+  const value = event.params.value;
+  const token = addr(event.srcAddress);
+  const meta: EventMeta = {
+    block: event.block.number,
+    timestamp: event.block.timestamp,
+    logIndex: event.logIndex,
+  };
+
+  if (wallets.has(from)) {
+    await applyTransferToWalletBalance(context, event.chainId, token, from, -value, meta);
+  }
+  if (wallets.has(to)) {
+    await applyTransferToWalletBalance(context, event.chainId, token, to, value, meta);
+  }
+}
+
 indexer.onEvent(
   {
     contract: "TreasuryERC20",
     event: "Transfer",
-    where: ({ chain }) => {
-      const wallets = treasuryWalletsForChain(chain.id);
-      if (wallets.length === 0) return false;
-      return { params: [{ from: wallets }, { to: wallets }] };
-    },
+    where: buildTreasuryTransferWhere,
   },
-  async ({ event, context }) => {
-    const wallets = new Set<string>(treasuryWalletsForChain(event.chainId));
-    const from = addr(event.params.from);
-    const to = addr(event.params.to);
-    const value = event.params.value;
-    const token = addr(event.srcAddress);
-    const meta: EventMeta = {
-      block: event.block.number,
-      timestamp: event.block.timestamp,
-      logIndex: event.logIndex,
-    };
+  handleTreasuryTransfer,
+);
 
-    if (wallets.has(from)) {
-      await applyTransferToWalletBalance(context, event.chainId, token, from, -value, meta);
-    }
-    if (wallets.has(to)) {
-      await applyTransferToWalletBalance(context, event.chainId, token, to, value, meta);
-    }
+indexer.onEvent(
+  {
+    contract: "Wrapped9",
+    event: "Transfer",
+    where: buildTreasuryTransferWhere,
   },
+  handleTreasuryTransfer,
+);
+
+indexer.onEvent(
+  {
+    contract: "Erc4626Vault",
+    event: "Transfer",
+    where: buildTreasuryTransferWhere,
+  },
+  handleTreasuryTransfer,
 );
 
 // OHM ERC20 Transfer: track BOTH treasury balances and totalSupply (mints/burns).
@@ -287,6 +323,19 @@ indexer.onEvent(
 indexer.onEvent(
   {
     contract: "UniswapV2Pool",
+    event: "Transfer",
+    where: buildLpTransferWhere,
+  },
+  handleLpTransfer,
+);
+
+// StakingRewardsVault stake tokens (Beradrome / Infrared / BeraHub on Berachain)
+// behave as plain LP receipt tokens for direct ERC20 Transfer activity — the
+// wallet-to-wallet hand-offs that don't go through stake() / withdraw(). The
+// Staked / Withdrawn handlers below cover the silent stake-balance mutations.
+indexer.onEvent(
+  {
+    contract: "StakingRewardsVault",
     event: "Transfer",
     where: buildLpTransferWhere,
   },
