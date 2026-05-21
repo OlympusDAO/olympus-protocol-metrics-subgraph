@@ -367,3 +367,91 @@ indexer.onEvent(
   { contract: "Wrapped9", event: "Withdrawal", where: buildWrapped9WithdrawalWhere },
   handleWrapped9Withdrawal,
 );
+
+// ERC4626 vault Deposit: mints `shares` to `owner`. Most vaults (sDAI verified)
+// emit only this event on deposit — no Transfer-from-zero — so subscribing to
+// Transfer alone misses every share mint. Routes through the existing balance
+// helper so the TokenBalance ledger reflects share holdings correctly.
+export async function handleErc4626Deposit(args: {
+  event: {
+    chainId: number;
+    srcAddress: string;
+    logIndex: number;
+    block: { number: number; timestamp: number };
+    params: { sender: string; owner: string; assets: bigint; shares: bigint };
+  };
+  context: Parameters<typeof applyTransferToWalletBalance>[0];
+}): Promise<void> {
+  const { event, context } = args;
+  const wallets = new Set<string>(treasuryWalletsForChain(event.chainId));
+  const owner = addr(event.params.owner);
+  if (!wallets.has(owner)) return;
+  const token = addr(event.srcAddress);
+  const meta: EventMeta = {
+    block: event.block.number,
+    timestamp: event.block.timestamp,
+    logIndex: event.logIndex,
+  };
+  await applyTransferToWalletBalance(
+    context,
+    event.chainId,
+    token,
+    owner,
+    event.params.shares,
+    meta,
+  );
+}
+
+// ERC4626 vault Withdraw: burns `shares` from `owner`. Same no-Transfer
+// behavior as Deposit on most vault implementations.
+export async function handleErc4626Withdraw(args: {
+  event: {
+    chainId: number;
+    srcAddress: string;
+    logIndex: number;
+    block: { number: number; timestamp: number };
+    params: { sender: string; receiver: string; owner: string; assets: bigint; shares: bigint };
+  };
+  context: Parameters<typeof applyTransferToWalletBalance>[0];
+}): Promise<void> {
+  const { event, context } = args;
+  const wallets = new Set<string>(treasuryWalletsForChain(event.chainId));
+  const owner = addr(event.params.owner);
+  if (!wallets.has(owner)) return;
+  const token = addr(event.srcAddress);
+  const meta: EventMeta = {
+    block: event.block.number,
+    timestamp: event.block.timestamp,
+    logIndex: event.logIndex,
+  };
+  await applyTransferToWalletBalance(
+    context,
+    event.chainId,
+    token,
+    owner,
+    -event.params.shares,
+    meta,
+  );
+}
+
+const buildErc4626DepositWhere = ({ chain }: { chain: { id: number } }) => {
+  const wallets = treasuryWalletsForChain(chain.id);
+  if (wallets.length === 0) return false as const;
+  return { params: [{ owner: wallets }] };
+};
+
+const buildErc4626WithdrawWhere = ({ chain }: { chain: { id: number } }) => {
+  const wallets = treasuryWalletsForChain(chain.id);
+  if (wallets.length === 0) return false as const;
+  return { params: [{ owner: wallets }] };
+};
+
+indexer.onEvent(
+  { contract: "Erc4626Vault", event: "Deposit", where: buildErc4626DepositWhere },
+  handleErc4626Deposit,
+);
+
+indexer.onEvent(
+  { contract: "Erc4626Vault", event: "Withdraw", where: buildErc4626WithdrawWhere },
+  handleErc4626Withdraw,
+);

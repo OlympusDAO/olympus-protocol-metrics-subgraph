@@ -30,6 +30,18 @@ contracts:
       - event: "Deposit(address indexed dst, uint256 wad)"
       - event: "Withdrawal(address indexed src, uint256 wad)"
 
+  # ERC4626 yield-bearing vaults (sDAI / sUSDe / sUSDS / Gauntlet sUSDS, etc.).
+  # The standard Deposit/Withdraw events fire on share mint/burn, but the share
+  # balance mutation skips emitting a Transfer-from/to-zero on most vault
+  # implementations (sDAI verified: only Deposit fires on deposit; only Withdraw
+  # fires on redeem). Without subscribing to these, wallets that deposit/redeem
+  # show only the direct Transfer activity between wallets, and the ledger drifts.
+  # Handler treats Deposit as +shares to owner and Withdraw as -shares from owner.
+  - name: Erc4626Vault
+    events:
+      - event: "Deposit(address indexed sender, address indexed owner, uint256 assets, uint256 shares)"
+      - event: "Withdraw(address indexed sender, address indexed receiver, address indexed owner, uint256 assets, uint256 shares)"
+
   - name: OlympusLender
     events:
       - event: "AMOAdded(address indexed amo)"
@@ -411,6 +423,14 @@ chains:
       - name: Wrapped9
         address:
           - "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" # WETH
+
+      # ERC4626 vaults — share mint/burn via Deposit/Withdraw, no Transfer.
+      - name: Erc4626Vault
+        address:
+          - "0x83f20f44975d03b1b09e64809b757c47f942beea" # sDAI
+          - "0x9d39a5de30e57443bff2a8307a4256c8797a3497" # sUSDe
+          - "0xa3931d71877c0e7a3148cb7eb4463524fec27fbd" # sUSDS
+          - "0x3365184e87d2bd75961780454a5810bec956f0dd" # Gauntlet Olympus sUSDS Vault
 
       # ---- OHM ERC20s.
       - name: OhmERC20

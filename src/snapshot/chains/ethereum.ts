@@ -778,16 +778,22 @@ export const ETHEREUM: ChainConfig = {
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
     }),
-    // Aave V2 aDAI receipt (matches underlying DAI rate via shared Chainlink feed).
-    // Rebases via interest accrual without emitting Transfer events — must use
-    // snapshot-time balanceOf to avoid drift.
+    // Aave V2 aDAI receipt. Stores SCALED balance internally; balanceOf returns
+    // scaledBalance × liquidityIndex, which grows over time as interest accrues.
+    // Mint/Burn events DO fire, but they emit the user-facing amount (deposit
+    // or withdrawal value at the time), not the scaled amount — so subscribing
+    // to them alone can't reconstruct the silent index-driven growth between
+    // mints/burns. A full fix would index LendingPool.ReserveDataUpdated for
+    // the liquidityIndex and recompute balance = scaledBalance × index. For now
+    // we keep nonStandardBalance (snapshot-time balanceOf is exact and cheap
+    // — ~3 wallets × 1 call per 8h snapshot).
     token(ERC20_ADAI, "Stable", true, false, undefined, {
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
       nonStandardBalance: true,
     }),
-    // Aave V3 aEthUSDe receipt (matches underlying USDe rate via shared feed).
-    // Same rebase pattern as aDAI.
+    // Aave V3 aEthUSDe receipt — same scaled-balance / silent-rebase mechanics
+    // as aDAI. Same justification for keeping nonStandardBalance.
     token(ERC20_AETH_USDE, "Stable", true, false, undefined, {
       startBlock: ERC20_AAVE_V3_BLOCK,
       decimals: 18,
@@ -795,7 +801,8 @@ export const ETHEREUM: ChainConfig = {
     }),
     // Aave V3 variable-debt receipts — liabilities (subtract from treasury MV).
     // Underlying tokens are 6-decimal USDC/USDT, so the debt tokens share those
-    // decimals. Aave debt tokens also rebase silently — use snapshot balanceOf.
+    // decimals. Aave debt tokens also use scaled balances (variableBorrowIndex)
+    // with silent accrual — same nonStandardBalance justification as aDAI.
     token(ERC20_VAR_DEBT_ETH_USDC, "Stable", true, false, undefined, {
       startBlock: ERC20_AAVE_V3_BLOCK,
       decimals: 6,
@@ -809,29 +816,28 @@ export const ETHEREUM: ChainConfig = {
       nonStandardBalance: true,
     }),
     // ERC4626 yield-bearing stables. Underlying price comes from Chainlink;
-    // share→asset rate from `convertToAssets()` via Erc4626PriceHandler. sDAI
-    // is confirmed to mint shares without emitting Transfer(0x0, recipient) —
-    // only ERC4626 Deposit. We treat the whole family as non-standard so the
-    // snapshot reads balanceOf at the block.
+    // share→asset rate from `convertToAssets()` via Erc4626PriceHandler. Share
+    // mints/burns are tracked event-driven via the Erc4626Vault handlers in
+    // Erc20Transfers.ts — sDAI (and similar) emit only the ERC4626 Deposit
+    // event on mint (no Transfer-from-zero), so the Erc4626 handler routes
+    // Deposit (+shares to owner) / Withdraw (-shares from owner) through the
+    // existing balance helper. Plain Transfer (wallet→wallet) still flows
+    // through the TreasuryERC20 handler.
     token(ERC20_SDAI, "Stable", true, false, undefined, {
       startBlock: ERC20_SDAI_BLOCK,
       decimals: 18,
-      nonStandardBalance: true,
     }),
     token(ERC20_SUSDE, "Stable", true, false, undefined, {
       startBlock: ERC20_SUSDE_BLOCK,
       decimals: 18,
-      nonStandardBalance: true,
     }),
     token(ERC20_SUSDS, "Stable", true, false, undefined, {
       startBlock: ERC20_SUSDS_BLOCK,
       decimals: 18,
-      nonStandardBalance: true,
     }),
     token(ERC20_GAUNTLET_SUSDS_VAULT, "Stable", true, false, undefined, {
       startBlock: ERC20_GAUNTLET_SUSDS_VAULT_BLOCK,
       decimals: 18,
-      nonStandardBalance: true,
     }),
     // Convex staked-LP wrappers (POL category — protocol-owned liquidity).
     // Pricing routes through the underlying Curve LP via `remap` handlers.
