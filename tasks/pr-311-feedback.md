@@ -210,6 +210,8 @@ Track per-token findings + fix shipped under the table above as we work through 
   12. `16fb7e4` — **Step 3**: Staking handlers filter by indexed user
   13. `cba6308` — **Step 3**: Remove dead ChainlinkAggregator code
   14. `883983a` — **Step 3**: Trim Polygon (37→1) + Fantom (2→1) protocolAddresses
+  15. `1392d89` — Plan tracker update
+  16. `84181c2` — **Step 3**: Single-pass `pushTokenBalanceRecords` loop
 - [ ] After push + re-sync, re-run the 14-token scan to confirm: Class A tokens resolve to 0 residual; Class B fixed tokens (WETH @ LUSD, sDAI @ TRSRY) drop off the negative-balance list entirely.
 - [x] Class B investigation complete — see "Class B summary — final tally" below.
 - **Class C (2-3 tokens)**: keep `nonStandardBalance: true` as the cleanest path; document that aDAI / sKLIMA fundamentally have non-Transfer balance mutations. Alternative is to index Aave `ReserveDataUpdated` + sOHM-style index entity, but the RPC fallback is cheaper for these low-touch wallets.
@@ -261,8 +263,8 @@ Track per-token findings + fix shipped under the table above as we work through 
 
 ## Step 3 — Indexer performance (event filters)
 
-- [ ] **BlockHandlers.ts:168** — sequential handler calls; could be parallel. (Pending investigation.)
-- [ ] **BlockHandlers.ts:476** — nested loop in `pushTokenBalanceRecords`; should be single pass over token defs filtering by category. (Pending — low impact, code-clarity win.)
+- [x] **BlockHandlers.ts:168** — Investigated, replied as deferred. Cache safety blocker: `cachedPricingLookup` uses `inFlight` Set for recursive-cycle detection; concurrent same-key requests under `Promise.all` would return cycle-fallback (ZERO), poisoning the cache. Safe parallelization needs cache refactor first. Absolute win is small (~5s/day total across all chains since snapshots produce 4-33 records each, 3x/day per chain).
+- [x] **BlockHandlers.ts:476** — Fixed in `84181c2` — single pass over `config.tokens` with inline category skip.
 - [x] **BlockHandlers.ts:579 (a)** — Trimmed Polygon (37→1) and Fantom (2→1) per-chain protocolAddresses in `883983a`. Rigorous on-chain audit (37 wallets × all tokens × multiple historical blocks) confirmed only Cross-Chain wallets had ever held tracked tokens. Ethereum left as-is (home chain).
 - [x] **BlockHandlers.ts:579 (b)** — Replied as deferred follow-up. After the trim in 883983a, the remaining wallets across all chains have existed for years before our chain start blocks, so per-address startBlock filtering has minimal additional value.
 - [x] **BophadesKernel.ts:56** — Investigated: `action` param is `uint8` (not indexed), so HyperSync can't filter on it. Already has in-handler early-return for InstallModule/UpgradeModule. Volume sample: **93 events ever** across full ~9M-block lifetime (~1/month). Replied with reasoning; no code change.
@@ -271,8 +273,8 @@ Track per-token findings + fix shipped under the table above as we work through 
 - [x] **Staking.ts:72 — Staked event** — Filtered by indexed `user` (treasury wallets) in `16fb7e4`. Drops shared-contract event volume from ~2,800/day chain-wide to single-digit/day for our wallets.
 - [x] **Staking.ts:72 — Withdraw event** — Same fix in `16fb7e4`.
 - [x] **Staking.ts:123** — Same `where: buildStakingUserWhere` filter applied to TreasureMining Deposit + Withdraw in `16fb7e4`.
-- [ ] **pricing/chainlink.ts:24** — Likely moot now that the dead ChainlinkAggregator path is gone. The pricing handler uses the `readChainlinkLatestAnswer` cached effect (1 RPC per (chain, feed, block), deduped across snapshot). Pending: confirm Jem's specific concern is addressed by 6bf06fa, then reply.
-- [ ] **pricing/index.ts:78** — In-memory vs entity-stored price perf. Pending investigation (open architectural question).
+- [x] **pricing/chainlink.ts:24** — Replied. Yes, cached: `readChainlinkLatestAnswer` effect is registered with `cache: true`, so each `(chainId, feedAddress, atBlock)` is one RPC ever (~90/day total). Manual aggregator-recording alternative was tried (c28d34d) and broke due to Chainlink phase transitions; cba6308 + 6bf06fa is the final state.
+- [x] **pricing/index.ts:78** — Replied. Prices ARE persisted via `TokenRecord.rate` per snapshot row; the in-memory `withPricingCache` is purely intra-snapshot dedup (avoids 5x cost when 5 wallets hold the same token). A dedicated TokenPriceState entity would duplicate TokenRecord.rate with extra DB cost.
 
 ---
 
