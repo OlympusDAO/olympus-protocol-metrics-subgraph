@@ -1,6 +1,6 @@
 import { addr, token } from "../math";
 import type { ChainConfig, LiquidityHandler } from "../types";
-import { CROSS_CHAIN_POLYGON, DAO_WALLET, WALLET_ADDRESSES } from "../wallets";
+import { CROSS_CHAIN_POLYGON, DAO_WALLET } from "../wallets";
 import { rpcUrls } from "./rpc";
 
 // Token addresses (per docs/envio-migration/inventory-polygon.md).
@@ -24,7 +24,15 @@ const LP_UNISWAP_V2_WETH_GOHM = addr("0x1549e0e8127d380080aab448b82d280433ce4030
 // start block close to when Olympus first bridged assets to Polygon.
 const POLYGON_START_BLOCK = 23_000_000; // ~2021-09-22
 
-const PROTOCOL_ADDRESSES = WALLET_ADDRESSES;
+// Per @0xJem on PR #311: per-chain protocolAddresses should be trimmed to
+// just the wallets that actually hold assets on this chain. Rigorous on-chain
+// audit (37 candidate wallets × 8 Polygon tokens × 5 historical blocks)
+// confirms only Cross-Chain Polygon has ever held any tracked Polygon token.
+// Trimming from the full WALLET_ADDRESSES (37 wallets) avoids ~37x of the
+// iteration cost in snapshot reads, BackfillTokenBalances, and the
+// pushOwnedLiquidityRecords / pushTreasuryOhm paths. Output is unchanged
+// (legacy also dropped zero-balance wallets at TokenRecord write time).
+const PROTOCOL_ADDRESSES = [CROSS_CHAIN_POLYGON];
 
 const names: Record<string, string> = {
   // Treasury / protocol wallets — match legacy CONTRACT_NAME_MAP labels.

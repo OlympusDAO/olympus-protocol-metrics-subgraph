@@ -30,7 +30,12 @@ const LP_UNISWAP_V2_WFTM_USDC = addr("0x2b4c76d0dc16be1c31d4c1dc53bf9b45987fc75c
 // 2022-05-01, matches legacy Fantom start block.
 const FANTOM_START_BLOCK = 37_320_000;
 
-const PROTOCOL_ADDRESSES = [CROSS_CHAIN_FANTOM, DAO_WALLET];
+// Per @0xJem on PR #311: per-chain protocolAddresses should be trimmed to
+// just the wallets that actually hold assets on this chain. Rigorous on-chain
+// audit confirms only Cross-Chain Fantom has ever held any tracked Fantom
+// token; DAO_WALLET (the Ethereum-side Treasury MS) has zero history on
+// Fantom across 3 historical probes × all 10 Fantom tokens. Trimmed.
+const PROTOCOL_ADDRESSES = [CROSS_CHAIN_FANTOM];
 
 // Per Phase 1 decision #5: latent legacy bugs are fixed during the port.
 // Fantom legacy had two name-map bugs: (a) abbreviations land in
