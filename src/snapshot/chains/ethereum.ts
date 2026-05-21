@@ -915,14 +915,21 @@ export const ETHEREUM: ChainConfig = {
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
     }),
+    // BTRFLY V1 is 9 decimals on-chain (matches OHM V1's decimals). Earlier
+    // config carried decimals: 18 which made our balance computation off by
+    // 10^9 — fixed.
     token(ERC20_BTRFLY_V1, "Volatile", true, false, undefined, {
       startBlock: ETHEREUM_START_BLOCK,
-      decimals: 18,
+      decimals: 9,
     }),
-    // xBTRFLY is a staking-rebase receipt — balanceOf accrues silently.
+    // xBTRFLY V1 is also 9 decimals on-chain (same fix as BTRFLY V1). It's a
+    // staking-rebase receipt — balanceOf accrues silently like sOHM, so
+    // nonStandardBalance is the right call. Indexing the rebase event would
+    // be ideal but Redacted V1 is dormant; not worth the build for a tiny
+    // residual (~$400).
     token(ERC20_BTRFLY_V1_STAKED, "Volatile", true, false, undefined, {
       startBlock: ETHEREUM_START_BLOCK,
-      decimals: 18,
+      decimals: 9,
       nonStandardBalance: true,
     }),
     token(ERC20_BTRFLY_V2, "Volatile", true, false, undefined, {
