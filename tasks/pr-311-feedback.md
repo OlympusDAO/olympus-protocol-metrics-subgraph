@@ -195,7 +195,7 @@ Track per-token findings + fix shipped under the table above as we work through 
 
 ### Open mid-work items (don't lose track)
 
-- [ ] **10 local commits ready to push** (full Step 1, in order):
+- [ ] **Local commits ready to push** (in order, Step 1 + partial Step 3):
   1. `3e0e42a` — Class A backfill at chain start (seeds 7 pure-A tokens)
   2. `e193d99` — Drop nonStandardBalance on 3 Class A tokens
   3. `d8639bd` — Wrapped9 handler (WETH9 wrap/unwrap), drop 4 WETH-family flags
@@ -206,6 +206,10 @@ Track per-token findings + fix shipped under the table above as we work through 
   8. `c02e190` — Polygon sKLIMA docs + Class B close-out
   9. `6faf9ac` — Plan tracker updates
   10. `7345f7d` — StakingRewardsVault handler (Beradrome) + drop 6 more flags
+  11. `931fb4b` — Step 1 close-out plan updates
+  12. `16fb7e4` — **Step 3**: Staking handlers filter by indexed user
+  13. `cba6308` — **Step 3**: Remove dead ChainlinkAggregator code
+  14. `883983a` — **Step 3**: Trim Polygon (37→1) + Fantom (2→1) protocolAddresses
 - [ ] After push + re-sync, re-run the 14-token scan to confirm: Class A tokens resolve to 0 residual; Class B fixed tokens (WETH @ LUSD, sDAI @ TRSRY) drop off the negative-balance list entirely.
 - [x] Class B investigation complete — see "Class B summary — final tally" below.
 - **Class C (2-3 tokens)**: keep `nonStandardBalance: true` as the cleanest path; document that aDAI / sKLIMA fundamentally have non-Transfer balance mutations. Alternative is to index Aave `ReserveDataUpdated` + sOHM-style index entity, but the RPC fallback is cheaper for these low-touch wallets.
@@ -257,18 +261,18 @@ Track per-token findings + fix shipped under the table above as we work through 
 
 ## Step 3 — Indexer performance (event filters)
 
-- [ ] **BlockHandlers.ts:168** — sequential handler calls; could be parallel.
-- [ ] **BlockHandlers.ts:476** — nested loop in `pushTokenBalanceRecords`; should be single pass over token defs filtering by category.
-- [ ] **BlockHandlers.ts:579 (a)** — per-chain `protocolAddresses` should be trimmed (Arbitrum was iterating mainnet addresses).
-- [ ] **BlockHandlers.ts:579 (b)** — add per-protocol-address `startBlock` to skip pre-deployment scans.
-- [ ] **BophadesKernel.ts:56** — add `where` clause to filter events.
-- [ ] **ChainlinkAggregator.ts:85** — add `where` clause.
-- [ ] **KodiakLps.ts:53** — add `where` clause.
-- [ ] **Staking.ts:72 — Staked event** — currently indexing all staking events; filter.
-- [ ] **Staking.ts:72 — Withdraw event** — same.
-- [ ] **Staking.ts:123** — filter by depositor/recipient.
-- [ ] **pricing/chainlink.ts:24** — aggregator detection slow; cache aggregator addresses or pre-record + monitor for `AggregatorUpdated` events.
-- [ ] **pricing/index.ts:78** — in-memory price storage vs entity-stored: measure and discuss.
+- [ ] **BlockHandlers.ts:168** — sequential handler calls; could be parallel. (Pending investigation.)
+- [ ] **BlockHandlers.ts:476** — nested loop in `pushTokenBalanceRecords`; should be single pass over token defs filtering by category. (Pending — low impact, code-clarity win.)
+- [x] **BlockHandlers.ts:579 (a)** — Trimmed Polygon (37→1) and Fantom (2→1) per-chain protocolAddresses in `883983a`. Rigorous on-chain audit (37 wallets × all tokens × multiple historical blocks) confirmed only Cross-Chain wallets had ever held tracked tokens. Ethereum left as-is (home chain).
+- [x] **BlockHandlers.ts:579 (b)** — Replied as deferred follow-up. After the trim in 883983a, the remaining wallets across all chains have existed for years before our chain start blocks, so per-address startBlock filtering has minimal additional value.
+- [x] **BophadesKernel.ts:56** — Investigated: `action` param is `uint8` (not indexed), so HyperSync can't filter on it. Already has in-handler early-return for InstallModule/UpgradeModule. Volume sample: **93 events ever** across full ~9M-block lifetime (~1/month). Replied with reasoning; no code change.
+- [x] **ChainlinkAggregator.ts:85** — Fully removed in `cba6308` (file + 4 chain registrations + 2 schema entities). The handler was dead code — `EACAggregatorProxy` addresses don't emit `AnswerUpdated` (only the underlying aggregator does, and its address rotates via Chainlink phase transitions). Commit 6bf06fa had already switched pricing to RPC via `readChainlinkLatestAnswer` effect; this commit completes the cleanup.
+- [x] **KodiakLps.ts:53** — Investigated: envio DOES support `where` on `contractRegister`, but applying it here would delay underlying-UniV3-pool registration (which our backfill pricing depends on for `sqrtPriceX96`). Cost of leaving unfiltered: ~115 events/day chain-wide with a process-wide-cached `readInvariantContract` (1 RPC ever per Kodiak LP). Replied with reasoning; no code change.
+- [x] **Staking.ts:72 — Staked event** — Filtered by indexed `user` (treasury wallets) in `16fb7e4`. Drops shared-contract event volume from ~2,800/day chain-wide to single-digit/day for our wallets.
+- [x] **Staking.ts:72 — Withdraw event** — Same fix in `16fb7e4`.
+- [x] **Staking.ts:123** — Same `where: buildStakingUserWhere` filter applied to TreasureMining Deposit + Withdraw in `16fb7e4`.
+- [ ] **pricing/chainlink.ts:24** — Likely moot now that the dead ChainlinkAggregator path is gone. The pricing handler uses the `readChainlinkLatestAnswer` cached effect (1 RPC per (chain, feed, block), deduped across snapshot). Pending: confirm Jem's specific concern is addressed by 6bf06fa, then reply.
+- [ ] **pricing/index.ts:78** — In-memory vs entity-stored price perf. Pending investigation (open architectural question).
 
 ---
 
