@@ -473,45 +473,47 @@ export async function pushTokenBalanceRecords(
   timestamp: bigint,
   blockNumber: bigint,
 ): Promise<void> {
-  for (const category of ["Stable", "Volatile"] as const) {
-    for (const definition of config.tokens.filter((value) => value.category === category)) {
-      if (!isActive(definition, blockNumber)) continue;
+  // Single pass over config.tokens, skipping non-Stable/Volatile (Protocol-Owned
+  // Liquidity tokens are emitted via pushOwnedLiquidityRecords). Per @0xJem on
+  // PR #311 — avoids the nested-loop + per-category .filter() allocation.
+  for (const definition of config.tokens) {
+    if (definition.category !== "Stable" && definition.category !== "Volatile") continue;
+    if (!isActive(definition, blockNumber)) continue;
 
-      const rate = (await getPrice(config, context, client, definition.address, blockNumber, null))
-        .price;
-      if (rate.eq(ZERO)) continue;
+    const rate = (await getPrice(config, context, client, definition.address, blockNumber, null))
+      .price;
+    if (rate.eq(ZERO)) continue;
 
-      const wallets = getWalletAddressesForContract(config, definition.address);
-      const decimals = getTokenDecimals(config.tokens, definition.address);
-      const isNative = definition.address === config.nativeToken;
-      for (const wallet of wallets) {
-        const balance = isNative
-          ? await readNativeBalance(context, client, config.chainId, wallet, decimals, blockNumber)
-          : definition.nonStandardBalance
-            ? await readNonStandardBalance(
-                context,
-                config.chainId,
-                definition.address,
-                wallet,
-                decimals,
-                blockNumber,
-              )
-            : await readTokenBalance(context, config.chainId, definition.address, wallet, decimals);
-        if (balance.eq(ZERO)) continue;
-        records.push(
-          createTokenRecord(
-            config,
-            timestamp,
-            getContractName(config, definition.address),
-            definition.address,
-            getContractName(config, wallet),
-            wallet,
-            rate,
-            balance,
-            blockNumber,
-          ),
-        );
-      }
+    const wallets = getWalletAddressesForContract(config, definition.address);
+    const decimals = getTokenDecimals(config.tokens, definition.address);
+    const isNative = definition.address === config.nativeToken;
+    for (const wallet of wallets) {
+      const balance = isNative
+        ? await readNativeBalance(context, client, config.chainId, wallet, decimals, blockNumber)
+        : definition.nonStandardBalance
+          ? await readNonStandardBalance(
+              context,
+              config.chainId,
+              definition.address,
+              wallet,
+              decimals,
+              blockNumber,
+            )
+          : await readTokenBalance(context, config.chainId, definition.address, wallet, decimals);
+      if (balance.eq(ZERO)) continue;
+      records.push(
+        createTokenRecord(
+          config,
+          timestamp,
+          getContractName(config, definition.address),
+          definition.address,
+          getContractName(config, wallet),
+          wallet,
+          rate,
+          balance,
+          blockNumber,
+        ),
+      );
     }
   }
 }
@@ -1207,13 +1209,7 @@ export async function pushTreasuryOhm(
           decimals,
           blockNumber,
         )
-      : await readTokenBalance(
-          context,
-          config.chainId,
-          config.ohmToken,
-          wallet,
-          decimals,
-        );
+      : await readTokenBalance(context, config.chainId, config.ohmToken, wallet, decimals);
     if (rawBalance.eq(ZERO)) continue;
     const balance = rawBalance.times(multiplier);
     if (balance.eq(ZERO)) continue;
