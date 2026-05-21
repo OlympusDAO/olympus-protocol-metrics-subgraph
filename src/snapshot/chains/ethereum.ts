@@ -864,14 +864,13 @@ export const ETHEREUM: ChainConfig = {
       startBlock: LP_BALANCER_OHM_WSTETH_BLOCK,
       decimals: 18,
     }),
-    // WETH9: `deposit()` (wrap ETH) emits Deposit(dst, wad), `withdraw()`
-    // emits Withdrawal(src, wad) — neither emits Transfer. Wallets that hold
-    // wrapped ETH from a `weth.deposit{value:...}()` flow will drift in the
-    // event-driven ledger. Use snapshot-time balanceOf.
+    // WETH9 deposit/withdraw mutate balance without Transfer. Handled
+    // event-driven by the Wrapped9 handlers in Erc20Transfers.ts (Deposit
+    // = synthetic Transfer-in, Withdrawal = synthetic Transfer-out) so the
+    // TokenBalance ledger stays in sync without a per-snapshot balanceOf call.
     token(ERC20_WETH, "Volatile", true, true, undefined, {
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
-      nonStandardBalance: true,
     }),
     token(ERC20_WSTETH, "Volatile", true, true, undefined, {
       startBlock: ETHEREUM_START_BLOCK,

@@ -92,11 +92,11 @@ export const BASE: ChainConfig = {
       startBlock: BASE_START_BLOCK,
       decimals: 6,
     }),
-    // Base predeploy WETH9 — Deposit/Withdrawal events, no Transfer on wrap/unwrap.
+    // Base predeploy WETH9 — wrap/unwrap via Deposit/Withdrawal events.
+    // Tracked by the Wrapped9 handlers in Erc20Transfers.ts.
     token(ERC20_WETH, "Volatile", true, true, undefined, {
       startBlock: BASE_START_BLOCK,
       decimals: 18,
-      nonStandardBalance: true,
     }),
     token(ERC20_OHM, "Volatile", true, false, undefined, {
       startBlock: BASE_START_BLOCK,

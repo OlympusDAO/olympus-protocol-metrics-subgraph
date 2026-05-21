@@ -292,3 +292,78 @@ indexer.onEvent(
   },
   handleLpTransfer,
 );
+
+// WETH9 Deposit (wrap): credits balance to `dst` without emitting Transfer.
+// Treat as a synthetic Transfer-from-zero so applyTransferToWalletBalance does
+// the right thing for wallets that wrap ETH and forward the wETH. Without this
+// handler, a wrap-and-forward pattern (e.g. LUSD_ALLOCATOR receives ETH from
+// the Liquity StabilityPool, wraps to wETH, transfers to Treasury) records the
+// outflow Transfer but misses the wrap inflow and drifts negative.
+export async function handleWrapped9Deposit(args: {
+  event: {
+    chainId: number;
+    srcAddress: string;
+    logIndex: number;
+    block: { number: number; timestamp: number };
+    params: { dst: string; wad: bigint };
+  };
+  context: Parameters<typeof applyTransferToWalletBalance>[0];
+}): Promise<void> {
+  const { event, context } = args;
+  const wallets = new Set<string>(treasuryWalletsForChain(event.chainId));
+  const dst = addr(event.params.dst);
+  if (!wallets.has(dst)) return;
+  const token = addr(event.srcAddress);
+  const meta: EventMeta = {
+    block: event.block.number,
+    timestamp: event.block.timestamp,
+    logIndex: event.logIndex,
+  };
+  await applyTransferToWalletBalance(context, event.chainId, token, dst, event.params.wad, meta);
+}
+
+// WETH9 Withdrawal (unwrap): debits balance from `src` without emitting Transfer.
+export async function handleWrapped9Withdrawal(args: {
+  event: {
+    chainId: number;
+    srcAddress: string;
+    logIndex: number;
+    block: { number: number; timestamp: number };
+    params: { src: string; wad: bigint };
+  };
+  context: Parameters<typeof applyTransferToWalletBalance>[0];
+}): Promise<void> {
+  const { event, context } = args;
+  const wallets = new Set<string>(treasuryWalletsForChain(event.chainId));
+  const src = addr(event.params.src);
+  if (!wallets.has(src)) return;
+  const token = addr(event.srcAddress);
+  const meta: EventMeta = {
+    block: event.block.number,
+    timestamp: event.block.timestamp,
+    logIndex: event.logIndex,
+  };
+  await applyTransferToWalletBalance(context, event.chainId, token, src, -event.params.wad, meta);
+}
+
+const buildWrapped9DepositWhere = ({ chain }: { chain: { id: number } }) => {
+  const wallets = treasuryWalletsForChain(chain.id);
+  if (wallets.length === 0) return false as const;
+  return { params: [{ dst: wallets }] };
+};
+
+const buildWrapped9WithdrawalWhere = ({ chain }: { chain: { id: number } }) => {
+  const wallets = treasuryWalletsForChain(chain.id);
+  if (wallets.length === 0) return false as const;
+  return { params: [{ src: wallets }] };
+};
+
+indexer.onEvent(
+  { contract: "Wrapped9", event: "Deposit", where: buildWrapped9DepositWhere },
+  handleWrapped9Deposit,
+);
+
+indexer.onEvent(
+  { contract: "Wrapped9", event: "Withdrawal", where: buildWrapped9WithdrawalWhere },
+  handleWrapped9Withdrawal,
+);

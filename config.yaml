@@ -18,6 +18,18 @@ contracts:
     events:
       - event: "Transfer(address indexed from, address indexed to, uint256 value)"
 
+  # WETH9-family wrappers (canonical WETH9 on Ethereum + forks on most L2s/L1s).
+  # `deposit()` and `withdraw()` mutate `balanceOf` internally and emit only the
+  # Deposit/Withdrawal events — NOT Transfer. Subscribing only to Transfer leaves
+  # wrap/unwrap activity invisible and the TokenBalance ledger drifts negative
+  # for wallets that wrap-and-forward (see Eth WETH @ LUSD_ALLOCATOR trace in
+  # tasks/pr-311-feedback.md). Handler in Erc20Transfers.ts treats Deposit as a
+  # synthetic "Transfer from 0x0" (+wad) and Withdrawal as "Transfer to 0x0" (-wad).
+  - name: Wrapped9
+    events:
+      - event: "Deposit(address indexed dst, uint256 wad)"
+      - event: "Withdrawal(address indexed src, uint256 wad)"
+
   - name: OlympusLender
     events:
       - event: "AMOAdded(address indexed amo)"
@@ -133,6 +145,11 @@ chains:
           - "0xD8102963c400fEDBbc23Fe92f1b09c0C561e77Ae" # Silo OHM Collateral
           - "0x37E6a0EcB9e8E5D90104590049a0A197E1363b67" # Sentiment lToken
 
+      # WETH9 deposit/withdrawal — wrap/unwrap events without Transfer.
+      - name: Wrapped9
+        address:
+          - "0x82aF49447D8a07e3bd95BD0d56f35241523fBab1" # WETH
+
       # ---- OHM ERC20: also need from/to-zero transfers to track totalSupply.
       - name: OhmERC20
         address:
@@ -245,6 +262,11 @@ chains:
           - "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" # USDC
           - "0x4200000000000000000000000000000000000006" # WETH
 
+      # Base predeploy WETH9 — wrap/unwrap via Deposit/Withdrawal, no Transfer.
+      - name: Wrapped9
+        address:
+          - "0x4200000000000000000000000000000000000006" # WETH
+
       # ---- OHM ERC20: Transfer events drive treasury balance + totalSupply.
       - name: OhmERC20
         address:
@@ -318,6 +340,11 @@ chains:
           - "0x74b23882a30290451a17c44f4f05243b6b58c76d" # WETH (Multichain-bridged)
           - "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83" # WFTM
 
+      # wFTM is the canonical Fantom WETH9 fork — wrap/unwrap via Deposit/Withdrawal.
+      - name: Wrapped9
+        address:
+          - "0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83" # WFTM
+
       # ---- Univ2 pricing pools (Sync drives reserves; Transfer of POL drives totalSupply).
       - name: UniswapV2Pool
         address:
@@ -379,6 +406,11 @@ chains:
           - "0xb9d6ed734ccbdd0b9cadfed712cf8ac6d0917ecd" # auraOhmDai
           - "0xf01e29461f1fcedd82f5258da006295e23b4fab3" # auraOhmDaiWeth
           - "0x636024f9ddef77e625161b2ccf3a2adfbfad3615" # auraOhmWsteth
+
+      # Canonical WETH9 — wrap/unwrap via Deposit/Withdrawal, no Transfer.
+      - name: Wrapped9
+        address:
+          - "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" # WETH
 
       # ---- OHM ERC20s.
       - name: OhmERC20

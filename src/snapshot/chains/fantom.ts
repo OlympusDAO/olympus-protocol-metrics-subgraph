@@ -187,9 +187,9 @@ export const FANTOM: ChainConfig = {
       nonStandardBalance: true,
     }),
     // Cross-Chain Fantom held 5,198 wFTM before chain start (block
-    // 37,320,000). BackfillTokenBalances seeds that pre-existing balance
-    // from balanceOf so plain Transfer-driven accounting matches on-chain
-    // (validated: residual = 0).
+    // 37,320,000). BackfillTokenBalances seeds the pre-existing balance
+    // from balanceOf, and the Wrapped9 handlers in Erc20Transfers.ts catch
+    // wrap/unwrap activity since wFTM is the canonical Fantom WETH9 fork.
     token(ERC20_WFTM, "Volatile", true, true, undefined, {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
