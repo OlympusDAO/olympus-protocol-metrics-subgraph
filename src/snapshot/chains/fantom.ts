@@ -149,23 +149,26 @@ export const FANTOM: ChainConfig = {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
     }),
-    // Multichain-bridged DAI on Fantom. The bridge credits balance without a
-    // standard Transfer event, so the indexer's TokenBalance ledger drifts
-    // negative; read balanceOf at snapshot time to stay correct.
+    // Multichain-bridged DAI on Fantom. Cross-Chain Fantom held 80,100 DAI
+    // at chain start (verified on-chain); BackfillTokenBalances seeds it.
+    // Multichain anyDAI emits standard Transfer on mint/burn alongside its
+    // LogSwapin/LogSwapout events, so Transfer indexing handles everything
+    // post-backfill (the earlier nonStandardBalance flag was a mis-diagnosis
+    // — I'd queried the wrong wallet address and saw start=0).
     token(ERC20_DAI, "Stable", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
-      nonStandardBalance: true,
     }),
     token(ERC20_DEI, "Stable", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
     }),
-    // Multichain-bridged FRAX on Fantom — same bridge-mint issue as DAI.
+    // Multichain-bridged FRAX on Fantom — same pre-existing-balance pattern
+    // as DAI (45,036 at chain start). Backfill seeds it; Transfer indexing
+    // handles the rest.
     token(ERC20_FRAX, "Stable", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
-      nonStandardBalance: true,
     }),
     token(ERC20_LQDR, "Volatile", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,
