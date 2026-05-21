@@ -239,80 +239,14 @@ describe("pushTokenBalanceRecords per-chain validation", () => {
     expect(row.supplyBalance).toBe("-1350");
   });
 
-  test("Fantom: pushTreasuryOhm bypasses drifting TokenBalance for nonStandardBalance gOHM", async () => {
-    // Repro of the Cross-Chain Fantom drift: bridge mints gOHM without a
-    // standard Transfer, so the indexer's TokenBalance accumulates only
-    // outgoing transfers and goes negative. With ERC20_GOHM flagged
-    // `nonStandardBalance: true`, pushTreasuryOhm must read the on-chain
-    // balanceOf via readErc20BalanceOf effect — NOT the broken entity.
-    const FANTOM = CHAIN_CONFIGS[250];
-    const GOHM_FANTOM = "0x91fa20244fb509e8289ca630e5db3e9166233fdc";
-    const SOHM_V3 = "0x04906695d6d12cf5459975d7c3c03356e4ccd460";
-    const wallet = FANTOM.circulatingSupplyWallets[0];
-    const ONE_GOHM = 10n ** 18n;
-    const INDEX_270 = 270_000_000_000n;
-
-    // Entity says wallet has -1.13 gOHM (the bug). On-chain says it has
-    // +0.000066 gOHM (the truth).
-    const driftingEntityBalance = -1132383847256463562n;
-    const onChainBalance = 66152743536438n;
-
-    const tokenBalances = new Map<string, unknown>();
-    tokenBalances.set(`250-${addr(GOHM_FANTOM)}-${addr(wallet)}`, {
-      chainId: 250,
-      tokenAddress: addr(GOHM_FANTOM),
-      walletAddress: addr(wallet),
-      balance: driftingEntityBalance,
-      updatedAtBlock: BLOCK,
-    });
-    const ohmIndexStates = new Map<string, unknown>();
-    ohmIndexStates.set(`1-${addr(SOHM_V3)}`, {
-      chainId: 1,
-      sOhmAddress: addr(SOHM_V3),
-      index: INDEX_270,
-    });
-
-    const context = {
-      OhmIndexState: { get: async (id: string) => ohmIndexStates.get(id) },
-      TokenBalance: { get: async (id: string) => tokenBalances.get(id) },
-      effect: vi.fn(
-        async (
-          _effectDef: unknown,
-          input: { chainId?: number; tokenAddress?: string; walletAddress?: string },
-        ) => {
-          // readErc20BalanceOf dispatch — return on-chain balance ONLY for
-          // the wallet we're testing, zero for any other wallet. If
-          // pushTreasuryOhm called the entity path instead, the supply row
-          // would carry the drifting negative entity balance.
-          if (
-            input.tokenAddress !== undefined &&
-            input.walletAddress !== undefined &&
-            input.chainId !== undefined
-          ) {
-            if (addr(input.walletAddress) === addr(wallet)) {
-              return onChainBalance.toString();
-            }
-            return "0";
-          }
-          return "";
-        },
-      ),
-      log: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
-    } as unknown as Parameters<typeof pushTreasuryOhm>[0];
-
-    const supplies: SerializedTokenSupply[] = [];
-    await pushTreasuryOhm(context, FANTOM, supplies, TIMESTAMP, BLOCK);
-
-    expect(supplies).toHaveLength(1);
-    // 0.000066152743536438 gOHM × 270 ≈ 0.01786 OHM-equivalent. supplyBalance
-    // is negated by the multiplier=-1. The big assertion is just that it's
-    // positive-but-tiny — not the multi-thousand-OHM phantom that the
-    // drifting entity would produce.
-    const supplyBalance = Number(supplies[0].supplyBalance);
-    expect(supplyBalance).toBeLessThan(0); // negated by multiplier=-1
-    expect(Math.abs(supplyBalance)).toBeLessThan(1); // tiny, not phantom
-    expect(Math.abs(supplyBalance)).toBeGreaterThan(0.001);
-  });
+  // (Removed test "Fantom: pushTreasuryOhm bypasses drifting TokenBalance for
+  // nonStandardBalance gOHM" — it exercised the snapshot-time balanceOf
+  // workaround for Cross-Chain Fantom gOHM. With BackfillTokenBalances now
+  // seeding the wallet's pre-existing balance at chain start, the TokenBalance
+  // entity stays correct via plain Transfer accounting and the
+  // nonStandardBalance flag has been removed from Fantom gOHM. The bypass
+  // path itself is still tested for tokens that legitimately need it — e.g.
+  // Fantom DAI/FRAX which fall into Class B.)
 
   test("Fantom: skips Treasury emission when ohmIndex isn't available yet", async () => {
     // If Ethereum's sOHM-V3 OhmIndexState hasn't been populated (early

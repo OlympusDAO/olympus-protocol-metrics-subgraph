@@ -191,13 +191,14 @@ export const ARBITRUM: ChainConfig = {
       startBlock: ARB_CREATION_BLOCK,
       decimals: 18,
     }),
-    // Multichain-bridged FRAX on Arbitrum — bridge mints/burns mutate balance
-    // without standard Transfer events, so the TokenBalance ledger drifts
-    // negative for Olympus wallets. Read balanceOf at snapshot time.
+    // Multichain-bridged FRAX. Wallet held 18,072 FRAX before chain start
+    // (block 10,950,000) which the original event-driven ledger never saw,
+    // causing phantom-negative drift. BackfillTokenBalances seeds that
+    // pre-existing balance from balanceOf, so plain Transfer-driven
+    // accounting now matches on-chain (validated: residual = 0).
     token(ERC20_FRAX, "Stable", true, false, undefined, {
       startBlock: FRAX_CREATION_BLOCK,
       decimals: 18,
-      nonStandardBalance: true,
     }),
     token(ERC20_JONES, "Volatile", true, false, "0.83", {
       startBlock: JONES_CREATION_BLOCK,

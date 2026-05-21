@@ -186,20 +186,20 @@ export const FANTOM: ChainConfig = {
       decimals: 18,
       nonStandardBalance: true,
     }),
-    // wFTM is the canonical Fantom WETH9 fork — Deposit/Withdrawal pattern.
+    // Cross-Chain Fantom held 5,198 wFTM before chain start (block
+    // 37,320,000). BackfillTokenBalances seeds that pre-existing balance
+    // from balanceOf so plain Transfer-driven accounting matches on-chain
+    // (validated: residual = 0).
     token(ERC20_WFTM, "Volatile", true, true, undefined, {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
-      nonStandardBalance: true,
     }),
-    // Bridged gOHM on Fantom: confirmed the indexer's TokenBalance ledger
-    // drifts negative for Olympus protocol wallets because the bridge mint
-    // credits balance without a standard Transfer event. Read via balanceOf
-    // at snapshot time to stay correct.
+    // Cross-Chain Fantom held 1.13 gOHM before chain start; same Class A
+    // pre-existing-balance pattern as wFTM. BackfillTokenBalances seeds it
+    // (validated: residual = 0).
     token(ERC20_GOHM, "Volatile", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
-      nonStandardBalance: true,
     }),
     token(LP_UNISWAP_V2_WFTM_GOHM, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,
