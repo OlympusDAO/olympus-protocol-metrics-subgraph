@@ -52,7 +52,12 @@ overrides:
   "tmp@<=0.2.3": "^0.2.4"
   "undici": "^7.24.0"
   "yaml": "^2.8.3"
-  "yargs-parser": "^18.1.1"
+  # NOTE: yargs-parser override removed (was "^18.1.1" — a CVE-2020-7608
+  # pin from master's pnpm hardening). envio → yargs@17 expects
+  # yargs-parser@21, which exports `Parser.looksLikeNumber` used at
+  # runtime. Forcing v18 broke the indexer with
+  # "Parser.looksLikeNumber is not a function". v21 carries the same
+  # prototype-pollution fix, so the cap was over-restrictive.
   # Envio bundles express + ws; these overrides patch the transitive
   # advisories CI's audit gate flagged at moderate+. Pinned to ranges
   # known to address each CVE without churning unrelated majors.
