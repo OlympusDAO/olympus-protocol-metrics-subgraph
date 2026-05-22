@@ -60,3 +60,21 @@ overrides:
   "path-to-regexp": "^0.1.12"
   "qs": "^6.14.1"
   "ws": "^8.20.1"
+  # Envio pins @fuel-ts/* to 0.96.1, which declares engines.node:
+  # ^18.20.3 || ^20.0.0 || ^22.0.0 — explicitly rejects Node 24. Envio's
+  # hosted indexer container runs Node 24 and refuses to install when
+  # engines.node is violated. Bumping to 0.101.3 (the first release that
+  # adds Node 24 to the accept list) unblocks the install. We don't
+  # index Fuel chains, so the only path through @fuel-ts is via
+  # hyperfuel-client init for Fuel data sources — none configured.
+  "@fuel-ts/crypto": "^0.101.3"
+  "@fuel-ts/errors": "^0.101.3"
+  "@fuel-ts/hasher": "^0.101.3"
+  "@fuel-ts/math": "^0.101.3"
+  "@fuel-ts/utils": "^0.101.3"
+  # Pin vite to a release older than minimumReleaseAge. vitest@4 accepts
+  # vite ^6/^7/^8 and pnpm's resolver picks the highest matching, which
+  # ends up being a too-fresh vite@8.0.14 when the lockfile gets
+  # re-resolved (e.g. after a fuel-ts override change). 8.0.13 is the
+  # newest release past the 7-day cutoff at time of writing.
+  "vite": "8.0.13"
