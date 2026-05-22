@@ -33,29 +33,16 @@ jobs:
       - name: Envio Unit Tests
         run: pnpm test
 
-  build:
-    strategy:
-      matrix:
-        # We want to test the shared code too
-        subgraph: [ethereum, arbitrum, polygon, fantom, shared, base, berachain]
-    # The type of runner that the job will run on
-    # Pin the runner to ubuntu-22.04 to avoid an incompatibility with ubuntu 24 and graph test
-    # https://github.com/graphprotocol/graph-tooling/issues/1546
-    runs-on: ubuntu-22.04
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+  envio-build:
+    runs-on: ubuntu-latest
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
 
       - name: Bootstrap
         uses: ./.github/actions/bootstrap
 
-      # Run build
-      - name: Build
-        run: pnpm subgraph build ${{ matrix.subgraph }}
+      - name: Codegen
+        run: pnpm codegen
 
-      # Run tests
-      - name: Unit Tests
-        run: pnpm subgraph test ${{ matrix.subgraph }}
+      - name: Type check
+        run: pnpm build

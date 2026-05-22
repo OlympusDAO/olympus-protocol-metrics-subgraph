@@ -1,373 +1,136 @@
-# Olympus Protocol Metrics Subgraph
+# Olympus Protocol Metrics Indexer
 
-Gathers data from bonds, liquidity and Olympus treasury.
+Treasury and protocol metrics indexer for Olympus DAO. Powers the
+[Olympus Treasury Dashboard](https://app.olympusdao.finance/) via the
+[treasury-subgraph](https://github.com/OlympusDAO/treasury-subgraph)
+aggregator service.
 
-Used in the [Olympus Treasury Dashboard](https://app.olympusdao.finance/).
+Built on [Envio HyperIndex](https://docs.envio.dev/) (v3, multichain).
+The previous implementation used The Graph Protocol with separate
+subgraphs per chain; that code has been replaced by the single Envio
+indexer in this repository (see `config.yaml`, `schema.graphql`, and
+`src/`). The Graph deployments are no longer maintained.
 
-Deployed at:
+## Chains indexed
 
-- [Ethereum mainnet](https://thegraph.com/explorer/subgraphs/7jeChfyUTWRyp2JxPGuuzxvGt3fDKMkC9rLjm7sfLcNp?view=Overview&chain=arbitrum-one)
-- [Polygon](https://thegraph.com/explorer/subgraphs/aF7zBXagiSjwwM1yAUiyrWFJDhh5RLpVn2nuvVbKwDw?view=Overview&chain=arbitrum-one)
-- [Arbitrum](https://thegraph.com/explorer/subgraphs/8Zxb1kVv9ZBChHXEPSgtC5u5gjCijMn5k8ErpzRYWNgH?view=Overview&chain=arbitrum-one)
-- [Fantom](https://thegraph.com/explorer/subgraphs/3qSJTWdWJETFzht814HVV9rVafwRLQp3k9mZhCF39bYd?v=1&view=Query&chain=arbitrum-one)
-- [Base](https://thegraph.com/explorer/subgraphs/3YAC1Gj2AUFCQ8wd4DaBQmqU3DJZjKyr45dQykAtXuMU?view=Overview&chain=arbitrum-one)
-- [Berachain](https://thegraph.com/explorer/subgraphs/5KjntDTvo4DumbAkXdkrzNBdta2NujCc73TRYwgTdVun?view=Query&chain=arbitrum-one)
+| Chain     | Chain ID | Start block | Source           |
+| --------- | -------- | ----------- | ---------------- |
+| Ethereum  | 1        | 12,000,000  | HyperSync + RPC  |
+| Polygon   | 137      | 23,000,000  | HyperSync + RPC  |
+| Fantom    | 250      | 37,320,000  | HyperSync + RPC  |
+| Base      | 8453     | 13,204,827  | HyperSync + RPC  |
+| Arbitrum  | 42161    | 10,950,000  | HyperSync + RPC  |
+| Berachain | 80094    | 799,194     | HyperSync + RPC  |
 
-## Initial Setup
-
-Run `yarn`
-
-## Writing AssemblyScript
-
-Note that the Graph Protocol compiles from AssemblyScript to WASM. AssemblyScript is strongly-typed, and is similar to TypeScript. However, there are a number of expected features of TypeScript (e.g. try/catch) that aren't implemented in AssemblyScript. A few suggestions:
-
-- Utilise the linting that has been set up in this repository
-- Build frequently (`yarn subgraph build <subgraph>`), as linting does not pick up all problems
-- Variables that are nullable need to be typed accordingly
-- You may run into a TS2322 compiler error when handling null values. The workaround for this is to use the strict equality operator (`===`), instead of loose equality (`==`) or negation (`!someValue`). e.g. `if (someValue === null)`. This is due to a [limitation in the AssemblyScript compiler.](https://github.com/AssemblyScript/assemblyscript/issues/2223#issuecomment-1069245834)
-- The Graph Protocol Discord is very helpful to get support. See the `subgraph-development` channel.
-
-## CLI
-
-A CLI tool is available at `yarn subgraph` to make common tasks (building, testing, deploying) significantly easier. Run `yarn subgraph --help` for details of the commands.
-
-Please note that `<subgraph>` is an argument for most of the commands, as files and configuration are stored on a per-subgraph basis.
-
-## Support for Networks
-
-Assets on different networks/chains are supported.
-
-Each network has an independent subgraph, as required by the Graph Protocol. For this reason, each network has an independent file structure under `subgraphs/`.
-
-### Adding a New Subgraph
-
-1. Decide on the name for the subgraph, which will be used throughout. e.g. `arbitrum`
-1. Create the following files and folders in `subgraphs/<subgraph>/`: `src/`, `tests/`, `config.json` and `subgraph.yaml`. See [subgraphs/ethereum/](subgraphs/ethereum/) for an example.
-1. Create the subgraph through the Graph Protocol (see [Deployment](#deployment) section)
-1. Create `bin/subgraph/src/subgraphs/<subgraph>/index.ts` and implement a class that extends `BaseNetworkHandler`. This file defines how a particular subgraph will be automatically tested using the workflow defined in [.github/workflows/query.yml](.github/workflows/query.yml). See [bin/subgraph/src/subgraphs/ethereum/index.ts](bin/subgraph/src/subgraphs/ethereum/index.ts) for an example.
-1. Add `<subgraph>` to the matrix strategies defined in [.github/workflows/query.yml](.github/workflows/query.yml) and [.github/workflows/main.yml](.github/workflows/main.yml).
-
-### Triggers
-
-Each subgraph has a different trigger, specified in the respective `subgraph.yaml` file:
-
-- Arbitrum: triggered by `NewRound` events on bounded FRAX/USD Chainlink aggregators.
-- Ethereum: triggered by the `stake()` function call on OlympusStakingV3
-- Fantom: triggered by the `rebase()` function call on FantOHM's staking contract (since we don't have a staking contract on Fantom)
-- Polygon: triggered on every block (unfortunately), but indexes only every 14,400th block (~8 hours).
-
-Arbitrum and Polygon are triggered on a per-block basis due to a limitation with nodes not supporting tracing. See: <https://github.com/graphprotocol/graph-node/issues/3517> (this applies to BSC, but also to Arbitrum and Polygon)
-
-## Testing
-
-The `matchstick-as` package is used to perform testing on the subgraph code. The syntax is close to that of
-`jest`. See this page for examples: <https://github.com/LimeChain/demo-subgraph>
-
-To run tests: `yarn subgraph test <subgraph>`
-
-If you receive a non-sensical test result (e.g. duplicated test cases, or a test failing that should be passing), try running `yarn subgraph test <subgraph> --recompile`. The build cache will sometimes get corrupted/broken.
-
-## Adding Contracts
-
-1. Add the ABI into the `abis/` folder.
-1. Add a reference to the ABI under the respective data source in `subgraph.yaml`
-1. Run `yarn subgraph codegen <subgraph>` to generate AssemblyScript files from the new ABI(s)
-
-## Deployment
-
-### Deployment - Subgraph Studio and Decentralised Service
-
-1. If necessary, create an account and subgraph in the Subgraph Studio: <https://thegraph.com/studio/>
-   - The subgraph should be called `olympus-protocol-metrics`
-1. Add the Subgraph Studio deploy key to the `GRAPH_STUDIO_TOKEN` variable in `.env` (using `.env.sample`)
-1. Update the `version` property in the `subgraphs/<subgraph>/config.json` file.
-1. Run `yarn subgraph build <subgraph>`
-1. Run `yarn subgraph deploy:studio <subgraph>`
-1. Update the `id` variable in the `subgraphs/<subgraph>/config.json` file with the subgraph id that was displayed in the output.
-
-A URL for the GraphQL Explorer will be provided.
-
-### Deployment - Hosted Service
-
-Some subgraphs are deployed on the Graph Protocol's Hosted Service:
-
-- Going forward, the Graph Network does not yet offer multi-chain indexing, so the hosted service will still be required.
-- Note that indexing takes a significant amount of time (weeks!) at the moment. Investigation is required to look into how to improve the indexing performance.
-
-To deploy, do the following:
-
-1. Add the Subgraph Studio deploy key to the `GRAPH_TOKEN_<subgraph>` variable in `.env` (using `.env.sample`)
-1. Update the `version` property in the `subgraphs/<subgraph>/config.json` file.
-1. Run `yarn subgraph build <subgraph>`
-1. Run `yarn subgraph deploy:hosted <subgraph>`
-1. Update the `id` variable in the `subgraphs/<subgraph>/config.json` file with the subgraph id that was displayed in the output.
-1. Update `CHANGELOG.md`.
-
-### Deployment - Local
-
-A set of Docker containers is pre-configured to enable local testing of the subgraph.
-
-1. Copy the `docker/.env.sample` file to `docker/.env` and set the Alchemy API key
-2. Run the Docker stack: `yarn run-local`
-3. Create the subgraph in the local graph node: `yarn create-local` (after every restart of the graph node stack)
-4. Deploy the subgraph: `yarn deploy-local --version-label 0.1.0`
-5. Access the GraphQL query interface: <http://localhost:8000/subgraphs/name/olympus/graphql>
-
-### HyperIndex - Local
-
-The Envio indexer is configured for sparse 8-hour block snapshots. Run local indexing with:
+## Setup
 
 ```sh
-pnpm run envio:dev
+pnpm install
+cp .env.sample .env  # then fill in the RPC URLs and Envio token
+pnpm codegen         # generates types from schema.graphql + config.yaml
 ```
 
-Snapshot handlers perform archive RPC reads for balances, pool state, and price feeds. The checked-in Arbitrum defaults use SubQuery first because the historical snapshots start at block `10950000`, and the default Arbitrum public RPC does not serve archive state that far back. A public Blast RPC is configured as the fallback because SubQuery's public endpoint can rate-limit local smoke runs. Set `ENVIO_ARBITRUM_RPC_URL` and `ENVIO_BERACHAIN_RPC_URL` to paid archive endpoints for reliable full historical backfills. Optional comma-separated fallback endpoints can be provided through `ENVIO_ARBITRUM_FALLBACK_RPC_URLS` and `ENVIO_BERACHAIN_FALLBACK_RPC_URLS`.
+## Running locally
 
-`full_batch_size` is set to `1` in `config.yaml` as a conservative backfill setting, not because larger batches are impossible. Each matched block runs a full treasury snapshot with many archive reads; one block per batch keeps progress commits frequent and limits replay to a single snapshot after an RPC failure. If a production archive RPC proves stable, this can be raised and benchmarked.
-
-The snapshot RPC work runs through the `getSnapshot` Envio effect with effect caching disabled. Each scheduled block is processed once, and the durable output is the `TokenRecord` and `TokenSupply` entity rows written by the handler. Caching the full snapshot would add a second database write for every 8-hour block without reuse benefit during backfill.
-
-If effect caching is enabled later, replace the loose effect output schema with an explicit schema for the full snapshot payload first. Envio persists cached effect outputs through its generated database schema, so `S.unknown` is not a safe cache boundary for the nested snapshot object.
-
-## Constants
-
-### Tokens
-
-Tokens are defined and mapped in the `Constants.ts` file for each chain/subgraph (typically).
-
-To add a new token:
-
-- Define a constant value with the address of the ERC20 contract, with `.toLowerCase()` appended
-- Define a constant value with the address of the liquidity pool used for price lookup
-- Add the token definition to the `ERC20_TOKENS` map
-- Add a mapping under `PAIR_HANDLER` between the ERC20 contract and the liquidity pool contract
-- Add the names for the ERC20 contract and liquidity pool to `CONTRACT_NAME_MAP`
-
-### Wallets
-
-Wallets are defined and mapped in the `src/utils/Constants.ts` file.
-
-To add a new wallet:
-
-- Define a constant value with the address of the wallet, with `.toLowerCase()` appended
-- Add the constant to the `WALLET_ADDRESSES` array
-- Add the name for the wallet to `CONTRACT_NAME_MAP`
-- If specific tokens in the wallet should not be reported as part of the treasury, add it to `DAO_WALLET_BLACKLIST`.
-
-### Price Lookup
-
-Price lookups are mapped in the `src/utils/Constants.ts` file.
-
-To add a new price lookup:
-
-- Define a constant value with the address of the liquidity pool (e.g. `PAIR_UNISWAP_V2_ALCX_ETH`), with `.toLowerCase()` appended
-- Add an entry to the `LIQUIDITY_POOL_TOKEN_LOOKUP` constant, which maps the pair type (Balancer, Curve, UniswapV2, UniswapV3) to the liquidity pool address
-
-Price lookups are performed in the following manner through the `getUSDRate` function:
-
-- If the token is a stablecoin, return a rate of `1`.
-- If the token is one of the base tokens (stablecoin or ETH), return the respective rate.
-- Otherwise, use `getPairHandler` to find the appropriate liquidity pool that will enable a price lookup into USD.
-
-### Protocol-Owned Liquidity
-
-Protocol-owned liquidity is mapped in the `src/utils/Constants.ts` file.
-
-To add a new liquidity entry:
-
-- Define a constant value with the address of the liquidity pool (e.g. `PAIR_UNISWAP_V2_ALCX_ETH`), with `.toLowerCase()` appended
-- Add an entry to the `LIQUIDITY_OWNED` constant, which maps the pool type (Balancer, Curve, UniswapV2, UniswapV3) to the liquidity pool address
-- Add an entry to the `LIQUIDITY_PAIR_TOKENS` constant, which maps the liquidity pool address to the tokens that it is composed of. This could be determined on-chain, but is easier/quicker if done statically.
-- If the entry is present in any wallets outside of {WALLET_ADDRESSES}, yet should be reported as part of the tresury, add it to `NON_TREASURY_ASSET_WHITELIST`.
-- Add a mock for a zero balance to the respective test helper function (e.g. `mockBalanceVaultZero`), otherwise tests will fail.
-
-### Staked Liquidity
-
-Some liquidity tokens (e.g. Curve OHMETH) can be staked in Convex, which in turn emits a staked token (e.g. cvxOHMETH).
-
-To add a new mapping:
-
-- Define a constant value with the address of the staked token, with `.toLowerCase()` appended
-- Create a mapping between the original token (e.g. `ERC20_CRV_OHMETH`) and the staked token (e.g. `ERC20_CVX_OHMETH`) in the `CONVEX_STAKED_TOKENS` map
-- Add the Convex staking contract to the `CONVEX_STAKING_CONTRACTS` array
-
-### Contract Addresses
-
-Although Ethereum addresses are not case-sensitive, the mix of uppercase and lowercase letters can create problems when using contract addresses as keys in a map.
-
-To work around this, the following have been implemented:
-
-- At the location where a constant is defined, it is forced into lowercase
-- All functions that access `Map` objects convert the given key into lowercase
-
-## Data Structure
-
-### Current Structure
-
-The current schema (as of 3.0.0) has three main entities:
-
-- `TokenRecord`: token-wallet permutations held by the treasury. These records can be aggregated to determine the treasury market value, liquid backing, etc.
-- `TokenSupply`: OHM-wallet permutations held by the treasury. These records can be aggregated to determine the OHM circulating and floating supply.
-- `ProtocolMetric`: calculated metrics for the protocol, such as the next rebase time, current APY.
-  - NOTE: some of the later-added properties (e.g. `treasuryMarketValue` are marked as optional, to work around a `504` error that is encountered while grafting)
-
-As defined in the `subgraph.yaml` file within the `ProtocolMetrics` data source (around line 417), when the `stake` function on the `OlympusStakingV3` contract is called (every rebase or ~8 hours), the indexing of the entities will commence.
-
-Each of these entities (defined in `schema.graphql`) has a unique ID that contains the date in `YYYY-MM-DD` format. Within a single day, subsequent indexing rounds will result in previous values being overwritten. However, any records that are not overwritten will also not be deleted.
-
-#### Caveat: Outdated Blocks
-
-One edge-case that is not currently handled is when a token balance exists in block 1 (resulting in a TokenRecord entity being created), but the token balance is removed in block 2, the TokenRecord for block 1 will not be removed - it will have the same date as other records, but a different block number.
-
-Take the following query as an example:
-
-```graphql
-query {
-  tokenRecords(orderBy: date, orderDirection: desc, where: { token: "wETH", date: "2022-07-06" }) {
-    id
-    block
-    date
-    timestamp
-    token
-    tokenAddress
-    source
-    sourceAddress
-    balance
-    rate
-    multiplier
-    value
-    category
-    isLiquid
-    isBluechip
-  }
-}
+```sh
+pnpm envio:dev   # boots a local indexer + Postgres + Hasura via Docker
+pnpm envio:start # runs the indexer against an existing Postgres
 ```
 
-The query results these results:
+Per-chain RPC endpoints come from `.env`:
 
-```json
-{
-  "data": {
-    "tokenRecords": [
-      {
-        "id": "2022-07-06/Treasury Wallet V3/wETH",
-        "block": "15091947",
-        "date": "2022-07-06",
-        "timestamp": "1657150086",
-        "token": "wETH",
-        "tokenAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-        "source": "Treasury Wallet V3",
-        "sourceAddress": "0x9a315bdf513367c0377fb36545857d12e85813ef",
-        "balance": "9755.083113575199483955",
-        "rate": "1193.605651838517369531398265305985",
-        "multiplier": "1",
-        "value": "11643722.33851783954945621052911067",
-        "category": "Volatile",
-        "isLiquid": true,
-        "isBluechip": true
-      },
-      {
-        "id": "2022-07-06/Treasury Wallet V2/wETH",
-        "block": "15091947",
-        "date": "2022-07-06",
-        "timestamp": "1657150086",
-        "token": "wETH",
-        "tokenAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-        "source": "Treasury Wallet V2",
-        "sourceAddress": "0x31f8cc382c9898b273eff4e0b7626a6987c846e8",
-        "balance": "16.949992098990965551",
-        "rate": "1193.605651838517369531398265305985",
-        "multiplier": "1",
-        "value": "20231.60636797383066804381708794811",
-        "category": "Volatile",
-        "isLiquid": true,
-        "isBluechip": true
-      },
-      {
-        "id": "2022-07-06/LUSD Allocator/wETH",
-        "block": "15091947",
-        "date": "2022-07-06",
-        "timestamp": "1657150086",
-        "token": "wETH",
-        "tokenAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-        "source": "LUSD Allocator",
-        "sourceAddress": "0x97b3ef4c558ec456d59cb95c65bfb79046e31fca",
-        "balance": "0.942594895556590696",
-        "rate": "1193.605651838517369531398265305985",
-        "multiplier": "1",
-        "value": "1125.086594730483637395458609404847",
-        "category": "Volatile",
-        "isLiquid": true,
-        "isBluechip": true
-      },
-      {
-        "id": "2022-07-06/DAO Wallet/wETH",
-        "block": "15086325",
-        "date": "2022-07-06",
-        "timestamp": "1657075064",
-        "token": "wETH",
-        "tokenAddress": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-        "source": "DAO Wallet",
-        "sourceAddress": "0x245cc372c84b3645bf0ffe6538620b04a217988b",
-        "balance": "15598.016502448886308205",
-        "rate": "1115.840986512379248158231626289313",
-        "multiplier": "1",
-        "value": "17404906.1217289366810338171332356",
-        "category": "Volatile",
-        "isLiquid": true,
-        "isBluechip": true
-      }
-    ]
-  }
-}
+- `ENVIO_ETHEREUM_RPC_URL`, `ENVIO_ARBITRUM_RPC_URL`,
+  `ENVIO_POLYGON_RPC_URL`, `ENVIO_FANTOM_RPC_URL`,
+  `ENVIO_BASE_RPC_URL`, `ENVIO_BERACHAIN_RPC_URL`
+- `ENVIO_API_TOKEN` — required for HyperSync access
+
+HyperSync is the primary data source for supported chains; the
+configured RPC is the fallback (and the source for snapshot-time
+`balanceOf` / pricing reads).
+
+## Snapshots
+
+The indexer runs an 8-hour-cadence block handler (`EightHourSnapshot`)
+on every chain that produces three entity types per snapshot:
+
+- `TokenRecord` — one row per (token, wallet) the treasury holds, with
+  price, balance, and USD value.
+- `TokenSupply` — OHM supply attribution rows (Total Supply, Treasury
+  holdings, Liquidity-bound, Lending-bound, etc.) that compose into
+  circulating / floating / backed supply at the global level.
+- `GlobalMetricSnapshot` — cross-chain rollup keyed by UTC date. Holds
+  `treasuryMarketValue`, `treasuryLiquidBacking`, OHM price, supply
+  derivations, etc. Per-chain breakdowns live in
+  `GlobalMetricChainValues`.
+
+The intervals are tuned per chain (see `BLOCK_HANDLERS` in
+`src/handlers/BlockHandlers.ts`) so each chain emits ~3 snapshots per
+UTC day.
+
+## Tests
+
+```sh
+pnpm test           # vitest, all handler tests
+pnpm test -- --watch
+pnpm build          # tsc --noEmit
+pnpm check          # biome (lint + format)
+pnpm validate       # check + build + test (CI parity)
 ```
 
-Note that while the records with block `15091947` are the latest on 2022-07-06, there also exists a record with block `15086325`. This represents `wETH` in the DAO wallet that was exchanged for a stablecoin.
+Tests use Envio's `createTestIndexer()` to drive handlers against real
+block ranges sourced via HyperSync — no mocks for on-chain state. See
+`.claude/skills/testing/SKILL.md` for the patterns and `tests/handlers/`
+for examples.
 
-**Client-side code should filter records for the latest block on each day, as a result.**
+## Repository layout
 
-A future improvement to this subgraph might modify the behaviour to _not_ overwrite the data in historical blocks, but instead create a `TokenRecordDaySnapshot` that represents the latest block of that day.
+```
+config.yaml              Envio contract/chain config (handlers register against it)
+schema.graphql           Entity schema; runs through `pnpm codegen`
+src/
+  handlers/              Event + onBlock handlers
+  snapshot/
+    chains/              Per-chain config (tokens, wallets, pricing handlers)
+    *.ts                 Cross-chain primitives (math, types, pricing helpers)
+  effects/               Envio Effect API wrappers for cached RPC reads
+  pricing/               Per-pool pricing logic (UniV2, UniV3, Balancer, Kodiak,
+                         Curve, Chainlink, ERC4626, remap)
+tests/                   Vitest handler tests
+scripts/parity-diff.ts   Compare Envio output to the legacy treasury endpoint
+docs/envio-migration/    Migration notes + per-chain inventory of what we index
+```
 
-### Previous Structure
+## Adding tokens / wallets / pools
 
-The previous indexing structure (before 3.0.0) aggregated the equivalents of `TokenRecord` and `TokenSupply` underneath `ProtocolMetric` entities. For each `ProtocolMetric` entitiy, there were some 10-15 properties (e.g. `treasuryMarketValue`), which resulted in blockchain data being indexed multiple times for each block. The current structure indexes only once per block, shifting the aggregation and calculation to the client-side, and results in a 15x improvement in indexing speed.
+The per-chain config in `src/snapshot/chains/<chain>.ts` is the single
+source of truth. Each chain config exports:
 
-NOTE: these fields have been re-added and are now calculated without requiring redundant calculations.
+- `tokens`: token definitions (category, decimals, optional
+  `nonStandardBalance: true` for tokens whose `balanceOf` is the truth
+  rather than the event-accumulated ledger)
+- `protocolAddresses`: wallets we treat as treasury for that chain
+- `liquidityHandlers`: pools used for pricing
+- `ownedLiquidityHandlers`: pools where the treasury holds POL (POL
+  totals contribute to TokenSupply Liquidity category)
+- `names`, `abbreviations`: human labels for the dashboard
 
-### Example Queries
+Then add the contract address to the relevant `address` list in
+`config.yaml` if the new token/pool isn't already covered by an
+existing `contracts:` entry. Run `pnpm codegen` after any
+`config.yaml` or `schema.graphql` change.
 
-Users should perform aggregation and calculations on the client-side. See the `olympus-frontend` repo for examples of this.
+## Parity with the legacy endpoint
 
-### Conversion from JSON
+`scripts/parity-diff.ts` diffs `GlobalMetricSnapshot` against the
+treasury-subgraph aggregator at
+`https://olympus-treasury-subgraph-prod.web.app/graphql`:
 
-Follow these steps to convert the JSON data into CSV:
+```sh
+pnpm exec tsx scripts/parity-diff.ts \
+  --start 2026-05-15 --end 2026-05-20 \
+  --envio https://your-envio-endpoint.example/v1/graphql \
+  --treasury https://olympus-treasury-subgraph-prod.web.app/graphql
+```
 
-1. Copy everything (including the square bracket, `[`) after `"records":` up to and including the next square bracket in the query results.
-2. Open [JSON to CSV Converter](https://konklone.io/json/)
-3. Paste the copied content into the field.
-4. Download the CSV.
-
-![JSON-to-CSV Demonstration](/assets/json-to-csv.gif)
-
-## Continuous Integration
-
-### Unit Tests
-
-For every pull request, GitHub Actions runs the unit tests. See `.github/workflows/main.yml` for details.
-
-### Query Tests
-
-For every pull request, GitHub Actions runs tests against the current and destination branches' subgraphs. See `.github/workflows/query.yml` for implementation details.
-
-This has a few requirements:
-
-- The subgraph id must be recorded in the `id` property in the `subgraphs/<subgraph>/config.json` file. See the [Deployment - Subgraph Studio](#deployment-subgraph-studio-and-decentralised-service) section of this document for steps.
-- Both of the subgraphs must be active (not archived)
-- Both of the subgraphs must have overlapping blocks. The latest block of the `branch` subgraph will be determined and the `base` subgraph will be given a query against that block.
-
-These query tests are run in order to:
-
-- Highlight any significant differences in the market value and/or liquid backing between branches.
-- Highlight if the consistency of the market value and liquid backing differ for the branch to be merged.
-
-Results are posted as a comment in the GitHub pull request.
+CSV-style output, one line per (date, field) divergence beyond the
+tolerance (default 0 — exact match).
