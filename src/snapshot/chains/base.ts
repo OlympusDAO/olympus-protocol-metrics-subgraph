@@ -84,29 +84,53 @@ export const BASE: ChainConfig = {
   ohmStartBlock: BASE_START_BLOCK,
   nativeToken: NATIVE_ETH,
   tokens: [
-    token(NATIVE_ETH, "Volatile", true, true, undefined, {
+    token({
+      address: NATIVE_ETH,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
       startBlock: BASE_START_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_USDC, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_USDC,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: BASE_START_BLOCK,
       decimals: 6,
     }),
     // Base predeploy WETH9 — wrap/unwrap via Deposit/Withdrawal events.
     // Tracked by the Wrapped9 handlers in Erc20Transfers.ts.
-    token(ERC20_WETH, "Volatile", true, true, undefined, {
+    token({
+      address: ERC20_WETH,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
       startBlock: BASE_START_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_OHM, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_OHM,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: BASE_START_BLOCK,
       decimals: 9,
     }),
-    token(LP_UNISWAP_V2_OHM_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
+    token({
+      address: LP_UNISWAP_V2_OHM_WETH,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: BASE_START_BLOCK,
       decimals: 18,
     }),
-    token(LP_UNISWAP_V3_OHM_USDC, "Protocol-Owned Liquidity", true, false, undefined, {
+    token({
+      address: LP_UNISWAP_V3_OHM_USDC,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: BASE_START_BLOCK,
       decimals: 18,
     }),

@@ -142,12 +142,26 @@ export const BERACHAIN: ChainConfig = {
   ohmStartBlock: BERACHAIN_START_BLOCK,
   nativeToken: NATIVE_BERA,
   tokens: [
-    token(ERC20_IBERA, "Volatile", false, false, undefined, { decimals: 18 }),
-    token(ERC20_IBGT, "Volatile", false, false, undefined, {
+    token({
+      address: ERC20_IBERA,
+      category: "Volatile",
+      isLiquid: false,
+      isBluechip: false,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_IBGT,
+      category: "Volatile",
+      isLiquid: false,
+      isBluechip: false,
       startBlock: BERACHAIN_START_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_LBGT, "Volatile", false, false, undefined, {
+    token({
+      address: ERC20_LBGT,
+      category: "Volatile",
+      isLiquid: false,
+      isBluechip: false,
       startBlock: LBGT_CREATION_BLOCK,
       decimals: 18,
     }),
@@ -159,19 +173,55 @@ export const BERACHAIN: ChainConfig = {
     // indexing). The earlier nonStandardBalance flag was added based on a
     // transient -440K/+440K ledger drift that turned out to be a misread of
     // older deploy state; the current ledger is correct via Transfer alone.
-    token(ERC20_STARGATE_USDC, "Stable", true, false, undefined, { decimals: 6 }),
-    token(ERC20_HONEY, "Stable", true, false, undefined, { decimals: 18 }),
-    token(ERC20_WBERA, "Volatile", true, true, undefined, { decimals: 18 }),
-    token(NATIVE_BERA, "Volatile", true, true, undefined, { decimals: 18 }),
-    token(ERC20_OHM, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_STARGATE_USDC,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      decimals: 6,
+    }),
+    token({
+      address: ERC20_HONEY,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_WBERA,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
+      decimals: 18,
+    }),
+    token({
+      address: NATIVE_BERA,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_OHM,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: BERACHAIN_START_BLOCK,
       decimals: 9,
     }),
-    token(LP_KODIAK_OHM_HONEY, "Protocol-Owned Liquidity", true, false, undefined, {
+    token({
+      address: LP_KODIAK_OHM_HONEY,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: LP_KODIAK_OHM_HONEY_CREATION_BLOCK,
       decimals: 18,
     }),
-    token(LP_BERADROME_KODIAK_OHM_HONEY, "Protocol-Owned Liquidity", true, false, undefined, {
+    token({
+      address: LP_BERADROME_KODIAK_OHM_HONEY,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: LP_BERADROME_KODIAK_OHM_HONEY_CREATION_BLOCK,
       decimals: 18,
     }),
@@ -182,43 +232,38 @@ export const BERACHAIN: ChainConfig = {
     // handler in Erc20Transfers.ts catches both events and routes them
     // through applyTransferToWalletBalance, so plain event-driven accounting
     // is correct — no nonStandardBalance fallback needed.
-    token(
-      BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1,
-      "Protocol-Owned Liquidity",
-      true,
-      false,
-      undefined,
-      {
-        startBlock: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1_CREATION_BLOCK,
-        decimals: 18,
-      },
-    ),
-    token(
-      BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2,
-      "Protocol-Owned Liquidity",
-      true,
-      false,
-      undefined,
-      {
-        startBlock: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2_CREATION_BLOCK,
-        decimals: 18,
-      },
-    ),
-    token(INFRARED_KODIAK_OHM_HONEY_VAULT, "Protocol-Owned Liquidity", true, false, undefined, {
+    token({
+      address: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1_CREATION_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2_CREATION_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: INFRARED_KODIAK_OHM_HONEY_VAULT,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: INFRARED_KODIAK_OHM_HONEY_VAULT_CREATION_BLOCK,
       decimals: 18,
     }),
-    token(
-      BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT,
-      "Protocol-Owned Liquidity",
-      true,
-      false,
-      undefined,
-      {
-        startBlock: BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT_CREATION_BLOCK,
-        decimals: 18,
-      },
-    ),
+    token({
+      address: BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT_CREATION_BLOCK,
+      decimals: 18,
+    }),
   ],
   names,
   abbreviations: {

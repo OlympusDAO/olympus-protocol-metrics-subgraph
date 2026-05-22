@@ -142,15 +142,27 @@ export const FANTOM: ChainConfig = {
   ohmStartBlock: FANTOM_START_BLOCK,
   nativeToken: NATIVE_FTM,
   tokens: [
-    token(NATIVE_FTM, "Volatile", true, true, undefined, {
+    token({
+      address: NATIVE_FTM,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_BEETS, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_BEETS,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_BOO, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_BOO,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
     }),
@@ -164,31 +176,55 @@ export const FANTOM: ChainConfig = {
     // when the bridge later swept the position out). Falling back to
     // nonStandardBalance until the backfill reliability issue is rooted
     // (see follow-up task in tasks/pr-311-feedback.md).
-    token(ERC20_DAI, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_DAI,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
       nonStandardBalance: true,
     }),
-    token(ERC20_DEI, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_DEI,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
     }),
     // Multichain-bridged FRAX on Fantom — same pre-existing-balance pattern
     // and same backfill-miss as DAI (45,036 at chain start). Same fallback.
-    token(ERC20_FRAX, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_FRAX,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
       nonStandardBalance: true,
     }),
-    token(ERC20_LQDR, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_LQDR,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_OXD, "Volatile", true, true, undefined, {
+    token({
+      address: ERC20_OXD,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_USDC, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_USDC,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: FANTOM_START_BLOCK,
       decimals: 6,
     }),
@@ -196,25 +232,41 @@ export const FANTOM: ChainConfig = {
     // envio's Transfer-only ledger matches on-chain balanceOf exactly for
     // Cross-Chain Fantom (~2.67 wETH) — the bridge emits standard Transfer
     // for mints/burns alongside its LogAnySwapIn/Out events. No flag needed.
-    token(ERC20_WETH, "Volatile", true, true, undefined, {
+    token({
+      address: ERC20_WETH,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
     }),
     // Cross-Chain Fantom held 5,198 wFTM before chain start (block
     // 37,320,000). Backfill missed (see DAI comment above for the broader
     // backfill-reliability issue) — falling back to nonStandardBalance.
-    token(ERC20_WFTM, "Volatile", true, true, undefined, {
+    token({
+      address: ERC20_WFTM,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
       nonStandardBalance: true,
     }),
     // Cross-Chain Fantom held 1.13 gOHM before chain start; backfill missed.
-    token(ERC20_GOHM, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_GOHM,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
       nonStandardBalance: true,
     }),
-    token(LP_UNISWAP_V2_WFTM_GOHM, "Protocol-Owned Liquidity", true, false, undefined, {
+    token({
+      address: LP_UNISWAP_V2_WFTM_GOHM,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
     }),

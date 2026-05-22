@@ -183,11 +183,19 @@ export const ARBITRUM: ChainConfig = {
   ohmStartBlock: OHM_CREATION_BLOCK,
   nativeToken: NATIVE_ETH,
   tokens: [
-    token(NATIVE_ETH, "Volatile", true, true, undefined, {
+    token({
+      address: NATIVE_ETH,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
       startBlock: ARBITRUM_START_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_ARB, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_ARB,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ARB_CREATION_BLOCK,
       decimals: 18,
     }),
@@ -196,19 +204,36 @@ export const ARBITRUM: ChainConfig = {
     // causing phantom-negative drift. BackfillTokenBalances seeds that
     // pre-existing balance from balanceOf, so plain Transfer-driven
     // accounting now matches on-chain (validated: residual = 0).
-    token(ERC20_FRAX, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_FRAX,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: FRAX_CREATION_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_JONES, "Volatile", true, false, "0.83", {
+    token({
+      address: ERC20_JONES,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      multiplier: "0.83",
       startBlock: JONES_CREATION_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_LQTY, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_LQTY,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: LQTY_CREATION_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_LUSD, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_LUSD,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: LUSD_CREATION_BLOCK,
       decimals: 18,
     }),
@@ -217,64 +242,125 @@ export const ARBITRUM: ChainConfig = {
     // "non-standard bridge mint" but the actual mechanism is standard
     // Transfer (verified by validating backfill + envio == on-chain).
     // BackfillTokenBalances seeds the pre-existing balance.
-    token(ERC20_MAGIC, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_MAGIC,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: MAGIC_CREATION_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_USDC, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_USDC,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: USDC_CREATION_BLOCK,
       decimals: 6,
     }),
-    token(ERC20_VSTA, "Volatile", true, false, "0.77", {
+    token({
+      address: ERC20_VSTA,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      multiplier: "0.77",
       startBlock: VSTA_CREATION_BLOCK,
       decimals: 18,
     }),
     // Arbitrum WETH9 fork — wrap/unwrap via Deposit/Withdrawal events.
     // Tracked by the Wrapped9 handlers in Erc20Transfers.ts.
-    token(ERC20_WETH, "Volatile", true, true, undefined, {
+    token({
+      address: ERC20_WETH,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
       startBlock: WETH_CREATION_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_OHM, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_OHM,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: OHM_CREATION_BLOCK,
       decimals: 9,
     }),
-    token(ERC20_GOHM_SYNAPSE, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_GOHM_SYNAPSE,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       decimals: 18,
     }),
-    token(LP_BALANCER_POOL_WETH_VESTA, "Protocol-Owned Liquidity", true, false, undefined, {
+    token({
+      address: LP_BALANCER_POOL_WETH_VESTA,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: LP_BALANCER_WETH_VSTA_CREATION_BLOCK,
       decimals: 18,
     }),
-    token(LP_BALANCER_POOL_WETH_OHM, "Protocol-Owned Liquidity", true, false, undefined, {
+    token({
+      address: LP_BALANCER_POOL_WETH_OHM,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: LP_BALANCER_WETH_OHM_CREATION_BLOCK,
       decimals: 18,
     }),
-    token(LP_BALANCER_POOL_OHM_USDC, "Protocol-Owned Liquidity", true, false, undefined, {
+    token({
+      address: LP_BALANCER_POOL_OHM_USDC,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: LP_BALANCER_OHM_USDC_CREATION_BLOCK,
       decimals: 18,
     }),
-    token(LP_UNISWAP_V2_GOHM_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
+    token({
+      address: LP_UNISWAP_V2_GOHM_WETH,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ARBITRUM_START_BLOCK,
       decimals: 18,
     }),
-    token(LP_UNISWAP_V2_JONES_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
+    token({
+      address: LP_UNISWAP_V2_JONES_WETH,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: LP_UNISWAP_V2_JONES_WETH_CREATION_BLOCK,
       decimals: 18,
     }),
-    token(LP_UNISWAP_V2_MAGIC_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
+    token({
+      address: LP_UNISWAP_V2_MAGIC_WETH,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: LP_UNISWAP_V2_MAGIC_WETH_CREATION_BLOCK,
       decimals: 18,
     }),
-    token(LP_CAMELOT_OHM_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
+    token({
+      address: LP_CAMELOT_OHM_WETH,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: LP_CAMELOT_OHM_WETH_CREATION_BLOCK,
       decimals: 18,
     }),
-    token(LP_UNISWAP_V3_ARB_WETH, "Protocol-Owned Liquidity", true, false, undefined, {
+    token({
+      address: LP_UNISWAP_V3_ARB_WETH,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: LP_UNISWAP_V3_ARB_WETH_CREATION_BLOCK,
       decimals: 18,
     }),
-    token(LP_UNISWAP_V3_WETH_USDC, "Protocol-Owned Liquidity", true, false, undefined, {
+    token({
+      address: LP_UNISWAP_V3_WETH_USDC,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ARBITRUM_START_BLOCK,
       decimals: 18,
     }),

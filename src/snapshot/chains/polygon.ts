@@ -106,17 +106,30 @@ export const POLYGON: ChainConfig = {
   // Native MATIC tracking deferred to the NativeBalanceState wiring commit
   // (matches legacy Polygon, which also doesn't track native).
   tokens: [
-    token(ERC20_DAI, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_DAI,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: POLYGON_START_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_FRAX, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_FRAX,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: POLYGON_START_BLOCK,
       decimals: 18,
     }),
     // KLIMA carries a 0.85 multiplier — treasury liquid backing for KLIMA
     // is haircut to 85% of market value (per legacy Polygon Constants.ts:29).
-    token(ERC20_KLIMA, "Volatile", true, false, "0.85", {
+    token({
+      address: ERC20_KLIMA,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      multiplier: "0.85",
       startBlock: POLYGON_START_BLOCK,
       decimals: 9,
     }),
@@ -128,16 +141,29 @@ export const POLYGON: ChainConfig = {
     // nominal) — the 1 RPC per snapshot to balanceOf is cheaper than the
     // indexing infrastructure. If KLIMA holdings ever grow, build the index
     // entity (see SOhmV3.ts for the equivalent pattern on Ethereum).
-    token(ERC20_KLIMA_STAKED, "Volatile", true, false, "0.85", {
+    token({
+      address: ERC20_KLIMA_STAKED,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      multiplier: "0.85",
       startBlock: POLYGON_START_BLOCK,
       decimals: 9,
       nonStandardBalance: true,
     }),
-    token(ERC20_SYN, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_SYN,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: POLYGON_START_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_USDC, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_USDC,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: POLYGON_START_BLOCK,
       decimals: 6,
     }),
@@ -147,16 +173,28 @@ export const POLYGON: ChainConfig = {
     // future drift. If a wallet does start receiving WETH via the PoS
     // bridge and the ledger drifts, revisit and either re-add the flag or
     // index the bridge's `LockedERC20` / `ExitedERC20` events.
-    token(ERC20_WETH, "Volatile", true, true, undefined, {
+    token({
+      address: ERC20_WETH,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
       startBlock: POLYGON_START_BLOCK,
       decimals: 18,
     }),
     // Bridged gOHM on Polygon — same audit conclusion as WETH above.
-    token(ERC20_GOHM, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_GOHM,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: POLYGON_START_BLOCK,
       decimals: 18,
     }),
-    token(LP_UNISWAP_V2_WETH_GOHM, "Protocol-Owned Liquidity", true, false, undefined, {
+    token({
+      address: LP_UNISWAP_V2_WETH_GOHM,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: POLYGON_START_BLOCK,
       decimals: 18,
     }),

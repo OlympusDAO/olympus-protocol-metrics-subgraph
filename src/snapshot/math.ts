@@ -15,29 +15,33 @@ export function toBigDecimal(value: BigNumber): BigDecimal {
   return new BigDecimal(value.toString());
 }
 
-export function token(
-  address: string,
-  category: string,
-  isLiquid: boolean,
-  isBluechip: boolean,
-  multiplier?: string,
-  options: {
-    startBlock?: number;
-    decimals?: number;
-    isLiability?: boolean;
-    nonStandardBalance?: boolean;
-  } = {},
-): TokenDefinition {
+// Named-parameter factory for token definitions. The previous positional
+// form required `undefined` for skipped optionals (e.g.
+// `token(addr, "Volatile", true, false, undefined, { decimals: 18 })`)
+// per @0xJem on PR #311; the named form drops the floating undefined and
+// makes call sites self-documenting at the cost of slightly more
+// vertical space for the common case.
+export function token(args: {
+  address: string;
+  category: string;
+  isLiquid: boolean;
+  isBluechip: boolean;
+  multiplier?: string;
+  startBlock?: number;
+  decimals?: number;
+  isLiability?: boolean;
+  nonStandardBalance?: boolean;
+}): TokenDefinition {
   return {
-    address: addr(address),
-    category,
-    isLiquid,
-    isBluechip,
-    multiplier,
-    decimals: options.decimals ?? 18,
-    startBlock: options.startBlock,
-    isLiability: options.isLiability,
-    nonStandardBalance: options.nonStandardBalance,
+    address: addr(args.address),
+    category: args.category,
+    isLiquid: args.isLiquid,
+    isBluechip: args.isBluechip,
+    multiplier: args.multiplier,
+    decimals: args.decimals ?? 18,
+    startBlock: args.startBlock,
+    isLiability: args.isLiability,
+    nonStandardBalance: args.nonStandardBalance,
   };
 }
 

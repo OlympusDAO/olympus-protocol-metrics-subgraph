@@ -746,35 +746,67 @@ export const ETHEREUM: ChainConfig = {
   ohmStartBlock: ERC20_OHM_V2_BLOCK,
   nativeToken: NATIVE_ETH,
   tokens: [
-    token(NATIVE_ETH, "Volatile", true, true, undefined, {
+    token({
+      address: NATIVE_ETH,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
       startBlock: NATIVE_ETH_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_DAI, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_DAI,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_FRAX, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_FRAX,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_LUSD, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_LUSD,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_USDC, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_USDC,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 6,
     }),
-    token(ERC20_USDT, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_USDT,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 6,
     }),
-    token(ERC20_USDE, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_USDE,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ERC20_USDE_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_USDS, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_USDS,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
     }),
@@ -787,14 +819,22 @@ export const ETHEREUM: ChainConfig = {
     // the liquidityIndex and recompute balance = scaledBalance × index. For now
     // we keep nonStandardBalance (snapshot-time balanceOf is exact and cheap
     // — ~3 wallets × 1 call per 8h snapshot).
-    token(ERC20_ADAI, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_ADAI,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
       nonStandardBalance: true,
     }),
     // Aave V3 aEthUSDe receipt — same scaled-balance / silent-rebase mechanics
     // as aDAI. Same justification for keeping nonStandardBalance.
-    token(ERC20_AETH_USDE, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_AETH_USDE,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ERC20_AAVE_V3_BLOCK,
       decimals: 18,
       nonStandardBalance: true,
@@ -803,13 +843,21 @@ export const ETHEREUM: ChainConfig = {
     // Underlying tokens are 6-decimal USDC/USDT, so the debt tokens share those
     // decimals. Aave debt tokens also use scaled balances (variableBorrowIndex)
     // with silent accrual — same nonStandardBalance justification as aDAI.
-    token(ERC20_VAR_DEBT_ETH_USDC, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_VAR_DEBT_ETH_USDC,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ERC20_AAVE_V3_BLOCK,
       decimals: 6,
       isLiability: true,
       nonStandardBalance: true,
     }),
-    token(ERC20_VAR_DEBT_ETH_USDT, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_VAR_DEBT_ETH_USDT,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ERC20_AAVE_V3_BLOCK,
       decimals: 6,
       isLiability: true,
@@ -823,50 +871,94 @@ export const ETHEREUM: ChainConfig = {
     // Deposit (+shares to owner) / Withdraw (-shares from owner) through the
     // existing balance helper. Plain Transfer (wallet→wallet) still flows
     // through the TreasuryERC20 handler.
-    token(ERC20_SDAI, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_SDAI,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ERC20_SDAI_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_SUSDE, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_SUSDE,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ERC20_SUSDE_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_SUSDS, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_SUSDS,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ERC20_SUSDS_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_GAUNTLET_SUSDS_VAULT, "Stable", true, false, undefined, {
+    token({
+      address: ERC20_GAUNTLET_SUSDS_VAULT,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ERC20_GAUNTLET_SUSDS_VAULT_BLOCK,
       decimals: 18,
     }),
     // Convex staked-LP wrappers (POL category — protocol-owned liquidity).
     // Pricing routes through the underlying Curve LP via `remap` handlers.
-    token(CONVEX_REWARD_OHM_ETH, "POL", false, false, undefined, {
+    token({
+      address: CONVEX_REWARD_OHM_ETH,
+      category: "POL",
+      isLiquid: false,
+      isBluechip: false,
       startBlock: LP_CURVE_OHM_ETH_BLOCK,
       decimals: 18,
     }),
-    token(CONVEX_REWARD_OHM_FRAXBP, "POL", false, false, undefined, {
+    token({
+      address: CONVEX_REWARD_OHM_FRAXBP,
+      category: "POL",
+      isLiquid: false,
+      isBluechip: false,
       startBlock: LP_CURVE_OHM_FRAXBP_BLOCK,
       decimals: 18,
     }),
-    token(CONVEX_REWARD_FRAX_USDC, "POL", false, false, undefined, {
+    token({
+      address: CONVEX_REWARD_FRAX_USDC,
+      category: "POL",
+      isLiquid: false,
+      isBluechip: false,
       startBlock: LP_CURVE_FRAX_USDC_BLOCK,
       decimals: 18,
     }),
     // Aura vault wrappers (POL). Pricing routes through Balancer BPT remap.
-    token(AURA_VAULT_OHM_WETH, "POL", false, false, undefined, {
+    token({
+      address: AURA_VAULT_OHM_WETH,
+      category: "POL",
+      isLiquid: false,
+      isBluechip: false,
       startBlock: LP_BALANCER_OHM_WETH_BLOCK,
       decimals: 18,
     }),
-    token(AURA_VAULT_OHM_DAI, "POL", false, false, undefined, {
+    token({
+      address: AURA_VAULT_OHM_DAI,
+      category: "POL",
+      isLiquid: false,
+      isBluechip: false,
       startBlock: LP_BALANCER_OHM_DAI_BLOCK,
       decimals: 18,
     }),
-    token(AURA_VAULT_OHM_DAI_WETH, "POL", false, false, undefined, {
+    token({
+      address: AURA_VAULT_OHM_DAI_WETH,
+      category: "POL",
+      isLiquid: false,
+      isBluechip: false,
       startBlock: LP_BALANCER_OHM_DAI_WETH_BLOCK,
       decimals: 18,
     }),
-    token(AURA_VAULT_OHM_WSTETH, "POL", false, false, undefined, {
+    token({
+      address: AURA_VAULT_OHM_WSTETH,
+      category: "POL",
+      isLiquid: false,
+      isBluechip: false,
       startBlock: LP_BALANCER_OHM_WSTETH_BLOCK,
       decimals: 18,
     }),
@@ -874,20 +966,36 @@ export const ETHEREUM: ChainConfig = {
     // event-driven by the Wrapped9 handlers in Erc20Transfers.ts (Deposit
     // = synthetic Transfer-in, Withdrawal = synthetic Transfer-out) so the
     // TokenBalance ledger stays in sync without a per-snapshot balanceOf call.
-    token(ERC20_WETH, "Volatile", true, true, undefined, {
+    token({
+      address: ERC20_WETH,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_WSTETH, "Volatile", true, true, undefined, {
+    token({
+      address: ERC20_WSTETH,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_WEETH, "Volatile", true, true, undefined, {
+    token({
+      address: ERC20_WEETH,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
       startBlock: ERC20_WEETH_BLOCK,
       decimals: 18,
     }),
     // Long-tail volatiles (no hard-coded multiplier).
-    token(ERC20_FXS, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_FXS,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ERC20_FXS_BLOCK,
       decimals: 18,
     }),
@@ -895,7 +1003,11 @@ export const ETHEREUM: ChainConfig = {
     // Categorized Volatile/isLiquid=false (legacy parity); the lock-decay
     // changes balanceOf without emitting Transfer, so use snapshot-time
     // balanceOf. Priced 1:1 with FXS via the remap LiquidityHandler.
-    token(ERC20_FXS_VE, "Volatile", false, false, undefined, {
+    token({
+      address: ERC20_FXS_VE,
+      category: "Volatile",
+      isLiquid: false,
+      isBluechip: false,
       startBlock: ERC20_FXS_VE_BLOCK,
       decimals: 18,
       nonStandardBalance: true,
@@ -903,22 +1015,38 @@ export const ETHEREUM: ChainConfig = {
     // cvxCRV — Convex's liquid staked-CRV wrapper. Standard ERC20 (mints
     // emit Transfer), so the event-driven TokenBalance is correct — no
     // nonStandardBalance flag needed. Priced via cvxCRV-ETH UniV2 handler.
-    token(ERC20_CVX_CRV, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_CVX_CRV,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ERC20_CVX_CRV_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_LDO, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_LDO,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
     }),
-    token(ERC20_LQTY, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_LQTY,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
     }),
     // BTRFLY V1 is 9 decimals on-chain (matches OHM V1's decimals). Earlier
     // config carried decimals: 18 which made our balance computation off by
     // 10^9 — fixed.
-    token(ERC20_BTRFLY_V1, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_BTRFLY_V1,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 9,
     }),
@@ -927,18 +1055,31 @@ export const ETHEREUM: ChainConfig = {
     // nonStandardBalance is the right call. Indexing the rebase event would
     // be ideal but Redacted V1 is dormant; not worth the build for a tiny
     // residual (~$400).
-    token(ERC20_BTRFLY_V1_STAKED, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_BTRFLY_V1_STAKED,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 9,
       nonStandardBalance: true,
     }),
-    token(ERC20_BTRFLY_V2, "Volatile", true, false, undefined, {
+    token({
+      address: ERC20_BTRFLY_V2,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
     }),
     // rlBTRFLY carries the legacy 0.89 illiquid multiplier (per inventory §2.2,
     // PriceHandlerCustomMapping legacy hard-code).
-    token(ERC20_BTRFLY_V2_RL, "Volatile", false, false, "0.89", {
+    token({
+      address: ERC20_BTRFLY_V2_RL,
+      category: "Volatile",
+      isLiquid: false,
+      isBluechip: false,
+      multiplier: "0.89",
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
     }),
@@ -946,15 +1087,30 @@ export const ETHEREUM: ChainConfig = {
     // by protocol wallets (multiplier 0). For the baseline, the protocol
     // wallet blacklist below excludes both from treasury balance entirely;
     // they get counted on the supply side.
-    token(ERC20_OHM_V1, "Volatile", true, false, "0", {
+    token({
+      address: ERC20_OHM_V1,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      multiplier: "0",
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 9,
     }),
-    token(ERC20_OHM_V2, "Volatile", true, false, "0", {
+    token({
+      address: ERC20_OHM_V2,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      multiplier: "0",
       startBlock: ERC20_OHM_V2_BLOCK,
       decimals: 9,
     }),
-    token(ERC20_GOHM, "Volatile", true, false, "0", {
+    token({
+      address: ERC20_GOHM,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      multiplier: "0",
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
     }),
