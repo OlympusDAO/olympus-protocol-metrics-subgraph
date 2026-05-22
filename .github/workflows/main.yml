@@ -9,6 +9,13 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# Minimum permissions for GITHUB_TOKEN — this workflow only reads the
+# repo contents (lint, tests, type-check). Matches audit.yml's policy
+# and satisfies CodeQL alerts #15 / #16 for the missing permissions
+# block on the workflow level.
+permissions:
+  contents: read
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   lint-check:
