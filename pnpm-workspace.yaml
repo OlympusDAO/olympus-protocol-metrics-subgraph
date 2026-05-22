@@ -2,12 +2,20 @@ minimumReleaseAge: 10080
 # The 7-day maturity gate above is good supply-chain hygiene for transitive
 # deps, but blocks us from picking up envio releases inside the first week.
 # Envio is our indexer framework — we want fast access to new versions and
-# trust the upstream release process. Allowlist it (and viem, our primary
-# RPC client, for the same reason) so the maturity gate applies only to
+# trust the upstream release process. Allowlist the entire envio family
+# (the meta package + per-platform native binaries that ship under
+# `optionalDependencies` of envio) so the maturity gate applies only to
 # the long tail of transitives we don't actively curate.
+#
+# Per-platform binaries must be listed explicitly because pnpm's
+# minimumReleaseAgeExclude does not accept globs.
 minimumReleaseAgeExclude:
   - envio
-  - viem
+  - envio-linux-x64
+  - envio-linux-x64-musl
+  - envio-linux-arm64
+  - envio-darwin-x64
+  - envio-darwin-arm64
 preferFrozenLockfile: true
 engineStrict: true
 strictDepBuilds: true
