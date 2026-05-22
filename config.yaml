@@ -34,15 +34,18 @@ contracts:
       - event: "Deposit(address indexed dst, uint256 wad)"
       - event: "Withdrawal(address indexed src, uint256 wad)"
 
-  # ERC4626 yield-bearing vaults (sDAI / sUSDe / sUSDS / Gauntlet sUSDS, etc.).
-  # The standard Deposit/Withdraw events fire on share mint/burn, but the share
-  # balance mutation skips emitting a Transfer-from/to-zero on most vault
-  # implementations (sDAI verified: only Deposit fires on deposit; only Withdraw
-  # fires on redeem). Without subscribing to these, wallets that deposit/redeem
-  # show only the direct Transfer activity between wallets, and the ledger drifts.
-  # Handler treats Deposit as +shares to owner and Withdraw as -shares from owner.
-  # Transfer is also subscribed here so the vault address can be registered under
-  # a single contract (see Wrapped9 note re: envio_addresses table PK).
+  # ERC4626 vaults whose ERC20 mint/burn skips emitting Transfer-from/to-zero.
+  # Standard ERC4626 spec only mandates Deposit/Withdraw events; whether the
+  # underlying ERC20 ALSO emits Transfer on _mint/_burn depends on the vault's
+  # implementation. Empirically across the Olympus treasury inventory:
+  #   - sDAI (MakerDAO custom impl): emits ONLY Deposit on mint and ONLY
+  #     Withdraw on burn — no accompanying Transfer-from/to-zero. Lives here.
+  #   - sUSDS / sUSDe / Gauntlet sUSDS (OpenZeppelin-style _mint/_burn): emit
+  #     BOTH Transfer-from/to-zero AND Deposit/Withdraw. Lives under
+  #     TreasuryERC20 so we catch them via Transfer alone (subscribing to
+  #     Deposit/Withdraw on top would double-count every mint and burn).
+  # Per-vault verification: see comments on the per-chain Erc4626Vault address
+  # entries and on TreasuryERC20 entries that flag a vault as "emits Transfer".
   - name: Erc4626Vault
     events:
       - event: "Transfer(address indexed from, address indexed to, uint256 value)"
@@ -396,7 +399,18 @@ chains:
           - "0x4f5923fc5fd4a93352581b38b7cd26943012decf" # aEthUSDe (Aave V3 receipt)
           - "0x72e95b8931767c79ba4eee721354d6e99a61d004" # variableDebtEthUSDC (Aave V3 liability)
           - "0x6df1c1e379bc5a00a7b4c6e67a203333772f45a8" # variableDebtEthUSDT (Aave V3 liability)
-          # sDAI / sUSDe / sUSDS / Gauntlet sUSDS registered under Erc4626Vault.
+          # sUSDS / sUSDe / Gauntlet sUSDS are ERC4626 vaults that DO emit
+          # Transfer(0x0, owner, shares) on mint and Transfer(owner, 0x0, shares)
+          # on burn (verified on-chain — sUSDS burn at block 21302879 emits both
+          # Transfer and Withdraw for the same shares). Subscribing only to
+          # Transfer here captures mints, burns, AND inter-wallet transfers
+          # with single-count accuracy. sDAI is the OUTLIER — it does NOT emit
+          # Transfer on mint/burn (verified at block 18164221 deposit and
+          # 18142516 redeem), so sDAI lives under Erc4626Vault below with
+          # Transfer + Deposit + Withdraw subscriptions.
+          - "0xa3931d71877c0e7a3148cb7eb4463524fec27fbd" # sUSDS (ERC4626, emits Transfer on mint/burn)
+          - "0x9d39a5de30e57443bff2a8307a4256c8797a3497" # sUSDe (ERC4626, emits Transfer on mint/burn)
+          - "0x3365184e87d2bd75961780454a5810bec956f0dd" # Gauntlet Olympus sUSDS Vault (ERC4626, emits Transfer on mint/burn)
           # WETH registered under Wrapped9.
           - "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0" # wstETH
           - "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee" # weETH
@@ -424,13 +438,19 @@ chains:
         address:
           - "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2" # WETH
 
-      # ERC4626 vaults — share mint/burn via Deposit/Withdraw, no Transfer.
+      # ERC4626 vaults whose ERC20 mint/burn does NOT emit Transfer. sDAI
+      # (MakerDAO custom implementation) is the only known case in the
+      # treasury — it emits ONLY Deposit on mint and ONLY Withdraw on burn,
+      # with no Transfer-from/to-zero. The Erc4626Vault Transfer + Deposit +
+      # Withdraw subscriptions are all required: Transfer for inter-wallet
+      # transfers, Deposit for mints, Withdraw for burns. Verified at block
+      # 18164221 (TRSRY deposit emits only Deposit, no Transfer).
+      # Other ERC4626 vaults (sUSDS / sUSDe / Gauntlet sUSDS) DO emit Transfer
+      # on mint/burn and live under TreasuryERC20 above so Transfer alone
+      # tracks them correctly — subscribing them here would double-count.
       - name: Erc4626Vault
         address:
-          - "0x83f20f44975d03b1b09e64809b757c47f942beea" # sDAI
-          - "0x9d39a5de30e57443bff2a8307a4256c8797a3497" # sUSDe
-          - "0xa3931d71877c0e7a3148cb7eb4463524fec27fbd" # sUSDS
-          - "0x3365184e87d2bd75961780454a5810bec956f0dd" # Gauntlet Olympus sUSDS Vault
+          - "0x83f20f44975d03b1b09e64809b757c47f942beea" # sDAI (MakerDAO — no Transfer on mint/burn)
 
       # ---- OHM ERC20s.
       - name: OhmERC20
