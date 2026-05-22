@@ -174,7 +174,7 @@ async function processSnapshot(
         await pushCoolerReceivables(context, config, client, records, timestamp, blockNumber);
       }
       if (config.univ3PositionManager) {
-        await pushUniv3NftPol(context, config, client, records, timestamp, blockNumber);
+        await pushUniv3NftPol(context, config, client, records, supplies, timestamp, blockNumber);
       }
 
       // Per @0xJem on PR #315: emit TokenSupply rows on every chain, even
@@ -715,6 +715,7 @@ async function pushUniv3NftPol(
   config: ChainConfig,
   client: PublicClient,
   records: SerializedTokenRecord[],
+  supplies: SerializedTokenSupply[],
   timestamp: bigint,
   blockNumber: bigint,
 ): Promise<void> {
@@ -776,6 +777,16 @@ async function pushUniv3NftPol(
       const balance1 = toDecimal(amounts.amount1, decimals1);
 
       // Emit one TokenRecord per token in the position. Skip dust.
+      // If either token in the position is OHM, ALSO emit a Liquidity-type
+      // TokenSupply row so OHM held inside UniV3 POL NFTs gets deducted from
+      // floating supply (mirrors pushOwnedLiquiditySupply for UniV2/Balancer
+      // POL, which can't handle UniV3 because UniV3 LP is NFT-based and
+      // getLpTokenForHandler returns null for kind: "univ3"). Empirically,
+      // omitting this caused Envio ohmFloatingSupply to overstate by ~700k
+      // OHM on Ethereum vs legacy on 2026-05-20 — verified from the legacy
+      // paginatedTokenSupplies query which emits Liquidity rows for both
+      // WETH-OHM and OHM-sUSDS UniV3 POL pools.
+      const ohmTokenLower = config.ohmToken.toLowerCase();
       if (!balance0.eq(ZERO)) {
         const rate0 = (await getPrice(config, context, client, position.token0, blockNumber, null))
           .price;
@@ -792,6 +803,24 @@ async function pushUniv3NftPol(
             blockNumber,
           ),
         );
+        if (position.token0.toLowerCase() === ohmTokenLower) {
+          supplies.push(
+            createTokenSupply(
+              config,
+              timestamp,
+              getContractName(config, config.ohmToken),
+              config.ohmToken,
+              getContractName(config, pool.id),
+              pool.id,
+              getContractName(config, wallet),
+              wallet,
+              "Liquidity",
+              balance0,
+              blockNumber,
+              -1,
+            ),
+          );
+        }
       }
       if (!balance1.eq(ZERO)) {
         const rate1 = (await getPrice(config, context, client, position.token1, blockNumber, null))
@@ -809,6 +838,24 @@ async function pushUniv3NftPol(
             blockNumber,
           ),
         );
+        if (position.token1.toLowerCase() === ohmTokenLower) {
+          supplies.push(
+            createTokenSupply(
+              config,
+              timestamp,
+              getContractName(config, config.ohmToken),
+              config.ohmToken,
+              getContractName(config, pool.id),
+              pool.id,
+              getContractName(config, wallet),
+              wallet,
+              "Liquidity",
+              balance1,
+              blockNumber,
+              -1,
+            ),
+          );
+        }
       }
     }
   }
