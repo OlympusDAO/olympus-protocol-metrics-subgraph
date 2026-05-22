@@ -36,3 +36,10 @@ overrides:
   "undici": "^7.24.0"
   "yaml": "^2.8.3"
   "yargs-parser": "^18.1.1"
+  # Envio bundles express + ws; these overrides patch the transitive
+  # advisories CI's audit gate flagged at moderate+. Pinned to ranges
+  # known to address each CVE without churning unrelated majors.
+  "body-parser": "^1.20.3"
+  "path-to-regexp": "^0.1.12"
+  "qs": "^6.14.1"
+  "ws": "^8.20.1"
