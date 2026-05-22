@@ -80,6 +80,18 @@ export type Bytes32 = `0x${string}` & { readonly [bytes32Brand]: true };
 
 export type ChainId = 1 | 42161 | 80094 | 8453 | 137 | 250;
 
+// Named chainId constants — preferred over numeric literals at call sites
+// (e.g. `chainId === CHAIN_IDS.ETHEREUM` reads better than `chainId === 1`,
+// and CHAIN_CONFIGS[CHAIN_IDS.ETHEREUM] avoids hard-coding the magic 1).
+export const CHAIN_IDS = {
+  ETHEREUM: 1,
+  ARBITRUM: 42161,
+  POLYGON: 137,
+  FANTOM: 250,
+  BASE: 8453,
+  BERACHAIN: 80094,
+} as const satisfies Record<string, ChainId>;
+
 // Cooler Loans receivable source. Each clearinghouse exposes a single
 // receivable value via either `principalReceivables()` (V1/V1.1/V2) or
 // `totalDebt()` (MonoCooler V2). Per Phase 1 decision #5 we mirror legacy

@@ -1,9 +1,19 @@
 import BigNumber from "bignumber.js";
+import { BigDecimal } from "envio";
 
 import type { BasePriceFeed, Bytes32, LiquidityHandler, TokenDefinition } from "./types";
 
 export const ZERO = new BigNumber(0);
 export const ONE = new BigNumber(1);
+
+// Convert a bignumber.js value to Envio's BigDecimal (postgres NUMERIC).
+// Goes through the base-10 string form so arbitrary precision is preserved
+// across the FFI boundary — neither BigNumber nor BigDecimal lose precision
+// to floating point in this round-trip. Replaces the repeated
+// `new BigDecimal(value.toString(10))` pattern from BlockHandlers.ts.
+export function toBigDecimal(value: BigNumber): BigDecimal {
+  return new BigDecimal(value.toString());
+}
 
 export function token(
   address: string,

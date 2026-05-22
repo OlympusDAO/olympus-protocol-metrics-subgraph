@@ -1,6 +1,7 @@
 import {
   type Abi,
   type Address,
+  type Chain,
   type ContractFunctionArgs,
   type ContractFunctionName,
   createPublicClient,
@@ -10,13 +11,28 @@ import {
   type PublicClient,
   type ReadContractReturnType,
 } from "viem";
-import { arbitrum, berachain } from "viem/chains";
+import { arbitrum, base, berachain, fantom, mainnet, polygon } from "viem/chains";
 
 import { BALANCER_VAULT_ABI } from "./abis/balancer";
 import { CHAINLINK_ABI } from "./abis/chainlink";
 import { ERC20_ABI } from "./abis/erc20";
 import { addr, isActive, toDecimal } from "./math";
-import type { ChainConfig, LiquidityHandler } from "./types";
+import { CHAIN_IDS, type ChainConfig, type ChainId, type LiquidityHandler } from "./types";
+
+// Per-chain viem chain mapping. viem uses this for RPC error decoding,
+// chain-specific multicall handling, and write-call signing semantics.
+// Previously the code hard-coded `arbitrum`/`berachain` and silently
+// fell back to `berachain` for every other chain — only safe by accident
+// because all our snapshot work is read-only and viem's eth_call path
+// doesn't enforce chain-specific behavior.
+const VIEM_CHAIN_BY_ID: Record<ChainId, Chain> = {
+  [CHAIN_IDS.ETHEREUM]: mainnet,
+  [CHAIN_IDS.ARBITRUM]: arbitrum,
+  [CHAIN_IDS.POLYGON]: polygon,
+  [CHAIN_IDS.FANTOM]: fantom,
+  [CHAIN_IDS.BASE]: base,
+  [CHAIN_IDS.BERACHAIN]: berachain,
+};
 
 const clients = new Map<number, PublicClient>();
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
@@ -57,7 +73,7 @@ export function getClient(config: ChainConfig) {
     }),
   );
   const client = createPublicClient({
-    chain: config.chainId === 42161 ? arbitrum : berachain,
+    chain: VIEM_CHAIN_BY_ID[config.chainId],
     batch: { multicall: { batchSize: getMulticallBatchSize() } },
     transport: transports.length === 1 ? transports[0] : fallback(transports),
   });

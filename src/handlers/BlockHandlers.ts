@@ -40,6 +40,7 @@ import {
   getTokenDecimals,
   isActive,
   matches,
+  toBigDecimal,
   toDecimal,
   univ3PositionAmounts,
   ZERO,
@@ -51,12 +52,13 @@ import {
   getTokenDefinition,
   getWalletAddressesForContract,
 } from "../snapshot/records";
-import type {
-  ChainConfig,
-  ChainId,
-  LiquidityHandler,
-  SerializedTokenRecord,
-  SerializedTokenSupply,
+import {
+  CHAIN_IDS,
+  type ChainConfig,
+  type ChainId,
+  type LiquidityHandler,
+  type SerializedTokenRecord,
+  type SerializedTokenSupply,
 } from "../snapshot/types";
 
 const SENTIMENT_LTOKEN_START_BLOCK = 100875583n;
@@ -167,7 +169,7 @@ async function processSnapshot(
     withPricingCache(async () => {
       await pushTokenBalanceRecords(context, config, client, records, timestamp, blockNumber);
       await pushOwnedLiquidityRecords(context, config, client, records, timestamp, blockNumber);
-      if (config.chainId === 42161) {
+      if (config.chainId === CHAIN_IDS.ARBITRUM) {
         await pushArbitrumStakingRecords(context, config, records, timestamp, blockNumber);
       }
       if (config.coolerClearinghouses && config.coolerClearinghouses.length > 0) {
@@ -184,7 +186,7 @@ async function processSnapshot(
       await pushTotalSupply(context, config, supplies, timestamp, blockNumber);
       await pushTreasuryOhm(context, config, supplies, timestamp, blockNumber);
       await pushOwnedLiquiditySupply(context, config, client, supplies, timestamp, blockNumber);
-      if (config.chainId === 42161) {
+      if (config.chainId === CHAIN_IDS.ARBITRUM) {
         await pushArbitrumLendingSupply(context, config, supplies, timestamp, blockNumber);
       }
       if (config.blvRegistry) {
@@ -297,12 +299,12 @@ export async function updateGlobalMetricSnapshot(
     date,
     block: blockNumber,
     timestamp,
-    ohmTotalSupply: new BigDecimal(thisChain.ohmTotalSupply.toString(10)),
-    ohmCirculatingSupply: new BigDecimal(thisChain.ohmCirculatingSupply.toString(10)),
-    ohmFloatingSupply: new BigDecimal(thisChain.ohmFloatingSupply.toString(10)),
-    ohmBackedSupply: new BigDecimal(thisChain.ohmBackedSupply.toString(10)),
-    treasuryMarketValue: new BigDecimal(thisChain.treasuryMarketValue.toString(10)),
-    treasuryLiquidBacking: new BigDecimal(thisChain.treasuryLiquidBacking.toString(10)),
+    ohmTotalSupply: toBigDecimal(thisChain.ohmTotalSupply),
+    ohmCirculatingSupply: toBigDecimal(thisChain.ohmCirculatingSupply),
+    ohmFloatingSupply: toBigDecimal(thisChain.ohmFloatingSupply),
+    ohmBackedSupply: toBigDecimal(thisChain.ohmBackedSupply),
+    treasuryMarketValue: toBigDecimal(thisChain.treasuryMarketValue),
+    treasuryLiquidBacking: toBigDecimal(thisChain.treasuryLiquidBacking),
   });
 
   // Pull other chains' values back from the store. We rebuild per-chain
@@ -343,14 +345,14 @@ export async function updateGlobalMetricSnapshot(
   // from Ethereum, so non-Ethereum chains must avoid clobbering them with
   // zeros. We preserve them by reading back what's there before writing.
   const existing = await context.GlobalMetricSnapshot.get(snapshotId);
-  const isCanonicalChain = config.chainId === 1;
+  const isCanonicalChain = config.chainId === CHAIN_IDS.ETHEREUM;
 
   // ohmIndex is the only canonical field that can be read cross-chain —
   // OhmIndexState lives in the shared Hasura schema, keyed by Ethereum's
   // chainId. Reading it from any chain's snapshot gives the latest sOHM-V3
   // rebase, so we always populate it (independent of write ordering).
   let ohmIndex = new BigNumberCtor("0");
-  const ethereumConfig = CHAIN_CONFIGS[1];
+  const ethereumConfig = CHAIN_CONFIGS[CHAIN_IDS.ETHEREUM];
   const canonicalSOhm = ethereumConfig?.migrationOffset?.sOhmAddress;
   if (canonicalSOhm) {
     const indexState = await context.OhmIndexState.get(`1-${addr(canonicalSOhm)}`);
@@ -422,29 +424,23 @@ export async function updateGlobalMetricSnapshot(
     crossChainComplete: aggregate.crossChainComplete,
     chainsIndexed: aggregate.chainsIndexed,
     chainsMissing: aggregate.chainsMissing,
-    ohmTotalSupply: new BigDecimal(aggregate.ohmTotalSupply.toString(10)),
-    ohmCirculatingSupply: new BigDecimal(aggregate.ohmCirculatingSupply.toString(10)),
-    ohmFloatingSupply: new BigDecimal(aggregate.ohmFloatingSupply.toString(10)),
-    ohmBackedSupply: new BigDecimal(aggregate.ohmBackedSupply.toString(10)),
-    gOhmBackedSupply: new BigDecimal(ratios.gOhmBackedSupply.toString(10)),
-    treasuryMarketValue: new BigDecimal(aggregate.treasuryMarketValue.toString(10)),
-    treasuryLiquidBacking: new BigDecimal(aggregate.treasuryLiquidBacking.toString(10)),
-    ohmIndex: new BigDecimal(ohmIndex.toString(10)),
-    ohmApy: new BigDecimal(ohmApy.toString(10)),
-    ohmPrice: new BigDecimal(ohmPrice.toString(10)),
-    gOhmPrice: new BigDecimal(gOhmPrice.toString(10)),
-    sOhmCirculatingSupply: new BigDecimal(sOhmCirculatingSupply.toString(10)),
-    sOhmTotalValueLocked: new BigDecimal(sOhmTotalValueLocked.toString(10)),
-    marketCap: new BigDecimal(ratios.marketCap.toString(10)),
-    treasuryLiquidBackingPerOhmFloating: new BigDecimal(
-      ratios.treasuryLiquidBackingPerOhmFloating.toString(10),
-    ),
-    treasuryLiquidBackingPerOhmBacked: new BigDecimal(
-      ratios.treasuryLiquidBackingPerOhmBacked.toString(10),
-    ),
-    treasuryLiquidBackingPerGOhmBacked: new BigDecimal(
-      ratios.treasuryLiquidBackingPerGOhmBacked.toString(10),
-    ),
+    ohmTotalSupply: toBigDecimal(aggregate.ohmTotalSupply),
+    ohmCirculatingSupply: toBigDecimal(aggregate.ohmCirculatingSupply),
+    ohmFloatingSupply: toBigDecimal(aggregate.ohmFloatingSupply),
+    ohmBackedSupply: toBigDecimal(aggregate.ohmBackedSupply),
+    gOhmBackedSupply: toBigDecimal(ratios.gOhmBackedSupply),
+    treasuryMarketValue: toBigDecimal(aggregate.treasuryMarketValue),
+    treasuryLiquidBacking: toBigDecimal(aggregate.treasuryLiquidBacking),
+    ohmIndex: toBigDecimal(ohmIndex),
+    ohmApy: toBigDecimal(ohmApy),
+    ohmPrice: toBigDecimal(ohmPrice),
+    gOhmPrice: toBigDecimal(gOhmPrice),
+    sOhmCirculatingSupply: toBigDecimal(sOhmCirculatingSupply),
+    sOhmTotalValueLocked: toBigDecimal(sOhmTotalValueLocked),
+    marketCap: toBigDecimal(ratios.marketCap),
+    treasuryLiquidBackingPerOhmFloating: toBigDecimal(ratios.treasuryLiquidBackingPerOhmFloating),
+    treasuryLiquidBackingPerOhmBacked: toBigDecimal(ratios.treasuryLiquidBackingPerOhmBacked),
+    treasuryLiquidBackingPerGOhmBacked: toBigDecimal(ratios.treasuryLiquidBackingPerGOhmBacked),
   });
 
   // Write GlobalMetricSupplyCategory rows from this chain's supplies. Each
@@ -457,8 +453,8 @@ export async function updateGlobalMetricSnapshot(
       snapshot_id: snapshotId,
       date,
       category: type,
-      balance: new BigDecimal(bucket.balance.toString(10)),
-      supplyBalance: new BigDecimal(bucket.supplyBalance.toString(10)),
+      balance: toBigDecimal(bucket.balance),
+      supplyBalance: toBigDecimal(bucket.supplyBalance),
     });
   }
 }
@@ -891,7 +887,13 @@ async function pushCoolerReceivables(
           })) as string);
     if (raw === "") continue;
 
-    const receivable = toDecimal(BigInt(raw), 18);
+    // Receivable decimals come from the chain's token definition for the
+    // receivableToken (DAI/USDS/USDC on Ethereum, all 18-decimal today;
+    // looking it up rather than hard-coding 18 makes future tokens with
+    // different decimals — e.g. a USDC-denominated clearinghouse on a
+    // chain that uses 6-decimal USDC — work without a code change).
+    const receivableDecimals = getTokenDecimals(config.tokens, clearinghouse.receivableToken);
+    const receivable = toDecimal(BigInt(raw), receivableDecimals);
     if (receivable.eq(ZERO)) continue;
 
     const priceLookupToken = clearinghouse.priceToken ?? clearinghouse.receivableToken;
@@ -1182,7 +1184,7 @@ async function getOhmEquivalentMultiplier(
 ): Promise<BigNumber | null> {
   const decimals = getTokenDecimals(config.tokens, config.ohmToken);
   if (decimals === 9) return new BigNumberCtor(1);
-  const ethereum = CHAIN_CONFIGS[1];
+  const ethereum = CHAIN_CONFIGS[CHAIN_IDS.ETHEREUM];
   const sOhm = ethereum?.migrationOffset?.sOhmAddress;
   if (!sOhm) return null;
   const indexState = await context.OhmIndexState.get(`1-${addr(sOhm)}`);

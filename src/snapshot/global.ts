@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 
 import { ONE, ZERO } from "./math";
-import type { SerializedTokenRecord, SerializedTokenSupply } from "./types";
+import { CHAIN_IDS, type SerializedTokenRecord, type SerializedTokenSupply } from "./types";
 
 // Supply-category type names, matching the string values written by
 // BlockHandlers (createTokenSupply with these `type` strings) and the legacy
@@ -102,7 +102,7 @@ export function computePerChainAggregate(
 
   const supplyOf = (type: string): BigNumber => supplyCategories.get(type)?.supplyBalance ?? ZERO;
 
-  const isPreBlvInclusion = chainId === 1 && block < ETHEREUM_BLV_INCLUSION_BLOCK;
+  const isPreBlvInclusion = chainId === CHAIN_IDS.ETHEREUM && block < ETHEREUM_BLV_INCLUSION_BLOCK;
 
   const ohmTotalSupply = supplyOf(TYPE_TOTAL_SUPPLY);
 
