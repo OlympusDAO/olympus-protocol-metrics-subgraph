@@ -1,7 +1,10 @@
 import { addr, token } from "../math";
 import type { ChainConfig, LiquidityHandler } from "../types";
-import { CROSS_CHAIN_FANTOM, DAO_WALLET } from "../wallets";
 import { rpcUrls } from "./rpc";
+
+// Cross-chain bridge wallet — the receiving address on Fantom for assets
+// sent through the Olympus multisig bridge. Only used here.
+const CROSS_CHAIN_FANTOM = addr("0x2bc001ffeb862d843e0a02a7163c7d4828e5fb10");
 
 // Token addresses (per docs/envio-migration/inventory-fantom.md and
 // subgraphs/fantom/src/contracts/Constants.ts).
@@ -44,7 +47,6 @@ const PROTOCOL_ADDRESSES = [CROSS_CHAIN_FANTOM];
 // separate abbreviations map.
 const names: Record<string, string> = {
   [CROSS_CHAIN_FANTOM]: "Cross-Chain Fantom",
-  [DAO_WALLET]: "Treasury MS (Formerly DAO Wallet)",
   [ERC20_BEETS]: "Beethoven",
   [ERC20_BOO]: "SpookySwap",
   [ERC20_DAI]: "DAI",

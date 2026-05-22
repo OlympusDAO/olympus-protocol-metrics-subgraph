@@ -1,25 +1,98 @@
 import { addr, bytes32, token } from "../math";
 import type { ChainConfig, CoolerClearinghouse, LiquidityHandler } from "../types";
-import {
-  AAVE_ALLOCATOR,
+import { rpcUrls } from "./rpc";
+
+// ---- Ethereum-only wallets (Olympus mainnet contracts + multisigs). ----
+// These previously lived in src/snapshot/wallets.ts and got re-exported to
+// every chain config. Per @0xJem on PR #311 (Step 5.1) they're inlined here
+// because no other chain has any business referencing them — they're all
+// concrete mainnet addresses, and the per-chain wallet-iteration code paths
+// were trimmed in 883983a so non-Ethereum chains no longer pull them in.
+// Cross-chain bridge wallets (CROSS_CHAIN_*) stay in ../wallets because each
+// is genuinely shared by exactly one non-Ethereum chain.
+
+// Treasury / DAO wallets.
+const TREASURY_ADDRESS_V1 = addr("0x886CE997aa9ee4F8c2282E182aB72A705762399D");
+const TREASURY_ADDRESS_V2 = addr("0x31f8cc382c9898b273eff4e0b7626a6987c846e8");
+const TREASURY_ADDRESS_V3 = addr("0x9A315BdF513367C0377FB36545857d12e85813Ef");
+const DAO_WALLET = addr("0x245cc372c84b3645bf0ffe6538620b04a217988b");
+const DAO_WORKING_CAPITAL = addr("0xF65A665D650B5De224F46D729e2bD0885EeA9dA5");
+// Bophades TRSRY module — two historical versions. The active one holds the
+// balance; the inactive one reads zero. Kernel upgrade events are tracked
+// separately (see Erc20Transfers.ts handlers + BophadesKernel handler).
+const TRSRY = addr("0xa8687A15D4BE32CC8F0a8a7B9704a4C3993D9613");
+const TRSRY_V1_1 = addr("0xea1560F36F71a2F54deFA75ed9EaA15E8655bE22");
+
+const BUYBACK_MS = addr("0xf7deb867e65306be0cb33918ac1b8f89a72109db");
+const YIELD_FARMING_MS = addr("0x2075e3b46470cfcE124Daaf52b46Dcf965727Dd1");
+const OTC_ESCROW = addr("0xe3312c3f1ab30878d9686452f7205ebe11e965eb");
+
+// Bonds.
+const BONDS_DEPOSIT = addr("0x9025046c6fb25Fb39e720d97a8FD881ED69a1Ef6");
+const BONDS_INVERSE_DEPOSIT = addr("0xBA42BE149e5260EbA4B82418A6306f55D532eA47");
+
+// Allocators (mainnet).
+const AAVE_ALLOCATOR = addr("0x0e1177e47151Be72e5992E0975000E73Ab5fd9D4");
+const AAVE_ALLOCATOR_V2 = addr("0x0d33c811d0fcc711bcb388dfb3a152de445be66f");
+const AURA_ALLOCATOR = addr("0x872ebDd8129Aa328C89f6BF032bBD77a4c4BaC7e");
+const AURA_ALLOCATOR_V2 = addr("0x8CaF91A6bb38D55fB530dEc0faB535FA78d98FaD");
+const BALANCER_ALLOCATOR = addr("0xa9b52a2d0ffdbabdb2cb23ebb7cd879cac6618a6");
+const CONVEX_ALLOCATOR1 = addr("0x3dF5A355457dB3A4B5C744B8623A7721BF56dF78");
+const CONVEX_ALLOCATOR2 = addr("0x408a9A09d97103022F53300A3A14Ca6c3FF867E8");
+const CONVEX_ALLOCATOR3 = addr("0xDbf0683fC4FC8Ac11e64a6817d3285ec4f2Fc42d");
+const CONVEX_CVX_ALLOCATOR = addr("0xdfc95aaf0a107daae2b350458ded4b7906e7f728");
+const CONVEX_CVX_VL_ALLOCATOR = addr("0x2d643df5de4e9ba063760d475beaa62821c71681");
+const CONVEX_STAKING_PROXY_FRAXBP = addr("0x943C1dfA7dA96e54242bD2c78DD3eF5C7b24b18C");
+const CONVEX_STAKING_PROXY_OHM_FRAXBP = addr("0x75E7f7D871F4B5db0fA9B0f01B7422352Ec9618f");
+const LUSD_ALLOCATOR = addr("0x97b3ef4c558ec456d59cb95c65bfb79046e31fca");
+const MAKER_DSR_ALLOCATOR = addr("0x0EA26319836fF05B8C5C5afD83b8aB17dd46d063");
+const MAKER_DSR_ALLOCATOR_PROXY = addr("0x5db0761487e26B555F5Bfd5E40F4CBC3E1a7d11E");
+const RARI_ALLOCATOR = addr("0x061C8610A784b8A1599De5B1157631e35180d818");
+const VEFXS_ALLOCATOR = addr("0xde7b85f52577b113181921a7aa8fc0c22e309475");
+
+// Cooler clearinghouses.
+const COOLER_LOANS_CLEARINGHOUSE_V1 = addr("0xD6A6E8d9e82534bD65821142fcCd91ec9cF31880");
+const COOLER_LOANS_CLEARINGHOUSE_V1_1 = addr("0xE6343ad0675C9b8D3f32679ae6aDbA0766A2ab4c");
+const COOLER_LOANS_CLEARINGHOUSE_V2 = addr("0x1e094fE00E13Fd06D64EeA4FB3cD912893606fE0");
+const COOLER_LOANS_V2_MONOCOOLER = addr("0xdb591Ea2e5Db886dA872654D58f6cc584b68e7cC");
+
+// Full Ethereum wallet list. Previously WALLET_ADDRESSES in wallets.ts;
+// inlined here so Ethereum's protocolAddresses is self-contained.
+const WALLET_ADDRESSES = [
   AAVE_ALLOCATOR_V2,
+  AAVE_ALLOCATOR,
+  AURA_ALLOCATOR_V2,
+  AURA_ALLOCATOR,
+  BALANCER_ALLOCATOR,
   BONDS_DEPOSIT,
   BONDS_INVERSE_DEPOSIT,
   BUYBACK_MS,
+  CONVEX_ALLOCATOR1,
+  CONVEX_ALLOCATOR2,
+  CONVEX_ALLOCATOR3,
+  CONVEX_CVX_ALLOCATOR,
   CONVEX_CVX_VL_ALLOCATOR,
+  CONVEX_STAKING_PROXY_FRAXBP,
+  CONVEX_STAKING_PROXY_OHM_FRAXBP,
+  DAO_WALLET,
+  DAO_WORKING_CAPITAL,
+  LUSD_ALLOCATOR,
+  MAKER_DSR_ALLOCATOR_PROXY,
+  MAKER_DSR_ALLOCATOR,
+  OTC_ESCROW,
+  RARI_ALLOCATOR,
+  TREASURY_ADDRESS_V1,
+  TREASURY_ADDRESS_V2,
+  TREASURY_ADDRESS_V3,
+  TRSRY,
+  TRSRY_V1_1,
+  VEFXS_ALLOCATOR,
   COOLER_LOANS_CLEARINGHOUSE_V1,
   COOLER_LOANS_CLEARINGHOUSE_V1_1,
   COOLER_LOANS_CLEARINGHOUSE_V2,
   COOLER_LOANS_V2_MONOCOOLER,
-  DAO_WALLET,
-  RARI_ALLOCATOR,
-  TREASURY_ADDRESS_V2,
-  TREASURY_ADDRESS_V3,
-  TRSRY,
-  VEFXS_ALLOCATOR,
-  WALLET_ADDRESSES,
-} from "../wallets";
-import { rpcUrls } from "./rpc";
+  YIELD_FARMING_MS,
+];
 
 // Ethereum mainnet — the largest surface in the migration. This file is the
 // "baseline" Ethereum config: core treasury tokens, the inherited 36-wallet

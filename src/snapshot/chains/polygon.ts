@@ -1,7 +1,10 @@
 import { addr, token } from "../math";
 import type { ChainConfig, LiquidityHandler } from "../types";
-import { CROSS_CHAIN_POLYGON, DAO_WALLET } from "../wallets";
 import { rpcUrls } from "./rpc";
+
+// Cross-chain bridge wallet — the receiving address on Polygon for assets
+// sent through the Olympus multisig bridge. Only used here.
+const CROSS_CHAIN_POLYGON = addr("0xe06efa3d9ee6923240ee1195a16ddd96b5cce8f7");
 
 // Token addresses (per docs/envio-migration/inventory-polygon.md).
 const ERC20_DAI = addr("0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063");
@@ -37,7 +40,6 @@ const PROTOCOL_ADDRESSES = [CROSS_CHAIN_POLYGON];
 const names: Record<string, string> = {
   // Treasury / protocol wallets — match legacy CONTRACT_NAME_MAP labels.
   [CROSS_CHAIN_POLYGON]: "Cross-Chain Polygon",
-  [DAO_WALLET]: "Treasury MS (Formerly DAO Wallet)",
   [ERC20_DAI]: "DAI",
   [ERC20_FRAX]: "FRAX",
   [ERC20_GOHM]: "Governance OHM",
