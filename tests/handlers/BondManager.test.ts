@@ -18,7 +18,7 @@ function buildContext(existingMarkets: bigint[] = []) {
     existingMarkets.length === 0
       ? undefined
       : {
-          id: `GnosisAuction-${ETHEREUM_CHAIN_ID}`,
+          id: `${ETHEREUM_CHAIN_ID}`,
           chainId: ETHEREUM_CHAIN_ID,
           markets: existingMarkets,
         };
@@ -53,7 +53,7 @@ describe("applyGnosisAuctionLaunched", () => {
     );
     expect(rootSetSpy).toHaveBeenCalledTimes(1);
     expect(rootSetSpy.mock.calls[0]?.[0]).toMatchObject({
-      id: `GnosisAuction-${ETHEREUM_CHAIN_ID}`,
+      id: `${ETHEREUM_CHAIN_ID}`,
       chainId: ETHEREUM_CHAIN_ID,
       markets: [42n],
     });

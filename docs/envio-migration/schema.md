@@ -38,26 +38,26 @@ ID: `YYYY-MM-DD`. Upserted as chain snapshots arrive within the date.
 | Group | Fields |
 |---|---|
 | Identity | `id`, `date`, `updatedAtTimestamp` |
-| Completeness | `crossChainComplete @index` (Arbitrum + Ethereum required), `chainsIndexed`, `chainsMissing` |
-| Per-chain breakdowns | `chainValues: [GlobalMetricChainValues!]! @derivedFrom` |
-| Supply categories | `supplyCategories: [GlobalMetricSupplyCategory!]! @derivedFrom` (10 rows per snapshot) |
+| Completeness | `crossChainComplete @index` (Arbitrum + Ethereum required), `chainsIndexed: [Int!]!`, `chainsMissing: [Int!]!` (chainIds, not chain names — see PR #311 Step 4) |
+| Per-chain breakdowns | `chainValues: [ChainMetricValues!]! @derivedFrom` |
+| Supply categories | `supplyCategories: [ChainSupplyCategory!]! @derivedFrom` (10 rows per chain per snapshot) |
 | Cross-chain aggregates | `ohmTotalSupply`, `ohmCirculatingSupply`, `ohmFloatingSupply`, `ohmBackedSupply`, `gOhmBackedSupply`, `treasuryMarketValue`, `treasuryLiquidBacking` |
 | **Canonical-chain (Ethereum) scalars** | `ohmIndex`, `ohmApy`, `ohmPrice`, `gOhmPrice`, `sOhmCirculatingSupply`, `sOhmTotalValueLocked` |
 | Derived | `marketCap`, `treasuryLiquidBackingPerOhmFloating`, `...PerOhmBacked`, `...PerGOhmBacked` |
 
 **Canonical-chain rule:** the six scalars above are sourced from the Ethereum chain snapshot only, mirroring the legacy `protocolMetrics[0]` selection. If Ethereum has not produced a snapshot for the date, hold previous canonical values (Phase 5 implementation choice).
 
-### `GlobalMetricChainValues` — per-chain breakdown
+### `ChainMetricValues` — per-chain breakdown
 
-ID: `<chainId>-YYYY-MM-DD`. Up to 6 per `GlobalMetricSnapshot`.
+ID: `YYYY-MM-DD/<chainId>`. Up to 6 per `GlobalMetricSnapshot`.
 
 Holds per-chain OHM supply components (`ohmTotalSupply`, `ohmCirculatingSupply`, `ohmFloatingSupply`, `ohmBackedSupply`) and per-chain treasury values (`treasuryMarketValue`, `treasuryLiquidBacking`). Resolver layer translates `[chainValues]` into the legacy `ChainValues!` object shape (`{Arbitrum, Ethereum, Fantom, Polygon, Base, Berachain}`).
 
-### `GlobalMetricSupplyCategory` — OHM supply category breakdown
+### `ChainSupplyCategory` — per-chain OHM supply category breakdown
 
-ID: `YYYY-MM-DD-<category>`. 10 rows per snapshot, cross-chain aggregate.
+ID: `YYYY-MM-DD/<chainId>/<category>`. 10 rows per chain per snapshot.
 
-10 categories: `BondsDeposits`, `BondsPreminted`, `BondsVestingDeposits`, `BondsVestingTokens`, `BoostedLiquidityVault`, `LendingMarkets`, `ProtocolOwnedLiquidity`, `MigrationOffset`, `TotalSupply`, `Treasury`. Both `balance` (raw on-chain) and `supplyBalance` (signed contribution) preserved per Phase 1 decision — these are different numbers.
+`category` is the `SupplyCategoryType` enum: `TOTAL_SUPPLY`, `TREASURY`, `OHM_MIGRATION_OFFSET`, `BONDS_PREMINTED`, `BONDS_VESTING_DEPOSITS`, `BONDS_VESTING_TOKENS`, `BONDS_DEPOSITS`, `LIQUIDITY`, `BOOSTED_LIQUIDITY_VAULT`, `LENDING`. Both `balance` (raw on-chain) and `supplyBalance` (signed contribution) preserved per Phase 1 decision — these are different numbers.
 
 ## Event-derived state entities (internal — read by snapshot handlers)
 

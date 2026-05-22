@@ -241,7 +241,7 @@ async function processSnapshot(
   // Update the cross-chain GlobalMetricSnapshot for this date. The current
   // chain's per-day aggregate is recomputed in-memory from the records we
   // just produced; other chains' per-day aggregates are read back from the
-  // existing GlobalMetricChainValues entities.
+  // existing ChainMetricValues entities.
   await withContractReadCache(() =>
     withPricingCache(() =>
       updateGlobalMetricSnapshot(
@@ -289,11 +289,12 @@ export async function updateGlobalMetricSnapshot(
     supplies,
   );
 
-  // Persist the per-chain values entity. ID is "{chainId}-YYYY-MM-DD" so
-  // repeat snapshots for the same UTC date overwrite cleanly.
-  const chainValuesId = `${config.chainId}-${date}`;
+  // Persist the per-chain values entity. ID is "YYYY-MM-DD/{chainId}" per
+  // @0xJem PR #311 Step 4 (consistent leading-date prefix across entities),
+  // so repeat snapshots for the same UTC date overwrite cleanly.
+  const chainValuesId = `${date}/${config.chainId}`;
   const snapshotId = date;
-  context.GlobalMetricChainValues.set({
+  context.ChainMetricValues.set({
     id: chainValuesId,
     snapshot_id: snapshotId,
     chainId: config.chainId,
@@ -313,7 +314,7 @@ export async function updateGlobalMetricSnapshot(
   // PerChainAggregate objects from the stored fields, keeping supplyCategories
   // empty for non-current chains (categories are recomputed cross-chain below
   // from this chain's supplies plus stored category rows).
-  const allChainValues = await context.GlobalMetricChainValues.getWhere({
+  const allChainValues = await context.ChainMetricValues.getWhere({
     date: { _eq: date },
   });
   const perChainAggregates = allChainValues.map((entity) => {
@@ -445,21 +446,44 @@ export async function updateGlobalMetricSnapshot(
     treasuryLiquidBackingPerGOhmBacked: toBigDecimal(ratios.treasuryLiquidBackingPerGOhmBacked),
   });
 
-  // Write GlobalMetricSupplyCategory rows from this chain's supplies. Each
-  // (date, category) row carries both `balance` (raw on-chain) and
-  // `supplyBalance` (signed contribution to circulating). Cross-chain
-  // aggregation across multiple chains' category rows is a follow-up.
+  // Write ChainSupplyCategory rows from this chain's supplies. Each
+  // (date, chainId, category) row carries both `balance` (raw on-chain) and
+  // `supplyBalance` (signed contribution to circulating). The category field
+  // is mapped from the legacy TYPE_* string ("Total Supply" etc.) to the
+  // SupplyCategoryType enum value ("TOTAL_SUPPLY" etc.) per @0xJem PR #311
+  // Step 4 — TokenSupply.type stays a string so the wider snapshot pipeline
+  // doesn't need to change.
   for (const [type, bucket] of thisChain.supplyCategories) {
-    context.GlobalMetricSupplyCategory.set({
-      id: `${date}-${type}-${config.chainId}`,
+    const categoryEnum = CATEGORY_TYPE_TO_ENUM[type];
+    if (!categoryEnum) continue; // unknown TYPE_* string; skip rather than corrupt the enum field
+    context.ChainSupplyCategory.set({
+      id: `${date}/${config.chainId}/${categoryEnum}`,
       snapshot_id: snapshotId,
+      chainId: config.chainId,
       date,
-      category: type,
+      category: categoryEnum,
       balance: toBigDecimal(bucket.balance),
       supplyBalance: toBigDecimal(bucket.supplyBalance),
     });
   }
 }
+
+// Maps the legacy TYPE_* string values (kept as strings in TokenSupply.type
+// for snapshot-pipeline simplicity) to the SupplyCategoryType GraphQL enum
+// members. If a TYPE_* string is missing from this map, the writer above
+// skips the row rather than emit a value the GraphQL enum would reject.
+const CATEGORY_TYPE_TO_ENUM: Record<string, "TOTAL_SUPPLY" | "TREASURY" | "OHM_MIGRATION_OFFSET" | "BONDS_PREMINTED" | "BONDS_VESTING_DEPOSITS" | "BONDS_VESTING_TOKENS" | "BONDS_DEPOSITS" | "LIQUIDITY" | "BOOSTED_LIQUIDITY_VAULT" | "LENDING"> = {
+  "Total Supply": "TOTAL_SUPPLY",
+  Treasury: "TREASURY",
+  "OHM Migration Offset": "OHM_MIGRATION_OFFSET",
+  "Bonds (Pre-Minted)": "BONDS_PREMINTED",
+  "Bonds (Vesting Deposits)": "BONDS_VESTING_DEPOSITS",
+  "Bonds (Vesting Tokens)": "BONDS_VESTING_TOKENS",
+  "Bonds (Deposits)": "BONDS_DEPOSITS",
+  Liquidity: "LIQUIDITY",
+  "Boosted Liquidity Vault": "BOOSTED_LIQUIDITY_VAULT",
+  Lending: "LENDING",
+};
 
 // ----- Token records (treasury balances) -----
 

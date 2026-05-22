@@ -7,6 +7,9 @@
 # docs/envio-migration/inventory-treasury-subgraph.md section 12.
 type GlobalMetricSnapshot {
   id: ID! # YYYY-MM-DD (UTC)
+  # Always a UTC calendar date in YYYY-MM-DD format (matches the entity id).
+  # All snapshot dates in this schema are UTC — derived from block timestamps
+  # via isoDate() which formats with toISOString().slice(0, 10).
   date: String!
   updatedAtTimestamp: BigInt!
 
@@ -14,12 +17,15 @@ type GlobalMetricSnapshot {
   # produced a chain snapshot for this date. Mirrors the legacy
   # `crossChainDataComplete` query gate, which only checks those two chains.
   crossChainComplete: Boolean! @index
-  chainsIndexed: [String!]!
-  chainsMissing: [String!]!
+  # Switched from chain-name strings to numeric chainIds per @0xJem on PR #311
+  # (Step 4) — chain names had case-sensitivity risk ("Ethereum" vs "ethereum")
+  # and didn't have a canonical source. chainIds are EIP-155 numbers.
+  chainsIndexed: [Int!]!
+  chainsMissing: [Int!]!
 
   # Per-chain breakdowns
-  chainValues: [GlobalMetricChainValues!]! @derivedFrom(field: "snapshot")
-  supplyCategories: [GlobalMetricSupplyCategory!]! @derivedFrom(field: "snapshot")
+  chainValues: [ChainMetricValues!]! @derivedFrom(field: "snapshot")
+  supplyCategories: [ChainSupplyCategory!]! @derivedFrom(field: "snapshot")
 
   # Aggregate scalars (sum across chains with data for this date)
   ohmTotalSupply: BigDecimal!
@@ -51,8 +57,9 @@ type GlobalMetricSnapshot {
 # Per-chain breakdown attached to GlobalMetricSnapshot. One row per chain that
 # has produced a snapshot for the date. Mirrors the legacy `ChainValues` struct
 # but as an entity (Envio has no embedded value-object type).
-type GlobalMetricChainValues {
-  id: ID! # <chainId>-YYYY-MM-DD
+# Renamed from GlobalMetricChainValues per @0xJem on PR #311 (Step 4).
+type ChainMetricValues {
+  id: ID! # YYYY-MM-DD/<chainId>
   snapshot: GlobalMetricSnapshot!
   chainId: Int! @index
   blockchain: String!
@@ -68,16 +75,36 @@ type GlobalMetricChainValues {
   treasuryLiquidBacking: BigDecimal!
 }
 
-# Cross-chain aggregate of OHM supply broken down by category. Mirrors the
-# legacy `SupplyCategoryValues` struct, with the user's Phase 1 decision to
-# preserve both `balance` (raw on-chain) and `supplyBalance` (signed
-# contribution to circulating/floating/backed totals) per category.
-# 10 rows per GlobalMetricSnapshot.
-type GlobalMetricSupplyCategory {
-  id: ID! # YYYY-MM-DD-<category>
+# Enum of the OHM-supply attribution categories. Replaces the previous freeform
+# `category: String` field per @0xJem on PR #311 (Step 4); the writer maps
+# from TYPE_* strings to these enum values via CATEGORY_ENUM_MAP.
+enum SupplyCategoryType {
+  TOTAL_SUPPLY
+  TREASURY
+  OHM_MIGRATION_OFFSET
+  BONDS_PREMINTED
+  BONDS_VESTING_DEPOSITS
+  BONDS_VESTING_TOKENS
+  BONDS_DEPOSITS
+  LIQUIDITY
+  BOOSTED_LIQUIDITY_VAULT
+  LENDING
+}
+
+# Per-chain OHM supply broken down by category. Mirrors the legacy
+# `SupplyCategoryValues` struct, with the user's Phase 1 decision to preserve
+# both `balance` (raw on-chain) and `supplyBalance` (signed contribution to
+# circulating/floating/backed totals) per category. 10 rows per
+# (chain, GlobalMetricSnapshot) pair.
+# Renamed from GlobalMetricSupplyCategory and added `chainId` per @0xJem on
+# PR #311 (Step 4) — previously the entity carried no chain info, so
+# cross-chain rollups had to infer chain from id structure.
+type ChainSupplyCategory {
+  id: ID! # YYYY-MM-DD/<chainId>/<category>
   snapshot: GlobalMetricSnapshot!
+  chainId: Int! @index
   date: String!
-  category: String! @index # BondsDeposits, BondsPreminted, BondsVestingDeposits, BondsVestingTokens, BoostedLiquidityVault, LendingMarkets, ProtocolOwnedLiquidity, MigrationOffset, TotalSupply, Treasury
+  category: SupplyCategoryType! @index
   balance: BigDecimal!
   supplyBalance: BigDecimal!
 }
@@ -110,7 +137,7 @@ type ProtocolMetric {
 
 # Represents the balance of a specific token in the treasury
 type TokenRecord {
-  id: ID! # <chainId>-YYYY-MM-DD/<block>/<source>/<token>
+  id: ID! # YYYY-MM-DD/<chainId>/<block>/<source>/<token>
   chainId: Int! @index
   blockchain: String!
   block: BigInt!
@@ -132,7 +159,7 @@ type TokenRecord {
 
 # Represents a balance that affects the supply of OHM
 type TokenSupply {
-  id: ID! # <chainId>-YYYY-MM-DD/<block>/<token>/<type>/<pool>/<source>
+  id: ID! # YYYY-MM-DD/<chainId>/<block>/<token>/<type>/<pool>/<source>
   chainId: Int! @index
   blockchain: String!
   block: BigInt!
@@ -160,7 +187,7 @@ type TokenSupply {
 # Olympus V1 bonds are Ethereum-only, but we still scope by chainId for
 # uniformity with other entities.
 type GnosisAuctionRoot {
-  id: ID! # "GnosisAuction-{chainId}"
+  id: ID! # "{chainId}" (dropped the redundant "GnosisAuction-" prefix per @0xJem PR #311 Step 4)
   chainId: Int! @index
   markets: [BigInt!]!
 }

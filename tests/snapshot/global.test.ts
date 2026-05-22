@@ -189,7 +189,7 @@ describe("aggregateAcrossChains", () => {
     expect(agg.treasuryMarketValue.toString()).toBe("1500");
     expect(agg.treasuryLiquidBacking.toString()).toBe("1500");
     expect(agg.ohmTotalSupply.toString()).toBe("1000000");
-    expect(agg.chainsIndexed.sort()).toEqual(["Arbitrum", "Ethereum"]);
+    expect(agg.chainsIndexed.sort((a, b) => a - b)).toEqual([1, 42161]);
     expect(agg.chainsMissing).toEqual([]);
     expect(agg.crossChainComplete).toBe(true);
   });
@@ -205,7 +205,7 @@ describe("aggregateAcrossChains", () => {
       [],
     );
     const agg = aggregateAcrossChains("2024-09-01", [arbitrum]);
-    expect(agg.chainsMissing).toEqual(["Ethereum"]);
+    expect(agg.chainsMissing).toEqual([1]);
     expect(agg.crossChainComplete).toBe(false);
   });
 
@@ -220,7 +220,7 @@ describe("aggregateAcrossChains", () => {
       [],
     );
     const agg = aggregateAcrossChains("2024-09-01", [ethereum]);
-    expect(agg.chainsMissing).toEqual(["Arbitrum"]);
+    expect(agg.chainsMissing).toEqual([42161]);
     expect(agg.crossChainComplete).toBe(false);
   });
 
@@ -253,15 +253,15 @@ describe("aggregateAcrossChains", () => {
       [],
     );
     const agg = aggregateAcrossChains("2024-09-01", [arbitrum, base, polygon]);
-    expect(agg.chainsIndexed.sort()).toEqual(["Arbitrum", "Base", "Polygon"]);
-    expect(agg.chainsMissing).toEqual(["Ethereum"]);
+    expect(agg.chainsIndexed.sort((a, b) => a - b)).toEqual([137, 8453, 42161]);
+    expect(agg.chainsMissing).toEqual([1]);
     expect(agg.crossChainComplete).toBe(false);
   });
 
   test("late-day-update — two Ethereum snapshots for same date sum correctly (snapshot path overwrites by ID)", () => {
     // This simulates the BlockHandler reading back the *latest* per-chain row
-    // for each chain. In practice GlobalMetricChainValues is keyed by
-    // "{chainId}-{date}" so the second snapshot overwrites the first. The
+    // for each chain. In practice ChainMetricValues is keyed by
+    // "{date}/{chainId}" so the second snapshot overwrites the first. The
     // aggregation receives the latest values (here represented as a single
     // higher row), not stacked rows. Confirm that aggregateAcrossChains is
     // a pure sum — passing the same chain twice would double-count, so

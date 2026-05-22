@@ -367,7 +367,7 @@ describe("pushTokenBalanceRecords per-chain validation", () => {
           writtenSnapshots[entity.id] = entity;
         },
       },
-      GlobalMetricChainValues: {
+      ChainMetricValues: {
         set: (entity: { id: string }) => {
           writtenChainValues[entity.id] = entity;
         },
@@ -404,7 +404,7 @@ describe("pushTokenBalanceRecords per-chain validation", () => {
           return [eth, ...fromWritten];
         },
       },
-      GlobalMetricSupplyCategory: { set: vi.fn() },
+      ChainSupplyCategory: { set: vi.fn() },
       log: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
       effect: vi.fn(async () => ""),
     } as unknown as Parameters<typeof updateGlobalMetricSnapshot>[0];
@@ -489,13 +489,13 @@ describe("pushTokenBalanceRecords per-chain validation", () => {
           writtenSnapshots[entity.id] = entity;
         },
       },
-      GlobalMetricChainValues: {
+      ChainMetricValues: {
         set: (entity: { id: string }) => {
           writtenChainValues[entity.id] = entity;
         },
         getWhere: async () => Object.values(writtenChainValues),
       },
-      GlobalMetricSupplyCategory: { set: vi.fn() },
+      ChainSupplyCategory: { set: vi.fn() },
       log: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
       effect: vi.fn(async () => ""),
     } as unknown as Parameters<typeof updateGlobalMetricSnapshot>[0];

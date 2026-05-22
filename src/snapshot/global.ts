@@ -161,14 +161,16 @@ export type CrossChainAggregate = {
   treasuryMarketValue: BigNumber;
   treasuryLiquidBacking: BigNumber;
   supplyCategories: Map<string, { balance: BigNumber; supplyBalance: BigNumber }>;
-  chainsIndexed: string[];
-  chainsMissing: string[];
+  // numeric chainIds — switched from chain-name strings per @0xJem on
+  // PR #311 Step 4 to avoid case-sensitivity risk.
+  chainsIndexed: number[];
+  chainsMissing: number[];
   crossChainComplete: boolean;
 };
 
 // Chains required for `crossChainComplete` to be true. Per Phase 1 decision
 // #10 the legacy `crossChainDataComplete` only requires Arbitrum + Ethereum.
-const REQUIRED_CHAINS_FOR_COMPLETE = ["Arbitrum", "Ethereum"];
+const REQUIRED_CHAINS_FOR_COMPLETE: number[] = [CHAIN_IDS.ARBITRUM, CHAIN_IDS.ETHEREUM];
 
 export function aggregateAcrossChains(
   date: string,
@@ -197,9 +199,9 @@ export function aggregateAcrossChains(
     }
   }
 
-  const chainsIndexed = perChain.map((chain) => chain.blockchain);
+  const chainsIndexed = perChain.map((chain) => chain.chainId);
   const chainsMissing = REQUIRED_CHAINS_FOR_COMPLETE.filter(
-    (chain) => !chainsIndexed.includes(chain),
+    (chainId) => !chainsIndexed.includes(chainId),
   );
   const crossChainComplete = chainsMissing.length === 0;
 

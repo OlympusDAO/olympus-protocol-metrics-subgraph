@@ -26,7 +26,7 @@ export function createTokenRecord(
     ? baseValue.times(multiplier).times(-1)
     : baseValue.times(multiplier);
   return {
-    id: `${config.chainId}-${date}/${blockNumber}/${sourceName}/${tokenName}`,
+    id: `${date}/${config.chainId}/${blockNumber}/${sourceName}/${tokenName}`,
     chainId: config.chainId,
     blockchain: config.blockchain,
     block: blockNumber.toString(),
@@ -63,7 +63,7 @@ export function createTokenSupply(
 ): SerializedTokenSupply {
   const date = isoDate(timestamp);
   return {
-    id: `${config.chainId}-${date}/${blockNumber}/${tokenName}/${type}/${poolName ?? "Unknown Pool"}/${sourceName ?? ""}`,
+    id: `${date}/${config.chainId}/${blockNumber}/${tokenName}/${type}/${poolName ?? "Unknown Pool"}/${sourceName ?? ""}`,
     chainId: config.chainId,
     blockchain: config.blockchain,
     block: blockNumber.toString(),

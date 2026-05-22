@@ -30,7 +30,10 @@ type LaunchedEvent = {
 const OHM_DECIMALS = 9;
 
 function rootId(chainId: number): string {
-  return `GnosisAuction-${chainId}`;
+  // Just the chainId — the "GnosisAuction-" prefix was redundant (the
+  // entity type already conveys what the id refers to). Dropped per @0xJem
+  // PR #311 Step 4.
+  return `${chainId}`;
 }
 
 function auctionId(chainId: number, marketId: bigint): string {
