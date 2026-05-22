@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 
 import { KODIAK_ABI } from "../snapshot/abis/kodiak";
-import { readContract } from "../snapshot/contracts";
+import { readContract } from "../snapshot/contract-cache";
 import { addr, getTokenDecimals, ONE, same, toDecimal, ZERO } from "../snapshot/math";
 import type { LiquidityHandler } from "../snapshot/types";
 import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";

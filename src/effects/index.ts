@@ -5,7 +5,7 @@ import { BALANCER_VAULT_ABI } from "../snapshot/abis/balancer";
 import { CHAINLINK_ABI } from "../snapshot/abis/chainlink";
 import { KODIAK_ABI } from "../snapshot/abis/kodiak";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
-import { getClient, retryRpc } from "../snapshot/contracts";
+import { getClient, retryRpc } from "../snapshot/rpc-client";
 import type { ChainId } from "../snapshot/types";
 
 // Cached effect that reads `vault.getPoolTokens(poolId)` once at the block of

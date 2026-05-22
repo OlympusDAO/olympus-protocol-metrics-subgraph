@@ -34,7 +34,8 @@ import {
 } from "../pricing";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { OLYMPUS_LENDER, SENTIMENT_LTOKEN, SILO_COLLATERAL } from "../snapshot/chains/arbitrum";
-import { getClient, getNativeBalance, withContractReadCache } from "../snapshot/contracts";
+import { withContractReadCache } from "../snapshot/contract-cache";
+import { getClient, getNativeBalance } from "../snapshot/rpc-client";
 import {
   addr,
   getTokenDecimals,

@@ -1,7 +1,8 @@
 import type BigNumber from "bignumber.js";
 
 import { BALANCER_POOL_TOKEN_ABI } from "../snapshot/abis/balancer";
-import { getDecimals, readInvariantContract } from "../snapshot/contracts";
+import { readInvariantContract } from "../snapshot/contract-cache";
+import { getDecimals } from "../snapshot/contracts";
 import { addr, getTokenDecimals, same, toDecimal, ZERO } from "../snapshot/math";
 import type { LiquidityHandler } from "../snapshot/types";
 import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";
