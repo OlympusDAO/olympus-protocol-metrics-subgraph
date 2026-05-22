@@ -5,41 +5,46 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  '@pnpm/npm-conf': ^3.0.2
-  ajv: 6.14.0
-  axios: ^1.15.1
-  brace-expansion: ^2.0.3
-  cross-spawn: ^7.0.5
-  diff@>=4.0.0 <4.0.4: ^4.0.4
-  ejs: ^3.1.10
-  es5-ext@>=0.10.0 <0.10.63: ^0.10.63
-  flatted: ^3.4.2
-  follow-redirects: ^1.16.0
-  glob: ^11.1.0
-  immutable: ^5.1.5
-  js-yaml: ^4.1.1
-  lodash: ^4.18.0
-  lodash.trim: 4.18.0
-  lodash.trimend: 4.18.0
-  minimatch: ^10.2.3
-  node-fetch: ^2.6.7
-  node-forge: ^1.3.0
-  picomatch: ^2.3.2
-  ramda: ^0.27.2
-  semver: ^7.5.2
-  tmp@<=0.2.3: ^0.2.4
-  undici: ^7.24.0
-  yaml: ^2.8.3
-  body-parser: ^1.20.3
-  path-to-regexp: ^0.1.12
-  qs: ^6.14.1
-  ws: ^8.20.1
-  '@fuel-ts/crypto': ^0.101.3
-  '@fuel-ts/errors': ^0.101.3
-  '@fuel-ts/hasher': ^0.101.3
-  '@fuel-ts/math': ^0.101.3
-  '@fuel-ts/utils': ^0.101.3
-  vite: 8.0.13
+  envio>@fuel-ts/crypto@<0.103.0: 0.103.0
+  envio>@fuel-ts/errors@<0.103.0: 0.103.0
+  envio>@fuel-ts/hasher@<0.103.0: 0.103.0
+  envio>@fuel-ts/math@<0.103.0: 0.103.0
+  envio>@fuel-ts/utils@<0.103.0: 0.103.0
+  bn.js@<4.12.3: 4.12.3
+  bn.js@>=5.0.0 <5.2.3: 5.2.3
+  '@pnpm/npm-conf@<3.0.2': 3.0.2
+  ajv@>=6.0.0 <7.0.0: 6.14.0
+  axios@<1.15.1: 1.15.1
+  brace-expansion@<1.1.13: 1.1.13
+  brace-expansion@>=2.0.0 <2.0.3: 2.0.3
+  cross-spawn@<7.0.5: 7.0.5
+  diff@>=4.0.0 <4.0.4: 4.0.4
+  ejs@<3.1.10: 3.1.10
+  es5-ext@>=0.10.0 <0.10.63: 0.10.63
+  flatted@<3.4.2: 3.4.2
+  follow-redirects@<1.16.0: 1.16.0
+  glob@<11.1.0: 11.1.0
+  immutable@<5.1.5: 5.1.5
+  js-yaml@<4.1.1: 4.1.1
+  lodash@<4.18.0: 4.18.0
+  lodash.trim@<4.18.0: 4.18.0
+  lodash.trimend@<4.18.0: 4.18.0
+  minimatch@<3.1.4: 3.1.5
+  minimatch@>=5.0.0 <5.1.8: 5.1.8
+  minimatch@>=9.0.0 <9.0.7: 9.0.7
+  node-fetch@<2.6.7: 2.6.7
+  node-forge@<1.3.0: 1.3.0
+  picomatch@<2.3.2: 2.3.2
+  ramda@<0.27.2: 0.27.2
+  semver@>=7.0.0 <7.5.2: 7.5.2
+  tmp@<=0.2.3: 0.2.4
+  undici@>=7.0.0 <7.24.0: 7.24.0
+  yaml@<2.8.3: 2.8.3
+  body-parser@<1.20.3: 1.20.3
+  path-to-regexp@<0.1.13: 0.1.13
+  qs@<6.15.2: 6.15.2
+  ws@>=8.0.0 <8.20.1: 8.20.1
+  vite@>8.0.13: 8.0.13
 
 importers:
 
@@ -400,30 +405,30 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@fuel-ts/crypto@0.101.3':
-    resolution: {integrity: sha512-bb/wnMMcf8czSpsamPfJx/I3/ag/mcmO2B9Tzy5Z4cFYbRs1Vzm2rVAmh7qsr00evxhftiu9QesPACZUjabZag==}
+  '@fuel-ts/crypto@0.103.0':
+    resolution: {integrity: sha512-8DWeYl1TkXY7Ga/2X1zI4Jv6Ua7mFHRgArwaSV0ckhk+Fu+KK4K9diUAge10TRUe11byG3cX2ObcVIlNtthnPg==}
     engines: {node: ^20.0.0 || ^22.0.0 || ^24.0.0}
 
-  '@fuel-ts/errors@0.101.3':
-    resolution: {integrity: sha512-c2WqH0fkSLPqDmAeCNJonca1Ui9CElFz3PEh/77btIE61bX9Iclq/L7/GtZabz8jsedBBbGJwyrgE4GTgNMwXQ==}
+  '@fuel-ts/errors@0.103.0':
+    resolution: {integrity: sha512-IvWB/Q7rRNYI/GrLuCD4EiGHOi5a+9a7P3AXMZ8gqE2PA5yYKUPQlI87xTvB9f9ZTiX1H/XwdCKprmKp6Nh16g==}
     engines: {node: ^20.0.0 || ^22.0.0 || ^24.0.0}
 
-  '@fuel-ts/hasher@0.101.3':
-    resolution: {integrity: sha512-XaT1Gwq7KdQQUEDXrY3Vx7c6vgIAZlAVG6RszkY6a2Gl72eYGB1tMf1GKkkKEMw5/liF/C8OG9/recwbxlI4XQ==}
+  '@fuel-ts/hasher@0.103.0':
+    resolution: {integrity: sha512-P1EU4iHb7biGSqIldNEgkULcmrY11xdF9fE4Ja3EUZTViI1ekUt2a7r8402CkafLjBpheKzRpsdyL2pqkxJqdw==}
     engines: {node: ^20.0.0 || ^22.0.0 || ^24.0.0}
 
-  '@fuel-ts/math@0.101.3':
-    resolution: {integrity: sha512-vqU4rzBjDkLHT7YTjhFWvbo3LDnDR3vgl33kMDj93eMu2tfm8W8WWRxOoqzLNf18sl8dcoYMrNvIgXIOplddOQ==}
+  '@fuel-ts/math@0.103.0':
+    resolution: {integrity: sha512-djUGWHC45GN8xiI4r20eg3hs1pHcZzkNLLFoX3Mg4gcEyPesr0dt+TdvyFGr/tBqoEuS+IBAS2rFB6v1f3Q+Xg==}
     engines: {node: ^20.0.0 || ^22.0.0 || ^24.0.0}
 
-  '@fuel-ts/utils@0.101.3':
-    resolution: {integrity: sha512-VGhp0TKT9h/E1Ptx7nFbiK/GnQptuewUg7aJgsgcYuSqyoJa+3cYbdTed5r9Mzoi4y/K/x/ano8Ui1yQETTa8Q==}
+  '@fuel-ts/utils@0.103.0':
+    resolution: {integrity: sha512-vYPb0vySLq0PZ0ytdWQnSeG1KjRBB90Fet114iS23sAd+Q1DZ75SHcgekPHkA0Hn4mTrE0Blch+d9tLnLeLrdw==}
     engines: {node: ^20.0.0 || ^22.0.0 || ^24.0.0}
     peerDependencies:
       vitest: 3.0.9
 
-  '@fuel-ts/versions@0.101.3':
-    resolution: {integrity: sha512-IVsK4t/ouxtvsWZNxLccOUVe+3BIsjsXhok74jWiwB8ATGmf/CtKnvsDJhhx9OrALZFdMz7WiCXrsBkhEITpCA==}
+  '@fuel-ts/versions@0.103.0':
+    resolution: {integrity: sha512-+omgQvyrOY3e41CdeFBbYl3wWkAimLIKx4lwT+wWWH+/Hxqx5J6oy102ETlr7r93u25X2a68K+USZlR6v7JXMA==}
     engines: {node: ^20.0.0 || ^22.0.0 || ^24.0.0}
     hasBin: true
 
@@ -690,11 +695,11 @@ packages:
   bintrees@1.0.2:
     resolution: {integrity: sha512-VOMgTMwjAaUG580SXn3LacVgjurrbMme7ZZNYGSSV7mmtY6QQRh0Eg3pwIcntQ77DErK1L0NxkbetjcoXzVwKw==}
 
-  bn.js@5.2.1:
-    resolution: {integrity: sha512-eXRvHzWyYPBuB4NBy0cmYQjGitUrtqwbvlzP3G6VFnNRbsZQIxQ10PbKKHt8gZ/HW/D/747aDl+QkDqg3KQLMQ==}
+  bn.js@5.2.3:
+    resolution: {integrity: sha512-EAcmnPkxpntVL+DS7bO1zhcZNvCkxqtkd0ZY53h06GNQ3DEkkGZ/gKgmDv6DdZQGj9BgfSPKtJJ7Dp1GPP8f7w==}
 
-  body-parser@1.20.5:
-    resolution: {integrity: sha512-3grm+/2tUOvu2cjJkvsIxrv/wVpfXQW4PsQHYm7yk4vfpu7Ekl6nEsYBoJUL6qDwZUx8wUhQ8tR2qz+ad9c9OA==}
+  body-parser@1.20.3:
+    resolution: {integrity: sha512-7rAxByjUMqQ3/bHJy7D6OGXvx/MMc4IqBn/X0fcM1QUcAItpZrBEYhWGem+tzXH90c+G01ypMcYJBO9Y30203g==}
     engines: {node: '>= 0.8', npm: 1.2.8000 || >= 1.4.16}
 
   bytes@3.1.2:
@@ -965,7 +970,7 @@ packages:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
-      picomatch: ^2.3.2
+      picomatch: ^3 || ^4
     peerDependenciesMeta:
       picomatch:
         optional: true
@@ -1041,10 +1046,6 @@ packages:
 
   http-errors@2.0.0:
     resolution: {integrity: sha512-FtwrG/euBzaEjYeRqOgly7G0qviiXoJWnvEH2Z1plBdXgbyjv34pHTSb9zoeHMyDy33+DWy5Wt9Wo+TURtOYSQ==}
-    engines: {node: '>= 0.8'}
-
-  http-errors@2.0.1:
-    resolution: {integrity: sha512-4FbRdAX+bSdmo4AUFuS0WNiPz8NgFt+r8ThgNWmlrjQjt1Q7ZR9+zTlce2859x4KSXrwIsaeTqDoKQmtP8pLmQ==}
     engines: {node: '>= 0.8'}
 
   iconv-lite@0.4.24:
@@ -1124,7 +1125,7 @@ packages:
   isows@1.0.7:
     resolution: {integrity: sha512-I1fSfDCZL5P0v33sVqeTDSpcstAg/N+wF5HS033mogOVIp4B+oHC7oOCsA3axAbBSGTJ8QubbNmnIRN/h8U7hg==}
     peerDependencies:
-      ws: ^8.20.1
+      ws: 8.20.1
 
   joycon@3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
@@ -1333,9 +1334,9 @@ packages:
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
-  picomatch@2.3.2:
-    resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
-    engines: {node: '>=8.6'}
+  picomatch@4.0.4:
+    resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
+    engines: {node: '>=12'}
 
   pino-abstract-transport@3.0.0:
     resolution: {integrity: sha512-wlfUczU+n7Hy/Ha5j9a/gZNy7We5+cXp8YL+X+PG8S0KXxw7n/JXA3c46Y0zQznIJ83URJiwy7Lh56WLokNuxg==}
@@ -1391,8 +1392,8 @@ packages:
     resolution: {integrity: sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==}
     engines: {node: '>= 0.6'}
 
-  raw-body@2.5.3:
-    resolution: {integrity: sha512-s4VSOf6yN0rvbRZGxs8Om5CWj6seneMwK3oDb4lWDH0UPhWcxwOWw5+qk24bxq87szX1ydrwylIOp2uG1ojUpA==}
+  raw-body@2.5.2:
+    resolution: {integrity: sha512-8zGqypfENjCIqGhgXToC8aB2r7YrBX+AQAfIPs/Mlk+BtPTztOvTS01NRW/3Eh60J+a48lt8qsCzirQ6loCVfA==}
     engines: {node: '>= 0.8'}
 
   react-dom@19.2.6:
@@ -1520,10 +1521,6 @@ packages:
 
   statuses@2.0.1:
     resolution: {integrity: sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ==}
-    engines: {node: '>= 0.8'}
-
-  statuses@2.0.2:
-    resolution: {integrity: sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw==}
     engines: {node: '>= 0.8'}
 
   std-env@4.1.0:
@@ -1674,7 +1671,7 @@ packages:
       sugarss: ^5.0.0
       terser: ^5.16.0
       tsx: ^4.8.1
-      yaml: ^2.8.3
+      yaml: 2.8.3
     peerDependenciesMeta:
       '@types/node':
         optional: true
@@ -1998,41 +1995,41 @@ snapshots:
   '@esbuild/win32-x64@0.27.7':
     optional: true
 
-  '@fuel-ts/crypto@0.101.3(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))':
+  '@fuel-ts/crypto@0.103.0(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))':
     dependencies:
-      '@fuel-ts/errors': 0.101.3
-      '@fuel-ts/utils': 0.101.3(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))
+      '@fuel-ts/errors': 0.103.0
+      '@fuel-ts/utils': 0.103.0(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))
       '@noble/hashes': 1.7.1
     transitivePeerDependencies:
       - vitest
 
-  '@fuel-ts/errors@0.101.3':
+  '@fuel-ts/errors@0.103.0':
     dependencies:
-      '@fuel-ts/versions': 0.101.3
+      '@fuel-ts/versions': 0.103.0
 
-  '@fuel-ts/hasher@0.101.3(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))':
+  '@fuel-ts/hasher@0.103.0(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))':
     dependencies:
-      '@fuel-ts/crypto': 0.101.3(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))
-      '@fuel-ts/utils': 0.101.3(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))
+      '@fuel-ts/crypto': 0.103.0(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))
+      '@fuel-ts/utils': 0.103.0(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))
       '@noble/hashes': 1.7.1
     transitivePeerDependencies:
       - vitest
 
-  '@fuel-ts/math@0.101.3':
+  '@fuel-ts/math@0.103.0':
     dependencies:
-      '@fuel-ts/errors': 0.101.3
+      '@fuel-ts/errors': 0.103.0
       '@types/bn.js': 5.1.6
-      bn.js: 5.2.1
+      bn.js: 5.2.3
 
-  '@fuel-ts/utils@0.101.3(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))':
+  '@fuel-ts/utils@0.103.0(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))':
     dependencies:
-      '@fuel-ts/errors': 0.101.3
-      '@fuel-ts/math': 0.101.3
-      '@fuel-ts/versions': 0.101.3
+      '@fuel-ts/errors': 0.103.0
+      '@fuel-ts/math': 0.103.0
+      '@fuel-ts/versions': 0.103.0
       fflate: 0.8.2
       vitest: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3))
 
-  '@fuel-ts/versions@0.101.3':
+  '@fuel-ts/versions@0.103.0':
     dependencies:
       chalk: 4.1.2
       cli-table: 0.3.11
@@ -2243,20 +2240,20 @@ snapshots:
 
   bintrees@1.0.2: {}
 
-  bn.js@5.2.1: {}
+  bn.js@5.2.3: {}
 
-  body-parser@1.20.5:
+  body-parser@1.20.3:
     dependencies:
       bytes: 3.1.2
       content-type: 1.0.5
       debug: 2.6.9
       depd: 2.0.0
       destroy: 1.2.0
-      http-errors: 2.0.1
+      http-errors: 2.0.0
       iconv-lite: 0.4.24
       on-finished: 2.4.1
       qs: 6.15.2
-      raw-body: 2.5.3
+      raw-body: 2.5.2
       type-is: 1.6.18
       unpipe: 1.0.0
     transitivePeerDependencies:
@@ -2400,11 +2397,11 @@ snapshots:
       '@elastic/ecs-pino-format': 1.4.0
       '@envio-dev/hyperfuel-client': 1.2.2
       '@envio-dev/hypersync-client': 1.3.0
-      '@fuel-ts/crypto': 0.101.3(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))
-      '@fuel-ts/errors': 0.101.3
-      '@fuel-ts/hasher': 0.101.3(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))
-      '@fuel-ts/math': 0.101.3
-      '@fuel-ts/utils': 0.101.3(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))
+      '@fuel-ts/crypto': 0.103.0(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))
+      '@fuel-ts/errors': 0.103.0
+      '@fuel-ts/hasher': 0.103.0(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))
+      '@fuel-ts/math': 0.103.0
+      '@fuel-ts/utils': 0.103.0(vitest@4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3)))
       '@rescript/react': 0.14.1(react-dom@19.2.6(react@19.2.5))(react@19.2.5)
       '@rescript/runtime': 12.2.0
       bignumber.js: 9.3.1
@@ -2512,7 +2509,7 @@ snapshots:
     dependencies:
       accepts: 1.3.8
       array-flatten: 1.1.1
-      body-parser: 1.20.5
+      body-parser: 1.20.3
       content-disposition: 0.5.4
       content-type: 1.0.5
       cookie: 0.6.0
@@ -2559,9 +2556,9 @@ snapshots:
 
   fast-safe-stringify@2.1.1: {}
 
-  fdir@6.5.0(picomatch@2.3.2):
+  fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
-      picomatch: 2.3.2
+      picomatch: 4.0.4
 
   fflate@0.8.2: {}
 
@@ -2636,14 +2633,6 @@ snapshots:
       inherits: 2.0.4
       setprototypeof: 1.2.0
       statuses: 2.0.1
-      toidentifier: 1.0.1
-
-  http-errors@2.0.1:
-    dependencies:
-      depd: 2.0.0
-      inherits: 2.0.4
-      setprototypeof: 1.2.0
-      statuses: 2.0.2
       toidentifier: 1.0.1
 
   iconv-lite@0.4.24:
@@ -2889,7 +2878,7 @@ snapshots:
 
   picocolors@1.1.1: {}
 
-  picomatch@2.3.2: {}
+  picomatch@4.0.4: {}
 
   pino-abstract-transport@3.0.0:
     dependencies:
@@ -2968,10 +2957,10 @@ snapshots:
 
   range-parser@1.2.1: {}
 
-  raw-body@2.5.3:
+  raw-body@2.5.2:
     dependencies:
       bytes: 3.1.2
-      http-errors: 2.0.1
+      http-errors: 2.0.0
       iconv-lite: 0.4.24
       unpipe: 1.0.0
 
@@ -3119,8 +3108,6 @@ snapshots:
 
   statuses@2.0.1: {}
 
-  statuses@2.0.2: {}
-
   std-env@4.1.0: {}
 
   string-similarity@4.0.4: {}
@@ -3178,13 +3165,13 @@ snapshots:
 
   tinyglobby@0.2.15:
     dependencies:
-      fdir: 6.5.0(picomatch@2.3.2)
-      picomatch: 2.3.2
+      fdir: 6.5.0(picomatch@4.0.4)
+      picomatch: 4.0.4
 
   tinyglobby@0.2.16:
     dependencies:
-      fdir: 6.5.0(picomatch@2.3.2)
-      picomatch: 2.3.2
+      fdir: 6.5.0(picomatch@4.0.4)
+      picomatch: 4.0.4
 
   tinyrainbow@3.1.0: {}
 
@@ -3260,7 +3247,7 @@ snapshots:
   vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3):
     dependencies:
       lightningcss: 1.32.0
-      picomatch: 2.3.2
+      picomatch: 4.0.4
       postcss: 8.5.14
       rolldown: 1.0.1
       tinyglobby: 0.2.16
@@ -3285,7 +3272,7 @@ snapshots:
       magic-string: 0.30.21
       obug: 2.1.1
       pathe: 2.0.3
-      picomatch: 2.3.2
+      picomatch: 4.0.4
       std-env: 4.1.0
       tinybench: 2.9.0
       tinyexec: 1.1.2
