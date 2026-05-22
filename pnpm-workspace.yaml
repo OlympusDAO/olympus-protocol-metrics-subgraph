@@ -1,4 +1,13 @@
 minimumReleaseAge: 10080
+# The 7-day maturity gate above is good supply-chain hygiene for transitive
+# deps, but blocks us from picking up envio releases inside the first week.
+# Envio is our indexer framework — we want fast access to new versions and
+# trust the upstream release process. Allowlist it (and viem, our primary
+# RPC client, for the same reason) so the maturity gate applies only to
+# the long tail of transitives we don't actively curate.
+minimumReleaseAgeExclude:
+  - envio
+  - viem
 preferFrozenLockfile: true
 engineStrict: true
 strictDepBuilds: true
