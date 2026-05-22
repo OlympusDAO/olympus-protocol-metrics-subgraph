@@ -1,8 +1,0 @@
-{
-  "ts-node": {
-    "compilerOptions": {
-      "module": "commonjs",
-      "target": "es2017"
-    }
-  }
-}

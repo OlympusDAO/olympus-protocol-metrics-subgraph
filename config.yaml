@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=./node_modules/envio/evm.schema.json
 name: olympus-protocol-metrics
-description: Olympus protocol metrics for Arbitrum and Berachain
+description: Olympus treasury + protocol-metrics indexer across Ethereum, Arbitrum, Polygon, Fantom, Base, and Berachain
 
 # Reusable contract definitions shared across chains. Each `events` entry is the
 # Solidity event signature with parameter names so HyperIndex codegen produces
