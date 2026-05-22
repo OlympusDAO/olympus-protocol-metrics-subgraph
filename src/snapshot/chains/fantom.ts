@@ -155,25 +155,30 @@ export const FANTOM: ChainConfig = {
       decimals: 18,
     }),
     // Multichain-bridged DAI on Fantom. Cross-Chain Fantom held 80,100 DAI
-    // at chain start (verified on-chain); BackfillTokenBalances seeds it.
-    // Multichain anyDAI emits standard Transfer on mint/burn alongside its
-    // LogSwapin/LogSwapout events, so Transfer indexing handles everything
-    // post-backfill (the earlier nonStandardBalance flag was a mis-diagnosis
-    // — I'd queried the wrong wallet address and saw start=0).
+    // at chain start (verified on-chain at block 37,319,999 via eth_call).
+    // BackfillTokenBalances was intended to seed it, but the deployed
+    // indexer at f41d225 shows zero backfill entries on Fantom (vs 4 on
+    // Arbitrum) — the onBlock `where` filter isn't firing on this chain in
+    // production, so the ledger started at 0 and went negative on the first
+    // outflow (verified: Cross-Chain Fantom ledger went from +0 → -80,100
+    // when the bridge later swept the position out). Falling back to
+    // nonStandardBalance until the backfill reliability issue is rooted
+    // (see follow-up task in tasks/pr-311-feedback.md).
     token(ERC20_DAI, "Stable", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     token(ERC20_DEI, "Stable", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
     }),
     // Multichain-bridged FRAX on Fantom — same pre-existing-balance pattern
-    // as DAI (45,036 at chain start). Backfill seeds it; Transfer indexing
-    // handles the rest.
+    // and same backfill-miss as DAI (45,036 at chain start). Same fallback.
     token(ERC20_FRAX, "Stable", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     token(ERC20_LQDR, "Volatile", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,
@@ -196,19 +201,18 @@ export const FANTOM: ChainConfig = {
       decimals: 18,
     }),
     // Cross-Chain Fantom held 5,198 wFTM before chain start (block
-    // 37,320,000). BackfillTokenBalances seeds the pre-existing balance
-    // from balanceOf, and the Wrapped9 handlers in Erc20Transfers.ts catch
-    // wrap/unwrap activity since wFTM is the canonical Fantom WETH9 fork.
+    // 37,320,000). Backfill missed (see DAI comment above for the broader
+    // backfill-reliability issue) — falling back to nonStandardBalance.
     token(ERC20_WFTM, "Volatile", true, true, undefined, {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
-    // Cross-Chain Fantom held 1.13 gOHM before chain start; same Class A
-    // pre-existing-balance pattern as wFTM. BackfillTokenBalances seeds it
-    // (validated: residual = 0).
+    // Cross-Chain Fantom held 1.13 gOHM before chain start; backfill missed.
     token(ERC20_GOHM, "Volatile", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     token(LP_UNISWAP_V2_WFTM_GOHM, "Protocol-Owned Liquidity", true, false, undefined, {
       startBlock: FANTOM_START_BLOCK,
