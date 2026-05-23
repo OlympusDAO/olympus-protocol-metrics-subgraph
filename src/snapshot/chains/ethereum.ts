@@ -138,6 +138,12 @@ const ERC20_GAUNTLET_SUSDS_VAULT = addr("0x3365184e87d2Bd75961780454A5810BEc956F
 // isLiability=true so their value subtracts from treasury MV.
 const ERC20_ADAI = addr("0x028171bca77440897b824ca71d1c56cac55b68a3");
 const ERC20_AETH_USDE = addr("0x4f5923fc5fd4a93352581b38b7cd26943012decf");
+// Aave V3 sUSDe supply receipt. Yield Farming MS holds this as part of the
+// "aEthsUSDe loop" position; legacy treasury reports it as the largest
+// missing position on Envio (~$1M peak in early April 2026). Priced 1:1
+// through the existing sUSDe ERC4626 handler. Same Aave scaled-balance
+// mechanics as aDAI / aEthUSDe → nonStandardBalance.
+const ERC20_AETH_SUSDE = addr("0x4579a27af00a62c0eb156349f31b345c08386419");
 const ERC20_VAR_DEBT_ETH_USDT = addr("0x6df1c1e379bc5a00a7b4c6e67a203333772f45a8");
 const ERC20_VAR_DEBT_ETH_USDC = addr("0x72e95b8931767c79ba4eee721354d6e99a61d004");
 
@@ -332,6 +338,7 @@ const names: Record<string, string> = {
   [ERC20_GAUNTLET_SUSDS_VAULT]: "Gauntlet sUSDS Vault",
   [ERC20_ADAI]: "Aave DAI",
   [ERC20_AETH_USDE]: "Aave Ethereum USDe",
+  [ERC20_AETH_SUSDE]: "Aave Ethereum sUSDe",
   [ERC20_VAR_DEBT_ETH_USDC]: "Aave Ethereum Variable Debt USDC",
   [ERC20_VAR_DEBT_ETH_USDT]: "Aave Ethereum Variable Debt USDT",
   [ERC20_BTRFLY_V1]: "BTRFLY",
@@ -382,6 +389,7 @@ const abbreviations: Record<string, string> = {
   [ERC20_GAUNTLET_SUSDS_VAULT]: "gtSUSDS",
   [ERC20_ADAI]: "aDAI",
   [ERC20_AETH_USDE]: "aEthUSDe",
+  [ERC20_AETH_SUSDE]: "aEthsUSDe",
   [ERC20_VAR_DEBT_ETH_USDC]: "variableDebtEthUSDC",
   [ERC20_VAR_DEBT_ETH_USDT]: "variableDebtEthUSDT",
   [ERC20_BTRFLY_V1]: "BTRFLY",
@@ -716,8 +724,11 @@ const liquidityHandlers: LiquidityHandler[] = [
     startBlock: ERC20_SDAI_BLOCK,
   },
   {
+    // Add ERC20_AETH_SUSDE here so the Aave receipt prices via the same
+    // sUSDe vault — 1 aEthSUSDe ≈ 1 sUSDe so the share→asset conversion
+    // from sUSDe.convertToAssets(1e18) is the correct rate for both.
     kind: "erc4626",
-    tokens: [ERC20_SUSDE],
+    tokens: [ERC20_SUSDE, ERC20_AETH_SUSDE],
     id: ERC20_SUSDE,
     underlying: ERC20_USDE,
     decimals: 18,
@@ -905,6 +916,20 @@ export const ETHEREUM: ChainConfig = {
     // as aDAI. Same justification for keeping nonStandardBalance.
     token({
       address: ERC20_AETH_USDE,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_AAVE_V3_BLOCK,
+      decimals: 18,
+      nonStandardBalance: true,
+    }),
+    // Aave V3 aEthSUSDe receipt — Aave supply token for sUSDe. Same Aave
+    // scaled-balance mechanics as aEthUSDe / aDAI, so nonStandardBalance.
+    // 1 aEthSUSDe ≈ 1 sUSDe at the Aave reserve index, so pricing chains
+    // through the existing sUSDe ERC4626 handler (added in liquidityHandlers
+    // below).
+    token({
+      address: ERC20_AETH_SUSDE,
       category: "Stable",
       isLiquid: true,
       isBluechip: false,
