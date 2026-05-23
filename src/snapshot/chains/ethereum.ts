@@ -110,6 +110,15 @@ const ERC20_OHM_V1 = addr("0x383518188c0c6d7730d91b2c03a03c837814a899");
 const ERC20_OHM_V2 = addr("0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5");
 const ERC20_GOHM = addr("0x0ab87046fBb341D058F17CBC4c1133F25a20a52f");
 const ERC20_SOHM_V3 = addr("0x04906695D6D12CF5459975d7C3C03356E4Ccd460");
+// sOHM V2 — rebasing predecessor of sOHM V3. Legacy treasury subgraph
+// includes it in TREASURY OHM accounting only after block 18_260_000
+// (`SOHM_V2_INDEX_BLOCK`), per inventory-ethereum.md §"sOHM V2 Balance
+// Indexing". Treated as direct OHM-equivalent (1 sOHM V2 = 1 OHM).
+const ERC20_SOHM_V2 = addr("0x04f2694c8fcee23e8fd0dfea1d4f5bb8c352111f");
+const ERC20_SOHM_V2_TREASURY_START_BLOCK = 18_260_000;
+// Start block from which gOHM / sOHM V3 in protocol wallets contribute to
+// TREASURY OHM (per inventory-ethereum.md §"gOHM Indexing Start").
+const ERC20_GOHM_TREASURY_START_BLOCK = 17_115_000;
 
 const ERC20_DAI = addr("0x6b175474e89094c44da98b954eedeac495271d0f");
 const ERC20_FRAX = addr("0x853d955acef822db058eb8505911ed77f175b99e");
@@ -352,6 +361,8 @@ const names: Record<string, string> = {
   [ERC20_FXS_VE]: "FXS - Staked",
   [LP_UNISWAP_V2_CVX_CRV_ETH]: "Uniswap V2 cvxCRV-ETH Liquidity Pool",
   [ERC20_GOHM]: "Governance OHM",
+  [ERC20_SOHM_V3]: "Staked OHM V3",
+  [ERC20_SOHM_V2]: "Staked OHM V2",
   [ERC20_LDO]: "Lido DAO",
   [ERC20_LQTY]: "Liquity",
   [ERC20_LUSD]: "Liquity USD",
@@ -400,6 +411,8 @@ const abbreviations: Record<string, string> = {
   [ERC20_FXS]: "FXS",
   [ERC20_FXS_VE]: "veFXS",
   [ERC20_GOHM]: "gOHM",
+  [ERC20_SOHM_V3]: "sOHM",
+  [ERC20_SOHM_V2]: "sOHM",
   [ERC20_LDO]: "LDO",
   [ERC20_LQTY]: "LQTY",
   [ERC20_OHM_V1]: "OHM V1",
@@ -1243,6 +1256,32 @@ export const ETHEREUM: ChainConfig = {
     address: addr("0xf577c77ee3578c7f216327f41b5d7221ead2b2a3"),
     startBlock: 16_226_955,
   },
+  // Additional OHM-equivalent tokens to count toward the TREASURY supply
+  // bucket alongside `ohmToken` (= OHM V2). Legacy treasury subgraph
+  // includes gOHM / sOHM V2 / sOHM V3 balances at protocol wallets here;
+  // omitting them inflates historical `ohmBackedSupply` (~2.0M OHM gap
+  // on 2024-10-01 traced entirely to ~9.4K gOHM held by protocol wallets
+  // at that time, × ~213 sOHM-V3 index).
+  treasuryOhmEquivalents: [
+    {
+      tokenAddress: ERC20_GOHM,
+      decimals: 18,
+      startBlock: ERC20_GOHM_TREASURY_START_BLOCK,
+      convertVia: "gohm-index",
+    },
+    {
+      tokenAddress: ERC20_SOHM_V3,
+      decimals: 9,
+      startBlock: ERC20_GOHM_TREASURY_START_BLOCK,
+      convertVia: "direct",
+    },
+    {
+      tokenAddress: ERC20_SOHM_V2,
+      decimals: 9,
+      startBlock: ERC20_SOHM_V2_TREASURY_START_BLOCK,
+      convertVia: "direct",
+    },
+  ],
   // OHM V1 → V2 migration offset. Per inventory §7: 2013 × sOHM-V3 index
   // OHM is subtracted from total supply between [14_381_564, 24_550_660)
   // to account for stranded gOHM pre-minted for OHM V1 LP migrations.

@@ -633,6 +633,16 @@ async function getOhmEquivalentMultiplier(
 ): Promise<BigNumber | null> {
   const decimals = getTokenDecimals(config.tokens, config.ohmToken);
   if (decimals === 9) return new BigNumberCtor(1);
+  return getSOhmV3Index(context);
+}
+
+// Reads the canonical sOHM V3 rebase index regardless of which chain the
+// caller is on. Needed for treasuryOhmEquivalents on OHM-native chains
+// (Ethereum) where `getOhmEquivalentMultiplier` returns 1 because
+// `config.ohmToken` is OHM-not-gOHM, but a separate `convertVia:
+// "gohm-index"` entry (gOHM held by protocol wallets) still needs the
+// rebase index to map gOHM units → OHM-equivalent.
+async function getSOhmV3Index(context: EvmOnBlockContext): Promise<BigNumber | null> {
   const ethereum = CHAIN_CONFIGS[CHAIN_IDS.ETHEREUM];
   const sOhm = ethereum?.migrationOffset?.sOhmAddress;
   if (!sOhm) return null;
@@ -727,6 +737,60 @@ export async function pushTreasuryOhm(
         -1,
       ),
     );
+  }
+
+  // Additional OHM-equivalent tokens (gOHM / sOHM V3 / sOHM V2 on
+  // Ethereum). The legacy treasury subgraph includes these in TREASURY
+  // supply alongside bare OHM — without them, historical
+  // `ohmBackedSupply` overstates by ~12% on 2024-10-01 because the
+  // protocol held ~9.4K gOHM (~2.0M OHM-equivalent) at that time. See
+  // ChainConfig.treasuryOhmEquivalents commentary for conversion rules
+  // and start-block gates.
+  if (config.treasuryOhmEquivalents) {
+    // gOHM-style entries need the sOHM V3 rebase index. On Ethereum the
+    // `multiplier` above is 1 (ohmToken is OHM, not gOHM) so we can't
+    // reuse it — fetch the index directly. Cache it so we don't hit
+    // OhmIndexState once per (entry × wallet).
+    let gohmIndex: BigNumber | null | undefined;
+    for (const entry of config.treasuryOhmEquivalents) {
+      if (blockNumber < BigInt(entry.startBlock)) continue;
+      let entryMultiplier: BigNumber;
+      if (entry.convertVia === "gohm-index") {
+        if (gohmIndex === undefined) gohmIndex = await getSOhmV3Index(context);
+        if (!gohmIndex) continue;
+        entryMultiplier = gohmIndex;
+      } else {
+        entryMultiplier = new BigNumberCtor("1");
+      }
+      for (const wallet of config.circulatingSupplyWallets) {
+        const rawBalance = await readTokenBalance(
+          context,
+          config.chainId,
+          entry.tokenAddress,
+          wallet,
+          entry.decimals,
+        );
+        if (rawBalance.eq(ZERO)) continue;
+        const balance = rawBalance.times(entryMultiplier);
+        if (balance.eq(ZERO)) continue;
+        supplies.push(
+          createTokenSupply(
+            config,
+            timestamp,
+            getContractName(config, entry.tokenAddress),
+            entry.tokenAddress,
+            undefined,
+            undefined,
+            getContractName(config, wallet),
+            wallet,
+            "Treasury",
+            balance,
+            blockNumber,
+            -1,
+          ),
+        );
+      }
+    }
   }
 }
 

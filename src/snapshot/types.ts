@@ -134,6 +134,26 @@ export type ChainConfig = {
     startBlock: number; // 14_381_564
     endBlock: number; // 24_550_660 (exclusive)
   };
+  // Additional OHM-equivalent tokens to count in the TREASURY supply
+  // category alongside the bare `ohmToken`. Legacy treasury subgraph
+  // includes gOHM / sOHM v2 / sOHM v3 held by `circulatingSupplyWallets`
+  // as part of the TREASURY deduction — see
+  // inventory-ethereum.md §"Treasury OHM" plus the start-block gates
+  // documented under "gOHM Indexing Start" / "sOHM V2 Balance Indexing".
+  // Missing this on Envio inflated historical `ohmBackedSupply` by ~12%
+  // on 2024-10-01 (~2M OHM-equivalent in gOHM that legacy counted but
+  // Envio didn't).
+  //
+  // - `convertVia: "gohm-index"`: balance is in 18-decimal gOHM-style
+  //   units; multiply by the sOHM V3 rebase index to get OHM-equivalent
+  // - `convertVia: "direct"`: balance is already in 9-decimal
+  //   OHM-equivalent units (sOHM V3, post-rebase)
+  treasuryOhmEquivalents?: Array<{
+    tokenAddress: string;
+    decimals: number;
+    startBlock: number;
+    convertVia: "gohm-index" | "direct";
+  }>;
   // Olympus staking contracts. Used to read the per-epoch OHM distribution
   // for the APY calculation. V1 is always tried; V2/V3 are gated on their
   // respective start blocks.

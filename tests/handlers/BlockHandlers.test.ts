@@ -272,6 +272,66 @@ describe("pushTokenBalanceRecords per-chain validation", () => {
     expect(supplies).toHaveLength(0);
   });
 
+  test("Ethereum: emits Treasury supply for OHM + gOHM + sOHM V3 (post-gate)", async () => {
+    // Reproduces the legacy "OHM V2 in gOHM" / "OHM V2 in sOHM v3" rows.
+    // Without treasuryOhmEquivalents wired in, historical ohmBackedSupply
+    // overstated by ~2M OHM on 2024-10-01 because ~9.4K gOHM held by
+    // protocol wallets wasn't being deducted from circulation.
+    const ETHEREUM = CHAIN_CONFIGS[1];
+    const OHM_V2 = ETHEREUM.ohmToken;
+    const GOHM = "0x0ab87046fbb341d058f17cbc4c1133f25a20a52f";
+    const SOHM_V3 = "0x04906695d6d12cf5459975d7c3c03356e4ccd460";
+    const wallet = ETHEREUM.circulatingSupplyWallets[0];
+
+    const INDEX_213 = 213_000_000_000n; // 213 × 1e9 (sOHM V3 index, 9 dec)
+    const context = buildMockContext({
+      chainId: 1,
+      tokenBalances: [
+        { tokenAddress: OHM_V2, walletAddress: wallet, balance: 100_000_000_000n }, // 100 OHM
+        { tokenAddress: GOHM, walletAddress: wallet, balance: 5n * 10n ** 18n }, // 5 gOHM
+        { tokenAddress: SOHM_V3, walletAddress: wallet, balance: 50_000_000_000n }, // 50 sOHM V3
+      ],
+      ohmIndex: { chainId: 1, sOhmAddress: SOHM_V3, index: INDEX_213 },
+    });
+
+    const supplies: SerializedTokenSupply[] = [];
+    // Block is past all gates (17,115,000 for gOHM/sOHM V3 and 18,260,000 for sOHM V2).
+    await pushTreasuryOhm(context, ETHEREUM, supplies, TIMESTAMP, 19_000_000n);
+
+    // Three rows: OHM, gOHM, sOHM V3 (no sOHM V2 balance seeded, so it's
+    // not emitted even though the gate is satisfied).
+    const byToken = new Map(supplies.filter((s) => s.source === wallet || s.sourceAddress === wallet).map((s) => [s.token, s]));
+    expect(byToken.get("OHM")?.supplyBalance).toBe("-100"); // OHM v2 raw
+    expect(byToken.get("Governance OHM (gOHM)")?.supplyBalance).toBe("-1065"); // 5 × 213 = 1065 OHM-equiv
+    expect(byToken.get("Staked OHM V3 (sOHM)")?.supplyBalance).toBe("-50"); // sOHM v3 direct
+  });
+
+  test("Ethereum: gOHM / sOHM V3 are NOT emitted before block 17_115_000 (pre-gate)", async () => {
+    const ETHEREUM = CHAIN_CONFIGS[1];
+    const OHM_V2 = ETHEREUM.ohmToken;
+    const GOHM = "0x0ab87046fbb341d058f17cbc4c1133f25a20a52f";
+    const SOHM_V3 = "0x04906695d6d12cf5459975d7c3c03356e4ccd460";
+    const wallet = ETHEREUM.circulatingSupplyWallets[0];
+
+    const context = buildMockContext({
+      chainId: 1,
+      tokenBalances: [
+        { tokenAddress: OHM_V2, walletAddress: wallet, balance: 100_000_000_000n },
+        { tokenAddress: GOHM, walletAddress: wallet, balance: 5n * 10n ** 18n },
+        { tokenAddress: SOHM_V3, walletAddress: wallet, balance: 50_000_000_000n },
+      ],
+      ohmIndex: { chainId: 1, sOhmAddress: SOHM_V3, index: 213_000_000_000n },
+    });
+
+    const supplies: SerializedTokenSupply[] = [];
+    // Block just before the gOHM/sOHM-V3 gate.
+    await pushTreasuryOhm(context, ETHEREUM, supplies, TIMESTAMP, 17_114_999n);
+
+    // Only the bare OHM row should fire; gOHM / sOHM V3 are gated off.
+    expect(supplies.filter((s) => s.token.includes("gOHM"))).toHaveLength(0);
+    expect(supplies.filter((s) => s.token.includes("Staked OHM"))).toHaveLength(0);
+  });
+
   test("Arbitrum: emits Treasury TokenSupply in OHM units (multiplier = 1, no index lookup)", async () => {
     // On OHM-native chains the multiplier is 1 — no OhmIndexState read
     // required — so the path stays untouched from legacy behavior.
