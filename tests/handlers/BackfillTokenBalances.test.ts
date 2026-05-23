@@ -16,20 +16,33 @@ function buildMockContext(args: {
   chainId: number;
   blockTimestamp: number;
   balances: Seed[];
+  existingTokenBalances?: Array<{ id: string; balance: bigint }>;
 }) {
   const balanceByPair = new Map<string, bigint>();
   for (const b of args.balances) {
     balanceByPair.set(`${addr(b.tokenAddress)}|${addr(b.walletAddress)}`, b.balance);
   }
+  const tokenBalanceStore = new Map<string, { id: string; balance: bigint }>();
+  for (const e of args.existingTokenBalances ?? []) {
+    tokenBalanceStore.set(e.id, e);
+  }
   const tokenBalanceSets: Array<Record<string, unknown>> = [];
   const tokenBalanceUpdateSets: Array<Record<string, unknown>> = [];
+  const sentinelSets: Array<Record<string, unknown>> = [];
 
   const context = {
     chain: { id: args.chainId },
     log: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
-    TokenBalance: { set: vi.fn((entity: Record<string, unknown>) => tokenBalanceSets.push(entity)) },
+    TokenBalance: {
+      get: vi.fn(async (id: string) => tokenBalanceStore.get(id)),
+      set: vi.fn((entity: Record<string, unknown>) => tokenBalanceSets.push(entity)),
+    },
     TokenBalanceUpdate: {
       set: vi.fn((entity: Record<string, unknown>) => tokenBalanceUpdateSets.push(entity)),
+    },
+    BackfillSentinel: {
+      get: vi.fn(async (_id: string) => undefined),
+      set: vi.fn((entity: Record<string, unknown>) => sentinelSets.push(entity)),
     },
     effect: vi.fn(
       async (
@@ -48,7 +61,7 @@ function buildMockContext(args: {
     ),
   } as unknown as EvmOnBlockContext;
 
-  return { context, tokenBalanceSets, tokenBalanceUpdateSets };
+  return { context, tokenBalanceSets, tokenBalanceUpdateSets, sentinelSets };
 }
 
 describe("BackfillTokenBalances", () => {
@@ -176,12 +189,67 @@ describe("BackfillTokenBalances", () => {
     await expect(runBackfill(context, { number: 0 })).rejects.toThrow(/unsupported chain/);
   });
 
-  test("wrong block throws (defensive — guards against firing at the wrong block)", async () => {
+  test("block before startBlock throws (defensive — handler should never fire before chain start)", async () => {
     const { context } = buildMockContext({
       chainId: 42161,
       blockTimestamp: 0,
       balances: [],
     });
-    await expect(runBackfill(context, { number: 99_999_999 })).rejects.toThrow(/unexpected block/);
+    await expect(runBackfill(context, { number: 10_000_000 })).rejects.toThrow(
+      /fired before startBlock/,
+    );
+  });
+
+  test("late-firing handler adds pre-window seed to existing TokenBalance (additive)", async () => {
+    // Simulates the wide-filter behaviour: backfill fires on the first
+    // block at or after startBlock that HyperSync delivers, which may be
+    // many blocks later. By then the Transfer handler may have written
+    // an in-window delta to TokenBalance. The seed must ADD to that, not
+    // overwrite, so the resulting ledger equals pre-window + in-window.
+    const ARBITRUM = CHAIN_CONFIGS[42161];
+    const FRAX = "0x17fc002b466eec40dae837fc4be5c67993ddbd6f";
+    const wallet = ARBITRUM.protocolAddresses[0];
+    const tokenLower = addr(FRAX);
+    const walletLower = addr(wallet);
+    const id = `42161-${tokenLower}-${walletLower}`;
+    const PRE_WINDOW = 18_072_805448367500373789n;
+    const IN_WINDOW_DELTA = -5_000_000000000000000000n; // outflow after chain start
+
+    const { context, tokenBalanceSets } = buildMockContext({
+      chainId: 42161,
+      blockTimestamp: 1_651_400_000,
+      balances: [{ tokenAddress: FRAX, walletAddress: wallet, balance: PRE_WINDOW }],
+      existingTokenBalances: [{ id, balance: IN_WINDOW_DELTA }],
+    });
+
+    // Fire well after startBlock (10_950_000).
+    await runBackfill(context, { number: 11_500_000 });
+
+    const fraxEntity = tokenBalanceSets.find((e) => e.id === id);
+    expect(fraxEntity).toBeDefined();
+    // pre-window + in-window
+    expect(fraxEntity?.balance).toBe(PRE_WINDOW + IN_WINDOW_DELTA);
+  });
+
+  test("writes BackfillSentinel exactly once at the end of the run", async () => {
+    const ARBITRUM = CHAIN_CONFIGS[42161];
+    const FRAX = "0x17fc002b466eec40dae837fc4be5c67993ddbd6f";
+    const wallet = ARBITRUM.protocolAddresses[0];
+
+    const { context, sentinelSets } = buildMockContext({
+      chainId: 42161,
+      blockTimestamp: 1_651_363_200,
+      balances: [{ tokenAddress: FRAX, walletAddress: wallet, balance: 1n }],
+    });
+
+    const result = await runBackfill(context, { number: 11_500_000 });
+
+    expect(sentinelSets).toHaveLength(1);
+    expect(sentinelSets[0]?.id).toBe("42161");
+    expect(sentinelSets[0]?.chainId).toBe(42161);
+    expect(sentinelSets[0]?.firedAtBlock).toBe(11_500_000n);
+    expect(sentinelSets[0]?.seededAtBlock).toBe(10_949_999n); // startBlock - 1
+    expect(sentinelSets[0]?.seeded).toBe(result.seeded);
+    expect(sentinelSets[0]?.skipped).toBe(result.skipped);
   });
 });

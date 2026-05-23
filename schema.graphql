@@ -256,6 +256,26 @@ type TokenBalanceUpdate {
   timestamp: BigInt!
 }
 
+# Per-chain sentinel for BackfillTokenBalances. Written once when the
+# pre-window balance seed runs for a chain; the handler short-circuits
+# on subsequent blocks once this exists. ID is the chainId as a string.
+# Previous design used an exact-block `where: { _gte: X, _lte: X }`
+# filter which only fired when HyperSync happened to deliver block X —
+# i.e. only when block X contained a Transfer for one of our contracts.
+# That coincided on Arbitrum (10,950,000) but not the other 5 chains,
+# leaving pre-window balances unseeded everywhere else. Switching to a
+# wide `_gte: startBlock` filter + this sentinel makes the seed run on
+# the first delivered block at or after startBlock, regardless of how
+# many "quiet" blocks separate startBlock from the first event.
+type BackfillSentinel {
+  id: ID! # chainId as string
+  chainId: Int!
+  seededAtBlock: BigInt! # the block we called `balanceOf` at (`startBlock - 1`)
+  firedAtBlock: BigInt! # the block onBlock actually fired on (>= startBlock)
+  seeded: Int! # number of (token, wallet) pairs with non-zero pre-window balance
+  skipped: Int! # number skipped (zero balance, native, or token not yet deployed)
+}
+
 # Running ERC20 totalSupply. Maintained from Transfer-from-zero (mint) and Transfer-to-zero (burn).
 type Erc20Supply {
   id: ID! # chainId-tokenAddress
