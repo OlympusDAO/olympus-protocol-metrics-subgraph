@@ -166,9 +166,21 @@ indexer.onBlock(
         // Unknown chain — never fire on this chain.
         return false;
       }
-      // Wide-open lower bound. Handler body short-circuits via the
-      // BackfillSentinel after the first successful run.
-      return { block: { number: { _gte: entry.startBlock } } };
+      // Exact-block filter. Empirically Envio actively schedules block
+      // processing at the `_gte` lower bound regardless of event presence
+      // (verified on the ea67290 deploy: all 6 chains fired at exact
+      // startBlock with no events present on the 5 "quiet" chains).
+      // Pairing `_gte` with `_lte` at the same value keeps invocations
+      // bounded to a single block per chain — the prior unbounded
+      // `_gte: X` filter caused the handler to fire on every event-bearing
+      // block from startBlock onward, inflating "events processed" by
+      // orders of magnitude with no behavioural benefit since the sentinel
+      // short-circuits subsequent calls anyway.
+      return {
+        block: {
+          number: { _gte: entry.startBlock, _lte: entry.startBlock },
+        },
+      };
     },
   },
   async ({ block, context }) => {

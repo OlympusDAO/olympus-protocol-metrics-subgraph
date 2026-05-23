@@ -11,18 +11,17 @@ import "../../src/handlers/BackfillTokenBalances";
 // pick up the token from .env via the test runner's process env.
 const hasApiToken = Boolean(process.env.ENVIO_API_TOKEN);
 
-// End-to-end verification via real HyperSync. Three cases:
+// End-to-end verification via real HyperSync. Confirms the exact-block
+// `_gte: X, _lte: X` filter combined with a sentinel-gated body fires on
+// both Arbitrum (event-bearing startBlock) and Berachain (quiet startBlock
+// — first treasury Transfer was 541K blocks later at 1,340,669).
 //
-//  - Arbitrum: handler still fires on the configured startBlock (regression
-//    guard — the previous exact-block filter worked there and the new
-//    wide filter must too).
-//
-//  - Berachain: configured startBlock 799,194 has no qualifying event; the
-//    first treasury Transfer on the deployed indexer was at block 1,340,669
-//    (~541K blocks later). Under the OLD exact-block filter this never
-//    fired. Under the new wide filter the handler should fire on the first
-//    delivered block in [799_194, 1_341_000] and write exactly one
-//    BackfillSentinel row.
+// The seemingly-broken behaviour we originally observed (only Arbitrum
+// produced `-backfill` rows) was a visibility artifact: the old code
+// skipped writing TokenBalanceUpdate for zero-balance pairs, so chains
+// where every wallet had a zero pre-window balance left no trace. The
+// sentinel entity (added alongside this test) makes those silent fires
+// observable; both tests assert one BackfillSentinel row is written.
 
 describe.skipIf(!hasApiToken)("BackfillTokenBalances — live HyperSync (post-fix)", () => {
   it("Arbitrum: fires on the configured startBlock", async () => {
