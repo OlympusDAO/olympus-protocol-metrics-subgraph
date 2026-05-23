@@ -5,6 +5,12 @@ import { describe, expect, it } from "vitest";
 // (top-level side effect at the bottom of BackfillTokenBalances.ts).
 import "../../src/handlers/BackfillTokenBalances";
 
+// `createTestIndexer` hits live HyperSync, which requires ENVIO_API_TOKEN.
+// CI doesn't ship a token (no secret needed for the suite to pass), so we
+// skip this whole file when the env var is missing. Devs running locally
+// pick up the token from .env via the test runner's process env.
+const hasApiToken = Boolean(process.env.ENVIO_API_TOKEN);
+
 // End-to-end verification via real HyperSync. Three cases:
 //
 //  - Arbitrum: handler still fires on the configured startBlock (regression
@@ -18,7 +24,7 @@ import "../../src/handlers/BackfillTokenBalances";
 //    delivered block in [799_194, 1_341_000] and write exactly one
 //    BackfillSentinel row.
 
-describe("BackfillTokenBalances — live HyperSync (post-fix)", () => {
+describe.skipIf(!hasApiToken)("BackfillTokenBalances — live HyperSync (post-fix)", () => {
   it("Arbitrum: fires on the configured startBlock", async () => {
     const indexer = createTestIndexer();
     const result = await indexer.process({
