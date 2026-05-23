@@ -1,4 +1,5 @@
 import type { EvmOnBlockContext } from "envio";
+import BigNumber from "bignumber.js";
 import type { PublicClient } from "viem";
 
 import { snapshotUniv3NftPositions } from "../effects";
@@ -12,19 +13,27 @@ import type {
   SerializedTokenSupply,
 } from "../snapshot/types";
 
-// UniV3 NFT POL (Ethereum). For each treasury wallet, walk its
-// NonfungiblePositionManager NFT holdings, match each position's token-pair
-// to one of the chain's known UniV3 pricing pools, compute token amounts
-// from the position's liquidity + the pool's current sqrtPriceX96, and emit:
-//   - one TokenRecord per token in the position (priced via the chain's
-//     pricing pipeline)
-//   - one Liquidity-type TokenSupply per position whose token0 OR token1 is
-//     OHM, so OHM held inside UniV3 POL NFTs gets deducted from floating
-//     supply (mirrors pushOwnedLiquiditySupply's behavior for UniV2 /
-//     Balancer, which can't handle UniV3 because UniV3 LP is NFT-based and
-//     getLpTokenForHandler returns null for kind: "univ3"). Empirically,
-//     omitting the supply emit caused ohmFloatingSupply to overstate by
-//     ~700k OHM on Ethereum vs legacy on 2026-05-20 (fix `a4b714a`).
+// UniV3 NFT POL. For each treasury wallet, walk its NonfungiblePositionManager
+// NFT holdings, match each position to a known UniV3 pricing pool, compute
+// token amounts from `liquidity` + indexed sqrtPriceX96, then emit:
+//
+//   - ONE TokenRecord per (wallet, pool), aggregating all NFTs in that pool,
+//     with category "Protocol-Owned Liquidity" and
+//     `multiplier = nonOhmValue / totalValue` — same shape as
+//     `pushOwnedLiquidityRecords` produces for Univ2 / Balancer / Kodiak,
+//     and what the legacy treasury subgraph emits via
+//     `LiquidityUniswapV3.getLiquidityBalances`. Earlier the handler emitted
+//     two rows per pool (one per token side, categorized as
+//     Volatile/Stable) — functionally produced the same aggregate
+//     liquidBacking but doubled per-position rows and broke any consumer
+//     filtering by `category = "Protocol-Owned Liquidity"`.
+//
+//   - ONE Liquidity-type TokenSupply per (wallet, pool) for the OHM side,
+//     so OHM held inside UniV3 POL NFTs is deducted from floating supply
+//     (mirrors `pushOwnedLiquiditySupply`'s behaviour for non-NFT POL —
+//     needed because `getLpTokenForHandler` returns null for univ3
+//     handlers). Without this the floating supply overstated by ~700K OHM
+//     on Ethereum vs legacy (fix `a4b714a`).
 export async function pushUniv3NftPol(
   context: EvmOnBlockContext,
   config: ChainConfig,
@@ -52,6 +61,8 @@ export async function pushUniv3NftPol(
   }
   if (univ3Pools.size === 0) return;
 
+  const ohmTokenLower = config.ohmToken.toLowerCase();
+
   for (const wallet of config.protocolAddresses) {
     const result = (await context.effect(snapshotUniv3NftPositions, {
       chainId: config.chainId,
@@ -70,12 +81,22 @@ export async function pushUniv3NftPol(
     };
     if (result.positions.length === 0) continue;
 
+    // Aggregate per pool. Legacy: "Records are aggregated per wallet (not
+    // per position ID)" (inventory-ethereum.md §UniswapV3 Pools). Multiple
+    // NFTs in the same pool from the same wallet sum into one row.
+    type PoolAgg = {
+      poolId: string;
+      token0: string;
+      token1: string;
+      amount0: BigNumber;
+      amount1: BigNumber;
+    };
+    const aggregates = new Map<string, PoolAgg>();
     for (const position of result.positions) {
       const pairKey = [position.token0, position.token1].sort().join("/");
       const pool = univ3Pools.get(pairKey);
       if (!pool) continue;
 
-      // sqrtPriceX96 sourced from indexed Univ3PoolState (no RPC).
       const state = await context.Univ3PoolState.get(`${config.chainId}-${addr(pool.id)}`);
       if (!state || state.sqrtPriceX96 === 0n) continue;
 
@@ -91,77 +112,105 @@ export async function pushUniv3NftPol(
       const balance0 = toDecimal(amounts.amount0, decimals0);
       const balance1 = toDecimal(amounts.amount1, decimals1);
 
-      // Emit one TokenRecord per token in the position. Skip dust.
-      const ohmTokenLower = config.ohmToken.toLowerCase();
-      if (!balance0.eq(ZERO)) {
-        const rate0 = (await getPrice(config, context, client, position.token0, blockNumber, null))
-          .price;
-        records.push(
-          createTokenRecord(
-            config,
-            timestamp,
-            `${getContractName(config, position.token0)} - UniV3 POL (${getContractName(config, pool.id)})`,
-            position.token0,
-            getContractName(config, wallet),
-            wallet,
-            rate0,
-            balance0,
-            blockNumber,
-          ),
-        );
-        if (position.token0.toLowerCase() === ohmTokenLower) {
-          supplies.push(
-            createTokenSupply(
-              config,
-              timestamp,
-              getContractName(config, config.ohmToken),
-              config.ohmToken,
-              getContractName(config, pool.id),
-              pool.id,
-              getContractName(config, wallet),
-              wallet,
-              TYPE_LIQUIDITY,
-              balance0,
-              blockNumber,
-              -1,
-            ),
-          );
-        }
+      const key = addr(pool.id);
+      const existing = aggregates.get(key);
+      if (existing) {
+        // Sum in token0/token1 order; pair-key sort guarantees consistent
+        // ordering across NFTs in the same pool.
+        existing.amount0 = existing.amount0.plus(balance0);
+        existing.amount1 = existing.amount1.plus(balance1);
+      } else {
+        aggregates.set(key, {
+          poolId: pool.id,
+          token0: position.token0,
+          token1: position.token1,
+          amount0: balance0,
+          amount1: balance1,
+        });
       }
-      if (!balance1.eq(ZERO)) {
-        const rate1 = (await getPrice(config, context, client, position.token1, blockNumber, null))
-          .price;
-        records.push(
-          createTokenRecord(
+    }
+
+    for (const agg of aggregates.values()) {
+      // Price each side via the chain's pricing router. Both prices are in
+      // USD per 1 token, so `amount * price` is USD value of that side.
+      const rate0 = (await getPrice(config, context, client, agg.token0, blockNumber, null)).price;
+      const rate1 = (await getPrice(config, context, client, agg.token1, blockNumber, null)).price;
+      const value0 = agg.amount0.times(rate0);
+      const value1 = agg.amount1.times(rate1);
+      const totalValue = value0.plus(value1);
+      if (totalValue.lte(ZERO)) continue;
+
+      // multiplier = (value of all non-OHM sides) / totalValue. Matches
+      // legacy `includedValue / totalValue`. Two OHM sides aren't a valid
+      // POL shape, so at most one of value0/value1 is OHM.
+      let ohmValue = new BigNumber("0");
+      const token0IsOhm = agg.token0.toLowerCase() === ohmTokenLower;
+      const token1IsOhm = agg.token1.toLowerCase() === ohmTokenLower;
+      if (token0IsOhm) ohmValue = ohmValue.plus(value0);
+      if (token1IsOhm) ohmValue = ohmValue.plus(value1);
+      const nonOhmValue = totalValue.minus(ohmValue);
+      const multiplier = nonOhmValue.div(totalValue);
+
+      // Emit ONE TokenRecord per (wallet, pool). balance=1 + rate=totalValue
+      // mirrors how legacy fills these fields for an aggregated POL row
+      // (and how `pushOwnedLiquidityRecords` does for Univ2 / Balancer /
+      // Kodiak): the pair's value-per-position-unit collapses into `rate`,
+      // `balance` is a dimensionless 1.
+      records.push(
+        createTokenRecord(
+          config,
+          timestamp,
+          getContractName(config, agg.poolId),
+          agg.poolId,
+          getContractName(config, wallet),
+          wallet,
+          totalValue,
+          new BigNumber("1"),
+          blockNumber,
+          multiplier,
+          "Protocol-Owned Liquidity",
+        ),
+      );
+
+      // OHM-side liquidity-supply emission (unchanged behaviour): one
+      // Liquidity-type TokenSupply per (wallet, pool) carrying the
+      // aggregated OHM amount, so cross-chain floating supply correctly
+      // deducts OHM locked in UniV3 NFT POL.
+      if (token0IsOhm && !agg.amount0.eq(ZERO)) {
+        supplies.push(
+          createTokenSupply(
             config,
             timestamp,
-            `${getContractName(config, position.token1)} - UniV3 POL (${getContractName(config, pool.id)})`,
-            position.token1,
+            getContractName(config, config.ohmToken),
+            config.ohmToken,
+            getContractName(config, agg.poolId),
+            agg.poolId,
             getContractName(config, wallet),
             wallet,
-            rate1,
-            balance1,
+            TYPE_LIQUIDITY,
+            agg.amount0,
             blockNumber,
+            -1,
           ),
         );
-        if (position.token1.toLowerCase() === ohmTokenLower) {
-          supplies.push(
-            createTokenSupply(
-              config,
-              timestamp,
-              getContractName(config, config.ohmToken),
-              config.ohmToken,
-              getContractName(config, pool.id),
-              pool.id,
-              getContractName(config, wallet),
-              wallet,
-              TYPE_LIQUIDITY,
-              balance1,
-              blockNumber,
-              -1,
-            ),
-          );
-        }
+      }
+      if (token1IsOhm && !agg.amount1.eq(ZERO)) {
+        supplies.push(
+          createTokenSupply(
+            config,
+            timestamp,
+            getContractName(config, config.ohmToken),
+            config.ohmToken,
+            getContractName(config, agg.poolId),
+            agg.poolId,
+            getContractName(config, wallet),
+            wallet,
+            TYPE_LIQUIDITY,
+            agg.amount1,
+            blockNumber,
+            -1,
+          ),
+        );
       }
     }
   }
