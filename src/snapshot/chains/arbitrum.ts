@@ -282,6 +282,8 @@ export const ARBITRUM: ChainConfig = {
       category: "Volatile",
       isLiquid: true,
       isBluechip: false,
+      // multiplier=0: see commentary on Base ERC20_OHM. gOHM also =0 below.
+      multiplier: "0",
       startBlock: OHM_CREATION_BLOCK,
       decimals: 9,
     }),
@@ -290,6 +292,7 @@ export const ARBITRUM: ChainConfig = {
       category: "Volatile",
       isLiquid: true,
       isBluechip: false,
+      multiplier: "0",
       decimals: 18,
     }),
     token({

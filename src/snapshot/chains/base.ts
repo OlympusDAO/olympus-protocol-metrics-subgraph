@@ -115,6 +115,13 @@ export const BASE: ChainConfig = {
       category: "Volatile",
       isLiquid: true,
       isBluechip: false,
+      // multiplier=0 zeroes out valueExcludingOhm for OHM-token records.
+      // createTokenRecord uses this when emitting OHM-side rows for direct
+      // holdings and UniV3 NFT POL positions. Missing it inflated Base
+      // liquidBacking by ~$763K (the OHM-USDC POL OHM-side row attributed
+      // its full value to non-OHM accounting). Mirrors Ethereum's
+      // ERC20_OHM_V2 / ERC20_GOHM defs.
+      multiplier: "0",
       startBlock: BASE_START_BLOCK,
       decimals: 9,
     }),

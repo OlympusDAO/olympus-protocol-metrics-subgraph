@@ -206,6 +206,8 @@ export const BERACHAIN: ChainConfig = {
       category: "Volatile",
       isLiquid: true,
       isBluechip: false,
+      // multiplier=0: see commentary on Base ERC20_OHM.
+      multiplier: "0",
       startBlock: BERACHAIN_START_BLOCK,
       decimals: 9,
     }),

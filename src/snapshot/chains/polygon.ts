@@ -189,6 +189,8 @@ export const POLYGON: ChainConfig = {
       category: "Volatile",
       isLiquid: true,
       isBluechip: false,
+      // multiplier=0: see commentary on Base ERC20_OHM.
+      multiplier: "0",
       startBlock: POLYGON_START_BLOCK,
       decimals: 18,
     }),
