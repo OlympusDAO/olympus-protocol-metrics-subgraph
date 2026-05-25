@@ -104,7 +104,20 @@ async function derivePrice(
     const handler = createPriceHandler(config, context, client, handlerConfig);
     if (!handler.matches(tokenAddress)) continue;
     if (handler.getId() === currentPool) continue;
-    if (currentPoolHandler && hasSameTokenSet(handlerConfig, currentPoolHandler)) continue;
+    // Skip a same-token-set sibling only when it's a *different* underlying
+    // pool — that's the genuine cycle-prevention case (e.g. two distinct
+    // WETH-OHM pools). Sibling handlers that wrap the SAME underlying pool
+    // (Beradrome / Infrared / BeraHub reward vaults all read
+    // LP_KODIAK_OHM_HONEY) must NOT be skipped, otherwise the pool's own
+    // tokens can't be priced when computing that pool's POL value — which
+    // silently zeroed the OHM side of Berachain OHM-HONEY TVL. The in-flight
+    // cycle guard in cachedPricingLookup backstops any residual recursion.
+    if (
+      currentPoolHandler &&
+      hasSameTokenSet(handlerConfig, currentPoolHandler) &&
+      underlyingPool(handlerConfig) !== underlyingPool(currentPoolHandler)
+    )
+      continue;
 
     const result = await handler.getPrice(
       tokenAddress,
@@ -117,6 +130,16 @@ async function derivePrice(
     selected = result;
   }
   return selected ?? ZERO_RESULT;
+}
+
+// Underlying liquidity contract a handler reads from. Kodiak reward-vault
+// wrappers (Beradrome / Infrared / BeraHub) each have a distinct `id` but
+// share the same underlying `pool`; every other kind uses `id` as its pool
+// identity.
+function underlyingPool(handler: LiquidityHandler): string {
+  return "pool" in handler && handler.pool
+    ? handler.pool.toLowerCase()
+    : handler.id.toLowerCase();
 }
 
 export async function getTotalValue(

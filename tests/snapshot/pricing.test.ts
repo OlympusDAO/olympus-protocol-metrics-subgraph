@@ -70,17 +70,20 @@ function mockContext({
   univ2 = [],
   univ3 = [],
   chainlink = [],
+  kodiak = [],
 }: {
   univ2?: readonly (readonly [string, unknown])[];
   univ3?: readonly (readonly [string, unknown])[];
   chainlink?: readonly (readonly [string, unknown])[];
+  kodiak?: readonly (readonly [string, unknown])[];
 } = {}): EvmOnBlockContext {
   const univ2States = new Map(univ2);
   const univ3States = new Map(univ3);
   const chainlinkStates = new Map(chainlink);
+  const kodiakPools = new Map(kodiak);
   return {
     BalancerPoolState: { get: async () => undefined },
-    KodiakPool: { get: async () => undefined },
+    KodiakPool: { get: async (id: string) => kodiakPools.get(id) },
     Univ2PoolState: { get: async (id: string) => univ2States.get(id) },
     Univ3PoolState: { get: async (id: string) => univ3States.get(id) },
     Erc20Supply: { get: async () => undefined },
@@ -338,5 +341,71 @@ describe("Berachain Envio snapshot parity", () => {
       kind: "remap",
       target: WBERA,
     });
+  });
+
+  // Regression for the Beradrome/Infrared/BeraHub OHM-HONEY POL TVL bug.
+  // All these reward-vault handlers wrap the SAME underlying Kodiak pool
+  // (LP_KODIAK_OHM_HONEY) and declare the same [HONEY, OHM] token set. When
+  // one of them computes its POL value it must price OHM — which can only
+  // come from the OHM-HONEY pool. The old `hasSameTokenSet` skip removed
+  // every OHM-HONEY handler from the router whenever the caller was a
+  // sibling, so OHM resolved to $0 and the OHM side of the pool's TVL
+  // silently vanished (treasuryMarketValue under-reported ~6x). The fix
+  // only skips same-token siblings that are a *different* underlying pool.
+  const OHM_BERACHAIN = "0x18878df23e2a36f81e820e4b47b4a40576d3159c";
+  const BERADROME_OHM_HONEY = "0x555bad9ec18db19ded0057d2517242399d1c5d87";
+  const KODIAK_OHM_HONEY_UNDERLYING = "0x1111111111111111111111111111111111111111";
+
+  function ohmHoneyContext() {
+    return mockContext({
+      kodiak: [
+        [
+          poolStateId(BERACHAIN, KODIAK_OHM_HONEY),
+          { underlyingPoolAddress: KODIAK_OHM_HONEY_UNDERLYING },
+        ],
+      ],
+      univ3: [
+        [
+          poolStateId(BERACHAIN, KODIAK_OHM_HONEY_UNDERLYING),
+          { sqrtPriceX96: ONE_TO_ONE_SQRT_PRICE_X96, liquidity: 1_000_000n },
+        ],
+      ],
+    });
+  }
+
+  test("prices OHM via the base Kodiak pool (currentPool = null)", async () => {
+    const client = mockClient(BERACHAIN.chainId, new Map<string, unknown>());
+    await expect(
+      getPrice(BERACHAIN, ohmHoneyContext(), client, OHM_BERACHAIN, BERACHAIN_BLOCK, null),
+    ).resolves.toSatisfy((result) => result.price.gt(0));
+  });
+
+  test("prices OHM when called from a sibling OHM-HONEY POL handler (Beradrome)", async () => {
+    const client = mockClient(BERACHAIN.chainId, new Map<string, unknown>());
+    // currentPool = Beradrome reward-vault handler id. Pre-fix this returned
+    // ZERO_RESULT because every OHM-HONEY handler shared Beradrome's token
+    // set and got skipped; post-fix the base Kodiak (same underlying pool)
+    // is allowed through and prices OHM.
+    const fromSibling = await getPrice(
+      BERACHAIN,
+      ohmHoneyContext(),
+      client,
+      OHM_BERACHAIN,
+      BERACHAIN_BLOCK,
+      BERADROME_OHM_HONEY,
+    );
+    expect(fromSibling.price.gt(0)).toBe(true);
+
+    // And it matches the base-case price — the sibling caller doesn't change
+    // the answer, it just no longer suppresses it.
+    const baseline = await getPrice(
+      BERACHAIN,
+      ohmHoneyContext(),
+      client,
+      OHM_BERACHAIN,
+      BERACHAIN_BLOCK,
+      null,
+    );
+    expect(fromSibling.price.toFixed()).toBe(baseline.price.toFixed());
   });
 });
