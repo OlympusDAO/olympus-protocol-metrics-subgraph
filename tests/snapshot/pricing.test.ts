@@ -2,7 +2,7 @@ import BigNumber from "bignumber.js";
 import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 import { describe, expect, test } from "vitest";
-import { getPrice, withPricingCache } from "../../src/pricing";
+import { getPrice, getTotalValue, withPricingCache } from "../../src/pricing";
 import { ARBITRUM } from "../../src/snapshot/chains/arbitrum";
 import { BERACHAIN } from "../../src/snapshot/chains/berachain";
 import type { ChainConfig, LiquidityHandler, TokenDefinition } from "../../src/snapshot/types";
@@ -369,6 +369,14 @@ describe("Berachain Envio snapshot parity", () => {
           poolStateId(BERACHAIN, KODIAK_OHM_HONEY_UNDERLYING),
           { sqrtPriceX96: ONE_TO_ONE_SQRT_PRICE_X96, liquidity: 1_000_000n },
         ],
+        // Production also has the WBERA-HONEY pool, which prices HONEY with
+        // positive liquidity (the stable handler returns liquidity:0). This
+        // replicates the real Berachain handler set so the recursion path
+        // matches production.
+        [
+          poolStateId(BERACHAIN, WBERA_HONEY_POOL),
+          { sqrtPriceX96: WBERA_HONEY_SQRT_PRICE_X96, liquidity: 1_000_000n },
+        ],
       ],
     });
   }
@@ -407,5 +415,85 @@ describe("Berachain Envio snapshot parity", () => {
       null,
     );
     expect(fromSibling.price.toFixed()).toBe(baseline.price.toFixed());
+  });
+
+  // Exercises the exact production path: pushOwnedLiquidityRecords computes
+  // multiplier = getTotalValue([OHM]) / getTotalValue([]) for a Beradrome
+  // POL row. Pre-fix, getTotalValue([]) returned HONEY-only (OHM priced 0)
+  // so multiplier == 1 and treasuryMarketValue under-reported ~6x. Post-fix
+  // OHM is priced, so 0 < multiplier < 1.
+  test("Beradrome getTotalValue includes the OHM side (multiplier < 1)", async () => {
+    // Reserves: token0=OHM (9 dec), token1=HONEY (18 dec) per address sort.
+    const OHM_RESERVE = 2_000n * 10n ** 9n; // 2000 OHM
+    const HONEY_RESERVE = 40_000n * 10n ** 18n; // 40000 HONEY
+    const responses = new Map<string, unknown>([
+      [key(KODIAK_OHM_HONEY, "getUnderlyingBalances"), [OHM_RESERVE, HONEY_RESERVE]],
+    ]);
+    const client = mockClient(BERACHAIN.chainId, responses);
+    const beradrome = handler(BERACHAIN, BERADROME_OHM_HONEY);
+    // Beradrome V1 reward vault is created at block 1,052,333; use a later
+    // block so the handler is active.
+    const block = 2_000_000n;
+
+    await withPricingCache(async () => {
+      const ctx = ohmHoneyContext();
+      const totalValue = await getTotalValue(BERACHAIN, ctx, client, beradrome, [], block);
+      const includedValue = await getTotalValue(
+        BERACHAIN,
+        ctx,
+        client,
+        beradrome,
+        [OHM_BERACHAIN],
+        block,
+      );
+      expect(totalValue).not.toBeNull();
+      expect(includedValue).not.toBeNull();
+      const multiplier = includedValue!.div(totalValue!);
+      // OHM contributes real value → strictly between 0 and 1.
+      expect(multiplier.gt(0)).toBe(true);
+      expect(multiplier.lt(1)).toBe(true);
+      // totalValue must exceed the HONEY-only included value.
+      expect(totalValue!.gt(includedValue!)).toBe(true);
+    });
+  });
+
+  // Reproduces the PRODUCTION snapshot ordering: every POL handler shares one
+  // pricing cache (withPricingCache wraps the whole snapshot), and the base
+  // Kodiak handler runs FIRST (it's first in ownedLiquidityHandlers). If its
+  // OHM/HONEY lookups poison the shared cache, the later Beradrome
+  // getTotalValue could reuse a degenerate cached price and collapse to
+  // multiplier=1. This guards against the cache-ordering sensitivity the
+  // isolated test above doesn't exercise.
+  test("Beradrome multiplier stays < 1 after base-Kodiak primes the shared cache", async () => {
+    const OHM_RESERVE = 2_000n * 10n ** 9n;
+    const HONEY_RESERVE = 40_000n * 10n ** 18n;
+    const responses = new Map<string, unknown>([
+      [key(KODIAK_OHM_HONEY, "getUnderlyingBalances"), [OHM_RESERVE, HONEY_RESERVE]],
+    ]);
+    const client = mockClient(BERACHAIN.chainId, responses);
+    const baseKodiak = handler(BERACHAIN, KODIAK_OHM_HONEY);
+    const beradrome = handler(BERACHAIN, BERADROME_OHM_HONEY);
+    const block = 2_000_000n;
+
+    await withPricingCache(async () => {
+      const ctx = ohmHoneyContext();
+      // Production order: base Kodiak getTotalValue first (primes the cache
+      // with OHM/HONEY price entries), then the Beradrome wrapper.
+      await getTotalValue(BERACHAIN, ctx, client, baseKodiak, [], block);
+      await getTotalValue(BERACHAIN, ctx, client, baseKodiak, [OHM_BERACHAIN], block);
+
+      const totalValue = await getTotalValue(BERACHAIN, ctx, client, beradrome, [], block);
+      const includedValue = await getTotalValue(
+        BERACHAIN,
+        ctx,
+        client,
+        beradrome,
+        [OHM_BERACHAIN],
+        block,
+      );
+      const multiplier = includedValue!.div(totalValue!);
+      expect(multiplier.lt(1)).toBe(true);
+      expect(multiplier.gt(0)).toBe(true);
+    });
   });
 });
