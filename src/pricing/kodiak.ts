@@ -28,10 +28,21 @@ function applyDecimalAdjustment(
   decimals1: number,
   lookupIsToken0: boolean,
 ): BigNumber {
+  // raw = token1_wei / token0_wei (UniV3 P = sqrtPriceX96^2 / 2^192).
+  //   price of token0 in token1 = raw      × 10^(dec0 - dec1)
+  //   price of token1 in token0 = (1/raw)  × 10^(dec1 - dec0)
+  // The decimal exponent is 10^diff; the raw term is `raw` for token0 and
+  // `1/raw` for token1. (A prior version had the raw/1-over-raw swapped,
+  // which only canceled out when raw == 1 — i.e. a 1:1 sqrtPrice — so it
+  // passed contrived unit tests but priced OHM at ~5e-20 on the real
+  // Berachain OHM-HONEY pool, zeroing the OHM side of POL TVL.)
   const diff = lookupIsToken0 ? decimals0 - decimals1 : decimals1 - decimals0;
   const factor = new BigNumber(10).pow(Math.abs(diff));
-  const adjusted = diff < 0 ? ONE.div(factor) : factor;
-  return adjusted.times(lookupIsToken0 ? ONE.div(rawPriceToken0InToken1) : rawPriceToken0InToken1);
+  const decimalAdjustment = diff < 0 ? ONE.div(factor) : factor;
+  const rawTerm = lookupIsToken0
+    ? rawPriceToken0InToken1
+    : ONE.div(rawPriceToken0InToken1);
+  return decimalAdjustment.times(rawTerm);
 }
 
 export class KodiakPriceHandler extends BasePriceHandler<

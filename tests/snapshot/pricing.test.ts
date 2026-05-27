@@ -388,6 +388,39 @@ describe("Berachain Envio snapshot parity", () => {
     ).resolves.toSatisfy((result) => result.price.gt(0));
   });
 
+  // Regression for the Kodiak decimal/inversion bug. With a realistic (non
+  // 1:1) sqrtPrice, OHM (9 dec) priced in HONEY (18 dec) must come out around
+  // its real ~$19, NOT ~5e-20. The previous applyDecimalAdjustment multiplied
+  // by 1/raw for token0 instead of raw; that only canceled when raw==1 (the
+  // ONE_TO_ONE_SQRT_PRICE_X96 used elsewhere), so it slipped past every
+  // contrived test while zeroing OHM on the real chain.
+  test("prices OHM at a realistic magnitude with a non-1:1 sqrtPrice", async () => {
+    // Real OHM-HONEY underlying sqrtPriceX96 sampled from chain. raw =
+    // sqrtPriceX96^2 / 2^192 ≈ 1.86e10 (HONEY_wei/OHM_wei); OHM price =
+    // raw × 10^(9-18) × HONEY($1) ≈ $18.6.
+    const REAL_SQRT_PRICE_X96 = 10820000112521596930084939133752873n;
+    const KODIAK_OHM_HONEY_UNDERLYING = "0x1111111111111111111111111111111111111111";
+    const client = mockClient(BERACHAIN.chainId, new Map<string, unknown>());
+    const ctx = mockContext({
+      kodiak: [
+        [
+          poolStateId(BERACHAIN, KODIAK_OHM_HONEY),
+          { underlyingPoolAddress: KODIAK_OHM_HONEY_UNDERLYING },
+        ],
+      ],
+      univ3: [
+        [
+          poolStateId(BERACHAIN, KODIAK_OHM_HONEY_UNDERLYING),
+          { sqrtPriceX96: REAL_SQRT_PRICE_X96, liquidity: 1_000_000n },
+        ],
+      ],
+    });
+    const result = await getPrice(BERACHAIN, ctx, client, OHM_BERACHAIN, BERACHAIN_BLOCK, null);
+    // Real OHM was ~$15–25 in this period; assert a sane band (the bug gave ~5e-20).
+    expect(result.price.gt(5)).toBe(true);
+    expect(result.price.lt(60)).toBe(true);
+  });
+
   test("prices OHM when called from a sibling OHM-HONEY POL handler (Beradrome)", async () => {
     const client = mockClient(BERACHAIN.chainId, new Map<string, unknown>());
     // currentPool = Beradrome reward-vault handler id. Pre-fix this returned
