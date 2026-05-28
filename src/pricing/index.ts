@@ -227,8 +227,14 @@ async function cachedPricingLookup<T>(
   // by contributing the fallback value to whoever called us — the upstream
   // resolver picks the highest-liquidity result so a zero contribution from
   // one branch doesn't poison the answer, it just gets ignored.
+  //
+  // Cycles are EXPECTED here, not exceptional: pools whose two tokens price
+  // each other (Berachain OHM↔HONEY across the shared Kodiak pool, WBERA↔HONEY)
+  // recurse until this guard breaks them, then resolve via a terminal source
+  // (the stable handler). We deliberately do NOT log — at historical-sync
+  // volume a per-cycle console.warn fires thousands of times and the
+  // synchronous I/O measurably slows indexing.
   if (store.inFlight.has(cacheKey)) {
-    console.warn(`[pricing] cycle detected for ${cacheKey} — returning fallback`);
     return cycleFallback;
   }
 
