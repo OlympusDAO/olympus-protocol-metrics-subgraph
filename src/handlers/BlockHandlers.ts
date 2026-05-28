@@ -128,21 +128,6 @@ indexer.onBlock(
     },
   },
   async ({ block, context }) => {
-    // Skip the preload phase. Envio runs every handler twice — once
-    // concurrently in the preload phase (DB writes ignored, exceptions
-    // silently abort), once sequentially in the processing phase. This
-    // snapshot is a heavy RPC-driven computation that prices liquidity via
-    // direct `client.readContract` calls (NOT the Effect API) and a
-    // process-global contract-read cache, neither of which is safe under
-    // the concurrent preload run. On chains with chained entity reads +
-    // recursive price lookups (Berachain Kodiak: KodiakPool → Univ3PoolState
-    // → cyclic OHM/HONEY pricing) the preload run resolved OHM to $0,
-    // collapsing POL multiplier to 1 and under-reporting treasuryMarketValue
-    // ~6x. Per Envio's "Double-Run Footgun" guidance, gate one-shot external
-    // work behind `context.isPreload`. Snapshots fire ~every 8h per chain,
-    // so forgoing preload batching here costs nothing.
-    if (context.isPreload) return;
-
     const handler = BLOCK_HANDLERS.find((value) => value.chain === context.chain.id);
     if (!handler) {
       throw new Error(
