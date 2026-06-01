@@ -6,6 +6,7 @@ import {
   createArtifactStoreFromEnv,
   createMetricsSourceFromEnv,
   publishMetricsArtifacts,
+  publishMetricsArtifactsFromEnv,
   type ArtifactStore,
   type MetricsSource,
 } from "../../apps/metrics-publisher/src/publisher";
@@ -166,6 +167,31 @@ describe("metrics publisher", () => {
     expect(result.range).toEqual({ start: "2026-05-31", end: "2026-06-01", days: 2 });
     expect(result.writtenKeys).toContain("v2/metrics/daily/2026-05.json");
     expect(result.writtenKeys).toContain("v2/metrics/daily/2026-06.json");
+  });
+
+  test("treats blank optional publisher date environment variables as unset", async () => {
+    const result = await publishMetricsArtifactsFromEnv(
+      {
+        HASURA_GRAPHQL_ENDPOINT: "http://hasura.internal/v1/graphql",
+        HASURA_GRAPHQL_ADMIN_SECRET: "secret",
+        ARTIFACT_BUCKET: "metrics",
+        ARTIFACT_ENDPOINT: "https://r2.example.com",
+        ARTIFACT_REGION: "auto",
+        ARTIFACT_ACCESS_KEY_ID: "access-key",
+        ARTIFACT_SECRET_ACCESS_KEY: "secret-key",
+        PUBLISHER_MODE: "incremental",
+        PUBLISHER_LOOKBACK_DAYS: "2",
+        PUBLISHER_START_DATE: "",
+        PUBLISHER_END_DATE: "   ",
+      },
+      {
+        source: source(),
+        store: new MemoryArtifactStore(),
+        now: () => new Date(generatedAt),
+      },
+    );
+
+    expect(result.range).toEqual({ start: "2026-05-31", end: "2026-06-01", days: 2 });
   });
 
   test("does not publish a new manifest when a shard upload fails", async () => {

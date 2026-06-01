@@ -164,15 +164,20 @@ export function createArtifactStoreFromEnv(env: NodeJS.ProcessEnv): S3ArtifactSt
   });
 }
 
-export async function publishMetricsArtifactsFromEnv(env: NodeJS.ProcessEnv = process.env): Promise<PublishResult> {
+export async function publishMetricsArtifactsFromEnv(
+  env: NodeJS.ProcessEnv = process.env,
+  deps: { source?: MetricsSource; store?: ArtifactStore; now?: () => Date } = {},
+): Promise<PublishResult> {
   const mode = parsePublishMode(env.PUBLISHER_MODE);
+  const lookbackDays = optionalEnv(env, "PUBLISHER_LOOKBACK_DAYS");
   return publishMetricsArtifacts({
     mode,
-    lookbackDays: env.PUBLISHER_LOOKBACK_DAYS === undefined ? undefined : Number(env.PUBLISHER_LOOKBACK_DAYS),
-    startDate: env.PUBLISHER_START_DATE,
-    endDate: env.PUBLISHER_END_DATE,
-    source: createMetricsSourceFromEnv(env),
-    store: createArtifactStoreFromEnv(env),
+    lookbackDays: lookbackDays === undefined ? undefined : Number(lookbackDays),
+    startDate: optionalEnv(env, "PUBLISHER_START_DATE"),
+    endDate: optionalEnv(env, "PUBLISHER_END_DATE"),
+    source: deps.source ?? createMetricsSourceFromEnv(env),
+    store: deps.store ?? createArtifactStoreFromEnv(env),
+    now: deps.now,
   });
 }
 
@@ -209,6 +214,11 @@ function requiredEnv(env: NodeJS.ProcessEnv, name: string): string {
     throw new Error(`Missing required environment variable ${name}.`);
   }
   return value;
+}
+
+function optionalEnv(env: NodeJS.ProcessEnv, name: string): string | undefined {
+  const value = env[name]?.trim();
+  return value === "" ? undefined : value;
 }
 
 function parsePublishMode(value: string | undefined): PublishMode {
