@@ -2,7 +2,7 @@ name: olympus-protocol-metrics
 
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:17-alpine@sha256:979c4379dd698aba0b890599a6104e082035f98ef31d9b9291ec22f2b13059ca
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: testing
@@ -38,7 +38,7 @@ services:
       - metrics-private
 
   minio:
-    image: quay.io/minio/minio:RELEASE.2026-05-21T22-20-29Z
+    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z@sha256:a1ea29fa28355559ef137d71fc570e508a214ec84ff8083e39bc5428980b015e
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
@@ -49,7 +49,7 @@ services:
       - metrics-private
 
   minio-init:
-    image: quay.io/minio/mc:RELEASE.2026-05-21T22-39-44Z
+    image: quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z@sha256:aead63c77f9db9107f1696fb08ecb0faeda23729cde94b0f663edf4fe09728e3
     depends_on:
       - minio
     entrypoint:
