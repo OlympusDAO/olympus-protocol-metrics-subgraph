@@ -162,6 +162,13 @@ surface.
 - [x] Upload all shards and schemas before `v2/manifest.json`.
 - [x] Implement full publish mode for initial deployment.
 - [x] Implement incremental publish mode with configurable lookback.
+- [x] Require a full publisher run to create the initial manifest; incremental
+      mode fails if the manifest is missing.
+- [x] Default full publisher runs to the public start date, `2022-05-01`.
+- [x] Coordinate overlapping cron runs with an S3-compatible
+      `v2/publisher.lock`; fresh locks skip cleanly, stale locks are taken over.
+- [x] Clamp public manifest bounds to the public start date instead of raw
+      Hasura source bounds.
 - [x] Ensure upload/validation failure exits non-zero and does not publish a new
       manifest.
 

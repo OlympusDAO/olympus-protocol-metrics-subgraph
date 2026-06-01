@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   monthKeysForRange,
   resolveDateRange,
@@ -5,6 +6,7 @@ import {
   type Manifest,
 } from "../../../packages/metrics-artifacts/src";
 import {
+  ArtifactNotFoundError,
   MemoryArtifactStore,
   S3ArtifactStore,
   artifactEntry,
@@ -32,13 +34,27 @@ export type PublishMode = "full" | "incremental";
 
 export type PublishResult = {
   manifestPublishedLast: boolean;
-  range: DateRange;
+  range?: DateRange;
+  skipped: boolean;
+  skipReason?: "lock_held";
+  runId: string;
+  publishMode: PublishMode;
   writtenKeys: string[];
 };
 
 const SCHEMA_VERSION = "1.0.0";
 const DEFAULT_GENERATED_AT = "2026-06-01T08:15:00.000Z";
+const DEFAULT_PUBLIC_START_DATE = "2022-05-01";
+const DEFAULT_LOCK_TTL_MS = 12 * 60 * 60 * 1000;
+const PUBLISHER_LOCK_KEY = "v2/publisher.lock";
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+type PublisherLock = {
+  runId: string;
+  startedAt: string;
+  expiresAt: string;
+  mode: PublishMode;
+};
 
 const SCHEMAS: Record<string, Record<string, unknown>> = {
   "v2/schemas/manifest.schema.json": {
@@ -88,63 +104,110 @@ const SCHEMAS: Record<string, Record<string, unknown>> = {
 export async function publishMetricsArtifacts(input: {
   mode: PublishMode;
   lookbackDays?: number;
+  publicStartDate?: string;
   startDate?: string;
   endDate?: string;
   manifest?: Manifest;
   source?: MetricsSource;
   store?: ArtifactStore;
   now?: () => Date;
+  lockTtlMs?: number;
 }): Promise<PublishResult> {
   const source = input.source ?? new EmptyMetricsSource();
   const store = input.store ?? new MemoryArtifactStore();
-  const bounds = input.manifest ?? (await source.fetchBounds());
-  const range = resolvePublishRange(input, bounds);
-  const generatedAt = (input.now?.() ?? new Date(DEFAULT_GENERATED_AT)).toISOString();
-  const [metrics, treasuryAssets, ohmSupply] = await Promise.all([
-    source.fetchDailyMetrics(range),
-    source.fetchTreasuryAssets(range),
-    source.fetchOhmSupply(range),
-  ]);
-
-  const writtenKeys: string[] = [];
-  const artifacts: Record<string, ArtifactEntry> = {};
-
-  const writeArtifact = async (key: string, value: unknown, rowCount: number): Promise<void> => {
-    artifacts[key] = artifactEntry(value, rowCount);
-    await store.putJson(key, value);
-    writtenKeys.push(key);
-  };
-
-  for (const [key, schema] of Object.entries(SCHEMAS)) {
-    await writeArtifact(key, schema, 0);
+  const now = input.now?.() ?? new Date(DEFAULT_GENERATED_AT);
+  const generatedAt = now.toISOString();
+  const publicStartDate = input.publicStartDate ?? DEFAULT_PUBLIC_START_DATE;
+  const lockTtlMs = input.lockTtlMs ?? DEFAULT_LOCK_TTL_MS;
+  if (!Number.isInteger(lockTtlMs) || lockTtlMs < 1) {
+    throw new Error("lockTtlMs must be a positive integer.");
+  }
+  const existingManifest = input.manifest ?? (await getExistingManifest(store));
+  if (input.mode === "incremental" && existingManifest === undefined) {
+    const existingLock = await readPublisherLock(store);
+    if (existingLock !== undefined && Date.parse(existingLock.value.expiresAt) > now.getTime()) {
+      return {
+        manifestPublishedLast: false,
+        skipped: true,
+        skipReason: "lock_held",
+        runId: existingLock.value.runId,
+        publishMode: input.mode,
+        writtenKeys: [],
+      };
+    }
+    throw new Error("Metrics artifact manifest is missing. Run the publisher in full mode first.");
+  }
+  const lock = await acquirePublisherLock({
+    store,
+    mode: input.mode,
+    now,
+    ttlMs: lockTtlMs,
+  });
+  if (!lock.acquired) {
+    return {
+      manifestPublishedLast: false,
+      skipped: true,
+      skipReason: "lock_held",
+      runId: lock.runId,
+      publishMode: input.mode,
+      writtenKeys: [],
+    };
   }
 
-  for (const month of monthKeysForRange(range)) {
-    const metricRows = metrics.filter((row) => row.date.startsWith(month));
-    const treasuryAssetRows = treasuryAssets.filter((row) => row.date.startsWith(month));
-    const ohmSupplyRows = ohmSupply.filter((row) => row.date.startsWith(month));
+  try {
+    const bounds = await source.fetchBounds();
+    const range = resolvePublishRange(input, bounds, existingManifest, publicStartDate);
+    const [metrics, treasuryAssets, ohmSupply] = await Promise.all([
+      source.fetchDailyMetrics(range),
+      source.fetchTreasuryAssets(range),
+      source.fetchOhmSupply(range),
+    ]);
 
-    await writeArtifact(`v2/metrics/daily/${month}.json`, metricRows, metricRows.length);
-    await writeArtifact(`v2/treasury-assets/daily/${month}.json`, treasuryAssetRows, treasuryAssetRows.length);
-    await writeArtifact(`v2/ohm-supply/daily/${month}.json`, ohmSupplyRows, ohmSupplyRows.length);
+    const writtenKeys: string[] = [];
+    const artifacts: Record<string, ArtifactEntry> = { ...(existingManifest?.artifacts ?? {}) };
+
+    const writeArtifact = async (key: string, value: unknown, rowCount: number): Promise<void> => {
+      artifacts[key] = artifactEntry(value, rowCount);
+      await store.putJson(key, value);
+      writtenKeys.push(key);
+    };
+
+    for (const [key, schema] of Object.entries(SCHEMAS)) {
+      await writeArtifact(key, schema, 0);
+    }
+
+    for (const month of monthKeysForRange(range)) {
+      const metricRows = metrics.filter((row) => row.date.startsWith(month));
+      const treasuryAssetRows = treasuryAssets.filter((row) => row.date.startsWith(month));
+      const ohmSupplyRows = ohmSupply.filter((row) => row.date.startsWith(month));
+
+      await writeArtifact(`v2/metrics/daily/${month}.json`, metricRows, metricRows.length);
+      await writeArtifact(`v2/treasury-assets/daily/${month}.json`, treasuryAssetRows, treasuryAssetRows.length);
+      await writeArtifact(`v2/ohm-supply/daily/${month}.json`, ohmSupplyRows, ohmSupplyRows.length);
+    }
+
+    const manifest: Manifest = {
+      schemaVersion: SCHEMA_VERSION,
+      generatedAt,
+      earliestDate: maxDate(publicStartDate, minDate(existingManifest?.earliestDate ?? range.start, range.start)),
+      latestDate: maxDate(existingManifest?.latestDate ?? range.end, range.end),
+      artifacts,
+    };
+
+    await store.putJson("v2/manifest.json", manifest);
+    writtenKeys.push("v2/manifest.json");
+
+    return {
+      manifestPublishedLast: writtenKeys.at(-1) === "v2/manifest.json",
+      range,
+      skipped: false,
+      runId: lock.runId,
+      publishMode: input.mode,
+      writtenKeys,
+    };
+  } finally {
+    await releasePublisherLock(store, lock.runId);
   }
-
-  const manifest: Manifest = {
-    schemaVersion: SCHEMA_VERSION,
-    generatedAt,
-    earliestDate: bounds.earliestDate,
-    latestDate: bounds.latestDate,
-    artifacts,
-  };
-
-  await store.putJson("v2/manifest.json", manifest);
-  writtenKeys.push("v2/manifest.json");
-
-  return {
-    manifestPublishedLast: writtenKeys.at(-1) === "v2/manifest.json",
-    range,
-    writtenKeys,
-  };
 }
 
 export function createMetricsSourceFromEnv(env: NodeJS.ProcessEnv): HasuraGraphqlMetricsSource {
@@ -170,24 +233,29 @@ export async function publishMetricsArtifactsFromEnv(
 ): Promise<PublishResult> {
   const mode = parsePublishMode(env.PUBLISHER_MODE);
   const lookbackDays = optionalEnv(env, "PUBLISHER_LOOKBACK_DAYS");
+  const lockTtlMs = optionalEnv(env, "PUBLISHER_LOCK_TTL_MS");
   return publishMetricsArtifacts({
     mode,
     lookbackDays: lookbackDays === undefined ? undefined : Number(lookbackDays),
+    publicStartDate: optionalEnv(env, "PUBLISHER_PUBLIC_START_DATE"),
     startDate: optionalEnv(env, "PUBLISHER_START_DATE"),
     endDate: optionalEnv(env, "PUBLISHER_END_DATE"),
     source: deps.source ?? createMetricsSourceFromEnv(env),
     store: deps.store ?? createArtifactStoreFromEnv(env),
     now: deps.now,
+    lockTtlMs: lockTtlMs === undefined ? undefined : Number(lockTtlMs),
   });
 }
 
 function resolvePublishRange(
   input: { mode: PublishMode; lookbackDays?: number; startDate?: string; endDate?: string },
   bounds: MetricsBounds,
+  existingManifest: Manifest | undefined,
+  publicStartDate: string,
 ): DateRange {
   if (input.mode === "full") {
     return resolveDateRange({
-      start: input.startDate ?? bounds.earliestDate,
+      start: input.startDate ?? publicStartDate,
       end: input.endDate ?? bounds.latestDate,
       manifest: { schemaVersion: SCHEMA_VERSION, generatedAt: DEFAULT_GENERATED_AT, ...bounds },
       enforceMaxRange: false,
@@ -199,13 +267,91 @@ function resolvePublishRange(
   if (!Number.isInteger(lookbackDays) || lookbackDays < 1) {
     throw new Error("lookbackDays must be a positive integer.");
   }
-  const start = input.startDate ?? maxDate(bounds.earliestDate, addDays(end, -(lookbackDays - 1)));
+  if (existingManifest === undefined) {
+    throw new Error("Metrics artifact manifest is missing. Run the publisher in full mode first.");
+  }
+  const start = input.startDate ?? maxDate(publicStartDate, addDays(existingManifest.latestDate, -(lookbackDays - 1)));
   return resolveDateRange({
     start,
     end,
     manifest: { schemaVersion: SCHEMA_VERSION, generatedAt: DEFAULT_GENERATED_AT, ...bounds },
     enforceMaxRange: false,
   });
+}
+
+async function getExistingManifest(store: ArtifactStore): Promise<Manifest | undefined> {
+  try {
+    return await store.getJson<Manifest>("v2/manifest.json");
+  } catch (error) {
+    if (error instanceof ArtifactNotFoundError) {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+async function acquirePublisherLock(input: {
+  store: ArtifactStore;
+  mode: PublishMode;
+  now: Date;
+  ttlMs: number;
+}): Promise<{ acquired: true; runId: string } | { acquired: false; runId: string }> {
+  const runId = randomUUID();
+  const lock = buildPublisherLock(runId, input.mode, input.now, input.ttlMs);
+  const acquired = await input.store.putJsonIfAbsent(PUBLISHER_LOCK_KEY, lock);
+  if (acquired) {
+    return { acquired: true, runId };
+  }
+
+  const existing = await readPublisherLock(input.store);
+  if (existing === undefined || Date.parse(existing.value.expiresAt) > input.now.getTime()) {
+    return { acquired: false, runId: existing?.value.runId ?? runId };
+  }
+
+  const replaced =
+    existing.etag === undefined
+      ? await input.store.putJsonIfAbsent(PUBLISHER_LOCK_KEY, lock)
+      : await input.store.putJsonIfMatch(PUBLISHER_LOCK_KEY, lock, existing.etag);
+  if (!replaced) {
+    const current = await readPublisherLock(input.store);
+    return { acquired: false, runId: current?.value.runId ?? runId };
+  }
+
+  const verified = await readPublisherLock(input.store);
+  return verified?.value.runId === runId ? { acquired: true, runId } : { acquired: false, runId };
+}
+
+async function readPublisherLock(
+  store: ArtifactStore,
+): Promise<{ value: PublisherLock; etag?: string } | undefined> {
+  try {
+    return await store.getJsonWithMetadata<PublisherLock>(PUBLISHER_LOCK_KEY);
+  } catch (error) {
+    if (error instanceof ArtifactNotFoundError) {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+async function releasePublisherLock(store: ArtifactStore, runId: string): Promise<void> {
+  const existing = await readPublisherLock(store);
+  if (existing?.value.runId === runId && existing.etag !== undefined) {
+    await store.deleteJsonIfMatch(PUBLISHER_LOCK_KEY, existing.etag);
+    return;
+  }
+  if (existing?.value.runId === runId) {
+    await store.deleteJson(PUBLISHER_LOCK_KEY);
+  }
+}
+
+function buildPublisherLock(runId: string, mode: PublishMode, now: Date, ttlMs: number): PublisherLock {
+  return {
+    runId,
+    mode,
+    startedAt: now.toISOString(),
+    expiresAt: new Date(now.getTime() + ttlMs).toISOString(),
+  };
 }
 
 function requiredEnv(env: NodeJS.ProcessEnv, name: string): string {
@@ -237,4 +383,8 @@ function addDays(date: string, days: number): string {
 
 function maxDate(a: string, b: string): string {
   return a > b ? a : b;
+}
+
+function minDate(a: string, b: string): string {
+  return a < b ? a : b;
 }

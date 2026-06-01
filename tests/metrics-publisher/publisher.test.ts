@@ -11,7 +11,7 @@ import {
   type ArtifactStore,
   type MetricsSource,
 } from "../../apps/metrics-publisher/src/publisher";
-import type { DailyMetric, OhmSupply, TreasuryAsset } from "../../packages/metrics-artifacts/src";
+import type { DailyMetric, Manifest, OhmSupply, TreasuryAsset } from "../../packages/metrics-artifacts/src";
 
 const generatedAt = "2026-06-01T08:15:00.000Z";
 
@@ -97,6 +97,14 @@ const ohmSupply: OhmSupply = {
   type: "Total Supply",
 };
 
+const existingManifest: Manifest = {
+  schemaVersion: "1.0.0",
+  generatedAt,
+  earliestDate: "2022-05-01",
+  latestDate: "2026-05-30",
+  artifacts: {},
+};
+
 function source(overrides: Partial<MetricsSource> = {}): MetricsSource {
   return {
     fetchBounds: async () => ({ earliestDate: "2026-04-30", latestDate: "2026-06-01" }),
@@ -144,8 +152,8 @@ describe("metrics publisher", () => {
     expect(manifest).toMatchObject({
       schemaVersion: "1.0.0",
       generatedAt,
-      earliestDate: "2026-04-30",
-      latestDate: "2026-06-01",
+      earliestDate: "2026-05-01",
+      latestDate: "2026-05-31",
     });
     expect(manifest.artifacts["v2/metrics/daily/2026-05.json"]).toMatchObject({
       rowCount: 1,
@@ -156,21 +164,51 @@ describe("metrics publisher", () => {
     expect(manifest.artifacts["v2/ohm-supply/daily/2026-05.json"].rowCount).toBe(1);
   });
 
-  test("incremental mode publishes a latest-date lookback window", async () => {
+  test("incremental mode publishes from the existing manifest with a lookback overlap", async () => {
+    const store = new MemoryArtifactStore();
+    await store.putJson("v2/manifest.json", existingManifest);
+
     const result = await publishMetricsArtifacts({
       mode: "incremental",
       lookbackDays: 2,
+      source: source(),
+      store,
+      now: () => new Date(generatedAt),
+    });
+
+    expect(result.publishMode).toBe("incremental");
+    expect(result.range).toEqual({ start: "2026-05-29", end: "2026-06-01", days: 4 });
+    expect(result.writtenKeys).toContain("v2/metrics/daily/2026-05.json");
+    expect(result.writtenKeys).toContain("v2/metrics/daily/2026-06.json");
+  });
+
+  test("incremental mode requires a manifest and does not bootstrap from the public start date", async () => {
+    await expect(
+      publishMetricsArtifacts({
+        mode: "incremental",
+        source: source(),
+        store: new MemoryArtifactStore(),
+        now: () => new Date(generatedAt),
+      }),
+    ).rejects.toThrow("Run the publisher in full mode first");
+  });
+
+  test("full mode defaults to the public start date for the initial backfill", async () => {
+    const result = await publishMetricsArtifacts({
+      mode: "full",
       source: source(),
       store: new MemoryArtifactStore(),
       now: () => new Date(generatedAt),
     });
 
-    expect(result.range).toEqual({ start: "2026-05-31", end: "2026-06-01", days: 2 });
-    expect(result.writtenKeys).toContain("v2/metrics/daily/2026-05.json");
-    expect(result.writtenKeys).toContain("v2/metrics/daily/2026-06.json");
+    expect(result.publishMode).toBe("full");
+    expect(result.range).toEqual({ start: "2022-05-01", end: "2026-06-01", days: 1493 });
   });
 
   test("treats blank optional publisher date environment variables as unset", async () => {
+    const store = new MemoryArtifactStore();
+    await store.putJson("v2/manifest.json", existingManifest);
+
     const result = await publishMetricsArtifactsFromEnv(
       {
         HASURA_GRAPHQL_ENDPOINT: "http://hasura.internal/v1/graphql",
@@ -182,27 +220,88 @@ describe("metrics publisher", () => {
         ARTIFACT_SECRET_ACCESS_KEY: "secret-key",
         PUBLISHER_MODE: "incremental",
         PUBLISHER_LOOKBACK_DAYS: "2",
+        PUBLISHER_PUBLIC_START_DATE: "2022-05-01",
         PUBLISHER_START_DATE: "",
         PUBLISHER_END_DATE: "   ",
       },
       {
         source: source(),
-        store: new MemoryArtifactStore(),
+        store,
         now: () => new Date(generatedAt),
       },
     );
 
-    expect(result.range).toEqual({ start: "2026-05-31", end: "2026-06-01", days: 2 });
+    expect(result.range).toEqual({ start: "2026-05-29", end: "2026-06-01", days: 4 });
+  });
+
+  test("skips cleanly when a fresh publisher lock already exists", async () => {
+    const store = new MemoryArtifactStore();
+    await store.putJson("v2/publisher.lock", {
+      runId: "existing-run",
+      mode: "full",
+      startedAt: "2026-06-01T08:00:00.000Z",
+      expiresAt: "2026-06-01T20:00:00.000Z",
+    });
+
+    const result = await publishMetricsArtifacts({
+      mode: "incremental",
+      source: source({
+        fetchBounds: async () => {
+          throw new Error("should not fetch Hasura while locked");
+        },
+      }),
+      store,
+      now: () => new Date(generatedAt),
+    });
+
+    expect(result).toMatchObject({
+      skipped: true,
+      skipReason: "lock_held",
+      manifestPublishedLast: false,
+      publishMode: "incremental",
+      writtenKeys: [],
+    });
+    await expect(store.getJson("v2/manifest.json")).rejects.toThrow("Artifact not found");
+  });
+
+  test("takes over stale publisher locks and releases the lock after publishing", async () => {
+    const store = new MemoryArtifactStore();
+    await store.putJson("v2/publisher.lock", {
+      runId: "stale-run",
+      mode: "full",
+      startedAt: "2026-05-31T08:00:00.000Z",
+      expiresAt: "2026-05-31T20:00:00.000Z",
+    });
+
+    await expect(
+      publishMetricsArtifacts({
+        mode: "incremental",
+        source: source(),
+        store,
+        now: () => new Date(generatedAt),
+      }),
+    ).rejects.toThrow("Run the publisher in full mode first");
+
+    const result = await publishMetricsArtifacts({
+      mode: "full",
+      source: source(),
+      store,
+      now: () => new Date(generatedAt),
+    });
+
+    expect(result.skipped).toBe(false);
+    expect(result.range).toEqual({ start: "2022-05-01", end: "2026-06-01", days: 1493 });
+    await expect(store.getJson("v2/publisher.lock")).rejects.toThrow("Artifact not found");
   });
 
   test("does not publish a new manifest when a shard upload fails", async () => {
-    class FailingStore implements ArtifactStore {
-      readonly writtenKeys: string[] = [];
+    class FailingStore extends MemoryArtifactStore implements ArtifactStore {
       async putJson(key: string): Promise<void> {
         this.writtenKeys.push(key);
         if (key === "v2/metrics/daily/2026-05.json") {
           throw new Error("upload failed");
         }
+        this.objects.set(key, `${JSON.stringify({ key })}\n`);
       }
     }
     const store = new FailingStore();
@@ -238,13 +337,19 @@ describe("metrics publisher", () => {
     });
 
     await store.putJson("v2/manifest.json", { ok: true });
+    await expect(store.putJsonIfAbsent("v2/publisher.lock", { runId: "run-1" })).resolves.toBe(true);
 
-    expect(commands).toHaveLength(1);
+    expect(commands).toHaveLength(2);
     expect(commands[0].input).toMatchObject({
       Bucket: "metrics",
       Key: "v2/manifest.json",
       Body: '{"ok":true}\n',
       ContentType: "application/json; charset=utf-8",
+    });
+    expect(commands[1].input).toMatchObject({
+      Bucket: "metrics",
+      Key: "v2/publisher.lock",
+      IfNoneMatch: "*",
     });
   });
 

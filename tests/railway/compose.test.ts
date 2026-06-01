@@ -64,6 +64,9 @@ describe("local Docker Compose stack", () => {
     expect(packageJson).toContain(
       '"compose:publish": "docker compose --profile publish run --build --rm --no-deps metrics-publisher"',
     );
+    expect(packageJson).toContain(
+      '"compose:publish:full": "docker compose --profile publish run --build --rm --no-deps -e PUBLISHER_MODE=full metrics-publisher"',
+    );
   });
 
   test("documents split compose workflows for core and API development", () => {
@@ -73,11 +76,14 @@ describe("local Docker Compose stack", () => {
     expect(packageJson).toContain('"compose:core": "docker compose up postgres hasura indexer"');
     expect(packageJson).toContain('"compose:api": "docker compose up --build minio minio-init metrics-api"');
     expect(packageJson).toContain('"compose:api:rebuild": "docker compose up --build --no-deps metrics-api"');
+    expect(packageJson).toContain('"compose:bucket:clear": "docker compose run --rm --no-deps');
     expect(doc).toContain("## Split Workflow");
     expect(doc).toContain("in the foreground");
     expect(doc).toContain("pnpm run compose:core");
     expect(doc).toContain("pnpm run compose:api");
     expect(doc).toContain("pnpm run compose:api:rebuild");
+    expect(doc).toContain("pnpm run compose:bucket:clear");
+    expect(doc).toContain("pnpm run compose:publish:full");
     expect(doc).toContain("This rebuilds and starts only the one-shot `metrics-publisher` container");
   });
 

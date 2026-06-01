@@ -71,7 +71,32 @@ pnpm run compose:publish
 
 This rebuilds and starts only the one-shot `metrics-publisher` container with
 `--no-deps`. It assumes Postgres, Hasura, MinIO, and the bucket initialization
-job are already available on the compose network.
+job are already available on the compose network. The publish scripts include
+`--build`, so Docker Compose invokes a build before each publish; Docker's layer
+cache may make that quick, but Compose does not reliably build only when the
+local source has changed.
+
+Before the first incremental publish, create the initial manifest and historical
+artifacts with a full backfill:
+
+```sh
+pnpm run compose:publish:full
+```
+
+The full publish defaults to `2022-05-01` through Hasura's latest indexed date.
+After it completes, `pnpm run compose:publish` performs incremental catch-up
+from the existing manifest latest date with the configured lookback overlap.
+
+To clear only the local artifact bucket while keeping the rest of the compose
+stack running:
+
+```sh
+pnpm run compose:bucket:clear
+```
+
+This uses the `minio-init` container as a MinIO client with `--no-deps`, removes
+objects from `local/${ARTIFACT_BUCKET:-metrics}`, and recreates the bucket if
+needed.
 
 Compose startup order is declared with `depends_on` health conditions:
 `minio-init` waits for MinIO's readiness endpoint, `metrics-api` waits for
@@ -96,8 +121,13 @@ Most variables have local defaults. Override these when needed:
   Envio event-ingestion settings.
 - `INDEXER_HASURA_GRAPHQL_ENDPOINT`: Envio metadata endpoint used by the
   indexer, default `http://hasura:8080/v1/metadata`.
-- `PUBLISHER_MODE`, `PUBLISHER_LOOKBACK_DAYS`, `PUBLISHER_START_DATE`, and
-  `PUBLISHER_END_DATE`: publisher range controls.
+- `PUBLISHER_MODE`, `PUBLISHER_PUBLIC_START_DATE`,
+  `PUBLISHER_LOOKBACK_DAYS`, `PUBLISHER_LOCK_TTL_MS`,
+  `PUBLISHER_START_DATE`, and `PUBLISHER_END_DATE`: publisher range and
+  overlap controls. Full mode defaults to `2022-05-01`; incremental mode
+  requires an existing manifest and uses the manifest latest date plus the
+  lookback overlap. A fresh `v2/publisher.lock` makes overlapping publisher
+  runs exit successfully without writing artifacts.
 
 Envio v3 fallback RPCs are configured in `apps/indexer/config.yaml` by adding
 multiple `rpc` entries with `for: fallback`. It does not consume a

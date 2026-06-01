@@ -83,14 +83,28 @@ The API reads from the same bucket.
 
 - `HASURA_GRAPHQL_ENDPOINT`: private Railway URL for Hasura GraphQL, for
   example `http://hasura.railway.internal/v1/graphql`.
-- `PUBLISHER_MODE`: `full` for initial publish, `incremental` after launch.
-- `PUBLISHER_LOOKBACK_DAYS`: number of recent days to regenerate in incremental
-  mode.
+- `PUBLISHER_MODE`: use `full` for the first deployment backfill, then
+  `incremental` for scheduled runs. Incremental mode requires
+  `v2/manifest.json` to exist and exits with an error if the manifest is
+  missing.
+- `PUBLISHER_PUBLIC_START_DATE`: first public API date, default `2022-05-01`.
+- `PUBLISHER_LOOKBACK_DAYS`: number of already-published days to regenerate
+  when catching up from the existing manifest latest date.
+- `PUBLISHER_LOCK_TTL_MS`: S3 lock timeout for overlapping cron runs. The
+  documented default is 12 hours (`43200000`) so a slow first bootstrap is not
+  overtaken by the next hourly cron.
 - `PUBLISHER_START_DATE`: optional UTC calendar date for full backfills.
 - `PUBLISHER_END_DATE`: optional UTC calendar end date for controlled
   backfills or re-publishing a bounded window.
 - `PUBLISHER_CRON`: documented value is `15 * * * *`; the Railway config sets
   this schedule directly.
+
+The publisher writes `v2/publisher.lock` before reading Hasura. If a new cron
+run starts while a previous full backfill or incremental publish still holds a
+fresh lock, the new run exits successfully without writing artifacts. If a full
+backfill crashes, rerun with `PUBLISHER_MODE=full`; a later run can take over
+after the lock expires. The manifest is published last, so partial shard uploads
+are not exposed through `/v2/bounds`.
 
 ### Metrics API
 
