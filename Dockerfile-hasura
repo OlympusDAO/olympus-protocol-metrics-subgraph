@@ -1,2 +1,2 @@
-FROM hasura/graphql-engine:v2.48.16
+FROM hasura/graphql-engine:v2.48.16@sha256:6ff7d8ba122c69f7be377092b0c1f5314d3e4e28274dc089cd774ce6a8ba6479
 ENV HASURA_GRAPHQL_ENABLE_CONSOLE=false

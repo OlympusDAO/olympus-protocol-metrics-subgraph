@@ -235,12 +235,13 @@ surface.
 - [ ] Review new production dependencies for necessity and maintenance posture.
 - [ ] Keep new runtime dependency footprint minimal; avoid framework dependencies
       unless they remove meaningful risk.
-- [ ] Build all Docker images locally.
+- [x] Build all Docker images locally.
 - [ ] Scan Docker images for vulnerabilities before deployment.
 - [ ] Resolve or explicitly document Docker image findings.
 - [ ] Confirm runtime images run as non-root where practical.
-- [ ] Confirm public API rejects unsupported methods and request bodies.
-- [ ] Confirm Hasura console is disabled and Hasura has no public domain.
+- [x] Confirm public API rejects unsupported methods and request bodies.
+- [x] Confirm Hasura console is disabled.
+- [ ] Confirm Hasura has no public domain.
 - [ ] Confirm secrets are only supplied through Railway variables and are not
       printed in logs.
 
@@ -251,10 +252,10 @@ surface.
 - [ ] `pnpm run build`
 - [ ] `pnpm test`
 - [x] Targeted metrics API red/green test suite passes.
-- [ ] `docker build -f Dockerfile-indexer .`
-- [ ] `docker build -f Dockerfile-hasura .`
-- [ ] `docker build -f Dockerfile-metrics-publisher .`
-- [ ] `docker build -f Dockerfile-metrics-api .`
+- [x] `docker build -f Dockerfile-indexer .`
+- [x] `docker build -f Dockerfile-hasura .`
+- [x] `docker build -f Dockerfile-metrics-publisher .`
+- [x] `docker build -f Dockerfile-metrics-api .`
 - [ ] Deployment smoke checks for `/ready`, `/v2/bounds`, `/v2/metrics/daily`,
       `/v2/metrics/daily?includeRecords=true`, and
       `/operations/paginated/metrics`.
