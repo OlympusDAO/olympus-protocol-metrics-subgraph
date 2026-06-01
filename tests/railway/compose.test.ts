@@ -61,7 +61,24 @@ describe("local Docker Compose stack", () => {
     expect(doc).toContain("docker compose up --build postgres hasura minio minio-init indexer metrics-api");
     expect(doc).toContain("pnpm run compose:publish");
     expect(packageJson).toContain("docker compose up --build postgres hasura minio minio-init indexer metrics-api");
-    expect(packageJson).toContain('"compose:publish": "docker compose --profile publish run --rm metrics-publisher"');
+    expect(packageJson).toContain(
+      '"compose:publish": "docker compose --profile publish run --build --rm --no-deps metrics-publisher"',
+    );
+  });
+
+  test("documents split compose workflows for core and API development", () => {
+    const doc = readFileSync("docs/local-compose.md", "utf8");
+    const packageJson = readFileSync("package.json", "utf8");
+
+    expect(packageJson).toContain('"compose:core": "docker compose up postgres hasura indexer"');
+    expect(packageJson).toContain('"compose:api": "docker compose up --build minio minio-init metrics-api"');
+    expect(packageJson).toContain('"compose:api:rebuild": "docker compose up --build --no-deps metrics-api"');
+    expect(doc).toContain("## Split Workflow");
+    expect(doc).toContain("in the foreground");
+    expect(doc).toContain("pnpm run compose:core");
+    expect(doc).toContain("pnpm run compose:api");
+    expect(doc).toContain("pnpm run compose:api:rebuild");
+    expect(doc).toContain("This rebuilds and starts only the one-shot `metrics-publisher` container");
   });
 
   test("documents and wires stack variables without unsupported Envio env knobs", () => {

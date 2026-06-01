@@ -12,8 +12,16 @@ to override locally. `ENVIO_API_TOKEN` is required because the current Envio
 config uses HyperSync as the primary source on supported chains and RPCs as
 fallbacks. Compose intentionally fails fast if the token is missing.
 
+To start the full stack in the foreground:
+
 ```sh
 docker compose up --build postgres hasura minio minio-init indexer metrics-api
+```
+
+The equivalent package script is:
+
+```sh
+pnpm run compose:up
 ```
 
 The indexer is included in the default daemon stack and remains internal-only.
@@ -25,11 +33,45 @@ the `indexer` service:
 docker compose up --build postgres hasura minio minio-init metrics-api
 ```
 
-Run the publisher after Hasura has indexed at least one daily snapshot:
+## Split Workflow
+
+For day-to-day development, keep the indexing core running separately because
+Postgres, Hasura, and the indexer change less often:
+
+```sh
+pnpm run compose:core
+```
+
+This starts `postgres`, `hasura`, and `indexer` in the foreground. They share
+the same private compose network and volumes as the rest of the stack.
+
+Start or refresh the storage/API side when needed:
+
+```sh
+pnpm run compose:api
+```
+
+The API reads `v2/manifest.json` from the artifact bucket for `/v2/bounds` and
+range validation. Before the publisher has written that manifest, these routes
+return `503 manifest_not_published` instead of synthetic dates.
+
+After changing only the metrics API, rebuild just that container without
+restarting MinIO or the indexing core:
+
+```sh
+pnpm run compose:api:rebuild
+```
+
+Run the publisher after the core and API/storage services are already running
+and Hasura has indexed at least one daily snapshot:
 
 ```sh
 pnpm run compose:publish
 ```
+
+This rebuilds and starts only the one-shot `metrics-publisher` container with
+`--no-deps`. It assumes Postgres, Hasura, MinIO, and the bucket initialization
+job are already available on the compose network.
 
 Compose startup order is declared with `depends_on` health conditions:
 `minio-init` waits for MinIO's readiness endpoint, `metrics-api` waits for
