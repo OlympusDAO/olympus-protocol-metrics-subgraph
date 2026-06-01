@@ -36,8 +36,10 @@ describe("Railway config-as-code", () => {
 
     for (const variable of [
       "DATABASE_URL",
+      "ENVIO_PG_HOST",
       "HASURA_GRAPHQL_ADMIN_SECRET",
-      "RPC_URL_1",
+      "ENVIO_ETHEREUM_RPC_URL",
+      "ENVIO_ARBITRUM_RPC_URL",
       "ARTIFACT_BUCKET",
       "ARTIFACT_ACCESS_KEY_ID",
       "ARTIFACT_SECRET_ACCESS_KEY",
@@ -56,12 +58,16 @@ describe("Railway config-as-code", () => {
     for (const dockerfile of ["Dockerfile-indexer", "Dockerfile-metrics-api", "Dockerfile-metrics-publisher"]) {
       const content = readFileSync(dockerfile, "utf8");
       expect(content).toContain("@sha256:");
+      expect(content).toContain("apt-get install -y --no-install-recommends ca-certificates");
+      expect(content).toContain("COREPACK_HOME=/corepack");
+      expect(content).toContain("pnpm --version");
       expect(content).toContain("pnpm install --frozen-lockfile");
       expect(content).not.toContain("node\", \"--version");
       expect(content).toContain("USER node");
     }
 
     expect(readFileSync("Dockerfile-indexer", "utf8")).toContain("envio:start");
+    expect(readFileSync("Dockerfile-indexer", "utf8")).toContain("chown -R node:node apps/indexer/.envio");
     expect(readFileSync("Dockerfile-metrics-api", "utf8")).toContain("apps/metrics-api");
     expect(readFileSync("Dockerfile-metrics-publisher", "utf8")).toContain("apps/metrics-publisher");
   });

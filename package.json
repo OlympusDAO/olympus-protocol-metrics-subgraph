@@ -16,7 +16,7 @@
     "codegen": "pnpm --dir apps/indexer codegen",
     "compose:config": "docker compose config",
     "compose:publish": "docker compose --profile publish run --rm metrics-publisher",
-    "compose:up": "docker compose up --build postgres hasura minio minio-init metrics-api",
+    "compose:up": "docker compose up --build postgres hasura minio minio-init indexer metrics-api",
     "envio": "pnpm --dir apps/indexer envio",
     "envio:dev": "pnpm --dir apps/indexer envio:dev",
     "envio:start": "pnpm --dir apps/indexer envio:start",

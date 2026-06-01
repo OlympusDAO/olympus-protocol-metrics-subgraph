@@ -2,11 +2,20 @@ FROM node:24-slim@sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c
 
 ENV CI=true
 ENV PNPM_HOME=/pnpm
+ENV COREPACK_HOME=/corepack
 ENV PATH=/pnpm:$PATH
 
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /corepack /pnpm \
+  && corepack enable \
+  && corepack prepare pnpm@10.33.0 --activate \
+  && pnpm --version \
+  && chown -R node:node /corepack /pnpm
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 # pnpm validates every workspace importer under a frozen lockfile, so copy all

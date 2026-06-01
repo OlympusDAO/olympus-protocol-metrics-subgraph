@@ -217,6 +217,18 @@ surface.
 - [x] Keep the package framework-agnostic; no TanStack Query dependency.
 - [x] Include `openapi.json` in package output.
 - [x] Export legacy and v2-compatible TypeScript types.
+- [ ] Add package scripts for client release preparation:
+      clean/build type declarations, copy OpenAPI output, run package-focused
+      tests, and produce a dry-run `npm pack` tarball for inspection.
+- [ ] Add an explicit client publish script that publishes
+      `@olympusdao/treasury-subgraph-client` from `apps/client` only after
+      validation passes.
+- [ ] Document the versioning/release workflow for the client package,
+      including when to bump major/minor/patch for legacy `/operations/*` and
+      v2 API changes.
+- [ ] Add CI or a local validation gate that compares packed tarball contents
+      against the intended allowlist (`dist`, `openapi.json`, package metadata)
+      before publishing.
 
 ### Railway config-as-code and containers
 
@@ -243,6 +255,18 @@ surface.
 - [ ] Review new production dependencies for necessity and maintenance posture.
 - [ ] Keep new runtime dependency footprint minimal; avoid framework dependencies
       unless they remove meaningful risk.
+- [ ] Secure the client package release path: require npm 2FA / trusted
+      publisher or provenance where available, avoid publishing from dirty
+      working trees, and record the exact git commit/tag used for each release.
+- [ ] Make client publishing reproducible: run release from a pinned Node/pnpm
+      toolchain, `pnpm install --frozen-lockfile`, and a generated tarball whose
+      contents can be reviewed before `npm publish`.
+- [ ] Add pre-publish checks for supply-chain risk: dependency audit, license
+      review for runtime deps, package script review, and verification that no
+      secrets or environment files are included in the npm tarball.
+- [ ] Document maintainer permissions and token handling for npm publishing:
+      least-privilege access, no long-lived local automation tokens where
+      possible, and no committed `.npmrc` secrets.
 - [x] Build all Docker images locally.
 - [ ] Scan Docker images for vulnerabilities before deployment.
 - [ ] Resolve or explicitly document Docker image findings.

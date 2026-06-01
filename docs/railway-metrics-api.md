@@ -25,12 +25,22 @@ files, Dockerfiles, OpenAPI output, or generated artifacts.
 
 - `DATABASE_URL`: Railway private Postgres connection string used by Envio and
   Hasura.
+- `ENVIO_PG_HOST`, `ENVIO_PG_PORT`, `ENVIO_PG_USER`, `ENVIO_PG_PASSWORD`,
+  `ENVIO_PG_DATABASE`, and `ENVIO_PG_SCHEMA`: Envio's Postgres connection
+  settings. Set these from Railway Postgres private-network variables.
+- `ENVIO_PG_SSL_MODE`: set according to the Railway Postgres connection mode.
+  Envio accepts `false`, `true`, `require`, `allow`, `prefer`, or
+  `verify-full`; it does not accept libpq-style `disable`.
+- `ENVIO_PG_MAX_CONNECTIONS`: optional Envio Postgres pool size.
 
 ### Hasura
 
 - `HASURA_GRAPHQL_DATABASE_URL`: same private Postgres connection string as
   `DATABASE_URL`, or a Railway reference to it.
 - `HASURA_GRAPHQL_ADMIN_SECRET`: high-entropy admin secret.
+- `HASURA_GRAPHQL_ENDPOINT`: for the indexer service, set this to the private
+  Hasura metadata endpoint, for example
+  `http://hasura.railway.internal/v1/metadata`.
 - `HASURA_GRAPHQL_ENABLE_CONSOLE`: must be `false`. The Dockerfile also sets
   this as a default.
 - `HASURA_GRAPHQL_ENABLED_LOG_TYPES`: recommended `startup,http-log,webhook-log,websocket-log,query-log`.
@@ -38,14 +48,23 @@ files, Dockerfiles, OpenAPI output, or generated artifacts.
 
 ### RPC URLs
 
-Use per-chain variables so rotation can happen independently:
+Use the per-chain `ENVIO_*_RPC_URL` variables consumed by
+`apps/indexer/config.yaml` so rotation can happen independently:
 
-- `RPC_URL_1`: Ethereum.
-- `RPC_URL_42161`: Arbitrum.
-- `RPC_URL_8453`: Base.
-- `RPC_URL_80094`: Berachain.
-- `RPC_URL_137`: Polygon.
-- `RPC_URL_250`: Fantom.
+- `ENVIO_ETHEREUM_RPC_URL`: Ethereum.
+- `ENVIO_ARBITRUM_RPC_URL`: Arbitrum.
+- `ENVIO_BASE_RPC_URL`: Base.
+- `ENVIO_BERACHAIN_RPC_URL`: Berachain.
+- `ENVIO_POLYGON_RPC_URL`: Polygon.
+- `ENVIO_FANTOM_RPC_URL`: Fantom.
+
+Envio v3 supports fallback RPCs by adding multiple `rpc` entries in
+`apps/indexer/config.yaml` with `for: fallback`. It does not consume
+comma-separated fallback URL environment variables. Envio's RPC schema supports
+batch/backoff/timeout/polling fields in `config.yaml`; it does not consume
+`requests_per_second` environment variables. Any repository-local
+`ENVIO_RPC_*` tuning variables are for the snapshot effect RPC client, not
+Envio's event ingestion engine.
 
 ### Artifact Storage
 
