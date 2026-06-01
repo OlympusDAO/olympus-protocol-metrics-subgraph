@@ -9,6 +9,9 @@ WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@10.33.0 --activate
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# pnpm validates every workspace importer under a frozen lockfile, so copy all
+# package manifests before the full source copy. These are install/cache inputs,
+# not runtime dependencies of this service.
 COPY apps/indexer/package.json apps/indexer/package.json
 COPY apps/metrics-api/package.json apps/metrics-api/package.json
 COPY apps/metrics-publisher/package.json apps/metrics-publisher/package.json

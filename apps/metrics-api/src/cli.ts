@@ -3,6 +3,9 @@
 import { createServer } from "node:http";
 import { handleMetricsApiRequest } from "./server";
 
+// The API intentionally uses Node's built-in HTTP server. The public surface is
+// a small GET/HEAD/OPTIONS REST API, and avoiding Express keeps the runtime
+// dependency and middleware surface smaller.
 const port = Number(process.env.PORT ?? process.env.METRICS_API_PORT ?? "3000");
 const maxRangeDays = Number(process.env.METRICS_API_MAX_RANGE_DAYS ?? "366");
 
