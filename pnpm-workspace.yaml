@@ -1,3 +1,7 @@
+packages:
+  - apps/*
+  - packages/*
+
 minimumReleaseAge: 10080
 # The 7-day maturity gate above is good supply-chain hygiene for transitive
 # deps, but blocks us from picking up envio releases inside the first week.

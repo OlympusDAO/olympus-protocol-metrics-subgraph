@@ -116,6 +116,8 @@ surface.
 - [x] Create branch `feat/railway-metrics-api` before implementation.
 - [x] Add red-test scaffolding for shared artifacts, API routes, publisher,
       client package, OpenAPI, and Railway config-as-code.
+- [x] Move Envio indexer config, schema, source, and tests into
+      `apps/indexer`.
 - [ ] Keep the red-test list current as implementation proceeds; do not remove a
       test unless the corresponding product requirement is explicitly dropped.
 
@@ -247,10 +249,10 @@ surface.
 
 ### Validation gates
 
-- [ ] `pnpm install --frozen-lockfile`
-- [ ] `pnpm run check`
-- [ ] `pnpm run build`
-- [ ] `pnpm test`
+- [x] `pnpm install --frozen-lockfile`
+- [x] `pnpm run check`
+- [x] `pnpm run build`
+- [x] `pnpm test`
 - [x] Targeted metrics API red/green test suite passes.
 - [x] `docker build -f Dockerfile-indexer .`
 - [x] `docker build -f Dockerfile-hasura .`

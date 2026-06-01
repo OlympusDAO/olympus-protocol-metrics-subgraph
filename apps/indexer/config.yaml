@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+# yaml-language-server: $schema=../../node_modules/envio/evm.schema.json
 name: olympus-protocol-metrics
 description: Olympus treasury + protocol-metrics indexer across Ethereum, Arbitrum, Polygon, Fantom, Base, and Berachain
 
@@ -147,7 +147,7 @@ contracts:
   # ClearinghouseRegistry events are tracked via dynamic contract registration
   # once the Kernel handler observes the CHREG module address (see Phase 4
   # follow-up). For now the 3 known Cooler clearinghouses are hardcoded in
-  # `src/snapshot/wallets.ts` so Cooler-receivable accounting still works.
+  # `apps/indexer/src/snapshot/wallets.ts` so Cooler-receivable accounting still works.
 
 chains:
   - id: 42161 # Arbitrum One

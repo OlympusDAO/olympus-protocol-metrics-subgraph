@@ -1,0 +1,24 @@
+{
+  "name": "@olympusdao/protocol-metrics-indexer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "codegen": "envio codegen",
+    "envio": "envio",
+    "envio:dev": "ENVIO_TUI=${ENVIO_TUI:-false} envio dev",
+    "envio:start": "envio start",
+    "test": "vitest run tests"
+  },
+  "dependencies": {
+    "bignumber.js": "9.1.2",
+    "envio": "3.0.1",
+    "graphql": "^16.8.1",
+    "viem": "2.48.8"
+  },
+  "devDependencies": {
+    "@types/node": "24.12.2",
+    "typescript": "6.0.3",
+    "vitest": "4.1.0"
+  }
+}
