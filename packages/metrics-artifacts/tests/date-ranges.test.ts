@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 
-import { monthKeysForRange, resolveDateRange } from "../../packages/metrics-artifacts/src";
-import type { Manifest } from "../../packages/metrics-artifacts/src";
+import { monthKeysForRange, resolveDateRange } from "../src";
+import type { Manifest } from "../src";
 
 const manifest: Manifest = {
   schemaVersion: "1.0.0",

@@ -34,4 +34,17 @@ describe("indexer monorepo layout", () => {
     expect(workspace).toContain("- apps/*");
     expect(workspace).toContain("- packages/*");
   });
+
+  test("keeps app and package tests next to their owning code", () => {
+    expect(existsSync("apps/metrics-api/tests/server.test.ts")).toBe(true);
+    expect(existsSync("apps/metrics-publisher/tests/publisher.test.ts")).toBe(true);
+    expect(existsSync("apps/client/tests/client.test.ts")).toBe(true);
+    expect(existsSync("packages/metrics-artifacts/tests/date-ranges.test.ts")).toBe(true);
+    expect(existsSync("packages/metrics-artifacts/tests/legacy-shape.test.ts")).toBe(true);
+    expect(existsSync("packages/metrics-artifacts/tests/openapi.test.ts")).toBe(true);
+
+    expect(existsSync("tests/metrics-api")).toBe(false);
+    expect(existsSync("tests/metrics-publisher")).toBe(false);
+    expect(existsSync("tests/client")).toBe(false);
+  });
 });

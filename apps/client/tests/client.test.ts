@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test, vi } from "vitest";
 
-import { createClient } from "../../apps/client/src";
-import { getOpenApiDocument, type OhmSupply, type TokenRecord, type TokenSupply, type TreasuryAsset } from "../../apps/client/src";
-import { getOpenApiDocument as getCanonicalOpenApiDocument } from "../../packages/metrics-artifacts/src";
+import { createClient } from "../src";
+import { getOpenApiDocument, type OhmSupply, type TokenRecord, type TokenSupply, type TreasuryAsset } from "../src";
+import { getOpenApiDocument as getCanonicalOpenApiDocument } from "../../../packages/metrics-artifacts/src";
 
 describe("@olympusdao/treasury-subgraph-client compatibility", () => {
   test("legacy query maps to /operations with wg_variables", async () => {
@@ -37,7 +37,7 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
   });
 
   test("ships package metadata for the published client", () => {
-    const packageJson = JSON.parse(readFileSync("apps/client/package.json", "utf8")) as {
+    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as {
       name: string;
       version: string;
       files: string[];
@@ -55,7 +55,7 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
   });
 
   test("ships an OpenAPI JSON file matching the generated document paths", () => {
-    const packaged = JSON.parse(readFileSync("apps/client/openapi.json", "utf8")) as {
+    const packaged = JSON.parse(readFileSync("openapi.json", "utf8")) as {
       openapi: string;
       paths: Record<string, unknown>;
     };

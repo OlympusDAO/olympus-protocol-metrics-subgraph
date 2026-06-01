@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test": "vitest run tests",
     "start": "tsx src/cli.ts"
   },
   "dependencies": {

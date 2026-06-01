@@ -2,8 +2,8 @@ import { createServer, request as httpRequest } from "node:http";
 import { AddressInfo } from "node:net";
 import { afterEach, describe, expect, test } from "vitest";
 
-import { handleMetricsApiRequest, type MetricsApiConfig } from "../../apps/metrics-api/src/server";
-import type { Manifest } from "../../packages/metrics-artifacts/src";
+import { handleMetricsApiRequest, type MetricsApiConfig } from "../src/server";
+import type { Manifest } from "../../../packages/metrics-artifacts/src";
 
 let closeServer: (() => Promise<void>) | undefined;
 

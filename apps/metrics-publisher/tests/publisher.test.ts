@@ -12,8 +12,8 @@ import {
   type ArtifactStore,
   type MetricsSource,
   type PublishBoundsCompleteness,
-} from "../../apps/metrics-publisher/src/publisher";
-import type { DailyMetric, Manifest, OhmSupply, TreasuryAsset } from "../../packages/metrics-artifacts/src";
+} from "../src/publisher";
+import type { DailyMetric, Manifest, OhmSupply, TreasuryAsset } from "../../../packages/metrics-artifacts/src";
 
 const generatedAt = "2026-06-01T08:15:00.000Z";
 

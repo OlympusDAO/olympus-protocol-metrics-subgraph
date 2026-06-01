@@ -6,8 +6,8 @@ import {
   emptySupplyCategoryValues,
   groupOhmSupplyByChain,
   groupTreasuryAssetsByChain,
-} from "../../packages/metrics-artifacts/src";
-import type { OhmSupply, TreasuryAsset } from "../../packages/metrics-artifacts/src";
+} from "../src";
+import type { OhmSupply, TreasuryAsset } from "../src";
 
 const treasuryAsset: TreasuryAsset = {
   id: "asset-1",

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { getOpenApiDocument } from "../../packages/metrics-artifacts/src";
+import { getOpenApiDocument } from "../src";
 
 describe("OpenAPI document", () => {
   test("documents v2, legacy operations, deprecated operations, and atBlock 501 responses", () => {
