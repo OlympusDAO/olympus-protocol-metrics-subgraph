@@ -44,6 +44,11 @@ const LEGACY_OPERATION_PATHS = new Set([
   "/operations/paginated/protocolMetrics",
 ]);
 
+const READY_CACHE_CONTROL = "no-store";
+const MANIFEST_CACHE_CONTROL = "public, max-age=300, stale-while-revalidate=60";
+const RANGE_CACHE_CONTROL = "public, max-age=28800, stale-while-revalidate=86400";
+const STATIC_CACHE_CONTROL = "public, max-age=3600";
+
 function setCommonHeaders(res: ServerResponse): void {
   res.setHeader("access-control-allow-origin", "*");
   res.setHeader("access-control-allow-methods", "GET, HEAD, OPTIONS");
@@ -80,6 +85,17 @@ function getUrl(req: IncomingMessage): URL {
 
 function getManifest(config: MetricsApiConfig): Manifest {
   return config.manifest ?? DEFAULT_MANIFEST;
+}
+
+function hasRequestBody(req: IncomingMessage): boolean {
+  const contentLength = req.headers["content-length"];
+  if (Array.isArray(contentLength)) {
+    return contentLength.some((value) => Number(value) > 0);
+  }
+  if (contentLength !== undefined && Number(contentLength) > 0) {
+    return true;
+  }
+  return req.headers["transfer-encoding"] !== undefined;
 }
 
 function emptyResponse<T>(
@@ -125,6 +141,19 @@ function legacyResponse<T>(data: T | null): WundergraphResponse<T> {
   return { data };
 }
 
+function parseLegacyVariables(url: URL): Record<string, unknown> {
+  const value = url.searchParams.get("wg_variables");
+  if (value === null || value === "") {
+    return {};
+  }
+
+  try {
+    return JSON.parse(value) as Record<string, unknown>;
+  } catch {
+    return JSON.parse(decodeURIComponent(value)) as Record<string, unknown>;
+  }
+}
+
 export async function handleMetricsApiRequest(
   req: IncomingMessage,
   res: ServerResponse,
@@ -143,27 +172,36 @@ export async function handleMetricsApiRequest(
     return;
   }
 
+  if (hasRequestBody(req)) {
+    sendError(res, 400, "request_body_not_allowed", "GET and HEAD requests must not include a request body.");
+    return;
+  }
+
   const url = getUrl(req);
   const manifest = getManifest(config);
 
   if (url.pathname === "/ready") {
+    res.setHeader("cache-control", READY_CACHE_CONTROL);
     sendJson(res, 200, { status: "ready" });
     return;
   }
 
   if (url.pathname === "/openapi.json") {
+    res.setHeader("cache-control", STATIC_CACHE_CONTROL);
     sendJson(res, 200, getOpenApiDocument());
     return;
   }
 
   if (url.pathname === "/docs") {
     res.statusCode = 200;
+    res.setHeader("cache-control", STATIC_CACHE_CONTROL);
     res.setHeader("content-type", "text/html; charset=utf-8");
     res.end("<!doctype html><title>Olympus Protocol Metrics API</title><h1>OpenAPI</h1>");
     return;
   }
 
   if (url.pathname === "/v2/manifest") {
+    res.setHeader("cache-control", MANIFEST_CACHE_CONTROL);
     sendJson(res, 200, emptyResponse(config, undefined, manifest));
     return;
   }
@@ -174,6 +212,7 @@ export async function handleMetricsApiRequest(
       latestDate: manifest.latestDate,
       maxRangeDays: config.maxRangeDays,
     };
+    res.setHeader("cache-control", MANIFEST_CACHE_CONTROL);
     sendJson(res, 200, emptyResponse(config, undefined, bounds));
     return;
   }
@@ -190,6 +229,7 @@ export async function handleMetricsApiRequest(
         includeRecords,
         generatedAt: config.generatedAt ?? manifest.generatedAt,
       });
+      res.setHeader("cache-control", RANGE_CACHE_CONTROL);
       sendJson(res, 200, emptyResponse<DailyMetric[]>(config, range, [metric]));
     } catch (error) {
       sendError(res, 400, "invalid_date_range", error instanceof Error ? error.message : "Invalid date range.");
@@ -200,6 +240,7 @@ export async function handleMetricsApiRequest(
   if (url.pathname === "/v2/treasury-assets/daily") {
     try {
       const range = resolveV2Range(url, config);
+      res.setHeader("cache-control", RANGE_CACHE_CONTROL);
       sendJson(res, 200, emptyResponse<TreasuryAsset[]>(config, range, []));
     } catch (error) {
       sendError(res, 400, "invalid_date_range", error instanceof Error ? error.message : "Invalid date range.");
@@ -210,6 +251,7 @@ export async function handleMetricsApiRequest(
   if (url.pathname === "/v2/ohm-supply/daily") {
     try {
       const range = resolveV2Range(url, config);
+      res.setHeader("cache-control", RANGE_CACHE_CONTROL);
       sendJson(res, 200, emptyResponse<OhmSupply[]>(config, range, []));
     } catch (error) {
       sendError(res, 400, "invalid_date_range", error instanceof Error ? error.message : "Invalid date range.");
@@ -228,7 +270,18 @@ export async function handleMetricsApiRequest(
 
   if (LEGACY_OPERATION_PATHS.has(url.pathname)) {
     res.setHeader("deprecation", "true");
-    sendJson(res, 200, legacyResponse(null));
+    try {
+      parseLegacyVariables(url);
+    } catch (error) {
+      sendError(
+        res,
+        400,
+        "invalid_wg_variables",
+        error instanceof Error ? error.message : "Invalid wg_variables JSON.",
+      );
+      return;
+    }
+    sendJson(res, 200, legacyResponse([]));
     return;
   }
 

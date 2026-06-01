@@ -164,7 +164,7 @@ surface.
 
 - [x] Implement `/ready`; do not add `/healthz`.
 - [x] Implement CORS for `GET`, `HEAD`, and `OPTIONS`.
-- [ ] Reject request bodies on `GET` and `HEAD`.
+- [x] Reject request bodies on `GET` and `HEAD`.
 - [x] Implement `/openapi.json` and `/docs`.
 - [x] Implement `/v2/bounds` without exposing `availableMonths`.
 - [x] Implement `/v2/manifest`.
@@ -175,29 +175,29 @@ surface.
       metric-specific `*Records` fields.
 - [x] Return consistent v2 `{ data, meta }` success envelopes and
       `{ error: { code, message, details? } }` error envelopes.
-- [ ] Add cache headers for range routes, manifest/bounds, and readiness.
+- [x] Add cache headers for range routes, manifest/bounds, and readiness.
 
 ### Legacy `/operations/*` compatibility
 
 - [x] Implement Wundergraph response wrapper `{ data, errors? }`.
-- [ ] Parse raw and URL-encoded `wg_variables`.
+- [x] Parse raw and URL-encoded `wg_variables`.
 - [x] Mark `/operations/*` as deprecated with response headers and OpenAPI
       `deprecated: true`.
-- [ ] Implement latest, earliest, and paginated metrics.
-- [ ] Implement latest, earliest, and paginated treasury assets via legacy
+- [x] Implement latest, earliest, and paginated metrics.
+- [x] Implement latest, earliest, and paginated treasury assets via legacy
       `tokenRecords` route names.
-- [ ] Implement latest, earliest, and paginated OHM supply via legacy
+- [x] Implement latest, earliest, and paginated OHM supply via legacy
       `tokenSupplies` route names.
-- [ ] Do not expose raw legacy Wundergraph routes such as
+- [x] Do not expose raw legacy Wundergraph routes such as
       `/operations/tokenRecordsLatest` or chain-specific response keys such as
       `treasuryEthereum_tokenRecords`.
-- [ ] Accept and ignore `ignoreCache`.
-- [ ] Accept and ignore `dateOffset`.
-- [ ] Apply no max range limit on `/operations/*`.
-- [ ] Support `crossChainDataComplete=true` filtering.
-- [ ] Support `includeRecords=true` on paginated metrics.
+- [x] Accept and ignore `ignoreCache`.
+- [x] Accept and ignore `dateOffset`.
+- [x] Apply no max range limit on `/operations/*`.
+- [x] Support `crossChainDataComplete=true` filtering.
+- [x] Support `includeRecords=true` on paginated metrics.
 - [x] Implement `atBlock/*` route parity with `501` Wundergraph-style errors.
-- [ ] Return narrow legacy `ProtocolMetric` shape; return empty arrays rather
+- [x] Return narrow legacy `ProtocolMetric` shape; return empty arrays rather
       than synthesizing unsupported values.
 
 ### Client package
