@@ -104,6 +104,159 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
 
 See `docs/envio-migration/inherited-todos.md`.
 
+## Railway self-hosted metrics API (`feat/railway-metrics-api`)
+
+Current objective: replace public Hasura exposure with private Railway
+Envio/Hasura/Postgres plus a public artifact-backed REST API. New API is `/v2`;
+legacy Wundergraph-style `/operations/*` remains as a deprecated compatibility
+surface.
+
+### Branch and scaffolding
+
+- [x] Create branch `feat/railway-metrics-api` before implementation.
+- [x] Add red-test scaffolding for shared artifacts, API routes, publisher,
+      client package, OpenAPI, and Railway config-as-code.
+- [ ] Keep the red-test list current as implementation proceeds; do not remove a
+      test unless the corresponding product requirement is explicitly dropped.
+
+### Shared artifact and metric logic
+
+- [ ] Implement UTC date parsing and inclusive range resolution.
+- [ ] Default missing `end` to `manifest.latestDate`.
+- [ ] Reject `end < start` with `invalid_date_range`.
+- [ ] Enforce `METRICS_API_MAX_RANGE_DAYS` on `/v2/*` only.
+- [ ] Ignore legacy `dateOffset` everywhere.
+- [ ] Generate month shard keys across month/year boundaries.
+- [ ] Implement exact legacy chain keys and zero defaults:
+      `Arbitrum`, `Ethereum`, `Fantom`, `Polygon`, `Base`, `Berachain`.
+- [ ] Implement exact legacy `SupplyCategoryValues` keys and zero defaults.
+- [ ] Map incomplete chain data to `crossChainComplete=false`, zero component
+      values, empty chain record arrays, `chainsIndexed`, `chainsMissing`, and
+      `_meta.chainsFailed`.
+- [ ] Preserve aggregate/component/record triplets such as
+      `treasuryMarketValue`, `treasuryMarketValueComponents`, and
+      `treasuryMarketValueRecords`.
+- [ ] Keep `TreasuryAsset` and `OhmSupply` as the v2 names while preserving
+      legacy `TokenRecord` / `TokenSupply` shape aliases for `/operations/*`.
+- [ ] Normalize legacy numeric values to JS numbers, not strings.
+- [ ] Normalize legacy `TokenSupply.source` and `sourceAddress` to non-null
+      strings; keep `pool` and `poolAddress` nullable.
+
+### Publisher
+
+- [ ] Query private Hasura over Railway private networking only.
+- [ ] Generate monthly artifacts:
+      `v2/metrics/daily/YYYY-MM.json`,
+      `v2/treasury-assets/daily/YYYY-MM.json`,
+      `v2/ohm-supply/daily/YYYY-MM.json`.
+- [ ] Generate schemas under `v2/schemas/`.
+- [ ] Generate manifest with `earliestDate`, `latestDate`, schema version,
+      generated timestamp, artifact keys, hashes, and row counts.
+- [ ] Upload all shards and schemas before `v2/manifest.json`.
+- [ ] Implement full publish mode for initial deployment.
+- [ ] Implement incremental publish mode with configurable lookback.
+- [ ] Ensure upload/validation failure exits non-zero and does not publish a new
+      manifest.
+
+### Public API
+
+- [ ] Implement `/ready`; do not add `/healthz`.
+- [ ] Implement CORS for `GET`, `HEAD`, and `OPTIONS`.
+- [ ] Reject request bodies on `GET` and `HEAD`.
+- [ ] Implement `/openapi.json` and `/docs`.
+- [ ] Implement `/v2/bounds` without exposing `availableMonths`.
+- [ ] Implement `/v2/manifest`.
+- [ ] Implement `/v2/metrics/daily`.
+- [ ] Implement `/v2/treasury-assets/daily`.
+- [ ] Implement `/v2/ohm-supply/daily`.
+- [ ] Support `includeRecords=true` on `/v2/metrics/daily` using the legacy
+      metric-specific `*Records` fields.
+- [ ] Return consistent v2 `{ data, meta }` success envelopes and
+      `{ error: { code, message, details? } }` error envelopes.
+- [ ] Add cache headers for range routes, manifest/bounds, and readiness.
+
+### Legacy `/operations/*` compatibility
+
+- [ ] Implement Wundergraph response wrapper `{ data, errors? }`.
+- [ ] Parse raw and URL-encoded `wg_variables`.
+- [ ] Mark `/operations/*` as deprecated with response headers and OpenAPI
+      `deprecated: true`.
+- [ ] Implement latest, earliest, and paginated metrics.
+- [ ] Implement latest, earliest, and paginated treasury assets via legacy
+      `tokenRecords` route names.
+- [ ] Implement latest, earliest, and paginated OHM supply via legacy
+      `tokenSupplies` route names.
+- [ ] Do not expose raw legacy Wundergraph routes such as
+      `/operations/tokenRecordsLatest` or chain-specific response keys such as
+      `treasuryEthereum_tokenRecords`.
+- [ ] Accept and ignore `ignoreCache`.
+- [ ] Accept and ignore `dateOffset`.
+- [ ] Apply no max range limit on `/operations/*`.
+- [ ] Support `crossChainDataComplete=true` filtering.
+- [ ] Support `includeRecords=true` on paginated metrics.
+- [ ] Implement `atBlock/*` route parity with `501` Wundergraph-style errors.
+- [ ] Return narrow legacy `ProtocolMetric` shape; return empty arrays rather
+      than synthesizing unsupported values.
+
+### Client package
+
+- [ ] Continue publishing `@olympusdao/treasury-subgraph-client` as a major
+      version.
+- [ ] Preserve `createClient`, `TreasurySubgraphClient`, and legacy
+      `query({ operationName, input })`.
+- [ ] Add v2 methods:
+      `getBounds`, `getDailyMetrics`, `getDailyTreasuryAssets`,
+      `getDailyOhmSupply`.
+- [ ] Keep the package framework-agnostic; no TanStack Query dependency.
+- [ ] Include `openapi.json` in package output.
+- [ ] Export legacy and v2-compatible TypeScript types.
+
+### Railway config-as-code and containers
+
+- [x] Add Railway config-as-code file stubs for indexer, Hasura, publisher, and
+      API.
+- [x] Add Dockerfile stubs for indexer, Hasura, publisher, and API.
+- [ ] Replace Dockerfile stubs with pinned, production-ready images modeled on
+      `protocol-visualizer`.
+- [ ] Configure publisher cron as `15 * * * *` with `restartPolicyType: NEVER`.
+- [ ] Configure API healthcheck as `/ready` with `restartPolicyType: ALWAYS`.
+- [ ] Document Railway variables for Postgres, Hasura admin secret, RPC URLs,
+      bucket credentials, publisher mode, and API max range.
+- [ ] Document Cloudflare cache and WAF rules.
+- [ ] Ensure Hasura/Postgres/indexer/publisher remain private and only
+      `metrics-api` has a public domain.
+
+### Security and supply-chain validation
+
+- [ ] Run `pnpm audit --audit-level moderate` and resolve or explicitly justify
+      findings.
+- [ ] Review new production dependencies for necessity and maintenance posture.
+- [ ] Keep new runtime dependency footprint minimal; avoid framework dependencies
+      unless they remove meaningful risk.
+- [ ] Build all Docker images locally.
+- [ ] Scan Docker images for vulnerabilities before deployment.
+- [ ] Resolve or explicitly document Docker image findings.
+- [ ] Confirm runtime images run as non-root where practical.
+- [ ] Confirm public API rejects unsupported methods and request bodies.
+- [ ] Confirm Hasura console is disabled and Hasura has no public domain.
+- [ ] Confirm secrets are only supplied through Railway variables and are not
+      printed in logs.
+
+### Validation gates
+
+- [ ] `pnpm install --frozen-lockfile`
+- [ ] `pnpm run check`
+- [ ] `pnpm run build`
+- [ ] `pnpm test`
+- [ ] Targeted metrics API red/green test suite passes.
+- [ ] `docker build -f Dockerfile-indexer .`
+- [ ] `docker build -f Dockerfile-hasura .`
+- [ ] `docker build -f Dockerfile-metrics-publisher .`
+- [ ] `docker build -f Dockerfile-metrics-api .`
+- [ ] Deployment smoke checks for `/ready`, `/v2/bounds`, `/v2/metrics/daily`,
+      `/v2/metrics/daily?includeRecords=true`, and
+      `/operations/paginated/metrics`.
+
 ## Review notes
 
 ### Phase 1 decisions (2026-05-14)
@@ -149,4 +302,3 @@ See `docs/envio-migration/inherited-todos.md`.
 
 - [x] **Fantom/Polygon gOHM `TokenBalance` drift.** Confirmed same root cause as the broader non-standard-balance class (bridge mint credits balance without a standard Transfer event). Worked around 2026-05-17 by flagging `ERC20_GOHM` as `nonStandardBalance: true` on both chains and threading the flag through `pushTreasuryOhm` so snapshot-time `balanceOf` (cached via `readErc20BalanceOf` effect) replaces the drifting `TokenBalance` entity. See 2026-05-17 entry in `tasks/lessons.md`.
   - **Note: the underlying ledger is still wrong.** `nonStandardBalance` is a snapshot-time read-around, not a fix — `TokenBalance` rows for bridged gOHM on Fantom/Polygon (and the bridge-mint sources on those chains: WETH, DAI, FRAX, sKLIMA) remain incorrect for any consumer that queries them directly. The snapshot path is the only consumer today, so this is acceptable, but a real fix would require either (a) indexing the bridge-mint events that mutate balance, or (b) deriving `TokenBalance` from `balanceOf` instead of from Transfer accumulation. Track if a downstream consumer ever needs raw `TokenBalance` correctness.
-

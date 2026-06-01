@@ -1,0 +1,10 @@
+export function getOpenApiDocument(): unknown {
+  return {
+    openapi: "3.1.0",
+    info: {
+      title: "Olympus Protocol Metrics API",
+      version: "0.0.0-stub",
+    },
+    paths: {},
+  };
+}
