@@ -106,7 +106,11 @@ importers:
         specifier: 4.1.0
         version: 4.1.0(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.13(@types/node@24.12.2)(esbuild@0.27.7)(tsx@4.21.0)(yaml@2.8.3))
 
-  apps/metrics-api: {}
+  apps/metrics-api:
+    dependencies:
+      '@aws-sdk/client-s3':
+        specifier: 3.1053.0
+        version: 3.1053.0
 
   apps/metrics-publisher:
     dependencies:

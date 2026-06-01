@@ -1,5 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 
+import { ArtifactNotFoundError, type ArtifactReader } from "./artifact-store";
 import {
   buildDailyMetric,
   getOpenApiDocument,
@@ -17,16 +18,8 @@ import {
 export type MetricsApiConfig = {
   maxRangeDays: number;
   manifest?: Manifest;
+  artifactReader?: ArtifactReader;
   generatedAt?: string;
-};
-
-const DEFAULT_GENERATED_AT = "2026-06-01T08:15:00.000Z";
-
-const DEFAULT_MANIFEST: Manifest = {
-  schemaVersion: "1.0.0",
-  generatedAt: DEFAULT_GENERATED_AT,
-  earliestDate: "2021-04-29",
-  latestDate: "2026-06-01",
 };
 
 const LEGACY_OPERATION_PATHS = new Set([
@@ -83,8 +76,14 @@ function getUrl(req: IncomingMessage): URL {
   return new URL(req.url ?? "/", "http://metrics-api.local");
 }
 
-function getManifest(config: MetricsApiConfig): Manifest {
-  return config.manifest ?? DEFAULT_MANIFEST;
+async function getManifest(config: MetricsApiConfig): Promise<Manifest> {
+  if (config.manifest !== undefined) {
+    return config.manifest;
+  }
+  if (config.artifactReader !== undefined) {
+    return config.artifactReader.getJson<Manifest>("v2/manifest.json");
+  }
+  throw new ArtifactNotFoundError("v2/manifest.json");
 }
 
 function hasRequestBody(req: IncomingMessage): boolean {
@@ -102,8 +101,8 @@ function emptyResponse<T>(
   config: MetricsApiConfig,
   range: { start: string; end: string; days: number } | undefined,
   data: T,
+  manifest: Manifest,
 ): ApiResponse<T> {
-  const manifest = getManifest(config);
   return {
     data,
     meta: {
@@ -122,7 +121,11 @@ function emptyResponse<T>(
   };
 }
 
-function resolveV2Range(url: URL, config: MetricsApiConfig): { start: string; end: string; days: number } {
+function resolveV2Range(
+  url: URL,
+  config: MetricsApiConfig,
+  manifest: Manifest,
+): { start: string; end: string; days: number } {
   const start = url.searchParams.get("start");
   if (start === null) {
     throw new Error("start is required");
@@ -131,7 +134,7 @@ function resolveV2Range(url: URL, config: MetricsApiConfig): { start: string; en
   return resolveDateRange({
     start,
     end: url.searchParams.get("end") ?? undefined,
-    manifest: getManifest(config),
+    manifest,
     maxRangeDays: config.maxRangeDays,
     enforceMaxRange: true,
   });
@@ -178,7 +181,6 @@ export async function handleMetricsApiRequest(
   }
 
   const url = getUrl(req);
-  const manifest = getManifest(config);
 
   if (url.pathname === "/ready") {
     res.setHeader("cache-control", READY_CACHE_CONTROL);
@@ -200,26 +202,61 @@ export async function handleMetricsApiRequest(
     return;
   }
 
+  let manifest: Manifest | undefined;
+  const getPublishedManifest = async (): Promise<Manifest | undefined> => {
+    if (manifest !== undefined) {
+      return manifest;
+    }
+    try {
+      manifest = await getManifest(config);
+      return manifest;
+    } catch (error) {
+      if (error instanceof ArtifactNotFoundError) {
+        sendError(res, 503, "manifest_not_published", "Metrics artifacts have not been published yet.");
+        return undefined;
+      }
+      sendError(
+        res,
+        503,
+        "manifest_unavailable",
+        error instanceof Error ? error.message : "Metrics artifact manifest is unavailable.",
+      );
+      return undefined;
+    }
+  };
+
   if (url.pathname === "/v2/manifest") {
+    const publishedManifest = await getPublishedManifest();
+    if (publishedManifest === undefined) {
+      return;
+    }
     res.setHeader("cache-control", MANIFEST_CACHE_CONTROL);
-    sendJson(res, 200, emptyResponse(config, undefined, manifest));
+    sendJson(res, 200, emptyResponse(config, undefined, publishedManifest, publishedManifest));
     return;
   }
 
   if (url.pathname === "/v2/bounds") {
+    const publishedManifest = await getPublishedManifest();
+    if (publishedManifest === undefined) {
+      return;
+    }
     const bounds: BoundsResponse = {
-      earliestDate: manifest.earliestDate,
-      latestDate: manifest.latestDate,
+      earliestDate: publishedManifest.earliestDate,
+      latestDate: publishedManifest.latestDate,
       maxRangeDays: config.maxRangeDays,
     };
     res.setHeader("cache-control", MANIFEST_CACHE_CONTROL);
-    sendJson(res, 200, emptyResponse(config, undefined, bounds));
+    sendJson(res, 200, emptyResponse(config, undefined, bounds, publishedManifest));
     return;
   }
 
   if (url.pathname === "/v2/metrics/daily") {
     try {
-      const range = resolveV2Range(url, config);
+      const publishedManifest = await getPublishedManifest();
+      if (publishedManifest === undefined) {
+        return;
+      }
+      const range = resolveV2Range(url, config, publishedManifest);
       const includeRecords = url.searchParams.get("includeRecords") === "true";
       const metric = buildDailyMetric({
         date: range.start,
@@ -227,11 +264,14 @@ export async function handleMetricsApiRequest(
         treasuryAssets: [],
         ohmSupply: [],
         includeRecords,
-        generatedAt: config.generatedAt ?? manifest.generatedAt,
+        generatedAt: config.generatedAt ?? publishedManifest.generatedAt,
       });
       res.setHeader("cache-control", RANGE_CACHE_CONTROL);
-      sendJson(res, 200, emptyResponse<DailyMetric[]>(config, range, [metric]));
+      sendJson(res, 200, emptyResponse<DailyMetric[]>(config, range, [metric], publishedManifest));
     } catch (error) {
+      if (error instanceof ArtifactNotFoundError) {
+        return;
+      }
       sendError(res, 400, "invalid_date_range", error instanceof Error ? error.message : "Invalid date range.");
     }
     return;
@@ -239,10 +279,17 @@ export async function handleMetricsApiRequest(
 
   if (url.pathname === "/v2/treasury-assets/daily") {
     try {
-      const range = resolveV2Range(url, config);
+      const publishedManifest = await getPublishedManifest();
+      if (publishedManifest === undefined) {
+        return;
+      }
+      const range = resolveV2Range(url, config, publishedManifest);
       res.setHeader("cache-control", RANGE_CACHE_CONTROL);
-      sendJson(res, 200, emptyResponse<TreasuryAsset[]>(config, range, []));
+      sendJson(res, 200, emptyResponse<TreasuryAsset[]>(config, range, [], publishedManifest));
     } catch (error) {
+      if (error instanceof ArtifactNotFoundError) {
+        return;
+      }
       sendError(res, 400, "invalid_date_range", error instanceof Error ? error.message : "Invalid date range.");
     }
     return;
@@ -250,10 +297,17 @@ export async function handleMetricsApiRequest(
 
   if (url.pathname === "/v2/ohm-supply/daily") {
     try {
-      const range = resolveV2Range(url, config);
+      const publishedManifest = await getPublishedManifest();
+      if (publishedManifest === undefined) {
+        return;
+      }
+      const range = resolveV2Range(url, config, publishedManifest);
       res.setHeader("cache-control", RANGE_CACHE_CONTROL);
-      sendJson(res, 200, emptyResponse<OhmSupply[]>(config, range, []));
+      sendJson(res, 200, emptyResponse<OhmSupply[]>(config, range, [], publishedManifest));
     } catch (error) {
+      if (error instanceof ArtifactNotFoundError) {
+        return;
+      }
       sendError(res, 400, "invalid_date_range", error instanceof Error ? error.message : "Invalid date range.");
     }
     return;

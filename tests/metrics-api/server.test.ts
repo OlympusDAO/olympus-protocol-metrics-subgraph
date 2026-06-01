@@ -2,13 +2,26 @@ import { createServer, request as httpRequest } from "node:http";
 import { AddressInfo } from "node:net";
 import { afterEach, describe, expect, test } from "vitest";
 
-import { handleMetricsApiRequest } from "../../apps/metrics-api/src/server";
+import { handleMetricsApiRequest, type MetricsApiConfig } from "../../apps/metrics-api/src/server";
+import type { Manifest } from "../../packages/metrics-artifacts/src";
 
 let closeServer: (() => Promise<void>) | undefined;
 
-async function request(path: string, init?: RequestInit) {
+const testManifest: Manifest = {
+  schemaVersion: "1.0.0",
+  generatedAt: "2026-06-01T08:15:00.000Z",
+  earliestDate: "2021-04-29",
+  latestDate: "2026-06-01",
+};
+
+const defaultConfig: MetricsApiConfig = {
+  maxRangeDays: 366,
+  manifest: testManifest,
+};
+
+async function request(path: string, init?: RequestInit, config: MetricsApiConfig = defaultConfig) {
   const server = createServer((req, res) => {
-    void handleMetricsApiRequest(req, res, { maxRangeDays: 366 });
+    void handleMetricsApiRequest(req, res, config);
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   closeServer = () => new Promise((resolve) => server.close(() => resolve()));
@@ -16,9 +29,13 @@ async function request(path: string, init?: RequestInit) {
   return fetch(`http://127.0.0.1:${port}${path}`, init);
 }
 
-async function rawRequest(path: string, init: { method: string; body?: string }) {
+async function rawRequest(
+  path: string,
+  init: { method: string; body?: string },
+  config: MetricsApiConfig = defaultConfig,
+) {
   const server = createServer((req, res) => {
-    void handleMetricsApiRequest(req, res, { maxRangeDays: 366 });
+    void handleMetricsApiRequest(req, res, config);
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   closeServer = () => new Promise((resolve) => server.close(() => resolve()));
@@ -77,6 +94,17 @@ describe("metrics API HTTP behavior", () => {
     expect(response.status).toBe(204);
     expect(response.headers.get("access-control-allow-origin")).toBe("*");
     expect(response.headers.get("access-control-allow-methods")).toContain("GET");
+  });
+
+  test("does not return hardcoded bounds when manifest has not been published", async () => {
+    const response = await request("/v2/bounds", undefined, { maxRangeDays: 366 });
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({
+      error: {
+        code: "manifest_not_published",
+        message: expect.stringMatching(/not been published/i),
+      },
+    });
   });
 
   test("rejects end date before start date on v2 ranges", async () => {

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { createServer } from "node:http";
+import { createArtifactReaderFromEnv } from "./artifact-store";
 import { handleMetricsApiRequest } from "./server";
 
 // The API intentionally uses Node's built-in HTTP server. The public surface is
@@ -18,7 +19,10 @@ if (!Number.isInteger(maxRangeDays) || maxRangeDays < 1) {
 }
 
 const server = createServer((req, res) => {
-  void handleMetricsApiRequest(req, res, { maxRangeDays });
+  void handleMetricsApiRequest(req, res, {
+    maxRangeDays,
+    artifactReader: createArtifactReaderFromEnv(process.env),
+  });
 });
 
 server.listen(port, "0.0.0.0", () => {
