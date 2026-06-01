@@ -64,7 +64,7 @@ describe("local Docker Compose stack", () => {
       "docker compose up --build postgres hasura minio minio-init indexer metrics-api",
     );
     expect(packageJson.scripts["compose:publish"]).toBe(
-      "docker compose --profile publish run --build --rm --no-deps metrics-publisher",
+      "INDEXER_DEPLOYMENT_ID=$(git rev-parse HEAD) docker compose --profile publish run --build --rm --no-deps metrics-publisher",
     );
     expect(packageJson.scripts[["compose", "publish", "full"].join(":")]).toBeUndefined();
   });
@@ -115,6 +115,9 @@ describe("local Docker Compose stack", () => {
     expect(compose).toContain("ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:?");
     expect(compose).toContain("HASURA_GRAPHQL_ENDPOINT: ${INDEXER_HASURA_GRAPHQL_ENDPOINT:-http://hasura:8080/v1/metadata}");
     expect(compose).toContain("MINIO_ROOT_USER: ${MINIO_ROOT_USER:-metricsadmin}");
+    expect(compose).toContain("INDEXER_DEPLOYMENT_ID: ${INDEXER_DEPLOYMENT_ID:-}");
+    expect(sample).toContain("INDEXER_DEPLOYMENT_ID=<git-commit-hash>");
+    expect(sample).toContain("git rev-parse HEAD");
     expect(doc).toContain("It does not consume a");
     expect(doc).toContain("requests_per_second");
     expect(doc).toContain("ENVIO_API_TOKEN` is required");

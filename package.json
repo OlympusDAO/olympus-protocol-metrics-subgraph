@@ -19,7 +19,7 @@
     "compose:bucket:clear": "docker compose run --rm --no-deps --entrypoint /bin/sh minio-init -c 'mc alias set local http://minio:9000 \"$MINIO_ROOT_USER\" \"$MINIO_ROOT_PASSWORD\" && mc rm --recursive --force \"local/${ARTIFACT_BUCKET:-metrics}\" && mc mb -p \"local/${ARTIFACT_BUCKET:-metrics}\"'",
     "compose:config": "docker compose config",
     "compose:core": "docker compose up postgres hasura indexer",
-    "compose:publish": "docker compose --profile publish run --build --rm --no-deps metrics-publisher",
+    "compose:publish": "INDEXER_DEPLOYMENT_ID=$(git rev-parse HEAD) docker compose --profile publish run --build --rm --no-deps metrics-publisher",
     "compose:up": "docker compose up --build postgres hasura minio minio-init indexer metrics-api",
     "envio": "pnpm --dir apps/indexer envio",
     "envio:dev": "pnpm --dir apps/indexer envio:dev",

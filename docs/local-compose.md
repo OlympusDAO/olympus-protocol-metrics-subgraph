@@ -72,11 +72,12 @@ pnpm run compose:publish
 ```
 
 This rebuilds and starts only the one-shot `metrics-publisher` container with
-`--no-deps`. It assumes Postgres, Hasura, MinIO, and the bucket initialization
-job are already available on the compose network. The publish scripts include
-`--build`, so Docker Compose invokes a build before each publish; Docker's layer
-cache may make that quick, but Compose does not reliably build only when the
-local source has changed.
+`--no-deps` and sets `INDEXER_DEPLOYMENT_ID` to the current local
+`git rev-parse HEAD` value. It assumes Postgres, Hasura, MinIO, and the bucket
+initialization job are already available on the compose network. The publish
+scripts include `--build`, so Docker Compose invokes a build before each
+publish; Docker's layer cache may make that quick, but Compose does not reliably
+build only when the local source has changed.
 
 If no manifest exists, `pnpm run compose:publish` creates the initial historical
 backfill from `2022-05-01` through Hasura's latest indexed date. After that, the
@@ -124,9 +125,11 @@ Most variables have local defaults. Override these when needed:
   latest date plus the lookback overlap. A fresh `v2/publisher.lock` makes
   overlapping publisher runs exit successfully without writing artifacts.
 - `INDEXER_DEPLOYMENT_ID`: required deployment identifier stamped into the
-  internal manifest. Data shards are written under `v2/deployments/<id>/...`,
-  and successful publishes remove stale files from older deployment prefixes
-  after the new manifest has been written.
+  internal manifest. `pnpm run compose:publish` sets it to the latest local git
+  commit hash. If running Docker Compose directly, set it manually. Data shards
+  are written under `v2/deployments/<id>/...`, and successful publishes remove
+  stale files from older deployment prefixes after the new manifest has been
+  written.
 
 Envio v3 fallback RPCs are configured in `apps/indexer/config.yaml` by adding
 multiple `rpc` entries with `for: fallback`. It does not consume a

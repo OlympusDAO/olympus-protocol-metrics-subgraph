@@ -224,6 +224,64 @@ describe("metrics publisher", () => {
     await expect(store.getJson("v2/deployments/current-indexer/metrics/daily/2026-04.json")).resolves.toEqual([]);
   });
 
+  test("handles a changed indexer deployment id by replacing deployment-scoped artifacts", async () => {
+    const store = new MemoryArtifactStore();
+    await store.putJson("v2/deployments/old-indexer/metrics/daily/2026-05.json", []);
+    await store.putJson("v2/deployments/old-indexer/treasury-assets/daily/2026-05.json", []);
+    await store.putJson("v2/deployments/old-indexer/ohm-supply/daily/2026-05.json", []);
+    await store.putJson("v2/manifest.json", {
+      ...existingManifest,
+      indexerDeploymentId: "old-indexer",
+      artifacts: {
+        "v2/deployments/old-indexer/metrics/daily/2026-05.json": {
+          sha256: "0".repeat(64),
+          byteLength: 3,
+          rowCount: 0,
+        },
+        "v2/deployments/old-indexer/treasury-assets/daily/2026-05.json": {
+          sha256: "1".repeat(64),
+          byteLength: 3,
+          rowCount: 0,
+        },
+        "v2/deployments/old-indexer/ohm-supply/daily/2026-05.json": {
+          sha256: "2".repeat(64),
+          byteLength: 3,
+          rowCount: 0,
+        },
+      },
+    });
+
+    const result = await publishMetricsArtifacts({
+      deploymentId: "new-indexer",
+      lookbackDays: 2,
+      source: source(),
+      store,
+      now: () => new Date(generatedAt),
+    });
+
+    expect(result.range).toEqual({ start: "2026-05-29", end: "2026-06-01", days: 4 });
+    expect(result.writtenKeys).toContain("v2/deployments/new-indexer/metrics/daily/2026-05.json");
+    expect(result.writtenKeys).toContain("v2/deployments/new-indexer/metrics/daily/2026-06.json");
+    expect(result.deletedKeys).toEqual([
+      "v2/deployments/old-indexer/metrics/daily/2026-05.json",
+      "v2/deployments/old-indexer/ohm-supply/daily/2026-05.json",
+      "v2/deployments/old-indexer/treasury-assets/daily/2026-05.json",
+    ]);
+
+    const manifest = store.json("v2/manifest.json");
+    expect(manifest).toMatchObject({ indexerDeploymentId: "new-indexer" });
+    expect(Object.keys(manifest.artifacts).some((key) => key.startsWith("v2/deployments/old-indexer/"))).toBe(false);
+    expect(manifest.artifacts["v2/deployments/new-indexer/metrics/daily/2026-05.json"]).toMatchObject({
+      rowCount: 1,
+    });
+    expect(manifest.artifacts["v2/deployments/new-indexer/metrics/daily/2026-06.json"]).toMatchObject({
+      rowCount: 1,
+    });
+    await expect(store.getJson("v2/deployments/old-indexer/metrics/daily/2026-05.json")).rejects.toThrow(
+      "Artifact not found",
+    );
+  });
+
   test("rejects unsafe indexer deployment ids", async () => {
     await expect(
       publishMetricsArtifacts({
