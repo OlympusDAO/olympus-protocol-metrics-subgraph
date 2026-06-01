@@ -194,31 +194,31 @@ describe("metrics publisher", () => {
     expect(store.writtenKeys).not.toContain("v2/manifest.json");
   });
 
-  test("S3-compatible store uploads JSON with SigV4 auth", async () => {
-    const calls: Array<{ url: string; init: RequestInit }> = [];
+  test("S3-compatible store uploads JSON through the pinned AWS S3 client", async () => {
+    const commands: Array<{ input?: Record<string, unknown> }> = [];
     const store = new S3ArtifactStore({
       endpoint: "https://r2.example.com",
       region: "auto",
       bucket: "metrics",
       accessKeyId: "access-key",
       secretAccessKey: "secret-key",
-      now: () => new Date("2026-06-01T08:15:00.000Z"),
-      fetchFn: async (url, init) => {
-        calls.push({ url: String(url), init: init ?? {} });
-        return new Response("", { status: 200 });
+      client: {
+        async send(command) {
+          commands.push(command as unknown as { input?: Record<string, unknown> });
+          return {};
+        },
       },
     });
 
     await store.putJson("v2/manifest.json", { ok: true });
 
-    expect(calls).toHaveLength(1);
-    expect(calls[0].url).toBe("https://r2.example.com/metrics/v2/manifest.json");
-    expect(calls[0].init.method).toBe("PUT");
-    expect(calls[0].init.body).toBe('{"ok":true}\n');
-    const headers = calls[0].init.headers as Record<string, string>;
-    expect(headers["content-type"]).toBe("application/json; charset=utf-8");
-    expect(headers.authorization).toContain("AWS4-HMAC-SHA256");
-    expect(headers["x-amz-content-sha256"]).toMatch(/^[a-f0-9]{64}$/);
+    expect(commands).toHaveLength(1);
+    expect(commands[0].input).toMatchObject({
+      Bucket: "metrics",
+      Key: "v2/manifest.json",
+      Body: '{"ok":true}\n',
+      ContentType: "application/json; charset=utf-8",
+    });
   });
 
   test("creates production source and store from documented Railway variables", () => {
