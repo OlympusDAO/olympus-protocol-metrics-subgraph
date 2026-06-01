@@ -160,13 +160,19 @@ surface.
 - [x] Publish metric, treasury asset, and OHM supply shard keys before
       `v2/manifest.json` in the publisher contract.
 - [x] Upload all shards and schemas before `v2/manifest.json`.
-- [x] Implement full publish mode for initial deployment.
-- [x] Implement incremental publish mode with configurable lookback.
-- [x] Require a full publisher run to create the initial manifest; incremental
-      mode fails if the manifest is missing.
-- [x] Default full publisher runs to the public start date, `2022-05-01`.
+- [x] Implement initial backfill when no manifest exists.
+- [x] Implement incremental publish with configurable lookback when a manifest
+      exists.
+- [x] Default initial publisher runs to the public start date, `2022-05-01`.
 - [x] Coordinate overlapping cron runs with an S3-compatible
       `v2/publisher.lock`; fresh locks skip cleanly, stale locks are taken over.
+- [x] Record deployment-scoped shard keys in the internal manifest using the
+      required `INDEXER_DEPLOYMENT_ID`.
+- [x] Fail publisher startup if `INDEXER_DEPLOYMENT_ID` is missing or invalid.
+- [x] Delete stale `v2/deployments/<old-id>/...` files only after the new
+      internal manifest has been published.
+- [x] Keep `v2/manifest.json` internal; do not expose deployment ids or
+      artifact file keys through a public `/v2/manifest` route.
 - [x] Clamp public manifest bounds to the public start date instead of raw
       Hasura source bounds.
 - [x] Ensure upload/validation failure exits non-zero and does not publish a new
@@ -179,7 +185,8 @@ surface.
 - [x] Reject request bodies on `GET` and `HEAD`.
 - [x] Implement `/openapi.json` and `/docs`.
 - [x] Implement `/v2/bounds` without exposing `availableMonths`.
-- [x] Implement `/v2/manifest`.
+- [x] Include optional `indexerDeploymentId` in `/v2/bounds` when the internal
+      manifest has one.
 - [x] Implement `/v2/metrics/daily`.
 - [x] Implement `/v2/treasury-assets/daily`.
 - [x] Implement `/v2/ohm-supply/daily`.
@@ -187,7 +194,7 @@ surface.
       metric-specific `*Records` fields.
 - [x] Return consistent v2 `{ data, meta }` success envelopes and
       `{ error: { code, message, details? } }` error envelopes.
-- [x] Add cache headers for range routes, manifest/bounds, and readiness.
+- [x] Add cache headers for range routes, bounds, and readiness.
 
 ### Legacy `/operations/*` compatibility
 
@@ -195,10 +202,12 @@ surface.
 - [x] Parse raw and URL-encoded `wg_variables`.
 - [x] Mark `/operations/*` as deprecated with response headers and OpenAPI
       `deprecated: true`.
-- [x] Implement latest, earliest, and paginated metrics.
-- [x] Implement latest, earliest, and paginated treasury assets via legacy
+- [ ] Replace current placeholder responses with artifact-backed route
+      handlers for all public legacy `/operations/*` routes.
+- [ ] Implement latest, earliest, and paginated metrics.
+- [ ] Implement latest, earliest, and paginated treasury assets via legacy
       `tokenRecords` route names.
-- [x] Implement latest, earliest, and paginated OHM supply via legacy
+- [ ] Implement latest, earliest, and paginated OHM supply via legacy
       `tokenSupplies` route names.
 - [x] Do not expose raw legacy Wundergraph routes such as
       `/operations/tokenRecordsLatest` or chain-specific response keys such as
@@ -206,11 +215,15 @@ surface.
 - [x] Accept and ignore `ignoreCache`.
 - [x] Accept and ignore `dateOffset`.
 - [x] Apply no max range limit on `/operations/*`.
-- [x] Support `crossChainDataComplete=true` filtering.
-- [x] Support `includeRecords=true` on paginated metrics.
+- [ ] Preserve legacy `startDate` with optional `endDate`; missing `endDate`
+      resolves to manifest latest date.
+- [ ] Support `crossChainDataComplete=true` filtering.
+- [ ] Support `includeRecords=true` on paginated metrics.
+- [ ] Add route tests that assert legacy latest/earliest/paginated operations
+      return artifact data instead of empty arrays.
 - [x] Implement `atBlock/*` route parity with `501` Wundergraph-style errors.
-- [x] Return narrow legacy `ProtocolMetric` shape; return empty arrays rather
-      than synthesizing unsupported values.
+- [ ] Return narrow legacy `ProtocolMetric` shape for `protocolMetrics`
+      aliases rather than synthesizing unsupported values.
 
 ### Client package
 
@@ -224,12 +237,18 @@ surface.
 - [x] Keep the package framework-agnostic; no TanStack Query dependency.
 - [x] Include `openapi.json` in package output.
 - [x] Export legacy and v2-compatible TypeScript types.
+- [ ] Add client methods or typed wrappers for the implemented legacy
+      `/operations/*` compatibility routes where the historical package exposed
+      them directly.
 - [ ] Add package scripts for client release preparation:
       clean/build type declarations, copy OpenAPI output, run package-focused
       tests, and produce a dry-run `npm pack` tarball for inspection.
 - [ ] Add an explicit client publish script that publishes
       `@olympusdao/treasury-subgraph-client` from `apps/client` only after
       validation passes.
+- [ ] Add a package-only release checklist/script that verifies the git tree is
+      clean, the package version matches the intended release, and npm
+      publishing uses provenance or trusted publishing where available.
 - [ ] Document the versioning/release workflow for the client package,
       including when to bump major/minor/patch for legacy `/operations/*` and
       v2 API changes.
@@ -250,7 +269,7 @@ surface.
 - [x] Configure publisher cron as `15 * * * *` with `restartPolicyType: NEVER`.
 - [x] Configure API healthcheck as `/ready` with `restartPolicyType: ALWAYS`.
 - [x] Document Railway variables for Postgres, Hasura admin secret, RPC URLs,
-      bucket credentials, publisher mode, and API max range.
+      bucket credentials, publisher range controls, and API max range.
 - [x] Document Cloudflare cache and WAF rules.
 - [ ] Ensure Hasura/Postgres/indexer/publisher remain private and only
       `metrics-api` has a public domain.

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  ListObjectsV2Command,
   NoSuchKey,
   PutObjectCommand,
   S3Client,
@@ -20,6 +21,7 @@ export type ArtifactStore = {
   putJson(key: string, value: unknown): Promise<void>;
   putJsonIfAbsent(key: string, value: unknown): Promise<boolean>;
   putJsonIfMatch(key: string, value: unknown, etag: string): Promise<boolean>;
+  listKeys(prefix: string): Promise<string[]>;
   deleteJson(key: string): Promise<void>;
   deleteJsonIfMatch(key: string, etag: string): Promise<boolean>;
 };
@@ -32,6 +34,7 @@ export type ArtifactEntry = {
 
 export class MemoryArtifactStore implements ArtifactStore {
   readonly writtenKeys: string[] = [];
+  readonly deletedKeys: string[] = [];
   readonly objects = new Map<string, string>();
 
   async getJson<T>(key: string): Promise<T> {
@@ -68,7 +71,12 @@ export class MemoryArtifactStore implements ArtifactStore {
     return true;
   }
 
+  async listKeys(prefix: string): Promise<string[]> {
+    return Array.from(this.objects.keys()).filter((key) => key.startsWith(prefix)).sort();
+  }
+
   async deleteJson(key: string): Promise<void> {
+    this.deletedKeys.push(key);
     this.objects.delete(key);
   }
 
@@ -77,6 +85,7 @@ export class MemoryArtifactStore implements ArtifactStore {
     if (existing === undefined || etag(existing) !== etagValue) {
       return false;
     }
+    this.deletedKeys.push(key);
     this.objects.delete(key);
     return true;
   }
@@ -199,6 +208,27 @@ export class S3ArtifactStore implements ArtifactStore {
         Key: key,
       }),
     );
+  }
+
+  async listKeys(prefix: string): Promise<string[]> {
+    const keys: string[] = [];
+    let continuationToken: string | undefined;
+    do {
+      const response = await this.client.send(
+        new ListObjectsV2Command({
+          Bucket: this.input.bucket,
+          Prefix: prefix,
+          ContinuationToken: continuationToken,
+        }),
+      );
+      for (const object of response.Contents ?? []) {
+        if (object.Key !== undefined) {
+          keys.push(object.Key);
+        }
+      }
+      continuationToken = response.NextContinuationToken;
+    } while (continuationToken !== undefined);
+    return keys;
   }
 
   async deleteJsonIfMatch(key: string, etagValue: string): Promise<boolean> {

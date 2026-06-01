@@ -30,15 +30,13 @@ export {
   type MetricsSource,
 };
 
-export type PublishMode = "full" | "incremental";
-
 export type PublishResult = {
+  deletedKeys: string[];
   manifestPublishedLast: boolean;
   range?: DateRange;
   skipped: boolean;
   skipReason?: "lock_held";
   runId: string;
-  publishMode: PublishMode;
   writtenKeys: string[];
 };
 
@@ -53,7 +51,7 @@ type PublisherLock = {
   runId: string;
   startedAt: string;
   expiresAt: string;
-  mode: PublishMode;
+  operation: "initial_backfill" | "incremental_refresh";
 };
 
 const SCHEMAS: Record<string, Record<string, unknown>> = {
@@ -65,6 +63,7 @@ const SCHEMAS: Record<string, Record<string, unknown>> = {
     properties: {
       schemaVersion: { type: "string" },
       generatedAt: { type: "string", format: "date-time" },
+      indexerDeploymentId: { type: "string" },
       earliestDate: { type: "string", format: "date" },
       latestDate: { type: "string", format: "date" },
       artifacts: {
@@ -102,9 +101,9 @@ const SCHEMAS: Record<string, Record<string, unknown>> = {
 };
 
 export async function publishMetricsArtifacts(input: {
-  mode: PublishMode;
   lookbackDays?: number;
   publicStartDate?: string;
+  deploymentId: string;
   startDate?: string;
   endDate?: string;
   manifest?: Manifest;
@@ -118,38 +117,26 @@ export async function publishMetricsArtifacts(input: {
   const now = input.now?.() ?? new Date(DEFAULT_GENERATED_AT);
   const generatedAt = now.toISOString();
   const publicStartDate = input.publicStartDate ?? DEFAULT_PUBLIC_START_DATE;
+  const deploymentId = parseDeploymentId(input.deploymentId);
   const lockTtlMs = input.lockTtlMs ?? DEFAULT_LOCK_TTL_MS;
   if (!Number.isInteger(lockTtlMs) || lockTtlMs < 1) {
     throw new Error("lockTtlMs must be a positive integer.");
   }
   const existingManifest = input.manifest ?? (await getExistingManifest(store));
-  if (input.mode === "incremental" && existingManifest === undefined) {
-    const existingLock = await readPublisherLock(store);
-    if (existingLock !== undefined && Date.parse(existingLock.value.expiresAt) > now.getTime()) {
-      return {
-        manifestPublishedLast: false,
-        skipped: true,
-        skipReason: "lock_held",
-        runId: existingLock.value.runId,
-        publishMode: input.mode,
-        writtenKeys: [],
-      };
-    }
-    throw new Error("Metrics artifact manifest is missing. Run the publisher in full mode first.");
-  }
+  const operation = existingManifest === undefined ? "initial_backfill" : "incremental_refresh";
   const lock = await acquirePublisherLock({
     store,
-    mode: input.mode,
+    operation,
     now,
     ttlMs: lockTtlMs,
   });
   if (!lock.acquired) {
     return {
       manifestPublishedLast: false,
+      deletedKeys: [],
       skipped: true,
       skipReason: "lock_held",
       runId: lock.runId,
-      publishMode: input.mode,
       writtenKeys: [],
     };
   }
@@ -164,6 +151,7 @@ export async function publishMetricsArtifacts(input: {
     ]);
 
     const writtenKeys: string[] = [];
+    let deletedKeys: string[] = [];
     const artifacts: Record<string, ArtifactEntry> = { ...(existingManifest?.artifacts ?? {}) };
 
     const writeArtifact = async (key: string, value: unknown, rowCount: number): Promise<void> => {
@@ -176,33 +164,39 @@ export async function publishMetricsArtifacts(input: {
       await writeArtifact(key, schema, 0);
     }
 
+    const dataKey = (kind: "metrics" | "treasury-assets" | "ohm-supply", month: string): string =>
+      `v2/deployments/${deploymentId}/${kind}/daily/${month}.json`;
+
     for (const month of monthKeysForRange(range)) {
       const metricRows = metrics.filter((row) => row.date.startsWith(month));
       const treasuryAssetRows = treasuryAssets.filter((row) => row.date.startsWith(month));
       const ohmSupplyRows = ohmSupply.filter((row) => row.date.startsWith(month));
 
-      await writeArtifact(`v2/metrics/daily/${month}.json`, metricRows, metricRows.length);
-      await writeArtifact(`v2/treasury-assets/daily/${month}.json`, treasuryAssetRows, treasuryAssetRows.length);
-      await writeArtifact(`v2/ohm-supply/daily/${month}.json`, ohmSupplyRows, ohmSupplyRows.length);
+      await writeArtifact(dataKey("metrics", month), metricRows, metricRows.length);
+      await writeArtifact(dataKey("treasury-assets", month), treasuryAssetRows, treasuryAssetRows.length);
+      await writeArtifact(dataKey("ohm-supply", month), ohmSupplyRows, ohmSupplyRows.length);
     }
 
+    const manifestArtifacts = pruneHistoricalDeploymentArtifacts(artifacts, deploymentId);
     const manifest: Manifest = {
       schemaVersion: SCHEMA_VERSION,
       generatedAt,
+      indexerDeploymentId: deploymentId,
       earliestDate: maxDate(publicStartDate, minDate(existingManifest?.earliestDate ?? range.start, range.start)),
       latestDate: maxDate(existingManifest?.latestDate ?? range.end, range.end),
-      artifacts,
+      artifacts: manifestArtifacts,
     };
 
     await store.putJson("v2/manifest.json", manifest);
     writtenKeys.push("v2/manifest.json");
+    deletedKeys = await cleanupHistoricalDeploymentArtifacts(store, deploymentId);
 
     return {
+      deletedKeys,
       manifestPublishedLast: writtenKeys.at(-1) === "v2/manifest.json",
       range,
       skipped: false,
       runId: lock.runId,
-      publishMode: input.mode,
       writtenKeys,
     };
   } finally {
@@ -231,11 +225,9 @@ export async function publishMetricsArtifactsFromEnv(
   env: NodeJS.ProcessEnv = process.env,
   deps: { source?: MetricsSource; store?: ArtifactStore; now?: () => Date } = {},
 ): Promise<PublishResult> {
-  const mode = parsePublishMode(env.PUBLISHER_MODE);
   const lookbackDays = optionalEnv(env, "PUBLISHER_LOOKBACK_DAYS");
   const lockTtlMs = optionalEnv(env, "PUBLISHER_LOCK_TTL_MS");
   return publishMetricsArtifacts({
-    mode,
     lookbackDays: lookbackDays === undefined ? undefined : Number(lookbackDays),
     publicStartDate: optionalEnv(env, "PUBLISHER_PUBLIC_START_DATE"),
     startDate: optionalEnv(env, "PUBLISHER_START_DATE"),
@@ -244,16 +236,17 @@ export async function publishMetricsArtifactsFromEnv(
     store: deps.store ?? createArtifactStoreFromEnv(env),
     now: deps.now,
     lockTtlMs: lockTtlMs === undefined ? undefined : Number(lockTtlMs),
+    deploymentId: requiredEnv(env, "INDEXER_DEPLOYMENT_ID"),
   });
 }
 
 function resolvePublishRange(
-  input: { mode: PublishMode; lookbackDays?: number; startDate?: string; endDate?: string },
+  input: { lookbackDays?: number; startDate?: string; endDate?: string },
   bounds: MetricsBounds,
   existingManifest: Manifest | undefined,
   publicStartDate: string,
 ): DateRange {
-  if (input.mode === "full") {
+  if (existingManifest === undefined) {
     return resolveDateRange({
       start: input.startDate ?? publicStartDate,
       end: input.endDate ?? bounds.latestDate,
@@ -266,9 +259,6 @@ function resolvePublishRange(
   const lookbackDays = input.lookbackDays ?? 3;
   if (!Number.isInteger(lookbackDays) || lookbackDays < 1) {
     throw new Error("lookbackDays must be a positive integer.");
-  }
-  if (existingManifest === undefined) {
-    throw new Error("Metrics artifact manifest is missing. Run the publisher in full mode first.");
   }
   const start = input.startDate ?? maxDate(publicStartDate, addDays(existingManifest.latestDate, -(lookbackDays - 1)));
   return resolveDateRange({
@@ -290,14 +280,34 @@ async function getExistingManifest(store: ArtifactStore): Promise<Manifest | und
   }
 }
 
+async function cleanupHistoricalDeploymentArtifacts(store: ArtifactStore, currentDeploymentId: string): Promise<string[]> {
+  const currentPrefix = `v2/deployments/${currentDeploymentId}/`;
+  const keys = await store.listKeys("v2/deployments/");
+  const staleKeys = keys.filter((key) => !key.startsWith(currentPrefix));
+  for (const key of staleKeys) {
+    await store.deleteJson(key);
+  }
+  return staleKeys;
+}
+
+function pruneHistoricalDeploymentArtifacts(
+  artifacts: Record<string, ArtifactEntry>,
+  currentDeploymentId: string,
+): Record<string, ArtifactEntry> {
+  const currentPrefix = `v2/deployments/${currentDeploymentId}/`;
+  return Object.fromEntries(
+    Object.entries(artifacts).filter(([key]) => !key.startsWith("v2/deployments/") || key.startsWith(currentPrefix)),
+  );
+}
+
 async function acquirePublisherLock(input: {
   store: ArtifactStore;
-  mode: PublishMode;
+  operation: PublisherLock["operation"];
   now: Date;
   ttlMs: number;
 }): Promise<{ acquired: true; runId: string } | { acquired: false; runId: string }> {
   const runId = randomUUID();
-  const lock = buildPublisherLock(runId, input.mode, input.now, input.ttlMs);
+  const lock = buildPublisherLock(runId, input.operation, input.now, input.ttlMs);
   const acquired = await input.store.putJsonIfAbsent(PUBLISHER_LOCK_KEY, lock);
   if (acquired) {
     return { acquired: true, runId };
@@ -345,10 +355,15 @@ async function releasePublisherLock(store: ArtifactStore, runId: string): Promis
   }
 }
 
-function buildPublisherLock(runId: string, mode: PublishMode, now: Date, ttlMs: number): PublisherLock {
+function buildPublisherLock(
+  runId: string,
+  operation: PublisherLock["operation"],
+  now: Date,
+  ttlMs: number,
+): PublisherLock {
   return {
     runId,
-    mode,
+    operation,
     startedAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + ttlMs).toISOString(),
   };
@@ -367,14 +382,15 @@ function optionalEnv(env: NodeJS.ProcessEnv, name: string): string | undefined {
   return value === "" ? undefined : value;
 }
 
-function parsePublishMode(value: string | undefined): PublishMode {
-  if (value === undefined || value === "") {
-    return "incremental";
+function parseDeploymentId(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed === "") {
+    throw new Error("INDEXER_DEPLOYMENT_ID is required.");
   }
-  if (value === "full" || value === "incremental") {
-    return value;
+  if (!/^[A-Za-z0-9._-]+$/.test(trimmed)) {
+    throw new Error("INDEXER_DEPLOYMENT_ID may contain only letters, numbers, dots, underscores, and dashes.");
   }
-  throw new Error("PUBLISHER_MODE must be either full or incremental.");
+  return trimmed;
 }
 
 function addDays(date: string, days: number): string {

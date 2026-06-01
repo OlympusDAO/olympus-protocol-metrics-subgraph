@@ -53,20 +53,20 @@ describe("local Docker Compose stack", () => {
   test("includes indexer in the default stack and runs publisher as an explicit profile", () => {
     const compose = readFileSync("docker-compose.yml", "utf8");
     const doc = readFileSync("docs/local-compose.md", "utf8");
-    const packageJson = readFileSync("package.json", "utf8");
+    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as { scripts: Record<string, string> };
 
     expect(serviceBlock(compose, "metrics-publisher")).toContain("publish");
     expect(serviceBlock(compose, "indexer")).not.toContain("profiles:");
     expect(doc).toContain("only `metrics-api` is reachable from the host");
     expect(doc).toContain("docker compose up --build postgres hasura minio minio-init indexer metrics-api");
     expect(doc).toContain("pnpm run compose:publish");
-    expect(packageJson).toContain("docker compose up --build postgres hasura minio minio-init indexer metrics-api");
-    expect(packageJson).toContain(
-      '"compose:publish": "docker compose --profile publish run --build --rm --no-deps metrics-publisher"',
+    expect(packageJson.scripts["compose:up"]).toBe(
+      "docker compose up --build postgres hasura minio minio-init indexer metrics-api",
     );
-    expect(packageJson).toContain(
-      '"compose:publish:full": "docker compose --profile publish run --build --rm --no-deps -e PUBLISHER_MODE=full metrics-publisher"',
+    expect(packageJson.scripts["compose:publish"]).toBe(
+      "docker compose --profile publish run --build --rm --no-deps metrics-publisher",
     );
+    expect(packageJson.scripts[["compose", "publish", "full"].join(":")]).toBeUndefined();
   });
 
   test("documents split compose workflows for core and API development", () => {
@@ -83,7 +83,7 @@ describe("local Docker Compose stack", () => {
     expect(doc).toContain("pnpm run compose:api");
     expect(doc).toContain("pnpm run compose:api:rebuild");
     expect(doc).toContain("pnpm run compose:bucket:clear");
-    expect(doc).toContain("pnpm run compose:publish:full");
+    expect(doc).toContain("pnpm run compose:publish");
     expect(doc).toContain("This rebuilds and starts only the one-shot `metrics-publisher` container");
   });
 

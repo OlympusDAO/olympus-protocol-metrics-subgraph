@@ -118,7 +118,7 @@ function source(overrides: Partial<MetricsSource> = {}): MetricsSource {
 describe("metrics publisher", () => {
   test("publishes manifest last after writing metric, treasury asset, and OHM supply shards", async () => {
     const result = await publishMetricsArtifacts({
-      mode: "full",
+      deploymentId: "current-indexer",
       startDate: "2026-05-01",
       source: source(),
       store: new MemoryArtifactStore(),
@@ -126,16 +126,16 @@ describe("metrics publisher", () => {
     });
 
     expect(result.manifestPublishedLast).toBe(true);
-    expect(result.writtenKeys).toContain("v2/metrics/daily/2026-05.json");
-    expect(result.writtenKeys).toContain("v2/treasury-assets/daily/2026-05.json");
-    expect(result.writtenKeys).toContain("v2/ohm-supply/daily/2026-05.json");
+    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/metrics/daily/2026-05.json");
+    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/treasury-assets/daily/2026-05.json");
+    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/ohm-supply/daily/2026-05.json");
     expect(result.writtenKeys.at(-1)).toBe("v2/manifest.json");
   });
 
   test("writes schemas before manifest and records hashes, byte sizes, and row counts", async () => {
     const store = new MemoryArtifactStore();
     const result = await publishMetricsArtifacts({
-      mode: "full",
+      deploymentId: "current-indexer",
       startDate: "2026-05-01",
       endDate: "2026-05-31",
       source: source(),
@@ -152,57 +152,123 @@ describe("metrics publisher", () => {
     expect(manifest).toMatchObject({
       schemaVersion: "1.0.0",
       generatedAt,
+      indexerDeploymentId: "current-indexer",
       earliestDate: "2026-05-01",
       latestDate: "2026-05-31",
     });
-    expect(manifest.artifacts["v2/metrics/daily/2026-05.json"]).toMatchObject({
+    expect(manifest.artifacts["v2/deployments/current-indexer/metrics/daily/2026-05.json"]).toMatchObject({
       rowCount: 1,
       byteLength: expect.any(Number),
       sha256: expect.stringMatching(/^[a-f0-9]{64}$/),
     });
-    expect(manifest.artifacts["v2/treasury-assets/daily/2026-05.json"].rowCount).toBe(1);
-    expect(manifest.artifacts["v2/ohm-supply/daily/2026-05.json"].rowCount).toBe(1);
+    expect(manifest.artifacts["v2/deployments/current-indexer/treasury-assets/daily/2026-05.json"].rowCount).toBe(1);
+    expect(manifest.artifacts["v2/deployments/current-indexer/ohm-supply/daily/2026-05.json"].rowCount).toBe(1);
   });
 
-  test("incremental mode publishes from the existing manifest with a lookback overlap", async () => {
+  test("publishes from the existing manifest with a lookback overlap", async () => {
     const store = new MemoryArtifactStore();
     await store.putJson("v2/manifest.json", existingManifest);
 
     const result = await publishMetricsArtifacts({
-      mode: "incremental",
+      deploymentId: "current-indexer",
       lookbackDays: 2,
       source: source(),
       store,
       now: () => new Date(generatedAt),
     });
 
-    expect(result.publishMode).toBe("incremental");
     expect(result.range).toEqual({ start: "2026-05-29", end: "2026-06-01", days: 4 });
-    expect(result.writtenKeys).toContain("v2/metrics/daily/2026-05.json");
-    expect(result.writtenKeys).toContain("v2/metrics/daily/2026-06.json");
+    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/metrics/daily/2026-05.json");
+    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/metrics/daily/2026-06.json");
   });
 
-  test("incremental mode requires a manifest and does not bootstrap from the public start date", async () => {
-    await expect(
-      publishMetricsArtifacts({
-        mode: "incremental",
-        source: source(),
-        store: new MemoryArtifactStore(),
-        now: () => new Date(generatedAt),
-      }),
-    ).rejects.toThrow("Run the publisher in full mode first");
-  });
-
-  test("full mode defaults to the public start date for the initial backfill", async () => {
+  test("defaults to the public start date for the initial backfill when no manifest exists", async () => {
     const result = await publishMetricsArtifacts({
-      mode: "full",
+      deploymentId: "current-indexer",
       source: source(),
       store: new MemoryArtifactStore(),
       now: () => new Date(generatedAt),
     });
 
-    expect(result.publishMode).toBe("full");
     expect(result.range).toEqual({ start: "2022-05-01", end: "2026-06-01", days: 1493 });
+  });
+
+  test("writes deployment-scoped shards and deletes historical deployment files after publishing manifest", async () => {
+    const store = new MemoryArtifactStore();
+    await store.putJson("v2/deployments/old-indexer/metrics/daily/2026-05.json", []);
+    await store.putJson("v2/deployments/current-indexer/metrics/daily/2026-04.json", []);
+
+    const result = await publishMetricsArtifacts({
+      deploymentId: "current-indexer",
+      startDate: "2026-05-01",
+      endDate: "2026-05-31",
+      source: source(),
+      store,
+      now: () => new Date(generatedAt),
+    });
+
+    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/metrics/daily/2026-05.json");
+    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/treasury-assets/daily/2026-05.json");
+    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/ohm-supply/daily/2026-05.json");
+    expect(result.deletedKeys).toEqual(["v2/deployments/old-indexer/metrics/daily/2026-05.json"]);
+
+    const manifest = store.json("v2/manifest.json");
+    expect(manifest).toMatchObject({ indexerDeploymentId: "current-indexer" });
+    expect(manifest.artifacts["v2/deployments/current-indexer/metrics/daily/2026-05.json"]).toMatchObject({
+      rowCount: 1,
+    });
+    expect(manifest.artifacts["v2/deployments/old-indexer/metrics/daily/2026-05.json"]).toBeUndefined();
+    await expect(store.getJson("v2/deployments/old-indexer/metrics/daily/2026-05.json")).rejects.toThrow(
+      "Artifact not found",
+    );
+    await expect(store.getJson("v2/deployments/current-indexer/metrics/daily/2026-04.json")).resolves.toEqual([]);
+  });
+
+  test("rejects unsafe indexer deployment ids", async () => {
+    await expect(
+      publishMetricsArtifacts({
+        deploymentId: "../old-indexer",
+        source: source(),
+        store: new MemoryArtifactStore(),
+        now: () => new Date(generatedAt),
+      }),
+    ).rejects.toThrow("INDEXER_DEPLOYMENT_ID");
+  });
+
+  test("requires an indexer deployment id before locking or reading Hasura", async () => {
+    await expect(
+      publishMetricsArtifacts({
+        deploymentId: "",
+        source: source({
+          fetchBounds: async () => {
+            throw new Error("should not fetch Hasura without a deployment id");
+          },
+        }),
+        store: new MemoryArtifactStore(),
+        now: () => new Date(generatedAt),
+      }),
+    ).rejects.toThrow("INDEXER_DEPLOYMENT_ID is required");
+  });
+
+  test("requires INDEXER_DEPLOYMENT_ID in the environment", async () => {
+    await expect(
+      publishMetricsArtifactsFromEnv(
+        {
+          HASURA_GRAPHQL_ENDPOINT: "http://hasura.internal/v1/graphql",
+          HASURA_GRAPHQL_ADMIN_SECRET: "secret",
+          ARTIFACT_BUCKET: "metrics",
+          ARTIFACT_ENDPOINT: "https://r2.example.com",
+          ARTIFACT_REGION: "auto",
+          ARTIFACT_ACCESS_KEY_ID: "access-key",
+          ARTIFACT_SECRET_ACCESS_KEY: "secret-key",
+        },
+        {
+          source: source(),
+          store: new MemoryArtifactStore(),
+          now: () => new Date(generatedAt),
+        },
+      ),
+    ).rejects.toThrow("Missing required environment variable INDEXER_DEPLOYMENT_ID");
   });
 
   test("treats blank optional publisher date environment variables as unset", async () => {
@@ -218,7 +284,7 @@ describe("metrics publisher", () => {
         ARTIFACT_REGION: "auto",
         ARTIFACT_ACCESS_KEY_ID: "access-key",
         ARTIFACT_SECRET_ACCESS_KEY: "secret-key",
-        PUBLISHER_MODE: "incremental",
+        INDEXER_DEPLOYMENT_ID: "current-indexer",
         PUBLISHER_LOOKBACK_DAYS: "2",
         PUBLISHER_PUBLIC_START_DATE: "2022-05-01",
         PUBLISHER_START_DATE: "",
@@ -238,13 +304,13 @@ describe("metrics publisher", () => {
     const store = new MemoryArtifactStore();
     await store.putJson("v2/publisher.lock", {
       runId: "existing-run",
-      mode: "full",
+      operation: "initial_backfill",
       startedAt: "2026-06-01T08:00:00.000Z",
       expiresAt: "2026-06-01T20:00:00.000Z",
     });
 
     const result = await publishMetricsArtifacts({
-      mode: "incremental",
+      deploymentId: "current-indexer",
       source: source({
         fetchBounds: async () => {
           throw new Error("should not fetch Hasura while locked");
@@ -255,10 +321,10 @@ describe("metrics publisher", () => {
     });
 
     expect(result).toMatchObject({
+      deletedKeys: [],
       skipped: true,
       skipReason: "lock_held",
       manifestPublishedLast: false,
-      publishMode: "incremental",
       writtenKeys: [],
     });
     await expect(store.getJson("v2/manifest.json")).rejects.toThrow("Artifact not found");
@@ -268,22 +334,13 @@ describe("metrics publisher", () => {
     const store = new MemoryArtifactStore();
     await store.putJson("v2/publisher.lock", {
       runId: "stale-run",
-      mode: "full",
+      operation: "initial_backfill",
       startedAt: "2026-05-31T08:00:00.000Z",
       expiresAt: "2026-05-31T20:00:00.000Z",
     });
 
-    await expect(
-      publishMetricsArtifacts({
-        mode: "incremental",
-        source: source(),
-        store,
-        now: () => new Date(generatedAt),
-      }),
-    ).rejects.toThrow("Run the publisher in full mode first");
-
     const result = await publishMetricsArtifacts({
-      mode: "full",
+      deploymentId: "current-indexer",
       source: source(),
       store,
       now: () => new Date(generatedAt),
@@ -298,7 +355,7 @@ describe("metrics publisher", () => {
     class FailingStore extends MemoryArtifactStore implements ArtifactStore {
       async putJson(key: string): Promise<void> {
         this.writtenKeys.push(key);
-        if (key === "v2/metrics/daily/2026-05.json") {
+        if (key === "v2/deployments/current-indexer/metrics/daily/2026-05.json") {
           throw new Error("upload failed");
         }
         this.objects.set(key, `${JSON.stringify({ key })}\n`);
@@ -308,7 +365,7 @@ describe("metrics publisher", () => {
 
     await expect(
       publishMetricsArtifacts({
-        mode: "full",
+        deploymentId: "current-indexer",
         startDate: "2026-05-01",
         endDate: "2026-05-31",
         source: source(),

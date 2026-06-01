@@ -77,12 +77,6 @@ export function getOpenApiDocument(): {
           responses: { "200": jsonResponse("Earliest/latest dates and maximum v2 range.") },
         },
       },
-      "/v2/manifest": {
-        get: {
-          summary: "Published artifact manifest",
-          responses: { "200": jsonResponse("Current manifest.") },
-        },
-      },
       "/v2/metrics/daily": {
         get: {
           summary: "Daily protocol metrics",

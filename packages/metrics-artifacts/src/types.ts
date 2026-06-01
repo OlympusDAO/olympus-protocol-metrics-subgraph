@@ -137,11 +137,13 @@ export type BoundsResponse = {
   earliestDate: string;
   latestDate: string;
   maxRangeDays: number;
+  indexerDeploymentId?: string;
 };
 
 export type Manifest = {
   schemaVersion: string;
   generatedAt: string;
+  indexerDeploymentId?: string;
   earliestDate: string;
   latestDate: string;
   artifacts?: Record<

@@ -20,7 +20,6 @@
     "compose:config": "docker compose config",
     "compose:core": "docker compose up postgres hasura indexer",
     "compose:publish": "docker compose --profile publish run --build --rm --no-deps metrics-publisher",
-    "compose:publish:full": "docker compose --profile publish run --build --rm --no-deps -e PUBLISHER_MODE=full metrics-publisher",
     "compose:up": "docker compose up --build postgres hasura minio minio-init indexer metrics-api",
     "envio": "pnpm --dir apps/indexer envio",
     "envio:dev": "pnpm --dir apps/indexer envio:dev",

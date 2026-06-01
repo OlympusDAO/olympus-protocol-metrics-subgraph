@@ -19,6 +19,17 @@ const defaultConfig: MetricsApiConfig = {
   manifest: testManifest,
 };
 
+function artifactReader(objects: Record<string, unknown>): MetricsApiConfig["artifactReader"] {
+  return {
+    async getJson<T>(key: string): Promise<T> {
+      if (!(key in objects)) {
+        throw new Error(`Missing test artifact: ${key}`);
+      }
+      return objects[key] as T;
+    },
+  };
+}
+
 async function request(path: string, init?: RequestInit, config: MetricsApiConfig = defaultConfig) {
   const server = createServer((req, res) => {
     void handleMetricsApiRequest(req, res, config);
@@ -107,6 +118,26 @@ describe("metrics API HTTP behavior", () => {
     });
   });
 
+  test("returns the indexer deployment id in bounds when present", async () => {
+    const response = await request("/v2/bounds", undefined, {
+      maxRangeDays: 366,
+      manifest: {
+        ...testManifest,
+        indexerDeploymentId: "current-indexer",
+      },
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      data: {
+        earliestDate: "2021-04-29",
+        latestDate: "2026-06-01",
+        maxRangeDays: 366,
+        indexerDeploymentId: "current-indexer",
+      },
+    });
+  });
+
   test("rejects end date before start date on v2 ranges", async () => {
     const response = await request("/v2/metrics/daily?start=2026-06-01&end=2026-05-20");
     expect(response.status).toBe(400);
@@ -123,13 +154,87 @@ describe("metrics API HTTP behavior", () => {
     });
   });
 
-  test("sets cache headers for readiness, manifest, bounds, and range routes", async () => {
+  test("sets cache headers for readiness, bounds, and range routes", async () => {
     expect((await request("/ready")).headers.get("cache-control")).toBe("no-store");
-    expect((await request("/v2/manifest")).headers.get("cache-control")).toContain("max-age=300");
     expect((await request("/v2/bounds")).headers.get("cache-control")).toContain("max-age=300");
     expect(
       (await request("/v2/metrics/daily?start=2026-05-21")).headers.get("cache-control"),
     ).toContain("max-age=28800");
+  });
+
+  test("does not expose the internal manifest as a public route", async () => {
+    const response = await request("/v2/manifest", undefined, {
+      maxRangeDays: 366,
+      manifest: {
+        ...testManifest,
+        indexerDeploymentId: "current-indexer",
+        artifacts: {
+          "v2/deployments/current-indexer/metrics/daily/2026-05.json": {
+            sha256: "0".repeat(64),
+            byteLength: 2,
+            rowCount: 1,
+          },
+        },
+      },
+    });
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toMatchObject({
+      error: { code: "not_found" },
+    });
+  });
+
+  test("reads deployment-scoped artifact keys from the internal manifest", async () => {
+    const response = await request("/v2/metrics/daily?start=2026-05-21&end=2026-05-21", undefined, {
+      maxRangeDays: 366,
+      manifest: {
+        ...testManifest,
+        indexerDeploymentId: "current-indexer",
+        artifacts: {
+          "v2/metrics/daily/2026-05.json": {
+            sha256: "1".repeat(64),
+            byteLength: 2,
+            rowCount: 1,
+          },
+          "v2/deployments/current-indexer/metrics/daily/2026-05.json": {
+            sha256: "0".repeat(64),
+            byteLength: 2,
+            rowCount: 1,
+          },
+        },
+      },
+      artifactReader: artifactReader({
+        "v2/metrics/daily/2026-05.json": [
+          {
+            date: "2026-05-21",
+            chainsIndexed: [],
+            chainsMissing: [],
+            crossChainComplete: false,
+            treasuryMarketValue: 99,
+          },
+        ],
+        "v2/deployments/current-indexer/metrics/daily/2026-05.json": [
+          {
+            date: "2026-05-21",
+            chainsIndexed: [1, 42161],
+            chainsMissing: [],
+            crossChainComplete: true,
+            treasuryMarketValue: 13,
+          },
+        ],
+      }),
+    });
+
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0]).toMatchObject({
+      date: "2026-05-21",
+      chainsIndexed: [1, 42161],
+      chainsMissing: [250, 137, 8453, 80094],
+      crossChainComplete: true,
+      treasuryMarketValue: 13,
+    });
   });
 
   test("marks required chains as missing when no metric rows exist for a requested date", async () => {

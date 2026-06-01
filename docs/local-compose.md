@@ -54,6 +54,8 @@ pnpm run compose:api
 The API reads `v2/manifest.json` from the artifact bucket for `/v2/bounds` and
 range validation. Before the publisher has written that manifest, these routes
 return `503 manifest_not_published` instead of synthetic dates.
+The publisher requires `INDEXER_DEPLOYMENT_ID`; `/v2/bounds` includes it as an
+opaque data version.
 
 After changing only the metrics API, rebuild just that container without
 restarting MinIO or the indexing core:
@@ -76,16 +78,10 @@ job are already available on the compose network. The publish scripts include
 cache may make that quick, but Compose does not reliably build only when the
 local source has changed.
 
-Before the first incremental publish, create the initial manifest and historical
-artifacts with a full backfill:
-
-```sh
-pnpm run compose:publish:full
-```
-
-The full publish defaults to `2022-05-01` through Hasura's latest indexed date.
-After it completes, `pnpm run compose:publish` performs incremental catch-up
-from the existing manifest latest date with the configured lookback overlap.
+If no manifest exists, `pnpm run compose:publish` creates the initial historical
+backfill from `2022-05-01` through Hasura's latest indexed date. After that, the
+same command performs incremental catch-up from the existing manifest latest
+date with the configured lookback overlap.
 
 To clear only the local artifact bucket while keeping the rest of the compose
 stack running:
@@ -121,13 +117,16 @@ Most variables have local defaults. Override these when needed:
   Envio event-ingestion settings.
 - `INDEXER_HASURA_GRAPHQL_ENDPOINT`: Envio metadata endpoint used by the
   indexer, default `http://hasura:8080/v1/metadata`.
-- `PUBLISHER_MODE`, `PUBLISHER_PUBLIC_START_DATE`,
-  `PUBLISHER_LOOKBACK_DAYS`, `PUBLISHER_LOCK_TTL_MS`,
-  `PUBLISHER_START_DATE`, and `PUBLISHER_END_DATE`: publisher range and
-  overlap controls. Full mode defaults to `2022-05-01`; incremental mode
-  requires an existing manifest and uses the manifest latest date plus the
-  lookback overlap. A fresh `v2/publisher.lock` makes overlapping publisher
-  runs exit successfully without writing artifacts.
+- `PUBLISHER_PUBLIC_START_DATE`, `PUBLISHER_LOOKBACK_DAYS`,
+  `PUBLISHER_LOCK_TTL_MS`, `PUBLISHER_START_DATE`, and
+  `PUBLISHER_END_DATE`: publisher range and overlap controls. If no manifest
+  exists, publishing starts at `2022-05-01`; otherwise it uses the manifest
+  latest date plus the lookback overlap. A fresh `v2/publisher.lock` makes
+  overlapping publisher runs exit successfully without writing artifacts.
+- `INDEXER_DEPLOYMENT_ID`: required deployment identifier stamped into the
+  internal manifest. Data shards are written under `v2/deployments/<id>/...`,
+  and successful publishes remove stale files from older deployment prefixes
+  after the new manifest has been written.
 
 Envio v3 fallback RPCs are configured in `apps/indexer/config.yaml` by adding
 multiple `rpc` entries with `for: fallback`. It does not consume a

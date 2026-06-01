@@ -44,7 +44,7 @@ describe("Railway config-as-code", () => {
       "ARTIFACT_ACCESS_KEY_ID",
       "ARTIFACT_SECRET_ACCESS_KEY",
       "METRICS_API_MAX_RANGE_DAYS",
-      "PUBLISHER_MODE",
+      "INDEXER_DEPLOYMENT_ID",
     ]) {
       expect(doc).toContain(variable);
     }

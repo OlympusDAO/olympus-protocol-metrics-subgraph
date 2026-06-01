@@ -186,6 +186,7 @@ function isInRange(date: string, range: { start: string; end: string }): boolean
 
 async function readArtifactRows<T>(
   config: MetricsApiConfig,
+  manifest: Manifest,
   range: { start: string; end: string; days: number },
   keyPrefix: string,
 ): Promise<T[]> {
@@ -196,7 +197,7 @@ async function readArtifactRows<T>(
   const rows: T[] = [];
   for (const month of monthKeysForRange(range)) {
     try {
-      const monthRows = await config.artifactReader.getJson<T[]>(`${keyPrefix}/${month}.json`);
+      const monthRows = await config.artifactReader.getJson<T[]>(artifactKeyForMonth(manifest, keyPrefix, month));
       rows.push(...monthRows.filter((row) => isInRange((row as { date: string }).date, range)));
     } catch (error) {
       if (!(error instanceof ArtifactNotFoundError)) {
@@ -205,6 +206,27 @@ async function readArtifactRows<T>(
     }
   }
   return rows;
+}
+
+function artifactKeyForMonth(manifest: Manifest, keyPrefix: string, month: string): string {
+  const deploymentPath = `${keyPrefix.replace(/^v2\//, "")}/${month}.json`;
+  if (manifest.indexerDeploymentId !== undefined) {
+    const currentDeploymentKey = `v2/deployments/${manifest.indexerDeploymentId}/${deploymentPath}`;
+    if (manifest.artifacts?.[currentDeploymentKey] !== undefined) {
+      return currentDeploymentKey;
+    }
+  }
+
+  const stableKey = `${keyPrefix}/${month}.json`;
+  if (manifest.artifacts?.[stableKey] !== undefined) {
+    return stableKey;
+  }
+
+  const deploymentSuffix = `/${deploymentPath}`;
+  const deploymentKey = Object.keys(manifest.artifacts ?? {}).find(
+    (key) => key.startsWith("v2/deployments/") && key.endsWith(deploymentSuffix),
+  );
+  return deploymentKey ?? stableKey;
 }
 
 function attachMetricRecords(metric: DailyMetric, treasuryAssets: TreasuryAsset[], ohmSupply: OhmSupply[]): DailyMetric {
@@ -231,17 +253,18 @@ function attachMetricRecords(metric: DailyMetric, treasuryAssets: TreasuryAsset[
 
 async function readDailyMetrics(
   config: MetricsApiConfig,
+  manifest: Manifest,
   range: { start: string; end: string; days: number },
   includeRecords: boolean,
   generatedAt: string,
 ): Promise<DailyMetric[]> {
-  const metricRows = await readArtifactRows<DailyMetric>(config, range, "v2/metrics/daily");
+  const metricRows = await readArtifactRows<DailyMetric>(config, manifest, range, "v2/metrics/daily");
   const metricsByDate = new Map(metricRows.map((metric) => [metric.date, normalizeMetricCompleteness(metric)]));
   const treasuryAssets = includeRecords
-    ? await readArtifactRows<TreasuryAsset>(config, range, "v2/treasury-assets/daily")
+    ? await readArtifactRows<TreasuryAsset>(config, manifest, range, "v2/treasury-assets/daily")
     : [];
   const ohmSupply = includeRecords
-    ? await readArtifactRows<OhmSupply>(config, range, "v2/ohm-supply/daily")
+    ? await readArtifactRows<OhmSupply>(config, manifest, range, "v2/ohm-supply/daily")
     : [];
 
   return dateKeysForRange(range).map((date) => {
@@ -341,16 +364,6 @@ export async function handleMetricsApiRequest(
     }
   };
 
-  if (url.pathname === "/v2/manifest") {
-    const publishedManifest = await getPublishedManifest();
-    if (publishedManifest === undefined) {
-      return;
-    }
-    res.setHeader("cache-control", MANIFEST_CACHE_CONTROL);
-    sendJson(res, 200, emptyResponse(config, undefined, publishedManifest, publishedManifest));
-    return;
-  }
-
   if (url.pathname === "/v2/bounds") {
     const publishedManifest = await getPublishedManifest();
     if (publishedManifest === undefined) {
@@ -360,6 +373,9 @@ export async function handleMetricsApiRequest(
       earliestDate: publishedManifest.earliestDate,
       latestDate: publishedManifest.latestDate,
       maxRangeDays: config.maxRangeDays,
+      ...(publishedManifest.indexerDeploymentId === undefined
+        ? {}
+        : { indexerDeploymentId: publishedManifest.indexerDeploymentId }),
     };
     res.setHeader("cache-control", MANIFEST_CACHE_CONTROL);
     sendJson(res, 200, emptyResponse(config, undefined, bounds, publishedManifest));
@@ -376,6 +392,7 @@ export async function handleMetricsApiRequest(
       const includeRecords = url.searchParams.get("includeRecords") === "true";
       const metrics = await readDailyMetrics(
         config,
+        publishedManifest,
         range,
         includeRecords,
         config.generatedAt ?? publishedManifest.generatedAt,
@@ -398,7 +415,12 @@ export async function handleMetricsApiRequest(
         return;
       }
       const range = resolveV2Range(url, config, publishedManifest);
-      const treasuryAssets = await readArtifactRows<TreasuryAsset>(config, range, "v2/treasury-assets/daily");
+      const treasuryAssets = await readArtifactRows<TreasuryAsset>(
+        config,
+        publishedManifest,
+        range,
+        "v2/treasury-assets/daily",
+      );
       res.setHeader("cache-control", RANGE_CACHE_CONTROL);
       sendJson(res, 200, emptyResponse<TreasuryAsset[]>(config, range, treasuryAssets, publishedManifest));
     } catch (error) {
@@ -417,7 +439,7 @@ export async function handleMetricsApiRequest(
         return;
       }
       const range = resolveV2Range(url, config, publishedManifest);
-      const ohmSupply = await readArtifactRows<OhmSupply>(config, range, "v2/ohm-supply/daily");
+      const ohmSupply = await readArtifactRows<OhmSupply>(config, publishedManifest, range, "v2/ohm-supply/daily");
       res.setHeader("cache-control", RANGE_CACHE_CONTROL);
       sendJson(res, 200, emptyResponse<OhmSupply[]>(config, range, ohmSupply, publishedManifest));
     } catch (error) {
