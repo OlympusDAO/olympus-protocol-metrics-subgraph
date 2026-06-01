@@ -144,6 +144,14 @@ export type Manifest = {
   generatedAt: string;
   earliestDate: string;
   latestDate: string;
+  artifacts?: Record<
+    string,
+    {
+      sha256: string;
+      byteLength: number;
+      rowCount: number;
+    }
+  >;
 };
 
 export type WundergraphResponse<T> = {

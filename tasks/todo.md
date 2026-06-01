@@ -140,26 +140,29 @@ surface.
       `treasuryMarketValueRecords`.
 - [x] Keep `TreasuryAsset` and `OhmSupply` as the v2 names while preserving
       legacy `TokenRecord` / `TokenSupply` shape aliases for `/operations/*`.
-- [ ] Normalize legacy numeric values to JS numbers, not strings.
-- [ ] Normalize legacy `TokenSupply.source` and `sourceAddress` to non-null
+- [x] Normalize legacy numeric values to JS numbers, not strings.
+- [x] Normalize legacy `TokenSupply.source` and `sourceAddress` to non-null
       strings; keep `pool` and `poolAddress` nullable.
 
 ### Publisher
 
-- [ ] Query private Hasura over Railway private networking only.
-- [ ] Generate monthly artifacts:
+- [x] Implement Hasura GraphQL publisher source using
+      `HASURA_GRAPHQL_ENDPOINT` and `HASURA_GRAPHQL_ADMIN_SECRET`.
+- [ ] Verify `HASURA_GRAPHQL_ENDPOINT` uses a Railway private hostname in
+      deployment.
+- [x] Generate monthly artifacts:
       `v2/metrics/daily/YYYY-MM.json`,
       `v2/treasury-assets/daily/YYYY-MM.json`,
       `v2/ohm-supply/daily/YYYY-MM.json`.
-- [ ] Generate schemas under `v2/schemas/`.
-- [ ] Generate manifest with `earliestDate`, `latestDate`, schema version,
+- [x] Generate schemas under `v2/schemas/`.
+- [x] Generate manifest with `earliestDate`, `latestDate`, schema version,
       generated timestamp, artifact keys, hashes, and row counts.
 - [x] Publish metric, treasury asset, and OHM supply shard keys before
       `v2/manifest.json` in the publisher contract.
-- [ ] Upload all shards and schemas before `v2/manifest.json`.
-- [ ] Implement full publish mode for initial deployment.
-- [ ] Implement incremental publish mode with configurable lookback.
-- [ ] Ensure upload/validation failure exits non-zero and does not publish a new
+- [x] Upload all shards and schemas before `v2/manifest.json`.
+- [x] Implement full publish mode for initial deployment.
+- [x] Implement incremental publish mode with configurable lookback.
+- [x] Ensure upload/validation failure exits non-zero and does not publish a new
       manifest.
 
 ### Public API

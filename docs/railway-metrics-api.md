@@ -62,10 +62,14 @@ The API reads from the same bucket.
 
 ### Publisher
 
+- `HASURA_GRAPHQL_ENDPOINT`: private Railway URL for Hasura GraphQL, for
+  example `http://hasura.railway.internal/v1/graphql`.
 - `PUBLISHER_MODE`: `full` for initial publish, `incremental` after launch.
 - `PUBLISHER_LOOKBACK_DAYS`: number of recent days to regenerate in incremental
   mode.
 - `PUBLISHER_START_DATE`: optional UTC calendar date for full backfills.
+- `PUBLISHER_END_DATE`: optional UTC calendar end date for controlled
+  backfills or re-publishing a bounded window.
 - `PUBLISHER_CRON`: documented value is `15 * * * *`; the Railway config sets
   this schedule directly.
 
