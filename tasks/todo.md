@@ -202,7 +202,7 @@ surface.
 
 ### Client package
 
-- [ ] Continue publishing `@olympusdao/treasury-subgraph-client` as a major
+- [x] Continue publishing `@olympusdao/treasury-subgraph-client` as a major
       version.
 - [x] Preserve `createClient`, `TreasurySubgraphClient`, and legacy
       `query({ operationName, input })`.
@@ -210,8 +210,8 @@ surface.
       `getBounds`, `getDailyMetrics`, `getDailyTreasuryAssets`,
       `getDailyOhmSupply`.
 - [x] Keep the package framework-agnostic; no TanStack Query dependency.
-- [ ] Include `openapi.json` in package output.
-- [ ] Export legacy and v2-compatible TypeScript types.
+- [x] Include `openapi.json` in package output.
+- [x] Export legacy and v2-compatible TypeScript types.
 
 ### Railway config-as-code and containers
 

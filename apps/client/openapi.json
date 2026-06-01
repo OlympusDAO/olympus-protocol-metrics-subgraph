@@ -2,7 +2,28 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Olympus Protocol Metrics API",
-    "version": "0.0.0-stub"
+    "version": "2.0.0",
+    "description": "Cacheable REST API for Olympus protocol metrics, treasury assets, and OHM supply. /operations routes are deprecated compatibility routes."
   },
-  "paths": {}
+  "paths": {
+    "/ready": {},
+    "/v2/bounds": {},
+    "/v2/manifest": {},
+    "/v2/metrics/daily": {},
+    "/v2/treasury-assets/daily": {},
+    "/v2/ohm-supply/daily": {},
+    "/operations/latest/metrics": {},
+    "/operations/earliest/metrics": {},
+    "/operations/paginated/metrics": {},
+    "/operations/latest/tokenRecords": {},
+    "/operations/earliest/tokenRecords": {},
+    "/operations/paginated/tokenRecords": {},
+    "/operations/latest/tokenSupplies": {},
+    "/operations/earliest/tokenSupplies": {},
+    "/operations/paginated/tokenSupplies": {},
+    "/operations/latest/protocolMetrics": {},
+    "/operations/earliest/protocolMetrics": {},
+    "/operations/paginated/protocolMetrics": {},
+    "/operations/atBlock/metrics": {}
+  }
 }
