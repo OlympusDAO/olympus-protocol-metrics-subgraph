@@ -6,9 +6,11 @@ describe("indexer monorepo layout", () => {
     expect(existsSync("apps/indexer/config.yaml")).toBe(true);
     expect(existsSync("apps/indexer/schema.graphql")).toBe(true);
     expect(existsSync("apps/indexer/envio-env.d.ts")).toBe(true);
+    expect(existsSync("apps/indexer/.env.sample")).toBe(true);
     expect(existsSync("apps/indexer/src/handlers/BlockHandlers.ts")).toBe(true);
     expect(existsSync("apps/indexer/tests/snapshot/global.test.ts")).toBe(true);
 
+    expect(existsSync(".env.sample")).toBe(false);
     expect(existsSync("config.yaml")).toBe(false);
     expect(existsSync("schema.graphql")).toBe(false);
     expect(existsSync("envio-env.d.ts")).toBe(false);

@@ -6,11 +6,17 @@
 // confirm something is deployed at that address; intent-checking those
 // requires per-address knowledge so we just flag empty bytecode.
 
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { createPublicClient, getAddress, http } from "viem";
 import * as chains from "viem/chains";
 
-for (const line of readFileSync(`${process.cwd()}/.env`, "utf8").split("\n")) {
+const envPath = `${process.cwd()}/apps/indexer/.env`;
+
+if (!existsSync(envPath)) {
+  throw new Error(`Missing ${envPath}. Copy apps/indexer/.env.sample to apps/indexer/.env and fill in RPC URLs.`);
+}
+
+for (const line of readFileSync(envPath, "utf8").split("\n")) {
   const match = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.+?)\s*$/);
   if (match) process.env[match[1]] = match[2];
 }
