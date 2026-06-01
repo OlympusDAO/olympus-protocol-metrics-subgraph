@@ -267,6 +267,8 @@ surface.
       publisher, and API with only `metrics-api` exposed on localhost by
       default.
 - [x] Configure publisher cron as `15 * * * *` with `restartPolicyType: NEVER`.
+- [x] Configure Railway watch patterns for each service's runtime ownership,
+      including publisher redeploys when indexer code/config changes.
 - [x] Configure API healthcheck as `/ready` with `restartPolicyType: ALWAYS`.
 - [x] Document Railway variables for Postgres, Hasura admin secret, RPC URLs,
       bucket credentials, publisher range controls, and API max range.

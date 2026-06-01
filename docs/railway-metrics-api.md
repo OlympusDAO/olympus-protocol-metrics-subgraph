@@ -89,10 +89,13 @@ The API reads from the same bucket.
 - `PUBLISHER_LOCK_TTL_MS`: S3 lock timeout for overlapping cron runs. The
   documented default is 12 hours (`43200000`) so a slow first bootstrap is not
   overtaken by the next hourly cron.
-- `INDEXER_DEPLOYMENT_ID`: required current indexer deployment identifier. The
-  publisher writes data shards under `v2/deployments/<id>/...`, records those
-  file keys in the internal manifest, and deletes stale deployment prefixes
-  after the new manifest is published.
+- `INDEXER_DEPLOYMENT_ID`: required current indexer deployment identifier. Set
+  this on the `metrics-publisher` service as a Railway reference variable to
+  the indexer service deployment id, for example
+  `${{indexer.RAILWAY_DEPLOYMENT_ID}}` if the Railway service is named
+  `indexer`. The publisher writes data shards under `v2/deployments/<id>/...`,
+  records those file keys in the internal manifest, and deletes stale deployment
+  prefixes after the new manifest is published.
 - `PUBLISHER_START_DATE`: optional UTC calendar date for full backfills.
 - `PUBLISHER_END_DATE`: optional UTC calendar end date for controlled
   backfills or re-publishing a bounded window.
@@ -107,6 +110,16 @@ exists, the same cron job publishes an incremental refresh with the configured
 lookback. If a publish crashes, a later run can take over after the lock expires.
 The manifest is published last, so partial shard uploads are not exposed through
 `/v2/bounds`.
+
+Each Railway config declares `build.watchPatterns` for its runtime ownership.
+The indexer watches `apps/indexer/**`; the API watches `apps/metrics-api/**`
+and `packages/metrics-artifacts/**`; Hasura watches only its Dockerfile/config.
+The publisher also watches indexer source/config/Dockerfile changes in addition
+to publisher and shared artifact code. This causes normal monorepo code changes
+that redeploy the indexer to redeploy the publisher too, so the referenced
+`INDEXER_DEPLOYMENT_ID` is refreshed before the next cron run. If the indexer is
+manually redeployed without a code change, verify the rendered publisher
+variable or redeploy the publisher before allowing new snapshots.
 
 The bucket manifest is an internal file index. The API uses it to resolve
 deployment-scoped shard keys. It is not exposed as a public route; clients

@@ -10,15 +10,18 @@ describe("Railway config-as-code", () => {
       ["railway-metrics-api.json", "Dockerfile-metrics-api"],
     ] as const) {
       const config = JSON.parse(readFileSync(configPath, "utf8")) as {
-        build: { dockerfilePath: string };
+        build: { dockerfilePath: string; watchPatterns: string[] };
       };
       expect(config.build.dockerfilePath).toBe(dockerfilePath);
+      expect(config.build.watchPatterns).toContain(configPath);
+      expect(config.build.watchPatterns).toContain(dockerfilePath);
       expect(existsSync(dockerfilePath)).toBe(true);
     }
   });
 
-  test("configures publisher cron and API readiness healthcheck", () => {
+  test("configures service deploy behavior", () => {
     const publisher = JSON.parse(readFileSync("railway-metrics-publisher.json", "utf8")) as {
+      build: { watchPatterns: string[] };
       deploy: { cronSchedule: string; restartPolicyType: string };
     };
     const api = JSON.parse(readFileSync("railway-metrics-api.json", "utf8")) as {
@@ -27,8 +30,43 @@ describe("Railway config-as-code", () => {
 
     expect(publisher.deploy.cronSchedule).toBe("15 * * * *");
     expect(publisher.deploy.restartPolicyType).toBe("NEVER");
+    expect(publisher.build.watchPatterns).toContain("apps/indexer/**");
+    expect(publisher.build.watchPatterns).toContain("apps/metrics-publisher/**");
+    expect(publisher.build.watchPatterns).toContain("packages/metrics-artifacts/**");
     expect(api.deploy.healthcheckPath).toBe("/ready");
     expect(api.deploy.restartPolicyType).toBe("ALWAYS");
+  });
+
+  test("configures service watch patterns by runtime ownership", () => {
+    const indexer = JSON.parse(readFileSync("railway-indexer.json", "utf8")) as {
+      build: { watchPatterns: string[] };
+    };
+    const hasura = JSON.parse(readFileSync("railway-hasura.json", "utf8")) as {
+      build: { watchPatterns: string[] };
+    };
+    const api = JSON.parse(readFileSync("railway-metrics-api.json", "utf8")) as {
+      build: { watchPatterns: string[] };
+    };
+    const publisher = JSON.parse(readFileSync("railway-metrics-publisher.json", "utf8")) as {
+      build: { watchPatterns: string[] };
+    };
+
+    expect(hasura.build.watchPatterns).toEqual(["Dockerfile-hasura", "railway-hasura.json"]);
+    expect(indexer.build.watchPatterns).toContain("apps/indexer/**");
+    expect(api.build.watchPatterns).toContain("apps/metrics-api/**");
+    expect(api.build.watchPatterns).toContain("packages/metrics-artifacts/**");
+    expect(publisher.build.watchPatterns).toContain("apps/indexer/**");
+    expect(publisher.build.watchPatterns).toContain("Dockerfile-indexer");
+    expect(publisher.build.watchPatterns).toContain("railway-indexer.json");
+    expect(publisher.build.watchPatterns).toContain("apps/metrics-publisher/**");
+    expect(publisher.build.watchPatterns).toContain("packages/metrics-artifacts/**");
+
+    for (const config of [indexer, api, publisher]) {
+      expect(config.build.watchPatterns).toContain("package.json");
+      expect(config.build.watchPatterns).toContain("pnpm-lock.yaml");
+      expect(config.build.watchPatterns).toContain("pnpm-workspace.yaml");
+      expect(config.build.watchPatterns).toContain("tsconfig.json");
+    }
   });
 
   test("documents required Railway variables and public exposure rules", () => {

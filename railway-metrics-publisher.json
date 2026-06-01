@@ -2,7 +2,20 @@
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
     "builder": "DOCKERFILE",
-    "dockerfilePath": "Dockerfile-metrics-publisher"
+    "dockerfilePath": "Dockerfile-metrics-publisher",
+    "watchPatterns": [
+      "Dockerfile-indexer",
+      "Dockerfile-metrics-publisher",
+      "railway-indexer.json",
+      "railway-metrics-publisher.json",
+      "apps/indexer/**",
+      "apps/metrics-publisher/**",
+      "packages/metrics-artifacts/**",
+      "package.json",
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      "tsconfig.json"
+    ]
   },
   "deploy": {
     "cronSchedule": "15 * * * *",
