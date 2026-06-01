@@ -223,8 +223,11 @@ surface.
 - [x] Add Railway config-as-code file stubs for indexer, Hasura, publisher, and
       API.
 - [x] Add Dockerfile stubs for indexer, Hasura, publisher, and API.
-- [ ] Replace Dockerfile stubs with pinned, production-ready images modeled on
+- [x] Replace Dockerfile stubs with pinned, production-ready images modeled on
       `protocol-visualizer`.
+- [x] Add local Docker Compose stack for Postgres, Hasura, indexer, MinIO,
+      publisher, and API with only `metrics-api` exposed on localhost by
+      default.
 - [x] Configure publisher cron as `15 * * * *` with `restartPolicyType: NEVER`.
 - [x] Configure API healthcheck as `/ready` with `restartPolicyType: ALWAYS`.
 - [x] Document Railway variables for Postgres, Hasura admin secret, RPC URLs,

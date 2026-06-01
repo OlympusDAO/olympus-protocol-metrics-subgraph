@@ -51,4 +51,18 @@ describe("Railway config-as-code", () => {
     expect(doc).toContain("Cloudflare");
     expect(doc).toContain("WAF");
   });
+
+  test("uses pinned production Dockerfiles with real service commands", () => {
+    for (const dockerfile of ["Dockerfile-indexer", "Dockerfile-metrics-api", "Dockerfile-metrics-publisher"]) {
+      const content = readFileSync(dockerfile, "utf8");
+      expect(content).toContain("@sha256:");
+      expect(content).toContain("pnpm install --frozen-lockfile");
+      expect(content).not.toContain("node\", \"--version");
+      expect(content).toContain("USER node");
+    }
+
+    expect(readFileSync("Dockerfile-indexer", "utf8")).toContain("envio:start");
+    expect(readFileSync("Dockerfile-metrics-api", "utf8")).toContain("apps/metrics-api");
+    expect(readFileSync("Dockerfile-metrics-publisher", "utf8")).toContain("apps/metrics-publisher");
+  });
 });

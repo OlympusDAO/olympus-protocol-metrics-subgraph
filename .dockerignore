@@ -1,0 +1,13 @@
+.git
+.DS_Store
+.env
+.env.*
+!apps/indexer/.env.sample
+node_modules
+**/node_modules
+build
+dist
+**/build
+**/dist
+coverage
+**/coverage
