@@ -53,4 +53,9 @@ describe("metrics API HTTP behavior", () => {
       errors: [{ message: expect.stringMatching(/not supported/i) }],
     });
   });
+
+  test("does not expose raw Wundergraph operation names", async () => {
+    expect((await request("/operations/tokenRecordsLatest")).status).toBe(404);
+    expect((await request("/operations/treasuryEthereum_tokenRecords")).status).toBe(404);
+  });
 });

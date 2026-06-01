@@ -58,6 +58,10 @@ export type ChainTreasuryAssets = Record<ChainName, TreasuryAsset[]>;
 
 export type ChainOhmSupply = Record<ChainName, OhmSupply[]>;
 
+export type TokenRecord = TreasuryAsset;
+
+export type TokenSupply = OhmSupply;
+
 export type ResponseMetadata = {
   chainsComplete: ChainName[];
   chainsFailed: ChainName[];

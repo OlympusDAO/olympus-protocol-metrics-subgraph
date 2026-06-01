@@ -121,22 +121,22 @@ surface.
 
 ### Shared artifact and metric logic
 
-- [ ] Implement UTC date parsing and inclusive range resolution.
-- [ ] Default missing `end` to `manifest.latestDate`.
-- [ ] Reject `end < start` with `invalid_date_range`.
-- [ ] Enforce `METRICS_API_MAX_RANGE_DAYS` on `/v2/*` only.
+- [x] Implement UTC date parsing and inclusive range resolution.
+- [x] Default missing `end` to `manifest.latestDate`.
+- [x] Reject `end < start` with `invalid_date_range`.
+- [x] Enforce `METRICS_API_MAX_RANGE_DAYS` on `/v2/*` only.
 - [ ] Ignore legacy `dateOffset` everywhere.
-- [ ] Generate month shard keys across month/year boundaries.
-- [ ] Implement exact legacy chain keys and zero defaults:
+- [x] Generate month shard keys across month/year boundaries.
+- [x] Implement exact legacy chain keys and zero defaults:
       `Arbitrum`, `Ethereum`, `Fantom`, `Polygon`, `Base`, `Berachain`.
-- [ ] Implement exact legacy `SupplyCategoryValues` keys and zero defaults.
-- [ ] Map incomplete chain data to `crossChainComplete=false`, zero component
+- [x] Implement exact legacy `SupplyCategoryValues` keys and zero defaults.
+- [x] Map incomplete chain data to `crossChainComplete=false`, zero component
       values, empty chain record arrays, `chainsIndexed`, `chainsMissing`, and
       `_meta.chainsFailed`.
-- [ ] Preserve aggregate/component/record triplets such as
+- [x] Preserve aggregate/component/record triplets such as
       `treasuryMarketValue`, `treasuryMarketValueComponents`, and
       `treasuryMarketValueRecords`.
-- [ ] Keep `TreasuryAsset` and `OhmSupply` as the v2 names while preserving
+- [x] Keep `TreasuryAsset` and `OhmSupply` as the v2 names while preserving
       legacy `TokenRecord` / `TokenSupply` shape aliases for `/operations/*`.
 - [ ] Normalize legacy numeric values to JS numbers, not strings.
 - [ ] Normalize legacy `TokenSupply.source` and `sourceAddress` to non-null
@@ -152,6 +152,8 @@ surface.
 - [ ] Generate schemas under `v2/schemas/`.
 - [ ] Generate manifest with `earliestDate`, `latestDate`, schema version,
       generated timestamp, artifact keys, hashes, and row counts.
+- [x] Publish metric, treasury asset, and OHM supply shard keys before
+      `v2/manifest.json` in the publisher contract.
 - [ ] Upload all shards and schemas before `v2/manifest.json`.
 - [ ] Implement full publish mode for initial deployment.
 - [ ] Implement incremental publish mode with configurable lookback.
@@ -160,26 +162,26 @@ surface.
 
 ### Public API
 
-- [ ] Implement `/ready`; do not add `/healthz`.
-- [ ] Implement CORS for `GET`, `HEAD`, and `OPTIONS`.
+- [x] Implement `/ready`; do not add `/healthz`.
+- [x] Implement CORS for `GET`, `HEAD`, and `OPTIONS`.
 - [ ] Reject request bodies on `GET` and `HEAD`.
-- [ ] Implement `/openapi.json` and `/docs`.
-- [ ] Implement `/v2/bounds` without exposing `availableMonths`.
-- [ ] Implement `/v2/manifest`.
-- [ ] Implement `/v2/metrics/daily`.
-- [ ] Implement `/v2/treasury-assets/daily`.
-- [ ] Implement `/v2/ohm-supply/daily`.
-- [ ] Support `includeRecords=true` on `/v2/metrics/daily` using the legacy
+- [x] Implement `/openapi.json` and `/docs`.
+- [x] Implement `/v2/bounds` without exposing `availableMonths`.
+- [x] Implement `/v2/manifest`.
+- [x] Implement `/v2/metrics/daily`.
+- [x] Implement `/v2/treasury-assets/daily`.
+- [x] Implement `/v2/ohm-supply/daily`.
+- [x] Support `includeRecords=true` on `/v2/metrics/daily` using the legacy
       metric-specific `*Records` fields.
-- [ ] Return consistent v2 `{ data, meta }` success envelopes and
+- [x] Return consistent v2 `{ data, meta }` success envelopes and
       `{ error: { code, message, details? } }` error envelopes.
 - [ ] Add cache headers for range routes, manifest/bounds, and readiness.
 
 ### Legacy `/operations/*` compatibility
 
-- [ ] Implement Wundergraph response wrapper `{ data, errors? }`.
+- [x] Implement Wundergraph response wrapper `{ data, errors? }`.
 - [ ] Parse raw and URL-encoded `wg_variables`.
-- [ ] Mark `/operations/*` as deprecated with response headers and OpenAPI
+- [x] Mark `/operations/*` as deprecated with response headers and OpenAPI
       `deprecated: true`.
 - [ ] Implement latest, earliest, and paginated metrics.
 - [ ] Implement latest, earliest, and paginated treasury assets via legacy
@@ -194,7 +196,7 @@ surface.
 - [ ] Apply no max range limit on `/operations/*`.
 - [ ] Support `crossChainDataComplete=true` filtering.
 - [ ] Support `includeRecords=true` on paginated metrics.
-- [ ] Implement `atBlock/*` route parity with `501` Wundergraph-style errors.
+- [x] Implement `atBlock/*` route parity with `501` Wundergraph-style errors.
 - [ ] Return narrow legacy `ProtocolMetric` shape; return empty arrays rather
       than synthesizing unsupported values.
 
@@ -202,12 +204,12 @@ surface.
 
 - [ ] Continue publishing `@olympusdao/treasury-subgraph-client` as a major
       version.
-- [ ] Preserve `createClient`, `TreasurySubgraphClient`, and legacy
+- [x] Preserve `createClient`, `TreasurySubgraphClient`, and legacy
       `query({ operationName, input })`.
-- [ ] Add v2 methods:
+- [x] Add v2 methods:
       `getBounds`, `getDailyMetrics`, `getDailyTreasuryAssets`,
       `getDailyOhmSupply`.
-- [ ] Keep the package framework-agnostic; no TanStack Query dependency.
+- [x] Keep the package framework-agnostic; no TanStack Query dependency.
 - [ ] Include `openapi.json` in package output.
 - [ ] Export legacy and v2-compatible TypeScript types.
 
@@ -218,8 +220,8 @@ surface.
 - [x] Add Dockerfile stubs for indexer, Hasura, publisher, and API.
 - [ ] Replace Dockerfile stubs with pinned, production-ready images modeled on
       `protocol-visualizer`.
-- [ ] Configure publisher cron as `15 * * * *` with `restartPolicyType: NEVER`.
-- [ ] Configure API healthcheck as `/ready` with `restartPolicyType: ALWAYS`.
+- [x] Configure publisher cron as `15 * * * *` with `restartPolicyType: NEVER`.
+- [x] Configure API healthcheck as `/ready` with `restartPolicyType: ALWAYS`.
 - [ ] Document Railway variables for Postgres, Hasura admin secret, RPC URLs,
       bucket credentials, publisher mode, and API max range.
 - [ ] Document Cloudflare cache and WAF rules.
@@ -248,7 +250,7 @@ surface.
 - [ ] `pnpm run check`
 - [ ] `pnpm run build`
 - [ ] `pnpm test`
-- [ ] Targeted metrics API red/green test suite passes.
+- [x] Targeted metrics API red/green test suite passes.
 - [ ] `docker build -f Dockerfile-indexer .`
 - [ ] `docker build -f Dockerfile-hasura .`
 - [ ] `docker build -f Dockerfile-metrics-publisher .`
