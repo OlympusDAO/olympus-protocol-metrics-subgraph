@@ -16,7 +16,10 @@ import {
 import {
   EmptyMetricsSource,
   HasuraGraphqlMetricsSource,
+  MetricsNotDataReadyError,
+  type LatestIndexingProgress,
   type MetricsBounds,
+  type PublishBoundsCompleteness,
   type MetricsSource,
 } from "./metrics-source";
 
@@ -26,16 +29,25 @@ export {
   type ArtifactStore,
   EmptyMetricsSource,
   HasuraGraphqlMetricsSource,
+  MetricsNotDataReadyError,
+  type LatestIndexingProgress,
   type MetricsBounds,
+  type PublishBoundsCompleteness,
   type MetricsSource,
+};
+
+export type PublisherIndexingProgress = {
+  chains: LatestIndexingProgress["chains"];
 };
 
 export type PublishResult = {
   deletedKeys: string[];
+  deploymentId: string;
+  indexingProgress?: PublisherIndexingProgress;
   manifestPublishedLast: boolean;
   range?: DateRange;
   skipped: boolean;
-  skipReason?: "lock_held";
+  skipReason?: "lock_held" | "not_data_ready";
   runId: string;
   writtenKeys: string[];
 };
@@ -124,6 +136,7 @@ export async function publishMetricsArtifacts(input: {
   }
   const existingManifest = input.manifest ?? (await getExistingManifest(store));
   const operation = existingManifest === undefined ? "initial_backfill" : "incremental_refresh";
+  const hasPublishedDeploymentArtifacts = deploymentHasPublishedArtifacts(existingManifest, deploymentId);
   const lock = await acquirePublisherLock({
     store,
     operation,
@@ -134,6 +147,10 @@ export async function publishMetricsArtifacts(input: {
     return {
       manifestPublishedLast: false,
       deletedKeys: [],
+      deploymentId,
+      indexingProgress: {
+        chains: {},
+      },
       skipped: true,
       skipReason: "lock_held",
       runId: lock.runId,
@@ -142,8 +159,44 @@ export async function publishMetricsArtifacts(input: {
   }
 
   try {
-    const bounds = await source.fetchBounds();
-    const range = resolvePublishRange(input, bounds, existingManifest, publicStartDate);
+    let bounds: MetricsBounds;
+    const publishBoundsCompleteness = hasPublishedDeploymentArtifacts ? "cross_chain" : "all_chains";
+    const latestIndexingProgress = await source.fetchLatestIndexingProgress();
+    const indexingProgress: PublisherIndexingProgress = {
+      chains: latestIndexingProgress.chains,
+    };
+    try {
+      bounds = await source.fetchBounds(publishBoundsCompleteness);
+    } catch (error) {
+      if (error instanceof MetricsNotDataReadyError) {
+        return {
+          manifestPublishedLast: false,
+          deletedKeys: [],
+          deploymentId,
+          indexingProgress,
+          skipped: true,
+          skipReason: "not_data_ready",
+          runId: lock.runId,
+          writtenKeys: [],
+        };
+      }
+      throw error;
+    }
+    const freshForDeploymentHandover =
+      hasPublishedDeploymentArtifacts || isFreshForDeploymentHandover(bounds.latestDate, now);
+    if (!freshForDeploymentHandover) {
+      return {
+        manifestPublishedLast: false,
+        deletedKeys: [],
+        deploymentId,
+        indexingProgress,
+        skipped: true,
+        skipReason: "not_data_ready",
+        runId: lock.runId,
+        writtenKeys: [],
+      };
+    }
+    const range = resolvePublishRange(input, bounds, existingManifest, publicStartDate, hasPublishedDeploymentArtifacts);
     const [metrics, treasuryAssets, ohmSupply] = await Promise.all([
       source.fetchDailyMetrics(range),
       source.fetchTreasuryAssets(range),
@@ -177,13 +230,19 @@ export async function publishMetricsArtifacts(input: {
       await writeArtifact(dataKey("ohm-supply", month), ohmSupplyRows, ohmSupplyRows.length);
     }
 
-    const manifestArtifacts = pruneHistoricalDeploymentArtifacts(artifacts, deploymentId);
+    const earliestDate = maxDate(publicStartDate, minDate(existingManifest?.earliestDate ?? range.start, range.start));
+    const latestDate = minDate(maxDate(existingManifest?.latestDate ?? range.end, range.end), bounds.latestDate);
+    const manifestArtifacts = pruneArtifactsOutsidePublishedBounds(
+      pruneHistoricalDeploymentArtifacts(artifacts, deploymentId),
+      earliestDate,
+      latestDate,
+    );
     const manifest: Manifest = {
       schemaVersion: SCHEMA_VERSION,
       generatedAt,
       indexerDeploymentId: deploymentId,
-      earliestDate: maxDate(publicStartDate, minDate(existingManifest?.earliestDate ?? range.start, range.start)),
-      latestDate: maxDate(existingManifest?.latestDate ?? range.end, range.end),
+      earliestDate,
+      latestDate,
       artifacts: manifestArtifacts,
     };
 
@@ -193,6 +252,8 @@ export async function publishMetricsArtifacts(input: {
 
     return {
       deletedKeys,
+      deploymentId,
+      indexingProgress,
       manifestPublishedLast: writtenKeys.at(-1) === "v2/manifest.json",
       range,
       skipped: false,
@@ -245,8 +306,9 @@ function resolvePublishRange(
   bounds: MetricsBounds,
   existingManifest: Manifest | undefined,
   publicStartDate: string,
+  hasPublishedDeploymentArtifacts: boolean,
 ): DateRange {
-  if (existingManifest === undefined) {
+  if (existingManifest === undefined || !hasPublishedDeploymentArtifacts) {
     return resolveDateRange({
       start: input.startDate ?? publicStartDate,
       end: input.endDate ?? bounds.latestDate,
@@ -260,7 +322,8 @@ function resolvePublishRange(
   if (!Number.isInteger(lookbackDays) || lookbackDays < 1) {
     throw new Error("lookbackDays must be a positive integer.");
   }
-  const start = input.startDate ?? maxDate(publicStartDate, addDays(existingManifest.latestDate, -(lookbackDays - 1)));
+  const catchupBaseDate = minDate(existingManifest.latestDate, bounds.latestDate);
+  const start = input.startDate ?? maxDate(publicStartDate, addDays(catchupBaseDate, -(lookbackDays - 1)));
   return resolveDateRange({
     start,
     end,
@@ -298,6 +361,44 @@ function pruneHistoricalDeploymentArtifacts(
   return Object.fromEntries(
     Object.entries(artifacts).filter(([key]) => !key.startsWith("v2/deployments/") || key.startsWith(currentPrefix)),
   );
+}
+
+function deploymentHasPublishedArtifacts(manifest: Manifest | undefined, deploymentId: string): boolean {
+  if (manifest === undefined) {
+    return false;
+  }
+  return Object.keys(manifest.artifacts ?? {}).some(
+    (key) =>
+      key.startsWith(`v2/deployments/${deploymentId}/metrics/daily/`) ||
+      key.startsWith(`v2/deployments/${deploymentId}/treasury-assets/daily/`) ||
+      key.startsWith(`v2/deployments/${deploymentId}/ohm-supply/daily/`),
+  );
+}
+
+function pruneArtifactsOutsidePublishedBounds(
+  artifacts: Record<string, ArtifactEntry>,
+  earliestDate: string,
+  latestDate: string,
+): Record<string, ArtifactEntry> {
+  const publishedMonths = new Set(monthKeysForRange({ start: earliestDate, end: latestDate, days: 1 }));
+  return Object.fromEntries(
+    Object.entries(artifacts).filter(([key]) => {
+      const month = dataArtifactMonth(key);
+      return month === undefined || publishedMonths.has(month);
+    }),
+  );
+}
+
+function dataArtifactMonth(key: string): string | undefined {
+  return (
+    key.match(/^v2\/deployments\/[^/]+\/(?:metrics|treasury-assets|ohm-supply)\/daily\/(\d{4}-\d{2})\.json$/)?.[1] ??
+    key.match(/^v2\/(?:metrics|treasury-assets|ohm-supply)\/daily\/(\d{4}-\d{2})\.json$/)?.[1]
+  );
+}
+
+function isFreshForDeploymentHandover(latestDate: string, now: Date): boolean {
+  const latestAllowedLagDate = addDays(now.toISOString().slice(0, 10), -1);
+  return latestDate >= latestAllowedLagDate;
 }
 
 async function acquirePublisherLock(input: {

@@ -21,6 +21,9 @@ type GlobalMetricSnapshot {
   # (Step 4) — chain names had case-sensitivity risk ("Ethereum" vs "ethereum")
   # and didn't have a canonical source. chainIds are EIP-155 numbers.
   chainsIndexed: [Int!]!
+  # All supported chainIds that have not produced a chain snapshot for this
+  # date. This may be non-empty even when crossChainComplete is true because
+  # optional chains can lag the Arbitrum/Ethereum compatibility gate.
   chainsMissing: [Int!]!
 
   # Per-chain breakdowns

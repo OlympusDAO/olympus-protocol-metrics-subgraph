@@ -8,6 +8,8 @@ console.log(
   JSON.stringify({
     skipped: result.skipped,
     skipReason: result.skipReason,
+    deploymentId: result.deploymentId,
+    indexingProgress: result.indexingProgress,
     runId: result.runId,
     range: result.range,
     writtenKeys: result.writtenKeys,

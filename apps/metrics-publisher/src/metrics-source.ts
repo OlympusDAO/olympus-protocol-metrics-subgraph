@@ -17,12 +17,31 @@ export type MetricsBounds = {
   latestDate: string;
 };
 
+export type PublishBoundsCompleteness = "cross_chain" | "all_chains";
+
+export type ChainIndexingProgress = {
+  block: number;
+  date: string;
+};
+
+export type LatestIndexingProgress = {
+  chains: Partial<Record<ChainName, ChainIndexingProgress>>;
+};
+
 export type MetricsSource = {
-  fetchBounds(): Promise<MetricsBounds>;
+  fetchBounds(completeness?: PublishBoundsCompleteness): Promise<MetricsBounds>;
+  fetchLatestIndexingProgress(): Promise<LatestIndexingProgress>;
   fetchDailyMetrics(range: DateRange): Promise<DailyMetric[]>;
   fetchTreasuryAssets(range: DateRange): Promise<TreasuryAsset[]>;
   fetchOhmSupply(range: DateRange): Promise<OhmSupply[]>;
 };
+
+export class MetricsNotDataReadyError extends Error {
+  constructor(message = "Metrics data is not ready to publish.") {
+    super(message);
+    this.name = "MetricsNotDataReadyError";
+  }
+}
 
 type GraphqlResponse<T> = {
   data?: T;
@@ -52,6 +71,14 @@ export class EmptyMetricsSource implements MetricsSource {
     return DEFAULT_BOUNDS;
   }
 
+  async fetchLatestIndexingProgress(): Promise<LatestIndexingProgress> {
+    return {
+      chains: Object.fromEntries(
+        CHAIN_NAMES.map((chainName) => [chainName, { block: 0, date: DEFAULT_BOUNDS.latestDate }]),
+      ),
+    };
+  }
+
   async fetchDailyMetrics(): Promise<DailyMetric[]> {
     return [];
   }
@@ -75,22 +102,59 @@ export class HasuraGraphqlMetricsSource implements MetricsSource {
     },
   ) {}
 
-  async fetchBounds(): Promise<MetricsBounds> {
+  async fetchBounds(completeness: PublishBoundsCompleteness = "cross_chain"): Promise<MetricsBounds> {
+    const completenessWhere =
+      completeness === "all_chains"
+        ? `{ chainsIndexed: { _contains: [${ALL_CHAIN_IDS.join(", ")}] } }`
+        : "{ crossChainComplete: { _eq: true } }";
     const body = await this.graphql<{
       earliest?: Array<{ date: string }>;
       latest?: Array<{ date: string }>;
     }>(`
       query Bounds {
-        earliest: GlobalMetricSnapshot(limit: 1, order_by: { date: asc }) { date }
-        latest: GlobalMetricSnapshot(limit: 1, order_by: { date: desc }) { date }
+        earliest: GlobalMetricSnapshot(
+          where: ${completenessWhere}
+          limit: 1
+          order_by: { date: asc }
+        ) { date }
+        latest: GlobalMetricSnapshot(
+          where: ${completenessWhere}
+          limit: 1
+          order_by: { date: desc }
+        ) { date }
       }
     `);
     const earliestDate = body.earliest?.[0]?.date;
     const latestDate = body.latest?.[0]?.date;
     if (earliestDate === undefined || latestDate === undefined) {
-      throw new Error("Hasura returned no GlobalMetricSnapshot bounds.");
+      throw new MetricsNotDataReadyError("Hasura returned no complete GlobalMetricSnapshot bounds.");
     }
     return { earliestDate, latestDate };
+  }
+
+  async fetchLatestIndexingProgress(): Promise<LatestIndexingProgress> {
+    const body = await this.graphql<Record<string, Array<RawChainIndexingProgress> | undefined>>(`
+      query LatestIndexingProgress {
+        ${CHAIN_NAMES.map((chainName) => {
+          const chainId = chainIdForName(chainName);
+          return `
+            ${chainProgressAlias(chainName)}: ChainMetricValues(
+              where: { chainId: { _eq: ${chainId} } }
+              limit: 1
+              order_by: { timestamp: desc }
+            ) {
+              date
+              block
+            }
+          `;
+        }).join("\n")}
+      }
+    `);
+    const chainRows = CHAIN_NAMES.flatMap((chainName) => {
+      const rows = body[chainProgressAlias(chainName)] as Array<RawChainIndexingProgress> | undefined;
+      return chainProgressFromRows(chainName, rows);
+    });
+    return indexingProgressFromChainRows(chainRows);
   }
 
   async fetchDailyMetrics(range: DateRange): Promise<DailyMetric[]> {
@@ -183,6 +247,11 @@ type RawChainMetricValues = {
 type RawSupplyCategory = {
   category: string;
   balance: unknown;
+};
+
+type RawChainIndexingProgress = {
+  block: unknown;
+  date: string;
 };
 
 type RawDailyMetric = {
@@ -374,6 +443,50 @@ function normalizeDailyMetric(row: RawDailyMetric): DailyMetric {
     treasuryLiquidBackingPerOhmBacked: toNumber(row.treasuryLiquidBackingPerOhmBacked),
     treasuryLiquidBackingPerGOhmBacked: toNumber(row.treasuryLiquidBackingPerGOhmBacked),
   };
+}
+
+function indexingProgressFromChainRows(
+  chainRows: Array<RawChainIndexingProgress & { chainName?: ChainName }>,
+): LatestIndexingProgress {
+  const chains: Partial<Record<ChainName, ChainIndexingProgress>> = {};
+  for (const chainRow of chainRows) {
+    if (chainRow.chainName === undefined) {
+      continue;
+    }
+    chains[chainRow.chainName] = {
+      block: toNumber(chainRow.block),
+      date: chainRow.date,
+    };
+  }
+  return { chains };
+}
+
+function chainIdForName(chainName: ChainName): number {
+  switch (chainName) {
+    case "Arbitrum":
+      return 42161;
+    case "Ethereum":
+      return 1;
+    case "Fantom":
+      return 250;
+    case "Polygon":
+      return 137;
+    case "Base":
+      return 8453;
+    case "Berachain":
+      return 80094;
+  }
+}
+
+function chainProgressFromRows(
+  chainName: ChainName,
+  rows: RawChainIndexingProgress[] | undefined,
+): Array<RawChainIndexingProgress & { chainName: ChainName }> {
+  return (rows ?? []).map((row) => ({ ...row, chainName }));
+}
+
+function chainProgressAlias(chainName: ChainName): string {
+  return `${chainName.toLowerCase()}Progress`;
 }
 
 function normalizeTreasuryAsset(row: RawTreasuryAsset): TreasuryAsset {

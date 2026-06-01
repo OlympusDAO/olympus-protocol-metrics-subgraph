@@ -171,6 +171,14 @@ export type CrossChainAggregate = {
 // Chains required for `crossChainComplete` to be true. Per Phase 1 decision
 // #10 the legacy `crossChainDataComplete` only requires Arbitrum + Ethereum.
 const REQUIRED_CHAINS_FOR_COMPLETE: number[] = [CHAIN_IDS.ARBITRUM, CHAIN_IDS.ETHEREUM];
+const ALL_CHAIN_IDS: number[] = [
+  CHAIN_IDS.ARBITRUM,
+  CHAIN_IDS.ETHEREUM,
+  CHAIN_IDS.FANTOM,
+  CHAIN_IDS.POLYGON,
+  CHAIN_IDS.BASE,
+  CHAIN_IDS.BERACHAIN,
+];
 
 export function aggregateAcrossChains(
   date: string,
@@ -200,10 +208,10 @@ export function aggregateAcrossChains(
   }
 
   const chainsIndexed = perChain.map((chain) => chain.chainId);
-  const chainsMissing = REQUIRED_CHAINS_FOR_COMPLETE.filter(
-    (chainId) => !chainsIndexed.includes(chainId),
+  const chainsMissing = ALL_CHAIN_IDS.filter((chainId) => !chainsIndexed.includes(chainId));
+  const crossChainComplete = REQUIRED_CHAINS_FOR_COMPLETE.every((chainId) =>
+    chainsIndexed.includes(chainId),
   );
-  const crossChainComplete = chainsMissing.length === 0;
 
   return {
     date,

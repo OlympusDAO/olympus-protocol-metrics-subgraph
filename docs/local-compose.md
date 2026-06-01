@@ -65,7 +65,7 @@ pnpm run compose:api:rebuild
 ```
 
 Run the publisher after the core and API/storage services are already running
-and Hasura has indexed at least one daily snapshot:
+and Hasura has indexed at least one complete daily snapshot:
 
 ```sh
 pnpm run compose:publish
@@ -78,11 +78,19 @@ initialization job are already available on the compose network. The publish
 scripts include `--build`, so Docker Compose invokes a build before each
 publish; Docker's layer cache may make that quick, but Compose does not reliably
 build only when the local source has changed.
+The command prints a JSON result containing `deploymentId` and
+`indexingProgress.chains`, keyed by chain name with each chain's latest indexed
+date and block.
 
-If no manifest exists, `pnpm run compose:publish` creates the initial historical
-backfill from `2022-05-01` through Hasura's latest indexed date. After that, the
-same command performs incremental catch-up from the existing manifest latest
-date with the configured lookback overlap.
+If no manifest exists, or the manifest has no snapshots for the current
+`INDEXER_DEPLOYMENT_ID`, `pnpm run compose:publish` creates the initial
+historical backfill from `2022-05-01` through Hasura's latest date where every
+supported chain id is indexed. That latest all-chain date must also be within
+one day of the current UTC date, otherwise the publisher exits successfully with
+`skipReason: "not_data_ready"` and leaves any existing manifest untouched. After
+that, the same command performs incremental catch-up from the existing manifest
+latest date with the configured lookback overlap; incremental runs only require
+the Arbitrum/Ethereum `crossChainComplete` gate.
 
 To clear only the local artifact bucket while keeping the rest of the compose
 stack running:

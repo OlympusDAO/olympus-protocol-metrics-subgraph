@@ -190,7 +190,7 @@ describe("aggregateAcrossChains", () => {
     expect(agg.treasuryLiquidBacking.toString()).toBe("1500");
     expect(agg.ohmTotalSupply.toString()).toBe("1000000");
     expect(agg.chainsIndexed.sort((a, b) => a - b)).toEqual([1, 42161]);
-    expect(agg.chainsMissing).toEqual([]);
+    expect(agg.chainsMissing).toEqual([250, 137, 8453, 80094]);
     expect(agg.crossChainComplete).toBe(true);
   });
 
@@ -205,7 +205,7 @@ describe("aggregateAcrossChains", () => {
       [],
     );
     const agg = aggregateAcrossChains("2024-09-01", [arbitrum]);
-    expect(agg.chainsMissing).toEqual([1]);
+    expect(agg.chainsMissing).toEqual([1, 250, 137, 8453, 80094]);
     expect(agg.crossChainComplete).toBe(false);
   });
 
@@ -220,7 +220,7 @@ describe("aggregateAcrossChains", () => {
       [],
     );
     const agg = aggregateAcrossChains("2024-09-01", [ethereum]);
-    expect(agg.chainsMissing).toEqual([42161]);
+    expect(agg.chainsMissing).toEqual([42161, 250, 137, 8453, 80094]);
     expect(agg.crossChainComplete).toBe(false);
   });
 
@@ -254,7 +254,7 @@ describe("aggregateAcrossChains", () => {
     );
     const agg = aggregateAcrossChains("2024-09-01", [arbitrum, base, polygon]);
     expect(agg.chainsIndexed.sort((a, b) => a - b)).toEqual([137, 8453, 42161]);
-    expect(agg.chainsMissing).toEqual([1]);
+    expect(agg.chainsMissing).toEqual([1, 250, 80094]);
     expect(agg.crossChainComplete).toBe(false);
   });
 

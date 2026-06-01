@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import {
   HasuraGraphqlMetricsSource,
   MemoryArtifactStore,
+  MetricsNotDataReadyError,
   S3ArtifactStore,
   createArtifactStoreFromEnv,
   createMetricsSourceFromEnv,
@@ -10,6 +11,7 @@ import {
   publishMetricsArtifactsFromEnv,
   type ArtifactStore,
   type MetricsSource,
+  type PublishBoundsCompleteness,
 } from "../../apps/metrics-publisher/src/publisher";
 import type { DailyMetric, Manifest, OhmSupply, TreasuryAsset } from "../../packages/metrics-artifacts/src";
 
@@ -105,9 +107,31 @@ const existingManifest: Manifest = {
   artifacts: {},
 };
 
+const existingCurrentDeploymentManifest: Manifest = {
+  ...existingManifest,
+  indexerDeploymentId: "current-indexer",
+  artifacts: {
+    "v2/deployments/current-indexer/metrics/daily/2026-05.json": {
+      sha256: "0".repeat(64),
+      byteLength: 3,
+      rowCount: 1,
+    },
+  },
+};
+
 function source(overrides: Partial<MetricsSource> = {}): MetricsSource {
   return {
     fetchBounds: async () => ({ earliestDate: "2026-04-30", latestDate: "2026-06-01" }),
+    fetchLatestIndexingProgress: async () => ({
+      chains: {
+        Arbitrum: { block: 100, date: "2026-06-01" },
+        Ethereum: { block: 200, date: "2026-06-01" },
+        Fantom: { block: 300, date: "2026-06-01" },
+        Polygon: { block: 400, date: "2026-06-01" },
+        Base: { block: 500, date: "2026-06-01" },
+        Berachain: { block: 600, date: "2026-06-01" },
+      },
+    }),
     fetchDailyMetrics: async () => [metric, { ...metric, date: "2026-06-01" }],
     fetchTreasuryAssets: async () => [treasuryAsset],
     fetchOhmSupply: async () => [ohmSupply],
@@ -167,7 +191,7 @@ describe("metrics publisher", () => {
 
   test("publishes from the existing manifest with a lookback overlap", async () => {
     const store = new MemoryArtifactStore();
-    await store.putJson("v2/manifest.json", existingManifest);
+    await store.putJson("v2/manifest.json", existingCurrentDeploymentManifest);
 
     const result = await publishMetricsArtifacts({
       deploymentId: "current-indexer",
@@ -180,6 +204,174 @@ describe("metrics publisher", () => {
     expect(result.range).toEqual({ start: "2026-05-29", end: "2026-06-01", days: 4 });
     expect(result.writtenKeys).toContain("v2/deployments/current-indexer/metrics/daily/2026-05.json");
     expect(result.writtenKeys).toContain("v2/deployments/current-indexer/metrics/daily/2026-06.json");
+  });
+
+  test("first publish for a deployment only publishes up to the latest all-chain indexed snapshot", async () => {
+    const store = new MemoryArtifactStore();
+    const observedRanges: Array<{ start: string; end: string; days: number }> = [];
+    const observedCompleteness: PublishBoundsCompleteness[] = [];
+    await store.putJson("v2/manifest.json", existingManifest);
+
+    const result = await publishMetricsArtifacts({
+      deploymentId: "current-indexer",
+      lookbackDays: 2,
+      source: source({
+        fetchBounds: async (completeness) => {
+          observedCompleteness.push(completeness ?? "cross_chain");
+          return { earliestDate: "2026-04-30", latestDate: "2026-05-31" };
+        },
+        fetchDailyMetrics: async (range) => {
+          observedRanges.push(range);
+          return [{ ...metric, date: "2026-05-31" }];
+        },
+        fetchTreasuryAssets: async (range) => {
+          observedRanges.push(range);
+          return [];
+        },
+        fetchOhmSupply: async (range) => {
+          observedRanges.push(range);
+          return [];
+        },
+      }),
+      store,
+      now: () => new Date(generatedAt),
+    });
+
+    expect(observedCompleteness).toEqual(["all_chains"]);
+    expect(result.range).toEqual({ start: "2022-05-01", end: "2026-05-31", days: 1492 });
+    expect(result.deploymentId).toBe("current-indexer");
+    expect(result.indexingProgress).toMatchObject({
+      chains: {
+        Arbitrum: { block: 100, date: "2026-06-01" },
+        Ethereum: { block: 200, date: "2026-06-01" },
+      },
+    });
+    expect(observedRanges).toEqual([
+      { start: "2022-05-01", end: "2026-05-31", days: 1492 },
+      { start: "2022-05-01", end: "2026-05-31", days: 1492 },
+      { start: "2022-05-01", end: "2026-05-31", days: 1492 },
+    ]);
+    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/metrics/daily/2026-05.json");
+    expect(result.writtenKeys).not.toContain("v2/deployments/current-indexer/metrics/daily/2026-06.json");
+    expect(store.json("v2/manifest.json")).toMatchObject({
+      latestDate: "2026-05-31",
+      indexerDeploymentId: "current-indexer",
+    });
+  });
+
+  test("first publish for a deployment waits until all-chain data is within one day of current UTC date", async () => {
+    const store = new MemoryArtifactStore();
+    const observedCompleteness: PublishBoundsCompleteness[] = [];
+    await store.putJson("v2/manifest.json", existingManifest);
+
+    const result = await publishMetricsArtifacts({
+      deploymentId: "current-indexer",
+      source: source({
+        fetchBounds: async (completeness) => {
+          observedCompleteness.push(completeness ?? "cross_chain");
+          return { earliestDate: "2026-04-30", latestDate: "2026-05-30" };
+        },
+        fetchDailyMetrics: async () => {
+          throw new Error("should not fetch daily metrics before deployment handover is ready");
+        },
+        fetchTreasuryAssets: async () => {
+          throw new Error("should not fetch treasury assets before deployment handover is ready");
+        },
+        fetchOhmSupply: async () => {
+          throw new Error("should not fetch OHM supply before deployment handover is ready");
+        },
+      }),
+      store,
+      now: () => new Date("2026-06-01T08:15:00.000Z"),
+    });
+
+    expect(observedCompleteness).toEqual(["all_chains"]);
+    expect(result).toMatchObject({
+      deletedKeys: [],
+      skipped: true,
+      skipReason: "not_data_ready",
+      manifestPublishedLast: false,
+      writtenKeys: [],
+    });
+    expect(store.json("v2/manifest.json")).toEqual(existingManifest);
+    await expect(store.getJson("v2/publisher.lock")).rejects.toThrow("Artifact not found");
+  });
+
+  test("incremental publish for the same deployment can use cross-chain complete bounds", async () => {
+    const store = new MemoryArtifactStore();
+    const observedCompleteness: PublishBoundsCompleteness[] = [];
+    await store.putJson("v2/manifest.json", existingCurrentDeploymentManifest);
+
+    const result = await publishMetricsArtifacts({
+      deploymentId: "current-indexer",
+      lookbackDays: 2,
+      source: source({
+        fetchBounds: async (completeness) => {
+          observedCompleteness.push(completeness ?? "cross_chain");
+          return { earliestDate: "2026-04-30", latestDate: "2026-06-01" };
+        },
+      }),
+      store,
+      now: () => new Date(generatedAt),
+    });
+
+    expect(observedCompleteness).toEqual(["cross_chain"]);
+    expect(result.range).toEqual({ start: "2026-05-29", end: "2026-06-01", days: 4 });
+    expect(result.indexingProgress).toMatchObject({
+      chains: {
+        Arbitrum: { block: 100, date: "2026-06-01" },
+        Ethereum: { block: 200, date: "2026-06-01" },
+      },
+    });
+    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/metrics/daily/2026-06.json");
+  });
+
+  test("skips without replacing the manifest when no complete Hasura bounds exist", async () => {
+    const store = new MemoryArtifactStore();
+    const observedCompleteness: PublishBoundsCompleteness[] = [];
+    await store.putJson("v2/manifest.json", existingManifest);
+
+    const result = await publishMetricsArtifacts({
+      deploymentId: "current-indexer",
+      source: source({
+        fetchLatestIndexingProgress: async () => ({
+          chains: {
+            Base: { block: 12345, date: "2026-06-01" },
+          },
+        }),
+        fetchBounds: async (completeness) => {
+          observedCompleteness.push(completeness ?? "cross_chain");
+          throw new MetricsNotDataReadyError("Hasura returned no complete GlobalMetricSnapshot bounds.");
+        },
+        fetchDailyMetrics: async () => {
+          throw new Error("should not fetch daily metrics while data is not ready");
+        },
+        fetchTreasuryAssets: async () => {
+          throw new Error("should not fetch treasury assets while data is not ready");
+        },
+        fetchOhmSupply: async () => {
+          throw new Error("should not fetch OHM supply while data is not ready");
+        },
+      }),
+      store,
+      now: () => new Date(generatedAt),
+    });
+
+    expect(observedCompleteness).toEqual(["all_chains"]);
+    expect(result).toMatchObject({
+      deletedKeys: [],
+      skipped: true,
+      skipReason: "not_data_ready",
+      manifestPublishedLast: false,
+      writtenKeys: [],
+    });
+    expect(result.indexingProgress).toMatchObject({
+      chains: {
+        Base: { block: 12345, date: "2026-06-01" },
+      },
+    });
+    expect(store.json("v2/manifest.json")).toEqual(existingManifest);
+    await expect(store.getJson("v2/publisher.lock")).rejects.toThrow("Artifact not found");
   });
 
   test("defaults to the public start date for the initial backfill when no manifest exists", async () => {
@@ -259,8 +451,9 @@ describe("metrics publisher", () => {
       now: () => new Date(generatedAt),
     });
 
-    expect(result.range).toEqual({ start: "2026-05-29", end: "2026-06-01", days: 4 });
+    expect(result.range).toEqual({ start: "2022-05-01", end: "2026-06-01", days: 1493 });
     expect(result.writtenKeys).toContain("v2/deployments/new-indexer/metrics/daily/2026-05.json");
+    expect(result.writtenKeys).toContain("v2/deployments/new-indexer/metrics/daily/2022-05.json");
     expect(result.writtenKeys).toContain("v2/deployments/new-indexer/metrics/daily/2026-06.json");
     expect(result.deletedKeys).toEqual([
       "v2/deployments/old-indexer/metrics/daily/2026-05.json",
@@ -331,7 +524,7 @@ describe("metrics publisher", () => {
 
   test("treats blank optional publisher date environment variables as unset", async () => {
     const store = new MemoryArtifactStore();
-    await store.putJson("v2/manifest.json", existingManifest);
+    await store.putJson("v2/manifest.json", existingCurrentDeploymentManifest);
 
     const result = await publishMetricsArtifactsFromEnv(
       {
@@ -528,5 +721,108 @@ describe("metrics publisher", () => {
     expect(metric.chainsIndexed).toEqual([1, 42161]);
     expect(metric.chainsMissing).toEqual([250, 137, 8453, 80094]);
     expect(metric.crossChainComplete).toBe(true);
+  });
+
+  test("Hasura source uses cross-chain complete snapshots for incremental publish bounds", async () => {
+    let requestBody: { query?: string } | undefined;
+    const source = new HasuraGraphqlMetricsSource({
+      endpoint: "http://hasura.internal/v1/graphql",
+      adminSecret: "secret",
+      fetchFn: async (_url, init) => {
+        requestBody = JSON.parse(String(init?.body));
+        return new Response(
+          JSON.stringify({
+            data: {
+              earliest: [{ date: "2026-05-01" }],
+              latest: [{ date: "2026-05-31" }],
+            },
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      },
+    });
+
+    await expect(source.fetchBounds()).resolves.toEqual({
+      earliestDate: "2026-05-01",
+      latestDate: "2026-05-31",
+    });
+    expect(requestBody?.query).toContain("crossChainComplete");
+    expect(requestBody?.query).toContain("_eq: true");
+  });
+
+  test("Hasura source uses all supported chain ids for first deployment publish bounds", async () => {
+    let requestBody: { query?: string } | undefined;
+    const source = new HasuraGraphqlMetricsSource({
+      endpoint: "http://hasura.internal/v1/graphql",
+      adminSecret: "secret",
+      fetchFn: async (_url, init) => {
+        requestBody = JSON.parse(String(init?.body));
+        return new Response(
+          JSON.stringify({
+            data: {
+              earliest: [{ date: "2026-05-01" }],
+              latest: [{ date: "2026-05-31" }],
+            },
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      },
+    });
+
+    await expect(source.fetchBounds("all_chains")).resolves.toEqual({
+      earliestDate: "2026-05-01",
+      latestDate: "2026-05-31",
+    });
+    expect(requestBody?.query).toContain("chainsIndexed");
+    expect(requestBody?.query).toContain("_contains: [42161, 1, 250, 137, 8453, 80094]");
+  });
+
+  test("Hasura source reports latest indexing progress per chain", async () => {
+    let requestBody: { query?: string } | undefined;
+    const source = new HasuraGraphqlMetricsSource({
+      endpoint: "http://hasura.internal/v1/graphql",
+      adminSecret: "secret",
+      fetchFn: async (_url, init) => {
+        requestBody = JSON.parse(String(init?.body));
+        return new Response(
+          JSON.stringify({
+            data: {
+              arbitrumProgress: [{ date: "2026-05-30", block: "123" }],
+              ethereumProgress: [{ date: "2026-05-31", block: "456" }],
+              fantomProgress: [],
+              polygonProgress: [],
+              baseProgress: [{ date: "2026-06-01", block: "789" }],
+              berachainProgress: [],
+            },
+          }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      },
+    });
+
+    await expect(source.fetchLatestIndexingProgress()).resolves.toMatchObject({
+      chains: {
+        Arbitrum: { block: 123, date: "2026-05-30" },
+        Ethereum: { block: 456, date: "2026-05-31" },
+        Base: { block: 789, date: "2026-06-01" },
+      },
+    });
+    expect(requestBody?.query).toContain("LatestIndexingProgress");
+    expect(requestBody?.query).toContain("ChainMetricValues");
+    expect(requestBody?.query).toContain("block");
+  });
+
+  test("Hasura source reports not-ready when no complete snapshots exist", async () => {
+    const source = new HasuraGraphqlMetricsSource({
+      endpoint: "http://hasura.internal/v1/graphql",
+      adminSecret: "secret",
+      fetchFn: async () =>
+        new Response(JSON.stringify({ data: { earliest: [], latest: [] } }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    });
+
+    await expect(source.fetchBounds()).rejects.toThrow(MetricsNotDataReadyError);
   });
 });

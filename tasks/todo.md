@@ -171,6 +171,15 @@ surface.
 - [x] Fail publisher startup if `INDEXER_DEPLOYMENT_ID` is missing or invalid.
 - [x] Delete stale `v2/deployments/<old-id>/...` files only after the new
       internal manifest has been published.
+- [x] Publish a deployment's first snapshot set only through the latest date
+      with every supported chain indexed, then use cross-chain complete bounds
+      for incremental refreshes.
+- [x] Keep the existing manifest active until a deployment's first all-chain
+      indexed date is within one day of the current UTC date.
+- [x] Skip without replacing the manifest when Hasura has no eligible publisher
+      bounds.
+- [x] Include `INDEXER_DEPLOYMENT_ID` and per-chain indexing progress in the
+      publisher JSON output for both successful and skipped runs.
 - [x] Keep `v2/manifest.json` internal; do not expose deployment ids or
       artifact file keys through a public `/v2/manifest` route.
 - [x] Clamp public manifest bounds to the public start date instead of raw

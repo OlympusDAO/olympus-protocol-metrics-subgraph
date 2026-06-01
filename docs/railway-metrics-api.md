@@ -108,8 +108,25 @@ successfully without writing artifacts. If no manifest exists, the publisher
 creates the initial backfill from `PUBLISHER_PUBLIC_START_DATE`; once a manifest
 exists, the same cron job publishes an incremental refresh with the configured
 lookback. If a publish crashes, a later run can take over after the lock expires.
+For the first publish of an `INDEXER_DEPLOYMENT_ID`, publisher bounds require
+every supported chain id to be present in `chainsIndexed`. Once that deployment
+has published snapshots, incremental bounds use `crossChainComplete=true`, which
+means Arbitrum and Ethereum have both indexed that UTC date. If Hasura has no
+eligible bounds yet, the publisher exits successfully with
+`skipReason: "not_data_ready"` and leaves the current manifest and snapshots
+untouched.
+The first publish for a deployment also requires that latest all-chain date to
+be within one day of the publisher's current UTC date. This prevents a new
+indexer deployment from taking over the manifest while it is still several days
+behind the existing published snapshots.
 The manifest is published last, so partial shard uploads are not exposed through
 `/v2/bounds`.
+
+The publisher logs one JSON object per run. It includes `deploymentId` and
+`indexingProgress` whether the publish writes artifacts or skips. Progress
+is intentionally small: `indexingProgress.chains` is keyed by chain name and
+each present chain has `{ date, block }` for the latest indexed
+`ChainMetricValues` row.
 
 Each Railway config declares `build.watchPatterns` for its runtime ownership.
 The indexer watches `apps/indexer/**`; the API watches `apps/metrics-api/**`
