@@ -222,9 +222,9 @@ surface.
       `protocol-visualizer`.
 - [x] Configure publisher cron as `15 * * * *` with `restartPolicyType: NEVER`.
 - [x] Configure API healthcheck as `/ready` with `restartPolicyType: ALWAYS`.
-- [ ] Document Railway variables for Postgres, Hasura admin secret, RPC URLs,
+- [x] Document Railway variables for Postgres, Hasura admin secret, RPC URLs,
       bucket credentials, publisher mode, and API max range.
-- [ ] Document Cloudflare cache and WAF rules.
+- [x] Document Cloudflare cache and WAF rules.
 - [ ] Ensure Hasura/Postgres/indexer/publisher remain private and only
       `metrics-api` has a public domain.
 

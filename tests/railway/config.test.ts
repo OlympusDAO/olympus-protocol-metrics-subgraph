@@ -30,4 +30,25 @@ describe("Railway config-as-code", () => {
     expect(api.deploy.healthcheckPath).toBe("/ready");
     expect(api.deploy.restartPolicyType).toBe("ALWAYS");
   });
+
+  test("documents required Railway variables and public exposure rules", () => {
+    const doc = readFileSync("docs/railway-metrics-api.md", "utf8");
+
+    for (const variable of [
+      "DATABASE_URL",
+      "HASURA_GRAPHQL_ADMIN_SECRET",
+      "RPC_URL_1",
+      "ARTIFACT_BUCKET",
+      "ARTIFACT_ACCESS_KEY_ID",
+      "ARTIFACT_SECRET_ACCESS_KEY",
+      "METRICS_API_MAX_RANGE_DAYS",
+      "PUBLISHER_MODE",
+    ]) {
+      expect(doc).toContain(variable);
+    }
+
+    expect(doc).toContain("Only `metrics-api` should receive a public Railway domain");
+    expect(doc).toContain("Cloudflare");
+    expect(doc).toContain("WAF");
+  });
 });
