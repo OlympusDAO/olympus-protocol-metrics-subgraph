@@ -132,6 +132,28 @@ describe("metrics API HTTP behavior", () => {
     ).toContain("max-age=28800");
   });
 
+  test("marks required chains as missing when no metric rows exist for a requested date", async () => {
+    const response = await request("/v2/metrics/daily?start=2026-05-21&end=2026-05-21&includeRecords=true");
+    expect(response.status).toBe(200);
+
+    const body = await response.json();
+    expect(body.data).toHaveLength(1);
+    expect(body.data[0]).toMatchObject({
+      date: "2026-05-21",
+      chainsIndexed: [],
+      chainsMissing: [42161, 1, 250, 137, 8453, 80094],
+      crossChainComplete: false,
+      _meta: {
+        chainsComplete: [],
+        chainsFailed: ["Arbitrum", "Ethereum", "Fantom", "Polygon", "Base", "Berachain"],
+      },
+    });
+    expect(body.data[0].treasuryMarketValueRecords.Arbitrum).toEqual([]);
+    expect(body.data[0].treasuryMarketValueRecords.Ethereum).toEqual([]);
+    expect(body.data[0].ohmTotalSupplyRecords.Arbitrum).toEqual([]);
+    expect(body.data[0].ohmTotalSupplyRecords.Ethereum).toEqual([]);
+  });
+
   test("rejects request bodies on GET and HEAD", async () => {
     const getResponse = await rawRequest("/v2/bounds", { method: "GET", body: "{}" });
     expect(getResponse.status).toBe(400);

@@ -102,6 +102,46 @@ describe("legacy-compatible metric shape", () => {
     expect(withRecords.ohmTotalSupplyRecords?.Ethereum).toEqual([ohmSupply]);
   });
 
+  test("infers missing chains from available records", () => {
+    const metric = buildDailyMetric({
+      date: "2026-05-21",
+      chainValues: {},
+      treasuryAssets: [treasuryAsset],
+      ohmSupply: [ohmSupply],
+      generatedAt: "2026-06-01T08:15:00.000Z",
+    });
+
+    expect(metric.chainsIndexed).toEqual([1]);
+    expect(metric.chainsMissing).toEqual([42161, 250, 137, 8453, 80094]);
+    expect(metric.crossChainComplete).toBe(false);
+    expect(metric._meta?.chainsComplete).toEqual(["Ethereum"]);
+    expect(metric._meta?.chainsFailed).toEqual(["Arbitrum", "Fantom", "Polygon", "Base", "Berachain"]);
+  });
+
+  test("marks cross-chain data complete when Arbitrum and Ethereum are indexed", () => {
+    const metric = buildDailyMetric({
+      date: "2026-05-21",
+      chainValues: {},
+      chainsIndexed: [42161, 1],
+      generatedAt: "2026-06-01T08:15:00.000Z",
+    });
+
+    expect(metric.chainsMissing).toEqual([250, 137, 8453, 80094]);
+    expect(metric.crossChainComplete).toBe(true);
+  });
+
+  test("marks cross-chain data incomplete when either Arbitrum or Ethereum is missing", () => {
+    const metric = buildDailyMetric({
+      date: "2026-05-21",
+      chainValues: {},
+      chainsIndexed: [1, 250, 137, 8453, 80094],
+      generatedAt: "2026-06-01T08:15:00.000Z",
+    });
+
+    expect(metric.chainsMissing).toEqual([42161]);
+    expect(metric.crossChainComplete).toBe(false);
+  });
+
   test("handles incomplete chain data without failing", () => {
     const metric = buildDailyMetric({
       date: "2026-05-21",

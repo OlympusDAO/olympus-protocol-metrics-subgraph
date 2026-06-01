@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import {
+  HasuraGraphqlMetricsSource,
   MemoryArtifactStore,
   S3ArtifactStore,
   createArtifactStoreFromEnv,
@@ -264,5 +265,48 @@ describe("metrics publisher", () => {
         ARTIFACT_SECRET_ACCESS_KEY: "secret-key",
       }),
     ).toBeInstanceOf(S3ArtifactStore);
+  });
+
+  test("Hasura source keeps cross-chain complete when Arbitrum and Ethereum are indexed", async () => {
+    const rawMetric = {
+      date: "2026-05-21",
+      crossChainComplete: true,
+      chainsIndexed: [1, 42161],
+      chainsMissing: [],
+      chainValues: [],
+      supplyCategories: [],
+      ohmIndex: 0,
+      ohmApy: 0,
+      ohmTotalSupply: 0,
+      ohmCirculatingSupply: 0,
+      ohmFloatingSupply: 0,
+      ohmBackedSupply: 0,
+      gOhmBackedSupply: 0,
+      ohmPrice: 0,
+      gOhmPrice: 0,
+      marketCap: 0,
+      sOhmCirculatingSupply: 0,
+      sOhmTotalValueLocked: 0,
+      treasuryMarketValue: 0,
+      treasuryLiquidBacking: 0,
+      treasuryLiquidBackingPerOhmFloating: 0,
+      treasuryLiquidBackingPerOhmBacked: 0,
+      treasuryLiquidBackingPerGOhmBacked: 0,
+    };
+    const source = new HasuraGraphqlMetricsSource({
+      endpoint: "http://hasura.internal/v1/graphql",
+      adminSecret: "secret",
+      fetchFn: async () =>
+        new Response(JSON.stringify({ data: { GlobalMetricSnapshot: [rawMetric] } }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+    });
+
+    const [metric] = await source.fetchDailyMetrics({ start: "2026-05-21", end: "2026-05-21", days: 1 });
+
+    expect(metric.chainsIndexed).toEqual([1, 42161]);
+    expect(metric.chainsMissing).toEqual([250, 137, 8453, 80094]);
+    expect(metric.crossChainComplete).toBe(true);
   });
 });

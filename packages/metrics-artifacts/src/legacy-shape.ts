@@ -10,14 +10,24 @@ import type {
 } from "./types";
 import { CHAIN_NAMES } from "./types";
 
-const CHAIN_ID_TO_NAME = new Map<number, ChainName>([
-  [42161, "Arbitrum"],
-  [1, "Ethereum"],
-  [250, "Fantom"],
-  [137, "Polygon"],
-  [8453, "Base"],
-  [80094, "Berachain"],
-]);
+export const CHAIN_IDS_BY_NAME: Record<ChainName, number> = {
+  Arbitrum: 42161,
+  Ethereum: 1,
+  Fantom: 250,
+  Polygon: 137,
+  Base: 8453,
+  Berachain: 80094,
+};
+
+export const ALL_CHAIN_IDS: number[] = CHAIN_NAMES.map((chainName) => CHAIN_IDS_BY_NAME[chainName]);
+export const REQUIRED_CHAIN_IDS_FOR_COMPLETE: number[] = [
+  CHAIN_IDS_BY_NAME.Arbitrum,
+  CHAIN_IDS_BY_NAME.Ethereum,
+];
+
+const CHAIN_ID_TO_NAME = new Map<number, ChainName>(
+  Object.entries(CHAIN_IDS_BY_NAME).map(([chainName, chainId]) => [chainId, chainName as ChainName]),
+);
 
 export function emptyChainValues(): ChainValues {
   return {
@@ -85,6 +95,25 @@ function sum(values: number[]): number {
   return values.reduce((total, value) => total + value, 0);
 }
 
+function uniqueChainIds(chainNames: ChainName[]): number[] {
+  return [...new Set(chainNames.map((chainName) => CHAIN_IDS_BY_NAME[chainName]))];
+}
+
+function inferIndexedChainIds(treasuryAssets: TreasuryAsset[], ohmSupply: OhmSupply[]): number[] {
+  return uniqueChainIds([
+    ...treasuryAssets.map((asset) => asset.blockchain),
+    ...ohmSupply.map((supply) => supply.blockchain),
+  ]);
+}
+
+function missingChainIds(chainsIndexed: number[]): number[] {
+  return ALL_CHAIN_IDS.filter((chainId) => !chainsIndexed.includes(chainId));
+}
+
+export function isCrossChainComplete(chainsIndexed: number[]): boolean {
+  return REQUIRED_CHAIN_IDS_FOR_COMPLETE.every((chainId) => chainsIndexed.includes(chainId));
+}
+
 export function buildDailyMetric(input: {
   date: string;
   chainValues: Partial<Record<ChainName, Partial<ChainValues>>>;
@@ -97,6 +126,8 @@ export function buildDailyMetric(input: {
 }): DailyMetric {
   const treasuryAssets = input.treasuryAssets ?? [];
   const ohmSupply = input.ohmSupply ?? [];
+  const chainsIndexed = input.chainsIndexed ?? inferIndexedChainIds(treasuryAssets, ohmSupply);
+  const chainsMissing = input.chainsMissing ?? missingChainIds(chainsIndexed);
   const treasuryAssetsByChain = groupTreasuryAssetsByChain(treasuryAssets);
   const ohmSupplyByChain = groupOhmSupplyByChain(ohmSupply);
   const treasuryMarketValueComponents = emptyChainValues();
@@ -131,9 +162,9 @@ export function buildDailyMetric(input: {
     date: input.date,
     blocks,
     timestamps,
-    crossChainComplete: (input.chainsMissing ?? []).length === 0,
-    chainsIndexed: input.chainsIndexed ?? [],
-    chainsMissing: input.chainsMissing ?? [],
+    crossChainComplete: isCrossChainComplete(chainsIndexed),
+    chainsIndexed,
+    chainsMissing,
     ohmIndex: 0,
     ohmApy: 0,
     ohmTotalSupply: sum(Object.values(ohmTotalSupplyComponents)),
@@ -159,8 +190,8 @@ export function buildDailyMetric(input: {
     treasuryLiquidBackingPerOhmBacked: 0,
     treasuryLiquidBackingPerGOhmBacked: 0,
     _meta: {
-      chainsComplete: chainNamesFromIds(input.chainsIndexed),
-      chainsFailed: chainNamesFromIds(input.chainsMissing),
+      chainsComplete: chainNamesFromIds(chainsIndexed),
+      chainsFailed: chainNamesFromIds(chainsMissing),
       timestamp: input.generatedAt,
     },
   };

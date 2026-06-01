@@ -1,7 +1,9 @@
 import {
+  ALL_CHAIN_IDS,
   CHAIN_NAMES,
   emptyChainValues,
   emptySupplyCategoryValues,
+  isCrossChainComplete,
   type ChainName,
   type DailyMetric,
   type DateRange,
@@ -310,6 +312,7 @@ const OHM_SUPPLY_SELECTION = `
 `;
 
 function normalizeDailyMetric(row: RawDailyMetric): DailyMetric {
+  const chainsMissing = ALL_CHAIN_IDS.filter((chainId) => !row.chainsIndexed.includes(chainId));
   const blocks = emptyChainValues();
   const timestamps = emptyChainValues();
   const ohmTotalSupplyComponents = emptyChainValues();
@@ -343,9 +346,9 @@ function normalizeDailyMetric(row: RawDailyMetric): DailyMetric {
     date: row.date,
     blocks,
     timestamps,
-    crossChainComplete: row.crossChainComplete,
+    crossChainComplete: isCrossChainComplete(row.chainsIndexed),
     chainsIndexed: row.chainsIndexed,
-    chainsMissing: row.chainsMissing,
+    chainsMissing,
     ohmIndex: toNumber(row.ohmIndex),
     ohmApy: toNumber(row.ohmApy),
     ohmTotalSupply: toNumber(row.ohmTotalSupply),

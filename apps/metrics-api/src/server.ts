@@ -2,8 +2,11 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 
 import { ArtifactNotFoundError, type ArtifactReader } from "./artifact-store";
 import {
+  ALL_CHAIN_IDS,
   buildDailyMetric,
   getOpenApiDocument,
+  isCrossChainComplete,
+  monthKeysForRange,
   resolveDateRange,
   type ApiErrorResponse,
   type ApiResponse,
@@ -144,6 +147,119 @@ function legacyResponse<T>(data: T | null): WundergraphResponse<T> {
   return { data };
 }
 
+function buildEmptyDailyMetric(input: {
+  date: string;
+  includeRecords: boolean;
+  generatedAt: string;
+}): DailyMetric {
+  return buildDailyMetric({
+    date: input.date,
+    chainValues: {},
+    treasuryAssets: [],
+    ohmSupply: [],
+    includeRecords: input.includeRecords,
+    chainsIndexed: [],
+    chainsMissing: ALL_CHAIN_IDS,
+    generatedAt: input.generatedAt,
+  });
+}
+
+function normalizeMetricCompleteness(metric: DailyMetric): DailyMetric {
+  const chainsMissing = ALL_CHAIN_IDS.filter((chainId) => !metric.chainsIndexed.includes(chainId));
+  return {
+    ...metric,
+    chainsMissing,
+    crossChainComplete: isCrossChainComplete(metric.chainsIndexed),
+  };
+}
+
+function dateKeysForRange(range: { start: string; days: number }): string[] {
+  const start = Date.parse(`${range.start}T00:00:00.000Z`);
+  return Array.from({ length: range.days }, (_, index) =>
+    new Date(start + index * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+  );
+}
+
+function isInRange(date: string, range: { start: string; end: string }): boolean {
+  return date >= range.start && date <= range.end;
+}
+
+async function readArtifactRows<T>(
+  config: MetricsApiConfig,
+  range: { start: string; end: string; days: number },
+  keyPrefix: string,
+): Promise<T[]> {
+  if (config.artifactReader === undefined) {
+    return [];
+  }
+
+  const rows: T[] = [];
+  for (const month of monthKeysForRange(range)) {
+    try {
+      const monthRows = await config.artifactReader.getJson<T[]>(`${keyPrefix}/${month}.json`);
+      rows.push(...monthRows.filter((row) => isInRange((row as { date: string }).date, range)));
+    } catch (error) {
+      if (!(error instanceof ArtifactNotFoundError)) {
+        throw error;
+      }
+    }
+  }
+  return rows;
+}
+
+function attachMetricRecords(metric: DailyMetric, treasuryAssets: TreasuryAsset[], ohmSupply: OhmSupply[]): DailyMetric {
+  const records = buildDailyMetric({
+    date: metric.date,
+    chainValues: {},
+    treasuryAssets,
+    ohmSupply,
+    includeRecords: true,
+    chainsIndexed: metric.chainsIndexed,
+    chainsMissing: metric.chainsMissing,
+    generatedAt: metric._meta?.timestamp ?? "",
+  });
+  return {
+    ...metric,
+    ohmTotalSupplyRecords: records.ohmTotalSupplyRecords,
+    ohmCirculatingSupplyRecords: records.ohmCirculatingSupplyRecords,
+    ohmFloatingSupplyRecords: records.ohmFloatingSupplyRecords,
+    ohmBackedSupplyRecords: records.ohmBackedSupplyRecords,
+    treasuryMarketValueRecords: records.treasuryMarketValueRecords,
+    treasuryLiquidBackingRecords: records.treasuryLiquidBackingRecords,
+  };
+}
+
+async function readDailyMetrics(
+  config: MetricsApiConfig,
+  range: { start: string; end: string; days: number },
+  includeRecords: boolean,
+  generatedAt: string,
+): Promise<DailyMetric[]> {
+  const metricRows = await readArtifactRows<DailyMetric>(config, range, "v2/metrics/daily");
+  const metricsByDate = new Map(metricRows.map((metric) => [metric.date, normalizeMetricCompleteness(metric)]));
+  const treasuryAssets = includeRecords
+    ? await readArtifactRows<TreasuryAsset>(config, range, "v2/treasury-assets/daily")
+    : [];
+  const ohmSupply = includeRecords
+    ? await readArtifactRows<OhmSupply>(config, range, "v2/ohm-supply/daily")
+    : [];
+
+  return dateKeysForRange(range).map((date) => {
+    const metric = metricsByDate.get(date);
+    if (metric === undefined) {
+      return buildEmptyDailyMetric({ date, includeRecords, generatedAt });
+    }
+    if (!includeRecords) {
+      return metric;
+    }
+    return attachMetricRecords(
+      metric,
+      treasuryAssets.filter((asset) => asset.date === date),
+      ohmSupply.filter((supply) => supply.date === date),
+    );
+  });
+}
+
 function parseLegacyVariables(url: URL): Record<string, unknown> {
   const value = url.searchParams.get("wg_variables");
   if (value === null || value === "") {
@@ -258,16 +374,14 @@ export async function handleMetricsApiRequest(
       }
       const range = resolveV2Range(url, config, publishedManifest);
       const includeRecords = url.searchParams.get("includeRecords") === "true";
-      const metric = buildDailyMetric({
-        date: range.start,
-        chainValues: {},
-        treasuryAssets: [],
-        ohmSupply: [],
+      const metrics = await readDailyMetrics(
+        config,
+        range,
         includeRecords,
-        generatedAt: config.generatedAt ?? publishedManifest.generatedAt,
-      });
+        config.generatedAt ?? publishedManifest.generatedAt,
+      );
       res.setHeader("cache-control", RANGE_CACHE_CONTROL);
-      sendJson(res, 200, emptyResponse<DailyMetric[]>(config, range, [metric], publishedManifest));
+      sendJson(res, 200, emptyResponse<DailyMetric[]>(config, range, metrics, publishedManifest));
     } catch (error) {
       if (error instanceof ArtifactNotFoundError) {
         return;
@@ -284,8 +398,9 @@ export async function handleMetricsApiRequest(
         return;
       }
       const range = resolveV2Range(url, config, publishedManifest);
+      const treasuryAssets = await readArtifactRows<TreasuryAsset>(config, range, "v2/treasury-assets/daily");
       res.setHeader("cache-control", RANGE_CACHE_CONTROL);
-      sendJson(res, 200, emptyResponse<TreasuryAsset[]>(config, range, [], publishedManifest));
+      sendJson(res, 200, emptyResponse<TreasuryAsset[]>(config, range, treasuryAssets, publishedManifest));
     } catch (error) {
       if (error instanceof ArtifactNotFoundError) {
         return;
@@ -302,8 +417,9 @@ export async function handleMetricsApiRequest(
         return;
       }
       const range = resolveV2Range(url, config, publishedManifest);
+      const ohmSupply = await readArtifactRows<OhmSupply>(config, range, "v2/ohm-supply/daily");
       res.setHeader("cache-control", RANGE_CACHE_CONTROL);
-      sendJson(res, 200, emptyResponse<OhmSupply[]>(config, range, [], publishedManifest));
+      sendJson(res, 200, emptyResponse<OhmSupply[]>(config, range, ohmSupply, publishedManifest));
     } catch (error) {
       if (error instanceof ArtifactNotFoundError) {
         return;
