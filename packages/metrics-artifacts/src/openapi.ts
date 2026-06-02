@@ -55,6 +55,14 @@ export function getOpenApiDocument(): {
       "400": jsonResponse("Invalid request."),
     },
   });
+  const deprecatedAtBlockOperation = (summary: string) => ({
+    deprecated: true,
+    summary,
+    parameters: [legacyVariablesParameter],
+    responses: {
+      "501": jsonResponse("atBlock queries are not supported by the artifact-backed API."),
+    },
+  });
 
   return {
     openapi: "3.1.0",
@@ -154,14 +162,16 @@ export function getOpenApiDocument(): {
         ),
       },
       "/operations/atBlock/metrics": {
-        get: {
-          deprecated: true,
-          summary: "Deprecated atBlock metrics placeholder.",
-          parameters: [legacyVariablesParameter],
-          responses: {
-            "501": jsonResponse("atBlock queries are not supported by the artifact-backed API."),
-          },
-        },
+        get: deprecatedAtBlockOperation("Deprecated atBlock metrics placeholder."),
+      },
+      "/operations/atBlock/tokenRecords": {
+        get: deprecatedAtBlockOperation("Deprecated atBlock tokenRecords placeholder."),
+      },
+      "/operations/atBlock/tokenSupplies": {
+        get: deprecatedAtBlockOperation("Deprecated atBlock tokenSupplies placeholder."),
+      },
+      "/operations/atBlock/internal/protocolMetrics": {
+        get: deprecatedAtBlockOperation("Deprecated atBlock protocolMetrics placeholder."),
       },
     },
   };

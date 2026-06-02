@@ -62,6 +62,23 @@ export type TokenRecord = TreasuryAsset;
 
 export type TokenSupply = OhmSupply;
 
+export type ProtocolMetric = {
+  id: string;
+  block: number;
+  currentAPY: number;
+  currentIndex: number;
+  date: string;
+  gOhmPrice: number;
+  gOhmTotalSupply: number;
+  nextDistributedOhm: number;
+  nextEpochRebase: number;
+  ohmPrice: number;
+  ohmTotalSupply: number;
+  sOhmCirculatingSupply: number;
+  timestamp: number;
+  totalValueLocked: number;
+};
+
 export type ResponseMetadata = {
   chainsComplete: ChainName[];
   chainsFailed: ChainName[];
@@ -157,6 +174,80 @@ export type Manifest = {
 };
 
 export type WundergraphResponse<T> = {
-  data: T | null;
+  data: T;
   errors?: Array<{ message: string }>;
+};
+
+export type IgnoreCacheInput = {
+  ignoreCache?: boolean;
+};
+
+export type PaginatedMetricsInput = {
+  startDate: string;
+  endDate?: string;
+  dateOffset?: number;
+  crossChainDataComplete?: boolean;
+  includeRecords?: boolean;
+  ignoreCache?: boolean;
+};
+
+export type PaginatedTokenRecordsInput = {
+  startDate: string;
+  endDate?: string;
+  dateOffset?: number;
+  crossChainDataComplete?: boolean;
+  ignoreCache?: boolean;
+};
+
+export type PaginatedTokenSuppliesInput = {
+  startDate: string;
+  endDate?: string;
+  dateOffset?: number;
+  crossChainDataComplete?: boolean;
+  ignoreCache?: boolean;
+};
+
+export type PaginatedProtocolMetricsInput = {
+  startDate: string;
+  endDate?: string;
+  dateOffset?: number;
+  ignoreCache?: boolean;
+};
+
+export type AtBlockInput = {
+  arbitrumBlock: number;
+  ethereumBlock: number;
+  fantomBlock: number;
+  polygonBlock: number;
+  baseBlock: number;
+  berachainBlock: number;
+};
+
+type LegacyOperation<Data, Input = IgnoreCacheInput | undefined> = {
+  input: Input;
+  data: Data;
+  response: WundergraphResponse<Data>;
+};
+
+export type Operations = {
+  "latest/metrics": LegacyOperation<DailyMetric[]>;
+  "earliest/metrics": LegacyOperation<DailyMetric[]>;
+  "paginated/metrics": LegacyOperation<DailyMetric[], PaginatedMetricsInput>;
+  "latest/tokenRecords": LegacyOperation<TokenRecord[]>;
+  "earliest/tokenRecords": LegacyOperation<TokenRecord[]>;
+  "paginated/tokenRecords": LegacyOperation<TokenRecord[], PaginatedTokenRecordsInput>;
+  "latest/tokenSupplies": LegacyOperation<TokenSupply[]>;
+  "earliest/tokenSupplies": LegacyOperation<TokenSupply[]>;
+  "paginated/tokenSupplies": LegacyOperation<TokenSupply[], PaginatedTokenSuppliesInput>;
+  "latest/protocolMetrics": LegacyOperation<ProtocolMetric[]>;
+  "earliest/protocolMetrics": LegacyOperation<ProtocolMetric[]>;
+  "paginated/protocolMetrics": LegacyOperation<ProtocolMetric[], PaginatedProtocolMetricsInput>;
+  "atBlock/metrics": LegacyOperation<DailyMetric[], AtBlockInput>;
+  "atBlock/tokenRecords": LegacyOperation<TokenRecord[], AtBlockInput>;
+  "atBlock/tokenSupplies": LegacyOperation<TokenSupply[], AtBlockInput>;
+  "atBlock/internal/protocolMetrics": LegacyOperation<ProtocolMetric[], AtBlockInput>;
+};
+
+export type Queries = {
+  [K in keyof Operations]: Operations[K]["response"];
 };

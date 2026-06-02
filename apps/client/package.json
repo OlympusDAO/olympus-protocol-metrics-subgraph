@@ -6,8 +6,10 @@
   "main": "./dist/apps/client/src/index.js",
   "types": "./dist/apps/client/src/index.d.ts",
   "scripts": {
-    "build": "rm -rf dist && tsc -p tsconfig.build.json && tsx scripts/write-openapi.ts",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && pnpm run openapi:generate",
+    "openapi:generate": "tsx scripts/write-openapi.ts",
     "prepack": "pnpm run build",
+    "pretest": "pnpm run openapi:generate",
     "test": "vitest run tests"
   },
   "files": [

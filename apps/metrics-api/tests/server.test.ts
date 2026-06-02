@@ -308,6 +308,9 @@ describe("metrics API HTTP behavior", () => {
       data: null,
       errors: [{ message: expect.stringMatching(/not supported/i) }],
     });
+    expect((await request("/operations/atBlock/tokenRecords")).status).toBe(501);
+    expect((await request("/operations/atBlock/tokenSupplies")).status).toBe(501);
+    expect((await request("/operations/atBlock/internal/protocolMetrics")).status).toBe(501);
   });
 
   test("does not expose raw Wundergraph operation names", async () => {
@@ -372,9 +375,18 @@ describe("metrics API HTTP behavior", () => {
         "v2/metrics/daily/2026-05.json": [
           {
             date: "2026-05-21",
+            blocks: { Ethereum: 123 },
+            timestamps: { Ethereum: 1_716_249_600 },
             chainsIndexed: [1, 42161],
             chainsMissing: [],
             crossChainComplete: true,
+            ohmIndex: 10,
+            ohmApy: 0.05,
+            ohmPrice: 12,
+            gOhmPrice: 120,
+            ohmTotalSupply: 1000,
+            sOhmCirculatingSupply: 500,
+            sOhmTotalValueLocked: 6000,
             treasuryMarketValue: 13,
           },
         ],
@@ -435,7 +447,24 @@ describe("metrics API HTTP behavior", () => {
     );
     expect(protocolMetrics.status).toBe(200);
     expect(await protocolMetrics.json()).toEqual({
-      data: [expect.objectContaining({ date: "2026-05-21", treasuryMarketValue: 13 })],
+      data: [
+        {
+          id: "protocol-metric-2026-05-21",
+          block: 123,
+          currentAPY: 0.05,
+          currentIndex: 10,
+          date: "2026-05-21",
+          gOhmPrice: 120,
+          gOhmTotalSupply: 100,
+          nextDistributedOhm: 0,
+          nextEpochRebase: 0,
+          ohmPrice: 12,
+          ohmTotalSupply: 1000,
+          sOhmCirculatingSupply: 500,
+          timestamp: 1_716_249_600,
+          totalValueLocked: 6000,
+        },
+      ],
     });
   });
 });

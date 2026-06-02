@@ -232,7 +232,7 @@ surface.
 - [x] Add route tests that assert legacy latest/earliest/paginated operations
       return artifact data instead of empty arrays.
 - [x] Implement `atBlock/*` route parity with `501` Wundergraph-style errors.
-- [ ] Return narrow legacy `ProtocolMetric` shape for `protocolMetrics`
+- [x] Return narrow legacy `ProtocolMetric` shape for `protocolMetrics`
       aliases rather than synthesizing unsupported values.
 
 ### Client package
@@ -247,7 +247,7 @@ surface.
 - [x] Keep the package framework-agnostic; no TanStack Query dependency.
 - [x] Include `openapi.json` in package output.
 - [x] Export legacy and v2-compatible TypeScript types.
-- [ ] Add client methods or typed wrappers for the implemented legacy
+- [x] Add client methods or typed wrappers for the implemented legacy
       `/operations/*` compatibility routes where the historical package exposed
       them directly.
 - [x] Add package scripts for client release preparation:

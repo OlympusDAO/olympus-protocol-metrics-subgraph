@@ -14,6 +14,7 @@ import {
   type DailyMetric,
   type Manifest,
   type OhmSupply,
+  type ProtocolMetric,
   type TreasuryAsset,
   type WundergraphResponse,
 } from "../../../packages/metrics-artifacts/src";
@@ -38,6 +39,13 @@ const LEGACY_OPERATION_PATHS = new Set([
   "/operations/latest/protocolMetrics",
   "/operations/earliest/protocolMetrics",
   "/operations/paginated/protocolMetrics",
+]);
+
+const LEGACY_AT_BLOCK_PATHS = new Set([
+  "/operations/atBlock/metrics",
+  "/operations/atBlock/tokenRecords",
+  "/operations/atBlock/tokenSupplies",
+  "/operations/atBlock/internal/protocolMetrics",
 ]);
 
 const READY_CACHE_CONTROL = "no-store";
@@ -143,7 +151,7 @@ function resolveV2Range(
   });
 }
 
-function legacyResponse<T>(data: T | null): WundergraphResponse<T> {
+function legacyResponse<T>(data: T): WundergraphResponse<T> {
   return { data };
 }
 
@@ -334,22 +342,55 @@ function resolveLegacyRange(
   });
 }
 
+function legacyRowsDescending<T extends { date: string }>(rows: T[]): T[] {
+  return [...rows].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+function dailyMetricToProtocolMetric(metric: DailyMetric): ProtocolMetric {
+  const block = (metric.blocks as Partial<Record<string, number>> | undefined)?.Ethereum ?? 0;
+  const timestamp = (metric.timestamps as Partial<Record<string, number>> | undefined)?.Ethereum ?? 0;
+  const gOhmTotalSupply = metric.ohmIndex === 0 ? 0 : metric.ohmTotalSupply / metric.ohmIndex;
+
+  return {
+    id: `protocol-metric-${metric.date}`,
+    block,
+    currentAPY: metric.ohmApy,
+    currentIndex: metric.ohmIndex,
+    date: metric.date,
+    gOhmPrice: metric.gOhmPrice,
+    gOhmTotalSupply,
+    nextDistributedOhm: 0,
+    nextEpochRebase: 0,
+    ohmPrice: metric.ohmPrice,
+    ohmTotalSupply: metric.ohmTotalSupply,
+    sOhmCirculatingSupply: metric.sOhmCirculatingSupply,
+    timestamp,
+    totalValueLocked: metric.sOhmTotalValueLocked,
+  };
+}
+
 async function readLegacyOperation(
   pathname: string,
   variables: Record<string, unknown>,
   config: MetricsApiConfig,
   manifest: Manifest,
-): Promise<DailyMetric[] | TreasuryAsset[] | OhmSupply[]> {
+): Promise<DailyMetric[] | TreasuryAsset[] | OhmSupply[] | ProtocolMetric[]> {
   const range = resolveLegacyRange(pathname, variables, manifest);
   if (pathname.endsWith("/tokenRecords")) {
-    return readArtifactRows<TreasuryAsset>(config, manifest, range, "v2/treasury-assets/daily");
+    return legacyRowsDescending(await readArtifactRows<TreasuryAsset>(config, manifest, range, "v2/treasury-assets/daily"));
   }
   if (pathname.endsWith("/tokenSupplies")) {
-    return readArtifactRows<OhmSupply>(config, manifest, range, "v2/ohm-supply/daily");
+    return legacyRowsDescending(await readArtifactRows<OhmSupply>(config, manifest, range, "v2/ohm-supply/daily"));
   }
 
   const includeRecords = variables.includeRecords === true;
-  return readDailyMetrics(config, manifest, range, includeRecords, config.generatedAt ?? manifest.generatedAt);
+  const metrics = await readDailyMetrics(config, manifest, range, includeRecords, config.generatedAt ?? manifest.generatedAt);
+  const filteredMetrics =
+    variables.crossChainDataComplete === true ? metrics.filter((metric) => metric.crossChainComplete) : metrics;
+  if (pathname.endsWith("/protocolMetrics")) {
+    return legacyRowsDescending(filteredMetrics.map(dailyMetricToProtocolMetric));
+  }
+  return legacyRowsDescending(filteredMetrics);
 }
 
 export async function handleMetricsApiRequest(
@@ -507,7 +548,7 @@ export async function handleMetricsApiRequest(
     return;
   }
 
-  if (url.pathname === "/operations/atBlock/metrics") {
+  if (LEGACY_AT_BLOCK_PATHS.has(url.pathname)) {
     res.setHeader("deprecation", "true");
     sendJson(res, 501, {
       data: null,

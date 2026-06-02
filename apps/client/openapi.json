@@ -610,6 +610,84 @@
           }
         }
       }
+    },
+    "/operations/atBlock/tokenRecords": {
+      "get": {
+        "deprecated": true,
+        "summary": "Deprecated atBlock tokenRecords placeholder.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored."
+          }
+        ],
+        "responses": {
+          "501": {
+            "description": "atBlock queries are not supported by the artifact-backed API.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/atBlock/tokenSupplies": {
+      "get": {
+        "deprecated": true,
+        "summary": "Deprecated atBlock tokenSupplies placeholder.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored."
+          }
+        ],
+        "responses": {
+          "501": {
+            "description": "atBlock queries are not supported by the artifact-backed API.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/atBlock/internal/protocolMetrics": {
+      "get": {
+        "deprecated": true,
+        "summary": "Deprecated atBlock protocolMetrics placeholder.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored."
+          }
+        ],
+        "responses": {
+          "501": {
+            "description": "atBlock queries are not supported by the artifact-backed API.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

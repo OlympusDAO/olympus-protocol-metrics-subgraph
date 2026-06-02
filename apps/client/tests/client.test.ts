@@ -1,8 +1,16 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, expectTypeOf, test, vi } from "vitest";
 
 import { createClient } from "../src";
-import { getOpenApiDocument, type OhmSupply, type TokenRecord, type TokenSupply, type TreasuryAsset } from "../src";
+import {
+  getOpenApiDocument,
+  type Operations,
+  type OhmSupply,
+  type TokenRecord,
+  type TokenSupply,
+  type TreasuryAsset,
+  type WundergraphResponse,
+} from "../src";
 import { getOpenApiDocument as getCanonicalOpenApiDocument } from "../../../packages/metrics-artifacts/src";
 
 describe("@olympusdao/treasury-subgraph-client compatibility", () => {
@@ -22,6 +30,36 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
       startDate: "2026-05-20",
       dateOffset: 30,
     });
+  });
+
+  test("legacy query preserves operation-specific TypeScript inference", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [] })));
+    const client = createClient({ baseUrl: "https://metrics.example", fetch: fetchMock });
+
+    const metrics = await client.query({
+      operationName: "paginated/metrics",
+      input: { startDate: "2026-05-20", includeRecords: true },
+    });
+    const protocolMetrics = await client.query({
+      operationName: "paginated/protocolMetrics",
+      input: { startDate: "2026-05-20" },
+    });
+
+    expectTypeOf(metrics).toEqualTypeOf<Operations["paginated/metrics"]["response"]>();
+    expectTypeOf(protocolMetrics).toEqualTypeOf<Operations["paginated/protocolMetrics"]["response"]>();
+    expectTypeOf(protocolMetrics).toEqualTypeOf<WundergraphResponse<Operations["paginated/protocolMetrics"]["data"]>>();
+  });
+
+  test("deprecated legacy helper methods call the same operations routes", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [] })));
+    const client = createClient({ baseUrl: "https://metrics.example", fetch: fetchMock });
+
+    await client.getPaginatedTokenRecords({ startDate: "2026-05-20" });
+    await client.getLatestProtocolMetrics();
+
+    const calls = fetchMock.mock.calls as unknown as Array<[string, RequestInit?]>;
+    expect(new URL(calls[0][0]).pathname).toBe("/operations/paginated/tokenRecords");
+    expect(new URL(calls[1][0]).pathname).toBe("/operations/latest/protocolMetrics");
   });
 
   test("new methods map to semantic v2 routes", async () => {
@@ -55,9 +93,9 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(packageJson.types).toBe("./dist/apps/client/src/index.d.ts");
     expect(packageJson.files).toContain("openapi.json");
     expect(packageJson.files).toContain("dist");
-    expect(packageJson.scripts.build).toBe(
-      "rm -rf dist && tsc -p tsconfig.build.json && tsx scripts/write-openapi.ts",
-    );
+    expect(packageJson.scripts.build).toBe("rm -rf dist && tsc -p tsconfig.build.json && pnpm run openapi:generate");
+    expect(packageJson.scripts["openapi:generate"]).toBe("tsx scripts/write-openapi.ts");
+    expect(packageJson.scripts.pretest).toBe("pnpm run openapi:generate");
     expect(packageJson.scripts.prepack).toBe("pnpm run build");
     expect(packageJson.exports).toHaveProperty("./openapi.json");
     expect(packageJson.dependencies ?? {}).not.toHaveProperty("@tanstack/react-query");
