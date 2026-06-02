@@ -1,4 +1,4 @@
-import type { Manifest } from "./types";
+import type { Manifest } from "./types.js";
 
 export type DateRange = {
   start: string;

@@ -6,23 +6,610 @@
     "description": "Cacheable REST API for Olympus protocol metrics, treasury assets, and OHM supply. /operations routes are deprecated compatibility routes."
   },
   "paths": {
-    "/ready": {},
-    "/v2/bounds": {},
-    "/v2/metrics/daily": {},
-    "/v2/treasury-assets/daily": {},
-    "/v2/ohm-supply/daily": {},
-    "/operations/latest/metrics": {},
-    "/operations/earliest/metrics": {},
-    "/operations/paginated/metrics": {},
-    "/operations/latest/tokenRecords": {},
-    "/operations/earliest/tokenRecords": {},
-    "/operations/paginated/tokenRecords": {},
-    "/operations/latest/tokenSupplies": {},
-    "/operations/earliest/tokenSupplies": {},
-    "/operations/paginated/tokenSupplies": {},
-    "/operations/latest/protocolMetrics": {},
-    "/operations/earliest/protocolMetrics": {},
-    "/operations/paginated/protocolMetrics": {},
-    "/operations/atBlock/metrics": {}
+    "/ready": {
+      "get": {
+        "summary": "Readiness probe",
+        "responses": {
+          "200": {
+            "description": "API is ready.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/bounds": {
+      "get": {
+        "summary": "Published date bounds",
+        "responses": {
+          "200": {
+            "description": "Earliest/latest dates and maximum v2 range.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/metrics/daily": {
+      "get": {
+        "summary": "Daily protocol metrics",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Inclusive UTC calendar start date."
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Inclusive UTC calendar end date. Defaults to the latest published date."
+          },
+          {
+            "name": "includeRecords",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Include metric-specific treasury asset and OHM supply records."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily metrics.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date range.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/treasury-assets/daily": {
+      "get": {
+        "summary": "Daily treasury assets",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Inclusive UTC calendar start date."
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Inclusive UTC calendar end date. Defaults to the latest published date."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Treasury assets.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date range.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2/ohm-supply/daily": {
+      "get": {
+        "summary": "Daily OHM supply",
+        "parameters": [
+          {
+            "name": "start",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Inclusive UTC calendar start date."
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": "Inclusive UTC calendar end date. Defaults to the latest published date."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OHM supply records.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid date range.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/latest/metrics": {
+      "get": {
+        "deprecated": true,
+        "summary": "Latest protocol metrics.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Legacy WunderGraph-compatible response.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/earliest/metrics": {
+      "get": {
+        "deprecated": true,
+        "summary": "Earliest protocol metrics.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Legacy WunderGraph-compatible response.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/paginated/metrics": {
+      "get": {
+        "deprecated": true,
+        "summary": "Daily protocol metrics from a start date to optional end date.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Legacy WunderGraph-compatible response.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/latest/tokenRecords": {
+      "get": {
+        "deprecated": true,
+        "summary": "Latest treasury assets using the legacy tokenRecords shape.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Legacy WunderGraph-compatible response.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/earliest/tokenRecords": {
+      "get": {
+        "deprecated": true,
+        "summary": "Earliest treasury assets using the legacy tokenRecords shape.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Legacy WunderGraph-compatible response.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/paginated/tokenRecords": {
+      "get": {
+        "deprecated": true,
+        "summary": "Treasury assets using the legacy tokenRecords shape.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Legacy WunderGraph-compatible response.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/latest/tokenSupplies": {
+      "get": {
+        "deprecated": true,
+        "summary": "Latest OHM supply using the legacy tokenSupplies shape.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Legacy WunderGraph-compatible response.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/earliest/tokenSupplies": {
+      "get": {
+        "deprecated": true,
+        "summary": "Earliest OHM supply using the legacy tokenSupplies shape.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Legacy WunderGraph-compatible response.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/paginated/tokenSupplies": {
+      "get": {
+        "deprecated": true,
+        "summary": "OHM supply using the legacy tokenSupplies shape.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Legacy WunderGraph-compatible response.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/latest/protocolMetrics": {
+      "get": {
+        "deprecated": true,
+        "summary": "Latest protocol metrics using the legacy protocolMetrics alias.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Legacy WunderGraph-compatible response.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/earliest/protocolMetrics": {
+      "get": {
+        "deprecated": true,
+        "summary": "Earliest protocol metrics using the legacy protocolMetrics alias.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Legacy WunderGraph-compatible response.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/paginated/protocolMetrics": {
+      "get": {
+        "deprecated": true,
+        "summary": "Protocol metrics from a start date to optional end date using the legacy protocolMetrics alias.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Legacy WunderGraph-compatible response.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/operations/atBlock/metrics": {
+      "get": {
+        "deprecated": true,
+        "summary": "Deprecated atBlock metrics placeholder.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored."
+          }
+        ],
+        "responses": {
+          "501": {
+            "description": "atBlock queries are not supported by the artifact-backed API.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

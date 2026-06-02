@@ -44,11 +44,21 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
       dependencies?: Record<string, string>;
       peerDependencies?: Record<string, string>;
       exports: Record<string, unknown>;
+      main: string;
+      scripts: Record<string, string>;
+      types: string;
     };
 
     expect(packageJson.name).toBe("@olympusdao/treasury-subgraph-client");
     expect(packageJson.version).toMatch(/^2\./);
+    expect(packageJson.main).toBe("./dist/apps/client/src/index.js");
+    expect(packageJson.types).toBe("./dist/apps/client/src/index.d.ts");
     expect(packageJson.files).toContain("openapi.json");
+    expect(packageJson.files).toContain("dist");
+    expect(packageJson.scripts.build).toBe(
+      "rm -rf dist && tsc -p tsconfig.build.json && tsx scripts/write-openapi.ts",
+    );
+    expect(packageJson.scripts.prepack).toBe("pnpm run build");
     expect(packageJson.exports).toHaveProperty("./openapi.json");
     expect(packageJson.dependencies ?? {}).not.toHaveProperty("@tanstack/react-query");
     expect(packageJson.peerDependencies ?? {}).not.toHaveProperty("@tanstack/react-query");
@@ -64,6 +74,7 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(packaged.openapi).toBe("3.1.0");
     expect(Object.keys(packaged.paths).sort()).toEqual(Object.keys(canonical.paths).sort());
     expect(Object.keys(getOpenApiDocument().paths).sort()).toEqual(Object.keys(canonical.paths).sort());
+    expect(packaged.paths["/operations/paginated/metrics"]).toEqual(canonical.paths["/operations/paginated/metrics"]);
   });
 
   test("exports semantic v2 and legacy-compatible TypeScript types", () => {

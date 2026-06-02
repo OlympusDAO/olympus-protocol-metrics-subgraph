@@ -7,8 +7,8 @@ import type {
   OhmSupply,
   SupplyCategoryValues,
   TreasuryAsset,
-} from "./types";
-import { CHAIN_NAMES } from "./types";
+} from "./types.js";
+import { CHAIN_NAMES } from "./types.js";
 
 export const CHAIN_IDS_BY_NAME: Record<ChainName, number> = {
   Arbitrum: 42161,

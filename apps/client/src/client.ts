@@ -4,7 +4,7 @@ import type {
   DailyMetric,
   OhmSupply,
   TreasuryAsset,
-} from "../../../packages/metrics-artifacts/src";
+} from "../../../packages/metrics-artifacts/src/types.js";
 
 export type ClientConfig = {
   baseUrl?: string;

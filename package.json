@@ -11,7 +11,7 @@
   "type": "module",
   "repository": "https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph",
   "scripts": {
-    "build": "tsc --noEmit",
+    "build": "tsc --noEmit && pnpm --dir apps/client build",
     "check": "biome check .",
     "codegen": "pnpm --dir apps/indexer codegen",
     "compose:api": "docker compose up --build minio minio-init metrics-api",
