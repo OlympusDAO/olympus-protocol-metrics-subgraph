@@ -1,28 +1,17 @@
 #!/usr/bin/env node
 
 import { createServer } from "node:http";
-import { createArtifactReaderFromEnv } from "./artifact-store";
+import { metricsApiConfigFromEnv, metricsApiPortFromEnv } from "./config";
 import { handleMetricsApiRequest } from "./server";
 
 // The API intentionally uses Node's built-in HTTP server. The public surface is
 // a small GET/HEAD/OPTIONS REST API, and avoiding Express keeps the runtime
 // dependency and middleware surface smaller.
-const port = Number(process.env.PORT ?? process.env.METRICS_API_PORT ?? "3000");
-const maxRangeDays = Number(process.env.METRICS_API_MAX_RANGE_DAYS ?? "366");
-
-if (!Number.isInteger(port) || port < 1 || port > 65535) {
-  throw new Error("PORT or METRICS_API_PORT must be a valid TCP port.");
-}
-
-if (!Number.isInteger(maxRangeDays) || maxRangeDays < 1) {
-  throw new Error("METRICS_API_MAX_RANGE_DAYS must be a positive integer.");
-}
+const port = metricsApiPortFromEnv(process.env);
+const config = metricsApiConfigFromEnv(process.env);
 
 const server = createServer((req, res) => {
-  void handleMetricsApiRequest(req, res, {
-    maxRangeDays,
-    artifactReader: createArtifactReaderFromEnv(process.env),
-  });
+  void handleMetricsApiRequest(req, res, config);
 });
 
 server.listen(port, "0.0.0.0", () => {

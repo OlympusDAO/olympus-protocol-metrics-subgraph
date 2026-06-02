@@ -282,6 +282,8 @@ surface.
 - [x] Document Railway variables for Postgres, Hasura admin secret, RPC URLs,
       bucket credentials, publisher range controls, and API max range.
 - [x] Document Cloudflare cache and WAF rules.
+- [x] Ensure indexer, Hasura, publisher, and API fail loudly at startup when
+      required env variables are missing.
 - [ ] Ensure Hasura/Postgres/indexer/publisher remain private and only
       `metrics-api` has a public domain.
 

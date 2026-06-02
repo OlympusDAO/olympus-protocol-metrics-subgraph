@@ -119,6 +119,14 @@ const existingCurrentDeploymentManifest: Manifest = {
   },
 };
 
+const validPublisherArtifactEnv: NodeJS.ProcessEnv = {
+  ARTIFACT_BUCKET: "metrics",
+  ARTIFACT_ENDPOINT: "https://r2.example.com",
+  ARTIFACT_REGION: "auto",
+  ARTIFACT_ACCESS_KEY_ID: "access-key",
+  ARTIFACT_SECRET_ACCESS_KEY: "secret-key",
+};
+
 function source(overrides: Partial<MetricsSource> = {}): MetricsSource {
   return {
     fetchBounds: async () => ({ earliestDate: "2026-04-30", latestDate: "2026-06-01" }),
@@ -507,11 +515,7 @@ describe("metrics publisher", () => {
         {
           HASURA_GRAPHQL_ENDPOINT: "http://hasura.internal/v1/graphql",
           HASURA_GRAPHQL_ADMIN_SECRET: "secret",
-          ARTIFACT_BUCKET: "metrics",
-          ARTIFACT_ENDPOINT: "https://r2.example.com",
-          ARTIFACT_REGION: "auto",
-          ARTIFACT_ACCESS_KEY_ID: "access-key",
-          ARTIFACT_SECRET_ACCESS_KEY: "secret-key",
+          ...validPublisherArtifactEnv,
         },
         {
           source: source(),
@@ -522,6 +526,39 @@ describe("metrics publisher", () => {
     ).rejects.toThrow("Missing required environment variable INDEXER_DEPLOYMENT_ID");
   });
 
+  test("requires Hasura env variables before constructing the publisher source", () => {
+    expect(() =>
+      createMetricsSourceFromEnv({
+        HASURA_GRAPHQL_ADMIN_SECRET: "secret",
+      }),
+    ).toThrow("Missing required environment variable HASURA_GRAPHQL_ENDPOINT");
+
+    expect(() =>
+      createMetricsSourceFromEnv({
+        HASURA_GRAPHQL_ENDPOINT: "http://hasura.internal/v1/graphql",
+        HASURA_GRAPHQL_ADMIN_SECRET: "   ",
+      }),
+    ).toThrow("Missing required environment variable HASURA_GRAPHQL_ADMIN_SECRET");
+  });
+
+  test("requires artifact storage env variables before constructing the publisher store", () => {
+    for (const name of Object.keys(validPublisherArtifactEnv)) {
+      expect(() =>
+        createArtifactStoreFromEnv({
+          ...validPublisherArtifactEnv,
+          [name]: "",
+        }),
+      ).toThrow(`Missing required environment variable ${name}`);
+    }
+
+    expect(() =>
+      createArtifactStoreFromEnv({
+        ...validPublisherArtifactEnv,
+        ARTIFACT_BUCKET: "   ",
+      }),
+    ).toThrow("Missing required environment variable ARTIFACT_BUCKET");
+  });
+
   test("treats blank optional publisher date environment variables as unset", async () => {
     const store = new MemoryArtifactStore();
     await store.putJson("v2/manifest.json", existingCurrentDeploymentManifest);
@@ -530,11 +567,7 @@ describe("metrics publisher", () => {
       {
         HASURA_GRAPHQL_ENDPOINT: "http://hasura.internal/v1/graphql",
         HASURA_GRAPHQL_ADMIN_SECRET: "secret",
-        ARTIFACT_BUCKET: "metrics",
-        ARTIFACT_ENDPOINT: "https://r2.example.com",
-        ARTIFACT_REGION: "auto",
-        ARTIFACT_ACCESS_KEY_ID: "access-key",
-        ARTIFACT_SECRET_ACCESS_KEY: "secret-key",
+        ...validPublisherArtifactEnv,
         INDEXER_DEPLOYMENT_ID: "current-indexer",
         PUBLISHER_LOOKBACK_DAYS: "2",
         PUBLISHER_PUBLIC_START_DATE: "2022-05-01",

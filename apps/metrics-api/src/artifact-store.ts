@@ -77,7 +77,7 @@ function isNotFoundError(error: unknown): boolean {
 }
 
 function requiredEnv(env: NodeJS.ProcessEnv, name: string): string {
-  const value = env[name];
+  const value = env[name]?.trim();
   if (value === undefined || value === "") {
     throw new Error(`Missing required environment variable ${name}.`);
   }

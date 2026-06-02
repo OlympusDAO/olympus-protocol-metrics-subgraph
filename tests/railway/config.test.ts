@@ -109,4 +109,13 @@ describe("Railway config-as-code", () => {
     expect(readFileSync("Dockerfile-metrics-api", "utf8")).toContain("apps/metrics-api");
     expect(readFileSync("Dockerfile-metrics-publisher", "utf8")).toContain("apps/metrics-publisher");
   });
+
+  test("fails Hasura early when required Railway env variables are missing", () => {
+    const content = readFileSync("Dockerfile-hasura", "utf8");
+
+    expect(content).toContain("HASURA_GRAPHQL_DATABASE_URL:?");
+    expect(content).toContain("HASURA_GRAPHQL_ADMIN_SECRET:?");
+    expect(content).toContain("ENTRYPOINT []");
+    expect(content).toContain("exec graphql-engine serve");
+  });
 });

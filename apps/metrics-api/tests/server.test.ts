@@ -2,6 +2,7 @@ import { createServer, request as httpRequest } from "node:http";
 import { AddressInfo } from "node:net";
 import { afterEach, describe, expect, test } from "vitest";
 
+import { metricsApiConfigFromEnv, metricsApiPortFromEnv } from "../src/config";
 import { handleMetricsApiRequest, type MetricsApiConfig } from "../src/server";
 import type { Manifest } from "../../../packages/metrics-artifacts/src";
 
@@ -95,6 +96,31 @@ afterEach(async () => {
 });
 
 describe("metrics API HTTP behavior", () => {
+  test("fails config creation loudly when artifact env variables are missing", () => {
+    expect(() =>
+      metricsApiConfigFromEnv({
+        ARTIFACT_ENDPOINT: "https://r2.example.com",
+        ARTIFACT_REGION: "auto",
+        ARTIFACT_ACCESS_KEY_ID: "access-key",
+        ARTIFACT_SECRET_ACCESS_KEY: "secret-key",
+      }),
+    ).toThrow("Missing required environment variable ARTIFACT_BUCKET");
+  });
+
+  test("rejects invalid port and range env values before creating the server", () => {
+    expect(() => metricsApiPortFromEnv({ PORT: "0" })).toThrow("PORT or METRICS_API_PORT");
+    expect(() =>
+      metricsApiConfigFromEnv({
+        METRICS_API_MAX_RANGE_DAYS: "0",
+        ARTIFACT_BUCKET: "metrics",
+        ARTIFACT_ENDPOINT: "https://r2.example.com",
+        ARTIFACT_REGION: "auto",
+        ARTIFACT_ACCESS_KEY_ID: "access-key",
+        ARTIFACT_SECRET_ACCESS_KEY: "secret-key",
+      }),
+    ).toThrow("METRICS_API_MAX_RANGE_DAYS");
+  });
+
   test("has /ready but no /healthz", async () => {
     expect((await request("/ready")).status).toBe(200);
     expect((await request("/healthz")).status).toBe(404);
