@@ -4,13 +4,13 @@
     "builder": "DOCKERFILE",
     "dockerfilePath": "Dockerfile-indexer",
     "watchPatterns": [
-      "Dockerfile-indexer",
-      "railway-indexer.json",
-      "apps/indexer/**",
-      "package.json",
-      "pnpm-lock.yaml",
-      "pnpm-workspace.yaml",
-      "tsconfig.json"
+      "/Dockerfile-indexer",
+      "/railway-indexer.json",
+      "/apps/indexer/**",
+      "/package.json",
+      "/pnpm-lock.yaml",
+      "/pnpm-workspace.yaml",
+      "/tsconfig.json"
     ]
   },
   "deploy": {

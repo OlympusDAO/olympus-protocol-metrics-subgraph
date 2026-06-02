@@ -4,8 +4,8 @@
     "builder": "DOCKERFILE",
     "dockerfilePath": "Dockerfile-hasura",
     "watchPatterns": [
-      "Dockerfile-hasura",
-      "railway-hasura.json"
+      "/Dockerfile-hasura",
+      "/railway-hasura.json"
     ]
   },
   "deploy": {

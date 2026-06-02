@@ -4,14 +4,14 @@
     "builder": "DOCKERFILE",
     "dockerfilePath": "Dockerfile-metrics-api",
     "watchPatterns": [
-      "Dockerfile-metrics-api",
-      "railway-metrics-api.json",
-      "apps/metrics-api/**",
-      "packages/metrics-artifacts/**",
-      "package.json",
-      "pnpm-lock.yaml",
-      "pnpm-workspace.yaml",
-      "tsconfig.json"
+      "/Dockerfile-metrics-api",
+      "/railway-metrics-api.json",
+      "/apps/metrics-api/**",
+      "/packages/metrics-artifacts/**",
+      "/package.json",
+      "/pnpm-lock.yaml",
+      "/pnpm-workspace.yaml",
+      "/tsconfig.json"
     ]
   },
   "deploy": {

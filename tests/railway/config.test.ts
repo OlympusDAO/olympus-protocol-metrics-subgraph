@@ -13,8 +13,9 @@ describe("Railway config-as-code", () => {
         build: { dockerfilePath: string; watchPatterns: string[] };
       };
       expect(config.build.dockerfilePath).toBe(dockerfilePath);
-      expect(config.build.watchPatterns).toContain(configPath);
-      expect(config.build.watchPatterns).toContain(dockerfilePath);
+      expect(config.build.watchPatterns).toContain(`/${configPath}`);
+      expect(config.build.watchPatterns).toContain(`/${dockerfilePath}`);
+      expect(config.build.watchPatterns.every((pattern) => pattern.startsWith("/"))).toBe(true);
       expect(existsSync(dockerfilePath)).toBe(true);
     }
   });
@@ -36,9 +37,9 @@ describe("Railway config-as-code", () => {
 
     expect(publisher.deploy.cronSchedule).toBe("15 * * * *");
     expect(publisher.deploy.restartPolicyType).toBe("NEVER");
-    expect(publisher.build.watchPatterns).toContain("apps/indexer/**");
-    expect(publisher.build.watchPatterns).toContain("apps/metrics-publisher/**");
-    expect(publisher.build.watchPatterns).toContain("packages/metrics-artifacts/**");
+    expect(publisher.build.watchPatterns).toContain("/apps/indexer/**");
+    expect(publisher.build.watchPatterns).toContain("/apps/metrics-publisher/**");
+    expect(publisher.build.watchPatterns).toContain("/packages/metrics-artifacts/**");
     expect(hasura.deploy.healthcheckPath).toBe("/healthz");
     expect(hasura.deploy.restartPolicyType).toBe("ON_FAILURE");
     expect(hasura.deploy.restartPolicyMaxRetries).toBe(1);
@@ -64,21 +65,21 @@ describe("Railway config-as-code", () => {
       build: { watchPatterns: string[] };
     };
 
-    expect(hasura.build.watchPatterns).toEqual(["Dockerfile-hasura", "railway-hasura.json"]);
-    expect(indexer.build.watchPatterns).toContain("apps/indexer/**");
-    expect(api.build.watchPatterns).toContain("apps/metrics-api/**");
-    expect(api.build.watchPatterns).toContain("packages/metrics-artifacts/**");
-    expect(publisher.build.watchPatterns).toContain("apps/indexer/**");
-    expect(publisher.build.watchPatterns).toContain("Dockerfile-indexer");
-    expect(publisher.build.watchPatterns).toContain("railway-indexer.json");
-    expect(publisher.build.watchPatterns).toContain("apps/metrics-publisher/**");
-    expect(publisher.build.watchPatterns).toContain("packages/metrics-artifacts/**");
+    expect(hasura.build.watchPatterns).toEqual(["/Dockerfile-hasura", "/railway-hasura.json"]);
+    expect(indexer.build.watchPatterns).toContain("/apps/indexer/**");
+    expect(api.build.watchPatterns).toContain("/apps/metrics-api/**");
+    expect(api.build.watchPatterns).toContain("/packages/metrics-artifacts/**");
+    expect(publisher.build.watchPatterns).toContain("/apps/indexer/**");
+    expect(publisher.build.watchPatterns).toContain("/Dockerfile-indexer");
+    expect(publisher.build.watchPatterns).toContain("/railway-indexer.json");
+    expect(publisher.build.watchPatterns).toContain("/apps/metrics-publisher/**");
+    expect(publisher.build.watchPatterns).toContain("/packages/metrics-artifacts/**");
 
     for (const config of [indexer, api, publisher]) {
-      expect(config.build.watchPatterns).toContain("package.json");
-      expect(config.build.watchPatterns).toContain("pnpm-lock.yaml");
-      expect(config.build.watchPatterns).toContain("pnpm-workspace.yaml");
-      expect(config.build.watchPatterns).toContain("tsconfig.json");
+      expect(config.build.watchPatterns).toContain("/package.json");
+      expect(config.build.watchPatterns).toContain("/pnpm-lock.yaml");
+      expect(config.build.watchPatterns).toContain("/pnpm-workspace.yaml");
+      expect(config.build.watchPatterns).toContain("/tsconfig.json");
     }
   });
 
