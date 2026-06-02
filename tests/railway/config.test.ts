@@ -27,12 +27,22 @@ describe("Railway config-as-code", () => {
     const api = JSON.parse(readFileSync("railway-metrics-api.json", "utf8")) as {
       deploy: { healthcheckPath: string; restartPolicyType: string };
     };
+    const hasura = JSON.parse(readFileSync("railway-hasura.json", "utf8")) as {
+      deploy: { healthcheckPath: string; restartPolicyType: string };
+    };
+    const indexer = JSON.parse(readFileSync("railway-indexer.json", "utf8")) as {
+      deploy: { healthcheckPath: string; restartPolicyType: string };
+    };
 
     expect(publisher.deploy.cronSchedule).toBe("15 * * * *");
     expect(publisher.deploy.restartPolicyType).toBe("NEVER");
     expect(publisher.build.watchPatterns).toContain("apps/indexer/**");
     expect(publisher.build.watchPatterns).toContain("apps/metrics-publisher/**");
     expect(publisher.build.watchPatterns).toContain("packages/metrics-artifacts/**");
+    expect(hasura.deploy.healthcheckPath).toBe("/healthz");
+    expect(hasura.deploy.restartPolicyType).toBe("ALWAYS");
+    expect(indexer.deploy.healthcheckPath).toBe("/healthz");
+    expect(indexer.deploy.restartPolicyType).toBe("ALWAYS");
     expect(api.deploy.healthcheckPath).toBe("/ready");
     expect(api.deploy.restartPolicyType).toBe("ALWAYS");
   });
@@ -76,7 +86,6 @@ describe("Railway config-as-code", () => {
       "DATABASE_URL",
       "ENVIO_PG_HOST",
       "HASURA_GRAPHQL_ADMIN_SECRET",
-      "HASURA_GRAPHQL_SERVER_PORT",
       "ENVIO_ETHEREUM_RPC_URL",
       "ENVIO_ARBITRUM_RPC_URL",
       "ARTIFACT_BUCKET",
@@ -89,8 +98,9 @@ describe("Railway config-as-code", () => {
     }
 
     expect(doc).toContain("copies Railway's runtime `RAILWAY_DEPLOYMENT_ID` into `ENVIO_PG_SCHEMA`");
-    expect(doc).toContain("${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.HASURA_GRAPHQL_SERVER_PORT}}/v1/graphql");
-    expect(doc).toContain("${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.HASURA_GRAPHQL_SERVER_PORT}}/v1/metadata");
+    expect(doc).toContain("indexer startup wrapper derives `ENVIO_INDEXER_PORT`");
+    expect(doc).toContain("${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.PORT}}/v1/graphql");
+    expect(doc).toContain("${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.PORT}}/v1/metadata");
     expect(doc).toContain("Only `metrics-api` should receive a public Railway domain");
     expect(doc).toContain("Cloudflare");
     expect(doc).toContain("WAF");
@@ -134,6 +144,8 @@ describe("Railway config-as-code", () => {
 
     expect(content).toContain("HASURA_GRAPHQL_DATABASE_URL:?");
     expect(content).toContain("HASURA_GRAPHQL_ADMIN_SECRET:?");
+    expect(content).toContain("export HASURA_GRAPHQL_SERVER_PORT=\\\"$PORT\\\"");
+    expect(content).toContain("HASURA_GRAPHQL_SERVER_PORT must match PORT when set");
     expect(content).toContain("USER hasura");
     expect(content).toContain("ENTRYPOINT []");
     expect(content).toContain("exec graphql-engine serve");

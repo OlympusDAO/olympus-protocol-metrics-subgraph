@@ -114,6 +114,8 @@ Most variables have local defaults. Override these when needed:
 
 - `METRICS_API_PORT`: host port for the public API, default `3000`.
 - `HASURA_GRAPHQL_ADMIN_SECRET`: local Hasura admin secret.
+- `HASURA_PORT`: internal Hasura HTTP port, default `8080`. The Hasura image
+  derives `HASURA_GRAPHQL_SERVER_PORT` from this value.
 - `ARTIFACT_BUCKET`: MinIO bucket, default `metrics`.
 - `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`: local MinIO credentials. Defaults
   avoid MinIO's built-in `minioadmin:minioadmin` warning.
@@ -126,6 +128,8 @@ Most variables have local defaults. Override these when needed:
   Envio event-ingestion settings.
 - `INDEXER_HASURA_GRAPHQL_ENDPOINT`: Envio metadata endpoint used by the
   indexer, default `http://hasura:8080/v1/metadata`.
+- `INDEXER_PORT`: internal Envio indexer HTTP port, default `9898`. The indexer
+  startup wrapper derives `ENVIO_INDEXER_PORT` from this value.
 - `PUBLISHER_PUBLIC_START_DATE`, `PUBLISHER_LOOKBACK_DAYS`,
   `PUBLISHER_LOCK_TTL_MS`, `PUBLISHER_START_DATE`, and
   `PUBLISHER_END_DATE`: publisher range and overlap controls. If no manifest

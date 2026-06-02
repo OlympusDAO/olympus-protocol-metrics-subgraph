@@ -10,7 +10,7 @@ inside Railway. Only `metrics-api` should receive a public Railway domain.
 | `metrics-api` | Yes | Public REST API, OpenAPI document, and readiness probe. |
 | `metrics-publisher` | No | Scheduled artifact generation and upload. |
 | `hasura` | No | Private GraphQL access for the publisher only. |
-| `indexer` | No | Envio indexer process. |
+| `indexer` | No | Envio indexer process and Envio `/healthz` liveness probe. |
 | Postgres | No | Railway private database service. |
 
 Hasura must use Railway private networking only. Configure publisher-to-Hasura
@@ -34,7 +34,7 @@ Use Railway's Variables tab or raw editor for each service. Variables listed as
 1. Create the Postgres, Hasura, indexer, metrics publisher, and metrics API
    services.
 2. Add Postgres first so its generated variables are available for references.
-3. Set Hasura variables, including `HASURA_GRAPHQL_SERVER_PORT`.
+3. Set Hasura variables, including `PORT`.
 4. Set indexer variables, pointing `HASURA_GRAPHQL_ENDPOINT` at Hasura's private
    metadata endpoint.
 5. Set publisher variables, pointing `HASURA_GRAPHQL_ENDPOINT` at Hasura's
@@ -63,8 +63,9 @@ These variables belong on the private `hasura` service.
 - Required `HASURA_GRAPHQL_ADMIN_SECRET`: high-entropy admin secret. Reuse the
   same value on the private indexer and publisher services so they can call
   Hasura.
-- Required `HASURA_GRAPHQL_SERVER_PORT`: internal Hasura HTTP port. Use `8080`
-  unless there is a specific reason to change it.
+- Required on Railway `PORT`: Hasura HTTP port. Use `8080` unless there is a
+  specific reason to change it. The Dockerfile derives
+  `HASURA_GRAPHQL_SERVER_PORT` from `PORT` before Hasura starts.
 - Optional `HASURA_GRAPHQL_ENABLE_CONSOLE`: must be `false`. The Dockerfile also
   sets this as a default.
 - Optional `HASURA_GRAPHQL_ENABLED_LOG_TYPES`: recommended
@@ -80,7 +81,7 @@ Example Hasura raw variables:
 ```dotenv
 HASURA_GRAPHQL_DATABASE_URL=${{Postgres.DATABASE_URL}}
 HASURA_GRAPHQL_ADMIN_SECRET=<shared-hasura-admin-secret>
-HASURA_GRAPHQL_SERVER_PORT=8080
+PORT=8080
 ```
 
 ### Indexer service
@@ -102,13 +103,16 @@ check requires the core variables below before Envio starts.
   connection mode. Envio accepts `false`, `true`, `require`, `allow`, `prefer`,
   or `verify-full`; it does not accept libpq-style `disable`.
 - Optional `ENVIO_PG_MAX_CONNECTIONS`: Envio Postgres pool size.
+- Required on Railway `PORT`: Railway HTTP target port for the indexer
+  healthcheck. Use `9898` unless you intentionally need a different port. The
+  indexer startup wrapper derives `ENVIO_INDEXER_PORT` from Railway's runtime
+  `PORT` before Envio starts.
 - Required `HASURA_GRAPHQL_ENDPOINT`: private Hasura metadata endpoint, for
   example `http://hasura.railway.internal:8080/v1/metadata`.
 - Required `HASURA_GRAPHQL_ADMIN_SECRET`: same value used by Hasura.
 - Required `ENVIO_ETHEREUM_RPC_URL`, `ENVIO_ARBITRUM_RPC_URL`,
   `ENVIO_BASE_RPC_URL`, `ENVIO_BERACHAIN_RPC_URL`, `ENVIO_POLYGON_RPC_URL`, and
   `ENVIO_FANTOM_RPC_URL`: primary per-chain archive RPC URLs.
-- Optional `ENVIO_INDEXER_PORT`: Envio indexer port.
 - Optional `ENVIO_MAX_PARTITION_CONCURRENCY`: Envio concurrency setting.
 
 Example indexer raw variables:
@@ -121,7 +125,8 @@ ENVIO_PG_USER=${{Postgres.PGUSER}}
 ENVIO_PG_PASSWORD=${{Postgres.PGPASSWORD}}
 ENVIO_PG_DATABASE=${{Postgres.PGDATABASE}}
 ENVIO_PG_SSL_MODE=prefer
-HASURA_GRAPHQL_ENDPOINT=http://${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.HASURA_GRAPHQL_SERVER_PORT}}/v1/metadata
+PORT=9898
+HASURA_GRAPHQL_ENDPOINT=http://${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.PORT}}/v1/metadata
 HASURA_GRAPHQL_ADMIN_SECRET=${{hasura.HASURA_GRAPHQL_ADMIN_SECRET}}
 ENVIO_ETHEREUM_RPC_URL=<ethereum-archive-rpc-url>
 ENVIO_ARBITRUM_RPC_URL=<arbitrum-archive-rpc-url>
@@ -161,7 +166,8 @@ These variables belong on the private `metrics-publisher` cron service. The
 publisher writes immutable monthly JSON shards before publishing the manifest.
 
 - Required `HASURA_GRAPHQL_ENDPOINT`: private Railway URL for Hasura GraphQL,
-  for example `http://hasura.railway.internal/v1/graphql`.
+  for example
+  `http://${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.PORT}}/v1/graphql`.
 - Required `HASURA_GRAPHQL_ADMIN_SECRET`: same value used by Hasura.
 - Required `ARTIFACT_BUCKET`: bucket name.
 - Required `ARTIFACT_ENDPOINT`: S3-compatible endpoint, for example Cloudflare
@@ -192,7 +198,7 @@ publisher writes immutable monthly JSON shards before publishing the manifest.
 Example metrics publisher raw variables:
 
 ```dotenv
-HASURA_GRAPHQL_ENDPOINT=http://${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.HASURA_GRAPHQL_SERVER_PORT}}/v1/graphql
+HASURA_GRAPHQL_ENDPOINT=http://${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.PORT}}/v1/graphql
 HASURA_GRAPHQL_ADMIN_SECRET=${{hasura.HASURA_GRAPHQL_ADMIN_SECRET}}
 ARTIFACT_BUCKET=<bucket-name>
 ARTIFACT_ENDPOINT=<s3-compatible-endpoint>

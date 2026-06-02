@@ -38,4 +38,4 @@ RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get update \
 ENV HASURA_GRAPHQL_ENABLE_CONSOLE=false
 USER hasura
 ENTRYPOINT []
-CMD ["sh", "-c", ": \"${HASURA_GRAPHQL_DATABASE_URL:?Missing required environment variable HASURA_GRAPHQL_DATABASE_URL}\"; : \"${HASURA_GRAPHQL_ADMIN_SECRET:?Missing required environment variable HASURA_GRAPHQL_ADMIN_SECRET}\"; exec graphql-engine serve"]
+CMD ["sh", "-c", ": \"${HASURA_GRAPHQL_DATABASE_URL:?Missing required environment variable HASURA_GRAPHQL_DATABASE_URL}\"; : \"${HASURA_GRAPHQL_ADMIN_SECRET:?Missing required environment variable HASURA_GRAPHQL_ADMIN_SECRET}\"; : \"${PORT:=8080}\"; if [ -n \"${HASURA_GRAPHQL_SERVER_PORT:-}\" ] && [ \"$HASURA_GRAPHQL_SERVER_PORT\" != \"$PORT\" ]; then echo \"HASURA_GRAPHQL_SERVER_PORT must match PORT when set\" >&2; exit 1; fi; export PORT; export HASURA_GRAPHQL_SERVER_PORT=\"$PORT\"; exec graphql-engine serve"]

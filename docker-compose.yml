@@ -24,13 +24,14 @@ services:
     environment:
       HASURA_GRAPHQL_DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-testing}@postgres:5432/${POSTGRES_DB:-envio-dev}
       HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-local-dev-secret}
+      PORT: ${HASURA_PORT:-8080}
       HASURA_GRAPHQL_ENABLE_CONSOLE: "false"
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup,http-log,query-log
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/healthz >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS \"http://localhost:$${PORT}/healthz\" >/dev/null || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 30
@@ -89,7 +90,7 @@ services:
       HASURA_GRAPHQL_ENDPOINT: ${INDEXER_HASURA_GRAPHQL_ENDPOINT:-http://hasura:8080/v1/metadata}
       HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-local-dev-secret}
       ENVIO_TUI: "false"
-      ENVIO_INDEXER_PORT: ${ENVIO_INDEXER_PORT:-9898}
+      PORT: ${INDEXER_PORT:-9898}
       ENVIO_MAX_PARTITION_CONCURRENCY: ${ENVIO_MAX_PARTITION_CONCURRENCY:-10}
       ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:?Set ENVIO_API_TOKEN in .env to run the compose stack}
       ENVIO_ARBITRUM_RPC_URL: ${ENVIO_ARBITRUM_RPC_URL:-https://arbitrum.rpc.subquery.network/public}

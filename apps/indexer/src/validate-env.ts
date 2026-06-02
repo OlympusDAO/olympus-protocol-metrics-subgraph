@@ -28,6 +28,7 @@ const URL_ENV_VARS = [
 ] as const;
 
 const POSITIVE_INTEGER_ENV_VARS = ["ENVIO_PG_PORT"] as const;
+const OPTIONAL_POSITIVE_INTEGER_ENV_VARS = ["ENVIO_INDEXER_PORT", "PORT"] as const;
 
 export function validateIndexerEnv(env: NodeJS.ProcessEnv): void {
   const missing = REQUIRED_ENV_VARS.filter((name) => isBlank(env[name]));
@@ -45,8 +46,23 @@ export function validateIndexerEnv(env: NodeJS.ProcessEnv): void {
     throw new Error(`Invalid positive integer environment variables: ${invalidIntegers.join(", ")}`);
   }
 
+  const invalidOptionalIntegers = OPTIONAL_POSITIVE_INTEGER_ENV_VARS.filter(
+    (name) => !isBlank(env[name]) && !isPositiveInteger(env[name] ?? ""),
+  );
+  if (invalidOptionalIntegers.length > 0) {
+    throw new Error(`Invalid positive integer environment variables: ${invalidOptionalIntegers.join(", ")}`);
+  }
+
   if (!isBlank(env.RAILWAY_DEPLOYMENT_ID) && env.ENVIO_PG_SCHEMA !== env.RAILWAY_DEPLOYMENT_ID) {
     throw new Error("ENVIO_PG_SCHEMA must match RAILWAY_DEPLOYMENT_ID when running on Railway.");
+  }
+
+  if (!isBlank(env.RAILWAY_DEPLOYMENT_ID) && isBlank(env.PORT)) {
+    throw new Error("PORT must be set when running on Railway.");
+  }
+
+  if (!isBlank(env.PORT) && !isBlank(env.ENVIO_INDEXER_PORT) && env.PORT !== env.ENVIO_INDEXER_PORT) {
+    throw new Error("ENVIO_INDEXER_PORT must match PORT when PORT is set.");
   }
 }
 

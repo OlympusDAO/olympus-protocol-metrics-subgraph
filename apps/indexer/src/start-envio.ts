@@ -8,6 +8,13 @@ export function prepareIndexerEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   if (!hasSchema && railwayDeploymentId !== undefined && railwayDeploymentId !== "") {
     env.ENVIO_PG_SCHEMA = railwayDeploymentId;
   }
+
+  const railwayPort = env.PORT?.trim();
+  const hasEnvioIndexerPort = env.ENVIO_INDEXER_PORT !== undefined && env.ENVIO_INDEXER_PORT.trim() !== "";
+  if (!hasEnvioIndexerPort && railwayPort !== undefined && railwayPort !== "") {
+    env.ENVIO_INDEXER_PORT = railwayPort;
+  }
+
   return env;
 }
 
