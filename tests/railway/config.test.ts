@@ -122,4 +122,24 @@ describe("Railway config-as-code", () => {
     expect(content).toContain("ENTRYPOINT []");
     expect(content).toContain("exec graphql-engine serve");
   });
+
+  test("scans all Docker images with pinned Trivy CI checks", () => {
+    const workflow = readFileSync(".github/workflows/security-scan.yml", "utf8");
+    const packageJson = readFileSync("package.json", "utf8");
+
+    expect(workflow).toContain("aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1");
+    expect(workflow).toContain("docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd");
+
+    for (const [name, dockerfile] of [
+      ["indexer", "Dockerfile-indexer"],
+      ["hasura", "Dockerfile-hasura"],
+      ["metrics-api", "Dockerfile-metrics-api"],
+      ["metrics-publisher", "Dockerfile-metrics-publisher"],
+    ] as const) {
+      expect(packageJson).toContain(`"docker:build:${name}"`);
+      expect(packageJson).toContain(`"docker:tag:scan:${name}"`);
+      expect(workflow).toContain(dockerfile);
+      expect(workflow).toContain(`olympus-protocol-metrics/${name}:scan`);
+    }
+  });
 });

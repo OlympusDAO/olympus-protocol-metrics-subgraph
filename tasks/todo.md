@@ -307,6 +307,8 @@ surface.
       least-privilege access, no long-lived local automation tokens where
       possible, and no committed `.npmrc` secrets.
 - [x] Build all Docker images locally.
+- [x] Add GitHub CI Trivy checks for Dockerfile misconfigurations and all
+      service Docker image vulnerabilities.
 - [ ] Scan Docker images for vulnerabilities before deployment.
 - [ ] Resolve or explicitly document Docker image findings.
 - [ ] Confirm runtime images run as non-root where practical.
