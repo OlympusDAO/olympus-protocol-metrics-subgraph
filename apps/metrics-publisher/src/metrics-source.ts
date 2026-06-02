@@ -189,7 +189,7 @@ export class HasuraGraphqlMetricsSource implements MetricsSource {
               where: { date: { _gte: $start, _lte: $end } }
               limit: $limit
               offset: $offset
-              order_by: { date: asc }
+              order_by: { date: asc, id: asc }
             ) {
               ${selection}
             }

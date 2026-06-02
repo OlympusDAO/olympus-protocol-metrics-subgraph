@@ -810,6 +810,26 @@ describe("metrics publisher", () => {
     expect(requestBody?.query).toContain("_contains: [42161, 1, 250, 137, 8453, 80094]");
   });
 
+  test("Hasura source paginates records with a stable unique order", async () => {
+    let requestBody: { query?: string } | undefined;
+    const source = new HasuraGraphqlMetricsSource({
+      endpoint: "http://hasura.internal/v1/graphql",
+      adminSecret: "secret",
+      fetchFn: async (_url, init) => {
+        requestBody = JSON.parse(String(init?.body));
+        return new Response(JSON.stringify({ data: { TokenRecord: [] } }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      },
+    });
+
+    await expect(source.fetchTreasuryAssets({ start: "2026-05-01", end: "2026-05-31", days: 31 })).resolves.toEqual(
+      [],
+    );
+    expect(requestBody?.query).toContain("order_by: { date: asc, id: asc }");
+  });
+
   test("Hasura source reports latest indexing progress per chain", async () => {
     let requestBody: { query?: string } | undefined;
     const source = new HasuraGraphqlMetricsSource({
