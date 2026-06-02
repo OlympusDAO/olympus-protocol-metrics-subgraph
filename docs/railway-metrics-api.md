@@ -182,13 +182,16 @@ publisher writes immutable monthly JSON shards before publishing the manifest.
 - Optional `PUBLISHER_LOCK_TTL_MS`: S3 lock timeout for overlapping cron runs. The
   documented default is 12 hours (`43200000`) so a slow first bootstrap is not
   overtaken by the next hourly cron.
-- Required `INDEXER_DEPLOYMENT_ID`: current indexer deployment identifier. Set
-  this on the `metrics-publisher` service as a Railway reference variable to the
-  indexer service deployment id, for example
-  `${{indexer.RAILWAY_DEPLOYMENT_ID}}` if the Railway service is named
-  `indexer`. The publisher writes data shards under `v2/deployments/<id>/...`,
-  records those file keys in the internal manifest, and deletes stale deployment
-  prefixes after the new manifest is published.
+- Automatically set on Railway `RAILWAY_GIT_COMMIT_SHA`: Railway provides this
+  to GitHub-triggered deployments. The publisher uses it as the indexer artifact
+  deployment id because the publisher watches indexer source and redeploys from
+  the same commit when indexer code changes.
+- Optional `INDEXER_DEPLOYMENT_ID`: manual override for the artifact deployment
+  id, useful for forced full regenerations or local/manual runs. When set, it
+  takes precedence over `RAILWAY_GIT_COMMIT_SHA`. The publisher writes data
+  shards under `v2/deployments/<id>/...`, records those file keys in the
+  internal manifest, and deletes stale deployment prefixes after the new manifest
+  is published.
 - Optional `PUBLISHER_START_DATE`: UTC calendar date for full backfills.
 - Optional `PUBLISHER_END_DATE`: UTC calendar end date for controlled
   backfills or re-publishing a bounded window.
@@ -205,7 +208,6 @@ ARTIFACT_ENDPOINT=<s3-compatible-endpoint>
 ARTIFACT_REGION=auto
 ARTIFACT_ACCESS_KEY_ID=<bucket-access-key>
 ARTIFACT_SECRET_ACCESS_KEY=<bucket-secret-key>
-INDEXER_DEPLOYMENT_ID=${{indexer.RAILWAY_DEPLOYMENT_ID}}
 ```
 
 The publisher writes `v2/publisher.lock` before reading Hasura. If a new cron
@@ -239,10 +241,11 @@ The indexer watches `apps/indexer/**`; the API watches `apps/metrics-api/**`
 and `packages/metrics-artifacts/**`; Hasura watches only its Dockerfile/config.
 The publisher also watches indexer source/config/Dockerfile changes in addition
 to publisher and shared artifact code. This causes normal monorepo code changes
-that redeploy the indexer to redeploy the publisher too, so the referenced
-`INDEXER_DEPLOYMENT_ID` is refreshed before the next cron run. If the indexer is
-manually redeployed without a code change, verify the rendered publisher
-variable or redeploy the publisher before allowing new snapshots.
+that redeploy the indexer to redeploy the publisher too, so the publisher's own
+`RAILWAY_GIT_COMMIT_SHA` matches the indexer code version before the next cron
+run. If the indexer is manually redeployed without a code change, the artifact
+deployment id does not change. To force a fresh artifact namespace, set
+`INDEXER_DEPLOYMENT_ID` to a new explicit value for the publisher run.
 
 The bucket manifest is an internal file index. The API uses it to resolve
 deployment-scoped shard keys. It is not exposed as a public route; clients

@@ -297,8 +297,22 @@ export async function publishMetricsArtifactsFromEnv(
     store: deps.store ?? createArtifactStoreFromEnv(env),
     now: deps.now,
     lockTtlMs: lockTtlMs === undefined ? undefined : Number(lockTtlMs),
-    deploymentId: requiredEnv(env, "INDEXER_DEPLOYMENT_ID"),
+    deploymentId: resolvePublisherDeploymentId(env),
   });
+}
+
+function resolvePublisherDeploymentId(env: NodeJS.ProcessEnv): string {
+  const explicitIndexerDeploymentId = optionalEnv(env, "INDEXER_DEPLOYMENT_ID");
+  if (explicitIndexerDeploymentId !== undefined) {
+    return explicitIndexerDeploymentId;
+  }
+
+  const railwayGitCommitSha = optionalEnv(env, "RAILWAY_GIT_COMMIT_SHA");
+  if (railwayGitCommitSha !== undefined) {
+    return railwayGitCommitSha;
+  }
+
+  throw new Error("Missing required environment variable INDEXER_DEPLOYMENT_ID or RAILWAY_GIT_COMMIT_SHA.");
 }
 
 function resolvePublishRange(

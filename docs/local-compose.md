@@ -136,12 +136,12 @@ Most variables have local defaults. Override these when needed:
   exists, publishing starts at `2022-05-01`; otherwise it uses the manifest
   latest date plus the lookback overlap. A fresh `v2/publisher.lock` makes
   overlapping publisher runs exit successfully without writing artifacts.
-- `INDEXER_DEPLOYMENT_ID`: required deployment identifier stamped into the
-  internal manifest. `pnpm run compose:publish` sets it to the latest local git
-  commit hash. If running Docker Compose directly, set it manually. Data shards
-  are written under `v2/deployments/<id>/...`, and successful publishes remove
-  stale files from older deployment prefixes after the new manifest has been
-  written.
+- `INDEXER_DEPLOYMENT_ID`: deployment identifier stamped into the internal
+  manifest. `pnpm run compose:publish` sets it to the latest local git commit
+  hash. If running Docker Compose directly, set it manually or provide
+  `RAILWAY_GIT_COMMIT_SHA`. Data shards are written under
+  `v2/deployments/<id>/...`, and successful publishes remove stale files from
+  older deployment prefixes after the new manifest has been written.
 
 Envio v3 fallback RPCs are configured in `apps/indexer/config.yaml` by adding
 multiple `rpc` entries with `for: fallback`. It does not consume a

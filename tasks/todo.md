@@ -118,7 +118,7 @@ surface.
       client package, OpenAPI, and Railway config-as-code.
 - [x] Move Envio indexer config, schema, source, and tests into
       `apps/indexer`.
-- [ ] Keep the red-test list current as implementation proceeds; do not remove a
+- [x] Keep the red-test list current as implementation proceeds; do not remove a
       test unless the corresponding product requirement is explicitly dropped.
 
 ### Shared artifact and metric logic
@@ -127,7 +127,7 @@ surface.
 - [x] Default missing `end` to `manifest.latestDate`.
 - [x] Reject `end < start` with `invalid_date_range`.
 - [x] Enforce `METRICS_API_MAX_RANGE_DAYS` on `/v2/*` only.
-- [ ] Ignore legacy `dateOffset` everywhere.
+- [x] Ignore legacy `dateOffset` everywhere.
 - [x] Generate month shard keys across month/year boundaries.
 - [x] Implement exact legacy chain keys and zero defaults:
       `Arbitrum`, `Ethereum`, `Fantom`, `Polygon`, `Base`, `Berachain`.
@@ -166,9 +166,11 @@ surface.
 - [x] Default initial publisher runs to the public start date, `2022-05-01`.
 - [x] Coordinate overlapping cron runs with an S3-compatible
       `v2/publisher.lock`; fresh locks skip cleanly, stale locks are taken over.
-- [x] Record deployment-scoped shard keys in the internal manifest using the
-      required `INDEXER_DEPLOYMENT_ID`.
-- [x] Fail publisher startup if `INDEXER_DEPLOYMENT_ID` is missing or invalid.
+- [x] Record deployment-scoped shard keys in the internal manifest using
+      explicit `INDEXER_DEPLOYMENT_ID` when set, otherwise Railway's
+      `RAILWAY_GIT_COMMIT_SHA`.
+- [x] Fail publisher startup if neither `INDEXER_DEPLOYMENT_ID` nor
+      `RAILWAY_GIT_COMMIT_SHA` is available, or if the resolved id is invalid.
 - [x] Delete stale `v2/deployments/<old-id>/...` files only after the new
       internal manifest has been published.
 - [x] Publish a deployment's first snapshot set only through the latest date
@@ -178,7 +180,7 @@ surface.
       indexed date is within one day of the current UTC date.
 - [x] Skip without replacing the manifest when Hasura has no eligible publisher
       bounds.
-- [x] Include `INDEXER_DEPLOYMENT_ID` and per-chain indexing progress in the
+- [x] Include the resolved deployment id and per-chain indexing progress in the
       publisher JSON output for both successful and skipped runs.
 - [x] Keep `v2/manifest.json` internal; do not expose deployment ids or
       artifact file keys through a public `/v2/manifest` route.
@@ -211,12 +213,12 @@ surface.
 - [x] Parse raw and URL-encoded `wg_variables`.
 - [x] Mark `/operations/*` as deprecated with response headers and OpenAPI
       `deprecated: true`.
-- [ ] Replace current placeholder responses with artifact-backed route
+- [x] Replace current placeholder responses with artifact-backed route
       handlers for all public legacy `/operations/*` routes.
-- [ ] Implement latest, earliest, and paginated metrics.
-- [ ] Implement latest, earliest, and paginated treasury assets via legacy
+- [x] Implement latest, earliest, and paginated metrics.
+- [x] Implement latest, earliest, and paginated treasury assets via legacy
       `tokenRecords` route names.
-- [ ] Implement latest, earliest, and paginated OHM supply via legacy
+- [x] Implement latest, earliest, and paginated OHM supply via legacy
       `tokenSupplies` route names.
 - [x] Do not expose raw legacy Wundergraph routes such as
       `/operations/tokenRecordsLatest` or chain-specific response keys such as
@@ -224,11 +226,10 @@ surface.
 - [x] Accept and ignore `ignoreCache`.
 - [x] Accept and ignore `dateOffset`.
 - [x] Apply no max range limit on `/operations/*`.
-- [ ] Preserve legacy `startDate` with optional `endDate`; missing `endDate`
+- [x] Preserve legacy `startDate` with optional `endDate`; missing `endDate`
       resolves to manifest latest date.
-- [ ] Support `crossChainDataComplete=true` filtering.
-- [ ] Support `includeRecords=true` on paginated metrics.
-- [ ] Add route tests that assert legacy latest/earliest/paginated operations
+- [x] Support `includeRecords=true` on paginated metrics.
+- [x] Add route tests that assert legacy latest/earliest/paginated operations
       return artifact data instead of empty arrays.
 - [x] Implement `atBlock/*` route parity with `501` Wundergraph-style errors.
 - [ ] Return narrow legacy `ProtocolMetric` shape for `protocolMetrics`
@@ -249,7 +250,7 @@ surface.
 - [ ] Add client methods or typed wrappers for the implemented legacy
       `/operations/*` compatibility routes where the historical package exposed
       them directly.
-- [ ] Add package scripts for client release preparation:
+- [x] Add package scripts for client release preparation:
       clean/build type declarations, copy OpenAPI output, run package-focused
       tests, and produce a dry-run `npm pack` tarball for inspection.
 - [ ] Add an explicit client publish script that publishes

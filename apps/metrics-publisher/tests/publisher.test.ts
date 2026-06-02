@@ -509,7 +509,44 @@ describe("metrics publisher", () => {
     ).rejects.toThrow("INDEXER_DEPLOYMENT_ID is required");
   });
 
-  test("requires INDEXER_DEPLOYMENT_ID in the environment", async () => {
+  test("uses Railway git commit SHA as the publisher deployment id when no override is set", async () => {
+    const result = await publishMetricsArtifactsFromEnv(
+      {
+        HASURA_GRAPHQL_ENDPOINT: "http://hasura.internal/v1/graphql",
+        HASURA_GRAPHQL_ADMIN_SECRET: "secret",
+        ...validPublisherArtifactEnv,
+        RAILWAY_GIT_COMMIT_SHA: "abcdef1234567890abcdef1234567890abcdef12",
+      },
+      {
+        source: source(),
+        store: new MemoryArtifactStore(),
+        now: () => new Date(generatedAt),
+      },
+    );
+
+    expect(result.deploymentId).toBe("abcdef1234567890abcdef1234567890abcdef12");
+  });
+
+  test("prefers explicit INDEXER_DEPLOYMENT_ID over Railway git commit SHA", async () => {
+    const result = await publishMetricsArtifactsFromEnv(
+      {
+        HASURA_GRAPHQL_ENDPOINT: "http://hasura.internal/v1/graphql",
+        HASURA_GRAPHQL_ADMIN_SECRET: "secret",
+        ...validPublisherArtifactEnv,
+        INDEXER_DEPLOYMENT_ID: "manual-backfill-1",
+        RAILWAY_GIT_COMMIT_SHA: "abcdef1234567890abcdef1234567890abcdef12",
+      },
+      {
+        source: source(),
+        store: new MemoryArtifactStore(),
+        now: () => new Date(generatedAt),
+      },
+    );
+
+    expect(result.deploymentId).toBe("manual-backfill-1");
+  });
+
+  test("requires either INDEXER_DEPLOYMENT_ID or RAILWAY_GIT_COMMIT_SHA in the environment", async () => {
     await expect(
       publishMetricsArtifactsFromEnv(
         {
@@ -523,7 +560,7 @@ describe("metrics publisher", () => {
           now: () => new Date(generatedAt),
         },
       ),
-    ).rejects.toThrow("Missing required environment variable INDEXER_DEPLOYMENT_ID");
+    ).rejects.toThrow("Missing required environment variable INDEXER_DEPLOYMENT_ID or RAILWAY_GIT_COMMIT_SHA");
   });
 
   test("requires Hasura env variables before constructing the publisher source", () => {
