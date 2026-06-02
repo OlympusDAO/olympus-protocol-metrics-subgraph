@@ -1,5 +1,10 @@
 .git
 .DS_Store
+.claude
+.pnpm-store
+.vscode
+.envio
+**/.envio
 .env
 .env.*
 !apps/indexer/.env.sample
@@ -11,3 +16,5 @@ dist
 **/dist
 coverage
 **/coverage
+assets
+subgraphs
