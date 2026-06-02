@@ -296,6 +296,62 @@ function parseLegacyVariables(url: URL): Record<string, unknown> {
   }
 }
 
+function legacyString(variables: Record<string, unknown>, key: string): string | undefined {
+  const value = variables[key];
+  return typeof value === "string" && value.trim() !== "" ? value : undefined;
+}
+
+function resolveLegacyRange(
+  pathname: string,
+  variables: Record<string, unknown>,
+  manifest: Manifest,
+): { start: string; end: string; days: number } {
+  if (pathname.startsWith("/operations/latest/")) {
+    return resolveDateRange({
+      start: manifest.latestDate,
+      end: manifest.latestDate,
+      manifest,
+      enforceMaxRange: false,
+    });
+  }
+
+  if (pathname.startsWith("/operations/earliest/")) {
+    return resolveDateRange({
+      start: manifest.earliestDate,
+      end: manifest.earliestDate,
+      manifest,
+      enforceMaxRange: false,
+    });
+  }
+
+  const start = legacyString(variables, "startDate") ?? legacyString(variables, "start") ?? manifest.earliestDate;
+  const end = legacyString(variables, "endDate") ?? legacyString(variables, "end") ?? manifest.latestDate;
+  return resolveDateRange({
+    start,
+    end,
+    manifest,
+    enforceMaxRange: false,
+  });
+}
+
+async function readLegacyOperation(
+  pathname: string,
+  variables: Record<string, unknown>,
+  config: MetricsApiConfig,
+  manifest: Manifest,
+): Promise<DailyMetric[] | TreasuryAsset[] | OhmSupply[]> {
+  const range = resolveLegacyRange(pathname, variables, manifest);
+  if (pathname.endsWith("/tokenRecords")) {
+    return readArtifactRows<TreasuryAsset>(config, manifest, range, "v2/treasury-assets/daily");
+  }
+  if (pathname.endsWith("/tokenSupplies")) {
+    return readArtifactRows<OhmSupply>(config, manifest, range, "v2/ohm-supply/daily");
+  }
+
+  const includeRecords = variables.includeRecords === true;
+  return readDailyMetrics(config, manifest, range, includeRecords, config.generatedAt ?? manifest.generatedAt);
+}
+
 export async function handleMetricsApiRequest(
   req: IncomingMessage,
   res: ServerResponse,
@@ -462,8 +518,9 @@ export async function handleMetricsApiRequest(
 
   if (LEGACY_OPERATION_PATHS.has(url.pathname)) {
     res.setHeader("deprecation", "true");
+    let variables: Record<string, unknown>;
     try {
-      parseLegacyVariables(url);
+      variables = parseLegacyVariables(url);
     } catch (error) {
       sendError(
         res,
@@ -473,7 +530,20 @@ export async function handleMetricsApiRequest(
       );
       return;
     }
-    sendJson(res, 200, legacyResponse([]));
+    try {
+      const publishedManifest = await getPublishedManifest();
+      if (publishedManifest === undefined) {
+        return;
+      }
+      const data = await readLegacyOperation(url.pathname, variables, config, publishedManifest);
+      res.setHeader("cache-control", RANGE_CACHE_CONTROL);
+      sendJson(res, 200, legacyResponse(data));
+    } catch (error) {
+      if (error instanceof ArtifactNotFoundError) {
+        return;
+      }
+      sendError(res, 400, "invalid_legacy_request", error instanceof Error ? error.message : "Invalid legacy request.");
+    }
     return;
   }
 

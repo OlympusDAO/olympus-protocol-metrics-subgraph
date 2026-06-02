@@ -298,7 +298,9 @@ describe("metrics API HTTP behavior", () => {
 
   test("returns deprecated legacy operations and 501 atBlock responses", async () => {
     const latest = await request("/operations/latest/metrics");
+    expect(latest.status).toBe(200);
     expect(latest.headers.get("deprecation")).toBe("true");
+    expect(await latest.json()).toMatchObject({ data: [{ date: "2026-06-01" }] });
 
     const atBlock = await request("/operations/atBlock/metrics");
     expect(atBlock.status).toBe(501);
@@ -333,7 +335,7 @@ describe("metrics API HTTP behavior", () => {
       const response = await request(route);
       expect(response.status, route).toBe(200);
       expect(response.headers.get("deprecation"), route).toBe("true");
-      expect(await response.json(), route).toEqual({ data: [] });
+      expect(await response.json(), route).toHaveProperty("data");
     }
   });
 
@@ -348,10 +350,92 @@ describe("metrics API HTTP behavior", () => {
     });
     const encoded = await request(`/operations/paginated/metrics?wg_variables=${encodeURIComponent(variables)}`);
     expect(encoded.status).toBe(200);
-    expect(await encoded.json()).toMatchObject({ data: [] });
+    expect(await encoded.json()).toMatchObject({ data: expect.any(Array) });
 
     const raw = await request(`/operations/paginated/tokenRecords?wg_variables=${variables}`);
     expect(raw.status).toBe(200);
-    expect(await raw.json()).toMatchObject({ data: [] });
+    expect(await raw.json()).toMatchObject({ data: expect.any(Array) });
+  });
+
+  test("backs legacy operations with published artifacts", async () => {
+    const config: MetricsApiConfig = {
+      maxRangeDays: 1,
+      manifest: {
+        ...testManifest,
+        artifacts: {
+          "v2/metrics/daily/2026-05.json": { sha256: "0".repeat(64), byteLength: 2, rowCount: 1 },
+          "v2/treasury-assets/daily/2026-05.json": { sha256: "1".repeat(64), byteLength: 2, rowCount: 1 },
+          "v2/ohm-supply/daily/2026-05.json": { sha256: "2".repeat(64), byteLength: 2, rowCount: 1 },
+        },
+      },
+      artifactReader: artifactReader({
+        "v2/metrics/daily/2026-05.json": [
+          {
+            date: "2026-05-21",
+            chainsIndexed: [1, 42161],
+            chainsMissing: [],
+            crossChainComplete: true,
+            treasuryMarketValue: 13,
+          },
+        ],
+        "v2/treasury-assets/daily/2026-05.json": [
+          {
+            id: "asset-1",
+            date: "2026-05-21",
+            blockchain: "Ethereum",
+            value: 13,
+            valueExcludingOhm: 13,
+            isLiquid: true,
+          },
+        ],
+        "v2/ohm-supply/daily/2026-05.json": [
+          {
+            id: "supply-1",
+            date: "2026-05-21",
+            blockchain: "Ethereum",
+            balance: 100,
+            supplyBalance: 100,
+          },
+        ],
+      }),
+    };
+    const variables = encodeURIComponent(JSON.stringify({ startDate: "2026-05-21", endDate: "2026-05-21" }));
+
+    const metrics = await request(`/operations/paginated/metrics?wg_variables=${variables}`, undefined, config);
+    expect(metrics.status).toBe(200);
+    const metricsBody = await metrics.json();
+    expect(metricsBody).toEqual({
+      data: [expect.objectContaining({ date: "2026-05-21", treasuryMarketValue: 13 })],
+    });
+    expect(metricsBody).not.toHaveProperty("meta");
+    expect(metricsBody).not.toHaveProperty("error");
+
+    const tokenRecords = await request(`/operations/paginated/tokenRecords?wg_variables=${variables}`, undefined, config);
+    expect(tokenRecords.status).toBe(200);
+    const tokenRecordsBody = await tokenRecords.json();
+    expect(tokenRecordsBody).toEqual({
+      data: [expect.objectContaining({ id: "asset-1", blockchain: "Ethereum" })],
+    });
+
+    const tokenSupplies = await request(
+      `/operations/paginated/tokenSupplies?wg_variables=${variables}`,
+      undefined,
+      config,
+    );
+    expect(tokenSupplies.status).toBe(200);
+    const tokenSuppliesBody = await tokenSupplies.json();
+    expect(tokenSuppliesBody).toEqual({
+      data: [expect.objectContaining({ id: "supply-1", blockchain: "Ethereum" })],
+    });
+
+    const protocolMetrics = await request(
+      `/operations/paginated/protocolMetrics?wg_variables=${variables}`,
+      undefined,
+      config,
+    );
+    expect(protocolMetrics.status).toBe(200);
+    expect(await protocolMetrics.json()).toEqual({
+      data: [expect.objectContaining({ date: "2026-05-21", treasuryMarketValue: 13 })],
+    });
   });
 });
