@@ -278,7 +278,10 @@ surface.
 - [x] Configure publisher cron as `15 * * * *` with `restartPolicyType: NEVER`.
 - [x] Configure Railway watch patterns for each service's runtime ownership,
       including publisher redeploys when indexer code/config changes.
-- [x] Configure API healthcheck as `/ready` with `restartPolicyType: ALWAYS`.
+- [x] Configure API healthcheck as `/ready` with `restartPolicyType:
+      ON_FAILURE` and one retry.
+- [x] Configure indexer and Hasura healthchecks as `/healthz` with
+      `restartPolicyType: ON_FAILURE` and one retry.
 - [x] Document Railway variables for Postgres, Hasura admin secret, RPC URLs,
       bucket credentials, publisher range controls, and API max range.
 - [x] Document Cloudflare cache and WAF rules.

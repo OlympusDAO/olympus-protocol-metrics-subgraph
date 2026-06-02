@@ -25,13 +25,13 @@ describe("Railway config-as-code", () => {
       deploy: { cronSchedule: string; restartPolicyType: string };
     };
     const api = JSON.parse(readFileSync("railway-metrics-api.json", "utf8")) as {
-      deploy: { healthcheckPath: string; restartPolicyType: string };
+      deploy: { healthcheckPath: string; restartPolicyMaxRetries: number; restartPolicyType: string };
     };
     const hasura = JSON.parse(readFileSync("railway-hasura.json", "utf8")) as {
-      deploy: { healthcheckPath: string; restartPolicyType: string };
+      deploy: { healthcheckPath: string; restartPolicyMaxRetries: number; restartPolicyType: string };
     };
     const indexer = JSON.parse(readFileSync("railway-indexer.json", "utf8")) as {
-      deploy: { healthcheckPath: string; restartPolicyType: string };
+      deploy: { healthcheckPath: string; restartPolicyMaxRetries: number; restartPolicyType: string };
     };
 
     expect(publisher.deploy.cronSchedule).toBe("15 * * * *");
@@ -40,11 +40,14 @@ describe("Railway config-as-code", () => {
     expect(publisher.build.watchPatterns).toContain("apps/metrics-publisher/**");
     expect(publisher.build.watchPatterns).toContain("packages/metrics-artifacts/**");
     expect(hasura.deploy.healthcheckPath).toBe("/healthz");
-    expect(hasura.deploy.restartPolicyType).toBe("ALWAYS");
+    expect(hasura.deploy.restartPolicyType).toBe("ON_FAILURE");
+    expect(hasura.deploy.restartPolicyMaxRetries).toBe(1);
     expect(indexer.deploy.healthcheckPath).toBe("/healthz");
-    expect(indexer.deploy.restartPolicyType).toBe("ALWAYS");
+    expect(indexer.deploy.restartPolicyType).toBe("ON_FAILURE");
+    expect(indexer.deploy.restartPolicyMaxRetries).toBe(1);
     expect(api.deploy.healthcheckPath).toBe("/ready");
-    expect(api.deploy.restartPolicyType).toBe("ALWAYS");
+    expect(api.deploy.restartPolicyType).toBe("ON_FAILURE");
+    expect(api.deploy.restartPolicyMaxRetries).toBe(1);
   });
 
   test("configures service watch patterns by runtime ownership", () => {
