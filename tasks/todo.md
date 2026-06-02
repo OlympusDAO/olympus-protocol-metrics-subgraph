@@ -205,7 +205,8 @@ surface.
       metric-specific `*Records` fields.
 - [x] Return consistent v2 `{ data, meta }` success envelopes and
       `{ error: { code, message, details? } }` error envelopes.
-- [x] Add cache headers for range routes, bounds, and readiness.
+- [x] Add cache headers: `/ready` and `/v2/bounds` are `no-store`; data
+      routes cache for one hour.
 
 ### Legacy `/operations/*` compatibility
 

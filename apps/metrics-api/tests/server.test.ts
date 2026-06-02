@@ -182,10 +182,10 @@ describe("metrics API HTTP behavior", () => {
 
   test("sets cache headers for readiness, bounds, and range routes", async () => {
     expect((await request("/ready")).headers.get("cache-control")).toBe("no-store");
-    expect((await request("/v2/bounds")).headers.get("cache-control")).toContain("max-age=300");
+    expect((await request("/v2/bounds")).headers.get("cache-control")).toBe("no-store");
     expect(
       (await request("/v2/metrics/daily?start=2026-05-21")).headers.get("cache-control"),
-    ).toContain("max-age=28800");
+    ).toBe("public, max-age=3600");
   });
 
   test("does not expose the internal manifest as a public route", async () => {

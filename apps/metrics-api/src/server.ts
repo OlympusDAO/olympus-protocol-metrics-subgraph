@@ -49,9 +49,8 @@ const LEGACY_AT_BLOCK_PATHS = new Set([
 ]);
 
 const READY_CACHE_CONTROL = "no-store";
-const MANIFEST_CACHE_CONTROL = "public, max-age=300, stale-while-revalidate=60";
-const RANGE_CACHE_CONTROL = "public, max-age=28800, stale-while-revalidate=86400";
-const STATIC_CACHE_CONTROL = "public, max-age=3600";
+const BOUNDS_CACHE_CONTROL = "no-store";
+const PUBLIC_CACHE_CONTROL = "public, max-age=3600";
 
 function setCommonHeaders(res: ServerResponse): void {
   res.setHeader("access-control-allow-origin", "*");
@@ -425,14 +424,14 @@ export async function handleMetricsApiRequest(
   }
 
   if (url.pathname === "/openapi.json") {
-    res.setHeader("cache-control", STATIC_CACHE_CONTROL);
+    res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
     sendJson(res, 200, getOpenApiDocument());
     return;
   }
 
   if (url.pathname === "/docs") {
     res.statusCode = 200;
-    res.setHeader("cache-control", STATIC_CACHE_CONTROL);
+    res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
     res.setHeader("content-type", "text/html; charset=utf-8");
     res.end("<!doctype html><title>Olympus Protocol Metrics API</title><h1>OpenAPI</h1>");
     return;
@@ -474,7 +473,7 @@ export async function handleMetricsApiRequest(
         ? {}
         : { indexerDeploymentId: publishedManifest.indexerDeploymentId }),
     };
-    res.setHeader("cache-control", MANIFEST_CACHE_CONTROL);
+    res.setHeader("cache-control", BOUNDS_CACHE_CONTROL);
     sendJson(res, 200, emptyResponse(config, undefined, bounds, publishedManifest));
     return;
   }
@@ -494,7 +493,7 @@ export async function handleMetricsApiRequest(
         includeRecords,
         config.generatedAt ?? publishedManifest.generatedAt,
       );
-      res.setHeader("cache-control", RANGE_CACHE_CONTROL);
+      res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
       sendJson(res, 200, emptyResponse<DailyMetric[]>(config, range, metrics, publishedManifest));
     } catch (error) {
       if (error instanceof ArtifactNotFoundError) {
@@ -518,7 +517,7 @@ export async function handleMetricsApiRequest(
         range,
         "v2/treasury-assets/daily",
       );
-      res.setHeader("cache-control", RANGE_CACHE_CONTROL);
+      res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
       sendJson(res, 200, emptyResponse<TreasuryAsset[]>(config, range, treasuryAssets, publishedManifest));
     } catch (error) {
       if (error instanceof ArtifactNotFoundError) {
@@ -537,7 +536,7 @@ export async function handleMetricsApiRequest(
       }
       const range = resolveV2Range(url, config, publishedManifest);
       const ohmSupply = await readArtifactRows<OhmSupply>(config, publishedManifest, range, "v2/ohm-supply/daily");
-      res.setHeader("cache-control", RANGE_CACHE_CONTROL);
+      res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
       sendJson(res, 200, emptyResponse<OhmSupply[]>(config, range, ohmSupply, publishedManifest));
     } catch (error) {
       if (error instanceof ArtifactNotFoundError) {
@@ -577,7 +576,7 @@ export async function handleMetricsApiRequest(
         return;
       }
       const data = await readLegacyOperation(url.pathname, variables, config, publishedManifest);
-      res.setHeader("cache-control", RANGE_CACHE_CONTROL);
+      res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
       sendJson(res, 200, legacyResponse(data));
     } catch (error) {
       if (error instanceof ArtifactNotFoundError) {
