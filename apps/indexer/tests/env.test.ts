@@ -26,6 +26,24 @@ describe("indexer env validation", () => {
     expect(() => validateIndexerEnv(validEnv)).not.toThrow();
   });
 
+  test("requires Railway indexer schemas to match the deployment id", () => {
+    expect(() =>
+      validateIndexerEnv({
+        ...validEnv,
+        ENVIO_PG_SCHEMA: "railway-deployment-1",
+        RAILWAY_DEPLOYMENT_ID: "railway-deployment-1",
+      }),
+    ).not.toThrow();
+
+    expect(() =>
+      validateIndexerEnv({
+        ...validEnv,
+        ENVIO_PG_SCHEMA: "public",
+        RAILWAY_DEPLOYMENT_ID: "railway-deployment-1",
+      }),
+    ).toThrow("ENVIO_PG_SCHEMA must match RAILWAY_DEPLOYMENT_ID");
+  });
+
   test("fails loudly when required env variables are missing", () => {
     expect(() =>
       validateIndexerEnv({

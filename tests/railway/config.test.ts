@@ -76,6 +76,7 @@ describe("Railway config-as-code", () => {
       "DATABASE_URL",
       "ENVIO_PG_HOST",
       "HASURA_GRAPHQL_ADMIN_SECRET",
+      "HASURA_GRAPHQL_SERVER_PORT",
       "ENVIO_ETHEREUM_RPC_URL",
       "ENVIO_ARBITRUM_RPC_URL",
       "ARTIFACT_BUCKET",
@@ -87,6 +88,9 @@ describe("Railway config-as-code", () => {
       expect(doc).toContain(variable);
     }
 
+    expect(doc).toContain("ENVIO_PG_SCHEMA=${{indexer.RAILWAY_DEPLOYMENT_ID}}");
+    expect(doc).toContain("${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.HASURA_GRAPHQL_SERVER_PORT}}/v1/graphql");
+    expect(doc).toContain("${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.HASURA_GRAPHQL_SERVER_PORT}}/v1/metadata");
     expect(doc).toContain("Only `metrics-api` should receive a public Railway domain");
     expect(doc).toContain("Cloudflare");
     expect(doc).toContain("WAF");

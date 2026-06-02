@@ -21,86 +21,184 @@ traffic with the private service hostname, not the public internet hostname.
 Set secrets only through Railway variables. Do not commit secrets to repository
 files, Dockerfiles, OpenAPI output, or generated artifacts.
 
-### Postgres
+The examples below assume Railway service names of `Postgres`, `hasura`,
+`indexer`, `metrics-publisher`, and `metrics-api`. Railway reference variables
+are service-name sensitive; if your Railway service uses a different name,
+replace the namespace in expressions such as `${{hasura.RAILWAY_PRIVATE_DOMAIN}}`.
 
-- `DATABASE_URL`: Railway private Postgres connection string used by Envio and
+Use Railway's Variables tab or raw editor for each service. Variables listed as
+`Optional` can be omitted unless you need to override the documented default.
+
+### Setup order
+
+1. Create the Postgres, Hasura, indexer, metrics publisher, and metrics API
+   services.
+2. Add Postgres first so its generated variables are available for references.
+3. Set Hasura variables, including `HASURA_GRAPHQL_SERVER_PORT`.
+4. Set indexer variables, pointing `HASURA_GRAPHQL_ENDPOINT` at Hasura's private
+   metadata endpoint.
+5. Set publisher variables, pointing `HASURA_GRAPHQL_ENDPOINT` at Hasura's
+   private GraphQL endpoint.
+6. Set metrics API variables and give only `metrics-api` a public Railway
+   domain.
+
+### Postgres service
+
+The Railway Postgres service should not receive any `ENVIO_*` variables. It is
+the source of private connection values that other services reference.
+
+- Required, Railway-provided `DATABASE_URL`: private Postgres connection
+  string. Reference it from Hasura as `HASURA_GRAPHQL_DATABASE_URL` if the URL
+  form is suitable.
+- Required, Railway-provided host, port, user, password, and database
+  variables: use these as references when setting the indexer service's
+  `ENVIO_PG_*` variables.
+
+### Hasura service
+
+These variables belong on the private `hasura` service.
+
+- Required `HASURA_GRAPHQL_DATABASE_URL`: private Postgres connection string,
+  usually a Railway reference to the Postgres service's `DATABASE_URL`.
+- Required `HASURA_GRAPHQL_ADMIN_SECRET`: high-entropy admin secret. Reuse the
+  same value on the private indexer and publisher services so they can call
   Hasura.
-- `ENVIO_PG_HOST`, `ENVIO_PG_PORT`, `ENVIO_PG_USER`, `ENVIO_PG_PASSWORD`,
-  `ENVIO_PG_DATABASE`, and `ENVIO_PG_SCHEMA`: Envio's Postgres connection
-  settings. Set these from Railway Postgres private-network variables.
-- `ENVIO_PG_SSL_MODE`: set according to the Railway Postgres connection mode.
-  Envio accepts `false`, `true`, `require`, `allow`, `prefer`, or
-  `verify-full`; it does not accept libpq-style `disable`.
-- `ENVIO_PG_MAX_CONNECTIONS`: optional Envio Postgres pool size.
+- Required `HASURA_GRAPHQL_SERVER_PORT`: internal Hasura HTTP port. Use `8080`
+  unless there is a specific reason to change it.
+- Optional `HASURA_GRAPHQL_ENABLE_CONSOLE`: must be `false`. The Dockerfile also
+  sets this as a default.
+- Optional `HASURA_GRAPHQL_ENABLED_LOG_TYPES`: recommended
+  `startup,http-log,webhook-log,websocket-log,query-log`.
+- Optional `HASURA_GRAPHQL_CORS_DOMAIN`: omit or restrict to private service
+  callers.
 
-### Hasura
+Do not set `HASURA_GRAPHQL_ENDPOINT` on the Hasura service. That variable is for
+services that call Hasura.
 
-- `HASURA_GRAPHQL_DATABASE_URL`: same private Postgres connection string as
-  `DATABASE_URL`, or a Railway reference to it.
-- `HASURA_GRAPHQL_ADMIN_SECRET`: high-entropy admin secret.
-- `HASURA_GRAPHQL_ENDPOINT`: for the indexer service, set this to the private
-  Hasura metadata endpoint, for example
-  `http://hasura.railway.internal/v1/metadata`.
-- `HASURA_GRAPHQL_ENABLE_CONSOLE`: must be `false`. The Dockerfile also sets
-  this as a default.
-- `HASURA_GRAPHQL_ENABLED_LOG_TYPES`: recommended `startup,http-log,webhook-log,websocket-log,query-log`.
-- `HASURA_GRAPHQL_CORS_DOMAIN`: omit or restrict to private service callers.
+Example Hasura raw variables:
 
-### RPC URLs
+```dotenv
+HASURA_GRAPHQL_DATABASE_URL=${{Postgres.DATABASE_URL}}
+HASURA_GRAPHQL_ADMIN_SECRET=<shared-hasura-admin-secret>
+HASURA_GRAPHQL_SERVER_PORT=8080
+```
 
-Use the per-chain `ENVIO_*_RPC_URL` variables consumed by
-`apps/indexer/config.yaml` so rotation can happen independently:
+### Indexer service
 
-- `ENVIO_ETHEREUM_RPC_URL`: Ethereum.
-- `ENVIO_ARBITRUM_RPC_URL`: Arbitrum.
-- `ENVIO_BASE_RPC_URL`: Base.
-- `ENVIO_BERACHAIN_RPC_URL`: Berachain.
-- `ENVIO_POLYGON_RPC_URL`: Polygon.
-- `ENVIO_FANTOM_RPC_URL`: Fantom.
+These variables belong on the private `indexer` service. The indexer preflight
+check requires the core variables below before Envio starts.
+
+- Required `ENVIO_API_TOKEN`: Envio/HyperSync API token.
+- Required `ENVIO_PG_HOST`, `ENVIO_PG_PORT`, `ENVIO_PG_USER`,
+  `ENVIO_PG_PASSWORD`, `ENVIO_PG_DATABASE`, and `ENVIO_PG_SCHEMA`: Envio's
+  Postgres connection settings, usually references to Railway Postgres
+  private-network variables. On Railway, set `ENVIO_PG_SCHEMA` to
+  `${{indexer.RAILWAY_DEPLOYMENT_ID}}` so each indexer deployment writes to a
+  deployment-scoped schema.
+- Required `ENVIO_PG_SSL_MODE`: set according to the Railway Postgres
+  connection mode. Envio accepts `false`, `true`, `require`, `allow`, `prefer`,
+  or `verify-full`; it does not accept libpq-style `disable`.
+- Optional `ENVIO_PG_MAX_CONNECTIONS`: Envio Postgres pool size.
+- Required `HASURA_GRAPHQL_ENDPOINT`: private Hasura metadata endpoint, for
+  example `http://hasura.railway.internal:8080/v1/metadata`.
+- Required `HASURA_GRAPHQL_ADMIN_SECRET`: same value used by Hasura.
+- Required `ENVIO_ETHEREUM_RPC_URL`, `ENVIO_ARBITRUM_RPC_URL`,
+  `ENVIO_BASE_RPC_URL`, `ENVIO_BERACHAIN_RPC_URL`, `ENVIO_POLYGON_RPC_URL`, and
+  `ENVIO_FANTOM_RPC_URL`: primary per-chain archive RPC URLs.
+- Optional `ENVIO_INDEXER_PORT`: Envio indexer port.
+- Optional `ENVIO_MAX_PARTITION_CONCURRENCY`: Envio concurrency setting.
+
+Example indexer raw variables:
+
+```dotenv
+ENVIO_API_TOKEN=<envio-api-token>
+ENVIO_PG_HOST=${{Postgres.PGHOST}}
+ENVIO_PG_PORT=${{Postgres.PGPORT}}
+ENVIO_PG_USER=${{Postgres.PGUSER}}
+ENVIO_PG_PASSWORD=${{Postgres.PGPASSWORD}}
+ENVIO_PG_DATABASE=${{Postgres.PGDATABASE}}
+ENVIO_PG_SCHEMA=${{indexer.RAILWAY_DEPLOYMENT_ID}}
+ENVIO_PG_SSL_MODE=prefer
+HASURA_GRAPHQL_ENDPOINT=http://${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.HASURA_GRAPHQL_SERVER_PORT}}/v1/metadata
+HASURA_GRAPHQL_ADMIN_SECRET=${{hasura.HASURA_GRAPHQL_ADMIN_SECRET}}
+ENVIO_ETHEREUM_RPC_URL=<ethereum-archive-rpc-url>
+ENVIO_ARBITRUM_RPC_URL=<arbitrum-archive-rpc-url>
+ENVIO_BASE_RPC_URL=<base-archive-rpc-url>
+ENVIO_BERACHAIN_RPC_URL=<berachain-archive-rpc-url>
+ENVIO_POLYGON_RPC_URL=<polygon-archive-rpc-url>
+ENVIO_FANTOM_RPC_URL=<fantom-archive-rpc-url>
+```
+
+Railway Postgres variable names can differ depending on how the database service
+was created. Use the names exposed by your Postgres service. If it only exposes
+`DATABASE_URL`, either split it into the `ENVIO_PG_*` variables above or add a
+startup wrapper that derives them before running Envio.
 
 Envio v3 supports fallback RPCs by adding multiple `rpc` entries in
 `apps/indexer/config.yaml` with `for: fallback`. It does not consume
-comma-separated fallback URL environment variables. Envio's RPC schema supports
-batch/backoff/timeout/polling fields in `config.yaml`; it does not consume
-`requests_per_second` environment variables. Any repository-local
-`ENVIO_RPC_*` tuning variables are for the snapshot effect RPC client, not
-Envio's event ingestion engine.
+comma-separated fallback URL environment variables for event ingestion.
+Envio's RPC schema supports batch/backoff/timeout/polling fields in
+`config.yaml`; it does not consume `requests_per_second` environment variables
+for event ingestion.
 
-### Artifact Storage
+This repository's snapshot effect RPC client does consume optional runtime
+tuning variables:
 
-The publisher writes immutable monthly JSON shards before publishing the manifest.
-The API reads from the same bucket.
+- Optional `ENVIO_RPC_HTTP_BATCH_SIZE`, `ENVIO_RPC_MULTICALL_BATCH_SIZE`, and
+  `ENVIO_RPC_TIMEOUT_MS`.
+- Optional `ENVIO_RPC_REQUESTS_PER_SECOND`, plus chain-specific overrides such
+  as `ENVIO_ETHEREUM_RPC_REQUESTS_PER_SECOND`.
+- Optional `ENVIO_<CHAIN>_FALLBACK_RPC_URLS`, for example
+  `ENVIO_ETHEREUM_FALLBACK_RPC_URLS`, as comma-separated snapshot effect
+  fallbacks. These are viem fallback transports for snapshot reads, not Envio's
+  primary sync source.
 
-- `ARTIFACT_BUCKET`: bucket name.
-- `ARTIFACT_ENDPOINT`: S3-compatible endpoint, for example Cloudflare R2.
-- `ARTIFACT_REGION`: S3 region. Use `auto` for Cloudflare R2.
-- `ARTIFACT_ACCESS_KEY_ID`: bucket access key.
-- `ARTIFACT_SECRET_ACCESS_KEY`: bucket secret key.
-- `ARTIFACT_PUBLIC_BASE_URL`: public CDN origin for immutable artifacts, if the
-  API redirects or references artifact URLs.
+### Metrics publisher service
 
-### Publisher
+These variables belong on the private `metrics-publisher` cron service. The
+publisher writes immutable monthly JSON shards before publishing the manifest.
 
-- `HASURA_GRAPHQL_ENDPOINT`: private Railway URL for Hasura GraphQL, for
-  example `http://hasura.railway.internal/v1/graphql`.
-- `PUBLISHER_PUBLIC_START_DATE`: first public API date, default `2022-05-01`.
-- `PUBLISHER_LOOKBACK_DAYS`: number of already-published days to regenerate
-  when catching up from the existing manifest latest date.
-- `PUBLISHER_LOCK_TTL_MS`: S3 lock timeout for overlapping cron runs. The
+- Required `HASURA_GRAPHQL_ENDPOINT`: private Railway URL for Hasura GraphQL,
+  for example `http://hasura.railway.internal/v1/graphql`.
+- Required `HASURA_GRAPHQL_ADMIN_SECRET`: same value used by Hasura.
+- Required `ARTIFACT_BUCKET`: bucket name.
+- Required `ARTIFACT_ENDPOINT`: S3-compatible endpoint, for example Cloudflare
+  R2.
+- Required `ARTIFACT_REGION`: S3 region. Use `auto` for Cloudflare R2.
+- Required `ARTIFACT_ACCESS_KEY_ID`: bucket access key.
+- Required `ARTIFACT_SECRET_ACCESS_KEY`: bucket secret key.
+- Optional `PUBLISHER_PUBLIC_START_DATE`: first public API date, default
+  `2022-05-01`.
+- Optional `PUBLISHER_LOOKBACK_DAYS`: number of already-published days to
+  regenerate when catching up from the existing manifest latest date.
+- Optional `PUBLISHER_LOCK_TTL_MS`: S3 lock timeout for overlapping cron runs. The
   documented default is 12 hours (`43200000`) so a slow first bootstrap is not
   overtaken by the next hourly cron.
-- `INDEXER_DEPLOYMENT_ID`: required current indexer deployment identifier. Set
-  this on the `metrics-publisher` service as a Railway reference variable to
-  the indexer service deployment id, for example
+- Required `INDEXER_DEPLOYMENT_ID`: current indexer deployment identifier. Set
+  this on the `metrics-publisher` service as a Railway reference variable to the
+  indexer service deployment id, for example
   `${{indexer.RAILWAY_DEPLOYMENT_ID}}` if the Railway service is named
   `indexer`. The publisher writes data shards under `v2/deployments/<id>/...`,
   records those file keys in the internal manifest, and deletes stale deployment
   prefixes after the new manifest is published.
-- `PUBLISHER_START_DATE`: optional UTC calendar date for full backfills.
-- `PUBLISHER_END_DATE`: optional UTC calendar end date for controlled
+- Optional `PUBLISHER_START_DATE`: UTC calendar date for full backfills.
+- Optional `PUBLISHER_END_DATE`: UTC calendar end date for controlled
   backfills or re-publishing a bounded window.
-- `PUBLISHER_CRON`: documented value is `15 * * * *`; the Railway config sets
-  this schedule directly.
+- Optional `PUBLISHER_CRON`: documented value is `15 * * * *`; the Railway
+  config sets this schedule directly.
+
+Example metrics publisher raw variables:
+
+```dotenv
+HASURA_GRAPHQL_ENDPOINT=http://${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.HASURA_GRAPHQL_SERVER_PORT}}/v1/graphql
+HASURA_GRAPHQL_ADMIN_SECRET=${{hasura.HASURA_GRAPHQL_ADMIN_SECRET}}
+ARTIFACT_BUCKET=<bucket-name>
+ARTIFACT_ENDPOINT=<s3-compatible-endpoint>
+ARTIFACT_REGION=auto
+ARTIFACT_ACCESS_KEY_ID=<bucket-access-key>
+ARTIFACT_SECRET_ACCESS_KEY=<bucket-secret-key>
+INDEXER_DEPLOYMENT_ID=${{indexer.RAILWAY_DEPLOYMENT_ID}}
+```
 
 The publisher writes `v2/publisher.lock` before reading Hasura. If a new cron
 run starts while a previous publish still holds a fresh lock, the new run exits
@@ -146,13 +244,27 @@ version for debugging and stale-data checks.
 
 ### Metrics API
 
-- `METRICS_API_MAX_RANGE_DAYS`: maximum inclusive v2 range. The documented
-  default is `366`.
-- `METRICS_API_PORT`: optional port override if the runtime does not provide
+These variables belong on the public `metrics-api` service. The API reads from
+the same bucket the publisher writes to.
+
+- Optional `PORT`: Railway normally provides this.
+- Optional `METRICS_API_MAX_RANGE_DAYS`: maximum inclusive v2 range. The
+  documented default is `366`.
+- Optional `METRICS_API_PORT`: port override if the runtime does not provide
   `PORT`.
-- `ARTIFACT_BUCKET`, `ARTIFACT_ENDPOINT`, `ARTIFACT_REGION`,
+- Required `ARTIFACT_BUCKET`, `ARTIFACT_ENDPOINT`, `ARTIFACT_REGION`,
   `ARTIFACT_ACCESS_KEY_ID`, and `ARTIFACT_SECRET_ACCESS_KEY`: read-only
   artifact access.
+
+Example metrics API raw variables:
+
+```dotenv
+ARTIFACT_BUCKET=<bucket-name>
+ARTIFACT_ENDPOINT=<s3-compatible-endpoint>
+ARTIFACT_REGION=auto
+ARTIFACT_ACCESS_KEY_ID=<read-only-bucket-access-key>
+ARTIFACT_SECRET_ACCESS_KEY=<read-only-bucket-secret-key>
+```
 
 ## Cloudflare Cache Rules
 

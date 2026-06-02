@@ -44,6 +44,10 @@ export function validateIndexerEnv(env: NodeJS.ProcessEnv): void {
   if (invalidIntegers.length > 0) {
     throw new Error(`Invalid positive integer environment variables: ${invalidIntegers.join(", ")}`);
   }
+
+  if (!isBlank(env.RAILWAY_DEPLOYMENT_ID) && env.ENVIO_PG_SCHEMA !== env.RAILWAY_DEPLOYMENT_ID) {
+    throw new Error("ENVIO_PG_SCHEMA must match RAILWAY_DEPLOYMENT_ID when running on Railway.");
+  }
 }
 
 function isBlank(value: string | undefined): boolean {
