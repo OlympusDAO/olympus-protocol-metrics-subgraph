@@ -90,11 +90,14 @@ check requires the core variables below before Envio starts.
 
 - Required `ENVIO_API_TOKEN`: Envio/HyperSync API token.
 - Required `ENVIO_PG_HOST`, `ENVIO_PG_PORT`, `ENVIO_PG_USER`,
-  `ENVIO_PG_PASSWORD`, `ENVIO_PG_DATABASE`, and `ENVIO_PG_SCHEMA`: Envio's
-  Postgres connection settings, usually references to Railway Postgres
-  private-network variables. On Railway, set `ENVIO_PG_SCHEMA` to
-  `${{indexer.RAILWAY_DEPLOYMENT_ID}}` so each indexer deployment writes to a
-  deployment-scoped schema.
+  `ENVIO_PG_PASSWORD`, and `ENVIO_PG_DATABASE`: Envio's Postgres connection
+  settings, usually references to Railway Postgres private-network variables.
+- Automatically set on Railway `ENVIO_PG_SCHEMA`: the indexer startup wrapper
+  copies Railway's runtime `RAILWAY_DEPLOYMENT_ID` into `ENVIO_PG_SCHEMA` before
+  validation and Envio startup. Do not define `ENVIO_PG_SCHEMA` as a Railway
+  variable unless you are intentionally overriding this behavior; if
+  `RAILWAY_DEPLOYMENT_ID` is present, the preflight check requires the two
+  values to match.
 - Required `ENVIO_PG_SSL_MODE`: set according to the Railway Postgres
   connection mode. Envio accepts `false`, `true`, `require`, `allow`, `prefer`,
   or `verify-full`; it does not accept libpq-style `disable`.
@@ -117,7 +120,6 @@ ENVIO_PG_PORT=${{Postgres.PGPORT}}
 ENVIO_PG_USER=${{Postgres.PGUSER}}
 ENVIO_PG_PASSWORD=${{Postgres.PGPASSWORD}}
 ENVIO_PG_DATABASE=${{Postgres.PGDATABASE}}
-ENVIO_PG_SCHEMA=${{indexer.RAILWAY_DEPLOYMENT_ID}}
 ENVIO_PG_SSL_MODE=prefer
 HASURA_GRAPHQL_ENDPOINT=http://${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.HASURA_GRAPHQL_SERVER_PORT}}/v1/metadata
 HASURA_GRAPHQL_ADMIN_SECRET=${{hasura.HASURA_GRAPHQL_ADMIN_SECRET}}

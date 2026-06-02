@@ -7,6 +7,7 @@ describe("indexer monorepo layout", () => {
     expect(existsSync("apps/indexer/schema.graphql")).toBe(true);
     expect(existsSync("apps/indexer/envio-env.d.ts")).toBe(true);
     expect(existsSync("apps/indexer/.env.sample")).toBe(true);
+    expect(existsSync("apps/indexer/src/start-envio.ts")).toBe(true);
     expect(existsSync("apps/indexer/src/validate-env.ts")).toBe(true);
     expect(existsSync("apps/indexer/src/handlers/BlockHandlers.ts")).toBe(true);
     expect(existsSync("apps/indexer/tests/snapshot/global.test.ts")).toBe(true);
@@ -34,9 +35,9 @@ describe("indexer monorepo layout", () => {
       scripts: Record<string, string>;
     };
 
-    expect(packageJson.scripts["env:check"]).toBe("tsx src/validate-env.ts");
-    expect(packageJson.scripts["envio:dev"]).toContain("pnpm env:check &&");
-    expect(packageJson.scripts["envio:start"]).toContain("pnpm env:check &&");
+    expect(packageJson.scripts["env:check"]).toBe("tsx src/start-envio.ts check");
+    expect(packageJson.scripts["envio:dev"]).toBe("ENVIO_TUI=${ENVIO_TUI:-false} tsx src/start-envio.ts dev");
+    expect(packageJson.scripts["envio:start"]).toBe("tsx src/start-envio.ts start");
   });
 
   test("declares apps and packages as workspace packages", () => {

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 
+import { prepareIndexerEnv, resolveEnvioArgs } from "../src/start-envio";
 import { validateIndexerEnv } from "../src/validate-env";
 
 const validEnv: NodeJS.ProcessEnv = {
@@ -42,6 +43,22 @@ describe("indexer env validation", () => {
         RAILWAY_DEPLOYMENT_ID: "railway-deployment-1",
       }),
     ).toThrow("ENVIO_PG_SCHEMA must match RAILWAY_DEPLOYMENT_ID");
+  });
+
+  test("injects the Railway deployment id as the schema before validation", () => {
+    const env = prepareIndexerEnv({
+      ...validEnv,
+      ENVIO_PG_SCHEMA: "",
+      RAILWAY_DEPLOYMENT_ID: "railway-deployment-1",
+    });
+
+    expect(env.ENVIO_PG_SCHEMA).toBe("railway-deployment-1");
+    expect(() => validateIndexerEnv(env)).not.toThrow();
+  });
+
+  test("defaults startup to envio start when no args are provided", () => {
+    expect(resolveEnvioArgs([])).toEqual(["start"]);
+    expect(resolveEnvioArgs(["dev"])).toEqual(["dev"]);
   });
 
   test("fails loudly when required env variables are missing", () => {

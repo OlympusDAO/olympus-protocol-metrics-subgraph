@@ -88,7 +88,7 @@ describe("Railway config-as-code", () => {
       expect(doc).toContain(variable);
     }
 
-    expect(doc).toContain("ENVIO_PG_SCHEMA=${{indexer.RAILWAY_DEPLOYMENT_ID}}");
+    expect(doc).toContain("copies Railway's runtime `RAILWAY_DEPLOYMENT_ID` into `ENVIO_PG_SCHEMA`");
     expect(doc).toContain("${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.HASURA_GRAPHQL_SERVER_PORT}}/v1/graphql");
     expect(doc).toContain("${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.HASURA_GRAPHQL_SERVER_PORT}}/v1/metadata");
     expect(doc).toContain("Only `metrics-api` should receive a public Railway domain");

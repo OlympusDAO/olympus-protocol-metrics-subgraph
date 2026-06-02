@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "codegen": "envio codegen",
-    "env:check": "tsx src/validate-env.ts",
+    "env:check": "tsx src/start-envio.ts check",
     "envio": "envio",
-    "envio:dev": "pnpm env:check && ENVIO_TUI=${ENVIO_TUI:-false} envio dev",
-    "envio:start": "pnpm env:check && envio start",
+    "envio:dev": "ENVIO_TUI=${ENVIO_TUI:-false} tsx src/start-envio.ts dev",
+    "envio:start": "tsx src/start-envio.ts start",
     "test": "vitest run tests"
   },
   "dependencies": {
