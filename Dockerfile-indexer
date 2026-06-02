@@ -8,12 +8,13 @@ ENV PATH=/pnpm:$PATH
 WORKDIR /app
 
 RUN apt-get update \
+  && apt-get install -y --no-install-recommends --only-upgrade libgcrypt20 libgnutls30 \
   && apt-get install -y --no-install-recommends ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /corepack /pnpm \
   && corepack enable \
-  && corepack prepare pnpm@10.33.0 --activate \
+  && corepack prepare pnpm@10.34.1 --activate \
   && pnpm --version \
   && chown -R node:node /corepack /pnpm
 
@@ -30,6 +31,8 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm --dir apps/indexer codegen
 RUN pnpm run build
+RUN pnpm prune --prod \
+  && rm -rf /app/.pnpm-store /usr/local/bin/npm /usr/local/bin/npx /usr/local/lib/node_modules/npm apps/*/tests packages/*/tests tests docs tasks .github
 RUN chown -R node:node apps/indexer/.envio
 
 USER node

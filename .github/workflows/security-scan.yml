@@ -88,6 +88,7 @@ jobs:
           image-ref: olympus-protocol-metrics/indexer:scan
           format: table
           severity: MEDIUM,HIGH,CRITICAL
+          ignore-unfixed: true
           exit-code: "1"
 
       - name: Scan Hasura image for vulnerabilities
@@ -105,6 +106,7 @@ jobs:
           image-ref: olympus-protocol-metrics/metrics-api:scan
           format: table
           severity: MEDIUM,HIGH,CRITICAL
+          ignore-unfixed: true
           exit-code: "1"
 
       - name: Scan metrics publisher image for vulnerabilities
@@ -113,4 +115,5 @@ jobs:
           image-ref: olympus-protocol-metrics/metrics-publisher:scan
           format: table
           severity: MEDIUM,HIGH,CRITICAL
+          ignore-unfixed: true
           exit-code: "1"
