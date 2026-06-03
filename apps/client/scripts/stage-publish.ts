@@ -18,7 +18,6 @@ try {
     "publish",
     "--access",
     "public",
-    "--provenance",
     "--userconfig",
     userConfig,
     "--cache",

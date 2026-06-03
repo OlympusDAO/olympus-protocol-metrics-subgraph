@@ -318,6 +318,7 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(stagePublish).toContain('runNpm(["login"');
     expect(stagePublish).toContain('"stage"');
     expect(stagePublish).toContain('"publish"');
+    expect(stagePublish).not.toContain('"--provenance"');
     expect(stagePublish).toContain("logoutAndRemoveLocalNpmConfig()");
     expect(stagePublish).toContain("removeLocalNpmConfig()");
     expect(authLogout).toContain("logoutAndRemoveLocalNpmConfig()");

@@ -46,11 +46,14 @@ helpers, deprecated legacy `/operations/*` helpers, and `openapi.json`.
 
    The publish script logs in to npm with the directory-local
    `apps/client/.npmrc.local`, runs
-   `npm stage publish --access public --provenance`, then logs out and removes
-   `.npmrc.local` in a cleanup step. The package's npm access policy is set to
-   "Require two-factor authentication and disallow tokens", so direct
-   token-based publishing is rejected. Staged publishing uploads the tarball
-   without making it installable; approval is a separate 2FA-protected step.
+   `npm stage publish --access public`, then logs out and removes `.npmrc.local`
+   in a cleanup step. Do not pass `--provenance` for local staging; npm
+   provenance generation requires a supported trusted-publishing/OIDC provider,
+   and local CLI runs fail with `provider: null`. The package's npm access
+   policy is set to "Require two-factor authentication and disallow tokens", so
+   direct token-based publishing is rejected. Staged publishing uploads the
+   tarball without making it installable; approval is a separate 2FA-protected
+   step.
 
 7. Review and approve the staged package through npmjs.com. The npm staged
    publishing docs recommend opening the **Staged Packages** tab to review a
@@ -87,5 +90,7 @@ helpers, deprecated legacy `/operations/*` helpers, and `openapi.json`.
 
 Do not commit `.npmrc` files with tokens. `apps/client/.npmrc.local` is
 gitignored and should only exist during the short login windows above. Prefer
-trusted publishing configured with stage-only permissions for CI, and keep
+trusted publishing configured with stage-only permissions for CI if provenance
+is required; npm trusted publishing generates provenance automatically for
+supported CI providers without the local `--provenance` flag. Keep
 package-level direct token publishing disabled.
