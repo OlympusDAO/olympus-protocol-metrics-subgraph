@@ -87,6 +87,149 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(new URL(calls[1][0]).pathname).toBe("/v2/ohm-supply/daily");
   });
 
+  test("does not paginate v2 ranges unless autoPaginate is enabled", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [], meta: {} })));
+    const client = createClient({ baseUrl: "https://metrics.example", fetch: fetchMock });
+
+    await client.getDailyMetrics({ start: "2025-01-01", end: "2026-01-02" });
+
+    const calls = fetchMock.mock.calls as unknown as Array<[string, RequestInit?]>;
+    expect(calls).toHaveLength(1);
+    const url = new URL(calls[0][0]);
+    expect(url.pathname).toBe("/v2/metrics/daily");
+    expect(url.searchParams.get("start")).toBe("2025-01-01");
+    expect(url.searchParams.get("end")).toBe("2026-01-02");
+  });
+
+  test.each([
+    {
+      label: "less than maxRangeDays",
+      end: "2025-01-02",
+      expectedChunks: [{ start: "2025-01-01", end: "2025-01-02" }],
+    },
+    {
+      label: "equal to maxRangeDays",
+      end: "2025-01-03",
+      expectedChunks: [{ start: "2025-01-01", end: "2025-01-03" }],
+    },
+    {
+      label: "greater than maxRangeDays",
+      end: "2025-01-04",
+      expectedChunks: [
+        { start: "2025-01-01", end: "2025-01-03" },
+        { start: "2025-01-04", end: "2025-01-04" },
+      ],
+    },
+  ])("auto-paginates v2 daily metrics when the date range is $label", async ({ end, expectedChunks }) => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const parsed = new URL(input instanceof Request ? input.url : input.toString());
+      if (parsed.pathname === "/v2/bounds") {
+        return new Response(
+          JSON.stringify({
+            data: {
+              earliestDate: "2025-01-01",
+              latestDate: "2025-01-04",
+              maxRangeDays: 3,
+            },
+          }),
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          data: [{ start: parsed.searchParams.get("start"), end: parsed.searchParams.get("end") }],
+          meta: {},
+        }),
+      );
+    });
+    const client = createClient({ baseUrl: "https://metrics.example", fetch: fetchMock });
+
+    const data = await client.getDailyMetrics({
+      start: "2025-01-01",
+      end,
+      autoPaginate: true,
+    });
+
+    expect(data).toEqual(expectedChunks);
+    const calls = fetchMock.mock.calls as unknown as Array<[string, RequestInit?]>;
+    expect(calls.map(([url]) => new URL(url).pathname)).toEqual([
+      "/v2/bounds",
+      ...expectedChunks.map(() => "/v2/metrics/daily"),
+    ]);
+    expect(
+      calls.slice(1).map(([url]) => {
+        const parsed = new URL(url);
+        return {
+          start: parsed.searchParams.get("start"),
+          end: parsed.searchParams.get("end"),
+        };
+      }),
+    ).toEqual(expectedChunks);
+  });
+
+  test("auto-pagination preserves metric-specific options", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const parsed = new URL(input instanceof Request ? input.url : input.toString());
+      if (parsed.pathname === "/v2/bounds") {
+        return new Response(
+          JSON.stringify({
+            data: {
+              earliestDate: "2025-01-01",
+              latestDate: "2025-01-04",
+              maxRangeDays: 3,
+            },
+          }),
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          data: [{ includeRecords: parsed.searchParams.get("includeRecords") }],
+          meta: {},
+        }),
+      );
+    });
+    const client = createClient({ baseUrl: "https://metrics.example", fetch: fetchMock });
+
+    const data = await client.getDailyMetrics({
+      start: "2025-01-01",
+      end: "2025-01-04",
+      includeRecords: true,
+      autoPaginate: true,
+    });
+
+    expect(data).toEqual([{ includeRecords: "true" }, { includeRecords: "true" }]);
+  });
+
+  test("auto-paginates v2 treasury assets and OHM supply when enabled", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const parsed = new URL(input instanceof Request ? input.url : input.toString());
+      if (parsed.pathname === "/v2/bounds") {
+        return new Response(
+          JSON.stringify({
+            data: {
+              earliestDate: "2025-01-01",
+              latestDate: "2025-01-03",
+              maxRangeDays: 2,
+            },
+          }),
+        );
+      }
+      return new Response(JSON.stringify({ data: [{ path: parsed.pathname, start: parsed.searchParams.get("start") }] }));
+    });
+    const client = createClient({ baseUrl: "https://metrics.example", fetch: fetchMock });
+
+    await client.getDailyTreasuryAssets({ start: "2025-01-01", end: "2025-01-03", autoPaginate: true });
+    await client.getDailyOhmSupply({ start: "2025-01-01", end: "2025-01-03", autoPaginate: true });
+
+    const calls = fetchMock.mock.calls as unknown as Array<[string, RequestInit?]>;
+    expect(calls.map(([url]) => new URL(url).pathname)).toEqual([
+      "/v2/bounds",
+      "/v2/treasury-assets/daily",
+      "/v2/treasury-assets/daily",
+      "/v2/ohm-supply/daily",
+      "/v2/ohm-supply/daily",
+    ]);
+  });
+
   test("ships package metadata for the published client", () => {
     const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as {
       name: string;

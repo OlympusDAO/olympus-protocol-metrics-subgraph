@@ -17,6 +17,16 @@ import type {
 
 export const DEFAULT_BASE_URL = "https://treasury-subgraph-api.olympusdao.finance";
 
+type DailyRangeInput = {
+  start: string;
+  end?: string;
+  autoPaginate?: boolean;
+};
+
+type DailyMetricsInput = DailyRangeInput & {
+  includeRecords?: boolean;
+};
+
 export type ClientConfig = {
   baseUrl?: string;
   fetch?: typeof fetch;
@@ -29,6 +39,7 @@ export class TreasurySubgraphClient {
   private readonly fetchImpl: typeof fetch;
   private readonly headers: Record<string, string>;
   private readonly timeout: number | undefined;
+  private boundsPromise: Promise<BoundsResponse> | undefined;
 
   constructor(config: ClientConfig = {}) {
     this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
@@ -122,11 +133,15 @@ export class TreasurySubgraphClient {
     return this.fetchData<BoundsResponse>(this.url("/v2/bounds"));
   }
 
-  async getDailyMetrics(input: {
-    start: string;
-    end?: string;
-    includeRecords?: boolean;
-  }): Promise<DailyMetric[]> {
+  async getDailyMetrics(input: DailyMetricsInput): Promise<DailyMetric[]> {
+    if (input.autoPaginate) {
+      return this.fetchAutoPaginated<DailyMetric>("/v2/metrics/daily", input, (url) => {
+        if (input.includeRecords !== undefined) {
+          url.searchParams.set("includeRecords", String(input.includeRecords));
+        }
+      });
+    }
+
     const url = this.url("/v2/metrics/daily");
     appendRange(url, input);
     if (input.includeRecords !== undefined) {
@@ -135,13 +150,21 @@ export class TreasurySubgraphClient {
     return this.fetchData<DailyMetric[]>(url);
   }
 
-  async getDailyTreasuryAssets(input: { start: string; end?: string }): Promise<TreasuryAsset[]> {
+  async getDailyTreasuryAssets(input: DailyRangeInput): Promise<TreasuryAsset[]> {
+    if (input.autoPaginate) {
+      return this.fetchAutoPaginated<TreasuryAsset>("/v2/treasury-assets/daily", input);
+    }
+
     const url = this.url("/v2/treasury-assets/daily");
     appendRange(url, input);
     return this.fetchData<TreasuryAsset[]>(url);
   }
 
-  async getDailyOhmSupply(input: { start: string; end?: string }): Promise<OhmSupply[]> {
+  async getDailyOhmSupply(input: DailyRangeInput): Promise<OhmSupply[]> {
+    if (input.autoPaginate) {
+      return this.fetchAutoPaginated<OhmSupply>("/v2/ohm-supply/daily", input);
+    }
+
     const url = this.url("/v2/ohm-supply/daily");
     appendRange(url, input);
     return this.fetchData<OhmSupply[]>(url);
@@ -154,6 +177,33 @@ export class TreasurySubgraphClient {
   private async fetchData<T>(url: URL): Promise<T> {
     const response = (await this.fetchJson(url)) as ApiResponse<T>;
     return response.data;
+  }
+
+  private async fetchAutoPaginated<T>(
+    path: string,
+    input: DailyRangeInput,
+    configureUrl?: (url: URL) => void,
+  ): Promise<T[]> {
+    const bounds = await this.getCachedBounds();
+    const chunks = splitRange({
+      start: input.start,
+      end: input.end ?? bounds.latestDate,
+      maxDays: bounds.maxRangeDays,
+    });
+    const pages = await Promise.all(
+      chunks.map((chunk) => {
+        const url = this.url(path);
+        appendRange(url, chunk);
+        configureUrl?.(url);
+        return this.fetchData<T[]>(url);
+      }),
+    );
+    return pages.flat();
+  }
+
+  private getCachedBounds(): Promise<BoundsResponse> {
+    this.boundsPromise ??= this.getBounds();
+    return this.boundsPromise;
   }
 
   private async fetchJson(url: URL): Promise<unknown> {
@@ -187,6 +237,44 @@ function appendRange(url: URL, input: { start: string; end?: string }): void {
   if (input.end !== undefined) {
     url.searchParams.set("end", input.end);
   }
+}
+
+function splitRange(input: { start: string; end: string; maxDays: number }): Array<{ start: string; end: string }> {
+  if (input.maxDays < 1) {
+    throw new Error(`maxRangeDays must be greater than zero, got ${input.maxDays}`);
+  }
+
+  const start = parseDate(input.start);
+  const end = parseDate(input.end);
+  if (end.getTime() < start.getTime()) {
+    throw new Error("end must be greater than or equal to start");
+  }
+
+  const chunks: Array<{ start: string; end: string }> = [];
+  let cursor = start;
+  while (cursor.getTime() <= end.getTime()) {
+    const chunkEnd = new Date(Math.min(end.getTime(), cursor.getTime() + (input.maxDays - 1) * DAY_MS));
+    chunks.push({ start: formatDate(cursor), end: formatDate(chunkEnd) });
+    cursor = new Date(chunkEnd.getTime() + DAY_MS);
+  }
+  return chunks;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function parseDate(value: string): Date {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    throw new Error(`Invalid date: ${value}`);
+  }
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime()) || formatDate(date) !== value) {
+    throw new Error(`Invalid date: ${value}`);
+  }
+  return date;
+}
+
+function formatDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }
 
 export function createClient(config?: ClientConfig): TreasurySubgraphClient {
