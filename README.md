@@ -1,9 +1,7 @@
 # Olympus Protocol Metrics Indexer
 
 Treasury and protocol metrics indexer for Olympus DAO. Powers the
-[Olympus Treasury Dashboard](https://app.olympusdao.finance/) via the
-[treasury-subgraph](https://github.com/OlympusDAO/treasury-subgraph)
-aggregator service.
+[Olympus Treasury Dashboard](https://app.olympusdao.finance/).
 
 Built on [Envio HyperIndex](https://docs.envio.dev/) (v3, multichain).
 The previous implementation used The Graph Protocol with separate

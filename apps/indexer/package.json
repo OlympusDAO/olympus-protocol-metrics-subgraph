@@ -1,5 +1,5 @@
 {
-  "name": "@olympusdao/protocol-metrics-indexer",
+  "name": "@olympusdao/treasury-subgraph-indexer",
   "version": "0.1.0",
   "private": true,
   "type": "module",

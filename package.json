@@ -1,7 +1,7 @@
 {
-  "name": "olympus-subgraph",
+  "name": "@olympusdao/treasury-subgraph",
   "version": "0.1.0",
-  "description": "Subgraphs for OlympusDAO. NOTE: This does not build a package.",
+  "description": "Subgraphs for the Olympus treasury",
   "author": {
     "name": "Jem",
     "email": "0x0xjem@gmail.com",

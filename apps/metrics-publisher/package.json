@@ -1,5 +1,5 @@
 {
-  "name": "@olympusdao/protocol-metrics-publisher",
+  "name": "@olympusdao/treasury-subgraph-metrics-publisher",
   "version": "0.1.0",
   "private": true,
   "type": "module",
