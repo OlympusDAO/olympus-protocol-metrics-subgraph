@@ -1,4 +1,6 @@
 import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, expectTypeOf, test, vi } from "vitest";
 
 import { createClient, DEFAULT_BASE_URL } from "../src";
@@ -16,6 +18,10 @@ import {
   type WundergraphResponse,
 } from "../src";
 import { getOpenApiDocument as getCanonicalOpenApiDocument } from "../../../packages/metrics-artifacts/src";
+
+const TEST_DIR = dirname(fileURLToPath(import.meta.url));
+const CLIENT_DIR = resolve(TEST_DIR, "..");
+const clientFile = (path: string) => resolve(CLIENT_DIR, path);
 
 describe("@olympusdao/treasury-subgraph-client compatibility", () => {
   afterEach(() => {
@@ -264,6 +270,47 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(data).toEqual([{ includeRecords: "true" }, { includeRecords: "true" }]);
   });
 
+  test("auto-pagination retries bounds after a transient bounds failure", async () => {
+    let boundsAttempts = 0;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const parsed = new URL(input instanceof Request ? input.url : input.toString());
+      if (parsed.pathname === "/v2/bounds") {
+        boundsAttempts += 1;
+        if (boundsAttempts === 1) {
+          return new Response(JSON.stringify({ message: "temporary failure" }), { status: 503 });
+        }
+        return new Response(
+          JSON.stringify({
+            data: {
+              earliestDate: "2025-01-01",
+              latestDate: "2025-01-02",
+              maxRangeDays: 2,
+            },
+          }),
+        );
+      }
+      return new Response(JSON.stringify({ data: [{ path: parsed.pathname }] }));
+    });
+    const client = createClient({ baseUrl: "https://metrics.example", fetch: fetchMock });
+
+    await expect(
+      client.getDailyMetrics({
+        start: "2025-01-01",
+        end: "2025-01-02",
+        autoPaginate: true,
+      }),
+    ).rejects.toThrow("status 503");
+
+    await expect(
+      client.getDailyMetrics({
+        start: "2025-01-01",
+        end: "2025-01-02",
+        autoPaginate: true,
+      }),
+    ).resolves.toEqual([{ path: "/v2/metrics/daily" }]);
+    expect(boundsAttempts).toBe(2);
+  });
+
   test("auto-paginates v2 treasury assets and OHM supply when enabled", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const parsed = new URL(input instanceof Request ? input.url : input.toString());
@@ -296,7 +343,7 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
   });
 
   test("ships package metadata for the published client", () => {
-    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as {
+    const packageJson = JSON.parse(readFileSync(clientFile("package.json"), "utf8")) as {
       name: string;
       version: string;
       files: string[];
@@ -341,9 +388,9 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
   });
 
   test("publish helper logs out and removes the local npm credentials", () => {
-    const stagePublish = readFileSync("scripts/stage-publish.ts", "utf8");
-    const authLogout = readFileSync("scripts/auth-logout.ts", "utf8");
-    const npmAuth = readFileSync("scripts/npm-auth.ts", "utf8");
+    const stagePublish = readFileSync(clientFile("scripts/stage-publish.ts"), "utf8");
+    const authLogout = readFileSync(clientFile("scripts/auth-logout.ts"), "utf8");
+    const npmAuth = readFileSync(clientFile("scripts/npm-auth.ts"), "utf8");
 
     expect(stagePublish).toContain('runNpm(["login"');
     expect(stagePublish).toContain('"stage"');
@@ -357,7 +404,7 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
   });
 
   test("ships an OpenAPI JSON file matching the generated document paths", () => {
-    const packaged = JSON.parse(readFileSync("openapi.json", "utf8")) as {
+    const packaged = JSON.parse(readFileSync(clientFile("openapi.json"), "utf8")) as {
       openapi: string;
       paths: Record<string, unknown>;
     };

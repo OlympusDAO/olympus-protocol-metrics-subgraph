@@ -202,7 +202,10 @@ export class TreasurySubgraphClient {
   }
 
   private getCachedBounds(): Promise<BoundsResponse> {
-    this.boundsPromise ??= this.getBounds();
+    this.boundsPromise ??= this.getBounds().catch((error: unknown) => {
+      this.boundsPromise = undefined;
+      throw error;
+    });
     return this.boundsPromise;
   }
 
