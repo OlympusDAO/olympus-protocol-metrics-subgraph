@@ -1,4 +1,4 @@
-export { createClient, TreasurySubgraphClient, type ClientConfig } from "./client.js";
+export { createClient, DEFAULT_BASE_URL, TreasurySubgraphClient, type ClientConfig } from "./client.js";
 export { getOpenApiDocument } from "../../../packages/metrics-artifacts/src/index.js";
 export * from "../../../packages/metrics-artifacts/src/date-ranges.js";
 export * from "../../../packages/metrics-artifacts/src/legacy-shape.js";

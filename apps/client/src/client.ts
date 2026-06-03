@@ -15,6 +15,8 @@ import type {
   TreasuryAsset,
 } from "../../../packages/metrics-artifacts/src/types.js";
 
+export const DEFAULT_BASE_URL = "https://treasury-subgraph-api.olympusdao.finance";
+
 export type ClientConfig = {
   baseUrl?: string;
   fetch?: typeof fetch;
@@ -29,7 +31,7 @@ export class TreasurySubgraphClient {
   private readonly timeout: number | undefined;
 
   constructor(config: ClientConfig = {}) {
-    this.baseUrl = (config.baseUrl ?? "http://localhost:3000").replace(/\/+$/, "");
+    this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
     this.fetchImpl = config.fetch ?? fetch;
     this.headers = config.headers ?? {};
     this.timeout = config.timeout;

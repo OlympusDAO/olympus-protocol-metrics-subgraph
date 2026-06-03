@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, expectTypeOf, test, vi } from "vitest";
 
-import { createClient } from "../src";
+import { createClient, DEFAULT_BASE_URL } from "../src";
 import {
   getOpenApiDocument,
   type Operations,
@@ -14,6 +14,19 @@ import {
 import { getOpenApiDocument as getCanonicalOpenApiDocument } from "../../../packages/metrics-artifacts/src";
 
 describe("@olympusdao/treasury-subgraph-client compatibility", () => {
+  test("defaults to the public treasury subgraph API", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [] })));
+    const client = createClient({ fetch: fetchMock });
+
+    await client.getDailyMetrics({ start: "2026-05-20" });
+
+    const calls = fetchMock.mock.calls as unknown as Array<[string, RequestInit?]>;
+    const url = new URL(calls[0][0]);
+    expect(DEFAULT_BASE_URL).toBe("https://treasury-subgraph-api.olympusdao.finance");
+    expect(`${url.protocol}//${url.host}`).toBe(DEFAULT_BASE_URL);
+    expect(url.pathname).toBe("/v2/metrics/daily");
+  });
+
   test("legacy query maps to /operations with wg_variables", async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [] })));
     const client = createClient({ baseUrl: "https://metrics.example", fetch: fetchMock });
