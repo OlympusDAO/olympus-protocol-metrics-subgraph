@@ -177,6 +177,40 @@
         }
       }
     },
+    "/operations/health": {
+      "get": {
+        "deprecated": true,
+        "summary": "Legacy WunderGraph-compatible health response.",
+        "parameters": [
+          {
+            "name": "wg_variables",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored. startDate/endDate ranges must not exceed the API maxRangeDays value."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Legacy WunderGraph-compatible response.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request.",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
     "/operations/latest/metrics": {
       "get": {
         "deprecated": true,

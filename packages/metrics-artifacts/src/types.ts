@@ -31,7 +31,7 @@ export type TreasuryAsset = {
   id: string;
   balance: number;
   block: number;
-  blockchain: ChainName;
+  blockchain: string;
   category: string;
   date: string;
   isBluechip: boolean;
@@ -51,10 +51,10 @@ export type OhmSupply = {
   id: string;
   balance: number;
   block: number;
-  blockchain: ChainName;
+  blockchain: string;
   date: string;
-  pool: string | null;
-  poolAddress: string | null;
+  pool?: string | null;
+  poolAddress?: string | null;
   source: string;
   sourceAddress: string;
   supplyBalance: number;
@@ -67,6 +67,10 @@ export type OhmSupply = {
 export type ChainTreasuryAssets = Record<ChainName, TreasuryAsset[]>;
 
 export type ChainOhmSupply = Record<ChainName, OhmSupply[]>;
+
+export type ChainTokenRecords = ChainTreasuryAssets;
+
+export type ChainTokenSupplies = ChainOhmSupply;
 
 export type TokenRecord = TreasuryAsset;
 
@@ -90,18 +94,15 @@ export type ProtocolMetric = {
 };
 
 export type ResponseMetadata = {
-  chainsComplete: ChainName[];
-  chainsFailed: ChainName[];
+  chainsComplete: string[];
+  chainsFailed: string[];
   timestamp: string;
 };
 
-export type DailyMetric = {
+export type Metric = {
   date: string;
   blocks: ChainValues;
   timestamps: ChainValues;
-  crossChainComplete: boolean;
-  chainsIndexed: number[];
-  chainsMissing: number[];
   ohmIndex: number;
   ohmApy: number;
   ohmTotalSupply: number;
@@ -132,7 +133,19 @@ export type DailyMetric = {
   ohmBackedSupplyRecords?: ChainOhmSupply;
   treasuryMarketValueRecords?: ChainTreasuryAssets;
   treasuryLiquidBackingRecords?: ChainTreasuryAssets;
-  _meta?: ResponseMetadata;
+  _meta: ResponseMetadata;
+};
+
+export type DailyMetric = Metric & {
+  crossChainComplete: boolean;
+  chainsIndexed: number[];
+  chainsMissing: number[];
+};
+
+export type Health = {
+  status: string;
+  timestamp: string;
+  version: string;
 };
 
 export type ApiMeta = {
@@ -242,8 +255,9 @@ type LegacyOperation<Data, Input = IgnoreCacheInput | undefined> = {
 };
 
 export type Operations = {
-  "latest/metrics": LegacyOperation<DailyMetric[]>;
-  "earliest/metrics": LegacyOperation<DailyMetric[]>;
+  health: LegacyOperation<Health, undefined>;
+  "latest/metrics": LegacyOperation<Metric>;
+  "earliest/metrics": LegacyOperation<Metric>;
   "paginated/metrics": LegacyOperation<DailyMetric[], PaginatedMetricsInput>;
   "latest/tokenRecords": LegacyOperation<TokenRecord[]>;
   "earliest/tokenRecords": LegacyOperation<TokenRecord[]>;
@@ -254,7 +268,7 @@ export type Operations = {
   "latest/protocolMetrics": LegacyOperation<ProtocolMetric[]>;
   "earliest/protocolMetrics": LegacyOperation<ProtocolMetric[]>;
   "paginated/protocolMetrics": LegacyOperation<ProtocolMetric[], PaginatedProtocolMetricsInput>;
-  "atBlock/metrics": LegacyOperation<DailyMetric[], AtBlockInput>;
+  "atBlock/metrics": LegacyOperation<Metric, AtBlockInput>;
   "atBlock/tokenRecords": LegacyOperation<TokenRecord[], AtBlockInput>;
   "atBlock/tokenSupplies": LegacyOperation<TokenSupply[], AtBlockInput>;
   "atBlock/internal/protocolMetrics": LegacyOperation<ProtocolMetric[], AtBlockInput>;

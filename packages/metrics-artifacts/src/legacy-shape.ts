@@ -29,6 +29,10 @@ const CHAIN_ID_TO_NAME = new Map<number, ChainName>(
   Object.entries(CHAIN_IDS_BY_NAME).map(([chainName, chainId]) => [chainId, chainName as ChainName]),
 );
 
+function isChainName(value: string): value is ChainName {
+  return (CHAIN_NAMES as readonly string[]).includes(value);
+}
+
 export function emptyChainValues(): ChainValues {
   return {
     Arbitrum: 0,
@@ -65,7 +69,9 @@ export function groupTreasuryAssetsByChain(assets: TreasuryAsset[]): ChainTreasu
     Berachain: [],
   };
   for (const asset of assets) {
-    grouped[asset.blockchain].push(asset);
+    if (isChainName(asset.blockchain)) {
+      grouped[asset.blockchain].push(asset);
+    }
   }
   return grouped;
 }
@@ -80,7 +86,9 @@ export function groupOhmSupplyByChain(supplies: OhmSupply[]): ChainOhmSupply {
     Berachain: [],
   };
   for (const supply of supplies) {
-    grouped[supply.blockchain].push(supply);
+    if (isChainName(supply.blockchain)) {
+      grouped[supply.blockchain].push(supply);
+    }
   }
   return grouped;
 }
@@ -101,8 +109,8 @@ function uniqueChainIds(chainNames: ChainName[]): number[] {
 
 function inferIndexedChainIds(treasuryAssets: TreasuryAsset[], ohmSupply: OhmSupply[]): number[] {
   return uniqueChainIds([
-    ...treasuryAssets.map((asset) => asset.blockchain),
-    ...ohmSupply.map((supply) => supply.blockchain),
+    ...treasuryAssets.map((asset) => asset.blockchain).filter(isChainName),
+    ...ohmSupply.map((supply) => supply.blockchain).filter(isChainName),
   ]);
 }
 

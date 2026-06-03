@@ -4,6 +4,10 @@ import { afterEach, describe, expect, expectTypeOf, test, vi } from "vitest";
 import { createClient, DEFAULT_BASE_URL } from "../src";
 import {
   getOpenApiDocument,
+  type ChainTokenRecords,
+  type ChainTokenSupplies,
+  type Health,
+  type Metric,
   type Operations,
   type OhmSupply,
   type TokenRecord,
@@ -80,6 +84,19 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     });
   });
 
+  test("legacy health query maps to the operations health route", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({ data: { status: "ok", timestamp: "2026-06-03T00:00:00.000Z", version: "3.0.0" } })),
+    );
+    const client = createClient({ baseUrl: "https://metrics.example", fetch: fetchMock });
+
+    const health = await client.query({ operationName: "health" });
+
+    expectTypeOf(health).toEqualTypeOf<Operations["health"]["response"]>();
+    const calls = fetchMock.mock.calls as unknown as Array<[string, RequestInit?]>;
+    expect(new URL(calls[0][0]).pathname).toBe("/operations/health");
+  });
+
   test("legacy query preserves operation-specific TypeScript inference", async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [] })));
     const client = createClient({ baseUrl: "https://metrics.example", fetch: fetchMock });
@@ -94,6 +111,9 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     });
 
     expectTypeOf(metrics).toEqualTypeOf<Operations["paginated/metrics"]["response"]>();
+    expectTypeOf(await client.query({ operationName: "latest/metrics" })).toEqualTypeOf<
+      Operations["latest/metrics"]["response"]
+    >();
     expectTypeOf(protocolMetrics).toEqualTypeOf<Operations["paginated/protocolMetrics"]["response"]>();
     expectTypeOf(protocolMetrics).toEqualTypeOf<WundergraphResponse<Operations["paginated/protocolMetrics"]["data"]>>();
   });
@@ -344,8 +364,15 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     const tokenRecord: TokenRecord = treasuryAsset;
     const ohmSupply = {} as OhmSupply;
     const tokenSupply: TokenSupply = ohmSupply;
+    const tokenRecords = {} as ChainTokenRecords;
+    const tokenSupplies = {} as ChainTokenSupplies;
+    const health = {} as Health;
 
     expect(tokenRecord).toBe(treasuryAsset);
     expect(tokenSupply).toBe(ohmSupply);
+    expectTypeOf<Metric["_meta"]["chainsComplete"]>().toEqualTypeOf<string[]>();
+    expect(tokenRecords).toBe(tokenRecords);
+    expect(tokenSupplies).toBe(tokenSupplies);
+    expect(health).toBe(health);
   });
 });

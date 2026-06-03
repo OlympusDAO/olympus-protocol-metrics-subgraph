@@ -28,6 +28,7 @@ export type MetricsApiConfig = {
 };
 
 const LEGACY_OPERATION_PATHS = new Set([
+  "/operations/health",
   "/operations/latest/metrics",
   "/operations/earliest/metrics",
   "/operations/paginated/metrics",
@@ -461,7 +462,7 @@ async function readLegacyOperation(
   variables: Record<string, unknown>,
   config: MetricsApiConfig,
   manifest: Manifest,
-): Promise<DailyMetric[] | TreasuryAsset[] | OhmSupply[] | ProtocolMetric[]> {
+): Promise<DailyMetric | DailyMetric[] | TreasuryAsset[] | OhmSupply[] | ProtocolMetric[]> {
   const range = resolveLegacyRange(pathname, variables, manifest, config.maxRangeDays);
   if (range === undefined) {
     return [];
@@ -482,6 +483,15 @@ async function readLegacyOperation(
   const metrics = await readDailyMetrics(config, manifest, range, includeRecords, config.generatedAt ?? manifest.generatedAt);
   const filteredMetrics =
     variables.crossChainDataComplete === true ? metrics.filter((metric) => metric.crossChainComplete) : metrics;
+  if (pathname.endsWith("/metrics") && !pathname.startsWith("/operations/paginated/")) {
+    return filteredMetrics[0] === undefined
+      ? buildEmptyDailyMetric({
+          date: range.start,
+          includeRecords,
+          generatedAt: config.generatedAt ?? manifest.generatedAt,
+        })
+      : filteredMetrics[0];
+  }
   if (pathname.endsWith("/protocolMetrics")) {
     return legacyRowsDescending(filteredMetrics.map(dailyMetricToProtocolMetric));
   }
@@ -681,6 +691,13 @@ async function handleMetricsApiRequestUnchecked(
       data: null,
       errors: [{ message: "atBlock queries are not supported by the artifact-backed metrics API." }],
     });
+    return;
+  }
+
+  if (url.pathname === "/operations/health") {
+    res.setHeader("deprecation", "true");
+    res.setHeader("cache-control", READY_CACHE_CONTROL);
+    sendJson(req, res, 200, legacyResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.0.0" }));
     return;
   }
 

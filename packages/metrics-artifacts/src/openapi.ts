@@ -126,6 +126,9 @@ export function getOpenApiDocument(): {
           },
         },
       },
+      "/operations/health": {
+        get: deprecatedOperation("Legacy WunderGraph-compatible health response."),
+      },
       "/operations/latest/metrics": {
         get: deprecatedOperation("Latest protocol metrics."),
       },

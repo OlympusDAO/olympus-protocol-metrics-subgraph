@@ -537,10 +537,17 @@ describe("metrics API HTTP behavior", () => {
   });
 
   test("returns deprecated legacy operations and 501 atBlock responses", async () => {
+    const health = await request("/operations/health");
+    expect(health.status).toBe(200);
+    expect(health.headers.get("deprecation")).toBe("true");
+    expect(await health.json()).toMatchObject({
+      data: { status: "ok", version: "3.0.0", timestamp: expect.any(String) },
+    });
+
     const latest = await request("/operations/latest/metrics");
     expect(latest.status).toBe(200);
     expect(latest.headers.get("deprecation")).toBe("true");
-    expect(await latest.json()).toMatchObject({ data: [{ date: "2026-06-01" }] });
+    expect(await latest.json()).toMatchObject({ data: { date: "2026-06-01" } });
 
     const atBlock = await request("/operations/atBlock/metrics");
     expect(atBlock.status).toBe(501);
@@ -561,6 +568,7 @@ describe("metrics API HTTP behavior", () => {
   test("supports documented latest, earliest, and paginated legacy route families", async () => {
     const boundedVariables = `?wg_variables=${encodeURIComponent(JSON.stringify({ startDate: "2026-06-01", endDate: "2026-06-01" }))}`;
     const routes = [
+      "/operations/health",
       "/operations/latest/metrics",
       "/operations/earliest/metrics",
       `/operations/paginated/metrics${boundedVariables}`,

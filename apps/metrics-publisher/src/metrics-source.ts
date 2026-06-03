@@ -439,7 +439,20 @@ function normalizeDailyMetric(row: RawDailyMetric): DailyMetric {
     treasuryLiquidBackingPerOhmFloating: toNumber(row.treasuryLiquidBackingPerOhmFloating),
     treasuryLiquidBackingPerOhmBacked: toNumber(row.treasuryLiquidBackingPerOhmBacked),
     treasuryLiquidBackingPerGOhmBacked: toNumber(row.treasuryLiquidBackingPerGOhmBacked),
+    _meta: {
+      chainsComplete: CHAIN_NAMES.filter((chain) => row.chainsIndexed.includes(chainIdForName(chain))),
+      chainsFailed: CHAIN_NAMES.filter((chain) => chainsMissing.includes(chainIdForName(chain))),
+      timestamp: metricTimestamp(row.date, timestamps),
+    },
   };
+}
+
+function metricTimestamp(date: string, timestamps: Record<string, number>): string {
+  const latestTimestamp = Math.max(...Object.values(timestamps));
+  if (latestTimestamp > 0) {
+    return new Date(latestTimestamp * 1000).toISOString();
+  }
+  return `${date}T00:00:00.000Z`;
 }
 
 function indexingProgressFromChainRows(
