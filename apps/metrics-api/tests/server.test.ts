@@ -317,7 +317,7 @@ describe("metrics API HTTP behavior", () => {
     expect(body.data[0].ohmTotalSupplyRecords.Ethereum).toEqual([]);
   });
 
-  test("attaches only records from the metric's selected per-chain block", async () => {
+  test("returns only records from the metric's selected per-chain block", async () => {
     const config: MetricsApiConfig = {
       maxRangeDays: 366,
       manifest: {
@@ -402,6 +402,39 @@ describe("metrics API HTTP behavior", () => {
     expect(body.data[0].ohmTotalSupplyRecords.Ethereum).toEqual([
       expect.objectContaining({ id: "supply-selected", block: 200 }),
     ]);
+
+    const treasuryAssets = await request(
+      "/v2/treasury-assets/daily?start=2026-05-21&end=2026-05-21",
+      undefined,
+      config,
+    );
+    expect(treasuryAssets.status).toBe(200);
+    expect(await treasuryAssets.json()).toMatchObject({
+      data: [expect.objectContaining({ id: "asset-selected", block: 200 })],
+    });
+
+    const ohmSupply = await request("/v2/ohm-supply/daily?start=2026-05-21&end=2026-05-21", undefined, config);
+    expect(ohmSupply.status).toBe(200);
+    expect(await ohmSupply.json()).toMatchObject({
+      data: [expect.objectContaining({ id: "supply-selected", block: 200 })],
+    });
+
+    const variables = encodeURIComponent(JSON.stringify({ startDate: "2026-05-21", endDate: "2026-05-21" }));
+    const legacyTokenRecords = await request(`/operations/paginated/tokenRecords?wg_variables=${variables}`, undefined, config);
+    expect(legacyTokenRecords.status).toBe(200);
+    expect(await legacyTokenRecords.json()).toEqual({
+      data: [expect.objectContaining({ id: "asset-selected", block: 200 })],
+    });
+
+    const legacyTokenSupplies = await request(
+      `/operations/paginated/tokenSupplies?wg_variables=${variables}`,
+      undefined,
+      config,
+    );
+    expect(legacyTokenSupplies.status).toBe(200);
+    expect(await legacyTokenSupplies.json()).toEqual({
+      data: [expect.objectContaining({ id: "supply-selected", block: 200 })],
+    });
   });
 
   test("rejects request bodies on GET and HEAD", async () => {
@@ -513,6 +546,7 @@ describe("metrics API HTTP behavior", () => {
           {
             id: "asset-1",
             date: "2026-05-21",
+            block: 123,
             blockchain: "Ethereum",
             value: 13,
             valueExcludingOhm: 13,
@@ -523,6 +557,7 @@ describe("metrics API HTTP behavior", () => {
           {
             id: "supply-1",
             date: "2026-05-21",
+            block: 123,
             blockchain: "Ethereum",
             balance: 100,
             supplyBalance: 100,

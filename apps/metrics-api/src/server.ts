@@ -254,6 +254,25 @@ async function readArtifactRows<T>(
   return rows;
 }
 
+async function readSelectedDailyRecords<T extends { date: string; block: number; blockchain: string }>(
+  config: MetricsApiConfig,
+  manifest: Manifest,
+  range: { start: string; end: string; days: number },
+  keyPrefix: string,
+): Promise<T[]> {
+  const [metricRows, records] = await Promise.all([
+    readArtifactRows<DailyMetric>(config, manifest, range, "v2/metrics/daily"),
+    readArtifactRows<T>(config, manifest, range, keyPrefix),
+  ]);
+  const metricsByDate = new Map(
+    metricRows.map((metric) => [metric.date, normalizeMetricCompleteness(metric)]),
+  );
+  return records.filter((record) => {
+    const metric = metricsByDate.get(record.date);
+    return metric !== undefined && isSelectedMetricBlock(metric, record);
+  });
+}
+
 function artifactKeyForMonth(manifest: Manifest, keyPrefix: string, month: string): string {
   const deploymentPath = `${keyPrefix.replace(/^v2\//, "")}/${month}.json`;
   if (manifest.indexerDeploymentId !== undefined) {
@@ -425,10 +444,14 @@ async function readLegacyOperation(
 ): Promise<DailyMetric[] | TreasuryAsset[] | OhmSupply[] | ProtocolMetric[]> {
   const range = resolveLegacyRange(pathname, variables, manifest);
   if (pathname.endsWith("/tokenRecords")) {
-    return legacyRowsDescending(await readArtifactRows<TreasuryAsset>(config, manifest, range, "v2/treasury-assets/daily"));
+    return legacyRowsDescending(
+      await readSelectedDailyRecords<TreasuryAsset>(config, manifest, range, "v2/treasury-assets/daily"),
+    );
   }
   if (pathname.endsWith("/tokenSupplies")) {
-    return legacyRowsDescending(await readArtifactRows<OhmSupply>(config, manifest, range, "v2/ohm-supply/daily"));
+    return legacyRowsDescending(
+      await readSelectedDailyRecords<OhmSupply>(config, manifest, range, "v2/ohm-supply/daily"),
+    );
   }
 
   const includeRecords = variables.includeRecords === true;
@@ -563,7 +586,7 @@ export async function handleMetricsApiRequest(
         return;
       }
       const range = resolveV2Range(url, config, publishedManifest);
-      const treasuryAssets = await readArtifactRows<TreasuryAsset>(
+      const treasuryAssets = await readSelectedDailyRecords<TreasuryAsset>(
         config,
         publishedManifest,
         range,
@@ -587,7 +610,12 @@ export async function handleMetricsApiRequest(
         return;
       }
       const range = resolveV2Range(url, config, publishedManifest);
-      const ohmSupply = await readArtifactRows<OhmSupply>(config, publishedManifest, range, "v2/ohm-supply/daily");
+      const ohmSupply = await readSelectedDailyRecords<OhmSupply>(
+        config,
+        publishedManifest,
+        range,
+        "v2/ohm-supply/daily",
+      );
       res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
       sendJson(req, res, 200, emptyResponse<OhmSupply[]>(config, range, ohmSupply, publishedManifest));
     } catch (error) {
