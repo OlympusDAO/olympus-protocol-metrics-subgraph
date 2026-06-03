@@ -1,5 +1,6 @@
 import { createServer, request as httpRequest } from "node:http";
 import { AddressInfo } from "node:net";
+import { gunzipSync } from "node:zlib";
 import { afterEach, describe, expect, test } from "vitest";
 
 import { metricsApiConfigFromEnv, metricsApiPortFromEnv } from "../src/config";
@@ -43,7 +44,7 @@ async function request(path: string, init?: RequestInit, config: MetricsApiConfi
 
 async function rawRequest(
   path: string,
-  init: { method: string; body?: string },
+  init: { method: string; body?: string; headers?: Record<string, string> },
   config: MetricsApiConfig = defaultConfig,
 ) {
   const server = createServer((req, res) => {
@@ -53,8 +54,12 @@ async function rawRequest(
   closeServer = () => new Promise((resolve) => server.close(() => resolve()));
   const port = (server.address() as AddressInfo).port;
 
-  return new Promise<{ status: number; headers: Record<string, string | string[] | undefined>; body: string }>(
-    (resolve, reject) => {
+  return new Promise<{
+    status: number;
+    headers: Record<string, string | string[] | undefined>;
+    body: string;
+    rawBody: Buffer;
+  }>((resolve, reject) => {
       const clientRequest = httpRequest(
         {
           host: "127.0.0.1",
@@ -63,8 +68,9 @@ async function rawRequest(
           method: init.method,
           headers:
             init.body === undefined
-              ? undefined
+              ? init.headers
               : {
+                  ...init.headers,
                   "content-length": Buffer.byteLength(init.body),
                   "content-type": "application/json",
                 },
@@ -72,13 +78,15 @@ async function rawRequest(
         (response) => {
           const chunks: Buffer[] = [];
           response.on("data", (chunk: Buffer) => chunks.push(chunk));
-          response.on("end", () =>
+          response.on("end", () => {
+            const rawBody = Buffer.concat(chunks);
             resolve({
               status: response.statusCode ?? 0,
               headers: response.headers,
-              body: Buffer.concat(chunks).toString("utf8"),
-            }),
-          );
+              body: rawBody.toString("utf8"),
+              rawBody,
+            });
+          });
         },
       );
       clientRequest.on("error", reject);
@@ -86,8 +94,7 @@ async function rawRequest(
         clientRequest.write(init.body);
       }
       clientRequest.end();
-    },
-  );
+    });
 }
 
 afterEach(async () => {
@@ -186,6 +193,19 @@ describe("metrics API HTTP behavior", () => {
     expect(
       (await request("/v2/metrics/daily?start=2026-05-21")).headers.get("cache-control"),
     ).toBe("public, max-age=3600");
+  });
+
+  test("compresses JSON responses when requested", async () => {
+    const response = await rawRequest("/v2/metrics/daily?start=2026-05-21", {
+      method: "GET",
+      headers: { "accept-encoding": "gzip" },
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-encoding"]).toBe("gzip");
+    expect(response.headers.vary).toContain("accept-encoding");
+    const body = JSON.parse(gunzipSync(response.rawBody).toString("utf8")) as { data: Array<{ date: string }> };
+    expect(body.data[0]).toMatchObject({ date: "2026-05-21" });
   });
 
   test("does not expose the internal manifest as a public route", async () => {

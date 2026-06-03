@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { brotliCompressSync, gzipSync } from "node:zlib";
 
 import { ArtifactNotFoundError, type ArtifactReader } from "./artifact-store";
 import {
@@ -56,16 +57,54 @@ function setCommonHeaders(res: ServerResponse): void {
   res.setHeader("access-control-allow-origin", "*");
   res.setHeader("access-control-allow-methods", "GET, HEAD, OPTIONS");
   res.setHeader("access-control-allow-headers", "content-type");
-  res.setHeader("vary", "origin");
+  res.setHeader("vary", "origin, accept-encoding");
 }
 
-function sendJson(res: ServerResponse, status: number, value: unknown): void {
+function acceptedEncoding(req: IncomingMessage): "br" | "gzip" | undefined {
+  const header = req.headers["accept-encoding"];
+  const value = Array.isArray(header) ? header.join(",") : (header ?? "");
+  const encodings = value
+    .split(",")
+    .map((encoding) => encoding.trim().toLowerCase().split(";")[0])
+    .filter((encoding) => encoding !== "");
+
+  if (encodings.includes("br")) {
+    return "br";
+  }
+  if (encodings.includes("gzip")) {
+    return "gzip";
+  }
+  return undefined;
+}
+
+function sendBody(req: IncomingMessage, res: ServerResponse, status: number, contentType: string, body: string): void {
   res.statusCode = status;
-  res.setHeader("content-type", "application/json; charset=utf-8");
-  res.end(JSON.stringify(value));
+  res.setHeader("content-type", contentType);
+  if (req.method === "HEAD") {
+    res.end();
+    return;
+  }
+
+  const encoding = acceptedEncoding(req);
+  if (encoding === "br") {
+    res.setHeader("content-encoding", "br");
+    res.end(brotliCompressSync(Buffer.from(body)));
+    return;
+  }
+  if (encoding === "gzip") {
+    res.setHeader("content-encoding", "gzip");
+    res.end(gzipSync(Buffer.from(body)));
+    return;
+  }
+  res.end(body);
+}
+
+function sendJson(req: IncomingMessage, res: ServerResponse, status: number, value: unknown): void {
+  sendBody(req, res, status, "application/json; charset=utf-8", JSON.stringify(value));
 }
 
 function sendError(
+  req: IncomingMessage,
   res: ServerResponse,
   status: number,
   code: string,
@@ -79,7 +118,7 @@ function sendError(
       ...(details === undefined ? {} : { details }),
     },
   };
-  sendJson(res, status, body);
+  sendJson(req, res, status, body);
 }
 
 function getUrl(req: IncomingMessage): URL {
@@ -406,12 +445,12 @@ export async function handleMetricsApiRequest(
   }
 
   if (req.method !== "GET" && req.method !== "HEAD") {
-    sendError(res, 405, "method_not_allowed", "Only GET, HEAD, and OPTIONS are supported.");
+    sendError(req, res, 405, "method_not_allowed", "Only GET, HEAD, and OPTIONS are supported.");
     return;
   }
 
   if (hasRequestBody(req)) {
-    sendError(res, 400, "request_body_not_allowed", "GET and HEAD requests must not include a request body.");
+    sendError(req, res, 400, "request_body_not_allowed", "GET and HEAD requests must not include a request body.");
     return;
   }
 
@@ -419,21 +458,20 @@ export async function handleMetricsApiRequest(
 
   if (url.pathname === "/ready") {
     res.setHeader("cache-control", READY_CACHE_CONTROL);
-    sendJson(res, 200, { status: "ready" });
+    sendJson(req, res, 200, { status: "ready" });
     return;
   }
 
   if (url.pathname === "/openapi.json") {
     res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
-    sendJson(res, 200, getOpenApiDocument());
+    sendJson(req, res, 200, getOpenApiDocument());
     return;
   }
 
   if (url.pathname === "/docs") {
     res.statusCode = 200;
     res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
-    res.setHeader("content-type", "text/html; charset=utf-8");
-    res.end("<!doctype html><title>Olympus Protocol Metrics API</title><h1>OpenAPI</h1>");
+    sendBody(req, res, 200, "text/html; charset=utf-8", "<!doctype html><title>Olympus Protocol Metrics API</title><h1>OpenAPI</h1>");
     return;
   }
 
@@ -447,10 +485,11 @@ export async function handleMetricsApiRequest(
       return manifest;
     } catch (error) {
       if (error instanceof ArtifactNotFoundError) {
-        sendError(res, 503, "manifest_not_published", "Metrics artifacts have not been published yet.");
+        sendError(req, res, 503, "manifest_not_published", "Metrics artifacts have not been published yet.");
         return undefined;
       }
       sendError(
+        req,
         res,
         503,
         "manifest_unavailable",
@@ -474,7 +513,7 @@ export async function handleMetricsApiRequest(
         : { indexerDeploymentId: publishedManifest.indexerDeploymentId }),
     };
     res.setHeader("cache-control", BOUNDS_CACHE_CONTROL);
-    sendJson(res, 200, emptyResponse(config, undefined, bounds, publishedManifest));
+    sendJson(req, res, 200, emptyResponse(config, undefined, bounds, publishedManifest));
     return;
   }
 
@@ -494,12 +533,12 @@ export async function handleMetricsApiRequest(
         config.generatedAt ?? publishedManifest.generatedAt,
       );
       res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
-      sendJson(res, 200, emptyResponse<DailyMetric[]>(config, range, metrics, publishedManifest));
+      sendJson(req, res, 200, emptyResponse<DailyMetric[]>(config, range, metrics, publishedManifest));
     } catch (error) {
       if (error instanceof ArtifactNotFoundError) {
         return;
       }
-      sendError(res, 400, "invalid_date_range", error instanceof Error ? error.message : "Invalid date range.");
+      sendError(req, res, 400, "invalid_date_range", error instanceof Error ? error.message : "Invalid date range.");
     }
     return;
   }
@@ -518,12 +557,12 @@ export async function handleMetricsApiRequest(
         "v2/treasury-assets/daily",
       );
       res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
-      sendJson(res, 200, emptyResponse<TreasuryAsset[]>(config, range, treasuryAssets, publishedManifest));
+      sendJson(req, res, 200, emptyResponse<TreasuryAsset[]>(config, range, treasuryAssets, publishedManifest));
     } catch (error) {
       if (error instanceof ArtifactNotFoundError) {
         return;
       }
-      sendError(res, 400, "invalid_date_range", error instanceof Error ? error.message : "Invalid date range.");
+      sendError(req, res, 400, "invalid_date_range", error instanceof Error ? error.message : "Invalid date range.");
     }
     return;
   }
@@ -537,19 +576,19 @@ export async function handleMetricsApiRequest(
       const range = resolveV2Range(url, config, publishedManifest);
       const ohmSupply = await readArtifactRows<OhmSupply>(config, publishedManifest, range, "v2/ohm-supply/daily");
       res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
-      sendJson(res, 200, emptyResponse<OhmSupply[]>(config, range, ohmSupply, publishedManifest));
+      sendJson(req, res, 200, emptyResponse<OhmSupply[]>(config, range, ohmSupply, publishedManifest));
     } catch (error) {
       if (error instanceof ArtifactNotFoundError) {
         return;
       }
-      sendError(res, 400, "invalid_date_range", error instanceof Error ? error.message : "Invalid date range.");
+      sendError(req, res, 400, "invalid_date_range", error instanceof Error ? error.message : "Invalid date range.");
     }
     return;
   }
 
   if (LEGACY_AT_BLOCK_PATHS.has(url.pathname)) {
     res.setHeader("deprecation", "true");
-    sendJson(res, 501, {
+    sendJson(req, res, 501, {
       data: null,
       errors: [{ message: "atBlock queries are not supported by the artifact-backed metrics API." }],
     });
@@ -563,6 +602,7 @@ export async function handleMetricsApiRequest(
       variables = parseLegacyVariables(url);
     } catch (error) {
       sendError(
+        req,
         res,
         400,
         "invalid_wg_variables",
@@ -577,15 +617,15 @@ export async function handleMetricsApiRequest(
       }
       const data = await readLegacyOperation(url.pathname, variables, config, publishedManifest);
       res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
-      sendJson(res, 200, legacyResponse(data));
+      sendJson(req, res, 200, legacyResponse(data));
     } catch (error) {
       if (error instanceof ArtifactNotFoundError) {
         return;
       }
-      sendError(res, 400, "invalid_legacy_request", error instanceof Error ? error.message : "Invalid legacy request.");
+      sendError(req, res, 400, "invalid_legacy_request", error instanceof Error ? error.message : "Invalid legacy request.");
     }
     return;
   }
 
-  sendError(res, 404, "not_found", "Route not found.");
+  sendError(req, res, 404, "not_found", "Route not found.");
 }
