@@ -8,8 +8,10 @@ import {
   type DailyMetric,
   type DateRange,
   type OhmSupply,
+  type ChainIndexingProgress,
   type SupplyCategoryValues,
   type TreasuryAsset,
+  type IndexingProgress,
 } from "../../../packages/metrics-artifacts/src";
 
 export type MetricsBounds = {
@@ -19,14 +21,7 @@ export type MetricsBounds = {
 
 export type PublishBoundsCompleteness = "cross_chain" | "all_chains";
 
-export type ChainIndexingProgress = {
-  block: number;
-  date: string;
-};
-
-export type LatestIndexingProgress = {
-  chains: Partial<Record<ChainName, ChainIndexingProgress>>;
-};
+export type LatestIndexingProgress = IndexingProgress;
 
 export type MetricsSource = {
   fetchBounds(completeness?: PublishBoundsCompleteness): Promise<MetricsBounds>;
@@ -145,6 +140,7 @@ export class HasuraGraphqlMetricsSource implements MetricsSource {
             ) {
               date
               block
+              timestamp
             }
           `;
         }).join("\n")}
@@ -252,6 +248,7 @@ type RawSupplyCategory = {
 type RawChainIndexingProgress = {
   block: unknown;
   date: string;
+  timestamp: unknown;
 };
 
 type RawDailyMetric = {
@@ -456,6 +453,7 @@ function indexingProgressFromChainRows(
     chains[chainRow.chainName] = {
       block: toNumber(chainRow.block),
       date: chainRow.date,
+      timestamp: toNumber(chainRow.timestamp),
     };
   }
   return { chains };

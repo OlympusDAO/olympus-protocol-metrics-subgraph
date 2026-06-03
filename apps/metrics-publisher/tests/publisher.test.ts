@@ -132,12 +132,12 @@ function source(overrides: Partial<MetricsSource> = {}): MetricsSource {
     fetchBounds: async () => ({ earliestDate: "2026-04-30", latestDate: "2026-06-01" }),
     fetchLatestIndexingProgress: async () => ({
       chains: {
-        Arbitrum: { block: 100, date: "2026-06-01" },
-        Ethereum: { block: 200, date: "2026-06-01" },
-        Fantom: { block: 300, date: "2026-06-01" },
-        Polygon: { block: 400, date: "2026-06-01" },
-        Base: { block: 500, date: "2026-06-01" },
-        Berachain: { block: 600, date: "2026-06-01" },
+        Arbitrum: { block: 100, date: "2026-06-01", timestamp: 1780272000 },
+        Ethereum: { block: 200, date: "2026-06-01", timestamp: 1780272000 },
+        Fantom: { block: 300, date: "2026-06-01", timestamp: 1780272000 },
+        Polygon: { block: 400, date: "2026-06-01", timestamp: 1780272000 },
+        Base: { block: 500, date: "2026-06-01", timestamp: 1780272000 },
+        Berachain: { block: 600, date: "2026-06-01", timestamp: 1780272000 },
       },
     }),
     fetchDailyMetrics: async () => [metric, { ...metric, date: "2026-06-01" }],
@@ -185,6 +185,12 @@ describe("metrics publisher", () => {
       schemaVersion: "1.0.0",
       generatedAt,
       indexerDeploymentId: "current-indexer",
+      indexingProgress: {
+        chains: {
+          Arbitrum: { block: 100, date: "2026-06-01", timestamp: 1780272000 },
+          Ethereum: { block: 200, date: "2026-06-01", timestamp: 1780272000 },
+        },
+      },
       earliestDate: "2026-05-01",
       latestDate: "2026-05-31",
     });
@@ -250,8 +256,8 @@ describe("metrics publisher", () => {
     expect(result.deploymentId).toBe("current-indexer");
     expect(result.indexingProgress).toMatchObject({
       chains: {
-        Arbitrum: { block: 100, date: "2026-06-01" },
-        Ethereum: { block: 200, date: "2026-06-01" },
+        Arbitrum: { block: 100, date: "2026-06-01", timestamp: 1780272000 },
+        Ethereum: { block: 200, date: "2026-06-01", timestamp: 1780272000 },
       },
     });
     expect(observedRanges).toEqual([
@@ -327,8 +333,8 @@ describe("metrics publisher", () => {
     expect(result.range).toEqual({ start: "2026-05-29", end: "2026-06-01", days: 4 });
     expect(result.indexingProgress).toMatchObject({
       chains: {
-        Arbitrum: { block: 100, date: "2026-06-01" },
-        Ethereum: { block: 200, date: "2026-06-01" },
+        Arbitrum: { block: 100, date: "2026-06-01", timestamp: 1780272000 },
+        Ethereum: { block: 200, date: "2026-06-01", timestamp: 1780272000 },
       },
     });
     expect(result.writtenKeys).toContain("v2/deployments/current-indexer/metrics/daily/2026-06.json");
@@ -344,7 +350,7 @@ describe("metrics publisher", () => {
       source: source({
         fetchLatestIndexingProgress: async () => ({
           chains: {
-            Base: { block: 12345, date: "2026-06-01" },
+            Base: { block: 12345, date: "2026-06-01", timestamp: 1780272000 },
           },
         }),
         fetchBounds: async (completeness) => {
@@ -375,7 +381,7 @@ describe("metrics publisher", () => {
     });
     expect(result.indexingProgress).toMatchObject({
       chains: {
-        Base: { block: 12345, date: "2026-06-01" },
+        Base: { block: 12345, date: "2026-06-01", timestamp: 1780272000 },
       },
     });
     expect(store.json("v2/manifest.json")).toEqual(existingManifest);
@@ -877,11 +883,11 @@ describe("metrics publisher", () => {
         return new Response(
           JSON.stringify({
             data: {
-              arbitrumProgress: [{ date: "2026-05-30", block: "123" }],
-              ethereumProgress: [{ date: "2026-05-31", block: "456" }],
+              arbitrumProgress: [{ date: "2026-05-30", block: "123", timestamp: "1780099200" }],
+              ethereumProgress: [{ date: "2026-05-31", block: "456", timestamp: "1780185600" }],
               fantomProgress: [],
               polygonProgress: [],
-              baseProgress: [{ date: "2026-06-01", block: "789" }],
+              baseProgress: [{ date: "2026-06-01", block: "789", timestamp: "1780272000" }],
               berachainProgress: [],
             },
           }),
@@ -892,14 +898,15 @@ describe("metrics publisher", () => {
 
     await expect(source.fetchLatestIndexingProgress()).resolves.toMatchObject({
       chains: {
-        Arbitrum: { block: 123, date: "2026-05-30" },
-        Ethereum: { block: 456, date: "2026-05-31" },
-        Base: { block: 789, date: "2026-06-01" },
+        Arbitrum: { block: 123, date: "2026-05-30", timestamp: 1780099200 },
+        Ethereum: { block: 456, date: "2026-05-31", timestamp: 1780185600 },
+        Base: { block: 789, date: "2026-06-01", timestamp: 1780272000 },
       },
     });
     expect(requestBody?.query).toContain("LatestIndexingProgress");
     expect(requestBody?.query).toContain("ChainMetricValues");
     expect(requestBody?.query).toContain("block");
+    expect(requestBody?.query).toContain("timestamp");
   });
 
   test("Hasura source reports not-ready when no complete snapshots exist", async () => {

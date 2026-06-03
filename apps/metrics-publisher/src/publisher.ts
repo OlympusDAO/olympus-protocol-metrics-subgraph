@@ -76,6 +76,24 @@ const SCHEMAS: Record<string, Record<string, unknown>> = {
       schemaVersion: { type: "string" },
       generatedAt: { type: "string", format: "date-time" },
       indexerDeploymentId: { type: "string" },
+      indexingProgress: {
+        type: "object",
+        required: ["chains"],
+        properties: {
+          chains: {
+            type: "object",
+            additionalProperties: {
+              type: "object",
+              required: ["date", "timestamp", "block"],
+              properties: {
+                date: { type: "string", format: "date" },
+                timestamp: { type: "integer", minimum: 0 },
+                block: { type: "integer", minimum: 0 },
+              },
+            },
+          },
+        },
+      },
       earliestDate: { type: "string", format: "date" },
       latestDate: { type: "string", format: "date" },
       artifacts: {
@@ -241,6 +259,7 @@ export async function publishMetricsArtifacts(input: {
       schemaVersion: SCHEMA_VERSION,
       generatedAt,
       indexerDeploymentId: deploymentId,
+      indexingProgress,
       earliestDate,
       latestDate,
       artifacts: manifestArtifacts,

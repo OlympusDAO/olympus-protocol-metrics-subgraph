@@ -2,6 +2,16 @@ export const CHAIN_NAMES = ["Arbitrum", "Ethereum", "Fantom", "Polygon", "Base",
 
 export type ChainName = (typeof CHAIN_NAMES)[number];
 
+export type ChainIndexingProgress = {
+  block: number;
+  date: string;
+  timestamp: number;
+};
+
+export type IndexingProgress = {
+  chains: Partial<Record<ChainName, ChainIndexingProgress>>;
+};
+
 export type ChainValues = Record<ChainName, number>;
 
 export type SupplyCategoryValues = {
@@ -155,12 +165,14 @@ export type BoundsResponse = {
   latestDate: string;
   maxRangeDays: number;
   indexerDeploymentId?: string;
+  indexingProgress?: IndexingProgress;
 };
 
 export type Manifest = {
   schemaVersion: string;
   generatedAt: string;
   indexerDeploymentId?: string;
+  indexingProgress?: IndexingProgress;
   earliestDate: string;
   latestDate: string;
   artifacts?: Record<
