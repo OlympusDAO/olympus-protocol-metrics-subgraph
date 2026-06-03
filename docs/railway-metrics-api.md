@@ -281,14 +281,55 @@ ARTIFACT_SECRET_ACCESS_KEY=<read-only-bucket-secret-key>
 
 Cloudflare should sit in front of the public `metrics-api` domain.
 
-- Cache `GET /v2/metrics/daily*`, `GET /v2/treasury-assets/daily*`, and
-  `GET /v2/ohm-supply/daily*` by full URL, including query string.
-- Respect origin `Cache-Control`. Range routes currently use an 8-hour TTL
-  because indexer data only updates on that cadence.
-- Cache `GET /v2/bounds` for a short TTL and allow stale revalidation.
-- Do not cache `/ready`.
-- Do not cache error responses by default.
-- Keep `GET` and `HEAD` as the only cacheable methods.
+Create cache rules in this order:
+
+1. Bypass non-data routes.
+
+   Expression:
+
+   ```text
+   http.host eq "treasury-subgraph-api.olympusdao.finance"
+   and (
+     http.request.uri.path eq "/ready"
+     or http.request.uri.path eq "/v2/bounds"
+   )
+   ```
+
+   Settings:
+
+   - Cache eligibility: Bypass cache.
+
+2. Cache every other `GET` and `HEAD` route on the API hostname.
+
+   Expression:
+
+   ```text
+   http.host eq "treasury-subgraph-api.olympusdao.finance"
+   and http.request.method in {"GET" "HEAD"}
+   ```
+
+   Settings:
+
+   - Cache eligibility: Eligible for cache.
+   - Edge TTL: Use cache-control header if present, bypass cache if not.
+   - Browser TTL: Respect origin.
+   - Cache key: include query string parameters.
+   - Query string sort: enabled, if available.
+
+The API currently returns `Cache-Control: public, max-age=3600` for data
+routes and `Cache-Control: no-store` for `/ready` and `/v2/bounds`. The
+Cloudflare rule should therefore respect the origin response headers rather
+than override TTLs. Keep query strings in the cache key because `start`, `end`,
+`includeRecords`, and legacy `wg_variables` change the response body.
+
+Relevant Cloudflare references:
+
+- Cache Rules settings:
+  <https://developers.cloudflare.com/cache/how-to/cache-rules/settings/>
+- Cache key settings:
+  <https://developers.cloudflare.com/cache/how-to/cache-keys/>
+- Query String Sort:
+  <https://developers.cloudflare.com/cache/advanced-configuration/query-string-sort/>
 
 ## Cloudflare WAF Rules
 
@@ -298,6 +339,10 @@ Use WAF rules to keep the public surface narrow:
   Railway.
 - Block requests with bodies for `GET` and `HEAD`.
 - Rate-limit abusive traffic by IP and path.
+- Rate-limit malformed URLs and cache-busting probes. Railway logs showed
+  requests such as `///////this-should-not-exist,.%3C%3E%21@` and
+  `///%5Coast.me`; the API now returns `400 invalid_request_url` for these,
+  but Cloudflare should absorb repeat traffic before it reaches Railway.
 - Block obvious path traversal and non-API paths.
 - Keep Hasura, Postgres, the indexer, and the publisher without public domains;
   WAF rules are not a substitute for private Railway networking.
