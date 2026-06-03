@@ -69,6 +69,14 @@ function assertNodeVersion(): void {
   }
 }
 
+function assertNpmSupportsStagedPublishing(): void {
+  const version = capture("npm", ["--version"]).trim();
+  const [major = 0, minor = 0] = version.split(".").map((part) => Number.parseInt(part, 10));
+  if (!Number.isInteger(major) || !Number.isInteger(minor) || major < 11 || (major === 11 && minor < 15)) {
+    fail(`npm 11.15.0+ is required for staged publishing, got ${version}`);
+  }
+}
+
 function assertCleanGitTree(): void {
   const status = capture("git", ["status", "--porcelain"], repoRoot).trim();
   if (status.length > 0) {
@@ -101,6 +109,7 @@ function assertPackAllowlist(): void {
 
 assertPackageMetadata();
 assertNodeVersion();
+assertNpmSupportsStagedPublishing();
 assertCleanGitTree();
 run("pnpm", ["install", "--frozen-lockfile"], repoRoot);
 run("pnpm", ["run", "build"], packageDir);

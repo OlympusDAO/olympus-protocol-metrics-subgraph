@@ -102,6 +102,12 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
 
     expect(packageJson.name).toBe("@olympusdao/treasury-subgraph-client");
     expect(packageJson.version).toMatch(/^3\./);
+    expect(packageJson.scripts["auth:login"]).toBe(
+      "npm login --registry=https://registry.npmjs.org --scope=@olympusdao --userconfig ./.npmrc.local",
+    );
+    expect(packageJson.scripts["auth:whoami"]).toBe(
+      "npm whoami --registry=https://registry.npmjs.org --userconfig ./.npmrc.local",
+    );
     expect(packageJson.main).toBe("./dist/apps/client/src/index.js");
     expect(packageJson.types).toBe("./dist/apps/client/src/index.d.ts");
     expect(packageJson.files).toContain("CHANGELOG.md");
@@ -116,9 +122,12 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(packageJson.scripts.prepack).toBe("pnpm run build");
     expect(packageJson.scripts.prepublishOnly).toBe("pnpm run release:check");
     expect(packageJson.scripts["publish:client"]).toBe(
-      "npm publish --access public --provenance --cache /tmp/olympus-treasury-subgraph-npm-cache",
+      "npm stage publish --access public --provenance --userconfig ./.npmrc.local --cache /tmp/olympus-treasury-subgraph-npm-cache",
     );
     expect(packageJson.scripts["release:check"]).toBe("tsx scripts/release-check.ts");
+    expect(packageJson.scripts["stage:list"]).toBe(
+      "npm stage list @olympusdao/treasury-subgraph-client --userconfig ./.npmrc.local",
+    );
     expect(packageJson.exports).toHaveProperty("./openapi.json");
     expect(packageJson.dependencies ?? {}).not.toHaveProperty("@tanstack/react-query");
     expect(packageJson.peerDependencies ?? {}).not.toHaveProperty("@tanstack/react-query");

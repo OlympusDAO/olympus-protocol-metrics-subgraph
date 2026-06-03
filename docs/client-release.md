@@ -17,11 +17,24 @@ helpers, deprecated legacy `/operations/*` helpers, and `openapi.json`.
 
 ## Release Checklist
 
-1. Use Node.js 24+ and the pinned workspace pnpm version.
+1. Use Node.js 24+, npm 11.15.0+, and the pinned workspace pnpm version.
 2. Bump `apps/client/package.json` to the intended version.
 3. Commit the version bump and related changes. The release check intentionally
    fails on a dirty git tree.
-4. Run the client release gate:
+4. Log in to npm from `apps/client` using a directory-local npm config:
+
+   ```sh
+   cd apps/client
+   pnpm run auth:login
+   pnpm run auth:whoami
+   ```
+
+   `auth:login` writes credentials to `apps/client/.npmrc.local`, which is
+   gitignored and used only by the client package publish scripts. Do not use a
+   repository-root `.npmrc`, and do not commit npm credentials. Remove
+   `.npmrc.local` after publishing if you do not want to keep the local session.
+
+5. Run the client release gate:
 
    ```sh
    pnpm --dir apps/client run release:check
@@ -32,26 +45,42 @@ helpers, deprecated legacy `/operations/*` helpers, and `openapi.json`.
    and verifies that `npm pack --dry-run` only includes `dist`, `CHANGELOG.md`,
    `openapi.json`, and package metadata.
 
-5. Review the tarball contents:
+6. Review the tarball contents:
 
    ```sh
    pnpm --dir apps/client run pack:dry-run
    ```
 
-6. Publish from `apps/client`:
+7. Stage the package from `apps/client`:
 
    ```sh
    pnpm --dir apps/client run publish:client
    ```
 
-   The publish script uses `npm publish --access public --provenance` with a
-   temporary npm cache, so npm can attach provenance when running from a
-   supported CI environment without depending on a developer's global npm cache.
-   If publishing locally, use an npm account with 2FA enabled and avoid
-   long-lived local automation tokens.
+   The publish script uses `npm stage publish --access public --provenance`
+   with the directory-local npm config and a temporary npm cache. The package's
+   npm access policy is set to "Require two-factor authentication and disallow
+   tokens", so direct token-based publishing is rejected. Staged publishing
+   uploads the tarball without making it installable; approval is a separate
+   2FA-protected step.
 
-7. Record the package version, git commit, and npm package URL in the release
+8. Review and approve the staged package:
+
+   ```sh
+   cd apps/client
+   pnpm run stage:list
+   npm stage view <stage-id> --userconfig ./.npmrc.local
+   npm stage download <stage-id> --userconfig ./.npmrc.local
+   npm stage approve <stage-id> --userconfig ./.npmrc.local
+   ```
+
+   `npm stage approve` prompts for 2FA. Reject the stage instead of approving
+   it if the tarball contents, version, git commit, or changelog do not match
+   the intended release.
+
+9. Record the package version, git commit, and npm package URL in the release
    notes or PR thread.
 
-Do not commit `.npmrc` files with tokens. Prefer trusted publishing or
-short-lived npm automation credentials when possible.
+Do not commit `.npmrc` files with tokens. Prefer trusted publishing configured
+with stage-only permissions for CI, and keep package-level direct token
+publishing disabled.
