@@ -52,6 +52,7 @@ const LEGACY_AT_BLOCK_PATHS = new Set([
 const READY_CACHE_CONTROL = "no-store";
 const BOUNDS_CACHE_CONTROL = "no-store";
 const PUBLIC_CACHE_CONTROL = "public, max-age=3600";
+const REQUEST_URL_PARSE_BASE = "http://localhost";
 
 function setCommonHeaders(res: ServerResponse): void {
   res.setHeader("access-control-allow-origin", "*");
@@ -121,8 +122,12 @@ function sendError(
   sendJson(req, res, status, body);
 }
 
-function getUrl(req: IncomingMessage): URL {
-  return new URL(req.url ?? "/", "http://metrics-api.local");
+function getUrl(req: IncomingMessage): URL | undefined {
+  try {
+    return new URL(req.url ?? "/", REQUEST_URL_PARSE_BASE);
+  } catch {
+    return undefined;
+  }
 }
 
 async function getManifest(config: MetricsApiConfig): Promise<Manifest> {
@@ -488,6 +493,10 @@ export async function handleMetricsApiRequest(
   }
 
   const url = getUrl(req);
+  if (url === undefined) {
+    sendError(req, res, 400, "invalid_request_url", "Request URL is invalid.");
+    return;
+  }
 
   if (url.pathname === "/ready") {
     res.setHeader("cache-control", READY_CACHE_CONTROL);

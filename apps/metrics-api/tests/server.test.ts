@@ -1,5 +1,5 @@
 import { createServer, request as httpRequest } from "node:http";
-import { AddressInfo } from "node:net";
+import { AddressInfo, connect } from "node:net";
 import { gunzipSync } from "node:zlib";
 import { afterEach, describe, expect, test } from "vitest";
 
@@ -95,6 +95,48 @@ async function rawRequest(
       }
       clientRequest.end();
     });
+}
+
+async function rawSocketRequest(
+  requestTarget: string,
+  config: MetricsApiConfig = defaultConfig,
+): Promise<{ status: number; body: string }> {
+  const server = createServer((req, res) => {
+    void handleMetricsApiRequest(req, res, config);
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const close = () => new Promise<void>((resolve) => server.close(() => resolve()));
+  closeServer = close;
+  const port = (server.address() as AddressInfo).port;
+
+  return new Promise((resolve, reject) => {
+    const socket = connect(port, "127.0.0.1");
+    let response = "";
+
+    socket.setEncoding("utf8");
+    socket.on("connect", () => {
+      socket.write(`GET ${requestTarget} HTTP/1.1\r\nHost: 127.0.0.1:${port}\r\nConnection: close\r\n\r\n`);
+    });
+    socket.on("data", (chunk) => {
+      response += chunk;
+    });
+    socket.on("error", reject);
+    socket.on("end", () => {
+      const [, status = "0"] = response.match(/^HTTP\/\d\.\d\s+(\d+)/) ?? [];
+      const result = {
+        status: Number(status),
+        body: response.slice(response.indexOf("\r\n\r\n") + 4),
+      };
+      close()
+        .then(() => {
+          if (closeServer === close) {
+            closeServer = undefined;
+          }
+          resolve(result);
+        })
+        .catch(reject);
+    });
+  });
 }
 
 afterEach(async () => {
@@ -446,6 +488,18 @@ describe("metrics API HTTP behavior", () => {
 
     const headResponse = await rawRequest("/v2/bounds", { method: "HEAD", body: "{}" });
     expect(headResponse.status).toBe(400);
+  });
+
+  test("rejects malformed request URLs without crashing the server", async () => {
+    const response = await rawSocketRequest("///////this-should-not-exist,.%3C%3E%21@");
+
+    expect(response.status).toBe(400);
+    expect(JSON.parse(response.body)).toMatchObject({
+      error: { code: "invalid_request_url" },
+    });
+
+    const ready = await request("/ready");
+    expect(ready.status).toBe(200);
   });
 
   test("returns deprecated legacy operations and 501 atBlock responses", async () => {
