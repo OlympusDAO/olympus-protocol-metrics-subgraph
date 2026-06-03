@@ -21,20 +21,7 @@ helpers, deprecated legacy `/operations/*` helpers, and `openapi.json`.
 2. Bump `apps/client/package.json` to the intended version.
 3. Commit the version bump and related changes. The release check intentionally
    fails on a dirty git tree.
-4. Log in to npm from `apps/client` using a directory-local npm config:
-
-   ```sh
-   cd apps/client
-   pnpm run auth:login
-   pnpm run auth:whoami
-   ```
-
-   `auth:login` writes credentials to `apps/client/.npmrc.local`, which is
-   gitignored and used only by the client package publish scripts. Do not use a
-   repository-root `.npmrc`, and do not commit npm credentials. Remove
-   `.npmrc.local` after publishing if you do not want to keep the local session.
-
-5. Run the client release gate:
+4. Run the client release gate before logging in to npm:
 
    ```sh
    pnpm --dir apps/client run release:check
@@ -45,42 +32,60 @@ helpers, deprecated legacy `/operations/*` helpers, and `openapi.json`.
    and verifies that `npm pack --dry-run` only includes `dist`, `CHANGELOG.md`,
    `openapi.json`, and package metadata.
 
-6. Review the tarball contents:
+5. Review the tarball contents:
 
    ```sh
    pnpm --dir apps/client run pack:dry-run
    ```
 
-7. Stage the package from `apps/client`:
+6. Stage the package from `apps/client`:
 
    ```sh
    pnpm --dir apps/client run publish:client
    ```
 
-   The publish script uses `npm stage publish --access public --provenance`
-   with the directory-local npm config and a temporary npm cache. The package's
-   npm access policy is set to "Require two-factor authentication and disallow
-   tokens", so direct token-based publishing is rejected. Staged publishing
-   uploads the tarball without making it installable; approval is a separate
-   2FA-protected step.
+   The publish script logs in to npm with the directory-local
+   `apps/client/.npmrc.local`, runs
+   `npm stage publish --access public --provenance`, then logs out and removes
+   `.npmrc.local` in a cleanup step. The package's npm access policy is set to
+   "Require two-factor authentication and disallow tokens", so direct
+   token-based publishing is rejected. Staged publishing uploads the tarball
+   without making it installable; approval is a separate 2FA-protected step.
 
-8. Review and approve the staged package:
+7. Review and approve the staged package through npmjs.com. The npm staged
+   publishing docs recommend opening the **Staged Packages** tab to review a
+   staged package, then clicking **Approve** from that tab. Use the web
+   frontend as the primary approval path so approval is not coupled to local
+   npm CLI or development-environment issues:
+
+   <https://www.npmjs.com/package/@olympusdao/treasury-subgraph-client>
+
+   Confirm the staged version, tag, package contents, changelog, and git commit
+   before approving. npm will prompt for 2FA in the web flow before publishing
+   the staged package to the live registry.
+
+   The CLI path is optional and should be used only when you want to list,
+   view, or download the staged tarball locally before website approval. It
+   requires a short npm login session because the staging commands are
+   authenticated:
 
    ```sh
    cd apps/client
+   pnpm run auth:login
    pnpm run stage:list
    npm stage view <stage-id> --userconfig ./.npmrc.local
    npm stage download <stage-id> --userconfig ./.npmrc.local
-   npm stage approve <stage-id> --userconfig ./.npmrc.local
+   pnpm run auth:logout
    ```
 
-   `npm stage approve` prompts for 2FA. Reject the stage instead of approving
-   it if the tarball contents, version, git commit, or changelog do not match
-   the intended release.
+   Reject the stage instead of approving it if the tarball contents, version,
+   git commit, or changelog do not match the intended release. Always run
+   `pnpm run auth:logout` after any CLI review session.
 
-9. Record the package version, git commit, and npm package URL in the release
+8. Record the package version, git commit, and npm package URL in the release
    notes or PR thread.
 
-Do not commit `.npmrc` files with tokens. Prefer trusted publishing configured
-with stage-only permissions for CI, and keep package-level direct token
-publishing disabled.
+Do not commit `.npmrc` files with tokens. `apps/client/.npmrc.local` is
+gitignored and should only exist during the short login windows above. Prefer
+trusted publishing configured with stage-only permissions for CI, and keep
+package-level direct token publishing disabled.

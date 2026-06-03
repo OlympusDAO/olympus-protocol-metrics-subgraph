@@ -283,6 +283,7 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(packageJson.scripts["auth:login"]).toBe(
       "npm login --registry=https://registry.npmjs.org --scope=@olympusdao --userconfig ./.npmrc.local",
     );
+    expect(packageJson.scripts["auth:logout"]).toBe("tsx scripts/auth-logout.ts");
     expect(packageJson.scripts["auth:whoami"]).toBe(
       "npm whoami --registry=https://registry.npmjs.org --userconfig ./.npmrc.local",
     );
@@ -299,9 +300,7 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(packageJson.scripts.pretest).toBe("pnpm run openapi:generate");
     expect(packageJson.scripts.prepack).toBe("pnpm run build");
     expect(packageJson.scripts.prepublishOnly).toBe("pnpm run release:check");
-    expect(packageJson.scripts["publish:client"]).toBe(
-      "npm stage publish --access public --provenance --userconfig ./.npmrc.local --cache /tmp/olympus-treasury-subgraph-npm-cache",
-    );
+    expect(packageJson.scripts["publish:client"]).toBe("tsx scripts/stage-publish.ts");
     expect(packageJson.scripts["release:check"]).toBe("tsx scripts/release-check.ts");
     expect(packageJson.scripts["stage:list"]).toBe(
       "npm stage list @olympusdao/treasury-subgraph-client --userconfig ./.npmrc.local",
@@ -309,6 +308,21 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(packageJson.exports).toHaveProperty("./openapi.json");
     expect(packageJson.dependencies ?? {}).not.toHaveProperty("@tanstack/react-query");
     expect(packageJson.peerDependencies ?? {}).not.toHaveProperty("@tanstack/react-query");
+  });
+
+  test("publish helper logs out and removes the local npm credentials", () => {
+    const stagePublish = readFileSync("scripts/stage-publish.ts", "utf8");
+    const authLogout = readFileSync("scripts/auth-logout.ts", "utf8");
+    const npmAuth = readFileSync("scripts/npm-auth.ts", "utf8");
+
+    expect(stagePublish).toContain('runNpm(["login"');
+    expect(stagePublish).toContain('"stage"');
+    expect(stagePublish).toContain('"publish"');
+    expect(stagePublish).toContain("logoutAndRemoveLocalNpmConfig()");
+    expect(stagePublish).toContain("removeLocalNpmConfig()");
+    expect(authLogout).toContain("logoutAndRemoveLocalNpmConfig()");
+    expect(npmAuth).toContain('runNpm(["logout"');
+    expect(npmAuth).toContain("unlinkSync(userConfig)");
   });
 
   test("ships an OpenAPI JSON file matching the generated document paths", () => {
