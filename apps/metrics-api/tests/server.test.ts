@@ -317,6 +317,93 @@ describe("metrics API HTTP behavior", () => {
     expect(body.data[0].ohmTotalSupplyRecords.Ethereum).toEqual([]);
   });
 
+  test("attaches only records from the metric's selected per-chain block", async () => {
+    const config: MetricsApiConfig = {
+      maxRangeDays: 366,
+      manifest: {
+        ...testManifest,
+        earliestDate: "2026-05-21",
+        latestDate: "2026-05-21",
+        artifacts: {
+          "v2/metrics/daily/2026-05.json": { sha256: "0".repeat(64), byteLength: 2, rowCount: 1 },
+          "v2/treasury-assets/daily/2026-05.json": { sha256: "1".repeat(64), byteLength: 2, rowCount: 2 },
+          "v2/ohm-supply/daily/2026-05.json": { sha256: "2".repeat(64), byteLength: 2, rowCount: 2 },
+        },
+      },
+      artifactReader: artifactReader({
+        "v2/metrics/daily/2026-05.json": [
+          {
+            date: "2026-05-21",
+            blocks: { Ethereum: 200 },
+            timestamps: { Ethereum: 1_716_249_600 },
+            chainsIndexed: [1],
+            chainsMissing: [42161, 250, 137, 8453, 80094],
+            crossChainComplete: false,
+            ohmTotalSupply: 2000,
+            ohmTotalSupplyComponents: { Ethereum: 2000 },
+            treasuryLiquidBacking: 20,
+            treasuryLiquidBackingComponents: { Ethereum: 20 },
+          },
+        ],
+        "v2/treasury-assets/daily/2026-05.json": [
+          {
+            id: "asset-old",
+            date: "2026-05-21",
+            block: 100,
+            blockchain: "Ethereum",
+            value: 10,
+            valueExcludingOhm: 10,
+            isLiquid: true,
+          },
+          {
+            id: "asset-selected",
+            date: "2026-05-21",
+            block: 200,
+            blockchain: "Ethereum",
+            value: 20,
+            valueExcludingOhm: 20,
+            isLiquid: true,
+          },
+        ],
+        "v2/ohm-supply/daily/2026-05.json": [
+          {
+            id: "supply-old",
+            date: "2026-05-21",
+            block: 100,
+            blockchain: "Ethereum",
+            balance: 1000,
+            supplyBalance: 1000,
+            type: "Total Supply",
+          },
+          {
+            id: "supply-selected",
+            date: "2026-05-21",
+            block: 200,
+            blockchain: "Ethereum",
+            balance: 2000,
+            supplyBalance: 2000,
+            type: "Total Supply",
+          },
+        ],
+      }),
+    };
+
+    const response = await request(
+      "/v2/metrics/daily?start=2026-05-21&end=2026-05-21&includeRecords=true",
+      undefined,
+      config,
+    );
+    expect(response.status).toBe(200);
+
+    const body = await response.json();
+    expect(body.data[0].treasuryLiquidBackingRecords.Ethereum).toEqual([
+      expect.objectContaining({ id: "asset-selected", block: 200 }),
+    ]);
+    expect(body.data[0].ohmTotalSupplyRecords.Ethereum).toEqual([
+      expect.objectContaining({ id: "supply-selected", block: 200 }),
+    ]);
+  });
+
   test("rejects request bodies on GET and HEAD", async () => {
     const getResponse = await rawRequest("/v2/bounds", { method: "GET", body: "{}" });
     expect(getResponse.status).toBe(400);

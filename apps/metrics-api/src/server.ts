@@ -275,12 +275,22 @@ function artifactKeyForMonth(manifest: Manifest, keyPrefix: string, month: strin
   return deploymentKey ?? stableKey;
 }
 
+function isSelectedMetricBlock(
+  metric: DailyMetric,
+  record: { block: number; blockchain: string },
+): boolean {
+  const metricBlock = (metric.blocks as Partial<Record<string, number>> | undefined)?.[record.blockchain];
+  return metricBlock !== undefined && metricBlock !== 0 && Number(record.block) === metricBlock;
+}
+
 function attachMetricRecords(metric: DailyMetric, treasuryAssets: TreasuryAsset[], ohmSupply: OhmSupply[]): DailyMetric {
+  const selectedTreasuryAssets = treasuryAssets.filter((asset) => isSelectedMetricBlock(metric, asset));
+  const selectedOhmSupply = ohmSupply.filter((supply) => isSelectedMetricBlock(metric, supply));
   const records = buildDailyMetric({
     date: metric.date,
     chainValues: {},
-    treasuryAssets,
-    ohmSupply,
+    treasuryAssets: selectedTreasuryAssets,
+    ohmSupply: selectedOhmSupply,
     includeRecords: true,
     chainsIndexed: metric.chainsIndexed,
     chainsMissing: metric.chainsMissing,
