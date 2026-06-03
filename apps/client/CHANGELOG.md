@@ -23,6 +23,9 @@ The client now targets the self-hosted Olympus treasury metrics API by default.
 - Preserved legacy `query({ operationName, input })` support for `/operations/*`.
 - Preserved typed legacy helper methods and marked them as deprecated.
 - Preserved legacy `TokenRecord` and `TokenSupply` type aliases while adding clearer `TreasuryAsset` and `OhmSupply` types.
+- Preserved the documented `2.0.0` compatibility contract for legacy exports,
+  operation names, WunderGraph response wrappers, and latest/earliest response
+  cardinality.
 
 ## [v2.0.0] - 2026-02-06
 

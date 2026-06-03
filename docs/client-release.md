@@ -5,6 +5,9 @@ The `@olympusdao/treasury-subgraph-client` package is released from
 `@olympusdao/treasury-subgraph-client` package and includes typed v2 REST
 helpers, deprecated legacy `/operations/*` helpers, and `openapi.json`.
 
+The compatibility contract is documented in
+[`docs/client-backwards-compatibility.md`](client-backwards-compatibility.md).
+
 ## Versioning
 
 - Patch: implementation fixes, type fixes, OpenAPI corrections, or additive
@@ -31,6 +34,10 @@ helpers, deprecated legacy `/operations/*` helpers, and `openapi.json`.
    `openapi.json`, runs client tests, runs `pnpm audit --audit-level moderate`,
    and verifies that `npm pack --dry-run` only includes `dist`, `CHANGELOG.md`,
    `openapi.json`, and package metadata.
+
+   The client tests should continue to cover the compatibility contract:
+   legacy exports, legacy `query({ operationName, input })`, legacy operation
+   cardinality, default fetch behavior, and generated OpenAPI.
 
 5. Review the tarball contents:
 
