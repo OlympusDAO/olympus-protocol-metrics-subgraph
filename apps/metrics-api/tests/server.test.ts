@@ -559,19 +559,20 @@ describe("metrics API HTTP behavior", () => {
   });
 
   test("supports documented latest, earliest, and paginated legacy route families", async () => {
+    const boundedVariables = `?wg_variables=${encodeURIComponent(JSON.stringify({ startDate: "2026-06-01", endDate: "2026-06-01" }))}`;
     const routes = [
       "/operations/latest/metrics",
       "/operations/earliest/metrics",
-      "/operations/paginated/metrics",
+      `/operations/paginated/metrics${boundedVariables}`,
       "/operations/latest/tokenRecords",
       "/operations/earliest/tokenRecords",
-      "/operations/paginated/tokenRecords",
+      `/operations/paginated/tokenRecords${boundedVariables}`,
       "/operations/latest/tokenSupplies",
       "/operations/earliest/tokenSupplies",
-      "/operations/paginated/tokenSupplies",
+      `/operations/paginated/tokenSupplies${boundedVariables}`,
       "/operations/latest/protocolMetrics",
       "/operations/earliest/protocolMetrics",
-      "/operations/paginated/protocolMetrics",
+      `/operations/paginated/protocolMetrics${boundedVariables}`,
     ];
 
     for (const route of routes) {
@@ -582,9 +583,9 @@ describe("metrics API HTTP behavior", () => {
     }
   });
 
-  test("parses legacy wg_variables, accepts ignored controls, and does not apply v2 max ranges", async () => {
+  test("parses legacy wg_variables and accepts ignored controls within the max range", async () => {
     const variables = JSON.stringify({
-      startDate: "2025-01-01",
+      startDate: "2026-05-31",
       endDate: "2026-06-01",
       dateOffset: 30,
       ignoreCache: true,
@@ -600,9 +601,26 @@ describe("metrics API HTTP behavior", () => {
     expect(await raw.json()).toMatchObject({ data: expect.any(Array) });
   });
 
-  test("clips oversized legacy ranges to manifest bounds without applying the v2 max range", async () => {
+  test("rejects legacy ranges that exceed the max range", async () => {
+    const variables = JSON.stringify({
+      startDate: "2025-01-01",
+      endDate: "2026-06-01",
+    });
+
+    const response = await request(`/operations/paginated/metrics?wg_variables=${encodeURIComponent(variables)}`);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: {
+        code: "invalid_legacy_request",
+        message: expect.stringContaining("maximum is 366 days"),
+      },
+    });
+  });
+
+  test("clips legacy ranges to manifest bounds after applying the max range", async () => {
     const config: MetricsApiConfig = {
-      maxRangeDays: 1,
+      maxRangeDays: 2,
       manifest: {
         ...testManifest,
         earliestDate: "2026-05-21",
@@ -618,13 +636,13 @@ describe("metrics API HTTP behavior", () => {
         ],
       }),
     };
-    const variables = encodeURIComponent(JSON.stringify({ startDate: "2020-01-01", endDate: "2030-12-31" }));
+    const variables = encodeURIComponent(JSON.stringify({ startDate: "2026-05-20", endDate: "2026-05-21" }));
 
     const response = await request(`/operations/paginated/metrics?wg_variables=${variables}`, undefined, config);
 
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({
-      data: [{ date: "2026-05-22" }, { date: "2026-05-21" }],
+      data: [{ date: "2026-05-21" }],
     });
   });
 

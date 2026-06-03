@@ -38,7 +38,8 @@ const legacyVariablesParameter: OpenApiParameter = {
   name: "wg_variables",
   in: "query",
   schema: { type: "string" },
-  description: "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored.",
+  description:
+    "JSON-encoded legacy WunderGraph variables. dateOffset is accepted and ignored. startDate/endDate ranges must not exceed the API maxRangeDays value.",
 };
 
 export function getOpenApiDocument(): {

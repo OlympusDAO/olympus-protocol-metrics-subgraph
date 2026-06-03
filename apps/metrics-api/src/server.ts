@@ -385,13 +385,15 @@ function resolveLegacyRange(
   pathname: string,
   variables: Record<string, unknown>,
   manifest: Manifest,
+  maxRangeDays: number,
 ): { start: string; end: string; days: number } | undefined {
   if (pathname.startsWith("/operations/latest/")) {
     return resolveDateRange({
       start: manifest.latestDate,
       end: manifest.latestDate,
       manifest,
-      enforceMaxRange: false,
+      maxRangeDays,
+      enforceMaxRange: true,
     });
   }
 
@@ -400,7 +402,8 @@ function resolveLegacyRange(
       start: manifest.earliestDate,
       end: manifest.earliestDate,
       manifest,
-      enforceMaxRange: false,
+      maxRangeDays,
+      enforceMaxRange: true,
     });
   }
 
@@ -410,7 +413,8 @@ function resolveLegacyRange(
     start,
     end,
     manifest,
-    enforceMaxRange: false,
+    maxRangeDays,
+    enforceMaxRange: true,
   });
   if (requestedRange.end < manifest.earliestDate || requestedRange.start > manifest.latestDate) {
     return undefined;
@@ -420,7 +424,8 @@ function resolveLegacyRange(
     start: requestedRange.start < manifest.earliestDate ? manifest.earliestDate : requestedRange.start,
     end: requestedRange.end > manifest.latestDate ? manifest.latestDate : requestedRange.end,
     manifest,
-    enforceMaxRange: false,
+    maxRangeDays,
+    enforceMaxRange: true,
   });
 }
 
@@ -457,7 +462,7 @@ async function readLegacyOperation(
   config: MetricsApiConfig,
   manifest: Manifest,
 ): Promise<DailyMetric[] | TreasuryAsset[] | OhmSupply[] | ProtocolMetric[]> {
-  const range = resolveLegacyRange(pathname, variables, manifest);
+  const range = resolveLegacyRange(pathname, variables, manifest, config.maxRangeDays);
   if (range === undefined) {
     return [];
   }
