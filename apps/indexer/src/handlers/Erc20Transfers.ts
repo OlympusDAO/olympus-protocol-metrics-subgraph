@@ -146,7 +146,8 @@ async function applyMintBurnToSupply(
 // Reused by Wrapped9 + Erc4626Vault contracts because Envio's address table keys
 // on (chainId, address), so each address must live under exactly one contract
 // definition. WETH / WFTM / sDAI / etc. live under Wrapped9 / Erc4626Vault and
-// reuse this same Transfer logic.
+// reuse this same treasury-balance Transfer logic; Erc4626 supply mint/burn
+// accounting is handled by the Deposit/Withdraw handlers below.
 export const buildTreasuryTransferWhere = ({ chain }: { chain: { id: number } }) => {
   const wallets = treasuryWalletsForChain(chain.id);
   if (wallets.length === 0) return false as const;

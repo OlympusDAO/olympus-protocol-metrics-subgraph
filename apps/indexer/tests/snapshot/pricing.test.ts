@@ -2,7 +2,7 @@ import BigNumber from "bignumber.js";
 import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 import { describe, expect, test } from "vitest";
-import { getPrice, getTotalValue, withPricingCache } from "../../src/pricing";
+import { createPriceHandler, getPrice, getTotalValue, withPricingCache } from "../../src/pricing";
 import { ARBITRUM } from "../../src/snapshot/chains/arbitrum";
 import { BERACHAIN } from "../../src/snapshot/chains/berachain";
 import type { ChainConfig, LiquidityHandler, TokenDefinition } from "../../src/snapshot/types";
@@ -173,6 +173,35 @@ describe("Arbitrum Envio snapshot parity", () => {
     await expect(
       getPrice(ARBITRUM, context, client, WETH, ARBITRUM_BLOCK, null),
     ).resolves.toSatisfy((result) => result.price.eq("3000"));
+  });
+
+  test("passes the current Univ2 pool id while valuing underlying tokens", async () => {
+    const pool = handler(ARBITRUM, MAGIC_WETH_POOL);
+    const client = mockClient(ARBITRUM.chainId, new Map<string, unknown>());
+    const context = mockContext({
+      univ2: [
+        [
+          poolStateId(ARBITRUM, MAGIC_WETH_POOL),
+          {
+            reserve0: 100_000_000_000_000_000_000n,
+            reserve1: 200_000_000_000_000_000_000n,
+          },
+        ],
+      ],
+    });
+    const currentPools: Array<string | null> = [];
+
+    const totalValue = await createPriceHandler(ARBITRUM, context, client, pool).getTotalValue(
+      [],
+      async (_tokenAddress, _blockNumber, currentPool) => {
+        currentPools.push(currentPool);
+        return { price: new BigNumber(1), liquidity: new BigNumber(1) };
+      },
+      ARBITRUM_BLOCK,
+    );
+
+    expect(totalValue?.toString()).toBe("300");
+    expect(currentPools).toEqual([MAGIC_WETH_POOL, MAGIC_WETH_POOL]);
   });
 
   test("caches repeated price derivations within a snapshot", async () => {

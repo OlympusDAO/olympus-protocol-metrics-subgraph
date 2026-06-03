@@ -118,7 +118,6 @@ export function computePerChainAggregate(
   if (isPreBlvInclusion) ohmCirculatingSupply = ohmCirculatingSupply.plus(supplyOf(TYPE_BLV));
 
   let ohmFloatingSupply = ohmCirculatingSupply.plus(supplyOf(TYPE_LIQUIDITY));
-  if (isPreBlvInclusion) ohmFloatingSupply = ohmFloatingSupply.plus(supplyOf(TYPE_BLV));
 
   const ohmBackedSupply = [
     TYPE_TOTAL_SUPPLY,

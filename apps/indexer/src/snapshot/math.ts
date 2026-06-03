@@ -12,7 +12,7 @@ export const ONE = new BigNumber(1);
 // to floating point in this round-trip. Replaces the repeated
 // `new BigDecimal(value.toString(10))` pattern from BlockHandlers.ts.
 export function toBigDecimal(value: BigNumber): BigDecimal {
-  return new BigDecimal(value.toString());
+  return new BigDecimal(value.toFixed());
 }
 
 // Named-parameter factory for token definitions. The previous positional

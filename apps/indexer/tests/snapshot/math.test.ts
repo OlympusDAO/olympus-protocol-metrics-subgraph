@@ -1,6 +1,7 @@
+import BigNumber from "bignumber.js";
 import { describe, expect, test } from "vitest";
 
-import { univ3PositionAmounts } from "../../src/snapshot/math";
+import { toBigDecimal, univ3PositionAmounts } from "../../src/snapshot/math";
 
 // sqrtPriceX96 for an in-range position. Constructed so the math is easy to
 // reason about: sqrtPriceX96 / 2^96 ≈ 1.0 (price ratio of 1 between tokens).
@@ -39,5 +40,26 @@ describe("univ3PositionAmounts", () => {
     const result = univ3PositionAmounts(0n, SQRT_PRICE_X96_AT_1, -10, 10);
     expect(result.amount0).toBe(0n);
     expect(result.amount1).toBe(0n);
+  });
+});
+
+describe("toBigDecimal", () => {
+  test("serializes BigNumber values in fixed decimal notation", () => {
+    let fixedCalls = 0;
+    let stringCalls = 0;
+    const value = {
+      toFixed: () => {
+        fixedCalls += 1;
+        return "123456789012345678901234567890";
+      },
+      toString: () => {
+        stringCalls += 1;
+        return "1.2345678901234567890123456789e+29";
+      },
+    } as BigNumber;
+
+    expect(toBigDecimal(value).toString()).toBe(new BigNumber("123456789012345678901234567890").toString());
+    expect(fixedCalls).toBe(1);
+    expect(stringCalls).toBe(0);
   });
 });

@@ -282,7 +282,9 @@ export const ARBITRUM: ChainConfig = {
       category: "Volatile",
       isLiquid: true,
       isBluechip: false,
-      // multiplier=0: see commentary on Base ERC20_OHM. gOHM also =0 below.
+      // multiplier=0: OHM/gOHM are protocol liabilities, not treasury assets.
+      // Their own value is excluded here while their pool backing is still
+      // valued through the liquidity handlers.
       multiplier: "0",
       startBlock: OHM_CREATION_BLOCK,
       decimals: 9,

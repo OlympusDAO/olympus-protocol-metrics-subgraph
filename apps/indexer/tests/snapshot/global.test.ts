@@ -122,7 +122,8 @@ describe("computePerChainAggregate", () => {
   });
 
   test("ohmCirculatingSupply / Floating / Backed apply pre-BLV-inclusion rule on Ethereum", () => {
-    // Pre-BLV-inclusion: BLV counted in circulating AND floating.
+    // Legacy Ethereum parity: before the BLV inclusion block, BLV supplyBalance
+    // is included once in both the circulating and floating type lists.
     const supplies: SerializedTokenSupply[] = [
       supply(TYPE_TOTAL_SUPPLY, "1000000", "1000000"),
       supply(TYPE_TREASURY, "0", "-100000"),
@@ -139,14 +140,14 @@ describe("computePerChainAggregate", () => {
       [],
       supplies,
     );
-    // Circulating = total + treasury + BLV (pre) = 1_000_000 - 100_000 - 30_000 = 870_000
+    // Circulating = total + treasury + BLV = 1_000_000 - 100_000 - 30_000 = 870_000
     expect(aggPre.ohmCirculatingSupply.toString()).toBe("870000");
-    // Floating = circulating + liquidity + BLV (pre, already added) = 870_000 - 50_000 - 30_000 = 790_000
-    expect(aggPre.ohmFloatingSupply.toString()).toBe("790000");
+    // Floating = circulating + liquidity = 870_000 - 50_000 = 820_000
+    expect(aggPre.ohmFloatingSupply.toString()).toBe("820000");
     // Backed always includes BLV: 1_000_000 - 100_000 - 50_000 - 30_000 = 820_000
     expect(aggPre.ohmBackedSupply.toString()).toBe("820000");
 
-    // Post-BLV-inclusion: BLV excluded from circulating, still in floating/backed.
+    // After the inclusion block, BLV is excluded from circulating and floating.
     const aggPost = computePerChainAggregate(
       1,
       "Ethereum",

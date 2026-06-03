@@ -74,7 +74,7 @@ export class Univ2PriceHandler extends BasePriceHandler<
     let total = ZERO;
     for (let i = 0; i < tokens.length; i++) {
       if (excludedTokens.some((excluded) => same(excluded, tokens[i]))) continue;
-      const result = await priceLookup(tokens[i], blockNumber, null);
+      const result = await priceLookup(tokens[i], blockNumber, this.getId());
       total = total.plus(balances[i].times(result.price));
     }
     return total;
