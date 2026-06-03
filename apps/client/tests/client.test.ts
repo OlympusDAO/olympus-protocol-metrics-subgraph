@@ -66,6 +66,16 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(defaultFetchMock).not.toHaveBeenCalled();
   });
 
+  test("normalizes trailing slashes in the base URL without a regular expression", async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [] })));
+    const client = createClient({ baseUrl: "https://metrics.example////", fetch: fetchMock });
+
+    await client.getDailyMetrics({ start: "2026-05-20" });
+
+    const calls = fetchMock.mock.calls as unknown as Array<[string, RequestInit?]>;
+    expect(calls[0][0]).toBe("https://metrics.example/v2/metrics/daily?start=2026-05-20");
+  });
+
   test("legacy query maps to /operations with wg_variables", async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [] })));
     const client = createClient({ baseUrl: "https://metrics.example", fetch: fetchMock });

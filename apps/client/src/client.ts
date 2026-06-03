@@ -42,7 +42,7 @@ export class TreasurySubgraphClient {
   private boundsPromise: Promise<BoundsResponse> | undefined;
 
   constructor(config: ClientConfig = {}) {
-    this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
+    this.baseUrl = trimTrailingSlashes(config.baseUrl ?? DEFAULT_BASE_URL);
     this.fetchImpl = config.fetch ?? ((...args) => globalThis.fetch(...args));
     this.headers = config.headers ?? {};
     this.timeout = config.timeout;
@@ -261,6 +261,14 @@ function splitRange(input: { start: string; end: string; maxDays: number }): Arr
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+function trimTrailingSlashes(value: string): string {
+  let end = value.length;
+  while (end > 0 && value.charCodeAt(end - 1) === 47) {
+    end -= 1;
+  }
+  return value.slice(0, end);
+}
 
 function parseDate(value: string): Date {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
