@@ -254,16 +254,16 @@ surface.
 - [x] Add package scripts for client release preparation:
       clean/build type declarations, copy OpenAPI output, run package-focused
       tests, and produce a dry-run `npm pack` tarball for inspection.
-- [ ] Add an explicit client publish script that publishes
+- [x] Add an explicit client publish script that publishes
       `@olympusdao/treasury-subgraph-client` from `apps/client` only after
       validation passes.
-- [ ] Add a package-only release checklist/script that verifies the git tree is
+- [x] Add a package-only release checklist/script that verifies the git tree is
       clean, the package version matches the intended release, and npm
       publishing uses provenance or trusted publishing where available.
-- [ ] Document the versioning/release workflow for the client package,
+- [x] Document the versioning/release workflow for the client package,
       including when to bump major/minor/patch for legacy `/operations/*` and
       v2 API changes.
-- [ ] Add CI or a local validation gate that compares packed tarball contents
+- [x] Add CI or a local validation gate that compares packed tarball contents
       against the intended allowlist (`dist`, `openapi.json`, package metadata)
       before publishing.
 
@@ -294,21 +294,21 @@ surface.
 
 ### Security and supply-chain validation
 
-- [ ] Run `pnpm audit --audit-level moderate` and resolve or explicitly justify
+- [x] Run `pnpm audit --audit-level moderate` and resolve or explicitly justify
       findings.
-- [ ] Review new production dependencies for necessity and maintenance posture.
-- [ ] Keep new runtime dependency footprint minimal; avoid framework dependencies
+- [x] Review new production dependencies for necessity and maintenance posture.
+- [x] Keep new runtime dependency footprint minimal; avoid framework dependencies
       unless they remove meaningful risk.
-- [ ] Secure the client package release path: require npm 2FA / trusted
+- [x] Secure the client package release path: require npm 2FA / trusted
       publisher or provenance where available, avoid publishing from dirty
       working trees, and record the exact git commit/tag used for each release.
-- [ ] Make client publishing reproducible: run release from a pinned Node/pnpm
+- [x] Make client publishing reproducible: run release from a pinned Node/pnpm
       toolchain, `pnpm install --frozen-lockfile`, and a generated tarball whose
       contents can be reviewed before `npm publish`.
-- [ ] Add pre-publish checks for supply-chain risk: dependency audit, license
+- [x] Add pre-publish checks for supply-chain risk: dependency audit, license
       review for runtime deps, package script review, and verification that no
       secrets or environment files are included in the npm tarball.
-- [ ] Document maintainer permissions and token handling for npm publishing:
+- [x] Document maintainer permissions and token handling for npm publishing:
       least-privilege access, no long-lived local automation tokens where
       possible, and no committed `.npmrc` secrets.
 - [x] Build all Docker images locally.
