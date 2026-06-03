@@ -29,8 +29,8 @@ helpers, deprecated legacy `/operations/*` helpers, and `openapi.json`.
 
    This runs `pnpm install --frozen-lockfile`, builds the client, regenerates
    `openapi.json`, runs client tests, runs `pnpm audit --audit-level moderate`,
-   and verifies that `npm pack --dry-run` only includes `dist`, `openapi.json`,
-   and package metadata.
+   and verifies that `npm pack --dry-run` only includes `dist`, `CHANGELOG.md`,
+   `openapi.json`, and package metadata.
 
 5. Review the tarball contents:
 

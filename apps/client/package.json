@@ -1,6 +1,6 @@
 {
   "name": "@olympusdao/treasury-subgraph-client",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Client for Olympus treasury metrics REST and legacy operations APIs.",
   "type": "module",
   "main": "./dist/apps/client/src/index.js",
@@ -17,6 +17,7 @@
     "test": "vitest run tests"
   },
   "files": [
+    "CHANGELOG.md",
     "dist",
     "openapi.json"
   ],

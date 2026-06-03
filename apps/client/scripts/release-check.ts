@@ -86,7 +86,9 @@ function assertPackAllowlist(): void {
   const files = parsed[0]?.files ?? [];
   const disallowed = files
     .map((file) => file.path)
-    .filter((path) => path !== "package.json" && path !== "openapi.json" && !path.startsWith("dist/"));
+    .filter(
+      (path) => path !== "package.json" && path !== "CHANGELOG.md" && path !== "openapi.json" && !path.startsWith("dist/"),
+    );
 
   if (files.length === 0) {
     fail("npm pack dry run did not report any files.");

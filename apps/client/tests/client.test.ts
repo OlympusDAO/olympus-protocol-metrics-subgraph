@@ -101,9 +101,10 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     };
 
     expect(packageJson.name).toBe("@olympusdao/treasury-subgraph-client");
-    expect(packageJson.version).toMatch(/^2\./);
+    expect(packageJson.version).toMatch(/^3\./);
     expect(packageJson.main).toBe("./dist/apps/client/src/index.js");
     expect(packageJson.types).toBe("./dist/apps/client/src/index.d.ts");
+    expect(packageJson.files).toContain("CHANGELOG.md");
     expect(packageJson.files).toContain("openapi.json");
     expect(packageJson.files).toContain("dist");
     expect(packageJson.scripts.build).toBe("rm -rf dist && tsc -p tsconfig.build.json && pnpm run openapi:generate");
