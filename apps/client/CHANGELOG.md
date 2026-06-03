@@ -12,6 +12,7 @@ The client now targets the self-hosted Olympus treasury metrics API by default.
 - Changed the default base URL to `https://treasury-subgraph-api.olympusdao.finance`.
 - Added semantic v2 REST helpers for bounds, daily metrics, treasury assets, and OHM supply.
 - Added opt-in `autoPaginate` support for v2 daily helpers.
+- Added manifest-backed per-chain indexing progress to the v2 bounds response.
 - Bundled `openapi.json` with the package.
 - Added `DEFAULT_BASE_URL` export.
 - Kept the package framework-agnostic with no runtime dependencies.

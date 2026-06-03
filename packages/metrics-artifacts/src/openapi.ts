@@ -82,7 +82,9 @@ export function getOpenApiDocument(): {
       "/v2/bounds": {
         get: {
           summary: "Published date bounds",
-          responses: { "200": jsonResponse("Earliest/latest dates and maximum v2 range.") },
+          responses: {
+            "200": jsonResponse("Earliest/latest dates, maximum v2 range, and latest per-chain indexing progress."),
+          },
         },
       },
       "/v2/metrics/daily": {

@@ -511,6 +511,9 @@ export async function handleMetricsApiRequest(
       ...(publishedManifest.indexerDeploymentId === undefined
         ? {}
         : { indexerDeploymentId: publishedManifest.indexerDeploymentId }),
+      ...(publishedManifest.indexingProgress === undefined
+        ? {}
+        : { indexingProgress: publishedManifest.indexingProgress }),
     };
     res.setHeader("cache-control", BOUNDS_CACHE_CONTROL);
     sendJson(req, res, 200, emptyResponse(config, undefined, bounds, publishedManifest));

@@ -157,6 +157,12 @@ describe("metrics API HTTP behavior", () => {
       manifest: {
         ...testManifest,
         indexerDeploymentId: "current-indexer",
+        indexingProgress: {
+          chains: {
+            Arbitrum: { date: "2026-06-01", timestamp: 1780272000, block: 100 },
+            Ethereum: { date: "2026-06-01", timestamp: 1780272000, block: 200 },
+          },
+        },
       },
     });
 
@@ -167,6 +173,12 @@ describe("metrics API HTTP behavior", () => {
         latestDate: "2026-06-01",
         maxRangeDays: 366,
         indexerDeploymentId: "current-indexer",
+        indexingProgress: {
+          chains: {
+            Arbitrum: { date: "2026-06-01", timestamp: 1780272000, block: 100 },
+            Ethereum: { date: "2026-06-01", timestamp: 1780272000, block: 200 },
+          },
+        },
       },
     });
   });

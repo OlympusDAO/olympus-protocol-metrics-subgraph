@@ -26,7 +26,7 @@
         "summary": "Published date bounds",
         "responses": {
           "200": {
-            "description": "Earliest/latest dates and maximum v2 range.",
+            "description": "Earliest/latest dates, maximum v2 range, and latest per-chain indexing progress.",
             "content": {
               "application/json": {
                 "schema": {}
