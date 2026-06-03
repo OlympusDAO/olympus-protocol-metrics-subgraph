@@ -1,6 +1,11 @@
 import { describe, expect, test } from "vitest";
 
-import { prepareIndexerEnv, resolveEnvioArgs } from "../src/start-envio";
+import {
+  attachEnvioChildHandlers,
+  formatEnvioSpawnError,
+  prepareIndexerEnv,
+  resolveEnvioArgs,
+} from "../src/start-envio";
 import { validateIndexerEnv } from "../src/validate-env";
 
 const validEnv: NodeJS.ProcessEnv = {
@@ -93,6 +98,42 @@ describe("indexer env validation", () => {
   test("defaults startup to envio start when no args are provided", () => {
     expect(resolveEnvioArgs([])).toEqual(["start"]);
     expect(resolveEnvioArgs(["dev"])).toEqual(["dev"]);
+  });
+
+  test("formats spawn failures loudly before Envio starts", () => {
+    expect(formatEnvioSpawnError(Object.assign(new Error("spawn envio ENOENT"), { code: "ENOENT" }))).toContain(
+      "envio binary was not found in PATH",
+    );
+    expect(formatEnvioSpawnError(Object.assign(new Error("permission denied"), { code: "EACCES" }))).toBe(
+      "Failed to start envio: EACCES: permission denied",
+    );
+  });
+
+  test("attaches a spawn error handler that logs and exits", () => {
+    const handlers = new Map<string, (first: unknown, second?: unknown) => void>();
+    const child = {
+      on: (event: string, handler: (first: unknown, second?: unknown) => void) => {
+        handlers.set(event, handler);
+        return child;
+      },
+    };
+    const logged: string[] = [];
+    const exits: number[] = [];
+
+    attachEnvioChildHandlers(child as Parameters<typeof attachEnvioChildHandlers>[0], {
+      logError: (message) => logged.push(message),
+      exit: (code) => {
+        exits.push(code ?? 0);
+        throw new Error(`exit ${code}`);
+      },
+    });
+
+    expect(handlers.has("error")).toBe(true);
+    expect(() => handlers.get("error")?.(Object.assign(new Error("spawn envio ENOENT"), { code: "ENOENT" }))).toThrow(
+      "exit 1",
+    );
+    expect(logged[0]).toContain("envio binary was not found in PATH");
+    expect(exits).toEqual([1]);
   });
 
   test("fails loudly when required env variables are missing", () => {

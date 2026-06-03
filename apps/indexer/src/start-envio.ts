@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { type ChildProcess, spawn } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { validateIndexerEnv } from "./validate-env";
 
@@ -35,13 +35,42 @@ export function runIndexerStartup(args: string[] = process.argv.slice(2), env: N
     stdio: "inherit",
   });
 
+  attachEnvioChildHandlers(child);
+}
+
+export function attachEnvioChildHandlers(
+  child: Pick<ChildProcess, "on">,
+  options: {
+    logError?: (message: string) => void;
+    exit?: (code?: number) => never;
+    kill?: (pid: number, signal: NodeJS.Signals) => void;
+    pid?: number;
+  } = {},
+): void {
+  const logError = options.logError ?? console.error;
+  const exit = options.exit ?? process.exit;
+  const kill = options.kill ?? process.kill;
+  const pid = options.pid ?? process.pid;
+
+  child.on("error", (error) => {
+    logError(formatEnvioSpawnError(error));
+    exit(1);
+  });
+
   child.on("exit", (code, signal) => {
     if (signal !== null) {
-      process.kill(process.pid, signal);
+      kill(pid, signal);
       return;
     }
-    process.exit(code ?? 1);
+    exit(code ?? 1);
   });
+}
+
+export function formatEnvioSpawnError(error: Error & { code?: string }): string {
+  if (error.code === "ENOENT") {
+    return `Failed to start envio: envio binary was not found in PATH (${error.message})`;
+  }
+  return `Failed to start envio: ${error.code ? `${error.code}: ` : ""}${error.message}`;
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
