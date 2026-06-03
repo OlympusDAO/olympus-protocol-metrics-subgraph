@@ -8,8 +8,12 @@
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json && pnpm run openapi:generate",
     "openapi:generate": "tsx scripts/write-openapi.ts",
+    "pack:dry-run": "pnpm run build && npm pack --dry-run --ignore-scripts --cache /tmp/olympus-treasury-subgraph-npm-cache",
     "prepack": "pnpm run build",
+    "prepublishOnly": "pnpm run release:check",
     "pretest": "pnpm run openapi:generate",
+    "publish:client": "npm publish --access public --provenance --cache /tmp/olympus-treasury-subgraph-npm-cache",
+    "release:check": "tsx scripts/release-check.ts",
     "test": "vitest run tests"
   },
   "files": [

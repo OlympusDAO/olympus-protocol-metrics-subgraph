@@ -95,8 +95,16 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(packageJson.files).toContain("dist");
     expect(packageJson.scripts.build).toBe("rm -rf dist && tsc -p tsconfig.build.json && pnpm run openapi:generate");
     expect(packageJson.scripts["openapi:generate"]).toBe("tsx scripts/write-openapi.ts");
+    expect(packageJson.scripts["pack:dry-run"]).toBe(
+      "pnpm run build && npm pack --dry-run --ignore-scripts --cache /tmp/olympus-treasury-subgraph-npm-cache",
+    );
     expect(packageJson.scripts.pretest).toBe("pnpm run openapi:generate");
     expect(packageJson.scripts.prepack).toBe("pnpm run build");
+    expect(packageJson.scripts.prepublishOnly).toBe("pnpm run release:check");
+    expect(packageJson.scripts["publish:client"]).toBe(
+      "npm publish --access public --provenance --cache /tmp/olympus-treasury-subgraph-npm-cache",
+    );
+    expect(packageJson.scripts["release:check"]).toBe("tsx scripts/release-check.ts");
     expect(packageJson.exports).toHaveProperty("./openapi.json");
     expect(packageJson.dependencies ?? {}).not.toHaveProperty("@tanstack/react-query");
     expect(packageJson.peerDependencies ?? {}).not.toHaveProperty("@tanstack/react-query");
