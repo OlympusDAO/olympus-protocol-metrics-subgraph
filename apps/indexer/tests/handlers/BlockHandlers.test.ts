@@ -6,6 +6,7 @@ import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
 import { addr } from "../../src/snapshot/math";
 import type { SerializedTokenRecord, SerializedTokenSupply } from "../../src/snapshot/types";
 import {
+  BLOCK_HANDLERS,
   pushTokenBalanceRecords,
   pushTotalSupply,
   pushTreasuryOhm,
@@ -24,6 +25,7 @@ import {
 
 const BLOCK = 100_000_000n;
 const TIMESTAMP = 1_700_000_000n;
+const DAY_SECONDS = 24 * 60 * 60;
 
 function buildMockClient(chainId: number): PublicClient {
   return {
@@ -133,6 +135,17 @@ function buildMockContext(seed: {
 }
 
 describe("pushTokenBalanceRecords per-chain validation", () => {
+  test("Fantom snapshot interval is short enough to avoid skipped UTC dates", () => {
+    const fantom = BLOCK_HANDLERS.find((handler) => handler.chain === 250);
+
+    expect(fantom).toMatchObject({
+      name: "FantomEightHourSnapshot",
+      interval: 7200,
+    });
+    expect((fantom?.interval ?? 0) * 4).toBe(8 * 60 * 60);
+    expect((fantom?.interval ?? 0) * 7).toBeLessThan(DAY_SECONDS);
+  });
+
   test("Arbitrum: emits a TokenRecord for WETH held in the DAO MS via Chainlink ETH/USD price", async () => {
     const ARBITRUM = CHAIN_CONFIGS[42161];
     const WETH = "0x82af49447d8a07e3bd95bd0d56f35241523fbab1";

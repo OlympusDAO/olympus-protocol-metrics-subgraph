@@ -70,7 +70,7 @@ import {
 } from "./SnapshotHelpers";
 import { pushUniv3NftPol } from "./Univ3NftPol";
 
-const BLOCK_HANDLERS = [
+export const BLOCK_HANDLERS = [
   {
     name: "ArbitrumEightHourSnapshot",
     chain: 42161 as const,
@@ -99,7 +99,10 @@ const BLOCK_HANDLERS = [
     name: "FantomEightHourSnapshot",
     chain: 250 as const,
     startBlock: 37320000, // 2022-05-01, matches FANTOM config (legacy parity)
-    interval: 24000, // ~8h at Fantom's ~1.2s block time
+    // Fantom is currently ~4s/block, so 7,200 blocks is ~8h. Historical
+    // periods can be slower; keeping this well below 24h prevents skipped UTC
+    // calendar dates in GlobalMetricSnapshot.
+    interval: 7200,
   },
   {
     name: "EthereumEightHourSnapshot",
@@ -844,5 +847,4 @@ async function pushOwnedLiquiditySupply(
     }
   }
 }
-
 
