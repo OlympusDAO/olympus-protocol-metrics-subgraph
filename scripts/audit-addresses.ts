@@ -1,4 +1,4 @@
-// Audits every `addr("0x…")` constant in src/snapshot/chains/*.ts against
+// Audits every `addr("0x…")` constant in apps/indexer/src/snapshot/chains/*.ts against
 // on-chain reality. For each ERC20-like address, calls symbol() / name() /
 // decimals() and prints any mismatch between the variable name and what
 // the contract returns. Non-ERC20 contracts (wallets, multisigs, NFT
@@ -6,14 +6,17 @@
 // confirm something is deployed at that address; intent-checking those
 // requires per-address knowledge so we just flag empty bytecode.
 
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { createPublicClient, getAddress, http } from "viem";
 import * as chains from "viem/chains";
 
-for (const line of readFileSync(
-  "/Users/zach/Documents/repos/olympus/olympus-protocol-metrics-subgraph/.env",
-  "utf8",
-).split("\n")) {
+const envPath = `${process.cwd()}/apps/indexer/.env`;
+
+if (!existsSync(envPath)) {
+  throw new Error(`Missing ${envPath}. Copy apps/indexer/.env.sample to apps/indexer/.env and fill in RPC URLs.`);
+}
+
+for (const line of readFileSync(envPath, "utf8").split("\n")) {
   const match = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.+?)\s*$/);
   if (match) process.env[match[1]] = match[2];
 }
@@ -91,7 +94,7 @@ function looksConsistent(varName: string, symbol: string): boolean {
 }
 
 async function main() {
-  const chainDir = "/Users/zach/Documents/repos/olympus/olympus-protocol-metrics-subgraph/src/snapshot/chains";
+  const chainDir = `${process.cwd()}/apps/indexer/src/snapshot/chains`;
   const files = readdirSync(chainDir).filter((f) => f.endsWith(".ts") && f !== "index.ts" && f !== "rpc.ts");
 
   const allEntries: Entry[] = [];

@@ -104,6 +104,240 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
 
 See `docs/envio-migration/inherited-todos.md`.
 
+## Railway self-hosted metrics API (`feat/railway-metrics-api`)
+
+Current objective: replace public Hasura exposure with private Railway
+Envio/Hasura/Postgres plus a public artifact-backed REST API. New API is `/v2`;
+legacy Wundergraph-style `/operations/*` remains as a deprecated compatibility
+surface.
+
+### Branch and scaffolding
+
+- [x] Create branch `feat/railway-metrics-api` before implementation.
+- [x] Add red-test scaffolding for shared artifacts, API routes, publisher,
+      client package, OpenAPI, and Railway config-as-code.
+- [x] Move Envio indexer config, schema, source, and tests into
+      `apps/indexer`.
+- [x] Keep the red-test list current as implementation proceeds; do not remove a
+      test unless the corresponding product requirement is explicitly dropped.
+
+### Shared artifact and metric logic
+
+- [x] Implement UTC date parsing and inclusive range resolution.
+- [x] Default missing `end` to `manifest.latestDate`.
+- [x] Reject `end < start` with `invalid_date_range`.
+- [x] Enforce `METRICS_API_MAX_RANGE_DAYS` on `/v2/*` only.
+- [x] Ignore legacy `dateOffset` everywhere.
+- [x] Generate month shard keys across month/year boundaries.
+- [x] Implement exact legacy chain keys and zero defaults:
+      `Arbitrum`, `Ethereum`, `Fantom`, `Polygon`, `Base`, `Berachain`.
+- [x] Implement exact legacy `SupplyCategoryValues` keys and zero defaults.
+- [x] Map incomplete chain data to `crossChainComplete=false`, zero component
+      values, empty chain record arrays, `chainsIndexed`, `chainsMissing`, and
+      `_meta.chainsFailed`.
+- [x] Preserve aggregate/component/record triplets such as
+      `treasuryMarketValue`, `treasuryMarketValueComponents`, and
+      `treasuryMarketValueRecords`.
+- [x] Keep `TreasuryAsset` and `OhmSupply` as the v2 names while preserving
+      legacy `TokenRecord` / `TokenSupply` shape aliases for `/operations/*`.
+- [x] Normalize legacy numeric values to JS numbers, not strings.
+- [x] Normalize legacy `TokenSupply.source` and `sourceAddress` to non-null
+      strings; keep `pool` and `poolAddress` nullable.
+
+### Publisher
+
+- [x] Implement Hasura GraphQL publisher source using
+      `HASURA_GRAPHQL_ENDPOINT` and `HASURA_GRAPHQL_ADMIN_SECRET`.
+- [ ] Verify `HASURA_GRAPHQL_ENDPOINT` uses a Railway private hostname in
+      deployment.
+- [x] Generate monthly artifacts:
+      `v2/metrics/daily/YYYY-MM.json`,
+      `v2/treasury-assets/daily/YYYY-MM.json`,
+      `v2/ohm-supply/daily/YYYY-MM.json`.
+- [x] Generate schemas under `v2/schemas/`.
+- [x] Generate manifest with `earliestDate`, `latestDate`, schema version,
+      generated timestamp, artifact keys, hashes, and row counts.
+- [x] Publish metric, treasury asset, and OHM supply shard keys before
+      `v2/manifest.json` in the publisher contract.
+- [x] Upload all shards and schemas before `v2/manifest.json`.
+- [x] Implement initial backfill when no manifest exists.
+- [x] Implement incremental publish with configurable lookback when a manifest
+      exists.
+- [x] Default initial publisher runs to the public start date, `2022-05-01`.
+- [x] Coordinate overlapping cron runs with an S3-compatible
+      `v2/publisher.lock`; fresh locks skip cleanly, stale locks are taken over.
+- [x] Record deployment-scoped shard keys in the internal manifest using
+      explicit `INDEXER_DEPLOYMENT_ID` when set, otherwise Railway's
+      `RAILWAY_GIT_COMMIT_SHA`.
+- [x] Fail publisher startup if neither `INDEXER_DEPLOYMENT_ID` nor
+      `RAILWAY_GIT_COMMIT_SHA` is available, or if the resolved id is invalid.
+- [x] Delete stale `v2/deployments/<old-id>/...` files only after the new
+      internal manifest has been published.
+- [x] Publish a deployment's first snapshot set only through the latest date
+      with every supported chain indexed, then use cross-chain complete bounds
+      for incremental refreshes.
+- [x] Keep the existing manifest active until a deployment's first all-chain
+      indexed date is within one day of the current UTC date.
+- [x] Skip without replacing the manifest when Hasura has no eligible publisher
+      bounds.
+- [x] Include the resolved deployment id and per-chain indexing progress in the
+      publisher JSON output for both successful and skipped runs.
+- [x] Keep `v2/manifest.json` internal; do not expose deployment ids or
+      artifact file keys through a public `/v2/manifest` route.
+- [x] Clamp public manifest bounds to the public start date instead of raw
+      Hasura source bounds.
+- [x] Ensure upload/validation failure exits non-zero and does not publish a new
+      manifest.
+
+### Public API
+
+- [x] Implement `/ready`; do not add `/healthz`.
+- [x] Implement CORS for `GET`, `HEAD`, and `OPTIONS`.
+- [x] Reject request bodies on `GET` and `HEAD`.
+- [x] Implement `/openapi.json` and `/docs`.
+- [x] Implement `/v2/bounds` without exposing `availableMonths`.
+- [x] Include optional `indexerDeploymentId` in `/v2/bounds` when the internal
+      manifest has one.
+- [x] Implement `/v2/metrics/daily`.
+- [x] Implement `/v2/treasury-assets/daily`.
+- [x] Implement `/v2/ohm-supply/daily`.
+- [x] Support `includeRecords=true` on `/v2/metrics/daily` using the legacy
+      metric-specific `*Records` fields.
+- [x] Return consistent v2 `{ data, meta }` success envelopes and
+      `{ error: { code, message, details? } }` error envelopes.
+- [x] Add cache headers: `/ready` and `/v2/bounds` are `no-store`; data
+      routes cache for one hour.
+
+### Legacy `/operations/*` compatibility
+
+- [x] Implement Wundergraph response wrapper `{ data, errors? }`.
+- [x] Parse raw and URL-encoded `wg_variables`.
+- [x] Mark `/operations/*` as deprecated with response headers and OpenAPI
+      `deprecated: true`.
+- [x] Replace current placeholder responses with artifact-backed route
+      handlers for all public legacy `/operations/*` routes.
+- [x] Implement latest, earliest, and paginated metrics.
+- [x] Implement latest, earliest, and paginated treasury assets via legacy
+      `tokenRecords` route names.
+- [x] Implement latest, earliest, and paginated OHM supply via legacy
+      `tokenSupplies` route names.
+- [x] Do not expose raw legacy Wundergraph routes such as
+      `/operations/tokenRecordsLatest` or chain-specific response keys such as
+      `treasuryEthereum_tokenRecords`.
+- [x] Accept and ignore `ignoreCache`.
+- [x] Accept and ignore `dateOffset`.
+- [x] Apply no max range limit on `/operations/*`.
+- [x] Preserve legacy `startDate` with optional `endDate`; missing `endDate`
+      resolves to manifest latest date.
+- [x] Support `includeRecords=true` on paginated metrics.
+- [x] Add route tests that assert legacy latest/earliest/paginated operations
+      return artifact data instead of empty arrays.
+- [x] Implement `atBlock/*` route parity with `501` Wundergraph-style errors.
+- [x] Return narrow legacy `ProtocolMetric` shape for `protocolMetrics`
+      aliases rather than synthesizing unsupported values.
+
+### Client package
+
+- [x] Continue publishing `@olympusdao/treasury-subgraph-client` as a major
+      version.
+- [x] Preserve `createClient`, `TreasurySubgraphClient`, and legacy
+      `query({ operationName, input })`.
+- [x] Add v2 methods:
+      `getBounds`, `getDailyMetrics`, `getDailyTreasuryAssets`,
+      `getDailyOhmSupply`.
+- [x] Keep the package framework-agnostic; no TanStack Query dependency.
+- [x] Include `openapi.json` in package output.
+- [x] Export legacy and v2-compatible TypeScript types.
+- [x] Add client methods or typed wrappers for the implemented legacy
+      `/operations/*` compatibility routes where the historical package exposed
+      them directly.
+- [x] Add package scripts for client release preparation:
+      clean/build type declarations, copy OpenAPI output, run package-focused
+      tests, and produce a dry-run `npm pack` tarball for inspection.
+- [x] Add an explicit client publish script that publishes
+      `@olympusdao/treasury-subgraph-client` from `apps/client` only after
+      validation passes.
+- [x] Add a package-only release checklist/script that verifies the git tree is
+      clean, the package version matches the intended release, and npm
+      publishing uses provenance or trusted publishing where available.
+- [x] Document the versioning/release workflow for the client package,
+      including when to bump major/minor/patch for legacy `/operations/*` and
+      v2 API changes.
+- [x] Add CI or a local validation gate that compares packed tarball contents
+      against the intended allowlist (`dist`, `openapi.json`, package metadata)
+      before publishing.
+
+### Railway config-as-code and containers
+
+- [x] Add Railway config-as-code file stubs for indexer, Hasura, publisher, and
+      API.
+- [x] Add Dockerfile stubs for indexer, Hasura, publisher, and API.
+- [x] Replace Dockerfile stubs with pinned, production-ready images modeled on
+      `protocol-visualizer`.
+- [x] Add local Docker Compose stack for Postgres, Hasura, indexer, MinIO,
+      publisher, and API with only `metrics-api` exposed on localhost by
+      default.
+- [x] Configure publisher cron as `15 * * * *` with `restartPolicyType: NEVER`.
+- [x] Configure Railway watch patterns for each service's runtime ownership,
+      including publisher redeploys when indexer code/config changes.
+- [x] Configure API healthcheck as `/ready` with `restartPolicyType:
+      ON_FAILURE` and one retry.
+- [x] Configure indexer and Hasura healthchecks as `/healthz` with
+      `restartPolicyType: ON_FAILURE` and one retry.
+- [x] Document Railway variables for Postgres, Hasura admin secret, RPC URLs,
+      bucket credentials, publisher range controls, and API max range.
+- [x] Document Cloudflare cache and WAF rules.
+- [x] Ensure indexer, Hasura, publisher, and API fail loudly at startup when
+      required env variables are missing.
+- [ ] Ensure Hasura/Postgres/indexer/publisher remain private and only
+      `metrics-api` has a public domain.
+
+### Security and supply-chain validation
+
+- [x] Run `pnpm audit --audit-level moderate` and resolve or explicitly justify
+      findings.
+- [x] Review new production dependencies for necessity and maintenance posture.
+- [x] Keep new runtime dependency footprint minimal; avoid framework dependencies
+      unless they remove meaningful risk.
+- [x] Secure the client package release path: require npm 2FA / trusted
+      publisher or provenance where available, avoid publishing from dirty
+      working trees, and record the exact git commit/tag used for each release.
+- [x] Make client publishing reproducible: run release from a pinned Node/pnpm
+      toolchain, `pnpm install --frozen-lockfile`, and a generated tarball whose
+      contents can be reviewed before `npm publish`.
+- [x] Add pre-publish checks for supply-chain risk: dependency audit, license
+      review for runtime deps, package script review, and verification that no
+      secrets or environment files are included in the npm tarball.
+- [x] Document maintainer permissions and token handling for npm publishing:
+      least-privilege access, no long-lived local automation tokens where
+      possible, and no committed `.npmrc` secrets.
+- [x] Build all Docker images locally.
+- [x] Add GitHub CI Trivy checks for Dockerfile misconfigurations and all
+      service Docker image vulnerabilities.
+- [ ] Scan Docker images for vulnerabilities before deployment.
+- [ ] Resolve or explicitly document Docker image findings.
+- [ ] Confirm runtime images run as non-root where practical.
+- [x] Confirm public API rejects unsupported methods and request bodies.
+- [x] Confirm Hasura console is disabled.
+- [ ] Confirm Hasura has no public domain.
+- [ ] Confirm secrets are only supplied through Railway variables and are not
+      printed in logs.
+
+### Validation gates
+
+- [x] `pnpm install --frozen-lockfile`
+- [x] `pnpm run check`
+- [x] `pnpm run build`
+- [x] `pnpm test`
+- [x] Targeted metrics API red/green test suite passes.
+- [x] `docker build -f Dockerfile-indexer .`
+- [x] `docker build -f Dockerfile-hasura .`
+- [x] `docker build -f Dockerfile-metrics-publisher .`
+- [x] `docker build -f Dockerfile-metrics-api .`
+- [ ] Deployment smoke checks for `/ready`, `/v2/bounds`, `/v2/metrics/daily`,
+      `/v2/metrics/daily?includeRecords=true`, and
+      `/operations/paginated/metrics`.
+
 ## Review notes
 
 ### Phase 1 decisions (2026-05-14)
@@ -149,4 +383,3 @@ See `docs/envio-migration/inherited-todos.md`.
 
 - [x] **Fantom/Polygon gOHM `TokenBalance` drift.** Confirmed same root cause as the broader non-standard-balance class (bridge mint credits balance without a standard Transfer event). Worked around 2026-05-17 by flagging `ERC20_GOHM` as `nonStandardBalance: true` on both chains and threading the flag through `pushTreasuryOhm` so snapshot-time `balanceOf` (cached via `readErc20BalanceOf` effect) replaces the drifting `TokenBalance` entity. See 2026-05-17 entry in `tasks/lessons.md`.
   - **Note: the underlying ledger is still wrong.** `nonStandardBalance` is a snapshot-time read-around, not a fix — `TokenBalance` rows for bridged gOHM on Fantom/Polygon (and the bridge-mint sources on those chains: WETH, DAI, FRAX, sKLIMA) remain incorrect for any consumer that queries them directly. The snapshot path is the only consumer today, so this is acceptable, but a real fix would require either (a) indexing the bridge-mint events that mutate balance, or (b) deriving `TokenBalance` from `balanceOf` instead of from Transfer accumulation. Track if a downstream consumer ever needs raw `TokenBalance` correctness.
-

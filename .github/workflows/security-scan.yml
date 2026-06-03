@@ -1,0 +1,119 @@
+name: Docker Security Scan
+
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 5 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  docker-security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Bootstrap
+        uses: ./.github/actions/bootstrap
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Build indexer Docker image
+        run: pnpm run docker:build:indexer
+
+      - name: Tag indexer image for scan
+        run: pnpm run docker:tag:scan:indexer
+
+      - name: Build Hasura Docker image
+        run: pnpm run docker:build:hasura
+
+      - name: Tag Hasura image for scan
+        run: pnpm run docker:tag:scan:hasura
+
+      - name: Build metrics API Docker image
+        run: pnpm run docker:build:metrics-api
+
+      - name: Tag metrics API image for scan
+        run: pnpm run docker:tag:scan:metrics-api
+
+      - name: Build metrics publisher Docker image
+        run: pnpm run docker:build:metrics-publisher
+
+      - name: Tag metrics publisher image for scan
+        run: pnpm run docker:tag:scan:metrics-publisher
+
+      - name: Scan indexer Dockerfile for misconfigurations
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: config
+          scan-ref: Dockerfile-indexer
+          scanners: misconfig
+          severity: MEDIUM,HIGH,CRITICAL
+          exit-code: "1"
+
+      - name: Scan Hasura Dockerfile for misconfigurations
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: config
+          scan-ref: Dockerfile-hasura
+          scanners: misconfig
+          severity: MEDIUM,HIGH,CRITICAL
+          exit-code: "1"
+
+      - name: Scan metrics API Dockerfile for misconfigurations
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: config
+          scan-ref: Dockerfile-metrics-api
+          scanners: misconfig
+          severity: MEDIUM,HIGH,CRITICAL
+          exit-code: "1"
+
+      - name: Scan metrics publisher Dockerfile for misconfigurations
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          scan-type: config
+          scan-ref: Dockerfile-metrics-publisher
+          scanners: misconfig
+          severity: MEDIUM,HIGH,CRITICAL
+          exit-code: "1"
+
+      - name: Scan indexer image for vulnerabilities
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          image-ref: olympus-protocol-metrics/indexer:scan
+          format: table
+          severity: MEDIUM,HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Scan Hasura image for vulnerabilities
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          image-ref: olympus-protocol-metrics/hasura:scan
+          format: table
+          severity: MEDIUM,HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Scan metrics API image for vulnerabilities
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          image-ref: olympus-protocol-metrics/metrics-api:scan
+          format: table
+          severity: MEDIUM,HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Scan metrics publisher image for vulnerabilities
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          image-ref: olympus-protocol-metrics/metrics-publisher:scan
+          format: table
+          severity: MEDIUM,HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"

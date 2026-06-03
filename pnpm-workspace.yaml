@@ -1,21 +1,25 @@
+packages:
+  - apps/*
+  - packages/*
+
 minimumReleaseAge: 10080
 # The 7-day maturity gate above is good supply-chain hygiene for transitive
 # deps, but blocks us from picking up envio releases inside the first week.
 # Envio is our indexer framework — we want fast access to new versions and
-# trust the upstream release process. Allowlist the entire envio family
-# (the meta package + per-platform native binaries that ship under
-# `optionalDependencies` of envio) so the maturity gate applies only to
+# trust the upstream release process. Allowlist only the exact envio versions
+# we have reviewed (the meta package + per-platform native binaries that ship
+# under `optionalDependencies` of envio) so the maturity gate applies only to
 # the long tail of transitives we don't actively curate.
 #
 # Per-platform binaries must be listed explicitly because pnpm's
 # minimumReleaseAgeExclude does not accept globs.
 minimumReleaseAgeExclude:
-  - envio
-  - envio-linux-x64
-  - envio-linux-x64-musl
-  - envio-linux-arm64
-  - envio-darwin-x64
-  - envio-darwin-arm64
+  - "envio@3.0.1"
+  - "envio-linux-x64@3.0.1"
+  - "envio-linux-x64-musl@3.0.1"
+  - "envio-linux-arm64@3.0.1"
+  - "envio-darwin-x64@3.0.1"
+  - "envio-darwin-arm64@3.0.1"
   # qs@6.15.2 patches GHSA-q8mj-m7cp-5q26 but was released 2026-05-16, inside
   # the 7-day maturity window. Allowlisting the single patched version (not
   # the whole package) preserves the gate for any future qs releases.
@@ -62,6 +66,7 @@ overrides:
   "axios@<1.15.1": "1.15.1"
   "brace-expansion@<1.1.13": "1.1.13"
   "brace-expansion@>=2.0.0 <2.0.3": "2.0.3"
+  "brace-expansion@>=5.0.0 <5.0.6": "5.0.6"
   "cross-spawn@<7.0.5": "7.0.5"
   "diff@>=4.0.0 <4.0.4": "4.0.4"
   "ejs@<3.1.10": "3.1.10"
@@ -82,7 +87,9 @@ overrides:
   "minimatch@>=9.0.0 <9.0.7": "9.0.7"
   "node-fetch@<2.6.7": "2.6.7"
   "node-forge@<1.3.0": "1.3.0"
+  "ip-address@<10.1.1": "10.1.1"
   "picomatch@<2.3.2": "2.3.2"
+  "picomatch@>=4.0.0 <4.0.4": "4.0.4"
   "ramda@<0.27.2": "0.27.2"
   "semver@>=7.0.0 <7.5.2": "7.5.2"
   "tmp@<=0.2.3": "0.2.4"
@@ -92,8 +99,12 @@ overrides:
   # audit gate flagged at moderate+. Pinned to ranges known to address
   # each CVE without churning unrelated majors.
   "body-parser@<1.20.3": "1.20.3"
+  "cookie@<0.7.0": "0.7.0"
+  "express@<4.20.0": "4.20.0"
   "path-to-regexp@<0.1.13": "0.1.13"
   "qs@<6.15.2": "6.15.2"
+  "send@<0.19.0": "0.19.0"
+  "serve-static@<1.16.0": "1.16.0"
   "ws@>=8.0.0 <8.20.1": "8.20.1"
   # Maturity-gate workaround, not a CVE fix. vitest@4 accepts vite ^6/^7/^8
   # and pnpm's resolver picks the highest matching, which ends up being a
