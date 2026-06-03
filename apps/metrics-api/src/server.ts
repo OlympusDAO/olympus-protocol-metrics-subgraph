@@ -385,7 +385,7 @@ function resolveLegacyRange(
   pathname: string,
   variables: Record<string, unknown>,
   manifest: Manifest,
-): { start: string; end: string; days: number } {
+): { start: string; end: string; days: number } | undefined {
   if (pathname.startsWith("/operations/latest/")) {
     return resolveDateRange({
       start: manifest.latestDate,
@@ -406,9 +406,19 @@ function resolveLegacyRange(
 
   const start = legacyString(variables, "startDate") ?? legacyString(variables, "start") ?? manifest.earliestDate;
   const end = legacyString(variables, "endDate") ?? legacyString(variables, "end") ?? manifest.latestDate;
-  return resolveDateRange({
+  const requestedRange = resolveDateRange({
     start,
     end,
+    manifest,
+    enforceMaxRange: false,
+  });
+  if (requestedRange.end < manifest.earliestDate || requestedRange.start > manifest.latestDate) {
+    return undefined;
+  }
+
+  return resolveDateRange({
+    start: requestedRange.start < manifest.earliestDate ? manifest.earliestDate : requestedRange.start,
+    end: requestedRange.end > manifest.latestDate ? manifest.latestDate : requestedRange.end,
     manifest,
     enforceMaxRange: false,
   });
@@ -448,6 +458,10 @@ async function readLegacyOperation(
   manifest: Manifest,
 ): Promise<DailyMetric[] | TreasuryAsset[] | OhmSupply[] | ProtocolMetric[]> {
   const range = resolveLegacyRange(pathname, variables, manifest);
+  if (range === undefined) {
+    return [];
+  }
+
   if (pathname.endsWith("/tokenRecords")) {
     return legacyRowsDescending(
       await readSelectedDailyRecords<TreasuryAsset>(config, manifest, range, "v2/treasury-assets/daily"),
@@ -470,6 +484,26 @@ async function readLegacyOperation(
 }
 
 export async function handleMetricsApiRequest(
+  req: IncomingMessage,
+  res: ServerResponse,
+  config: MetricsApiConfig,
+): Promise<void> {
+  try {
+    await handleMetricsApiRequestUnchecked(req, res, config);
+  } catch {
+    if (res.headersSent) {
+      res.destroy();
+      return;
+    }
+    setCommonHeaders(res);
+    res.removeHeader("content-encoding");
+    res.removeHeader("content-length");
+    res.setHeader("cache-control", "no-store");
+    sendError(req, res, 500, "internal_server_error", "Internal server error.");
+  }
+}
+
+async function handleMetricsApiRequestUnchecked(
   req: IncomingMessage,
   res: ServerResponse,
   config: MetricsApiConfig,

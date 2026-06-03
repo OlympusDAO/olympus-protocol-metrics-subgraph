@@ -3,6 +3,7 @@ import { AddressInfo, connect } from "node:net";
 import { gunzipSync } from "node:zlib";
 import { afterEach, describe, expect, test } from "vitest";
 
+import { ArtifactNotFoundError } from "../src/artifact-store";
 import { metricsApiConfigFromEnv, metricsApiPortFromEnv } from "../src/config";
 import { handleMetricsApiRequest, type MetricsApiConfig } from "../src/server";
 import type { Manifest } from "../../../packages/metrics-artifacts/src";
@@ -26,6 +27,17 @@ function artifactReader(objects: Record<string, unknown>): MetricsApiConfig["art
     async getJson<T>(key: string): Promise<T> {
       if (!(key in objects)) {
         throw new Error(`Missing test artifact: ${key}`);
+      }
+      return objects[key] as T;
+    },
+  };
+}
+
+function sparseArtifactReader(objects: Record<string, unknown>): MetricsApiConfig["artifactReader"] {
+  return {
+    async getJson<T>(key: string): Promise<T> {
+      if (!(key in objects)) {
+        throw new ArtifactNotFoundError(key);
       }
       return objects[key] as T;
     },
@@ -502,6 +514,28 @@ describe("metrics API HTTP behavior", () => {
     expect(ready.status).toBe(200);
   });
 
+  test("returns a 500 response instead of crashing on unexpected handler errors", async () => {
+    const response = await request("/v2/bounds", undefined, {
+      maxRangeDays: 366,
+      manifest: {
+        ...testManifest,
+        indexingProgress: {
+          chains: {
+            Ethereum: { date: "2026-06-01", timestamp: 1_780_272_000, block: BigInt(123) },
+          },
+        },
+      } as unknown as Manifest,
+    });
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toMatchObject({
+      error: { code: "internal_server_error" },
+    });
+
+    const ready = await request("/ready");
+    expect(ready.status).toBe(200);
+  });
+
   test("returns deprecated legacy operations and 501 atBlock responses", async () => {
     const latest = await request("/operations/latest/metrics");
     expect(latest.status).toBe(200);
@@ -564,6 +598,44 @@ describe("metrics API HTTP behavior", () => {
     const raw = await request(`/operations/paginated/tokenRecords?wg_variables=${variables}`);
     expect(raw.status).toBe(200);
     expect(await raw.json()).toMatchObject({ data: expect.any(Array) });
+  });
+
+  test("clips oversized legacy ranges to manifest bounds without applying the v2 max range", async () => {
+    const config: MetricsApiConfig = {
+      maxRangeDays: 1,
+      manifest: {
+        ...testManifest,
+        earliestDate: "2026-05-21",
+        latestDate: "2026-05-22",
+        artifacts: {
+          "v2/metrics/daily/2026-05.json": { sha256: "0".repeat(64), byteLength: 2, rowCount: 2 },
+        },
+      },
+      artifactReader: sparseArtifactReader({
+        "v2/metrics/daily/2026-05.json": [
+          { date: "2026-05-21", chainsIndexed: [], chainsMissing: [], crossChainComplete: false },
+          { date: "2026-05-22", chainsIndexed: [], chainsMissing: [], crossChainComplete: false },
+        ],
+      }),
+    };
+    const variables = encodeURIComponent(JSON.stringify({ startDate: "2020-01-01", endDate: "2030-12-31" }));
+
+    const response = await request(`/operations/paginated/metrics?wg_variables=${variables}`, undefined, config);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      data: [{ date: "2026-05-22" }, { date: "2026-05-21" }],
+    });
+  });
+
+  test("rejects invalid legacy dates before clipping to manifest bounds", async () => {
+    const variables = encodeURIComponent(JSON.stringify({ startDate: "not-a-date", endDate: "2030-12-31" }));
+    const response = await request(`/operations/paginated/metrics?wg_variables=${variables}`);
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: { code: "invalid_legacy_request" },
+    });
   });
 
   test("backs legacy operations with published artifacts", async () => {
