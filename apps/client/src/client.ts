@@ -43,7 +43,7 @@ export class TreasurySubgraphClient {
 
   constructor(config: ClientConfig = {}) {
     this.baseUrl = (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
-    this.fetchImpl = config.fetch ?? fetch;
+    this.fetchImpl = config.fetch ?? ((...args) => globalThis.fetch(...args));
     this.headers = config.headers ?? {};
     this.timeout = config.timeout;
   }

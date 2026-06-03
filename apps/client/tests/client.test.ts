@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, expectTypeOf, test, vi } from "vitest";
+import { afterEach, describe, expect, expectTypeOf, test, vi } from "vitest";
 
 import { createClient, DEFAULT_BASE_URL } from "../src";
 import {
@@ -14,6 +14,10 @@ import {
 import { getOpenApiDocument as getCanonicalOpenApiDocument } from "../../../packages/metrics-artifacts/src";
 
 describe("@olympusdao/treasury-subgraph-client compatibility", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   test("defaults to the public treasury subgraph API", async () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [] })));
     const client = createClient({ fetch: fetchMock });
@@ -25,6 +29,37 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(DEFAULT_BASE_URL).toBe("https://treasury-subgraph-api.olympusdao.finance");
     expect(`${url.protocol}//${url.host}`).toBe(DEFAULT_BASE_URL);
     expect(url.pathname).toBe("/v2/metrics/daily");
+  });
+
+  test("wraps the default global fetch so browser receivers stay valid", async () => {
+    const fetchMock = vi.fn(function (this: unknown) {
+      if (this !== globalThis) {
+        throw new Error("fetch called with the wrong receiver");
+      }
+      return Promise.resolve(new Response(JSON.stringify({ data: [] })));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const client = createClient({ baseUrl: "https://metrics.example" });
+
+    await client.getDailyMetrics({ start: "2026-05-20" });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const calls = fetchMock.mock.calls as unknown as Array<[string, RequestInit?]>;
+    expect(new URL(calls[0][0]).pathname).toBe("/v2/metrics/daily");
+  });
+
+  test("still uses a custom fetch implementation when provided", async () => {
+    const defaultFetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [] })));
+    const customFetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [] })));
+    vi.stubGlobal("fetch", defaultFetchMock);
+
+    const client = createClient({ baseUrl: "https://metrics.example", fetch: customFetchMock });
+
+    await client.getDailyMetrics({ start: "2026-05-20" });
+
+    expect(customFetchMock).toHaveBeenCalledTimes(1);
+    expect(defaultFetchMock).not.toHaveBeenCalled();
   });
 
   test("legacy query maps to /operations with wg_variables", async () => {
