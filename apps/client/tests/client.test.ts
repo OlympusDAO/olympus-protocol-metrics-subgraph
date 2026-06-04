@@ -409,8 +409,8 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(workflow).toContain("pnpm --dir \"$PACKAGE_DIR\" run release:check");
     expect(workflow).toContain("actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02");
     expect(workflow).toContain("actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53");
-    expect(workflow).toContain("if: ${{ inputs.mode == 'dry-run' }}");
-    expect(workflow).toContain("if: ${{ inputs.mode == 'stage' }}");
+    expect(workflow).toContain(`if: \${{ inputs.mode == 'dry-run' }}`);
+    expect(workflow).toContain(`if: \${{ inputs.mode == 'stage' }}`);
     expect(workflow).toContain("No npm staging, git tag, or GitHub Release was created.");
     expect(workflow).toContain("npm stage publish \"$RUNNER_TEMP/client-package/");
     expect(workflow).toContain("gh release create");
@@ -427,6 +427,15 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(ciRelease).toContain("is already published on npm");
     expect(ciRelease).toContain("is already staged on npm");
     expect(ciRelease).toContain("validateReleaseInputs");
+    expect(ciRelease).toContain(
+      [
+        "function validateReleaseInputs(): void {",
+        "  assertExpectedVersion();",
+        "  assertVersionNotPublished();",
+        "  assertReleaseTagDoesNotExist();",
+        "}",
+      ].join("\n"),
+    );
     expect(ciRelease).toContain("already exists on origin");
     expect(ciRelease).toContain("CHANGELOG.md");
     expect(ciRelease).toContain("Missing changelog section");

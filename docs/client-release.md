@@ -58,7 +58,9 @@ Release steps:
    the release, runs the client release checks, packs the package, uploads the
    tarball, uploads npm pack metadata, and writes release notes as workflow
    artifacts. It does not stage anything on npm, create a git tag, or create a
-   GitHub Release.
+   GitHub Release. Dry-run mode also does not call `npm stage list`, because
+   npm trusted publishing only authenticates OIDC for `npm stage publish`; other
+   `npm stage` subcommands require an interactive npm session.
 5. Review the dry-run artifacts.
 6. Rerun the workflow against the same branch and version with `mode=stage`.
    Stage mode validates and packs the package again, fails if that version is
