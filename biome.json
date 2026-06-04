@@ -7,15 +7,21 @@
   },
   "files": {
     "includes": [
-      "src/**",
-      "config.yaml",
-      "schema.graphql",
-      "package.json",
-      "tsconfig.json",
-      "biome.json",
-      "!generated",
-      "!node_modules",
-      "!**/build"
+      ".github/**",
+      "apps/**",
+      "packages/**",
+      "tests/**",
+      "*.json",
+      "*.jsonc",
+      "*.yaml",
+      "*.yml",
+      "!**/.envio",
+      "!**/.pnpm-store",
+      "!**/build",
+      "!**/coverage",
+      "!**/dist",
+      "!**/generated",
+      "!**/node_modules"
     ]
   },
   "formatter": {
