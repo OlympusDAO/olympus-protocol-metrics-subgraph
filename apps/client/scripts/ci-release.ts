@@ -19,6 +19,8 @@ const repoRoot = resolve(packageDir, "../..");
 const changelogPath = resolve(packageDir, "CHANGELOG.md");
 const packageJsonPath = resolve(packageDir, "package.json");
 const packageName = "@olympusdao/treasury-subgraph-client";
+const SEMVER_PATTERN =
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 
 function fail(message: string): never {
   throw new Error(`[client release] ${message}`);
@@ -53,6 +55,9 @@ function readPackage(): Required<PackageJson> {
   if (parsed.version === undefined || parsed.version.trim() === "") {
     fail("Package version is missing.");
   }
+  if (!SEMVER_PATTERN.test(parsed.version)) {
+    fail(`Package version must be valid semver: ${parsed.version}`);
+  }
   return { name: parsed.name, version: parsed.version };
 }
 
@@ -64,10 +69,14 @@ function isChangelogReleaseHeading(line: string): boolean {
   return /^## \[v?\d+\.\d+\.\d+\]/.test(line);
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function readChangelogSection(version: string): string {
   const changelog = readFileSync(changelogPath, "utf8");
   const lines = changelog.split(/\r?\n/);
-  const releaseHeading = new RegExp(`^## \\[v?${version.replaceAll(".", "\\.")}\\](?:\\s+-\\s+.+)?\\s*$`);
+  const releaseHeading = new RegExp(`^## \\[v?${escapeRegExp(version)}\\](?:\\s+-\\s+.+)?\\s*$`);
   const start = lines.findIndex((line) => releaseHeading.test(line));
   if (start === -1) {
     fail(`Missing changelog section for ${packageName}@${version}. Expected heading like "## [v${version}]".`);
@@ -86,7 +95,10 @@ function setGithubOutput(values: Record<string, string>): void {
     return;
   }
 
-  writeFileSync(outputPath, Object.entries(values).map(([key, value]) => `${key}=${value}`).join("\n") + "\n", {
+  const output = `${Object.entries(values)
+    .map(([key, value]) => `${key}=${value}`)
+    .join("\n")}\n`;
+  writeFileSync(outputPath, output, {
     flag: "a",
   });
 }
@@ -210,6 +222,12 @@ function preflight(): void {
   assertReleaseTagDoesNotExist();
 }
 
+function validateReleaseInputs(): void {
+  assertExpectedVersion();
+  assertVersionNotPublished();
+  assertReleaseTagDoesNotExist();
+}
+
 function pack(): void {
   const destination = process.env.PACK_DESTINATION?.trim();
   const cache = process.env.NPM_CACHE_DIR?.trim();
@@ -275,6 +293,9 @@ switch (command) {
     break;
   case "preflight":
     preflight();
+    break;
+  case "validate":
+    validateReleaseInputs();
     break;
   case "pack":
     pack();

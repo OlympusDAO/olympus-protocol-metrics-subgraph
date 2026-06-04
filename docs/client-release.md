@@ -47,10 +47,12 @@ Release steps:
 3. Open GitHub Actions and run **Release treasury-subgraph-client** manually.
    Enter the required `expected_version`; the workflow fails unless it matches
    `apps/client/package.json`.
-4. The workflow reads the package version, fails if that version is already
-   published, fails if that version is already staged, fails if the matching git
-   tag already exists, runs the client release gate, stages the npm package,
-   then creates `treasury-subgraph-client-v<version>` and a GitHub Release.
+4. The workflow validates and packs the package in a read-only job, fails if
+   that version is already published, fails if the matching git tag already
+   exists, stages the packed tarball in a separate npm trusted-publishing job,
+   then creates `treasury-subgraph-client-v<version>` and a GitHub Release in
+   a separate GitHub write job. If the version is already staged on npm, the npm
+   staging step fails before the GitHub tag and Release are created.
 5. Review the staged package on npmjs.com and approve it with 2FA.
 
 The workflow creates the GitHub tag and GitHub Release only after
