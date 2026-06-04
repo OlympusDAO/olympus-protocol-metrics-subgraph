@@ -402,6 +402,8 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(workflow).toContain("id-token: write");
     expect(workflow).toContain("contents: write");
     expect(workflow).toContain("environment: npm-stage");
+    expect(workflow).toContain("actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f");
+    expect(workflow).toContain("node-version: 24");
     expect(workflow).toContain("npm install -g npm@11.15.0");
     expect(workflow).toContain("pnpm --dir \"$PACKAGE_DIR\" exec tsx scripts/ci-release.ts validate");
     expect(workflow).toContain("pnpm --dir \"$PACKAGE_DIR\" exec tsx scripts/ci-release.ts pack");
@@ -417,6 +419,7 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(workflow).not.toContain("npm publish --access public");
     expect(workflow).not.toContain("NODE_AUTH_TOKEN");
     expect(workflow).not.toContain("NPM_TOKEN");
+    expect(workflow).not.toContain("npm install --global --prefix");
     expect(workflow).not.toContain("node --input-type=module");
     expect(workflow).not.toContain("<<'NODE'");
     expect(workflow).not.toContain("git tag -a");
