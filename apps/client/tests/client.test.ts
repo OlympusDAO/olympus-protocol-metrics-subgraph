@@ -425,6 +425,9 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(ciRelease).toContain("Missing changelog section");
     expect(ciRelease).toContain("## Changelog");
     expect(ciRelease).toContain("escapeRegExp");
+    expect(ciRelease).toContain("CHANGELOG_RELEASE_HEADING_PATTERN");
+    expect(ciRelease).toContain("SEMVER_PATTERN.source.slice(1, -1)");
+    expect(ciRelease).not.toContain("^## \\\\[v?\\\\d+\\\\.\\\\d+\\\\.\\\\d+\\\\]");
     expect(ciRelease).toContain("validateReleaseInputs");
     expect(ciRelease).toContain(["treasury-subgraph-client-v", "{version}"].join("$"));
     expect(ciRelease).toContain('"release"');

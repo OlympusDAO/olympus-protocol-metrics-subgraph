@@ -21,6 +21,9 @@ const packageJsonPath = resolve(packageDir, "package.json");
 const packageName = "@olympusdao/treasury-subgraph-client";
 const SEMVER_PATTERN =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+const CHANGELOG_RELEASE_HEADING_PATTERN = new RegExp(
+  `^## \\[v?(?:${SEMVER_PATTERN.source.slice(1, -1)})\\](?:\\s+-\\s+.+)?\\s*$`,
+);
 
 function fail(message: string): never {
   throw new Error(`[client release] ${message}`);
@@ -47,6 +50,30 @@ function getExitStatus(error: unknown): number | undefined {
     : undefined;
 }
 
+function getErrorProperty(error: unknown, key: string): unknown {
+  if (typeof error !== "object" || error === null || !(key in error)) {
+    return undefined;
+  }
+  return (error as Record<string, unknown>)[key];
+}
+
+function errorText(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value instanceof Uint8Array) {
+    return Buffer.from(value).toString("utf8");
+  }
+  return "";
+}
+
+function isNpmRegistryNotFoundError(error: unknown): boolean {
+  const code = errorText(getErrorProperty(error, "code"));
+  const stderr = errorText(getErrorProperty(error, "stderr"));
+  const message = error instanceof Error ? error.message : errorText(getErrorProperty(error, "message"));
+  return code === "E404" || stderr.includes("E404") || stderr.includes("404") || message.includes("E404");
+}
+
 function readPackage(): Required<PackageJson> {
   const parsed = JSON.parse(readFileSync(packageJsonPath, "utf8")) as PackageJson;
   if (parsed.name !== packageName) {
@@ -66,7 +93,7 @@ function tagForVersion(version: string): string {
 }
 
 function isChangelogReleaseHeading(line: string): boolean {
-  return /^## \[v?\d+\.\d+\.\d+\]/.test(line);
+  return CHANGELOG_RELEASE_HEADING_PATTERN.test(line);
 }
 
 function escapeRegExp(value: string): string {
@@ -119,7 +146,15 @@ function assertExpectedVersion(): void {
 
 function assertVersionNotPublished(): void {
   const { version } = readPackage();
-  const output = capture("npm", ["view", packageName, "versions", "--json"]).trim();
+  let output = "";
+  try {
+    output = capture("npm", ["view", packageName, "versions", "--json"]).trim();
+  } catch (error) {
+    if (!isNpmRegistryNotFoundError(error)) {
+      throw error;
+    }
+    output = "[]";
+  }
   const versions = JSON.parse(output) as string[] | string;
   const publishedVersions = Array.isArray(versions) ? versions : [versions];
   if (publishedVersions.includes(version)) {
