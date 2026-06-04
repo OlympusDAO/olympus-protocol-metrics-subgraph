@@ -33,6 +33,11 @@ the `indexer` service:
 docker compose up --build postgres hasura minio minio-init metrics-api
 ```
 
+Local indexer startup does not reset the Envio database. Compose sets
+`ENVIO_PG_SCHEMA` to `public` by default and runs plain `envio start`, so local
+work can resume from the existing Postgres volume. Reset-on-start is reserved
+for the Railway indexer runtime.
+
 ## Split Workflow
 
 For day-to-day development, keep the indexing core running separately because

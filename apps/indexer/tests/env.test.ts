@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import {
   attachEnvioChildHandlers,
   formatEnvioSpawnError,
+  isRailwayRuntime,
   prepareIndexerEnv,
   resolveEnvioArgs,
 } from "../src/start-envio";
@@ -32,27 +33,29 @@ describe("indexer env validation", () => {
     expect(() => validateIndexerEnv(validEnv)).not.toThrow();
   });
 
-  test("requires Railway indexer schemas to match the deployment id", () => {
+  test("forbids explicit Railway schemas so Envio uses its default schema", () => {
     expect(() =>
       validateIndexerEnv({
         ...validEnv,
         ENVIO_INDEXER_PORT: "9898",
-        ENVIO_PG_SCHEMA: "railway-deployment-1",
+        ENVIO_PG_SCHEMA: "public",
         PORT: "9898",
-        RAILWAY_DEPLOYMENT_ID: "railway-deployment-1",
+        RAILWAY_SERVICE_ID: "railway-service-1",
       }),
-    ).not.toThrow();
+    ).toThrow("ENVIO_PG_SCHEMA must not be set on Railway");
 
     expect(() =>
       validateIndexerEnv({
         ...validEnv,
-        ENVIO_PG_SCHEMA: "public",
-        RAILWAY_DEPLOYMENT_ID: "railway-deployment-1",
+        ENVIO_INDEXER_PORT: "9898",
+        ENVIO_PG_SCHEMA: "",
+        PORT: "9898",
+        RAILWAY_SERVICE_ID: "railway-service-1",
       }),
-    ).toThrow("ENVIO_PG_SCHEMA must match RAILWAY_DEPLOYMENT_ID");
+    ).not.toThrow();
   });
 
-  test("injects the Railway deployment id as the schema before validation", () => {
+  test("does not inject the Railway deployment id as the schema", () => {
     const env = prepareIndexerEnv({
       ...validEnv,
       ENVIO_INDEXER_PORT: "9898",
@@ -61,7 +64,7 @@ describe("indexer env validation", () => {
       RAILWAY_DEPLOYMENT_ID: "railway-deployment-1",
     });
 
-    expect(env.ENVIO_PG_SCHEMA).toBe("railway-deployment-1");
+    expect(env.ENVIO_PG_SCHEMA).toBe("");
     expect(() => validateIndexerEnv(env)).not.toThrow();
   });
 
@@ -69,9 +72,9 @@ describe("indexer env validation", () => {
     const env = prepareIndexerEnv({
       ...validEnv,
       ENVIO_INDEXER_PORT: "",
-      ENVIO_PG_SCHEMA: "railway-deployment-1",
+      ENVIO_PG_SCHEMA: "",
       PORT: "9898",
-      RAILWAY_DEPLOYMENT_ID: "railway-deployment-1",
+      RAILWAY_SERVICE_ID: "railway-service-1",
     });
 
     expect(env.ENVIO_INDEXER_PORT).toBe("9898");
@@ -80,9 +83,9 @@ describe("indexer env validation", () => {
     expect(() =>
       validateIndexerEnv({
         ...validEnv,
-        ENVIO_PG_SCHEMA: "railway-deployment-1",
+        ENVIO_PG_SCHEMA: "",
         PORT: "",
-        RAILWAY_DEPLOYMENT_ID: "railway-deployment-1",
+        RAILWAY_SERVICE_ID: "railway-service-1",
       }),
     ).toThrow("PORT must be set when running on Railway");
 
@@ -95,9 +98,28 @@ describe("indexer env validation", () => {
     ).toThrow("ENVIO_INDEXER_PORT must match PORT");
   });
 
-  test("defaults startup to envio start when no args are provided", () => {
-    expect(resolveEnvioArgs([])).toEqual(["start"]);
-    expect(resolveEnvioArgs(["dev"])).toEqual(["dev"]);
+  test("defaults local startup to envio start without resetting the database", () => {
+    expect(isRailwayRuntime(validEnv)).toBe(false);
+    expect(resolveEnvioArgs([], validEnv)).toEqual(["start"]);
+    expect(resolveEnvioArgs(["start"], validEnv)).toEqual(["start"]);
+    expect(resolveEnvioArgs(["dev"], validEnv)).toEqual(["dev"]);
+  });
+
+  test("resets Envio only for Railway start commands", () => {
+    const railwayEnv = {
+      ...validEnv,
+      ENVIO_INDEXER_PORT: "9898",
+      ENVIO_PG_SCHEMA: "",
+      PORT: "9898",
+      RAILWAY_SERVICE_ID: "railway-service-1",
+    };
+
+    expect(isRailwayRuntime(railwayEnv)).toBe(true);
+    expect(resolveEnvioArgs([], railwayEnv)).toEqual(["start", "-r"]);
+    expect(resolveEnvioArgs(["start"], railwayEnv)).toEqual(["start", "-r"]);
+    expect(resolveEnvioArgs(["start", "-r"], railwayEnv)).toEqual(["start", "-r"]);
+    expect(resolveEnvioArgs(["start", "--reset"], railwayEnv)).toEqual(["start", "--reset"]);
+    expect(resolveEnvioArgs(["dev"], railwayEnv)).toEqual(["dev"]);
   });
 
   test("formats spawn failures loudly before Envio starts", () => {

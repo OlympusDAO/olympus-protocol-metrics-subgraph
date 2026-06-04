@@ -3,12 +3,6 @@ import { pathToFileURL } from "node:url";
 import { validateIndexerEnv } from "./validate-env";
 
 export function prepareIndexerEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  const railwayDeploymentId = env.RAILWAY_DEPLOYMENT_ID?.trim();
-  const hasSchema = env.ENVIO_PG_SCHEMA !== undefined && env.ENVIO_PG_SCHEMA.trim() !== "";
-  if (!hasSchema && railwayDeploymentId !== undefined && railwayDeploymentId !== "") {
-    env.ENVIO_PG_SCHEMA = railwayDeploymentId;
-  }
-
   const railwayPort = env.PORT?.trim();
   const hasEnvioIndexerPort = env.ENVIO_INDEXER_PORT !== undefined && env.ENVIO_INDEXER_PORT.trim() !== "";
   if (!hasEnvioIndexerPort && railwayPort !== undefined && railwayPort !== "") {
@@ -18,8 +12,17 @@ export function prepareIndexerEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   return env;
 }
 
-export function resolveEnvioArgs(args: string[]): string[] {
-  return args.length === 0 ? ["start"] : args;
+export function isRailwayRuntime(env: NodeJS.ProcessEnv): boolean {
+  return Object.entries(env).some(([key, value]) => key.startsWith("RAILWAY_") && isPresent(value));
+}
+
+export function resolveEnvioArgs(args: string[], env: NodeJS.ProcessEnv = process.env): string[] {
+  const resolvedArgs = args.length === 0 ? ["start"] : args;
+  if (!isRailwayRuntime(env) || resolvedArgs[0] !== "start" || hasResetFlag(resolvedArgs)) {
+    return resolvedArgs;
+  }
+
+  return [...resolvedArgs, "-r"];
 }
 
 export function runIndexerStartup(args: string[] = process.argv.slice(2), env: NodeJS.ProcessEnv = process.env): void {
@@ -30,7 +33,7 @@ export function runIndexerStartup(args: string[] = process.argv.slice(2), env: N
     return;
   }
 
-  const child = spawn("envio", resolveEnvioArgs(args), {
+  const child = spawn("envio", resolveEnvioArgs(args, preparedEnv), {
     env: preparedEnv,
     stdio: "inherit",
   });
@@ -71,6 +74,14 @@ export function formatEnvioSpawnError(error: Error & { code?: string }): string 
     return `Failed to start envio: envio binary was not found in PATH (${error.message})`;
   }
   return `Failed to start envio: ${error.code ? `${error.code}: ` : ""}${error.message}`;
+}
+
+function hasResetFlag(args: string[]): boolean {
+  return args.includes("-r") || args.includes("--reset");
+}
+
+function isPresent(value: string | undefined): boolean {
+  return value !== undefined && value.trim() !== "";
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {

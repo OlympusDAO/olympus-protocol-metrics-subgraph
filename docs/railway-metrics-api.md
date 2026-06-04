@@ -93,12 +93,13 @@ check requires the core variables below before Envio starts.
 - Required `ENVIO_PG_HOST`, `ENVIO_PG_PORT`, `ENVIO_PG_USER`,
   `ENVIO_PG_PASSWORD`, and `ENVIO_PG_DATABASE`: Envio's Postgres connection
   settings, usually references to Railway Postgres private-network variables.
-- Automatically set on Railway `ENVIO_PG_SCHEMA`: the indexer startup wrapper
-  copies Railway's runtime `RAILWAY_DEPLOYMENT_ID` into `ENVIO_PG_SCHEMA` before
-  validation and Envio startup. Do not define `ENVIO_PG_SCHEMA` as a Railway
-  variable unless you are intentionally overriding this behavior; if
-  `RAILWAY_DEPLOYMENT_ID` is present, the preflight check requires the two
-  values to match.
+- Do not set `ENVIO_PG_SCHEMA` on Railway. The indexer intentionally uses
+  Envio's default schema, currently `public`, so each deployment operates on the
+  same Envio schema instead of accumulating deployment-specific schemas.
+- Railway indexer startup runs `envio start -r`. This deletes and recreates the
+  Envio tables in the default schema before indexing. That is intentional:
+  Postgres/Hasura is not the public availability boundary for this service.
+  Published artifact snapshots and the metrics API are the handover boundary.
 - Required `ENVIO_PG_SSL_MODE`: set according to the Railway Postgres
   connection mode. Envio accepts `false`, `true`, `require`, `allow`, `prefer`,
   or `verify-full`; it does not accept libpq-style `disable`.
@@ -147,6 +148,24 @@ comma-separated fallback URL environment variables for event ingestion.
 Envio's RPC schema supports batch/backoff/timeout/polling fields in
 `config.yaml`; it does not consume `requests_per_second` environment variables
 for event ingestion.
+
+Railway deployment flow:
+
+1. A new indexer deployment starts with `envio start -r` against Envio's default
+   schema.
+2. Existing metric artifacts remain in the bucket, and `metrics-api` continues
+   serving the currently published manifest while the indexer reindexes.
+3. The publisher cron reads Hasura but skips cleanly with
+   `skipReason: "not_data_ready"` until the indexer has produced complete
+   eligible data.
+4. Once the indexer is data-ready, the publisher regenerates the deployment's
+   snapshots, uploads all shard files, then publishes `v2/manifest.json` last.
+5. After the manifest update, `metrics-api` serves the newly published artifact
+   set.
+
+Do not use `ENVIO_PG_SCHEMA` for Railway blue/green handover. If Envio config or
+schema changes are incompatible with existing data, reset-on-start handles the
+database side. Client-visible handover is handled by the publisher manifest.
 
 This repository's snapshot effect RPC client does consume optional runtime
 tuning variables:

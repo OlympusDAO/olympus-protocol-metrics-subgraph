@@ -101,7 +101,10 @@ describe("Railway config-as-code", () => {
       expect(doc).toContain(variable);
     }
 
-    expect(doc).toContain("copies Railway's runtime `RAILWAY_DEPLOYMENT_ID` into `ENVIO_PG_SCHEMA`");
+    expect(doc).toContain("Do not set `ENVIO_PG_SCHEMA` on Railway");
+    expect(doc).toContain("Railway indexer startup runs `envio start -r`");
+    expect(doc).toContain("Published artifact snapshots and the metrics API are the handover boundary");
+    expect(doc).not.toContain("copies Railway's runtime `RAILWAY_DEPLOYMENT_ID` into `ENVIO_PG_SCHEMA`");
     expect(doc).toContain("indexer startup wrapper derives `ENVIO_INDEXER_PORT`");
     expect(doc).toContain("${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.PORT}}/v1/graphql");
     expect(doc).toContain("${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.PORT}}/v1/metadata");

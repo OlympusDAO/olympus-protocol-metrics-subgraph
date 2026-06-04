@@ -5,7 +5,6 @@ const REQUIRED_ENV_VARS = [
   "ENVIO_PG_USER",
   "ENVIO_PG_PASSWORD",
   "ENVIO_PG_DATABASE",
-  "ENVIO_PG_SCHEMA",
   "ENVIO_PG_SSL_MODE",
   "HASURA_GRAPHQL_ENDPOINT",
   "HASURA_GRAPHQL_ADMIN_SECRET",
@@ -53,11 +52,11 @@ export function validateIndexerEnv(env: NodeJS.ProcessEnv): void {
     throw new Error(`Invalid positive integer environment variables: ${invalidOptionalIntegers.join(", ")}`);
   }
 
-  if (!isBlank(env.RAILWAY_DEPLOYMENT_ID) && env.ENVIO_PG_SCHEMA !== env.RAILWAY_DEPLOYMENT_ID) {
-    throw new Error("ENVIO_PG_SCHEMA must match RAILWAY_DEPLOYMENT_ID when running on Railway.");
+  if (isRailwayRuntime(env) && !isBlank(env.ENVIO_PG_SCHEMA)) {
+    throw new Error("ENVIO_PG_SCHEMA must not be set on Railway; Envio must use its default schema.");
   }
 
-  if (!isBlank(env.RAILWAY_DEPLOYMENT_ID) && isBlank(env.PORT)) {
+  if (isRailwayRuntime(env) && isBlank(env.PORT)) {
     throw new Error("PORT must be set when running on Railway.");
   }
 
@@ -82,6 +81,10 @@ function isUrl(value: string): boolean {
 function isPositiveInteger(value: string): boolean {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0;
+}
+
+function isRailwayRuntime(env: NodeJS.ProcessEnv): boolean {
+  return Object.entries(env).some(([key, value]) => key.startsWith("RAILWAY_") && !isBlank(value));
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

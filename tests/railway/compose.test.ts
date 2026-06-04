@@ -114,6 +114,7 @@ describe("local Docker Compose stack", () => {
     expect(compose).not.toContain("ENVIO_INDEXER_PORT:");
     expect(compose).not.toContain("ENVIO_PG_SSL_MODE: ${ENVIO_PG_SSL_MODE:-disable}");
     expect(compose).toContain("ENVIO_PG_SSL_MODE: ${ENVIO_PG_SSL_MODE:-false}");
+    expect(compose).toContain("ENVIO_PG_SCHEMA: ${ENVIO_PG_SCHEMA:-public}");
     expect(compose).toContain("PORT: ${HASURA_PORT:-8080}");
     expect(compose).toContain("PORT: ${INDEXER_PORT:-9898}");
     expect(compose).toContain("ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:?");
@@ -129,5 +130,6 @@ describe("local Docker Compose stack", () => {
     expect(doc).toContain("ENVIO_API_TOKEN` is required");
     expect(doc).toContain("fails fast if the token is missing");
     expect(doc).toContain("fallbacks, not as the primary sync source");
+    expect(doc).toContain("Local indexer startup does not reset the Envio database");
   });
 });
