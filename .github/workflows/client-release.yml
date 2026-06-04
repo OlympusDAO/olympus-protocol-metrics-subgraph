@@ -1,0 +1,140 @@
+name: Release treasury-subgraph-client
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_version:
+        description: Version to release. Must match apps/client/package.json.
+        required: true
+        type: string
+      mode:
+        description: Run a safe package rehearsal or stage the package on npm.
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - dry-run
+          - stage
+
+permissions:
+  contents: read
+
+concurrency:
+  group: treasury-subgraph-client-release
+  cancel-in-progress: false
+
+env:
+  PACKAGE_DIR: apps/client
+  PACKAGE_NAME: "@olympusdao/treasury-subgraph-client"
+
+jobs:
+  validate-pack:
+    name: Validate and pack package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    outputs:
+      filename: ${{ steps.pack.outputs.filename }}
+      tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Bootstrap
+        uses: ./.github/actions/bootstrap
+
+      - name: Install npm with staged publishing support
+        run: npm install -g npm@11.15.0
+
+      - name: Release preflight
+        id: release
+        run: pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts validate
+        env:
+          EXPECTED_VERSION: ${{ inputs.expected_version }}
+
+      - name: Run client release checks
+        run: pnpm --dir "$PACKAGE_DIR" run release:check
+
+      - name: Pack release artifact for review
+        id: pack
+        run: pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts pack
+        env:
+          PACK_DESTINATION: ${{ runner.temp }}
+          NPM_CACHE_DIR: ${{ runner.temp }}/npm-cache
+
+      - name: Write GitHub release notes
+        run: pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts notes
+        env:
+          RELEASE_NOTES_PATH: ${{ runner.temp }}/client-release-notes.md
+
+      - name: Upload packed package artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: treasury-subgraph-client-${{ steps.release.outputs.version }}
+          path: |
+            ${{ steps.pack.outputs.tarball }}
+            ${{ steps.pack.outputs.pack_json }}
+            ${{ runner.temp }}/client-release-notes.md
+          if-no-files-found: error
+
+      - name: Write dry-run summary
+        if: ${{ inputs.mode == 'dry-run' }}
+        run: |
+          {
+            echo "## Client package release dry-run"
+            echo ""
+            echo "- Package: \`$PACKAGE_NAME@${{ steps.release.outputs.version }}\`"
+            echo "- Tag that would be created in stage mode: \`${{ steps.release.outputs.tag }}\`"
+            echo "- Packed artifact: \`${{ steps.pack.outputs.filename }}\`"
+            echo ""
+            echo "No npm staging, git tag, or GitHub Release was created."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  stage-npm:
+    name: Stage package on npm
+    if: ${{ inputs.mode == 'stage' }}
+    needs: validate-pack
+    runs-on: ubuntu-latest
+    environment: npm-stage
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download packed package artifacts
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: treasury-subgraph-client-${{ needs.validate-pack.outputs.version }}
+          path: ${{ runner.temp }}/client-package
+
+      - name: Install npm with staged publishing support
+        run: npm install -g npm@11.15.0
+
+      - name: Stage package on npm
+        run: npm stage publish "$RUNNER_TEMP/client-package/${{ needs.validate-pack.outputs.filename }}" --access public --cache "$RUNNER_TEMP/npm-cache"
+
+  github-release:
+    name: Create GitHub release
+    if: ${{ inputs.mode == 'stage' }}
+    needs:
+      - validate-pack
+      - stage-npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download packed package artifacts
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
+        with:
+          name: treasury-subgraph-client-${{ needs.validate-pack.outputs.version }}
+          path: ${{ runner.temp }}/client-package
+
+      - name: Create GitHub release
+        run: gh release create "${{ needs.validate-pack.outputs.tag }}" "$RUNNER_TEMP/client-package/${{ needs.validate-pack.outputs.filename }}" "$RUNNER_TEMP/client-package/client-pack.json" --title "$PACKAGE_NAME@${{ needs.validate-pack.outputs.version }}" --notes-file "$RUNNER_TEMP/client-package/client-release-notes.md" --target "${{ github.sha }}"
+        env:
+          GH_TOKEN: ${{ github.token }}
