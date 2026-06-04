@@ -25,6 +25,12 @@ tree. CI staging gives a clean build environment, npm trusted-publishing
 provenance, and no local npm token exposure. Final approval is still manual in
 npm's website.
 
+GitHub only shows a `workflow_dispatch` workflow in the Actions UI after the
+workflow file exists on the repository default branch. Keep
+`.github/workflows/client-release.yml` on `master`; then use the workflow's
+branch selector to choose the branch or tag that contains the intended package
+release.
+
 Prerequisites:
 
 - Configure npm trusted publishing for
@@ -45,15 +51,23 @@ Release steps:
 1. Bump `apps/client/package.json` and `apps/client/CHANGELOG.md`.
 2. Commit and merge the release changes.
 3. Open GitHub Actions and run **Release treasury-subgraph-client** manually.
-   Enter the required `expected_version`; the workflow fails unless it matches
+   Select the branch containing the intended package release and enter the
+   required `expected_version`; the workflow fails unless it matches
    `apps/client/package.json`.
-4. The workflow validates and packs the package in a read-only job, fails if
-   that version is already published, fails if the matching git tag already
-   exists, stages the packed tarball in a separate npm trusted-publishing job,
-   then creates `treasury-subgraph-client-v<version>` and a GitHub Release in
-   a separate GitHub write job. If the version is already staged on npm, the npm
-   staging step fails before the GitHub tag and Release are created.
-5. Review the staged package on npmjs.com and approve it with 2FA.
+4. Run with `mode=dry-run` first. This is the default. Dry-run mode validates
+   the release, runs the client release checks, packs the package, uploads the
+   tarball, uploads npm pack metadata, and writes release notes as workflow
+   artifacts. It does not stage anything on npm, create a git tag, or create a
+   GitHub Release.
+5. Review the dry-run artifacts.
+6. Rerun the workflow against the same branch and version with `mode=stage`.
+   Stage mode validates and packs the package again, fails if that version is
+   already published, fails if the matching git tag already exists, stages the
+   packed tarball in a separate npm trusted-publishing job, then creates
+   `treasury-subgraph-client-v<version>` and a GitHub Release in a separate
+   GitHub write job. If the version is already staged on npm, the npm staging
+   step fails before the GitHub tag and Release are created.
+7. Review the staged package on npmjs.com and approve it with 2FA.
 
 The workflow creates the GitHub tag and GitHub Release only after
 `npm stage publish` succeeds. If staging succeeds but the later tag or GitHub

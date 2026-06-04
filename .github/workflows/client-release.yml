@@ -4,9 +4,17 @@ on:
   workflow_dispatch:
     inputs:
       expected_version:
-        description: Version to stage. Must match apps/client/package.json.
+        description: Version to release. Must match apps/client/package.json.
         required: true
         type: string
+      mode:
+        description: Run a safe package rehearsal or stage the package on npm.
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - dry-run
+          - stage
 
 permissions:
   contents: read
@@ -51,7 +59,7 @@ jobs:
       - name: Run client release checks
         run: pnpm --dir "$PACKAGE_DIR" run release:check
 
-      - name: Pack release artifact for GitHub review
+      - name: Pack release artifact for review
         id: pack
         run: pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts pack
         env:
@@ -73,8 +81,22 @@ jobs:
             ${{ runner.temp }}/client-release-notes.md
           if-no-files-found: error
 
+      - name: Write dry-run summary
+        if: ${{ inputs.mode == 'dry-run' }}
+        run: |
+          {
+            echo "## Client package release dry-run"
+            echo ""
+            echo "- Package: \`$PACKAGE_NAME@${{ steps.release.outputs.version }}\`"
+            echo "- Tag that would be created in stage mode: \`${{ steps.release.outputs.tag }}\`"
+            echo "- Packed artifact: \`${{ steps.pack.outputs.filename }}\`"
+            echo ""
+            echo "No npm staging, git tag, or GitHub Release was created."
+          } >> "$GITHUB_STEP_SUMMARY"
+
   stage-npm:
     name: Stage package on npm
+    if: ${{ inputs.mode == 'stage' }}
     needs: validate-pack
     runs-on: ubuntu-latest
     environment: npm-stage
@@ -97,6 +119,7 @@ jobs:
 
   github-release:
     name: Create GitHub release
+    if: ${{ inputs.mode == 'stage' }}
     needs:
       - validate-pack
       - stage-npm

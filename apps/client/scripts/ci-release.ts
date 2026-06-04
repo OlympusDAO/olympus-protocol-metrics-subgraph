@@ -260,6 +260,7 @@ function preflight(): void {
 function validateReleaseInputs(): void {
   assertExpectedVersion();
   assertVersionNotPublished();
+  assertVersionNotStaged();
   assertReleaseTagDoesNotExist();
 }
 
