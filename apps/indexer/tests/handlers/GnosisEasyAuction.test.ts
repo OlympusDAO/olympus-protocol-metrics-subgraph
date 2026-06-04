@@ -37,7 +37,7 @@ describe("applyAuctionCleared", () => {
           auctionId: 42n,
           soldAuctioningTokens: 0n,
           soldBiddingTokens: 5_500_000_000n, // 5.5 OHM at 9 decimals
-          clearingPriceOrder: "0x" + "0".repeat(64),
+          clearingPriceOrder: `0x${"0".repeat(64)}`,
         },
       },
       context,
@@ -58,7 +58,7 @@ describe("applyAuctionCleared", () => {
           auctionId: 9999n,
           soldAuctioningTokens: 0n,
           soldBiddingTokens: 1n,
-          clearingPriceOrder: "0x" + "0".repeat(64),
+          clearingPriceOrder: `0x${"0".repeat(64)}`,
         },
       },
       context,

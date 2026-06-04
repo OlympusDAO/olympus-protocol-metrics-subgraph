@@ -90,12 +90,12 @@ export class MemoryArtifactStore implements ArtifactStore {
     return true;
   }
 
-  json(key: string): any {
+  json<T = unknown>(key: string): T {
     const value = this.objects.get(key);
     if (value === undefined) {
       throw new Error(`No object written for ${key}`);
     }
-    return JSON.parse(value);
+    return JSON.parse(value) as T;
   }
 }
 

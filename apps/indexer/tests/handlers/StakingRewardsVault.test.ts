@@ -109,7 +109,7 @@ describe("StakingRewardsVault handlers", () => {
       },
       context: context as unknown as Parameters<typeof handleStakingRewardsStaked>[0]["context"],
     });
-    expect(balanceSets.at(-1)!.balance).toBe(amount);
+    expect(balanceSets.at(-1)?.balance).toBe(amount);
 
     await handleStakingRewardsWithdrawn({
       event: {
@@ -121,7 +121,7 @@ describe("StakingRewardsVault handlers", () => {
       },
       context: context as unknown as Parameters<typeof handleStakingRewardsWithdrawn>[0]["context"],
     });
-    expect(balanceSets.at(-1)!.balance).toBe(0n);
+    expect(balanceSets.at(-1)?.balance).toBe(0n);
   });
 
   test("Staked by a non-treasury user is a no-op", async () => {

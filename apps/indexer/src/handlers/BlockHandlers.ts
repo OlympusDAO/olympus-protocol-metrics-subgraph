@@ -9,14 +9,12 @@ import {
   BigDecimal,
   type EvmOnBlockContext,
   indexer,
-  type NativeBalanceState,
   type TokenRecord,
   type TokenSupply,
 } from "envio";
-import { getAddress, type PublicClient } from "viem";
+import type { PublicClient } from "viem";
 import {
   readBlockTimestamp,
-  readErc20BalanceOf,
   readNextOhmDistribution,
   readSOhmCirculatingSupply,
 } from "../effects";
@@ -29,7 +27,7 @@ import {
 } from "../pricing";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { withContractReadCache } from "../snapshot/contract-cache";
-import { getClient, getNativeBalance } from "../snapshot/rpc-client";
+import { getClient } from "../snapshot/rpc-client";
 import {
   addr,
   getTokenDecimals,
@@ -37,7 +35,6 @@ import {
   matches,
   toBigDecimal,
   toDecimal,
-  univ3PositionAmounts,
   ZERO,
 } from "../snapshot/math";
 import {
@@ -51,7 +48,6 @@ import {
   CHAIN_IDS,
   type ChainConfig,
   type ChainId,
-  type LiquidityHandler,
   type SerializedTokenRecord,
   type SerializedTokenSupply,
 } from "../snapshot/types";
@@ -847,4 +843,3 @@ async function pushOwnedLiquiditySupply(
     }
   }
 }
-

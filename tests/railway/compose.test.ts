@@ -36,7 +36,7 @@ describe("local Docker Compose stack", () => {
 
     const api = serviceBlock(compose, "metrics-api");
     expect(api).toContain("ports:");
-    expect(api).toContain("127.0.0.1:${METRICS_API_PORT:-3000}:3000");
+    expect(api).toContain(`127.0.0.1:\${METRICS_API_PORT:-3000}:3000`);
   });
 
   test("orders dependent services with health and completion gates", () => {
@@ -112,15 +112,17 @@ describe("local Docker Compose stack", () => {
     expect(compose).not.toContain("FALLBACK_RPC_URLS");
     expect(compose).not.toContain("REQUESTS_PER_SECOND");
     expect(compose).not.toContain("ENVIO_INDEXER_PORT:");
-    expect(compose).not.toContain("ENVIO_PG_SSL_MODE: ${ENVIO_PG_SSL_MODE:-disable}");
-    expect(compose).toContain("ENVIO_PG_SSL_MODE: ${ENVIO_PG_SSL_MODE:-false}");
-    expect(compose).toContain("ENVIO_PG_SCHEMA: ${ENVIO_PG_SCHEMA:-public}");
-    expect(compose).toContain("PORT: ${HASURA_PORT:-8080}");
-    expect(compose).toContain("PORT: ${INDEXER_PORT:-9898}");
+    expect(compose).not.toContain(`ENVIO_PG_SSL_MODE: \${ENVIO_PG_SSL_MODE:-disable}`);
+    expect(compose).toContain(`ENVIO_PG_SSL_MODE: \${ENVIO_PG_SSL_MODE:-false}`);
+    expect(compose).toContain(`ENVIO_PG_SCHEMA: \${ENVIO_PG_SCHEMA:-public}`);
+    expect(compose).toContain(`PORT: \${HASURA_PORT:-8080}`);
+    expect(compose).toContain(`PORT: \${INDEXER_PORT:-9898}`);
     expect(compose).toContain("ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:?");
-    expect(compose).toContain("HASURA_GRAPHQL_ENDPOINT: ${INDEXER_HASURA_GRAPHQL_ENDPOINT:-http://hasura:8080/v1/metadata}");
-    expect(compose).toContain("MINIO_ROOT_USER: ${MINIO_ROOT_USER:-metricsadmin}");
-    expect(compose).toContain("INDEXER_DEPLOYMENT_ID: ${INDEXER_DEPLOYMENT_ID:-}");
+    expect(compose).toContain(
+      `HASURA_GRAPHQL_ENDPOINT: \${INDEXER_HASURA_GRAPHQL_ENDPOINT:-http://hasura:8080/v1/metadata}`,
+    );
+    expect(compose).toContain(`MINIO_ROOT_USER: \${MINIO_ROOT_USER:-metricsadmin}`);
+    expect(compose).toContain(`INDEXER_DEPLOYMENT_ID: \${INDEXER_DEPLOYMENT_ID:-}`);
     expect(sample).toContain("HASURA_PORT=8080");
     expect(sample).toContain("INDEXER_DEPLOYMENT_ID=<git-commit-hash>");
     expect(sample).toContain("git rev-parse HEAD");

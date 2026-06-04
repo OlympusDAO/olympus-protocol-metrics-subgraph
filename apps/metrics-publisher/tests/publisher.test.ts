@@ -17,6 +17,13 @@ import type { DailyMetric, Manifest, OhmSupply, TreasuryAsset } from "../../../p
 
 const generatedAt = "2026-06-01T08:15:00.000Z";
 
+function requireArtifacts(manifest: Manifest): NonNullable<Manifest["artifacts"]> {
+  if (manifest.artifacts === undefined) {
+    throw new Error("Expected manifest artifacts to be present");
+  }
+  return manifest.artifacts;
+}
+
 const metric: DailyMetric = {
   date: "2026-05-21",
   blocks: { Arbitrum: 0, Ethereum: 100, Fantom: 0, Polygon: 0, Base: 0, Berachain: 0 },
@@ -180,7 +187,7 @@ describe("metrics publisher", () => {
       result.writtenKeys.indexOf("v2/manifest.json"),
     );
 
-    const manifest = store.json("v2/manifest.json");
+    const manifest = store.json<Manifest>("v2/manifest.json");
     expect(manifest).toMatchObject({
       schemaVersion: "1.0.0",
       generatedAt,
@@ -194,13 +201,14 @@ describe("metrics publisher", () => {
       earliestDate: "2026-05-01",
       latestDate: "2026-05-31",
     });
-    expect(manifest.artifacts["v2/deployments/current-indexer/metrics/daily/2026-05.json"]).toMatchObject({
+    const artifacts = requireArtifacts(manifest);
+    expect(artifacts["v2/deployments/current-indexer/metrics/daily/2026-05.json"]).toMatchObject({
       rowCount: 1,
       byteLength: expect.any(Number),
       sha256: expect.stringMatching(/^[a-f0-9]{64}$/),
     });
-    expect(manifest.artifacts["v2/deployments/current-indexer/treasury-assets/daily/2026-05.json"].rowCount).toBe(1);
-    expect(manifest.artifacts["v2/deployments/current-indexer/ohm-supply/daily/2026-05.json"].rowCount).toBe(1);
+    expect(artifacts["v2/deployments/current-indexer/treasury-assets/daily/2026-05.json"].rowCount).toBe(1);
+    expect(artifacts["v2/deployments/current-indexer/ohm-supply/daily/2026-05.json"].rowCount).toBe(1);
   });
 
   test("publishes from the existing manifest with a lookback overlap", async () => {
@@ -267,7 +275,7 @@ describe("metrics publisher", () => {
     ]);
     expect(result.writtenKeys).toContain("v2/deployments/current-indexer/metrics/daily/2026-05.json");
     expect(result.writtenKeys).not.toContain("v2/deployments/current-indexer/metrics/daily/2026-06.json");
-    expect(store.json("v2/manifest.json")).toMatchObject({
+    expect(store.json<Manifest>("v2/manifest.json")).toMatchObject({
       latestDate: "2026-05-31",
       indexerDeploymentId: "current-indexer",
     });
@@ -307,7 +315,7 @@ describe("metrics publisher", () => {
       manifestPublishedLast: false,
       writtenKeys: [],
     });
-    expect(store.json("v2/manifest.json")).toEqual(existingManifest);
+    expect(store.json<Manifest>("v2/manifest.json")).toEqual(existingManifest);
     await expect(store.getJson("v2/publisher.lock")).rejects.toThrow("Artifact not found");
   });
 
@@ -384,7 +392,7 @@ describe("metrics publisher", () => {
         Base: { block: 12345, date: "2026-06-01", timestamp: 1780272000 },
       },
     });
-    expect(store.json("v2/manifest.json")).toEqual(existingManifest);
+    expect(store.json<Manifest>("v2/manifest.json")).toEqual(existingManifest);
     await expect(store.getJson("v2/publisher.lock")).rejects.toThrow("Artifact not found");
   });
 
@@ -418,12 +426,13 @@ describe("metrics publisher", () => {
     expect(result.writtenKeys).toContain("v2/deployments/current-indexer/ohm-supply/daily/2026-05.json");
     expect(result.deletedKeys).toEqual(["v2/deployments/old-indexer/metrics/daily/2026-05.json"]);
 
-    const manifest = store.json("v2/manifest.json");
+    const manifest = store.json<Manifest>("v2/manifest.json");
+    const artifacts = requireArtifacts(manifest);
     expect(manifest).toMatchObject({ indexerDeploymentId: "current-indexer" });
-    expect(manifest.artifacts["v2/deployments/current-indexer/metrics/daily/2026-05.json"]).toMatchObject({
+    expect(artifacts["v2/deployments/current-indexer/metrics/daily/2026-05.json"]).toMatchObject({
       rowCount: 1,
     });
-    expect(manifest.artifacts["v2/deployments/old-indexer/metrics/daily/2026-05.json"]).toBeUndefined();
+    expect(artifacts["v2/deployments/old-indexer/metrics/daily/2026-05.json"]).toBeUndefined();
     await expect(store.getJson("v2/deployments/old-indexer/metrics/daily/2026-05.json")).rejects.toThrow(
       "Artifact not found",
     );
@@ -475,13 +484,14 @@ describe("metrics publisher", () => {
       "v2/deployments/old-indexer/treasury-assets/daily/2026-05.json",
     ]);
 
-    const manifest = store.json("v2/manifest.json");
+    const manifest = store.json<Manifest>("v2/manifest.json");
+    const artifacts = requireArtifacts(manifest);
     expect(manifest).toMatchObject({ indexerDeploymentId: "new-indexer" });
-    expect(Object.keys(manifest.artifacts).some((key) => key.startsWith("v2/deployments/old-indexer/"))).toBe(false);
-    expect(manifest.artifacts["v2/deployments/new-indexer/metrics/daily/2026-05.json"]).toMatchObject({
+    expect(Object.keys(artifacts).some((key) => key.startsWith("v2/deployments/old-indexer/"))).toBe(false);
+    expect(artifacts["v2/deployments/new-indexer/metrics/daily/2026-05.json"]).toMatchObject({
       rowCount: 1,
     });
-    expect(manifest.artifacts["v2/deployments/new-indexer/metrics/daily/2026-06.json"]).toMatchObject({
+    expect(artifacts["v2/deployments/new-indexer/metrics/daily/2026-06.json"]).toMatchObject({
       rowCount: 1,
     });
     await expect(store.getJson("v2/deployments/old-indexer/metrics/daily/2026-05.json")).rejects.toThrow(

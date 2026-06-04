@@ -508,14 +508,15 @@ describe("Berachain Envio snapshot parity", () => {
         [OHM_BERACHAIN],
         block,
       );
-      expect(totalValue).not.toBeNull();
-      expect(includedValue).not.toBeNull();
-      const multiplier = includedValue!.div(totalValue!);
+      if (totalValue === null || includedValue === null) {
+        throw new Error("Expected Beradrome total values to resolve");
+      }
+      const multiplier = includedValue.div(totalValue);
       // OHM contributes real value → strictly between 0 and 1.
       expect(multiplier.gt(0)).toBe(true);
       expect(multiplier.lt(1)).toBe(true);
       // totalValue must exceed the HONEY-only included value.
-      expect(totalValue!.gt(includedValue!)).toBe(true);
+      expect(totalValue.gt(includedValue)).toBe(true);
     });
   });
 
@@ -553,7 +554,10 @@ describe("Berachain Envio snapshot parity", () => {
         [OHM_BERACHAIN],
         block,
       );
-      const multiplier = includedValue!.div(totalValue!);
+      if (totalValue === null || includedValue === null) {
+        throw new Error("Expected Beradrome total values to resolve after base Kodiak cache priming");
+      }
+      const multiplier = includedValue.div(totalValue);
       expect(multiplier.lt(1)).toBe(true);
       expect(multiplier.gt(0)).toBe(true);
     });

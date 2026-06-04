@@ -48,8 +48,15 @@ describe("Wrapped9 handlers", () => {
     (w) => w === addr("0x97b3ef4c558ec456d59cb95c65bfb79046e31fca"),
   );
 
+  function requireTreasuryWallet(): string {
+    if (treasuryWallet === undefined) {
+      throw new Error("Expected treasury wallet fixture to exist");
+    }
+    return treasuryWallet;
+  }
+
   test("Deposit credits dst's TokenBalance with +wad", async () => {
-    expect(treasuryWallet).toBeDefined();
+    const wallet = requireTreasuryWallet();
     const wad = 771_059_105_630_142_323_797n;
     const { context, balanceSets, updateSets } = buildContext();
 
@@ -59,14 +66,14 @@ describe("Wrapped9 handlers", () => {
         srcAddress: WETH,
         logIndex: 35,
         block: { number: 14_915_630, timestamp: 1_654_000_000 },
-        params: { dst: treasuryWallet!, wad },
+        params: { dst: wallet, wad },
       },
       context: context as unknown as Parameters<typeof handleWrapped9Deposit>[0]["context"],
     });
 
     expect(balanceSets).toHaveLength(1);
     expect(balanceSets[0].balance).toBe(wad);
-    expect(balanceSets[0].id).toBe(`${ETH}-${addr(WETH)}-${addr(treasuryWallet!)}`);
+    expect(balanceSets[0].id).toBe(`${ETH}-${addr(WETH)}-${addr(wallet)}`);
 
     expect(updateSets).toHaveLength(1);
     expect(updateSets[0].delta).toBe(wad);
@@ -74,13 +81,13 @@ describe("Wrapped9 handlers", () => {
   });
 
   test("Withdrawal debits src's TokenBalance with -wad", async () => {
-    expect(treasuryWallet).toBeDefined();
+    const wallet = requireTreasuryWallet();
     const startingBalance = 1_000_000_000_000_000_000_000n; // 1000 wETH
     const wad = 250_000_000_000_000_000_000n; // 250 wETH
     const { context, balanceSets, updateSets } = buildContext({
       chainId: ETH,
       tokenAddress: WETH,
-      walletAddress: treasuryWallet!,
+      walletAddress: wallet,
       balance: startingBalance,
     });
 
@@ -90,7 +97,7 @@ describe("Wrapped9 handlers", () => {
         srcAddress: WETH,
         logIndex: 12,
         block: { number: 17_000_000, timestamp: 1_680_000_000 },
-        params: { src: treasuryWallet!, wad },
+        params: { src: wallet, wad },
       },
       context: context as unknown as Parameters<typeof handleWrapped9Withdrawal>[0]["context"],
     });
@@ -107,7 +114,7 @@ describe("Wrapped9 handlers", () => {
     // Wrap mints +wad to wallet, then a Transfer (simulated by directly
     // decrementing the balance) sends it out. The Deposit handler must
     // catch the wrap so the subsequent outflow lands on the right base.
-    expect(treasuryWallet).toBeDefined();
+    const wallet = requireTreasuryWallet();
     const wad = 771_059_105_630_142_323_797n;
     const { context, balanceSets } = buildContext();
 
@@ -118,11 +125,11 @@ describe("Wrapped9 handlers", () => {
         srcAddress: WETH,
         logIndex: 35,
         block: { number: 14_915_630, timestamp: 1_654_000_000 },
-        params: { dst: treasuryWallet!, wad },
+        params: { dst: wallet, wad },
       },
       context: context as unknown as Parameters<typeof handleWrapped9Deposit>[0]["context"],
     });
-    expect(balanceSets.at(-1)!.balance).toBe(wad);
+    expect(balanceSets.at(-1)?.balance).toBe(wad);
 
     // Simulate a Transfer-out via Withdrawal (same value)
     await handleWrapped9Withdrawal({
@@ -131,11 +138,11 @@ describe("Wrapped9 handlers", () => {
         srcAddress: WETH,
         logIndex: 36,
         block: { number: 14_915_630, timestamp: 1_654_000_000 },
-        params: { src: treasuryWallet!, wad },
+        params: { src: wallet, wad },
       },
       context: context as unknown as Parameters<typeof handleWrapped9Withdrawal>[0]["context"],
     });
-    expect(balanceSets.at(-1)!.balance).toBe(0n);
+    expect(balanceSets.at(-1)?.balance).toBe(0n);
   });
 
   test("Deposit to a non-treasury wallet is a no-op", async () => {

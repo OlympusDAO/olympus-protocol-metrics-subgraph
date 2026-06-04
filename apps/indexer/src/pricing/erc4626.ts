@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 
 import { readErc4626AssetsPerShare } from "../effects";
-import { addr, toDecimal, ZERO } from "../snapshot/math";
+import { addr, ZERO } from "../snapshot/math";
 import type { LiquidityHandler } from "../snapshot/types";
 import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";
 

@@ -1,5 +1,4 @@
 import { AsyncLocalStorage } from "node:async_hooks";
-import type BigNumber from "bignumber.js";
 import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 
@@ -126,7 +125,7 @@ async function derivePrice(
       blockNumber,
     );
     if (!result) continue;
-    if (selected && selected.liquidity.gt(result.liquidity)) continue;
+    if (selected?.liquidity.gt(result.liquidity)) continue;
     selected = result;
   }
   return selected ?? ZERO_RESULT;

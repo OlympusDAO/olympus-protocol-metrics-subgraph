@@ -111,7 +111,7 @@ describe("Erc4626Vault handlers", () => {
       },
       context: context as unknown as Parameters<typeof handleErc4626Deposit>[0]["context"],
     });
-    expect(balanceSets.at(-1)!.balance).toBe(shares);
+    expect(balanceSets.at(-1)?.balance).toBe(shares);
 
     await handleErc4626Withdraw({
       event: {
@@ -123,7 +123,7 @@ describe("Erc4626Vault handlers", () => {
       },
       context: context as unknown as Parameters<typeof handleErc4626Withdraw>[0]["context"],
     });
-    expect(balanceSets.at(-1)!.balance).toBe(0n);
+    expect(balanceSets.at(-1)?.balance).toBe(0n);
   });
 
   test("Deposit to a non-treasury owner is a no-op", async () => {

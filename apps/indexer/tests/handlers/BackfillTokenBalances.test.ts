@@ -105,9 +105,6 @@ describe("BackfillTokenBalances", () => {
   });
 
   test("zero-balance pairs are skipped (no entity write)", async () => {
-    const ARBITRUM = CHAIN_CONFIGS[42161];
-    const wallet = ARBITRUM.protocolAddresses[0];
-
     const { context, tokenBalanceSets, tokenBalanceUpdateSets } = buildMockContext({
       chainId: 42161,
       blockTimestamp: 1_651_363_200,

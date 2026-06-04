@@ -106,8 +106,8 @@ describe("Railway config-as-code", () => {
     expect(doc).toContain("Published artifact snapshots and the metrics API are the handover boundary");
     expect(doc).not.toContain("copies Railway's runtime `RAILWAY_DEPLOYMENT_ID` into `ENVIO_PG_SCHEMA`");
     expect(doc).toContain("indexer startup wrapper derives `ENVIO_INDEXER_PORT`");
-    expect(doc).toContain("${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.PORT}}/v1/graphql");
-    expect(doc).toContain("${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.PORT}}/v1/metadata");
+    expect(doc).toContain(`\${{hasura.RAILWAY_PRIVATE_DOMAIN}}:\${{hasura.PORT}}/v1/graphql`);
+    expect(doc).toContain(`\${{hasura.RAILWAY_PRIVATE_DOMAIN}}:\${{hasura.PORT}}/v1/metadata`);
     expect(doc).toContain("Only `metrics-api` should receive a public Railway domain");
     expect(doc).toContain("Cloudflare");
     expect(doc).toContain("WAF");
