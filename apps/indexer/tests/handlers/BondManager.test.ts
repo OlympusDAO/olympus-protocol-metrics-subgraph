@@ -1,8 +1,8 @@
-import {
+import type {
   BigDecimal,
-  type EvmOnEventContext,
-  type GnosisAuction,
-  type GnosisAuctionRoot,
+  EvmOnEventContext,
+  GnosisAuction,
+  GnosisAuctionRoot,
 } from "envio";
 import { describe, expect, test, vi } from "vitest";
 

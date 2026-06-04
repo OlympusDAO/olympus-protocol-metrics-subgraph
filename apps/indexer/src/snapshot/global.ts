@@ -117,7 +117,7 @@ export function computePerChainAggregate(
   let ohmCirculatingSupply = circulatingTypes.reduce((acc, type) => acc.plus(supplyOf(type)), ZERO);
   if (isPreBlvInclusion) ohmCirculatingSupply = ohmCirculatingSupply.plus(supplyOf(TYPE_BLV));
 
-  let ohmFloatingSupply = ohmCirculatingSupply.plus(supplyOf(TYPE_LIQUIDITY));
+  const ohmFloatingSupply = ohmCirculatingSupply.plus(supplyOf(TYPE_LIQUIDITY));
 
   const ohmBackedSupply = [
     TYPE_TOTAL_SUPPLY,
@@ -281,7 +281,7 @@ export function computeApy(
   // that exactly so the parity diff produces zero. Compounded 3× daily over
   // 365 days = 1095 rebases.
   const rebaseRatio = nextEpochRebase.div(new BigNumber("100")).plus(new BigNumber("1"));
-  const compounded = Math.pow(Number(rebaseRatio.toString()), 365 * 3);
+  const compounded = Number(rebaseRatio.toString()) ** (365 * 3);
   const currentApy = new BigNumber((compounded - 1).toString()).times(new BigNumber("100"));
   return { nextEpochRebase, currentApy };
 }

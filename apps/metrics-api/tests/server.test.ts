@@ -1,5 +1,5 @@
 import { createServer, request as httpRequest } from "node:http";
-import { AddressInfo, connect } from "node:net";
+import { type AddressInfo, connect } from "node:net";
 import { gunzipSync } from "node:zlib";
 import { afterEach, describe, expect, test } from "vitest";
 

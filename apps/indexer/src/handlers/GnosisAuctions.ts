@@ -1,6 +1,6 @@
 import type BigNumber from "bignumber.js";
 import BigNumberCtor from "bignumber.js";
-import { type BigDecimal, type EvmOnBlockContext } from "envio";
+import type { BigDecimal, EvmOnBlockContext } from "envio";
 
 import { readBondManagerState } from "../effects";
 import {
