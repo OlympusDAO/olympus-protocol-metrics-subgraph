@@ -1,4 +1,6 @@
-import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, expectTypeOf, test, vi } from "vitest";
@@ -357,13 +359,9 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
 
     expect(packageJson.name).toBe("@olympusdao/treasury-subgraph-client");
     expect(packageJson.version).toMatch(/^3\./);
-    expect(packageJson.scripts["auth:login"]).toBe(
-      "npm login --registry=https://registry.npmjs.org --scope=@olympusdao --userconfig ./.npmrc.local",
-    );
-    expect(packageJson.scripts["auth:logout"]).toBe("tsx scripts/auth-logout.ts");
-    expect(packageJson.scripts["auth:whoami"]).toBe(
-      "npm whoami --registry=https://registry.npmjs.org --userconfig ./.npmrc.local",
-    );
+    expect(packageJson.scripts["auth:login"]).toBeUndefined();
+    expect(packageJson.scripts["auth:logout"]).toBeUndefined();
+    expect(packageJson.scripts["auth:whoami"]).toBeUndefined();
     expect(packageJson.main).toBe("./dist/apps/client/src/index.js");
     expect(packageJson.types).toBe("./dist/apps/client/src/index.d.ts");
     expect(packageJson.files).toContain("CHANGELOG.md");
@@ -377,30 +375,93 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(packageJson.scripts.pretest).toBe("pnpm run openapi:generate");
     expect(packageJson.scripts.prepack).toBe("pnpm run build");
     expect(packageJson.scripts.prepublishOnly).toBe("pnpm run release:check");
-    expect(packageJson.scripts["publish:client"]).toBe("tsx scripts/stage-publish.ts");
+    expect(packageJson.scripts["publish:client"]).toBeUndefined();
     expect(packageJson.scripts["release:check"]).toBe("tsx scripts/release-check.ts");
-    expect(packageJson.scripts["stage:list"]).toBe(
-      "npm stage list @olympusdao/treasury-subgraph-client --userconfig ./.npmrc.local",
-    );
+    expect(packageJson.scripts["stage:list"]).toBeUndefined();
     expect(packageJson.exports).toHaveProperty("./openapi.json");
     expect(packageJson.dependencies ?? {}).not.toHaveProperty("@tanstack/react-query");
     expect(packageJson.peerDependencies ?? {}).not.toHaveProperty("@tanstack/react-query");
   });
 
-  test("publish helper logs out and removes the local npm credentials", () => {
-    const stagePublish = readFileSync(clientFile("scripts/stage-publish.ts"), "utf8");
-    const authLogout = readFileSync(clientFile("scripts/auth-logout.ts"), "utf8");
-    const npmAuth = readFileSync(clientFile("scripts/npm-auth.ts"), "utf8");
+  test("ships a manual CI staged-publishing workflow", () => {
+    const workflow = readFileSync(resolve(CLIENT_DIR, "../../.github/workflows/client-release.yml"), "utf8");
+    const docs = readFileSync(resolve(CLIENT_DIR, "../../docs/client-release.md"), "utf8");
 
-    expect(stagePublish).toContain('runNpm(["login"');
-    expect(stagePublish).toContain('"stage"');
-    expect(stagePublish).toContain('"publish"');
-    expect(stagePublish).not.toContain('"--provenance"');
-    expect(stagePublish).toContain("logoutAndRemoveLocalNpmConfig()");
-    expect(stagePublish).toContain("removeLocalNpmConfig()");
-    expect(authLogout).toContain("logoutAndRemoveLocalNpmConfig()");
-    expect(npmAuth).toContain('runNpm(["logout"');
-    expect(npmAuth).toContain("unlinkSync(userConfig)");
+    expect(workflow).toContain("workflow_dispatch:");
+    expect(workflow).toContain("expected_version:");
+    expect(workflow).toContain("required: true");
+    expect(workflow).toContain("id-token: write");
+    expect(workflow).toContain("contents: write");
+    expect(workflow).toContain("environment: npm-stage");
+    expect(workflow).toContain("npm install -g npm@11.15.0");
+    expect(workflow).toContain("pnpm --dir \"$PACKAGE_DIR\" exec tsx scripts/ci-release.ts preflight");
+    expect(workflow).toContain("pnpm --dir \"$PACKAGE_DIR\" exec tsx scripts/ci-release.ts pack");
+    expect(workflow).toContain("pnpm --dir \"$PACKAGE_DIR\" exec tsx scripts/ci-release.ts notes");
+    expect(workflow).toContain("pnpm --dir \"$PACKAGE_DIR\" run release:check");
+    expect(workflow).toContain("actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02");
+    expect(workflow).toContain("npm stage publish --access public");
+    expect(workflow).not.toContain("npm publish --access public");
+    expect(workflow).not.toContain("NODE_AUTH_TOKEN");
+    expect(workflow).not.toContain("NPM_TOKEN");
+    expect(workflow).not.toContain("run: |");
+    expect(workflow).not.toContain("node --input-type=module");
+    expect(workflow).not.toContain("<<'NODE'");
+    expect(workflow).not.toContain("gh release create");
+    expect(workflow).not.toContain("git tag -a");
+
+    const ciRelease = readFileSync(clientFile("scripts/ci-release.ts"), "utf8");
+    expect(ciRelease).toContain("EXPECTED_VERSION is required");
+    expect(ciRelease).toContain("is already published on npm");
+    expect(ciRelease).toContain("is already staged on npm");
+    expect(ciRelease).toContain("already exists on origin");
+    expect(ciRelease).toContain("CHANGELOG.md");
+    expect(ciRelease).toContain("Missing changelog section");
+    expect(ciRelease).toContain("## Changelog");
+    expect(ciRelease).toContain("treasury-subgraph-client-v${version}");
+    expect(ciRelease).toContain('"release"');
+    expect(ciRelease).toContain('"create"');
+    expect(ciRelease).toContain('"tag"');
+    expect(ciRelease).toContain('getExitStatus(error) !== 2');
+    expect(docs).toContain("Use the manual GitHub Actions workflow");
+    expect(docs).toContain("Allow **stage publish**");
+    expect(docs).toContain("Do not allow direct");
+    expect(docs).toContain("There is no supported local package staging path");
+    expect(docs).toContain("approve it with 2FA");
+  });
+
+  test("generates CI release notes from the matching changelog section", () => {
+    const outputDir = mkdtempSync(resolve(tmpdir(), "treasury-subgraph-client-release-"));
+    const notesPath = resolve(outputDir, "notes.md");
+
+    execFileSync("pnpm", ["exec", "tsx", "scripts/ci-release.ts", "notes"], {
+      cwd: CLIENT_DIR,
+      env: { ...process.env, RELEASE_NOTES_PATH: notesPath },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    const notes = readFileSync(notesPath, "utf8");
+    expect(notes).toContain("Package: `@olympusdao/treasury-subgraph-client@3.0.0`");
+    expect(notes).toContain("https://www.npmjs.com/package/@olympusdao/treasury-subgraph-client");
+    expect(notes).not.toContain("Staged npm package");
+    expect(notes).not.toContain("Review and approve the staged package");
+    expect(notes).toContain("## Changelog");
+    expect(notes).toContain("## [v3.0.0] - 2026-06-03");
+    expect(notes).toContain("### Breaking: Move to the self-hosted metrics API");
+    expect(notes).toContain("Preserved legacy `query({ operationName, input })` support for `/operations/*`.");
+    expect(notes).not.toContain("## [v2.0.0]");
+  });
+
+  test("release check fails if generated files drift during build or tests", () => {
+    const releaseCheck = readFileSync(clientFile("scripts/release-check.ts"), "utf8");
+    const buildIndex = releaseCheck.indexOf('run("pnpm", ["run", "build"], packageDir);');
+    const testIndex = releaseCheck.indexOf('run("pnpm", ["run", "test"], packageDir);');
+    const postBuildCleanIndex = releaseCheck.indexOf('assertCleanGitTree();', testIndex);
+    const auditIndex = releaseCheck.indexOf('run("pnpm", ["audit", "--audit-level", "moderate"], repoRoot);');
+
+    expect(buildIndex).toBeGreaterThan(0);
+    expect(testIndex).toBeGreaterThan(buildIndex);
+    expect(postBuildCleanIndex).toBeGreaterThan(testIndex);
+    expect(auditIndex).toBeGreaterThan(postBuildCleanIndex);
   });
 
   test("ships an OpenAPI JSON file matching the generated document paths", () => {

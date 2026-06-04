@@ -7,17 +7,12 @@
   "types": "./dist/apps/client/src/index.d.ts",
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json && pnpm run openapi:generate",
-    "auth:login": "npm login --registry=https://registry.npmjs.org --scope=@olympusdao --userconfig ./.npmrc.local",
-    "auth:logout": "tsx scripts/auth-logout.ts",
-    "auth:whoami": "npm whoami --registry=https://registry.npmjs.org --userconfig ./.npmrc.local",
     "openapi:generate": "tsx scripts/write-openapi.ts",
     "pack:dry-run": "pnpm run build && npm pack --dry-run --ignore-scripts --cache /tmp/olympus-treasury-subgraph-npm-cache",
     "prepack": "pnpm run build",
     "prepublishOnly": "pnpm run release:check",
     "pretest": "pnpm run openapi:generate",
-    "publish:client": "tsx scripts/stage-publish.ts",
     "release:check": "tsx scripts/release-check.ts",
-    "stage:list": "npm stage list @olympusdao/treasury-subgraph-client --userconfig ./.npmrc.local",
     "test": "vitest run tests"
   },
   "files": [

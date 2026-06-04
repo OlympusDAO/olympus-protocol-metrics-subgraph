@@ -114,6 +114,7 @@ assertCleanGitTree();
 run("pnpm", ["install", "--frozen-lockfile"], repoRoot);
 run("pnpm", ["run", "build"], packageDir);
 run("pnpm", ["run", "test"], packageDir);
+assertCleanGitTree();
 run("pnpm", ["audit", "--audit-level", "moderate"], repoRoot);
 assertPackAllowlist();
 

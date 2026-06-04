@@ -1,0 +1,81 @@
+name: Release treasury-subgraph-client
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_version:
+        description: Version to stage. Must match apps/client/package.json.
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: treasury-subgraph-client-release
+  cancel-in-progress: false
+
+env:
+  PACKAGE_DIR: apps/client
+  PACKAGE_NAME: "@olympusdao/treasury-subgraph-client"
+
+jobs:
+  stage:
+    name: Stage package
+    runs-on: ubuntu-latest
+    environment: npm-stage
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Bootstrap
+        uses: ./.github/actions/bootstrap
+
+      - name: Install npm with staged publishing support
+        run: npm install -g npm@11.15.0
+
+      - name: Release preflight
+        id: release
+        run: pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts preflight
+        env:
+          EXPECTED_VERSION: ${{ inputs.expected_version }}
+
+      - name: Run client release checks
+        run: pnpm --dir "$PACKAGE_DIR" run release:check
+
+      - name: Pack release artifact for GitHub review
+        id: pack
+        run: pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts pack
+        env:
+          PACK_DESTINATION: ${{ runner.temp }}
+          NPM_CACHE_DIR: ${{ runner.temp }}/npm-cache
+
+      - name: Upload packed package artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: treasury-subgraph-client-${{ steps.release.outputs.version }}
+          path: |
+            ${{ steps.pack.outputs.tarball }}
+            ${{ steps.pack.outputs.pack_json }}
+          if-no-files-found: error
+
+      - name: Stage package on npm
+        working-directory: apps/client
+        run: npm stage publish --access public --cache "$RUNNER_TEMP/npm-cache"
+
+      - name: Write GitHub release notes
+        run: pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts notes
+        env:
+          RELEASE_NOTES_PATH: ${{ runner.temp }}/client-release-notes.md
+
+      - name: Create git tag
+        run: pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts tag
+
+      - name: Create GitHub release
+        run: pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts github-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARBALL_PATH: ${{ steps.pack.outputs.tarball }}
+          PACK_JSON_PATH: ${{ steps.pack.outputs.pack_json }}
+          RELEASE_NOTES_PATH: ${{ runner.temp }}/client-release-notes.md
