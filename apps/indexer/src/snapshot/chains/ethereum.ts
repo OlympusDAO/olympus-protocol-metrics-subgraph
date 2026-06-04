@@ -1,0 +1,1313 @@
+import { addr, bytes32, token } from "../math";
+import type { ChainConfig, CoolerClearinghouse, LiquidityHandler } from "../types";
+import { rpcUrls } from "./rpc";
+
+// ---- Ethereum-only wallets (Olympus mainnet contracts + multisigs). ----
+// These previously lived in src/snapshot/wallets.ts and got re-exported to
+// every chain config. Per @0xJem on PR #311 (Step 5.1) they're inlined here
+// because no other chain has any business referencing them — they're all
+// concrete mainnet addresses, and the per-chain wallet-iteration code paths
+// were trimmed in 883983a so non-Ethereum chains no longer pull them in.
+// Cross-chain bridge wallets (CROSS_CHAIN_*) stay in ../wallets because each
+// is genuinely shared by exactly one non-Ethereum chain.
+
+// Treasury / DAO wallets.
+const TREASURY_ADDRESS_V1 = addr("0x886CE997aa9ee4F8c2282E182aB72A705762399D");
+const TREASURY_ADDRESS_V2 = addr("0x31f8cc382c9898b273eff4e0b7626a6987c846e8");
+const TREASURY_ADDRESS_V3 = addr("0x9A315BdF513367C0377FB36545857d12e85813Ef");
+const DAO_WALLET = addr("0x245cc372c84b3645bf0ffe6538620b04a217988b");
+const DAO_WORKING_CAPITAL = addr("0xF65A665D650B5De224F46D729e2bD0885EeA9dA5");
+// Bophades TRSRY module — two historical versions. The active one holds the
+// balance; the inactive one reads zero. Kernel upgrade events are tracked
+// separately (see Erc20Transfers.ts handlers + BophadesKernel handler).
+const TRSRY = addr("0xa8687A15D4BE32CC8F0a8a7B9704a4C3993D9613");
+const TRSRY_V1_1 = addr("0xea1560F36F71a2F54deFA75ed9EaA15E8655bE22");
+
+const BUYBACK_MS = addr("0xf7deb867e65306be0cb33918ac1b8f89a72109db");
+const YIELD_FARMING_MS = addr("0x2075e3b46470cfcE124Daaf52b46Dcf965727Dd1");
+const OTC_ESCROW = addr("0xe3312c3f1ab30878d9686452f7205ebe11e965eb");
+
+// Bonds.
+const BONDS_DEPOSIT = addr("0x9025046c6fb25Fb39e720d97a8FD881ED69a1Ef6");
+const BONDS_INVERSE_DEPOSIT = addr("0xBA42BE149e5260EbA4B82418A6306f55D532eA47");
+
+// Allocators (mainnet).
+const AAVE_ALLOCATOR = addr("0x0e1177e47151Be72e5992E0975000E73Ab5fd9D4");
+const AAVE_ALLOCATOR_V2 = addr("0x0d33c811d0fcc711bcb388dfb3a152de445be66f");
+const AURA_ALLOCATOR = addr("0x872ebDd8129Aa328C89f6BF032bBD77a4c4BaC7e");
+const AURA_ALLOCATOR_V2 = addr("0x8CaF91A6bb38D55fB530dEc0faB535FA78d98FaD");
+const BALANCER_ALLOCATOR = addr("0xa9b52a2d0ffdbabdb2cb23ebb7cd879cac6618a6");
+const CONVEX_ALLOCATOR1 = addr("0x3dF5A355457dB3A4B5C744B8623A7721BF56dF78");
+const CONVEX_ALLOCATOR2 = addr("0x408a9A09d97103022F53300A3A14Ca6c3FF867E8");
+const CONVEX_ALLOCATOR3 = addr("0xDbf0683fC4FC8Ac11e64a6817d3285ec4f2Fc42d");
+const CONVEX_CVX_ALLOCATOR = addr("0xdfc95aaf0a107daae2b350458ded4b7906e7f728");
+const CONVEX_CVX_VL_ALLOCATOR = addr("0x2d643df5de4e9ba063760d475beaa62821c71681");
+const CONVEX_STAKING_PROXY_FRAXBP = addr("0x943C1dfA7dA96e54242bD2c78DD3eF5C7b24b18C");
+const CONVEX_STAKING_PROXY_OHM_FRAXBP = addr("0x75E7f7D871F4B5db0fA9B0f01B7422352Ec9618f");
+const LUSD_ALLOCATOR = addr("0x97b3ef4c558ec456d59cb95c65bfb79046e31fca");
+const MAKER_DSR_ALLOCATOR = addr("0x0EA26319836fF05B8C5C5afD83b8aB17dd46d063");
+const MAKER_DSR_ALLOCATOR_PROXY = addr("0x5db0761487e26B555F5Bfd5E40F4CBC3E1a7d11E");
+const RARI_ALLOCATOR = addr("0x061C8610A784b8A1599De5B1157631e35180d818");
+const VEFXS_ALLOCATOR = addr("0xde7b85f52577b113181921a7aa8fc0c22e309475");
+
+// Cooler clearinghouses.
+const COOLER_LOANS_CLEARINGHOUSE_V1 = addr("0xD6A6E8d9e82534bD65821142fcCd91ec9cF31880");
+const COOLER_LOANS_CLEARINGHOUSE_V1_1 = addr("0xE6343ad0675C9b8D3f32679ae6aDbA0766A2ab4c");
+const COOLER_LOANS_CLEARINGHOUSE_V2 = addr("0x1e094fE00E13Fd06D64EeA4FB3cD912893606fE0");
+const COOLER_LOANS_V2_MONOCOOLER = addr("0xdb591Ea2e5Db886dA872654D58f6cc584b68e7cC");
+
+// Full Ethereum wallet list. Previously WALLET_ADDRESSES in wallets.ts;
+// inlined here so Ethereum's protocolAddresses is self-contained.
+const WALLET_ADDRESSES = [
+  AAVE_ALLOCATOR_V2,
+  AAVE_ALLOCATOR,
+  AURA_ALLOCATOR_V2,
+  AURA_ALLOCATOR,
+  BALANCER_ALLOCATOR,
+  BONDS_DEPOSIT,
+  BONDS_INVERSE_DEPOSIT,
+  BUYBACK_MS,
+  CONVEX_ALLOCATOR1,
+  CONVEX_ALLOCATOR2,
+  CONVEX_ALLOCATOR3,
+  CONVEX_CVX_ALLOCATOR,
+  CONVEX_CVX_VL_ALLOCATOR,
+  CONVEX_STAKING_PROXY_FRAXBP,
+  CONVEX_STAKING_PROXY_OHM_FRAXBP,
+  DAO_WALLET,
+  DAO_WORKING_CAPITAL,
+  LUSD_ALLOCATOR,
+  MAKER_DSR_ALLOCATOR_PROXY,
+  MAKER_DSR_ALLOCATOR,
+  OTC_ESCROW,
+  RARI_ALLOCATOR,
+  TREASURY_ADDRESS_V1,
+  TREASURY_ADDRESS_V2,
+  TREASURY_ADDRESS_V3,
+  TRSRY,
+  TRSRY_V1_1,
+  VEFXS_ALLOCATOR,
+  COOLER_LOANS_CLEARINGHOUSE_V1,
+  COOLER_LOANS_CLEARINGHOUSE_V1_1,
+  COOLER_LOANS_CLEARINGHOUSE_V2,
+  COOLER_LOANS_V2_MONOCOOLER,
+  YIELD_FARMING_MS,
+];
+
+// Ethereum mainnet — the largest surface in the migration. This file is the
+// "baseline" Ethereum config: core treasury tokens, the inherited 36-wallet
+// list from shared/Wallets.ts, Chainlink feeds for the major stables + WETH,
+// and the minimum pool set to give OHM / wstETH / weETH a price. Phase 4
+// follow-up commits add the exotic positions documented in
+// docs/envio-migration/inventory-ethereum.md: Bophades dynamic resolution,
+// Cooler clearinghouse receivables, BLV vault registry, GnosisAuction
+// cross-data-source state, OHM v1→v2 migration offsets, Aura/Convex wrappers,
+// Curve / FraxSwap / ERC4626 vault handlers, Univ3 NFT POL positions.
+
+// ---- Token addresses (per inventory-ethereum.md sections 2.1 and 2.4). ----
+
+const ERC20_OHM_V1 = addr("0x383518188c0c6d7730d91b2c03a03c837814a899");
+const ERC20_OHM_V2 = addr("0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5");
+const ERC20_GOHM = addr("0x0ab87046fBb341D058F17CBC4c1133F25a20a52f");
+const ERC20_SOHM_V3 = addr("0x04906695D6D12CF5459975d7C3C03356E4Ccd460");
+// sOHM V2 — rebasing predecessor of sOHM V3. Legacy treasury subgraph
+// includes it in TREASURY OHM accounting only after block 18_260_000
+// (`SOHM_V2_INDEX_BLOCK`), per inventory-ethereum.md §"sOHM V2 Balance
+// Indexing". Treated as direct OHM-equivalent (1 sOHM V2 = 1 OHM).
+const ERC20_SOHM_V2 = addr("0x04f2694c8fcee23e8fd0dfea1d4f5bb8c352111f");
+const ERC20_SOHM_V2_TREASURY_START_BLOCK = 18_260_000;
+// Start block from which gOHM / sOHM V3 in protocol wallets contribute to
+// TREASURY OHM (per inventory-ethereum.md §"gOHM Indexing Start").
+const ERC20_GOHM_TREASURY_START_BLOCK = 17_115_000;
+
+const ERC20_DAI = addr("0x6b175474e89094c44da98b954eedeac495271d0f");
+const ERC20_FRAX = addr("0x853d955acef822db058eb8505911ed77f175b99e");
+const ERC20_LUSD = addr("0x5f98805a4e8be255a32880fdec7f6728c6568ba0");
+const ERC20_USDC = addr("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48");
+const ERC20_USDT = addr("0xdAC17F958D2ee523a2206206994597C13D831ec7");
+const ERC20_USDE = addr("0x4c9EDD5852cd905f086C759E8383e09bff1E68B3");
+const ERC20_USDS = addr("0xdC035D45d973E3EC169d2276DDab16f1e407384F");
+
+// ERC4626 yield-bearing vault tokens (per inventory §2.3 + §5).
+// `convertToAssets()` provides the share→asset rate; the underlying is
+// independently priced via Chainlink. Prices recurse through their
+// underlying asset.
+const ERC20_SDAI = addr("0x83F20F44975D03b1b09e64809B757c47f942BEeA");
+const ERC20_SUSDE = addr("0x9D39A5DE30e57443BfF2A8307A4256c8797A3497");
+const ERC20_SUSDS = addr("0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD");
+// Real Gauntlet Olympus sUSDS Vault — ERC4626 on Ethereum. The earlier
+// address `0x0Eb5B03c0303f2F47cD81d7BE4275AF8Ed347576` here was a Gnosis Safe
+// (Olympus Treasury MS) and reverted on every ERC20 method, silently zeroing
+// the position in the rollup. Legacy uses this address at
+// subgraphs/ethereum/src/utils/Constants.ts ERC4626_GAUNTLET_SUSDS_VAULT.
+const ERC20_GAUNTLET_SUSDS_VAULT = addr("0x3365184e87d2Bd75961780454A5810BEc956F0dD");
+
+// Aave receipt tokens (assets) + variable-debt tokens (liabilities). Receipts
+// price at the underlying asset's rate; variable-debt tokens carry
+// isLiability=true so their value subtracts from treasury MV.
+const ERC20_ADAI = addr("0x028171bca77440897b824ca71d1c56cac55b68a3");
+const ERC20_AETH_USDE = addr("0x4f5923fc5fd4a93352581b38b7cd26943012decf");
+// Aave V3 sUSDe supply receipt. Yield Farming MS holds this as part of the
+// "aEthsUSDe loop" position; legacy treasury reports it as the largest
+// missing position on Envio (~$1M peak in early April 2026). Priced 1:1
+// through the existing sUSDe ERC4626 handler. Same Aave scaled-balance
+// mechanics as aDAI / aEthUSDe → nonStandardBalance.
+const ERC20_AETH_SUSDE = addr("0x4579a27af00a62c0eb156349f31b345c08386419");
+const ERC20_VAR_DEBT_ETH_USDT = addr("0x6df1c1e379bc5a00a7b4c6e67a203333772f45a8");
+const ERC20_VAR_DEBT_ETH_USDC = addr("0x72e95b8931767c79ba4eee721354d6e99a61d004");
+
+const ERC20_WETH = addr("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2");
+const ERC20_WSTETH = addr("0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0");
+const ERC20_WEETH = addr("0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee");
+
+// Long-tail volatiles (per inventory §2.2).
+const ERC20_FXS = addr("0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0");
+// veFXS: vote-escrow FXS lock receipt. Olympus's VeFXS Allocator holds these
+// (legacy CONTRACT_NAME_MAP "FXS - Staked" / abbrev "veFXS"). Price 1:1 with
+// FXS via remap. Lock-decay changes balanceOf without emitting Transfer →
+// nonStandardBalance.
+const ERC20_FXS_VE = addr("0xc8418af6358ffdda74e09ca9cc3fe03ca6adc5b0");
+const ERC20_LDO = addr("0x5a98fcbea516cf06857215779fd812ca3bef1b32");
+const ERC20_LQTY = addr("0x6dea81c8171d0ba574754ef6f8b412f2ed88c54d");
+const ERC20_BTRFLY_V1 = addr("0xc0d4ceb216b3ba9c3701b291766fdcba977cec3a");
+const ERC20_BTRFLY_V1_STAKED = addr("0xCC94Faf235cC5D3Bf4bEd3a30db5984306c86aBC"); // xBTRFLY
+const ERC20_BTRFLY_V2 = addr("0xc55126051b22ebb829d00368f4b12bde432de5da");
+const ERC20_BTRFLY_V2_RL = addr("0x742B70151cd3Bc7ab598aAFF1d54B90c3ebC6027"); // rlBTRFLY
+// cvxCRV — Convex's liquid wrapper of staked CRV. Held by Convex vlCVX
+// Allocator as a reward-accrual token; priced via the UniswapV2 cvxCRV-ETH
+// pool (recurses to ETH/USD via Chainlink). Standard ERC20 — `_mint`
+// emits Transfer, so the event-driven ledger works.
+const ERC20_CVX_CRV = addr("0x62b9c7356a2dc64a1969e19c23e4f579f9810aa7");
+const LP_UNISWAP_V2_CVX_CRV_ETH = addr("0x4b893b0e9c2fe8bf5d531d0c9c603b1483b4ce30");
+
+const NATIVE_ETH = "0x0000000000000000000000000000000000000000";
+
+// ---- Chainlink feeds (per inventory section 4.1). ----
+
+const CHAINLINK_FEED_DAI_USD = addr("0xaed0c38402a5d19df6e4c03f4e2dced6e29c1ee9");
+const CHAINLINK_FEED_FRAX_USD = addr("0xb9e1e3a9feff48998e45fa90847ed4d467e8bcfd");
+const CHAINLINK_FEED_LUSD_USD = addr("0x3D7aE7E594f2f2091Ad8798313450130d0Aba3a0");
+const CHAINLINK_FEED_USDC_USD = addr("0x8fffffd4afb6115b954bd326cbe7b4ba576818f6");
+const CHAINLINK_FEED_USDT_USD = addr("0x3e7d1eab13ad0104d2750b8863b489d65364e32d");
+const CHAINLINK_FEED_USDE_USD = addr("0xa569d910839Ae8865Da8F8e70FfFb0cBA869F961");
+const CHAINLINK_FEED_ETH_USD = addr("0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419");
+
+// ---- Pricing pools (per inventory section 5). ----
+
+// Curve POL pools (per inventory §5).
+const LP_CURVE_OHM_ETH = addr("0x6ec38b3228251a0C5D491Faf66858e2E23d7728B");
+const LP_CURVE_OHM_FRAXBP = addr("0xFc1e8bf3E81383Ef07Be24c3FD146745719DE48D");
+const LP_CURVE_FRAX_USDC_POOL = addr("0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2");
+// FraxBP LP token (separate from the pool address per Curve V2 lp_token()).
+const LP_CURVE_FRAX_USDC_LP = addr("0x3175Df0976dFA876431C2E9eE6Bc45b65d3473CC");
+
+// Curve OHM-ETH uses native ETH (sentinel address) as coin 1. FraxBP coins
+// are FRAX and USDC. Coin order per Curve registry.
+const CURVE_OHM_ETH_COINS = [ERC20_OHM_V2, NATIVE_ETH];
+const CURVE_OHM_FRAXBP_COINS = [ERC20_OHM_V2, LP_CURVE_FRAX_USDC_LP];
+const CURVE_FRAX_USDC_COINS = [ERC20_FRAX, ERC20_USDC];
+
+// FraxSwap pools (per inventory §5).
+const LP_FRAXSWAP_V1_OHM_FRAX = addr("0x38633ed142bcc8128b45ab04a2e4a6e53774699f");
+const LP_FRAXSWAP_V2_OHM_FRAX = addr("0x5769071665eb8Db80e7e9226F92336Bb2897DCFA");
+
+// Convex BaseRewardPool wrappers — 1:1 ERC20 wrappers of staked Curve LP
+// tokens. Pricing recurses through the `remap` handlers below back to the
+// underlying Curve LP pool. Per inventory §5.
+const CONVEX_REWARD_OHM_ETH = addr("0xd683C7051a28fA150EB3F4BD92263865D4a67778"); // wraps Curve OHM-ETH LP
+const CONVEX_REWARD_OHM_FRAXBP = addr("0x27A8c58e3DE84280826d615D80ddb33930383fE9"); // wraps Curve OHM-FraxBP LP
+const CONVEX_REWARD_FRAX_USDC = addr("0x7e880867363A7e321f5d260Cade2B0Bb2F717B02"); // wraps Curve FRAX-USDC LP
+
+// Balancer V2 Vault.
+const BALANCER_VAULT = addr("0xba12222222228d8ba445958a75a0704d566bf2c8");
+
+// Balancer pools + BPTs (per inventory §5). For Balancer V2 weighted pools,
+// the first 20 bytes of poolId == the BPT address.
+const LP_BALANCER_POOL_OHM_WETH = bytes32(
+  "0xd1ec5e215e8148d76f4460e4097fd3d5ae0a35580002000000000000000003d3",
+);
+const LP_BALANCER_POOL_OHM_DAI = bytes32(
+  "0x76fcf0e8c7ff37a47a799fa2cd4c13cde0d981c90002000000000000000003d2",
+);
+const LP_BALANCER_POOL_OHM_DAI_WETH = bytes32(
+  "0xc45d42f801105e861e86658648e3678ad7aa70f900010000000000000000011e",
+);
+const LP_BALANCER_POOL_OHM_WSTETH = bytes32(
+  "0xd4f79ca0ac83192693bce4699d0c10c66aa6cf0f00020000000000000000047e",
+);
+const BPT_OHM_WETH = addr("0xd1ec5e215e8148d76f4460e4097fd3d5ae0a3558");
+const BPT_OHM_DAI = addr("0x76fcf0e8c7ff37a47a799fa2cd4c13cde0d981c9");
+const BPT_OHM_DAI_WETH = addr("0xc45d42f801105e861e86658648e3678ad7aa70f9");
+const BPT_OHM_WSTETH = addr("0xd4f79ca0ac83192693bce4699d0c10c66aa6cf0f");
+
+// Aura vault wrappers (per inventory §5 "Aura Staking Contracts"). 1:1 ERC20
+// wrappers of the underlying BPT — priced via `remap` to the BPT.
+const AURA_VAULT_OHM_WETH = addr("0x978653c02f2fbbdfd67cbc7f45c42262f213e0b5");
+const AURA_VAULT_OHM_DAI = addr("0xB9D6ED734Ccbdd0b9CadFED712Cf8AC6D0917EcD");
+const AURA_VAULT_OHM_DAI_WETH = addr("0xF01e29461f1FCEdD82f5258Da006295E23b4Fab3");
+const AURA_VAULT_OHM_WSTETH = addr("0x636024f9ddef77e625161b2ccf3a2adfbfad3615");
+
+const LP_UNISWAP_V3_WETH_OHM = addr("0x88051b0eea095007d3bef21ab287be961f3d8598");
+const LP_UNISWAP_V3_OHM_SUSDS = addr("0x0858e2B0F9D75f7300B38D64482aC2C8DF06a755");
+const LP_UNISWAP_V3_WETH_WSTETH = addr("0x109830a1aaad605bbf02a9dfa7b0b92ec2fb7daa");
+const LP_UNISWAP_V3_WEETH_WETH = addr("0x202A6012894Ae5c288eA824cbc8A9bfb26A49b93");
+const LP_UNISWAP_V3_FXS_ETH = addr("0xcd8286b48936cdac20518247dbd310ab681a9fbf");
+const LP_UNISWAP_V3_LDO_WETH = addr("0xa3f558aebaecaf0e11ca4b2199cc5ed341edfd74");
+const LP_UNISWAP_V3_LQTY_WETH = addr("0xd1d5a4c0ea98971894772dcd6d2f1dc71083c44e");
+const LP_UNISWAP_V3_WETH_BTRFLY_V1 = addr("0xdf9ab3c649005ebfdf682d2302ca1f673e0d37a2");
+const LP_UNISWAP_V3_WETH_BTRFLY_V2 = addr("0x3e6e23198679419cd73bb6376518dcc5168c8260");
+
+// Curve / FraxSwap pool deployment blocks. These pools' POL contributions
+// only start at the listed blocks; before that the effect's revert handling
+// makes the contribution zero anyway, but startBlock keeps the indexer
+// from doing useless RPC calls.
+const LP_CURVE_OHM_ETH_BLOCK = 14_490_000; // ~2022-03-22
+const LP_CURVE_OHM_FRAXBP_BLOCK = 15_300_000; // ~2022-08-15
+const LP_CURVE_FRAX_USDC_BLOCK = 14_950_000; // ~2022-05-28
+const LP_FRAXSWAP_V1_OHM_FRAX_BLOCK = 14_490_000;
+const LP_FRAXSWAP_V2_OHM_FRAX_BLOCK = 17_000_000;
+
+// Balancer + Aura deployment blocks (approximate; effect reverts before
+// the actual creation gracefully zero out).
+const LP_BALANCER_OHM_WETH_BLOCK = 15_650_000;
+const LP_BALANCER_OHM_DAI_BLOCK = 15_650_000;
+const LP_BALANCER_OHM_DAI_WETH_BLOCK = 14_790_000;
+const LP_BALANCER_OHM_WSTETH_BLOCK = 16_800_000;
+
+// ---- Block windows (per inventory section 2.1). ----
+
+const ETHEREUM_START_BLOCK = 12_000_000; // ~2021-04-29, before Treasury V2 (12525281).
+const ERC20_OHM_V2_BLOCK = 13_782_589;
+// sOHM V3 deployment (per inventory-ethereum.md §2.1). LogRebase from sOHM V3
+// feeds OhmIndexState; gOHM pricing becomes available once the first rebase
+// after this block is observed.
+const ERC20_SOHM_V3_BLOCK = 13_806_000;
+const ERC20_SDAI_BLOCK = 17_675_440;
+const ERC20_SUSDE_BLOCK = 20_265_440;
+const ERC20_SUSDS_BLOCK = 20_722_900;
+const ERC20_GAUNTLET_SUSDS_VAULT_BLOCK = 21_924_854;
+const ERC20_USDE_BLOCK = 20_289_094;
+const ERC20_WEETH_BLOCK = 18_961_223;
+const NATIVE_ETH_BLOCK = 21_810_000;
+const ERC20_FXS_BLOCK = 11_465_584;
+const ERC20_FXS_VE_BLOCK = 13_833_298;
+// cvxCRV token + cvxCRV-ETH UniV2 pool deployment blocks (eth_getCode
+// binary search).
+const ERC20_CVX_CRV_BLOCK = 12_451_018;
+const LP_UNISWAP_V2_CVX_CRV_ETH_BLOCK = 12_496_006;
+// Olympus's Aave V3 position deployment block on Ethereum (per
+// inventory-ethereum.md §2 + §5: aEthUSDe, varDebtEth USDC/USDT, aEthSUSDe).
+// Also the graft block on the legacy subgraph; matches when the treasury first
+// took an Aave V3 position. Indexing earlier yields no Transfers to/from
+// treasury wallets so it's pure waste.
+const ERC20_AAVE_V3_BLOCK = 24_707_147;
+
+const PROTOCOL_ADDRESSES = WALLET_ADDRESSES;
+
+const names: Record<string, string> = {
+  // Treasury / protocol wallets — names mirror legacy
+  // subgraphs/ethereum/src/utils/Constants.ts CONTRACT_NAME_MAP so consumers
+  // (parity diffs, dashboards, frontend tables) see the same source labels.
+  [AAVE_ALLOCATOR]: "Aave Allocator V1",
+  [AAVE_ALLOCATOR_V2]: "Aave Allocator V2",
+  [BONDS_DEPOSIT]: "Bond Depository",
+  [BONDS_INVERSE_DEPOSIT]: "Bond (Inverse) Depository",
+  [BUYBACK_MS]: "Buyback MS",
+  [CONVEX_CVX_VL_ALLOCATOR]: "Convex vlCVX Allocator",
+  [COOLER_LOANS_CLEARINGHOUSE_V1]: "Cooler Loans Clearinghouse V1",
+  [COOLER_LOANS_CLEARINGHOUSE_V1_1]: "Cooler Loans Clearinghouse V1.1",
+  [COOLER_LOANS_CLEARINGHOUSE_V2]: "Cooler Loans Clearinghouse V2",
+  [COOLER_LOANS_V2_MONOCOOLER]: "Cooler Loans V2 MonoCooler",
+  [DAO_WALLET]: "Treasury MS (Formerly DAO Wallet)",
+  [RARI_ALLOCATOR]: "Rari Allocator",
+  [TREASURY_ADDRESS_V2]: "Treasury Wallet V2",
+  [TREASURY_ADDRESS_V3]: "Treasury Wallet V3",
+  [TRSRY]: "Bophades Treasury",
+  [VEFXS_ALLOCATOR]: "VeFXS Allocator",
+  // Tokens and pools
+  [CONVEX_REWARD_OHM_ETH]: "Convex Staked Curve OHM-ETH",
+  [CONVEX_REWARD_OHM_FRAXBP]: "Convex Staked Curve OHM-FraxBP",
+  [CONVEX_REWARD_FRAX_USDC]: "Convex Staked Curve FRAX-USDC",
+  [BPT_OHM_WETH]: "Balancer OHM-WETH BPT",
+  [BPT_OHM_DAI]: "Balancer OHM-DAI BPT",
+  [BPT_OHM_DAI_WETH]: "Balancer OHM-DAI-WETH BPT",
+  [BPT_OHM_WSTETH]: "Balancer OHM-wstETH BPT",
+  [AURA_VAULT_OHM_WETH]: "Aura Staked OHM-WETH",
+  [AURA_VAULT_OHM_DAI]: "Aura Staked OHM-DAI",
+  [AURA_VAULT_OHM_DAI_WETH]: "Aura Staked OHM-DAI-WETH",
+  [AURA_VAULT_OHM_WSTETH]: "Aura Staked OHM-wstETH",
+  [LP_CURVE_OHM_ETH]: "Curve OHM-ETH",
+  [LP_CURVE_OHM_FRAXBP]: "Curve OHM-FraxBP",
+  [LP_CURVE_FRAX_USDC_LP]: "Curve FRAX-USDC",
+  [LP_FRAXSWAP_V1_OHM_FRAX]: "FraxSwap V1 OHM-FRAX",
+  [LP_FRAXSWAP_V2_OHM_FRAX]: "FraxSwap V2 OHM-FRAX",
+  [ERC20_SDAI]: "Savings DAI",
+  [ERC20_SUSDE]: "Staked USDe",
+  [ERC20_SUSDS]: "Savings USDS",
+  [ERC20_GAUNTLET_SUSDS_VAULT]: "Gauntlet sUSDS Vault",
+  [ERC20_ADAI]: "Aave DAI",
+  [ERC20_AETH_USDE]: "Aave Ethereum USDe",
+  [ERC20_AETH_SUSDE]: "Aave Ethereum sUSDe",
+  [ERC20_VAR_DEBT_ETH_USDC]: "Aave Ethereum Variable Debt USDC",
+  [ERC20_VAR_DEBT_ETH_USDT]: "Aave Ethereum Variable Debt USDT",
+  [ERC20_BTRFLY_V1]: "BTRFLY",
+  [ERC20_BTRFLY_V1_STAKED]: "Staked BTRFLY",
+  [ERC20_BTRFLY_V2]: "BTRFLY V2",
+  [ERC20_BTRFLY_V2_RL]: "Revenue-Locked BTRFLY",
+  [ERC20_DAI]: "DAI",
+  [ERC20_CVX_CRV]: "Curve - Convex CRV Reward Pool",
+  [ERC20_FRAX]: "FRAX",
+  [ERC20_FXS]: "Frax Share",
+  [ERC20_FXS_VE]: "FXS - Staked",
+  [LP_UNISWAP_V2_CVX_CRV_ETH]: "Uniswap V2 cvxCRV-ETH Liquidity Pool",
+  [ERC20_GOHM]: "Governance OHM",
+  [ERC20_SOHM_V3]: "Staked OHM V3",
+  [ERC20_SOHM_V2]: "Staked OHM V2",
+  [ERC20_LDO]: "Lido DAO",
+  [ERC20_LQTY]: "Liquity",
+  [ERC20_LUSD]: "Liquity USD",
+  [ERC20_OHM_V1]: "OHM (V1)",
+  [ERC20_OHM_V2]: "OHM",
+  [ERC20_USDC]: "USDC",
+  [ERC20_USDE]: "USDe",
+  [ERC20_USDS]: "USDS",
+  [ERC20_USDT]: "USDT",
+  [ERC20_WEETH]: "Wrapped eETH",
+  [ERC20_WETH]: "Wrapped ETH",
+  [ERC20_WSTETH]: "Wrapped staked ETH",
+  [LP_UNISWAP_V3_FXS_ETH]: "UniswapV3 FXS-ETH",
+  [LP_UNISWAP_V3_LDO_WETH]: "UniswapV3 LDO-WETH",
+  [LP_UNISWAP_V3_LQTY_WETH]: "UniswapV3 LQTY-WETH",
+  [LP_UNISWAP_V3_WEETH_WETH]: "UniswapV3 weETH-WETH",
+  [LP_UNISWAP_V3_WETH_BTRFLY_V1]: "UniswapV3 WETH-BTRFLY V1",
+  [LP_UNISWAP_V3_WETH_BTRFLY_V2]: "UniswapV3 WETH-BTRFLY V2",
+  [LP_UNISWAP_V3_WETH_OHM]: "UniswapV3 WETH-OHM",
+  [LP_UNISWAP_V3_OHM_SUSDS]: "UniswapV3 OHM-sUSDS",
+  [LP_UNISWAP_V3_WETH_WSTETH]: "UniswapV3 WETH-wstETH",
+};
+
+const abbreviations: Record<string, string> = {
+  [CONVEX_REWARD_OHM_ETH]: "cvxCurveOhmEth",
+  [CONVEX_REWARD_OHM_FRAXBP]: "cvxCurveOhmFraxBp",
+  [CONVEX_REWARD_FRAX_USDC]: "cvxFraxUsdc",
+  [AURA_VAULT_OHM_WETH]: "auraOhmWeth",
+  [AURA_VAULT_OHM_DAI]: "auraOhmDai",
+  [AURA_VAULT_OHM_DAI_WETH]: "auraOhmDaiWeth",
+  [AURA_VAULT_OHM_WSTETH]: "auraOhmWsteth",
+  [ERC20_SDAI]: "sDAI",
+  [ERC20_SUSDE]: "sUSDe",
+  [ERC20_SUSDS]: "sUSDS",
+  [ERC20_GAUNTLET_SUSDS_VAULT]: "gtSUSDS",
+  [ERC20_ADAI]: "aDAI",
+  [ERC20_AETH_USDE]: "aEthUSDe",
+  [ERC20_AETH_SUSDE]: "aEthsUSDe",
+  [ERC20_VAR_DEBT_ETH_USDC]: "variableDebtEthUSDC",
+  [ERC20_VAR_DEBT_ETH_USDT]: "variableDebtEthUSDT",
+  [ERC20_BTRFLY_V1]: "BTRFLY",
+  [ERC20_BTRFLY_V1_STAKED]: "xBTRFLY",
+  [ERC20_BTRFLY_V2]: "BTRFLY",
+  [ERC20_BTRFLY_V2_RL]: "rlBTRFLY",
+  [ERC20_CVX_CRV]: "cvxCRV",
+  [ERC20_FXS]: "FXS",
+  [ERC20_FXS_VE]: "veFXS",
+  [ERC20_GOHM]: "gOHM",
+  [ERC20_SOHM_V3]: "sOHM",
+  [ERC20_SOHM_V2]: "sOHM",
+  [ERC20_LDO]: "LDO",
+  [ERC20_LQTY]: "LQTY",
+  [ERC20_OHM_V1]: "OHM V1",
+  [ERC20_OHM_V2]: "OHM",
+  [ERC20_USDE]: "USDe",
+  [ERC20_USDS]: "USDS",
+  [ERC20_WEETH]: "weETH",
+  [ERC20_WETH]: "wETH",
+  [ERC20_WSTETH]: "wstETH",
+};
+
+// OHM gets priced via the WETH-OHM UniV3 pool, which recurses through WETH
+// (Chainlink). Phase 4 follow-up wires the legacy "largest non-OHM reserves"
+// dynamic OHM price selection across multiple pools (OHM-DAI V2 SLP, OHM-DAI
+// Balancer, etc.).
+const univ3WethOhm: LiquidityHandler = {
+  kind: "univ3",
+  tokens: [ERC20_OHM_V2, ERC20_WETH],
+  id: LP_UNISWAP_V3_WETH_OHM,
+  startBlock: ERC20_OHM_V2_BLOCK,
+};
+
+// OHM-sUSDS UniV3 pool (per inventory-ethereum.md §6). Treasury holds NFT
+// positions in this pool, so it counts as POL — pushUniv3NftPol matches the
+// pool by token pair against this list. Pool deployment block from on-chain
+// eth_getCode binary search.
+const LP_UNISWAP_V3_OHM_SUSDS_BLOCK = 21_309_466;
+const univ3OhmSusds: LiquidityHandler = {
+  kind: "univ3",
+  tokens: [ERC20_OHM_V2, ERC20_SUSDS],
+  id: LP_UNISWAP_V3_OHM_SUSDS,
+  startBlock: LP_UNISWAP_V3_OHM_SUSDS_BLOCK,
+};
+
+const ownedLiquidityHandlers: LiquidityHandler[] = [univ3WethOhm, univ3OhmSusds];
+
+// Cooler Loans clearinghouses. Each clearinghouse's principal receivable is
+// added to the snapshot as a DAI / USDS TokenRecord priced via the
+// corresponding Chainlink feed. Start blocks are the approximate deployment
+// windows from inventory-ethereum.md §3 "Clearinghouse Addresses"; the
+// underlying RPC call gracefully returns null on revert (pre-deploy) so an
+// over-broad start block is harmless.
+const COOLER_LOANS_V1_BLOCK = 18_539_800;
+const COOLER_LOANS_V1_1_BLOCK = 18_794_000;
+const COOLER_LOANS_V2_BLOCK = 19_620_000;
+const COOLER_LOANS_V2_MONOCOOLER_BLOCK = 22_423_121;
+
+const coolerClearinghouses: CoolerClearinghouse[] = [
+  {
+    address: COOLER_LOANS_CLEARINGHOUSE_V1,
+    kind: "clearinghouse",
+    name: "Cooler Loans Clearinghouse V1",
+    receivableToken: ERC20_DAI,
+    startBlock: COOLER_LOANS_V1_BLOCK,
+  },
+  {
+    address: COOLER_LOANS_CLEARINGHOUSE_V1_1,
+    kind: "clearinghouse",
+    name: "Cooler Loans Clearinghouse V1.1",
+    receivableToken: ERC20_DAI,
+    startBlock: COOLER_LOANS_V1_1_BLOCK,
+  },
+  {
+    address: COOLER_LOANS_CLEARINGHOUSE_V2,
+    kind: "clearinghouse",
+    name: "Cooler Loans Clearinghouse V2",
+    receivableToken: ERC20_DAI,
+    startBlock: COOLER_LOANS_V2_BLOCK,
+  },
+  {
+    address: COOLER_LOANS_V2_MONOCOOLER,
+    kind: "monocooler",
+    name: "Cooler Loans V2 MonoCooler",
+    receivableToken: ERC20_USDS,
+    // Per Phase 1 decision #5: MonoCooler debt is USDS-denominated but legacy
+    // prices it via the DAI Chainlink rate. Preserve the exact behavior for
+    // parity; flag for review in the Phase 6 changelog.
+    priceToken: ERC20_DAI,
+    startBlock: COOLER_LOANS_V2_MONOCOOLER_BLOCK,
+  },
+];
+
+const liquidityHandlers: LiquidityHandler[] = [
+  // Chainlink feeds (highest priority via CHAINLINK_PRIORITY = 10^30).
+  // aDAI / aEthUSDe / varDebtEthUSDT / varDebtEthUSDC piggyback the same
+  // feeds as their underlyings — one feed serves many tokens via the
+  // handler's `tokens` array.
+  {
+    kind: "chainlink",
+    tokens: [ERC20_DAI, ERC20_ADAI],
+    id: CHAINLINK_FEED_DAI_USD,
+    decimals: 8,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "chainlink",
+    tokens: [ERC20_FRAX],
+    id: CHAINLINK_FEED_FRAX_USD,
+    decimals: 8,
+    // Proxy deployment block (verified via eth_getCode binary search).
+    // Before this block the contract doesn't exist and `latestAnswer()`
+    // reverts; the try/catch in the effect handles it, but skipping the call
+    // entirely avoids ~63s of retryRpc backoff per pre-deployment snapshot.
+    startBlock: 12_974_035,
+  },
+  {
+    kind: "chainlink",
+    tokens: [ERC20_LUSD],
+    id: CHAINLINK_FEED_LUSD_USD,
+    decimals: 8,
+    startBlock: 13_038_711,
+  },
+  {
+    kind: "chainlink",
+    tokens: [ERC20_USDC, ERC20_VAR_DEBT_ETH_USDC],
+    id: CHAINLINK_FEED_USDC_USD,
+    decimals: 8,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "chainlink",
+    tokens: [ERC20_USDT, ERC20_VAR_DEBT_ETH_USDT],
+    id: CHAINLINK_FEED_USDT_USD,
+    decimals: 8,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "chainlink",
+    tokens: [ERC20_USDE, ERC20_AETH_USDE],
+    id: CHAINLINK_FEED_USDE_USD,
+    decimals: 8,
+    startBlock: ERC20_USDE_BLOCK,
+  },
+  // USDS uses the DAI feed (no USDS feed exists). Per inventory section 2.2.
+  {
+    kind: "chainlink",
+    tokens: [ERC20_USDS],
+    id: CHAINLINK_FEED_DAI_USD,
+    decimals: 8,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "chainlink",
+    tokens: [ERC20_WETH],
+    id: CHAINLINK_FEED_ETH_USD,
+    decimals: 8,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  // Stable fallback for stables that may have Chainlink seeding lag.
+  {
+    kind: "stable",
+    tokens: [ERC20_DAI, ERC20_FRAX, ERC20_LUSD, ERC20_USDC, ERC20_USDT, ERC20_USDE, ERC20_USDS],
+    id: "stable-usd",
+  },
+  // OHM pricing via the WETH-OHM UniV3 pool (recurses to WETH via Chainlink).
+  univ3WethOhm,
+  // OHM-sUSDS UniV3 pool — both a price candidate and an owned-liquidity
+  // (POL) source. Listed here so the router can use it for OHM pricing in
+  // addition to WETH-OHM, and so pushUniv3NftPol recognizes the pair when
+  // matching NFT positions. Inventory: docs/envio-migration/inventory-ethereum.md §6.
+  univ3OhmSusds,
+  // wstETH and weETH price via their WETH UniV3 pools.
+  {
+    kind: "univ3",
+    tokens: [ERC20_WETH, ERC20_WSTETH],
+    id: LP_UNISWAP_V3_WETH_WSTETH,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "univ3",
+    tokens: [ERC20_WEETH, ERC20_WETH],
+    id: LP_UNISWAP_V3_WEETH_WETH,
+    startBlock: ERC20_WEETH_BLOCK,
+  },
+  // Long-tail volatiles priced via WETH UniV3 pools (each recurses to WETH
+  // Chainlink). xBTRFLY and rlBTRFLY remap to their respective unwrapped/
+  // unlocked equivalents; rlBTRFLY's 0.89 illiquid multiplier is encoded on
+  // its TokenDefinition.
+  {
+    kind: "univ3",
+    tokens: [ERC20_FXS, ERC20_WETH],
+    id: LP_UNISWAP_V3_FXS_ETH,
+    startBlock: ERC20_FXS_BLOCK,
+  },
+  {
+    kind: "univ3",
+    tokens: [ERC20_LDO, ERC20_WETH],
+    id: LP_UNISWAP_V3_LDO_WETH,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "univ3",
+    tokens: [ERC20_LQTY, ERC20_WETH],
+    id: LP_UNISWAP_V3_LQTY_WETH,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "univ3",
+    tokens: [ERC20_WETH, ERC20_BTRFLY_V1],
+    id: LP_UNISWAP_V3_WETH_BTRFLY_V1,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "univ3",
+    tokens: [ERC20_WETH, ERC20_BTRFLY_V2],
+    id: LP_UNISWAP_V3_WETH_BTRFLY_V2,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  // cvxCRV — Convex's liquid staked-CRV wrapper. Held by Convex vlCVX
+  // Allocator; pricing via the cvxCRV-ETH UniV2 pool (recurses to ETH via
+  // Chainlink). Legacy: LIQUIDITY_POOL_TOKEN_LOOKUP[ERC20_CVX_CRV] =
+  // PairHandler(UniswapV2, PAIR_UNISWAP_V2_CVX_CRV_ETH).
+  {
+    kind: "univ2",
+    tokens: [ERC20_CVX_CRV, ERC20_WETH],
+    id: LP_UNISWAP_V2_CVX_CRV_ETH,
+    startBlock: LP_UNISWAP_V2_CVX_CRV_ETH_BLOCK,
+  },
+  // Staked / locked variants remap to their base tokens for pricing.
+  {
+    kind: "remap",
+    tokens: [ERC20_BTRFLY_V1_STAKED],
+    id: ERC20_BTRFLY_V1_STAKED,
+    target: ERC20_BTRFLY_V1,
+  },
+  {
+    kind: "remap",
+    tokens: [ERC20_BTRFLY_V2_RL],
+    id: ERC20_BTRFLY_V2_RL,
+    target: ERC20_BTRFLY_V2,
+  },
+  // Balancer V2 POL pools. BPT pricing is handled by getPrice when the
+  // requested token == bptAddressFromPoolId(handler.id).
+  {
+    kind: "balancer",
+    tokens: [ERC20_OHM_V2, ERC20_WETH],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_OHM_WETH,
+    startBlock: LP_BALANCER_OHM_WETH_BLOCK,
+  },
+  {
+    kind: "balancer",
+    tokens: [ERC20_OHM_V2, ERC20_DAI],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_OHM_DAI,
+    startBlock: LP_BALANCER_OHM_DAI_BLOCK,
+  },
+  {
+    kind: "balancer",
+    tokens: [ERC20_OHM_V2, ERC20_DAI, ERC20_WETH],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_OHM_DAI_WETH,
+    startBlock: LP_BALANCER_OHM_DAI_WETH_BLOCK,
+  },
+  {
+    kind: "balancer",
+    tokens: [ERC20_OHM_V2, ERC20_WSTETH],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_OHM_WSTETH,
+    startBlock: LP_BALANCER_OHM_WSTETH_BLOCK,
+  },
+  // Aura vault wrappers — 1:1 ERC20 wrappers of underlying BPTs. Pricing
+  // routes through the Balancer handler via the BPT address.
+  {
+    kind: "remap",
+    tokens: [AURA_VAULT_OHM_WETH],
+    id: AURA_VAULT_OHM_WETH,
+    target: BPT_OHM_WETH,
+  },
+  {
+    kind: "remap",
+    tokens: [AURA_VAULT_OHM_DAI],
+    id: AURA_VAULT_OHM_DAI,
+    target: BPT_OHM_DAI,
+  },
+  {
+    kind: "remap",
+    tokens: [AURA_VAULT_OHM_DAI_WETH],
+    id: AURA_VAULT_OHM_DAI_WETH,
+    target: BPT_OHM_DAI_WETH,
+  },
+  {
+    kind: "remap",
+    tokens: [AURA_VAULT_OHM_WSTETH],
+    id: AURA_VAULT_OHM_WSTETH,
+    target: BPT_OHM_WSTETH,
+  },
+  // Convex staked-LP wrappers — 1:1 ERC20 wrappers of underlying Curve LPs.
+  // Treasury balances of these come in via TreasuryERC20 Transfer events;
+  // pricing routes through the underlying Curve handler. Per inventory §5.
+  {
+    kind: "remap",
+    tokens: [CONVEX_REWARD_OHM_ETH],
+    id: CONVEX_REWARD_OHM_ETH,
+    target: LP_CURVE_OHM_ETH,
+  },
+  {
+    kind: "remap",
+    tokens: [CONVEX_REWARD_OHM_FRAXBP],
+    id: CONVEX_REWARD_OHM_FRAXBP,
+    target: LP_CURVE_OHM_FRAXBP,
+  },
+  {
+    kind: "remap",
+    tokens: [CONVEX_REWARD_FRAX_USDC],
+    id: CONVEX_REWARD_FRAX_USDC,
+    target: LP_CURVE_FRAX_USDC_LP,
+  },
+  // veFXS prices 1:1 with FXS (locked FXS, same underlying). Legacy uses
+  // UNSTAKED_TOKEN_MAPPING(ERC20_FXS_VE → ERC20_FXS) to drive its price.
+  { kind: "remap", tokens: [ERC20_FXS_VE], id: ERC20_FXS_VE, target: ERC20_FXS },
+  // ERC4626 yield-bearing vault shares (sDAI / sUSDe / sUSDS / gauntlet
+  // sUSDS). `convertToAssets()` provides the share→asset rate; underlying
+  // recurses to its Chainlink feed. Carries Chainlink-equivalent priority.
+  {
+    kind: "erc4626",
+    tokens: [ERC20_SDAI],
+    id: ERC20_SDAI,
+    underlying: ERC20_DAI,
+    decimals: 18,
+    underlyingDecimals: 18,
+    startBlock: ERC20_SDAI_BLOCK,
+  },
+  {
+    // Add ERC20_AETH_SUSDE here so the Aave receipt prices via the same
+    // sUSDe vault — 1 aEthSUSDe ≈ 1 sUSDe so the share→asset conversion
+    // from sUSDe.convertToAssets(1e18) is the correct rate for both.
+    kind: "erc4626",
+    tokens: [ERC20_SUSDE, ERC20_AETH_SUSDE],
+    id: ERC20_SUSDE,
+    underlying: ERC20_USDE,
+    decimals: 18,
+    underlyingDecimals: 18,
+    startBlock: ERC20_SUSDE_BLOCK,
+  },
+  {
+    kind: "erc4626",
+    tokens: [ERC20_SUSDS],
+    id: ERC20_SUSDS,
+    underlying: ERC20_USDS,
+    decimals: 18,
+    underlyingDecimals: 18,
+    startBlock: ERC20_SUSDS_BLOCK,
+  },
+  {
+    kind: "erc4626",
+    tokens: [ERC20_GAUNTLET_SUSDS_VAULT],
+    id: ERC20_GAUNTLET_SUSDS_VAULT,
+    underlying: ERC20_USDS,
+    decimals: 18,
+    underlyingDecimals: 18,
+    startBlock: ERC20_GAUNTLET_SUSDS_VAULT_BLOCK,
+  },
+  // Curve pools (POL). LP-token price = (Σ balance × coin price) / totalSupply.
+  // Native ETH appears as a coin in the OHM-ETH pool; remap entry above
+  // resolves it to WETH for pricing.
+  {
+    kind: "curve",
+    tokens: [LP_CURVE_OHM_ETH],
+    id: LP_CURVE_OHM_ETH,
+    lpToken: LP_CURVE_OHM_ETH,
+    coins: CURVE_OHM_ETH_COINS,
+    coinDecimals: [9, 18],
+    startBlock: LP_CURVE_OHM_ETH_BLOCK,
+  },
+  {
+    kind: "curve",
+    tokens: [LP_CURVE_OHM_FRAXBP],
+    id: LP_CURVE_OHM_FRAXBP,
+    lpToken: LP_CURVE_OHM_FRAXBP,
+    coins: CURVE_OHM_FRAXBP_COINS,
+    coinDecimals: [9, 18],
+    startBlock: LP_CURVE_OHM_FRAXBP_BLOCK,
+  },
+  {
+    kind: "curve",
+    tokens: [LP_CURVE_FRAX_USDC_LP],
+    id: LP_CURVE_FRAX_USDC_POOL,
+    // FRAX-USDC is a Curve V2 pool — LP token lives at a separate address
+    // (returned by lp_token() in legacy; hard-coded here).
+    lpToken: LP_CURVE_FRAX_USDC_LP,
+    coins: CURVE_FRAX_USDC_COINS,
+    coinDecimals: [18, 6],
+    startBlock: LP_CURVE_FRAX_USDC_BLOCK,
+  },
+  // FraxSwap V1/V2 OHM-FRAX (TWAMM, UniV2-compatible reserves).
+  {
+    kind: "fraxswap",
+    tokens: [LP_FRAXSWAP_V1_OHM_FRAX],
+    id: LP_FRAXSWAP_V1_OHM_FRAX,
+    token0: ERC20_OHM_V2,
+    token1: ERC20_FRAX,
+    decimals0: 9,
+    decimals1: 18,
+    startBlock: LP_FRAXSWAP_V1_OHM_FRAX_BLOCK,
+  },
+  {
+    kind: "fraxswap",
+    tokens: [LP_FRAXSWAP_V2_OHM_FRAX],
+    id: LP_FRAXSWAP_V2_OHM_FRAX,
+    token0: ERC20_OHM_V2,
+    token1: ERC20_FRAX,
+    decimals0: 9,
+    decimals1: 18,
+    startBlock: LP_FRAXSWAP_V2_OHM_FRAX_BLOCK,
+  },
+  // Native ETH prices via WETH (1:1).
+  { kind: "remap", tokens: [NATIVE_ETH], id: NATIVE_ETH, target: ERC20_WETH },
+  // gOHM = OHM × sOHM-V3 rebase index. The handler reads OhmIndexState
+  // (populated by SOhmV3.LogRebase) and recurses to the OHM price via the
+  // WETH-OHM UniV3 pool. Carries GOHM_PRIORITY so the deterministic formula
+  // wins over any pool-derived gOHM quote (matches legacy resolvePrice).
+  {
+    kind: "gohm",
+    tokens: [ERC20_GOHM],
+    id: ERC20_SOHM_V3,
+    ohmToken: ERC20_OHM_V2,
+    startBlock: ERC20_SOHM_V3_BLOCK,
+  },
+];
+
+export const ETHEREUM: ChainConfig = {
+  chainId: 1,
+  blockchain: "Ethereum",
+  startBlock: ETHEREUM_START_BLOCK,
+  rpcUrls: rpcUrls("ETHEREUM", "https://eth.llamarpc.com"),
+  ohmToken: ERC20_OHM_V2,
+  ohmStartBlock: ERC20_OHM_V2_BLOCK,
+  nativeToken: NATIVE_ETH,
+  tokens: [
+    token({
+      address: NATIVE_ETH,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
+      startBlock: NATIVE_ETH_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_DAI,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_FRAX,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_LUSD,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_USDC,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 6,
+    }),
+    token({
+      address: ERC20_USDT,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 6,
+    }),
+    token({
+      address: ERC20_USDE,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_USDE_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_USDS,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    // Aave V2 aDAI receipt. Stores SCALED balance internally; balanceOf returns
+    // scaledBalance × liquidityIndex, which grows over time as interest accrues.
+    // Mint/Burn events DO fire, but they emit the user-facing amount (deposit
+    // or withdrawal value at the time), not the scaled amount — so subscribing
+    // to them alone can't reconstruct the silent index-driven growth between
+    // mints/burns. A full fix would index LendingPool.ReserveDataUpdated for
+    // the liquidityIndex and recompute balance = scaledBalance × index. For now
+    // we keep nonStandardBalance (snapshot-time balanceOf is exact and cheap
+    // — ~3 wallets × 1 call per 8h snapshot).
+    token({
+      address: ERC20_ADAI,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+      nonStandardBalance: true,
+    }),
+    // Aave V3 aEthUSDe receipt — same scaled-balance / silent-rebase mechanics
+    // as aDAI. Same justification for keeping nonStandardBalance.
+    token({
+      address: ERC20_AETH_USDE,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_AAVE_V3_BLOCK,
+      decimals: 18,
+      nonStandardBalance: true,
+    }),
+    // Aave V3 aEthSUSDe receipt — Aave supply token for sUSDe. Same Aave
+    // scaled-balance mechanics as aEthUSDe / aDAI, so nonStandardBalance.
+    // 1 aEthSUSDe ≈ 1 sUSDe at the Aave reserve index, so pricing chains
+    // through the existing sUSDe ERC4626 handler (added in liquidityHandlers
+    // below).
+    token({
+      address: ERC20_AETH_SUSDE,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_AAVE_V3_BLOCK,
+      decimals: 18,
+      nonStandardBalance: true,
+    }),
+    // Aave V3 variable-debt receipts — liabilities (subtract from treasury MV).
+    // Underlying tokens are 6-decimal USDC/USDT, so the debt tokens share those
+    // decimals. Aave debt tokens also use scaled balances (variableBorrowIndex)
+    // with silent accrual — same nonStandardBalance justification as aDAI.
+    token({
+      address: ERC20_VAR_DEBT_ETH_USDC,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_AAVE_V3_BLOCK,
+      decimals: 6,
+      isLiability: true,
+      nonStandardBalance: true,
+    }),
+    token({
+      address: ERC20_VAR_DEBT_ETH_USDT,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_AAVE_V3_BLOCK,
+      decimals: 6,
+      isLiability: true,
+      nonStandardBalance: true,
+    }),
+    // ERC4626 yield-bearing stables. Underlying price comes from Chainlink;
+    // share→asset rate from `convertToAssets()` via Erc4626PriceHandler. Share
+    // mints/burns are tracked event-driven via the Erc4626Vault handlers in
+    // Erc20Transfers.ts — sDAI (and similar) emit only the ERC4626 Deposit
+    // event on mint (no Transfer-from-zero), so the Erc4626 handler routes
+    // Deposit (+shares to owner) / Withdraw (-shares from owner) through the
+    // existing balance helper. Plain Transfer (wallet→wallet) still flows
+    // through the TreasuryERC20 handler.
+    token({
+      address: ERC20_SDAI,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_SDAI_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_SUSDE,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_SUSDE_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_SUSDS,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_SUSDS_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_GAUNTLET_SUSDS_VAULT,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_GAUNTLET_SUSDS_VAULT_BLOCK,
+      decimals: 18,
+    }),
+    // Convex staked-LP wrappers (POL category — protocol-owned liquidity).
+    // Pricing routes through the underlying Curve LP via `remap` handlers.
+    token({
+      address: CONVEX_REWARD_OHM_ETH,
+      category: "POL",
+      isLiquid: false,
+      isBluechip: false,
+      startBlock: LP_CURVE_OHM_ETH_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: CONVEX_REWARD_OHM_FRAXBP,
+      category: "POL",
+      isLiquid: false,
+      isBluechip: false,
+      startBlock: LP_CURVE_OHM_FRAXBP_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: CONVEX_REWARD_FRAX_USDC,
+      category: "POL",
+      isLiquid: false,
+      isBluechip: false,
+      startBlock: LP_CURVE_FRAX_USDC_BLOCK,
+      decimals: 18,
+    }),
+    // Aura vault wrappers (POL). Pricing routes through Balancer BPT remap.
+    token({
+      address: AURA_VAULT_OHM_WETH,
+      category: "POL",
+      isLiquid: false,
+      isBluechip: false,
+      startBlock: LP_BALANCER_OHM_WETH_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: AURA_VAULT_OHM_DAI,
+      category: "POL",
+      isLiquid: false,
+      isBluechip: false,
+      startBlock: LP_BALANCER_OHM_DAI_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: AURA_VAULT_OHM_DAI_WETH,
+      category: "POL",
+      isLiquid: false,
+      isBluechip: false,
+      startBlock: LP_BALANCER_OHM_DAI_WETH_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: AURA_VAULT_OHM_WSTETH,
+      category: "POL",
+      isLiquid: false,
+      isBluechip: false,
+      startBlock: LP_BALANCER_OHM_WSTETH_BLOCK,
+      decimals: 18,
+    }),
+    // WETH9 deposit/withdraw mutate balance without Transfer. Handled
+    // event-driven by the Wrapped9 handlers in Erc20Transfers.ts (Deposit
+    // = synthetic Transfer-in, Withdrawal = synthetic Transfer-out) so the
+    // TokenBalance ledger stays in sync without a per-snapshot balanceOf call.
+    token({
+      address: ERC20_WETH,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_WSTETH,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_WEETH,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
+      startBlock: ERC20_WEETH_BLOCK,
+      decimals: 18,
+    }),
+    // Long-tail volatiles (no hard-coded multiplier).
+    token({
+      address: ERC20_FXS,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_FXS_BLOCK,
+      decimals: 18,
+    }),
+    // veFXS — vote-escrow FXS lock receipt. Held in VeFXS Allocator.
+    // Categorized Volatile/isLiquid=false (legacy parity); the lock-decay
+    // changes balanceOf without emitting Transfer, so use snapshot-time
+    // balanceOf. Priced 1:1 with FXS via the remap LiquidityHandler.
+    token({
+      address: ERC20_FXS_VE,
+      category: "Volatile",
+      isLiquid: false,
+      isBluechip: false,
+      startBlock: ERC20_FXS_VE_BLOCK,
+      decimals: 18,
+      nonStandardBalance: true,
+    }),
+    // cvxCRV — Convex's liquid staked-CRV wrapper. Standard ERC20 (mints
+    // emit Transfer), so the event-driven TokenBalance is correct — no
+    // nonStandardBalance flag needed. Priced via cvxCRV-ETH UniV2 handler.
+    token({
+      address: ERC20_CVX_CRV,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_CVX_CRV_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_LDO,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_LQTY,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    // BTRFLY V1 is 9 decimals on-chain (matches OHM V1's decimals). Earlier
+    // config carried decimals: 18 which made our balance computation off by
+    // 10^9 — fixed.
+    token({
+      address: ERC20_BTRFLY_V1,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 9,
+    }),
+    // xBTRFLY V1 is also 9 decimals on-chain (same fix as BTRFLY V1). It's a
+    // staking-rebase receipt — balanceOf accrues silently like sOHM, so
+    // nonStandardBalance is the right call. Indexing the rebase event would
+    // be ideal but Redacted V1 is dormant; not worth the build for a tiny
+    // residual (~$400).
+    token({
+      address: ERC20_BTRFLY_V1_STAKED,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 9,
+      nonStandardBalance: true,
+    }),
+    token({
+      address: ERC20_BTRFLY_V2,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    // rlBTRFLY carries the legacy 0.89 illiquid multiplier (per inventory §2.2,
+    // PriceHandlerCustomMapping legacy hard-code).
+    token({
+      address: ERC20_BTRFLY_V2_RL,
+      category: "Volatile",
+      isLiquid: false,
+      isBluechip: false,
+      multiplier: "0.89",
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    // OHM V1 and V2 are tracked but value-excluded from treasury MV when held
+    // by protocol wallets (multiplier 0). For the baseline, the protocol
+    // wallet blacklist below excludes both from treasury balance entirely;
+    // they get counted on the supply side.
+    token({
+      address: ERC20_OHM_V1,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      multiplier: "0",
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 9,
+    }),
+    token({
+      address: ERC20_OHM_V2,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      multiplier: "0",
+      startBlock: ERC20_OHM_V2_BLOCK,
+      decimals: 9,
+    }),
+    token({
+      address: ERC20_GOHM,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      multiplier: "0",
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+  ],
+  names,
+  abbreviations,
+  protocolAddresses: PROTOCOL_ADDRESSES,
+  circulatingSupplyWallets: PROTOCOL_ADDRESSES,
+  // Per inventory section 3: OHM V1/V2/gOHM held in protocol wallets is
+  // excluded from treasury market value (counted on the supply side via
+  // getTreasuryOHMRecords). Phase 4 follow-up will refine this once Bophades
+  // dynamic wallets are wired (Buyback MS becomes IN the MV after block
+  // 20514801 per OHM_IN_MARKET_VALUE_BLOCK).
+  treasuryBlacklist: {
+    [ERC20_OHM_V1]: PROTOCOL_ADDRESSES,
+    [ERC20_OHM_V2]: PROTOCOL_ADDRESSES,
+    [ERC20_GOHM]: PROTOCOL_ADDRESSES,
+  },
+  basePriceFeeds: {},
+  coolerClearinghouses,
+  // Olympus Boosted Liquidity Vault registry (per inventory §8). The effect
+  // iterates active vaults and reads getPoolOhmShare() per vault. Active
+  // after the OHM_INCUR_DEBT_BLOCK = 17_620_000 gate.
+  blvRegistry: {
+    address: addr("0x375E06C694B5E50aF8be8FB03495A612eA3e2275"),
+    startBlock: 17_620_000,
+  },
+  // Olympus V1 BondManager + Gnosis EasyAuction. Drives the bond
+  // pre-minted / vesting / vested supply rows. Indexer-side runtime is
+  // gated by the BOND_MANAGER_BLOCK = 16_226_955.
+  bondManager: {
+    address: addr("0xf577c77ee3578c7f216327f41b5d7221ead2b2a3"),
+    startBlock: 16_226_955,
+  },
+  // Additional OHM-equivalent tokens to count toward the TREASURY supply
+  // bucket alongside `ohmToken` (= OHM V2). Legacy treasury subgraph
+  // includes gOHM / sOHM V2 / sOHM V3 balances at protocol wallets here;
+  // omitting them inflates historical `ohmBackedSupply` (~2.0M OHM gap
+  // on 2024-10-01 traced entirely to ~9.4K gOHM held by protocol wallets
+  // at that time, × ~213 sOHM-V3 index).
+  treasuryOhmEquivalents: [
+    {
+      tokenAddress: ERC20_GOHM,
+      decimals: 18,
+      startBlock: ERC20_GOHM_TREASURY_START_BLOCK,
+      convertVia: "gohm-index",
+    },
+    {
+      tokenAddress: ERC20_SOHM_V3,
+      decimals: 9,
+      startBlock: ERC20_GOHM_TREASURY_START_BLOCK,
+      convertVia: "direct",
+    },
+    {
+      tokenAddress: ERC20_SOHM_V2,
+      decimals: 9,
+      startBlock: ERC20_SOHM_V2_TREASURY_START_BLOCK,
+      convertVia: "direct",
+    },
+  ],
+  // OHM V1 → V2 migration offset. Per inventory §7: 2013 × sOHM-V3 index
+  // OHM is subtracted from total supply between [14_381_564, 24_550_660)
+  // to account for stranded gOHM pre-minted for OHM V1 LP migrations.
+  migrationOffset: {
+    migrationContract: addr("0x184f3fad8618a6f458c16bae63f70c426fe784b3"),
+    sOhmAddress: ERC20_SOHM_V3,
+    offsetOhm: "2013",
+    startBlock: 14_381_564,
+    endBlock: 24_550_660,
+  },
+  // Olympus staking contracts (per inventory §8 + Constants.ts:139-143). The
+  // APY effect reads the per-epoch distribution from whichever versions are
+  // active at the snapshot block (V1 always tried; V2/V3 gated).
+  stakingContracts: {
+    v1: addr("0x0822f3c03dcc24d200aff33493dc08d0e1f274a2"),
+    v2: addr("0xfd31c7d00ca47653c6ce64af53c1571f9c36566a"),
+    v2StartBlock: 12_622_679,
+    v3: addr("0xB63cac384247597756545b500253ff8E607a8020"),
+    v3StartBlock: 13_804_019,
+  },
+  // UniV3 NonfungiblePositionManager (per inventory §5). Treasury POL via
+  // UniV3 NFTs (WETH-OHM, OHM-sUSDS) is enumerated per snapshot.
+  univ3PositionManager: {
+    address: addr("0xC36442b4a4522E871399CD717aBDD847Ab11FE88"),
+    startBlock: ERC20_OHM_V2_BLOCK,
+  },
+  liquidityHandlers,
+  ownedLiquidityHandlers,
+};

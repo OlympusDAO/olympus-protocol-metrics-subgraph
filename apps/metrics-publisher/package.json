@@ -1,0 +1,13 @@
+{
+  "name": "@olympusdao/treasury-subgraph-metrics-publisher",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run tests",
+    "start": "tsx src/cli.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1053.0"
+  }
+}

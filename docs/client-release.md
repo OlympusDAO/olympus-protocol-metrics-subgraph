@@ -1,56 +1,138 @@
 # Client Package Release
 
-The `@olympusdao/treasury-subgraph-client` package is released with the manual
-GitHub Actions workflow **Release treasury-subgraph-client**.
+The `@olympusdao/treasury-subgraph-client` package is released from
+`apps/client`. It is the drop-in replacement for the historical
+`@olympusdao/treasury-subgraph-client` package and includes typed v2 REST
+helpers, deprecated legacy `/operations/*` helpers, and `openapi.json`.
 
-## Why this workflow lives on master
+The compatibility contract is documented in
+[`docs/client-backwards-compatibility.md`](client-backwards-compatibility.md).
+
+## Versioning
+
+- Patch: implementation fixes, type fixes, OpenAPI corrections, or additive
+  legacy compatibility fixes that do not require caller changes.
+- Minor: additive v2 methods, additive response fields, or new exported types
+  that do not break existing callers.
+- Major: removing or renaming exported APIs, changing legacy `/operations/*`
+  compatibility, or changing response shapes in a way that requires caller
+  updates.
+
+## Preferred CI Staging Flow
+
+Use the manual GitHub Actions workflow when releasing from a committed clean
+tree. CI staging gives a clean build environment, npm trusted-publishing
+provenance, and no local npm token exposure. Final approval is still manual in
+npm's website.
 
 GitHub only shows a `workflow_dispatch` workflow in the Actions UI after the
-workflow file exists on the repository default branch. Keep this workflow on
-`master` even when the package version being tested or released lives on a
-feature branch.
+workflow file exists on the repository default branch. Keep
+`.github/workflows/client-release.yml` on `master`; then use the workflow's
+branch selector to choose the branch or tag that contains the intended package
+release.
 
-When running the workflow from the Actions UI, use the branch selector to choose
-the branch or tag that contains the package source, `apps/client/package.json`,
-`apps/client/scripts/ci-release.ts`, and the matching changelog entry.
+Prerequisites:
 
-## Modes
+- Configure npm trusted publishing for
+  `@olympusdao/treasury-subgraph-client`.
+- Trust this repository and the `.github/workflows/client-release.yml`
+  workflow.
+- Restrict the trust relationship to the protected release branch used for
+  publishing.
+- Allow **stage publish** for that trusted publisher. Do not allow direct
+  publish from CI.
+- Configure the GitHub Environment `npm-stage` with required reviewers if you
+  want an approval gate before CI can stage the package.
+- Keep the package npm policy set to require two-factor authentication and
+  disallow tokens.
 
-Use `mode=dry-run` first. This is the default.
+Release steps:
 
-Dry-run mode:
+1. Bump `apps/client/package.json` and `apps/client/CHANGELOG.md`.
+2. Commit and merge the release changes.
+3. Open GitHub Actions and run **Release treasury-subgraph-client** manually.
+   Select the branch containing the intended package release and enter the
+   required `expected_version`; the workflow fails unless it matches
+   `apps/client/package.json`.
+4. Run with `mode=dry-run` first. This is the default. Dry-run mode validates
+   the release, runs the client release checks, packs the package, uploads the
+   tarball, uploads npm pack metadata, and writes release notes as workflow
+   artifacts. It does not stage anything on npm, create a git tag, or create a
+   GitHub Release. Dry-run mode also does not call `npm stage list`, because
+   npm trusted publishing only authenticates OIDC for `npm stage publish`; other
+   `npm stage` subcommands require an interactive npm session.
+5. Review the dry-run artifacts.
+6. Rerun the workflow against the same branch and version with `mode=stage`.
+   Stage mode validates and packs the package again, fails if that version is
+   already published, fails if the matching git tag already exists, stages the
+   packed tarball in a separate npm trusted-publishing job, then creates
+   `treasury-subgraph-client-v<version>` and a GitHub Release in a separate
+   GitHub write job. If the version is already staged on npm, the npm staging
+   step fails before the GitHub tag and Release are created.
+7. Review the staged package on npmjs.com and approve it with 2FA.
 
-- validates `expected_version` against `apps/client/package.json`
-- runs the client release checks
-- packs the package
-- uploads the tarball, npm pack metadata, and release notes as workflow
-  artifacts
-- does not stage anything on npm
-- does not create a git tag
-- does not create a GitHub Release
+The workflow creates the GitHub tag and GitHub Release only after
+`npm stage publish` succeeds. If staging succeeds but the later tag or GitHub
+Release step fails, the npm stage remains pending; review it on npmjs.com and
+either approve it or reject it before rerunning the workflow.
 
-Use `mode=stage` only after the dry-run artifact has been reviewed.
+The GitHub Release records the staged package version, source commit, npm pack
+metadata, and the packed tarball generated by CI. npm provenance links the
+package back to the GitHub Actions run and source commit; it does not replace
+the manual staged-package review.
 
-Stage mode:
+## Local Preflight Checklist
 
-- performs the same validation and package packing
-- stages the tarball on npm through trusted publishing
-- creates the `treasury-subgraph-client-v<version>` GitHub tag and Release only
-  after npm staging succeeds
+1. Use Node.js 24+, npm 11.15.0+, and the pinned workspace pnpm version.
+2. Bump `apps/client/package.json` to the intended version.
+3. Commit the version bump and related changes. The release check intentionally
+   fails on a dirty git tree. Do not stage or publish from the local machine.
+4. Run the client release gate:
 
-The staged npm package still needs manual approval in npm's web UI before it is
-published to the live registry.
+   ```sh
+   pnpm --dir apps/client run release:check
+   ```
 
-## Running A Release
+   This runs `pnpm install --frozen-lockfile`, builds the client, regenerates
+   `openapi.json`, runs client tests, runs `pnpm audit --audit-level moderate`,
+   and verifies that `npm pack --dry-run` only includes `dist`, `CHANGELOG.md`,
+   `openapi.json`, and package metadata.
 
-1. Open **Actions**.
-2. Select **Release treasury-subgraph-client**.
-3. Click **Run workflow**.
-4. Select the branch containing the intended package release.
-5. Enter `expected_version`, for example `3.0.0`.
-6. Leave `mode` as `dry-run`.
-7. Review the uploaded workflow artifacts.
-8. Rerun the workflow with the same branch and `mode=stage`.
-9. Review and approve the staged package on npmjs.com.
+   The client tests should continue to cover the compatibility contract:
+   legacy exports, legacy `query({ operationName, input })`, legacy operation
+   cardinality, default fetch behavior, and generated OpenAPI.
 
-Do not use local npm tokens or local `npm stage publish` for this package.
+5. Review the tarball contents:
+
+   ```sh
+   pnpm --dir apps/client run pack:dry-run
+   ```
+
+6. Merge the committed release changes, then use the CI staging workflow.
+
+There is no supported local package staging path. Do not use local npm login or
+local `npm stage publish` for this package.
+
+## Staged Package Approval
+
+Review and approve the staged package through npmjs.com. The npm staged
+publishing docs recommend opening the **Staged Packages** tab to review a
+staged package, then clicking **Approve** from that tab. Use the web frontend
+so approval is not coupled to local npm CLI or development-environment issues:
+
+<https://www.npmjs.com/package/@olympusdao/treasury-subgraph-client>
+
+Confirm the staged version, tag, package contents, changelog, and git commit
+before approving. npm will prompt for 2FA in the web flow before publishing the
+staged package to the live registry.
+
+Reject the stage instead of approving it if the tarball contents, version, git
+commit, or changelog do not match the intended release.
+
+Record the package version, git commit, and npm package URL in the release notes
+or PR thread.
+
+Do not commit `.npmrc` files with tokens. Keep trusted publishing configured
+with stage-only permissions for CI; npm trusted publishing generates provenance
+automatically for supported CI providers without the local `--provenance` flag.
+Keep package-level direct token publishing disabled.

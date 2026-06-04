@@ -1,0 +1,24 @@
+{
+  "name": "@olympusdao/treasury-subgraph-indexer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "codegen": "envio codegen",
+    "env:check": "tsx src/start-envio.ts check",
+    "envio": "envio",
+    "envio:dev": "ENVIO_TUI=${ENVIO_TUI:-false} tsx src/start-envio.ts dev",
+    "envio:start": "tsx src/start-envio.ts start",
+    "test": "vitest run tests"
+  },
+  "dependencies": {
+    "bignumber.js": "9.1.2",
+    "envio": "3.0.1",
+    "viem": "2.48.8"
+  },
+  "devDependencies": {
+    "@types/node": "24.12.2",
+    "typescript": "6.0.3",
+    "vitest": "4.1.0"
+  }
+}

@@ -1,0 +1,41 @@
+FROM hasura/graphql-engine:v2.48.16@sha256:6ff7d8ba122c69f7be377092b0c1f5314d3e4e28274dc089cd774ce6a8ba6479
+RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get update \
+  && DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get install -y --no-install-recommends --only-upgrade \
+    bsdutils \
+    coreutils \
+    curl \
+    distro-info-data \
+    gcc-12-base \
+    libblkid1 \
+    libcap2 \
+    libcurl4 \
+    libexpat1 \
+    libgcc-s1 \
+    libgcrypt20 \
+    libgnutls30 \
+    libmount1 \
+    libnghttp2-14 \
+    libpq5 \
+    libpython3.10-minimal \
+    libpython3.10-stdlib \
+    libsmartcols1 \
+    libssh-4 \
+    libssl3 \
+    libstdc++6 \
+    libsystemd0 \
+    libudev1 \
+    libuuid1 \
+    mount \
+    msodbcsql18 \
+    openssl \
+    postgresql-client-18 \
+    postgresql-client-common \
+    python3.10 \
+    python3.10-minimal \
+    sed \
+    util-linux \
+  && rm -rf /var/lib/apt/lists/*
+ENV HASURA_GRAPHQL_ENABLE_CONSOLE=false
+USER hasura
+ENTRYPOINT []
+CMD ["sh", "-c", ": \"${HASURA_GRAPHQL_DATABASE_URL:?Missing required environment variable HASURA_GRAPHQL_DATABASE_URL}\"; : \"${HASURA_GRAPHQL_ADMIN_SECRET:?Missing required environment variable HASURA_GRAPHQL_ADMIN_SECRET}\"; : \"${PORT:=8080}\"; if [ -n \"${HASURA_GRAPHQL_SERVER_PORT:-}\" ] && [ \"$HASURA_GRAPHQL_SERVER_PORT\" != \"$PORT\" ]; then echo \"HASURA_GRAPHQL_SERVER_PORT must match PORT when set\" >&2; exit 1; fi; export PORT; export HASURA_GRAPHQL_SERVER_PORT=\"$PORT\"; exec graphql-engine serve"]

@@ -1,0 +1,327 @@
+import { zeroAddress } from "viem";
+
+import { addr, bytes32, token } from "../math";
+import type { ChainConfig, LiquidityHandler } from "../types";
+import { rpcUrls } from "./rpc";
+
+const ERC20_OHM = addr("0x18878Df23e2a36f81e820e4b47b4A40576D3159C");
+const ERC20_IBERA = addr("0x9b6761bf2397Bb5a6624a856cC84A3A14Dcd3fe5");
+const ERC20_IBGT = addr("0xac03CABA51e17c86c921E1f6CBFBdC91F8BB2E6b");
+const ERC20_LBGT = addr("0xBaadCC2962417C01Af99fb2B7C75706B9bd6Babe");
+const ERC20_STARGATE_USDC = addr("0x549943e04f40284185054145c6E4e9568C1D3241");
+const ERC20_HONEY = addr("0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce");
+const ERC20_WBERA = addr("0x6969696969696969696969696969696969696969");
+const NATIVE_BERA = zeroAddress.toLowerCase();
+const BEX_VAULT = addr("0x4Be03f781C497A489E3cB0287833452cA9B9E80B");
+const LP_KODIAK_OHM_HONEY = addr("0x98bDEEde9A45C28d229285d9d6e9139e9F505391");
+const LP_BERADROME_KODIAK_OHM_HONEY = addr("0x555BAd9EC18dB19dED0057D2517242399d1c5D87");
+const LP_UNISWAP_V3_WBERA_HONEY = addr("0x1127f801cb3ab7bdf8923272949aa7dba94b5805");
+const LP_KODIAK_IBERA_WBERA_3000 = addr("0x8dD1C3e5fB96ca0E45Fe3c3CC521Ad44e12F3e47");
+const LP_KODIAK_IBERA_WBERA_500 = addr("0xfcb24b3b7e87e3810b150d25d5964c566d9a2b6f");
+const LP_KODIAK_IBGT_WBERA = addr("0x12bf773F18cEC56F14e7cb91d82984eF5A3148EE");
+const LP_BEX_LBGT_WBERA_ID = bytes32(
+  "0x705fc16ba5a1eb67051934f2fb17eacae660f6c70002000000000000000000d5",
+);
+const KODIAK_QUOTER = addr("0x644C8D6E501f7C994B74F5ceA96abe65d0BA662B");
+const BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1 = addr(
+  "0x017B4DD27782E2FE3421e71F33ce54801aF696F8",
+);
+const BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2 = addr(
+  "0x8e5b2DF607B43C8D0F28035210D4e1aD1E72b8ed",
+);
+const INFRARED_KODIAK_OHM_HONEY_VAULT = addr("0xa57Cb177Beebc35A1A26A286951a306d9B752524");
+const BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT = addr("0x815596fa7c4d983d1ca5304e5b48978424c1b448");
+const BERACHAIN_START_BLOCK = 799194;
+const LP_KODIAK_OHM_HONEY_CREATION_BLOCK = 969521;
+const LP_BERADROME_KODIAK_OHM_HONEY_CREATION_BLOCK = 1052333;
+const LP_KODIAK_IBERA_WBERA_500_CREATION_BLOCK = 929297;
+const LP_KODIAK_IBGT_WBERA_CREATION_BLOCK = 1226972;
+const LBGT_CREATION_BLOCK = 1586863;
+const BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1_CREATION_BLOCK = 1052333;
+const BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2_CREATION_BLOCK = 1272921;
+const INFRARED_KODIAK_OHM_HONEY_VAULT_CREATION_BLOCK = 1184484;
+const BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT_CREATION_BLOCK = 1006689;
+const LP_BEX_LBGT_WBERA_CREATION_BLOCK = 1592960;
+
+const DAO_MULTISIG = addr("0x91494D1BC2286343D51c55E46AE80C9356D099b5");
+const TRSRY = addr("0xb1fA0Ac44d399b778B14af0AAF4bCF8af3437ad1");
+const DAO_OPS_MULTISIG = addr("0xe22b2d431838528BcaD52d11C4744EfCdc907a1c");
+const THJ_CUSTODIAN = addr("0x082689241b09c600b3eaf3812b1d09791e7ded5a");
+const INFRARED_CUSTODIAN = addr("0xb65e74f6b2c0633e30ba1be75db818bb9522a81a");
+
+const PROTOCOL_ADDRESSES = [
+  DAO_MULTISIG,
+  TRSRY,
+  DAO_OPS_MULTISIG,
+  THJ_CUSTODIAN,
+  INFRARED_CUSTODIAN,
+];
+
+const names: Record<string, string> = {
+  [BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1]: "Beradrome Kodiak OHM-HONEY Reward Vault V1",
+  [BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2]: "Beradrome Kodiak OHM-HONEY Reward Vault V2",
+  [BEX_VAULT]: "BEX Vault",
+  [DAO_MULTISIG]: "DAO MS (Berachain)",
+  [DAO_OPS_MULTISIG]: "DAO Operations MS (Berachain)",
+  [ERC20_HONEY]: "Honey",
+  [ERC20_IBERA]: "Infrared BERA",
+  [ERC20_IBGT]: "Infrared BGT",
+  [ERC20_LBGT]: "Liquid BGT",
+  [ERC20_OHM]: "OHM",
+  [ERC20_STARGATE_USDC]: "Bridged USDC (Stargate)",
+  [ERC20_WBERA]: "Wrapped BERA",
+  [NATIVE_BERA]: "BERA",
+  [INFRARED_CUSTODIAN]: "Infrared Custodian",
+  [INFRARED_KODIAK_OHM_HONEY_VAULT]: "Infrared Kodiak OHM-HONEY Reward Vault",
+  [BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT]: "BeraHub Kodiak OHM-HONEY Reward Vault",
+  [LP_KODIAK_OHM_HONEY]: "Kodiak OHM-HONEY LP",
+  [LP_BERADROME_KODIAK_OHM_HONEY]: "Beradrome Kodiak OHM-HONEY LP",
+  [THJ_CUSTODIAN]: "THJ Custodian",
+  [TRSRY]: "TRSRY Module",
+};
+
+const kodiak: LiquidityHandler = {
+  kind: "kodiak",
+  id: LP_KODIAK_OHM_HONEY,
+  pool: LP_KODIAK_OHM_HONEY,
+  quoter: KODIAK_QUOTER,
+  tokens: [ERC20_HONEY, ERC20_OHM],
+  startBlock: LP_KODIAK_OHM_HONEY_CREATION_BLOCK,
+};
+const beradromeKodiakOhmHoneyV1: LiquidityHandler = {
+  kind: "kodiak",
+  id: LP_BERADROME_KODIAK_OHM_HONEY,
+  pool: LP_KODIAK_OHM_HONEY,
+  quoter: KODIAK_QUOTER,
+  rewardVault: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1,
+  tokens: [ERC20_HONEY, ERC20_OHM],
+  startBlock: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1_CREATION_BLOCK,
+};
+const beradromeKodiakOhmHoneyV2: LiquidityHandler = {
+  kind: "kodiak",
+  id: LP_BERADROME_KODIAK_OHM_HONEY,
+  pool: LP_KODIAK_OHM_HONEY,
+  quoter: KODIAK_QUOTER,
+  rewardVault: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2,
+  tokens: [ERC20_HONEY, ERC20_OHM],
+  startBlock: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2_CREATION_BLOCK,
+};
+const infraredKodiakOhmHoney: LiquidityHandler = {
+  kind: "kodiak",
+  id: INFRARED_KODIAK_OHM_HONEY_VAULT,
+  pool: LP_KODIAK_OHM_HONEY,
+  quoter: KODIAK_QUOTER,
+  rewardVault: INFRARED_KODIAK_OHM_HONEY_VAULT,
+  tokens: [ERC20_HONEY, ERC20_OHM],
+  startBlock: INFRARED_KODIAK_OHM_HONEY_VAULT_CREATION_BLOCK,
+};
+const beraHubKodiakOhmHoney: LiquidityHandler = {
+  kind: "kodiak",
+  id: BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT,
+  pool: LP_KODIAK_OHM_HONEY,
+  quoter: KODIAK_QUOTER,
+  rewardVault: BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT,
+  tokens: [ERC20_HONEY, ERC20_OHM],
+  startBlock: BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT_CREATION_BLOCK,
+};
+
+const ownedLiquidityHandlers: LiquidityHandler[] = [
+  kodiak,
+  beradromeKodiakOhmHoneyV1,
+  beradromeKodiakOhmHoneyV2,
+  infraredKodiakOhmHoney,
+  beraHubKodiakOhmHoney,
+];
+
+export const BERACHAIN: ChainConfig = {
+  chainId: 80094,
+  blockchain: "Berachain",
+  startBlock: BERACHAIN_START_BLOCK,
+  rpcUrls: rpcUrls("BERACHAIN", "https://rpc.berachain.com"),
+  ohmToken: ERC20_OHM,
+  ohmStartBlock: BERACHAIN_START_BLOCK,
+  nativeToken: NATIVE_BERA,
+  tokens: [
+    token({
+      address: ERC20_IBERA,
+      category: "Volatile",
+      isLiquid: false,
+      isBluechip: false,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_IBGT,
+      category: "Volatile",
+      isLiquid: false,
+      isBluechip: false,
+      startBlock: BERACHAIN_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_LBGT,
+      category: "Volatile",
+      isLiquid: false,
+      isBluechip: false,
+      startBlock: LBGT_CREATION_BLOCK,
+      decimals: 18,
+    }),
+    // Stargate-bridged USDC.e and Berachain HONEY both emit standard
+    // Transfer-from-zero on mint and Transfer-to-zero on burn (verified
+    // against on-chain logs at the FiatToken/HoneyFactory mint sites and via
+    // entity-vs-balanceOf parity across all 5 Berachain treasury wallets —
+    // every (wallet, token) pair matches exactly with plain Transfer
+    // indexing). The earlier nonStandardBalance flag was added based on a
+    // transient -440K/+440K ledger drift that turned out to be a misread of
+    // older deploy state; the current ledger is correct via Transfer alone.
+    token({
+      address: ERC20_STARGATE_USDC,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      decimals: 6,
+    }),
+    token({
+      address: ERC20_HONEY,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_WBERA,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
+      decimals: 18,
+    }),
+    token({
+      address: NATIVE_BERA,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_OHM,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      // multiplier=0: see commentary on Base ERC20_OHM.
+      multiplier: "0",
+      startBlock: BERACHAIN_START_BLOCK,
+      decimals: 9,
+    }),
+    token({
+      address: LP_KODIAK_OHM_HONEY,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: LP_KODIAK_OHM_HONEY_CREATION_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: LP_BERADROME_KODIAK_OHM_HONEY,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: LP_BERADROME_KODIAK_OHM_HONEY_CREATION_BLOCK,
+      decimals: 18,
+    }),
+    // Beradrome V1 + V2 reward vault stake tokens — Synthetix-style
+    // StakingRewards. The vault contract IS the "stake token" address; its
+    // `stake()` / `withdraw()` mutate `_balances[user]` internally and emit
+    // only Staked/Withdrawn events (no Transfer). The StakingRewardsVault
+    // handler in Erc20Transfers.ts catches both events and routes them
+    // through applyTransferToWalletBalance, so plain event-driven accounting
+    // is correct — no nonStandardBalance fallback needed.
+    token({
+      address: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V1_CREATION_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: BERADROME_KODIAK_OHM_HONEY_REWARD_VAULT_V2_CREATION_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: INFRARED_KODIAK_OHM_HONEY_VAULT,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: INFRARED_KODIAK_OHM_HONEY_VAULT_CREATION_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT,
+      category: "Protocol-Owned Liquidity",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: BERAHUB_KODIAK_OHM_HONEY_REWARD_VAULT_CREATION_BLOCK,
+      decimals: 18,
+    }),
+  ],
+  names,
+  abbreviations: {
+    [ERC20_IBERA]: "iBERA",
+    [ERC20_IBGT]: "iBGT",
+    [ERC20_LBGT]: "lBGT",
+    [ERC20_STARGATE_USDC]: "USDC.e",
+    [ERC20_WBERA]: "wBERA",
+    [NATIVE_BERA]: "BERA",
+  },
+  protocolAddresses: PROTOCOL_ADDRESSES,
+  circulatingSupplyWallets: PROTOCOL_ADDRESSES,
+  treasuryBlacklist: { [ERC20_OHM]: [DAO_MULTISIG, DAO_OPS_MULTISIG, TRSRY] },
+  // HONEY and STARGATE_USDC are priced via the "stable-usd" handler below ($1).
+  // The previous Chainlink lookups are removed so pricing is fully RPC-free.
+  basePriceFeeds: {},
+  liquidityHandlers: [
+    { kind: "stable", tokens: [ERC20_HONEY, ERC20_STARGATE_USDC], id: "stable-usd" },
+    {
+      kind: "univ3-quoter",
+      tokens: [ERC20_HONEY, ERC20_WBERA],
+      id: LP_UNISWAP_V3_WBERA_HONEY,
+      quoter: KODIAK_QUOTER,
+    },
+    {
+      kind: "univ3-quoter",
+      tokens: [ERC20_IBERA, ERC20_WBERA],
+      id: LP_KODIAK_IBERA_WBERA_3000,
+      quoter: KODIAK_QUOTER,
+    },
+    {
+      kind: "univ3-quoter",
+      tokens: [ERC20_IBERA, ERC20_WBERA],
+      id: LP_KODIAK_IBERA_WBERA_500,
+      quoter: KODIAK_QUOTER,
+      startBlock: LP_KODIAK_IBERA_WBERA_500_CREATION_BLOCK,
+    },
+    kodiak,
+    beradromeKodiakOhmHoneyV1,
+    beradromeKodiakOhmHoneyV2,
+    beraHubKodiakOhmHoney,
+    {
+      kind: "univ3-quoter",
+      tokens: [ERC20_IBGT, ERC20_WBERA],
+      id: LP_KODIAK_IBGT_WBERA,
+      quoter: KODIAK_QUOTER,
+      startBlock: LP_KODIAK_IBGT_WBERA_CREATION_BLOCK,
+    },
+    { kind: "remap", tokens: [NATIVE_BERA], id: NATIVE_BERA, target: ERC20_WBERA },
+    {
+      kind: "balancer",
+      tokens: [ERC20_LBGT, ERC20_WBERA],
+      vault: BEX_VAULT,
+      id: LP_BEX_LBGT_WBERA_ID,
+      startBlock: LP_BEX_LBGT_WBERA_CREATION_BLOCK,
+    },
+  ],
+  ownedLiquidityHandlers,
+};

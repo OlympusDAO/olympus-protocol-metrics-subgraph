@@ -9,42 +9,52 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
+# Minimum permissions for GITHUB_TOKEN — this workflow only reads the
+# repo contents (lint, tests, type-check). Matches audit.yml's policy
+# and satisfies CodeQL alerts #15 / #16 for the missing permissions
+# block on the workflow level.
+permissions:
+  contents: read
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   lint-check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
+        with:
+          persist-credentials: false
 
       - name: Bootstrap
         uses: ./.github/actions/bootstrap
       - name: Lint
         run: pnpm lint:check
 
-  build:
-    strategy:
-      matrix:
-        # We want to test the shared code too
-        subgraph: [ethereum, arbitrum, polygon, fantom, shared, base, berachain]
-    # The type of runner that the job will run on
-    # Pin the runner to ubuntu-22.04 to avoid an incompatibility with ubuntu 24 and graph test
-    # https://github.com/graphprotocol/graph-tooling/issues/1546
-    runs-on: ubuntu-22.04
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+  tests:
+    runs-on: ubuntu-latest
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
+        with:
+          persist-credentials: false
 
       - name: Bootstrap
         uses: ./.github/actions/bootstrap
 
-      # Run build
-      - name: Build
-        run: pnpm subgraph build ${{ matrix.subgraph }}
-
-      # Run tests
       - name: Unit Tests
-        run: pnpm subgraph test ${{ matrix.subgraph }}
+        run: pnpm test
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Bootstrap
+        uses: ./.github/actions/bootstrap
+
+      - name: Codegen
+        run: pnpm codegen
+
+      - name: Type check
+        run: pnpm build

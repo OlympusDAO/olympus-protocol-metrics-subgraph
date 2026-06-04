@@ -1,0 +1,35 @@
+{
+  "name": "@olympusdao/treasury-subgraph-client",
+  "version": "3.0.0",
+  "description": "Client for Olympus treasury metrics REST and legacy operations APIs.",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph"
+  },
+  "main": "./dist/apps/client/src/index.js",
+  "types": "./dist/apps/client/src/index.d.ts",
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && pnpm run openapi:generate",
+    "openapi:generate": "tsx scripts/write-openapi.ts",
+    "pack:dry-run": "pnpm run build && npm pack --dry-run --ignore-scripts --cache /tmp/olympus-treasury-subgraph-npm-cache",
+    "prepack": "pnpm run build",
+    "prepublishOnly": "pnpm run release:check",
+    "pretest": "pnpm run openapi:generate",
+    "release:check": "tsx scripts/release-check.ts",
+    "test": "vitest run tests"
+  },
+  "files": [
+    "CHANGELOG.md",
+    "dist",
+    "openapi.json"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/apps/client/src/index.d.ts",
+      "import": "./dist/apps/client/src/index.js"
+    },
+    "./openapi.json": "./openapi.json"
+  },
+  "sideEffects": false
+}

@@ -1,4 +1,19 @@
 {
-  "extends": "./node_modules/@graphprotocol/graph-ts/tsconfig.json",
-  "include": ["./**/*.ts"]
+  "compilerOptions": {
+    "target": "es2022",
+    "lib": ["es2022", "dom"],
+    "allowJs": false,
+    "checkJs": false,
+    "outDir": "build",
+    "strict": true,
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"]
+  },
+  "include": ["apps", "packages", "tests"],
+  "exclude": ["node_modules", "**/generated", "**/.envio"]
 }
