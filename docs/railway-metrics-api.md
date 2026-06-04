@@ -341,6 +341,39 @@ Cloudflare rule should therefore respect the origin response headers rather
 than override TTLs. Keep query strings in the cache key because `start`, `end`,
 `includeRecords`, and legacy `wg_variables` change the response body.
 
+## Cloudflare Compression Rules
+
+The `metrics-api` origin intentionally does not gzip or Brotli-compress JSON
+responses. This keeps compression CPU off the Railway Node.js process and lets
+Cloudflare compress cached responses at the edge.
+
+If Cloudflare's default compression is not applied to API responses, create a
+Compression Rule for the API data surface.
+
+Expression:
+
+```text
+(starts_with(http.request.uri.path, "/v2/")
+or starts_with(http.request.uri.path, "/operations/")
+or starts_with(http.request.uri.path, "/openapi.json"))
+```
+
+Settings:
+
+- Compression algorithms: Brotli and Gzip.
+- Do not add `Cache-Control: no-transform` at the origin, because that prevents
+  Cloudflare from modifying the response for compression.
+
+Verify with:
+
+```sh
+curl -I --compressed 'https://treasury-subgraph-api.olympusdao.finance/v2/metrics/daily?start=2026-05-20'
+```
+
+After the second request, expect Cloudflare cache headers such as
+`CF-Cache-Status: HIT` for cacheable data routes. If compression is applied,
+the response should include `Content-Encoding: br` or `Content-Encoding: gzip`.
+
 Relevant Cloudflare references:
 
 - Cache Rules settings:
@@ -349,6 +382,8 @@ Relevant Cloudflare references:
   <https://developers.cloudflare.com/cache/how-to/cache-keys/>
 - Query String Sort:
   <https://developers.cloudflare.com/cache/advanced-configuration/query-string-sort/>
+- Compression Rules:
+  <https://developers.cloudflare.com/rules/compression-rules/>
 
 ## Cloudflare WAF Rules
 
