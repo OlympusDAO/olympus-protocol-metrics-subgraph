@@ -348,6 +348,10 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     const packageJson = JSON.parse(readFileSync(clientFile("package.json"), "utf8")) as {
       name: string;
       version: string;
+      repository: {
+        type: string;
+        url: string;
+      };
       files: string[];
       dependencies?: Record<string, string>;
       peerDependencies?: Record<string, string>;
