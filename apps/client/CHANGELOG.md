@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-## [v3.0.0] - 2026-06-03
+## [v3.0.0] - 2026-06-04
 
 ### Breaking: Move to the self-hosted metrics API
 
@@ -15,8 +15,9 @@ The client now targets the self-hosted Olympus treasury metrics API by default.
 - Added manifest-backed per-chain indexing progress to the v2 bounds response.
 - Bundled `openapi.json` with the package.
 - Added `DEFAULT_BASE_URL` export.
+- Fixed browser default `fetch` handling so `createClient({ baseUrl })` works
+  without custom fetch binding.
 - Kept the package framework-agnostic with no runtime dependencies.
-- Added a release gate that validates package metadata, tests, audit status, and packed tarball contents.
 
 **Backward Compatibility**
 - Preserved `createClient()` and `TreasurySubgraphClient`.
