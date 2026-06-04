@@ -415,6 +415,14 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(workflow).toContain("pnpm --dir \"$PACKAGE_DIR\" run release:check");
     expect(workflow).toContain("actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02");
     expect(workflow).toContain("actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53");
+    const githubReleaseJobIndex = workflow.indexOf("github-release:");
+    const githubReleaseCheckoutIndex = workflow.indexOf(
+      "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd",
+      githubReleaseJobIndex,
+    );
+    const githubReleaseCreateIndex = workflow.indexOf("gh release create", githubReleaseJobIndex);
+    expect(githubReleaseCheckoutIndex).toBeGreaterThan(githubReleaseJobIndex);
+    expect(githubReleaseCreateIndex).toBeGreaterThan(githubReleaseCheckoutIndex);
     expect(workflow).toContain(`if: \${{ inputs.mode == 'dry-run' }}`);
     expect(workflow).toContain(`if: \${{ inputs.mode == 'stage' }}`);
     expect(workflow).toContain("No npm staging, git tag, or GitHub Release was created.");
