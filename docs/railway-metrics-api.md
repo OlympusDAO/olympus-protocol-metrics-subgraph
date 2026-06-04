@@ -330,16 +330,23 @@ Create cache rules in this order:
    Settings:
 
    - Cache eligibility: Eligible for cache.
-   - Edge TTL: Use cache-control header if present, bypass cache if not.
+   - Edge TTL: Override origin and use a default TTL of 1 hour.
    - Browser TTL: Respect origin.
    - Cache key: include query string parameters.
    - Query string sort: enabled, if available.
 
 The API currently returns `Cache-Control: public, max-age=3600` for data
 routes and `Cache-Control: no-store` for `/ready` and `/v2/bounds`. The
-Cloudflare rule should therefore respect the origin response headers rather
-than override TTLs. Keep query strings in the cache key because `start`, `end`,
-`includeRecords`, and legacy `wg_variables` change the response body.
+Cloudflare cache rule should still set an explicit 1-hour edge TTL for cacheable
+routes. That prevents callers from bypassing the edge cache with request cache
+headers or by omitting client-side caching behavior. Keep query strings in the
+cache key because `start`, `end`, `includeRecords`, and legacy `wg_variables`
+change the response body.
+
+The API rejects unsupported query string keys and duplicate supported keys with
+`400` responses. That keeps cacheable URLs constrained to documented request
+shapes and prevents arbitrary query parameters from creating unbounded origin
+work or cache-key variants.
 
 ## Cloudflare Compression Rules
 

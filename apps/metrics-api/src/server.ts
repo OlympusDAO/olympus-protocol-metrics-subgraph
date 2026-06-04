@@ -53,6 +53,26 @@ const READY_CACHE_CONTROL = "no-store";
 const BOUNDS_CACHE_CONTROL = "no-store";
 const PUBLIC_CACHE_CONTROL = "public, max-age=3600";
 const REQUEST_URL_PARSE_BASE = "http://localhost";
+const LEGACY_VARIABLE_KEYS = new Set([
+  "startDate",
+  "start",
+  "endDate",
+  "end",
+  "includeRecords",
+  "crossChainDataComplete",
+]);
+const LEGACY_IGNORED_VARIABLE_KEYS = new Set(["dateOffset"]);
+
+const SUPPORTED_QUERY_PARAMS = new Map<string, readonly string[]>([
+  ["/openapi.json", []],
+  ["/docs", []],
+  ["/operations/health", []],
+  ["/ready", []],
+  ["/v2/bounds", []],
+  ["/v2/metrics/daily", ["start", "end", "includeRecords"]],
+  ["/v2/ohm-supply/daily", ["start", "end"]],
+  ["/v2/treasury-assets/daily", ["start", "end"]],
+]);
 
 function setCommonHeaders(res: ServerResponse): void {
   res.setHeader("access-control-allow-origin", "*");
@@ -100,6 +120,39 @@ function getUrl(req: IncomingMessage): URL | undefined {
   } catch {
     return undefined;
   }
+}
+
+function supportedQueryParamsForPath(pathname: string): readonly string[] | undefined {
+  if (pathname.startsWith("/operations/")) {
+    return ["wg_variables"];
+  }
+  return SUPPORTED_QUERY_PARAMS.get(pathname);
+}
+
+function validateQueryParams(url: URL): { code: string; message: string } | undefined {
+  const supportedKeys = supportedQueryParamsForPath(url.pathname);
+  if (supportedKeys === undefined) {
+    return undefined;
+  }
+
+  const supportedKeySet = new Set(supportedKeys);
+  const unsupportedKeys = Array.from(new Set([...url.searchParams.keys()].filter((key) => !supportedKeySet.has(key))));
+  if (unsupportedKeys.length > 0) {
+    return {
+      code: "unsupported_query_parameter",
+      message: `Unsupported query parameter(s): ${unsupportedKeys.join(", ")}`,
+    };
+  }
+
+  for (const key of supportedKeys) {
+    if (url.searchParams.getAll(key).length > 1) {
+      return {
+        code: "duplicate_query_parameter",
+        message: `Duplicate query parameter is not supported: ${key}`,
+      };
+    }
+  }
+  return undefined;
 }
 
 async function getManifest(config: MetricsApiConfig): Promise<Manifest> {
@@ -341,11 +394,31 @@ function parseLegacyVariables(url: URL): Record<string, unknown> {
     return {};
   }
 
+  return validateLegacyVariables(parseLegacyVariablesJson(value));
+}
+
+function parseLegacyVariablesJson(value: string): Record<string, unknown> {
+  let parsed: unknown;
   try {
-    return JSON.parse(value) as Record<string, unknown>;
+    parsed = JSON.parse(value);
   } catch {
-    return JSON.parse(decodeURIComponent(value)) as Record<string, unknown>;
+    parsed = JSON.parse(decodeURIComponent(value));
   }
+
+  if (parsed === null || Array.isArray(parsed) || typeof parsed !== "object") {
+    throw new Error("wg_variables must be a JSON object.");
+  }
+  return parsed as Record<string, unknown>;
+}
+
+function validateLegacyVariables(variables: Record<string, unknown>): Record<string, unknown> {
+  const unsupportedKeys = Object.keys(variables).filter(
+    (key) => !LEGACY_VARIABLE_KEYS.has(key) && !LEGACY_IGNORED_VARIABLE_KEYS.has(key),
+  );
+  if (unsupportedKeys.length > 0) {
+    throw new Error(`Unsupported wg_variables field(s): ${unsupportedKeys.join(", ")}`);
+  }
+  return Object.fromEntries(Object.entries(variables).filter(([key]) => LEGACY_VARIABLE_KEYS.has(key)));
 }
 
 function legacyString(variables: Record<string, unknown>, key: string): string | undefined {
@@ -515,6 +588,11 @@ async function handleMetricsApiRequestUnchecked(
   const url = getUrl(req);
   if (url === undefined) {
     sendError(req, res, 400, "invalid_request_url", "Request URL is invalid.");
+    return;
+  }
+  const queryParamError = validateQueryParams(url);
+  if (queryParamError !== undefined) {
+    sendError(req, res, 400, queryParamError.code, queryParamError.message);
     return;
   }
 

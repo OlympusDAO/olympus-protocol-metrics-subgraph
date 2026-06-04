@@ -284,6 +284,85 @@ describe("metrics API HTTP behavior", () => {
     ).toBe("public, max-age=3600");
   });
 
+  test("rejects unsupported v2 query parameters that would otherwise cache-bust", async () => {
+    const response = await request(
+      "/v2/metrics/daily?cacheBust=one&start=2026-05-21&unused=true&end=2026-05-21&includeRecords=true",
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: {
+        code: "unsupported_query_parameter",
+        message: expect.stringContaining("cacheBust"),
+      },
+    });
+  });
+
+  test("rejects duplicate supported query parameters that would otherwise cache-bust", async () => {
+    const response = await request("/v2/metrics/daily?start=2026-05-21&start=2026-05-21");
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: {
+        code: "duplicate_query_parameter",
+        message: expect.stringContaining("start"),
+      },
+    });
+  });
+
+  test("rejects unsupported query parameters on routes without query controls", async () => {
+    const response = await request("/v2/bounds?cacheBust=one");
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      error: {
+        code: "unsupported_query_parameter",
+        message: expect.stringContaining("cacheBust"),
+      },
+    });
+  });
+
+  test("rejects unsupported legacy operation query parameters and variables", async () => {
+    const canonicalVariables = encodeURIComponent(
+      JSON.stringify({ startDate: "2026-05-21", endDate: "2026-05-21" }),
+    );
+    const unsupportedVariables = encodeURIComponent(
+      JSON.stringify({
+        startDate: "2026-05-21",
+        endDate: "2026-05-21",
+        cacheBust: "rejected",
+      }),
+    );
+
+    const canonical = await request(`/operations/paginated/metrics?wg_variables=${canonicalVariables}`);
+    const withDateOffset = await request(
+      `/operations/paginated/metrics?wg_variables=${encodeURIComponent(
+        JSON.stringify({ startDate: "2026-05-21", endDate: "2026-05-21", dateOffset: 999 }),
+      )}`,
+    );
+    const unsupportedTopLevel = await request(
+      `/operations/paginated/metrics?cacheBust=one&wg_variables=${canonicalVariables}`,
+    );
+    const unsupportedVariable = await request(`/operations/paginated/metrics?wg_variables=${unsupportedVariables}`);
+
+    expect(withDateOffset.status).toBe(200);
+    expect(await withDateOffset.json()).toEqual(await canonical.json());
+    expect(unsupportedTopLevel.status).toBe(400);
+    expect(await unsupportedTopLevel.json()).toMatchObject({
+      error: {
+        code: "unsupported_query_parameter",
+        message: expect.stringContaining("cacheBust"),
+      },
+    });
+    expect(unsupportedVariable.status).toBe(400);
+    expect(await unsupportedVariable.json()).toMatchObject({
+      error: {
+        code: "invalid_wg_variables",
+        message: expect.stringContaining("cacheBust"),
+      },
+    });
+  });
+
   test("does not compress JSON responses at the origin", async () => {
     const response = await rawRequest("/v2/metrics/daily?start=2026-05-21", {
       method: "GET",
@@ -619,7 +698,6 @@ describe("metrics API HTTP behavior", () => {
       startDate: "2026-05-31",
       endDate: "2026-06-01",
       dateOffset: 30,
-      ignoreCache: true,
       crossChainDataComplete: true,
       includeRecords: true,
     });
