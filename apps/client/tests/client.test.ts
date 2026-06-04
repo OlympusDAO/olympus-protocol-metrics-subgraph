@@ -359,6 +359,10 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
 
     expect(packageJson.name).toBe("@olympusdao/treasury-subgraph-client");
     expect(packageJson.version).toMatch(/^3\./);
+    expect(packageJson.repository).toEqual({
+      type: "git",
+      url: "https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph",
+    });
     expect(packageJson.scripts["auth:login"]).toBeUndefined();
     expect(packageJson.scripts["auth:logout"]).toBeUndefined();
     expect(packageJson.scripts["auth:whoami"]).toBeUndefined();

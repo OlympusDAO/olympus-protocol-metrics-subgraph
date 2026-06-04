@@ -3,6 +3,10 @@
   "version": "3.0.0",
   "description": "Client for Olympus treasury metrics REST and legacy operations APIs.",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph"
+  },
   "main": "./dist/apps/client/src/index.js",
   "types": "./dist/apps/client/src/index.d.ts",
   "scripts": {
