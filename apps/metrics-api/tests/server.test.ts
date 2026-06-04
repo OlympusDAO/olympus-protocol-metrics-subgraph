@@ -1,7 +1,6 @@
 import { createServer, request as httpRequest } from "node:http";
 import { type AddressInfo, connect } from "node:net";
-import { gunzipSync } from "node:zlib";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { ArtifactNotFoundError } from "../src/artifact-store";
 import { metricsApiConfigFromEnv, metricsApiPortFromEnv } from "../src/config";
@@ -154,6 +153,7 @@ async function rawSocketRequest(
 afterEach(async () => {
   await closeServer?.();
   closeServer = undefined;
+  vi.restoreAllMocks();
 });
 
 describe("metrics API HTTP behavior", () => {
@@ -203,6 +203,29 @@ describe("metrics API HTTP behavior", () => {
         message: expect.stringMatching(/not been published/i),
       },
     });
+  });
+
+  test("does not expose artifact backend details when manifest loading fails", async () => {
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const backendError = new Error("S3 backend leaked-secret internal endpoint");
+    const response = await request("/v2/bounds", undefined, {
+      maxRangeDays: 366,
+      artifactReader: {
+        async getJson<T>(): Promise<T> {
+          throw backendError;
+        },
+      },
+    });
+
+    expect(response.status).toBe(503);
+    const body = (await response.json()) as { error: { code: string; message: string } };
+    expect(body.error).toEqual({
+      code: "manifest_unavailable",
+      message: "Metrics artifact manifest is unavailable.",
+    });
+    expect(JSON.stringify(body)).not.toContain("leaked-secret");
+    expect(JSON.stringify(body)).not.toContain("internal endpoint");
+    expect(errorSpy).toHaveBeenCalledWith("Metrics artifact manifest is unavailable.", backendError);
   });
 
   test("returns the indexer deployment id in bounds when present", async () => {
@@ -261,16 +284,16 @@ describe("metrics API HTTP behavior", () => {
     ).toBe("public, max-age=3600");
   });
 
-  test("compresses JSON responses when requested", async () => {
+  test("does not compress JSON responses at the origin", async () => {
     const response = await rawRequest("/v2/metrics/daily?start=2026-05-21", {
       method: "GET",
       headers: { "accept-encoding": "gzip" },
     });
 
     expect(response.status).toBe(200);
-    expect(response.headers["content-encoding"]).toBe("gzip");
-    expect(response.headers.vary).toContain("accept-encoding");
-    const body = JSON.parse(gunzipSync(response.rawBody).toString("utf8")) as { data: Array<{ date: string }> };
+    expect(response.headers["content-encoding"]).toBeUndefined();
+    expect(response.headers.vary).toBe("origin");
+    const body = JSON.parse(response.body) as { data: Array<{ date: string }> };
     expect(body.data[0]).toMatchObject({ date: "2026-05-21" });
   });
 

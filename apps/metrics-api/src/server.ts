@@ -1,5 +1,4 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { brotliCompressSync, gzipSync } from "node:zlib";
 
 import { ArtifactNotFoundError, type ArtifactReader } from "./artifact-store";
 import {
@@ -59,24 +58,7 @@ function setCommonHeaders(res: ServerResponse): void {
   res.setHeader("access-control-allow-origin", "*");
   res.setHeader("access-control-allow-methods", "GET, HEAD, OPTIONS");
   res.setHeader("access-control-allow-headers", "content-type");
-  res.setHeader("vary", "origin, accept-encoding");
-}
-
-function acceptedEncoding(req: IncomingMessage): "br" | "gzip" | undefined {
-  const header = req.headers["accept-encoding"];
-  const value = Array.isArray(header) ? header.join(",") : (header ?? "");
-  const encodings = value
-    .split(",")
-    .map((encoding) => encoding.trim().toLowerCase().split(";")[0])
-    .filter((encoding) => encoding !== "");
-
-  if (encodings.includes("br")) {
-    return "br";
-  }
-  if (encodings.includes("gzip")) {
-    return "gzip";
-  }
-  return undefined;
+  res.setHeader("vary", "origin");
 }
 
 function sendBody(req: IncomingMessage, res: ServerResponse, status: number, contentType: string, body: string): void {
@@ -87,17 +69,6 @@ function sendBody(req: IncomingMessage, res: ServerResponse, status: number, con
     return;
   }
 
-  const encoding = acceptedEncoding(req);
-  if (encoding === "br") {
-    res.setHeader("content-encoding", "br");
-    res.end(brotliCompressSync(Buffer.from(body)));
-    return;
-  }
-  if (encoding === "gzip") {
-    res.setHeader("content-encoding", "gzip");
-    res.end(gzipSync(Buffer.from(body)));
-    return;
-  }
   res.end(body);
 }
 
@@ -579,12 +550,13 @@ async function handleMetricsApiRequestUnchecked(
         sendError(req, res, 503, "manifest_not_published", "Metrics artifacts have not been published yet.");
         return undefined;
       }
+      console.error("Metrics artifact manifest is unavailable.", error);
       sendError(
         req,
         res,
         503,
         "manifest_unavailable",
-        error instanceof Error ? error.message : "Metrics artifact manifest is unavailable.",
+        "Metrics artifact manifest is unavailable.",
       );
       return undefined;
     }
