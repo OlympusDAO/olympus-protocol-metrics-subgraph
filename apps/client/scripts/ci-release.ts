@@ -45,7 +45,10 @@ function run(command: string, args: string[], cwd = repoRoot): void {
 }
 
 function getExitStatus(error: unknown): number | undefined {
-  return typeof error === "object" && error !== null && "status" in error && typeof error.status === "number"
+  return typeof error === "object" &&
+    error !== null &&
+    "status" in error &&
+    typeof error.status === "number"
     ? error.status
     : undefined;
 }
@@ -70,8 +73,11 @@ function errorText(value: unknown): string {
 function isNpmRegistryNotFoundError(error: unknown): boolean {
   const code = errorText(getErrorProperty(error, "code"));
   const stderr = errorText(getErrorProperty(error, "stderr"));
-  const message = error instanceof Error ? error.message : errorText(getErrorProperty(error, "message"));
-  return code === "E404" || stderr.includes("E404") || stderr.includes("404") || message.includes("E404");
+  const message =
+    error instanceof Error ? error.message : errorText(getErrorProperty(error, "message"));
+  return (
+    code === "E404" || stderr.includes("E404") || stderr.includes("404") || message.includes("E404")
+  );
 }
 
 function readPackage(): Required<PackageJson> {
@@ -106,11 +112,16 @@ function readChangelogSection(version: string): string {
   const releaseHeading = new RegExp(`^## \\[v?${escapeRegExp(version)}\\](?:\\s+-\\s+.+)?\\s*$`);
   const start = lines.findIndex((line) => releaseHeading.test(line));
   if (start === -1) {
-    fail(`Missing changelog section for ${packageName}@${version}. Expected heading like "## [v${version}]".`);
+    fail(
+      `Missing changelog section for ${packageName}@${version}. Expected heading like "## [v${version}]".`,
+    );
   }
 
   const end = lines.findIndex((line, index) => index > start && isChangelogReleaseHeading(line));
-  return lines.slice(start, end === -1 ? undefined : end).join("\n").trim();
+  return lines
+    .slice(start, end === -1 ? undefined : end)
+    .join("\n")
+    .trim();
 }
 
 function setGithubOutput(values: Record<string, string>): void {
@@ -164,7 +175,11 @@ function assertVersionNotPublished(): void {
 
 function valueContainsVersion(value: unknown, version: string): boolean {
   if (typeof value === "string") {
-    return value === version || value === `${packageName}@${version}` || value.includes(`${packageName}@${version}`);
+    return (
+      value === version ||
+      value === `${packageName}@${version}` ||
+      value.includes(`${packageName}@${version}`)
+    );
   }
   if (Array.isArray(value)) {
     return value.some((item) => valueContainsVersion(item, version));

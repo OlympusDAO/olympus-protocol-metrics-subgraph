@@ -286,4 +286,4 @@ export function computeApy(
   return { nextEpochRebase, currentApy };
 }
 
-export { ZERO, ONE };
+export { ONE, ZERO };

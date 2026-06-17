@@ -8,7 +8,12 @@ import {
 import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
 import { addr } from "../../src/snapshot/math";
 
-function buildContext(seed?: { tokenAddress: string; walletAddress: string; balance: bigint; chainId: number }) {
+function buildContext(seed?: {
+  tokenAddress: string;
+  walletAddress: string;
+  balance: bigint;
+  chainId: number;
+}) {
   const tokenBalances = new Map<string, TokenBalance>();
   if (seed) {
     const id = `${seed.chainId}-${addr(seed.tokenAddress)}-${addr(seed.walletAddress)}`;

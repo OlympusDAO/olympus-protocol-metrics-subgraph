@@ -36,7 +36,9 @@ describe("indexer monorepo layout", () => {
     };
 
     expect(packageJson.scripts["env:check"]).toBe("tsx src/start-envio.ts check");
-    expect(packageJson.scripts["envio:dev"]).toBe(`ENVIO_TUI=\${ENVIO_TUI:-false} tsx src/start-envio.ts dev`);
+    expect(packageJson.scripts["envio:dev"]).toBe(
+      `ENVIO_TUI=\${ENVIO_TUI:-false} tsx src/start-envio.ts dev`,
+    );
     expect(packageJson.scripts["envio:start"]).toBe("tsx src/start-envio.ts start");
   });
 

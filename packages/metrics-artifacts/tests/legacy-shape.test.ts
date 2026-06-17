@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-
+import type { OhmSupply, TreasuryAsset } from "../src";
 import {
   buildDailyMetric,
   emptyChainValues,
@@ -7,7 +7,6 @@ import {
   groupOhmSupplyByChain,
   groupTreasuryAssetsByChain,
 } from "../src";
-import type { OhmSupply, TreasuryAsset } from "../src";
 
 const treasuryAsset: TreasuryAsset = {
   id: "asset-1",
@@ -115,7 +114,13 @@ describe("legacy-compatible metric shape", () => {
     expect(metric.chainsMissing).toEqual([42161, 250, 137, 8453, 80094]);
     expect(metric.crossChainComplete).toBe(false);
     expect(metric._meta?.chainsComplete).toEqual(["Ethereum"]);
-    expect(metric._meta?.chainsFailed).toEqual(["Arbitrum", "Fantom", "Polygon", "Base", "Berachain"]);
+    expect(metric._meta?.chainsFailed).toEqual([
+      "Arbitrum",
+      "Fantom",
+      "Polygon",
+      "Base",
+      "Berachain",
+    ]);
   });
 
   test("marks cross-chain data complete when Arbitrum and Ethereum are indexed", () => {

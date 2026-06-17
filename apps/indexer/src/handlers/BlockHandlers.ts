@@ -1,11 +1,5 @@
 import BigNumberCtor, { type default as BigNumber } from "bignumber.js";
 import {
-  aggregateAcrossChains,
-  computeApy,
-  computeDerivedRatios,
-  computePerChainAggregate,
-} from "../snapshot/global";
-import {
   BigDecimal,
   type EvmOnBlockContext,
   indexer,
@@ -13,11 +7,7 @@ import {
   type TokenSupply,
 } from "envio";
 import type { PublicClient } from "viem";
-import {
-  readBlockTimestamp,
-  readNextOhmDistribution,
-  readSOhmCirculatingSupply,
-} from "../effects";
+import { readBlockTimestamp, readNextOhmDistribution, readSOhmCirculatingSupply } from "../effects";
 import {
   getPrice,
   getTotalValue,
@@ -27,7 +17,12 @@ import {
 } from "../pricing";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { withContractReadCache } from "../snapshot/contract-cache";
-import { getClient } from "../snapshot/rpc-client";
+import {
+  aggregateAcrossChains,
+  computeApy,
+  computeDerivedRatios,
+  computePerChainAggregate,
+} from "../snapshot/global";
 import {
   addr,
   getTokenDecimals,
@@ -44,6 +39,7 @@ import {
   getTokenDefinition,
   getWalletAddressesForContract,
 } from "../snapshot/records";
+import { getClient } from "../snapshot/rpc-client";
 import {
   CHAIN_IDS,
   type ChainConfig,
@@ -471,7 +467,19 @@ export async function updateGlobalMetricSnapshot(
 // for snapshot-pipeline simplicity) to the SupplyCategoryType GraphQL enum
 // members. If a TYPE_* string is missing from this map, the writer above
 // skips the row rather than emit a value the GraphQL enum would reject.
-const CATEGORY_TYPE_TO_ENUM: Record<string, "TOTAL_SUPPLY" | "TREASURY" | "OHM_MIGRATION_OFFSET" | "BONDS_PREMINTED" | "BONDS_VESTING_DEPOSITS" | "BONDS_VESTING_TOKENS" | "BONDS_DEPOSITS" | "LIQUIDITY" | "BOOSTED_LIQUIDITY_VAULT" | "LENDING"> = {
+const CATEGORY_TYPE_TO_ENUM: Record<
+  string,
+  | "TOTAL_SUPPLY"
+  | "TREASURY"
+  | "OHM_MIGRATION_OFFSET"
+  | "BONDS_PREMINTED"
+  | "BONDS_VESTING_DEPOSITS"
+  | "BONDS_VESTING_TOKENS"
+  | "BONDS_DEPOSITS"
+  | "LIQUIDITY"
+  | "BOOSTED_LIQUIDITY_VAULT"
+  | "LENDING"
+> = {
   "Total Supply": "TOTAL_SUPPLY",
   Treasury: "TREASURY",
   "OHM Migration Offset": "OHM_MIGRATION_OFFSET",
@@ -611,8 +619,6 @@ async function pushOwnedLiquidityRecords(
     }
   }
 }
-
-
 
 // ----- Token supplies (OHM total / treasury / liquidity / lending) -----
 

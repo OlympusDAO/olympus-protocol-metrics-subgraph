@@ -4,7 +4,8 @@ import { validateIndexerEnv } from "./validate-env";
 
 export function prepareIndexerEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const railwayPort = env.PORT?.trim();
-  const hasEnvioIndexerPort = env.ENVIO_INDEXER_PORT !== undefined && env.ENVIO_INDEXER_PORT.trim() !== "";
+  const hasEnvioIndexerPort =
+    env.ENVIO_INDEXER_PORT !== undefined && env.ENVIO_INDEXER_PORT.trim() !== "";
   if (!hasEnvioIndexerPort && railwayPort !== undefined && railwayPort !== "") {
     env.ENVIO_INDEXER_PORT = railwayPort;
   }
@@ -25,7 +26,10 @@ export function resolveEnvioArgs(args: string[], env: NodeJS.ProcessEnv = proces
   return [...resolvedArgs, "-r"];
 }
 
-export function runIndexerStartup(args: string[] = process.argv.slice(2), env: NodeJS.ProcessEnv = process.env): void {
+export function runIndexerStartup(
+  args: string[] = process.argv.slice(2),
+  env: NodeJS.ProcessEnv = process.env,
+): void {
   const preparedEnv = prepareIndexerEnv(env);
   validateIndexerEnv(preparedEnv);
 

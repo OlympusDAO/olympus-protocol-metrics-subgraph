@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
-
-import { monthKeysForRange, resolveDateRange } from "../src";
 import type { Manifest } from "../src";
+import { monthKeysForRange, resolveDateRange } from "../src";
 
 const manifest: Manifest = {
   schemaVersion: "1.0.0",
@@ -20,9 +19,9 @@ describe("date range resolution", () => {
   });
 
   test("rejects end date before start date", () => {
-    expect(() =>
-      resolveDateRange({ start: "2026-06-01", end: "2026-05-20", manifest }),
-    ).toThrow(/end must be greater than or equal to start/i);
+    expect(() => resolveDateRange({ start: "2026-06-01", end: "2026-05-20", manifest })).toThrow(
+      /end must be greater than or equal to start/i,
+    );
   });
 
   test("enforces max range only when requested", () => {
@@ -48,8 +47,10 @@ describe("date range resolution", () => {
   });
 
   test("selects month shards across month and year boundaries", () => {
-    expect(
-      monthKeysForRange({ start: "2025-12-31", end: "2026-02-01", days: 33 }),
-    ).toEqual(["2025-12", "2026-01", "2026-02"]);
+    expect(monthKeysForRange({ start: "2025-12-31", end: "2026-02-01", days: 33 })).toEqual([
+      "2025-12",
+      "2026-01",
+      "2026-02",
+    ]);
   });
 });

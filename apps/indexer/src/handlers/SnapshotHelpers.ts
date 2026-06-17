@@ -3,8 +3,8 @@ import type { EvmOnBlockContext, NativeBalanceState } from "envio";
 import { getAddress, type PublicClient } from "viem";
 
 import { readErc20BalanceOf } from "../effects";
-import { getNativeBalance } from "../snapshot/rpc-client";
 import { addr, toDecimal, ZERO } from "../snapshot/math";
+import { getNativeBalance } from "../snapshot/rpc-client";
 import type { LiquidityHandler } from "../snapshot/types";
 
 // Shared balance-read helpers used by the snapshot block handler and the

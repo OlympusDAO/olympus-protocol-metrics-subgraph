@@ -1,4 +1,4 @@
-import { type OhmIndexState, type OhmIndexUpdate, indexer } from "envio";
+import { indexer, type OhmIndexState, type OhmIndexUpdate } from "envio";
 
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { addr } from "../snapshot/math";

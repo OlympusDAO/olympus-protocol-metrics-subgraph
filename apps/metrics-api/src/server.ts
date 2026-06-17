@@ -1,23 +1,22 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-
-import { ArtifactNotFoundError, type ArtifactReader } from "./artifact-store";
 import {
   ALL_CHAIN_IDS,
-  buildDailyMetric,
-  getOpenApiDocument,
-  isCrossChainComplete,
-  monthKeysForRange,
-  resolveDateRange,
   type ApiErrorResponse,
   type ApiResponse,
   type BoundsResponse,
+  buildDailyMetric,
   type DailyMetric,
+  getOpenApiDocument,
+  isCrossChainComplete,
   type Manifest,
+  monthKeysForRange,
   type OhmSupply,
   type ProtocolMetric,
+  resolveDateRange,
   type TreasuryAsset,
   type WundergraphResponse,
 } from "../../../packages/metrics-artifacts/src";
+import { ArtifactNotFoundError, type ArtifactReader } from "./artifact-store";
 
 export type MetricsApiConfig = {
   maxRangeDays: number;
@@ -81,7 +80,13 @@ function setCommonHeaders(res: ServerResponse): void {
   res.setHeader("vary", "origin");
 }
 
-function sendBody(req: IncomingMessage, res: ServerResponse, status: number, contentType: string, body: string): void {
+function sendBody(
+  req: IncomingMessage,
+  res: ServerResponse,
+  status: number,
+  contentType: string,
+  body: string,
+): void {
   res.statusCode = status;
   res.setHeader("content-type", contentType);
   if (req.method === "HEAD") {
@@ -136,7 +141,9 @@ function validateQueryParams(url: URL): { code: string; message: string } | unde
   }
 
   const supportedKeySet = new Set(supportedKeys);
-  const unsupportedKeys = Array.from(new Set([...url.searchParams.keys()].filter((key) => !supportedKeySet.has(key))));
+  const unsupportedKeys = Array.from(
+    new Set([...url.searchParams.keys()].filter((key) => !supportedKeySet.has(key))),
+  );
   if (unsupportedKeys.length > 0) {
     return {
       code: "unsupported_query_parameter",
@@ -273,7 +280,9 @@ async function readArtifactRows<T>(
   const rows: T[] = [];
   for (const month of monthKeysForRange(range)) {
     try {
-      const monthRows = await config.artifactReader.getJson<T[]>(artifactKeyForMonth(manifest, keyPrefix, month));
+      const monthRows = await config.artifactReader.getJson<T[]>(
+        artifactKeyForMonth(manifest, keyPrefix, month),
+      );
       rows.push(...monthRows.filter((row) => isInRange((row as { date: string }).date, range)));
     } catch (error) {
       if (!(error instanceof ArtifactNotFoundError)) {
@@ -284,7 +293,9 @@ async function readArtifactRows<T>(
   return rows;
 }
 
-async function readSelectedDailyRecords<T extends { date: string; block: number; blockchain: string }>(
+async function readSelectedDailyRecords<
+  T extends { date: string; block: number; blockchain: string },
+>(
   config: MetricsApiConfig,
   manifest: Manifest,
   range: { start: string; end: string; days: number },
@@ -328,12 +339,20 @@ function isSelectedMetricBlock(
   metric: DailyMetric,
   record: { block: number; blockchain: string },
 ): boolean {
-  const metricBlock = (metric.blocks as Partial<Record<string, number>> | undefined)?.[record.blockchain];
+  const metricBlock = (metric.blocks as Partial<Record<string, number>> | undefined)?.[
+    record.blockchain
+  ];
   return metricBlock !== undefined && metricBlock !== 0 && Number(record.block) === metricBlock;
 }
 
-function attachMetricRecords(metric: DailyMetric, treasuryAssets: TreasuryAsset[], ohmSupply: OhmSupply[]): DailyMetric {
-  const selectedTreasuryAssets = treasuryAssets.filter((asset) => isSelectedMetricBlock(metric, asset));
+function attachMetricRecords(
+  metric: DailyMetric,
+  treasuryAssets: TreasuryAsset[],
+  ohmSupply: OhmSupply[],
+): DailyMetric {
+  const selectedTreasuryAssets = treasuryAssets.filter((asset) =>
+    isSelectedMetricBlock(metric, asset),
+  );
   const selectedOhmSupply = ohmSupply.filter((supply) => isSelectedMetricBlock(metric, supply));
   const records = buildDailyMetric({
     date: metric.date,
@@ -363,8 +382,15 @@ async function readDailyMetrics(
   includeRecords: boolean,
   generatedAt: string,
 ): Promise<DailyMetric[]> {
-  const metricRows = await readArtifactRows<DailyMetric>(config, manifest, range, "v2/metrics/daily");
-  const metricsByDate = new Map(metricRows.map((metric) => [metric.date, normalizeMetricCompleteness(metric)]));
+  const metricRows = await readArtifactRows<DailyMetric>(
+    config,
+    manifest,
+    range,
+    "v2/metrics/daily",
+  );
+  const metricsByDate = new Map(
+    metricRows.map((metric) => [metric.date, normalizeMetricCompleteness(metric)]),
+  );
   const treasuryAssets = includeRecords
     ? await readArtifactRows<TreasuryAsset>(config, manifest, range, "v2/treasury-assets/daily")
     : [];
@@ -418,7 +444,9 @@ function validateLegacyVariables(variables: Record<string, unknown>): Record<str
   if (unsupportedKeys.length > 0) {
     throw new Error(`Unsupported wg_variables field(s): ${unsupportedKeys.join(", ")}`);
   }
-  return Object.fromEntries(Object.entries(variables).filter(([key]) => LEGACY_VARIABLE_KEYS.has(key)));
+  return Object.fromEntries(
+    Object.entries(variables).filter(([key]) => LEGACY_VARIABLE_KEYS.has(key)),
+  );
 }
 
 function legacyString(variables: Record<string, unknown>, key: string): string | undefined {
@@ -452,8 +480,12 @@ function resolveLegacyRange(
     });
   }
 
-  const start = legacyString(variables, "startDate") ?? legacyString(variables, "start") ?? manifest.earliestDate;
-  const end = legacyString(variables, "endDate") ?? legacyString(variables, "end") ?? manifest.latestDate;
+  const start =
+    legacyString(variables, "startDate") ??
+    legacyString(variables, "start") ??
+    manifest.earliestDate;
+  const end =
+    legacyString(variables, "endDate") ?? legacyString(variables, "end") ?? manifest.latestDate;
   const requestedRange = resolveDateRange({
     start,
     end,
@@ -466,7 +498,8 @@ function resolveLegacyRange(
   }
 
   return resolveDateRange({
-    start: requestedRange.start < manifest.earliestDate ? manifest.earliestDate : requestedRange.start,
+    start:
+      requestedRange.start < manifest.earliestDate ? manifest.earliestDate : requestedRange.start,
     end: requestedRange.end > manifest.latestDate ? manifest.latestDate : requestedRange.end,
     manifest,
     maxRangeDays,
@@ -480,7 +513,8 @@ function legacyRowsDescending<T extends { date: string }>(rows: T[]): T[] {
 
 function dailyMetricToProtocolMetric(metric: DailyMetric): ProtocolMetric {
   const block = (metric.blocks as Partial<Record<string, number>> | undefined)?.Ethereum ?? 0;
-  const timestamp = (metric.timestamps as Partial<Record<string, number>> | undefined)?.Ethereum ?? 0;
+  const timestamp =
+    (metric.timestamps as Partial<Record<string, number>> | undefined)?.Ethereum ?? 0;
   const gOhmTotalSupply = metric.ohmIndex === 0 ? 0 : metric.ohmTotalSupply / metric.ohmIndex;
 
   return {
@@ -514,7 +548,12 @@ async function readLegacyOperation(
 
   if (pathname.endsWith("/tokenRecords")) {
     return legacyRowsDescending(
-      await readSelectedDailyRecords<TreasuryAsset>(config, manifest, range, "v2/treasury-assets/daily"),
+      await readSelectedDailyRecords<TreasuryAsset>(
+        config,
+        manifest,
+        range,
+        "v2/treasury-assets/daily",
+      ),
     );
   }
   if (pathname.endsWith("/tokenSupplies")) {
@@ -524,9 +563,17 @@ async function readLegacyOperation(
   }
 
   const includeRecords = variables.includeRecords === true;
-  const metrics = await readDailyMetrics(config, manifest, range, includeRecords, config.generatedAt ?? manifest.generatedAt);
+  const metrics = await readDailyMetrics(
+    config,
+    manifest,
+    range,
+    includeRecords,
+    config.generatedAt ?? manifest.generatedAt,
+  );
   const filteredMetrics =
-    variables.crossChainDataComplete === true ? metrics.filter((metric) => metric.crossChainComplete) : metrics;
+    variables.crossChainDataComplete === true
+      ? metrics.filter((metric) => metric.crossChainComplete)
+      : metrics;
   if (pathname.endsWith("/metrics") && !pathname.startsWith("/operations/paginated/")) {
     return filteredMetrics[0] === undefined
       ? buildEmptyDailyMetric({
@@ -581,7 +628,13 @@ async function handleMetricsApiRequestUnchecked(
   }
 
   if (hasRequestBody(req)) {
-    sendError(req, res, 400, "request_body_not_allowed", "GET and HEAD requests must not include a request body.");
+    sendError(
+      req,
+      res,
+      400,
+      "request_body_not_allowed",
+      "GET and HEAD requests must not include a request body.",
+    );
     return;
   }
 
@@ -611,7 +664,13 @@ async function handleMetricsApiRequestUnchecked(
   if (url.pathname === "/docs") {
     res.statusCode = 200;
     res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
-    sendBody(req, res, 200, "text/html; charset=utf-8", "<!doctype html><title>Olympus Protocol Metrics API</title><h1>OpenAPI</h1>");
+    sendBody(
+      req,
+      res,
+      200,
+      "text/html; charset=utf-8",
+      "<!doctype html><title>Olympus Protocol Metrics API</title><h1>OpenAPI</h1>",
+    );
     return;
   }
 
@@ -625,17 +684,17 @@ async function handleMetricsApiRequestUnchecked(
       return manifest;
     } catch (error) {
       if (error instanceof ArtifactNotFoundError) {
-        sendError(req, res, 503, "manifest_not_published", "Metrics artifacts have not been published yet.");
+        sendError(
+          req,
+          res,
+          503,
+          "manifest_not_published",
+          "Metrics artifacts have not been published yet.",
+        );
         return undefined;
       }
       console.error("Metrics artifact manifest is unavailable.", error);
-      sendError(
-        req,
-        res,
-        503,
-        "manifest_unavailable",
-        "Metrics artifact manifest is unavailable.",
-      );
+      sendError(req, res, 503, "manifest_unavailable", "Metrics artifact manifest is unavailable.");
       return undefined;
     }
   };
@@ -677,12 +736,23 @@ async function handleMetricsApiRequestUnchecked(
         config.generatedAt ?? publishedManifest.generatedAt,
       );
       res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
-      sendJson(req, res, 200, emptyResponse<DailyMetric[]>(config, range, metrics, publishedManifest));
+      sendJson(
+        req,
+        res,
+        200,
+        emptyResponse<DailyMetric[]>(config, range, metrics, publishedManifest),
+      );
     } catch (error) {
       if (error instanceof ArtifactNotFoundError) {
         return;
       }
-      sendError(req, res, 400, "invalid_date_range", error instanceof Error ? error.message : "Invalid date range.");
+      sendError(
+        req,
+        res,
+        400,
+        "invalid_date_range",
+        error instanceof Error ? error.message : "Invalid date range.",
+      );
     }
     return;
   }
@@ -701,12 +771,23 @@ async function handleMetricsApiRequestUnchecked(
         "v2/treasury-assets/daily",
       );
       res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
-      sendJson(req, res, 200, emptyResponse<TreasuryAsset[]>(config, range, treasuryAssets, publishedManifest));
+      sendJson(
+        req,
+        res,
+        200,
+        emptyResponse<TreasuryAsset[]>(config, range, treasuryAssets, publishedManifest),
+      );
     } catch (error) {
       if (error instanceof ArtifactNotFoundError) {
         return;
       }
-      sendError(req, res, 400, "invalid_date_range", error instanceof Error ? error.message : "Invalid date range.");
+      sendError(
+        req,
+        res,
+        400,
+        "invalid_date_range",
+        error instanceof Error ? error.message : "Invalid date range.",
+      );
     }
     return;
   }
@@ -725,12 +806,23 @@ async function handleMetricsApiRequestUnchecked(
         "v2/ohm-supply/daily",
       );
       res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
-      sendJson(req, res, 200, emptyResponse<OhmSupply[]>(config, range, ohmSupply, publishedManifest));
+      sendJson(
+        req,
+        res,
+        200,
+        emptyResponse<OhmSupply[]>(config, range, ohmSupply, publishedManifest),
+      );
     } catch (error) {
       if (error instanceof ArtifactNotFoundError) {
         return;
       }
-      sendError(req, res, 400, "invalid_date_range", error instanceof Error ? error.message : "Invalid date range.");
+      sendError(
+        req,
+        res,
+        400,
+        "invalid_date_range",
+        error instanceof Error ? error.message : "Invalid date range.",
+      );
     }
     return;
   }
@@ -739,7 +831,9 @@ async function handleMetricsApiRequestUnchecked(
     res.setHeader("deprecation", "true");
     sendJson(req, res, 501, {
       data: null,
-      errors: [{ message: "atBlock queries are not supported by the artifact-backed metrics API." }],
+      errors: [
+        { message: "atBlock queries are not supported by the artifact-backed metrics API." },
+      ],
     });
     return;
   }
@@ -747,7 +841,12 @@ async function handleMetricsApiRequestUnchecked(
   if (url.pathname === "/operations/health") {
     res.setHeader("deprecation", "true");
     res.setHeader("cache-control", READY_CACHE_CONTROL);
-    sendJson(req, res, 200, legacyResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.0.0" }));
+    sendJson(
+      req,
+      res,
+      200,
+      legacyResponse({ status: "ok", timestamp: new Date().toISOString(), version: "3.0.0" }),
+    );
     return;
   }
 
@@ -778,7 +877,13 @@ async function handleMetricsApiRequestUnchecked(
       if (error instanceof ArtifactNotFoundError) {
         return;
       }
-      sendError(req, res, 400, "invalid_legacy_request", error instanceof Error ? error.message : "Invalid legacy request.");
+      sendError(
+        req,
+        res,
+        400,
+        "invalid_legacy_request",
+        error instanceof Error ? error.message : "Invalid legacy request.",
+      );
     }
     return;
   }

@@ -136,9 +136,7 @@ async function derivePrice(
 // share the same underlying `pool`; every other kind uses `id` as its pool
 // identity.
 function underlyingPool(handler: LiquidityHandler): string {
-  return "pool" in handler && handler.pool
-    ? handler.pool.toLowerCase()
-    : handler.id.toLowerCase();
+  return "pool" in handler && handler.pool ? handler.pool.toLowerCase() : handler.id.toLowerCase();
 }
 
 export async function getTotalValue(

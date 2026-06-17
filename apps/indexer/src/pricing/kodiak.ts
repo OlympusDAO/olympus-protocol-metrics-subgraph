@@ -39,9 +39,7 @@ function applyDecimalAdjustment(
   const diff = lookupIsToken0 ? decimals0 - decimals1 : decimals1 - decimals0;
   const factor = new BigNumber(10).pow(Math.abs(diff));
   const decimalAdjustment = diff < 0 ? ONE.div(factor) : factor;
-  const rawTerm = lookupIsToken0
-    ? rawPriceToken0InToken1
-    : ONE.div(rawPriceToken0InToken1);
+  const rawTerm = lookupIsToken0 ? rawPriceToken0InToken1 : ONE.div(rawPriceToken0InToken1);
   return decimalAdjustment.times(rawTerm);
 }
 

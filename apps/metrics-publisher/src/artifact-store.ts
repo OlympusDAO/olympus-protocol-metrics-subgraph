@@ -72,7 +72,9 @@ export class MemoryArtifactStore implements ArtifactStore {
   }
 
   async listKeys(prefix: string): Promise<string[]> {
-    return Array.from(this.objects.keys()).filter((key) => key.startsWith(prefix)).sort();
+    return Array.from(this.objects.keys())
+      .filter((key) => key.startsWith(prefix))
+      .sort();
   }
 
   async deleteJson(key: string): Promise<void> {

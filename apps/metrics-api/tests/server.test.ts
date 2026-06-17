@@ -1,11 +1,10 @@
 import { createServer, request as httpRequest } from "node:http";
 import { type AddressInfo, connect } from "node:net";
 import { afterEach, describe, expect, test, vi } from "vitest";
-
+import type { Manifest } from "../../../packages/metrics-artifacts/src";
 import { ArtifactNotFoundError } from "../src/artifact-store";
 import { metricsApiConfigFromEnv, metricsApiPortFromEnv } from "../src/config";
 import { handleMetricsApiRequest, type MetricsApiConfig } from "../src/server";
-import type { Manifest } from "../../../packages/metrics-artifacts/src";
 
 let closeServer: (() => Promise<void>) | undefined;
 
@@ -32,7 +31,9 @@ function artifactReader(objects: Record<string, unknown>): MetricsApiConfig["art
   };
 }
 
-function sparseArtifactReader(objects: Record<string, unknown>): MetricsApiConfig["artifactReader"] {
+function sparseArtifactReader(
+  objects: Record<string, unknown>,
+): MetricsApiConfig["artifactReader"] {
   return {
     async getJson<T>(key: string): Promise<T> {
       if (!(key in objects)) {
@@ -71,41 +72,41 @@ async function rawRequest(
     body: string;
     rawBody: Buffer;
   }>((resolve, reject) => {
-      const clientRequest = httpRequest(
-        {
-          host: "127.0.0.1",
-          port,
-          path,
-          method: init.method,
-          headers:
-            init.body === undefined
-              ? init.headers
-              : {
-                  ...init.headers,
-                  "content-length": Buffer.byteLength(init.body),
-                  "content-type": "application/json",
-                },
-        },
-        (response) => {
-          const chunks: Buffer[] = [];
-          response.on("data", (chunk: Buffer) => chunks.push(chunk));
-          response.on("end", () => {
-            const rawBody = Buffer.concat(chunks);
-            resolve({
-              status: response.statusCode ?? 0,
-              headers: response.headers,
-              body: rawBody.toString("utf8"),
-              rawBody,
-            });
+    const clientRequest = httpRequest(
+      {
+        host: "127.0.0.1",
+        port,
+        path,
+        method: init.method,
+        headers:
+          init.body === undefined
+            ? init.headers
+            : {
+                ...init.headers,
+                "content-length": Buffer.byteLength(init.body),
+                "content-type": "application/json",
+              },
+      },
+      (response) => {
+        const chunks: Buffer[] = [];
+        response.on("data", (chunk: Buffer) => chunks.push(chunk));
+        response.on("end", () => {
+          const rawBody = Buffer.concat(chunks);
+          resolve({
+            status: response.statusCode ?? 0,
+            headers: response.headers,
+            body: rawBody.toString("utf8"),
+            rawBody,
           });
-        },
-      );
-      clientRequest.on("error", reject);
-      if (init.body !== undefined) {
-        clientRequest.write(init.body);
-      }
-      clientRequest.end();
-    });
+        });
+      },
+    );
+    clientRequest.on("error", reject);
+    if (init.body !== undefined) {
+      clientRequest.write(init.body);
+    }
+    clientRequest.end();
+  });
 }
 
 async function rawSocketRequest(
@@ -126,7 +127,9 @@ async function rawSocketRequest(
 
     socket.setEncoding("utf8");
     socket.on("connect", () => {
-      socket.write(`GET ${requestTarget} HTTP/1.1\r\nHost: 127.0.0.1:${port}\r\nConnection: close\r\n\r\n`);
+      socket.write(
+        `GET ${requestTarget} HTTP/1.1\r\nHost: 127.0.0.1:${port}\r\nConnection: close\r\n\r\n`,
+      );
     });
     socket.on("data", (chunk) => {
       response += chunk;
@@ -225,7 +228,10 @@ describe("metrics API HTTP behavior", () => {
     });
     expect(JSON.stringify(body)).not.toContain("leaked-secret");
     expect(JSON.stringify(body)).not.toContain("internal endpoint");
-    expect(errorSpy).toHaveBeenCalledWith("Metrics artifact manifest is unavailable.", backendError);
+    expect(errorSpy).toHaveBeenCalledWith(
+      "Metrics artifact manifest is unavailable.",
+      backendError,
+    );
   });
 
   test("returns the indexer deployment id in bounds when present", async () => {
@@ -279,9 +285,9 @@ describe("metrics API HTTP behavior", () => {
   test("sets cache headers for readiness, bounds, and range routes", async () => {
     expect((await request("/ready")).headers.get("cache-control")).toBe("no-store");
     expect((await request("/v2/bounds")).headers.get("cache-control")).toBe("no-store");
-    expect(
-      (await request("/v2/metrics/daily?start=2026-05-21")).headers.get("cache-control"),
-    ).toBe("public, max-age=3600");
+    expect((await request("/v2/metrics/daily?start=2026-05-21")).headers.get("cache-control")).toBe(
+      "public, max-age=3600",
+    );
   });
 
   test("rejects unsupported v2 query parameters that would otherwise cache-bust", async () => {
@@ -334,7 +340,9 @@ describe("metrics API HTTP behavior", () => {
       }),
     );
 
-    const canonical = await request(`/operations/paginated/metrics?wg_variables=${canonicalVariables}`);
+    const canonical = await request(
+      `/operations/paginated/metrics?wg_variables=${canonicalVariables}`,
+    );
     const withDateOffset = await request(
       `/operations/paginated/metrics?wg_variables=${encodeURIComponent(
         JSON.stringify({ startDate: "2026-05-21", endDate: "2026-05-21", dateOffset: 999 }),
@@ -343,7 +351,9 @@ describe("metrics API HTTP behavior", () => {
     const unsupportedTopLevel = await request(
       `/operations/paginated/metrics?cacheBust=one&wg_variables=${canonicalVariables}`,
     );
-    const unsupportedVariable = await request(`/operations/paginated/metrics?wg_variables=${unsupportedVariables}`);
+    const unsupportedVariable = await request(
+      `/operations/paginated/metrics?wg_variables=${unsupportedVariables}`,
+    );
 
     expect(withDateOffset.status).toBe(200);
     expect(await withDateOffset.json()).toEqual(await canonical.json());
@@ -452,7 +462,9 @@ describe("metrics API HTTP behavior", () => {
   });
 
   test("marks required chains as missing when no metric rows exist for a requested date", async () => {
-    const response = await request("/v2/metrics/daily?start=2026-05-21&end=2026-05-21&includeRecords=true");
+    const response = await request(
+      "/v2/metrics/daily?start=2026-05-21&end=2026-05-21&includeRecords=true",
+    );
     expect(response.status).toBe(200);
 
     const body = await response.json();
@@ -482,8 +494,16 @@ describe("metrics API HTTP behavior", () => {
         latestDate: "2026-05-21",
         artifacts: {
           "v2/metrics/daily/2026-05.json": { sha256: "0".repeat(64), byteLength: 2, rowCount: 1 },
-          "v2/treasury-assets/daily/2026-05.json": { sha256: "1".repeat(64), byteLength: 2, rowCount: 2 },
-          "v2/ohm-supply/daily/2026-05.json": { sha256: "2".repeat(64), byteLength: 2, rowCount: 2 },
+          "v2/treasury-assets/daily/2026-05.json": {
+            sha256: "1".repeat(64),
+            byteLength: 2,
+            rowCount: 2,
+          },
+          "v2/ohm-supply/daily/2026-05.json": {
+            sha256: "2".repeat(64),
+            byteLength: 2,
+            rowCount: 2,
+          },
         },
       },
       artifactReader: artifactReader({
@@ -569,14 +589,24 @@ describe("metrics API HTTP behavior", () => {
       data: [expect.objectContaining({ id: "asset-selected", block: 200 })],
     });
 
-    const ohmSupply = await request("/v2/ohm-supply/daily?start=2026-05-21&end=2026-05-21", undefined, config);
+    const ohmSupply = await request(
+      "/v2/ohm-supply/daily?start=2026-05-21&end=2026-05-21",
+      undefined,
+      config,
+    );
     expect(ohmSupply.status).toBe(200);
     expect(await ohmSupply.json()).toMatchObject({
       data: [expect.objectContaining({ id: "supply-selected", block: 200 })],
     });
 
-    const variables = encodeURIComponent(JSON.stringify({ startDate: "2026-05-21", endDate: "2026-05-21" }));
-    const legacyTokenRecords = await request(`/operations/paginated/tokenRecords?wg_variables=${variables}`, undefined, config);
+    const variables = encodeURIComponent(
+      JSON.stringify({ startDate: "2026-05-21", endDate: "2026-05-21" }),
+    );
+    const legacyTokenRecords = await request(
+      `/operations/paginated/tokenRecords?wg_variables=${variables}`,
+      undefined,
+      config,
+    );
     expect(legacyTokenRecords.status).toBe(200);
     expect(await legacyTokenRecords.json()).toEqual({
       data: [expect.objectContaining({ id: "asset-selected", block: 200 })],
@@ -701,7 +731,9 @@ describe("metrics API HTTP behavior", () => {
       crossChainDataComplete: true,
       includeRecords: true,
     });
-    const encoded = await request(`/operations/paginated/metrics?wg_variables=${encodeURIComponent(variables)}`);
+    const encoded = await request(
+      `/operations/paginated/metrics?wg_variables=${encodeURIComponent(variables)}`,
+    );
     expect(encoded.status).toBe(200);
     expect(await encoded.json()).toMatchObject({ data: expect.any(Array) });
 
@@ -716,7 +748,9 @@ describe("metrics API HTTP behavior", () => {
       endDate: "2026-06-01",
     });
 
-    const response = await request(`/operations/paginated/metrics?wg_variables=${encodeURIComponent(variables)}`);
+    const response = await request(
+      `/operations/paginated/metrics?wg_variables=${encodeURIComponent(variables)}`,
+    );
 
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({
@@ -745,9 +779,15 @@ describe("metrics API HTTP behavior", () => {
         ],
       }),
     };
-    const variables = encodeURIComponent(JSON.stringify({ startDate: "2026-05-20", endDate: "2026-05-21" }));
+    const variables = encodeURIComponent(
+      JSON.stringify({ startDate: "2026-05-20", endDate: "2026-05-21" }),
+    );
 
-    const response = await request(`/operations/paginated/metrics?wg_variables=${variables}`, undefined, config);
+    const response = await request(
+      `/operations/paginated/metrics?wg_variables=${variables}`,
+      undefined,
+      config,
+    );
 
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({
@@ -756,7 +796,9 @@ describe("metrics API HTTP behavior", () => {
   });
 
   test("rejects invalid legacy dates before clipping to manifest bounds", async () => {
-    const variables = encodeURIComponent(JSON.stringify({ startDate: "not-a-date", endDate: "2030-12-31" }));
+    const variables = encodeURIComponent(
+      JSON.stringify({ startDate: "not-a-date", endDate: "2030-12-31" }),
+    );
     const response = await request(`/operations/paginated/metrics?wg_variables=${variables}`);
 
     expect(response.status).toBe(400);
@@ -772,8 +814,16 @@ describe("metrics API HTTP behavior", () => {
         ...testManifest,
         artifacts: {
           "v2/metrics/daily/2026-05.json": { sha256: "0".repeat(64), byteLength: 2, rowCount: 1 },
-          "v2/treasury-assets/daily/2026-05.json": { sha256: "1".repeat(64), byteLength: 2, rowCount: 1 },
-          "v2/ohm-supply/daily/2026-05.json": { sha256: "2".repeat(64), byteLength: 2, rowCount: 1 },
+          "v2/treasury-assets/daily/2026-05.json": {
+            sha256: "1".repeat(64),
+            byteLength: 2,
+            rowCount: 1,
+          },
+          "v2/ohm-supply/daily/2026-05.json": {
+            sha256: "2".repeat(64),
+            byteLength: 2,
+            rowCount: 1,
+          },
         },
       },
       artifactReader: artifactReader({
@@ -818,9 +868,15 @@ describe("metrics API HTTP behavior", () => {
         ],
       }),
     };
-    const variables = encodeURIComponent(JSON.stringify({ startDate: "2026-05-21", endDate: "2026-05-21" }));
+    const variables = encodeURIComponent(
+      JSON.stringify({ startDate: "2026-05-21", endDate: "2026-05-21" }),
+    );
 
-    const metrics = await request(`/operations/paginated/metrics?wg_variables=${variables}`, undefined, config);
+    const metrics = await request(
+      `/operations/paginated/metrics?wg_variables=${variables}`,
+      undefined,
+      config,
+    );
     expect(metrics.status).toBe(200);
     const metricsBody = await metrics.json();
     expect(metricsBody).toEqual({
@@ -829,7 +885,11 @@ describe("metrics API HTTP behavior", () => {
     expect(metricsBody).not.toHaveProperty("meta");
     expect(metricsBody).not.toHaveProperty("error");
 
-    const tokenRecords = await request(`/operations/paginated/tokenRecords?wg_variables=${variables}`, undefined, config);
+    const tokenRecords = await request(
+      `/operations/paginated/tokenRecords?wg_variables=${variables}`,
+      undefined,
+      config,
+    );
     expect(tokenRecords.status).toBe(200);
     const tokenRecordsBody = await tokenRecords.json();
     expect(tokenRecordsBody).toEqual({

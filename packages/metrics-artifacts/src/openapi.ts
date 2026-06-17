@@ -84,7 +84,9 @@ export function getOpenApiDocument(): {
         get: {
           summary: "Published date bounds",
           responses: {
-            "200": jsonResponse("Earliest/latest dates, maximum v2 range, and latest per-chain indexing progress."),
+            "200": jsonResponse(
+              "Earliest/latest dates, maximum v2 range, and latest per-chain indexing progress.",
+            ),
           },
         },
       },
@@ -160,7 +162,9 @@ export function getOpenApiDocument(): {
         get: deprecatedOperation("Latest protocol metrics using the legacy protocolMetrics alias."),
       },
       "/operations/earliest/protocolMetrics": {
-        get: deprecatedOperation("Earliest protocol metrics using the legacy protocolMetrics alias."),
+        get: deprecatedOperation(
+          "Earliest protocol metrics using the legacy protocolMetrics alias.",
+        ),
       },
       "/operations/paginated/protocolMetrics": {
         get: deprecatedOperation(

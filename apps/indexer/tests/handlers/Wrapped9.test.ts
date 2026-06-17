@@ -1,16 +1,18 @@
 import type { TokenBalance, TokenBalanceUpdate } from "envio";
 import { describe, expect, test, vi } from "vitest";
 
-import {
-  handleWrapped9Deposit,
-  handleWrapped9Withdrawal,
-} from "../../src/handlers/Erc20Transfers";
+import { handleWrapped9Deposit, handleWrapped9Withdrawal } from "../../src/handlers/Erc20Transfers";
 import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
 import { addr } from "../../src/snapshot/math";
 
 // Mock context that records TokenBalance + TokenBalanceUpdate writes and
 // returns a seeded TokenBalance for the relevant id on read.
-function buildContext(seed?: { tokenAddress: string; walletAddress: string; balance: bigint; chainId: number }) {
+function buildContext(seed?: {
+  tokenAddress: string;
+  walletAddress: string;
+  balance: bigint;
+  chainId: number;
+}) {
   const tokenBalances = new Map<string, TokenBalance>();
   if (seed) {
     const id = `${seed.chainId}-${addr(seed.tokenAddress)}-${addr(seed.walletAddress)}`;

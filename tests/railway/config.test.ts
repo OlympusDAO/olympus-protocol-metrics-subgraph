@@ -26,13 +26,25 @@ describe("Railway config-as-code", () => {
       deploy: { cronSchedule: string; restartPolicyType: string };
     };
     const api = JSON.parse(readFileSync("railway-metrics-api.json", "utf8")) as {
-      deploy: { healthcheckPath: string; restartPolicyMaxRetries: number; restartPolicyType: string };
+      deploy: {
+        healthcheckPath: string;
+        restartPolicyMaxRetries: number;
+        restartPolicyType: string;
+      };
     };
     const hasura = JSON.parse(readFileSync("railway-hasura.json", "utf8")) as {
-      deploy: { healthcheckPath: string; restartPolicyMaxRetries: number; restartPolicyType: string };
+      deploy: {
+        healthcheckPath: string;
+        restartPolicyMaxRetries: number;
+        restartPolicyType: string;
+      };
     };
     const indexer = JSON.parse(readFileSync("railway-indexer.json", "utf8")) as {
-      deploy: { healthcheckPath: string; restartPolicyMaxRetries: number; restartPolicyType: string };
+      deploy: {
+        healthcheckPath: string;
+        restartPolicyMaxRetries: number;
+        restartPolicyType: string;
+      };
     };
 
     expect(publisher.deploy.cronSchedule).toBe("15 * * * *");
@@ -103,8 +115,12 @@ describe("Railway config-as-code", () => {
 
     expect(doc).toContain("Do not set `ENVIO_PG_SCHEMA` on Railway");
     expect(doc).toContain("Railway indexer startup runs `envio start -r`");
-    expect(doc).toContain("Published artifact snapshots and the metrics API are the handover boundary");
-    expect(doc).not.toContain("copies Railway's runtime `RAILWAY_DEPLOYMENT_ID` into `ENVIO_PG_SCHEMA`");
+    expect(doc).toContain(
+      "Published artifact snapshots and the metrics API are the handover boundary",
+    );
+    expect(doc).not.toContain(
+      "copies Railway's runtime `RAILWAY_DEPLOYMENT_ID` into `ENVIO_PG_SCHEMA`",
+    );
     expect(doc).toContain("indexer startup wrapper derives `ENVIO_INDEXER_PORT`");
     expect(doc).toContain(`\${{hasura.RAILWAY_PRIVATE_DOMAIN}}:\${{hasura.PORT}}/v1/graphql`);
     expect(doc).toContain(`\${{hasura.RAILWAY_PRIVATE_DOMAIN}}:\${{hasura.PORT}}/v1/metadata`);
@@ -118,7 +134,11 @@ describe("Railway config-as-code", () => {
     expect(dockerignore.split(/\r?\n/)).toContain(".pnpm-store");
     expect(dockerignore.split(/\r?\n/)).toContain("**/.envio");
 
-    for (const dockerfile of ["Dockerfile-indexer", "Dockerfile-metrics-api", "Dockerfile-metrics-publisher"]) {
+    for (const dockerfile of [
+      "Dockerfile-indexer",
+      "Dockerfile-metrics-api",
+      "Dockerfile-metrics-publisher",
+    ]) {
       const content = readFileSync(dockerfile, "utf8");
       expect(content).toContain("@sha256:");
       expect(content).toContain("apt-get install -y --no-install-recommends ca-certificates");
@@ -128,14 +148,16 @@ describe("Railway config-as-code", () => {
       expect(content).toContain("pnpm --version");
       expect(content).toContain("pnpm install --frozen-lockfile");
       expect(content).toContain("/usr/local/lib/node_modules/npm");
-      expect(content).not.toContain("node\", \"--version");
+      expect(content).not.toContain('node", "--version');
       expect(content).toContain("USER node");
     }
 
     expect(readFileSync("Dockerfile-hasura", "utf8")).toContain("--only-upgrade");
     expect(readFileSync("Dockerfile-hasura", "utf8")).not.toContain("apt-get upgrade");
     expect(readFileSync("Dockerfile-indexer", "utf8")).toContain("envio:start");
-    expect(readFileSync("Dockerfile-indexer", "utf8")).toContain("chown -R node:node apps/indexer/.envio");
+    expect(readFileSync("Dockerfile-indexer", "utf8")).toContain(
+      "chown -R node:node apps/indexer/.envio",
+    );
     const metricsApiDockerfile = readFileSync("Dockerfile-metrics-api", "utf8");
     const metricsPublisherDockerfile = readFileSync("Dockerfile-metrics-publisher", "utf8");
     expect(metricsApiDockerfile).toContain("pnpm --dir apps/indexer codegen");
@@ -151,7 +173,7 @@ describe("Railway config-as-code", () => {
 
     expect(content).toContain("HASURA_GRAPHQL_DATABASE_URL:?");
     expect(content).toContain("HASURA_GRAPHQL_ADMIN_SECRET:?");
-    expect(content).toContain("export HASURA_GRAPHQL_SERVER_PORT=\\\"$PORT\\\"");
+    expect(content).toContain('export HASURA_GRAPHQL_SERVER_PORT=\\"$PORT\\"');
     expect(content).toContain("HASURA_GRAPHQL_SERVER_PORT must match PORT when set");
     expect(content).toContain("USER hasura");
     expect(content).toContain("ENTRYPOINT []");
@@ -162,8 +184,12 @@ describe("Railway config-as-code", () => {
     const workflow = readFileSync(".github/workflows/security-scan.yml", "utf8");
     const packageJson = readFileSync("package.json", "utf8");
 
-    expect(workflow).toContain("aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1");
-    expect(workflow).toContain("docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd");
+    expect(workflow).toContain(
+      "aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1",
+    );
+    expect(workflow).toContain(
+      "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd",
+    );
     expect(workflow.match(/ignore-unfixed: true/g)?.length).toBe(4);
 
     for (const [name, dockerfile] of [

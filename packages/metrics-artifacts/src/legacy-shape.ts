@@ -26,7 +26,10 @@ export const REQUIRED_CHAIN_IDS_FOR_COMPLETE: number[] = [
 ];
 
 const CHAIN_ID_TO_NAME = new Map<number, ChainName>(
-  Object.entries(CHAIN_IDS_BY_NAME).map(([chainName, chainId]) => [chainId, chainName as ChainName]),
+  Object.entries(CHAIN_IDS_BY_NAME).map(([chainName, chainId]) => [
+    chainId,
+    chainName as ChainName,
+  ]),
 );
 
 function isChainName(value: string): value is ChainName {
@@ -152,9 +155,7 @@ export function buildDailyMetric(input: {
     const supplies = ohmSupplyByChain[chain];
     treasuryMarketValueComponents[chain] = sum(assets.map((asset) => asset.value));
     treasuryLiquidBackingComponents[chain] = sum(
-      assets
-        .filter((asset) => asset.isLiquid)
-        .map((asset) => asset.valueExcludingOhm),
+      assets.filter((asset) => asset.isLiquid).map((asset) => asset.valueExcludingOhm),
     );
     ohmTotalSupplyComponents[chain] = sum(
       supplies.filter((supply) => supply.type === "Total Supply").map((supply) => supply.balance),

@@ -1,17 +1,17 @@
 import {
   ALL_CHAIN_IDS,
   CHAIN_NAMES,
-  emptyChainValues,
-  emptySupplyCategoryValues,
-  isCrossChainComplete,
+  type ChainIndexingProgress,
   type ChainName,
   type DailyMetric,
   type DateRange,
+  emptyChainValues,
+  emptySupplyCategoryValues,
+  type IndexingProgress,
+  isCrossChainComplete,
   type OhmSupply,
-  type ChainIndexingProgress,
   type SupplyCategoryValues,
   type TreasuryAsset,
-  type IndexingProgress,
 } from "../../../packages/metrics-artifacts/src";
 
 export type MetricsBounds = {
@@ -97,7 +97,9 @@ export class HasuraGraphqlMetricsSource implements MetricsSource {
     },
   ) {}
 
-  async fetchBounds(completeness: PublishBoundsCompleteness = "cross_chain"): Promise<MetricsBounds> {
+  async fetchBounds(
+    completeness: PublishBoundsCompleteness = "cross_chain",
+  ): Promise<MetricsBounds> {
     const completenessWhere =
       completeness === "all_chains"
         ? `{ chainsIndexed: { _contains: [${ALL_CHAIN_IDS.join(", ")}] } }`
@@ -122,7 +124,9 @@ export class HasuraGraphqlMetricsSource implements MetricsSource {
     const earliestDate = body.earliest?.[0]?.date;
     const latestDate = body.latest?.[0]?.date;
     if (earliestDate === undefined || latestDate === undefined) {
-      throw new MetricsNotDataReadyError("Hasura returned no complete GlobalMetricSnapshot bounds.");
+      throw new MetricsNotDataReadyError(
+        "Hasura returned no complete GlobalMetricSnapshot bounds.",
+      );
     }
     return { earliestDate, latestDate };
   }
@@ -147,19 +151,29 @@ export class HasuraGraphqlMetricsSource implements MetricsSource {
       }
     `);
     const chainRows = CHAIN_NAMES.flatMap((chainName) => {
-      const rows = body[chainProgressAlias(chainName)] as Array<RawChainIndexingProgress> | undefined;
+      const rows = body[chainProgressAlias(chainName)] as
+        | Array<RawChainIndexingProgress>
+        | undefined;
       return chainProgressFromRows(chainName, rows);
     });
     return indexingProgressFromChainRows(chainRows);
   }
 
   async fetchDailyMetrics(range: DateRange): Promise<DailyMetric[]> {
-    const rows = await this.paginate<RawDailyMetric>("GlobalMetricSnapshot", range, DAILY_METRIC_SELECTION);
+    const rows = await this.paginate<RawDailyMetric>(
+      "GlobalMetricSnapshot",
+      range,
+      DAILY_METRIC_SELECTION,
+    );
     return rows.map(normalizeDailyMetric);
   }
 
   async fetchTreasuryAssets(range: DateRange): Promise<TreasuryAsset[]> {
-    const rows = await this.paginate<RawTreasuryAsset>("TokenRecord", range, TREASURY_ASSET_SELECTION);
+    const rows = await this.paginate<RawTreasuryAsset>(
+      "TokenRecord",
+      range,
+      TREASURY_ASSET_SELECTION,
+    );
     return rows.map(normalizeTreasuryAsset);
   }
 
@@ -219,7 +233,9 @@ export class HasuraGraphqlMetricsSource implements MetricsSource {
     }
     const body = (await response.json()) as GraphqlResponse<T>;
     if (body.errors && body.errors.length > 0) {
-      throw new Error(`Hasura GraphQL error: ${body.errors.map((error) => error.message).join("; ")}`);
+      throw new Error(
+        `Hasura GraphQL error: ${body.errors.map((error) => error.message).join("; ")}`,
+      );
     }
     if (body.data === undefined) {
       throw new Error("Hasura GraphQL response did not include data.");
@@ -279,7 +295,14 @@ type RawDailyMetric = {
 
 type RawTreasuryAsset = Omit<
   TreasuryAsset,
-  "balance" | "block" | "blockchain" | "multiplier" | "rate" | "timestamp" | "value" | "valueExcludingOhm"
+  | "balance"
+  | "block"
+  | "blockchain"
+  | "multiplier"
+  | "rate"
+  | "timestamp"
+  | "value"
+  | "valueExcludingOhm"
 > & {
   balance: unknown;
   block: unknown;
@@ -291,7 +314,10 @@ type RawTreasuryAsset = Omit<
   valueExcludingOhm: unknown;
 };
 
-type RawOhmSupply = Omit<OhmSupply, "balance" | "block" | "blockchain" | "supplyBalance" | "timestamp"> & {
+type RawOhmSupply = Omit<
+  OhmSupply,
+  "balance" | "block" | "blockchain" | "supplyBalance" | "timestamp"
+> & {
   balance: unknown;
   block: unknown;
   blockchain: string;
@@ -440,7 +466,9 @@ function normalizeDailyMetric(row: RawDailyMetric): DailyMetric {
     treasuryLiquidBackingPerOhmBacked: toNumber(row.treasuryLiquidBackingPerOhmBacked),
     treasuryLiquidBackingPerGOhmBacked: toNumber(row.treasuryLiquidBackingPerGOhmBacked),
     _meta: {
-      chainsComplete: CHAIN_NAMES.filter((chain) => row.chainsIndexed.includes(chainIdForName(chain))),
+      chainsComplete: CHAIN_NAMES.filter((chain) =>
+        row.chainsIndexed.includes(chainIdForName(chain)),
+      ),
       chainsFailed: CHAIN_NAMES.filter((chain) => chainsMissing.includes(chainIdForName(chain))),
       timestamp: metricTimestamp(row.date, timestamps),
     },

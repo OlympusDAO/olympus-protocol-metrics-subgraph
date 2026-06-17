@@ -6,8 +6,8 @@ vi.mock("../../src/pricing", () => ({
   getPrice: vi.fn(),
 }));
 
-import { getPrice } from "../../src/pricing";
 import { pushArbitrumStakingRecords } from "../../src/handlers/ArbitrumStaking";
+import { getPrice } from "../../src/pricing";
 import { ARBITRUM, ERC20_MAGIC } from "../../src/snapshot/chains/arbitrum";
 import type { SerializedTokenRecord } from "../../src/snapshot/types";
 

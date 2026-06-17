@@ -902,9 +902,7 @@ export const readBlockTimestamp = createEffect(
     const config = CHAIN_CONFIGS[input.chainId as ChainId];
     if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
     const client = getClient(config);
-    const block = await retryRpc(() =>
-      client.getBlock({ blockNumber: BigInt(input.blockNumber) }),
-    );
+    const block = await retryRpc(() => client.getBlock({ blockNumber: BigInt(input.blockNumber) }));
     return Number(block.timestamp);
   },
 );
