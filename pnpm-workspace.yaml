@@ -24,6 +24,41 @@ minimumReleaseAgeExclude:
   # the 7-day maturity window. Allowlisting the single patched version (not
   # the whole package) preserves the gate for any future qs releases.
   - "qs@6.15.2"
+  # esbuild@0.28.1 patches GHSA-gv7w-rqvm-qjhr (RCE via NPM_CONFIG_REGISTRY)
+  # and GHSA-g7r4-m6w7-qqqr but was released 2026-06-11, inside the 7-day
+  # maturity window. Allowlist the single patched version (same pattern as
+  # qs@6.15.2 above) so the gate still applies to future esbuild releases.
+  # The per-platform @esbuild/* binaries ship under esbuild's
+  # optionalDependencies and hit the gate too; like the envio binaries above
+  # they must be listed explicitly (no glob support). Once 0.28.1 ages past
+  # the 7-day cutoff (~2026-06-18) this whole esbuild block can be removed.
+  - "esbuild@0.28.1"
+  - "@esbuild/aix-ppc64@0.28.1"
+  - "@esbuild/android-arm@0.28.1"
+  - "@esbuild/android-arm64@0.28.1"
+  - "@esbuild/android-x64@0.28.1"
+  - "@esbuild/darwin-arm64@0.28.1"
+  - "@esbuild/darwin-x64@0.28.1"
+  - "@esbuild/freebsd-arm64@0.28.1"
+  - "@esbuild/freebsd-x64@0.28.1"
+  - "@esbuild/linux-arm@0.28.1"
+  - "@esbuild/linux-arm64@0.28.1"
+  - "@esbuild/linux-ia32@0.28.1"
+  - "@esbuild/linux-loong64@0.28.1"
+  - "@esbuild/linux-mips64el@0.28.1"
+  - "@esbuild/linux-ppc64@0.28.1"
+  - "@esbuild/linux-riscv64@0.28.1"
+  - "@esbuild/linux-s390x@0.28.1"
+  - "@esbuild/linux-x64@0.28.1"
+  - "@esbuild/netbsd-arm64@0.28.1"
+  - "@esbuild/netbsd-x64@0.28.1"
+  - "@esbuild/openbsd-arm64@0.28.1"
+  - "@esbuild/openbsd-x64@0.28.1"
+  - "@esbuild/openharmony-arm64@0.28.1"
+  - "@esbuild/sunos-x64@0.28.1"
+  - "@esbuild/win32-arm64@0.28.1"
+  - "@esbuild/win32-ia32@0.28.1"
+  - "@esbuild/win32-x64@0.28.1"
 preferFrozenLockfile: true
 engineStrict: true
 strictDepBuilds: true
@@ -33,7 +68,8 @@ onlyBuiltDependencies:
   # esbuild ships native binaries it builds on install; required because
   # vitest (our test runner) depends on it transitively. Without this entry,
   # `strictDepBuilds: true` rejects the install with ERR_PNPM_IGNORED_BUILDS.
-  - "esbuild@0.27.7"
+  # Pinned to the patched 0.28.1 (see esbuild override below + GHSA fixes).
+  - "esbuild@0.28.1"
 # All CVE overrides are range-scoped — `pkg@<fixed: fixed` only patches
 # resolutions that fall in the vulnerable range, leaving newer versions
 # alone. Unscoped overrides (e.g. `"pkg": "^X"`) are a footgun: they force
@@ -106,10 +142,17 @@ overrides:
   "send@<0.19.0": "0.19.0"
   "serve-static@<1.16.0": "1.16.0"
   "ws@>=8.0.0 <8.20.1": "8.20.1"
-  # Maturity-gate workaround, not a CVE fix. vitest@4 accepts vite ^6/^7/^8
-  # and pnpm's resolver picks the highest matching, which ends up being a
-  # too-fresh vite@8.0.14 when the lockfile gets re-resolved. Range scopes
-  # the pin to versions newer than 8.0.13 only — older releases pass
-  # through. 8.0.13 is the newest release past the 7-day cutoff at time
-  # of writing.
-  "vite@>8.0.13": "8.0.13"
+  # vite GHSA-fx2h-pf6j-xcff (server.fs.deny bypass) + GHSA-v6wh-96g9-6wx3
+  # (NTLMv2 disclosure), both fixed in 8.0.16. Previously this override
+  # pinned vite DOWN to 8.0.13 purely as a maturity-gate workaround (vitest@4
+  # accepts vite ^6/^7/^8 and the resolver picked the too-fresh 8.0.14). The
+  # patched 8.0.16 (released 2026-06-01) is now well past the 7-day cutoff,
+  # so the override doubles as the CVE fix. Range-scoped per the convention
+  # above: only the vulnerable 8.0.x line is forced to 8.0.16.
+  "vite@>=8.0.0 <8.0.16": "8.0.16"
+  # esbuild GHSA-gv7w-rqvm-qjhr (RCE via NPM_CONFIG_REGISTRY in the Deno
+  # module) + GHSA-g7r4-m6w7-qqqr (dev-server arbitrary file read), both
+  # fixed in 0.28.1. vite@8.0.16 accepts esbuild ^0.27.0 || ^0.28.0, so the
+  # bump is peer-compatible. 0.28.1 is allowlisted in minimumReleaseAgeExclude
+  # above (released inside the 7-day window).
+  "esbuild@>=0.17.0 <0.28.1": "0.28.1"
