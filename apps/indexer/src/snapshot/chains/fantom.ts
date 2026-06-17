@@ -57,6 +57,7 @@ const names: Record<string, string> = {
   [ERC20_OXD]: "0xDAO",
   [ERC20_USDC]: "USDC",
   [ERC20_WETH]: "Wrapped ETH",
+  [NATIVE_FTM]: "FTM",
   [ERC20_WFTM]: "Wrapped Fantom",
   [LP_UNISWAP_V2_BOO_WFTM]: "UniswapV2 BOO-wFTM Liquidity Pool",
   [LP_UNISWAP_V2_LQDR_WFTM]: "UniswapV2 LQDR-wFTM Liquidity Pool",
@@ -77,6 +78,7 @@ const abbreviations: Record<string, string> = {
   [ERC20_LQDR]: "LQDR",
   [ERC20_OXD]: "OXD",
   [ERC20_WETH]: "wETH",
+  [NATIVE_FTM]: "FTM",
   [ERC20_WFTM]: "wFTM",
 };
 

@@ -373,6 +373,7 @@ const names: Record<string, string> = {
   [ERC20_USDS]: "USDS",
   [ERC20_USDT]: "USDT",
   [ERC20_WEETH]: "Wrapped eETH",
+  [NATIVE_ETH]: "ETH",
   [ERC20_WETH]: "Wrapped ETH",
   [ERC20_WSTETH]: "Wrapped staked ETH",
   [LP_UNISWAP_V3_FXS_ETH]: "UniswapV3 FXS-ETH",
@@ -420,6 +421,7 @@ const abbreviations: Record<string, string> = {
   [ERC20_USDE]: "USDe",
   [ERC20_USDS]: "USDS",
   [ERC20_WEETH]: "weETH",
+  [NATIVE_ETH]: "ETH",
   [ERC20_WETH]: "wETH",
   [ERC20_WSTETH]: "wstETH",
 };
