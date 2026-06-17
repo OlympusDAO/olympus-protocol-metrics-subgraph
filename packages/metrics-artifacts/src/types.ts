@@ -1,4 +1,11 @@
-export const CHAIN_NAMES = ["Arbitrum", "Ethereum", "Fantom", "Polygon", "Base", "Berachain"] as const;
+export const CHAIN_NAMES = [
+  "Arbitrum",
+  "Ethereum",
+  "Fantom",
+  "Polygon",
+  "Base",
+  "Berachain",
+] as const;
 
 export type ChainName = (typeof CHAIN_NAMES)[number];
 

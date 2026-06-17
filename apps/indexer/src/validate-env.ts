@@ -40,27 +40,39 @@ export function validateIndexerEnv(env: NodeJS.ProcessEnv): void {
     throw new Error(`Invalid URL environment variables: ${invalidUrls.join(", ")}`);
   }
 
-  const invalidIntegers = POSITIVE_INTEGER_ENV_VARS.filter((name) => !isPositiveInteger(env[name] ?? ""));
+  const invalidIntegers = POSITIVE_INTEGER_ENV_VARS.filter(
+    (name) => !isPositiveInteger(env[name] ?? ""),
+  );
   if (invalidIntegers.length > 0) {
-    throw new Error(`Invalid positive integer environment variables: ${invalidIntegers.join(", ")}`);
+    throw new Error(
+      `Invalid positive integer environment variables: ${invalidIntegers.join(", ")}`,
+    );
   }
 
   const invalidOptionalIntegers = OPTIONAL_POSITIVE_INTEGER_ENV_VARS.filter(
     (name) => !isBlank(env[name]) && !isPositiveInteger(env[name] ?? ""),
   );
   if (invalidOptionalIntegers.length > 0) {
-    throw new Error(`Invalid positive integer environment variables: ${invalidOptionalIntegers.join(", ")}`);
+    throw new Error(
+      `Invalid positive integer environment variables: ${invalidOptionalIntegers.join(", ")}`,
+    );
   }
 
   if (isRailwayRuntime(env) && !isBlank(env.ENVIO_PG_SCHEMA)) {
-    throw new Error("ENVIO_PG_SCHEMA must not be set on Railway; Envio must use its default schema.");
+    throw new Error(
+      "ENVIO_PG_SCHEMA must not be set on Railway; Envio must use its default schema.",
+    );
   }
 
   if (isRailwayRuntime(env) && isBlank(env.PORT)) {
     throw new Error("PORT must be set when running on Railway.");
   }
 
-  if (!isBlank(env.PORT) && !isBlank(env.ENVIO_INDEXER_PORT) && env.PORT !== env.ENVIO_INDEXER_PORT) {
+  if (
+    !isBlank(env.PORT) &&
+    !isBlank(env.ENVIO_INDEXER_PORT) &&
+    env.PORT !== env.ENVIO_INDEXER_PORT
+  ) {
     throw new Error("ENVIO_INDEXER_PORT must match PORT when PORT is set.");
   }
 }

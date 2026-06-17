@@ -1,9 +1,4 @@
-import type {
-  BigDecimal,
-  EvmOnEventContext,
-  GnosisAuction,
-  GnosisAuctionRoot,
-} from "envio";
+import type { BigDecimal, EvmOnEventContext, GnosisAuction, GnosisAuctionRoot } from "envio";
 import { describe, expect, test, vi } from "vitest";
 
 import { applyGnosisAuctionLaunched } from "../../src/handlers/BondManager";

@@ -1,19 +1,23 @@
 import { describe, expect, test } from "vitest";
-
+import type {
+  DailyMetric,
+  Manifest,
+  OhmSupply,
+  TreasuryAsset,
+} from "../../../packages/metrics-artifacts/src";
 import {
+  type ArtifactStore,
+  createArtifactStoreFromEnv,
+  createMetricsSourceFromEnv,
   HasuraGraphqlMetricsSource,
   MemoryArtifactStore,
   MetricsNotDataReadyError,
-  S3ArtifactStore,
-  createArtifactStoreFromEnv,
-  createMetricsSourceFromEnv,
-  publishMetricsArtifacts,
-  publishMetricsArtifactsFromEnv,
-  type ArtifactStore,
   type MetricsSource,
   type PublishBoundsCompleteness,
+  publishMetricsArtifacts,
+  publishMetricsArtifactsFromEnv,
+  S3ArtifactStore,
 } from "../src/publisher";
-import type { DailyMetric, Manifest, OhmSupply, TreasuryAsset } from "../../../packages/metrics-artifacts/src";
 
 const generatedAt = "2026-06-01T08:15:00.000Z";
 
@@ -34,14 +38,42 @@ const metric: DailyMetric = {
   ohmIndex: 1,
   ohmApy: 2,
   ohmTotalSupply: 3,
-  ohmTotalSupplyComponents: { Arbitrum: 0, Ethereum: 3, Fantom: 0, Polygon: 0, Base: 0, Berachain: 0 },
+  ohmTotalSupplyComponents: {
+    Arbitrum: 0,
+    Ethereum: 3,
+    Fantom: 0,
+    Polygon: 0,
+    Base: 0,
+    Berachain: 0,
+  },
   ohmCirculatingSupply: 4,
-  ohmCirculatingSupplyComponents: { Arbitrum: 0, Ethereum: 4, Fantom: 0, Polygon: 0, Base: 0, Berachain: 0 },
+  ohmCirculatingSupplyComponents: {
+    Arbitrum: 0,
+    Ethereum: 4,
+    Fantom: 0,
+    Polygon: 0,
+    Base: 0,
+    Berachain: 0,
+  },
   ohmFloatingSupply: 5,
-  ohmFloatingSupplyComponents: { Arbitrum: 0, Ethereum: 5, Fantom: 0, Polygon: 0, Base: 0, Berachain: 0 },
+  ohmFloatingSupplyComponents: {
+    Arbitrum: 0,
+    Ethereum: 5,
+    Fantom: 0,
+    Polygon: 0,
+    Base: 0,
+    Berachain: 0,
+  },
   ohmBackedSupply: 6,
   gOhmBackedSupply: 7,
-  ohmBackedSupplyComponents: { Arbitrum: 0, Ethereum: 6, Fantom: 0, Polygon: 0, Base: 0, Berachain: 0 },
+  ohmBackedSupplyComponents: {
+    Arbitrum: 0,
+    Ethereum: 6,
+    Fantom: 0,
+    Polygon: 0,
+    Base: 0,
+    Berachain: 0,
+  },
   ohmSupplyCategories: {
     BondsDeposits: 0,
     BondsPreminted: 0,
@@ -60,9 +92,23 @@ const metric: DailyMetric = {
   sOhmCirculatingSupply: 11,
   sOhmTotalValueLocked: 12,
   treasuryMarketValue: 13,
-  treasuryMarketValueComponents: { Arbitrum: 0, Ethereum: 13, Fantom: 0, Polygon: 0, Base: 0, Berachain: 0 },
+  treasuryMarketValueComponents: {
+    Arbitrum: 0,
+    Ethereum: 13,
+    Fantom: 0,
+    Polygon: 0,
+    Base: 0,
+    Berachain: 0,
+  },
   treasuryLiquidBacking: 14,
-  treasuryLiquidBackingComponents: { Arbitrum: 0, Ethereum: 14, Fantom: 0, Polygon: 0, Base: 0, Berachain: 0 },
+  treasuryLiquidBackingComponents: {
+    Arbitrum: 0,
+    Ethereum: 14,
+    Fantom: 0,
+    Polygon: 0,
+    Base: 0,
+    Berachain: 0,
+  },
   treasuryLiquidBackingPerOhmFloating: 15,
   treasuryLiquidBackingPerOhmBacked: 16,
   treasuryLiquidBackingPerGOhmBacked: 17,
@@ -154,6 +200,45 @@ function source(overrides: Partial<MetricsSource> = {}): MetricsSource {
   };
 }
 
+function completeDailyMetrics(range: { start: string; end: string }): DailyMetric[] {
+  return dateKeys(range).map((date) => ({ ...metric, date }));
+}
+
+function completeTreasuryAssets(range: { start: string; end: string }): TreasuryAsset[] {
+  return dateKeys(range).map((date) => ({
+    ...treasuryAsset,
+    id: `asset-${date}`,
+    date,
+  }));
+}
+
+function completeOhmSupply(range: { start: string; end: string }): OhmSupply[] {
+  return dateKeys(range).map((date) => ({
+    ...ohmSupply,
+    id: `supply-${date}`,
+    date,
+  }));
+}
+
+function dateKeys(range: { start: string; end: string }): string[] {
+  const keys: string[] = [];
+  let cursor = Date.parse(`${range.start}T00:00:00.000Z`);
+  const end = Date.parse(`${range.end}T00:00:00.000Z`);
+  while (cursor <= end) {
+    keys.push(new Date(cursor).toISOString().slice(0, 10));
+    cursor += 24 * 60 * 60 * 1000;
+  }
+  return keys;
+}
+
+function expectArtifactDates<T extends { date: string }>(
+  store: MemoryArtifactStore,
+  key: string,
+  expectedDates: string[],
+): void {
+  expect(store.json<T[]>(key).map((row) => row.date)).toEqual(expectedDates);
+}
+
 describe("metrics publisher", () => {
   test("publishes manifest last after writing metric, treasury asset, and OHM supply shards", async () => {
     const result = await publishMetricsArtifacts({
@@ -165,9 +250,15 @@ describe("metrics publisher", () => {
     });
 
     expect(result.manifestPublishedLast).toBe(true);
-    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/metrics/daily/2026-05.json");
-    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/treasury-assets/daily/2026-05.json");
-    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/ohm-supply/daily/2026-05.json");
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/metrics/daily/2026-05.json",
+    );
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/treasury-assets/daily/2026-05.json",
+    );
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/ohm-supply/daily/2026-05.json",
+    );
     expect(result.writtenKeys.at(-1)).toBe("v2/manifest.json");
   });
 
@@ -207,25 +298,234 @@ describe("metrics publisher", () => {
       byteLength: expect.any(Number),
       sha256: expect.stringMatching(/^[a-f0-9]{64}$/),
     });
-    expect(artifacts["v2/deployments/current-indexer/treasury-assets/daily/2026-05.json"].rowCount).toBe(1);
-    expect(artifacts["v2/deployments/current-indexer/ohm-supply/daily/2026-05.json"].rowCount).toBe(1);
+    expect(
+      artifacts["v2/deployments/current-indexer/treasury-assets/daily/2026-05.json"].rowCount,
+    ).toBe(1);
+    expect(artifacts["v2/deployments/current-indexer/ohm-supply/daily/2026-05.json"].rowCount).toBe(
+      1,
+    );
   });
 
-  test("publishes from the existing manifest with a lookback overlap", async () => {
+  test("publishes from the existing manifest by regenerating previous and current month", async () => {
+    const store = new MemoryArtifactStore();
+    await store.putJson("v2/manifest.json", existingCurrentDeploymentManifest);
+    const mayDates = dateKeys({ start: "2026-05-01", end: "2026-05-31" });
+    const juneDates = ["2026-06-01"];
+
+    const result = await publishMetricsArtifacts({
+      deploymentId: "current-indexer",
+      source: source({
+        fetchDailyMetrics: async (range) => completeDailyMetrics(range),
+        fetchTreasuryAssets: async (range) => completeTreasuryAssets(range),
+        fetchOhmSupply: async (range) => completeOhmSupply(range),
+      }),
+      store,
+      now: () => new Date(generatedAt),
+    });
+
+    expect(result.range).toEqual({ start: "2026-05-01", end: "2026-06-01", days: 32 });
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/metrics/daily/2026-05.json",
+    );
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/metrics/daily/2026-06.json",
+    );
+    expectArtifactDates<DailyMetric>(
+      store,
+      "v2/deployments/current-indexer/metrics/daily/2026-05.json",
+      mayDates,
+    );
+    expectArtifactDates<TreasuryAsset>(
+      store,
+      "v2/deployments/current-indexer/treasury-assets/daily/2026-05.json",
+      mayDates,
+    );
+    expectArtifactDates<OhmSupply>(
+      store,
+      "v2/deployments/current-indexer/ohm-supply/daily/2026-05.json",
+      mayDates,
+    );
+    expectArtifactDates<DailyMetric>(
+      store,
+      "v2/deployments/current-indexer/metrics/daily/2026-06.json",
+      juneDates,
+    );
+    expectArtifactDates<TreasuryAsset>(
+      store,
+      "v2/deployments/current-indexer/treasury-assets/daily/2026-06.json",
+      juneDates,
+    );
+    expectArtifactDates<OhmSupply>(
+      store,
+      "v2/deployments/current-indexer/ohm-supply/daily/2026-06.json",
+      juneDates,
+    );
+  });
+
+  test("incremental publish regenerates previous and current month at a month border", async () => {
+    const store = new MemoryArtifactStore();
+    await store.putJson("v2/manifest.json", {
+      ...existingCurrentDeploymentManifest,
+      latestDate: "2026-06-30",
+      artifacts: {
+        "v2/deployments/current-indexer/metrics/daily/2026-06.json": {
+          sha256: "0".repeat(64),
+          byteLength: 2,
+          rowCount: 30,
+        },
+      },
+    });
+    const juneDates = dateKeys({ start: "2026-06-01", end: "2026-06-30" });
+    const julyDates = ["2026-07-01"];
+
+    const observedRanges: Array<{ start: string; end: string; days: number }> = [];
+    const result = await publishMetricsArtifacts({
+      deploymentId: "current-indexer",
+      source: source({
+        fetchBounds: async () => ({ earliestDate: "2026-04-30", latestDate: "2026-07-01" }),
+        fetchDailyMetrics: async (range) => {
+          observedRanges.push(range);
+          return completeDailyMetrics(range);
+        },
+        fetchTreasuryAssets: async (range) => completeTreasuryAssets(range),
+        fetchOhmSupply: async (range) => completeOhmSupply(range),
+      }),
+      store,
+      now: () => new Date("2026-07-01T09:15:00.000Z"),
+    });
+
+    expect(result.range).toEqual({ start: "2026-06-01", end: "2026-07-01", days: 31 });
+    expect(observedRanges).toEqual([{ start: "2026-06-01", end: "2026-07-01", days: 31 }]);
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/metrics/daily/2026-06.json",
+    );
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/metrics/daily/2026-07.json",
+    );
+    expectArtifactDates<DailyMetric>(
+      store,
+      "v2/deployments/current-indexer/metrics/daily/2026-06.json",
+      juneDates,
+    );
+    expectArtifactDates<TreasuryAsset>(
+      store,
+      "v2/deployments/current-indexer/treasury-assets/daily/2026-06.json",
+      juneDates,
+    );
+    expectArtifactDates<OhmSupply>(
+      store,
+      "v2/deployments/current-indexer/ohm-supply/daily/2026-06.json",
+      juneDates,
+    );
+    expectArtifactDates<DailyMetric>(
+      store,
+      "v2/deployments/current-indexer/metrics/daily/2026-07.json",
+      julyDates,
+    );
+    expectArtifactDates<TreasuryAsset>(
+      store,
+      "v2/deployments/current-indexer/treasury-assets/daily/2026-07.json",
+      julyDates,
+    );
+    expectArtifactDates<OhmSupply>(
+      store,
+      "v2/deployments/current-indexer/ohm-supply/daily/2026-07.json",
+      julyDates,
+    );
+  });
+
+  test("incremental publish backfills unpublished months before the normal refresh window", async () => {
+    const store = new MemoryArtifactStore();
+    await store.putJson("v2/manifest.json", {
+      ...existingCurrentDeploymentManifest,
+      latestDate: "2026-03-31",
+      artifacts: {
+        "v2/deployments/current-indexer/metrics/daily/2026-03.json": {
+          sha256: "0".repeat(64),
+          byteLength: 2,
+          rowCount: 31,
+        },
+      },
+    });
+    const aprilDates = dateKeys({ start: "2026-04-01", end: "2026-04-30" });
+    const mayDates = dateKeys({ start: "2026-05-01", end: "2026-05-31" });
+    const juneDates = dateKeys({ start: "2026-06-01", end: "2026-06-17" });
+
+    const result = await publishMetricsArtifacts({
+      deploymentId: "current-indexer",
+      source: source({
+        fetchBounds: async () => ({ earliestDate: "2026-03-01", latestDate: "2026-06-17" }),
+        fetchDailyMetrics: async (range) => completeDailyMetrics(range),
+        fetchTreasuryAssets: async (range) => completeTreasuryAssets(range),
+        fetchOhmSupply: async (range) => completeOhmSupply(range),
+      }),
+      store,
+      now: () => new Date("2026-06-17T09:15:00.000Z"),
+    });
+
+    expect(result.range).toEqual({ start: "2026-04-01", end: "2026-06-17", days: 78 });
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/metrics/daily/2026-04.json",
+    );
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/metrics/daily/2026-05.json",
+    );
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/metrics/daily/2026-06.json",
+    );
+    expectArtifactDates<DailyMetric>(
+      store,
+      "v2/deployments/current-indexer/metrics/daily/2026-04.json",
+      aprilDates,
+    );
+    expectArtifactDates<TreasuryAsset>(
+      store,
+      "v2/deployments/current-indexer/treasury-assets/daily/2026-04.json",
+      aprilDates,
+    );
+    expectArtifactDates<OhmSupply>(
+      store,
+      "v2/deployments/current-indexer/ohm-supply/daily/2026-04.json",
+      aprilDates,
+    );
+    expectArtifactDates<DailyMetric>(
+      store,
+      "v2/deployments/current-indexer/metrics/daily/2026-05.json",
+      mayDates,
+    );
+    expectArtifactDates<DailyMetric>(
+      store,
+      "v2/deployments/current-indexer/metrics/daily/2026-06.json",
+      juneDates,
+    );
+  });
+
+  test("incremental publish skips instead of overwriting a monthly shard with sparse rows", async () => {
     const store = new MemoryArtifactStore();
     await store.putJson("v2/manifest.json", existingCurrentDeploymentManifest);
 
     const result = await publishMetricsArtifacts({
       deploymentId: "current-indexer",
-      lookbackDays: 2,
-      source: source(),
+      source: source({
+        fetchBounds: async () => ({ earliestDate: "2026-04-30", latestDate: "2026-06-17" }),
+        fetchDailyMetrics: async () => [
+          { ...metric, date: "2026-06-15" },
+          { ...metric, date: "2026-06-16" },
+          { ...metric, date: "2026-06-17" },
+        ],
+      }),
       store,
-      now: () => new Date(generatedAt),
+      now: () => new Date("2026-06-17T09:15:00.000Z"),
     });
 
-    expect(result.range).toEqual({ start: "2026-05-29", end: "2026-06-01", days: 4 });
-    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/metrics/daily/2026-05.json");
-    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/metrics/daily/2026-06.json");
+    expect(result).toMatchObject({
+      skipped: true,
+      skipReason: "not_data_ready",
+      manifestPublishedLast: false,
+      writtenKeys: [],
+      deletedKeys: [],
+    });
+    expect(store.json<Manifest>("v2/manifest.json")).toEqual(existingCurrentDeploymentManifest);
   });
 
   test("first publish for a deployment only publishes up to the latest all-chain indexed snapshot", async () => {
@@ -236,7 +536,6 @@ describe("metrics publisher", () => {
 
     const result = await publishMetricsArtifacts({
       deploymentId: "current-indexer",
-      lookbackDays: 2,
       source: source({
         fetchBounds: async (completeness) => {
           observedCompleteness.push(completeness ?? "cross_chain");
@@ -273,8 +572,12 @@ describe("metrics publisher", () => {
       { start: "2022-05-01", end: "2026-05-31", days: 1492 },
       { start: "2022-05-01", end: "2026-05-31", days: 1492 },
     ]);
-    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/metrics/daily/2026-05.json");
-    expect(result.writtenKeys).not.toContain("v2/deployments/current-indexer/metrics/daily/2026-06.json");
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/metrics/daily/2026-05.json",
+    );
+    expect(result.writtenKeys).not.toContain(
+      "v2/deployments/current-indexer/metrics/daily/2026-06.json",
+    );
     expect(store.json<Manifest>("v2/manifest.json")).toMatchObject({
       latestDate: "2026-05-31",
       indexerDeploymentId: "current-indexer",
@@ -326,26 +629,28 @@ describe("metrics publisher", () => {
 
     const result = await publishMetricsArtifacts({
       deploymentId: "current-indexer",
-      lookbackDays: 2,
       source: source({
         fetchBounds: async (completeness) => {
           observedCompleteness.push(completeness ?? "cross_chain");
           return { earliestDate: "2026-04-30", latestDate: "2026-06-01" };
         },
+        fetchDailyMetrics: async (range) => completeDailyMetrics(range),
       }),
       store,
       now: () => new Date(generatedAt),
     });
 
     expect(observedCompleteness).toEqual(["cross_chain"]);
-    expect(result.range).toEqual({ start: "2026-05-29", end: "2026-06-01", days: 4 });
+    expect(result.range).toEqual({ start: "2026-05-01", end: "2026-06-01", days: 32 });
     expect(result.indexingProgress).toMatchObject({
       chains: {
         Arbitrum: { block: 100, date: "2026-06-01", timestamp: 1780272000 },
         Ethereum: { block: 200, date: "2026-06-01", timestamp: 1780272000 },
       },
     });
-    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/metrics/daily/2026-06.json");
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/metrics/daily/2026-06.json",
+    );
   });
 
   test("skips without replacing the manifest when no complete Hasura bounds exist", async () => {
@@ -363,7 +668,9 @@ describe("metrics publisher", () => {
         }),
         fetchBounds: async (completeness) => {
           observedCompleteness.push(completeness ?? "cross_chain");
-          throw new MetricsNotDataReadyError("Hasura returned no complete GlobalMetricSnapshot bounds.");
+          throw new MetricsNotDataReadyError(
+            "Hasura returned no complete GlobalMetricSnapshot bounds.",
+          );
         },
         fetchDailyMetrics: async () => {
           throw new Error("should not fetch daily metrics while data is not ready");
@@ -421,9 +728,15 @@ describe("metrics publisher", () => {
       now: () => new Date(generatedAt),
     });
 
-    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/metrics/daily/2026-05.json");
-    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/treasury-assets/daily/2026-05.json");
-    expect(result.writtenKeys).toContain("v2/deployments/current-indexer/ohm-supply/daily/2026-05.json");
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/metrics/daily/2026-05.json",
+    );
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/treasury-assets/daily/2026-05.json",
+    );
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/ohm-supply/daily/2026-05.json",
+    );
     expect(result.deletedKeys).toEqual(["v2/deployments/old-indexer/metrics/daily/2026-05.json"]);
 
     const manifest = store.json<Manifest>("v2/manifest.json");
@@ -433,10 +746,12 @@ describe("metrics publisher", () => {
       rowCount: 1,
     });
     expect(artifacts["v2/deployments/old-indexer/metrics/daily/2026-05.json"]).toBeUndefined();
-    await expect(store.getJson("v2/deployments/old-indexer/metrics/daily/2026-05.json")).rejects.toThrow(
-      "Artifact not found",
-    );
-    await expect(store.getJson("v2/deployments/current-indexer/metrics/daily/2026-04.json")).resolves.toEqual([]);
+    await expect(
+      store.getJson("v2/deployments/old-indexer/metrics/daily/2026-05.json"),
+    ).rejects.toThrow("Artifact not found");
+    await expect(
+      store.getJson("v2/deployments/current-indexer/metrics/daily/2026-04.json"),
+    ).resolves.toEqual([]);
   });
 
   test("handles a changed indexer deployment id by replacing deployment-scoped artifacts", async () => {
@@ -468,7 +783,6 @@ describe("metrics publisher", () => {
 
     const result = await publishMetricsArtifacts({
       deploymentId: "new-indexer",
-      lookbackDays: 2,
       source: source(),
       store,
       now: () => new Date(generatedAt),
@@ -487,16 +801,18 @@ describe("metrics publisher", () => {
     const manifest = store.json<Manifest>("v2/manifest.json");
     const artifacts = requireArtifacts(manifest);
     expect(manifest).toMatchObject({ indexerDeploymentId: "new-indexer" });
-    expect(Object.keys(artifacts).some((key) => key.startsWith("v2/deployments/old-indexer/"))).toBe(false);
+    expect(
+      Object.keys(artifacts).some((key) => key.startsWith("v2/deployments/old-indexer/")),
+    ).toBe(false);
     expect(artifacts["v2/deployments/new-indexer/metrics/daily/2026-05.json"]).toMatchObject({
       rowCount: 1,
     });
     expect(artifacts["v2/deployments/new-indexer/metrics/daily/2026-06.json"]).toMatchObject({
       rowCount: 1,
     });
-    await expect(store.getJson("v2/deployments/old-indexer/metrics/daily/2026-05.json")).rejects.toThrow(
-      "Artifact not found",
-    );
+    await expect(
+      store.getJson("v2/deployments/old-indexer/metrics/daily/2026-05.json"),
+    ).rejects.toThrow("Artifact not found");
   });
 
   test("rejects unsafe indexer deployment ids", async () => {
@@ -576,7 +892,9 @@ describe("metrics publisher", () => {
           now: () => new Date(generatedAt),
         },
       ),
-    ).rejects.toThrow("Missing required environment variable INDEXER_DEPLOYMENT_ID or RAILWAY_GIT_COMMIT_SHA");
+    ).rejects.toThrow(
+      "Missing required environment variable INDEXER_DEPLOYMENT_ID or RAILWAY_GIT_COMMIT_SHA",
+    );
   });
 
   test("requires Hasura env variables before constructing the publisher source", () => {
@@ -622,19 +940,20 @@ describe("metrics publisher", () => {
         HASURA_GRAPHQL_ADMIN_SECRET: "secret",
         ...validPublisherArtifactEnv,
         INDEXER_DEPLOYMENT_ID: "current-indexer",
-        PUBLISHER_LOOKBACK_DAYS: "2",
         PUBLISHER_PUBLIC_START_DATE: "2022-05-01",
         PUBLISHER_START_DATE: "",
         PUBLISHER_END_DATE: "   ",
       },
       {
-        source: source(),
+        source: source({
+          fetchDailyMetrics: async (range) => completeDailyMetrics(range),
+        }),
         store,
         now: () => new Date(generatedAt),
       },
     );
 
-    expect(result.range).toEqual({ start: "2026-05-29", end: "2026-06-01", days: 4 });
+    expect(result.range).toEqual({ start: "2026-05-01", end: "2026-06-01", days: 32 });
   });
 
   test("skips cleanly when a fresh publisher lock already exists", async () => {
@@ -731,7 +1050,9 @@ describe("metrics publisher", () => {
     });
 
     await store.putJson("v2/manifest.json", { ok: true });
-    await expect(store.putJsonIfAbsent("v2/publisher.lock", { runId: "run-1" })).resolves.toBe(true);
+    await expect(store.putJsonIfAbsent("v2/publisher.lock", { runId: "run-1" })).resolves.toBe(
+      true,
+    );
 
     expect(commands).toHaveLength(2);
     expect(commands[0].input).toMatchObject({
@@ -802,7 +1123,11 @@ describe("metrics publisher", () => {
         }),
     });
 
-    const [metric] = await source.fetchDailyMetrics({ start: "2026-05-21", end: "2026-05-21", days: 1 });
+    const [metric] = await source.fetchDailyMetrics({
+      start: "2026-05-21",
+      end: "2026-05-21",
+      days: 1,
+    });
 
     expect(metric.chainsIndexed).toEqual([1, 42161]);
     expect(metric.chainsMissing).toEqual([250, 137, 8453, 80094]);
@@ -877,9 +1202,9 @@ describe("metrics publisher", () => {
       },
     });
 
-    await expect(source.fetchTreasuryAssets({ start: "2026-05-01", end: "2026-05-31", days: 31 })).resolves.toEqual(
-      [],
-    );
+    await expect(
+      source.fetchTreasuryAssets({ start: "2026-05-01", end: "2026-05-31", days: 31 }),
+    ).resolves.toEqual([]);
     expect(requestBody?.query).toContain("order_by: { date: asc, id: asc }");
   });
 

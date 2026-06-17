@@ -1,8 +1,8 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import process from "node:process";
-import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 
 type PackFile = {
@@ -49,16 +49,25 @@ function assertPackageMetadata(): void {
     fail(`Unexpected package name: ${packageJson.name ?? "(missing)"}`);
   }
 
-  if (packageJson.version === undefined || !/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(packageJson.version)) {
-    fail(`Package version must be a concrete semver version, got: ${packageJson.version ?? "(missing)"}`);
+  if (
+    packageJson.version === undefined ||
+    !/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(packageJson.version)
+  ) {
+    fail(
+      `Package version must be a concrete semver version, got: ${packageJson.version ?? "(missing)"}`,
+    );
   }
 
   if (Object.keys(packageJson.dependencies ?? {}).length > 0) {
-    fail("Client package should not publish runtime dependencies without an explicit release-process update.");
+    fail(
+      "Client package should not publish runtime dependencies without an explicit release-process update.",
+    );
   }
 
   if (Object.keys(packageJson.peerDependencies ?? {}).length > 0) {
-    fail("Client package should not publish peer dependencies without an explicit release-process update.");
+    fail(
+      "Client package should not publish peer dependencies without an explicit release-process update.",
+    );
   }
 }
 
@@ -72,7 +81,12 @@ function assertNodeVersion(): void {
 function assertNpmSupportsStagedPublishing(): void {
   const version = capture("npm", ["--version"]).trim();
   const [major = 0, minor = 0] = version.split(".").map((part) => Number.parseInt(part, 10));
-  if (!Number.isInteger(major) || !Number.isInteger(minor) || major < 11 || (major === 11 && minor < 15)) {
+  if (
+    !Number.isInteger(major) ||
+    !Number.isInteger(minor) ||
+    major < 11 ||
+    (major === 11 && minor < 15)
+  ) {
     fail(`npm 11.15.0+ is required for staged publishing, got ${version}`);
   }
 }
@@ -95,7 +109,11 @@ function assertPackAllowlist(): void {
   const disallowed = files
     .map((file) => file.path)
     .filter(
-      (path) => path !== "package.json" && path !== "CHANGELOG.md" && path !== "openapi.json" && !path.startsWith("dist/"),
+      (path) =>
+        path !== "package.json" &&
+        path !== "CHANGELOG.md" &&
+        path !== "openapi.json" &&
+        !path.startsWith("dist/"),
     );
 
   if (files.length === 0) {

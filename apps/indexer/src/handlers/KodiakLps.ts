@@ -5,8 +5,8 @@ import { resolveKodiakUnderlyingPool } from "../effects";
 import { KODIAK_ABI } from "../snapshot/abis/kodiak";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { readInvariantContract } from "../snapshot/contract-cache";
-import { getClient } from "../snapshot/rpc-client";
 import { addr } from "../snapshot/math";
+import { getClient } from "../snapshot/rpc-client";
 import type { ChainId } from "../snapshot/types";
 import { buildLpTransferWhere, handleLpTransfer } from "./Erc20Transfers";
 

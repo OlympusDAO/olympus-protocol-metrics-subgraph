@@ -1,9 +1,8 @@
 import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 import { describe, expect, test, vi } from "vitest";
-
-import type { ChainConfig, LiquidityHandler } from "../../src/snapshot/types";
 import { getPrice } from "../../src/pricing";
+import type { ChainConfig, LiquidityHandler } from "../../src/snapshot/types";
 
 const CHAIN_ID = 1;
 const POOL = "0xfc1e8bf3e81383ef07be24c3fd146745719de48d";

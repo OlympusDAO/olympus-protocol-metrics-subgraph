@@ -1,10 +1,6 @@
 import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 import { describe, expect, test, vi } from "vitest";
-
-import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
-import { addr } from "../../src/snapshot/math";
-import type { SerializedTokenRecord, SerializedTokenSupply } from "../../src/snapshot/types";
 import {
   BLOCK_HANDLERS,
   pushTokenBalanceRecords,
@@ -12,6 +8,9 @@ import {
   pushTreasuryOhm,
   updateGlobalMetricSnapshot,
 } from "../../src/handlers/BlockHandlers";
+import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
+import { addr } from "../../src/snapshot/math";
+import type { SerializedTokenRecord, SerializedTokenSupply } from "../../src/snapshot/types";
 
 // Per-chain snapshot validation. Each test wires a minimal mock context
 // with one TokenBalance + ChainlinkPriceState row, calls
@@ -313,7 +312,11 @@ describe("pushTokenBalanceRecords per-chain validation", () => {
 
     // Three rows: OHM, gOHM, sOHM V3 (no sOHM V2 balance seeded, so it's
     // not emitted even though the gate is satisfied).
-    const byToken = new Map(supplies.filter((s) => s.source === wallet || s.sourceAddress === wallet).map((s) => [s.token, s]));
+    const byToken = new Map(
+      supplies
+        .filter((s) => s.source === wallet || s.sourceAddress === wallet)
+        .map((s) => [s.token, s]),
+    );
     expect(byToken.get("OHM")?.supplyBalance).toBe("-100"); // OHM v2 raw
     expect(byToken.get("Governance OHM (gOHM)")?.supplyBalance).toBe("-1065"); // 5 × 213 = 1065 OHM-equiv
     expect(byToken.get("Staked OHM V3 (sOHM)")?.supplyBalance).toBe("-50"); // sOHM v3 direct

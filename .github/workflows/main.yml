@@ -27,8 +27,8 @@ jobs:
 
       - name: Bootstrap
         uses: ./.github/actions/bootstrap
-      - name: Lint
-        run: pnpm lint:check
+      - name: Check
+        run: pnpm run check
 
   tests:
     runs-on: ubuntu-latest

@@ -555,7 +555,9 @@ describe("Berachain Envio snapshot parity", () => {
         block,
       );
       if (totalValue === null || includedValue === null) {
-        throw new Error("Expected Beradrome total values to resolve after base Kodiak cache priming");
+        throw new Error(
+          "Expected Beradrome total values to resolve after base Kodiak cache priming",
+        );
       }
       const multiplier = includedValue.div(totalValue);
       expect(multiplier.lt(1)).toBe(true);

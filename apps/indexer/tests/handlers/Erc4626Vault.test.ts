@@ -1,14 +1,16 @@
 import type { TokenBalance, TokenBalanceUpdate } from "envio";
 import { describe, expect, test, vi } from "vitest";
 
-import {
-  handleErc4626Deposit,
-  handleErc4626Withdraw,
-} from "../../src/handlers/Erc20Transfers";
+import { handleErc4626Deposit, handleErc4626Withdraw } from "../../src/handlers/Erc20Transfers";
 import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
 import { addr } from "../../src/snapshot/math";
 
-function buildContext(seed?: { tokenAddress: string; walletAddress: string; balance: bigint; chainId: number }) {
+function buildContext(seed?: {
+  tokenAddress: string;
+  walletAddress: string;
+  balance: bigint;
+  chainId: number;
+}) {
   const tokenBalances = new Map<string, TokenBalance>();
   if (seed) {
     const id = `${seed.chainId}-${addr(seed.tokenAddress)}-${addr(seed.walletAddress)}`;
@@ -88,7 +90,13 @@ describe("Erc4626Vault handlers", () => {
         srcAddress: SDAI,
         logIndex: 50,
         block: { number: 18_500_000, timestamp: 1_700_000_000 },
-        params: { sender: DAO_MS, receiver: DAO_MS, owner: TRSRY, assets: assetsOut, shares: sharesBurnt },
+        params: {
+          sender: DAO_MS,
+          receiver: DAO_MS,
+          owner: TRSRY,
+          assets: assetsOut,
+          shares: sharesBurnt,
+        },
       },
       context: context as unknown as Parameters<typeof handleErc4626Withdraw>[0]["context"],
     });
@@ -136,7 +144,12 @@ describe("Erc4626Vault handlers", () => {
         srcAddress: SDAI,
         logIndex: 1,
         block: { number: 18_164_221, timestamp: 1_695_000_000 },
-        params: { sender: DAO_MS, owner: randomOwner, assets: 1_000_000_000_000_000_000n, shares: 1_000_000_000_000_000_000n },
+        params: {
+          sender: DAO_MS,
+          owner: randomOwner,
+          assets: 1_000_000_000_000_000_000n,
+          shares: 1_000_000_000_000_000_000n,
+        },
       },
       context: context as unknown as Parameters<typeof handleErc4626Deposit>[0]["context"],
     });
@@ -154,7 +167,13 @@ describe("Erc4626Vault handlers", () => {
         srcAddress: SDAI,
         logIndex: 1,
         block: { number: 18_500_000, timestamp: 1_700_000_000 },
-        params: { sender: DAO_MS, receiver: DAO_MS, owner: randomOwner, assets: 1_000_000_000_000_000_000n, shares: 1_000_000_000_000_000_000n },
+        params: {
+          sender: DAO_MS,
+          receiver: DAO_MS,
+          owner: randomOwner,
+          assets: 1_000_000_000_000_000_000n,
+          shares: 1_000_000_000_000_000_000n,
+        },
       },
       context: context as unknown as Parameters<typeof handleErc4626Withdraw>[0]["context"],
     });

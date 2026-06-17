@@ -31,15 +31,12 @@ describe.skipIf(!hasApiToken)("BackfillTokenBalances — live HyperSync (post-fi
         42161: { startBlock: 10_950_000, endBlock: 10_950_500 },
       },
     });
-    const backfillRows = result.changes.flatMap(
-      (change) =>
-        (change.TokenBalanceUpdate?.sets ?? []).filter((row) =>
-          String((row as { id: string }).id).endsWith("-backfill"),
-        ),
+    const backfillRows = result.changes.flatMap((change) =>
+      (change.TokenBalanceUpdate?.sets ?? []).filter((row) =>
+        String((row as { id: string }).id).endsWith("-backfill"),
+      ),
     );
-    const sentinelRows = result.changes.flatMap(
-      (change) => change.BackfillSentinel?.sets ?? [],
-    );
+    const sentinelRows = result.changes.flatMap((change) => change.BackfillSentinel?.sets ?? []);
     expect(backfillRows.length).toBeGreaterThan(0);
     expect(sentinelRows).toHaveLength(1);
     expect((sentinelRows[0] as { chainId: number }).chainId).toBe(42161);
@@ -52,9 +49,7 @@ describe.skipIf(!hasApiToken)("BackfillTokenBalances — live HyperSync (post-fi
         80094: { startBlock: 799_194, endBlock: 1_341_000 },
       },
     });
-    const sentinelRows = result.changes.flatMap(
-      (change) => change.BackfillSentinel?.sets ?? [],
-    );
+    const sentinelRows = result.changes.flatMap((change) => change.BackfillSentinel?.sets ?? []);
     // The fix proves itself: sentinel exists ⇒ handler fired exactly once.
     // (Berachain may have zero non-zero pre-window balances, so we don't
     // assert on TokenBalanceUpdate-backfill row count — only on the

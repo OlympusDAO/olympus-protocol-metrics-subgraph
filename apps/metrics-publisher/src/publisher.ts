@@ -1,39 +1,39 @@
 import { randomUUID } from "node:crypto";
 import {
-  monthKeysForRange,
-  resolveDateRange,
   type DateRange,
   type Manifest,
+  monthKeysForRange,
+  resolveDateRange,
 } from "../../../packages/metrics-artifacts/src";
 import {
+  type ArtifactEntry,
   ArtifactNotFoundError,
+  type ArtifactStore,
+  artifactEntry,
   MemoryArtifactStore,
   S3ArtifactStore,
-  artifactEntry,
-  type ArtifactEntry,
-  type ArtifactStore,
 } from "./artifact-store";
 import {
   EmptyMetricsSource,
   HasuraGraphqlMetricsSource,
-  MetricsNotDataReadyError,
   type LatestIndexingProgress,
   type MetricsBounds,
-  type PublishBoundsCompleteness,
+  MetricsNotDataReadyError,
   type MetricsSource,
+  type PublishBoundsCompleteness,
 } from "./metrics-source";
 
 export {
-  MemoryArtifactStore,
-  S3ArtifactStore,
   type ArtifactStore,
   EmptyMetricsSource,
   HasuraGraphqlMetricsSource,
-  MetricsNotDataReadyError,
   type LatestIndexingProgress,
+  MemoryArtifactStore,
   type MetricsBounds,
-  type PublishBoundsCompleteness,
+  MetricsNotDataReadyError,
   type MetricsSource,
+  type PublishBoundsCompleteness,
+  S3ArtifactStore,
 };
 
 export type PublisherIndexingProgress = {
@@ -131,7 +131,6 @@ const SCHEMAS: Record<string, Record<string, unknown>> = {
 };
 
 export async function publishMetricsArtifacts(input: {
-  lookbackDays?: number;
   publicStartDate?: string;
   deploymentId: string;
   startDate?: string;
@@ -154,7 +153,10 @@ export async function publishMetricsArtifacts(input: {
   }
   const existingManifest = input.manifest ?? (await getExistingManifest(store));
   const operation = existingManifest === undefined ? "initial_backfill" : "incremental_refresh";
-  const hasPublishedDeploymentArtifacts = deploymentHasPublishedArtifacts(existingManifest, deploymentId);
+  const hasPublishedDeploymentArtifacts = deploymentHasPublishedArtifacts(
+    existingManifest,
+    deploymentId,
+  );
   const lock = await acquirePublisherLock({
     store,
     operation,
@@ -178,7 +180,9 @@ export async function publishMetricsArtifacts(input: {
 
   try {
     let bounds: MetricsBounds;
-    const publishBoundsCompleteness = hasPublishedDeploymentArtifacts ? "cross_chain" : "all_chains";
+    const publishBoundsCompleteness = hasPublishedDeploymentArtifacts
+      ? "cross_chain"
+      : "all_chains";
     const latestIndexingProgress = await source.fetchLatestIndexingProgress();
     const indexingProgress: PublisherIndexingProgress = {
       chains: latestIndexingProgress.chains,
@@ -214,12 +218,30 @@ export async function publishMetricsArtifacts(input: {
         writtenKeys: [],
       };
     }
-    const range = resolvePublishRange(input, bounds, existingManifest, publicStartDate, hasPublishedDeploymentArtifacts);
+    const range = resolvePublishRange(
+      input,
+      bounds,
+      existingManifest,
+      publicStartDate,
+      hasPublishedDeploymentArtifacts,
+    );
     const [metrics, treasuryAssets, ohmSupply] = await Promise.all([
       source.fetchDailyMetrics(range),
       source.fetchTreasuryAssets(range),
       source.fetchOhmSupply(range),
     ]);
+    if (hasPublishedDeploymentArtifacts && hasMissingDailyMetrics(range, metrics)) {
+      return {
+        manifestPublishedLast: false,
+        deletedKeys: [],
+        deploymentId,
+        indexingProgress,
+        skipped: true,
+        skipReason: "not_data_ready",
+        runId: lock.runId,
+        writtenKeys: [],
+      };
+    }
 
     const writtenKeys: string[] = [];
     let deletedKeys: string[] = [];
@@ -244,12 +266,22 @@ export async function publishMetricsArtifacts(input: {
       const ohmSupplyRows = ohmSupply.filter((row) => row.date.startsWith(month));
 
       await writeArtifact(dataKey("metrics", month), metricRows, metricRows.length);
-      await writeArtifact(dataKey("treasury-assets", month), treasuryAssetRows, treasuryAssetRows.length);
+      await writeArtifact(
+        dataKey("treasury-assets", month),
+        treasuryAssetRows,
+        treasuryAssetRows.length,
+      );
       await writeArtifact(dataKey("ohm-supply", month), ohmSupplyRows, ohmSupplyRows.length);
     }
 
-    const earliestDate = maxDate(publicStartDate, minDate(existingManifest?.earliestDate ?? range.start, range.start));
-    const latestDate = minDate(maxDate(existingManifest?.latestDate ?? range.end, range.end), bounds.latestDate);
+    const earliestDate = maxDate(
+      publicStartDate,
+      minDate(existingManifest?.earliestDate ?? range.start, range.start),
+    );
+    const latestDate = minDate(
+      maxDate(existingManifest?.latestDate ?? range.end, range.end),
+      bounds.latestDate,
+    );
     const manifestArtifacts = pruneArtifactsOutsidePublishedBounds(
       pruneHistoricalDeploymentArtifacts(artifacts, deploymentId),
       earliestDate,
@@ -305,10 +337,8 @@ export async function publishMetricsArtifactsFromEnv(
   env: NodeJS.ProcessEnv = process.env,
   deps: { source?: MetricsSource; store?: ArtifactStore; now?: () => Date } = {},
 ): Promise<PublishResult> {
-  const lookbackDays = optionalEnv(env, "PUBLISHER_LOOKBACK_DAYS");
   const lockTtlMs = optionalEnv(env, "PUBLISHER_LOCK_TTL_MS");
   return publishMetricsArtifacts({
-    lookbackDays: lookbackDays === undefined ? undefined : Number(lookbackDays),
     publicStartDate: optionalEnv(env, "PUBLISHER_PUBLIC_START_DATE"),
     startDate: optionalEnv(env, "PUBLISHER_START_DATE"),
     endDate: optionalEnv(env, "PUBLISHER_END_DATE"),
@@ -331,11 +361,13 @@ function resolvePublisherDeploymentId(env: NodeJS.ProcessEnv): string {
     return railwayGitCommitSha;
   }
 
-  throw new Error("Missing required environment variable INDEXER_DEPLOYMENT_ID or RAILWAY_GIT_COMMIT_SHA.");
+  throw new Error(
+    "Missing required environment variable INDEXER_DEPLOYMENT_ID or RAILWAY_GIT_COMMIT_SHA.",
+  );
 }
 
 function resolvePublishRange(
-  input: { lookbackDays?: number; startDate?: string; endDate?: string },
+  input: { startDate?: string; endDate?: string },
   bounds: MetricsBounds,
   existingManifest: Manifest | undefined,
   publicStartDate: string,
@@ -351,12 +383,9 @@ function resolvePublishRange(
   }
 
   const end = input.endDate ?? bounds.latestDate;
-  const lookbackDays = input.lookbackDays ?? 3;
-  if (!Number.isInteger(lookbackDays) || lookbackDays < 1) {
-    throw new Error("lookbackDays must be a positive integer.");
-  }
-  const catchupBaseDate = minDate(existingManifest.latestDate, bounds.latestDate);
-  const start = input.startDate ?? maxDate(publicStartDate, addDays(catchupBaseDate, -(lookbackDays - 1)));
+  const firstUnpublishedMonth = firstDayOfMonth(addDays(existingManifest.latestDate, 1));
+  const refreshStart = minDate(firstDayOfPreviousMonth(end), firstUnpublishedMonth);
+  const start = input.startDate ?? maxDate(publicStartDate, refreshStart);
   return resolveDateRange({
     start,
     end,
@@ -376,7 +405,10 @@ async function getExistingManifest(store: ArtifactStore): Promise<Manifest | und
   }
 }
 
-async function cleanupHistoricalDeploymentArtifacts(store: ArtifactStore, currentDeploymentId: string): Promise<string[]> {
+async function cleanupHistoricalDeploymentArtifacts(
+  store: ArtifactStore,
+  currentDeploymentId: string,
+): Promise<string[]> {
   const currentPrefix = `v2/deployments/${currentDeploymentId}/`;
   const keys = await store.listKeys("v2/deployments/");
   const staleKeys = keys.filter((key) => !key.startsWith(currentPrefix));
@@ -392,11 +424,16 @@ function pruneHistoricalDeploymentArtifacts(
 ): Record<string, ArtifactEntry> {
   const currentPrefix = `v2/deployments/${currentDeploymentId}/`;
   return Object.fromEntries(
-    Object.entries(artifacts).filter(([key]) => !key.startsWith("v2/deployments/") || key.startsWith(currentPrefix)),
+    Object.entries(artifacts).filter(
+      ([key]) => !key.startsWith("v2/deployments/") || key.startsWith(currentPrefix),
+    ),
   );
 }
 
-function deploymentHasPublishedArtifacts(manifest: Manifest | undefined, deploymentId: string): boolean {
+function deploymentHasPublishedArtifacts(
+  manifest: Manifest | undefined,
+  deploymentId: string,
+): boolean {
   if (manifest === undefined) {
     return false;
   }
@@ -413,7 +450,9 @@ function pruneArtifactsOutsidePublishedBounds(
   earliestDate: string,
   latestDate: string,
 ): Record<string, ArtifactEntry> {
-  const publishedMonths = new Set(monthKeysForRange({ start: earliestDate, end: latestDate, days: 1 }));
+  const publishedMonths = new Set(
+    monthKeysForRange({ start: earliestDate, end: latestDate, days: 1 }),
+  );
   return Object.fromEntries(
     Object.entries(artifacts).filter(([key]) => {
       const month = dataArtifactMonth(key);
@@ -424,9 +463,24 @@ function pruneArtifactsOutsidePublishedBounds(
 
 function dataArtifactMonth(key: string): string | undefined {
   return (
-    key.match(/^v2\/deployments\/[^/]+\/(?:metrics|treasury-assets|ohm-supply)\/daily\/(\d{4}-\d{2})\.json$/)?.[1] ??
+    key.match(
+      /^v2\/deployments\/[^/]+\/(?:metrics|treasury-assets|ohm-supply)\/daily\/(\d{4}-\d{2})\.json$/,
+    )?.[1] ??
     key.match(/^v2\/(?:metrics|treasury-assets|ohm-supply)\/daily\/(\d{4}-\d{2})\.json$/)?.[1]
   );
+}
+
+function hasMissingDailyMetrics(range: DateRange, metrics: Array<{ date: string }>): boolean {
+  const dates = new Set(metrics.map((metric) => metric.date));
+  let cursor = Date.parse(`${range.start}T00:00:00.000Z`);
+  const end = Date.parse(`${range.end}T00:00:00.000Z`);
+  while (cursor <= end) {
+    if (!dates.has(new Date(cursor).toISOString().slice(0, 10))) {
+      return true;
+    }
+    cursor += DAY_MS;
+  }
+  return false;
 }
 
 function isFreshForDeploymentHandover(latestDate: string, now: Date): boolean {
@@ -522,13 +576,26 @@ function parseDeploymentId(value: string): string {
     throw new Error("INDEXER_DEPLOYMENT_ID is required.");
   }
   if (!/^[A-Za-z0-9._-]+$/.test(trimmed)) {
-    throw new Error("INDEXER_DEPLOYMENT_ID may contain only letters, numbers, dots, underscores, and dashes.");
+    throw new Error(
+      "INDEXER_DEPLOYMENT_ID may contain only letters, numbers, dots, underscores, and dashes.",
+    );
   }
   return trimmed;
 }
 
 function addDays(date: string, days: number): string {
   return new Date(Date.parse(`${date}T00:00:00.000Z`) + days * DAY_MS).toISOString().slice(0, 10);
+}
+
+function firstDayOfMonth(date: string): string {
+  return `${date.slice(0, 7)}-01`;
+}
+
+function firstDayOfPreviousMonth(date: string): string {
+  const parsed = new Date(`${date}T00:00:00.000Z`);
+  return new Date(Date.UTC(parsed.getUTCFullYear(), parsed.getUTCMonth() - 1, 1))
+    .toISOString()
+    .slice(0, 10);
 }
 
 function maxDate(a: string, b: string): string {

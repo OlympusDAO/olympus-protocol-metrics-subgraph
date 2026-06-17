@@ -123,12 +123,12 @@ describe("indexer env validation", () => {
   });
 
   test("formats spawn failures loudly before Envio starts", () => {
-    expect(formatEnvioSpawnError(Object.assign(new Error("spawn envio ENOENT"), { code: "ENOENT" }))).toContain(
-      "envio binary was not found in PATH",
-    );
-    expect(formatEnvioSpawnError(Object.assign(new Error("permission denied"), { code: "EACCES" }))).toBe(
-      "Failed to start envio: EACCES: permission denied",
-    );
+    expect(
+      formatEnvioSpawnError(Object.assign(new Error("spawn envio ENOENT"), { code: "ENOENT" })),
+    ).toContain("envio binary was not found in PATH");
+    expect(
+      formatEnvioSpawnError(Object.assign(new Error("permission denied"), { code: "EACCES" })),
+    ).toBe("Failed to start envio: EACCES: permission denied");
   });
 
   test("attaches a spawn error handler that logs and exits", () => {
@@ -151,9 +151,9 @@ describe("indexer env validation", () => {
     });
 
     expect(handlers.has("error")).toBe(true);
-    expect(() => handlers.get("error")?.(Object.assign(new Error("spawn envio ENOENT"), { code: "ENOENT" }))).toThrow(
-      "exit 1",
-    );
+    expect(() =>
+      handlers.get("error")?.(Object.assign(new Error("spawn envio ENOENT"), { code: "ENOENT" })),
+    ).toThrow("exit 1");
     expect(logged[0]).toContain("envio binary was not found in PATH");
     expect(exits).toEqual([1]);
   });

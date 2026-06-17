@@ -3,10 +3,7 @@
   "build": {
     "builder": "DOCKERFILE",
     "dockerfilePath": "Dockerfile-hasura",
-    "watchPatterns": [
-      "/Dockerfile-hasura",
-      "/railway-hasura.json"
-    ]
+    "watchPatterns": ["/Dockerfile-hasura", "/railway-hasura.json"]
   },
   "deploy": {
     "healthcheckPath": "/healthz",

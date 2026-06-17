@@ -58,7 +58,9 @@ describe("toBigDecimal", () => {
       },
     } as BigNumber;
 
-    expect(toBigDecimal(value).toString()).toBe(new BigNumber("123456789012345678901234567890").toString());
+    expect(toBigDecimal(value).toString()).toBe(
+      new BigNumber("123456789012345678901234567890").toString(),
+    );
     expect(fixedCalls).toBe(1);
     expect(stringCalls).toBe(0);
   });

@@ -53,7 +53,10 @@ export class TreasurySubgraphClient {
     input?: Operations[OperationName]["input"];
   }): Promise<Operations[OperationName]["response"]>;
   async query(params: { operationName: string; input?: Record<string, unknown> }): Promise<unknown>;
-  async query(params: { operationName: string; input?: Record<string, unknown> }): Promise<unknown> {
+  async query(params: {
+    operationName: string;
+    input?: Record<string, unknown>;
+  }): Promise<unknown> {
     const url = this.url(getLegacyOperationPath(params.operationName));
     if (params.input !== undefined) {
       url.searchParams.set("wg_variables", JSON.stringify(params.input));
@@ -62,27 +65,37 @@ export class TreasurySubgraphClient {
   }
 
   /** @deprecated Use `getDailyMetrics` or `query({ operationName: "latest/metrics" })` instead. */
-  async getLatestMetrics(input?: IgnoreCacheInput): Promise<Operations["latest/metrics"]["response"]> {
+  async getLatestMetrics(
+    input?: IgnoreCacheInput,
+  ): Promise<Operations["latest/metrics"]["response"]> {
     return this.query({ operationName: "latest/metrics", input });
   }
 
   /** @deprecated Use `getDailyMetrics` or `query({ operationName: "earliest/metrics" })` instead. */
-  async getEarliestMetrics(input?: IgnoreCacheInput): Promise<Operations["earliest/metrics"]["response"]> {
+  async getEarliestMetrics(
+    input?: IgnoreCacheInput,
+  ): Promise<Operations["earliest/metrics"]["response"]> {
     return this.query({ operationName: "earliest/metrics", input });
   }
 
   /** @deprecated Use `getDailyMetrics` or `query({ operationName: "paginated/metrics" })` instead. */
-  async getPaginatedMetrics(input: PaginatedMetricsInput): Promise<Operations["paginated/metrics"]["response"]> {
+  async getPaginatedMetrics(
+    input: PaginatedMetricsInput,
+  ): Promise<Operations["paginated/metrics"]["response"]> {
     return this.query({ operationName: "paginated/metrics", input });
   }
 
   /** @deprecated Use `getDailyTreasuryAssets` or `query({ operationName: "latest/tokenRecords" })` instead. */
-  async getLatestTokenRecords(input?: IgnoreCacheInput): Promise<Operations["latest/tokenRecords"]["response"]> {
+  async getLatestTokenRecords(
+    input?: IgnoreCacheInput,
+  ): Promise<Operations["latest/tokenRecords"]["response"]> {
     return this.query({ operationName: "latest/tokenRecords", input });
   }
 
   /** @deprecated Use `getDailyTreasuryAssets` or `query({ operationName: "earliest/tokenRecords" })` instead. */
-  async getEarliestTokenRecords(input?: IgnoreCacheInput): Promise<Operations["earliest/tokenRecords"]["response"]> {
+  async getEarliestTokenRecords(
+    input?: IgnoreCacheInput,
+  ): Promise<Operations["earliest/tokenRecords"]["response"]> {
     return this.query({ operationName: "earliest/tokenRecords", input });
   }
 
@@ -94,12 +107,16 @@ export class TreasurySubgraphClient {
   }
 
   /** @deprecated Use `getDailyOhmSupply` or `query({ operationName: "latest/tokenSupplies" })` instead. */
-  async getLatestTokenSupplies(input?: IgnoreCacheInput): Promise<Operations["latest/tokenSupplies"]["response"]> {
+  async getLatestTokenSupplies(
+    input?: IgnoreCacheInput,
+  ): Promise<Operations["latest/tokenSupplies"]["response"]> {
     return this.query({ operationName: "latest/tokenSupplies", input });
   }
 
   /** @deprecated Use `getDailyOhmSupply` or `query({ operationName: "earliest/tokenSupplies" })` instead. */
-  async getEarliestTokenSupplies(input?: IgnoreCacheInput): Promise<Operations["earliest/tokenSupplies"]["response"]> {
+  async getEarliestTokenSupplies(
+    input?: IgnoreCacheInput,
+  ): Promise<Operations["earliest/tokenSupplies"]["response"]> {
     return this.query({ operationName: "earliest/tokenSupplies", input });
   }
 
@@ -111,7 +128,9 @@ export class TreasurySubgraphClient {
   }
 
   /** @deprecated Use `query({ operationName: "latest/protocolMetrics" })` only for legacy compatibility. */
-  async getLatestProtocolMetrics(input?: IgnoreCacheInput): Promise<Operations["latest/protocolMetrics"]["response"]> {
+  async getLatestProtocolMetrics(
+    input?: IgnoreCacheInput,
+  ): Promise<Operations["latest/protocolMetrics"]["response"]> {
     return this.query({ operationName: "latest/protocolMetrics", input });
   }
 
@@ -242,7 +261,11 @@ function appendRange(url: URL, input: { start: string; end?: string }): void {
   }
 }
 
-function splitRange(input: { start: string; end: string; maxDays: number }): Array<{ start: string; end: string }> {
+function splitRange(input: {
+  start: string;
+  end: string;
+  maxDays: number;
+}): Array<{ start: string; end: string }> {
   if (input.maxDays < 1) {
     throw new Error(`maxRangeDays must be greater than zero, got ${input.maxDays}`);
   }
@@ -256,7 +279,9 @@ function splitRange(input: { start: string; end: string; maxDays: number }): Arr
   const chunks: Array<{ start: string; end: string }> = [];
   let cursor = start;
   while (cursor.getTime() <= end.getTime()) {
-    const chunkEnd = new Date(Math.min(end.getTime(), cursor.getTime() + (input.maxDays - 1) * DAY_MS));
+    const chunkEnd = new Date(
+      Math.min(end.getTime(), cursor.getTime() + (input.maxDays - 1) * DAY_MS),
+    );
     chunks.push({ start: formatDate(cursor), end: formatDate(chunkEnd) });
     cursor = new Date(chunkEnd.getTime() + DAY_MS);
   }

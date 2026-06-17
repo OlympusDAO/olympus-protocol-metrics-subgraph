@@ -2,7 +2,11 @@ import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 
 function serviceBlock(compose: string, serviceName: string): string {
-  const match = compose.match(new RegExp(`\\n  ${serviceName}:\\n([\\s\\S]*?)(?=\\n  [a-zA-Z0-9_-]+:\\n|\\nvolumes:\\n|\\nnetworks:\\n|$)`));
+  const match = compose.match(
+    new RegExp(
+      `\\n  ${serviceName}:\\n([\\s\\S]*?)(?=\\n  [a-zA-Z0-9_-]+:\\n|\\nvolumes:\\n|\\nnetworks:\\n|$)`,
+    ),
+  );
   if (match === null) {
     throw new Error(`Missing service ${serviceName}`);
   }
@@ -44,8 +48,12 @@ describe("local Docker Compose stack", () => {
 
     expect(serviceBlock(compose, "minio")).toContain("/minio/health/ready");
     expect(serviceBlock(compose, "minio-init")).toContain("condition: service_healthy");
-    expect(serviceBlock(compose, "metrics-api")).toContain("condition: service_completed_successfully");
-    expect(serviceBlock(compose, "metrics-publisher")).toContain("condition: service_completed_successfully");
+    expect(serviceBlock(compose, "metrics-api")).toContain(
+      "condition: service_completed_successfully",
+    );
+    expect(serviceBlock(compose, "metrics-publisher")).toContain(
+      "condition: service_completed_successfully",
+    );
     expect(serviceBlock(compose, "indexer")).toContain("condition: service_healthy");
     expect(serviceBlock(compose, "indexer")).toContain("hasura:");
   });
@@ -53,12 +61,16 @@ describe("local Docker Compose stack", () => {
   test("includes indexer in the default stack and runs publisher as an explicit profile", () => {
     const compose = readFileSync("docker-compose.yml", "utf8");
     const doc = readFileSync("docs/local-compose.md", "utf8");
-    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as { scripts: Record<string, string> };
+    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as {
+      scripts: Record<string, string>;
+    };
 
     expect(serviceBlock(compose, "metrics-publisher")).toContain("publish");
     expect(serviceBlock(compose, "indexer")).not.toContain("profiles:");
     expect(doc).toContain("only `metrics-api` is reachable from the host");
-    expect(doc).toContain("docker compose up --build postgres hasura minio minio-init indexer metrics-api");
+    expect(doc).toContain(
+      "docker compose up --build postgres hasura minio minio-init indexer metrics-api",
+    );
     expect(doc).toContain("pnpm run compose:publish");
     expect(packageJson.scripts["compose:up"]).toBe(
       "docker compose up --build postgres hasura minio minio-init indexer metrics-api",
@@ -74,8 +86,12 @@ describe("local Docker Compose stack", () => {
     const packageJson = readFileSync("package.json", "utf8");
 
     expect(packageJson).toContain('"compose:core": "docker compose up postgres hasura indexer"');
-    expect(packageJson).toContain('"compose:api": "docker compose up --build minio minio-init metrics-api"');
-    expect(packageJson).toContain('"compose:api:rebuild": "docker compose up --build --no-deps metrics-api"');
+    expect(packageJson).toContain(
+      '"compose:api": "docker compose up --build minio minio-init metrics-api"',
+    );
+    expect(packageJson).toContain(
+      '"compose:api:rebuild": "docker compose up --build --no-deps metrics-api"',
+    );
     expect(packageJson).toContain('"compose:bucket:clear": "docker compose run --rm --no-deps');
     expect(doc).toContain("## Split Workflow");
     expect(doc).toContain("in the foreground");
@@ -84,7 +100,9 @@ describe("local Docker Compose stack", () => {
     expect(doc).toContain("pnpm run compose:api:rebuild");
     expect(doc).toContain("pnpm run compose:bucket:clear");
     expect(doc).toContain("pnpm run compose:publish");
-    expect(doc).toContain("This rebuilds and starts only the one-shot `metrics-publisher` container");
+    expect(doc).toContain(
+      "This rebuilds and starts only the one-shot `metrics-publisher` container",
+    );
   });
 
   test("documents and wires stack variables without unsupported Envio env knobs", () => {

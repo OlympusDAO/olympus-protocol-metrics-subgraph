@@ -82,9 +82,7 @@ describe("BackfillTokenBalances", () => {
     expect(result.seeded).toBeGreaterThanOrEqual(1);
     const fraxEntity = tokenBalanceSets.find(
       (e) =>
-        e.tokenAddress === addr(FRAX) &&
-        e.walletAddress === addr(wallet) &&
-        e.chainId === 42161,
+        e.tokenAddress === addr(FRAX) && e.walletAddress === addr(wallet) && e.chainId === 42161,
     );
     expect(fraxEntity).toBeDefined();
     expect(fraxEntity?.balance).toBe(PRE_EXISTING);
@@ -93,9 +91,7 @@ describe("BackfillTokenBalances", () => {
 
     const fraxUpdate = tokenBalanceUpdateSets.find(
       (e) =>
-        e.tokenAddress === addr(FRAX) &&
-        e.walletAddress === addr(wallet) &&
-        e.chainId === 42161,
+        e.tokenAddress === addr(FRAX) && e.walletAddress === addr(wallet) && e.chainId === 42161,
     );
     expect(fraxUpdate).toBeDefined();
     expect(fraxUpdate?.delta).toBe(PRE_EXISTING);
@@ -128,7 +124,9 @@ describe("BackfillTokenBalances", () => {
       chainId: 42161,
       blockTimestamp: 1_651_363_200,
       // Even if "native" had a seed, runBackfill should skip native tokens
-      balances: [{ tokenAddress: NATIVE, walletAddress: wallet, balance: 5_000_000_000_000_000_000n }],
+      balances: [
+        { tokenAddress: NATIVE, walletAddress: wallet, balance: 5_000_000_000_000_000_000n },
+      ],
     });
 
     await runBackfill(context, { number: 10_950_000 });
