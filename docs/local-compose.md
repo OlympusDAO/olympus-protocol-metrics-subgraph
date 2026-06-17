@@ -93,9 +93,9 @@ historical backfill from `2022-05-01` through Hasura's latest date where every
 supported chain id is indexed. That latest all-chain date must also be within
 one day of the current UTC date, otherwise the publisher exits successfully with
 `skipReason: "not_data_ready"` and leaves any existing manifest untouched. After
-that, the same command performs incremental catch-up from the existing manifest
-latest date with the configured lookback overlap; incremental runs only require
-the Arbitrum/Ethereum `crossChainComplete` gate.
+that, the same command performs incremental catch-up by regenerating the
+previous and current month based on Hasura's latest complete date; incremental
+runs only require the Arbitrum/Ethereum `crossChainComplete` gate.
 
 To clear only the local artifact bucket while keeping the rest of the compose
 stack running:
@@ -135,12 +135,11 @@ Most variables have local defaults. Override these when needed:
   indexer, default `http://hasura:8080/v1/metadata`.
 - `INDEXER_PORT`: internal Envio indexer HTTP port, default `9898`. The indexer
   startup wrapper derives `ENVIO_INDEXER_PORT` from this value.
-- `PUBLISHER_PUBLIC_START_DATE`, `PUBLISHER_LOOKBACK_DAYS`,
-  `PUBLISHER_LOCK_TTL_MS`, `PUBLISHER_START_DATE`, and
-  `PUBLISHER_END_DATE`: publisher range and overlap controls. If no manifest
-  exists, publishing starts at `2022-05-01`; otherwise it uses the manifest
-  latest date plus the lookback overlap. A fresh `v2/publisher.lock` makes
-  overlapping publisher runs exit successfully without writing artifacts.
+- `PUBLISHER_PUBLIC_START_DATE`, `PUBLISHER_LOCK_TTL_MS`,
+  `PUBLISHER_START_DATE`, and `PUBLISHER_END_DATE`: publisher range controls. If
+  no manifest exists, publishing starts at `2022-05-01`; otherwise it regenerates
+  the previous and current month. A fresh `v2/publisher.lock` makes overlapping
+  publisher runs exit successfully without writing artifacts.
 - `INDEXER_DEPLOYMENT_ID`: deployment identifier stamped into the internal
   manifest. `pnpm run compose:publish` sets it to the latest local git commit
   hash. If running Docker Compose directly, set it manually or provide

@@ -131,7 +131,6 @@ const SCHEMAS: Record<string, Record<string, unknown>> = {
 };
 
 export async function publishMetricsArtifacts(input: {
-  lookbackDays?: number;
   publicStartDate?: string;
   deploymentId: string;
   startDate?: string;
@@ -338,10 +337,8 @@ export async function publishMetricsArtifactsFromEnv(
   env: NodeJS.ProcessEnv = process.env,
   deps: { source?: MetricsSource; store?: ArtifactStore; now?: () => Date } = {},
 ): Promise<PublishResult> {
-  const lookbackDays = optionalEnv(env, "PUBLISHER_LOOKBACK_DAYS");
   const lockTtlMs = optionalEnv(env, "PUBLISHER_LOCK_TTL_MS");
   return publishMetricsArtifacts({
-    lookbackDays: lookbackDays === undefined ? undefined : Number(lookbackDays),
     publicStartDate: optionalEnv(env, "PUBLISHER_PUBLIC_START_DATE"),
     startDate: optionalEnv(env, "PUBLISHER_START_DATE"),
     endDate: optionalEnv(env, "PUBLISHER_END_DATE"),
@@ -370,7 +367,7 @@ function resolvePublisherDeploymentId(env: NodeJS.ProcessEnv): string {
 }
 
 function resolvePublishRange(
-  input: { lookbackDays?: number; startDate?: string; endDate?: string },
+  input: { startDate?: string; endDate?: string },
   bounds: MetricsBounds,
   existingManifest: Manifest | undefined,
   publicStartDate: string,
@@ -386,12 +383,6 @@ function resolvePublishRange(
   }
 
   const end = input.endDate ?? bounds.latestDate;
-  if (
-    input.lookbackDays !== undefined &&
-    (!Number.isInteger(input.lookbackDays) || input.lookbackDays < 1)
-  ) {
-    throw new Error("lookbackDays must be a positive integer.");
-  }
   const start = input.startDate ?? maxDate(publicStartDate, firstDayOfPreviousMonth(end));
   return resolveDateRange({
     start,

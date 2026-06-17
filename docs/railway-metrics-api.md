@@ -196,8 +196,6 @@ publisher writes immutable monthly JSON shards before publishing the manifest.
 - Required `ARTIFACT_SECRET_ACCESS_KEY`: bucket secret key.
 - Optional `PUBLISHER_PUBLIC_START_DATE`: first public API date, default
   `2022-05-01`.
-- Optional `PUBLISHER_LOOKBACK_DAYS`: number of already-published days to
-  regenerate when catching up from the existing manifest latest date.
 - Optional `PUBLISHER_LOCK_TTL_MS`: S3 lock timeout for overlapping cron runs. The
   documented default is 12 hours (`43200000`) so a slow first bootstrap is not
   overtaken by the next hourly cron.
@@ -233,8 +231,9 @@ The publisher writes `v2/publisher.lock` before reading Hasura. If a new cron
 run starts while a previous publish still holds a fresh lock, the new run exits
 successfully without writing artifacts. If no manifest exists, the publisher
 creates the initial backfill from `PUBLISHER_PUBLIC_START_DATE`; once a manifest
-exists, the same cron job publishes an incremental refresh with the configured
-lookback. If a publish crashes, a later run can take over after the lock expires.
+exists, the same cron job publishes an incremental refresh for the previous and
+current month based on Hasura's latest complete date. If a publish crashes, a
+later run can take over after the lock expires.
 For the first publish of an `INDEXER_DEPLOYMENT_ID`, publisher bounds require
 every supported chain id to be present in `chainsIndexed`. Once that deployment
 has published snapshots, incremental bounds use `crossChainComplete=true`, which

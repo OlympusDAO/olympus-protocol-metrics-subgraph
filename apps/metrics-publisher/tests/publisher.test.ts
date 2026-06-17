@@ -306,7 +306,7 @@ describe("metrics publisher", () => {
     );
   });
 
-  test("publishes from the existing manifest with a lookback overlap", async () => {
+  test("publishes from the existing manifest by regenerating previous and current month", async () => {
     const store = new MemoryArtifactStore();
     await store.putJson("v2/manifest.json", existingCurrentDeploymentManifest);
     const mayDates = dateKeys({ start: "2026-05-01", end: "2026-05-31" });
@@ -314,7 +314,6 @@ describe("metrics publisher", () => {
 
     const result = await publishMetricsArtifacts({
       deploymentId: "current-indexer",
-      lookbackDays: 2,
       source: source({
         fetchDailyMetrics: async (range) => completeDailyMetrics(range),
         fetchTreasuryAssets: async (range) => completeTreasuryAssets(range),
@@ -461,7 +460,6 @@ describe("metrics publisher", () => {
 
     const result = await publishMetricsArtifacts({
       deploymentId: "current-indexer",
-      lookbackDays: 2,
       source: source({
         fetchBounds: async (completeness) => {
           observedCompleteness.push(completeness ?? "cross_chain");
@@ -555,7 +553,6 @@ describe("metrics publisher", () => {
 
     const result = await publishMetricsArtifacts({
       deploymentId: "current-indexer",
-      lookbackDays: 2,
       source: source({
         fetchBounds: async (completeness) => {
           observedCompleteness.push(completeness ?? "cross_chain");
@@ -710,7 +707,6 @@ describe("metrics publisher", () => {
 
     const result = await publishMetricsArtifacts({
       deploymentId: "new-indexer",
-      lookbackDays: 2,
       source: source(),
       store,
       now: () => new Date(generatedAt),
@@ -868,7 +864,6 @@ describe("metrics publisher", () => {
         HASURA_GRAPHQL_ADMIN_SECRET: "secret",
         ...validPublisherArtifactEnv,
         INDEXER_DEPLOYMENT_ID: "current-indexer",
-        PUBLISHER_LOOKBACK_DAYS: "2",
         PUBLISHER_PUBLIC_START_DATE: "2022-05-01",
         PUBLISHER_START_DATE: "",
         PUBLISHER_END_DATE: "   ",
