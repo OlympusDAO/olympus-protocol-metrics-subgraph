@@ -204,6 +204,22 @@ function completeDailyMetrics(range: { start: string; end: string }): DailyMetri
   return dateKeys(range).map((date) => ({ ...metric, date }));
 }
 
+function completeTreasuryAssets(range: { start: string; end: string }): TreasuryAsset[] {
+  return dateKeys(range).map((date) => ({
+    ...treasuryAsset,
+    id: `asset-${date}`,
+    date,
+  }));
+}
+
+function completeOhmSupply(range: { start: string; end: string }): OhmSupply[] {
+  return dateKeys(range).map((date) => ({
+    ...ohmSupply,
+    id: `supply-${date}`,
+    date,
+  }));
+}
+
 function dateKeys(range: { start: string; end: string }): string[] {
   const keys: string[] = [];
   let cursor = Date.parse(`${range.start}T00:00:00.000Z`);
@@ -213,6 +229,14 @@ function dateKeys(range: { start: string; end: string }): string[] {
     cursor += 24 * 60 * 60 * 1000;
   }
   return keys;
+}
+
+function expectArtifactDates<T extends { date: string }>(
+  store: MemoryArtifactStore,
+  key: string,
+  expectedDates: string[],
+): void {
+  expect(store.json<T[]>(key).map((row) => row.date)).toEqual(expectedDates);
 }
 
 describe("metrics publisher", () => {
@@ -285,12 +309,16 @@ describe("metrics publisher", () => {
   test("publishes from the existing manifest with a lookback overlap", async () => {
     const store = new MemoryArtifactStore();
     await store.putJson("v2/manifest.json", existingCurrentDeploymentManifest);
+    const mayDates = dateKeys({ start: "2026-05-01", end: "2026-05-31" });
+    const juneDates = ["2026-06-01"];
 
     const result = await publishMetricsArtifacts({
       deploymentId: "current-indexer",
       lookbackDays: 2,
       source: source({
         fetchDailyMetrics: async (range) => completeDailyMetrics(range),
+        fetchTreasuryAssets: async (range) => completeTreasuryAssets(range),
+        fetchOhmSupply: async (range) => completeOhmSupply(range),
       }),
       store,
       now: () => new Date(generatedAt),
@@ -303,11 +331,43 @@ describe("metrics publisher", () => {
     expect(result.writtenKeys).toContain(
       "v2/deployments/current-indexer/metrics/daily/2026-06.json",
     );
+    expectArtifactDates<DailyMetric>(
+      store,
+      "v2/deployments/current-indexer/metrics/daily/2026-05.json",
+      mayDates,
+    );
+    expectArtifactDates<TreasuryAsset>(
+      store,
+      "v2/deployments/current-indexer/treasury-assets/daily/2026-05.json",
+      mayDates,
+    );
+    expectArtifactDates<OhmSupply>(
+      store,
+      "v2/deployments/current-indexer/ohm-supply/daily/2026-05.json",
+      mayDates,
+    );
+    expectArtifactDates<DailyMetric>(
+      store,
+      "v2/deployments/current-indexer/metrics/daily/2026-06.json",
+      juneDates,
+    );
+    expectArtifactDates<TreasuryAsset>(
+      store,
+      "v2/deployments/current-indexer/treasury-assets/daily/2026-06.json",
+      juneDates,
+    );
+    expectArtifactDates<OhmSupply>(
+      store,
+      "v2/deployments/current-indexer/ohm-supply/daily/2026-06.json",
+      juneDates,
+    );
   });
 
   test("incremental publish regenerates previous and current month at a month border", async () => {
     const store = new MemoryArtifactStore();
     await store.putJson("v2/manifest.json", existingCurrentDeploymentManifest);
+    const juneDates = dateKeys({ start: "2026-06-01", end: "2026-06-30" });
+    const julyDates = ["2026-07-01"];
 
     const observedRanges: Array<{ start: string; end: string; days: number }> = [];
     const result = await publishMetricsArtifacts({
@@ -318,6 +378,8 @@ describe("metrics publisher", () => {
           observedRanges.push(range);
           return completeDailyMetrics(range);
         },
+        fetchTreasuryAssets: async (range) => completeTreasuryAssets(range),
+        fetchOhmSupply: async (range) => completeOhmSupply(range),
       }),
       store,
       now: () => new Date("2026-07-01T09:15:00.000Z"),
@@ -330,6 +392,36 @@ describe("metrics publisher", () => {
     );
     expect(result.writtenKeys).toContain(
       "v2/deployments/current-indexer/metrics/daily/2026-07.json",
+    );
+    expectArtifactDates<DailyMetric>(
+      store,
+      "v2/deployments/current-indexer/metrics/daily/2026-06.json",
+      juneDates,
+    );
+    expectArtifactDates<TreasuryAsset>(
+      store,
+      "v2/deployments/current-indexer/treasury-assets/daily/2026-06.json",
+      juneDates,
+    );
+    expectArtifactDates<OhmSupply>(
+      store,
+      "v2/deployments/current-indexer/ohm-supply/daily/2026-06.json",
+      juneDates,
+    );
+    expectArtifactDates<DailyMetric>(
+      store,
+      "v2/deployments/current-indexer/metrics/daily/2026-07.json",
+      julyDates,
+    );
+    expectArtifactDates<TreasuryAsset>(
+      store,
+      "v2/deployments/current-indexer/treasury-assets/daily/2026-07.json",
+      julyDates,
+    );
+    expectArtifactDates<OhmSupply>(
+      store,
+      "v2/deployments/current-indexer/ohm-supply/daily/2026-07.json",
+      julyDates,
     );
   });
 
