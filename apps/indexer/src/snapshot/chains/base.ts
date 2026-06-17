@@ -30,6 +30,7 @@ const names: Record<string, string> = {
   [DAO_MULTISIG]: "DAO MS (Base)",
   [ERC20_OHM]: "OHM",
   [ERC20_USDC]: "USDC",
+  [NATIVE_ETH]: "ETH",
   [ERC20_WETH]: "Wrapped ETH",
   [LP_UNISWAP_V2_OHM_WETH]: "UniswapV2 OHM-WETH Liquidity Pool",
   [LP_UNISWAP_V3_OHM_USDC]: "UniswapV3 OHM-USDC Liquidity Pool",
