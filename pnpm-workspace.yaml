@@ -141,7 +141,11 @@ overrides:
   "qs@<6.15.2": "6.15.2"
   "send@<0.19.0": "0.19.0"
   "serve-static@<1.16.0": "1.16.0"
-  "ws@>=8.0.0 <8.20.1": "8.20.1"
+  # ws GHSA-96hv-2xvq-fx4p (high, memory-exhaustion DoS from tiny fragments),
+  # fixed in 8.21.0. Pulled transitively via envio>ink>ws. The prior cap of
+  # 8.20.1 predates this advisory and is still vulnerable; bumped to 8.21.0
+  # (released 2026-05-22, past the 7-day cutoff). Range-scoped per convention.
+  "ws@>=8.0.0 <8.21.0": "8.21.0"
   # vite GHSA-fx2h-pf6j-xcff (server.fs.deny bypass) + GHSA-v6wh-96g9-6wx3
   # (NTLMv2 disclosure), both fixed in 8.0.16. Previously this override
   # pinned vite DOWN to 8.0.13 purely as a maturity-gate workaround (vitest@4
