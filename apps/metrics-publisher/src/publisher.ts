@@ -383,7 +383,9 @@ function resolvePublishRange(
   }
 
   const end = input.endDate ?? bounds.latestDate;
-  const start = input.startDate ?? maxDate(publicStartDate, firstDayOfPreviousMonth(end));
+  const firstUnpublishedMonth = firstDayOfMonth(addDays(existingManifest.latestDate, 1));
+  const refreshStart = minDate(firstDayOfPreviousMonth(end), firstUnpublishedMonth);
+  const start = input.startDate ?? maxDate(publicStartDate, refreshStart);
   return resolveDateRange({
     start,
     end,
@@ -583,6 +585,10 @@ function parseDeploymentId(value: string): string {
 
 function addDays(date: string, days: number): string {
   return new Date(Date.parse(`${date}T00:00:00.000Z`) + days * DAY_MS).toISOString().slice(0, 10);
+}
+
+function firstDayOfMonth(date: string): string {
+  return `${date.slice(0, 7)}-01`;
 }
 
 function firstDayOfPreviousMonth(date: string): string {

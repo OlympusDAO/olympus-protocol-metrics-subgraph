@@ -231,9 +231,9 @@ The publisher writes `v2/publisher.lock` before reading Hasura. If a new cron
 run starts while a previous publish still holds a fresh lock, the new run exits
 successfully without writing artifacts. If no manifest exists, the publisher
 creates the initial backfill from `PUBLISHER_PUBLIC_START_DATE`; once a manifest
-exists, the same cron job publishes an incremental refresh for the previous and
-current month based on Hasura's latest complete date. If a publish crashes, a
-later run can take over after the lock expires.
+exists, the same cron job backfills any unpublished months and regenerates at
+least the previous and current month based on Hasura's latest complete date. If a
+publish crashes, a later run can take over after the lock expires.
 For the first publish of an `INDEXER_DEPLOYMENT_ID`, publisher bounds require
 every supported chain id to be present in `chainsIndexed`. Once that deployment
 has published snapshots, incremental bounds use `crossChainComplete=true`, which

@@ -93,9 +93,10 @@ historical backfill from `2022-05-01` through Hasura's latest date where every
 supported chain id is indexed. That latest all-chain date must also be within
 one day of the current UTC date, otherwise the publisher exits successfully with
 `skipReason: "not_data_ready"` and leaves any existing manifest untouched. After
-that, the same command performs incremental catch-up by regenerating the
-previous and current month based on Hasura's latest complete date; incremental
-runs only require the Arbitrum/Ethereum `crossChainComplete` gate.
+that, the same command performs incremental catch-up by backfilling unpublished
+months and regenerating at least the previous and current month based on Hasura's
+latest complete date; incremental runs only require the Arbitrum/Ethereum
+`crossChainComplete` gate.
 
 To clear only the local artifact bucket while keeping the rest of the compose
 stack running:
@@ -137,9 +138,10 @@ Most variables have local defaults. Override these when needed:
   startup wrapper derives `ENVIO_INDEXER_PORT` from this value.
 - `PUBLISHER_PUBLIC_START_DATE`, `PUBLISHER_LOCK_TTL_MS`,
   `PUBLISHER_START_DATE`, and `PUBLISHER_END_DATE`: publisher range controls. If
-  no manifest exists, publishing starts at `2022-05-01`; otherwise it regenerates
-  the previous and current month. A fresh `v2/publisher.lock` makes overlapping
-  publisher runs exit successfully without writing artifacts.
+  no manifest exists, publishing starts at `2022-05-01`; otherwise it backfills
+  unpublished months and regenerates at least the previous and current month. A
+  fresh `v2/publisher.lock` makes overlapping publisher runs exit successfully
+  without writing artifacts.
 - `INDEXER_DEPLOYMENT_ID`: deployment identifier stamped into the internal
   manifest. `pnpm run compose:publish` sets it to the latest local git commit
   hash. If running Docker Compose directly, set it manually or provide

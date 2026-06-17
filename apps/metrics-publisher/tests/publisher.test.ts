@@ -364,7 +364,17 @@ describe("metrics publisher", () => {
 
   test("incremental publish regenerates previous and current month at a month border", async () => {
     const store = new MemoryArtifactStore();
-    await store.putJson("v2/manifest.json", existingCurrentDeploymentManifest);
+    await store.putJson("v2/manifest.json", {
+      ...existingCurrentDeploymentManifest,
+      latestDate: "2026-06-30",
+      artifacts: {
+        "v2/deployments/current-indexer/metrics/daily/2026-06.json": {
+          sha256: "0".repeat(64),
+          byteLength: 2,
+          rowCount: 30,
+        },
+      },
+    });
     const juneDates = dateKeys({ start: "2026-06-01", end: "2026-06-30" });
     const julyDates = ["2026-07-01"];
 
@@ -421,6 +431,72 @@ describe("metrics publisher", () => {
       store,
       "v2/deployments/current-indexer/ohm-supply/daily/2026-07.json",
       julyDates,
+    );
+  });
+
+  test("incremental publish backfills unpublished months before the normal refresh window", async () => {
+    const store = new MemoryArtifactStore();
+    await store.putJson("v2/manifest.json", {
+      ...existingCurrentDeploymentManifest,
+      latestDate: "2026-03-31",
+      artifacts: {
+        "v2/deployments/current-indexer/metrics/daily/2026-03.json": {
+          sha256: "0".repeat(64),
+          byteLength: 2,
+          rowCount: 31,
+        },
+      },
+    });
+    const aprilDates = dateKeys({ start: "2026-04-01", end: "2026-04-30" });
+    const mayDates = dateKeys({ start: "2026-05-01", end: "2026-05-31" });
+    const juneDates = dateKeys({ start: "2026-06-01", end: "2026-06-17" });
+
+    const result = await publishMetricsArtifacts({
+      deploymentId: "current-indexer",
+      source: source({
+        fetchBounds: async () => ({ earliestDate: "2026-03-01", latestDate: "2026-06-17" }),
+        fetchDailyMetrics: async (range) => completeDailyMetrics(range),
+        fetchTreasuryAssets: async (range) => completeTreasuryAssets(range),
+        fetchOhmSupply: async (range) => completeOhmSupply(range),
+      }),
+      store,
+      now: () => new Date("2026-06-17T09:15:00.000Z"),
+    });
+
+    expect(result.range).toEqual({ start: "2026-04-01", end: "2026-06-17", days: 78 });
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/metrics/daily/2026-04.json",
+    );
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/metrics/daily/2026-05.json",
+    );
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/metrics/daily/2026-06.json",
+    );
+    expectArtifactDates<DailyMetric>(
+      store,
+      "v2/deployments/current-indexer/metrics/daily/2026-04.json",
+      aprilDates,
+    );
+    expectArtifactDates<TreasuryAsset>(
+      store,
+      "v2/deployments/current-indexer/treasury-assets/daily/2026-04.json",
+      aprilDates,
+    );
+    expectArtifactDates<OhmSupply>(
+      store,
+      "v2/deployments/current-indexer/ohm-supply/daily/2026-04.json",
+      aprilDates,
+    );
+    expectArtifactDates<DailyMetric>(
+      store,
+      "v2/deployments/current-indexer/metrics/daily/2026-05.json",
+      mayDates,
+    );
+    expectArtifactDates<DailyMetric>(
+      store,
+      "v2/deployments/current-indexer/metrics/daily/2026-06.json",
+      juneDates,
     );
   });
 
