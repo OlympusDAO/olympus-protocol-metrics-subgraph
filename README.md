@@ -24,19 +24,36 @@ deployments are no longer maintained.
 ## Setup
 
 ```sh
-pnpm install
-cp apps/indexer/.env.sample apps/indexer/.env  # then fill in RPC URLs and Envio token
+pnpm install --frozen-lockfile
+cp .env.compose.sample .env  # then fill in ENVIO_API_TOKEN and any RPC overrides
 pnpm codegen         # generates types from the indexer schema/config
 ```
 
 ## Running locally
 
+Use Docker Compose for normal local development and integration testing. It
+starts Postgres, Hasura, the indexer, MinIO, and the metrics API with the
+service-to-service environment variables wired for local use:
+
 ```sh
-pnpm envio:dev   # boots a local indexer + Postgres + Hasura via Docker
-pnpm envio:start # runs the indexer against an existing Postgres
+pnpm run compose:core # Postgres + Hasura + indexer
+pnpm run compose:up   # full local stack, including storage and metrics API
 ```
 
-Per-chain RPC endpoints come from `apps/indexer/.env`:
+Use the direct Envio commands only when you already have reachable Postgres and
+Hasura services and have exported the indexer environment yourself:
+
+```sh
+pnpm run envio:dev   # runs `envio dev` against existing services
+pnpm run envio:start # runs `envio start` against existing services
+```
+
+Direct runs require `ENVIO_PG_*`, `HASURA_GRAPHQL_ENDPOINT`,
+`HASURA_GRAPHQL_ADMIN_SECRET`, `ENVIO_API_TOKEN`, and per-chain RPC URLs in the
+process environment. `HASURA_GRAPHQL_ENDPOINT` must point at Hasura's metadata
+endpoint, for example `/v1/metadata`.
+
+Per-chain RPC endpoints are:
 
 - `ENVIO_ETHEREUM_RPC_URL`, `ENVIO_ARBITRUM_RPC_URL`,
   `ENVIO_POLYGON_RPC_URL`, `ENVIO_FANTOM_RPC_URL`,

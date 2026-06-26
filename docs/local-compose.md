@@ -38,6 +38,34 @@ Local indexer startup does not reset the Envio database. Compose sets
 work can resume from the existing Postgres volume. Reset-on-start is reserved
 for the Railway indexer runtime.
 
+## Which Command to Run
+
+Use `pnpm run compose:core` when working on indexer handlers, schemas, snapshot
+logic, or Hasura-backed data shape. This is the default local development path
+because Compose provides Postgres, Hasura, and the `ENVIO_PG_*` environment
+variables the startup wrapper requires.
+
+Use `pnpm run compose:up` when you also need the local artifact bucket and
+metrics API, or when validating an end-to-end API flow after the publisher has
+written artifacts.
+
+Use `pnpm run compose:api` or `pnpm run compose:api:rebuild` when the indexing
+core is already running and you are only iterating on storage/API behavior.
+
+Use `pnpm run compose:publish` after the indexer has produced at least one
+complete daily snapshot and you want to generate local `v2/` artifact shards for
+the API.
+
+Use `pnpm run envio:dev` or `pnpm run envio:start` only for direct host runs
+against already reachable Postgres and Hasura services. These commands do not
+start Docker services and do not receive Compose's local defaults. Before
+running them, export `ENVIO_PG_HOST`, `ENVIO_PG_PORT`, `ENVIO_PG_USER`,
+`ENVIO_PG_PASSWORD`, `ENVIO_PG_DATABASE`, `ENVIO_PG_SSL_MODE`,
+`HASURA_GRAPHQL_ENDPOINT`, `HASURA_GRAPHQL_ADMIN_SECRET`, `ENVIO_API_TOKEN`, and
+the per-chain `ENVIO_*_RPC_URL` variables. For the indexer,
+`HASURA_GRAPHQL_ENDPOINT` is the Hasura metadata endpoint, usually
+`/v1/metadata`, not the publisher's `/v1/graphql` endpoint.
+
 ## Split Workflow
 
 For day-to-day development, keep the indexing core running separately because
