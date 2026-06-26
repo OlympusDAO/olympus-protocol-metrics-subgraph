@@ -14,11 +14,11 @@
   "dependencies": {
     "bignumber.js": "9.1.2",
     "envio": "3.0.1",
-    "viem": "2.48.8"
+    "viem": "2.52.2"
   },
   "devDependencies": {
     "@types/node": "24.12.2",
     "typescript": "6.0.3",
-    "vitest": "4.1.0"
+    "vitest": "4.1.9"
   }
 }
