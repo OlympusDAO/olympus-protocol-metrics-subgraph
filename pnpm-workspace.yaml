@@ -14,12 +14,12 @@ minimumReleaseAge: 10080
 # Per-platform binaries must be listed explicitly because pnpm's
 # minimumReleaseAgeExclude does not accept globs.
 minimumReleaseAgeExclude:
-  - "envio@3.0.1"
-  - "envio-linux-x64@3.0.1"
-  - "envio-linux-x64-musl@3.0.1"
-  - "envio-linux-arm64@3.0.1"
-  - "envio-darwin-x64@3.0.1"
-  - "envio-darwin-arm64@3.0.1"
+  - "envio@3.2.1"
+  - "envio-linux-x64@3.2.1"
+  - "envio-linux-x64-musl@3.2.1"
+  - "envio-linux-arm64@3.2.1"
+  - "envio-darwin-x64@3.2.1"
+  - "envio-darwin-arm64@3.2.1"
   # qs@6.15.2 patches GHSA-q8mj-m7cp-5q26 but was released 2026-05-16, inside
   # the 7-day maturity window. Allowlisting the single patched version (not
   # the whole package) preserves the gate for any future qs releases.
