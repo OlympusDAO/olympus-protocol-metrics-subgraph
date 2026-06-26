@@ -38,7 +38,7 @@ export async function applyLogRebase(
   const handler = chainConfig.liquidityHandlers.find(
     (entry) => entry.kind === "gohm" && addr(entry.id) === sOhmAddress,
   );
-  if (!handler || handler.kind !== "gohm") return;
+  if (handler?.kind !== "gohm") return;
 
   const block = BigInt(event.block.number);
   const timestamp = BigInt(event.block.timestamp);
