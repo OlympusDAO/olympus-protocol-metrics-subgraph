@@ -15,6 +15,7 @@ RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get update \
     libgnutls30 \
     libmount1 \
     libnghttp2-14 \
+    libperl5.34 \
     libpq5 \
     libpython3.10-minimal \
     libpython3.10-stdlib \
@@ -28,6 +29,9 @@ RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get update \
     mount \
     msodbcsql18 \
     openssl \
+    perl \
+    perl-base \
+    perl-modules-5.34 \
     postgresql-client-18 \
     postgresql-client-common \
     python3.10 \
