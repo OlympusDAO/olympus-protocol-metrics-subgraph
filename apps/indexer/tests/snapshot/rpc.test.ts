@@ -45,4 +45,17 @@ describe("rpcUrls", () => {
       "Using default public archive RPC for ARBITRUM. Set ENVIO_ARBITRUM_RPC_URL for backfills.",
     );
   });
+
+  test("treats a whitespace-only primary as unset", () => {
+    process.env.ENVIO_ARBITRUM_RPC_URL = "   ";
+    process.env.ENVIO_ARBITRUM_FALLBACK_RPC_URLS = "";
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+
+    expect(
+      rpcUrls("ARBITRUM", "https://default.example.com", ["https://public-fallback.example.com"]),
+    ).toEqual(["https://default.example.com", "https://public-fallback.example.com"]);
+    expect(warn).toHaveBeenCalledWith(
+      "Using default public archive RPC for ARBITRUM. Set ENVIO_ARBITRUM_RPC_URL for backfills.",
+    );
+  });
 });
