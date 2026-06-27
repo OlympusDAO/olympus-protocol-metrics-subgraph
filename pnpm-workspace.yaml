@@ -14,6 +14,10 @@ onlyBuiltDependencies:
   # `strictDepBuilds: true` rejects the install with ERR_PNPM_IGNORED_BUILDS.
   # Pinned to the patched 0.28.1 (see esbuild override below + GHSA fixes).
   - "esbuild@0.28.1"
+allowBuilds:
+  # pnpm 11 records approved dependency build scripts here. Keep this exact:
+  # esbuild is required by Vitest/Vite for native binary installation.
+  esbuild: true
 # All CVE overrides are range-scoped — `pkg@<fixed: fixed` only patches
 # resolutions that fall in the vulnerable range, leaving newer versions
 # alone. Unscoped overrides (e.g. `"pkg": "^X"`) are a footgun: they force
