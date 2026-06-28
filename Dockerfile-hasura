@@ -37,6 +37,7 @@ RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get update \
     python3.10 \
     python3.10-minimal \
     sed \
+    tar \
     util-linux \
   && rm -rf /var/lib/apt/lists/*
 ENV HASURA_GRAPHQL_ENABLE_CONSOLE=false

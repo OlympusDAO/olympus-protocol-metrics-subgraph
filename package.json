@@ -63,5 +63,5 @@
     "npm": "use-pnpm",
     "yarn": "use-pnpm"
   },
-  "packageManager": "pnpm@10.34.3"
+  "packageManager": "pnpm@11.9.0"
 }

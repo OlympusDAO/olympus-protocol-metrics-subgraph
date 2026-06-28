@@ -4,7 +4,11 @@ export function rpcUrls(
   defaultFallbackUrls: string[] = [],
 ): string[] {
   const envPrefix = `ENVIO_${prefix}`;
-  const configuredPrimary = process.env[`${envPrefix}_RPC_URL`]?.trim();
+  const configuredPrimaryInput = process.env[`${envPrefix}_RPC_URL`]?.trim();
+  const configuredPrimary =
+    configuredPrimaryInput && configuredPrimaryInput.length > 0
+      ? configuredPrimaryInput
+      : undefined;
   const primary = configuredPrimary ?? defaultUrl;
   if (!configuredPrimary) {
     console.warn(
@@ -16,5 +20,6 @@ export function rpcUrls(
     .split(",")
     .map((url) => url.trim())
     .filter((url) => url.length > 0);
+  if (configuredPrimary) return [primary, ...fallbacks];
   return [primary, ...(fallbacks.length > 0 ? fallbacks : defaultFallbackUrls)];
 }
