@@ -12,7 +12,7 @@
     "test": "vitest run tests"
   },
   "dependencies": {
-    "bignumber.js": "9.1.2",
+    "bignumber.js": "11.1.4",
     "envio": "3.2.1",
     "viem": "2.53.1"
   },
