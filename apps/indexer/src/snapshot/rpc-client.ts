@@ -164,13 +164,19 @@ export async function getNativeBalance(
 
 function isRetryableRpcError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
+  const name = "name" in error ? String(error.name) : "";
+  if (name === "BlockNotFoundError") return true;
   const status = "status" in error ? Number(error.status) : undefined;
   if (status && RETRYABLE_STATUSES.has(status)) return true;
   const details = "details" in error ? String(error.details) : "";
   const message = "message" in error ? String(error.message) : "";
+  const shortMessage = "shortMessage" in error ? String(error.shortMessage) : "";
   if (details.includes("Too Many Requests")) return true;
   if (details.includes("compute units per second capacity")) return true;
   if (message.includes("compute units per second capacity")) return true;
+  if (shortMessage.includes("could not be found") && shortMessage.includes("Block at number")) {
+    return true;
+  }
   return "cause" in error ? isRetryableRpcError(error.cause) : false;
 }
 
