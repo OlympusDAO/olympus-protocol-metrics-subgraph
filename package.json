@@ -49,10 +49,10 @@
     "bignumber.js": "9.1.2",
     "envio": "3.2.1",
     "tsx": "4.22.4",
-    "viem": "2.52.2"
+    "viem": "2.53.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.0",
+    "@biomejs/biome": "2.5.1",
     "@types/node": "24.12.2",
     "typescript": "6.0.3",
     "vitest": "4.1.9"
