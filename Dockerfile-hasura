@@ -20,6 +20,7 @@ RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get update \
     libpython3.10-minimal \
     libpython3.10-stdlib \
     libsmartcols1 \
+    libsqlite3-0 \
     libssh-4 \
     libssl3 \
     libstdc++6 \
