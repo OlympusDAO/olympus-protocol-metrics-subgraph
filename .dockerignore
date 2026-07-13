@@ -10,6 +10,12 @@
 !apps/indexer/.env.sample
 node_modules
 **/node_modules
+apps/*/tests
+packages/*/tests
+tests
+docs
+tasks
+.github
 build
 dist
 **/build
