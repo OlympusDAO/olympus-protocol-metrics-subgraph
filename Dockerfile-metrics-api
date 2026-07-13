@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.7
 FROM node:24-slim@sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
 
 ENV CI=true
@@ -26,12 +27,12 @@ COPY apps/indexer/package.json apps/indexer/package.json
 COPY apps/metrics-api/package.json apps/metrics-api/package.json
 COPY apps/metrics-publisher/package.json apps/metrics-publisher/package.json
 COPY apps/client/package.json apps/client/package.json
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,target=/pnpm/store,sharing=locked pnpm install --frozen-lockfile
 
 COPY . .
 RUN pnpm --dir apps/indexer codegen
 RUN pnpm run build
-RUN pnpm prune --prod \
+RUN --mount=type=cache,target=/pnpm/store,sharing=locked pnpm prune --prod \
   && rm -rf /app/.pnpm-store /usr/local/bin/npm /usr/local/bin/npx /usr/local/lib/node_modules/npm apps/indexer/.envio apps/*/tests packages/*/tests tests docs tasks .github
 
 USER node

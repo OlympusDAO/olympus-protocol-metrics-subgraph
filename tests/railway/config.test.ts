@@ -146,7 +146,13 @@ describe("Railway config-as-code", () => {
       expect(content).not.toContain("apt-get upgrade");
       expect(content).toContain("COREPACK_HOME=/corepack");
       expect(content).toContain("pnpm --version");
-      expect(content).toContain("pnpm install --frozen-lockfile");
+      expect(content).toContain(
+        "RUN --mount=type=cache,target=/pnpm/store,sharing=locked pnpm install --frozen-lockfile",
+      );
+      expect(content).toContain(
+        "RUN --mount=type=cache,target=/pnpm/store,sharing=locked pnpm prune --prod",
+      );
+      expect(content).toContain("/pnpm/store");
       expect(content).toContain("/usr/local/lib/node_modules/npm");
       expect(content).not.toContain('node", "--version');
       expect(content).toContain("USER node");
