@@ -7,6 +7,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
+import { DEFAULT_EXTERNAL_REQUEST_TIMEOUT_MS, withTimeout } from "./timeout";
 
 export class ArtifactNotFoundError extends Error {
   constructor(readonly key: string) {
@@ -112,6 +113,7 @@ export class S3ArtifactStore implements ArtifactStore {
       accessKeyId: string;
       secretAccessKey: string;
       client?: Pick<S3Client, "send">;
+      requestTimeoutMs?: number;
     },
   ) {
     this.client =
@@ -128,13 +130,16 @@ export class S3ArtifactStore implements ArtifactStore {
   }
 
   async putJson(key: string, value: unknown): Promise<void> {
-    await this.client.send(
-      new PutObjectCommand({
-        Bucket: this.input.bucket,
-        Key: key,
-        Body: serializeJson(value),
-        ContentType: "application/json; charset=utf-8",
-      }),
+    await this.withS3Timeout(
+      this.client.send(
+        new PutObjectCommand({
+          Bucket: this.input.bucket,
+          Key: key,
+          Body: serializeJson(value),
+          ContentType: "application/json; charset=utf-8",
+        }),
+      ),
+      `S3 PutObject ${key}`,
     );
   }
 
@@ -144,11 +149,14 @@ export class S3ArtifactStore implements ArtifactStore {
 
   async getJsonWithMetadata<T>(key: string): Promise<{ value: T; etag?: string }> {
     try {
-      const response = await this.client.send(
-        new GetObjectCommand({
-          Bucket: this.input.bucket,
-          Key: key,
-        }),
+      const response = await this.withS3Timeout(
+        this.client.send(
+          new GetObjectCommand({
+            Bucket: this.input.bucket,
+            Key: key,
+          }),
+        ),
+        `S3 GetObject ${key}`,
       );
       const body = await response.Body?.transformToString();
       if (body === undefined) {
@@ -165,14 +173,17 @@ export class S3ArtifactStore implements ArtifactStore {
 
   async putJsonIfAbsent(key: string, value: unknown): Promise<boolean> {
     try {
-      await this.client.send(
-        new PutObjectCommand({
-          Bucket: this.input.bucket,
-          Key: key,
-          Body: serializeJson(value),
-          ContentType: "application/json; charset=utf-8",
-          IfNoneMatch: "*",
-        }),
+      await this.withS3Timeout(
+        this.client.send(
+          new PutObjectCommand({
+            Bucket: this.input.bucket,
+            Key: key,
+            Body: serializeJson(value),
+            ContentType: "application/json; charset=utf-8",
+            IfNoneMatch: "*",
+          }),
+        ),
+        `S3 PutObject ${key}`,
       );
       return true;
     } catch (error) {
@@ -185,14 +196,17 @@ export class S3ArtifactStore implements ArtifactStore {
 
   async putJsonIfMatch(key: string, value: unknown, etagValue: string): Promise<boolean> {
     try {
-      await this.client.send(
-        new PutObjectCommand({
-          Bucket: this.input.bucket,
-          Key: key,
-          Body: serializeJson(value),
-          ContentType: "application/json; charset=utf-8",
-          IfMatch: etagValue,
-        }),
+      await this.withS3Timeout(
+        this.client.send(
+          new PutObjectCommand({
+            Bucket: this.input.bucket,
+            Key: key,
+            Body: serializeJson(value),
+            ContentType: "application/json; charset=utf-8",
+            IfMatch: etagValue,
+          }),
+        ),
+        `S3 PutObject ${key}`,
       );
       return true;
     } catch (error) {
@@ -204,11 +218,14 @@ export class S3ArtifactStore implements ArtifactStore {
   }
 
   async deleteJson(key: string): Promise<void> {
-    await this.client.send(
-      new DeleteObjectCommand({
-        Bucket: this.input.bucket,
-        Key: key,
-      }),
+    await this.withS3Timeout(
+      this.client.send(
+        new DeleteObjectCommand({
+          Bucket: this.input.bucket,
+          Key: key,
+        }),
+      ),
+      `S3 DeleteObject ${key}`,
     );
   }
 
@@ -216,12 +233,15 @@ export class S3ArtifactStore implements ArtifactStore {
     const keys: string[] = [];
     let continuationToken: string | undefined;
     do {
-      const response = await this.client.send(
-        new ListObjectsV2Command({
-          Bucket: this.input.bucket,
-          Prefix: prefix,
-          ContinuationToken: continuationToken,
-        }),
+      const response = await this.withS3Timeout(
+        this.client.send(
+          new ListObjectsV2Command({
+            Bucket: this.input.bucket,
+            Prefix: prefix,
+            ContinuationToken: continuationToken,
+          }),
+        ),
+        `S3 ListObjectsV2 ${prefix}`,
       );
       for (const object of response.Contents ?? []) {
         if (object.Key !== undefined) {
@@ -235,12 +255,15 @@ export class S3ArtifactStore implements ArtifactStore {
 
   async deleteJsonIfMatch(key: string, etagValue: string): Promise<boolean> {
     try {
-      await this.client.send(
-        new DeleteObjectCommand({
-          Bucket: this.input.bucket,
-          Key: key,
-          IfMatch: etagValue,
-        }),
+      await this.withS3Timeout(
+        this.client.send(
+          new DeleteObjectCommand({
+            Bucket: this.input.bucket,
+            Key: key,
+            IfMatch: etagValue,
+          }),
+        ),
+        `S3 DeleteObject ${key}`,
       );
       return true;
     } catch (error) {
@@ -249,6 +272,13 @@ export class S3ArtifactStore implements ArtifactStore {
       }
       throw error;
     }
+  }
+
+  private async withS3Timeout<T>(operation: Promise<T>, operationName: string): Promise<T> {
+    return withTimeout(operation, {
+      operation: operationName,
+      timeoutMs: this.input.requestTimeoutMs ?? DEFAULT_EXTERNAL_REQUEST_TIMEOUT_MS,
+    });
   }
 }
 
