@@ -158,10 +158,11 @@ export class S3ArtifactStore implements ArtifactStore {
         ),
         `S3 GetObject ${key}`,
       );
-      const body = await response.Body?.transformToString();
-      if (body === undefined) {
+      const bodyRead = response.Body?.transformToString();
+      if (bodyRead === undefined) {
         throw new Error(`Artifact ${key} had no response body.`);
       }
+      const body = await this.withS3Timeout(bodyRead, `S3 GetObject body ${key}`);
       return { value: JSON.parse(body) as T, etag: response.ETag };
     } catch (error) {
       if (isNotFoundError(error)) {

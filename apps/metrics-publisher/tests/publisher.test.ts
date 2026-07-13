@@ -1095,6 +1095,35 @@ describe("metrics publisher", () => {
     await assertion;
   });
 
+  test("S3-compatible store times out when a download body never settles", async () => {
+    vi.useFakeTimers();
+    const store = new S3ArtifactStore({
+      endpoint: "https://r2.example.com",
+      region: "auto",
+      bucket: "metrics",
+      accessKeyId: "access-key",
+      secretAccessKey: "secret-key",
+      requestTimeoutMs: 5,
+      client: {
+        async send() {
+          return {
+            Body: {
+              transformToString: () => new Promise<string>(() => {}),
+            },
+          };
+        },
+      },
+    });
+
+    const download = store.getJson("v2/manifest.json");
+    const assertion = expect(download).rejects.toThrow(
+      "S3 GetObject body v2/manifest.json timed out after 5ms.",
+    );
+    await vi.advanceTimersByTimeAsync(5);
+
+    await assertion;
+  });
+
   test("creates production source and store from documented Railway variables", () => {
     expect(
       createMetricsSourceFromEnv({

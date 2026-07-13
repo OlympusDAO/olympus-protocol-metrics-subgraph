@@ -11,6 +11,8 @@ export async function withTimeout<T>(
   operation: Promise<T>,
   input: { operation: string; timeoutMs: number },
 ): Promise<T> {
+  // The operation may already be in flight before timeout validation runs.
+  void operation.catch(() => {});
   validateTimeoutMs(input.timeoutMs);
   let timeout: ReturnType<typeof setTimeout> | undefined;
   try {

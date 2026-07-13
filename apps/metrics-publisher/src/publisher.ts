@@ -22,7 +22,7 @@ import {
   type MetricsSource,
   type PublishBoundsCompleteness,
 } from "./metrics-source";
-import { DEFAULT_EXTERNAL_REQUEST_TIMEOUT_MS } from "./timeout";
+import { DEFAULT_EXTERNAL_REQUEST_TIMEOUT_MS, validateTimeoutMs } from "./timeout";
 
 export {
   type ArtifactStore,
@@ -594,7 +594,9 @@ function parseOptionalPositiveIntegerEnv(
     return defaultValue;
   }
   const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed < 1) {
+  try {
+    validateTimeoutMs(parsed);
+  } catch {
     throw new Error(`${name} must be a positive integer.`);
   }
   return parsed;
