@@ -31,7 +31,6 @@ COPY . .
 RUN pnpm install --frozen-lockfile \
   && pnpm --dir apps/indexer codegen \
   && pnpm run build \
-  && pnpm prune --prod \
   && rm -rf /app/.pnpm-store /pnpm/store /root/.cache/pnpm /usr/local/bin/npm /usr/local/bin/npx /usr/local/lib/node_modules/npm apps/*/tests packages/*/tests tests docs tasks .github
 RUN chown -R node:node apps/indexer/.envio
 

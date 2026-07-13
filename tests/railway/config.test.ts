@@ -148,6 +148,7 @@ describe("Railway config-as-code", () => {
       expect(content).toContain("pnpm --version");
       expect(content).toContain("RUN pnpm install --frozen-lockfile");
       expect(content).not.toContain("--mount=type=cache");
+      expect(content).not.toContain("pnpm prune --prod");
       expect(content).toContain("/pnpm/store");
       expect(content).toContain("/root/.cache/pnpm");
       expect(content).toContain("/usr/local/lib/node_modules/npm");
