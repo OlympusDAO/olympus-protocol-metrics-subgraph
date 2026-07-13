@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import type {
   DailyMetric,
   Manifest,
@@ -18,6 +18,10 @@ import {
   publishMetricsArtifactsFromEnv,
   S3ArtifactStore,
 } from "../src/publisher";
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 const generatedAt = "2026-06-01T08:15:00.000Z";
 
@@ -1068,6 +1072,58 @@ describe("metrics publisher", () => {
     });
   });
 
+  test("S3-compatible store times out when an upload never settles", async () => {
+    vi.useFakeTimers();
+    const store = new S3ArtifactStore({
+      endpoint: "https://r2.example.com",
+      region: "auto",
+      bucket: "metrics",
+      accessKeyId: "access-key",
+      secretAccessKey: "secret-key",
+      requestTimeoutMs: 5,
+      client: {
+        send: () => new Promise(() => {}),
+      },
+    });
+
+    const upload = store.putJson("v2/manifest.json", { ok: true });
+    const assertion = expect(upload).rejects.toThrow(
+      "S3 PutObject v2/manifest.json timed out after 5ms.",
+    );
+    await vi.advanceTimersByTimeAsync(5);
+
+    await assertion;
+  });
+
+  test("S3-compatible store times out when a download body never settles", async () => {
+    vi.useFakeTimers();
+    const store = new S3ArtifactStore({
+      endpoint: "https://r2.example.com",
+      region: "auto",
+      bucket: "metrics",
+      accessKeyId: "access-key",
+      secretAccessKey: "secret-key",
+      requestTimeoutMs: 5,
+      client: {
+        async send() {
+          return {
+            Body: {
+              transformToString: () => new Promise<string>(() => {}),
+            },
+          };
+        },
+      },
+    });
+
+    const download = store.getJson("v2/manifest.json");
+    const assertion = expect(download).rejects.toThrow(
+      "S3 GetObject body v2/manifest.json timed out after 5ms.",
+    );
+    await vi.advanceTimersByTimeAsync(5);
+
+    await assertion;
+  });
+
   test("creates production source and store from documented Railway variables", () => {
     expect(
       createMetricsSourceFromEnv({
@@ -1159,6 +1215,22 @@ describe("metrics publisher", () => {
     });
     expect(requestBody?.query).toContain("crossChainComplete");
     expect(requestBody?.query).toContain("_eq: true");
+  });
+
+  test("Hasura source times out when a GraphQL request never settles", async () => {
+    vi.useFakeTimers();
+    const source = new HasuraGraphqlMetricsSource({
+      endpoint: "http://hasura.internal/v1/graphql",
+      adminSecret: "secret",
+      requestTimeoutMs: 5,
+      fetchFn: () => new Promise<Response>(() => {}),
+    });
+
+    const bounds = source.fetchBounds();
+    const assertion = expect(bounds).rejects.toThrow("Hasura GraphQL request timed out after 5ms.");
+    await vi.advanceTimersByTimeAsync(5);
+
+    await assertion;
   });
 
   test("Hasura source uses all supported chain ids for first deployment publish bounds", async () => {

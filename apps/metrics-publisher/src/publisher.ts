@@ -22,6 +22,7 @@ import {
   type MetricsSource,
   type PublishBoundsCompleteness,
 } from "./metrics-source";
+import { DEFAULT_EXTERNAL_REQUEST_TIMEOUT_MS, validateTimeoutMs } from "./timeout";
 
 export {
   type ArtifactStore,
@@ -316,20 +317,28 @@ export async function publishMetricsArtifacts(input: {
   }
 }
 
-export function createMetricsSourceFromEnv(env: NodeJS.ProcessEnv): HasuraGraphqlMetricsSource {
+export function createMetricsSourceFromEnv(
+  env: NodeJS.ProcessEnv,
+  requestTimeoutMs = DEFAULT_EXTERNAL_REQUEST_TIMEOUT_MS,
+): HasuraGraphqlMetricsSource {
   return new HasuraGraphqlMetricsSource({
     endpoint: requiredEnv(env, "HASURA_GRAPHQL_ENDPOINT"),
     adminSecret: requiredEnv(env, "HASURA_GRAPHQL_ADMIN_SECRET"),
+    requestTimeoutMs,
   });
 }
 
-export function createArtifactStoreFromEnv(env: NodeJS.ProcessEnv): S3ArtifactStore {
+export function createArtifactStoreFromEnv(
+  env: NodeJS.ProcessEnv,
+  requestTimeoutMs = DEFAULT_EXTERNAL_REQUEST_TIMEOUT_MS,
+): S3ArtifactStore {
   return new S3ArtifactStore({
     bucket: requiredEnv(env, "ARTIFACT_BUCKET"),
     endpoint: requiredEnv(env, "ARTIFACT_ENDPOINT"),
     region: requiredEnv(env, "ARTIFACT_REGION"),
     accessKeyId: requiredEnv(env, "ARTIFACT_ACCESS_KEY_ID"),
     secretAccessKey: requiredEnv(env, "ARTIFACT_SECRET_ACCESS_KEY"),
+    requestTimeoutMs,
   });
 }
 
@@ -338,12 +347,17 @@ export async function publishMetricsArtifactsFromEnv(
   deps: { source?: MetricsSource; store?: ArtifactStore; now?: () => Date } = {},
 ): Promise<PublishResult> {
   const lockTtlMs = optionalEnv(env, "PUBLISHER_LOCK_TTL_MS");
+  const requestTimeoutMs = parseOptionalPositiveIntegerEnv(
+    env,
+    "PUBLISHER_REQUEST_TIMEOUT_MS",
+    DEFAULT_EXTERNAL_REQUEST_TIMEOUT_MS,
+  );
   return publishMetricsArtifacts({
     publicStartDate: optionalEnv(env, "PUBLISHER_PUBLIC_START_DATE"),
     startDate: optionalEnv(env, "PUBLISHER_START_DATE"),
     endDate: optionalEnv(env, "PUBLISHER_END_DATE"),
-    source: deps.source ?? createMetricsSourceFromEnv(env),
-    store: deps.store ?? createArtifactStoreFromEnv(env),
+    source: deps.source ?? createMetricsSourceFromEnv(env, requestTimeoutMs),
+    store: deps.store ?? createArtifactStoreFromEnv(env, requestTimeoutMs),
     now: deps.now,
     lockTtlMs: lockTtlMs === undefined ? undefined : Number(lockTtlMs),
     deploymentId: resolvePublisherDeploymentId(env),
@@ -568,6 +582,24 @@ function requiredEnv(env: NodeJS.ProcessEnv, name: string): string {
 function optionalEnv(env: NodeJS.ProcessEnv, name: string): string | undefined {
   const value = env[name]?.trim();
   return value === "" ? undefined : value;
+}
+
+function parseOptionalPositiveIntegerEnv(
+  env: NodeJS.ProcessEnv,
+  name: string,
+  defaultValue: number,
+): number {
+  const value = optionalEnv(env, name);
+  if (value === undefined) {
+    return defaultValue;
+  }
+  const parsed = Number(value);
+  try {
+    validateTimeoutMs(parsed);
+  } catch {
+    throw new Error(`${name} must be a positive integer.`);
+  }
+  return parsed;
 }
 
 function parseDeploymentId(value: string): string {

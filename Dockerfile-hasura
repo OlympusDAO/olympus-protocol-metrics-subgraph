@@ -6,6 +6,7 @@ RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get update \
     curl \
     distro-info-data \
     gcc-12-base \
+    gzip \
     libblkid1 \
     libcap2 \
     libcurl4 \
@@ -19,6 +20,7 @@ RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get update \
     libpq5 \
     libpython3.10-minimal \
     libpython3.10-stdlib \
+    libsqlite3-0 \
     libsmartcols1 \
     libsqlite3-0 \
     libssh-4 \

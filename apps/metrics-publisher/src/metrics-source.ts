@@ -13,6 +13,7 @@ import {
   type SupplyCategoryValues,
   type TreasuryAsset,
 } from "../../../packages/metrics-artifacts/src";
+import { DEFAULT_EXTERNAL_REQUEST_TIMEOUT_MS, withTimeout } from "./timeout";
 
 export type MetricsBounds = {
   earliestDate: string;
@@ -94,6 +95,7 @@ export class HasuraGraphqlMetricsSource implements MetricsSource {
       adminSecret: string;
       fetchFn?: typeof fetch;
       pageSize?: number;
+      requestTimeoutMs?: number;
     },
   ) {}
 
@@ -220,14 +222,20 @@ export class HasuraGraphqlMetricsSource implements MetricsSource {
 
   private async graphql<T>(query: string, variables?: Record<string, unknown>): Promise<T> {
     const fetchFn = this.input.fetchFn ?? fetch;
-    const response = await fetchFn(this.input.endpoint, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-hasura-admin-secret": this.input.adminSecret,
+    const response = await withTimeout(
+      fetchFn(this.input.endpoint, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-hasura-admin-secret": this.input.adminSecret,
+        },
+        body: JSON.stringify({ query, variables }),
+      }),
+      {
+        operation: "Hasura GraphQL request",
+        timeoutMs: this.input.requestTimeoutMs ?? DEFAULT_EXTERNAL_REQUEST_TIMEOUT_MS,
       },
-      body: JSON.stringify({ query, variables }),
-    });
+    );
     if (!response.ok) {
       throw new Error(`Hasura GraphQL request failed: ${response.status} ${await response.text()}`);
     }

@@ -199,6 +199,10 @@ publisher writes immutable monthly JSON shards before publishing the manifest.
 - Optional `PUBLISHER_LOCK_TTL_MS`: S3 lock timeout for overlapping cron runs. The
   documented default is 12 hours (`43200000`) so a slow first bootstrap is not
   overtaken by the next hourly cron.
+- Optional `PUBLISHER_REQUEST_TIMEOUT_MS`: per Hasura GraphQL or S3 request
+  timeout. The documented default is 60 seconds (`60000`) so network stalls fail
+  with an explicit timeout instead of leaving the one-shot publisher process
+  pending.
 - Automatically set on Railway `RAILWAY_GIT_COMMIT_SHA`: Railway provides this
   to GitHub-triggered deployments. The publisher uses it as the indexer artifact
   deployment id because the publisher watches indexer source and redeploys from
