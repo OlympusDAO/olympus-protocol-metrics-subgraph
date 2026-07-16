@@ -14,7 +14,7 @@ RUN apt-get update \
 
 RUN mkdir -p /corepack /pnpm \
   && corepack enable \
-  && corepack prepare pnpm@11.9.0 --activate \
+  && corepack prepare pnpm@11.13.0 --activate \
   && pnpm --version \
   && chown -R node:node /corepack /pnpm
 
