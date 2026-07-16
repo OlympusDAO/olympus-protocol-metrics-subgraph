@@ -2,22 +2,16 @@ packages:
   - apps/*
   - packages/*
 
-minimumReleaseAge: 10080
-preferFrozenLockfile: true
-engineStrict: true
-strictDepBuilds: true
 blockExoticSubdeps: true
-onlyBuiltDependencies:
-  - "es5-ext@0.10.64"
+engineStrict: true
+minimumReleaseAge: 10080
+allowBuilds:
+  "es5-ext@0.10.63": true
   # esbuild ships native binaries it builds on install; required because
   # vitest (our test runner) depends on it transitively. Without this entry,
   # `strictDepBuilds: true` rejects the install with ERR_PNPM_IGNORED_BUILDS.
   # Pinned to the patched 0.28.1 (see esbuild override below + GHSA fixes).
-  - "esbuild@0.28.1"
-allowBuilds:
-  # pnpm 11 records approved dependency build scripts here. Keep this exact:
-  # esbuild is required by Vitest/Vite for native binary installation.
-  esbuild: true
+  "esbuild@0.28.1": true
 # All CVE overrides are range-scoped — `pkg@<fixed: fixed` only patches
 # resolutions that fall in the vulnerable range, leaving newer versions
 # alone. Unscoped overrides (e.g. `"pkg": "^X"`) are a footgun: they force
@@ -107,3 +101,5 @@ overrides:
   # fixed in 0.28.1. vite@8.0.16 accepts esbuild ^0.27.0 || ^0.28.0, so the
   # bump is peer-compatible.
   "esbuild@>=0.17.0 <0.28.1": "0.28.1"
+preferFrozenLockfile: true
+strictDepBuilds: true

@@ -1,4 +1,4 @@
-FROM node:24-slim@sha256:242549cd46785b480c832479a730f4f2a20865d61ea2e404fdb2a5c3d3b73ecf
+FROM node:24-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
 
 ENV CI=true
 ENV PNPM_HOME=/pnpm
@@ -14,7 +14,7 @@ RUN apt-get update \
 
 RUN mkdir -p /corepack /pnpm \
   && corepack enable \
-  && corepack prepare pnpm@11.9.0 --activate \
+  && corepack prepare pnpm@11.13.0 --activate \
   && pnpm --version \
   && chown -R node:node /corepack /pnpm
 
