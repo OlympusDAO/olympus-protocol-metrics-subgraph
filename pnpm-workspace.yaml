@@ -6,7 +6,7 @@ blockExoticSubdeps: true
 engineStrict: true
 minimumReleaseAge: 10080
 allowBuilds:
-  "es5-ext@0.10.64": true
+  "es5-ext@0.10.63": true
   # esbuild ships native binaries it builds on install; required because
   # vitest (our test runner) depends on it transitively. Without this entry,
   # `strictDepBuilds: true` rejects the install with ERR_PNPM_IGNORED_BUILDS.
