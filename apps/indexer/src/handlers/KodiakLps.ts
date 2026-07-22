@@ -52,6 +52,7 @@ indexer.contractRegister(
   {
     contract: "KodiakLp",
     event: "Transfer",
+    where: buildLpTransferWhere,
   },
   async ({ event, context }) => {
     const config = CHAIN_CONFIGS[event.chainId as ChainId];
