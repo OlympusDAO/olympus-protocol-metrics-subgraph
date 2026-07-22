@@ -86,4 +86,56 @@ describe("retryRpc", () => {
     await expect(result).resolves.toBe("ok");
     expect(operation).toHaveBeenCalledTimes(2);
   });
+
+  test("retries provider internal errors wrapped as invalid input", async () => {
+    vi.useFakeTimers();
+    const rpcRequest = Object.assign(new Error("RPC Request failed."), {
+      name: "RpcRequestError",
+      details: "Internal error",
+    });
+    const invalidInput = Object.assign(new Error("Missing or invalid parameters."), {
+      name: "InvalidInputRpcError",
+      cause: rpcRequest,
+    });
+    const callExecution = Object.assign(new Error("Contract call failed."), {
+      name: "CallExecutionError",
+      cause: invalidInput,
+    });
+    const operation = vi.fn().mockRejectedValueOnce(callExecution).mockResolvedValueOnce("ok");
+
+    const result = retryRpc(operation);
+
+    await vi.advanceTimersByTimeAsync(1_000);
+    await expect(result).resolves.toBe("ok");
+    expect(operation).toHaveBeenCalledTimes(2);
+  });
+
+  test.each([
+    Object.assign(new Error("An internal error was received."), {
+      name: "InternalRpcError",
+    }),
+    Object.assign(new Error("RPC Request failed."), {
+      code: -32603,
+    }),
+  ])("retries canonical JSON-RPC internal errors", async (internalError) => {
+    vi.useFakeTimers();
+    const operation = vi.fn().mockRejectedValueOnce(internalError).mockResolvedValueOnce("ok");
+
+    const result = retryRpc(operation);
+
+    await vi.advanceTimersByTimeAsync(1_000);
+    await expect(result).resolves.toBe("ok");
+    expect(operation).toHaveBeenCalledTimes(2);
+  });
+
+  test("does not retry genuine invalid-input errors", async () => {
+    const invalidInput = Object.assign(new Error("Missing or invalid parameters."), {
+      name: "InvalidInputRpcError",
+      details: "Invalid params",
+    });
+    const operation = vi.fn().mockRejectedValue(invalidInput);
+
+    await expect(retryRpc(operation)).rejects.toBe(invalidInput);
+    expect(operation).toHaveBeenCalledTimes(1);
+  });
 });
