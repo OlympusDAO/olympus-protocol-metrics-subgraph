@@ -167,9 +167,9 @@ function isRetryableRpcError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
   const name = "name" in error ? String(error.name) : "";
   if (name === "BlockNotFoundError") return true;
-  const code = "code" in error ? Number(error.code) : undefined;
+  const code = "code" in error ? toNumber(error.code) : undefined;
   if (name === "InternalRpcError" || code === INTERNAL_RPC_ERROR_CODE) return true;
-  const status = "status" in error ? Number(error.status) : undefined;
+  const status = "status" in error ? toNumber(error.status) : undefined;
   if (status && RETRYABLE_STATUSES.has(status)) return true;
   const details = "details" in error ? String(error.details) : "";
   const message = "message" in error ? String(error.message) : "";
@@ -182,6 +182,10 @@ function isRetryableRpcError(error: unknown): boolean {
     return true;
   }
   return "cause" in error ? isRetryableRpcError(error.cause) : false;
+}
+
+function toNumber(value: unknown): number | undefined {
+  return typeof value === "number" || typeof value === "string" ? Number(value) : undefined;
 }
 
 function sleep(ms: number): Promise<void> {
