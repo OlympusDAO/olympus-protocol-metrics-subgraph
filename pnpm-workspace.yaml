@@ -5,6 +5,15 @@ packages:
 blockExoticSubdeps: true
 engineStrict: true
 minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  # Explicitly approved while Envio 3.3.2 and its platform binaries are under
+  # the registry's `next` tag.
+  - "envio@3.3.2"
+  - "envio-darwin-arm64@3.3.2"
+  - "envio-darwin-x64@3.3.2"
+  - "envio-linux-arm64@3.3.2"
+  - "envio-linux-x64@3.3.2"
+  - "envio-linux-x64-musl@3.3.2"
 allowBuilds:
   "es5-ext@0.10.63": true
   # esbuild ships native binaries it builds on install; required because
@@ -76,7 +85,7 @@ overrides:
   # Envio bundles express + ws; patches the transitive advisories CI's
   # audit gate flagged at moderate+. Pinned to ranges known to address
   # each CVE without churning unrelated majors.
-  "body-parser@<1.20.3": "1.20.3"
+  "body-parser@<1.20.6": "1.20.6"
   "cookie@<0.7.0": "0.7.0"
   "express@<4.20.0": "4.20.0"
   "path-to-regexp@<0.1.13": "0.1.13"

@@ -33,6 +33,7 @@ const VIEM_CHAIN_BY_ID: Record<ChainId, Chain> = {
 
 const clients = new Map<number, PublicClient>();
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
+const INTERNAL_RPC_ERROR_CODE = -32603;
 const MAX_RPC_ATTEMPTS = 6;
 const BASE_RETRY_DELAY_MS = 1_000;
 const DEFAULT_HTTP_BATCH_SIZE = 10;
@@ -166,18 +167,25 @@ function isRetryableRpcError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
   const name = "name" in error ? String(error.name) : "";
   if (name === "BlockNotFoundError") return true;
-  const status = "status" in error ? Number(error.status) : undefined;
+  const code = "code" in error ? toNumber(error.code) : undefined;
+  if (name === "InternalRpcError" || code === INTERNAL_RPC_ERROR_CODE) return true;
+  const status = "status" in error ? toNumber(error.status) : undefined;
   if (status && RETRYABLE_STATUSES.has(status)) return true;
   const details = "details" in error ? String(error.details) : "";
   const message = "message" in error ? String(error.message) : "";
   const shortMessage = "shortMessage" in error ? String(error.shortMessage) : "";
   if (details.includes("Too Many Requests")) return true;
   if (details.includes("compute units per second capacity")) return true;
+  if (details.trim().toLowerCase() === "internal error") return true;
   if (message.includes("compute units per second capacity")) return true;
   if (shortMessage.includes("could not be found") && shortMessage.includes("Block at number")) {
     return true;
   }
   return "cause" in error ? isRetryableRpcError(error.cause) : false;
+}
+
+function toNumber(value: unknown): number | undefined {
+  return typeof value === "number" || typeof value === "string" ? Number(value) : undefined;
 }
 
 function sleep(ms: number): Promise<void> {
