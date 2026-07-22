@@ -59,8 +59,8 @@ importers:
   .:
     dependencies:
       bignumber.js:
-        specifier: 9.1.2
-        version: 9.1.2
+        specifier: 11.1.5
+        version: 11.1.5
       envio:
         specifier: 3.3.2
         version: 3.3.2(react-dom@19.2.6(react@19.2.5))(typescript@6.0.3)(vitest@4.1.9(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))(zod@3.25.76)
@@ -89,8 +89,8 @@ importers:
   apps/indexer:
     dependencies:
       bignumber.js:
-        specifier: 9.1.2
-        version: 9.1.2
+        specifier: 11.1.5
+        version: 11.1.5
       envio:
         specifier: 3.3.2
         version: 3.3.2(react-dom@19.2.6(react@19.2.7))(typescript@6.0.3)(vitest@4.1.9(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))(zod@3.25.76)
@@ -790,8 +790,8 @@ packages:
     resolution: {integrity: sha512-ooviqdwwgfIfNmDwo94wlshcdzfO64XV0Cg6oDsDYBJfITDz1EngD2z7DkbvCWn+XIMsIqW27sEVF6qcpJrRcg==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  bignumber.js@9.1.2:
-    resolution: {integrity: sha512-2/mKyZH9K85bzOEfhXDBFZTGd1CTs+5IHpeFQo9luiBG7hghdC851Pj2WAhb6E3R6b9tZj/XKhbg4fum+Kepug==}
+  bignumber.js@11.1.5:
+    resolution: {integrity: sha512-6WmzCNtUnfKpbozq+hOgWaZMMzORmYBwF1xZScyoIX3QRYWeKTtxxwDOW5tIz7C9BdjkIYHGTcelCLkXg0mndw==}
 
   bignumber.js@9.3.1:
     resolution: {integrity: sha512-Ko0uX15oIUS7wJ3Rb30Fs6SkVbLmPBAKdlm7q9+ak9bbIeFf0MwuBsQV6z7+X768/cHsfg+WlysDWJcmthjsjQ==}
@@ -2592,7 +2592,7 @@ snapshots:
 
   auto-bind@5.0.1: {}
 
-  bignumber.js@9.1.2: {}
+  bignumber.js@11.1.5: {}
 
   bignumber.js@9.3.1: {}
 
