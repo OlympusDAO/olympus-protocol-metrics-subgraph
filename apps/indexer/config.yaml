@@ -463,6 +463,7 @@ chains:
       - name: UniswapV3Pool
         address:
           - "0x88051b0eea095007d3bef21ab287be961f3d8598" # WETH-OHM
+          - "0x584eC2562b937C4AC0452184D8d83346382B5D3a" # WETH-OHM 1% (Treasury concentrated POL)
           - "0x0858e2B0F9D75f7300B38D64482aC2C8DF06a755" # OHM-sUSDS (also POL — NFT positions)
           - "0x109830a1aaad605bbf02a9dfa7b0b92ec2fb7daa" # WETH-wstETH
           - "0x202A6012894Ae5c288eA824cbc8A9bfb26A49b93" # weETH-WETH
