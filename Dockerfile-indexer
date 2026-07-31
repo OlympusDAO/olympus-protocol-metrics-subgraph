@@ -41,6 +41,8 @@ RUN chown -R node:node apps/indexer/.envio
 
 ENV PATH=/app/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
+WORKDIR /app/apps/indexer
+
 USER node
 
-CMD ["tsx", "apps/indexer/src/start-envio.ts", "start"]
+CMD ["tsx", "src/start-envio.ts", "start"]

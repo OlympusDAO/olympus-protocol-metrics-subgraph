@@ -41,7 +41,9 @@ RUN pnpm --dir apps/indexer codegen \
 
 ENV PATH=/app/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
+WORKDIR /app/apps/metrics-api
+
 USER node
 
 EXPOSE 3000
-CMD ["tsx", "apps/metrics-api/src/cli.ts"]
+CMD ["tsx", "src/cli.ts"]

@@ -171,18 +171,19 @@ describe("Railway config-as-code", () => {
     expect(readFileSync("Dockerfile-hasura", "utf8")).toContain("--only-upgrade");
     expect(readFileSync("Dockerfile-hasura", "utf8")).not.toContain("apt-get upgrade");
     const indexerDockerfile = readFileSync("Dockerfile-indexer", "utf8");
-    expect(indexerDockerfile).toContain('CMD ["tsx", "apps/indexer/src/start-envio.ts", "start"]');
+    expect(indexerDockerfile).toContain("WORKDIR /app/apps/indexer");
+    expect(indexerDockerfile).toContain('CMD ["tsx", "src/start-envio.ts", "start"]');
     expect(indexerDockerfile).toContain("chown -R node:node apps/indexer/.envio");
     const metricsApiDockerfile = readFileSync("Dockerfile-metrics-api", "utf8");
     const metricsPublisherDockerfile = readFileSync("Dockerfile-metrics-publisher", "utf8");
     expect(metricsApiDockerfile).toContain("pnpm --dir apps/indexer codegen");
     expect(metricsApiDockerfile).toContain("apps/indexer/.envio");
-    expect(metricsApiDockerfile).toContain('CMD ["tsx", "apps/metrics-api/src/cli.ts"]');
+    expect(metricsApiDockerfile).toContain("WORKDIR /app/apps/metrics-api");
+    expect(metricsApiDockerfile).toContain('CMD ["tsx", "src/cli.ts"]');
     expect(metricsPublisherDockerfile).toContain("pnpm --dir apps/indexer codegen");
     expect(metricsPublisherDockerfile).toContain("apps/indexer/.envio");
-    expect(metricsPublisherDockerfile).toContain(
-      'CMD ["tsx", "apps/metrics-publisher/src/cli.ts"]',
-    );
+    expect(metricsPublisherDockerfile).toContain("WORKDIR /app/apps/metrics-publisher");
+    expect(metricsPublisherDockerfile).toContain('CMD ["tsx", "src/cli.ts"]');
   });
 
   test("fails Hasura early when required Railway env variables are missing", () => {
