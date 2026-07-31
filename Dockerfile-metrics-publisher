@@ -33,8 +33,14 @@ RUN pnpm install --frozen-lockfile \
 COPY . .
 RUN pnpm --dir apps/indexer codegen \
   && pnpm run build \
-  && rm -rf /app/.pnpm-store /pnpm/store /root/.cache/pnpm /usr/local/bin/npm /usr/local/bin/npx /usr/local/lib/node_modules/npm apps/indexer/.envio
+  && rm -rf /app/.pnpm-store /corepack /pnpm /root/.cache/pnpm \
+    /usr/local/bin/corepack /usr/local/bin/npm /usr/local/bin/npx \
+    /usr/local/bin/pnpm /usr/local/bin/pnpx \
+    /usr/local/lib/node_modules/corepack /usr/local/lib/node_modules/npm \
+    apps/indexer/.envio
+
+ENV PATH=/app/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 USER node
 
-CMD ["pnpm", "--dir", "apps/metrics-publisher", "start"]
+CMD ["tsx", "apps/metrics-publisher/src/cli.ts"]
