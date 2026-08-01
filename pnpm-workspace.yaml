@@ -15,7 +15,6 @@ minimumReleaseAgeExclude:
   - "envio-linux-x64@3.3.2"
   - "envio-linux-x64-musl@3.3.2"
 allowBuilds:
-  "es5-ext@0.10.63": true
   # esbuild ships native binaries it builds on install; required because
   # vitest (our test runner) depends on it transitively. Without this entry,
   # `strictDepBuilds: true` rejects the install with ERR_PNPM_IGNORED_BUILDS.
@@ -92,6 +91,9 @@ overrides:
   "qs@<6.15.2": "6.15.2"
   "send@<0.19.0": "0.19.0"
   "serve-static@<1.16.0": "1.16.0"
+  # postcss GHSA-r28c-9q8g-f849 (high, arbitrary source-map disclosure),
+  # fixed in 8.5.18. Use the newest patched release past the 7-day cutoff.
+  "postcss@<=8.5.17": "8.5.22"
   # ws GHSA-96hv-2xvq-fx4p (high, memory-exhaustion DoS from tiny fragments),
   # fixed in 8.21.0. Pulled transitively via envio>ink>ws. The prior cap of
   # 8.20.1 predates this advisory and is still vulnerable; bumped to 8.21.0

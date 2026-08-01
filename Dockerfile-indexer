@@ -33,9 +33,16 @@ RUN pnpm install --frozen-lockfile \
 COPY . .
 RUN pnpm --dir apps/indexer codegen \
   && pnpm run build \
-  && rm -rf /app/.pnpm-store /pnpm/store /root/.cache/pnpm /usr/local/bin/npm /usr/local/bin/npx /usr/local/lib/node_modules/npm
+  && rm -rf /app/.pnpm-store /corepack /pnpm /root/.cache/pnpm \
+    /usr/local/bin/corepack /usr/local/bin/npm /usr/local/bin/npx \
+    /usr/local/bin/pnpm /usr/local/bin/pnpx \
+    /usr/local/lib/node_modules/corepack /usr/local/lib/node_modules/npm
 RUN chown -R node:node apps/indexer/.envio
+
+ENV PATH=/app/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+WORKDIR /app/apps/indexer
 
 USER node
 
-CMD ["pnpm", "--dir", "apps/indexer", "envio:start"]
+CMD ["tsx", "src/start-envio.ts", "start"]

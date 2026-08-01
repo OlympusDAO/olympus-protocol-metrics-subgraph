@@ -9,13 +9,23 @@ RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get update \
     gzip \
     libblkid1 \
     libcap2 \
+    libc-bin \
+    libc6 \
     libcurl4 \
     libexpat1 \
     libgcc-s1 \
     libgcrypt20 \
+    libgssapi-krb5-2 \
     libgnutls30 \
+    libk5crypto3 \
+    libkrb5-3 \
+    libkrb5support0 \
     libmount1 \
     libnghttp2-14 \
+    libpam-modules \
+    libpam-modules-bin \
+    libpam-runtime \
+    libpam0g \
     libperl5.34 \
     libpq5 \
     libpython3.10-minimal \

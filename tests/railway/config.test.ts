@@ -161,25 +161,29 @@ describe("Railway config-as-code", () => {
       expect(content).not.toContain("pnpm prune --prod");
       expect(content).toContain("/pnpm/store");
       expect(content).toContain("/root/.cache/pnpm");
+      expect(content).toContain("/usr/local/lib/node_modules/corepack");
       expect(content).toContain("/usr/local/lib/node_modules/npm");
+      expect(content).toContain("ENV PATH=/app/node_modules/.bin:");
       expect(content).not.toContain('node", "--version');
       expect(content).toContain("USER node");
     }
 
     expect(readFileSync("Dockerfile-hasura", "utf8")).toContain("--only-upgrade");
     expect(readFileSync("Dockerfile-hasura", "utf8")).not.toContain("apt-get upgrade");
-    expect(readFileSync("Dockerfile-indexer", "utf8")).toContain("envio:start");
-    expect(readFileSync("Dockerfile-indexer", "utf8")).toContain(
-      "chown -R node:node apps/indexer/.envio",
-    );
+    const indexerDockerfile = readFileSync("Dockerfile-indexer", "utf8");
+    expect(indexerDockerfile).toContain("WORKDIR /app/apps/indexer");
+    expect(indexerDockerfile).toContain('CMD ["tsx", "src/start-envio.ts", "start"]');
+    expect(indexerDockerfile).toContain("chown -R node:node apps/indexer/.envio");
     const metricsApiDockerfile = readFileSync("Dockerfile-metrics-api", "utf8");
     const metricsPublisherDockerfile = readFileSync("Dockerfile-metrics-publisher", "utf8");
     expect(metricsApiDockerfile).toContain("pnpm --dir apps/indexer codegen");
     expect(metricsApiDockerfile).toContain("apps/indexer/.envio");
-    expect(metricsApiDockerfile).toContain("apps/metrics-api");
+    expect(metricsApiDockerfile).toContain("WORKDIR /app/apps/metrics-api");
+    expect(metricsApiDockerfile).toContain('CMD ["tsx", "src/cli.ts"]');
     expect(metricsPublisherDockerfile).toContain("pnpm --dir apps/indexer codegen");
     expect(metricsPublisherDockerfile).toContain("apps/indexer/.envio");
-    expect(metricsPublisherDockerfile).toContain("apps/metrics-publisher");
+    expect(metricsPublisherDockerfile).toContain("WORKDIR /app/apps/metrics-publisher");
+    expect(metricsPublisherDockerfile).toContain('CMD ["tsx", "src/cli.ts"]');
   });
 
   test("fails Hasura early when required Railway env variables are missing", () => {
