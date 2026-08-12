@@ -144,7 +144,7 @@ export async function publishMetricsArtifacts(input: {
 }): Promise<PublishResult> {
   const source = input.source ?? new EmptyMetricsSource();
   const store = input.store ?? new MemoryArtifactStore();
-  const now = input.now?.() ?? new Date(DEFAULT_GENERATED_AT);
+  const now = input.now?.() ?? new Date();
   const generatedAt = now.toISOString();
   const publicStartDate = input.publicStartDate ?? DEFAULT_PUBLIC_START_DATE;
   const deploymentId = parseDeploymentId(input.deploymentId);
