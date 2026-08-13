@@ -1011,6 +1011,34 @@ describe("metrics publisher", () => {
     await expect(store.getJson("v2/publisher.lock")).rejects.toThrow("Artifact not found");
   });
 
+  test("expires stale locks against the real clock when no clock override is provided", async () => {
+    const store = new MemoryArtifactStore();
+    await store.putJson("v2/manifest.json", existingCurrentDeploymentManifest);
+    // Lock timestamps an orphaned run would leave behind: expired in real time,
+    // but never expired when compared against a frozen default clock.
+    await store.putJson("v2/publisher.lock", {
+      runId: "orphaned-run",
+      operation: "incremental_refresh",
+      startedAt: "2026-06-01T08:15:00.000Z",
+      expiresAt: "2026-06-01T20:15:00.000Z",
+    });
+
+    const result = await publishMetricsArtifacts({
+      deploymentId: "current-indexer",
+      source: source({
+        fetchDailyMetrics: async (range) => completeDailyMetrics(range),
+        fetchTreasuryAssets: async (range) => completeTreasuryAssets(range),
+        fetchOhmSupply: async (range) => completeOhmSupply(range),
+      }),
+      store,
+    });
+
+    expect(result.skipped).toBe(false);
+    await expect(store.getJson("v2/publisher.lock")).rejects.toThrow("Artifact not found");
+    const manifest = store.json<Manifest>("v2/manifest.json");
+    expect(Math.abs(Date.parse(manifest.generatedAt) - Date.now())).toBeLessThan(5 * 60 * 1000);
+  });
+
   test("does not publish a new manifest when a shard upload fails", async () => {
     class FailingStore extends MemoryArtifactStore implements ArtifactStore {
       async putJson(key: string): Promise<void> {
