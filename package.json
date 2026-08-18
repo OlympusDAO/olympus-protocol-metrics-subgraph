@@ -46,7 +46,7 @@
     "lint:check": "biome lint ."
   },
   "dependencies": {
-    "bignumber.js": "9.1.2",
+    "bignumber.js": "11.1.5",
     "envio": "3.3.2",
     "tsx": "4.22.4",
     "viem": "2.53.1"
