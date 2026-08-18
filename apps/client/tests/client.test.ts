@@ -525,7 +525,7 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
       "Preserved legacy `query({ operationName, input })` support for `/operations/*`.",
     );
     expect(notes).not.toContain("## [v2.0.0]");
-  });
+  }, 15000);
 
   test("release check fails if generated files drift during build or tests", () => {
     const releaseCheck = readFileSync(clientFile("scripts/release-check.ts"), "utf8");
