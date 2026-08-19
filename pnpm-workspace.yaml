@@ -5,15 +5,6 @@ packages:
 blockExoticSubdeps: true
 engineStrict: true
 minimumReleaseAge: 10080
-minimumReleaseAgeExclude:
-  # Explicitly approved while Envio 3.3.2 and its platform binaries are under
-  # the registry's `next` tag.
-  - "envio@3.3.2"
-  - "envio-darwin-arm64@3.3.2"
-  - "envio-darwin-x64@3.3.2"
-  - "envio-linux-arm64@3.3.2"
-  - "envio-linux-x64@3.3.2"
-  - "envio-linux-x64-musl@3.3.2"
 allowBuilds:
   # esbuild ships native binaries it builds on install; required because
   # vitest (our test runner) depends on it transitively. Without this entry,
