@@ -145,3 +145,15 @@ If those match but disagree with the actual on-chain `balanceOf`, the token is n
 **Fix in this codebase:** `TokenDefinition.nonStandardBalance: true` routes snapshot balance reads through `readErc20BalanceOf` (cached `createEffect`, one RPC per (chain, token, wallet, block)) instead of the `TokenBalance` ledger. Set on every confirmed-broken token in `src/snapshot/chains/*`. Bounded cost: ~6 chains × ~10 wallets × ~10 non-standard tokens × 3 snapshots/day ≈ 1.8k RPC calls/day across all chains.
 
 **Where to apply (preventatively):** any ERC4626 vault, any WETH9-style wrapper, any rebasing receipt token, any bridge-minted token where you can't trace the mint path to a standard `_mint`. When in doubt, flag it — the cost of a cached `balanceOf` call is trivial; the cost of a negative-balance contamination is days of debugging and a 5× wrong treasury rollup.
+
+---
+
+## 2026-08-24 — A failing PR-environment deploy is not proof of a code defect
+
+**Pattern that bit us:** PR #355's `metrics-publisher` check failed with `Hasura GraphQL error: field 'chainValues' not found in type: 'GlobalMetricSnapshot'`. The PR bumped envio 3.3.2 → 3.6.1, and inspection lined up perfectly: production (3.3.2) had 27 fields on that type with `chainValues` and `supplyCategories` present, the PR environment (3.6.1) had 23 and a metadata export showing zero array *and* zero object relationships across every table. Envio's `sendOperation` swallows Hasura failures into a warning, and no warning appeared in the logs. The obvious read was that 3.6.1 had stopped creating `@derivedFrom` relationships, and I recommended dropping the upgrade on that basis.
+
+**It was wrong.** Standing the compose stack up locally on 3.6.1 created all four relationships — on a fresh start, across a restart, and across an `envio start -r` reset. Hasura in the PR environment also accepted the exact `pg_create_array_relationship` call when issued by hand. Simply redeploying the PR environment's indexer, same commit and same version, created all four. The original failure was a transient error during one startup, and the warning that would have revealed it was almost certainly eaten by Railway's 500 logs/sec replica limit, which was actively dropping batches of up to 780 messages from that service.
+
+**Why it's a trap:** a version bump in the diff supplies a ready-made culprit, and one environment's symptom looks like proof when it lines up that cleanly. Comparing two environments only shows they *differ*; it never shows *why*. The missing step was reproducing against the suspect version in isolation before assigning blame.
+
+**Where to apply:** any dependency upgrade whose failure surfaces only in a deployed environment. Reproduce locally against the new version first. If it behaves correctly there, suspect the environment and redeploy before touching the diff. Note also that `tsc` and the four test suites all pass against a broken Hasura surface — the publisher's queries are raw strings against a live endpoint, so nothing in CI covers that contract.
