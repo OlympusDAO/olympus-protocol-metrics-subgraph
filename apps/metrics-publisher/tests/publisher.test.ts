@@ -626,6 +626,39 @@ describe("metrics publisher", () => {
     await expect(store.getJson("v2/publisher.lock")).rejects.toThrow("Artifact not found");
   });
 
+  test("skips when the indexer has been reset and reports bounds behind the published manifest", async () => {
+    const store = new MemoryArtifactStore();
+    await store.putJson("v2/manifest.json", existingCurrentDeploymentManifest);
+
+    const result = await publishMetricsArtifacts({
+      deploymentId: "current-indexer",
+      source: source({
+        fetchBounds: async () => ({ earliestDate: "2022-05-01", latestDate: "2023-02-09" }),
+        fetchDailyMetrics: async () => {
+          throw new Error("should not fetch daily metrics while the indexer is reindexing");
+        },
+        fetchTreasuryAssets: async () => {
+          throw new Error("should not fetch treasury assets while the indexer is reindexing");
+        },
+        fetchOhmSupply: async () => {
+          throw new Error("should not fetch OHM supply while the indexer is reindexing");
+        },
+      }),
+      store,
+      now: () => new Date("2026-06-01T08:15:00.000Z"),
+    });
+
+    expect(result).toMatchObject({
+      deletedKeys: [],
+      skipped: true,
+      skipReason: "reindex_in_progress",
+      manifestPublishedLast: false,
+      writtenKeys: [],
+    });
+    expect(store.json<Manifest>("v2/manifest.json")).toEqual(existingCurrentDeploymentManifest);
+    await expect(store.getJson("v2/publisher.lock")).rejects.toThrow("Artifact not found");
+  });
+
   test("incremental publish for the same deployment can use cross-chain complete bounds", async () => {
     const store = new MemoryArtifactStore();
     const observedCompleteness: PublishBoundsCompleteness[] = [];

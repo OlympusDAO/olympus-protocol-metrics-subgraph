@@ -5,15 +5,6 @@ packages:
 blockExoticSubdeps: true
 engineStrict: true
 minimumReleaseAge: 10080
-minimumReleaseAgeExclude:
-  # Explicitly approved while Envio 3.3.2 and its platform binaries are under
-  # the registry's `next` tag.
-  - "envio@3.3.2"
-  - "envio-darwin-arm64@3.3.2"
-  - "envio-darwin-x64@3.3.2"
-  - "envio-linux-arm64@3.3.2"
-  - "envio-linux-x64@3.3.2"
-  - "envio-linux-x64-musl@3.3.2"
 allowBuilds:
   # esbuild ships native binaries it builds on install; required because
   # vitest (our test runner) depends on it transitively. Without this entry,
@@ -95,9 +86,9 @@ overrides:
   # fixed in 8.5.18, plus the current incomplete-fix advisory fixed in
   # 8.5.23. Use the newest patched release past the 7-day cutoff.
   "postcss@<8.5.23": "8.5.23"
-  # nanoid GHSA-2v37-7h3g-55p8 (moderate, zero-size custom generator loop),
-  # fixed in 3.3.17. Scope this to the vulnerable 3.x range.
-  "nanoid@>=3.0.0 <3.3.17": "3.3.17"
+  # nanoid GHSA-2v37-7h3g-55p8 (high, zero-size custom generator loop),
+  # fixed in 3.3.18. Scope this to the vulnerable 3.x range.
+  "nanoid@>=3.0.0 <3.3.18": "3.3.18"
   # ws GHSA-96hv-2xvq-fx4p (high, memory-exhaustion DoS from tiny fragments),
   # fixed in 8.21.0. Pulled transitively via envio>ink>ws. The prior cap of
   # 8.20.1 predates this advisory and is still vulnerable; bumped to 8.21.0
