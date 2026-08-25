@@ -48,7 +48,7 @@ export type PublishResult = {
   manifestPublishedLast: boolean;
   range?: DateRange;
   skipped: boolean;
-  skipReason?: "lock_held" | "not_data_ready";
+  skipReason?: "lock_held" | "not_data_ready" | "reindex_in_progress";
   runId: string;
   writtenKeys: string[];
 };
@@ -215,6 +215,18 @@ export async function publishMetricsArtifacts(input: {
         indexingProgress,
         skipped: true,
         skipReason: "not_data_ready",
+        runId: lock.runId,
+        writtenKeys: [],
+      };
+    }
+    if (isBehindPublishedBounds(bounds.latestDate, existingManifest)) {
+      return {
+        manifestPublishedLast: false,
+        deletedKeys: [],
+        deploymentId,
+        indexingProgress,
+        skipped: true,
+        skipReason: "reindex_in_progress",
         runId: lock.runId,
         writtenKeys: [],
       };
@@ -495,6 +507,13 @@ function hasMissingDailyMetrics(range: DateRange, metrics: Array<{ date: string 
     cursor += DAY_MS;
   }
   return false;
+}
+
+function isBehindPublishedBounds(
+  latestDate: string,
+  existingManifest: Manifest | undefined,
+): boolean {
+  return existingManifest !== undefined && latestDate < existingManifest.latestDate;
 }
 
 function isFreshForDeploymentHandover(latestDate: string, now: Date): boolean {

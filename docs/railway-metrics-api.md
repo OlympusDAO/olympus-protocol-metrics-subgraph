@@ -152,7 +152,8 @@ for event ingestion.
 Railway deployment flow:
 
 1. A new indexer deployment starts with `envio start -r` against Envio's default
-   schema.
+   schema. Any restart of the indexer container does the same, including
+   platform-initiated restarts that keep the current deployment.
 2. Existing metric artifacts remain in the bucket, and `metrics-api` continues
    serving the currently published manifest while the indexer reindexes.
 3. The publisher cron reads Hasura but skips cleanly with
@@ -249,6 +250,12 @@ The first publish for a deployment also requires that latest all-chain date to
 be within one day of the publisher's current UTC date. This prevents a new
 indexer deployment from taking over the manifest while it is still several days
 behind the existing published snapshots.
+Published bounds never move backwards. If Hasura reports a latest date earlier
+than the published manifest's `latestDate`, the publisher exits successfully
+with `skipReason: "reindex_in_progress"` and leaves the manifest untouched. That
+covers a reindex triggered by an indexer restart on the same deployment id,
+where the freshness gate above does not apply because the deployment already has
+published artifacts.
 The manifest is published last, so partial shard uploads are not exposed through
 `/v2/bounds`.
 
