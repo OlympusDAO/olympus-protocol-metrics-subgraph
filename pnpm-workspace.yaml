@@ -11,6 +11,12 @@ allowBuilds:
   # `strictDepBuilds: true` rejects the install with ERR_PNPM_IGNORED_BUILDS.
   # Pinned to the patched 0.28.1 (see esbuild override below + GHSA fixes).
   "esbuild@0.28.1": true
+peerDependencyRules:
+  allowedVersions:
+    # @fuel-ts/utils exposes Vitest-only test helpers and pins its peer exactly
+    # to 3.0.9. Envio uses its runtime helpers, which are covered by this
+    # repository's Vitest 4 suite, so permit only our tested major here.
+    "@fuel-ts/utils@0.103.0>vitest": "4"
 # All CVE overrides are range-scoped — `pkg@<fixed: fixed` only patches
 # resolutions that fall in the vulnerable range, leaving newer versions
 # alone. Unscoped overrides (e.g. `"pkg": "^X"`) are a footgun: they force
@@ -32,6 +38,9 @@ overrides:
   "envio>@fuel-ts/hasher@<0.103.0": "0.103.0"
   "envio>@fuel-ts/math@<0.103.0": "0.103.0"
   "envio>@fuel-ts/utils@<0.103.0": "0.103.0"
+  # envio 3.6.1 pins react 19.2.5 while its @rescript/react dependency pulls
+  # react-dom 19.2.6, whose peer starts at React 19.2.6. Align that subtree.
+  "envio>react@19.2.5": "19.2.6"
   # bn.js GHSA-378v-28hj-76wf (moderate, maskn(0) DoS) — fixed in 4.12.3
   # and 5.2.3. Pulled transitively via @fuel-ts/math; the fuel-ts bump
   # above brings it along, this is belt-and-suspenders if pnpm dedupes.
