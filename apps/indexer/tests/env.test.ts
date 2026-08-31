@@ -1,11 +1,13 @@
 import { describe, expect, test } from "vitest";
 
 import {
-  attachEnvioChildHandlers,
+  type EnvioSupervisorOptions,
   formatEnvioSpawnError,
   isRailwayRuntime,
   prepareIndexerEnv,
   resolveEnvioArgs,
+  superviseEnvio,
+  waitForDatabase,
 } from "../src/start-envio";
 import { validateIndexerEnv } from "../src/validate-env";
 
@@ -131,31 +133,21 @@ describe("indexer env validation", () => {
     ).toBe("Failed to start envio: EACCES: permission denied");
   });
 
-  test("attaches a spawn error handler that logs and exits", () => {
-    const handlers = new Map<string, (first: unknown, second?: unknown) => void>();
-    const child = {
-      on: (event: string, handler: (first: unknown, second?: unknown) => void) => {
-        handlers.set(event, handler);
-        return child;
-      },
+  test("resumes instead of resetting when respawning after a crash", () => {
+    const railwayEnv = {
+      ...validEnv,
+      ENVIO_INDEXER_PORT: "9898",
+      ENVIO_PG_SCHEMA: "",
+      PORT: "9898",
+      RAILWAY_SERVICE_ID: "railway-service-1",
     };
-    const logged: string[] = [];
-    const exits: number[] = [];
 
-    attachEnvioChildHandlers(child as Parameters<typeof attachEnvioChildHandlers>[0], {
-      logError: (message) => logged.push(message),
-      exit: (code) => {
-        exits.push(code ?? 0);
-        throw new Error(`exit ${code}`);
-      },
-    });
-
-    expect(handlers.has("error")).toBe(true);
-    expect(() =>
-      handlers.get("error")?.(Object.assign(new Error("spawn envio ENOENT"), { code: "ENOENT" })),
-    ).toThrow("exit 1");
-    expect(logged[0]).toContain("envio binary was not found in PATH");
-    expect(exits).toEqual([1]);
+    expect(resolveEnvioArgs([], railwayEnv, { respawn: true })).toEqual(["start"]);
+    expect(resolveEnvioArgs(["start"], railwayEnv, { respawn: true })).toEqual(["start"]);
+    expect(resolveEnvioArgs(["start", "-r"], railwayEnv, { respawn: true })).toEqual(["start"]);
+    expect(resolveEnvioArgs(["start", "--reset"], railwayEnv, { respawn: true })).toEqual([
+      "start",
+    ]);
   });
 
   test("fails loudly when required env variables are missing", () => {
@@ -183,5 +175,243 @@ describe("indexer env validation", () => {
         ENVIO_INDEXER_PORT: "0",
       }),
     ).toThrow("Invalid positive integer environment variables: ENVIO_INDEXER_PORT");
+  });
+});
+
+const railwayEnv: NodeJS.ProcessEnv = {
+  ...validEnv,
+  ENVIO_INDEXER_PORT: "9898",
+  ENVIO_PG_SCHEMA: "",
+  PORT: "9898",
+  RAILWAY_SERVICE_ID: "railway-service-1",
+};
+
+type ScriptedRun = {
+  code?: number | null;
+  signal?: NodeJS.Signals;
+  error?: Error & { code?: string };
+  runtimeMs?: number;
+};
+
+type EnvioChild = ReturnType<NonNullable<EnvioSupervisorOptions["spawnEnvio"]>>;
+
+function scriptedChild(run: ScriptedRun): EnvioChild {
+  const child = {
+    on(event: string, handler: (...args: never[]) => void) {
+      if (event === "exit" && run.error === undefined) {
+        queueMicrotask(() =>
+          (handler as (code: number | null, signal: NodeJS.Signals | null) => void)(
+            run.code ?? null,
+            run.signal ?? null,
+          ),
+        );
+      }
+      if (event === "error" && run.error !== undefined) {
+        queueMicrotask(() => (handler as (error: Error) => void)(run.error as Error));
+      }
+      return child;
+    },
+  };
+
+  return child as unknown as EnvioChild;
+}
+
+function harness(runs: ScriptedRun[], databaseReachable: boolean[] = []) {
+  const spawnedArgs: string[][] = [];
+  const logged: string[] = [];
+  const exits: number[] = [];
+  let clock = 0;
+  let runIndex = 0;
+  let waitIndex = 0;
+
+  const options = {
+    spawnEnvio: (args: string[]) => {
+      const run = runs[runIndex++];
+      if (run === undefined) {
+        throw new Error(`envio was spawned ${runIndex} times but only ${runs.length} are scripted`);
+      }
+      spawnedArgs.push(args);
+      clock += run.runtimeMs ?? 0;
+      return scriptedChild(run);
+    },
+    waitForDatabase: async () => databaseReachable[waitIndex++] ?? true,
+    logError: (message: string) => logged.push(message),
+    logInfo: (message: string) => logged.push(message),
+    exit: ((code?: number) => {
+      exits.push(code ?? 0);
+      throw new Error(`exit ${code}`);
+    }) as (code?: number) => never,
+    kill: () => {},
+    pid: 1234,
+    now: () => clock,
+  };
+
+  return { options, spawnedArgs, logged, exits };
+}
+
+describe("envio supervisor", () => {
+  test("respawns without resetting after a healthy run crashes", async () => {
+    const { options, spawnedArgs, exits } = harness([
+      { code: 1, runtimeMs: 5 * 60_000 },
+      { code: 1, runtimeMs: 5 * 60_000 },
+      { signal: "SIGTERM", runtimeMs: 5 * 60_000 },
+    ]);
+
+    await expect(
+      superviseEnvio([], railwayEnv, { ...options, maxRespawns: 2 }),
+    ).resolves.toBeUndefined();
+
+    // First boot resets, every respawn resumes.
+    expect(spawnedArgs).toEqual([["start", "-r"], ["start"], ["start"]]);
+    expect(exits).toEqual([]);
+  });
+
+  test("refunds the respawn budget after each healthy run", async () => {
+    const runs: ScriptedRun[] = Array.from({ length: 12 }, () => ({
+      code: 1,
+      runtimeMs: 5 * 60_000,
+    }));
+    runs.push({ signal: "SIGTERM", runtimeMs: 5 * 60_000 });
+    const { options, spawnedArgs } = harness(runs);
+
+    await expect(
+      superviseEnvio([], railwayEnv, { ...options, maxRespawns: 2 }),
+    ).resolves.toBeUndefined();
+
+    // Every crash clears MIN_HEALTHY_RUNTIME_MS, so the two-respawn budget is
+    // refunded each time and never runs out over 12 successive crashes.
+    expect(spawnedArgs.length).toBe(13);
+  });
+
+  test("repeats the reset when the crash happened before a healthy run", async () => {
+    const { options, spawnedArgs } = harness([
+      { code: 1, runtimeMs: 500 },
+      { code: 1, runtimeMs: 500 },
+      { code: 1, runtimeMs: 500 },
+    ]);
+
+    await expect(superviseEnvio([], railwayEnv, { ...options, maxRespawns: 2 })).rejects.toThrow(
+      "exit 1",
+    );
+
+    // A crash during startup may have left a half-created schema, so the reset
+    // is repeated rather than resumed.
+    expect(spawnedArgs).toEqual([
+      ["start", "-r"],
+      ["start", "-r"],
+      ["start", "-r"],
+    ]);
+  });
+
+  test("gives up to Railway once the respawn budget is exhausted", async () => {
+    const runs = Array.from({ length: 5 }, () => ({ code: 1, runtimeMs: 500 }));
+    const { options, spawnedArgs, exits, logged } = harness(runs);
+
+    await expect(superviseEnvio([], railwayEnv, { ...options, maxRespawns: 2 })).rejects.toThrow(
+      "exit 1",
+    );
+
+    expect(spawnedArgs.length).toBe(3);
+    expect(exits).toEqual([1]);
+    expect(logged.some((message) => message.includes("giving up so Railway can restart"))).toBe(
+      true,
+    );
+  });
+
+  test("exits when Postgres never comes back", async () => {
+    const { options, spawnedArgs, exits, logged } = harness(
+      [{ code: 1, runtimeMs: 5 * 60_000 }, { code: 1 }],
+      [false],
+    );
+
+    await expect(superviseEnvio([], railwayEnv, options)).rejects.toThrow("exit 1");
+
+    expect(spawnedArgs.length).toBe(1);
+    expect(exits).toEqual([1]);
+    expect(logged.some((message) => message.includes("did not become reachable"))).toBe(true);
+  });
+
+  test("does not respawn when Envio is terminated by a signal", async () => {
+    const { options, spawnedArgs, exits } = harness([{ signal: "SIGTERM", runtimeMs: 60_000 }]);
+
+    await expect(superviseEnvio([], railwayEnv, options)).resolves.toBeUndefined();
+
+    expect(spawnedArgs.length).toBe(1);
+    expect(exits).toEqual([]);
+  });
+
+  test("logs and exits when envio cannot be spawned at all", async () => {
+    const { options, exits, logged } = harness([
+      { error: Object.assign(new Error("spawn envio ENOENT"), { code: "ENOENT" }) },
+    ]);
+
+    await expect(superviseEnvio([], railwayEnv, options)).rejects.toThrow("exit 1");
+
+    expect(exits).toEqual([1]);
+    expect(logged[0]).toContain("envio binary was not found in PATH");
+  });
+
+  test("exits cleanly when Envio finishes successfully", async () => {
+    const { options, exits } = harness([{ code: 0, runtimeMs: 60_000 }]);
+
+    await expect(superviseEnvio([], railwayEnv, options)).rejects.toThrow("exit 0");
+
+    expect(exits).toEqual([0]);
+  });
+});
+
+describe("postgres readiness probe", () => {
+  test("returns once the database accepts a connection", async () => {
+    const attempts: number[] = [];
+    let clock = 0;
+
+    const reachable = await waitForDatabase(railwayEnv, {
+      probe: async () => {
+        attempts.push(clock);
+        return attempts.length === 3;
+      },
+      sleep: async (ms) => {
+        clock += ms;
+      },
+      now: () => clock,
+      logInfo: () => {},
+      intervalMs: 2_000,
+      timeoutMs: 60_000,
+    });
+
+    expect(reachable).toBe(true);
+    expect(attempts).toEqual([0, 2_000, 4_000]);
+  });
+
+  test("gives up after the wait window elapses", async () => {
+    let clock = 0;
+
+    const reachable = await waitForDatabase(railwayEnv, {
+      probe: async () => false,
+      sleep: async (ms) => {
+        clock += ms;
+      },
+      now: () => clock,
+      logInfo: () => {},
+      intervalMs: 2_000,
+      timeoutMs: 10_000,
+    });
+
+    expect(reachable).toBe(false);
+    expect(clock).toBeGreaterThanOrEqual(10_000);
+  });
+
+  test("does not block when the Postgres address is unusable", async () => {
+    const reachable = await waitForDatabase(
+      { ...railwayEnv, ENVIO_PG_HOST: "  " },
+      {
+        probe: async () => {
+          throw new Error("probe must not run");
+        },
+        logInfo: () => {},
+      },
+    );
+
+    expect(reachable).toBe(false);
   });
 });

@@ -57,7 +57,11 @@ describe("Railway config-as-code", () => {
     expect(hasura.deploy.restartPolicyMaxRetries).toBe(1);
     expect(indexer.deploy.healthcheckPath).toBe("/healthz");
     expect(indexer.deploy.restartPolicyType).toBe("ON_FAILURE");
-    expect(indexer.deploy.restartPolicyMaxRetries).toBe(1);
+    // Envio exits on a failed batch write, so a Postgres restart takes the
+    // indexer down with it. One retry is consumed long before Postgres finishes
+    // crash recovery; the wrapper's own supervisor handles the common case and
+    // this is the backstop for anything that kills the wrapper too.
+    expect(indexer.deploy.restartPolicyMaxRetries).toBe(10);
     expect(api.deploy.healthcheckPath).toBe("/ready");
     expect(api.deploy.restartPolicyType).toBe("ON_FAILURE");
     expect(api.deploy.restartPolicyMaxRetries).toBe(1);
