@@ -100,6 +100,14 @@ check requires the core variables below before Envio starts.
   Envio tables in the default schema before indexing. That is intentional:
   Postgres/Hasura is not the public availability boundary for this service.
   Published artifact snapshots and the metrics API are the handover boundary.
+- The startup wrapper supervises Envio rather than exiting with it. Envio treats
+  a failed batch write as fatal, so a Postgres restart underneath a running
+  indexer kills the process. On an unexpected exit the wrapper waits for
+  Postgres to accept connections again (up to ten minutes) and respawns Envio
+  as plain `envio start` — no `-r` — so the indexer resumes rather than
+  replaying from the beginning. A crash inside the first minute is treated as a
+  failed startup instead and repeats the original `-r`, because a run that never
+  got under way may have left the schema half-created.
 - Required `ENVIO_PG_SSL_MODE`: set according to the Railway Postgres
   connection mode. Envio accepts `false`, `true`, `require`, `allow`, `prefer`,
   or `verify-full`; it does not accept libpq-style `disable`.
@@ -152,8 +160,11 @@ for event ingestion.
 Railway deployment flow:
 
 1. A new indexer deployment starts with `envio start -r` against Envio's default
-   schema. Any restart of the indexer container does the same, including
-   platform-initiated restarts that keep the current deployment.
+   schema. Any restart of the indexer *container* does the same, including
+   platform-initiated restarts that keep the current deployment. An in-process
+   respawn after an Envio crash does not: the wrapper resumes the existing
+   schema, so a transient Postgres outage costs seconds rather than a full
+   reindex.
 2. Existing metric artifacts remain in the bucket, and `metrics-api` continues
    serving the currently published manifest while the indexer reindexes.
 3. The publisher cron reads Hasura but skips cleanly with
