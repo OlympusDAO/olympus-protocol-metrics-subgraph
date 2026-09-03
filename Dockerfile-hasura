@@ -4,9 +4,11 @@ RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get update \
     bsdutils \
     coreutils \
     curl \
+    diffutils \
     distro-info-data \
     gcc-12-base \
     gzip \
+    libattr1 \
     libblkid1 \
     libcap2 \
     libc-bin \
