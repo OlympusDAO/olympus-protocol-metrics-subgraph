@@ -26,6 +26,7 @@ RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get update \
     libpam-modules-bin \
     libpam-runtime \
     libpam0g \
+    libp11-kit0 \
     libperl5.34 \
     libpq5 \
     libpython3.10-minimal \
