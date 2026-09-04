@@ -4,9 +4,11 @@ RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get update \
     bsdutils \
     coreutils \
     curl \
+    diffutils \
     distro-info-data \
     gcc-12-base \
     gzip \
+    libattr1 \
     libblkid1 \
     libcap2 \
     libc-bin \
@@ -26,6 +28,7 @@ RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get update \
     libpam-modules-bin \
     libpam-runtime \
     libpam0g \
+    libp11-kit0 \
     libperl5.34 \
     libpq5 \
     libpython3.10-minimal \

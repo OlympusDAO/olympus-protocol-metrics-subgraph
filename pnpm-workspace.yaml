@@ -4,7 +4,12 @@ packages:
 
 blockExoticSubdeps: true
 engineStrict: true
+fetchRetries: 3
 minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  # qs 6.16.0 is the only release fixing GHSA-x5fp-wj9c-mxmx and
+  # GHSA-4mjr-xmp4-gh2g. Remove this exception after 2026-09-05T23:50:15Z.
+  - qs@6.16.0
 allowBuilds:
   # esbuild ships native binaries it builds on install; required because
   # vitest (our test runner) depends on it transitively. Without this entry,
@@ -81,14 +86,17 @@ overrides:
   "tmp@<=0.2.3": "0.2.4"
   "undici@>=7.0.0 <7.24.0": "7.24.0"
   "yaml@<2.8.3": "2.8.3"
+  # Envio pulls fflate through @fuel-ts/utils. GHSA-px8p-9vwx-vf98 can
+  # loop indefinitely on malformed ZIP64 input and is fixed in 0.8.3.
+  "fflate@<0.8.3": "0.8.3"
   # Envio bundles express + ws; patches the transitive advisories CI's
   # audit gate flagged at moderate+. Pinned to ranges known to address
   # each CVE without churning unrelated majors.
   "body-parser@<1.20.6": "1.20.6"
   "cookie@<0.7.0": "0.7.0"
-  "express@<4.20.0": "4.20.0"
+  "express@<4.22.2": "4.22.2"
   "path-to-regexp@<0.1.13": "0.1.13"
-  "qs@<6.15.2": "6.15.2"
+  "qs@<6.16.0": "6.16.0"
   "send@<0.19.0": "0.19.0"
   "serve-static@<1.16.0": "1.16.0"
   # postcss GHSA-r28c-9q8g-f849 (high, arbitrary source-map disclosure),
