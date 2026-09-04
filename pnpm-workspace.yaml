@@ -85,6 +85,9 @@ overrides:
   "tmp@<=0.2.3": "0.2.4"
   "undici@>=7.0.0 <7.24.0": "7.24.0"
   "yaml@<2.8.3": "2.8.3"
+  # Envio pulls fflate through @fuel-ts/utils. GHSA-px8p-9vwx-vf98 can
+  # loop indefinitely on malformed ZIP64 input and is fixed in 0.8.3.
+  "fflate@<0.8.3": "0.8.3"
   # Envio bundles express + ws; patches the transitive advisories CI's
   # audit gate flagged at moderate+. Pinned to ranges known to address
   # each CVE without churning unrelated majors.
