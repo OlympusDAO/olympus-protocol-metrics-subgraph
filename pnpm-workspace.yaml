@@ -4,6 +4,7 @@ packages:
 
 blockExoticSubdeps: true
 engineStrict: true
+fetchRetries: 3
 minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
   # qs 6.16.0 is the only release fixing GHSA-x5fp-wj9c-mxmx and
