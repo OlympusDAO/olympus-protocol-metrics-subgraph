@@ -323,6 +323,8 @@ const names: Record<string, string> = {
   [TREASURY_ADDRESS_V2]: "Treasury Wallet V2",
   [TREASURY_ADDRESS_V3]: "Treasury Wallet V3",
   [TRSRY]: "Bophades Treasury",
+  [MAKER_DSR_ALLOCATOR]: "Maker DSR Allocator",
+  [MAKER_DSR_ALLOCATOR_PROXY]: "Maker DSR Allocator Proxy",
   [VEFXS_ALLOCATOR]: "VeFXS Allocator",
   // Tokens and pools
   [CONVEX_REWARD_OHM_ETH]: "Convex Staked Curve OHM-ETH",
@@ -496,6 +498,14 @@ const coolerClearinghouses: CoolerClearinghouse[] = [
     startBlock: COOLER_LOANS_V2_MONOCOOLER_BLOCK,
   },
 ];
+
+// Maker DSR. From Feb 2023 until the move into sDAI in Jan 2024 most treasury
+// DAI sat in the DSR through the DSR Allocator's DSProxy (above $160M in Sep
+// 2023). Without this read that whole position drops out of market value and
+// liquid backing. Start block is the DSR Allocator + DSProxy deployment
+// (tx 0x6e1bd99394992774a90d92e171992ad3502d2d00b68e559e055365220109a5d5).
+const MAKER_DSR_POT = addr("0x197E90f9FAD81970bA7976f33CbD77088E5D7cf7");
+const MAKER_DSR_START_BLOCK = 16_221_318;
 
 const liquidityHandlers: LiquidityHandler[] = [
   // Chainlink feeds (highest priority via CHAINLINK_PRIORITY = 10^30).
@@ -1244,6 +1254,11 @@ export const ETHEREUM: ChainConfig = {
   },
   basePriceFeeds: {},
   coolerClearinghouses,
+  makerDsr: {
+    pot: MAKER_DSR_POT,
+    depositToken: ERC20_DAI,
+    startBlock: MAKER_DSR_START_BLOCK,
+  },
   // Olympus Boosted Liquidity Vault registry (per inventory §8). The effect
   // iterates active vaults and reads getPoolOhmShare() per vault. Active
   // after the OHM_INCUR_DEBT_BLOCK = 17_620_000 gate.

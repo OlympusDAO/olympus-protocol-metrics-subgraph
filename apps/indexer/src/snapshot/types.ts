@@ -106,6 +106,16 @@ export type CoolerClearinghouse = {
   startBlock?: number;
 };
 
+// Maker DSR (Pot) deposits. DAI in the DSR is held as normalized shares
+// (`pie(wallet)`) that accrue via the rate accumulator (`chi()`), not as an
+// ERC20 balance, so it needs its own snapshot read. Legacy parity:
+// `getMakerDSRRecords`.
+export type MakerDsrConfig = {
+  pot: string;
+  depositToken: string; // DAI — the token DSR balances are denominated and priced in
+  startBlock: number;
+};
+
 export type ChainConfig = {
   chainId: ChainId;
   blockchain: string;
@@ -122,6 +132,7 @@ export type ChainConfig = {
   ohmStartBlock?: number;
   nativeToken?: string;
   coolerClearinghouses?: CoolerClearinghouse[];
+  makerDsr?: MakerDsrConfig;
   blvRegistry?: { address: string; startBlock: number };
   bondManager?: { address: string; startBlock: number };
   // OHM V1 → V2 migration offset. Subtracts `offsetOhm × current sOHM index`

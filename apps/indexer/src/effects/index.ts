@@ -5,6 +5,7 @@ import { BALANCER_VAULT_ABI } from "../snapshot/abis/balancer";
 import { CHAINLINK_ABI } from "../snapshot/abis/chainlink";
 import { KODIAK_ABI } from "../snapshot/abis/kodiak";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
+import { dsrSharesToDai } from "../snapshot/math";
 import { getClient, retryRpc } from "../snapshot/rpc-client";
 import type { ChainId } from "../snapshot/types";
 
@@ -141,6 +142,65 @@ export const readCoolerPrincipalReceivables = createEffect(
     } catch {
       // Effect outputs can't be null with the available schema primitives, so
       // we signal "no value" with an empty string. Consumers check for === "".
+      return "";
+    }
+  },
+);
+
+// Cached effect that reads a wallet's DAI-in-DSR balance from the Maker Pot:
+// `pie(wallet)` × `chi()`, returned as raw 18-decimal DAI units. Reverts
+// surface as "" so the snapshot path can skip without failing.
+const MAKER_POT_ABI = [
+  {
+    inputs: [],
+    name: "chi",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "", type: "address" }],
+    name: "pie",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+export const readMakerDsrBalance = createEffect(
+  {
+    name: "readMakerDsrBalance",
+    input: { chainId: S.number, pot: S.string, wallet: S.string, atBlock: S.number },
+    output: S.string,
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    const pot = getAddress(input.pot);
+    const blockNumber = BigInt(input.atBlock);
+    try {
+      const [pie, chi] = await retryRpc(() =>
+        Promise.all([
+          client.readContract({
+            address: pot,
+            abi: MAKER_POT_ABI,
+            functionName: "pie",
+            args: [getAddress(input.wallet)],
+            blockNumber,
+          }),
+          client.readContract({
+            address: pot,
+            abi: MAKER_POT_ABI,
+            functionName: "chi",
+            blockNumber,
+          }),
+        ]),
+      );
+      return dsrSharesToDai(pie as bigint, chi as bigint).toString();
+    } catch {
       return "";
     }
   },

@@ -62,6 +62,12 @@ export function toDecimal(value: bigint, decimals: number) {
   return new BigNumber(value.toString()).div(new BigNumber(10).pow(decimals));
 }
 
+// Maker Pot `pie` (normalized DSR shares, wad) × `chi` (rate accumulator, ray)
+// → DAI wad. Same truncating division the Pot uses (`rmul`).
+export function dsrSharesToDai(pie: bigint, chi: bigint): bigint {
+  return (pie * chi) / 10n ** 27n;
+}
+
 export function isoDate(timestamp: bigint) {
   return new Date(Number(timestamp) * 1000).toISOString().slice(0, 10);
 }
