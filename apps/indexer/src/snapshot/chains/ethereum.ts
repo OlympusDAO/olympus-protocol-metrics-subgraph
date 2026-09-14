@@ -41,6 +41,9 @@ const TRSRY_V1_1 = addr("0xea1560F36F71a2F54deFA75ed9EaA15E8655bE22");
 const BUYBACK_MS = addr("0xf7deb867e65306be0cb33918ac1b8f89a72109db");
 const YIELD_FARMING_MS = addr("0x2075e3b46470cfcE124Daaf52b46Dcf965727Dd1");
 const OTC_ESCROW = addr("0xe3312c3f1ab30878d9686452f7205ebe11e965eb");
+const BOND_MANAGER = addr("0xf577c77ee3578c7f216327f41b5d7221ead2b2a3");
+const BOND_FIXED_EXPIRY_TELLER = addr("0x007fe70dc9797c4198528ae43d8195fff82bdc95");
+const MIGRATION_CONTRACT = addr("0x184f3fad8618a6f458c16bae63f70c426fe784b3");
 
 // Bonds.
 const BONDS_DEPOSIT = addr("0x9025046c6fb25Fb39e720d97a8FD881ED69a1Ef6");
@@ -413,6 +416,13 @@ const names: Record<string, string> = {
   [OLYMPUS_ASSOCIATION]: "Olympus Association",
   [SILO_LENDING]: "Silo Router",
   [EULER_LENDING]: "Euler Protocol",
+  [TREASURY_ADDRESS_V1]: "Treasury Wallet V1",
+  [OTC_ESCROW]: "OTC Escrow",
+  [CONVEX_STAKING_PROXY_FRAXBP]: "Convex Staking Proxy - FraxBP",
+  [CONVEX_STAKING_PROXY_OHM_FRAXBP]: "Convex Staking Proxy - OHM-FraxBP",
+  [BOND_MANAGER]: "Bond Manager",
+  [BOND_FIXED_EXPIRY_TELLER]: "Bond Fixed Expiry Teller",
+  [MIGRATION_CONTRACT]: "Migration Contract",
   // Tokens and pools
   [CONVEX_REWARD_OHM_ETH]: "Convex Staked Curve OHM-ETH",
   [CONVEX_REWARD_OHM_FRAXBP]: "Convex Staked Curve OHM-FraxBP",
@@ -2041,7 +2051,7 @@ export const ETHEREUM: ChainConfig = {
   // pre-minted / vesting / vested supply rows. Indexer-side runtime is
   // gated by the BOND_MANAGER_BLOCK = 16_226_955.
   bondManager: {
-    address: addr("0xf577c77ee3578c7f216327f41b5d7221ead2b2a3"),
+    address: BOND_MANAGER,
     startBlock: 16_226_955,
   },
   // Additional OHM-equivalent tokens to count toward the TREASURY supply
@@ -2074,7 +2084,7 @@ export const ETHEREUM: ChainConfig = {
   // OHM is subtracted from total supply between [14_381_564, 24_550_660)
   // to account for stranded gOHM pre-minted for OHM V1 LP migrations.
   migrationOffset: {
-    migrationContract: addr("0x184f3fad8618a6f458c16bae63f70c426fe784b3"),
+    migrationContract: MIGRATION_CONTRACT,
     sOhmAddress: ERC20_SOHM_V3,
     offsetOhm: "2013",
     startBlock: 14_381_564,
