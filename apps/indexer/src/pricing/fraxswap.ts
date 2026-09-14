@@ -77,6 +77,23 @@ export class FraxSwapPriceHandler extends BasePriceHandler<
     return lpSupply.eq(ZERO) ? null : totalValue.div(lpSupply);
   }
 
+  async getTokenQuantityPerLp(
+    tokenAddress: string,
+    blockNumber: bigint,
+  ): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
+    const leg = same(tokenAddress, this.handler.token0)
+      ? { key: "reserve0" as const, decimals: this.handler.decimals0 }
+      : same(tokenAddress, this.handler.token1)
+        ? { key: "reserve1" as const, decimals: this.handler.decimals1 }
+        : null;
+    if (!leg) return null;
+    const snapshot = await this.snapshot(blockNumber);
+    if (!snapshot.totalSupply || snapshot.totalSupply === "0") return null;
+    const reserve = toDecimal(BigInt(snapshot[leg.key]), leg.decimals);
+    return reserve.div(toDecimal(BigInt(snapshot.totalSupply), 18));
+  }
+
   async getUnderlyingTokenBalance(): Promise<BigNumber> {
     return ZERO;
   }

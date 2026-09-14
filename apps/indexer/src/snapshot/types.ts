@@ -92,7 +92,8 @@ export type PositionReadMethod =
   | "aura.earned"
   | "rari.hasId"
   | "rari.amountAllocated"
-  | "frax.lockedLiquidity";
+  | "frax.lockedLiquidity"
+  | "incurDebt.totalOutstanding";
 
 // Protocol-owned liquidity valued through a pool's price handler (see
 // handlers/LiquidityPositions.ts). Each source is one way the treasury held
@@ -112,11 +113,21 @@ export type LiquidityPositionSource =
 export type LiquidityPosition = {
   pricing: LiquidityHandler; // pool handler for total value and LP unit price
   lpToken: string;
+  poolLabel: string; // legacy pool name on the OHM supply rows
   // Defaults to "Protocol-Owned Liquidity". Pools without OHM (FraxBP) keep
   // legacy's Stable category.
   category?: string;
   sources: LiquidityPositionSource[];
   startBlock: number;
+  lastActiveBlock?: number;
+};
+
+// OHM the treasury deployed into a lending market, recognised at the deployed
+// amount rather than the market's live balance (legacy SILO_DEPLOYMENTS /
+// EULER_DEPLOYMENTS).
+export type LendingDeployment = {
+  source: string;
+  entries: { block: number; amount: string }[];
   lastActiveBlock?: number;
 };
 
@@ -219,6 +230,12 @@ export type ChainConfig = {
   makerDsr?: MakerDsrConfig;
   protocolPositions?: ProtocolPosition[];
   liquidityPositions?: LiquidityPosition[];
+  // Olympus IncurDebt: outstanding OHM debt counted as Boosted Liquidity
+  // Vault supply from `startBlock`.
+  incurDebt?: { address: string; startBlock: number };
+  lendingDeployments?: LendingDeployment[];
+  // Non-protocol wallets legacy counted as treasury OHM up to a block.
+  treasuryOhmExtraWallets?: { address: string; lastActiveBlock: number }[];
   blvRegistry?: { address: string; startBlock: number };
   bondManager?: { address: string; startBlock: number };
   // OHM V1 → V2 migration offset. Subtracts `offsetOhm × current sOHM index`

@@ -50,9 +50,10 @@ import {
 // Per-protocol handlers extracted per @0xJem on PR #311 (Step 5.3).
 import { pushArbitrumLendingSupply } from "./ArbitrumLending";
 import { pushArbitrumStakingRecords } from "./ArbitrumStaking";
-import { pushBlvSupply } from "./BlvSupply";
+import { pushBlvSupply, pushIncurDebtSupply } from "./BlvSupply";
 import { pushCoolerReceivables } from "./CoolerLoans";
 import { pushGnosisAuctionSupply } from "./GnosisAuctions";
+import { pushLendingDeploymentSupply } from "./LendingDeployments";
 import { pushLiquidityPositionRecords } from "./LiquidityPositions";
 import { pushMakerDsrRecords } from "./MakerDsr";
 import { pushMigrationOffsetSupply } from "./MigrationOffset";
@@ -188,6 +189,7 @@ async function processSnapshot(
           config,
           client,
           records,
+          supplies,
           timestamp,
           blockNumber,
         );
@@ -208,6 +210,12 @@ async function processSnapshot(
       }
       if (config.blvRegistry) {
         await pushBlvSupply(context, config, supplies, timestamp, blockNumber);
+      }
+      if (config.incurDebt) {
+        await pushIncurDebtSupply(context, config, supplies, timestamp, blockNumber);
+      }
+      if (config.lendingDeployments) {
+        pushLendingDeploymentSupply(config, supplies, timestamp, blockNumber);
       }
       if (config.bondManager) {
         await pushGnosisAuctionSupply(context, config, supplies, timestamp, blockNumber);
@@ -770,6 +778,38 @@ export async function pushTreasuryOhm(
         wallet,
         "Treasury",
         balance,
+        blockNumber,
+        -1,
+      ),
+    );
+  }
+
+  // Wallets legacy counted as treasury OHM only up to a block (the Olympus
+  // Association before 17,115,000). They aren't protocol wallets, so there's
+  // no Transfer ledger for them; read balanceOf at the snapshot.
+  for (const extra of config.treasuryOhmExtraWallets ?? []) {
+    if (blockNumber > BigInt(extra.lastActiveBlock)) continue;
+    const rawBalance = await readNonStandardBalance(
+      context,
+      config.chainId,
+      config.ohmToken,
+      extra.address,
+      decimals,
+      blockNumber,
+    );
+    if (rawBalance.eq(ZERO)) continue;
+    supplies.push(
+      createTokenSupply(
+        config,
+        timestamp,
+        getContractName(config, config.ohmToken),
+        config.ohmToken,
+        undefined,
+        undefined,
+        getContractName(config, extra.address),
+        extra.address,
+        "Treasury",
+        rawBalance.times(multiplier),
         blockNumber,
         -1,
       ),

@@ -8,7 +8,11 @@ import { describe, expect, test, vi } from "vitest";
 import { pushLiquidityPositionRecords } from "../../src/handlers/LiquidityPositions";
 import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
 import { addr } from "../../src/snapshot/math";
-import type { ChainConfig, SerializedTokenRecord } from "../../src/snapshot/types";
+import type {
+  ChainConfig,
+  SerializedTokenRecord,
+  SerializedTokenSupply,
+} from "../../src/snapshot/types";
 
 const ETHEREUM = CHAIN_CONFIGS[1];
 const TIMESTAMP = 1_700_000_000n;
@@ -19,6 +23,7 @@ const WETH = addr("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2");
 const FRAX = addr("0x853d955acef822db058eb8505911ed77f175b99e");
 const USDC = addr("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48");
 const TREASURY_V3 = addr("0x9A315BdF513367C0377FB36545857d12e85813Ef");
+const DAO_WALLET = addr("0x245cc372c84b3645bf0ffe6538620b04a217988b");
 const AURA_ALLOCATOR = addr("0x872ebDd8129Aa328C89f6BF032bBD77a4c4BaC7e");
 const SUSHI_OHM_DAI = addr("0x055475920a8c93cffb64d039a8205f7acc7722d3");
 const BPT_OHM_DAI_WETH = addr("0xc45d42f801105e861e86658648e3678ad7aa70f9");
@@ -61,6 +66,9 @@ function buildMockContext() {
   const effect = vi.fn(async (_effectDef: unknown, input: Record<string, unknown>) => {
     if (input.method !== undefined) {
       const key = `${addr(String(input.contract))}:${input.method}:${addr(String(input.arg))}`;
+      if (key === `${AURA_POOL_OHM_DAI_WETH}:erc20.balanceOf:${DAO_WALLET}`) {
+        return (50n * 10n ** 18n).toString();
+      }
       if (key === `${AURA_POOL_OHM_DAI_WETH}:erc20.balanceOf:${AURA_ALLOCATOR}`) {
         return STATE.auraStaked.toString();
       }
@@ -77,6 +85,7 @@ function buildMockContext() {
   const tokenBalances = new Map<string, bigint>([
     [`1-${SUSHI_OHM_DAI}-${TREASURY_V3}`, STATE.sushiTreasuryV3],
     [`1-${BPT_OHM_DAI_WETH}-${TREASURY_V3}`, STATE.bptTreasuryV3],
+    [`1-${BPT_OHM_DAI_WETH}-${DAO_WALLET}`, 100n * 10n ** 18n],
   ]);
   const supplies = new Map<string, bigint>([
     [`1-${SUSHI_OHM_DAI}`, STATE.sushiSupply],
@@ -110,17 +119,19 @@ function buildMockContext() {
 async function snapshot(blockNumber: bigint, config: ChainConfig) {
   const { context, effect } = buildMockContext();
   const records: SerializedTokenRecord[] = [];
+  const supplies: SerializedTokenSupply[] = [];
   await pushLiquidityPositionRecords(
     context,
     config,
     buildMockClient(),
     records,
+    supplies,
     TIMESTAMP,
     blockNumber,
   );
   const find = (source: string, label: string) =>
     records.find((r) => r.sourceAddress === addr(source) && r.token === label);
-  return { records, find, effect };
+  return { records, supplies, find, effect };
 }
 
 // Every coin at $1: keeps the expected numbers exact.
@@ -184,6 +195,39 @@ describe("pushLiquidityPositionRecords", () => {
       ([, input]) => (input as { lpToken?: string }).lpToken !== undefined,
     );
     expect(curveSnapshots).toHaveLength(0);
+  });
+});
+
+describe("liquidity position OHM supply", () => {
+  test("OHM in SushiSwap OHM-DAI held by Treasury Wallet V3 leaves backed supply", async () => {
+    const { supplies } = await snapshot(14_694_800n, atOneDollar());
+    const row = supplies.find(
+      (s) => s.poolAddress === SUSHI_OHM_DAI && s.sourceAddress === TREASURY_V3,
+    );
+    const ohmPerLp = new BigNumber("953699.545842375").div(new BigNumber("133.154272771679037704"));
+    expect(row?.type).toBe("Liquidity");
+    expect(row?.tokenAddress).toBe(OHM);
+    expect(row?.pool).toBe("SushiSwap OHM V2-DAI Liquidity Pool");
+    expect(row?.supplyBalance).toBe(
+      new BigNumber("132.170296734877254208").times(ohmPerLp).times(-1).toString(10),
+    );
+  });
+
+  test("a wallet's staked and unstaked LP in one pool is one supply row", async () => {
+    const { supplies } = await snapshot(14_694_800n, atOneDollar());
+    const rows = supplies.filter(
+      (s) => s.poolAddress === BPT_OHM_DAI_WETH && s.sourceAddress === DAO_WALLET,
+    );
+    const ohmPerLp = new BigNumber("226840.363655203").div(
+      new BigNumber("298681.586807706691062017"),
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0].balance).toBe(new BigNumber(150).times(ohmPerLp).toString(10));
+  });
+
+  test("pools without OHM emit no supply rows", async () => {
+    const { supplies } = await snapshot(16_835_600n, atOneDollar());
+    expect(supplies.some((s) => s.sourceAddress === CONVEX_STAKING_PROXY_FRAXBP)).toBe(false);
   });
 });
 

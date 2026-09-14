@@ -346,6 +346,21 @@ const POSITION_READS: Record<
     args: walletArg,
     pick: uintResult,
   },
+  // IncurDebt total outstanding OHM debt across borrowers (arg unused).
+  "incurDebt.totalOutstanding": {
+    abi: [
+      {
+        inputs: [],
+        name: "totalOutstandingGlobalDebt",
+        outputs: [{ name: "", type: "uint256" }],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
+    functionName: "totalOutstandingGlobalDebt",
+    args: () => [],
+    pick: uintResult,
+  },
   // 1 when the Rari allocator lists `arg` in ids(), else 0.
   "rari.hasId": {
     abi: [

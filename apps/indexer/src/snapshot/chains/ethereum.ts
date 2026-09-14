@@ -2,6 +2,7 @@ import { addr, bytes32, token } from "../math";
 import type {
   ChainConfig,
   CoolerClearinghouse,
+  LendingDeployment,
   LiquidityHandler,
   LiquidityPosition,
   ProtocolPosition,
@@ -26,6 +27,11 @@ const DAO_WORKING_CAPITAL = addr("0xF65A665D650B5De224F46D729e2bD0885EeA9dA5");
 // Lending markets holding deployed DAI principal (legacy MYSO_LENDING / VENDOR_LENDING).
 const MYSO_LENDING = addr("0xb339953fc028b9998775c00594a74dd1488ee2c6");
 const VENDOR_LENDING = addr("0x83234a159dbd60a32457df158fafcbdf3d1ccc08");
+// OHM supply-side contracts (legacy OhmCalculations).
+const OLYMPUS_INCUR_DEBT = addr("0xd9d87586774fb9d036fa95a5991474513ff6c96e");
+const OLYMPUS_ASSOCIATION = addr("0x4c71db02aeeb336cbd8f3d2cc866911f6e2fbd94");
+const SILO_LENDING = addr("0xb2374f84b3cEeFF6492943Df613C9BcF45322a0c");
+const EULER_LENDING = addr("0x27182842E098f60e3D576794A5bFFb0777E025d3");
 // Bophades TRSRY module — two historical versions. The active one holds the
 // balance; the inactive one reads zero. Kernel upgrade events are tracked
 // separately (see Erc20Transfers.ts handlers + BophadesKernel handler).
@@ -404,6 +410,10 @@ const names: Record<string, string> = {
   [DAO_WORKING_CAPITAL]: "DAO Working Capital",
   [MYSO_LENDING]: "Myso Finance",
   [VENDOR_LENDING]: "Vendor Finance",
+  [OLYMPUS_INCUR_DEBT]: "IncurDebt",
+  [OLYMPUS_ASSOCIATION]: "Olympus Association",
+  [SILO_LENDING]: "Silo Router",
+  [EULER_LENDING]: "Euler Protocol",
   // Tokens and pools
   [CONVEX_REWARD_OHM_ETH]: "Convex Staked Curve OHM-ETH",
   [CONVEX_REWARD_OHM_FRAXBP]: "Convex Staked Curve OHM-FraxBP",
@@ -1284,6 +1294,7 @@ const liquidityPositions: LiquidityPosition[] = [
   {
     pricing: sushiOhmDai,
     lpToken: LP_SUSHI_OHM_DAI,
+    poolLabel: "SushiSwap OHM V2-DAI Liquidity Pool",
     sources: [
       { kind: "wallet", label: "SushiSwap OHM V2-DAI Liquidity Pool", wallets: POL_WALLETS },
     ],
@@ -1292,6 +1303,7 @@ const liquidityPositions: LiquidityPosition[] = [
   {
     pricing: sushiOhmEth,
     lpToken: LP_SUSHI_OHM_ETH,
+    poolLabel: "SushiSwap OHM V2-ETH Liquidity Pool",
     sources: [
       { kind: "wallet", label: "SushiSwap OHM V2-ETH Liquidity Pool", wallets: POL_WALLETS },
     ],
@@ -1305,6 +1317,7 @@ const liquidityPositions: LiquidityPosition[] = [
       startBlock: LP_BALANCER_OHM_DAI_WETH_DEPLOY_BLOCK,
     },
     lpToken: BPT_OHM_DAI_WETH,
+    poolLabel: "Balancer OHM-DAI-wETH Liquidity Pool",
     sources: [
       { kind: "wallet", label: "Balancer OHM-DAI-wETH Liquidity Pool", wallets: POL_WALLETS },
       auraStaked(
@@ -1319,6 +1332,7 @@ const liquidityPositions: LiquidityPosition[] = [
   {
     pricing: pricingHandler(LP_BALANCER_POOL_OHM_WETH),
     lpToken: BPT_OHM_WETH,
+    poolLabel: "Balancer OHM-wETH Liquidity Pool",
     sources: [
       { kind: "wallet", label: "Balancer OHM-wETH Liquidity Pool", wallets: POL_WALLETS },
       auraStaked(
@@ -1333,6 +1347,7 @@ const liquidityPositions: LiquidityPosition[] = [
   {
     pricing: pricingHandler(LP_BALANCER_POOL_OHM_DAI),
     lpToken: BPT_OHM_DAI,
+    poolLabel: "Balancer OHM-DAI Liquidity Pool",
     sources: [
       { kind: "wallet", label: "Balancer OHM-DAI Liquidity Pool", wallets: POL_WALLETS },
       auraStaked(
@@ -1347,6 +1362,7 @@ const liquidityPositions: LiquidityPosition[] = [
   {
     pricing: pricingHandler(LP_BALANCER_POOL_OHM_WSTETH),
     lpToken: BPT_OHM_WSTETH,
+    poolLabel: "Balancer OHM-wstETH Liquidity Pool",
     sources: [
       { kind: "wallet", label: "Balancer OHM-wstETH Liquidity Pool", wallets: POL_WALLETS },
       auraStaked(
@@ -1361,6 +1377,7 @@ const liquidityPositions: LiquidityPosition[] = [
   {
     pricing: pricingHandler(LP_CURVE_OHM_ETH),
     lpToken: LP_CURVE_OHM_ETH_TOKEN,
+    poolLabel: "Curve OHM-ETH Liquidity Pool",
     sources: [
       {
         kind: "read",
@@ -1376,6 +1393,7 @@ const liquidityPositions: LiquidityPosition[] = [
   {
     pricing: pricingHandler(LP_CURVE_FRAX_USDC_POOL),
     lpToken: LP_CURVE_FRAX_USDC_LP,
+    poolLabel: "Curve FraxBP Liquidity Pool",
     category: "Stable",
     sources: [
       {
@@ -1392,6 +1410,7 @@ const liquidityPositions: LiquidityPosition[] = [
   {
     pricing: pricingHandler(LP_CURVE_OHM_FRAXBP),
     lpToken: LP_CURVE_OHM_FRAXBP_TOKEN,
+    poolLabel: "Curve OHM-FraxBP Liquidity Pool",
     sources: [
       {
         kind: "read",
@@ -1407,6 +1426,7 @@ const liquidityPositions: LiquidityPosition[] = [
   {
     pricing: pricingHandler(LP_FRAXSWAP_V1_OHM_FRAX),
     lpToken: LP_FRAXSWAP_V1_OHM_FRAX,
+    poolLabel: "FraxSwap V1 OHM-FRAX Liquidity Pool",
     sources: [
       { kind: "wallet", label: "FraxSwap V1 OHM-FRAX Liquidity Pool", wallets: POL_WALLETS },
     ],
@@ -1415,10 +1435,39 @@ const liquidityPositions: LiquidityPosition[] = [
   {
     pricing: pricingHandler(LP_FRAXSWAP_V2_OHM_FRAX),
     lpToken: LP_FRAXSWAP_V2_OHM_FRAX,
+    poolLabel: "FraxSwap V2 OHM-FRAX Liquidity Pool",
     sources: [
       { kind: "wallet", label: "FraxSwap V2 OHM-FRAX Liquidity Pool", wallets: POL_WALLETS },
     ],
     startBlock: LP_FRAXSWAP_V2_OHM_FRAX_BLOCK,
+  },
+];
+
+// ---- OHM supply parity with legacy OhmCalculations.
+const OLYMPUS_INCUR_DEBT_BLOCK = 17_620_000; // legacy OLYMPUS_INCUR_DEBT_BLOCK
+const OLYMPUS_ASSOCIATION_LAST_ACTIVE_BLOCK = 17_114_999; // legacy counts it before 17,115,000
+// Legacy switched Silo to its collateral token balances at 18,121,728; those
+// read zero for protocol wallets, so the deployment schedule ends there.
+const SILO_DEPLOYMENTS_LAST_ACTIVE_BLOCK = 18_121_727;
+
+const lendingDeployments: LendingDeployment[] = [
+  {
+    source: SILO_LENDING,
+    entries: [
+      { block: 16_627_144, amount: "20000" },
+      { block: 16_834_221, amount: "28081.19399535" },
+      { block: 17_016_622, amount: "25000" },
+      { block: 17_464_332, amount: "-25000" },
+    ],
+    lastActiveBlock: SILO_DEPLOYMENTS_LAST_ACTIVE_BLOCK,
+  },
+  {
+    source: EULER_LENDING,
+    entries: [
+      { block: 16_627_152, amount: "30000" },
+      { block: 16_818_299, amount: "-27239.193995359" },
+      { block: 17_348_446, amount: "-2760.806004641" }, // settled in ETH / USDC
+    ],
   },
 ];
 
@@ -1972,12 +2021,19 @@ export const ETHEREUM: ChainConfig = {
   },
   protocolPositions,
   liquidityPositions,
+  incurDebt: { address: OLYMPUS_INCUR_DEBT, startBlock: OLYMPUS_INCUR_DEBT_BLOCK },
+  lendingDeployments,
+  treasuryOhmExtraWallets: [
+    { address: OLYMPUS_ASSOCIATION, lastActiveBlock: OLYMPUS_ASSOCIATION_LAST_ACTIVE_BLOCK },
+  ],
   // Olympus Boosted Liquidity Vault registry (per inventory §8). The effect
-  // iterates active vaults and reads getPoolOhmShare() per vault. Active
-  // after the OHM_INCUR_DEBT_BLOCK = 17_620_000 gate.
+  // iterates active vaults and reads getPoolOhmShare() per vault. Starts at
+  // the registry's deployment (first code at 17,067,350); reads revert and
+  // return empty before then. Legacy had no gate, so the earlier
+  // OHM_INCUR_DEBT_BLOCK start dropped ~155k OHM of BLV supply in Apr-Jun 2023.
   blvRegistry: {
     address: addr("0x375E06C694B5E50aF8be8FB03495A612eA3e2275"),
-    startBlock: 17_620_000,
+    startBlock: 17_067_350,
   },
   // Olympus V1 BondManager + Gnosis EasyAuction. Drives the bond
   // pre-minted / vesting / vested supply rows. Indexer-side runtime is

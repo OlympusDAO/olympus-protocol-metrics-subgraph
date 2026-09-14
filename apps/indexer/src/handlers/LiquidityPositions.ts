@@ -3,14 +3,16 @@ import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 
 import { readPositionAmount } from "../effects";
-import { getTotalValue, getUnitPrice } from "../pricing";
+import { getTokenQuantityPerLp, getTotalValue, getUnitPrice } from "../pricing";
+import { TYPE_LIQUIDITY } from "../snapshot/global";
 import { isActive, toDecimal, ZERO } from "../snapshot/math";
-import { createTokenRecord, getContractName } from "../snapshot/records";
+import { createTokenRecord, createTokenSupply, getContractName } from "../snapshot/records";
 import type {
   ChainConfig,
   LiquidityPosition,
   LiquidityPositionSource,
   SerializedTokenRecord,
+  SerializedTokenSupply,
 } from "../snapshot/types";
 import { readTokenBalance } from "./SnapshotHelpers";
 
@@ -59,11 +61,14 @@ async function readStaked(
 // farm). Each holding is valued at the pool's LP unit price, with legacy's
 // multiplier (pool value excluding OHM / total pool value) so the OHM side
 // never backs OHM. Pools are only priced when the treasury holds something.
+// The OHM share of each wallet's LP also leaves backed and floating supply as
+// a Liquidity row (one per pool and wallet, staked and unstaked summed).
 export async function pushLiquidityPositionRecords(
   context: EvmOnBlockContext,
   config: ChainConfig,
   client: PublicClient,
   records: SerializedTokenRecord[],
+  supplies: SerializedTokenSupply[],
   timestamp: bigint,
   blockNumber: bigint,
 ): Promise<void> {
@@ -102,6 +107,38 @@ export async function pushLiquidityPositionRecords(
           blockNumber,
           multiplier,
           position.category ?? "Protocol-Owned Liquidity",
+        ),
+      );
+    }
+
+    const ohmPerLp = await getTokenQuantityPerLp(
+      config,
+      context,
+      client,
+      pricing,
+      config.ohmToken,
+      blockNumber,
+    );
+    if (!ohmPerLp || ohmPerLp.eq(ZERO)) continue;
+    const lpByWallet = new Map<string, BigNumber>();
+    for (const holding of holdings) {
+      lpByWallet.set(holding.wallet, (lpByWallet.get(holding.wallet) ?? ZERO).plus(holding.amount));
+    }
+    for (const [wallet, lp] of lpByWallet) {
+      supplies.push(
+        createTokenSupply(
+          config,
+          timestamp,
+          getContractName(config, config.ohmToken),
+          config.ohmToken,
+          position.poolLabel,
+          position.lpToken,
+          getContractName(config, wallet),
+          wallet,
+          TYPE_LIQUIDITY,
+          lp.times(ohmPerLp),
+          blockNumber,
+          -1,
         ),
       );
     }

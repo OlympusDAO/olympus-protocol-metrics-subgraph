@@ -87,6 +87,22 @@ export class CurvePriceHandler extends BasePriceHandler<
     return lpSupply.eq(ZERO) ? null : totalValue.div(lpSupply);
   }
 
+  async getTokenQuantityPerLp(
+    tokenAddress: string,
+    blockNumber: bigint,
+  ): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
+    const index = this.handler.coins.findIndex((coin) => same(coin, tokenAddress));
+    if (index < 0) return null;
+    const snapshot = await this.snapshot(blockNumber);
+    if (!snapshot.totalSupply || snapshot.totalSupply === "0") return null;
+    const balance = toDecimal(
+      BigInt(snapshot.balances[index] ?? "0"),
+      this.handler.coinDecimals[index],
+    );
+    return balance.div(toDecimal(BigInt(snapshot.totalSupply), 18));
+  }
+
   async getUnderlyingTokenBalance(): Promise<BigNumber> {
     return ZERO;
   }
