@@ -6,7 +6,7 @@ import { CHAINLINK_ABI } from "../snapshot/abis/chainlink";
 import { KODIAK_ABI } from "../snapshot/abis/kodiak";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { dsrSharesToDai } from "../snapshot/math";
-import { getClient, retryRpc } from "../snapshot/rpc-client";
+import { getClient, isContractRevert, retryRpc } from "../snapshot/rpc-client";
 import type { ChainId, PositionReadMethod } from "../snapshot/types";
 
 // Cached effect that reads `vault.getPoolTokens(poolId)` once at the block of
@@ -139,7 +139,8 @@ export const readCoolerPrincipalReceivables = createEffect(
         }),
       );
       return (value as bigint).toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       // Effect outputs can't be null with the available schema primitives, so
       // we signal "no value" with an empty string. Consumers check for === "".
       return "";
@@ -200,7 +201,8 @@ export const readMakerDsrBalance = createEffect(
         ]),
       );
       return dsrSharesToDai(pie as bigint, chi as bigint).toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return "";
     }
   },
@@ -424,7 +426,8 @@ export const readPositionAmount = createEffect(
         }),
       );
       return read.pick(result, input.arg).toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return "";
     }
   },
@@ -465,7 +468,8 @@ export const readMonoCoolerTotalDebt = createEffect(
         }),
       );
       return (value as bigint).toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return "";
     }
   },
@@ -531,7 +535,8 @@ export const snapshotBlvRegistry = createEffect(
           blockNumber,
         }),
       );
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return { vaults: [], ohmShares: [] };
     }
 
@@ -558,7 +563,8 @@ export const snapshotBlvRegistry = createEffect(
         )) as bigint;
         vaults.push(vault.toLowerCase());
         ohmShares.push(share.toString());
-      } catch {
+      } catch (error) {
+        if (!isContractRevert(error)) throw error;
         // Per-vault revert (e.g. paused vault) — skip but keep iterating.
       }
     }
@@ -622,7 +628,8 @@ export const readBondManagerState = createEffect(
         }),
       )) as string;
       return { isActive: true, teller: teller.toLowerCase() };
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return { isActive: false, teller: "" };
     }
   },
@@ -671,7 +678,8 @@ export const readErc4626AssetsPerShare = createEffect(
         }),
       )) as bigint;
       return assets.toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return "";
     }
   },
@@ -711,7 +719,8 @@ export const readSOhmCirculatingSupply = createEffect(
         }),
       )) as bigint;
       return value.toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return "";
     }
   },
@@ -780,7 +789,8 @@ export const readNextOhmDistribution = createEffect(
         }),
       )) as bigint;
       total += v1;
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       /* V1 revert — skip; matches legacy try_ behavior */
     }
 
@@ -795,7 +805,8 @@ export const readNextOhmDistribution = createEffect(
           }),
         )) as readonly [bigint, bigint, bigint, bigint];
         total += v2[3];
-      } catch {
+      } catch (error) {
+        if (!isContractRevert(error)) throw error;
         /* V2 revert — skip */
       }
     }
@@ -811,7 +822,8 @@ export const readNextOhmDistribution = createEffect(
           }),
         )) as readonly [bigint, bigint, bigint, bigint];
         total += v3[3];
-      } catch {
+      } catch (error) {
+        if (!isContractRevert(error)) throw error;
         /* V3 revert — skip */
       }
     }
@@ -883,7 +895,8 @@ export const snapshotCurvePool = createEffect(
           }),
         )) as bigint;
         balances.push(b.toString());
-      } catch {
+      } catch (error) {
+        if (!isContractRevert(error)) throw error;
         balances.push("0");
       }
     }
@@ -898,7 +911,8 @@ export const snapshotCurvePool = createEffect(
         }),
       )) as bigint;
       totalSupply = ts.toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       /* revert; keep "0" */
     }
 
@@ -957,7 +971,8 @@ export const snapshotFraxSwapPool = createEffect(
       )) as readonly [bigint, bigint, number];
       reserve0 = reserves[0].toString();
       reserve1 = reserves[1].toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       /* revert; keep "0"s */
     }
 
@@ -971,7 +986,8 @@ export const snapshotFraxSwapPool = createEffect(
         }),
       )) as bigint;
       totalSupply = ts.toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       /* revert; keep "0" */
     }
 
@@ -1075,7 +1091,8 @@ export const snapshotUniv3NftPositions = createEffect(
           blockNumber,
         }),
       )) as bigint;
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return { positions };
     }
     if (count === 0n) return { positions };
@@ -1094,7 +1111,8 @@ export const snapshotUniv3NftPositions = createEffect(
             blockNumber,
           }),
         )) as bigint;
-      } catch {
+      } catch (error) {
+        if (!isContractRevert(error)) throw error;
         continue;
       }
 
@@ -1131,7 +1149,8 @@ export const snapshotUniv3NftPositions = createEffect(
           tickUpper: Number(pos[6]),
           liquidity: liquidity.toString(),
         });
-      } catch {
+      } catch (error) {
+        if (!isContractRevert(error)) throw error;
         /* per-position revert; skip */
       }
     }
@@ -1236,7 +1255,8 @@ export const readErc20BalanceOf = createEffect(
         }),
       );
       return (balance as bigint).toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return "0";
     }
   },
@@ -1274,7 +1294,8 @@ export const readChainlinkLatestAnswer = createEffect(
         }),
       );
       return (answer as bigint).toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       // Contract not deployed at this block, or feed reverted (Chainlink
       // proxies sometimes return empty data before their first phase is
       // initialised). Caller treats "0" as "no price available" and the

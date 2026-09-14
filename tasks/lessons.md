@@ -157,3 +157,15 @@ If those match but disagree with the actual on-chain `balanceOf`, the token is n
 **Why it's a trap:** a version bump in the diff supplies a ready-made culprit, and one environment's symptom looks like proof when it lines up that cleanly. Comparing two environments only shows they *differ*; it never shows *why*. The missing step was reproducing against the suspect version in isolation before assigning blame.
 
 **Where to apply:** any dependency upgrade whose failure surfaces only in a deployed environment. Reproduce locally against the new version first. If it behaves correctly there, suspect the environment and redeploy before touching the diff. Note also that `tsc` and the four test suites all pass against a broken Hasura surface — the publisher's queries are raw strings against a live endpoint, so nothing in CI covers that contract.
+
+---
+
+## 2026-09-14 — Cached effects must only default on a revert
+
+**The trap:** effects with `cache: true` persist whatever the handler returns in `envio_effect_<name>` tables. Most of ours wrapped the RPC read in `catch { return <default> }` to handle contracts that aren't deployed yet. That catch also swallowed rate limits, timeouts and HTTP errors, so a transient RPC failure was stored as a real answer and reused for that (input, block) from then on.
+
+**Concrete confirmation:** a local Ethereum reindex that fell back from HyperSync to RPC cached `readBondManagerState` as `{ isActive: false }` for 8 snapshots (blocks 17,647,200 to 17,664,000). On-chain `isActive()` was true and the BondManager held 271,221 OHM, so every bond deposit supply row for those snapshots was dropped.
+
+**Fix in this codebase:** `isContractRevert(error)` in `src/snapshot/rpc-client.ts` walks viem's cause chain for `ContractFunctionRevertedError` (reverted) or `ContractFunctionZeroDataError` (returned `0x`: not deployed yet, or a Chainlink proxy with no round). Every effect catch rethrows anything else. Envio doesn't cache a thrown effect; the batch fails and the indexer can resume.
+
+**Where to apply:** any new effect, and any `try/catch` around an RPC read whose result is persisted. Default only on `isContractRevert`, never on a bare `catch`. A production indexer that already ran with the old catches can hold bad cached values, so deploy this with a full reindex (reset drops the effect cache tables), not a resume.
