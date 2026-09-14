@@ -504,7 +504,6 @@ chains:
       - name: UniswapV2Pool
         address:
           - "0x4b893b0e9c2fe8bf5d531d0c9c603b1483b4ce30" # cvxCRV-ETH (prices cvxCRV)
-          - "0x8B00eE8606CC70c2dce68dea0CEfe632CCA0fB7b" # UST-ETH (prices UST)
           - "0xceff51756c56ceffca006cd410b03ffc46dd3a58" # ETH-wBTC (prices wBTC)
           - "0x7ce01885a13c652241ae02ea7369ee8d466802eb" # TRIBE-ETH (prices TRIBE)
           - "0xd4e7a6e2d03e4e48dfc27dd3f46df1c176647e38" # TOKE-ETH (prices TOKE)

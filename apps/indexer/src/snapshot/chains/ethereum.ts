@@ -206,7 +206,6 @@ const ERC20_CVX_FRAX_3CRV = addr("0xbe0f6478e0e4894cfb14f32855603a083a57c7da");
 
 // Price pools for the tokens above (legacy LIQUIDITY_POOL_TOKEN_LOOKUP).
 const LP_UNISWAP_V3_FEI_USDC = addr("0xdf50fbde8180c8785842c8e316ebe06f542d3443");
-const LP_UNISWAP_V2_UST_ETH = addr("0x8B00eE8606CC70c2dce68dea0CEfe632CCA0fB7b");
 const LP_UNISWAP_V2_ETH_WBTC = addr("0xceff51756c56ceffca006cd410b03ffc46dd3a58");
 const LP_UNISWAP_V2_TRIBE_ETH = addr("0x7ce01885a13c652241ae02ea7369ee8d466802eb");
 const LP_UNISWAP_V2_TOKE_ETH = addr("0xd4e7a6e2d03e4e48dfc27dd3f46df1c176647e38");
@@ -787,12 +786,11 @@ const liquidityHandlers: LiquidityHandler[] = [
     id: LP_UNISWAP_V3_FEI_USDC,
     startBlock: LP_UNISWAP_V3_FEI_USDC_BLOCK,
   },
-  {
-    kind: "univ2",
-    tokens: [ERC20_UST, ERC20_WETH],
-    id: LP_UNISWAP_V2_UST_ETH,
-    startBlock: ERC20_UST_BLOCK,
-  },
+  // UST (0xa693...) has no pool of its own: legacy's UST-ETH pair holds the
+  // other UST contract (0xa47c...), so pricing through it valued the treasury's
+  // UST at ~$0. Legacy's records show ~$1 until its post-collapse cutoff, which
+  // the token's lastActiveBlock already applies.
+  { kind: "stable", tokens: [ERC20_UST], id: "stable-ust", startBlock: ERC20_UST_BLOCK },
   {
     kind: "univ2",
     tokens: [ERC20_WBTC, ERC20_WETH],
