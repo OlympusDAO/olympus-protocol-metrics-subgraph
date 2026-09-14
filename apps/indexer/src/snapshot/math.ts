@@ -31,6 +31,7 @@ export function token(args: {
   decimals?: number;
   isLiability?: boolean;
   nonStandardBalance?: boolean;
+  positionRead?: TokenDefinition["positionRead"];
 }): TokenDefinition {
   return {
     address: addr(args.address),
@@ -42,6 +43,9 @@ export function token(args: {
     startBlock: args.startBlock,
     isLiability: args.isLiability,
     nonStandardBalance: args.nonStandardBalance,
+    positionRead: args.positionRead
+      ? { ...args.positionRead, wallets: args.positionRead.wallets?.map(addr) }
+      : undefined,
   };
 }
 

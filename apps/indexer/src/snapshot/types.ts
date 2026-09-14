@@ -68,7 +68,15 @@ export type TokenDefinition = {
   // negative, polluting downstream rollups. See tasks/lessons.md
   // "2026-05-17 — Tokens that mutate balance without Transfer events".
   nonStandardBalance?: boolean;
+  // Snapshot-time read for receipts whose ERC20 `balanceOf` isn't the asset
+  // amount (e.g. veFXS returns decaying voting power, not the locked FXS).
+  // `method` selects a fixed ABI in `readPositionAmount`; `wallets` narrows
+  // the read to the holders legacy valued. Takes precedence over
+  // `nonStandardBalance`.
+  positionRead?: { method: PositionReadMethod; wallets?: string[] };
 };
+
+export type PositionReadMethod = "veFxs.lockedAmount";
 
 export type BasePriceFeed = {
   address: string;

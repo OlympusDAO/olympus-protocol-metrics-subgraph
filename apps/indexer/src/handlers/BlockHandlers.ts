@@ -59,6 +59,7 @@ import {
   getLpTokenForHandler,
   readNativeBalance,
   readNonStandardBalance,
+  readPositionBalance,
   readTokenBalance,
 } from "./SnapshotHelpers";
 import { pushUniv3NftPol } from "./Univ3NftPol";
@@ -520,19 +521,31 @@ export async function pushTokenBalanceRecords(
     const wallets = getWalletAddressesForContract(config, definition.address);
     const decimals = getTokenDecimals(config.tokens, definition.address);
     const isNative = definition.address === config.nativeToken;
+    const positionRead = definition.positionRead;
     for (const wallet of wallets) {
+      if (positionRead?.wallets && !positionRead.wallets.includes(addr(wallet))) continue;
       const balance = isNative
         ? await readNativeBalance(context, client, config.chainId, wallet, decimals, blockNumber)
-        : definition.nonStandardBalance
-          ? await readNonStandardBalance(
+        : positionRead
+          ? await readPositionBalance(
               context,
               config.chainId,
               definition.address,
+              positionRead.method,
               wallet,
               decimals,
               blockNumber,
             )
-          : await readTokenBalance(context, config.chainId, definition.address, wallet, decimals);
+          : definition.nonStandardBalance
+            ? await readNonStandardBalance(
+                context,
+                config.chainId,
+                definition.address,
+                wallet,
+                decimals,
+                blockNumber,
+              )
+            : await readTokenBalance(context, config.chainId, definition.address, wallet, decimals);
       if (balance.eq(ZERO)) continue;
       records.push(
         createTokenRecord(

@@ -1,5 +1,5 @@
 import { createEffect, S } from "envio";
-import { getAddress } from "viem";
+import { type Abi, getAddress } from "viem";
 
 import { BALANCER_VAULT_ABI } from "../snapshot/abis/balancer";
 import { CHAINLINK_ABI } from "../snapshot/abis/chainlink";
@@ -7,7 +7,7 @@ import { KODIAK_ABI } from "../snapshot/abis/kodiak";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { dsrSharesToDai } from "../snapshot/math";
 import { getClient, retryRpc } from "../snapshot/rpc-client";
-import type { ChainId } from "../snapshot/types";
+import type { ChainId, PositionReadMethod } from "../snapshot/types";
 
 // Cached effect that reads `vault.getPoolTokens(poolId)` once at the block of
 // the first event we observe for a given pool. Used to seed BalancerPoolState
@@ -200,6 +200,75 @@ export const readMakerDsrBalance = createEffect(
         ]),
       );
       return dsrSharesToDai(pie as bigint, chi as bigint).toString();
+    } catch {
+      return "";
+    }
+  },
+);
+
+// Cached snapshot-time reads of protocol positions that aren't plain ERC20
+// balances (lock receipts, staking and stability pools, allocator ledgers).
+// Each method pins one ABI and how to pull the amount out of the result, so
+// the effect input stays a flat, cacheable (chain, contract, method, wallet,
+// block) tuple. Returns the raw uint as a string, or "" on revert.
+const POSITION_READS: Record<
+  PositionReadMethod,
+  { abi: Abi; functionName: string; pick: (result: unknown) => bigint }
+> = {
+  // VeFXS.locked(address) → (int128 amount, uint256 end). The amount stays
+  // until withdrawal, even after `end`; balanceOf is boosted voting power.
+  "veFxs.lockedAmount": {
+    abi: [
+      {
+        inputs: [{ name: "addr", type: "address" }],
+        name: "locked",
+        outputs: [
+          { name: "amount", type: "int128" },
+          { name: "end", type: "uint256" },
+        ],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
+    functionName: "locked",
+    pick: (result) => {
+      const [amount] = result as readonly [bigint, bigint];
+      return amount < 0n ? 0n : amount;
+    },
+  },
+};
+
+export const readPositionAmount = createEffect(
+  {
+    name: "readPositionAmount",
+    input: {
+      chainId: S.number,
+      contract: S.string,
+      method: S.string,
+      wallet: S.string,
+      atBlock: S.number,
+    },
+    output: S.string,
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const read = POSITION_READS[input.method as PositionReadMethod];
+    if (!read) throw new Error(`Unsupported position read ${input.method}`);
+    const client = getClient(config);
+    try {
+      const result = await retryRpc(() =>
+        client.readContract({
+          address: getAddress(input.contract),
+          abi: read.abi,
+          functionName: read.functionName,
+          args: [getAddress(input.wallet)],
+          blockNumber: BigInt(input.atBlock),
+        }),
+      );
+      return read.pick(result).toString();
     } catch {
       return "";
     }

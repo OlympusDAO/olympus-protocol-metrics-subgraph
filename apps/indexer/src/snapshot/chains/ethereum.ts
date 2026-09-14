@@ -1125,9 +1125,11 @@ export const ETHEREUM: ChainConfig = {
       decimals: 18,
     }),
     // veFXS — vote-escrow FXS lock receipt. Held in VeFXS Allocator.
-    // Categorized Volatile/isLiquid=false (legacy parity); the lock-decay
-    // changes balanceOf without emitting Transfer, so use snapshot-time
-    // balanceOf. Priced 1:1 with FXS via the remap LiquidityHandler.
+    // Categorized Volatile/isLiquid=false (legacy parity). balanceOf is the
+    // boosted, decaying voting power (up to 4x the lock), so read the locked
+    // FXS amount instead, as legacy getVeFXSAllocatorRecords did. The amount
+    // still counts after the lock expires, until it's withdrawn. Priced 1:1
+    // with FXS via the remap LiquidityHandler.
     token({
       address: ERC20_FXS_VE,
       category: "Volatile",
@@ -1135,7 +1137,7 @@ export const ETHEREUM: ChainConfig = {
       isBluechip: false,
       startBlock: ERC20_FXS_VE_BLOCK,
       decimals: 18,
-      nonStandardBalance: true,
+      positionRead: { method: "veFxs.lockedAmount", wallets: [VEFXS_ALLOCATOR] },
     }),
     // cvxCRV — Convex's liquid staked-CRV wrapper. Standard ERC20 (mints
     // emit Transfer), so the event-driven TokenBalance is correct — no
@@ -1198,7 +1200,9 @@ export const ETHEREUM: ChainConfig = {
       decimals: 18,
     }),
     // rlBTRFLY carries the legacy 0.89 illiquid multiplier (per inventory §2.2,
-    // PriceHandlerCustomMapping legacy hard-code).
+    // PriceHandlerCustomMapping legacy hard-code). Locking mints no Transfer
+    // (the contract only emits Locked / Withdrawn), so the ledger never moves;
+    // balanceOf returns the active locked amount.
     token({
       address: ERC20_BTRFLY_V2_RL,
       category: "Volatile",
@@ -1207,6 +1211,7 @@ export const ETHEREUM: ChainConfig = {
       multiplier: "0.89",
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
+      nonStandardBalance: true,
     }),
     // OHM V1 and V2 are tracked but value-excluded from treasury MV when held
     // by protocol wallets (multiplier 0). For the baseline, the protocol
