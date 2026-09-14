@@ -53,6 +53,7 @@ import { pushArbitrumStakingRecords } from "./ArbitrumStaking";
 import { pushBlvSupply } from "./BlvSupply";
 import { pushCoolerReceivables } from "./CoolerLoans";
 import { pushGnosisAuctionSupply } from "./GnosisAuctions";
+import { pushLiquidityPositionRecords } from "./LiquidityPositions";
 import { pushMakerDsrRecords } from "./MakerDsr";
 import { pushMigrationOffsetSupply } from "./MigrationOffset";
 import { pushProtocolPositionRecords } from "./ProtocolPositions";
@@ -180,6 +181,16 @@ async function processSnapshot(
       }
       if (config.protocolPositions) {
         await pushProtocolPositionRecords(context, config, client, records, timestamp, blockNumber);
+      }
+      if (config.liquidityPositions) {
+        await pushLiquidityPositionRecords(
+          context,
+          config,
+          client,
+          records,
+          timestamp,
+          blockNumber,
+        );
       }
       if (config.univ3PositionManager) {
         await pushUniv3NftPol(context, config, client, records, supplies, timestamp, blockNumber);

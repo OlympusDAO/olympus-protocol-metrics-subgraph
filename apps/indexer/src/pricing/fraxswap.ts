@@ -1,7 +1,7 @@
 import type BigNumber from "bignumber.js";
 
 import { snapshotFraxSwapPool } from "../effects";
-import { addr, toDecimal, ZERO } from "../snapshot/math";
+import { addr, same, toDecimal, ZERO } from "../snapshot/math";
 import type { LiquidityHandler } from "../snapshot/types";
 import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";
 
@@ -15,6 +15,14 @@ import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./ty
 export class FraxSwapPriceHandler extends BasePriceHandler<
   Extract<LiquidityHandler, { kind: "fraxswap" }>
 > {
+  private async snapshot(blockNumber: bigint) {
+    return (await this.context.effect(snapshotFraxSwapPool, {
+      chainId: this.config.chainId,
+      pool: addr(this.handler.id),
+      atBlock: Number(blockNumber),
+    })) as { reserve0: string; reserve1: string; totalSupply: string };
+  }
+
   async getPrice(
     _tokenAddress: string,
     priceLookup: PriceLookup,
@@ -22,11 +30,7 @@ export class FraxSwapPriceHandler extends BasePriceHandler<
   ): Promise<PriceLookupResult | null> {
     if (!this.isActive(blockNumber)) return null;
 
-    const snapshot = (await this.context.effect(snapshotFraxSwapPool, {
-      chainId: this.config.chainId,
-      pool: addr(this.handler.id),
-      atBlock: Number(blockNumber),
-    })) as { reserve0: string; reserve1: string; totalSupply: string };
+    const snapshot = await this.snapshot(blockNumber);
     if (!snapshot.totalSupply || snapshot.totalSupply === "0") return null;
 
     const reserve0 = toDecimal(BigInt(snapshot.reserve0), this.handler.decimals0);
@@ -43,12 +47,34 @@ export class FraxSwapPriceHandler extends BasePriceHandler<
     return { price, liquidity: poolValue };
   }
 
-  async getTotalValue(): Promise<BigNumber | null> {
-    return null;
+  async getTotalValue(
+    excludedTokens: string[],
+    priceLookup: PriceLookup,
+    blockNumber: bigint,
+  ): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
+    const snapshot = await this.snapshot(blockNumber);
+    if (!snapshot.totalSupply || snapshot.totalSupply === "0") return null;
+
+    const legs = [
+      { token: this.handler.token0, reserve: snapshot.reserve0, decimals: this.handler.decimals0 },
+      { token: this.handler.token1, reserve: snapshot.reserve1, decimals: this.handler.decimals1 },
+    ];
+    let total = ZERO;
+    for (const leg of legs) {
+      if (excludedTokens.some((excluded) => same(excluded, leg.token))) continue;
+      const price = await priceLookup(leg.token, blockNumber, this.handler.id);
+      total = total.plus(toDecimal(BigInt(leg.reserve), leg.decimals).times(price.price));
+    }
+    return total;
   }
 
-  async getUnitPrice(): Promise<BigNumber | null> {
-    return null;
+  async getUnitPrice(priceLookup: PriceLookup, blockNumber: bigint): Promise<BigNumber | null> {
+    const totalValue = await this.getTotalValue([], priceLookup, blockNumber);
+    if (!totalValue) return null;
+    const snapshot = await this.snapshot(blockNumber);
+    const lpSupply = toDecimal(BigInt(snapshot.totalSupply), 18);
+    return lpSupply.eq(ZERO) ? null : totalValue.div(lpSupply);
   }
 
   async getUnderlyingTokenBalance(): Promise<BigNumber> {

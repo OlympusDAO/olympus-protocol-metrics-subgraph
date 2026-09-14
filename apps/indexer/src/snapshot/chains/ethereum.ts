@@ -3,6 +3,7 @@ import type {
   ChainConfig,
   CoolerClearinghouse,
   LiquidityHandler,
+  LiquidityPosition,
   ProtocolPosition,
 } from "../types";
 import { rpcUrls } from "./rpc";
@@ -264,10 +265,13 @@ const LP_CURVE_OHM_FRAXBP = addr("0xFc1e8bf3E81383Ef07Be24c3FD146745719DE48D");
 const LP_CURVE_FRAX_USDC_POOL = addr("0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2");
 // FraxBP LP token (separate from the pool address per Curve V2 lp_token()).
 const LP_CURVE_FRAX_USDC_LP = addr("0x3175Df0976dFA876431C2E9eE6Bc45b65d3473CC");
+// OHM-ETH and OHM-FraxBP LP tokens are separate from their pools (pool.token()).
+const LP_CURVE_OHM_ETH_TOKEN = addr("0x3660bd168494d61ffdac21e403d0f6356cf90fd7");
+const LP_CURVE_OHM_FRAXBP_TOKEN = addr("0x5271045F7B73c17825A7A7aee6917eE46b0B7520");
 
-// Curve OHM-ETH uses native ETH (sentinel address) as coin 1. FraxBP coins
-// are FRAX and USDC. Coin order per Curve registry.
-const CURVE_OHM_ETH_COINS = [ERC20_OHM_V2, NATIVE_ETH];
+// Curve OHM-ETH holds WETH as coin 1 (pool.coins(1)). FraxBP coins are FRAX
+// and USDC. Coin order per Curve registry.
+const CURVE_OHM_ETH_COINS = [ERC20_OHM_V2, ERC20_WETH];
 const CURVE_OHM_FRAXBP_COINS = [ERC20_OHM_V2, LP_CURVE_FRAX_USDC_LP];
 const CURVE_FRAX_USDC_COINS = [ERC20_FRAX, ERC20_USDC];
 
@@ -903,13 +907,13 @@ const liquidityHandlers: LiquidityHandler[] = [
     kind: "remap",
     tokens: [CONVEX_REWARD_OHM_ETH],
     id: CONVEX_REWARD_OHM_ETH,
-    target: LP_CURVE_OHM_ETH,
+    target: LP_CURVE_OHM_ETH_TOKEN,
   },
   {
     kind: "remap",
     tokens: [CONVEX_REWARD_OHM_FRAXBP],
     id: CONVEX_REWARD_OHM_FRAXBP,
-    target: LP_CURVE_OHM_FRAXBP,
+    target: LP_CURVE_OHM_FRAXBP_TOKEN,
   },
   {
     kind: "remap",
@@ -963,22 +967,20 @@ const liquidityHandlers: LiquidityHandler[] = [
     startBlock: ERC20_GAUNTLET_SUSDS_VAULT_BLOCK,
   },
   // Curve pools (POL). LP-token price = (Σ balance × coin price) / totalSupply.
-  // Native ETH appears as a coin in the OHM-ETH pool; remap entry above
-  // resolves it to WETH for pricing.
   {
     kind: "curve",
-    tokens: [LP_CURVE_OHM_ETH],
+    tokens: [LP_CURVE_OHM_ETH_TOKEN],
     id: LP_CURVE_OHM_ETH,
-    lpToken: LP_CURVE_OHM_ETH,
+    lpToken: LP_CURVE_OHM_ETH_TOKEN,
     coins: CURVE_OHM_ETH_COINS,
     coinDecimals: [9, 18],
     startBlock: LP_CURVE_OHM_ETH_BLOCK,
   },
   {
     kind: "curve",
-    tokens: [LP_CURVE_OHM_FRAXBP],
+    tokens: [LP_CURVE_OHM_FRAXBP_TOKEN],
     id: LP_CURVE_OHM_FRAXBP,
-    lpToken: LP_CURVE_OHM_FRAXBP,
+    lpToken: LP_CURVE_OHM_FRAXBP_TOKEN,
     coins: CURVE_OHM_FRAXBP_COINS,
     coinDecimals: [9, 18],
     startBlock: LP_CURVE_OHM_FRAXBP_BLOCK,
@@ -1222,6 +1224,201 @@ const protocolPositions: ProtocolPosition[] = [
       { block: 16_897_393, amount: "500000" },
       { block: 18_227_657, amount: "-500000" },
     ],
+  },
+];
+
+// ---- Protocol-owned liquidity (handlers/LiquidityPositions.ts). Pools,
+// holders, staking contracts and labels mirror the legacy LIQUIDITY_OWNED
+// records (Balancer, SushiSwap, Curve, FraxSwap). wETH-FDT gauge deposits
+// and OHM-BTRFLY V1 stayed under $0.2M and aren't ported.
+const LP_SUSHI_OHM_DAI = addr("0x055475920a8c93cffb64d039a8205f7acc7722d3");
+const LP_SUSHI_OHM_ETH = addr("0x69b81152c5a8d35a67b32a4d3772795d96cae4da");
+const LP_SUSHI_OHM_DAI_BLOCK = 13_826_593;
+const LP_SUSHI_OHM_ETH_BLOCK = 13_805_112;
+const LP_BALANCER_OHM_DAI_WETH_DEPLOY_BLOCK = 13_929_694;
+// Aura deposit tokens (legacy record token) for each Aura staking pool.
+const AURA_DEPOSIT_OHM_DAI_WETH = addr("0x622A725a79C7fE37AD839C640cD62d546712B3A9");
+const AURA_DEPOSIT_OHM_DAI = addr("0xB23Dfc0C4502a271976F1ee65321C51Be2529640");
+const AURA_DEPOSIT_OHM_WETH = addr("0xA02D8861FBFD0bA3D8EbaFA447Fe7680a3FA9a93");
+const AURA_DEPOSIT_OHM_WSTETH = addr("0x0EF97ef0e20F84e82ec2D79CBD9Eda923C3DAF09");
+const CONVEX_DEPOSIT_OHM_ETH = addr("0x9bb0daf4361e1b84f5a44914595c46f07e9d12a4"); // cvxOHMETH
+const FRAX_FARM_FRAXBP = addr("0x963f487796d54d2f27bA6F3Fbe91154cA103b199");
+const FRAX_FARM_OHM_FRAXBP = addr("0xc96e1a26264D965078bd01eaceB129A65C09FFE7");
+const STKCVX_FRAXBP = addr("0x8a53ee42FB458D4897e15cc7dEa3F75D0F1c3475");
+const STKCVX_OHM_FRAXBP = addr("0x81b0dCDa53482A2EA9eb496342dC787643323e95");
+
+function pricingHandler(id: string): LiquidityHandler {
+  const handler = liquidityHandlers.find((value) => value.id === id);
+  if (!handler) throw new Error(`No Ethereum pricing handler ${id}`);
+  return handler;
+}
+
+// SushiSwap pairs value POL only; they aren't in liquidityHandlers, so they
+// don't become OHM / DAI / WETH price sources.
+const sushiOhmDai: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V2, ERC20_DAI],
+  id: LP_SUSHI_OHM_DAI,
+  startBlock: LP_SUSHI_OHM_DAI_BLOCK,
+};
+const sushiOhmEth: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V2, ERC20_WETH],
+  id: LP_SUSHI_OHM_ETH,
+  startBlock: LP_SUSHI_OHM_ETH_BLOCK,
+};
+
+const POL_WALLETS = [TREASURY_ADDRESS_V3, DAO_WALLET];
+
+const auraStaked = (pool: string, deposit: string, poolLabel: string, vault: string) =>
+  ({
+    kind: "read",
+    contract: pool,
+    method: "erc20.balanceOf",
+    receiptToken: deposit,
+    label: `${poolLabel} - Staked in ${vault}`,
+    wallets: AURA_HOLDERS,
+  }) as const;
+
+const liquidityPositions: LiquidityPosition[] = [
+  {
+    pricing: sushiOhmDai,
+    lpToken: LP_SUSHI_OHM_DAI,
+    sources: [
+      { kind: "wallet", label: "SushiSwap OHM V2-DAI Liquidity Pool", wallets: POL_WALLETS },
+    ],
+    startBlock: LP_SUSHI_OHM_DAI_BLOCK,
+  },
+  {
+    pricing: sushiOhmEth,
+    lpToken: LP_SUSHI_OHM_ETH,
+    sources: [
+      { kind: "wallet", label: "SushiSwap OHM V2-ETH Liquidity Pool", wallets: POL_WALLETS },
+    ],
+    startBlock: LP_SUSHI_OHM_ETH_BLOCK,
+  },
+  // The shared OHM-DAI-wETH price handler starts at 14,790,000 so it can't
+  // shift historical OHM price; POL valuation uses it from deployment.
+  {
+    pricing: {
+      ...pricingHandler(LP_BALANCER_POOL_OHM_DAI_WETH),
+      startBlock: LP_BALANCER_OHM_DAI_WETH_DEPLOY_BLOCK,
+    },
+    lpToken: BPT_OHM_DAI_WETH,
+    sources: [
+      { kind: "wallet", label: "Balancer OHM-DAI-wETH Liquidity Pool", wallets: POL_WALLETS },
+      auraStaked(
+        AURA_VAULT_OHM_DAI_WETH,
+        AURA_DEPOSIT_OHM_DAI_WETH,
+        "Balancer OHM-DAI-wETH Liquidity Pool",
+        "Aura OHM-DAI-wETH Deposit Vault",
+      ),
+    ],
+    startBlock: LP_BALANCER_OHM_DAI_WETH_DEPLOY_BLOCK,
+  },
+  {
+    pricing: pricingHandler(LP_BALANCER_POOL_OHM_WETH),
+    lpToken: BPT_OHM_WETH,
+    sources: [
+      { kind: "wallet", label: "Balancer OHM-wETH Liquidity Pool", wallets: POL_WALLETS },
+      auraStaked(
+        AURA_VAULT_OHM_WETH,
+        AURA_DEPOSIT_OHM_WETH,
+        "Balancer OHM-wETH Liquidity Pool",
+        "Aura OHM-wETH Deposit Vault",
+      ),
+    ],
+    startBlock: LP_BALANCER_OHM_WETH_BLOCK,
+  },
+  {
+    pricing: pricingHandler(LP_BALANCER_POOL_OHM_DAI),
+    lpToken: BPT_OHM_DAI,
+    sources: [
+      { kind: "wallet", label: "Balancer OHM-DAI Liquidity Pool", wallets: POL_WALLETS },
+      auraStaked(
+        AURA_VAULT_OHM_DAI,
+        AURA_DEPOSIT_OHM_DAI,
+        "Balancer OHM-DAI Liquidity Pool",
+        "Aura OHM-DAI Deposit Vault",
+      ),
+    ],
+    startBlock: LP_BALANCER_OHM_DAI_BLOCK,
+  },
+  {
+    pricing: pricingHandler(LP_BALANCER_POOL_OHM_WSTETH),
+    lpToken: BPT_OHM_WSTETH,
+    sources: [
+      { kind: "wallet", label: "Balancer OHM-wstETH Liquidity Pool", wallets: POL_WALLETS },
+      auraStaked(
+        AURA_VAULT_OHM_WSTETH,
+        AURA_DEPOSIT_OHM_WSTETH,
+        "Balancer OHM-wstETH Liquidity Pool",
+        "Aura OHM-wstETH Deposit Vault",
+      ),
+    ],
+    startBlock: LP_BALANCER_OHM_WSTETH_BLOCK,
+  },
+  {
+    pricing: pricingHandler(LP_CURVE_OHM_ETH),
+    lpToken: LP_CURVE_OHM_ETH_TOKEN,
+    sources: [
+      {
+        kind: "read",
+        contract: CONVEX_REWARD_OHM_ETH,
+        method: "erc20.balanceOf",
+        receiptToken: CONVEX_DEPOSIT_OHM_ETH,
+        label: "Curve OHM-ETH Liquidity Pool - Staked in Convex (cvxOHMETH)",
+        wallets: POL_WALLETS,
+      },
+    ],
+    startBlock: LP_CURVE_OHM_ETH_BLOCK,
+  },
+  {
+    pricing: pricingHandler(LP_CURVE_FRAX_USDC_POOL),
+    lpToken: LP_CURVE_FRAX_USDC_LP,
+    category: "Stable",
+    sources: [
+      {
+        kind: "read",
+        contract: FRAX_FARM_FRAXBP,
+        method: "frax.lockedLiquidity",
+        receiptToken: STKCVX_FRAXBP,
+        label: "Curve FraxBP - Staked in Frax",
+        wallets: [CONVEX_STAKING_PROXY_FRAXBP],
+      },
+    ],
+    startBlock: LP_CURVE_FRAX_USDC_BLOCK,
+  },
+  {
+    pricing: pricingHandler(LP_CURVE_OHM_FRAXBP),
+    lpToken: LP_CURVE_OHM_FRAXBP_TOKEN,
+    sources: [
+      {
+        kind: "read",
+        contract: FRAX_FARM_OHM_FRAXBP,
+        method: "frax.lockedLiquidity",
+        receiptToken: STKCVX_OHM_FRAXBP,
+        label: "Curve OHM-FraxBP - Staked in Frax",
+        wallets: [CONVEX_STAKING_PROXY_OHM_FRAXBP],
+      },
+    ],
+    startBlock: LP_CURVE_OHM_FRAXBP_BLOCK,
+  },
+  {
+    pricing: pricingHandler(LP_FRAXSWAP_V1_OHM_FRAX),
+    lpToken: LP_FRAXSWAP_V1_OHM_FRAX,
+    sources: [
+      { kind: "wallet", label: "FraxSwap V1 OHM-FRAX Liquidity Pool", wallets: POL_WALLETS },
+    ],
+    startBlock: LP_FRAXSWAP_V1_OHM_FRAX_BLOCK,
+  },
+  {
+    pricing: pricingHandler(LP_FRAXSWAP_V2_OHM_FRAX),
+    lpToken: LP_FRAXSWAP_V2_OHM_FRAX,
+    sources: [
+      { kind: "wallet", label: "FraxSwap V2 OHM-FRAX Liquidity Pool", wallets: POL_WALLETS },
+    ],
+    startBlock: LP_FRAXSWAP_V2_OHM_FRAX_BLOCK,
   },
 ];
 
@@ -1774,6 +1971,7 @@ export const ETHEREUM: ChainConfig = {
     startBlock: MAKER_DSR_START_BLOCK,
   },
   protocolPositions,
+  liquidityPositions,
   // Olympus Boosted Liquidity Vault registry (per inventory §8). The effect
   // iterates active vaults and reads getPoolOhmShare() per vault. Active
   // after the OHM_INCUR_DEBT_BLOCK = 17_620_000 gate.

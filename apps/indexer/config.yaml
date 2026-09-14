@@ -474,6 +474,18 @@ chains:
           - "0x64aa3364f17a4d01c6f1751fd97c2bd3d7e7f1d5" # OHM V2
           - "0x0ab87046fBb341D058F17CBC4c1133F25a20a52f" # gOHM
 
+      # ---- Protocol-owned LP tokens held in treasury wallets. Transfer keeps
+      # the wallet ledger and the LP totalSupply (mints/burns) that unit
+      # prices divide by.
+      - name: LpERC20
+        address:
+          - "0xc45d42f801105e861e86658648e3678ad7aa70f9" # Balancer OHM-DAI-wETH BPT
+          - "0x76fcf0e8c7ff37a47a799fa2cd4c13cde0d981c9" # Balancer OHM-DAI BPT
+          - "0xd1ec5e215e8148d76f4460e4097fd3d5ae0a3558" # Balancer OHM-wETH BPT
+          - "0xd4f79ca0ac83192693bce4699d0c10c66aa6cf0f" # Balancer OHM-wstETH BPT
+          - "0x38633ed142bcc8128b45ab04a2e4a6e53774699f" # FraxSwap V1 OHM-FRAX
+          - "0x5769071665eb8db80e7e9226f92336bb2897dcfa" # FraxSwap V2 OHM-FRAX
+
       # ---- Univ3 pricing pools (bluechips + long-tail volatiles).
       - name: UniswapV3Pool
         address:
@@ -499,6 +511,8 @@ chains:
           - "0x36e2fcccc59e5747ff63a03ea2e5c0c2c14911e7" # xSUSHI-ETH (prices xSUSHI)
           - "0x6591c4bcd6d7a1eb4e537da8b78676c1576ba244" # BOND-USDC (prices BOND)
           - "0x05767d9ef41dc40689678ffca0608878fb3de906" # CVX-ETH (prices CVX, vlCVX)
+          - "0x055475920a8c93cffb64d039a8205f7acc7722d3" # SushiSwap OHM V2-DAI (POL value only)
+          - "0x69b81152c5a8d35a67b32a4d3772795d96cae4da" # SushiSwap OHM V2-ETH (POL value only)
 
       # ---- sOHM V3 LogRebase drives OhmIndexState; consumed by GohmPriceHandler.
       - name: SOhmV3

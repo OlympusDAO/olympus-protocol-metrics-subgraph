@@ -91,7 +91,34 @@ export type PositionReadMethod =
   | "rlBtrfly.unlockable"
   | "aura.earned"
   | "rari.hasId"
-  | "rari.amountAllocated";
+  | "rari.amountAllocated"
+  | "frax.lockedLiquidity";
+
+// Protocol-owned liquidity valued through a pool's price handler (see
+// handlers/LiquidityPositions.ts). Each source is one way the treasury held
+// the pool's LP: in a wallet (TokenBalance ledger for `lpToken`) or staked in
+// a gauge / Aura / Convex / Frax farm contract read at the snapshot.
+export type LiquidityPositionSource =
+  | { kind: "wallet"; label: string; wallets: string[] }
+  | {
+      kind: "read";
+      contract: string;
+      method: PositionReadMethod;
+      receiptToken: string; // token address the record carries (legacy parity)
+      label: string;
+      wallets: string[];
+    };
+
+export type LiquidityPosition = {
+  pricing: LiquidityHandler; // pool handler for total value and LP unit price
+  lpToken: string;
+  // Defaults to "Protocol-Owned Liquidity". Pools without OHM (FraxBP) keep
+  // legacy's Stable category.
+  category?: string;
+  sources: LiquidityPositionSource[];
+  startBlock: number;
+  lastActiveBlock?: number;
+};
 
 // Treasury positions held inside another protocol's contract (see
 // handlers/ProtocolPositions.ts). Amounts are denominated in `token`, which
@@ -191,6 +218,7 @@ export type ChainConfig = {
   coolerClearinghouses?: CoolerClearinghouse[];
   makerDsr?: MakerDsrConfig;
   protocolPositions?: ProtocolPosition[];
+  liquidityPositions?: LiquidityPosition[];
   blvRegistry?: { address: string; startBlock: number };
   bondManager?: { address: string; startBlock: number };
   // OHM V1 → V2 migration offset. Subtracts `offsetOhm × current sOHM index`

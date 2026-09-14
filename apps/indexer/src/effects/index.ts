@@ -339,6 +339,13 @@ const POSITION_READS: Record<
     args: walletArg,
     pick: uintResult,
   },
+  // FraxUnifiedFarm locked stake (Convex staking proxies lock stkcvx LP).
+  "frax.lockedLiquidity": {
+    abi: walletUintAbi("lockedLiquidityOf"),
+    functionName: "lockedLiquidityOf",
+    args: walletArg,
+    pick: uintResult,
+  },
   // 1 when the Rari allocator lists `arg` in ids(), else 0.
   "rari.hasId": {
     abi: [
