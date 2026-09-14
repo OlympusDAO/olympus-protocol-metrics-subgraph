@@ -234,8 +234,9 @@ describe("liquidity position OHM supply", () => {
 describe("Ethereum liquidity position config", () => {
   const configYaml = readFileSync(resolve(__dirname, "../../config.yaml"), "utf8").toLowerCase();
 
-  test("SushiSwap pairs value POL without becoming price sources", () => {
-    expect(ETHEREUM.liquidityHandlers.some((handler) => handler.id === SUSHI_OHM_DAI)).toBe(false);
+  test("SushiSwap OHM pairs are OHM price sources, as in legacy", () => {
+    const sushi = ETHEREUM.liquidityHandlers.find((handler) => handler.id === SUSHI_OHM_DAI);
+    expect(sushi?.tokens).toContain(OHM);
     expect(configYaml).toContain(SUSHI_OHM_DAI);
   });
 

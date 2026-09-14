@@ -621,6 +621,26 @@ const coolerClearinghouses: CoolerClearinghouse[] = [
 const MAKER_DSR_POT = addr("0x197E90f9FAD81970bA7976f33CbD77088E5D7cf7");
 const MAKER_DSR_START_BLOCK = 16_221_318;
 
+const LP_SUSHI_OHM_DAI = addr("0x055475920a8c93cffb64d039a8205f7acc7722d3");
+const LP_SUSHI_OHM_ETH = addr("0x69b81152c5a8d35a67b32a4d3772795d96cae4da");
+const LP_SUSHI_OHM_DAI_BLOCK = 13_826_593;
+const LP_SUSHI_OHM_ETH_BLOCK = 13_805_112;
+// SushiSwap OHM V2 pairs. The deepest OHM pools through 2022, so legacy's
+// OHM price came from here (getBaseOhmUsdRate picks the largest non-OHM
+// reserves); they also value the treasury's SushiSwap POL.
+const sushiOhmDai: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V2, ERC20_DAI],
+  id: LP_SUSHI_OHM_DAI,
+  startBlock: LP_SUSHI_OHM_DAI_BLOCK,
+};
+const sushiOhmEth: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V2, ERC20_WETH],
+  id: LP_SUSHI_OHM_ETH,
+  startBlock: LP_SUSHI_OHM_ETH_BLOCK,
+};
+
 const liquidityHandlers: LiquidityHandler[] = [
   // Chainlink feeds (highest priority via CHAINLINK_PRIORITY = 10^30).
   // aDAI / aEthUSDe / varDebtEthUSDT / varDebtEthUSDC piggyback the same
@@ -695,6 +715,8 @@ const liquidityHandlers: LiquidityHandler[] = [
   },
   // OHM pricing via the WETH-OHM UniV3 pool (recurses to WETH via Chainlink).
   univ3WethOhm,
+  sushiOhmDai,
+  sushiOhmEth,
   // OHM-sUSDS UniV3 pool — both a price candidate and an owned-liquidity
   // (POL) source. Listed here so the router can use it for OHM pricing in
   // addition to WETH-OHM, and so pushUniv3NftPol recognizes the pair when
@@ -1241,10 +1263,6 @@ const protocolPositions: ProtocolPosition[] = [
 // holders, staking contracts and labels mirror the legacy LIQUIDITY_OWNED
 // records (Balancer, SushiSwap, Curve, FraxSwap). wETH-FDT gauge deposits
 // and OHM-BTRFLY V1 stayed under $0.2M and aren't ported.
-const LP_SUSHI_OHM_DAI = addr("0x055475920a8c93cffb64d039a8205f7acc7722d3");
-const LP_SUSHI_OHM_ETH = addr("0x69b81152c5a8d35a67b32a4d3772795d96cae4da");
-const LP_SUSHI_OHM_DAI_BLOCK = 13_826_593;
-const LP_SUSHI_OHM_ETH_BLOCK = 13_805_112;
 const LP_BALANCER_OHM_DAI_WETH_DEPLOY_BLOCK = 13_929_694;
 // Aura deposit tokens (legacy record token) for each Aura staking pool.
 const AURA_DEPOSIT_OHM_DAI_WETH = addr("0x622A725a79C7fE37AD839C640cD62d546712B3A9");
@@ -1262,21 +1280,6 @@ function pricingHandler(id: string): LiquidityHandler {
   if (!handler) throw new Error(`No Ethereum pricing handler ${id}`);
   return handler;
 }
-
-// SushiSwap pairs value POL only; they aren't in liquidityHandlers, so they
-// don't become OHM / DAI / WETH price sources.
-const sushiOhmDai: LiquidityHandler = {
-  kind: "univ2",
-  tokens: [ERC20_OHM_V2, ERC20_DAI],
-  id: LP_SUSHI_OHM_DAI,
-  startBlock: LP_SUSHI_OHM_DAI_BLOCK,
-};
-const sushiOhmEth: LiquidityHandler = {
-  kind: "univ2",
-  tokens: [ERC20_OHM_V2, ERC20_WETH],
-  id: LP_SUSHI_OHM_ETH,
-  startBlock: LP_SUSHI_OHM_ETH_BLOCK,
-};
 
 const POL_WALLETS = [TREASURY_ADDRESS_V3, DAO_WALLET];
 
