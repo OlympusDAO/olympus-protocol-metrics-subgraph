@@ -27,6 +27,7 @@ const DAO_WALLET = addr("0x245cc372c84b3645bf0ffe6538620b04a217988b");
 const AURA_ALLOCATOR = addr("0x872ebDd8129Aa328C89f6BF032bBD77a4c4BaC7e");
 const SUSHI_OHM_DAI = addr("0x055475920a8c93cffb64d039a8205f7acc7722d3");
 const BPT_OHM_DAI_WETH = addr("0xc45d42f801105e861e86658648e3678ad7aa70f9");
+const FRAXSWAP_V2_OHM_FRAX = addr("0x5769071665eb8db80e7e9226f92336bb2897dcfa");
 const POOL_ID_OHM_DAI_WETH = "0xc45d42f801105e861e86658648e3678ad7aa70f900010000000000000000011e";
 const AURA_POOL_OHM_DAI_WETH = addr("0xF01e29461f1FCEdD82f5258Da006295E23b4Fab3");
 const AURA_DEPOSIT_OHM_DAI_WETH = addr("0x622A725a79C7fE37AD839C640cD62d546712B3A9");
@@ -263,5 +264,15 @@ describe("Ethereum liquidity position config", () => {
     );
     expect(position?.startBlock).toBe(13_929_694);
     expect(position?.pricing.startBlock).toBe(13_929_694);
+  });
+
+  test("FraxSwap V2 OHM-FRAX POL is valued from deployment", () => {
+    // Treasury Wallet V3 moved its OHM-FRAX liquidity from the V1 pair to the
+    // V2 pair (deployed at 15,395,619) in late August 2022.
+    const position = ETHEREUM.liquidityPositions?.find(
+      (value) => value.lpToken === FRAXSWAP_V2_OHM_FRAX,
+    );
+    expect(position?.startBlock).toBe(15_395_619);
+    expect(position?.pricing.startBlock).toBe(15_395_619);
   });
 });

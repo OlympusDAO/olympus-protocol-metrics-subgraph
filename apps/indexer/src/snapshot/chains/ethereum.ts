@@ -338,7 +338,7 @@ const LP_CURVE_OHM_ETH_BLOCK = 14_490_000; // ~2022-03-22
 const LP_CURVE_OHM_FRAXBP_BLOCK = 15_300_000; // ~2022-08-15
 const LP_CURVE_FRAX_USDC_BLOCK = 14_950_000; // ~2022-05-28
 const LP_FRAXSWAP_V1_OHM_FRAX_BLOCK = 14_490_000;
-const LP_FRAXSWAP_V2_OHM_FRAX_BLOCK = 17_000_000;
+const LP_FRAXSWAP_V2_OHM_FRAX_BLOCK = 15_395_619; // pair deployment, 2022-08-23
 
 // Balancer + Aura deployment blocks (approximate; effect reverts before
 // the actual creation gracefully zero out).
