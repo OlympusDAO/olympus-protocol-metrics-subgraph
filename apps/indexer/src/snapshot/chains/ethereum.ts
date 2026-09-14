@@ -1424,6 +1424,7 @@ const liquidityPositions: LiquidityPosition[] = [
     lpToken: LP_CURVE_OHM_FRAXBP_TOKEN,
     poolLabel: "Curve OHM-FraxBP Liquidity Pool",
     sources: [
+      { kind: "wallet", label: "Curve OHM-FraxBP Liquidity Pool", wallets: POL_WALLETS },
       {
         kind: "read",
         contract: FRAX_FARM_OHM_FRAXBP,

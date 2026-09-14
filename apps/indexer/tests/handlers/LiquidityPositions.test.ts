@@ -28,6 +28,7 @@ const AURA_ALLOCATOR = addr("0x872ebDd8129Aa328C89f6BF032bBD77a4c4BaC7e");
 const SUSHI_OHM_DAI = addr("0x055475920a8c93cffb64d039a8205f7acc7722d3");
 const BPT_OHM_DAI_WETH = addr("0xc45d42f801105e861e86658648e3678ad7aa70f9");
 const FRAXSWAP_V2_OHM_FRAX = addr("0x5769071665eb8db80e7e9226f92336bb2897dcfa");
+const CURVE_OHM_FRAXBP_LP = addr("0x5271045F7B73c17825A7A7aee6917eE46b0B7520");
 const POOL_ID_OHM_DAI_WETH = "0xc45d42f801105e861e86658648e3678ad7aa70f900010000000000000000011e";
 const AURA_POOL_OHM_DAI_WETH = addr("0xF01e29461f1FCEdD82f5258Da006295E23b4Fab3");
 const AURA_DEPOSIT_OHM_DAI_WETH = addr("0x622A725a79C7fE37AD839C640cD62d546712B3A9");
@@ -274,5 +275,17 @@ describe("Ethereum liquidity position config", () => {
     );
     expect(position?.startBlock).toBe(15_395_619);
     expect(position?.pricing.startBlock).toBe(15_395_619);
+  });
+
+  test("Curve OHM-FraxBP LP held in protocol wallets is valued, not only the Frax farm stake", () => {
+    // Legacy recorded LP held directly in the DAO wallet from 2022-11-24 to
+    // 2023-08-15 (up to $310k, 14.5k OHM of Liquidity supply).
+    const position = ETHEREUM.liquidityPositions?.find(
+      (value) => value.lpToken === CURVE_OHM_FRAXBP_LP,
+    );
+    const wallet = position?.sources.find((source) => source.kind === "wallet");
+    expect(wallet?.kind === "wallet" && wallet.wallets).toEqual(
+      expect.arrayContaining([DAO_WALLET, TREASURY_V3]),
+    );
   });
 });
