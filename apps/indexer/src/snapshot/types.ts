@@ -57,6 +57,9 @@ export type TokenDefinition = {
   multiplier?: string;
   isLiability?: boolean;
   startBlock?: number;
+  // Last block (inclusive) the token is valued. After it the token prices at
+  // zero and emits no records, e.g. UST after its collapse.
+  lastActiveBlock?: number;
   // When true, snapshot-time balance is read via `balanceOf(wallet)` RPC
   // instead of the event-driven TokenBalance ledger. Required for tokens
   // that mutate balances without emitting `Transfer` events:

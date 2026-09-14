@@ -169,6 +169,62 @@ const ERC20_FXS = addr("0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0");
 const ERC20_FXS_VE = addr("0xc8418af6358ffdda74e09ca9cc3fe03ca6adc5b0");
 const ERC20_LDO = addr("0x5a98fcbea516cf06857215779fd812ca3bef1b32");
 const ERC20_LQTY = addr("0x6dea81c8171d0ba574754ef6f8b412f2ed88c54d");
+
+// Treasury tokens legacy valued that Envio didn't (parity diff vs the legacy
+// subgraph, May 2022 onward). Addresses, categories, names and price paths
+// mirror legacy subgraphs/ethereum/src/utils/Constants.ts.
+const ERC20_FEI = addr("0x956F47F50A910163D8BF957Cf5846D573E7f87CA");
+const ERC20_UST = addr("0xa693b19d2931d498c5b318df961919bb4aee87a5"); // Wormhole UST, 6 decimals
+const ERC20_WBTC = addr("0x2260fac5e5542a773aa44fbcfedf7c193bc2c599");
+const ERC20_TRIBE = addr("0xc7283b66Eb1EB5FB86327f08e1B5816b0720212B");
+const ERC20_TOKE = addr("0x2e9d63788249371f1dfc918a52f8d799f4a38c94");
+const ERC20_XSUSHI = addr("0x8798249c2e607446efb7ad49ec89dd1865ff4272");
+const ERC20_BOND = addr("0x0391D2021f89DC339F60Fff84546EA23E337750f"); // BarnBridge
+const ERC20_CVX = addr("0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b");
+const ERC20_CVX_VL = addr("0x72a19342e8F1838460eBFCCEf09F6585e32db86E"); // CvxLockerV2
+const ERC20_AURA = addr("0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF");
+const ERC20_AURA_VL = addr("0x3Fa73f1E5d8A792C80F426fc8F84FBF7Ce9bBCAC"); // AuraLocker
+const ERC20_AURA_BAL = addr("0x616e8BfA43F920657B3497DBf40D6b1A02D4608d");
+const ERC20_BAL = addr("0xba100000625a3754423978a60c9317c58a424e3d");
+const ERC20_BB_A_USD = addr("0xA13a9247ea42D743238089903570127DdA72fE44");
+const ERC20_CVX_FRAX_3CRV = addr("0xbe0f6478e0e4894cfb14f32855603a083a57c7da");
+
+// Price pools for the tokens above (legacy LIQUIDITY_POOL_TOKEN_LOOKUP).
+const LP_UNISWAP_V3_FEI_USDC = addr("0xdf50fbde8180c8785842c8e316ebe06f542d3443");
+const LP_UNISWAP_V2_UST_ETH = addr("0x8B00eE8606CC70c2dce68dea0CEfe632CCA0fB7b");
+const LP_UNISWAP_V2_ETH_WBTC = addr("0xceff51756c56ceffca006cd410b03ffc46dd3a58");
+const LP_UNISWAP_V2_TRIBE_ETH = addr("0x7ce01885a13c652241ae02ea7369ee8d466802eb");
+const LP_UNISWAP_V2_TOKE_ETH = addr("0xd4e7a6e2d03e4e48dfc27dd3f46df1c176647e38");
+const LP_UNISWAP_V2_XSUSHI_ETH = addr("0x36e2fcccc59e5747ff63a03ea2e5c0c2c14911e7");
+const LP_UNISWAP_V2_BOND_USDC = addr("0x6591c4bcd6d7a1eb4e537da8b78676c1576ba244");
+const LP_UNISWAP_V2_CVX_ETH = addr("0x05767d9ef41dc40689678ffca0608878fb3de906");
+const LP_BALANCER_POOL_AURA_WETH = bytes32(
+  "0xc29562b045d80fd77c69bec09541f5c16fe20d9d000200000000000000000251",
+);
+const LP_BALANCER_POOL_BAL_WETH = bytes32(
+  "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014",
+);
+const LP_BALANCER_POOL_GRAVIAURA_AURABAL_WETH = bytes32(
+  "0x0578292cb20a443ba1cde459c985ce14ca2bdee5000100000000000000000269",
+);
+
+// Start blocks are contract deployments (Blockscout creation txs) unless the
+// legacy subgraph gated later. UST stops being valued after its collapse.
+const ERC20_UST_BLOCK = 13_408_366; // legacy ERC20_UST_BLOCK
+const ERC20_UST_LAST_ACTIVE_BLOCK = 14_730_000; // legacy ERC20_UST_BLOCK_DEATH
+const ERC20_CVX_BLOCK = 12_460_000; // legacy ERC20_CVX_BLOCK
+const ERC20_CVX_VL_BLOCK = 14_320_609;
+const ERC20_AURA_BLOCK = 14_932_168;
+const ERC20_AURA_VL_BLOCK = 14_932_220;
+const ERC20_AURA_BAL_BLOCK = 14_932_194;
+const ERC20_BB_A_USD_BLOCK = 15_489_162;
+const LP_UNISWAP_V3_FEI_USDC_BLOCK = 13_754_443;
+const LP_UNISWAP_V2_TRIBE_ETH_BLOCK = 12_168_590;
+const LP_UNISWAP_V2_TOKE_ETH_BLOCK = 12_976_921;
+const LP_UNISWAP_V2_CVX_ETH_BLOCK = 12_451_311;
+const LP_BALANCER_AURA_WETH_BLOCK = 14_967_724;
+const LP_BALANCER_BAL_WETH_BLOCK = 12_369_384;
+const LP_BALANCER_GRAVIAURA_AURABAL_WETH_BLOCK = 15_007_813;
 const ERC20_BTRFLY_V1 = addr("0xc0d4ceb216b3ba9c3701b291766fdcba977cec3a");
 const ERC20_BTRFLY_V1_STAKED = addr("0xCC94Faf235cC5D3Bf4bEd3a30db5984306c86aBC"); // xBTRFLY
 const ERC20_BTRFLY_V2 = addr("0xc55126051b22ebb829d00368f4b12bde432de5da");
@@ -357,6 +413,21 @@ const names: Record<string, string> = {
   [ERC20_BTRFLY_V2]: "BTRFLY V2",
   [ERC20_BTRFLY_V2_RL]: "Revenue-Locked BTRFLY",
   [ERC20_DAI]: "DAI",
+  [ERC20_FEI]: "FEI",
+  [ERC20_UST]: "UST",
+  [ERC20_WBTC]: "wBTC",
+  [ERC20_TRIBE]: "TRIBE",
+  [ERC20_TOKE]: "TOKE",
+  [ERC20_XSUSHI]: "SUSHI - Staked",
+  [ERC20_BOND]: "BarnBridge Governance",
+  [ERC20_CVX]: "Convex",
+  [ERC20_CVX_VL]: "Convex - Vote-Locked",
+  [ERC20_AURA]: "Aura Finance",
+  [ERC20_AURA_VL]: "Aura Finance - Vote-Locked",
+  [ERC20_AURA_BAL]: "auraBAL",
+  [ERC20_BAL]: "Balancer",
+  [ERC20_BB_A_USD]: "Balancer Aave Boosted StablePool",
+  [ERC20_CVX_FRAX_3CRV]: "Curve FRAX3Pool",
   [ERC20_CVX_CRV]: "Curve - Convex CRV Reward Pool",
   [ERC20_FRAX]: "FRAX",
   [ERC20_FXS]: "Frax Share",
@@ -426,6 +497,15 @@ const abbreviations: Record<string, string> = {
   [NATIVE_ETH]: "ETH",
   [ERC20_WETH]: "wETH",
   [ERC20_WSTETH]: "wstETH",
+  [ERC20_XSUSHI]: "xSUSHI",
+  [ERC20_BOND]: "BOND",
+  [ERC20_CVX]: "CVX",
+  [ERC20_CVX_VL]: "vlCVX",
+  [ERC20_AURA]: "AURA",
+  [ERC20_AURA_VL]: "vlAURA",
+  [ERC20_BAL]: "BAL",
+  [ERC20_BB_A_USD]: "bb-a-USD",
+  [ERC20_CVX_FRAX_3CRV]: "cvxFRAX3CRV",
 };
 
 // OHM gets priced via the WETH-OHM UniV3 pool, which recurses through WETH
@@ -644,6 +724,90 @@ const liquidityHandlers: LiquidityHandler[] = [
     tokens: [ERC20_CVX_CRV, ERC20_WETH],
     id: LP_UNISWAP_V2_CVX_CRV_ETH,
     startBlock: LP_UNISWAP_V2_CVX_CRV_ETH_BLOCK,
+  },
+  // Price paths for tokens ported from legacy (see ERC20_FEI et al.). Each
+  // recurses to a Chainlink-priced base (WETH / USDC).
+  {
+    kind: "univ3",
+    tokens: [ERC20_FEI, ERC20_USDC],
+    id: LP_UNISWAP_V3_FEI_USDC,
+    startBlock: LP_UNISWAP_V3_FEI_USDC_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_UST, ERC20_WETH],
+    id: LP_UNISWAP_V2_UST_ETH,
+    startBlock: ERC20_UST_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_WBTC, ERC20_WETH],
+    id: LP_UNISWAP_V2_ETH_WBTC,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_TRIBE, ERC20_WETH],
+    id: LP_UNISWAP_V2_TRIBE_ETH,
+    startBlock: LP_UNISWAP_V2_TRIBE_ETH_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_TOKE, ERC20_WETH],
+    id: LP_UNISWAP_V2_TOKE_ETH,
+    startBlock: LP_UNISWAP_V2_TOKE_ETH_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_XSUSHI, ERC20_WETH],
+    id: LP_UNISWAP_V2_XSUSHI_ETH,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_BOND, ERC20_USDC],
+    id: LP_UNISWAP_V2_BOND_USDC,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_CVX, ERC20_WETH],
+    id: LP_UNISWAP_V2_CVX_ETH,
+    startBlock: LP_UNISWAP_V2_CVX_ETH_BLOCK,
+  },
+  {
+    kind: "balancer",
+    tokens: [ERC20_AURA, ERC20_WETH],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_AURA_WETH,
+    startBlock: LP_BALANCER_AURA_WETH_BLOCK,
+  },
+  {
+    kind: "balancer",
+    tokens: [ERC20_BAL, ERC20_WETH],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_BAL_WETH,
+    startBlock: LP_BALANCER_BAL_WETH_BLOCK,
+  },
+  // graviAURA has no price path of its own; auraBAL prices off the WETH leg.
+  {
+    kind: "balancer",
+    tokens: [ERC20_AURA_BAL, ERC20_WETH],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_GRAVIAURA_AURABAL_WETH,
+    startBlock: LP_BALANCER_GRAVIAURA_AURABAL_WETH_BLOCK,
+  },
+  // Lock receipts price as their underlying (legacy getUnstakedToken), and
+  // Curve / Balancer stable derivatives price at the USDC rate (legacy
+  // resolvePrice special case).
+  { kind: "remap", tokens: [ERC20_CVX_VL], id: ERC20_CVX_VL, target: ERC20_CVX },
+  { kind: "remap", tokens: [ERC20_AURA_VL], id: ERC20_AURA_VL, target: ERC20_AURA },
+  { kind: "remap", tokens: [ERC20_BB_A_USD], id: ERC20_BB_A_USD, target: ERC20_USDC },
+  {
+    kind: "remap",
+    tokens: [ERC20_CVX_FRAX_3CRV],
+    id: ERC20_CVX_FRAX_3CRV,
+    target: ERC20_USDC,
   },
   // Staked / locked variants remap to their base tokens for pricing.
   {
@@ -1212,6 +1376,136 @@ export const ETHEREUM: ChainConfig = {
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
       nonStandardBalance: true,
+    }),
+    // Tokens ported from legacy ERC20_TOKENS. Categories, liquidity and
+    // multipliers match legacy.
+    token({
+      address: ERC20_FEI,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_UST,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_UST_BLOCK,
+      lastActiveBlock: ERC20_UST_LAST_ACTIVE_BLOCK,
+      decimals: 6,
+    }),
+    token({
+      address: ERC20_WBTC,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 8,
+    }),
+    token({
+      address: ERC20_TRIBE,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_TOKE,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_XSUSHI,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_BOND,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      multiplier: "0.77",
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_CVX,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_CVX_BLOCK,
+      decimals: 18,
+    }),
+    // CvxLockerV2 emits no Transfer; balanceOf is the vote-locked CVX.
+    token({
+      address: ERC20_CVX_VL,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_CVX_VL_BLOCK,
+      decimals: 18,
+      nonStandardBalance: true,
+    }),
+    token({
+      address: ERC20_AURA,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_AURA_BLOCK,
+      decimals: 18,
+    }),
+    // vlAURA is valued from AuraLocker.lockedBalances, not balanceOf; the
+    // definition carries its category and price path.
+    token({
+      address: ERC20_AURA_VL,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_AURA_VL_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_AURA_BAL,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_AURA_BAL_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_BAL,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_BB_A_USD,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_BB_A_USD_BLOCK,
+      decimals: 18,
+    }),
+    // cvxFRAX3CRV is held staked in Convex reward pools, valued from the
+    // pool's balanceOf rather than the wallet ledger.
+    token({
+      address: ERC20_CVX_FRAX_3CRV,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
     }),
     // OHM V1 and V2 are tracked but value-excluded from treasury MV when held
     // by protocol wallets (multiplier 0). For the baseline, the protocol

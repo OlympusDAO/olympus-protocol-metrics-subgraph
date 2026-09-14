@@ -28,6 +28,7 @@ export function token(args: {
   isBluechip: boolean;
   multiplier?: string;
   startBlock?: number;
+  lastActiveBlock?: number;
   decimals?: number;
   isLiability?: boolean;
   nonStandardBalance?: boolean;
@@ -41,6 +42,7 @@ export function token(args: {
     multiplier: args.multiplier,
     decimals: args.decimals ?? 18,
     startBlock: args.startBlock,
+    lastActiveBlock: args.lastActiveBlock,
     isLiability: args.isLiability,
     nonStandardBalance: args.nonStandardBalance,
     positionRead: args.positionRead
@@ -95,8 +97,16 @@ export function matches(handler: LiquidityHandler, tokenAddress: string) {
   return handler.tokens.some((value) => same(value, tokenAddress));
 }
 
-export function isActive(definition: { startBlock?: number }, blockNumber: bigint) {
-  return definition.startBlock === undefined || blockNumber >= BigInt(definition.startBlock);
+export function isActive(
+  definition: { startBlock?: number; lastActiveBlock?: number },
+  blockNumber: bigint,
+) {
+  if (definition.startBlock !== undefined && blockNumber < BigInt(definition.startBlock)) {
+    return false;
+  }
+  return (
+    definition.lastActiveBlock === undefined || blockNumber <= BigInt(definition.lastActiveBlock)
+  );
 }
 
 // UniV3 token amounts from L + sqrtPrice + tick bounds. Mirrors legacy
