@@ -38,13 +38,13 @@ function buildMockContext() {
       input: {
         method?: string;
         contract?: string;
-        wallet?: string;
+        arg?: string;
         tokenAddress?: string;
         walletAddress?: string;
       },
     ) => {
       if (input.method === "veFxs.lockedAmount") {
-        return addr(input.contract ?? "") === VEFXS && addr(input.wallet ?? "") === VEFXS_ALLOCATOR
+        return addr(input.contract ?? "") === VEFXS && addr(input.arg ?? "") === VEFXS_ALLOCATOR
           ? VEFXS_LOCKED.toString()
           : "0";
       }

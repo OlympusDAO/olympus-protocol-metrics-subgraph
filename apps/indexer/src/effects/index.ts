@@ -211,9 +211,42 @@ export const readMakerDsrBalance = createEffect(
 // Each method pins one ABI and how to pull the amount out of the result, so
 // the effect input stays a flat, cacheable (chain, contract, method, wallet,
 // block) tuple. Returns the raw uint as a string, or "" on revert.
+const walletArg = (arg: string) => [getAddress(arg)] as const;
+const uintResult = (result: unknown) => result as bigint;
+// Shared by vlCVX, AuraLocker and rlBTRFLY: lockedBalances(address) returns
+// (total, unlockable, locked, lockData[]). Only the lockData tuple differs.
+const lockedBalancesAbi = (lockData: { name: string; type: string }[]): Abi => [
+  {
+    inputs: [{ name: "account", type: "address" }],
+    name: "lockedBalances",
+    outputs: [
+      { name: "total", type: "uint256" },
+      { name: "unlockable", type: "uint256" },
+      { name: "locked", type: "uint256" },
+      { name: "lockData", type: "tuple[]", components: lockData },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+];
+const walletUintAbi = (name: string): Abi => [
+  {
+    inputs: [{ name: "account", type: "address" }],
+    name,
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+];
+
 const POSITION_READS: Record<
   PositionReadMethod,
-  { abi: Abi; functionName: string; pick: (result: unknown) => bigint }
+  {
+    abi: Abi;
+    functionName: string;
+    args: (arg: string) => readonly unknown[];
+    pick: (result: unknown, arg: string) => bigint;
+  }
 > = {
   // VeFXS.locked(address) → (int128 amount, uint256 end). The amount stays
   // until withdrawal, even after `end`; balanceOf is boosted voting power.
@@ -231,10 +264,109 @@ const POSITION_READS: Record<
       },
     ],
     functionName: "locked",
+    args: walletArg,
     pick: (result) => {
       const [amount] = result as readonly [bigint, bigint];
       return amount < 0n ? 0n : amount;
     },
+  },
+  // Convex BaseRewardPool, TokemakStaking and Aura staking pools stake a
+  // receipt token and report it through balanceOf without emitting Transfer.
+  "erc20.balanceOf": {
+    abi: walletUintAbi("balanceOf"),
+    functionName: "balanceOf",
+    args: walletArg,
+    pick: uintResult,
+  },
+  "liquity.stakes": {
+    abi: walletUintAbi("stakes"),
+    functionName: "stakes",
+    args: walletArg,
+    pick: uintResult,
+  },
+  // Compounded deposit, not deposits(w).initialValue: liquidations burn LUSD
+  // from the deposit and pay out ETH, so initialValue + ETH gain double counts
+  // (legacy did; ~$14M at block 15,000,000).
+  "stabilityPool.compoundedLusd": {
+    abi: walletUintAbi("getCompoundedLUSDDeposit"),
+    functionName: "getCompoundedLUSDDeposit",
+    args: walletArg,
+    pick: uintResult,
+  },
+  "stabilityPool.ethGain": {
+    abi: walletUintAbi("getDepositorETHGain"),
+    functionName: "getDepositorETHGain",
+    args: walletArg,
+    pick: uintResult,
+  },
+  "stabilityPool.lqtyGain": {
+    abi: walletUintAbi("getDepositorLQTYGain"),
+    functionName: "getDepositorLQTYGain",
+    args: walletArg,
+    pick: uintResult,
+  },
+  "vlCvx.unlockable": {
+    abi: lockedBalancesAbi([
+      { name: "amount", type: "uint112" },
+      { name: "boosted", type: "uint112" },
+      { name: "unlockTime", type: "uint32" },
+    ]),
+    functionName: "lockedBalances",
+    args: walletArg,
+    pick: (result) => (result as readonly [bigint, bigint, bigint, unknown])[1],
+  },
+  "auraLocker.total": {
+    abi: lockedBalancesAbi([
+      { name: "amount", type: "uint112" },
+      { name: "unlockTime", type: "uint32" },
+    ]),
+    functionName: "lockedBalances",
+    args: walletArg,
+    pick: (result) => (result as readonly [bigint, bigint, bigint, unknown])[0],
+  },
+  "rlBtrfly.unlockable": {
+    abi: lockedBalancesAbi([
+      { name: "amount", type: "uint224" },
+      { name: "unlockTime", type: "uint32" },
+    ]),
+    functionName: "lockedBalances",
+    args: walletArg,
+    pick: (result) => (result as readonly [bigint, bigint, bigint, unknown])[1],
+  },
+  "aura.earned": {
+    abi: walletUintAbi("earned"),
+    functionName: "earned",
+    args: walletArg,
+    pick: uintResult,
+  },
+  // 1 when the Rari allocator lists `arg` in ids(), else 0.
+  "rari.hasId": {
+    abi: [
+      {
+        inputs: [],
+        name: "ids",
+        outputs: [{ name: "", type: "uint256[]" }],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
+    functionName: "ids",
+    args: () => [],
+    pick: (result, arg) => ((result as readonly bigint[]).includes(BigInt(arg)) ? 1n : 0n),
+  },
+  "rari.amountAllocated": {
+    abi: [
+      {
+        inputs: [{ name: "id", type: "uint256" }],
+        name: "amountAllocated",
+        outputs: [{ name: "", type: "uint256" }],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
+    functionName: "amountAllocated",
+    args: (arg) => [BigInt(arg)],
+    pick: uintResult,
   },
 };
 
@@ -245,7 +377,8 @@ export const readPositionAmount = createEffect(
       chainId: S.number,
       contract: S.string,
       method: S.string,
-      wallet: S.string,
+      // Wallet address for per-holder reads; an id for allocator lookups.
+      arg: S.string,
       atBlock: S.number,
     },
     output: S.string,
@@ -264,11 +397,11 @@ export const readPositionAmount = createEffect(
           address: getAddress(input.contract),
           abi: read.abi,
           functionName: read.functionName,
-          args: [getAddress(input.wallet)],
+          args: read.args(input.arg),
           blockNumber: BigInt(input.atBlock),
         }),
       );
-      return read.pick(result).toString();
+      return read.pick(result, input.arg).toString();
     } catch {
       return "";
     }

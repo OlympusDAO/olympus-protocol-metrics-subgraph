@@ -79,7 +79,53 @@ export type TokenDefinition = {
   positionRead?: { method: PositionReadMethod; wallets?: string[] };
 };
 
-export type PositionReadMethod = "veFxs.lockedAmount";
+export type PositionReadMethod =
+  | "veFxs.lockedAmount"
+  | "erc20.balanceOf"
+  | "liquity.stakes"
+  | "stabilityPool.compoundedLusd"
+  | "stabilityPool.ethGain"
+  | "stabilityPool.lqtyGain"
+  | "vlCvx.unlockable"
+  | "auraLocker.total"
+  | "rlBtrfly.unlockable"
+  | "aura.earned"
+  | "rari.hasId"
+  | "rari.amountAllocated";
+
+// Treasury positions held inside another protocol's contract (see
+// handlers/ProtocolPositions.ts). Amounts are denominated in `token`, which
+// drives price, category and liquidity through its TokenDefinition.
+export type ProtocolPosition =
+  | {
+      kind: "read";
+      contract: string;
+      method: PositionReadMethod;
+      token: string;
+      label: string; // legacy record token name
+      wallets: string[]; // holders legacy observed for this position
+      startBlock: number;
+      lastActiveBlock?: number;
+      // Legacy kept the position in market value but zeroed its liquid
+      // backing contribution from this block (e.g. bricked cvxCRV).
+      writeOffFromBlock?: number;
+    }
+  | {
+      kind: "rari";
+      allocator: string;
+      allocations: { id: number; token: string; label: string }[];
+      startBlock: number;
+      lastActiveBlock?: number;
+    }
+  | {
+      kind: "fixed";
+      source: string;
+      token: string;
+      label: string;
+      entries: { block: number; amount: string }[];
+      startBlock?: number;
+      lastActiveBlock?: number;
+    };
 
 export type BasePriceFeed = {
   address: string;
@@ -144,6 +190,7 @@ export type ChainConfig = {
   nativeToken?: string;
   coolerClearinghouses?: CoolerClearinghouse[];
   makerDsr?: MakerDsrConfig;
+  protocolPositions?: ProtocolPosition[];
   blvRegistry?: { address: string; startBlock: number };
   bondManager?: { address: string; startBlock: number };
   // OHM V1 → V2 migration offset. Subtracts `offsetOhm × current sOHM index`

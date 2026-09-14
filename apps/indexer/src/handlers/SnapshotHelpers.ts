@@ -67,7 +67,7 @@ export async function readPositionBalance(
     chainId,
     contract,
     method,
-    wallet: walletAddress,
+    arg: walletAddress,
     atBlock: Number(blockNumber),
   })) as string;
   if (raw === "" || raw === "0") return ZERO;

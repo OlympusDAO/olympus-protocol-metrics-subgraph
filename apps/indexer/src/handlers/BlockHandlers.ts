@@ -55,6 +55,7 @@ import { pushCoolerReceivables } from "./CoolerLoans";
 import { pushGnosisAuctionSupply } from "./GnosisAuctions";
 import { pushMakerDsrRecords } from "./MakerDsr";
 import { pushMigrationOffsetSupply } from "./MigrationOffset";
+import { pushProtocolPositionRecords } from "./ProtocolPositions";
 import {
   getLpTokenForHandler,
   readNativeBalance,
@@ -176,6 +177,9 @@ async function processSnapshot(
       }
       if (config.makerDsr) {
         await pushMakerDsrRecords(context, config, client, records, timestamp, blockNumber);
+      }
+      if (config.protocolPositions) {
+        await pushProtocolPositionRecords(context, config, client, records, timestamp, blockNumber);
       }
       if (config.univ3PositionManager) {
         await pushUniv3NftPol(context, config, client, records, supplies, timestamp, blockNumber);

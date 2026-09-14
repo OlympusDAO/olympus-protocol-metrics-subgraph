@@ -1,5 +1,10 @@
 import { addr, bytes32, token } from "../math";
-import type { ChainConfig, CoolerClearinghouse, LiquidityHandler } from "../types";
+import type {
+  ChainConfig,
+  CoolerClearinghouse,
+  LiquidityHandler,
+  ProtocolPosition,
+} from "../types";
 import { rpcUrls } from "./rpc";
 
 // ---- Ethereum-only wallets (Olympus mainnet contracts + multisigs). ----
@@ -17,6 +22,9 @@ const TREASURY_ADDRESS_V2 = addr("0x31f8cc382c9898b273eff4e0b7626a6987c846e8");
 const TREASURY_ADDRESS_V3 = addr("0x9A315BdF513367C0377FB36545857d12e85813Ef");
 const DAO_WALLET = addr("0x245cc372c84b3645bf0ffe6538620b04a217988b");
 const DAO_WORKING_CAPITAL = addr("0xF65A665D650B5De224F46D729e2bD0885EeA9dA5");
+// Lending markets holding deployed DAI principal (legacy MYSO_LENDING / VENDOR_LENDING).
+const MYSO_LENDING = addr("0xb339953fc028b9998775c00594a74dd1488ee2c6");
+const VENDOR_LENDING = addr("0x83234a159dbd60a32457df158fafcbdf3d1ccc08");
 // Bophades TRSRY module — two historical versions. The active one holds the
 // balance; the inactive one reads zero. Kernel upgrade events are tracked
 // separately (see Erc20Transfers.ts handlers + BophadesKernel handler).
@@ -382,6 +390,16 @@ const names: Record<string, string> = {
   [MAKER_DSR_ALLOCATOR]: "Maker DSR Allocator",
   [MAKER_DSR_ALLOCATOR_PROXY]: "Maker DSR Allocator Proxy",
   [VEFXS_ALLOCATOR]: "VeFXS Allocator",
+  [LUSD_ALLOCATOR]: "LUSD Allocator",
+  [CONVEX_ALLOCATOR1]: "Convex Allocator 1",
+  [CONVEX_ALLOCATOR2]: "Convex Allocator 2",
+  [CONVEX_ALLOCATOR3]: "Convex Allocator 3",
+  [CONVEX_CVX_ALLOCATOR]: "Convex Allocator",
+  [AURA_ALLOCATOR]: "AURA Allocator",
+  [AURA_ALLOCATOR_V2]: "AURA Allocator V2",
+  [DAO_WORKING_CAPITAL]: "DAO Working Capital",
+  [MYSO_LENDING]: "Myso Finance",
+  [VENDOR_LENDING]: "Vendor Finance",
   // Tokens and pools
   [CONVEX_REWARD_OHM_ETH]: "Convex Staked Curve OHM-ETH",
   [CONVEX_REWARD_OHM_FRAXBP]: "Convex Staked Curve OHM-FraxBP",
@@ -1012,6 +1030,201 @@ const liquidityHandlers: LiquidityHandler[] = [
   },
 ];
 
+// ---- Protocol positions (handlers/ProtocolPositions.ts). Contracts and
+// labels mirror legacy TokenStablecoins / TokenVolatile helpers. `wallets`
+// are the holders legacy recorded for each position, which keeps snapshot
+// RPC bounded instead of scanning every protocol wallet for every read.
+const LIQUITY_STABILITY_POOL = addr("0x66017d22b0f8556afdd19fc67041899eb65a21bb");
+const LIQUITY_LQTY_STAKING = addr("0x4f9Fbb3f1E99B56e0Fe2892e623Ed36A76Fc605d");
+const LIQUITY_BLOCK = 12_178_594; // legacy LUSD start block; Liquity launch
+const TOKEMAK_STAKING = addr("0x96f98ed74639689c3a11daf38ef86e59f43417d3");
+const CONVEX_FRAX_3CRV_REWARD_POOL = addr("0xB900EF131301B307dB5eFcbed9DBb50A3e209B2e");
+const CONVEX_CRV_REWARD_POOL = addr("0x3fe65692bfcd0e6cf84cb1e7d24108e434a7587e");
+// Legacy CVX_CRV_WRITE_OFF_BLOCK: cvxCRV bricked in the vlCVX allocator.
+const CONVEX_CVX_CRV_WRITE_OFF_BLOCK = 18_121_728;
+const AURA_STAKING_AURA_BAL = addr("0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2");
+const AURA_POOL_OHM_DAI_WETH = addr("0xF01e29461f1FCEdD82f5258Da006295E23b4Fab3");
+const AURA_POOL_OHM_DAI = addr("0xB9D6ED734Ccbdd0b9CadFED712Cf8AC6D0917EcD");
+const AURA_POOL_OHM_WETH = addr("0x978653c02f2fbbdfd67cbc7f45c42262f213e0b5");
+const AURA_POOL_OHM_WSTETH = addr("0x636024f9ddef77e625161b2ccf3a2adfbfad3615");
+const AURA_STABLE_REWARD_POOL = addr("0x62D7d772b2d909A0779d15299F4FC87e34513c6d");
+const RARI_ALLOCATOR_BLOCK = 14_550_000; // legacy RARI_ALLOCATOR_BLOCK
+const RARI_ALLOCATOR_LAST_ACTIVE_BLOCK = 14_983_058; // legacy stops reading after this
+
+const AURA_HOLDERS = [AURA_ALLOCATOR, AURA_ALLOCATOR_V2, DAO_WALLET];
+
+const auraRewards = (pool: string, poolName: string): ProtocolPosition => ({
+  kind: "read",
+  contract: pool,
+  method: "aura.earned",
+  token: ERC20_BAL,
+  label: `Balancer - Rewards from ${poolName} (BAL)`,
+  wallets: AURA_HOLDERS,
+  startBlock: ERC20_AURA_BLOCK,
+});
+
+const protocolPositions: ProtocolPosition[] = [
+  // Liquity stability pool: compounded LUSD plus ETH and LQTY gains.
+  {
+    kind: "read",
+    contract: LIQUITY_STABILITY_POOL,
+    method: "stabilityPool.compoundedLusd",
+    token: ERC20_LUSD,
+    label: "LUSD - Stability Pool",
+    wallets: [LUSD_ALLOCATOR, DAO_WALLET],
+    startBlock: LIQUITY_BLOCK,
+  },
+  {
+    kind: "read",
+    contract: LIQUITY_STABILITY_POOL,
+    method: "stabilityPool.ethGain",
+    token: ERC20_WETH,
+    label: "wETH - Stability Pool",
+    wallets: [LUSD_ALLOCATOR, DAO_WALLET],
+    startBlock: LIQUITY_BLOCK,
+  },
+  {
+    kind: "read",
+    contract: LIQUITY_STABILITY_POOL,
+    method: "stabilityPool.lqtyGain",
+    token: ERC20_LQTY,
+    label: "LQTY - Stability Pool",
+    wallets: [LUSD_ALLOCATOR, DAO_WALLET],
+    startBlock: LIQUITY_BLOCK,
+  },
+  {
+    kind: "read",
+    contract: LIQUITY_LQTY_STAKING,
+    method: "liquity.stakes",
+    token: ERC20_LQTY,
+    label: "LQTY - Staked",
+    wallets: [LUSD_ALLOCATOR, DAO_WALLET],
+    startBlock: LIQUITY_BLOCK,
+  },
+  {
+    kind: "read",
+    contract: TOKEMAK_STAKING,
+    method: "erc20.balanceOf",
+    token: ERC20_TOKE,
+    label: "TOKE - Staked",
+    wallets: [DAO_WALLET, TREASURY_ADDRESS_V3],
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  // Convex reward pools. BaseRewardPool emits no Transfer for stakes.
+  {
+    kind: "read",
+    contract: CONVEX_FRAX_3CRV_REWARD_POOL,
+    method: "erc20.balanceOf",
+    token: ERC20_CVX_FRAX_3CRV,
+    label: "Curve FRAX3Pool - Convex FRAX3CRV Reward Pool (cvxFRAX3CRV)",
+    wallets: [
+      CONVEX_ALLOCATOR1,
+      CONVEX_ALLOCATOR2,
+      CONVEX_ALLOCATOR3,
+      CONVEX_CVX_ALLOCATOR,
+      CONVEX_CVX_VL_ALLOCATOR,
+    ],
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "read",
+    contract: CONVEX_CRV_REWARD_POOL,
+    method: "erc20.balanceOf",
+    token: ERC20_CVX_CRV,
+    label: "Curve - Convex CRV Reward Pool (cvxCRV)",
+    wallets: [CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR],
+    startBlock: ERC20_CVX_CRV_BLOCK,
+    writeOffFromBlock: CONVEX_CVX_CRV_WRITE_OFF_BLOCK,
+  },
+  // Vote-lock positions. The locked part is the token's own balanceOf
+  // (vlCVX nonStandardBalance); these add what's unlockable but unwithdrawn.
+  {
+    kind: "read",
+    contract: ERC20_CVX_VL,
+    method: "vlCvx.unlockable",
+    token: ERC20_CVX_VL,
+    label: "Convex - Unlocked (vlCVX)",
+    wallets: [CONVEX_CVX_VL_ALLOCATOR, DAO_WALLET],
+    startBlock: ERC20_CVX_VL_BLOCK,
+  },
+  {
+    kind: "read",
+    contract: ERC20_AURA_VL,
+    method: "auraLocker.total",
+    token: ERC20_AURA_VL,
+    label: "Aura Finance - Vote-Locked (vlAURA)",
+    wallets: AURA_HOLDERS,
+    startBlock: ERC20_AURA_VL_BLOCK,
+  },
+  {
+    kind: "read",
+    contract: ERC20_BTRFLY_V2_RL,
+    method: "rlBtrfly.unlockable",
+    token: ERC20_BTRFLY_V2_RL,
+    label: "Redacted Cartel V2 - Staked - Unlocked (rlBTRFLY)",
+    wallets: [DAO_WALLET],
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  // Aura: staked auraBAL and pending rewards.
+  {
+    kind: "read",
+    contract: AURA_STAKING_AURA_BAL,
+    method: "erc20.balanceOf",
+    token: ERC20_AURA_BAL,
+    label: "auraBAL - Staked in auraBAL Staking Vault",
+    wallets: AURA_HOLDERS,
+    startBlock: ERC20_AURA_BAL_BLOCK,
+  },
+  auraRewards(AURA_STAKING_AURA_BAL, "auraBAL Staking Vault"),
+  auraRewards(AURA_POOL_OHM_DAI_WETH, "Aura OHM-DAI-wETH Deposit Vault"),
+  auraRewards(AURA_POOL_OHM_DAI, "Aura OHM-DAI Deposit Vault"),
+  auraRewards(AURA_POOL_OHM_WETH, "Aura OHM-wETH Deposit Vault"),
+  auraRewards(AURA_POOL_OHM_WSTETH, "Aura OHM-wstETH Deposit Vault"),
+  {
+    kind: "read",
+    contract: AURA_STABLE_REWARD_POOL,
+    method: "aura.earned",
+    token: ERC20_BB_A_USD,
+    label: `Balancer Aave Boosted StablePool - Rewards from ${AURA_STABLE_REWARD_POOL} (bb-a-USD)`,
+    wallets: AURA_HOLDERS,
+    startBlock: ERC20_BB_A_USD_BLOCK,
+  },
+  // Rari allocator: ids legacy mapped (legacy ALLOCATOR_RARI_ID).
+  {
+    kind: "rari",
+    allocator: RARI_ALLOCATOR,
+    allocations: [
+      { id: 3, token: ERC20_DAI, label: "DAI" },
+      { id: 4, token: ERC20_TRIBE, label: "TRIBE" },
+    ],
+    startBlock: RARI_ALLOCATOR_BLOCK,
+    lastActiveBlock: RARI_ALLOCATOR_LAST_ACTIVE_BLOCK,
+  },
+  // Lending markets recognised at deployed principal (legacy
+  // MYSO_DEPLOYMENTS / VENDOR_DEPLOYMENTS, with the linked txs there).
+  {
+    kind: "fixed",
+    source: MYSO_LENDING,
+    token: ERC20_DAI,
+    label: "DAI",
+    entries: [
+      { block: 16_898_161, amount: "500000" },
+      { block: 16_975_846, amount: "-471186.4848231525" },
+      { block: 18_185_779, amount: "-28813.5151768475" }, // write-off
+    ],
+  },
+  {
+    kind: "fixed",
+    source: VENDOR_LENDING,
+    token: ERC20_DAI,
+    label: "DAI",
+    entries: [
+      { block: 16_897_393, amount: "500000" },
+      { block: 18_227_657, amount: "-500000" },
+    ],
+  },
+];
+
 export const ETHEREUM: ChainConfig = {
   chainId: 1,
   blockchain: "Ethereum",
@@ -1560,6 +1773,7 @@ export const ETHEREUM: ChainConfig = {
     depositToken: ERC20_DAI,
     startBlock: MAKER_DSR_START_BLOCK,
   },
+  protocolPositions,
   // Olympus Boosted Liquidity Vault registry (per inventory §8). The effect
   // iterates active vaults and reads getPoolOhmShare() per vault. Active
   // after the OHM_INCUR_DEBT_BLOCK = 17_620_000 gate.
