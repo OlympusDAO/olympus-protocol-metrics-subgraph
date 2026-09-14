@@ -485,6 +485,7 @@ chains:
           - "0xd4f79ca0ac83192693bce4699d0c10c66aa6cf0f" # Balancer OHM-wstETH BPT
           - "0x38633ed142bcc8128b45ab04a2e4a6e53774699f" # FraxSwap V1 OHM-FRAX
           - "0x5769071665eb8db80e7e9226f92336bb2897dcfa" # FraxSwap V2 OHM-FRAX
+          - "0x3660bd168494d61ffdac21e403d0f6356cf90fd7" # Curve OHM-ETH LP
 
       # ---- Univ3 pricing pools (bluechips + long-tail volatiles).
       - name: UniswapV3Pool

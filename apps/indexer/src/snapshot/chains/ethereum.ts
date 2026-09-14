@@ -1380,6 +1380,7 @@ const liquidityPositions: LiquidityPosition[] = [
     lpToken: LP_CURVE_OHM_ETH_TOKEN,
     poolLabel: "Curve OHM-ETH Liquidity Pool",
     sources: [
+      { kind: "wallet", label: "Curve OHM-ETH Liquidity Pool", wallets: POL_WALLETS },
       {
         kind: "read",
         contract: CONVEX_REWARD_OHM_ETH,
