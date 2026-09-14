@@ -455,12 +455,14 @@ const ownedLiquidityHandlers: LiquidityHandler[] = [univ3WethOhm, univ3OhmSusds]
 
 // Cooler Loans clearinghouses. Each clearinghouse's principal receivable is
 // added to the snapshot as a DAI / USDS TokenRecord priced via the
-// corresponding Chainlink feed. Start blocks are the approximate deployment
-// windows from inventory-ethereum.md §3 "Clearinghouse Addresses"; the
-// underlying RPC call gracefully returns null on revert (pre-deploy) so an
-// over-broad start block is harmless.
-const COOLER_LOANS_V1_BLOCK = 18_539_800;
-const COOLER_LOANS_V1_1_BLOCK = 18_794_000;
+// corresponding Chainlink feed. The underlying RPC call gracefully returns
+// null on revert (pre-deploy), so a start block that's too early is harmless.
+// One that's too late silently drops live loans: V1 and V1.1 were deployed in
+// Sep 2023 but previously started at Nov / Dec 2023 blocks, which hid up to
+// ~$84M of receivables. V1 and V1.1 now start at their deployment blocks
+// (creation txs 0xb37655b7…fd38 and the V1.1 Clearinghouse creation tx).
+const COOLER_LOANS_V1_BLOCK = 18_185_779;
+const COOLER_LOANS_V1_1_BLOCK = 18_234_505;
 const COOLER_LOANS_V2_BLOCK = 19_620_000;
 const COOLER_LOANS_V2_MONOCOOLER_BLOCK = 22_423_121;
 
