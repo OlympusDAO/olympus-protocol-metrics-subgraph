@@ -88,7 +88,10 @@ overrides:
   "cookie@<0.7.0": "0.7.0"
   "express@<4.20.0": "4.20.0"
   "path-to-regexp@<0.1.13": "0.1.13"
-  "qs@<6.15.2": "6.15.2"
+  # qs GHSA-x5fp-wj9c-mxmx (array-limit bypass) + GHSA-4mjr-xmp4-gh2g
+  # (isBuffer DoS), fixed in 6.16.0 (released 2026-08-29, past the 7-day
+  # cutoff). body-parser 1.20.6 declares ~6.15.1; 6.16.0 is a minor bump.
+  "qs@<6.16.0": "6.16.0"
   "send@<0.19.0": "0.19.0"
   "serve-static@<1.16.0": "1.16.0"
   # postcss GHSA-r28c-9q8g-f849 (high, arbitrary source-map disclosure),
@@ -116,5 +119,8 @@ overrides:
   # fixed in 0.28.1. vite@8.0.16 accepts esbuild ^0.27.0 || ^0.28.0, so the
   # bump is peer-compatible.
   "esbuild@>=0.17.0 <0.28.1": "0.28.1"
+  # fflate GHSA-px8p-9vwx-vf98 (unzipSync infinite loop on malformed ZIP),
+  # fixed in 0.8.3. Pulled via envio>@fuel-ts/utils.
+  "fflate@>=0.8.0 <0.8.3": "0.8.3"
 preferFrozenLockfile: true
 strictDepBuilds: true

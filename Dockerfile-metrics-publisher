@@ -8,7 +8,7 @@ ENV PATH=/pnpm:$PATH
 WORKDIR /app
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends --only-upgrade libgcrypt20 libgnutls30 \
+  && apt-get install -y --no-install-recommends --only-upgrade libgcrypt20 libgnutls30 libpcre2-8-0 \
   && apt-get install -y --no-install-recommends ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
