@@ -57,6 +57,9 @@ export type TokenDefinition = {
   multiplier?: string;
   isLiability?: boolean;
   startBlock?: number;
+  // Last block (inclusive) the token is valued. After it the token prices at
+  // zero and emits no records, e.g. UST after its collapse.
+  lastActiveBlock?: number;
   // When true, snapshot-time balance is read via `balanceOf(wallet)` RPC
   // instead of the event-driven TokenBalance ledger. Required for tokens
   // that mutate balances without emitting `Transfer` events:
@@ -68,7 +71,99 @@ export type TokenDefinition = {
   // negative, polluting downstream rollups. See tasks/lessons.md
   // "2026-05-17 — Tokens that mutate balance without Transfer events".
   nonStandardBalance?: boolean;
+  // Snapshot-time read for receipts whose ERC20 `balanceOf` isn't the asset
+  // amount (e.g. veFXS returns decaying voting power, not the locked FXS).
+  // `method` selects a fixed ABI in `readPositionAmount`; `wallets` narrows
+  // the read to the holders legacy valued. Takes precedence over
+  // `nonStandardBalance`.
+  positionRead?: { method: PositionReadMethod; wallets?: string[] };
 };
+
+export type PositionReadMethod =
+  | "veFxs.lockedAmount"
+  | "erc20.balanceOf"
+  | "liquity.stakes"
+  | "stabilityPool.compoundedLusd"
+  | "stabilityPool.ethGain"
+  | "stabilityPool.lqtyGain"
+  | "vlCvx.unlockable"
+  | "auraLocker.total"
+  | "rlBtrfly.unlockable"
+  | "aura.earned"
+  | "rari.hasId"
+  | "rari.amountAllocated"
+  | "frax.lockedLiquidity"
+  | "incurDebt.totalOutstanding";
+
+// Protocol-owned liquidity valued through a pool's price handler (see
+// handlers/LiquidityPositions.ts). Each source is one way the treasury held
+// the pool's LP: in a wallet (TokenBalance ledger for `lpToken`) or staked in
+// a gauge / Aura / Convex / Frax farm contract read at the snapshot.
+export type LiquidityPositionSource =
+  | { kind: "wallet"; label: string; wallets: string[] }
+  | {
+      kind: "read";
+      contract: string;
+      method: PositionReadMethod;
+      receiptToken: string; // token address the record carries (legacy parity)
+      label: string;
+      wallets: string[];
+    };
+
+export type LiquidityPosition = {
+  pricing: LiquidityHandler; // pool handler for total value and LP unit price
+  lpToken: string;
+  poolLabel: string; // legacy pool name on the OHM supply rows
+  // Defaults to "Protocol-Owned Liquidity". Pools without OHM (FraxBP) keep
+  // legacy's Stable category.
+  category?: string;
+  sources: LiquidityPositionSource[];
+  startBlock: number;
+  lastActiveBlock?: number;
+};
+
+// OHM the treasury deployed into a lending market, recognised at the deployed
+// amount rather than the market's live balance (legacy SILO_DEPLOYMENTS /
+// EULER_DEPLOYMENTS).
+export type LendingDeployment = {
+  source: string;
+  entries: { block: number; amount: string }[];
+  lastActiveBlock?: number;
+};
+
+// Treasury positions held inside another protocol's contract (see
+// handlers/ProtocolPositions.ts). Amounts are denominated in `token`, which
+// drives price, category and liquidity through its TokenDefinition.
+export type ProtocolPosition =
+  | {
+      kind: "read";
+      contract: string;
+      method: PositionReadMethod;
+      token: string;
+      label: string; // legacy record token name
+      wallets: string[]; // holders legacy observed for this position
+      startBlock: number;
+      lastActiveBlock?: number;
+      // Legacy kept the position in market value but zeroed its liquid
+      // backing contribution from this block (e.g. bricked cvxCRV).
+      writeOffFromBlock?: number;
+    }
+  | {
+      kind: "rari";
+      allocator: string;
+      allocations: { id: number; token: string; label: string }[];
+      startBlock: number;
+      lastActiveBlock?: number;
+    }
+  | {
+      kind: "fixed";
+      source: string;
+      token: string;
+      label: string;
+      entries: { block: number; amount: string }[];
+      startBlock?: number;
+      lastActiveBlock?: number;
+    };
 
 export type BasePriceFeed = {
   address: string;
@@ -106,6 +201,16 @@ export type CoolerClearinghouse = {
   startBlock?: number;
 };
 
+// Maker DSR (Pot) deposits. DAI in the DSR is held as normalized shares
+// (`pie(wallet)`) that accrue via the rate accumulator (`chi()`), not as an
+// ERC20 balance, so it needs its own snapshot read. Legacy parity:
+// `getMakerDSRRecords`.
+export type MakerDsrConfig = {
+  pot: string;
+  depositToken: string; // DAI — the token DSR balances are denominated and priced in
+  startBlock: number;
+};
+
 export type ChainConfig = {
   chainId: ChainId;
   blockchain: string;
@@ -122,6 +227,15 @@ export type ChainConfig = {
   ohmStartBlock?: number;
   nativeToken?: string;
   coolerClearinghouses?: CoolerClearinghouse[];
+  makerDsr?: MakerDsrConfig;
+  protocolPositions?: ProtocolPosition[];
+  liquidityPositions?: LiquidityPosition[];
+  // Olympus IncurDebt: outstanding OHM debt counted as Boosted Liquidity
+  // Vault supply from `startBlock`.
+  incurDebt?: { address: string; startBlock: number };
+  lendingDeployments?: LendingDeployment[];
+  // Non-protocol wallets legacy counted as treasury OHM up to a block.
+  treasuryOhmExtraWallets?: { address: string; lastActiveBlock: number }[];
   blvRegistry?: { address: string; startBlock: number };
   bondManager?: { address: string; startBlock: number };
   // OHM V1 → V2 migration offset. Subtracts `offsetOhm × current sOHM index`

@@ -63,6 +63,9 @@ function mockContext(
     ChainlinkPriceState: { get: async () => undefined },
     Erc20Supply: { get: async () => undefined },
     TokenBalance: { get: async () => undefined },
+    // readErc20BalanceOf(pool) for Uniswap V3 USD-depth selection: every pool
+    // holds 42 of its secondary token.
+    effect: async () => (42n * 10n ** 18n).toString(),
   } as unknown as EvmOnBlockContext;
 }
 
@@ -206,9 +209,9 @@ describe("recursive router guards", () => {
     const result = await getPrice(config, context, mockClient(), TOKEN_A, BLOCK, null);
     // 1:1 sqrtPrice and stable USDC means TOKEN_A prices to $1.
     expect(result.price.eq("1")).toBe(true);
-    // And the liquidity reported should come from POOL_2's indexed L,
-    // not from the broken pool — so the tiebreaker is meaningful even when
-    // some candidates fail.
+    // And the liquidity reported should come from POOL_2's USD depth (42 of
+    // its $1 secondary token), not from the broken pool — so the tiebreaker
+    // is meaningful even when some candidates fail.
     expect(result.liquidity.eq("42")).toBe(true);
   });
 

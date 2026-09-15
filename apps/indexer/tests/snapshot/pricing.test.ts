@@ -88,7 +88,13 @@ function mockContext({
     Univ3PoolState: { get: async (id: string) => univ3States.get(id) },
     Erc20Supply: { get: async () => undefined },
     TokenBalance: { get: async () => undefined },
-    effect: async (_effectDef: unknown, input: { chainId?: number; feedAddress?: string }) => {
+    effect: async (
+      _effectDef: unknown,
+      input: { chainId?: number; feedAddress?: string; walletAddress?: string },
+    ) => {
+      // readErc20BalanceOf(pool) for Uniswap V3 USD-depth selection. Every pool
+      // holds the same balance here, so selection falls to handler order.
+      if (input.walletAddress !== undefined) return (10n ** 24n).toString();
       if (input.feedAddress !== undefined && input.chainId !== undefined) {
         const stateId = `${input.chainId}-${input.feedAddress.toLowerCase()}`;
         const state = chainlinkStates.get(stateId) as { answer?: bigint } | undefined;

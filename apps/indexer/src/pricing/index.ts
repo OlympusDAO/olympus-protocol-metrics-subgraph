@@ -186,6 +186,20 @@ export async function getUnitPrice(
   );
 }
 
+export async function getTokenQuantityPerLp(
+  config: ChainConfig,
+  context: EvmOnBlockContext,
+  client: PublicClient,
+  handler: LiquidityHandler,
+  tokenAddress: string,
+  blockNumber: bigint,
+) {
+  return createPriceHandler(config, context, client, handler).getTokenQuantityPerLp(
+    tokenAddress,
+    blockNumber,
+  );
+}
+
 export async function getUnderlyingTokenBalance(
   config: ChainConfig,
   context: EvmOnBlockContext,

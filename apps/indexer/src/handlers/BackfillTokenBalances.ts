@@ -1,5 +1,6 @@
 import type { BackfillSentinel, EvmOnBlockContext, TokenBalance, TokenBalanceUpdate } from "envio";
 import { indexer } from "envio";
+import { isAddress } from "viem";
 
 import { readBlockTimestamp, readErc20BalanceOf } from "../effects";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
@@ -80,6 +81,13 @@ export async function runBackfill(
   let seeded = 0;
   let skipped = 0;
   for (const tokenDef of config.tokens) {
+    if (!isAddress(tokenDef.address, { strict: false })) {
+      // Balancer LP definitions are keyed by the 32-byte pool id, which
+      // isn't an ERC20 address. There is no balanceOf to read, and the
+      // pool's BPT balances come from its own Transfer events.
+      skipped++;
+      continue;
+    }
     if (tokenDef.address === NATIVE_TOKEN) {
       // Native balances live in NativeBalanceState; balanceOf would revert.
       skipped++;
