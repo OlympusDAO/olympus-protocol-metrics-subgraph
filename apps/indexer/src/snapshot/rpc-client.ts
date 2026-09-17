@@ -29,6 +29,12 @@ const VIEM_CHAIN_BY_ID: Record<ChainId, Chain> = {
   [CHAIN_IDS.FANTOM]: fantom,
   [CHAIN_IDS.BASE]: base,
   [CHAIN_IDS.BERACHAIN]: berachain,
+  [CHAIN_IDS.ROBINHOOD]: {
+    id: 4663,
+    name: "Robinhood",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: { default: { http: ["https://rpc.mainnet.chain.robinhood.com"] } },
+  },
 };
 
 const clients = new Map<number, PublicClient>();

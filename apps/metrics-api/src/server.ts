@@ -1,11 +1,11 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import {
-  ALL_CHAIN_IDS,
   type ApiErrorResponse,
   type ApiResponse,
   type BoundsResponse,
   buildDailyMetric,
   type DailyMetric,
+  expectedChainIds,
   getOpenApiDocument,
   isCrossChainComplete,
   type Manifest,
@@ -242,13 +242,15 @@ function buildEmptyDailyMetric(input: {
     ohmSupply: [],
     includeRecords: input.includeRecords,
     chainsIndexed: [],
-    chainsMissing: ALL_CHAIN_IDS,
+    chainsMissing: expectedChainIds(input.date),
     generatedAt: input.generatedAt,
   });
 }
 
 function normalizeMetricCompleteness(metric: DailyMetric): DailyMetric {
-  const chainsMissing = ALL_CHAIN_IDS.filter((chainId) => !metric.chainsIndexed.includes(chainId));
+  const chainsMissing = expectedChainIds(metric.date).filter(
+    (chainId) => !metric.chainsIndexed.includes(chainId),
+  );
   return {
     ...metric,
     chainsMissing,

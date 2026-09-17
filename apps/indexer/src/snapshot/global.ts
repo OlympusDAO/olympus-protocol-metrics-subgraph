@@ -177,6 +177,7 @@ const ALL_CHAIN_IDS: number[] = [
   CHAIN_IDS.POLYGON,
   CHAIN_IDS.BASE,
   CHAIN_IDS.BERACHAIN,
+  CHAIN_IDS.ROBINHOOD,
 ];
 
 export function aggregateAcrossChains(
@@ -207,7 +208,10 @@ export function aggregateAcrossChains(
   }
 
   const chainsIndexed = perChain.map((chain) => chain.chainId);
-  const chainsMissing = ALL_CHAIN_IDS.filter((chainId) => !chainsIndexed.includes(chainId));
+  const chainsMissing = ALL_CHAIN_IDS.filter(
+    (chainId) =>
+      (chainId !== CHAIN_IDS.ROBINHOOD || date >= "2026-09-17") && !chainsIndexed.includes(chainId),
+  );
   const crossChainComplete = REQUIRED_CHAINS_FOR_COMPLETE.every((chainId) =>
     chainsIndexed.includes(chainId),
   );

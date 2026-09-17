@@ -17,9 +17,15 @@ export const CHAIN_IDS_BY_NAME: Record<ChainName, number> = {
   Polygon: 137,
   Base: 8453,
   Berachain: 80094,
+  Robinhood: 4663,
 };
 
 export const ALL_CHAIN_IDS: number[] = CHAIN_NAMES.map((chainName) => CHAIN_IDS_BY_NAME[chainName]);
+export const ROBINHOOD_START_DATE = "2026-09-17";
+export function expectedChainIds(date: string): number[] {
+  return ALL_CHAIN_IDS.filter((id) => id !== 4663 || date >= ROBINHOOD_START_DATE);
+}
+
 export const REQUIRED_CHAIN_IDS_FOR_COMPLETE: number[] = [
   CHAIN_IDS_BY_NAME.Arbitrum,
   CHAIN_IDS_BY_NAME.Ethereum,
@@ -44,6 +50,7 @@ export function emptyChainValues(): ChainValues {
     Polygon: 0,
     Base: 0,
     Berachain: 0,
+    Robinhood: 0,
   };
 }
 
@@ -70,6 +77,7 @@ export function groupTreasuryAssetsByChain(assets: TreasuryAsset[]): ChainTreasu
     Polygon: [],
     Base: [],
     Berachain: [],
+    Robinhood: [],
   };
   for (const asset of assets) {
     if (isChainName(asset.blockchain)) {
@@ -87,6 +95,7 @@ export function groupOhmSupplyByChain(supplies: OhmSupply[]): ChainOhmSupply {
     Polygon: [],
     Base: [],
     Berachain: [],
+    Robinhood: [],
   };
   for (const supply of supplies) {
     if (isChainName(supply.blockchain)) {
@@ -117,8 +126,8 @@ function inferIndexedChainIds(treasuryAssets: TreasuryAsset[], ohmSupply: OhmSup
   ]);
 }
 
-function missingChainIds(chainsIndexed: number[]): number[] {
-  return ALL_CHAIN_IDS.filter((chainId) => !chainsIndexed.includes(chainId));
+function missingChainIds(chainsIndexed: number[], date: string): number[] {
+  return expectedChainIds(date).filter((chainId) => !chainsIndexed.includes(chainId));
 }
 
 export function isCrossChainComplete(chainsIndexed: number[]): boolean {
@@ -138,7 +147,7 @@ export function buildDailyMetric(input: {
   const treasuryAssets = input.treasuryAssets ?? [];
   const ohmSupply = input.ohmSupply ?? [];
   const chainsIndexed = input.chainsIndexed ?? inferIndexedChainIds(treasuryAssets, ohmSupply);
-  const chainsMissing = input.chainsMissing ?? missingChainIds(chainsIndexed);
+  const chainsMissing = input.chainsMissing ?? missingChainIds(chainsIndexed, input.date);
   const treasuryAssetsByChain = groupTreasuryAssetsByChain(treasuryAssets);
   const ohmSupplyByChain = groupOhmSupplyByChain(ohmSupply);
   const treasuryMarketValueComponents = emptyChainValues();

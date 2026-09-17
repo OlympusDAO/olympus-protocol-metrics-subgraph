@@ -1,11 +1,14 @@
 # yaml-language-server: $schema=../../node_modules/envio/evm.schema.json
 name: olympus-protocol-metrics
-description: Olympus treasury + protocol-metrics indexer across Ethereum, Arbitrum, Polygon, Fantom, Base, and Berachain
+description: Olympus treasury + protocol-metrics indexer across Ethereum, Arbitrum, Polygon, Fantom, Base, Berachain, and Robinhood
 
 # Reusable contract definitions shared across chains. Each `events` entry is the
 # Solidity event signature with parameter names so HyperIndex codegen produces
 # typed `event.params` access.
 contracts:
+  - name: MellowRedeemQueue
+    events:
+      - event: "ReportHandled(uint224 priceD18, uint32 timestamp)"
   - name: TreasuryERC20
     events:
       - event: "Transfer(address indexed from, address indexed to, uint256 value)"
@@ -509,5 +512,18 @@ chains:
       # CHREG (ClearinghouseRegistry) is registered dynamically once
       # observed via Kernel.ActionExecuted — its address isn't hardcoded in
       # the legacy subgraph either (resolved per-block via Kernel).
+
+  - id: 4663 # Robinhood
+    start_block: 65044796 # Verified empty treasury position baseline, not deployment
+    rpc:
+      - url: ${ENVIO_ROBINHOOD_RPC_URL:-https://rpc.mainnet.chain.robinhood.com}
+        for: fallback
+    contracts:
+      - name: TreasuryERC20
+        address:
+          - "0x5fc5360d0400a0fd4f2af552add042d716f1d168"
+          - "0xf04c58853d54f2445989108c29087f1a61c034cb"
+      - name: MellowRedeemQueue
+        address: "0x873ff30c29450bf4beb3afbbb0372a4b47b4969c"
 
 address_format: lowercase

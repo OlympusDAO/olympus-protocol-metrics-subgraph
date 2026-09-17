@@ -34,8 +34,24 @@ function requireArtifacts(manifest: Manifest): NonNullable<Manifest["artifacts"]
 
 const metric: DailyMetric = {
   date: "2026-05-21",
-  blocks: { Arbitrum: 0, Ethereum: 100, Fantom: 0, Polygon: 0, Base: 0, Berachain: 0 },
-  timestamps: { Arbitrum: 0, Ethereum: 1779814223, Fantom: 0, Polygon: 0, Base: 0, Berachain: 0 },
+  blocks: {
+    Arbitrum: 0,
+    Ethereum: 100,
+    Fantom: 0,
+    Polygon: 0,
+    Base: 0,
+    Robinhood: 0,
+    Berachain: 0,
+  },
+  timestamps: {
+    Arbitrum: 0,
+    Ethereum: 1779814223,
+    Fantom: 0,
+    Polygon: 0,
+    Base: 0,
+    Robinhood: 0,
+    Berachain: 0,
+  },
   crossChainComplete: true,
   chainsIndexed: [1],
   chainsMissing: [],
@@ -48,6 +64,7 @@ const metric: DailyMetric = {
     Fantom: 0,
     Polygon: 0,
     Base: 0,
+    Robinhood: 0,
     Berachain: 0,
   },
   ohmCirculatingSupply: 4,
@@ -57,6 +74,7 @@ const metric: DailyMetric = {
     Fantom: 0,
     Polygon: 0,
     Base: 0,
+    Robinhood: 0,
     Berachain: 0,
   },
   ohmFloatingSupply: 5,
@@ -66,6 +84,7 @@ const metric: DailyMetric = {
     Fantom: 0,
     Polygon: 0,
     Base: 0,
+    Robinhood: 0,
     Berachain: 0,
   },
   ohmBackedSupply: 6,
@@ -76,6 +95,7 @@ const metric: DailyMetric = {
     Fantom: 0,
     Polygon: 0,
     Base: 0,
+    Robinhood: 0,
     Berachain: 0,
   },
   ohmSupplyCategories: {
@@ -102,6 +122,7 @@ const metric: DailyMetric = {
     Fantom: 0,
     Polygon: 0,
     Base: 0,
+    Robinhood: 0,
     Berachain: 0,
   },
   treasuryLiquidBacking: 14,
@@ -111,6 +132,7 @@ const metric: DailyMetric = {
     Fantom: 0,
     Polygon: 0,
     Base: 0,
+    Robinhood: 0,
     Berachain: 0,
   },
   treasuryLiquidBackingPerOhmFloating: 15,
@@ -1319,6 +1341,8 @@ describe("metrics publisher", () => {
     });
     expect(requestBody?.query).toContain("chainsIndexed");
     expect(requestBody?.query).toContain("_contains: [42161, 1, 250, 137, 8453, 80094]");
+    expect(requestBody?.query).toContain("_contains: [42161, 1, 250, 137, 8453, 80094, 4663]");
+    expect(requestBody?.query).toContain('_gte: "2026-09-17"');
   });
 
   test("Hasura source paginates records with a stable unique order", async () => {

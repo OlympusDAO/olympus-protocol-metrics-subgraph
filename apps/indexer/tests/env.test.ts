@@ -23,6 +23,7 @@ const validEnv: NodeJS.ProcessEnv = {
   HASURA_GRAPHQL_ENDPOINT: "http://hasura:8080/v1/metadata",
   HASURA_GRAPHQL_ADMIN_SECRET: "secret",
   ENVIO_ARBITRUM_RPC_URL: "https://arbitrum.example.com",
+  ENVIO_ROBINHOOD_RPC_URL: "https://robinhood.example.com",
   ENVIO_BERACHAIN_RPC_URL: "https://berachain.example.com",
   ENVIO_BASE_RPC_URL: "https://base.example.com",
   ENVIO_POLYGON_RPC_URL: "https://polygon.example.com",
