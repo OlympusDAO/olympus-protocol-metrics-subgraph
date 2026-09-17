@@ -6,6 +6,8 @@ import "../../src/handlers/Erc20Transfers";
 const hasApiToken = Boolean(process.env.ENVIO_API_TOKEN);
 const FUNDING_BLOCK = 65_047_107;
 const USDG = "0x5fc5360d0400a0fd4f2af552add042d716f1d168";
+// Registered in ROBINHOOD.protocolAddresses; Erc20Transfers uses it in both
+// buildTreasuryTransferWhere and handleTreasuryTransfer (see offline registration test).
 const WALLET = "0x317e0f5ef883db95f8ffb5b995b8457903873608";
 const RAW_USDG = 499_977_966_094n;
 

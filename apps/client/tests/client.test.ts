@@ -514,16 +514,19 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     });
 
     const notes = readFileSync(notesPath, "utf8");
-    expect(notes).toContain("Package: `@olympusdao/treasury-subgraph-client@3.0.0`");
+    expect(notes).toContain("Package: `@olympusdao/treasury-subgraph-client@3.1.0`");
     expect(notes).toContain("https://www.npmjs.com/package/@olympusdao/treasury-subgraph-client");
     expect(notes).not.toContain("Staged npm package");
     expect(notes).not.toContain("Review and approve the staged package");
     expect(notes).toContain("## Changelog");
-    expect(notes).toContain("## [v3.0.0] - 2026-06-04");
-    expect(notes).toContain("### Breaking: Move to the self-hosted metrics API");
+    expect(notes).toContain("## [v3.1.0] - 2026-09");
     expect(notes).toContain(
-      "Preserved legacy `query({ operationName, input })` support for `/operations/*`.",
+      "Add Robinhood to chain names and per-chain treasury/published metric components.",
     );
+    expect(notes).toContain(
+      "Existing chain fields are preserved; Robinhood defaults to zero in legacy shapes.",
+    );
+    expect(notes).not.toContain("## [v3.0.0]");
     expect(notes).not.toContain("## [v2.0.0]");
   }, 15000);
 

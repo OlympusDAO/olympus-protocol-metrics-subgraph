@@ -32,6 +32,14 @@ export type MellowPosition = {
   requests: { timestamp: number; shares: string; assets: string; isClaimable: boolean }[];
 };
 
+/**
+ * Split a wallet position into mutually exclusive claims. pendingShares are
+ * post-redemption-fee shares locked in requests not yet priced by ReportHandled;
+ * they float with NAV and are no longer part of wallet shares. fixedAssets are
+ * USDG amounts already priced by ReportHandled, even if not yet claimable. They
+ * do not reprice with NAV. Claimed requests disappear and become idle USDG.
+ * Inputs use raw 18dp shares / 6dp assets; outputs use whole units and USDG/share.
+ */
 export function valueMellowPosition(
   position: MellowPosition,
   handledTimestamp: number,

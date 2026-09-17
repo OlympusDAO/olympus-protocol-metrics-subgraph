@@ -148,8 +148,8 @@ The change spans ingestion, cached block-aware reads, treasury records, global
 rollups, publisher chain mapping, artifact/client chain names and environment
 validation. Tests cover zero/pre-start cases, non-unit NAV/mixed decimals,
 staleness, fee-netted shares, pending/fixed/dust claims and exactly-once totals.
-The client changelog records the additive chain field; no package publication
-or speculative version bump is performed by this PR.
+The client changelog and package metadata record additive chain coverage as
+v3.1.0 (September 2026), as requested in review; no package is published by this PR.
 
 After upstream deployment, verify the accepted commit, index progress past the
 baseline, the Safe's token and queue records, snapshot timestamps and exactly-once
@@ -214,3 +214,37 @@ experimental deployment must not be reused if they contain error-derived zeroes.
 Archive-backed baseline replay and authenticated HyperSync event retrieval are
 verified. Native local HyperSync replay and deployed publisher readback remain
 operational gates; this evidence does not claim production indexing or publication.
+
+## Reviewer navigation and revisions (September 2026)
+
+- **Wallet and tokens:** `src/snapshot/chains/robinhood.ts` registers the Safe in
+  `protocolAddresses`, USDG as a six-decimal liquid stable asset and rUSDG as an
+  eighteen-decimal illiquid receipt. `Erc20Transfers.ts` consumes the same wallet
+  list for both its event filter and balance updates. `config.yaml` subscribes
+  the two contracts; it is not the wallet or valuation registry.
+- **USDG valuation:** the `usdg-nominal-usd` stable handler prices idle USDG at
+  nominal $1. This works before any vault deposit and is not a market-price feed.
+- **rUSDG valuation:** `pushTokenBalanceRecords` now dispatches the registered
+  share token to `pushMellowRecords`, replacing the separate orchestration call.
+  This adapter reads wallet/claimable shares plus queued claims and uses the
+  verified inverse oracle conversion; an ordinary ERC20/$1 path would be wrong.
+- **Queue terms:** `pendingShares` are post-fee locked shares awaiting pricing;
+  `fixedAssets` are priced USDG claims awaiting payment. Only the former floats
+  with NAV. Neither is counted in idle USDG or liquid backing.
+- **OHM guards:** Robinhood has no configured verified OHM deployment. Supply
+  conversion, total-supply emission and treasury OHM exclusions therefore exit
+  without producing fictitious OHM records. Treasury asset records still run.
+- **Coverage:** indexer and publisher/API now share `expectedChainIds` and a
+  data-driven start-date map. Requiring Robinhood before the captured baseline
+  would incorrectly mark previously complete historical days as missing a chain.
+- **Viem:** both direct dependencies use 2.56.3 and import `robinhood` from
+  `viem/chains`. This includes mainnet chain 4663 and satisfies the repository's
+  minimum-release-age policy; no guardrail override was used.
+- **Client:** additive chain coverage is versioned as v3.1.0, September 2026,
+  with matching package metadata. This PR does not publish the package.
+
+Offline registration tests exercise the production transfer filter and handler
+for both assets. A mixed-position snapshot test covers idle USDG, wallet rUSDG,
+pending shares and fixed assets through one token pass, asserting four distinct
+records and excluding all vault/queue exposure from liquid backing. These tests
+are deterministic fixtures, not new authenticated replay or deployment evidence.

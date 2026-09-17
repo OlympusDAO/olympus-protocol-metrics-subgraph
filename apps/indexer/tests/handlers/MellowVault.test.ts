@@ -144,7 +144,7 @@ describe("Robinhood snapshot integration", () => {
     );
     expect(records).toEqual([]);
   });
-  test("ordinary token path skips rUSDG, custom path reaches global totals once", async () => {
+  test("registered rUSDG routes to its adapter and reaches global totals once", async () => {
     const records: SerializedTokenRecord[] = [];
     const ctx = context(position());
     const sharesOnly = {
@@ -159,15 +159,7 @@ describe("Robinhood snapshot integration", () => {
       BigInt(NOW),
       block,
     );
-    expect(ctx.effect).not.toHaveBeenCalled();
-    await pushMellowRecords(
-      ctx as unknown as EvmOnBlockContext,
-      ROBINHOOD,
-      client,
-      records,
-      BigInt(NOW),
-      block,
-    );
+    expect(ctx.effect).toHaveBeenCalledTimes(1);
     expect(records).toHaveLength(1);
     const chain = computePerChainAggregate(
       4663,
@@ -193,17 +185,14 @@ describe("Robinhood snapshot integration", () => {
   });
   test("completed redemption is idle USDG with no residual claim", async () => {
     const records: SerializedTokenRecord[] = [];
-    const idleContext = { effect: vi.fn(async () => "1005000") };
+    const idleContext = {
+      effect: vi.fn(async (effect: { name: string }) =>
+        effect.name === "readErc20BalanceOf" ? "1005000" : position({ shares: "0", requests: [] }),
+      ),
+      MellowQueueState: { get: vi.fn(async () => undefined) },
+    };
     await pushTokenBalanceRecords(
       idleContext as unknown as EvmOnBlockContext,
-      ROBINHOOD,
-      client,
-      records,
-      BigInt(NOW),
-      block,
-    );
-    await pushMellowRecords(
-      context(position({ shares: "0", requests: [] })) as unknown as EvmOnBlockContext,
       ROBINHOOD,
       client,
       records,
@@ -213,6 +202,46 @@ describe("Robinhood snapshot integration", () => {
     expect(records).toHaveLength(1);
     expect(records[0].value).toBe("1.005");
     expect(records[0].isLiquid).toBe(true);
+  });
+  test("one token pass includes idle USDG, wallet shares and both queue states once", async () => {
+    const records: SerializedTokenRecord[] = [];
+    const p = position({
+      requests: [
+        { timestamp: 200, shares: "990000000000000000", assets: "0", isClaimable: false },
+        { timestamp: 100, shares: "1000000000000000000", assets: "1005000", isClaimable: false },
+      ],
+    });
+    const ctx = {
+      effect: vi.fn(async (effect: { name: string }) =>
+        effect.name === "readErc20BalanceOf" ? "10000000" : p,
+      ),
+      MellowQueueState: { get: vi.fn(async () => ({ handledTimestamp: 100n })) },
+    };
+    await pushTokenBalanceRecords(
+      ctx as unknown as EvmOnBlockContext,
+      ROBINHOOD,
+      client,
+      records,
+      BigInt(NOW),
+      block,
+    );
+    expect(ctx.effect).toHaveBeenCalledTimes(2);
+    expect(records).toHaveLength(4);
+    expect(new Set(records.map((record) => record.id)).size).toBe(4);
+    const aggregate = computePerChainAggregate(
+      4663,
+      "Robinhood",
+      "2026-09-17",
+      block,
+      BigInt(NOW),
+      records,
+      [],
+    );
+    expect(aggregate.treasuryMarketValue.toNumber()).toBeCloseTo(
+      10 + 1.99 * 1.011345929971074 + 1.005,
+      10,
+    );
+    expect(aggregate.treasuryLiquidBacking.toString()).toBe("10");
   });
   test("coverage requires Robinhood only from its baseline date", () => {
     expect(aggregateAcrossChains("2026-09-16", []).chainsMissing).not.toContain(4663);
