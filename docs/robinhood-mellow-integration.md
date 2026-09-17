@@ -173,3 +173,40 @@ on the public RPC: the original pinned observations succeeded when captured, but
 that endpoint prunes state rapidly. This is an archive-provider deployment gate,
 not a passing archival replay test. Etherscan proxy responses must not be assumed
 to honor historical block tags; the baseline uses the direct pinned RPC reads.
+
+### Funded-wallet verification (2026-09-17 UTC)
+
+Read-only live verification passed at Robinhood block **65,091,877**, timestamp
+**1789620422**, hash
+`0x31f8514e9fde805e267874bc8c3c6dbb3b2fe3841b6cc2bad0b6964c88626172`:
+
+- Chain ID 4663; USDG decimals 6.
+- Funding receipt succeeded at block 65,047,107 with one USDG Transfer to the Safe
+  for raw amount `499977966094` (499,977.966094 USDG).
+- A fresh block-pinned balance read matched that raw amount.
+- The production balance-effect body and idle-token snapshot builder produced
+  one USDG record. Per-chain/global aggregation of that scoped record set was
+  499,977.966094 nominal USD, with no duplicate record.
+- This is an **idle-USDG-only** verification. The test supplies the effect dispatch
+  boundary; it does not exercise Envio scheduling/cache, HyperSync ingestion,
+  Mellow balances or the publisher. Other chains are not part of this total.
+
+Reproduce (read-only, explicit opt-in; requires funds to remain unchanged):
+
+```sh
+ROBINHOOD_LIVE_VERIFY=1 pnpm --dir apps/indexer exec vitest run tests/handlers/RobinhoodFunding.test.ts
+```
+
+The default offline suite includes a receipt-sized historical balance fixture
+(zero baseline then funded snapshot) and an unavailable-state regression. The
+fixture is not an actual historical replay. A fresh public-RPC baseline probe
+still returned `historical state ... is not available`.
+
+Verification exposed a shared effect that previously converted failed balance
+reads to zero. Robinhood reads now throw a sanitized error instead, preventing
+RPC/pruning failure from silently omitting the funded position. Other chains'
+existing behavior is unchanged. Existing effect-cache entries from any earlier
+experimental deployment must not be reused if they contain error-derived zeroes.
+
+Archive-backed baseline replay, authenticated HyperSync ingestion and deployed
+publisher readback remain outstanding. This evidence does not clear those gates.
