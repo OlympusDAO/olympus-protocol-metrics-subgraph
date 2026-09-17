@@ -1,4 +1,5 @@
 import BigNumber from "bignumber.js";
+import { expectedChainIds } from "../../../../packages/metrics-artifacts/src/legacy-shape";
 
 import { ONE, ZERO } from "./math";
 import { CHAIN_IDS, type SerializedTokenRecord, type SerializedTokenSupply } from "./types";
@@ -170,15 +171,6 @@ export type CrossChainAggregate = {
 // Chains required for `crossChainComplete` to be true. Per Phase 1 decision
 // #10 the legacy `crossChainDataComplete` only requires Arbitrum + Ethereum.
 const REQUIRED_CHAINS_FOR_COMPLETE: number[] = [CHAIN_IDS.ARBITRUM, CHAIN_IDS.ETHEREUM];
-const ALL_CHAIN_IDS: number[] = [
-  CHAIN_IDS.ARBITRUM,
-  CHAIN_IDS.ETHEREUM,
-  CHAIN_IDS.FANTOM,
-  CHAIN_IDS.POLYGON,
-  CHAIN_IDS.BASE,
-  CHAIN_IDS.BERACHAIN,
-  CHAIN_IDS.ROBINHOOD,
-];
 
 export function aggregateAcrossChains(
   date: string,
@@ -208,10 +200,9 @@ export function aggregateAcrossChains(
   }
 
   const chainsIndexed = perChain.map((chain) => chain.chainId);
-  const chainsMissing = ALL_CHAIN_IDS.filter(
-    (chainId) =>
-      (chainId !== CHAIN_IDS.ROBINHOOD || date >= "2026-09-17") && !chainsIndexed.includes(chainId),
-  );
+  // Use the same coverage calendar as the publisher/API. A newly tracked chain
+  // must not make earlier historical days appear incomplete retroactively.
+  const chainsMissing = expectedChainIds(date).filter((id) => !chainsIndexed.includes(id));
   const crossChainComplete = REQUIRED_CHAINS_FOR_COMPLETE.every((chainId) =>
     chainsIndexed.includes(chainId),
   );

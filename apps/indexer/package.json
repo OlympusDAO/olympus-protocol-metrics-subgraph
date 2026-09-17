@@ -14,7 +14,7 @@
   "dependencies": {
     "bignumber.js": "9.1.2",
     "envio": "3.6.1",
-    "viem": "2.53.1"
+    "viem": "2.56.3"
   },
   "devDependencies": {
     "@types/node": "24.12.2",

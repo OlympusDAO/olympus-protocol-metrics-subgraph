@@ -14,6 +14,8 @@ export const ROBINHOOD: ChainConfig = {
   rpcUrls: rpcUrls("ROBINHOOD", "https://rpc.mainnet.chain.robinhood.com"),
   // No OHM deployment/supply attribution in this integration.
   ohmToken: "",
+  // Shared by TreasuryERC20's from/to filter and snapshot wallet enumeration.
+  // The Safe therefore tracks idle USDG before any Mellow deposit as well.
   protocolAddresses: [wallet],
   circulatingSupplyWallets: [],
   treasuryBlacklist: {},
@@ -24,6 +26,8 @@ export const ROBINHOOD: ChainConfig = {
     [shares]: "Mellow USDG Yield Vault (rUSDG)",
   },
   abbreviations: {},
+  // USDG is the deposit asset; rUSDG is the non-ERC4626 receipt. Registration
+  // is independent of config.yaml, which only selects ingested event sources.
   tokens: [
     token({
       address: asset,
@@ -47,6 +51,9 @@ export const ROBINHOOD: ChainConfig = {
   // This is not an executable market quote or an assertion of redeemability.
   liquidityHandlers: [{ kind: "stable", id: "usdg-nominal-usd", tokens: [asset] }],
   ownedLiquidityHandlers: [],
+  // rUSDG valuation: pushTokenBalanceRecords routes this token to MellowVault.
+  // USDG/share = 10^30 / priceD18; multiply by the USDG handler's price. Locked
+  // requests use NAV until ReportHandled fixes an asset claim. Never peg rUSDG.
   mellowVault: {
     shares,
     asset,

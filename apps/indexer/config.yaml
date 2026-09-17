@@ -513,6 +513,9 @@ chains:
       # observed via Kernel.ActionExecuted — its address isn't hardcoded in
       # the legacy subgraph either (resolved per-block via Kernel).
 
+  # Ingestion subscriptions only. Treasury wallet registration, USDG/rUSDG
+  # token definitions and valuation wiring: src/snapshot/chains/robinhood.ts.
+  # USDG uses nominal $1; rUSDG uses Mellow NAV + queue accounting, not a $1 peg.
   - id: 4663 # Robinhood
     start_block: 65044796 # Verified empty treasury position baseline, not deployment
     rpc:

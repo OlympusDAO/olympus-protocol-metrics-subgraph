@@ -41,7 +41,11 @@ async function snapshot(
   });
   await pushTokenBalanceRecords(
     { effect } as unknown as EvmOnBlockContext,
-    ROBINHOOD,
+    // Deliberately idle-only. Full adapter routing is covered by MellowVault.test.
+    {
+      ...ROBINHOOD,
+      tokens: ROBINHOOD.tokens.filter((token) => token.address === asset.toLowerCase()),
+    },
     {} as PublicClient,
     records,
     timestamp,

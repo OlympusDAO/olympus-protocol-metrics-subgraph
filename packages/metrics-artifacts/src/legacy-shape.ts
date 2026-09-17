@@ -22,8 +22,18 @@ export const CHAIN_IDS_BY_NAME: Record<ChainName, number> = {
 
 export const ALL_CHAIN_IDS: number[] = CHAIN_NAMES.map((chainName) => CHAIN_IDS_BY_NAME[chainName]);
 export const ROBINHOOD_START_DATE = "2026-09-17";
+// Coverage begins at the captured position baseline, not chain deployment.
+// Chains without an entry preserve their pre-existing historical coverage.
+export const CHAIN_COVERAGE_START_DATES: Partial<Record<ChainName, string>> = {
+  Robinhood: ROBINHOOD_START_DATE,
+};
+
+/** Chains expected for a UTC daily snapshot, shared by indexer and consumers. */
 export function expectedChainIds(date: string): number[] {
-  return ALL_CHAIN_IDS.filter((id) => id !== 4663 || date >= ROBINHOOD_START_DATE);
+  return CHAIN_NAMES.filter((name) => {
+    const start = CHAIN_COVERAGE_START_DATES[name];
+    return start === undefined || date >= start;
+  }).map((name) => CHAIN_IDS_BY_NAME[name]);
 }
 
 export const REQUIRED_CHAIN_IDS_FOR_COMPLETE: number[] = [
