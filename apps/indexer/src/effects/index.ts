@@ -924,6 +924,35 @@ const ERC20_BALANCE_OF_ABI = [
   },
 ] as const;
 
+// Exported effect body for read-only RPC verification and failure regression tests.
+export async function readErc20BalanceAtBlock(
+  input: { chainId: number; tokenAddress: string; walletAddress: string; atBlock: number },
+  clientOverride?: ReturnType<typeof getClient>,
+): Promise<string> {
+  const config = CHAIN_CONFIGS[input.chainId as ChainId];
+  if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+  const client = clientOverride ?? getClient(config);
+  try {
+    const balance = await retryRpc(() =>
+      client.readContract({
+        address: getAddress(input.tokenAddress),
+        abi: ERC20_BALANCE_OF_ABI,
+        functionName: "balanceOf",
+        args: [getAddress(input.walletAddress)],
+        blockNumber: BigInt(input.atBlock),
+      }),
+    );
+    return (balance as bigint).toString();
+  } catch {
+    if (input.chainId === 4663) {
+      throw new Error(
+        `Robinhood USDG balance unavailable at block ${input.atBlock}; refusing zero fallback`,
+      );
+    }
+    return "0";
+  }
+}
+
 export const readErc20BalanceOf = createEffect(
   {
     name: "readErc20BalanceOf",
@@ -937,25 +966,7 @@ export const readErc20BalanceOf = createEffect(
     rateLimit: { calls: 1_000_000, per: "second" },
     cache: true,
   },
-  async ({ input }) => {
-    const config = CHAIN_CONFIGS[input.chainId as ChainId];
-    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
-    const client = getClient(config);
-    try {
-      const balance = await retryRpc(() =>
-        client.readContract({
-          address: getAddress(input.tokenAddress),
-          abi: ERC20_BALANCE_OF_ABI,
-          functionName: "balanceOf",
-          args: [getAddress(input.walletAddress)],
-          blockNumber: BigInt(input.atBlock),
-        }),
-      );
-      return (balance as bigint).toString();
-    } catch {
-      return "0";
-    }
-  },
+  async ({ input }) => readErc20BalanceAtBlock(input),
 );
 
 // Read the latest Chainlink answer at a specific block via `latestAnswer()`
