@@ -46,6 +46,31 @@ const ohmSupply: OhmSupply = {
 };
 
 describe("legacy-compatible metric shape", () => {
+  test("publishes Robinhood records and enables missing-chain coverage at the baseline date", () => {
+    const asset = {
+      ...treasuryAsset,
+      blockchain: "Robinhood",
+      date: "2026-09-17",
+      token: "rUSDG",
+      isLiquid: false,
+    };
+    const metric = buildDailyMetric({
+      date: "2026-09-17",
+      chainValues: {},
+      treasuryAssets: [asset],
+      generatedAt: "2026-09-17T04:00:00Z",
+      includeRecords: true,
+    });
+    expect(groupTreasuryAssetsByChain([asset]).Robinhood).toEqual([asset]);
+    expect(metric.chainsIndexed).toContain(4663);
+    expect(metric.chainsMissing).not.toContain(4663);
+    const empty = buildDailyMetric({
+      date: "2026-09-17",
+      chainValues: {},
+      generatedAt: "2026-09-17T04:00:00Z",
+    });
+    expect(empty.chainsMissing).toContain(4663);
+  });
   test("uses exact legacy chain keys and zero defaults", () => {
     expect(emptyChainValues()).toEqual({
       Arbitrum: 0,
@@ -54,6 +79,7 @@ describe("legacy-compatible metric shape", () => {
       Polygon: 0,
       Base: 0,
       Berachain: 0,
+      Robinhood: 0,
     });
   });
 

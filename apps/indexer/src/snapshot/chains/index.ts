@@ -5,6 +5,7 @@ import { BERACHAIN } from "./berachain";
 import { ETHEREUM } from "./ethereum";
 import { FANTOM } from "./fantom";
 import { POLYGON } from "./polygon";
+import { ROBINHOOD } from "./robinhood";
 
 export const CHAIN_CONFIGS: Record<number, ChainConfig> = {
   1: ETHEREUM,
@@ -13,4 +14,5 @@ export const CHAIN_CONFIGS: Record<number, ChainConfig> = {
   8453: BASE,
   137: POLYGON,
   250: FANTOM,
+  4663: ROBINHOOD,
 };

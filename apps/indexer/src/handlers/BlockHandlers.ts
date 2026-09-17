@@ -56,6 +56,7 @@ import { pushGnosisAuctionSupply } from "./GnosisAuctions";
 import { pushLendingDeploymentSupply } from "./LendingDeployments";
 import { pushLiquidityPositionRecords } from "./LiquidityPositions";
 import { pushMakerDsrRecords } from "./MakerDsr";
+import { pushMellowRecords } from "./MellowVault";
 import { pushMigrationOffsetSupply } from "./MigrationOffset";
 import { pushProtocolPositionRecords } from "./ProtocolPositions";
 import {
@@ -68,6 +69,12 @@ import {
 import { pushUniv3NftPol } from "./Univ3NftPol";
 
 export const BLOCK_HANDLERS = [
+  {
+    name: "RobinhoodEightHourSnapshot",
+    chain: 4663 as const,
+    startBlock: 65044796,
+    interval: 288000,
+  },
   {
     name: "ArbitrumEightHourSnapshot",
     chain: 42161 as const,
@@ -170,6 +177,7 @@ async function processSnapshot(
   await withContractReadCache(() =>
     withPricingCache(async () => {
       await pushTokenBalanceRecords(context, config, client, records, timestamp, blockNumber);
+      await pushMellowRecords(context, config, client, records, timestamp, blockNumber);
       await pushOwnedLiquidityRecords(context, config, client, records, timestamp, blockNumber);
       if (config.chainId === CHAIN_IDS.ARBITRUM) {
         await pushArbitrumStakingRecords(context, config, records, timestamp, blockNumber);
@@ -534,6 +542,7 @@ export async function pushTokenBalanceRecords(
   // Liquidity tokens are emitted via pushOwnedLiquidityRecords). Per @0xJem on
   // PR #311 — avoids the nested-loop + per-category .filter() allocation.
   for (const definition of config.tokens) {
+    if (definition.address === config.mellowVault?.shares) continue;
     if (definition.category !== "Stable" && definition.category !== "Volatile") continue;
     if (!isActive(definition, blockNumber)) continue;
 
@@ -676,6 +685,7 @@ async function getOhmEquivalentMultiplier(
   context: EvmOnBlockContext,
   config: ChainConfig,
 ): Promise<BigNumber | null> {
+  if (!config.ohmToken) return null;
   const decimals = getTokenDecimals(config.tokens, config.ohmToken);
   if (decimals === 9) return new BigNumberCtor(1);
   return getSOhmV3Index(context);
@@ -705,9 +715,9 @@ export async function pushTotalSupply(
 ): Promise<void> {
   if (config.ohmStartBlock && blockNumber < BigInt(config.ohmStartBlock)) return;
 
+  if (!config.ohmToken) return;
   const entity = await context.Erc20Supply.get(`${config.chainId}-${addr(config.ohmToken)}`);
   if (!entity) return;
-
   const decimals = getTokenDecimals(config.tokens, config.ohmToken);
   const multiplier = await getOhmEquivalentMultiplier(context, config);
   if (!multiplier) return;
@@ -740,6 +750,7 @@ export async function pushTreasuryOhm(
 ): Promise<void> {
   if (config.ohmStartBlock && blockNumber < BigInt(config.ohmStartBlock)) return;
 
+  if (!config.ohmToken) return;
   const decimals = getTokenDecimals(config.tokens, config.ohmToken);
   const multiplier = await getOhmEquivalentMultiplier(context, config);
   if (!multiplier) return;

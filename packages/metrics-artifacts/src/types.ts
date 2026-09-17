@@ -5,6 +5,7 @@ export const CHAIN_NAMES = [
   "Polygon",
   "Base",
   "Berachain",
+  "Robinhood",
 ] as const;
 
 export type ChainName = (typeof CHAIN_NAMES)[number];

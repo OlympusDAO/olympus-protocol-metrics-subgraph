@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+## Unreleased
+
+- Add Robinhood to chain names and per-chain treasury/published metric components.
+  Existing chain fields are preserved; Robinhood defaults to zero in legacy shapes.
+
 ## [v3.0.0] - 2026-06-04
 
 ### Breaking: Move to the self-hosted metrics API
