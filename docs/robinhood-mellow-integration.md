@@ -135,12 +135,14 @@ Native ETH/gas tracking is outside this USDG strategy scope.
 ## Ingestion, verification and deployment
 
 Envio lists Robinhood HyperSync support at <https://envio.dev/chains/robinhood>.
-The public height endpoint responded. Full HyperSync replay was **not** run in
-this development environment because authenticated query access was unavailable.
-Production already requires `ENVIO_API_TOKEN`; verify its Robinhood entitlement
-and set `ENVIO_ROBINHOOD_RPC_URL` to a provider retaining state from the baseline.
-Public RPC served the block-pinned verification reads, but indefinite historical
-retention is not promised. This remains a deployment-readback gate.
+An authenticated query returned the USDG funding events at block 65,047,107,
+including the Safe receipt described below. A full native local HyperSync replay
+has not yet been completed in this validation environment; deployment still needs
+to verify indexed progress and persisted records.
+
+Use an archive-capable RPC for block-pinned contract state. The authenticated
+QuickNode Robinhood Mainnet archive replay passed at the baseline block, so the
+public RPC is not relied upon for historical-state evidence.
 
 The change spans ingestion, cached block-aware reads, treasury records, global
 rollups, publisher chain mapping, artifact/client chain names and environment
@@ -169,10 +171,11 @@ configured baseline onward. This confirms the start point precedes acquisition.
 Until deployment, this funded position is an explicit treasury coverage gap.
 
 The standalone evidence replay later hit `historical state ... is not available`
-on the public RPC: the original pinned observations succeeded when captured, but
-that endpoint prunes state rapidly. This is an archive-provider deployment gate,
-not a passing archival replay test. Etherscan proxy responses must not be assumed
-to honor historical block tags; the baseline uses the direct pinned RPC reads.
+on the public RPC, confirming that endpoint prunes state rapidly. An authenticated
+QuickNode archive replay subsequently passed the same zero-state calls and four
+implementation-bytecode assertions at block 65,044,796 (hash
+`0x6824fa9cb985151e753cdefb9318ae9d6abc5b3927dc86e8e6c85fad70910965`).
+Etherscan proxy responses must not be assumed to honor historical block tags.
 
 ### Funded-wallet verification (2026-09-17 UTC)
 
@@ -208,5 +211,6 @@ RPC/pruning failure from silently omitting the funded position. Other chains'
 existing behavior is unchanged. Existing effect-cache entries from any earlier
 experimental deployment must not be reused if they contain error-derived zeroes.
 
-Archive-backed baseline replay, authenticated HyperSync ingestion and deployed
-publisher readback remain outstanding. This evidence does not clear those gates.
+Archive-backed baseline replay and authenticated HyperSync event retrieval are
+verified. Native local HyperSync replay and deployed publisher readback remain
+operational gates; this evidence does not claim production indexing or publication.
