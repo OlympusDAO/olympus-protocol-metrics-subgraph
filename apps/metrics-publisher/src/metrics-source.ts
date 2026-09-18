@@ -7,11 +7,9 @@ import {
   type DateRange,
   emptyChainValues,
   emptySupplyCategoryValues,
-  expectedChainIds,
   type IndexingProgress,
   isCrossChainComplete,
   type OhmSupply,
-  ROBINHOOD_START_DATE,
   type SupplyCategoryValues,
   type TreasuryAsset,
 } from "../../../packages/metrics-artifacts/src";
@@ -106,7 +104,7 @@ export class HasuraGraphqlMetricsSource implements MetricsSource {
   ): Promise<MetricsBounds> {
     const completenessWhere =
       completeness === "all_chains"
-        ? `{ _or: [{ date: { _lt: "${ROBINHOOD_START_DATE}" }, chainsIndexed: { _contains: [${expectedChainIds("2026-09-16").join(", ")}] } }, { date: { _gte: "${ROBINHOOD_START_DATE}" }, chainsIndexed: { _contains: [${ALL_CHAIN_IDS.join(", ")}] } }] }`
+        ? `{ chainsIndexed: { _contains: [${ALL_CHAIN_IDS.join(", ")}] } }`
         : "{ crossChainComplete: { _eq: true } }";
     const body = await this.graphql<{
       earliest?: Array<{ date: string }>;
@@ -414,9 +412,7 @@ const OHM_SUPPLY_SELECTION = `
 `;
 
 function normalizeDailyMetric(row: RawDailyMetric): DailyMetric {
-  const chainsMissing = expectedChainIds(row.date).filter(
-    (chainId) => !row.chainsIndexed.includes(chainId),
-  );
+  const chainsMissing = ALL_CHAIN_IDS.filter((chainId) => !row.chainsIndexed.includes(chainId));
   const blocks = emptyChainValues();
   const timestamps = emptyChainValues();
   const ohmTotalSupplyComponents = emptyChainValues();

@@ -124,8 +124,13 @@ All subsequent transfers and ReportHandled events are replayed from this block.
 There is no pre-existing position or request requiring seeding. This integration
 makes no claim about earlier Robinhood treasury history. Any future expansion to
 an earlier holding must move the baseline and reconcile initial queue state.
-Robinhood is included in missing-chain coverage only from 2026-09-17 onward.
-Legacy cross-chain-complete semantics (Ethereum + Arbitrum) are preserved.
+The chain config start block controls Robinhood snapshot registration; no separate
+coverage-date calendar is maintained. `chainsMissing` lists all configured chains
+without a snapshot, including Robinhood on historical dates. Legacy
+cross-chain-complete semantics (Ethereum + Arbitrum) are preserved. Strict
+`all_chains` publication bounds require all seven chains, so historical dates
+before Robinhood indexing do not qualify for that mode. Default `cross_chain`
+bounds retain the existing Ethereum + Arbitrum rule.
 
 The measured 1,000-block interval ending at the baseline was 101 seconds. A
 288,000-block snapshot interval targets roughly eight hours at 0.1s/block.
@@ -148,8 +153,8 @@ The change spans ingestion, cached block-aware reads, treasury records, global
 rollups, publisher chain mapping, artifact/client chain names and environment
 validation. Tests cover zero/pre-start cases, non-unit NAV/mixed decimals,
 staleness, fee-netted shares, pending/fixed/dust claims and exactly-once totals.
-The client changelog and package metadata record additive chain coverage as
-v3.1.0 (September 2026), as requested in review; no package is published by this PR.
+The indexer changelog and package metadata record v0.2.0 (September 2026).
+The client remains at v3.0.0; no package is published by this PR.
 
 After upstream deployment, verify the accepted commit, index progress past the
 baseline, the Safe's token and queue records, snapshot timestamps and exactly-once
@@ -234,14 +239,14 @@ operational gates; this evidence does not claim production indexing or publicati
 - **OHM guards:** Robinhood has no configured verified OHM deployment. Supply
   conversion, total-supply emission and treasury OHM exclusions therefore exit
   without producing fictitious OHM records. Treasury asset records still run.
-- **Coverage:** indexer and publisher/API now share `expectedChainIds` and a
-  data-driven start-date map. Requiring Robinhood before the captured baseline
-  would incorrectly mark previously complete historical days as missing a chain.
+- **Coverage (revised September 18):** removed the added coverage-date calendar
+  and cross-layer import. Snapshot registration uses the chain config start block;
+  missing-chain reporting and strict all-chain bounds retain existing semantics.
 - **Viem:** both direct dependencies use 2.56.3 and import `robinhood` from
   `viem/chains`. This includes mainnet chain 4663 and satisfies the repository's
   minimum-release-age policy; no guardrail override was used.
-- **Client:** additive chain coverage is versioned as v3.1.0, September 2026,
-  with matching package metadata. This PR does not publish the package.
+- **Release (revised September 18):** version/changelog changes belong to the
+  indexer (v0.2.0, September 2026), not the client. No package is published.
 
 Offline registration tests exercise the production transfer filter and handler
 for both assets. A mixed-position snapshot test covers idle USDG, wallet rUSDG,

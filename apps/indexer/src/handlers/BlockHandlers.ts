@@ -72,7 +72,7 @@ export const BLOCK_HANDLERS = [
   {
     name: "RobinhoodEightHourSnapshot",
     chain: 4663 as const,
-    startBlock: 65044796,
+    startBlock: CHAIN_CONFIGS[CHAIN_IDS.ROBINHOOD].startBlock,
     interval: 288000,
   },
   {
