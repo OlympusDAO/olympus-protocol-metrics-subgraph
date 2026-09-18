@@ -1,13 +1,29 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, test } from "vitest";
+import { parse } from "yaml";
 
 import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
 import { addr, isActive, matches } from "../../src/snapshot/math";
 import { getContractName } from "../../src/snapshot/records";
 
 const ETHEREUM = CHAIN_CONFIGS[1];
-const CONFIG_YAML = readFileSync(resolve(__dirname, "../../config.yaml"), "utf8").toLowerCase();
+type Config = {
+  contracts: Array<{ name: string; events: Array<{ event: string }> }>;
+  chains: Array<{ id: number; contracts: Array<{ name: string; address: string[] }> }>;
+};
+
+const CONFIG = parse(readFileSync(resolve(__dirname, "../../config.yaml"), "utf8")) as Config;
+const ETHEREUM_CONTRACTS = CONFIG.chains.find((chain) => chain.id === 1)?.contracts ?? [];
+
+function configuredEvents(address: string): string[] {
+  const contractNames = ETHEREUM_CONTRACTS.filter((contract) =>
+    contract.address.some((value) => addr(value) === addr(address)),
+  ).map((contract) => contract.name);
+  return CONFIG.contracts
+    .filter((contract) => contractNames.includes(contract.name))
+    .flatMap((contract) => contract.events.map(({ event }) => event.split("(")[0]));
+}
 
 // Tokens legacy valued that the Envio port had dropped. `ledger` tokens emit
 // Transfer and must be registered in config.yaml; the rest are read at
@@ -121,14 +137,14 @@ const PORTED = [
 ];
 
 const PRICE_POOLS = [
-  "0xdf50fbde8180c8785842c8e316ebe06f542d3443", // FEI-USDC V3
-  "0xceff51756c56ceffca006cd410b03ffc46dd3a58", // ETH-wBTC
-  "0x7ce01885a13c652241ae02ea7369ee8d466802eb", // TRIBE-ETH
-  "0xd4e7a6e2d03e4e48dfc27dd3f46df1c176647e38", // TOKE-ETH
-  "0x36e2fcccc59e5747ff63a03ea2e5c0c2c14911e7", // xSUSHI-ETH
-  "0x6591c4bcd6d7a1eb4e537da8b78676c1576ba244", // BOND-USDC
-  "0x05767d9ef41dc40689678ffca0608878fb3de906", // CVX-ETH
-];
+  ["0xdf50fbde8180c8785842c8e316ebe06f542d3443", "Swap"], // FEI-USDC V3
+  ["0xceff51756c56ceffca006cd410b03ffc46dd3a58", "Sync"], // ETH-wBTC
+  ["0x7ce01885a13c652241ae02ea7369ee8d466802eb", "Sync"], // TRIBE-ETH
+  ["0xd4e7a6e2d03e4e48dfc27dd3f46df1c176647e38", "Sync"], // TOKE-ETH
+  ["0x36e2fcccc59e5747ff63a03ea2e5c0c2c14911e7", "Sync"], // xSUSHI-ETH
+  ["0x6591c4bcd6d7a1eb4e537da8b78676c1576ba244", "Sync"], // BOND-USDC
+  ["0x05767d9ef41dc40689678ffca0608878fb3de906", "Sync"], // CVX-ETH
+] as const;
 
 describe("tokens ported from legacy", () => {
   test.each(PORTED)("$symbol has a definition, a price route and a readable balance", (token) => {
@@ -143,13 +159,13 @@ describe("tokens ported from legacy", () => {
     expect(getContractName(ETHEREUM, address)).not.toBe(address);
 
     if (token.ledger) {
-      expect(CONFIG_YAML).toContain(address);
+      expect(configuredEvents(address)).toContain("Transfer");
     }
   });
 
   test("price pools are registered for Sync / Swap events", () => {
-    for (const pool of PRICE_POOLS) {
-      expect(CONFIG_YAML).toContain(addr(pool));
+    for (const [pool, event] of PRICE_POOLS) {
+      expect(configuredEvents(pool), pool).toContain(event);
     }
   });
 

@@ -39,6 +39,12 @@ const WBERA_PRICE = decimalFromWei(WBERA_HONEY_AMOUNT_OUT);
 const IBERA_PRICE = new BigNumber(WBERA_PRICE)
   .times(decimalFromWei(IBERA_WBERA_AMOUNT_OUT))
   .toFixed();
+const POOL_BALANCES = new Map([
+  [USDC_ARBITRUM, (10n ** 12n).toString()], // 1m USDC, 6 decimals
+  [WETH, (10n ** 24n).toString()], // 1m WETH, 18 decimals
+  [HONEY, (10n ** 24n).toString()], // 1m HONEY, 18 decimals
+  [WBERA, (10n ** 24n).toString()], // 1m wBERA, 18 decimals
+]);
 
 function mockClient(
   chainId: number,
@@ -90,11 +96,22 @@ function mockContext({
     TokenBalance: { get: async () => undefined },
     effect: async (
       _effectDef: unknown,
-      input: { chainId?: number; feedAddress?: string; walletAddress?: string },
+      input: {
+        chainId?: number;
+        feedAddress?: string;
+        tokenAddress?: string;
+        walletAddress?: string;
+      },
     ) => {
-      // readErc20BalanceOf(pool) for Uniswap V3 USD-depth selection. Every pool
-      // holds the same balance here, so selection falls to handler order.
-      if (input.walletAddress !== undefined) return (10n ** 24n).toString();
+      // Each V3 pool holds one million normalized secondary tokens; raw
+      // balances differ for 6- and 18-decimal tokens.
+      if (input.walletAddress !== undefined) {
+        const balance = POOL_BALANCES.get(input.tokenAddress?.toLowerCase() ?? "");
+        if (balance === undefined) {
+          throw new Error(`Unhandled pool balance mock: ${input.tokenAddress}`);
+        }
+        return balance;
+      }
       if (input.feedAddress !== undefined && input.chainId !== undefined) {
         const stateId = `${input.chainId}-${input.feedAddress.toLowerCase()}`;
         const state = chainlinkStates.get(stateId) as { answer?: bigint } | undefined;
@@ -178,7 +195,7 @@ describe("Arbitrum Envio snapshot parity", () => {
     });
     await expect(
       getPrice(ARBITRUM, context, client, WETH, ARBITRUM_BLOCK, null),
-    ).resolves.toSatisfy((result) => result.price.eq("3000"));
+    ).resolves.toSatisfy((result) => result.price.eq("3000") && result.liquidity.eq("1000000"));
   });
 
   test("passes the current Univ2 pool id while valuing underlying tokens", async () => {
@@ -253,7 +270,7 @@ describe("Arbitrum Envio snapshot parity", () => {
       ],
     });
     await expect(getPrice(ARBITRUM, context, client, ARB, ARBITRUM_BLOCK, null)).resolves.toSatisfy(
-      (result) => result.price.eq("3000"),
+      (result) => result.price.eq("3000") && result.liquidity.eq("3000000000"),
     );
   });
 
@@ -331,7 +348,9 @@ describe("Berachain Envio snapshot parity", () => {
     });
     await expect(
       getPrice(BERACHAIN, context, client, WBERA, BERACHAIN_BLOCK, null),
-    ).resolves.toSatisfy((result) => result.price.eq(WBERA_PRICE));
+    ).resolves.toSatisfy(
+      (result) => result.price.eq(WBERA_PRICE) && result.liquidity.eq("1000000"),
+    );
   });
 
   test("keeps native BERA remapped to WBERA instead of pricing it at one dollar", async () => {

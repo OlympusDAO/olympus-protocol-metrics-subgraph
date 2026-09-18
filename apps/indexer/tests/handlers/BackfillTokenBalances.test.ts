@@ -261,13 +261,16 @@ describe("BackfillTokenBalances", () => {
       balances: [],
     });
     const effect = context.effect as unknown as ReturnType<typeof vi.fn>;
-    const original = effect.getMockImplementation();
+    const original = effect.getMockImplementation() as (
+      effectDef: { name: string },
+      input: { tokenAddress?: string },
+    ) => Promise<string>;
     effect.mockImplementation(
       async (effectDef: { name: string }, input: { tokenAddress?: string }) => {
         if (effectDef.name === "readErc20BalanceOf" && (input.tokenAddress ?? "").length !== 42) {
           throw new Error(`invalid address ${input.tokenAddress}`);
         }
-        return original?.(effectDef, input);
+        return original(effectDef, input);
       },
     );
 
