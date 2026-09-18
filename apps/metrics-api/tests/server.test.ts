@@ -455,7 +455,7 @@ describe("metrics API HTTP behavior", () => {
     expect(body.data[0]).toMatchObject({
       date: "2026-05-21",
       chainsIndexed: [1, 42161],
-      chainsMissing: [250, 137, 8453, 80094],
+      chainsMissing: [250, 137, 8453, 80094, 4663],
       crossChainComplete: true,
       treasuryMarketValue: 13,
     });
@@ -472,11 +472,19 @@ describe("metrics API HTTP behavior", () => {
     expect(body.data[0]).toMatchObject({
       date: "2026-05-21",
       chainsIndexed: [],
-      chainsMissing: [42161, 1, 250, 137, 8453, 80094],
+      chainsMissing: [42161, 1, 250, 137, 8453, 80094, 4663],
       crossChainComplete: false,
       _meta: {
         chainsComplete: [],
-        chainsFailed: ["Arbitrum", "Ethereum", "Fantom", "Polygon", "Base", "Berachain"],
+        chainsFailed: [
+          "Arbitrum",
+          "Ethereum",
+          "Fantom",
+          "Polygon",
+          "Base",
+          "Berachain",
+          "Robinhood",
+        ],
       },
     });
     expect(body.data[0].treasuryMarketValueRecords.Arbitrum).toEqual([]);
@@ -513,7 +521,7 @@ describe("metrics API HTTP behavior", () => {
             blocks: { Ethereum: 200 },
             timestamps: { Ethereum: 1_716_249_600 },
             chainsIndexed: [1],
-            chainsMissing: [42161, 250, 137, 8453, 80094],
+            chainsMissing: [42161, 250, 137, 8453, 80094, 4663],
             crossChainComplete: false,
             ohmTotalSupply: 2000,
             ohmTotalSupplyComponents: { Ethereum: 2000 },

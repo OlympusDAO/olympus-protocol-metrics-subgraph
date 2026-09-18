@@ -21,21 +21,6 @@ export const CHAIN_IDS_BY_NAME: Record<ChainName, number> = {
 };
 
 export const ALL_CHAIN_IDS: number[] = CHAIN_NAMES.map((chainName) => CHAIN_IDS_BY_NAME[chainName]);
-export const ROBINHOOD_START_DATE = "2026-09-17";
-// Coverage begins at the captured position baseline, not chain deployment.
-// Chains without an entry preserve their pre-existing historical coverage.
-export const CHAIN_COVERAGE_START_DATES: Partial<Record<ChainName, string>> = {
-  Robinhood: ROBINHOOD_START_DATE,
-};
-
-/** Chains expected for a UTC daily snapshot, shared by indexer and consumers. */
-export function expectedChainIds(date: string): number[] {
-  return CHAIN_NAMES.filter((name) => {
-    const start = CHAIN_COVERAGE_START_DATES[name];
-    return start === undefined || date >= start;
-  }).map((name) => CHAIN_IDS_BY_NAME[name]);
-}
-
 export const REQUIRED_CHAIN_IDS_FOR_COMPLETE: number[] = [
   CHAIN_IDS_BY_NAME.Arbitrum,
   CHAIN_IDS_BY_NAME.Ethereum,
@@ -136,8 +121,8 @@ function inferIndexedChainIds(treasuryAssets: TreasuryAsset[], ohmSupply: OhmSup
   ]);
 }
 
-function missingChainIds(chainsIndexed: number[], date: string): number[] {
-  return expectedChainIds(date).filter((chainId) => !chainsIndexed.includes(chainId));
+function missingChainIds(chainsIndexed: number[]): number[] {
+  return ALL_CHAIN_IDS.filter((chainId) => !chainsIndexed.includes(chainId));
 }
 
 export function isCrossChainComplete(chainsIndexed: number[]): boolean {
@@ -157,7 +142,7 @@ export function buildDailyMetric(input: {
   const treasuryAssets = input.treasuryAssets ?? [];
   const ohmSupply = input.ohmSupply ?? [];
   const chainsIndexed = input.chainsIndexed ?? inferIndexedChainIds(treasuryAssets, ohmSupply);
-  const chainsMissing = input.chainsMissing ?? missingChainIds(chainsIndexed, input.date);
+  const chainsMissing = input.chainsMissing ?? missingChainIds(chainsIndexed);
   const treasuryAssetsByChain = groupTreasuryAssetsByChain(treasuryAssets);
   const ohmSupplyByChain = groupOhmSupplyByChain(ohmSupply);
   const treasuryMarketValueComponents = emptyChainValues();

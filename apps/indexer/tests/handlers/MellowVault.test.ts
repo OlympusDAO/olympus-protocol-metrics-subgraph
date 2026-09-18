@@ -243,8 +243,8 @@ describe("Robinhood snapshot integration", () => {
     );
     expect(aggregate.treasuryLiquidBacking.toString()).toBe("10");
   });
-  test("coverage requires Robinhood only from its baseline date", () => {
-    expect(aggregateAcrossChains("2026-09-16", []).chainsMissing).not.toContain(4663);
+  test("coverage reports absent configured chains without a separate date calendar", () => {
+    expect(aggregateAcrossChains("2026-09-16", []).chainsMissing).toContain(4663);
     expect(aggregateAcrossChains("2026-09-17", []).chainsMissing).toContain(4663);
   });
 });

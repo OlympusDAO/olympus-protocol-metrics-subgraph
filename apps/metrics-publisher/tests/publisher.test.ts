@@ -1269,7 +1269,7 @@ describe("metrics publisher", () => {
     });
 
     expect(metric.chainsIndexed).toEqual([1, 42161]);
-    expect(metric.chainsMissing).toEqual([250, 137, 8453, 80094]);
+    expect(metric.chainsMissing).toEqual([250, 137, 8453, 80094, 4663]);
     expect(metric.crossChainComplete).toBe(true);
   });
 
@@ -1340,9 +1340,9 @@ describe("metrics publisher", () => {
       latestDate: "2026-05-31",
     });
     expect(requestBody?.query).toContain("chainsIndexed");
-    expect(requestBody?.query).toContain("_contains: [42161, 1, 250, 137, 8453, 80094]");
     expect(requestBody?.query).toContain("_contains: [42161, 1, 250, 137, 8453, 80094, 4663]");
-    expect(requestBody?.query).toContain('_gte: "2026-09-17"');
+    expect(requestBody?.query).not.toContain("_or:");
+    expect(requestBody?.query).not.toContain("date: { _gte:");
   });
 
   test("Hasura source paginates records with a stable unique order", async () => {
