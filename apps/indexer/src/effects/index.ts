@@ -1,12 +1,13 @@
 import { createEffect, S } from "envio";
-import { getAddress } from "viem";
+import { type Abi, getAddress } from "viem";
 
 import { BALANCER_VAULT_ABI } from "../snapshot/abis/balancer";
 import { CHAINLINK_ABI } from "../snapshot/abis/chainlink";
 import { KODIAK_ABI } from "../snapshot/abis/kodiak";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
-import { getClient, retryRpc } from "../snapshot/rpc-client";
-import type { ChainId } from "../snapshot/types";
+import { dsrSharesToDai } from "../snapshot/math";
+import { getClient, isContractRevert, retryRpc } from "../snapshot/rpc-client";
+import type { ChainId, PositionReadMethod } from "../snapshot/types";
 
 // Cached effect that reads `vault.getPoolTokens(poolId)` once at the block of
 // the first event we observe for a given pool. Used to seed BalancerPoolState
@@ -138,9 +139,295 @@ export const readCoolerPrincipalReceivables = createEffect(
         }),
       );
       return (value as bigint).toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       // Effect outputs can't be null with the available schema primitives, so
       // we signal "no value" with an empty string. Consumers check for === "".
+      return "";
+    }
+  },
+);
+
+// Cached effect that reads a wallet's DAI-in-DSR balance from the Maker Pot:
+// `pie(wallet)` × `chi()`, returned as raw 18-decimal DAI units. Reverts
+// surface as "" so the snapshot path can skip without failing.
+const MAKER_POT_ABI = [
+  {
+    inputs: [],
+    name: "chi",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "", type: "address" }],
+    name: "pie",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+export const readMakerDsrBalance = createEffect(
+  {
+    name: "readMakerDsrBalance",
+    input: { chainId: S.number, pot: S.string, wallet: S.string, atBlock: S.number },
+    output: S.string,
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    const pot = getAddress(input.pot);
+    const blockNumber = BigInt(input.atBlock);
+    try {
+      const [pie, chi] = await retryRpc(() =>
+        Promise.all([
+          client.readContract({
+            address: pot,
+            abi: MAKER_POT_ABI,
+            functionName: "pie",
+            args: [getAddress(input.wallet)],
+            blockNumber,
+          }),
+          client.readContract({
+            address: pot,
+            abi: MAKER_POT_ABI,
+            functionName: "chi",
+            blockNumber,
+          }),
+        ]),
+      );
+      return dsrSharesToDai(pie as bigint, chi as bigint).toString();
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
+      return "";
+    }
+  },
+);
+
+// Cached snapshot-time reads of protocol positions that aren't plain ERC20
+// balances (lock receipts, staking and stability pools, allocator ledgers).
+// Each method pins one ABI and how to pull the amount out of the result, so
+// the effect input stays a flat, cacheable (chain, contract, method, wallet,
+// block) tuple. Returns the raw uint as a string, or "" on revert.
+const walletArg = (arg: string) => [getAddress(arg)] as const;
+const uintResult = (result: unknown) => result as bigint;
+// Shared by vlCVX, AuraLocker and rlBTRFLY: lockedBalances(address) returns
+// (total, unlockable, locked, lockData[]). Only the lockData tuple differs.
+const lockedBalancesAbi = (lockData: { name: string; type: string }[]): Abi => [
+  {
+    inputs: [{ name: "account", type: "address" }],
+    name: "lockedBalances",
+    outputs: [
+      { name: "total", type: "uint256" },
+      { name: "unlockable", type: "uint256" },
+      { name: "locked", type: "uint256" },
+      { name: "lockData", type: "tuple[]", components: lockData },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+];
+const walletUintAbi = (name: string): Abi => [
+  {
+    inputs: [{ name: "account", type: "address" }],
+    name,
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+];
+
+const POSITION_READS: Record<
+  PositionReadMethod,
+  {
+    abi: Abi;
+    functionName: string;
+    args: (arg: string) => readonly unknown[];
+    pick: (result: unknown, arg: string) => bigint;
+  }
+> = {
+  // VeFXS.locked(address) → (int128 amount, uint256 end). The amount stays
+  // until withdrawal, even after `end`; balanceOf is boosted voting power.
+  "veFxs.lockedAmount": {
+    abi: [
+      {
+        inputs: [{ name: "addr", type: "address" }],
+        name: "locked",
+        outputs: [
+          { name: "amount", type: "int128" },
+          { name: "end", type: "uint256" },
+        ],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
+    functionName: "locked",
+    args: walletArg,
+    pick: (result) => {
+      const [amount] = result as readonly [bigint, bigint];
+      return amount < 0n ? 0n : amount;
+    },
+  },
+  // Convex BaseRewardPool, TokemakStaking and Aura staking pools stake a
+  // receipt token and report it through balanceOf without emitting Transfer.
+  "erc20.balanceOf": {
+    abi: walletUintAbi("balanceOf"),
+    functionName: "balanceOf",
+    args: walletArg,
+    pick: uintResult,
+  },
+  "liquity.stakes": {
+    abi: walletUintAbi("stakes"),
+    functionName: "stakes",
+    args: walletArg,
+    pick: uintResult,
+  },
+  // Compounded deposit, not deposits(w).initialValue: liquidations burn LUSD
+  // from the deposit and pay out ETH, so initialValue + ETH gain double counts
+  // (legacy did; ~$14M at block 15,000,000).
+  "stabilityPool.compoundedLusd": {
+    abi: walletUintAbi("getCompoundedLUSDDeposit"),
+    functionName: "getCompoundedLUSDDeposit",
+    args: walletArg,
+    pick: uintResult,
+  },
+  "stabilityPool.ethGain": {
+    abi: walletUintAbi("getDepositorETHGain"),
+    functionName: "getDepositorETHGain",
+    args: walletArg,
+    pick: uintResult,
+  },
+  "stabilityPool.lqtyGain": {
+    abi: walletUintAbi("getDepositorLQTYGain"),
+    functionName: "getDepositorLQTYGain",
+    args: walletArg,
+    pick: uintResult,
+  },
+  "vlCvx.unlockable": {
+    abi: lockedBalancesAbi([
+      { name: "amount", type: "uint112" },
+      { name: "boosted", type: "uint112" },
+      { name: "unlockTime", type: "uint32" },
+    ]),
+    functionName: "lockedBalances",
+    args: walletArg,
+    pick: (result) => (result as readonly [bigint, bigint, bigint, unknown])[1],
+  },
+  "auraLocker.total": {
+    abi: lockedBalancesAbi([
+      { name: "amount", type: "uint112" },
+      { name: "unlockTime", type: "uint32" },
+    ]),
+    functionName: "lockedBalances",
+    args: walletArg,
+    pick: (result) => (result as readonly [bigint, bigint, bigint, unknown])[0],
+  },
+  "rlBtrfly.unlockable": {
+    abi: lockedBalancesAbi([
+      { name: "amount", type: "uint224" },
+      { name: "unlockTime", type: "uint32" },
+    ]),
+    functionName: "lockedBalances",
+    args: walletArg,
+    pick: (result) => (result as readonly [bigint, bigint, bigint, unknown])[1],
+  },
+  "aura.earned": {
+    abi: walletUintAbi("earned"),
+    functionName: "earned",
+    args: walletArg,
+    pick: uintResult,
+  },
+  // FraxUnifiedFarm locked stake (Convex staking proxies lock stkcvx LP).
+  "frax.lockedLiquidity": {
+    abi: walletUintAbi("lockedLiquidityOf"),
+    functionName: "lockedLiquidityOf",
+    args: walletArg,
+    pick: uintResult,
+  },
+  // IncurDebt total outstanding OHM debt across borrowers (arg unused).
+  "incurDebt.totalOutstanding": {
+    abi: [
+      {
+        inputs: [],
+        name: "totalOutstandingGlobalDebt",
+        outputs: [{ name: "", type: "uint256" }],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
+    functionName: "totalOutstandingGlobalDebt",
+    args: () => [],
+    pick: uintResult,
+  },
+  // 1 when the Rari allocator lists `arg` in ids(), else 0.
+  "rari.hasId": {
+    abi: [
+      {
+        inputs: [],
+        name: "ids",
+        outputs: [{ name: "", type: "uint256[]" }],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
+    functionName: "ids",
+    args: () => [],
+    pick: (result, arg) => ((result as readonly bigint[]).includes(BigInt(arg)) ? 1n : 0n),
+  },
+  "rari.amountAllocated": {
+    abi: [
+      {
+        inputs: [{ name: "id", type: "uint256" }],
+        name: "amountAllocated",
+        outputs: [{ name: "", type: "uint256" }],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
+    functionName: "amountAllocated",
+    args: (arg) => [BigInt(arg)],
+    pick: uintResult,
+  },
+};
+
+export const readPositionAmount = createEffect(
+  {
+    name: "readPositionAmount",
+    input: {
+      chainId: S.number,
+      contract: S.string,
+      method: S.string,
+      // Wallet address for per-holder reads; an id for allocator lookups.
+      arg: S.string,
+      atBlock: S.number,
+    },
+    output: S.string,
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const read = POSITION_READS[input.method as PositionReadMethod];
+    if (!read) throw new Error(`Unsupported position read ${input.method}`);
+    const client = getClient(config);
+    try {
+      const result = await retryRpc(() =>
+        client.readContract({
+          address: getAddress(input.contract),
+          abi: read.abi,
+          functionName: read.functionName,
+          args: read.args(input.arg),
+          blockNumber: BigInt(input.atBlock),
+        }),
+      );
+      return read.pick(result, input.arg).toString();
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return "";
     }
   },
@@ -181,7 +468,8 @@ export const readMonoCoolerTotalDebt = createEffect(
         }),
       );
       return (value as bigint).toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return "";
     }
   },
@@ -247,7 +535,8 @@ export const snapshotBlvRegistry = createEffect(
           blockNumber,
         }),
       );
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return { vaults: [], ohmShares: [] };
     }
 
@@ -274,7 +563,8 @@ export const snapshotBlvRegistry = createEffect(
         )) as bigint;
         vaults.push(vault.toLowerCase());
         ohmShares.push(share.toString());
-      } catch {
+      } catch (error) {
+        if (!isContractRevert(error)) throw error;
         // Per-vault revert (e.g. paused vault) — skip but keep iterating.
       }
     }
@@ -338,7 +628,8 @@ export const readBondManagerState = createEffect(
         }),
       )) as string;
       return { isActive: true, teller: teller.toLowerCase() };
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return { isActive: false, teller: "" };
     }
   },
@@ -387,7 +678,8 @@ export const readErc4626AssetsPerShare = createEffect(
         }),
       )) as bigint;
       return assets.toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return "";
     }
   },
@@ -427,7 +719,8 @@ export const readSOhmCirculatingSupply = createEffect(
         }),
       )) as bigint;
       return value.toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return "";
     }
   },
@@ -496,7 +789,8 @@ export const readNextOhmDistribution = createEffect(
         }),
       )) as bigint;
       total += v1;
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       /* V1 revert — skip; matches legacy try_ behavior */
     }
 
@@ -511,7 +805,8 @@ export const readNextOhmDistribution = createEffect(
           }),
         )) as readonly [bigint, bigint, bigint, bigint];
         total += v2[3];
-      } catch {
+      } catch (error) {
+        if (!isContractRevert(error)) throw error;
         /* V2 revert — skip */
       }
     }
@@ -527,7 +822,8 @@ export const readNextOhmDistribution = createEffect(
           }),
         )) as readonly [bigint, bigint, bigint, bigint];
         total += v3[3];
-      } catch {
+      } catch (error) {
+        if (!isContractRevert(error)) throw error;
         /* V3 revert — skip */
       }
     }
@@ -599,7 +895,8 @@ export const snapshotCurvePool = createEffect(
           }),
         )) as bigint;
         balances.push(b.toString());
-      } catch {
+      } catch (error) {
+        if (!isContractRevert(error)) throw error;
         balances.push("0");
       }
     }
@@ -614,7 +911,8 @@ export const snapshotCurvePool = createEffect(
         }),
       )) as bigint;
       totalSupply = ts.toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       /* revert; keep "0" */
     }
 
@@ -673,7 +971,8 @@ export const snapshotFraxSwapPool = createEffect(
       )) as readonly [bigint, bigint, number];
       reserve0 = reserves[0].toString();
       reserve1 = reserves[1].toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       /* revert; keep "0"s */
     }
 
@@ -687,7 +986,8 @@ export const snapshotFraxSwapPool = createEffect(
         }),
       )) as bigint;
       totalSupply = ts.toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       /* revert; keep "0" */
     }
 
@@ -791,7 +1091,8 @@ export const snapshotUniv3NftPositions = createEffect(
           blockNumber,
         }),
       )) as bigint;
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return { positions };
     }
     if (count === 0n) return { positions };
@@ -810,7 +1111,8 @@ export const snapshotUniv3NftPositions = createEffect(
             blockNumber,
           }),
         )) as bigint;
-      } catch {
+      } catch (error) {
+        if (!isContractRevert(error)) throw error;
         continue;
       }
 
@@ -847,7 +1149,8 @@ export const snapshotUniv3NftPositions = createEffect(
           tickUpper: Number(pos[6]),
           liquidity: liquidity.toString(),
         });
-      } catch {
+      } catch (error) {
+        if (!isContractRevert(error)) throw error;
         /* per-position revert; skip */
       }
     }
@@ -952,7 +1255,8 @@ export const readErc20BalanceOf = createEffect(
         }),
       );
       return (balance as bigint).toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       return "0";
     }
   },
@@ -990,7 +1294,8 @@ export const readChainlinkLatestAnswer = createEffect(
         }),
       );
       return (answer as bigint).toString();
-    } catch {
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
       // Contract not deployed at this block, or feed reverted (Chainlink
       // proxies sometimes return empty data before their first phase is
       // initialised). Caller treats "0" as "no price available" and the

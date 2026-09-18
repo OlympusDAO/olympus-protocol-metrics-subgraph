@@ -2,7 +2,7 @@ import type BigNumber from "bignumber.js";
 import BigNumberCtor from "bignumber.js";
 import type { BigDecimal, EvmOnBlockContext } from "envio";
 
-import { readBondManagerState } from "../effects";
+import { readBondManagerState, readErc20BalanceOf } from "../effects";
 import {
   TYPE_BONDS_DEPOSITS,
   TYPE_BONDS_PREMINTED,
@@ -55,11 +55,17 @@ export async function pushGnosisAuctionSupply(
   if (auctions.length === 0) return;
 
   // BondManager OHM balance at this block — for adjusting fully-vested
-  // entries to account for partial burns.
-  const balanceEntity = await context.TokenBalance.get(
-    `${config.chainId}-${addr(config.ohmToken)}-${addr(bondManager.address)}`,
+  // entries to account for partial burns. BondManager isn't a protocol wallet,
+  // so the Transfer ledger never tracks it (it read zero and turned the
+  // deposit rows positive); read balanceOf as legacy did.
+  const bondManagerOhmBalanceRaw = BigInt(
+    (await context.effect(readErc20BalanceOf, {
+      chainId: config.chainId,
+      tokenAddress: config.ohmToken,
+      walletAddress: bondManager.address,
+      atBlock: Number(blockNumber),
+    })) as string,
   );
-  const bondManagerOhmBalanceRaw = balanceEntity?.balance ?? 0n;
   const bondManagerOhmBalance = toDecimal(bondManagerOhmBalanceRaw, BOND_OHM_DECIMALS);
 
   // First pass: compute totalBurnableOhm = sum of bidQuantity for auctions
