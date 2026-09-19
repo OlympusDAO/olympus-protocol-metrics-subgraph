@@ -20,6 +20,7 @@ deployments are no longer maintained.
 | Base      | 8453     | 13,204,827  | HyperSync + RPC  |
 | Arbitrum  | 42161    | 10,950,000  | HyperSync + RPC  |
 | Berachain | 80094    | 799,194     | HyperSync + RPC  |
+| Robinhood | 4663     | 65,044,796  | HyperSync + RPC  |
 
 ## Setup
 
@@ -57,7 +58,7 @@ Per-chain RPC endpoints are:
 
 - `ENVIO_ETHEREUM_RPC_URL`, `ENVIO_ARBITRUM_RPC_URL`,
   `ENVIO_POLYGON_RPC_URL`, `ENVIO_FANTOM_RPC_URL`,
-  `ENVIO_BASE_RPC_URL`, `ENVIO_BERACHAIN_RPC_URL`
+  `ENVIO_BASE_RPC_URL`, `ENVIO_BERACHAIN_RPC_URL`, `ENVIO_ROBINHOOD_RPC_URL`
 - `ENVIO_API_TOKEN` — required for HyperSync access
 
 HyperSync is the primary data source for supported chains; the
@@ -154,3 +155,10 @@ pnpm exec tsx scripts/parity-diff.ts \
 
 CSV-style output, one line per (date, field) divergence beyond the
 tolerance (default 0 — exact match).
+
+## Robinhood Mellow USDG vault
+
+See [accounting and deployment evidence](docs/robinhood-mellow-integration.md).
+Robinhood coverage begins at a verified empty Olympus position, not chain genesis.
+Mellow NAV and redemption claims are excluded from liquid backing. Production
+requires a Robinhood RPC with historical state from the configured start block.

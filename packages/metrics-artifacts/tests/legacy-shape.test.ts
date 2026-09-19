@@ -46,6 +46,31 @@ const ohmSupply: OhmSupply = {
 };
 
 describe("legacy-compatible metric shape", () => {
+  test("publishes Robinhood records and reports missing configured chains", () => {
+    const asset = {
+      ...treasuryAsset,
+      blockchain: "Robinhood",
+      date: "2026-09-17",
+      token: "rUSDG",
+      isLiquid: false,
+    };
+    const metric = buildDailyMetric({
+      date: "2026-09-17",
+      chainValues: {},
+      treasuryAssets: [asset],
+      generatedAt: "2026-09-17T04:00:00Z",
+      includeRecords: true,
+    });
+    expect(groupTreasuryAssetsByChain([asset]).Robinhood).toEqual([asset]);
+    expect(metric.chainsIndexed).toContain(4663);
+    expect(metric.chainsMissing).not.toContain(4663);
+    const empty = buildDailyMetric({
+      date: "2026-09-17",
+      chainValues: {},
+      generatedAt: "2026-09-17T04:00:00Z",
+    });
+    expect(empty.chainsMissing).toContain(4663);
+  });
   test("uses exact legacy chain keys and zero defaults", () => {
     expect(emptyChainValues()).toEqual({
       Arbitrum: 0,
@@ -54,6 +79,7 @@ describe("legacy-compatible metric shape", () => {
       Polygon: 0,
       Base: 0,
       Berachain: 0,
+      Robinhood: 0,
     });
   });
 
@@ -111,7 +137,7 @@ describe("legacy-compatible metric shape", () => {
     });
 
     expect(metric.chainsIndexed).toEqual([1]);
-    expect(metric.chainsMissing).toEqual([42161, 250, 137, 8453, 80094]);
+    expect(metric.chainsMissing).toEqual([42161, 250, 137, 8453, 80094, 4663]);
     expect(metric.crossChainComplete).toBe(false);
     expect(metric._meta?.chainsComplete).toEqual(["Ethereum"]);
     expect(metric._meta?.chainsFailed).toEqual([
@@ -120,6 +146,7 @@ describe("legacy-compatible metric shape", () => {
       "Polygon",
       "Base",
       "Berachain",
+      "Robinhood",
     ]);
   });
 
@@ -131,7 +158,7 @@ describe("legacy-compatible metric shape", () => {
       generatedAt: "2026-06-01T08:15:00.000Z",
     });
 
-    expect(metric.chainsMissing).toEqual([250, 137, 8453, 80094]);
+    expect(metric.chainsMissing).toEqual([250, 137, 8453, 80094, 4663]);
     expect(metric.crossChainComplete).toBe(true);
   });
 
@@ -143,7 +170,7 @@ describe("legacy-compatible metric shape", () => {
       generatedAt: "2026-06-01T08:15:00.000Z",
     });
 
-    expect(metric.chainsMissing).toEqual([42161]);
+    expect(metric.chainsMissing).toEqual([42161, 4663]);
     expect(metric.crossChainComplete).toBe(false);
   });
 

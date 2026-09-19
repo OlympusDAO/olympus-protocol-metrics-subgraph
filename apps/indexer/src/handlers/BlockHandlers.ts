@@ -56,6 +56,7 @@ import { pushGnosisAuctionSupply } from "./GnosisAuctions";
 import { pushLendingDeploymentSupply } from "./LendingDeployments";
 import { pushLiquidityPositionRecords } from "./LiquidityPositions";
 import { pushMakerDsrRecords } from "./MakerDsr";
+import { pushMellowRecords } from "./MellowVault";
 import { pushMigrationOffsetSupply } from "./MigrationOffset";
 import { pushProtocolPositionRecords } from "./ProtocolPositions";
 import {
@@ -68,6 +69,12 @@ import {
 import { pushUniv3NftPol } from "./Univ3NftPol";
 
 export const BLOCK_HANDLERS = [
+  {
+    name: "RobinhoodEightHourSnapshot",
+    chain: 4663 as const,
+    startBlock: CHAIN_CONFIGS[CHAIN_IDS.ROBINHOOD].startBlock,
+    interval: 288000,
+  },
   {
     name: "ArbitrumEightHourSnapshot",
     chain: 42161 as const,
@@ -534,6 +541,13 @@ export async function pushTokenBalanceRecords(
   // Liquidity tokens are emitted via pushOwnedLiquidityRecords). Per @0xJem on
   // PR #311 — avoids the nested-loop + per-category .filter() allocation.
   for (const definition of config.tokens) {
+    // Mellow is not ERC4626: sharesOf includes claimable wallet shares, and
+    // queued redemptions are separate claims. Route the registered rUSDG token
+    // through its NAV/queue adapter once, never the ordinary ERC20 balance path.
+    if (definition.address === config.mellowVault?.shares) {
+      await pushMellowRecords(context, config, client, records, timestamp, blockNumber);
+      continue;
+    }
     if (definition.category !== "Stable" && definition.category !== "Volatile") continue;
     if (!isActive(definition, blockNumber)) continue;
 
@@ -676,6 +690,8 @@ async function getOhmEquivalentMultiplier(
   context: EvmOnBlockContext,
   config: ChainConfig,
 ): Promise<BigNumber | null> {
+  // Treasury-only chains have no OHM denomination to convert.
+  if (!config.ohmToken) return null;
   const decimals = getTokenDecimals(config.tokens, config.ohmToken);
   if (decimals === 9) return new BigNumberCtor(1);
   return getSOhmV3Index(context);
@@ -705,9 +721,11 @@ export async function pushTotalSupply(
 ): Promise<void> {
   if (config.ohmStartBlock && blockNumber < BigInt(config.ohmStartBlock)) return;
 
+  // Robinhood tracks treasury assets only; no verified OHM deployment means
+  // no OHM supply records or treasury OHM exclusions may be fabricated.
+  if (!config.ohmToken) return;
   const entity = await context.Erc20Supply.get(`${config.chainId}-${addr(config.ohmToken)}`);
   if (!entity) return;
-
   const decimals = getTokenDecimals(config.tokens, config.ohmToken);
   const multiplier = await getOhmEquivalentMultiplier(context, config);
   if (!multiplier) return;
@@ -740,6 +758,9 @@ export async function pushTreasuryOhm(
 ): Promise<void> {
   if (config.ohmStartBlock && blockNumber < BigInt(config.ohmStartBlock)) return;
 
+  // Robinhood tracks treasury assets only; no verified OHM deployment means
+  // no OHM supply records or treasury OHM exclusions may be fabricated.
+  if (!config.ohmToken) return;
   const decimals = getTokenDecimals(config.tokens, config.ohmToken);
   const multiplier = await getOhmEquivalentMultiplier(context, config);
   if (!multiplier) return;

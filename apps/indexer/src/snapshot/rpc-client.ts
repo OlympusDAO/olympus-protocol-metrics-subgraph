@@ -12,7 +12,7 @@ import {
   http,
   type PublicClient,
 } from "viem";
-import { arbitrum, base, berachain, fantom, mainnet, polygon } from "viem/chains";
+import { arbitrum, base, berachain, fantom, mainnet, polygon, robinhood } from "viem/chains";
 
 import { CHAIN_IDS, type ChainConfig, type ChainId } from "./types";
 
@@ -29,6 +29,7 @@ const VIEM_CHAIN_BY_ID: Record<ChainId, Chain> = {
   [CHAIN_IDS.FANTOM]: fantom,
   [CHAIN_IDS.BASE]: base,
   [CHAIN_IDS.BERACHAIN]: berachain,
+  [CHAIN_IDS.ROBINHOOD]: robinhood,
 };
 
 const clients = new Map<number, PublicClient>();

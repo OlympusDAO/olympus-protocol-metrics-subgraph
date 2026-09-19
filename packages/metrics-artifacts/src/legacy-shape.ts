@@ -17,6 +17,7 @@ export const CHAIN_IDS_BY_NAME: Record<ChainName, number> = {
   Polygon: 137,
   Base: 8453,
   Berachain: 80094,
+  Robinhood: 4663,
 };
 
 export const ALL_CHAIN_IDS: number[] = CHAIN_NAMES.map((chainName) => CHAIN_IDS_BY_NAME[chainName]);
@@ -44,6 +45,7 @@ export function emptyChainValues(): ChainValues {
     Polygon: 0,
     Base: 0,
     Berachain: 0,
+    Robinhood: 0,
   };
 }
 
@@ -70,6 +72,7 @@ export function groupTreasuryAssetsByChain(assets: TreasuryAsset[]): ChainTreasu
     Polygon: [],
     Base: [],
     Berachain: [],
+    Robinhood: [],
   };
   for (const asset of assets) {
     if (isChainName(asset.blockchain)) {
@@ -87,6 +90,7 @@ export function groupOhmSupplyByChain(supplies: OhmSupply[]): ChainOhmSupply {
     Polygon: [],
     Base: [],
     Berachain: [],
+    Robinhood: [],
   };
   for (const supply of supplies) {
     if (isChainName(supply.blockchain)) {

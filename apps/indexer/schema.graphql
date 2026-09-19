@@ -459,3 +459,16 @@ type OhmIndexUpdate {
   block: BigInt! @index
   timestamp: BigInt!
 }
+
+# Last processed redemption cutoff; seeded by ReportHandled from the empty-position baseline.
+type MellowQueueState {
+  id: ID!
+  handledTimestamp: BigInt!
+  block: BigInt!
+}
+
+type MellowQueueUpdate {
+  id: ID!
+  handledTimestamp: BigInt!
+  block: BigInt!
+}

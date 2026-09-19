@@ -177,6 +177,7 @@ const ALL_CHAIN_IDS: number[] = [
   CHAIN_IDS.POLYGON,
   CHAIN_IDS.BASE,
   CHAIN_IDS.BERACHAIN,
+  CHAIN_IDS.ROBINHOOD,
 ];
 
 export function aggregateAcrossChains(
