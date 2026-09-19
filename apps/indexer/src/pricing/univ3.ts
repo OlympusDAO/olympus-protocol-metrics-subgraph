@@ -1,6 +1,7 @@
 import BigNumber from "bignumber.js";
 
-import { addr, getTokenDecimals, ONE, same, ZERO } from "../snapshot/math";
+import { readErc20BalanceOf } from "../effects";
+import { addr, getTokenDecimals, ONE, same, toDecimal, ZERO } from "../snapshot/math";
 import type { LiquidityHandler } from "../snapshot/types";
 import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";
 
@@ -66,13 +67,21 @@ abstract class Univ3PriceHandlerBase<
     const raw = priceToken0InToken1(state.sqrtPriceX96);
     const adjusted = applyDecimalAdjustment(raw, decimals0, decimals1, lookupIsToken0);
     const price = adjusted.times(secondary.price);
-    // Use the indexed active-range L parameter as the tiebreaker for two
-    // competing UniV3 pools (e.g. IBERA-WBERA 3000 vs 500 fee tier). Differs
-    // from legacy `otherTokenPrice * otherTokenBalance` (PriceHandlerUniswapV3.ts:156)
-    // which uses `balanceOf(poolAddress)` RPC — not available in the
-    // event-driven Envio model. Higher-L pools generally have higher
-    // total balance, so selection result tracks legacy in practice.
-    return { price, liquidity: new BigNumber(state.liquidity.toString()) };
+    // Liquidity for handler selection is USD depth on the secondary side, the
+    // same unit Univ2 and Balancer report and legacy's
+    // `otherTokenPrice * otherTokenBalance` (PriceHandlerUniswapV3.ts:156).
+    // The active-range L parameter isn't comparable to USD: it let a thin
+    // WETH-OHM pool outrank the deep SushiSwap OHM-DAI pool for OHM price in
+    // 2022 (down to $0.0004 in May 2022). balanceOf(pool) is a cached read.
+    const secondaryBalance = await this.context.effect(readErc20BalanceOf, {
+      chainId: this.config.chainId,
+      tokenAddress: secondaryToken,
+      walletAddress: addr(this.handler.id),
+      atBlock: Number(blockNumber),
+    });
+    const secondaryDecimals = lookupIsToken0 ? decimals1 : decimals0;
+    const liquidity = toDecimal(BigInt(secondaryBalance), secondaryDecimals).times(secondary.price);
+    return { price, liquidity };
   }
 
   // Total reserve value for Univ3 requires the actual token balances in the pool,

@@ -247,4 +247,39 @@ describe("BackfillTokenBalances", () => {
     expect(sentinelSets[0]?.seeded).toBe(result.seeded);
     expect(sentinelSets[0]?.skipped).toBe(result.skipped);
   });
+  test("Arbitrum: skips Balancer LP definitions keyed by pool id instead of reading balanceOf", async () => {
+    // Arbitrum's token list keys its Balancer LPs by the 32-byte pool id.
+    // viem rejects that as an address, and the cached effect now surfaces
+    // the error instead of returning "0", so the backfill must not pass it.
+    const ARBITRUM = CHAIN_CONFIGS[42161];
+    const poolIdTokens = ARBITRUM.tokens.filter((token) => token.address.length === 66);
+    expect(poolIdTokens.length).toBeGreaterThan(0);
+
+    const { context } = buildMockContext({
+      chainId: 42161,
+      blockTimestamp: 1_651_363_200,
+      balances: [],
+    });
+    const effect = context.effect as unknown as ReturnType<typeof vi.fn>;
+    const original = effect.getMockImplementation() as (
+      effectDef: { name: string },
+      input: { tokenAddress?: string },
+    ) => Promise<string>;
+    effect.mockImplementation(
+      async (effectDef: { name: string }, input: { tokenAddress?: string }) => {
+        if (effectDef.name === "readErc20BalanceOf" && (input.tokenAddress ?? "").length !== 42) {
+          throw new Error(`invalid address ${input.tokenAddress}`);
+        }
+        return original(effectDef, input);
+      },
+    );
+
+    const result = await runBackfill(context, { number: 10_950_000 });
+
+    const tokenReads = effect.mock.calls
+      .filter(([def]) => (def as { name: string }).name === "readErc20BalanceOf")
+      .map(([, input]) => (input as { tokenAddress: string }).tokenAddress);
+    expect(tokenReads.every((token) => token.length === 42)).toBe(true);
+    expect(result.skipped).toBeGreaterThanOrEqual(poolIdTokens.length);
+  });
 });

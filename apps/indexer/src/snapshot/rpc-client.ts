@@ -152,6 +152,24 @@ export async function retryRpc<T>(operation: () => Promise<T>): Promise<T> {
   throw lastError;
 }
 
+// A call that reverted, or returned no data (contract not deployed yet, or a
+// Chainlink proxy with no live round), is a real on-chain answer, so an effect
+// can map it to its "no value" default. Anything else (HTTP errors, timeouts,
+// rate limits, missing archive state) must propagate: effect results are
+// cached, and a default stored for a failed request is reused on every
+// reindex.
+export function isContractRevert(error: unknown): boolean {
+  let current: unknown = error;
+  for (let depth = 0; current && typeof current === "object" && depth < 10; depth++) {
+    const name = "name" in current ? String(current.name) : "";
+    if (name === "ContractFunctionRevertedError" || name === "ContractFunctionZeroDataError") {
+      return true;
+    }
+    current = "cause" in current ? current.cause : undefined;
+  }
+  return false;
+}
+
 export async function getBlock(client: PublicClient, blockNumber: bigint) {
   return retryRpc(() => client.getBlock({ blockNumber }));
 }

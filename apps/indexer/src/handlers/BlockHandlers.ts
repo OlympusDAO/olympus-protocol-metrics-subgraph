@@ -50,15 +50,20 @@ import {
 // Per-protocol handlers extracted per @0xJem on PR #311 (Step 5.3).
 import { pushArbitrumLendingSupply } from "./ArbitrumLending";
 import { pushArbitrumStakingRecords } from "./ArbitrumStaking";
-import { pushBlvSupply } from "./BlvSupply";
+import { pushBlvSupply, pushIncurDebtSupply } from "./BlvSupply";
 import { pushCoolerReceivables } from "./CoolerLoans";
 import { pushGnosisAuctionSupply } from "./GnosisAuctions";
 import { pushMellowRecords } from "./MellowVault";
+import { pushLendingDeploymentSupply } from "./LendingDeployments";
+import { pushLiquidityPositionRecords } from "./LiquidityPositions";
+import { pushMakerDsrRecords } from "./MakerDsr";
 import { pushMigrationOffsetSupply } from "./MigrationOffset";
+import { pushProtocolPositionRecords } from "./ProtocolPositions";
 import {
   getLpTokenForHandler,
   readNativeBalance,
   readNonStandardBalance,
+  readPositionBalance,
   readTokenBalance,
 } from "./SnapshotHelpers";
 import { pushUniv3NftPol } from "./Univ3NftPol";
@@ -179,6 +184,23 @@ async function processSnapshot(
       if (config.coolerClearinghouses && config.coolerClearinghouses.length > 0) {
         await pushCoolerReceivables(context, config, client, records, timestamp, blockNumber);
       }
+      if (config.makerDsr) {
+        await pushMakerDsrRecords(context, config, client, records, timestamp, blockNumber);
+      }
+      if (config.protocolPositions) {
+        await pushProtocolPositionRecords(context, config, client, records, timestamp, blockNumber);
+      }
+      if (config.liquidityPositions) {
+        await pushLiquidityPositionRecords(
+          context,
+          config,
+          client,
+          records,
+          supplies,
+          timestamp,
+          blockNumber,
+        );
+      }
       if (config.univ3PositionManager) {
         await pushUniv3NftPol(context, config, client, records, supplies, timestamp, blockNumber);
       }
@@ -195,6 +217,12 @@ async function processSnapshot(
       }
       if (config.blvRegistry) {
         await pushBlvSupply(context, config, supplies, timestamp, blockNumber);
+      }
+      if (config.incurDebt) {
+        await pushIncurDebtSupply(context, config, supplies, timestamp, blockNumber);
+      }
+      if (config.lendingDeployments) {
+        pushLendingDeploymentSupply(config, supplies, timestamp, blockNumber);
       }
       if (config.bondManager) {
         await pushGnosisAuctionSupply(context, config, supplies, timestamp, blockNumber);
@@ -530,19 +558,31 @@ export async function pushTokenBalanceRecords(
     const wallets = getWalletAddressesForContract(config, definition.address);
     const decimals = getTokenDecimals(config.tokens, definition.address);
     const isNative = definition.address === config.nativeToken;
+    const positionRead = definition.positionRead;
     for (const wallet of wallets) {
+      if (positionRead?.wallets && !positionRead.wallets.includes(addr(wallet))) continue;
       const balance = isNative
         ? await readNativeBalance(context, client, config.chainId, wallet, decimals, blockNumber)
-        : definition.nonStandardBalance
-          ? await readNonStandardBalance(
+        : positionRead
+          ? await readPositionBalance(
               context,
               config.chainId,
               definition.address,
+              positionRead.method,
               wallet,
               decimals,
               blockNumber,
             )
-          : await readTokenBalance(context, config.chainId, definition.address, wallet, decimals);
+          : definition.nonStandardBalance
+            ? await readNonStandardBalance(
+                context,
+                config.chainId,
+                definition.address,
+                wallet,
+                decimals,
+                blockNumber,
+              )
+            : await readTokenBalance(context, config.chainId, definition.address, wallet, decimals);
       if (balance.eq(ZERO)) continue;
       records.push(
         createTokenRecord(
@@ -759,6 +799,38 @@ export async function pushTreasuryOhm(
         wallet,
         "Treasury",
         balance,
+        blockNumber,
+        -1,
+      ),
+    );
+  }
+
+  // Wallets legacy counted as treasury OHM only up to a block (the Olympus
+  // Association before 17,115,000). They aren't protocol wallets, so there's
+  // no Transfer ledger for them; read balanceOf at the snapshot.
+  for (const extra of config.treasuryOhmExtraWallets ?? []) {
+    if (blockNumber > BigInt(extra.lastActiveBlock)) continue;
+    const rawBalance = await readNonStandardBalance(
+      context,
+      config.chainId,
+      config.ohmToken,
+      extra.address,
+      decimals,
+      blockNumber,
+    );
+    if (rawBalance.eq(ZERO)) continue;
+    supplies.push(
+      createTokenSupply(
+        config,
+        timestamp,
+        getContractName(config, config.ohmToken),
+        config.ohmToken,
+        undefined,
+        undefined,
+        getContractName(config, extra.address),
+        extra.address,
+        "Treasury",
+        rawBalance.times(multiplier),
         blockNumber,
         -1,
       ),

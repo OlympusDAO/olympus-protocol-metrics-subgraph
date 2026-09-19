@@ -2,10 +2,10 @@ import type BigNumber from "bignumber.js";
 import type { EvmOnBlockContext, NativeBalanceState } from "envio";
 import { getAddress, type PublicClient } from "viem";
 
-import { readErc20BalanceOf } from "../effects";
+import { readErc20BalanceOf, readPositionAmount } from "../effects";
 import { addr, toDecimal, ZERO } from "../snapshot/math";
 import { getNativeBalance } from "../snapshot/rpc-client";
-import type { LiquidityHandler } from "../snapshot/types";
+import type { LiquidityHandler, PositionReadMethod } from "../snapshot/types";
 
 // Shared balance-read helpers used by the snapshot block handler and the
 // per-protocol modules it delegates to. Extracted from BlockHandlers.ts per
@@ -50,6 +50,28 @@ export async function readNonStandardBalance(
   const rawBigInt = BigInt(raw);
   if (rawBigInt === 0n) return ZERO;
   return toDecimal(rawBigInt, decimals);
+}
+
+// Snapshot-time read for tokens carrying `positionRead` (see TokenDefinition).
+// A revert or pre-deployment read is treated as zero.
+export async function readPositionBalance(
+  context: EvmOnBlockContext,
+  chainId: number,
+  contract: string,
+  method: PositionReadMethod,
+  walletAddress: string,
+  decimals: number,
+  blockNumber: bigint,
+): Promise<BigNumber> {
+  const raw = (await context.effect(readPositionAmount, {
+    chainId,
+    contract,
+    method,
+    arg: walletAddress,
+    atBlock: Number(blockNumber),
+  })) as string;
+  if (raw === "" || raw === "0") return ZERO;
+  return toDecimal(BigInt(raw), decimals);
 }
 
 // Reads the native-token (ETH/MATIC/FTM/...) balance via RPC and persists

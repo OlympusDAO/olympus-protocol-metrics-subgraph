@@ -1,5 +1,12 @@
 import { addr, bytes32, token } from "../math";
-import type { ChainConfig, CoolerClearinghouse, LiquidityHandler } from "../types";
+import type {
+  ChainConfig,
+  CoolerClearinghouse,
+  LendingDeployment,
+  LiquidityHandler,
+  LiquidityPosition,
+  ProtocolPosition,
+} from "../types";
 import { rpcUrls } from "./rpc";
 
 // ---- Ethereum-only wallets (Olympus mainnet contracts + multisigs). ----
@@ -17,6 +24,14 @@ const TREASURY_ADDRESS_V2 = addr("0x31f8cc382c9898b273eff4e0b7626a6987c846e8");
 const TREASURY_ADDRESS_V3 = addr("0x9A315BdF513367C0377FB36545857d12e85813Ef");
 const DAO_WALLET = addr("0x245cc372c84b3645bf0ffe6538620b04a217988b");
 const DAO_WORKING_CAPITAL = addr("0xF65A665D650B5De224F46D729e2bD0885EeA9dA5");
+// Lending markets holding deployed DAI principal (legacy MYSO_LENDING / VENDOR_LENDING).
+const MYSO_LENDING = addr("0xb339953fc028b9998775c00594a74dd1488ee2c6");
+const VENDOR_LENDING = addr("0x83234a159dbd60a32457df158fafcbdf3d1ccc08");
+// OHM supply-side contracts (legacy OhmCalculations).
+const OLYMPUS_INCUR_DEBT = addr("0xd9d87586774fb9d036fa95a5991474513ff6c96e");
+const OLYMPUS_ASSOCIATION = addr("0x4c71db02aeeb336cbd8f3d2cc866911f6e2fbd94");
+const SILO_LENDING = addr("0xb2374f84b3cEeFF6492943Df613C9BcF45322a0c");
+const EULER_LENDING = addr("0x27182842E098f60e3D576794A5bFFb0777E025d3");
 // Bophades TRSRY module — two historical versions. The active one holds the
 // balance; the inactive one reads zero. Kernel upgrade events are tracked
 // separately (see Erc20Transfers.ts handlers + BophadesKernel handler).
@@ -26,6 +41,9 @@ const TRSRY_V1_1 = addr("0xea1560F36F71a2F54deFA75ed9EaA15E8655bE22");
 const BUYBACK_MS = addr("0xf7deb867e65306be0cb33918ac1b8f89a72109db");
 const YIELD_FARMING_MS = addr("0x2075e3b46470cfcE124Daaf52b46Dcf965727Dd1");
 const OTC_ESCROW = addr("0xe3312c3f1ab30878d9686452f7205ebe11e965eb");
+const BOND_MANAGER = addr("0xf577c77ee3578c7f216327f41b5d7221ead2b2a3");
+const BOND_FIXED_EXPIRY_TELLER = addr("0x007fe70dc9797c4198528ae43d8195fff82bdc95");
+const MIGRATION_CONTRACT = addr("0x184f3fad8618a6f458c16bae63f70c426fe784b3");
 
 // Bonds.
 const BONDS_DEPOSIT = addr("0x9025046c6fb25Fb39e720d97a8FD881ED69a1Ef6");
@@ -169,6 +187,61 @@ const ERC20_FXS = addr("0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0");
 const ERC20_FXS_VE = addr("0xc8418af6358ffdda74e09ca9cc3fe03ca6adc5b0");
 const ERC20_LDO = addr("0x5a98fcbea516cf06857215779fd812ca3bef1b32");
 const ERC20_LQTY = addr("0x6dea81c8171d0ba574754ef6f8b412f2ed88c54d");
+
+// Treasury tokens legacy valued that Envio didn't (parity diff vs the legacy
+// subgraph, May 2022 onward). Addresses, categories, names and price paths
+// mirror legacy subgraphs/ethereum/src/utils/Constants.ts.
+const ERC20_FEI = addr("0x956F47F50A910163D8BF957Cf5846D573E7f87CA");
+const ERC20_UST = addr("0xa693b19d2931d498c5b318df961919bb4aee87a5"); // Wormhole UST, 6 decimals
+const ERC20_WBTC = addr("0x2260fac5e5542a773aa44fbcfedf7c193bc2c599");
+const ERC20_TRIBE = addr("0xc7283b66Eb1EB5FB86327f08e1B5816b0720212B");
+const ERC20_TOKE = addr("0x2e9d63788249371f1dfc918a52f8d799f4a38c94");
+const ERC20_XSUSHI = addr("0x8798249c2e607446efb7ad49ec89dd1865ff4272");
+const ERC20_BOND = addr("0x0391D2021f89DC339F60Fff84546EA23E337750f"); // BarnBridge
+const ERC20_CVX = addr("0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b");
+const ERC20_CVX_VL = addr("0x72a19342e8F1838460eBFCCEf09F6585e32db86E"); // CvxLockerV2
+const ERC20_AURA = addr("0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF");
+const ERC20_AURA_VL = addr("0x3Fa73f1E5d8A792C80F426fc8F84FBF7Ce9bBCAC"); // AuraLocker
+const ERC20_AURA_BAL = addr("0x616e8BfA43F920657B3497DBf40D6b1A02D4608d");
+const ERC20_BAL = addr("0xba100000625a3754423978a60c9317c58a424e3d");
+const ERC20_BB_A_USD = addr("0xA13a9247ea42D743238089903570127DdA72fE44");
+const ERC20_CVX_FRAX_3CRV = addr("0xbe0f6478e0e4894cfb14f32855603a083a57c7da");
+
+// Price pools for the tokens above (legacy LIQUIDITY_POOL_TOKEN_LOOKUP).
+const LP_UNISWAP_V3_FEI_USDC = addr("0xdf50fbde8180c8785842c8e316ebe06f542d3443");
+const LP_UNISWAP_V2_ETH_WBTC = addr("0xceff51756c56ceffca006cd410b03ffc46dd3a58");
+const LP_UNISWAP_V2_TRIBE_ETH = addr("0x7ce01885a13c652241ae02ea7369ee8d466802eb");
+const LP_UNISWAP_V2_TOKE_ETH = addr("0xd4e7a6e2d03e4e48dfc27dd3f46df1c176647e38");
+const LP_UNISWAP_V2_XSUSHI_ETH = addr("0x36e2fcccc59e5747ff63a03ea2e5c0c2c14911e7");
+const LP_UNISWAP_V2_BOND_USDC = addr("0x6591c4bcd6d7a1eb4e537da8b78676c1576ba244");
+const LP_UNISWAP_V2_CVX_ETH = addr("0x05767d9ef41dc40689678ffca0608878fb3de906");
+const LP_BALANCER_POOL_AURA_WETH = bytes32(
+  "0xc29562b045d80fd77c69bec09541f5c16fe20d9d000200000000000000000251",
+);
+const LP_BALANCER_POOL_BAL_WETH = bytes32(
+  "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014",
+);
+const LP_BALANCER_POOL_GRAVIAURA_AURABAL_WETH = bytes32(
+  "0x0578292cb20a443ba1cde459c985ce14ca2bdee5000100000000000000000269",
+);
+
+// Start blocks are contract deployments (Blockscout creation txs) unless the
+// legacy subgraph gated later. UST stops being valued after its collapse.
+const ERC20_UST_BLOCK = 13_408_366; // legacy ERC20_UST_BLOCK
+const ERC20_UST_LAST_ACTIVE_BLOCK = 14_730_000; // legacy ERC20_UST_BLOCK_DEATH
+const ERC20_CVX_BLOCK = 12_460_000; // legacy ERC20_CVX_BLOCK
+const ERC20_CVX_VL_BLOCK = 14_320_609;
+const ERC20_AURA_BLOCK = 14_932_168;
+const ERC20_AURA_VL_BLOCK = 14_932_220;
+const ERC20_AURA_BAL_BLOCK = 14_932_194;
+const ERC20_BB_A_USD_BLOCK = 15_489_162;
+const LP_UNISWAP_V3_FEI_USDC_BLOCK = 13_754_443;
+const LP_UNISWAP_V2_TRIBE_ETH_BLOCK = 12_168_590;
+const LP_UNISWAP_V2_TOKE_ETH_BLOCK = 12_976_921;
+const LP_UNISWAP_V2_CVX_ETH_BLOCK = 12_451_311;
+const LP_BALANCER_AURA_WETH_BLOCK = 14_967_724;
+const LP_BALANCER_BAL_WETH_BLOCK = 12_369_384;
+const LP_BALANCER_GRAVIAURA_AURABAL_WETH_BLOCK = 15_007_813;
 const ERC20_BTRFLY_V1 = addr("0xc0d4ceb216b3ba9c3701b291766fdcba977cec3a");
 const ERC20_BTRFLY_V1_STAKED = addr("0xCC94Faf235cC5D3Bf4bEd3a30db5984306c86aBC"); // xBTRFLY
 const ERC20_BTRFLY_V2 = addr("0xc55126051b22ebb829d00368f4b12bde432de5da");
@@ -200,10 +273,13 @@ const LP_CURVE_OHM_FRAXBP = addr("0xFc1e8bf3E81383Ef07Be24c3FD146745719DE48D");
 const LP_CURVE_FRAX_USDC_POOL = addr("0xDcEF968d416a41Cdac0ED8702fAC8128A64241A2");
 // FraxBP LP token (separate from the pool address per Curve V2 lp_token()).
 const LP_CURVE_FRAX_USDC_LP = addr("0x3175Df0976dFA876431C2E9eE6Bc45b65d3473CC");
+// OHM-ETH and OHM-FraxBP LP tokens are separate from their pools (pool.token()).
+const LP_CURVE_OHM_ETH_TOKEN = addr("0x3660bd168494d61ffdac21e403d0f6356cf90fd7");
+const LP_CURVE_OHM_FRAXBP_TOKEN = addr("0x5271045F7B73c17825A7A7aee6917eE46b0B7520");
 
-// Curve OHM-ETH uses native ETH (sentinel address) as coin 1. FraxBP coins
-// are FRAX and USDC. Coin order per Curve registry.
-const CURVE_OHM_ETH_COINS = [ERC20_OHM_V2, NATIVE_ETH];
+// Curve OHM-ETH holds WETH as coin 1 (pool.coins(1)). FraxBP coins are FRAX
+// and USDC. Coin order per Curve registry.
+const CURVE_OHM_ETH_COINS = [ERC20_OHM_V2, ERC20_WETH];
 const CURVE_OHM_FRAXBP_COINS = [ERC20_OHM_V2, LP_CURVE_FRAX_USDC_LP];
 const CURVE_FRAX_USDC_COINS = [ERC20_FRAX, ERC20_USDC];
 
@@ -265,7 +341,7 @@ const LP_CURVE_OHM_ETH_BLOCK = 14_490_000; // ~2022-03-22
 const LP_CURVE_OHM_FRAXBP_BLOCK = 15_300_000; // ~2022-08-15
 const LP_CURVE_FRAX_USDC_BLOCK = 14_950_000; // ~2022-05-28
 const LP_FRAXSWAP_V1_OHM_FRAX_BLOCK = 14_490_000;
-const LP_FRAXSWAP_V2_OHM_FRAX_BLOCK = 17_000_000;
+const LP_FRAXSWAP_V2_OHM_FRAX_BLOCK = 15_395_619; // pair deployment, 2022-08-23
 
 // Balancer + Aura deployment blocks (approximate; effect reverts before
 // the actual creation gracefully zero out).
@@ -323,7 +399,30 @@ const names: Record<string, string> = {
   [TREASURY_ADDRESS_V2]: "Treasury Wallet V2",
   [TREASURY_ADDRESS_V3]: "Treasury Wallet V3",
   [TRSRY]: "Bophades Treasury",
+  [MAKER_DSR_ALLOCATOR]: "Maker DSR Allocator",
+  [MAKER_DSR_ALLOCATOR_PROXY]: "Maker DSR Allocator Proxy",
   [VEFXS_ALLOCATOR]: "VeFXS Allocator",
+  [LUSD_ALLOCATOR]: "LUSD Allocator",
+  [CONVEX_ALLOCATOR1]: "Convex Allocator 1",
+  [CONVEX_ALLOCATOR2]: "Convex Allocator 2",
+  [CONVEX_ALLOCATOR3]: "Convex Allocator 3",
+  [CONVEX_CVX_ALLOCATOR]: "Convex Allocator",
+  [AURA_ALLOCATOR]: "AURA Allocator",
+  [AURA_ALLOCATOR_V2]: "AURA Allocator V2",
+  [DAO_WORKING_CAPITAL]: "DAO Working Capital",
+  [MYSO_LENDING]: "Myso Finance",
+  [VENDOR_LENDING]: "Vendor Finance",
+  [OLYMPUS_INCUR_DEBT]: "IncurDebt",
+  [OLYMPUS_ASSOCIATION]: "Olympus Association",
+  [SILO_LENDING]: "Silo Router",
+  [EULER_LENDING]: "Euler Protocol",
+  [TREASURY_ADDRESS_V1]: "Treasury Wallet V1",
+  [OTC_ESCROW]: "OTC Escrow",
+  [CONVEX_STAKING_PROXY_FRAXBP]: "Convex Staking Proxy - FraxBP",
+  [CONVEX_STAKING_PROXY_OHM_FRAXBP]: "Convex Staking Proxy - OHM-FraxBP",
+  [BOND_MANAGER]: "Bond Manager",
+  [BOND_FIXED_EXPIRY_TELLER]: "Bond Fixed Expiry Teller",
+  [MIGRATION_CONTRACT]: "Migration Contract",
   // Tokens and pools
   [CONVEX_REWARD_OHM_ETH]: "Convex Staked Curve OHM-ETH",
   [CONVEX_REWARD_OHM_FRAXBP]: "Convex Staked Curve OHM-FraxBP",
@@ -355,6 +454,21 @@ const names: Record<string, string> = {
   [ERC20_BTRFLY_V2]: "BTRFLY V2",
   [ERC20_BTRFLY_V2_RL]: "Revenue-Locked BTRFLY",
   [ERC20_DAI]: "DAI",
+  [ERC20_FEI]: "FEI",
+  [ERC20_UST]: "UST",
+  [ERC20_WBTC]: "wBTC",
+  [ERC20_TRIBE]: "TRIBE",
+  [ERC20_TOKE]: "TOKE",
+  [ERC20_XSUSHI]: "SUSHI - Staked",
+  [ERC20_BOND]: "BarnBridge Governance",
+  [ERC20_CVX]: "Convex",
+  [ERC20_CVX_VL]: "Convex - Vote-Locked",
+  [ERC20_AURA]: "Aura Finance",
+  [ERC20_AURA_VL]: "Aura Finance - Vote-Locked",
+  [ERC20_AURA_BAL]: "auraBAL",
+  [ERC20_BAL]: "Balancer",
+  [ERC20_BB_A_USD]: "Balancer Aave Boosted StablePool",
+  [ERC20_CVX_FRAX_3CRV]: "Curve FRAX3Pool",
   [ERC20_CVX_CRV]: "Curve - Convex CRV Reward Pool",
   [ERC20_FRAX]: "FRAX",
   [ERC20_FXS]: "Frax Share",
@@ -424,6 +538,15 @@ const abbreviations: Record<string, string> = {
   [NATIVE_ETH]: "ETH",
   [ERC20_WETH]: "wETH",
   [ERC20_WSTETH]: "wstETH",
+  [ERC20_XSUSHI]: "xSUSHI",
+  [ERC20_BOND]: "BOND",
+  [ERC20_CVX]: "CVX",
+  [ERC20_CVX_VL]: "vlCVX",
+  [ERC20_AURA]: "AURA",
+  [ERC20_AURA_VL]: "vlAURA",
+  [ERC20_BAL]: "BAL",
+  [ERC20_BB_A_USD]: "bb-a-USD",
+  [ERC20_CVX_FRAX_3CRV]: "cvxFRAX3CRV",
 };
 
 // OHM gets priced via the WETH-OHM UniV3 pool, which recurses through WETH
@@ -453,12 +576,14 @@ const ownedLiquidityHandlers: LiquidityHandler[] = [univ3WethOhm, univ3OhmSusds]
 
 // Cooler Loans clearinghouses. Each clearinghouse's principal receivable is
 // added to the snapshot as a DAI / USDS TokenRecord priced via the
-// corresponding Chainlink feed. Start blocks are the approximate deployment
-// windows from inventory-ethereum.md §3 "Clearinghouse Addresses"; the
-// underlying RPC call gracefully returns null on revert (pre-deploy) so an
-// over-broad start block is harmless.
-const COOLER_LOANS_V1_BLOCK = 18_539_800;
-const COOLER_LOANS_V1_1_BLOCK = 18_794_000;
+// corresponding Chainlink feed. The underlying RPC call gracefully returns
+// null on revert (pre-deploy), so a start block that's too early is harmless.
+// One that's too late silently drops live loans: V1 and V1.1 were deployed in
+// Sep 2023 but previously started at Nov / Dec 2023 blocks, which hid up to
+// ~$84M of receivables. V1 and V1.1 now start at their deployment blocks
+// (creation txs 0xb37655b7…fd38 and the V1.1 Clearinghouse creation tx).
+const COOLER_LOANS_V1_BLOCK = 18_185_779;
+const COOLER_LOANS_V1_1_BLOCK = 18_234_505;
 const COOLER_LOANS_V2_BLOCK = 19_620_000;
 const COOLER_LOANS_V2_MONOCOOLER_BLOCK = 22_423_121;
 
@@ -496,6 +621,34 @@ const coolerClearinghouses: CoolerClearinghouse[] = [
     startBlock: COOLER_LOANS_V2_MONOCOOLER_BLOCK,
   },
 ];
+
+// Maker DSR. From Feb 2023 until the move into sDAI in Jan 2024 most treasury
+// DAI sat in the DSR through the DSR Allocator's DSProxy (above $160M in Sep
+// 2023). Without this read that whole position drops out of market value and
+// liquid backing. Start block is the DSR Allocator + DSProxy deployment
+// (tx 0x6e1bd99394992774a90d92e171992ad3502d2d00b68e559e055365220109a5d5).
+const MAKER_DSR_POT = addr("0x197E90f9FAD81970bA7976f33CbD77088E5D7cf7");
+const MAKER_DSR_START_BLOCK = 16_221_318;
+
+const LP_SUSHI_OHM_DAI = addr("0x055475920a8c93cffb64d039a8205f7acc7722d3");
+const LP_SUSHI_OHM_ETH = addr("0x69b81152c5a8d35a67b32a4d3772795d96cae4da");
+const LP_SUSHI_OHM_DAI_BLOCK = 13_826_593;
+const LP_SUSHI_OHM_ETH_BLOCK = 13_805_112;
+// SushiSwap OHM V2 pairs. The deepest OHM pools through 2022, so legacy's
+// OHM price came from here (getBaseOhmUsdRate picks the largest non-OHM
+// reserves); they also value the treasury's SushiSwap POL.
+const sushiOhmDai: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V2, ERC20_DAI],
+  id: LP_SUSHI_OHM_DAI,
+  startBlock: LP_SUSHI_OHM_DAI_BLOCK,
+};
+const sushiOhmEth: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V2, ERC20_WETH],
+  id: LP_SUSHI_OHM_ETH,
+  startBlock: LP_SUSHI_OHM_ETH_BLOCK,
+};
 
 const liquidityHandlers: LiquidityHandler[] = [
   // Chainlink feeds (highest priority via CHAINLINK_PRIORITY = 10^30).
@@ -571,6 +724,8 @@ const liquidityHandlers: LiquidityHandler[] = [
   },
   // OHM pricing via the WETH-OHM UniV3 pool (recurses to WETH via Chainlink).
   univ3WethOhm,
+  sushiOhmDai,
+  sushiOhmEth,
   // OHM-sUSDS UniV3 pool — both a price candidate and an owned-liquidity
   // (POL) source. Listed here so the router can use it for OHM pricing in
   // addition to WETH-OHM, and so pushUniv3NftPol recognizes the pair when
@@ -632,6 +787,89 @@ const liquidityHandlers: LiquidityHandler[] = [
     tokens: [ERC20_CVX_CRV, ERC20_WETH],
     id: LP_UNISWAP_V2_CVX_CRV_ETH,
     startBlock: LP_UNISWAP_V2_CVX_CRV_ETH_BLOCK,
+  },
+  // Price paths for tokens ported from legacy (see ERC20_FEI et al.). Each
+  // recurses to a Chainlink-priced base (WETH / USDC).
+  {
+    kind: "univ3",
+    tokens: [ERC20_FEI, ERC20_USDC],
+    id: LP_UNISWAP_V3_FEI_USDC,
+    startBlock: LP_UNISWAP_V3_FEI_USDC_BLOCK,
+  },
+  // UST (0xa693...) has no pool of its own: legacy's UST-ETH pair holds the
+  // other UST contract (0xa47c...), so pricing through it valued the treasury's
+  // UST at ~$0. Legacy's records show ~$1 until its post-collapse cutoff, which
+  // the token's lastActiveBlock already applies.
+  { kind: "stable", tokens: [ERC20_UST], id: "stable-ust", startBlock: ERC20_UST_BLOCK },
+  {
+    kind: "univ2",
+    tokens: [ERC20_WBTC, ERC20_WETH],
+    id: LP_UNISWAP_V2_ETH_WBTC,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_TRIBE, ERC20_WETH],
+    id: LP_UNISWAP_V2_TRIBE_ETH,
+    startBlock: LP_UNISWAP_V2_TRIBE_ETH_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_TOKE, ERC20_WETH],
+    id: LP_UNISWAP_V2_TOKE_ETH,
+    startBlock: LP_UNISWAP_V2_TOKE_ETH_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_XSUSHI, ERC20_WETH],
+    id: LP_UNISWAP_V2_XSUSHI_ETH,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_BOND, ERC20_USDC],
+    id: LP_UNISWAP_V2_BOND_USDC,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_CVX, ERC20_WETH],
+    id: LP_UNISWAP_V2_CVX_ETH,
+    startBlock: LP_UNISWAP_V2_CVX_ETH_BLOCK,
+  },
+  {
+    kind: "balancer",
+    tokens: [ERC20_AURA, ERC20_WETH],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_AURA_WETH,
+    startBlock: LP_BALANCER_AURA_WETH_BLOCK,
+  },
+  {
+    kind: "balancer",
+    tokens: [ERC20_BAL, ERC20_WETH],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_BAL_WETH,
+    startBlock: LP_BALANCER_BAL_WETH_BLOCK,
+  },
+  // graviAURA has no price path of its own; auraBAL prices off the WETH leg.
+  {
+    kind: "balancer",
+    tokens: [ERC20_AURA_BAL, ERC20_WETH],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_GRAVIAURA_AURABAL_WETH,
+    startBlock: LP_BALANCER_GRAVIAURA_AURABAL_WETH_BLOCK,
+  },
+  // Lock receipts price as their underlying (legacy getUnstakedToken), and
+  // Curve / Balancer stable derivatives price at the USDC rate (legacy
+  // resolvePrice special case).
+  { kind: "remap", tokens: [ERC20_CVX_VL], id: ERC20_CVX_VL, target: ERC20_CVX },
+  { kind: "remap", tokens: [ERC20_AURA_VL], id: ERC20_AURA_VL, target: ERC20_AURA },
+  { kind: "remap", tokens: [ERC20_BB_A_USD], id: ERC20_BB_A_USD, target: ERC20_USDC },
+  {
+    kind: "remap",
+    tokens: [ERC20_CVX_FRAX_3CRV],
+    id: ERC20_CVX_FRAX_3CRV,
+    target: ERC20_USDC,
   },
   // Staked / locked variants remap to their base tokens for pricing.
   {
@@ -709,13 +947,13 @@ const liquidityHandlers: LiquidityHandler[] = [
     kind: "remap",
     tokens: [CONVEX_REWARD_OHM_ETH],
     id: CONVEX_REWARD_OHM_ETH,
-    target: LP_CURVE_OHM_ETH,
+    target: LP_CURVE_OHM_ETH_TOKEN,
   },
   {
     kind: "remap",
     tokens: [CONVEX_REWARD_OHM_FRAXBP],
     id: CONVEX_REWARD_OHM_FRAXBP,
-    target: LP_CURVE_OHM_FRAXBP,
+    target: LP_CURVE_OHM_FRAXBP_TOKEN,
   },
   {
     kind: "remap",
@@ -769,22 +1007,20 @@ const liquidityHandlers: LiquidityHandler[] = [
     startBlock: ERC20_GAUNTLET_SUSDS_VAULT_BLOCK,
   },
   // Curve pools (POL). LP-token price = (Σ balance × coin price) / totalSupply.
-  // Native ETH appears as a coin in the OHM-ETH pool; remap entry above
-  // resolves it to WETH for pricing.
   {
     kind: "curve",
-    tokens: [LP_CURVE_OHM_ETH],
+    tokens: [LP_CURVE_OHM_ETH_TOKEN],
     id: LP_CURVE_OHM_ETH,
-    lpToken: LP_CURVE_OHM_ETH,
+    lpToken: LP_CURVE_OHM_ETH_TOKEN,
     coins: CURVE_OHM_ETH_COINS,
     coinDecimals: [9, 18],
     startBlock: LP_CURVE_OHM_ETH_BLOCK,
   },
   {
     kind: "curve",
-    tokens: [LP_CURVE_OHM_FRAXBP],
+    tokens: [LP_CURVE_OHM_FRAXBP_TOKEN],
     id: LP_CURVE_OHM_FRAXBP,
-    lpToken: LP_CURVE_OHM_FRAXBP,
+    lpToken: LP_CURVE_OHM_FRAXBP_TOKEN,
     coins: CURVE_OHM_FRAXBP_COINS,
     coinDecimals: [9, 18],
     startBlock: LP_CURVE_OHM_FRAXBP_BLOCK,
@@ -833,6 +1069,418 @@ const liquidityHandlers: LiquidityHandler[] = [
     id: ERC20_SOHM_V3,
     ohmToken: ERC20_OHM_V2,
     startBlock: ERC20_SOHM_V3_BLOCK,
+  },
+];
+
+// ---- Protocol positions (handlers/ProtocolPositions.ts). Contracts and
+// labels mirror legacy TokenStablecoins / TokenVolatile helpers. `wallets`
+// are the holders legacy recorded for each position, which keeps snapshot
+// RPC bounded instead of scanning every protocol wallet for every read.
+const LIQUITY_STABILITY_POOL = addr("0x66017d22b0f8556afdd19fc67041899eb65a21bb");
+const LIQUITY_LQTY_STAKING = addr("0x4f9Fbb3f1E99B56e0Fe2892e623Ed36A76Fc605d");
+const LIQUITY_BLOCK = 12_178_594; // legacy LUSD start block; Liquity launch
+const TOKEMAK_STAKING = addr("0x96f98ed74639689c3a11daf38ef86e59f43417d3");
+const CONVEX_FRAX_3CRV_REWARD_POOL = addr("0xB900EF131301B307dB5eFcbed9DBb50A3e209B2e");
+const CONVEX_CRV_REWARD_POOL = addr("0x3fe65692bfcd0e6cf84cb1e7d24108e434a7587e");
+// Legacy CVX_CRV_WRITE_OFF_BLOCK: cvxCRV bricked in the vlCVX allocator.
+const CONVEX_CVX_CRV_WRITE_OFF_BLOCK = 18_121_728;
+const AURA_STAKING_AURA_BAL = addr("0x00A7BA8Ae7bca0B10A32Ea1f8e2a1Da980c6CAd2");
+const AURA_POOL_OHM_DAI_WETH = addr("0xF01e29461f1FCEdD82f5258Da006295E23b4Fab3");
+const AURA_POOL_OHM_DAI = addr("0xB9D6ED734Ccbdd0b9CadFED712Cf8AC6D0917EcD");
+const AURA_POOL_OHM_WETH = addr("0x978653c02f2fbbdfd67cbc7f45c42262f213e0b5");
+const AURA_POOL_OHM_WSTETH = addr("0x636024f9ddef77e625161b2ccf3a2adfbfad3615");
+const AURA_STABLE_REWARD_POOL = addr("0x62D7d772b2d909A0779d15299F4FC87e34513c6d");
+const RARI_ALLOCATOR_BLOCK = 14_550_000; // legacy RARI_ALLOCATOR_BLOCK
+const RARI_ALLOCATOR_LAST_ACTIVE_BLOCK = 14_983_058; // legacy stops reading after this
+
+const AURA_HOLDERS = [AURA_ALLOCATOR, AURA_ALLOCATOR_V2, DAO_WALLET];
+
+const auraRewards = (pool: string, poolName: string): ProtocolPosition => ({
+  kind: "read",
+  contract: pool,
+  method: "aura.earned",
+  token: ERC20_BAL,
+  label: `Balancer - Rewards from ${poolName} (BAL)`,
+  wallets: AURA_HOLDERS,
+  startBlock: ERC20_AURA_BLOCK,
+});
+
+const protocolPositions: ProtocolPosition[] = [
+  // Liquity stability pool: compounded LUSD plus ETH and LQTY gains.
+  {
+    kind: "read",
+    contract: LIQUITY_STABILITY_POOL,
+    method: "stabilityPool.compoundedLusd",
+    token: ERC20_LUSD,
+    label: "LUSD - Stability Pool",
+    wallets: [LUSD_ALLOCATOR, DAO_WALLET],
+    startBlock: LIQUITY_BLOCK,
+  },
+  {
+    kind: "read",
+    contract: LIQUITY_STABILITY_POOL,
+    method: "stabilityPool.ethGain",
+    token: ERC20_WETH,
+    label: "wETH - Stability Pool",
+    wallets: [LUSD_ALLOCATOR, DAO_WALLET],
+    startBlock: LIQUITY_BLOCK,
+  },
+  {
+    kind: "read",
+    contract: LIQUITY_STABILITY_POOL,
+    method: "stabilityPool.lqtyGain",
+    token: ERC20_LQTY,
+    label: "LQTY - Stability Pool",
+    wallets: [LUSD_ALLOCATOR, DAO_WALLET],
+    startBlock: LIQUITY_BLOCK,
+  },
+  {
+    kind: "read",
+    contract: LIQUITY_LQTY_STAKING,
+    method: "liquity.stakes",
+    token: ERC20_LQTY,
+    label: "LQTY - Staked",
+    wallets: [LUSD_ALLOCATOR, DAO_WALLET],
+    startBlock: LIQUITY_BLOCK,
+  },
+  {
+    kind: "read",
+    contract: TOKEMAK_STAKING,
+    method: "erc20.balanceOf",
+    token: ERC20_TOKE,
+    label: "TOKE - Staked",
+    wallets: [DAO_WALLET, TREASURY_ADDRESS_V3],
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  // Convex reward pools. BaseRewardPool emits no Transfer for stakes.
+  {
+    kind: "read",
+    contract: CONVEX_FRAX_3CRV_REWARD_POOL,
+    method: "erc20.balanceOf",
+    token: ERC20_CVX_FRAX_3CRV,
+    label: "Curve FRAX3Pool - Convex FRAX3CRV Reward Pool (cvxFRAX3CRV)",
+    wallets: [
+      CONVEX_ALLOCATOR1,
+      CONVEX_ALLOCATOR2,
+      CONVEX_ALLOCATOR3,
+      CONVEX_CVX_ALLOCATOR,
+      CONVEX_CVX_VL_ALLOCATOR,
+    ],
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "read",
+    contract: CONVEX_CRV_REWARD_POOL,
+    method: "erc20.balanceOf",
+    token: ERC20_CVX_CRV,
+    label: "Curve - Convex CRV Reward Pool (cvxCRV)",
+    wallets: [CONVEX_CVX_ALLOCATOR, CONVEX_CVX_VL_ALLOCATOR],
+    startBlock: ERC20_CVX_CRV_BLOCK,
+    writeOffFromBlock: CONVEX_CVX_CRV_WRITE_OFF_BLOCK,
+  },
+  // Vote-lock positions. The locked part is the token's own balanceOf
+  // (vlCVX nonStandardBalance); these add what's unlockable but unwithdrawn.
+  {
+    kind: "read",
+    contract: ERC20_CVX_VL,
+    method: "vlCvx.unlockable",
+    token: ERC20_CVX_VL,
+    label: "Convex - Unlocked (vlCVX)",
+    wallets: [CONVEX_CVX_VL_ALLOCATOR, DAO_WALLET],
+    startBlock: ERC20_CVX_VL_BLOCK,
+  },
+  {
+    kind: "read",
+    contract: ERC20_AURA_VL,
+    method: "auraLocker.total",
+    token: ERC20_AURA_VL,
+    label: "Aura Finance - Vote-Locked (vlAURA)",
+    wallets: AURA_HOLDERS,
+    startBlock: ERC20_AURA_VL_BLOCK,
+  },
+  {
+    kind: "read",
+    contract: ERC20_BTRFLY_V2_RL,
+    method: "rlBtrfly.unlockable",
+    token: ERC20_BTRFLY_V2_RL,
+    label: "Redacted Cartel V2 - Staked - Unlocked (rlBTRFLY)",
+    wallets: [DAO_WALLET],
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  // Aura: staked auraBAL and pending rewards.
+  {
+    kind: "read",
+    contract: AURA_STAKING_AURA_BAL,
+    method: "erc20.balanceOf",
+    token: ERC20_AURA_BAL,
+    label: "auraBAL - Staked in auraBAL Staking Vault",
+    wallets: AURA_HOLDERS,
+    startBlock: ERC20_AURA_BAL_BLOCK,
+  },
+  auraRewards(AURA_STAKING_AURA_BAL, "auraBAL Staking Vault"),
+  auraRewards(AURA_POOL_OHM_DAI_WETH, "Aura OHM-DAI-wETH Deposit Vault"),
+  auraRewards(AURA_POOL_OHM_DAI, "Aura OHM-DAI Deposit Vault"),
+  auraRewards(AURA_POOL_OHM_WETH, "Aura OHM-wETH Deposit Vault"),
+  auraRewards(AURA_POOL_OHM_WSTETH, "Aura OHM-wstETH Deposit Vault"),
+  {
+    kind: "read",
+    contract: AURA_STABLE_REWARD_POOL,
+    method: "aura.earned",
+    token: ERC20_BB_A_USD,
+    label: `Balancer Aave Boosted StablePool - Rewards from ${AURA_STABLE_REWARD_POOL} (bb-a-USD)`,
+    wallets: AURA_HOLDERS,
+    startBlock: ERC20_BB_A_USD_BLOCK,
+  },
+  // Rari allocator: ids legacy mapped (legacy ALLOCATOR_RARI_ID).
+  {
+    kind: "rari",
+    allocator: RARI_ALLOCATOR,
+    allocations: [
+      { id: 3, token: ERC20_DAI, label: "DAI" },
+      { id: 4, token: ERC20_TRIBE, label: "TRIBE" },
+    ],
+    startBlock: RARI_ALLOCATOR_BLOCK,
+    lastActiveBlock: RARI_ALLOCATOR_LAST_ACTIVE_BLOCK,
+  },
+  // Lending markets recognised at deployed principal (legacy
+  // MYSO_DEPLOYMENTS / VENDOR_DEPLOYMENTS, with the linked txs there).
+  {
+    kind: "fixed",
+    source: MYSO_LENDING,
+    token: ERC20_DAI,
+    label: "DAI",
+    entries: [
+      { block: 16_898_161, amount: "500000" },
+      { block: 16_975_846, amount: "-471186.4848231525" },
+      { block: 18_185_779, amount: "-28813.5151768475" }, // write-off
+    ],
+  },
+  {
+    kind: "fixed",
+    source: VENDOR_LENDING,
+    token: ERC20_DAI,
+    label: "DAI",
+    entries: [
+      { block: 16_897_393, amount: "500000" },
+      { block: 18_227_657, amount: "-500000" },
+    ],
+  },
+];
+
+// ---- Protocol-owned liquidity (handlers/LiquidityPositions.ts). Pools,
+// holders, staking contracts and labels mirror the legacy LIQUIDITY_OWNED
+// records (Balancer, SushiSwap, Curve, FraxSwap). wETH-FDT gauge deposits
+// and OHM-BTRFLY V1 stayed under $0.2M and aren't ported.
+const LP_BALANCER_OHM_DAI_WETH_DEPLOY_BLOCK = 13_929_694;
+// Aura deposit tokens (legacy record token) for each Aura staking pool.
+const AURA_DEPOSIT_OHM_DAI_WETH = addr("0x622A725a79C7fE37AD839C640cD62d546712B3A9");
+const AURA_DEPOSIT_OHM_DAI = addr("0xB23Dfc0C4502a271976F1ee65321C51Be2529640");
+const AURA_DEPOSIT_OHM_WETH = addr("0xA02D8861FBFD0bA3D8EbaFA447Fe7680a3FA9a93");
+const AURA_DEPOSIT_OHM_WSTETH = addr("0x0EF97ef0e20F84e82ec2D79CBD9Eda923C3DAF09");
+const CONVEX_DEPOSIT_OHM_ETH = addr("0x9bb0daf4361e1b84f5a44914595c46f07e9d12a4"); // cvxOHMETH
+const FRAX_FARM_FRAXBP = addr("0x963f487796d54d2f27bA6F3Fbe91154cA103b199");
+const FRAX_FARM_OHM_FRAXBP = addr("0xc96e1a26264D965078bd01eaceB129A65C09FFE7");
+const STKCVX_FRAXBP = addr("0x8a53ee42FB458D4897e15cc7dEa3F75D0F1c3475");
+const STKCVX_OHM_FRAXBP = addr("0x81b0dCDa53482A2EA9eb496342dC787643323e95");
+
+function pricingHandler(id: string): LiquidityHandler {
+  const handler = liquidityHandlers.find((value) => value.id === id);
+  if (!handler) throw new Error(`No Ethereum pricing handler ${id}`);
+  return handler;
+}
+
+const POL_WALLETS = [TREASURY_ADDRESS_V3, DAO_WALLET];
+
+const auraStaked = (pool: string, deposit: string, poolLabel: string, vault: string) =>
+  ({
+    kind: "read",
+    contract: pool,
+    method: "erc20.balanceOf",
+    receiptToken: deposit,
+    label: `${poolLabel} - Staked in ${vault}`,
+    wallets: AURA_HOLDERS,
+  }) as const;
+
+const liquidityPositions: LiquidityPosition[] = [
+  {
+    pricing: sushiOhmDai,
+    lpToken: LP_SUSHI_OHM_DAI,
+    poolLabel: "SushiSwap OHM V2-DAI Liquidity Pool",
+    sources: [
+      { kind: "wallet", label: "SushiSwap OHM V2-DAI Liquidity Pool", wallets: POL_WALLETS },
+    ],
+    startBlock: LP_SUSHI_OHM_DAI_BLOCK,
+  },
+  {
+    pricing: sushiOhmEth,
+    lpToken: LP_SUSHI_OHM_ETH,
+    poolLabel: "SushiSwap OHM V2-ETH Liquidity Pool",
+    sources: [
+      { kind: "wallet", label: "SushiSwap OHM V2-ETH Liquidity Pool", wallets: POL_WALLETS },
+    ],
+    startBlock: LP_SUSHI_OHM_ETH_BLOCK,
+  },
+  // The shared OHM-DAI-wETH price handler starts at 14,790,000 so it can't
+  // shift historical OHM price; POL valuation uses it from deployment.
+  {
+    pricing: {
+      ...pricingHandler(LP_BALANCER_POOL_OHM_DAI_WETH),
+      startBlock: LP_BALANCER_OHM_DAI_WETH_DEPLOY_BLOCK,
+    },
+    lpToken: BPT_OHM_DAI_WETH,
+    poolLabel: "Balancer OHM-DAI-wETH Liquidity Pool",
+    sources: [
+      { kind: "wallet", label: "Balancer OHM-DAI-wETH Liquidity Pool", wallets: POL_WALLETS },
+      auraStaked(
+        AURA_VAULT_OHM_DAI_WETH,
+        AURA_DEPOSIT_OHM_DAI_WETH,
+        "Balancer OHM-DAI-wETH Liquidity Pool",
+        "Aura OHM-DAI-wETH Deposit Vault",
+      ),
+    ],
+    startBlock: LP_BALANCER_OHM_DAI_WETH_DEPLOY_BLOCK,
+  },
+  {
+    pricing: pricingHandler(LP_BALANCER_POOL_OHM_WETH),
+    lpToken: BPT_OHM_WETH,
+    poolLabel: "Balancer OHM-wETH Liquidity Pool",
+    sources: [
+      { kind: "wallet", label: "Balancer OHM-wETH Liquidity Pool", wallets: POL_WALLETS },
+      auraStaked(
+        AURA_VAULT_OHM_WETH,
+        AURA_DEPOSIT_OHM_WETH,
+        "Balancer OHM-wETH Liquidity Pool",
+        "Aura OHM-wETH Deposit Vault",
+      ),
+    ],
+    startBlock: LP_BALANCER_OHM_WETH_BLOCK,
+  },
+  {
+    pricing: pricingHandler(LP_BALANCER_POOL_OHM_DAI),
+    lpToken: BPT_OHM_DAI,
+    poolLabel: "Balancer OHM-DAI Liquidity Pool",
+    sources: [
+      { kind: "wallet", label: "Balancer OHM-DAI Liquidity Pool", wallets: POL_WALLETS },
+      auraStaked(
+        AURA_VAULT_OHM_DAI,
+        AURA_DEPOSIT_OHM_DAI,
+        "Balancer OHM-DAI Liquidity Pool",
+        "Aura OHM-DAI Deposit Vault",
+      ),
+    ],
+    startBlock: LP_BALANCER_OHM_DAI_BLOCK,
+  },
+  {
+    pricing: pricingHandler(LP_BALANCER_POOL_OHM_WSTETH),
+    lpToken: BPT_OHM_WSTETH,
+    poolLabel: "Balancer OHM-wstETH Liquidity Pool",
+    sources: [
+      { kind: "wallet", label: "Balancer OHM-wstETH Liquidity Pool", wallets: POL_WALLETS },
+      auraStaked(
+        AURA_VAULT_OHM_WSTETH,
+        AURA_DEPOSIT_OHM_WSTETH,
+        "Balancer OHM-wstETH Liquidity Pool",
+        "Aura OHM-wstETH Deposit Vault",
+      ),
+    ],
+    startBlock: LP_BALANCER_OHM_WSTETH_BLOCK,
+  },
+  {
+    pricing: pricingHandler(LP_CURVE_OHM_ETH),
+    lpToken: LP_CURVE_OHM_ETH_TOKEN,
+    poolLabel: "Curve OHM-ETH Liquidity Pool",
+    sources: [
+      { kind: "wallet", label: "Curve OHM-ETH Liquidity Pool", wallets: POL_WALLETS },
+      {
+        kind: "read",
+        contract: CONVEX_REWARD_OHM_ETH,
+        method: "erc20.balanceOf",
+        receiptToken: CONVEX_DEPOSIT_OHM_ETH,
+        label: "Curve OHM-ETH Liquidity Pool - Staked in Convex (cvxOHMETH)",
+        wallets: POL_WALLETS,
+      },
+    ],
+    startBlock: LP_CURVE_OHM_ETH_BLOCK,
+  },
+  {
+    pricing: pricingHandler(LP_CURVE_FRAX_USDC_POOL),
+    lpToken: LP_CURVE_FRAX_USDC_LP,
+    poolLabel: "Curve FraxBP Liquidity Pool",
+    category: "Stable",
+    sources: [
+      {
+        kind: "read",
+        contract: FRAX_FARM_FRAXBP,
+        method: "frax.lockedLiquidity",
+        receiptToken: STKCVX_FRAXBP,
+        label: "Curve FraxBP - Staked in Frax",
+        wallets: [CONVEX_STAKING_PROXY_FRAXBP],
+      },
+    ],
+    startBlock: LP_CURVE_FRAX_USDC_BLOCK,
+  },
+  {
+    pricing: pricingHandler(LP_CURVE_OHM_FRAXBP),
+    lpToken: LP_CURVE_OHM_FRAXBP_TOKEN,
+    poolLabel: "Curve OHM-FraxBP Liquidity Pool",
+    sources: [
+      { kind: "wallet", label: "Curve OHM-FraxBP Liquidity Pool", wallets: POL_WALLETS },
+      {
+        kind: "read",
+        contract: FRAX_FARM_OHM_FRAXBP,
+        method: "frax.lockedLiquidity",
+        receiptToken: STKCVX_OHM_FRAXBP,
+        label: "Curve OHM-FraxBP - Staked in Frax",
+        wallets: [CONVEX_STAKING_PROXY_OHM_FRAXBP],
+      },
+    ],
+    startBlock: LP_CURVE_OHM_FRAXBP_BLOCK,
+  },
+  {
+    pricing: pricingHandler(LP_FRAXSWAP_V1_OHM_FRAX),
+    lpToken: LP_FRAXSWAP_V1_OHM_FRAX,
+    poolLabel: "FraxSwap V1 OHM-FRAX Liquidity Pool",
+    sources: [
+      { kind: "wallet", label: "FraxSwap V1 OHM-FRAX Liquidity Pool", wallets: POL_WALLETS },
+    ],
+    startBlock: LP_FRAXSWAP_V1_OHM_FRAX_BLOCK,
+  },
+  {
+    pricing: pricingHandler(LP_FRAXSWAP_V2_OHM_FRAX),
+    lpToken: LP_FRAXSWAP_V2_OHM_FRAX,
+    poolLabel: "FraxSwap V2 OHM-FRAX Liquidity Pool",
+    sources: [
+      { kind: "wallet", label: "FraxSwap V2 OHM-FRAX Liquidity Pool", wallets: POL_WALLETS },
+    ],
+    startBlock: LP_FRAXSWAP_V2_OHM_FRAX_BLOCK,
+  },
+];
+
+// ---- OHM supply parity with legacy OhmCalculations.
+const OLYMPUS_INCUR_DEBT_BLOCK = 17_620_000; // legacy OLYMPUS_INCUR_DEBT_BLOCK
+const OLYMPUS_ASSOCIATION_LAST_ACTIVE_BLOCK = 17_114_999; // legacy counts it before 17,115,000
+// Legacy switched Silo to its collateral token balances at 18,121,728; those
+// read zero for protocol wallets, so the deployment schedule ends there.
+const SILO_DEPLOYMENTS_LAST_ACTIVE_BLOCK = 18_121_727;
+
+const lendingDeployments: LendingDeployment[] = [
+  {
+    source: SILO_LENDING,
+    entries: [
+      { block: 16_627_144, amount: "20000" },
+      { block: 16_834_221, amount: "28081.19399535" },
+      { block: 17_016_622, amount: "25000" },
+      { block: 17_464_332, amount: "-25000" },
+    ],
+    lastActiveBlock: SILO_DEPLOYMENTS_LAST_ACTIVE_BLOCK,
+  },
+  {
+    source: EULER_LENDING,
+    entries: [
+      { block: 16_627_152, amount: "30000" },
+      { block: 16_818_299, amount: "-27239.193995359" },
+      { block: 17_348_446, amount: "-2760.806004641" }, // settled in ETH / USDC
+    ],
   },
 ];
 
@@ -1113,9 +1761,11 @@ export const ETHEREUM: ChainConfig = {
       decimals: 18,
     }),
     // veFXS — vote-escrow FXS lock receipt. Held in VeFXS Allocator.
-    // Categorized Volatile/isLiquid=false (legacy parity); the lock-decay
-    // changes balanceOf without emitting Transfer, so use snapshot-time
-    // balanceOf. Priced 1:1 with FXS via the remap LiquidityHandler.
+    // Categorized Volatile/isLiquid=false (legacy parity). balanceOf is the
+    // boosted, decaying voting power (up to 4x the lock), so read the locked
+    // FXS amount instead, as legacy getVeFXSAllocatorRecords did. The amount
+    // still counts after the lock expires, until it's withdrawn. Priced 1:1
+    // with FXS via the remap LiquidityHandler.
     token({
       address: ERC20_FXS_VE,
       category: "Volatile",
@@ -1123,7 +1773,7 @@ export const ETHEREUM: ChainConfig = {
       isBluechip: false,
       startBlock: ERC20_FXS_VE_BLOCK,
       decimals: 18,
-      nonStandardBalance: true,
+      positionRead: { method: "veFxs.lockedAmount", wallets: [VEFXS_ALLOCATOR] },
     }),
     // cvxCRV — Convex's liquid staked-CRV wrapper. Standard ERC20 (mints
     // emit Transfer), so the event-driven TokenBalance is correct — no
@@ -1186,13 +1836,146 @@ export const ETHEREUM: ChainConfig = {
       decimals: 18,
     }),
     // rlBTRFLY carries the legacy 0.89 illiquid multiplier (per inventory §2.2,
-    // PriceHandlerCustomMapping legacy hard-code).
+    // PriceHandlerCustomMapping legacy hard-code). Locking mints no Transfer
+    // (the contract only emits Locked / Withdrawn), so the ledger never moves;
+    // balanceOf returns the active locked amount.
     token({
       address: ERC20_BTRFLY_V2_RL,
       category: "Volatile",
       isLiquid: false,
       isBluechip: false,
       multiplier: "0.89",
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+      nonStandardBalance: true,
+    }),
+    // Tokens ported from legacy ERC20_TOKENS. Categories, liquidity and
+    // multipliers match legacy.
+    token({
+      address: ERC20_FEI,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_UST,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_UST_BLOCK,
+      lastActiveBlock: ERC20_UST_LAST_ACTIVE_BLOCK,
+      decimals: 6,
+    }),
+    token({
+      address: ERC20_WBTC,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: true,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 8,
+    }),
+    token({
+      address: ERC20_TRIBE,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_TOKE,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_XSUSHI,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_BOND,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      multiplier: "0.77",
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_CVX,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_CVX_BLOCK,
+      decimals: 18,
+    }),
+    // CvxLockerV2 emits no Transfer; balanceOf is the vote-locked CVX.
+    token({
+      address: ERC20_CVX_VL,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_CVX_VL_BLOCK,
+      decimals: 18,
+      nonStandardBalance: true,
+    }),
+    token({
+      address: ERC20_AURA,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_AURA_BLOCK,
+      decimals: 18,
+    }),
+    // vlAURA is valued from AuraLocker.lockedBalances, not balanceOf; the
+    // definition carries its category and price path.
+    token({
+      address: ERC20_AURA_VL,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_AURA_VL_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_AURA_BAL,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_AURA_BAL_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_BAL,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ETHEREUM_START_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_BB_A_USD,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_BB_A_USD_BLOCK,
+      decimals: 18,
+    }),
+    // cvxFRAX3CRV is held staked in Convex reward pools, valued from the
+    // pool's balanceOf rather than the wallet ledger.
+    token({
+      address: ERC20_CVX_FRAX_3CRV,
+      category: "Stable",
+      isLiquid: true,
+      isBluechip: false,
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 18,
     }),
@@ -1244,18 +2027,32 @@ export const ETHEREUM: ChainConfig = {
   },
   basePriceFeeds: {},
   coolerClearinghouses,
+  makerDsr: {
+    pot: MAKER_DSR_POT,
+    depositToken: ERC20_DAI,
+    startBlock: MAKER_DSR_START_BLOCK,
+  },
+  protocolPositions,
+  liquidityPositions,
+  incurDebt: { address: OLYMPUS_INCUR_DEBT, startBlock: OLYMPUS_INCUR_DEBT_BLOCK },
+  lendingDeployments,
+  treasuryOhmExtraWallets: [
+    { address: OLYMPUS_ASSOCIATION, lastActiveBlock: OLYMPUS_ASSOCIATION_LAST_ACTIVE_BLOCK },
+  ],
   // Olympus Boosted Liquidity Vault registry (per inventory §8). The effect
-  // iterates active vaults and reads getPoolOhmShare() per vault. Active
-  // after the OHM_INCUR_DEBT_BLOCK = 17_620_000 gate.
+  // iterates active vaults and reads getPoolOhmShare() per vault. Starts at
+  // the registry's deployment (first code at 17,067,350); reads revert and
+  // return empty before then. Legacy had no gate, so the earlier
+  // OHM_INCUR_DEBT_BLOCK start dropped ~155k OHM of BLV supply in Apr-Jun 2023.
   blvRegistry: {
     address: addr("0x375E06C694B5E50aF8be8FB03495A612eA3e2275"),
-    startBlock: 17_620_000,
+    startBlock: 17_067_350,
   },
   // Olympus V1 BondManager + Gnosis EasyAuction. Drives the bond
   // pre-minted / vesting / vested supply rows. Indexer-side runtime is
   // gated by the BOND_MANAGER_BLOCK = 16_226_955.
   bondManager: {
-    address: addr("0xf577c77ee3578c7f216327f41b5d7221ead2b2a3"),
+    address: BOND_MANAGER,
     startBlock: 16_226_955,
   },
   // Additional OHM-equivalent tokens to count toward the TREASURY supply
@@ -1288,7 +2085,7 @@ export const ETHEREUM: ChainConfig = {
   // OHM is subtracted from total supply between [14_381_564, 24_550_660)
   // to account for stranded gOHM pre-minted for OHM V1 LP migrations.
   migrationOffset: {
-    migrationContract: addr("0x184f3fad8618a6f458c16bae63f70c426fe784b3"),
+    migrationContract: MIGRATION_CONTRACT,
     sOhmAddress: ERC20_SOHM_V3,
     offsetOhm: "2013",
     startBlock: 14_381_564,

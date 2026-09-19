@@ -35,6 +35,7 @@ export interface PriceHandler {
     blockNumber: bigint,
   ): Promise<BigNumber | null>;
   getUnitPrice(priceLookup: PriceLookup, blockNumber: bigint): Promise<BigNumber | null>;
+  getTokenQuantityPerLp(tokenAddress: string, blockNumber: bigint): Promise<BigNumber | null>;
   getUnderlyingTokenBalance(
     wallet: string,
     tokenAddress: string,
@@ -73,6 +74,14 @@ export abstract class BasePriceHandler<THandler extends LiquidityHandler> implem
     blockNumber: bigint,
   ): Promise<BigNumber | null>;
   abstract getUnitPrice(priceLookup: PriceLookup, blockNumber: bigint): Promise<BigNumber | null>;
+  // Quantity of `tokenAddress` in the pool per LP token, or null when the
+  // pool doesn't hold it or the handler can't tell (non-pool handlers).
+  async getTokenQuantityPerLp(
+    _tokenAddress: string,
+    _blockNumber: bigint,
+  ): Promise<BigNumber | null> {
+    return null;
+  }
   abstract getUnderlyingTokenBalance(
     wallet: string,
     tokenAddress: string,

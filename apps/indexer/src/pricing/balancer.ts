@@ -139,6 +139,26 @@ export class BalancerPriceHandler extends BasePriceHandler<
     return supply.eq(ZERO) ? null : totalValue.div(supply);
   }
 
+  async getTokenQuantityPerLp(
+    tokenAddress: string,
+    blockNumber: bigint,
+  ): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
+    const state = await this.getState();
+    if (!state) return null;
+    const index = state.tokens.findIndex((value) => same(value, tokenAddress));
+    if (index < 0) return null;
+    const bpt = bptAddressFromPoolId(this.handler.id);
+    const supplyEntity = await this.context.Erc20Supply.get(`${this.config.chainId}-${bpt}`);
+    if (!supplyEntity || supplyEntity.totalSupply === 0n) return null;
+    const supply = toDecimal(supplyEntity.totalSupply, getTokenDecimals(this.config.tokens, bpt));
+    const reserve = toDecimal(
+      state.balances[index],
+      getTokenDecimals(this.config.tokens, tokenAddress),
+    );
+    return reserve.div(supply);
+  }
+
   async getUnderlyingTokenBalance(
     wallet: string,
     tokenAddress: string,

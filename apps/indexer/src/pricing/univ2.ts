@@ -94,6 +94,30 @@ export class Univ2PriceHandler extends BasePriceHandler<
     return supply.eq(ZERO) ? null : totalValue.div(supply);
   }
 
+  async getTokenQuantityPerLp(
+    tokenAddress: string,
+    blockNumber: bigint,
+  ): Promise<BigNumber | null> {
+    if (!this.isActive(blockNumber)) return null;
+    const { token0, token1 } = this.getSortedTokens();
+    if (!same(tokenAddress, token0) && !same(tokenAddress, token1)) return null;
+    const state = await this.getState();
+    if (!state) return null;
+    const supplyEntity = await this.context.Erc20Supply.get(
+      `${this.config.chainId}-${addr(this.handler.id)}`,
+    );
+    if (!supplyEntity || supplyEntity.totalSupply === 0n) return null;
+    const supply = toDecimal(
+      supplyEntity.totalSupply,
+      getTokenDecimals(this.config.tokens, this.handler.id),
+    );
+    const tokenDecimals = getTokenDecimals(this.config.tokens, tokenAddress);
+    const reserve = same(tokenAddress, token0)
+      ? toDecimal(state.reserve0, tokenDecimals)
+      : toDecimal(state.reserve1, tokenDecimals);
+    return reserve.div(supply);
+  }
+
   async getUnderlyingTokenBalance(
     wallet: string,
     tokenAddress: string,
