@@ -28,7 +28,6 @@ export type MellowPosition = {
   priceD18: string;
   reportTimestamp: number;
   suspicious: boolean;
-  maxAge: number;
   requests: { timestamp: number; shares: string; assets: string; isClaimable: boolean }[];
 };
 
@@ -67,12 +66,9 @@ export function valueMellowPosition(
       price.lte(0) ||
       position.suspicious ||
       position.reportTimestamp <= 0 ||
-      position.reportTimestamp > timestamp ||
-      timestamp - position.reportTimestamp > position.maxAge
+      position.reportTimestamp > timestamp
     ) {
-      throw new Error(
-        "Invalid or stale Mellow oracle report; refusing incomplete treasury snapshot",
-      );
+      throw new Error("Invalid Mellow oracle report; refusing incomplete treasury snapshot");
     }
     // sharesRaw = assetsRaw * priceD18 / 1e18; shares 18dp, USDG 6dp.
     rate = new BigNumber(10).pow(30).div(price);

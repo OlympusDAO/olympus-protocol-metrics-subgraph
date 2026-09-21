@@ -102,11 +102,10 @@ USDG uses an **explicit nominal $1 stable handler**, as used for stable assets
 elsewhere in this indexer. No market-price feed or executable quote is claimed;
 a USDG depeg would not be reflected by this nominal valuation.
 
-When share NAV is needed, reject zero, suspicious, future-dated or stale reports.
-Freshness uses the live SyncDepositQueue `maxAge` (86,400 seconds at the baseline).
-This is a conservative indexing policy aligned with the queue's deposit limit,
-not a claim that NAV becomes economically zero after one day. Fail the snapshot
-rather than omit the position and publish an understated treasury. Existing
+When share NAV is needed, reject zero, suspicious or future-dated reports. A past report remains a valid on-chain observation even when it is older than the vault's live `maxAge`; accepting it prevents an external oracle delay from halting historical replay and rolling back the batch.
+This indexing policy preserves the latest on-chain NAV during historical replay;
+it does not claim that stale NAV is current market data. Fail the snapshot rather
+than omit the position and publish an understated treasury. Existing
 published snapshot timestamps must remain visible to operators. Fixed claims do
 not need valid current NAV. Zero holdings emit nothing.
 
@@ -118,7 +117,6 @@ Use block **65,044,796**, timestamp **1789615687** (2026-09-17 UTC), as the
 - `USDG.balanceOf(Safe) = 0`.
 - `rUSDG.sharesOf(Safe) = 0`.
 - `RedeemQueue.requestsOf(Safe, 0, 100) = []`.
-- `SyncDepositQueue.syncDepositParams() = (0, 86400)`.
 
 All subsequent transfers and ReportHandled events are replayed from this block.
 There is no pre-existing position or request requiring seeding. This integration

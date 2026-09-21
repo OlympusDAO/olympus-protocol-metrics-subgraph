@@ -58,7 +58,6 @@ export const ROBINHOOD: ChainConfig = {
     shares: ERC20_RUSDG,
     asset: ERC20_USDG,
     oracle: addr("0x4336739985da716436460f8E644c03120d334521"),
-    depositQueue: addr("0x4Cb16151eB97Ec29D3fDfc79CCe2233500A80389"),
     redeemQueue: addr("0x873ff30c29450bf4bEB3AfBBB0372a4b47b4969C"),
     startBlock: ROBINHOOD_START_BLOCK,
   },

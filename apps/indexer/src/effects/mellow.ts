@@ -13,7 +13,6 @@ export const readMellowPosition = createEffect(
       priceD18: S.string,
       reportTimestamp: S.number,
       suspicious: S.boolean,
-      maxAge: S.number,
       requests: S.array(
         S.schema({
           timestamp: S.number,
@@ -74,7 +73,6 @@ export const readMellowPosition = createEffect(
         priceD18: "0",
         reportTimestamp: 0,
         suspicious: false,
-        maxAge: 0,
         requests,
       };
     const report = await retryRpc(() =>
@@ -86,20 +84,11 @@ export const readMellowPosition = createEffect(
         blockNumber,
       }),
     );
-    const params = await retryRpc(() =>
-      client.readContract({
-        address: getAddress(vault.depositQueue),
-        abi: MELLOW_ABI,
-        functionName: "syncDepositParams",
-        blockNumber,
-      }),
-    );
     return {
       shares: shares.toString(),
       priceD18: report[0].toString(),
       reportTimestamp: report[1],
       suspicious: report[2],
-      maxAge: params[1],
       requests,
     };
   },

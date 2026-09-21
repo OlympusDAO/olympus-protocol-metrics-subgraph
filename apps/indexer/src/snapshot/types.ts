@@ -240,7 +240,6 @@ export type ChainConfig = {
   mellowVault?: {
     shares: string;
     oracle: string;
-    depositQueue: string;
     redeemQueue: string;
     asset: string;
     startBlock: number;

@@ -23,7 +23,6 @@ const position = (overrides: Partial<MellowPosition> = {}): MellowPosition => ({
   priceD18: "988781355978366146250746960814",
   reportTimestamp: 1789551327,
   suspicious: false,
-  maxAge: 86400,
   requests: [],
   ...overrides,
 });
@@ -46,14 +45,13 @@ describe("Mellow net claim valuation", () => {
     { priceD18: "0" },
     { suspicious: true },
     { reportTimestamp: NOW + 1 },
-    { reportTimestamp: NOW - 86401 },
     { reportTimestamp: 0 },
   ])("rejects unusable NAV instead of silently publishing zero: %o", (override) => {
     expect(() => valueMellowPosition(position(override), 0, NOW)).toThrow(/oracle/);
   });
-  test("accepts the freshness boundary", () => {
+  test("accepts a stale historical report rather than halting replay", () => {
     expect(() =>
-      valueMellowPosition(position({ reportTimestamp: NOW - 86400 }), 0, NOW),
+      valueMellowPosition(position({ reportTimestamp: NOW - 89_045 }), 0, NOW),
     ).not.toThrow();
   });
   test("locked redemption shares use NAV, with the post-fee share amount exactly once", () => {
