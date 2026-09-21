@@ -520,6 +520,8 @@ function chainIdForName(chainName: ChainName): number {
       return 137;
     case "Base":
       return 8453;
+    case "Robinhood":
+      return 4663;
     case "Berachain":
       return 80094;
   }

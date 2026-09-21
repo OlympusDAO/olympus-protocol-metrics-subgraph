@@ -173,7 +173,7 @@ export type BasePriceFeed = {
 declare const bytes32Brand: unique symbol;
 export type Bytes32 = `0x${string}` & { readonly [bytes32Brand]: true };
 
-export type ChainId = 1 | 42161 | 80094 | 8453 | 137 | 250;
+export type ChainId = 1 | 42161 | 80094 | 8453 | 137 | 250 | 4663;
 
 // Named chainId constants — preferred over numeric literals at call sites
 // (e.g. `chainId === CHAIN_IDS.ETHEREUM` reads better than `chainId === 1`,
@@ -185,6 +185,7 @@ export const CHAIN_IDS = {
   FANTOM: 250,
   BASE: 8453,
   BERACHAIN: 80094,
+  ROBINHOOD: 4663,
 } as const satisfies Record<string, ChainId>;
 
 // Cooler Loans receivable source. Each clearinghouse exposes a single
@@ -236,6 +237,13 @@ export type ChainConfig = {
   lendingDeployments?: LendingDeployment[];
   // Non-protocol wallets legacy counted as treasury OHM up to a block.
   treasuryOhmExtraWallets?: { address: string; lastActiveBlock: number }[];
+  mellowVault?: {
+    shares: string;
+    oracle: string;
+    redeemQueue: string;
+    asset: string;
+    startBlock: number;
+  };
   blvRegistry?: { address: string; startBlock: number };
   bondManager?: { address: string; startBlock: number };
   // OHM V1 → V2 migration offset. Subtracts `offsetOhm × current sOHM index`
