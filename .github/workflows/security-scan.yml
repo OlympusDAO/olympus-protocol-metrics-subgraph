@@ -2,6 +2,8 @@ name: Docker Security Scan
 
 on:
   pull_request:
+  push:
+    branches: [master]
   workflow_dispatch:
   schedule:
     - cron: "17 5 * * 1"
