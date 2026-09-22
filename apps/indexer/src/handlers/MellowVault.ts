@@ -81,6 +81,11 @@ export function valueMellowPosition(
   };
 }
 
+/**
+ * Emit mutually exclusive held-share and redemption-claim records at a pinned block.
+ * Held shares inherit the configured backing classification; queued claims stay
+ * non-liquid until collected. Pre-start and zero positions emit no records.
+ */
 export async function pushMellowRecords(
   context: EvmOnBlockContext,
   config: ChainConfig,
