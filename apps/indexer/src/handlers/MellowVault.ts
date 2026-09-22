@@ -108,20 +108,22 @@ export async function pushMellowRecords(
     const assetPrice = (await getPrice(config, context, client, vault.asset, blockNumber, null))
       .price;
     if (assetPrice.lte(0)) throw new Error("Missing USDG valuation");
-    for (const [name, address, rate, balance] of [
+    for (const [name, address, rate, balance, isQueuedClaim] of [
       [
         getContractName(config, vault.shares),
         vault.shares,
         values.rate.times(assetPrice),
         values.shares,
+        false,
       ],
       [
         "rUSDG - Pending redemption",
         vault.shares,
         values.rate.times(assetPrice),
         values.pendingShares,
+        true,
       ],
-      ["USDG - Mellow redemption claim", vault.asset, assetPrice, values.fixedAssets],
+      ["USDG - Mellow redemption claim", vault.asset, assetPrice, values.fixedAssets, true],
     ] as const) {
       if (balance.isZero()) continue;
       const record = createTokenRecord(
@@ -135,7 +137,10 @@ export async function pushMellowRecords(
         balance,
         blockNumber,
       );
-      record.isLiquid = false; // NAV/queued claims are not idle USDG or liquid backing.
+      // Held shares inherit the token's backing classification. Queue claims
+      // remain excluded, including fixed amounts that are not yet claimable.
+      // Inclusion in backing does not assert immediate USDG redemption.
+      if (isQueuedClaim) record.isLiquid = false;
       records.push(record);
     }
   }

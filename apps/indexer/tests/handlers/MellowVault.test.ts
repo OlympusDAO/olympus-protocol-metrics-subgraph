@@ -170,8 +170,8 @@ describe("Robinhood snapshot integration", () => {
     );
     const total = aggregateAcrossChains("2026-09-17", [chain]);
     expect(total.treasuryMarketValue.toNumber()).toBeCloseTo(1.011345929971074, 12);
-    expect(total.treasuryLiquidBacking.toString()).toBe("0");
-    expect(records[0].isLiquid).toBe(false);
+    expect(total.treasuryLiquidBacking.toNumber()).toBeCloseTo(1.011345929971074, 12);
+    expect(records[0].isLiquid).toBe(true);
     expect(records[0].sourceAddress).toBe(ROBINHOOD.protocolAddresses[0]);
     expect(Number(records[0].value)).toBeCloseTo(1.011345929971074, 12);
   });
@@ -239,7 +239,14 @@ describe("Robinhood snapshot integration", () => {
       10 + 1.99 * 1.011345929971074 + 1.005,
       10,
     );
-    expect(aggregate.treasuryLiquidBacking.toString()).toBe("10");
+    expect(aggregate.treasuryLiquidBacking.toNumber()).toBeCloseTo(10 + 1.011345929971074, 10);
+    expect(records.filter((record) => record.isLiquid)).toHaveLength(2);
+    expect(records.find((record) => record.token === "rUSDG - Pending redemption")?.isLiquid).toBe(
+      false,
+    );
+    expect(
+      records.find((record) => record.token === "USDG - Mellow redemption claim")?.isLiquid,
+    ).toBe(false);
   });
   test("coverage reports absent configured chains without a separate date calendar", () => {
     expect(aggregateAcrossChains("2026-09-16", []).chainsMissing).toContain(4663);
