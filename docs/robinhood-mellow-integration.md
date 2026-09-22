@@ -92,8 +92,8 @@ An already-priced request with missing cutoff history aborts the snapshot.
 
 Total = idle USDG + active/claimable-share NAV + unprocessed locked-share NAV +
 fixed redemption claims. No separate vault backing or internal vault liability
-is added/subtracted. Shares and all queued claims are `isLiquid: false`; idle
-USDG is `isLiquid: true` under the existing treasury metric convention, not a
+is added/subtracted. Held shares and idle USDG are `isLiquid: true`; all queued
+claims remain `isLiquid: false`. This is a treasury backing reporting convention, not a
 claim that all balances are unencumbered operational cash.
 
 ### Price and freshness policy
@@ -222,8 +222,8 @@ operational gates; this evidence does not claim production indexing or publicati
 
 - **Wallet and tokens:** `src/snapshot/chains/robinhood.ts` registers the Safe in
   `protocolAddresses`, USDG as a six-decimal liquid stable asset and rUSDG as an
-  eighteen-decimal illiquid receipt. `Erc20Transfers.ts` consumes the same wallet
-  list for both its event filter and balance updates. `config.yaml` subscribes
+  eighteen-decimal receipt included in liquid backing at NAV. `Erc20Transfers.ts`
+  consumes the same wallet list for both its event filter and balance updates. `config.yaml` subscribes
   the two contracts; it is not the wallet or valuation registry.
 - **USDG valuation:** the `usdg-nominal-usd` stable handler prices idle USDG at
   nominal $1. This works before any vault deposit and is not a market-price feed.
@@ -249,5 +249,17 @@ operational gates; this evidence does not claim production indexing or publicati
 Offline registration tests exercise the production transfer filter and handler
 for both assets. A mixed-position snapshot test covers idle USDG, wallet rUSDG,
 pending shares and fixed assets through one token pass, asserting four distinct
-records and excluding all vault/queue exposure from liquid backing. These tests
-are deterministic fixtures, not new authenticated replay or deployment evidence.
+records, including held shares at NAV and excluding all queue exposure from
+liquid backing. These tests are deterministic fixtures, not new authenticated replay or deployment evidence.
+
+## Liquid-backing classification proposal
+
+Held rUSDG shares contribute their existing NAV value to liquid backing. Pending
+redemptions and fixed claims remain excluded until claimed as idle USDG. This
+changes backing classification, not total market value, share pricing, OHM supply
+or redemption mechanics. It does not identify unencumbered deployable cash.
+
+On deployment, regenerate affected snapshots and published artifacts consistently;
+existing stored snapshots do not change merely because the frontend is redeployed.
+Maintainers should confirm the historical backfill scope before rollout. Verify
+asset flags, chain/global backing and frontend contribution from the same snapshot.

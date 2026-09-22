@@ -42,7 +42,8 @@ export const ROBINHOOD: ChainConfig = {
       address: ERC20_RUSDG,
       category: "Stable",
       decimals: 18,
-      isLiquid: false,
+      // Reporting classification for held shares; queued claims override this.
+      isLiquid: true,
       isBluechip: false,
       startBlock: ROBINHOOD_START_BLOCK,
     }),
