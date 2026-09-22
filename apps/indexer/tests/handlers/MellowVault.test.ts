@@ -181,6 +181,38 @@ describe("Robinhood snapshot integration", () => {
     await pushTreasuryOhm({} as EvmOnBlockContext, ROBINHOOD, supplies, BigInt(NOW), block);
     expect(supplies).toEqual([]);
   });
+  test.each([
+    { timestamp: 200, shares: "990000000000000000", assets: "0", isClaimable: false },
+    { timestamp: 100, shares: "1000000000000000000", assets: "1005000", isClaimable: false },
+    { timestamp: 100, shares: "1000000000000000000", assets: "1005000", isClaimable: true },
+  ])("queue-only exposure stays outside backing until claimed: %o", async (request) => {
+    const records: SerializedTokenRecord[] = [];
+    const ctx = {
+      ...context(position({ shares: "0", requests: [request] })),
+      MellowQueueState: { get: vi.fn(async () => ({ handledTimestamp: 100n })) },
+    };
+    await pushMellowRecords(
+      ctx as unknown as EvmOnBlockContext,
+      ROBINHOOD,
+      client,
+      records,
+      BigInt(NOW),
+      block,
+    );
+    expect(records).toHaveLength(1);
+    expect(records[0].isLiquid).toBe(false);
+    const aggregate = computePerChainAggregate(
+      4663,
+      "Robinhood",
+      "2026-09-17",
+      block,
+      BigInt(NOW),
+      records,
+      [],
+    );
+    expect(aggregate.treasuryMarketValue.gt(0)).toBe(true);
+    expect(aggregate.treasuryLiquidBacking.toString()).toBe("0");
+  });
   test("completed redemption is idle USDG with no residual claim", async () => {
     const records: SerializedTokenRecord[] = [];
     const idleContext = {
