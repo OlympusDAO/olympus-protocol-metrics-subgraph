@@ -151,6 +151,9 @@ const ERC20_USDS = addr("0xdC035D45d973E3EC169d2276DDab16f1e407384F");
 // independently priced via Chainlink. Prices recurse through their
 // underlying asset.
 const ERC20_SDAI = addr("0x83F20F44975D03b1b09e64809B757c47f942BEeA");
+const ERC20_ENA = addr("0x57e114b691db790c35207b2e685d4a43181e6061");
+const ERC20_SENA = addr("0x8be3460a480c80728a8c4d7a5d5303c85ba7b3b9");
+const LP_UNISWAP_V3_ENA_WETH = addr("0xc3db44adc1fcdfd5671f555236eae49f4a8eea18");
 const ERC20_SUSDE = addr("0x9D39A5DE30e57443BfF2A8307A4256c8797A3497");
 const ERC20_SUSDS = addr("0xa3931d71877C0E7a3148CB7Eb4463524FEc27fbD");
 // Real Gauntlet Olympus sUSDS Vault — ERC4626 on Ethereum. The earlier
@@ -359,6 +362,10 @@ const ERC20_OHM_V2_BLOCK = 13_782_589;
 // after this block is observed.
 const ERC20_SOHM_V3_BLOCK = 13_806_000;
 const ERC20_SDAI_BLOCK = 17_675_440;
+// Verified Ethereum contract creation blocks; pool deployment is later than ENA.
+const ERC20_ENA_BLOCK = 19_371_662;
+const ERC20_SENA_BLOCK = 20_713_442;
+const LP_UNISWAP_V3_ENA_WETH_BLOCK = 19_567_223;
 const ERC20_SUSDE_BLOCK = 20_265_440;
 const ERC20_SUSDS_BLOCK = 20_722_900;
 const ERC20_GAUNTLET_SUSDS_VAULT_BLOCK = 21_924_854;
@@ -441,6 +448,8 @@ const names: Record<string, string> = {
   [LP_FRAXSWAP_V1_OHM_FRAX]: "FraxSwap V1 OHM-FRAX",
   [LP_FRAXSWAP_V2_OHM_FRAX]: "FraxSwap V2 OHM-FRAX",
   [ERC20_SDAI]: "Savings DAI",
+  [ERC20_ENA]: "Ethena",
+  [ERC20_SENA]: "Staked ENA",
   [ERC20_SUSDE]: "Staked USDe",
   [ERC20_SUSDS]: "Savings USDS",
   [ERC20_GAUNTLET_SUSDS_VAULT]: "Gauntlet sUSDS Vault",
@@ -510,6 +519,8 @@ const abbreviations: Record<string, string> = {
   [AURA_VAULT_OHM_DAI_WETH]: "auraOhmDaiWeth",
   [AURA_VAULT_OHM_WSTETH]: "auraOhmWsteth",
   [ERC20_SDAI]: "sDAI",
+  [ERC20_ENA]: "ENA",
+  [ERC20_SENA]: "sENA",
   [ERC20_SUSDE]: "sUSDe",
   [ERC20_SUSDS]: "sUSDS",
   [ERC20_GAUNTLET_SUSDS_VAULT]: "gtSUSDS",
@@ -731,6 +742,23 @@ const liquidityHandlers: LiquidityHandler[] = [
   // addition to WETH-OHM, and so pushUniv3NftPol recognizes the pair when
   // matching NFT positions. Inventory: docs/envio-migration/inventory-ethereum.md §6.
   univ3OhmSusds,
+  // ENA uses the canonical Uniswap V3 0.3% ENA/WETH market. WETH recurses
+  // to its existing Chainlink USD route; sENA is valued in underlying ENA.
+  {
+    kind: "univ3",
+    tokens: [ERC20_ENA, ERC20_WETH],
+    id: LP_UNISWAP_V3_ENA_WETH,
+    startBlock: LP_UNISWAP_V3_ENA_WETH_BLOCK,
+  },
+  {
+    kind: "erc4626",
+    tokens: [ERC20_SENA],
+    id: ERC20_SENA,
+    underlying: ERC20_ENA,
+    decimals: 18,
+    underlyingDecimals: 18,
+    startBlock: ERC20_SENA_BLOCK,
+  },
   // wstETH and weETH price via their WETH UniV3 pools.
   {
     kind: "univ3",
@@ -1623,6 +1651,25 @@ export const ETHEREUM: ChainConfig = {
       decimals: 6,
       isLiability: true,
       nonStandardBalance: true,
+    }),
+    // Treasury classification: include ENA and sENA in market value, but
+    // exclude both from liquid backing. sENA emits ERC20 Transfer on mint
+    // and burn, so it uses the ordinary transfer ledger (not Erc4626Vault).
+    token({
+      address: ERC20_ENA,
+      category: "Volatile",
+      isLiquid: false,
+      isBluechip: false,
+      startBlock: ERC20_ENA_BLOCK,
+      decimals: 18,
+    }),
+    token({
+      address: ERC20_SENA,
+      category: "Volatile",
+      isLiquid: false,
+      isBluechip: false,
+      startBlock: ERC20_SENA_BLOCK,
+      decimals: 18,
     }),
     // ERC4626 yield-bearing stables. Underlying price comes from Chainlink;
     // share→asset rate from `convertToAssets()` via Erc4626PriceHandler. Share

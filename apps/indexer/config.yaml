@@ -412,6 +412,8 @@ chains:
           # 18142516 redeem), so sDAI lives under Erc4626Vault below with
           # Transfer + Deposit + Withdraw subscriptions.
           - "0xa3931d71877c0e7a3148cb7eb4463524fec27fbd" # sUSDS (ERC4626, emits Transfer on mint/burn)
+          - "0x57e114b691db790c35207b2e685d4a43181e6061" # ENA
+          - "0x8be3460a480c80728a8c4d7a5d5303c85ba7b3b9" # sENA (Transfer on mint/burn)
           - "0x9d39a5de30e57443bff2a8307a4256c8797a3497" # sUSDe (ERC4626, emits Transfer on mint/burn)
           - "0x3365184e87d2bd75961780454a5810bec956f0dd" # Gauntlet Olympus sUSDS Vault (ERC4626, emits Transfer on mint/burn)
           # WETH registered under Wrapped9.
@@ -497,6 +499,7 @@ chains:
           - "0x88051b0eea095007d3bef21ab287be961f3d8598" # WETH-OHM
           - "0x0858e2B0F9D75f7300B38D64482aC2C8DF06a755" # OHM-sUSDS (also POL — NFT positions)
           - "0x109830a1aaad605bbf02a9dfa7b0b92ec2fb7daa" # WETH-wstETH
+          - "0xc3db44adc1fcdfd5671f555236eae49f4a8eea18" # ENA-WETH 0.3%
           - "0x202A6012894Ae5c288eA824cbc8A9bfb26A49b93" # weETH-WETH
           - "0xcd8286b48936cdac20518247dbd310ab681a9fbf" # FXS-ETH
           - "0xa3f558aebaecaf0e11ca4b2199cc5ed341edfd74" # LDO-WETH
