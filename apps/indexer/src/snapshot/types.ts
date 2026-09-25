@@ -345,7 +345,7 @@ export type LiquidityHandler =
       id: string;
       tokens: string[];
       startBlock?: number;
-      twap?: { pricedToken: string; seconds: number; maxSpotDeviationBps: number };
+      twap?: { pricedToken: string; seconds: number; spotWarningBps: number };
     }
   | { kind: "univ3-quoter"; id: string; quoter: string; tokens: string[]; startBlock?: number }
   | { kind: "balancer"; id: Bytes32; vault: string; tokens: string[]; startBlock?: number }

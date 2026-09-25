@@ -53,6 +53,7 @@ async function snapshot(
     sqrtPrice?: bigint;
     liquidityDelta?: string;
     ethPrice?: string;
+    quoteError?: boolean;
   } = {},
 ) {
   const balances = new Map(
@@ -69,7 +70,10 @@ async function snapshot(
       };
     }
     // Controlled ETH price: isolates the recorded ENA/WETH and sENA/ENA rates.
-    if (def.name === "readChainlinkLatestAnswer") return args.ethPrice ?? "240000000000";
+    if (def.name === "readChainlinkLatestAnswer") {
+      if (args.quoteError) throw new Error("quote RPC unavailable");
+      return args.ethPrice ?? "240000000000";
+    }
     if (def.name === "readErc20BalanceOf") return "351067464160132271493";
     throw new Error(`Unexpected effect ${def.name}`);
   });
@@ -86,11 +90,11 @@ async function snapshot(
   await withPricingCache(() =>
     pushTokenBalanceRecords(context, config, client, records, TIMESTAMP, args.block ?? BLOCK),
   );
-  return { records, effect };
+  return { records, effect, log: context.log };
 }
 
 describe("Ethereum ENA/sENA treasury coverage", () => {
-  test("registers both assets and the price pool exactly once without duplicate vault events", () => {
+  test("registers both assets without unused pool or duplicate vault events", () => {
     const yaml = parse(readFileSync(resolve(__dirname, "../../config.yaml"), "utf8"));
     const contracts = yaml.chains.find((chain: { id: number }) => chain.id === 1)
       .contracts as Array<{ name: string; address: string[] }>;
@@ -119,7 +123,7 @@ describe("Ethereum ENA/sENA treasury coverage", () => {
       contracts
         .filter((contract) => contract.address.some((a) => a.toLowerCase() === POOL))
         .map((contract) => contract.name),
-    ).toEqual(["UniswapV3Pool"]);
+    ).toEqual([]);
     expect(ETHEREUM.protocolAddresses).toEqual(expect.arrayContaining([TRSRY, MS]));
   });
 
@@ -173,6 +177,32 @@ describe("Ethereum ENA/sENA treasury coverage", () => {
     expect(effect.mock.calls.some(([def]) => def.name === "readUniv3Twap")).toBe(false);
   });
 
+  test("shared lazy pricing reuses one WETH quote across wallets", async () => {
+    const { records, effect } = await snapshot({
+      balances: [
+        [WETH, TRSRY, 10n ** 18n],
+        [WETH, MS, 2n * 10n ** 18n],
+      ],
+    });
+    expect(records.map((record) => Number(record.value))).toEqual([2400, 4800]);
+    expect(
+      effect.mock.calls.filter(([def]) => def.name === "readChainlinkLatestAnswer"),
+    ).toHaveLength(1);
+  });
+
+  test("shared lazy pricing skips an empty first wallet and retains a later holding", async () => {
+    const { records } = await snapshot({ balances: [[WETH, MS, 10n ** 18n]] });
+    expect(records).toHaveLength(1);
+    expect(records[0].sourceAddress).toBe(MS);
+  });
+
+  test("shared lazy pricing still propagates quote failures for held non-ENA assets", async () => {
+    await expect(
+      snapshot({ quoteError: true, balances: [[WETH, MS, 10n ** 18n]] }),
+    ).rejects.toThrow("quote RPC unavailable");
+    expect((await snapshot({ quoteError: true })).records).toEqual([]);
+  });
+
   test("zero holdings create no phantom treasury records", async () => {
     const { records, effect } = await snapshot({ poolPresent: false });
     expect(records).toEqual([]);
@@ -191,10 +221,12 @@ describe("Ethereum ENA/sENA treasury coverage", () => {
     ).rejects.toThrow("OLD");
   });
 
-  test("spot manipulation beyond 10% fails instead of publishing distorted value", async () => {
-    await expect(
-      snapshot({ sqrtPrice: SQRT_PRICE * 2n, balances: [[ENA, MS, 10n ** 18n]] }),
-    ).rejects.toThrow("deviation");
+  test("large spot deviation warns but cannot change or block a valid TWAP valuation", async () => {
+    const balances: Array<[string, string, bigint]> = [[ENA, MS, 10n ** 18n]];
+    const baseline = await snapshot({ balances });
+    const moved = await snapshot({ sqrtPrice: SQRT_PRICE * 2n, balances });
+    expect(moved.records[0].rate).toBe(baseline.records[0].rate);
+    expect(moved.log.warn).toHaveBeenCalledWith(expect.stringContaining("using full-window TWAP"));
   });
 
   test("modest spot changes do not alter the TWAP valuation", async () => {

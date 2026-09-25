@@ -97,7 +97,7 @@ The separately listed Plasma feed is not an Ethereum historical-price replacemen
 
 Fallback parameters are explicit reviewable defaults, not empirically proven
 optimal thresholds: `observe([3600, 0])`, negative mean ticks rounded down as in
-Uniswap OracleLibrary, and a maximum **10% spot/TWAP price-ratio deviation**.
+Uniswap OracleLibrary, and a **10% spot/TWAP price-ratio warning threshold**.
 Both observation and slot reads are pinned to the snapshot block and cached by
 chain/pool/block/window. Require a valid tick and positive cumulative liquidity
 delta. A full-hour observation must succeed; never shorten the window or
@@ -114,10 +114,12 @@ PublicNode read at block **26,056,846**, timestamp **1,790,368,019**, hash
 - Observation cardinality: 600. This current observation is not archive replay proof.
 
 TWAP reduces instantaneous manipulation exposure but does not eliminate sustained
-manipulation or thin-liquidity risk. The deviation guard can also trip during a
-legitimate fast market or be used to interrupt publication. Invalid observations,
-excessive deviation and RPC errors fail the snapshot for a held position instead
-of publishing spot or silently dropping its value. Standard token pricing is
+manipulation or thin-liquidity risk. A spot/TWAP deviation above 10% emits an
+operational warning but does not reject a valid full-hour TWAP: a cosmetic
+valuation must not let transient spot moves veto the Ethereum snapshot. The
+published value remains the TWAP, never the spot price. Invalid observations
+and RPC errors still fail the snapshot for a held position instead of inventing
+a price or silently dropping its value. Standard token pricing is
 lazy: zero holdings do not require an oracle read, allowing pre-acquisition replay
 without demanding observations for assets the treasury did not hold. A failed
 snapshot requires investigation and rerun before republishing; keep the previous
@@ -130,14 +132,16 @@ before deployment. No spot fallback is configured for ENA.
 
 Ethereum's existing chain start is block 12,000,000, before the new contract
 starts. No wallet registration, OHM supply exclusions, schema, publisher date
-rules or frontend changes are needed. The configured pool events feed the
-existing pricing state; ERC20 transfers feed the existing token balance ledger;
+rules or frontend changes are needed. The ENA pool has no event subscription:
+its TWAP and diagnostic spot are read at the snapshot block through a cached
+effect, so indexing its swaps would produce unused state. ERC20 transfers feed
+the existing token balance ledger;
 `pushTokenBalanceRecords` emits the classified records; existing chain/global
 aggregation and published treasury assets retain their value and liquidity flag.
 
 Deploying config alone onto already-advanced balance state is insufficient.
 Proposed rollout: maintainers reindex Ethereum from its existing configured
-start block 12,000,000 with the new token/pool registrations, then regenerate
+start block 12,000,000 with the new token registrations, then regenerate
 the affected Ethereum snapshots and republish cross-chain aggregates. This is
 a historical coverage backfill, not a prospective deployment-day classification
 change. The replay must include both acquisition transfers. A narrower replay
@@ -154,3 +158,18 @@ requires a separately verified state baseline and is not asserted here. Check:
 
 The owning indexer package is bumped to v0.3.0 with a September 2026 changelog
 entry. No dependency, schema or published client API version changes are included.
+
+## Olympus Dev Check
+
+- TWAP rounding, observation validation and diagnostic deviation calculation live
+  in a pure pricing helper. RPCs reuse the existing UniV3 ABI module.
+- No ENA pool event stream is indexed; only ENA/sENA treasury transfers are added.
+- Spot divergence is diagnostic; unavailable TWAP data remains an explicit error.
+- Shared lazy pricing changes read order for standard assets: balances are read
+  first, and one quote is requested only if a wallet has a nonzero balance. This
+  avoids pre-acquisition oracle calls. Tests cover multiple WETH wallets sharing
+  a quote, an empty first wallet, zero holdings and propagated quote failures.
+  Nonstandard/native position reads may now run even when a quote would have
+  been unavailable; this is the intentional consequence of balance-first order.
+- Pure and routed tests cover negative rounding, tick/window boundaries, both
+  token orderings and mixed decimals. Historical archive replay remains separate.

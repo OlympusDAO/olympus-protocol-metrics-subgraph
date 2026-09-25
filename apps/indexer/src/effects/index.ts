@@ -1,9 +1,10 @@
 import { createEffect, S } from "envio";
-import { type Abi, getAddress, parseAbi } from "viem";
+import { type Abi, getAddress } from "viem";
 
 import { BALANCER_VAULT_ABI } from "../snapshot/abis/balancer";
 import { CHAINLINK_ABI } from "../snapshot/abis/chainlink";
 import { KODIAK_ABI } from "../snapshot/abis/kodiak";
+import { UNIV3_ABI } from "../snapshot/abis/univ3";
 import { CHAIN_CONFIGS } from "../snapshot/chains";
 import { dsrSharesToDai } from "../snapshot/math";
 import { getClient, isContractRevert, retryRpc } from "../snapshot/rpc-client";
@@ -1338,7 +1339,7 @@ export const readUniv3Twap = createEffect(
         client.readContract({
           address,
           blockNumber,
-          abi: parseAbi(["function observe(uint32[]) view returns (int56[], uint160[])"]),
+          abi: UNIV3_ABI,
           functionName: "observe",
           args: [[input.seconds, 0]],
         }),
@@ -1347,9 +1348,7 @@ export const readUniv3Twap = createEffect(
         client.readContract({
           address,
           blockNumber,
-          abi: parseAbi([
-            "function slot0() view returns (uint160,int24,uint16,uint16,uint16,uint8,bool)",
-          ]),
+          abi: UNIV3_ABI,
           functionName: "slot0",
         }),
       ),

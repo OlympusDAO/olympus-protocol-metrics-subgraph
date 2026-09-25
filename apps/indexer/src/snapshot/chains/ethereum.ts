@@ -743,13 +743,13 @@ const liquidityHandlers: LiquidityHandler[] = [
   // matching NFT positions. Inventory: docs/envio-migration/inventory-ethereum.md §6.
   univ3OhmSusds,
   // No verified Ethereum Chainlink ENA feed: use a 1h ENA/WETH TWAP.
-  // Reject >10% spot deviation; WETH uses its existing Chainlink USD route.
+  // Warn on >10% spot deviation; WETH uses its existing Chainlink USD route.
   {
     kind: "univ3",
     tokens: [ERC20_ENA, ERC20_WETH],
     id: LP_UNISWAP_V3_ENA_WETH,
     startBlock: LP_UNISWAP_V3_ENA_WETH_BLOCK,
-    twap: { pricedToken: ERC20_ENA, seconds: 3600, maxSpotDeviationBps: 1000 },
+    twap: { pricedToken: ERC20_ENA, seconds: 3600, spotWarningBps: 1000 },
   },
   {
     kind: "erc4626",

@@ -4,6 +4,7 @@ import { readErc20BalanceOf, readUniv3Twap } from "../effects";
 import { addr, getTokenDecimals, ONE, same, toDecimal, ZERO } from "../snapshot/math";
 import type { LiquidityHandler } from "../snapshot/types";
 import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";
+import { quoteTwap, validateTwapConfig } from "./univ3-twap";
 
 // Univ3 sorts tokens by address (token0 < token1 by uint256).
 function sortTokens(tokens: string[]): [string, string] {
@@ -56,37 +57,21 @@ abstract class Univ3PriceHandlerBase<
     if (!this.isActive(blockNumber)) return null;
     let raw: BigNumber;
     if (this.handler.kind === "univ3" && this.handler.twap) {
-      const { seconds, maxSpotDeviationBps } = this.handler.twap;
-      if (
-        !Number.isInteger(seconds) ||
-        seconds <= 0 ||
-        seconds > 0xffffffff ||
-        !Number.isInteger(maxSpotDeviationBps) ||
-        maxSpotDeviationBps <= 0 ||
-        maxSpotDeviationBps > 10000
-      ) {
-        throw new Error("Invalid UniV3 TWAP configuration");
-      }
+      const { seconds, spotWarningBps } = this.handler.twap;
+      validateTwapConfig(seconds, spotWarningBps);
       const observation = await this.context.effect(readUniv3Twap, {
         chainId: this.config.chainId,
         poolAddress: this.handler.id,
         atBlock: Number(blockNumber),
         seconds,
       });
-      const delta = BigInt(observation.tickDelta);
-      const window = BigInt(seconds);
-      let tick = delta / window;
-      // OracleLibrary.consult rounds negative arithmetic mean ticks down.
-      if (delta < 0n && delta % window !== 0n) tick -= 1n;
-      if (tick < -887272n || tick > 887272n || BigInt(observation.liquidityDelta) <= 0n) {
-        throw new Error("Invalid UniV3 TWAP observation");
-      }
-      // Bound exponentiation precision locally; never alter global decimal math.
-      const Decimal = BigNumber.clone({ POW_PRECISION: 60, DECIMAL_PLACES: 80 });
-      raw = new BigNumber(new Decimal("1.0001").pow(Number(tick)).toString());
-      const spot = priceToken0InToken1(BigInt(observation.sqrtPriceX96));
-      if (spot.lte(0) || spot.div(raw).minus(1).abs().times(10000).gt(maxSpotDeviationBps)) {
-        throw new Error("UniV3 spot/TWAP deviation exceeds configured bound");
+      const quote = quoteTwap(observation, seconds);
+      raw = quote.raw;
+      // Reporting-only diagnostic: a transient spot move must not veto a valid TWAP.
+      if (quote.deviationBps.gt(spotWarningBps)) {
+        this.context.log.warn(
+          `UniV3 spot/TWAP deviation ${quote.deviationBps.toFixed(0)} bps: chain ${this.config.chainId}, pool ${this.handler.id}, block ${blockNumber}; using full-window TWAP`,
+        );
       }
     } else {
       const state = await this.getState();
