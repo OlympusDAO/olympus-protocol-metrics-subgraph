@@ -6,7 +6,10 @@ import type { PublicClient } from "viem";
 import { describe, expect, test, vi } from "vitest";
 import { parse } from "yaml";
 import { pushTokenBalanceRecords } from "../../src/handlers/BlockHandlers";
-import { handleTreasuryTransfer } from "../../src/handlers/Erc20Transfers";
+import {
+  buildTreasuryTransferWhere,
+  handleTreasuryTransfer,
+} from "../../src/handlers/Erc20Transfers";
 import { withPricingCache } from "../../src/pricing";
 import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
 import { computePerChainAggregate } from "../../src/snapshot/global";
@@ -166,6 +169,53 @@ describe("Ethereum ENA/sENA treasury coverage", () => {
   test("missing conversion never values sENA at one ENA", async () => {
     expect((await snapshot({ ratio: "", balances: [[SENA, TRSRY, 10n ** 18n]] })).records).toEqual(
       [],
+    );
+  });
+});
+
+describe("Ethena production transfer filtering", () => {
+  test("both treasury wallets are selected by the live handler filter", () => {
+    const where = buildTreasuryTransferWhere({ chain: { id: 1 } });
+    if (!where) throw new Error("Ethereum production filter is missing");
+    expect(where.params).toEqual([
+      { from: expect.arrayContaining([TRSRY, MS]) },
+      { to: expect.arrayContaining([TRSRY, MS]) },
+    ]);
+  });
+  test.each([
+    ENA,
+    SENA,
+  ])("%s incoming transfer persists balance and immutable history once", async (token) => {
+    const context = {
+      TokenBalance: { get: vi.fn(async () => undefined), set: vi.fn() },
+      TokenBalanceUpdate: { set: vi.fn() },
+    };
+    await handleTreasuryTransfer({
+      context,
+      event: {
+        chainId: 1,
+        srcAddress: token,
+        logIndex: 7,
+        block: { number: Number(BLOCK), timestamp: Number(TIMESTAMP) },
+        params: {
+          from: "0x0000000000000000000000000000000000000000",
+          to: TRSRY,
+          value: 5n * 10n ** 18n,
+        },
+      },
+    });
+    expect(context.TokenBalance.set).toHaveBeenCalledTimes(1);
+    expect(context.TokenBalanceUpdate.set).toHaveBeenCalledTimes(1);
+    expect(context.TokenBalanceUpdate.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: `1-${token}-${TRSRY}-${BLOCK}-7`,
+        block: BLOCK,
+        timestamp: TIMESTAMP,
+        tokenAddress: token,
+        walletAddress: TRSRY,
+        delta: 5n * 10n ** 18n,
+        balance: 5n * 10n ** 18n,
+      }),
     );
   });
 });

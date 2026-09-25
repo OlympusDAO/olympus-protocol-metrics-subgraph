@@ -2,7 +2,7 @@
 
 All notable changes to this package will be documented in this file. Dates are displayed in UTC.
 
-## [Unreleased]
+## [v0.3.0] - 2026-09
 
 - Index Ethereum ENA and sENA treasury holdings as non-liquid volatile assets.
 - Value ENA through its Uniswap V3 ENA/WETH market and sENA through its ERC4626 ENA conversion.

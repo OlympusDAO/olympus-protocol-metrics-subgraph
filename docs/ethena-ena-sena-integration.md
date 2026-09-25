@@ -94,9 +94,12 @@ existing pricing state; ERC20 transfers feed the existing token balance ledger;
 aggregation and published treasury assets retain their value and liquidity flag.
 
 Deploying config alone onto already-advanced balance state is insufficient.
-Maintainers must replay/reindex the new token and pool history (or use a separately
-verified state baseline), including both acquisition transfers, then publish new
-snapshots. Check:
+Proposed rollout: maintainers reindex Ethereum from its existing configured
+start block 12,000,000 with the new token/pool registrations, then regenerate
+the affected Ethereum snapshots and republish cross-chain aggregates. This is
+a historical coverage backfill, not a prospective deployment-day classification
+change. The replay must include both acquisition transfers. A narrower replay
+requires a separately verified state baseline and is not asserted here. Check:
 
 1. Accepted deployment SHA and Ethereum progress past the acquisition blocks.
 2. Exactly one sENA record per holding wallet with correct conversion and
@@ -107,5 +110,5 @@ snapshots. Check:
    filters non-liquid assets may need its own follow-up; this PR changes indexing.
 5. Historical conversion reads succeed through the deployment's archive RPC.
 
-The package changelog records this under Unreleased; no dependency, schema or
-published client API version change is required.
+The owning indexer package is bumped to v0.3.0 with a September 2026 changelog
+entry. No dependency, schema or published client API version changes are included.
