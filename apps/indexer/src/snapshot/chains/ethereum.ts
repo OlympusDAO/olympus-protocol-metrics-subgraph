@@ -742,13 +742,14 @@ const liquidityHandlers: LiquidityHandler[] = [
   // addition to WETH-OHM, and so pushUniv3NftPol recognizes the pair when
   // matching NFT positions. Inventory: docs/envio-migration/inventory-ethereum.md §6.
   univ3OhmSusds,
-  // ENA uses the canonical Uniswap V3 0.3% ENA/WETH market. WETH recurses
-  // to its existing Chainlink USD route; sENA is valued in underlying ENA.
+  // No verified Ethereum Chainlink ENA feed: use a 1h ENA/WETH TWAP.
+  // Reject >10% spot deviation; WETH uses its existing Chainlink USD route.
   {
     kind: "univ3",
     tokens: [ERC20_ENA, ERC20_WETH],
     id: LP_UNISWAP_V3_ENA_WETH,
     startBlock: LP_UNISWAP_V3_ENA_WETH_BLOCK,
+    twap: { pricedToken: ERC20_ENA, seconds: 3600, maxSpotDeviationBps: 1000 },
   },
   {
     kind: "erc4626",

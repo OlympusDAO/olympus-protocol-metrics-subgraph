@@ -12,7 +12,7 @@ retain the existing behavior of not producing a holding row.
 - ENA value = wallet ENA balance × ENA/USD price.
 - sENA value = wallet shares × `convertToAssets(1e18) / 1e18` × ENA/USD price.
 - ENA/USD uses the Uniswap V3 0.3% ENA/WETH pool and the existing WETH/USD
-  Chainlink route. This is a pool spot valuation, not an ENA oracle or TWAP.
+  Chainlink route. ENA/WETH uses a one-hour geometric TWAP, not pool spot.
 - Underlying ENA inside sENA is not counted as a separate treasury asset.
 - The price pool is not registered as a treasury-owned position.
 
@@ -69,9 +69,9 @@ hash `0x44fabbaa014a702f2980e2520b79ce44b889bd1691d2d21dbb9ff776f230bb0c`:
 `1018269352422694832`, or **1.018269352422694832 ENA per sENA**.
 Pool `slot0.sqrtPriceX96` was `780550399454001161472712967`.
 These are dated fixtures, not permanently current balances or exchange rates.
-The regression test uses these balances, conversion and pool ratio with an
-explicitly controlled $2,400 ETH price; it does not claim that mocked price was
-the observed Chainlink answer.
+The regression test combines these balances/conversion with the later TWAP
+fixture below and a controlled $2,400 ETH price. It is a mixed-block unit
+fixture, not a claimed historical USD valuation.
 
 Explorer transfer history identified the existing holdings:
 
@@ -83,6 +83,48 @@ archive-state replay. PublicNode rejected old `eth_getCode` calls because archiv
 access requires a personal token; the public dRPC fallback timed out. Historical
 pre/post-deployment RPC replay remains unverified. Current block-pinned reads
 must not be represented as proof of historical archive availability.
+
+## Oracle preference and TWAP fallback
+
+Prefer a verified Chainlink ENA/USD feed when one exists on Ethereum with the
+required history and freshness semantics. On 2026-09-25, the Chainlink
+[Ethereum directory](https://reference-data-directory.vercel.app/feeds-mainnet.json)
+contained no ENA listing. At block **26,056,846**, the Ethereum Feed Registry
+`0x47Fb2585D2C56Fe188D0E6ec628a38b74fCeeeDf` returned `Feed not found` for
+`getFeed(ENA, 0x0000000000000000000000000000000000000348)` (USD).
+This does not prove no custom feed exists; no suitable Ethereum feed was verified.
+The separately listed Plasma feed is not an Ethereum historical-price replacement.
+
+Fallback parameters are explicit reviewable defaults, not empirically proven
+optimal thresholds: `observe([3600, 0])`, negative mean ticks rounded down as in
+Uniswap OracleLibrary, and a maximum **10% spot/TWAP price-ratio deviation**.
+Both observation and slot reads are pinned to the snapshot block and cached by
+chain/pool/block/window. Require a valid tick and positive cumulative liquidity
+delta. A full-hour observation must succeed; never shorten the window or
+silently substitute spot. The pool prices ENA only, not WETH. sENA retains its
+independent ERC4626 conversion.
+
+PublicNode read at block **26,056,846**, timestamp **1,790,368,019**, hash
+`0xd44a439b6801c98e9892828a71c8271acb0bf695fff01341e16493cf159b89fc`:
+
+- Tick cumulatives: `[-7116251905332, -7116584635080]`.
+- Mean tick: `-92425` after flooring.
+- Seconds-per-liquidity cumulative delta: `20249843485504294934`.
+- `slot0.sqrtPriceX96`: `783082933127646025307382464`.
+- Observation cardinality: 600. This current observation is not archive replay proof.
+
+TWAP reduces instantaneous manipulation exposure but does not eliminate sustained
+manipulation or thin-liquidity risk. The deviation guard can also trip during a
+legitimate fast market or be used to interrupt publication. Invalid observations,
+excessive deviation and RPC errors fail the snapshot for a held position instead
+of publishing spot or silently dropping its value. Standard token pricing is
+lazy: zero holdings do not require an oracle read, allowing pre-acquisition replay
+without demanding observations for assets the treasury did not hold. A failed
+snapshot requires investigation and rerun before republishing; keep the previous
+accepted published artifact until a complete replacement is verified. Historical
+TWAP reads at acquisition remain unverified because the public archive rejected
+the call. Maintainers must validate these parameters and historical coverage
+before deployment. No spot fallback is configured for ENA.
 
 ## Integration and deployment
 
@@ -108,7 +150,7 @@ requires a separately verified state baseline and is not asserted here. Check:
    to liquid backing from these records.
 4. Published API rows and frontend visibility. A frontend that independently
    filters non-liquid assets may need its own follow-up; this PR changes indexing.
-5. Historical conversion reads succeed through the deployment's archive RPC.
+5. Historical conversion and full-hour TWAP reads succeed through the deployment's archive RPC; reconcile any failed snapshots before republishing.
 
 The owning indexer package is bumped to v0.3.0 with a September 2026 changelog
 entry. No dependency, schema or published client API version changes are included.

@@ -25,6 +25,8 @@ const MS = "0x245cc372c84b3645bf0ffe6538620b04a217988b";
 const BLOCK = 26_056_046n;
 const TIMESTAMP = 1_790_358_395n;
 // Ethereum block 26056046: public RPC reads, retained in the PR evidence.
+// TWAP fixture is from block 26056846; holding/conversion anchor is 26056046.
+// Mixing these inputs is intentional for a controlled unit test, not a historical valuation.
 const RATIO = "1018269352422694832";
 const SQRT_PRICE = 780550399454001161472712967n;
 const ETHEREUM = CHAIN_CONFIGS[1];
@@ -40,12 +42,17 @@ const config = {
   ),
 };
 
+/** Run production token snapshots with controlled balances and price inputs. */
 async function snapshot(
   args: {
     block?: bigint;
     balances?: Array<[string, string, bigint]>;
     ratio?: string;
     poolPresent?: boolean;
+    tickDelta?: string;
+    sqrtPrice?: bigint;
+    liquidityDelta?: string;
+    ethPrice?: string;
   } = {},
 ) {
   const balances = new Map(
@@ -53,8 +60,16 @@ async function snapshot(
   );
   const effect = vi.fn(async (def: { name: string }) => {
     if (def.name === "readErc4626AssetsPerShare") return args.ratio ?? RATIO;
+    if (def.name === "readUniv3Twap") {
+      if (args.poolPresent === false) throw new Error("OLD: insufficient observation history");
+      return {
+        tickDelta: args.tickDelta ?? "-332729748",
+        liquidityDelta: args.liquidityDelta ?? "20249843485504294934",
+        sqrtPriceX96: (args.sqrtPrice ?? SQRT_PRICE).toString(),
+      };
+    }
     // Controlled ETH price: isolates the recorded ENA/WETH and sENA/ENA rates.
-    if (def.name === "readChainlinkLatestAnswer") return "240000000000";
+    if (def.name === "readChainlinkLatestAnswer") return args.ethPrice ?? "240000000000";
     if (def.name === "readErc20BalanceOf") return "351067464160132271493";
     throw new Error(`Unexpected effect ${def.name}`);
   });
@@ -117,10 +132,9 @@ describe("Ethereum ENA/sENA treasury coverage", () => {
       ],
     });
     expect(records).toHaveLength(3);
-    const enaPrice = new BigNumber(SQRT_PRICE.toString())
-      .pow(2)
-      .div(new BigNumber(2).pow(192))
-      .times(2400);
+    const enaPrice = new BigNumber(
+      "0.23251189604702704665875370820623958119844532174113462484271823767",
+    );
     const senaPrice = enaPrice.times(new BigNumber(RATIO).div(1e18));
     const sena = records.filter((record) => record.tokenAddress === SENA);
     expect(sena).toHaveLength(2);
@@ -150,8 +164,19 @@ describe("Ethereum ENA/sENA treasury coverage", () => {
     expect(new Set(records.map((r) => `${r.tokenAddress}-${r.sourceAddress}`)).size).toBe(3);
   });
 
+  test("WETH pricing never invokes the auxiliary ENA TWAP", async () => {
+    const { records, effect } = await snapshot({
+      poolPresent: false,
+      balances: [[WETH, MS, 10n ** 18n]],
+    });
+    expect(Number(records[0].rate)).toBe(2400);
+    expect(effect.mock.calls.some(([def]) => def.name === "readUniv3Twap")).toBe(false);
+  });
+
   test("zero holdings create no phantom treasury records", async () => {
-    expect((await snapshot()).records).toEqual([]);
+    const { records, effect } = await snapshot({ poolPresent: false });
+    expect(records).toEqual([]);
+    expect(effect).not.toHaveBeenCalled();
   });
 
   test("pre-deployment state avoids sENA conversion and treasury records", async () => {
@@ -160,10 +185,48 @@ describe("Ethereum ENA/sENA treasury coverage", () => {
     expect(effect.mock.calls.some(([def]) => def.name === "readErc4626AssetsPerShare")).toBe(false);
   });
 
-  test("missing underlying price never assigns sENA a dollar peg", async () => {
-    expect(
-      (await snapshot({ poolPresent: false, balances: [[SENA, TRSRY, 10n ** 18n]] })).records,
-    ).toEqual([]);
+  test("unavailable TWAP history fails instead of using spot or omitting held sENA", async () => {
+    await expect(
+      snapshot({ poolPresent: false, balances: [[SENA, TRSRY, 10n ** 18n]] }),
+    ).rejects.toThrow("OLD");
+  });
+
+  test("spot manipulation beyond 10% fails instead of publishing distorted value", async () => {
+    await expect(
+      snapshot({ sqrtPrice: SQRT_PRICE * 2n, balances: [[ENA, MS, 10n ** 18n]] }),
+    ).rejects.toThrow("deviation");
+  });
+
+  test("modest spot changes do not alter the TWAP valuation", async () => {
+    const balances: Array<[string, string, bigint]> = [[ENA, MS, 10n ** 18n]];
+    const baseline = await snapshot({ balances });
+    const moved = await snapshot({ balances, sqrtPrice: (SQRT_PRICE * 101n) / 100n });
+    expect(moved.records[0].rate).toBe(baseline.records[0].rate);
+    expect(moved.effect).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "readUniv3Twap" }),
+      expect.objectContaining({ atBlock: Number(BLOCK), seconds: 3600 }),
+    );
+  });
+
+  test.each(["0", "-1"])("invalid liquidity delta %s fails closed", async (liquidityDelta) => {
+    await expect(snapshot({ liquidityDelta, balances: [[ENA, MS, 10n ** 18n]] })).rejects.toThrow(
+      "observation",
+    );
+  });
+
+  test.each([
+    "0",
+    "-1",
+  ])("invalid secondary price %s fails rather than omitting held assets", async (ethPrice) => {
+    await expect(snapshot({ ethPrice, balances: [[ENA, MS, 10n ** 18n]] })).rejects.toThrow(
+      "secondary price",
+    );
+  });
+
+  test("out-of-range tick fails closed", async () => {
+    await expect(
+      snapshot({ tickDelta: "4000000000", balances: [[ENA, MS, 10n ** 18n]] }),
+    ).rejects.toThrow("observation");
   });
 
   test("missing conversion never values sENA at one ENA", async () => {

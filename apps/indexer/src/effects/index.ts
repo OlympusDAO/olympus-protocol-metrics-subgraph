@@ -1,5 +1,5 @@
 import { createEffect, S } from "envio";
-import { type Abi, getAddress } from "viem";
+import { type Abi, getAddress, parseAbi } from "viem";
 
 import { BALANCER_VAULT_ABI } from "../snapshot/abis/balancer";
 import { CHAINLINK_ABI } from "../snapshot/abis/chainlink";
@@ -1314,5 +1314,51 @@ export const readChainlinkLatestAnswer = createEffect(
       // gracefully instead of crashing the whole snapshot.
       return "0";
     }
+  },
+);
+
+// Block and window are part of the cache key. Failed/short observation history
+// must propagate, never masquerade as a zero price or downgrade to pool spot.
+export const readUniv3Twap = createEffect(
+  {
+    name: "readUniv3Twap",
+    input: { chainId: S.number, poolAddress: S.string, atBlock: S.number, seconds: S.number },
+    output: { tickDelta: S.string, liquidityDelta: S.string, sqrtPriceX96: S.string },
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    const address = getAddress(input.poolAddress);
+    const blockNumber = BigInt(input.atBlock);
+    const [observations, slot] = await Promise.all([
+      retryRpc(() =>
+        client.readContract({
+          address,
+          blockNumber,
+          abi: parseAbi(["function observe(uint32[]) view returns (int56[], uint160[])"]),
+          functionName: "observe",
+          args: [[input.seconds, 0]],
+        }),
+      ),
+      retryRpc(() =>
+        client.readContract({
+          address,
+          blockNumber,
+          abi: parseAbi([
+            "function slot0() view returns (uint160,int24,uint16,uint16,uint16,uint8,bool)",
+          ]),
+          functionName: "slot0",
+        }),
+      ),
+    ]);
+    // Match Solidity's wrapping cumulative counters before subtraction.
+    return {
+      tickDelta: BigInt.asIntN(56, observations[0][1] - observations[0][0]).toString(),
+      liquidityDelta: BigInt.asUintN(160, observations[1][1] - observations[1][0]).toString(),
+      sqrtPriceX96: slot[0].toString(),
+    };
   },
 );
