@@ -1,6 +1,7 @@
 import { parseAbi } from "viem";
 
 export const UNIV3_ABI = parseAbi([
+  "function observe(uint32[] secondsAgos) view returns (int56[] tickCumulatives, uint160[] secondsPerLiquidityCumulativeX128s)",
   "function token0() view returns (address)",
   "function token1() view returns (address)",
   "function fee() view returns (uint24)",

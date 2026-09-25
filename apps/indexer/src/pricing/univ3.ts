@@ -1,9 +1,10 @@
 import BigNumber from "bignumber.js";
 
-import { readErc20BalanceOf } from "../effects";
+import { readErc20BalanceOf, readUniv3Twap } from "../effects";
 import { addr, getTokenDecimals, ONE, same, toDecimal, ZERO } from "../snapshot/math";
 import type { LiquidityHandler } from "../snapshot/types";
 import { BasePriceHandler, type PriceLookup, type PriceLookupResult } from "./types";
+import { quoteTwap, validateTwapConfig } from "./univ3-twap";
 
 // Univ3 sorts tokens by address (token0 < token1 by uint256).
 function sortTokens(tokens: string[]): [string, string] {
@@ -47,24 +48,50 @@ abstract class Univ3PriceHandlerBase<
     return { token0, token1 };
   }
 
+  /** Value a pool pair, enforcing block-pinned TWAP guards when configured. */
   async getPrice(
     tokenAddress: string,
     priceLookup: PriceLookup,
     blockNumber: bigint,
   ): Promise<PriceLookupResult | null> {
     if (!this.isActive(blockNumber)) return null;
-    const state = await this.getState();
-    if (!state || state.sqrtPriceX96 === 0n) return null;
+    let raw: BigNumber;
+    if (this.handler.kind === "univ3" && this.handler.twap) {
+      const { seconds, spotWarningBps } = this.handler.twap;
+      validateTwapConfig(seconds, spotWarningBps);
+      const observation = await this.context.effect(readUniv3Twap, {
+        chainId: this.config.chainId,
+        poolAddress: this.handler.id,
+        atBlock: Number(blockNumber),
+        seconds,
+      });
+      const quote = quoteTwap(observation, seconds);
+      raw = quote.raw;
+      // Reporting-only diagnostic: a transient spot move must not veto a valid TWAP.
+      if (quote.deviationBps.gt(spotWarningBps)) {
+        this.context.log.warn(
+          `UniV3 spot/TWAP deviation ${quote.deviationBps.toFixed(0)} bps: chain ${this.config.chainId}, pool ${this.handler.id}, block ${blockNumber}; using full-window TWAP`,
+        );
+      }
+    } else {
+      const state = await this.getState();
+      if (!state || state.sqrtPriceX96 === 0n) return null;
+      raw = priceToken0InToken1(state.sqrtPriceX96);
+    }
 
     const { token0, token1 } = this.getSortedTokens();
     const lookupIsToken0 = same(tokenAddress, token0);
     const secondaryToken = lookupIsToken0 ? token1 : token0;
     const secondary = await priceLookup(secondaryToken, blockNumber, this.getId());
-    if (secondary.price.eq(ZERO)) return null;
+    if (secondary.price.lte(ZERO)) {
+      if (this.handler.kind === "univ3" && this.handler.twap) {
+        throw new Error("UniV3 TWAP secondary price unavailable");
+      }
+      return null;
+    }
 
     const decimals0 = getTokenDecimals(this.config.tokens, token0);
     const decimals1 = getTokenDecimals(this.config.tokens, token1);
-    const raw = priceToken0InToken1(state.sqrtPriceX96);
     const adjusted = applyDecimalAdjustment(raw, decimals0, decimals1, lookupIsToken0);
     const price = adjusted.times(secondary.price);
     // Liquidity for handler selection is USD depth on the secondary side, the
@@ -104,7 +131,14 @@ abstract class Univ3PriceHandlerBase<
 
 export class Univ3PriceHandler extends Univ3PriceHandlerBase<
   Extract<LiquidityHandler, { kind: "univ3" }>
-> {}
+> {
+  /** Restrict a TWAP route to its base asset, leaving the quote asset independent. */
+  matches(tokenAddress: string): boolean {
+    return this.handler.twap
+      ? same(tokenAddress, this.handler.twap.pricedToken)
+      : super.matches(tokenAddress);
+  }
+}
 
 export class Univ3QuoterPriceHandler extends Univ3PriceHandlerBase<
   Extract<LiquidityHandler, { kind: "univ3-quoter" }>
