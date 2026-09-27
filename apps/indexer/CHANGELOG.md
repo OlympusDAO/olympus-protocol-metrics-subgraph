@@ -4,7 +4,7 @@ All notable changes to this package will be documented in this file. Dates are d
 
 ## Unreleased
 
-- Include held Robinhood rUSDG shares in liquid backing at existing NAV; keep pending and fixed redemption claims non-liquid. This reporting classification does not imply instant redemption.
+- Review candidate: retain held/pending rUSDG at NAV outside liquid backing; split fixed claims so only claimable USDG is liquid. Make every row classification explicit and require historical replay before publication. Policy approval and release version assignment remain pending.
 
 ## [v0.2.0] - 2026-09
 

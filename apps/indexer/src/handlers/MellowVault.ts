@@ -46,10 +46,12 @@ export function valueMellowPosition(
 ) {
   let pendingShares = new BigNumber(0);
   let fixedAssets = new BigNumber(0);
+  let claimableAssets = new BigNumber(0);
   for (const request of position.requests) {
     if (request.timestamp <= handledTimestamp) {
       // Includes a processed zero-asset/dust claim, even before it is claimable.
       fixedAssets = fixedAssets.plus(request.assets);
+      if (request.isClaimable) claimableAssets = claimableAssets.plus(request.assets);
     } else {
       if (request.isClaimable || new BigNumber(request.assets).gt(0))
         throw new Error("Missing Mellow ReportHandled history");
@@ -77,14 +79,15 @@ export function valueMellowPosition(
     shares: shares.div(1e18),
     pendingShares: pendingShares.div(1e18),
     fixedAssets: fixedAssets.div(1e6),
+    claimableAssets: claimableAssets.div(1e6),
     rate,
   };
 }
 
 /**
  * Emit mutually exclusive held-share and redemption-claim records at a pinned block.
- * Held shares inherit the configured backing classification; queued claims stay
- * non-liquid until collected. Pre-start and zero positions emit no records.
+ * NAV-dependent held/pending shares and non-claimable fixed claims are non-liquid.
+ * Only fixed, currently claimable USDG is liquid. Pre-start/zero emit no records.
  */
 export async function pushMellowRecords(
   context: EvmOnBlockContext,
@@ -113,7 +116,7 @@ export async function pushMellowRecords(
     const assetPrice = (await getPrice(config, context, client, vault.asset, blockNumber, null))
       .price;
     if (assetPrice.lte(0)) throw new Error("Missing USDG valuation");
-    for (const [name, address, rate, balance, isQueuedClaim] of [
+    for (const [name, address, rate, balance, isLiquid] of [
       [
         getContractName(config, vault.shares),
         vault.shares,
@@ -126,27 +129,33 @@ export async function pushMellowRecords(
         vault.shares,
         values.rate.times(assetPrice),
         values.pendingShares,
-        true,
+        false,
       ],
-      ["USDG - Mellow redemption claim", vault.asset, assetPrice, values.fixedAssets, true],
+      [
+        "USDG - Mellow redemption claim",
+        vault.asset,
+        assetPrice,
+        values.fixedAssets.minus(values.claimableAssets),
+        false,
+      ],
+      ["USDG - Mellow claimable redemption", vault.asset, assetPrice, values.claimableAssets, true],
     ] as const) {
       if (balance.isZero()) continue;
-      const record = createTokenRecord(
-        config,
-        timestamp,
-        name,
-        address,
-        getContractName(config, wallet),
-        wallet,
-        rate,
-        balance,
-        blockNumber,
-      );
-      // Held shares inherit the token's backing classification. Queue claims
-      // remain excluded, including fixed amounts that are not yet claimable.
-      // Inclusion in backing does not assert immediate USDG redemption.
-      if (isQueuedClaim) record.isLiquid = false;
-      records.push(record);
+      records.push({
+        ...createTokenRecord(
+          config,
+          timestamp,
+          name,
+          address,
+          getContractName(config, wallet),
+          wallet,
+          rate,
+          balance,
+          blockNumber,
+        ),
+        // Classification belongs to the economic state, not the token address.
+        isLiquid,
+      });
     }
   }
 }

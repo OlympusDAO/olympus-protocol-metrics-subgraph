@@ -52,7 +52,7 @@ describe("legacy-compatible metric shape", () => {
       blockchain: "Robinhood",
       date: "2026-09-17",
       token: "rUSDG",
-      isLiquid: true,
+      isLiquid: false,
     };
     const queuedClaim = {
       ...asset,
@@ -60,20 +60,26 @@ describe("legacy-compatible metric shape", () => {
       token: "rUSDG - Pending redemption",
       isLiquid: false,
     };
+    const claimable = {
+      ...asset,
+      id: "claimable-claim",
+      token: "USDG - Mellow claimable redemption",
+      isLiquid: true,
+    };
     const metric = buildDailyMetric({
       date: "2026-09-17",
       chainValues: {},
-      treasuryAssets: [asset, queuedClaim],
+      treasuryAssets: [asset, queuedClaim, claimable],
       generatedAt: "2026-09-17T04:00:00Z",
       includeRecords: true,
     });
     expect(groupTreasuryAssetsByChain([asset]).Robinhood).toEqual([asset]);
     expect(metric.chainsIndexed).toContain(4663);
     expect(metric.chainsMissing).not.toContain(4663);
-    expect(metric.treasuryMarketValue).toBe(200);
+    expect(metric.treasuryMarketValue).toBe(300);
     expect(metric.treasuryLiquidBacking).toBe(100);
     expect(metric.treasuryLiquidBackingComponents.Robinhood).toBe(100);
-    expect(metric.treasuryLiquidBackingRecords?.Robinhood).toEqual([asset]);
+    expect(metric.treasuryLiquidBackingRecords?.Robinhood).toEqual([claimable]);
     const empty = buildDailyMetric({
       date: "2026-09-17",
       chainValues: {},

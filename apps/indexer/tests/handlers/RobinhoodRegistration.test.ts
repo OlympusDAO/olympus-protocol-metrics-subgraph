@@ -23,7 +23,7 @@ describe("Robinhood treasury ingestion registration", () => {
     });
     expect(ROBINHOOD.tokens.find((token) => token.address === RUSDG)).toMatchObject({
       decimals: 18,
-      isLiquid: true,
+      isLiquid: false,
     });
     expect(ROBINHOOD.liquidityHandlers).toContainEqual({
       kind: "stable",
