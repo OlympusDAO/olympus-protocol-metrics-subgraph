@@ -45,8 +45,7 @@ export async function pushUniv3NftPol(
 
   // Build a token-pair + fee-tier → pool lookup from this chain's owned
   // UniV3 handlers so positions in different pools for the same pair do not
-  // collapse into one row. Handlers without an explicit fee retain the
-  // pair-only fallback for chains that have a single configured pool per pair.
+  // collapse into one row. Every configured pool declares its fee tier.
   const univ3Pools = new Map<string, { id: string; tokens: string[] }>();
   for (const handler of config.ownedLiquidityHandlers) {
     if (handler.kind !== "univ3") continue;
@@ -89,10 +88,7 @@ export async function pushUniv3NftPol(
     };
     const aggregates = new Map<string, PoolAgg>();
     for (const position of result.positions) {
-      const pairKey = univ3PoolKey([position.token0, position.token1]);
-      const pool =
-        univ3Pools.get(univ3PoolKey([position.token0, position.token1], position.fee)) ??
-        univ3Pools.get(pairKey);
+      const pool = univ3Pools.get(univ3PoolKey([position.token0, position.token1], position.fee));
       if (!pool) continue;
 
       const state = await context.Univ3PoolState.get(`${config.chainId}-${addr(pool.id)}`);
@@ -214,10 +210,10 @@ export async function pushUniv3NftPol(
   }
 }
 
-export function univ3PoolKey(tokens: string[], fee?: number): string {
+export function univ3PoolKey(tokens: string[], fee: number): string {
   const pair = [tokens[0]?.toLowerCase(), tokens[1]?.toLowerCase()]
     .filter(Boolean)
     .sort()
     .join("/");
-  return fee === undefined ? pair : `${pair}/${fee}`;
+  return `${pair}/${fee}`;
 }

@@ -47,6 +47,7 @@ const univ3OhmUsdc: LiquidityHandler = {
   kind: "univ3",
   tokens: [ERC20_OHM, ERC20_USDC],
   id: LP_UNISWAP_V3_OHM_USDC,
+  fee: 10000,
   startBlock: BASE_START_BLOCK,
 };
 

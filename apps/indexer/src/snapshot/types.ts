@@ -344,8 +344,8 @@ export type LiquidityHandler =
       kind: "univ3";
       id: string;
       tokens: string[];
-      /** Pool fee tier in hundredths of a basis point. Required when the same pair has multiple pools. */
-      fee?: number;
+      /** Pool fee tier in hundredths of a basis point. */
+      fee: number;
       startBlock?: number;
     }
   | { kind: "univ3-quoter"; id: string; quoter: string; tokens: string[]; startBlock?: number }
