@@ -68,7 +68,7 @@ abstract class Univ3PriceHandlerBase<
       const quote = quoteTwap(observation, seconds);
       raw = quote.raw;
       // Reporting-only diagnostic: a transient spot move must not veto a valid TWAP.
-      if (quote.deviationBps.gt(spotWarningBps)) {
+      if (quote.deviationBps?.gt(spotWarningBps)) {
         this.context.log.warn(
           `UniV3 spot/TWAP deviation ${quote.deviationBps.toFixed(0)} bps: chain ${this.config.chainId}, pool ${this.handler.id}, block ${blockNumber}; using full-window TWAP`,
         );

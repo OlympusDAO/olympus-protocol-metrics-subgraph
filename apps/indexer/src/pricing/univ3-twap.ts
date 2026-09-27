@@ -21,9 +21,9 @@ export function validateTwapConfig(seconds: number, spotWarningBps: number): voi
 
 /** Return raw token1/token0 TWAP and diagnostic spot deviation, not a spot fallback. */
 export function quoteTwap(
-  observation: { tickDelta: string; liquidityDelta: string; sqrtPriceX96: string },
+  observation: { tickDelta: string; sqrtPriceX96: string | null },
   seconds: number,
-): { raw: BigNumber; deviationBps: BigNumber } {
+): { raw: BigNumber; deviationBps: BigNumber | null } {
   if (!Number.isInteger(seconds) || seconds <= 0 || seconds > 0xffffffff) {
     throw new Error("Invalid UniV3 TWAP window");
   }
@@ -32,15 +32,14 @@ export function quoteTwap(
   let tick = delta / window;
   // Match OracleLibrary.consult: negative fractional mean ticks round down.
   if (delta < 0n && delta % window !== 0n) tick -= 1n;
-  if (
-    tick < MIN_TICK ||
-    tick > MAX_TICK ||
-    BigInt(observation.liquidityDelta) <= 0n ||
-    BigInt(observation.sqrtPriceX96) <= 0n
-  ) {
+  if (tick < MIN_TICK || tick > MAX_TICK) {
     throw new Error("Invalid UniV3 TWAP observation");
   }
   const raw = new BigNumber(new Decimal("1.0001").pow(Number(tick)).toString());
+  // Spot is optional diagnostic data, never a prerequisite for a valid TWAP.
+  if (observation.sqrtPriceX96 === null || BigInt(observation.sqrtPriceX96) <= 0n) {
+    return { raw, deviationBps: null };
+  }
   const spot = new BigNumber(observation.sqrtPriceX96).pow(2).div(new BigNumber(2).pow(192));
   return { raw, deviationBps: spot.div(raw).minus(1).abs().times(10000) };
 }

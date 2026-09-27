@@ -1324,7 +1324,7 @@ export const readUniv3Twap = createEffect(
   {
     name: "readUniv3Twap",
     input: { chainId: S.number, poolAddress: S.string, atBlock: S.number, seconds: S.number },
-    output: { tickDelta: S.string, liquidityDelta: S.string, sqrtPriceX96: S.string },
+    output: { tickDelta: S.string, sqrtPriceX96: S.nullable(S.string) },
     rateLimit: { calls: 1_000_000, per: "second" },
     cache: true,
   },
@@ -1351,13 +1351,12 @@ export const readUniv3Twap = createEffect(
           abi: UNIV3_ABI,
           functionName: "slot0",
         }),
-      ),
+      ).catch(() => null), // Optional diagnostic must not discard successful observations.
     ]);
     // Match Solidity's wrapping cumulative counters before subtraction.
     return {
       tickDelta: BigInt.asIntN(56, observations[0][1] - observations[0][0]).toString(),
-      liquidityDelta: BigInt.asUintN(160, observations[1][1] - observations[1][0]).toString(),
-      sqrtPriceX96: slot[0].toString(),
+      sqrtPriceX96: slot?.[0].toString() ?? null,
     };
   },
 );

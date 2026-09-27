@@ -33,7 +33,6 @@ describe("block-pinned UniV3 TWAP effect", () => {
     );
     await expect(run()).resolves.toEqual({
       tickDelta: "-332729748",
-      liquidityDelta: "20249843485504294934",
       sqrtPriceX96: "783082933127646025307382464",
     });
     expect(readContract).toHaveBeenCalledWith(
@@ -54,6 +53,17 @@ describe("block-pinned UniV3 TWAP effect", () => {
     readContract.mockReset().mockRejectedValue(new Error(message));
     await expect(run()).rejects.toThrow(message);
   });
+  test("slot0 failure retains a successful full-window observation", async () => {
+    readContract.mockReset().mockImplementation(async ({ functionName }) => {
+      if (functionName === "slot0") throw new Error("slot unavailable");
+      // Zero liquidity still advances this accumulator: it is not a liquidity guard.
+      return [
+        [0n, 3600n],
+        [0n, 3600n << 128n],
+      ];
+    });
+    await expect(run()).resolves.toEqual({ tickDelta: "3600", sqrtPriceX96: null });
+  });
   test("preserves Solidity cumulative counter wraparound", async () => {
     readContract.mockReset().mockImplementation(async ({ functionName }) =>
       functionName === "observe"
@@ -63,6 +73,6 @@ describe("block-pinned UniV3 TWAP effect", () => {
           ]
         : [1n],
     );
-    await expect(run()).resolves.toMatchObject({ tickDelta: "30", liquidityDelta: "30" });
+    await expect(run()).resolves.toMatchObject({ tickDelta: "30" });
   });
 });

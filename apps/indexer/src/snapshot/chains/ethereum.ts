@@ -363,9 +363,10 @@ const ERC20_OHM_V2_BLOCK = 13_782_589;
 const ERC20_SOHM_V3_BLOCK = 13_806_000;
 const ERC20_SDAI_BLOCK = 17_675_440;
 // Verified Ethereum contract creation blocks; pool deployment is later than ENA.
-const ERC20_ENA_BLOCK = 19_371_662;
-const ERC20_SENA_BLOCK = 20_713_442;
-const LP_UNISWAP_V3_ENA_WETH_BLOCK = 19_567_223;
+// First treasury sENA acquisition; ENA is its underlying pricing asset.
+const ERC20_ENA_BLOCK = 25_042_334;
+const ERC20_SENA_BLOCK = 25_042_334;
+const LP_UNISWAP_V3_ENA_WETH_BLOCK = 25_042_334;
 const ERC20_SUSDE_BLOCK = 20_265_440;
 const ERC20_SUSDS_BLOCK = 20_722_900;
 const ERC20_GAUNTLET_SUSDS_VAULT_BLOCK = 21_924_854;

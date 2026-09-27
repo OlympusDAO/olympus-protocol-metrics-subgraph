@@ -6,7 +6,7 @@ import { Univ3PriceHandler } from "../../src/pricing/univ3";
 import { quoteTwap, validateTwapConfig } from "../../src/pricing/univ3-twap";
 import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
 
-const observation = { tickDelta: "0", liquidityDelta: "1", sqrtPriceX96: (2n ** 96n).toString() };
+const observation = { tickDelta: "0", sqrtPriceX96: (2n ** 96n).toString() };
 
 describe("TWAP arithmetic and configuration", () => {
   test("rounds negative fractional ticks down and positive ticks toward zero", () => {
@@ -37,8 +37,10 @@ describe("TWAP arithmetic and configuration", () => {
     expect(() => validateTwapConfig(1, 1)).not.toThrow();
     expect(() => validateTwapConfig(0xffffffff, 10000)).not.toThrow();
   });
-  test("rejects invalid slot state", () => {
-    expect(() => quoteTwap({ ...observation, sqrtPriceX96: "0" }, 3600)).toThrow("observation");
+  test.each([null, "0", "-1"])("optional spot %s does not veto TWAP", (sqrtPriceX96) => {
+    const quote = quoteTwap({ ...observation, sqrtPriceX96 }, 3600);
+    expect(quote.raw.toString()).toBe("1");
+    expect(quote.deviationBps).toBeNull();
   });
 });
 

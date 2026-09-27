@@ -78,6 +78,10 @@ Explorer transfer history identified the existing holdings:
 - TRSRY: block **25,042,334**, [transfer](https://etherscan.io/tx/0x98e908b0b7f91517c4cc56228cd9abcbe84d1454e700076cee84b64d32f2073f).
 - Treasury MS: block **25,052,168**, [transfer](https://etherscan.io/tx/0x7b1e5f0c8fc9f49fbae756e543f3186ec1e13ed662911ba2212c9552fe889277).
 
+All three configured ENA, sENA and price-pool start blocks are **25,042,334**,
+the first treasury acquisition, not contract creation. ENA is enabled there as
+the underlying pricing asset; the later MS acquisition is covered too.
+
 Creation/acquisition history above is explorer transaction evidence, not an
 archive-state replay. PublicNode rejected old `eth_getCode` calls because archive
 access requires a personal token; the public dRPC fallback timed out. Historical
@@ -99,8 +103,11 @@ Fallback parameters are explicit reviewable defaults, not empirically proven
 optimal thresholds: `observe([3600, 0])`, negative mean ticks rounded down as in
 Uniswap OracleLibrary, and a **10% spot/TWAP price-ratio warning threshold**.
 Both observation and slot reads are pinned to the snapshot block and cached by
-chain/pool/block/window. Require a valid tick and positive cumulative liquidity
-delta. A full-hour observation must succeed; never shorten the window or
+chain/pool/block/window. Require a valid tick. The slot read is best-effort: failure
+or non-positive slot price suppresses only the diagnostic. No minimum-liquidity
+guard is enforced; a positive seconds-per-liquidity delta cannot establish
+nonzero liquidity because Uniswap substitutes one for zero liquidity.
+A full-hour observation must succeed; never shorten the window or
 silently substitute spot. The pool prices ENA only, not WETH. sENA retains its
 independent ERC4626 conversion.
 
@@ -118,7 +125,7 @@ manipulation or thin-liquidity risk. A spot/TWAP deviation above 10% emits an
 operational warning but does not reject a valid full-hour TWAP: a cosmetic
 valuation must not let transient spot moves veto the Ethereum snapshot. The
 published value remains the TWAP, never the spot price. Invalid observations
-and RPC errors still fail the snapshot for a held position instead of inventing
+and required observation RPC errors still fail the snapshot for a held position instead of inventing
 a price or silently dropping its value. Standard token pricing is
 lazy: zero holdings do not require an oracle read, allowing pre-acquisition replay
 without demanding observations for assets the treasury did not hold. A failed

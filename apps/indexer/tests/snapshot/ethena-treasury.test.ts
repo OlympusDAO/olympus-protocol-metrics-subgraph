@@ -51,7 +51,6 @@ async function snapshot(
     poolPresent?: boolean;
     tickDelta?: string;
     sqrtPrice?: bigint;
-    liquidityDelta?: string;
     ethPrice?: string;
     quoteError?: boolean;
   } = {},
@@ -65,7 +64,6 @@ async function snapshot(
       if (args.poolPresent === false) throw new Error("OLD: insufficient observation history");
       return {
         tickDelta: args.tickDelta ?? "-332729748",
-        liquidityDelta: args.liquidityDelta ?? "20249843485504294934",
         sqrtPriceX96: (args.sqrtPrice ?? SQRT_PRICE).toString(),
       };
     }
@@ -99,8 +97,8 @@ describe("Ethereum ENA/sENA treasury coverage", () => {
     const contracts = yaml.chains.find((chain: { id: number }) => chain.id === 1)
       .contracts as Array<{ name: string; address: string[] }>;
     for (const [address, startBlock] of [
-      [ENA, 19_371_662],
-      [SENA, 20_713_442],
+      [ENA, 25_042_334],
+      [SENA, 25_042_334],
     ] as const) {
       const definition = ETHEREUM.tokens.find((token) => token.address === address);
       expect(definition).toMatchObject({
@@ -209,10 +207,23 @@ describe("Ethereum ENA/sENA treasury coverage", () => {
     expect(effect).not.toHaveBeenCalled();
   });
 
-  test("pre-deployment state avoids sENA conversion and treasury records", async () => {
-    const { records, effect } = await snapshot({ block: 19_371_661n });
+  test("pre-acquisition state avoids sENA conversion and treasury records", async () => {
+    const { records, effect } = await snapshot({ block: 25_042_333n });
     expect(records).toEqual([]);
     expect(effect.mock.calls.some(([def]) => def.name === "readErc4626AssetsPerShare")).toBe(false);
+  });
+
+  test("first acquisition block activates sENA conversion and the ENA TWAP route", async () => {
+    const { records, effect } = await snapshot({
+      block: 25_042_334n,
+      balances: [[SENA, TRSRY, 10n ** 18n]],
+    });
+    expect(records).toHaveLength(1);
+    expect(records[0].isLiquid).toBe(false);
+    expect(effect).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "readUniv3Twap" }),
+      expect.objectContaining({ atBlock: 25_042_334 }),
+    );
   });
 
   test("unavailable TWAP history fails instead of using spot or omitting held sENA", async () => {
@@ -240,10 +251,12 @@ describe("Ethereum ENA/sENA treasury coverage", () => {
     );
   });
 
-  test.each(["0", "-1"])("invalid liquidity delta %s fails closed", async (liquidityDelta) => {
-    await expect(snapshot({ liquidityDelta, balances: [[ENA, MS, 10n ** 18n]] })).rejects.toThrow(
-      "observation",
-    );
+  test("unavailable spot diagnostic preserves the held-asset valuation", async () => {
+    const balances: Array<[string, string, bigint]> = [[ENA, MS, 10n ** 18n]];
+    const baseline = await snapshot({ balances });
+    const missing = await snapshot({ balances, sqrtPrice: 0n });
+    expect(missing.records[0].rate).toBe(baseline.records[0].rate);
+    expect(missing.log.warn).not.toHaveBeenCalled();
   });
 
   test.each([
