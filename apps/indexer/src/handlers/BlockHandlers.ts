@@ -551,9 +551,8 @@ export async function pushTokenBalanceRecords(
     if (definition.category !== "Stable" && definition.category !== "Volatile") continue;
     if (!isActive(definition, blockNumber)) continue;
 
-    const rate = (await getPrice(config, context, client, definition.address, blockNumber, null))
-      .price;
-    if (rate.eq(ZERO)) continue;
+    // Price only held assets; pre-acquisition replay needs no pool history.
+    let rate: BigNumber | undefined;
 
     const wallets = getWalletAddressesForContract(config, definition.address);
     const decimals = getTokenDecimals(config.tokens, definition.address);
@@ -584,6 +583,9 @@ export async function pushTokenBalanceRecords(
               )
             : await readTokenBalance(context, config.chainId, definition.address, wallet, decimals);
       if (balance.eq(ZERO)) continue;
+      rate ??= (await getPrice(config, context, client, definition.address, blockNumber, null))
+        .price;
+      if (rate.eq(ZERO)) continue;
       records.push(
         createTokenRecord(
           config,
