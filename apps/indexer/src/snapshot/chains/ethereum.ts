@@ -44,6 +44,9 @@ const OTC_ESCROW = addr("0xe3312c3f1ab30878d9686452f7205ebe11e965eb");
 const BOND_MANAGER = addr("0xf577c77ee3578c7f216327f41b5d7221ead2b2a3");
 const BOND_FIXED_EXPIRY_TELLER = addr("0x007fe70dc9797c4198528ae43d8195fff82bdc95");
 const MIGRATION_CONTRACT = addr("0x184f3fad8618a6f458c16bae63f70c426fe784b3");
+// Bophades BondCallback policy. Holds bond reserves (DAI) between
+// batchToTreasury sweeps to TRSRY; OHM it receives is burned in the same tx.
+const BOND_CALLBACK = addr("0x73df08CE9dcC8d74d22F23282c4d49F13b4c795E");
 
 // Bonds.
 const BONDS_DEPOSIT = addr("0x9025046c6fb25Fb39e720d97a8FD881ED69a1Ef6");
@@ -82,6 +85,7 @@ const WALLET_ADDRESSES = [
   AURA_ALLOCATOR_V2,
   AURA_ALLOCATOR,
   BALANCER_ALLOCATOR,
+  BOND_CALLBACK,
   BONDS_DEPOSIT,
   BONDS_INVERSE_DEPOSIT,
   BUYBACK_MS,
@@ -423,6 +427,7 @@ const names: Record<string, string> = {
   [BOND_MANAGER]: "Bond Manager",
   [BOND_FIXED_EXPIRY_TELLER]: "Bond Fixed Expiry Teller",
   [MIGRATION_CONTRACT]: "Migration Contract",
+  [BOND_CALLBACK]: "Bond Callback",
   // Tokens and pools
   [CONVEX_REWARD_OHM_ETH]: "Convex Staked Curve OHM-ETH",
   [CONVEX_REWARD_OHM_FRAXBP]: "Convex Staked Curve OHM-FraxBP",
