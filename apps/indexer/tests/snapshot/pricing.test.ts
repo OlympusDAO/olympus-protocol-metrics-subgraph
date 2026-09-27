@@ -2,7 +2,13 @@ import BigNumber from "bignumber.js";
 import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 import { describe, expect, test } from "vitest";
-import { createPriceHandler, getPrice, getTotalValue, withPricingCache } from "../../src/pricing";
+import {
+  createPriceHandler,
+  getPrice,
+  getTotalValue,
+  getUnitPrice,
+  withPricingCache,
+} from "../../src/pricing";
 import { ARBITRUM } from "../../src/snapshot/chains/arbitrum";
 import { BERACHAIN } from "../../src/snapshot/chains/berachain";
 import type { ChainConfig, LiquidityHandler, TokenDefinition } from "../../src/snapshot/types";
@@ -21,6 +27,9 @@ const WETH = "0x82af49447d8a07e3bd95bd0d56f35241523fbab1";
 const WETH_USDC_POOL = "0xc31e54c7a869b9fcbecc14363cf510d1c41fa443";
 const ARB_WETH_POOL = "0xc6f780497a95e246eb9449f5e4770916dcd6396a";
 const MAGIC_WETH_POOL = "0xb7e50106a5bd3cf21af210a755f9c8740890a8c9";
+const OHM_ARBITRUM = "0xf0cb2dc0db5e6c66b9a70ac27b06b878da017028";
+const CAMELOT_OHM_WETH_POOL = "0x8acd42e4b5a5750b44a28c5fb50906ebff145359";
+const GOHM_WETH_POOL = "0xaa5bd49f2162ffdc15634c87a77ac67bd51c6a6d";
 const WETH_USDC_SQRT_PRICE_X96 = 4_339_505_179_874_779_489_431_521n;
 
 const HONEY = "0xfcbd14dc51f0a4d49d5e53c2e0950e0bc26d0dce";
@@ -77,22 +86,25 @@ function mockContext({
   univ3 = [],
   chainlink = [],
   kodiak = [],
+  supplies = [],
 }: {
   univ2?: readonly (readonly [string, unknown])[];
   univ3?: readonly (readonly [string, unknown])[];
   chainlink?: readonly (readonly [string, unknown])[];
   kodiak?: readonly (readonly [string, unknown])[];
+  supplies?: readonly (readonly [string, unknown])[];
 } = {}): EvmOnBlockContext {
   const univ2States = new Map(univ2);
   const univ3States = new Map(univ3);
   const chainlinkStates = new Map(chainlink);
   const kodiakPools = new Map(kodiak);
+  const erc20Supplies = new Map(supplies);
   return {
     BalancerPoolState: { get: async () => undefined },
     KodiakPool: { get: async (id: string) => kodiakPools.get(id) },
     Univ2PoolState: { get: async (id: string) => univ2States.get(id) },
     Univ3PoolState: { get: async (id: string) => univ3States.get(id) },
-    Erc20Supply: { get: async () => undefined },
+    Erc20Supply: { get: async (id: string) => erc20Supplies.get(id) },
     TokenBalance: { get: async () => undefined },
     effect: async (
       _effectDef: unknown,
@@ -253,6 +265,93 @@ describe("Arbitrum Envio snapshot parity", () => {
     });
 
     expect(reads).toBe(0);
+  });
+
+  // Camelot OHM-wETH is the only live OHM pool on Arbitrum, so while it is
+  // being valued (currentPool = Camelot) the router has no other handler to
+  // price OHM. Pre-fix OHM priced at 0: getTotalValue([]) came out as the
+  // wETH leg alone, the multiplier as 1, and the published POL row showed
+  // 0% OHM with half its real TVL (OlympusDAO/olympus-frontend-v2#135).
+  test("Camelot OHM-wETH values its OHM side (multiplier < 1)", async () => {
+    const camelot = handler(ARBITRUM, CAMELOT_OHM_WETH_POOL);
+    const client = mockClient(ARBITRUM.chainId, new Map<string, unknown>());
+    // token0 = wETH (18 dec), token1 = OHM (9 dec) by address sort.
+    // 50 wETH at $3,000 against 7,500 OHM → OHM at $20, pool worth $300,000.
+    const context = mockContext({
+      univ2: [
+        [
+          poolStateId(ARBITRUM, CAMELOT_OHM_WETH_POOL),
+          { reserve0: 50n * 10n ** 18n, reserve1: 7_500n * 10n ** 9n },
+        ],
+      ],
+      univ3: [
+        [
+          poolStateId(ARBITRUM, WETH_USDC_POOL),
+          { sqrtPriceX96: WETH_USDC_SQRT_PRICE_X96, liquidity: 1_000_000n },
+        ],
+      ],
+      // 2 LP tokens outstanding → $150,000 per LP token.
+      supplies: [[poolStateId(ARBITRUM, CAMELOT_OHM_WETH_POOL), { totalSupply: 2n * 10n ** 18n }]],
+    });
+
+    await withPricingCache(async () => {
+      const totalValue = await getTotalValue(
+        ARBITRUM,
+        context,
+        client,
+        camelot,
+        [],
+        ARBITRUM_BLOCK,
+      );
+      const includedValue = await getTotalValue(
+        ARBITRUM,
+        context,
+        client,
+        camelot,
+        [OHM_ARBITRUM],
+        ARBITRUM_BLOCK,
+      );
+      const unitRate = await getUnitPrice(ARBITRUM, context, client, camelot, ARBITRUM_BLOCK);
+
+      if (totalValue === null || includedValue === null || unitRate === null) {
+        throw new Error("Expected Camelot values to resolve");
+      }
+      // sqrtPriceX96 → price conversion leaves ~1e-16 of rounding noise.
+      expect(totalValue.toFixed(2)).toBe("300000.00");
+      expect(includedValue.toFixed(2)).toBe("150000.00");
+      expect(includedValue.div(totalValue).toFixed(6)).toBe("0.500000");
+      expect(unitRate.toFixed(2)).toBe("150000.00");
+    });
+  });
+
+  // The own-pool fallback only prices `config.ohmToken`, which valueExcludingOhm
+  // always drops, so it moves TVL and the multiplier but never liquid backing.
+  // gOHM-wETH shows why: gOHM isn't Arbitrum's ohmToken, so self-pricing it
+  // would have added ~$2.75M of gOHM to 2022–23 Arbitrum liquid backing.
+  test("does not self-price a lone non-OHM token (gOHM-wETH)", async () => {
+    const pool = handler(ARBITRUM, GOHM_WETH_POOL);
+    const client = mockClient(ARBITRUM.chainId, new Map<string, unknown>());
+    // token0 = wETH, token1 = gOHM (both 18 dec) by address sort.
+    const context = mockContext({
+      univ2: [
+        [
+          poolStateId(ARBITRUM, GOHM_WETH_POOL),
+          { reserve0: 50n * 10n ** 18n, reserve1: 50n * 10n ** 18n },
+        ],
+      ],
+      univ3: [
+        [
+          poolStateId(ARBITRUM, WETH_USDC_POOL),
+          { sqrtPriceX96: WETH_USDC_SQRT_PRICE_X96, liquidity: 1_000_000n },
+        ],
+      ],
+    });
+
+    const totalValue = await withPricingCache(() =>
+      getTotalValue(ARBITRUM, context, client, pool, [], ARBITRUM_BLOCK),
+    );
+    // wETH leg only: 50 × $3,000.
+    expect(totalValue?.toFixed(2)).toBe("150000.00");
   });
 
   test("derives ARB through the ARB-WETH Uniswap V3 handler", async () => {
