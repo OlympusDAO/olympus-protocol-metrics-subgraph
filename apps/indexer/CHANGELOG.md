@@ -2,9 +2,9 @@
 
 All notable changes to this package will be documented in this file. Dates are displayed in UTC.
 
-## Unreleased
+## [v0.2.1] - 2026-09-27
 
-- Review candidate: retain held/pending rUSDG at NAV outside liquid backing; split fixed claims so only claimable USDG is liquid. Make every row classification explicit and require historical replay before publication. Policy approval and release version assignment remain pending.
+- Keep held and pending rUSDG at NAV outside liquid backing; split fixed redemption claims so only claimable USDG is liquid. Classify each row explicitly and document the required historical replay and publication checks.
 
 ## [v0.2.0] - 2026-09
 

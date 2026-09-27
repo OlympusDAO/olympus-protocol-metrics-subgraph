@@ -262,13 +262,13 @@ records. Separate mixed-claim and claimable-to-idle tests prove disjoint records
 and stable backing through collection. These are deterministic fixtures, not new
 authenticated replay or deployment evidence.
 
-## Liquid-backing classification proposal - pending JJ/maintainer review
+## Liquid-backing classification - revised for maintainer review
 
-This candidate takes the conservative route: full NAV remains in economic value,
+At JJ's request, this revision takes the conservative route: full NAV remains in economic value,
 not liquid backing. Held shares and pending redemptions are non-liquid. Fixed
 USDG enters liquid backing only when the pinned request reports `isClaimable`.
-This replaces the earlier full-NAV held-share proposal; it is not an assertion
-that the new policy is approved.
+This withdraws the earlier full-NAV held-share inclusion proposal in response to
+maintainer review. Upstream acceptance, merge and deployment remain outstanding.
 
 | State | Economic value | Liquid backing |
 | --- | --- | --- |
@@ -286,7 +286,7 @@ redemption fees remain economic costs and are not smoothed away.
 
 If held receipts must instead count toward a broader backing metric, approval
 must specify the rationale, NAV freshness boundary, haircut (if any) and treatment
-of every queued state. No arbitrary number is introduced in this candidate.
+of every queued state. No arbitrary number is introduced in this revision.
 
 ## Required rollout and historical backfill
 
