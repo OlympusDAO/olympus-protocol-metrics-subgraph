@@ -181,6 +181,38 @@ describe("Robinhood snapshot integration", () => {
     await pushTreasuryOhm({} as EvmOnBlockContext, ROBINHOOD, supplies, BigInt(NOW), block);
     expect(supplies).toEqual([]);
   });
+  test.each([
+    { timestamp: 200, shares: "990000000000000000", assets: "0", isClaimable: false },
+    { timestamp: 100, shares: "1000000000000000000", assets: "1005000", isClaimable: false },
+    { timestamp: 100, shares: "1000000000000000000", assets: "1005000", isClaimable: true },
+  ])("only fixed claimable exposure enters backing: %o", async (request) => {
+    const records: SerializedTokenRecord[] = [];
+    const ctx = {
+      ...context(position({ shares: "0", requests: [request] })),
+      MellowQueueState: { get: vi.fn(async () => ({ handledTimestamp: 100n })) },
+    };
+    await pushMellowRecords(
+      ctx as unknown as EvmOnBlockContext,
+      ROBINHOOD,
+      client,
+      records,
+      BigInt(NOW),
+      block,
+    );
+    expect(records).toHaveLength(1);
+    expect(records[0].isLiquid).toBe(request.isClaimable);
+    const aggregate = computePerChainAggregate(
+      4663,
+      "Robinhood",
+      "2026-09-17",
+      block,
+      BigInt(NOW),
+      records,
+      [],
+    );
+    expect(aggregate.treasuryMarketValue.gt(0)).toBe(true);
+    expect(aggregate.treasuryLiquidBacking.toString()).toBe(request.isClaimable ? "1.005" : "0");
+  });
   test("completed redemption is idle USDG with no residual claim", async () => {
     const records: SerializedTokenRecord[] = [];
     const idleContext = {
@@ -240,6 +272,126 @@ describe("Robinhood snapshot integration", () => {
       10,
     );
     expect(aggregate.treasuryLiquidBacking.toString()).toBe("10");
+    expect(records.filter((record) => record.isLiquid)).toHaveLength(1);
+    expect(records.find((record) => record.token === "rUSDG - Pending redemption")?.isLiquid).toBe(
+      false,
+    );
+    expect(
+      records.find((record) => record.token === "USDG - Mellow redemption claim")?.isLiquid,
+    ).toBe(false);
+  });
+  test.each([
+    NOW - 60,
+    NOW - 30 * 86400,
+  ])("NAV age %s cannot promote held shares into liquid backing or halt replay", async (reportTimestamp) => {
+    const records: SerializedTokenRecord[] = [];
+    // Deliberately hostile token metadata proves row classification is explicit.
+    const config = {
+      ...ROBINHOOD,
+      tokens: ROBINHOOD.tokens.map((token) => ({ ...token, isLiquid: true })),
+    };
+    await pushMellowRecords(
+      context(position({ reportTimestamp })) as unknown as EvmOnBlockContext,
+      config,
+      client,
+      records,
+      BigInt(NOW),
+      block,
+    );
+    expect(records).toHaveLength(1);
+    expect(Number(records[0].value)).toBeCloseTo(1.011345929971074, 12);
+    expect(records[0].isLiquid).toBe(false);
+  });
+  test("mixed fixed claims split by claimability without counting principal twice", async () => {
+    const records: SerializedTokenRecord[] = [];
+    const ctx = {
+      ...context(
+        position({
+          shares: "0",
+          priceD18: "0",
+          reportTimestamp: 0,
+          requests: [
+            { timestamp: 99, shares: "1000000000000000000", assets: "1005000", isClaimable: false },
+            { timestamp: 100, shares: "2000000000000000000", assets: "2010000", isClaimable: true },
+          ],
+        }),
+      ),
+      MellowQueueState: { get: vi.fn(async () => ({ handledTimestamp: 100n })) },
+    };
+    await pushMellowRecords(
+      ctx as unknown as EvmOnBlockContext,
+      ROBINHOOD,
+      client,
+      records,
+      BigInt(NOW),
+      block,
+    );
+    expect(records).toHaveLength(2);
+    expect(new Set(records.map((record) => record.id)).size).toBe(2);
+    expect(records.map((record) => [record.balance, record.isLiquid])).toEqual([
+      ["1.005", false],
+      ["2.01", true],
+    ]);
+    const aggregate = computePerChainAggregate(
+      4663,
+      "Robinhood",
+      "2026-09-17",
+      block,
+      BigInt(NOW),
+      records,
+      [],
+    );
+    expect(aggregate.treasuryMarketValue.toString()).toBe("3.015");
+    expect(aggregate.treasuryLiquidBacking.toString()).toBe("2.01");
+  });
+  test("claimable-to-idle transition preserves backing with no residual claim", async () => {
+    const totals: string[] = [];
+    for (const claimed of [false, true]) {
+      const records: SerializedTokenRecord[] = [];
+      const ctx = {
+        effect: vi.fn(async (effect: { name: string }) =>
+          effect.name === "readErc20BalanceOf"
+            ? claimed
+              ? "1005000"
+              : "0"
+            : position({
+                shares: "0",
+                requests: claimed
+                  ? []
+                  : [
+                      {
+                        timestamp: 100,
+                        shares: "1000000000000000000",
+                        assets: "1005000",
+                        isClaimable: true,
+                      },
+                    ],
+              }),
+        ),
+        MellowQueueState: { get: vi.fn(async () => ({ handledTimestamp: 100n })) },
+      };
+      await pushTokenBalanceRecords(
+        ctx as unknown as EvmOnBlockContext,
+        ROBINHOOD,
+        client,
+        records,
+        BigInt(NOW),
+        block,
+      );
+      expect(records).toHaveLength(1);
+      const aggregate = computePerChainAggregate(
+        4663,
+        "Robinhood",
+        "2026-09-17",
+        block,
+        BigInt(NOW),
+        records,
+        [],
+      );
+      expect(aggregate.treasuryMarketValue.toString()).toBe("1.005");
+      totals.push(aggregate.treasuryLiquidBacking.toString());
+    }
+    expect(totals).toEqual(["1.005", "1.005"]);
   });
   test("coverage reports absent configured chains without a separate date calendar", () => {
     expect(aggregateAcrossChains("2026-09-16", []).chainsMissing).toContain(4663);
