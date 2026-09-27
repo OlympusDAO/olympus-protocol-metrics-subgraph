@@ -277,6 +277,13 @@ export const BERACHAIN: ChainConfig = {
     [NATIVE_BERA]: "BERA",
   },
   protocolAddresses: PROTOCOL_ADDRESSES,
+  // The BitGo custodians stay in market value, but the treasury can't deploy
+  // what they hold. The Infrared custodian redeemed its iBERA for native BERA
+  // in July 2026, which otherwise reads as liquid.
+  illiquidWallets: [
+    { address: INFRARED_CUSTODIAN, label: "BitGo Custody" },
+    { address: THJ_CUSTODIAN, label: "BitGo Custody" },
+  ],
   circulatingSupplyWallets: PROTOCOL_ADDRESSES,
   treasuryBlacklist: { [ERC20_OHM]: [DAO_MULTISIG, DAO_OPS_MULTISIG, TRSRY] },
   // HONEY and STARGATE_USDC are priced via the "stable-usd" handler below ($1).

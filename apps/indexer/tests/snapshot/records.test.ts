@@ -1,7 +1,9 @@
+import BigNumber from "bignumber.js";
 import { describe, expect, test } from "vitest";
 
 import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
-import { getContractName } from "../../src/snapshot/records";
+import { createTokenRecord, getContractName } from "../../src/snapshot/records";
+import type { ChainConfig } from "../../src/snapshot/types";
 
 describe("getContractName label formatting", () => {
   test("Ethereum: known wallets render with friendly names, not raw addresses", () => {
@@ -97,4 +99,75 @@ describe("OHM/gOHM token defs must have multiplier='0'", () => {
       });
     }
   }
+});
+
+// Berachain BitGo custodian wallets hold treasury assets that can't be
+// deployed at will, so their records stay in market value but are illiquid
+// and carry a distinct name. The frontend groups holdings by token name and
+// ORs the liquid flags, so a shared "BERA" name would still read as liquid
+// while the DAO MS holds BERA too.
+describe("createTokenRecord illiquid wallets", () => {
+  const BERACHAIN = CHAIN_CONFIGS[80094];
+  const NATIVE_BERA = "0x0000000000000000000000000000000000000000";
+  const INFRARED_CUSTODIAN = "0xb65e74f6b2c0633e30ba1be75db818bb9522a81a";
+  const THJ_CUSTODIAN = "0x082689241b09c600b3eaf3812b1d09791e7ded5a";
+  const DAO_MULTISIG = "0x91494D1BC2286343D51c55E46AE80C9356D099b5";
+
+  function beraRecord(config: ChainConfig, wallet: string) {
+    return createTokenRecord(
+      config,
+      1_790_000_000n,
+      getContractName(config, NATIVE_BERA),
+      NATIVE_BERA,
+      getContractName(config, wallet),
+      wallet,
+      new BigNumber("0.235"),
+      new BigNumber("2800000"),
+      10_000_000n,
+    );
+  }
+
+  test("Berachain marks both BitGo custodians illiquid and keeps them protocol wallets", () => {
+    const illiquid = (BERACHAIN.illiquidWallets ?? []).map((wallet) => wallet.address);
+    expect(illiquid).toEqual([INFRARED_CUSTODIAN, THJ_CUSTODIAN]);
+    expect(BERACHAIN.protocolAddresses).toEqual(
+      expect.arrayContaining([INFRARED_CUSTODIAN, THJ_CUSTODIAN]),
+    );
+  });
+
+  test("native BERA at the Infrared custodian is illiquid with the custody name", () => {
+    const record = beraRecord(BERACHAIN, INFRARED_CUSTODIAN);
+    expect(record.isLiquid).toBe(false);
+    expect(record.token).toBe("BERA - BitGo Custody");
+    expect(record.id).toContain("/Infrared Custodian/BERA - BitGo Custody");
+    // Address, rate, balance and value are untouched.
+    expect(record.tokenAddress).toBe(NATIVE_BERA);
+    expect(record.rate).toBe("0.235");
+    expect(record.balance).toBe("2800000");
+    expect(record.value).toBe("658000");
+    expect(record.valueExcludingOhm).toBe("658000");
+  });
+
+  test("the wallet match ignores address case", () => {
+    const record = beraRecord(BERACHAIN, "0x082689241B09C600B3EAF3812B1D09791E7DED5A");
+    expect(record.isLiquid).toBe(false);
+    expect(record.token).toBe("BERA - BitGo Custody");
+  });
+
+  test("native BERA at the DAO multisig keeps its liquid flag and normal name", () => {
+    const record = beraRecord(BERACHAIN, DAO_MULTISIG);
+    expect(record.isLiquid).toBe(true);
+    expect(record.token).toBe("BERA");
+    expect(record.value).toBe("658000");
+  });
+
+  test("a config without illiquidWallets behaves exactly as before", () => {
+    const { illiquidWallets: _omitted, ...withoutList } = BERACHAIN;
+    const absent = beraRecord(withoutList, INFRARED_CUSTODIAN);
+    expect(absent.isLiquid).toBe(true);
+    expect(absent.token).toBe("BERA");
+
+    const empty = beraRecord({ ...BERACHAIN, illiquidWallets: [] }, INFRARED_CUSTODIAN);
+    expect(empty).toEqual(absent);
+  });
 });
