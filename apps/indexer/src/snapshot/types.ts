@@ -347,6 +347,7 @@ export type LiquidityHandler =
       /** Pool fee tier in hundredths of a basis point. */
       fee: number;
       startBlock?: number;
+      twap?: { pricedToken: string; seconds: number; spotWarningBps: number };
     }
   | { kind: "univ3-quoter"; id: string; quoter: string; tokens: string[]; startBlock?: number }
   | { kind: "balancer"; id: Bytes32; vault: string; tokens: string[]; startBlock?: number }

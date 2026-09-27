@@ -412,6 +412,8 @@ chains:
           # 18142516 redeem), so sDAI lives under Erc4626Vault below with
           # Transfer + Deposit + Withdraw subscriptions.
           - "0xa3931d71877c0e7a3148cb7eb4463524fec27fbd" # sUSDS (ERC4626, emits Transfer on mint/burn)
+          - "0x57e114b691db790c35207b2e685d4a43181e6061" # ENA
+          - "0x8be3460a480c80728a8c4d7a5d5303c85ba7b3b9" # sENA (Transfer on mint/burn)
           - "0x9d39a5de30e57443bff2a8307a4256c8797a3497" # sUSDe (ERC4626, emits Transfer on mint/burn)
           - "0x3365184e87d2bd75961780454a5810bec956f0dd" # Gauntlet Olympus sUSDS Vault (ERC4626, emits Transfer on mint/burn)
           # WETH registered under Wrapped9.
