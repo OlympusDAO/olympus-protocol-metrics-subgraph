@@ -2,7 +2,7 @@
 
 All notable changes to this package will be documented in this file. Dates are displayed in UTC.
 
-## [v0.2.1] - 2026-09-27
+## [v0.2.2] - 2026-09-27
 
 - Match treasury UniV3 positions by mandatory fee tier, register WETH-OHM 1% POL separately and label the existing 0.3% pool explicitly.
 
