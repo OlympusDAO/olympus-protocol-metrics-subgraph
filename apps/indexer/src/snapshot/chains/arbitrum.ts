@@ -216,9 +216,8 @@ export const ARBITRUM: ChainConfig = {
     token({
       address: ERC20_JONES,
       category: "Volatile",
-      isLiquid: true,
+      isLiquid: false,
       isBluechip: false,
-      multiplier: "0.83",
       startBlock: JONES_CREATION_BLOCK,
       decimals: 18,
     }),

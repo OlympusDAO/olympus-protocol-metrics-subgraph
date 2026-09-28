@@ -141,6 +141,8 @@ describe("pushTokenBalanceRecords per-chain validation", () => {
     const jones = arbitrum.tokens.find((definition) => definition.address === ERC20_JONES);
     expect(jones).toBeDefined();
     if (!jones) throw new Error("JONES token definition missing");
+    expect(jones.isLiquid).toBe(false);
+    expect(jones.multiplier).toBeUndefined();
     const config = {
       ...arbitrum,
       tokens: [jones],
