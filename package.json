@@ -52,7 +52,7 @@
     "viem": "2.56.8"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.1",
+    "@biomejs/biome": "2.5.14",
     "@types/node": "24.12.2",
     "typescript": "6.0.3",
     "vitest": "4.1.11"
