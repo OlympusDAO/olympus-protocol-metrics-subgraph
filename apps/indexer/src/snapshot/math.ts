@@ -29,6 +29,7 @@ export function token(args: {
   multiplier?: string;
   startBlock?: number;
   lastActiveBlock?: number;
+  treasuryExcludedFromBlock?: number;
   decimals?: number;
   isLiability?: boolean;
   nonStandardBalance?: boolean;
@@ -43,6 +44,7 @@ export function token(args: {
     decimals: args.decimals ?? 18,
     startBlock: args.startBlock,
     lastActiveBlock: args.lastActiveBlock,
+    treasuryExcludedFromBlock: args.treasuryExcludedFromBlock,
     isLiability: args.isLiability,
     nonStandardBalance: args.nonStandardBalance,
     positionRead: args.positionRead

@@ -8,8 +8,9 @@ import {
   pushTreasuryOhm,
   updateGlobalMetricSnapshot,
 } from "../../src/handlers/BlockHandlers";
+import { getPrice } from "../../src/pricing";
 import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
-import { ERC20_JONES } from "../../src/snapshot/chains/arbitrum";
+import { ERC20_JONES, JONES_TREASURY_EXCLUSION_BLOCK } from "../../src/snapshot/chains/arbitrum";
 import { addr } from "../../src/snapshot/math";
 import type { SerializedTokenRecord, SerializedTokenSupply } from "../../src/snapshot/types";
 
@@ -135,14 +136,15 @@ function buildMockContext(seed: {
 }
 
 describe("pushTokenBalanceRecords per-chain validation", () => {
-  test("Arbitrum: perpetual-hold JONES is never a treasury token record", async () => {
+  test("Arbitrum: JONES preserves historical valuation and is excluded from its cutoff", async () => {
     const arbitrum = CHAIN_CONFIGS[42161];
     const wallet = arbitrum.protocolAddresses[0];
     const jones = arbitrum.tokens.find((definition) => definition.address === ERC20_JONES);
     expect(jones).toBeDefined();
     if (!jones) throw new Error("JONES token definition missing");
-    expect(jones.isLiquid).toBe(false);
-    expect(jones.multiplier).toBeUndefined();
+    expect(jones.isLiquid).toBe(true);
+    expect(jones.multiplier).toBe("0.83");
+    expect(jones.treasuryExcludedFromBlock).toBe(509_232_195);
     const config = {
       ...arbitrum,
       tokens: [jones],
@@ -168,7 +170,42 @@ describe("pushTokenBalanceRecords per-chain validation", () => {
     );
     expect(control).toHaveLength(1);
 
-    for (const block of [12_000_000n, 500_000_000n]) {
+    expect(control[0]).toMatchObject({
+      value: "100",
+      valueExcludingOhm: "83",
+      multiplier: "0.83",
+      isLiquid: true,
+    });
+    const cutoff = BigInt(JONES_TREASURY_EXCLUSION_BLOCK);
+    // Treasury exclusion must not disable the shared pricing path used by LPs.
+    const price = await getPrice(
+      config,
+      context,
+      buildMockClient(arbitrum.chainId),
+      ERC20_JONES,
+      cutoff,
+      null,
+    );
+    expect(price.price.toString()).toBe("1");
+    // Excluded wallet records must not attempt balance or price reads.
+    const noReadContext = new Proxy(
+      {},
+      {
+        get: () => {
+          throw new Error("excluded JONES read");
+        },
+      },
+    ) as EvmOnBlockContext;
+    await pushTokenBalanceRecords(
+      noReadContext,
+      config,
+      buildMockClient(arbitrum.chainId),
+      [],
+      TIMESTAMP,
+      cutoff,
+    );
+
+    for (const block of [12_000_000n, cutoff - 1n, cutoff, cutoff + 1n]) {
       const records: SerializedTokenRecord[] = [];
       await pushTokenBalanceRecords(
         context,
@@ -178,7 +215,17 @@ describe("pushTokenBalanceRecords per-chain validation", () => {
         TIMESTAMP,
         block,
       );
-      expect(records).toHaveLength(0);
+      if (block < cutoff) {
+        expect(records).toHaveLength(1);
+        expect(records[0]).toMatchObject({
+          value: "100",
+          valueExcludingOhm: "83",
+          multiplier: "0.83",
+          isLiquid: true,
+        });
+      } else {
+        expect(records).toHaveLength(0);
+      }
     }
   });
 

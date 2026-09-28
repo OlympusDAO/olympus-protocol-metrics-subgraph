@@ -551,6 +551,12 @@ export async function pushTokenBalanceRecords(
     if (definition.category !== "Stable" && definition.category !== "Volatile") continue;
     if (!isActive(definition, blockNumber)) continue;
 
+    if (
+      definition.treasuryExcludedFromBlock !== undefined &&
+      blockNumber >= BigInt(definition.treasuryExcludedFromBlock)
+    )
+      continue;
+
     // Price only held assets; pre-acquisition replay needs no pool history.
     let rate: BigNumber | undefined;
 

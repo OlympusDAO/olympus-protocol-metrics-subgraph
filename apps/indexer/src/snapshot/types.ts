@@ -55,6 +55,9 @@ export type TokenDefinition = {
   isBluechip: boolean;
   decimals: number;
   multiplier?: string;
+  // Inclusive cutoff for standalone wallet and staking treasury records only.
+  // Does not deactivate pricing or change separately held LP accounting.
+  treasuryExcludedFromBlock?: number;
   isLiability?: boolean;
   startBlock?: number;
   // Last block (inclusive) the token is valued. After it the token prices at
