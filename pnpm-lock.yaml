@@ -68,10 +68,10 @@ importers:
         version: 11.1.5
       envio:
         specifier: 3.6.1
-        version: 3.6.1(react-dom@19.2.6(react@19.2.6))(typescript@6.0.3)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))(zod@3.25.76)
+        version: 3.6.1(react-dom@19.2.6(react@19.2.6))(typescript@6.0.3)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)))(zod@3.25.76)
       tsx:
-        specifier: 4.22.4
-        version: 4.22.4
+        specifier: 4.23.15
+        version: 4.23.15
       viem:
         specifier: 2.56.8
         version: 2.56.8(typescript@6.0.3)(zod@3.25.76)
@@ -87,7 +87,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: 4.1.11
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3))
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3))
 
   apps/client: {}
 
@@ -98,7 +98,7 @@ importers:
         version: 11.1.5
       envio:
         specifier: 3.6.1
-        version: 3.6.1(react-dom@19.2.6(react@19.2.7))(typescript@6.0.3)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))(zod@3.25.76)
+        version: 3.6.1(react-dom@19.2.6(react@19.2.7))(typescript@6.0.3)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)))(zod@3.25.76)
       viem:
         specifier: 2.56.8
         version: 2.56.8(typescript@6.0.3)(zod@3.25.76)
@@ -111,7 +111,7 @@ importers:
         version: 6.0.3
       vitest:
         specifier: 4.1.11
-        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3))
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3))
       yaml:
         specifier: 2.8.3
         version: 2.8.3
@@ -1746,8 +1746,8 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  tsx@4.22.4:
-    resolution: {integrity: sha512-X8EX+XV4QR5xCsrgxaED954zTDfY8KqlDtskKEL0cHhyS/P8b4IFOvGDQpsC9Q1XnLq915wEfwwY/zzskCtmhg==}
+  tsx@4.23.15:
+    resolution: {integrity: sha512-Yiex1Ovn8z2xPpOWckIiysV1SSyRMY9BkLF++q0yKiDxCqRhosKfMg3janKkiLBwZ5c/YryloKwGZcrEmtwxKw==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
@@ -2328,10 +2328,10 @@ snapshots:
   '@esbuild/win32-x64@0.28.1':
     optional: true
 
-  '@fuel-ts/crypto@0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))':
+  '@fuel-ts/crypto@0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)))':
     dependencies:
       '@fuel-ts/errors': 0.103.0
-      '@fuel-ts/utils': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))
+      '@fuel-ts/utils': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)))
       '@noble/hashes': 1.7.1
     transitivePeerDependencies:
       - vitest
@@ -2340,10 +2340,10 @@ snapshots:
     dependencies:
       '@fuel-ts/versions': 0.103.0
 
-  '@fuel-ts/hasher@0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))':
+  '@fuel-ts/hasher@0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)))':
     dependencies:
-      '@fuel-ts/crypto': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))
-      '@fuel-ts/utils': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))
+      '@fuel-ts/crypto': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)))
+      '@fuel-ts/utils': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)))
       '@noble/hashes': 1.7.1
     transitivePeerDependencies:
       - vitest
@@ -2354,13 +2354,13 @@ snapshots:
       '@types/bn.js': 5.1.6
       bn.js: 5.2.3
 
-  '@fuel-ts/utils@0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))':
+  '@fuel-ts/utils@0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)))':
     dependencies:
       '@fuel-ts/errors': 0.103.0
       '@fuel-ts/math': 0.103.0
       '@fuel-ts/versions': 0.103.0
       fflate: 0.8.3
-      vitest: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3))
+      vitest: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3))
 
   '@fuel-ts/versions@0.103.0':
     dependencies:
@@ -2556,13 +2556,13 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.1.0
 
-  '@vitest/mocker@4.1.11(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3))':
+  '@vitest/mocker@4.1.11(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3))':
     dependencies:
       '@vitest/spy': 4.1.11
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)
+      vite: 8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)
 
   '@vitest/pretty-format@4.1.11':
     dependencies:
@@ -2791,15 +2791,15 @@ snapshots:
   envio-linux-x64@3.6.1:
     optional: true
 
-  envio@3.6.1(react-dom@19.2.6(react@19.2.6))(typescript@6.0.3)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))(zod@3.25.76):
+  envio@3.6.1(react-dom@19.2.6(react@19.2.6))(typescript@6.0.3)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)))(zod@3.25.76):
     dependencies:
       '@clickhouse/client': 1.17.0
       '@elastic/ecs-pino-format': 1.4.0
-      '@fuel-ts/crypto': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))
+      '@fuel-ts/crypto': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)))
       '@fuel-ts/errors': 0.103.0
-      '@fuel-ts/hasher': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))
+      '@fuel-ts/hasher': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)))
       '@fuel-ts/math': 0.103.0
-      '@fuel-ts/utils': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))
+      '@fuel-ts/utils': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)))
       '@rescript/react': 0.14.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@rescript/runtime': 12.2.0
       bignumber.js: 9.3.1
@@ -2837,15 +2837,15 @@ snapshots:
       - vitest
       - zod
 
-  envio@3.6.1(react-dom@19.2.6(react@19.2.7))(typescript@6.0.3)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))(zod@3.25.76):
+  envio@3.6.1(react-dom@19.2.6(react@19.2.7))(typescript@6.0.3)(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)))(zod@3.25.76):
     dependencies:
       '@clickhouse/client': 1.17.0
       '@elastic/ecs-pino-format': 1.4.0
-      '@fuel-ts/crypto': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))
+      '@fuel-ts/crypto': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)))
       '@fuel-ts/errors': 0.103.0
-      '@fuel-ts/hasher': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))
+      '@fuel-ts/hasher': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)))
       '@fuel-ts/math': 0.103.0
-      '@fuel-ts/utils': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)))
+      '@fuel-ts/utils': 0.103.0(vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)))
       '@rescript/react': 0.14.1(react-dom@19.2.6(react@19.2.7))(react@19.2.6)
       '@rescript/runtime': 12.2.0
       bignumber.js: 9.3.1
@@ -3643,7 +3643,7 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  tsx@4.22.4:
+  tsx@4.23.15:
     dependencies:
       esbuild: 0.28.1
     optionalDependencies:
@@ -3706,7 +3706,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3):
+  vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3):
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
@@ -3717,13 +3717,13 @@ snapshots:
       '@types/node': 24.12.2
       esbuild: 0.28.1
       fsevents: 2.3.3
-      tsx: 4.22.4
+      tsx: 4.23.15
       yaml: 2.8.3
 
-  vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)):
+  vitest@4.1.11(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)):
     dependencies:
       '@vitest/expect': 4.1.11
-      '@vitest/mocker': 4.1.11(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3))
+      '@vitest/mocker': 4.1.11(vite@8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3))
       '@vitest/pretty-format': 4.1.11
       '@vitest/runner': 4.1.11
       '@vitest/snapshot': 4.1.11
@@ -3740,7 +3740,7 @@ snapshots:
       tinyexec: 1.1.2
       tinyglobby: 0.2.17
       tinyrainbow: 3.1.0
-      vite: 8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.22.4)(yaml@2.8.3)
+      vite: 8.0.16(@types/node@24.12.2)(esbuild@0.28.1)(tsx@4.23.15)(yaml@2.8.3)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@opentelemetry/api': 1.9.1
