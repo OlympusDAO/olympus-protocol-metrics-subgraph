@@ -2,11 +2,6 @@
 
 All notable changes to this package will be documented in this file. Dates are displayed in UTC.
 
-## [v0.3.1] - 2026-09
-
-- Stop reporting the inaccessible cvxCRV reward-pool position from its existing write-off block.
-- Remove JONES token holdings from liquid backing after the existing bankruptcy write-off block while retaining market value.
-
 ## [v0.3.0] - 2026-09
 
 - Index Ethereum ENA and sENA treasury holdings as non-liquid volatile assets.
