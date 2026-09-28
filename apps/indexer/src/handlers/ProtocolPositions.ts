@@ -8,12 +8,14 @@ import { getTokenDecimals, isActive, toDecimal, ZERO } from "../snapshot/math";
 import { createTokenRecord, getContractName } from "../snapshot/records";
 import type { ChainConfig, PositionReadMethod, SerializedTokenRecord } from "../snapshot/types";
 
-// Treasury positions that live inside another protocol's contract rather
-// than as a wallet ERC20 balance: Liquity stability pool deposits and gains,
-// LQTY / TOKE / auraBAL staking, Convex reward pools, vote-lock unlockables,
-// Aura rewards, Rari allocations, and fixed-principal lending markets.
-// Ported from legacy TokenStablecoins / TokenVolatile helpers; each record
-// keeps the legacy token label so parity diffs line up.
+/**
+ * Append active external-protocol positions to the supplied snapshot records.
+ * Read balances and prices at blockNumber, normalize raw amounts by token
+ * decimals, and retain legacy labels. Read positions are omitted at and after
+ * writeOffFromBlock before balance or price effects, rather than emitted with
+ * a zero backing multiplier. Rari allocations and fixed principal retain their
+ * configured historical semantics. timestamp is the snapshot's Unix seconds.
+ */
 export async function pushProtocolPositionRecords(
   context: EvmOnBlockContext,
   config: ChainConfig,
@@ -26,6 +28,7 @@ export async function pushProtocolPositionRecords(
   if (positions.length === 0) return;
 
   const rates = new Map<string, BigNumber>();
+  /** Cache each token's block-pinned USD price for this snapshot invocation. */
   const rateOf = async (token: string) => {
     const cached = rates.get(token);
     if (cached) return cached;
@@ -34,6 +37,7 @@ export async function pushProtocolPositionRecords(
     return rate;
   };
 
+  /** Read a raw position amount at the snapshot block; an empty result is zero. */
   const read = async (contract: string, method: PositionReadMethod, arg: string) => {
     const raw = (await context.effect(readPositionAmount, {
       chainId: config.chainId,
@@ -45,6 +49,7 @@ export async function pushProtocolPositionRecords(
     return raw === "" ? 0n : BigInt(raw);
   };
 
+  /** Append a valued record for a nonzero normalized amount and nonzero price. */
   const push = async (args: {
     label: string;
     token: string;

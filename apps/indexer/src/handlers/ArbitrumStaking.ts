@@ -14,6 +14,12 @@ import type { ChainConfig, SerializedTokenRecord } from "../snapshot/types";
 const TREASURE_STAKED_LP_DECIMALS = 18;
 const MAGIC_TOKEN_ADDRESS = "0x539bde0d7dbd336b79148aa742883198bbf60342";
 
+/**
+ * Append eligible Arbitrum staking records to the caller's snapshot collection.
+ * Only Treasure deposits are valued: the perpetual-hold JONES allocation is
+ * excluded across indexed history, without reading its staking entity or price.
+ * The snapshot timestamp is in Unix seconds and blockNumber pins valuation.
+ */
 export async function pushArbitrumStakingRecords(
   context: EvmOnBlockContext,
   config: ChainConfig,
@@ -24,6 +30,12 @@ export async function pushArbitrumStakingRecords(
   await pushTreasureStakingRecords(context, config, records, timestamp, blockNumber);
 }
 
+/**
+ * Value nonzero, chain-matched Treasure deposits for configured protocol wallets.
+ * Convert raw 18-decimal deposit amounts to token units and fetch the MAGIC
+ * price at blockNumber once per call. Append explicitly non-liquid records;
+ * inactive tokens, empty deposits and a zero price produce no record.
+ */
 async function pushTreasureStakingRecords(
   context: EvmOnBlockContext,
   config: ChainConfig,
