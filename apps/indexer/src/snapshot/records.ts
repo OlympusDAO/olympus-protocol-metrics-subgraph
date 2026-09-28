@@ -42,10 +42,7 @@ export function createTokenRecord(
     value: value.toString(10),
     valueExcludingOhm: valueExcludingOhm.toString(10),
     category: category ?? definition?.category ?? "Unknown",
-    isLiquid:
-      (definition?.isLiquid ?? true) &&
-      (definition?.liquidUntilBlock === undefined ||
-        blockNumber <= BigInt(definition.liquidUntilBlock)),
+    isLiquid: definition?.isLiquid ?? true,
     isBluechip: definition?.isBluechip ?? false,
   };
 }

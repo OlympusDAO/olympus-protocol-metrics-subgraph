@@ -9,6 +9,7 @@ import {
   updateGlobalMetricSnapshot,
 } from "../../src/handlers/BlockHandlers";
 import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
+import { ERC20_JONES } from "../../src/snapshot/chains/arbitrum";
 import { addr } from "../../src/snapshot/math";
 import type { SerializedTokenRecord, SerializedTokenSupply } from "../../src/snapshot/types";
 
@@ -134,6 +135,51 @@ function buildMockContext(seed: {
 }
 
 describe("pushTokenBalanceRecords per-chain validation", () => {
+  test("Arbitrum: perpetual-hold JONES is never a treasury token record", async () => {
+    const arbitrum = CHAIN_CONFIGS[42161];
+    const wallet = arbitrum.protocolAddresses[0];
+    const jones = arbitrum.tokens.find((definition) => definition.address === ERC20_JONES);
+    expect(jones).toBeDefined();
+    if (!jones) throw new Error("JONES token definition missing");
+    const config = {
+      ...arbitrum,
+      tokens: [jones],
+      liquidityHandlers: [{ kind: "stable" as const, tokens: [ERC20_JONES], id: "jones-test" }],
+    };
+    const context = buildMockContext({
+      chainId: arbitrum.chainId,
+      tokenBalance: {
+        tokenAddress: ERC20_JONES,
+        walletAddress: wallet,
+        balance: 100_000_000_000_000_000_000n,
+      },
+    });
+
+    const control: SerializedTokenRecord[] = [];
+    await pushTokenBalanceRecords(
+      context,
+      { ...config, treasuryBlacklist: {} },
+      buildMockClient(arbitrum.chainId),
+      control,
+      TIMESTAMP,
+      12_000_000n,
+    );
+    expect(control).toHaveLength(1);
+
+    for (const block of [12_000_000n, 500_000_000n]) {
+      const records: SerializedTokenRecord[] = [];
+      await pushTokenBalanceRecords(
+        context,
+        config,
+        buildMockClient(arbitrum.chainId),
+        records,
+        TIMESTAMP,
+        block,
+      );
+      expect(records).toHaveLength(0);
+    }
+  });
+
   test("Fantom snapshot interval is short enough to avoid skipped UTC dates", () => {
     const fantom = BLOCK_HANDLERS.find((handler) => handler.chain === 250);
 

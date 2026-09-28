@@ -55,9 +55,6 @@ export type TokenDefinition = {
   isBluechip: boolean;
   decimals: number;
   multiplier?: string;
-  // Last block (inclusive) at which the asset contributes to liquid backing.
-  // Market value continues to be reported afterward.
-  liquidUntilBlock?: number;
   isLiability?: boolean;
   startBlock?: number;
   // Last block (inclusive) the token is valued. After it the token prices at

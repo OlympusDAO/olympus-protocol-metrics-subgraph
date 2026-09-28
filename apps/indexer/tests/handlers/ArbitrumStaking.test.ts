@@ -8,12 +8,7 @@ vi.mock("../../src/pricing", () => ({
 
 import { pushArbitrumStakingRecords } from "../../src/handlers/ArbitrumStaking";
 import { getPrice } from "../../src/pricing";
-import {
-  ARBITRUM,
-  ERC20_JONES,
-  ERC20_MAGIC,
-  JONES_WRITE_OFF_BLOCK,
-} from "../../src/snapshot/chains/arbitrum";
+import { ARBITRUM, ERC20_MAGIC } from "../../src/snapshot/chains/arbitrum";
 import type { SerializedTokenRecord } from "../../src/snapshot/types";
 
 const BLOCK = 500_000_000n;
@@ -81,31 +76,20 @@ describe("Arbitrum staking handlers", () => {
     expect(records.map((record) => record.isLiquid)).toEqual([false, false]);
   });
 
-  test("staked JONES is written down and illiquid from the bankruptcy block", async () => {
-    vi.mocked(getPrice).mockResolvedValue({
-      price: new BigNumber(2),
-      liquidity: new BigNumber(1),
-    });
+  test("does not emit restricted staked JONES as a treasury asset at any block", async () => {
+    const getJonesPosition = vi.fn(async () => ({ amount: 100_000_000_000_000_000_000n }));
     const context = {
       JonesStakingPosition: {
-        get: async () => ({ amount: 100_000_000_000_000_000_000n }),
+        get: getJonesPosition,
       },
       TreasureDeposit: { getWhere: async () => [] },
     } as unknown as EvmOnBlockContext;
-    const records: SerializedTokenRecord[] = [];
-
-    await pushArbitrumStakingRecords(
-      context,
-      ARBITRUM,
-      records,
-      TIMESTAMP,
-      BigInt(JONES_WRITE_OFF_BLOCK),
-    );
-
-    expect(records).toHaveLength(1);
-    expect(records[0].tokenAddress).toBe(ERC20_JONES);
-    expect(records[0].value).toBe("200");
-    expect(records[0].valueExcludingOhm).toBe("0");
-    expect(records[0].isLiquid).toBe(false);
+    for (const block of [12_000_000n, BLOCK]) {
+      const records: SerializedTokenRecord[] = [];
+      await pushArbitrumStakingRecords(context, ARBITRUM, records, TIMESTAMP, block);
+      expect(records).toHaveLength(0);
+    }
+    expect(getJonesPosition).not.toHaveBeenCalled();
+    expect(getPrice).not.toHaveBeenCalled();
   });
 });

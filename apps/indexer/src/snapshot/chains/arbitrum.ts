@@ -45,8 +45,6 @@ const ARB_CREATION_BLOCK = 70_398_215;
 const FRAX_CREATION_BLOCK = 1_693_791;
 const OHM_CREATION_BLOCK = 85_886_493;
 const JONES_CREATION_BLOCK = 4_936_079;
-// JONES staked positions were written off at the post-bankruptcy block.
-export const JONES_WRITE_OFF_BLOCK = 130_482_707;
 const LQTY_CREATION_BLOCK = 68_940_603;
 const LUSD_CREATION_BLOCK = 20_063_879;
 const MAGIC_CREATION_BLOCK = 2_028_077;
@@ -221,7 +219,6 @@ export const ARBITRUM: ChainConfig = {
       isLiquid: true,
       isBluechip: false,
       multiplier: "0.83",
-      liquidUntilBlock: JONES_WRITE_OFF_BLOCK - 1,
       startBlock: JONES_CREATION_BLOCK,
       decimals: 18,
     }),
@@ -391,6 +388,10 @@ export const ARBITRUM: ChainConfig = {
   treasuryBlacklist: {
     [ERC20_OHM]: ARBITRUM_PROTOCOL_ADDRESSES,
     [ERC20_GOHM_SYNAPSE]: ARBITRUM_PROTOCOL_ADDRESSES,
+    // OIP-74 requires Olympus to retain, not dispose of, its JONES allocation.
+    // Keep the token registered for JONES-WETH pool pricing, but do not value
+    // standalone wallet JONES as a treasury asset or liquid backing.
+    [ERC20_JONES]: ARBITRUM_PROTOCOL_ADDRESSES,
   },
   // USDC and LUSD are priced via the "stable-usd" handler ($1). WETH is priced
   // via the WETH/USDC UniV3 pool, which is in liquidityHandlers below. The

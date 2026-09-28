@@ -27,7 +27,6 @@ export function token(args: {
   isLiquid: boolean;
   isBluechip: boolean;
   multiplier?: string;
-  liquidUntilBlock?: number;
   startBlock?: number;
   lastActiveBlock?: number;
   decimals?: number;
@@ -41,7 +40,6 @@ export function token(args: {
     isLiquid: args.isLiquid,
     isBluechip: args.isBluechip,
     multiplier: args.multiplier,
-    liquidUntilBlock: args.liquidUntilBlock,
     decimals: args.decimals ?? 18,
     startBlock: args.startBlock,
     lastActiveBlock: args.lastActiveBlock,
