@@ -45,6 +45,8 @@ const ARB_CREATION_BLOCK = 70_398_215;
 const FRAX_CREATION_BLOCK = 1_693_791;
 const OHM_CREATION_BLOCK = 85_886_493;
 const JONES_CREATION_BLOCK = 4_936_079;
+// JONES staked positions were written off at the post-bankruptcy block.
+export const JONES_WRITE_OFF_BLOCK = 130_482_707;
 const LQTY_CREATION_BLOCK = 68_940_603;
 const LUSD_CREATION_BLOCK = 20_063_879;
 const MAGIC_CREATION_BLOCK = 2_028_077;
@@ -219,6 +221,7 @@ export const ARBITRUM: ChainConfig = {
       isLiquid: true,
       isBluechip: false,
       multiplier: "0.83",
+      liquidUntilBlock: JONES_WRITE_OFF_BLOCK - 1,
       startBlock: JONES_CREATION_BLOCK,
       decimals: 18,
     }),

@@ -55,6 +55,9 @@ export type TokenDefinition = {
   isBluechip: boolean;
   decimals: number;
   multiplier?: string;
+  // Last block (inclusive) at which the asset contributes to liquid backing.
+  // Market value continues to be reported afterward.
+  liquidUntilBlock?: number;
   isLiability?: boolean;
   startBlock?: number;
   // Last block (inclusive) the token is valued. After it the token prices at
@@ -144,8 +147,7 @@ export type ProtocolPosition =
       wallets: string[]; // holders legacy observed for this position
       startBlock: number;
       lastActiveBlock?: number;
-      // Legacy kept the position in market value but zeroed its liquid
-      // backing contribution from this block (e.g. bricked cvxCRV).
+      // A written-down position emits no record from this block onward.
       writeOffFromBlock?: number;
     }
   | {

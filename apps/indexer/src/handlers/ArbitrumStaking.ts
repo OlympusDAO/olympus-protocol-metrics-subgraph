@@ -2,6 +2,7 @@ import type BigNumber from "bignumber.js";
 import type { EvmOnBlockContext } from "envio";
 
 import { getPrice } from "../pricing";
+import { JONES_WRITE_OFF_BLOCK } from "../snapshot/chains/arbitrum";
 import { addr, isActive, toDecimal, ZERO } from "../snapshot/math";
 import { createTokenRecord, getContractName } from "../snapshot/records";
 import { getClient } from "../snapshot/rpc-client";
@@ -13,7 +14,6 @@ import type { ChainConfig, SerializedTokenRecord } from "../snapshot/types";
 // post-bankruptcy block; MAGIC veMAGIC is marked illiquid (record.isLiquid
 // = false) per legacy semantics.
 const JONES_STAKED_POOL_ID = 0n;
-const JONES_WRITE_OFF_BLOCK = 130_482_707n;
 const TREASURE_STAKED_LP_DECIMALS = 18;
 const JONES_TOKEN_ADDRESS = "0x10393c20975cf177a3513071bc110f7962cd67da";
 const MAGIC_TOKEN_ADDRESS = "0x539bde0d7dbd336b79148aa742883198bbf60342";
@@ -61,7 +61,7 @@ async function pushJonesStakingRecords(
       balance,
       blockNumber,
     );
-    if (blockNumber >= JONES_WRITE_OFF_BLOCK) {
+    if (blockNumber >= BigInt(JONES_WRITE_OFF_BLOCK)) {
       record.multiplier = "0";
       record.valueExcludingOhm = "0";
     }

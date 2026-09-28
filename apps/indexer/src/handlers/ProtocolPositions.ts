@@ -50,7 +50,6 @@ export async function pushProtocolPositionRecords(
     token: string;
     source: string;
     amount: BigNumber;
-    nonOhmMultiplier?: BigNumber;
   }) => {
     if (args.amount.eq(ZERO)) return;
     const rate = await rateOf(args.token);
@@ -66,7 +65,6 @@ export async function pushProtocolPositionRecords(
         rate,
         args.amount,
         blockNumber,
-        args.nonOhmMultiplier,
       ),
     );
   };
@@ -76,9 +74,11 @@ export async function pushProtocolPositionRecords(
 
     if (position.kind === "read") {
       const decimals = getTokenDecimals(config.tokens, position.token);
-      const writtenOff =
+      if (
         position.writeOffFromBlock !== undefined &&
-        blockNumber >= BigInt(position.writeOffFromBlock);
+        blockNumber >= BigInt(position.writeOffFromBlock)
+      )
+        continue;
       for (const wallet of position.wallets) {
         const raw = await read(position.contract, position.method, wallet);
         await push({
@@ -86,7 +86,6 @@ export async function pushProtocolPositionRecords(
           token: position.token,
           source: wallet,
           amount: toDecimal(raw, decimals),
-          nonOhmMultiplier: writtenOff ? ZERO : undefined,
         });
       }
       continue;

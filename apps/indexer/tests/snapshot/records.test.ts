@@ -1,7 +1,45 @@
+import BigNumber from "bignumber.js";
 import { describe, expect, test } from "vitest";
 
 import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
-import { getContractName } from "../../src/snapshot/records";
+import { ERC20_JONES, JONES_WRITE_OFF_BLOCK } from "../../src/snapshot/chains/arbitrum";
+import { computePerChainAggregate } from "../../src/snapshot/global";
+import { createTokenRecord, getContractName } from "../../src/snapshot/records";
+
+test("JONES remains market value but stops contributing to liquid backing at its write-off", () => {
+  const config = CHAIN_CONFIGS[42161];
+  const wallet = config.protocolAddresses[0];
+  const atBlock = (block: bigint) =>
+    createTokenRecord(
+      config,
+      1_700_000_000n,
+      "JonesDAO (JONES)",
+      ERC20_JONES,
+      "Cross-Chain Arbitrum",
+      wallet,
+      new BigNumber(2),
+      new BigNumber(100),
+      block,
+    );
+  const before = atBlock(BigInt(JONES_WRITE_OFF_BLOCK - 1));
+  const after = atBlock(BigInt(JONES_WRITE_OFF_BLOCK));
+
+  expect(before.isLiquid).toBe(true);
+  expect(before.valueExcludingOhm).toBe("166");
+  expect(after.isLiquid).toBe(false);
+  expect(after.value).toBe("200");
+  const aggregate = computePerChainAggregate(
+    config.chainId,
+    config.blockchain,
+    after.date,
+    BigInt(JONES_WRITE_OFF_BLOCK),
+    1_700_000_000n,
+    [after],
+    [],
+  );
+  expect(aggregate.treasuryMarketValue.toString()).toBe("200");
+  expect(aggregate.treasuryLiquidBacking.toString()).toBe("0");
+});
 
 describe("getContractName label formatting", () => {
   test("Ethereum: known wallets render with friendly names, not raw addresses", () => {

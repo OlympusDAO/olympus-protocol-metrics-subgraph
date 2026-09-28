@@ -8,7 +8,12 @@ vi.mock("../../src/pricing", () => ({
 
 import { pushArbitrumStakingRecords } from "../../src/handlers/ArbitrumStaking";
 import { getPrice } from "../../src/pricing";
-import { ARBITRUM, ERC20_MAGIC } from "../../src/snapshot/chains/arbitrum";
+import {
+  ARBITRUM,
+  ERC20_JONES,
+  ERC20_MAGIC,
+  JONES_WRITE_OFF_BLOCK,
+} from "../../src/snapshot/chains/arbitrum";
 import type { SerializedTokenRecord } from "../../src/snapshot/types";
 
 const BLOCK = 500_000_000n;
@@ -74,5 +79,33 @@ describe("Arbitrum staking handlers", () => {
     expect(records.map((record) => record.balance)).toEqual(["1", "2.5"]);
     expect(records.map((record) => record.value)).toEqual(["2", "5"]);
     expect(records.map((record) => record.isLiquid)).toEqual([false, false]);
+  });
+
+  test("staked JONES is written down and illiquid from the bankruptcy block", async () => {
+    vi.mocked(getPrice).mockResolvedValue({
+      price: new BigNumber(2),
+      liquidity: new BigNumber(1),
+    });
+    const context = {
+      JonesStakingPosition: {
+        get: async () => ({ amount: 100_000_000_000_000_000_000n }),
+      },
+      TreasureDeposit: { getWhere: async () => [] },
+    } as unknown as EvmOnBlockContext;
+    const records: SerializedTokenRecord[] = [];
+
+    await pushArbitrumStakingRecords(
+      context,
+      ARBITRUM,
+      records,
+      TIMESTAMP,
+      BigInt(JONES_WRITE_OFF_BLOCK),
+    );
+
+    expect(records).toHaveLength(1);
+    expect(records[0].tokenAddress).toBe(ERC20_JONES);
+    expect(records[0].value).toBe("200");
+    expect(records[0].valueExcludingOhm).toBe("0");
+    expect(records[0].isLiquid).toBe(false);
   });
 });
