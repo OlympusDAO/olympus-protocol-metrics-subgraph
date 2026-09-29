@@ -22,6 +22,17 @@ multiplier on an illiquid asset has no effect on these metrics.
 The multiplier scales `valueExcludingOhm`, which only feeds liquid backing. **It
 never changes market value**, which sums `value` (balance × mark).
 
+A record's classification can come from three places, and each one follows this rubric:
+
+- **The token definition** (`isLiquid`, `multiplier` in `apps/indexer/src/snapshot/chains/*.ts`).
+  Applies to every record of that token unless something below overrides it.
+- **A handler override** (`record.isLiquid` / `record.multiplier` in
+  `apps/indexer/src/handlers/`). Use it for a record that exits differently from its
+  token. For example, staked MAGIC in the Atlas Mine is locked while MAGIC itself is not.
+- **`illiquidWallets`** in a chain config. Marks everything a wallet holds as
+  illiquid. This is Gate 3 applied per wallet: for example, assets at a custodian
+  the treasury can't deploy from.
+
 ## The gates
 
 An asset is **liquid only if it passes all three gates**. Failing any one makes it
@@ -39,7 +50,13 @@ At least one exit path turns the full position into stablecoins or ETH within 7 
 deciding to exit.
 
 "Stablecoins" means Stable-category tokens that are themselves liquid under this
-rubric (for example USDC, DAI, USDS, USDe, HONEY, USDG).
+rubric (for example USDC, DAI, USDS, USDe, HONEY, USDG). "ETH" includes WETH, and ETH
+on an L2 reached through that chain's canonical bridge. It does not include ETH
+bridged through a third-party bridge.
+
+Steps inside the treasury (a multisig transaction, or a Bophades policy moving
+tokens out of a module) count as immediate unless they need an on-chain governance
+vote.
 
 Exit paths:
 
@@ -93,7 +110,12 @@ It fails if that party:
 A party passes when its part of the exit is working as stated (a live quote, normal
 withdrawals) and there is no known impairment. Mark it unproven only when there's a
 specific reason for doubt (a pause, depeg, incident, or announcement) that can't be
-resolved. The gate is n/a when the path
+resolved.
+
+An admin's *ability* to pause, blacklist, or lengthen a cooldown doesn't fail the
+gate. Nearly every issuer has one. The gate fails on an actual impairment, an active
+block or delay against the treasury, or an announced change that would push the exit
+past 7 days. The gate is n/a when the path
 depends on no third party, and when no path passed Gates 1 and 2 (the asset is
 already illiquid).
 
@@ -114,12 +136,18 @@ Counting an asset as liquid needs evidence. Counting it as illiquid does not.
 
 ## Standing rules
 
-- **OHM and gOHM** are out of scope. They never count toward liquid backing (enforced in
-  `global.ts`).
+- **OHM and gOHM** are out of scope. They never count toward liquid backing. Two
+  mechanisms enforce that:
+  - `global.ts` skips `OHM`-category records.
+  - OHM/gOHM token definitions (category `Volatile`) carry `multiplier: "0"`, and
+    `treasuryBlacklist` keeps treasury-held OHM out of the records.
+
+  Don't remove either one.
 - **Liabilities** (`isLiability: true`, such as Aave variable debt) are always liquid, so
   they always reduce liquid backing.
 - **Multipliers** are only for mechanical value adjustments:
   - the non-OHM share of a POL position;
+  - 0 on OHM/gOHM definitions (the exclusion above);
   - a write-off to 0.
 
   A multiplier is never a discount for "hard to sell". A hard-to-sell asset passes
@@ -128,14 +156,16 @@ Counting an asset as liquid needs evidence. Counting it as illiquid does not.
   Deciding to write an asset off is an accounting call for the team. The skill
   never proposes one. A mark that overstates what the asset can be sold for is a
   pricing bug and is reported separately.
-- **Every `TokenDefinition` carries a rationale comment**, and so does every handler
-  that overrides `isLiquid`:
+- **A rationale comment sits wherever a classification is set:** the definition of
+  every held asset, every handler override, and every `illiquidWallets` entry. The
+  skill defines the full set of comment forms. Two examples:
 
   ```ts
-  // liquidity: illiquid. G1 fail: non-transferable, locked until 2027-02-01. G2 n/a. G3 n/a. (assessed 2026-09-28)
-  // liquidity: liquid. G1 pass: DEX. G2 pass: 1.8% per 1/7 slice of $1.2M. G3 n/a. (assessed 2026-09-28)
-  // liquidity: liquid. EXCEPTION: Cooler Loans receivables, see docs/asset-liquidity-rubric.md#exceptions. (assessed 2026-09-28)
+  // liquidity: illiquid. unlock: G1 fail (locked until 2027-02-01). DEX: G1 fail (non-transferable). G3 n/a (no passing path). (assessed 2026-09-28)
+  // liquidity: liquid. G1 pass: DEX, 7 daily slices. G2 pass: 1.8% per slice $1.2M. G3 pass: USDC normal. (assessed 2026-09-28)
   ```
+
+  A definition with no position needs no comment until the treasury holds it.
 
 - **History:** a reclassification takes effect from the block where the facts changed
   (a lock started, a bridge collapsed, a peg broke). Earlier history keeps the old
@@ -194,7 +224,10 @@ These are expected results from applying the rubric to the assets tracked on
 | ENA, sENA | Ethereum | illiquid | needs a reason | added 2026-09-25 as illiquid with no recorded rationale; ENA trades deep, so without a lock or vesting it would pass |
 | rUSDG (Mellow vault) | Robinhood | illiquid | depends on queue length | no secondary market (no ParaSwap route); liquid only if the redeem queue settles within 7 days |
 | iBERA, iBGT, lBGT | Berachain | illiquid | measure | iBGT/lBGT are one-way wrappers, so only the sale path counts |
-| JONES, VSTA, KLIMA, sKLIMA | Arbitrum, Polygon | liquid with haircut | measure; multiplier 1 either way | haircuts retired; JONES's write-off to 0 is mechanical and stays |
+| JONES, VSTA, KLIMA, sKLIMA | Arbitrum, Polygon | liquid with haircut | measure; multiplier 1 either way | haircuts retired |
+| JONES - Staked | Arbitrum | liquid (inherited), multiplier 0 | illiquid | audit 2026-09-29: `withdraw` and `emergencyWithdraw` revert and the staking contract holds 0 JONES (G1). The write-off to 0 is mechanical and stays; liquid backing is unaffected |
+| BitGo custody wallets (`illiquidWallets`) | Berachain | illiquid | illiquid | G3 per wallet: the treasury can't deploy from them |
+| Balancer LP definitions keyed by pool id | Arbitrum | liquid | flag has no effect | keyed by the 32-byte pool id, but records carry the LP address, so a held position would fall back to the liquid default |
 | Multichain-bridged DAI, FRAX, USDC, WETH | Fantom | liquid | illiquid from the July 2023 collapse | bridge frozen (redeem fails G1), DEX far below the mark (G2); Fantom wETH is already marked ~$229 against ~$2,690 ETH |
 | DEI | Fantom | liquid | illiquid | G2 fail (depegged against a par mark) |
 | UniV3 and staked Kodiak/Beradrome POL | Ethereum, Base, Berachain | liquid | liquid if the non-OHM side exits | computed non-OHM multiplier stays |
