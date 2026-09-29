@@ -15,23 +15,30 @@ curl -s "https://treasury-subgraph-api.olympusdao.finance/v2/treasury-assets/dai
 | python3 -c '
 import json, sys
 from collections import defaultdict
-pos = defaultdict(lambda: {"balance": 0.0, "rates": set(), "rows": 0})
+pos = defaultdict(lambda: {"balance": 0.0, "exOhm": 0.0, "rates": set(), "liquid": set(), "mult": set()})
 for r in json.load(sys.stdin)["data"]:
-    k = (r["blockchain"], r["token"], r["tokenAddress"])
-    pos[k]["balance"] += r["balance"]; pos[k]["rates"].add(r["rate"]); pos[k]["rows"] += 1
-    pos[k]["exOhm"] = pos[k].get("exOhm", 0.0) + r["valueExcludingOhm"]
-    pos[k].update(isLiquid=r["isLiquid"], multiplier=r["multiplier"], block=r["block"])
-for (chain, tok, addr), p in sorted(pos.items()):
-    print(chain, tok, addr, "balance=%.4f" % p["balance"], "mark=%s" % sorted(p["rates"]),
-          "valueExcludingOhm=%.2f" % p["exOhm"], "isLiquid=%s" % p["isLiquid"],
-          "multiplier=%s" % p["multiplier"], "block=%s" % p["block"])'
+    k = (r["date"], r["blockchain"], r["token"], r["tokenAddress"])
+    p = pos[k]
+    p["balance"] += r["balance"]; p["exOhm"] += r["valueExcludingOhm"]
+    p["rates"].add(r["rate"]); p["liquid"].add(r["isLiquid"]); p["mult"].add(r["multiplier"])
+    p["block"] = r["block"]
+for (date, chain, tok, addr), p in sorted(pos.items()):
+    liquid = p["liquid"].pop() if len(p["liquid"]) == 1 else "mixed"
+    print(date, chain, tok, addr, "balance=%.4f" % p["balance"], "mark=%s" % sorted(p["rates"]),
+          "valueExcludingOhm=%.2f" % p["exOhm"], "isLiquid=%s" % liquid,
+          "multiplier=%s" % sorted(p["mult"]), "block=%s" % p["block"])'
 ```
 
-- **Position** = sum of `balance` across all rows with the same chain, `token` name
-  and `tokenAddress`. Group by name too: records that aren't wallet holdings reuse
+- Pass the same date as `start` and `end`. The script keys by date anyway, so a range
+  prints one position per day instead of summing days together.
+- **Position** = sum of `balance` across all rows with the same date, chain, `token`
+  name and `tokenAddress`. Group by name too: records that aren't wallet holdings reuse
   the underlying's address. Examples: "DAI - Borrowed Through Cooler Loans
   Clearinghouse V1.1" has DAI's address, and "wETH - Stability Pool" has WETH's.
   Assess those as separate positions.
+- **`isLiquid=mixed`** means the wallets holding the token disagree, usually because
+  one of them is in `illiquidWallets`. Split the position by wallet (`sourceAddress`)
+  and assess each part.
 - **Mark** = `rate`. It is the price the indexer values the asset at, and the
   price every Gate 2 cost is measured against.
 - Use the latest **complete** date *for that chain*: its `indexingProgress.date` in
@@ -75,12 +82,13 @@ CoinGecko reports, per venue, the USD needed to move the price 2%
 
 - `cexDepth` = sum of `cost_to_move_down_usd` over venues with a real order book
   (skip DEX tickers, since aggregators already cover those).
-- If `cexDepth >= slice`, the slice passes on CEX alone.
+- `sliceUsd = slice × mark`. If `cexDepth >= sliceUsd`, the slice passes on CEX alone.
 - Tickers don't say whether a venue is a CEX. Look up each
   `t["market"]["identifier"]` with `GET /api/v3/exchanges/<identifier>` and keep
   only those with `"centralized": true`. The tickers endpoint returns up to 100
   tickers per page; use `&page=2` beyond that.
-- Otherwise quote the remainder (`slice - cexDepth`) on DEX and apply the 5% test to it.
+- Otherwise convert the uncovered part back to token units,
+  `(sliceUsd - cexDepth) / mark`, quote that on DEX, and apply the 5% test to it.
 - CEX depth only counts if the treasury can actually deposit there (Gate 3 custody).
   If that isn't established, leave CEX out.
 
@@ -175,10 +183,16 @@ console.log(out.at(-1));'
 - **Cost:** `1 - (underlying received per unit × underlying mark) / mark`. For an
   ERC4626 vault the underlying per unit is `convertToAssets(10**decimals)`; add any
   redemption fee.
-- **Capacity:** the vault or pool must be able to pay our full position. Compare our
-  size to the vault's underlying balance (`totalAssets()`, or the underlying's
-  `balanceOf(vault)`), or for Aave to the pool's available liquidity (underlying
-  `balanceOf(aToken)`).
+- **Capacity:** the vault or pool must be able to pay out our full position now, or
+  within the 7 days.
+  - `totalAssets()` doesn't measure this. It counts everything the vault manages,
+    including funds a strategy vault (for example Gauntlet/Morpho) has lent out.
+  - Read `maxWithdraw(<treasury wallet>)` or `maxRedeem(<treasury wallet>)`, and
+    simulate the full `redeem` / `withdraw` from the treasury wallet.
+  - For Aave, compare our size with the pool's available liquidity (the
+    underlying's `balanceOf(aToken)`).
+  - If the vault pays through a queue or cooldown, the queue length is what counts
+    for Gate 1.
 - **Cooldown vaults** (for example sUSDe): `maxWithdraw` / `maxRedeem` can report
   the full balance while a direct `redeem` reverts because a cooldown applies. Read
   the cooldown (`cooldownDuration()`), and prove the cooldown can start by simulating
@@ -196,12 +210,25 @@ override that gives the pair its own LP balance. The balances mapping is usually
 slot 1; confirm it for each fork. Then measure the non-OHM side as a sale or
 redemption.
 
-For a UniV3 NFT position, simulate the exit from the owning wallet:
-`simulateContract` on the NonfungiblePositionManager with
-`decreaseLiquidity({ tokenId, liquidity: <full>, amount0Min: 0, amount1Min: 0, deadline })`,
-then `collect`. Also check that the pool holds enough of the non-OHM token to pay it.
-Uncollected fees aren't part of the indexed position, so leave them out of Gate 2;
-at most mention them under Mark check.
+For a UniV3 NFT position, simulate the whole exit **in one call**, so that state
+carries from one step to the next. Separate `simulateContract` calls don't share
+state, so a standalone `collect` can't see what `decreaseLiquidity` just credited.
+Call the NonfungiblePositionManager's `multicall(bytes[])` from the owning wallet
+with two encoded calls:
+
+1. `decreaseLiquidity({ tokenId, liquidity: <full>, amount0Min: 0, amount1Min: 0, deadline })`
+2. `collect({ tokenId, recipient: <owner>, amount0Max: 2**128-1, amount1Max: 2**128-1 })`
+
+What the two calls return:
+- `decreaseLiquidity`'s return value `(amount0, amount1)` is the principal. Use that
+  for Gate 2.
+- `collect` returns principal plus uncollected fees. Fees aren't part of the indexed
+  position, so leave them out of Gate 2 and mention them at most under Mark check.
+- Verified on Base NFT #1872809 on 2026-09-29: principal 164,354.85 USDC, and
+  `collect` 165,115.13 USDC.
+
+A successful simulation proves the pool can pay. Separately confirm the pool still
+holds enough of the non-OHM token for our size.
 
 ## Contract state (Gates 1 and 3)
 
