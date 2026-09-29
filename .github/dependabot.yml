@@ -9,3 +9,8 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+    ignore:
+      # @types/node tracks the Node runtime (24, see .nvmrc). Bump its major
+      # together with .nvmrc, engines and the Dockerfile base images.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
