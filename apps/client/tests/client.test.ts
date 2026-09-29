@@ -202,54 +202,56 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
         { start: "2025-01-04", end: "2025-01-04" },
       ],
     },
-  ])("auto-paginates v2 daily metrics when the date range is $label", async ({
-    end,
-    expectedChunks,
-  }) => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const parsed = new URL(input instanceof Request ? input.url : input.toString());
-      if (parsed.pathname === "/v2/bounds") {
+  ])(
+    "auto-paginates v2 daily metrics when the date range is $label",
+    async ({ end, expectedChunks }) => {
+      const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+        const parsed = new URL(input instanceof Request ? input.url : input.toString());
+        if (parsed.pathname === "/v2/bounds") {
+          return new Response(
+            JSON.stringify({
+              data: {
+                earliestDate: "2025-01-01",
+                latestDate: "2025-01-04",
+                maxRangeDays: 3,
+              },
+            }),
+          );
+        }
         return new Response(
           JSON.stringify({
-            data: {
-              earliestDate: "2025-01-01",
-              latestDate: "2025-01-04",
-              maxRangeDays: 3,
-            },
+            data: [
+              { start: parsed.searchParams.get("start"), end: parsed.searchParams.get("end") },
+            ],
+            meta: {},
           }),
         );
-      }
-      return new Response(
-        JSON.stringify({
-          data: [{ start: parsed.searchParams.get("start"), end: parsed.searchParams.get("end") }],
-          meta: {},
+      });
+      const client = createClient({ baseUrl: "https://metrics.example", fetch: fetchMock });
+
+      const data = await client.getDailyMetrics({
+        start: "2025-01-01",
+        end,
+        autoPaginate: true,
+      });
+
+      expect(data).toEqual(expectedChunks);
+      const calls = fetchMock.mock.calls as unknown as Array<[string, RequestInit?]>;
+      expect(calls.map(([url]) => new URL(url).pathname)).toEqual([
+        "/v2/bounds",
+        ...expectedChunks.map(() => "/v2/metrics/daily"),
+      ]);
+      expect(
+        calls.slice(1).map(([url]) => {
+          const parsed = new URL(url);
+          return {
+            start: parsed.searchParams.get("start"),
+            end: parsed.searchParams.get("end"),
+          };
         }),
-      );
-    });
-    const client = createClient({ baseUrl: "https://metrics.example", fetch: fetchMock });
-
-    const data = await client.getDailyMetrics({
-      start: "2025-01-01",
-      end,
-      autoPaginate: true,
-    });
-
-    expect(data).toEqual(expectedChunks);
-    const calls = fetchMock.mock.calls as unknown as Array<[string, RequestInit?]>;
-    expect(calls.map(([url]) => new URL(url).pathname)).toEqual([
-      "/v2/bounds",
-      ...expectedChunks.map(() => "/v2/metrics/daily"),
-    ]);
-    expect(
-      calls.slice(1).map(([url]) => {
-        const parsed = new URL(url);
-        return {
-          start: parsed.searchParams.get("start"),
-          end: parsed.searchParams.get("end"),
-        };
-      }),
-    ).toEqual(expectedChunks);
-  });
+      ).toEqual(expectedChunks);
+    },
+  );
 
   test("auto-pagination preserves metric-specific options", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {

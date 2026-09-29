@@ -163,12 +163,14 @@ const liquidityHandlers: LiquidityHandler[] = [
     kind: "univ3",
     tokens: [ERC20_USDC, ERC20_WETH],
     id: LP_UNISWAP_V3_WETH_USDC,
+    fee: 500,
     startBlock: ARBITRUM_START_BLOCK,
   },
   {
     kind: "univ3",
     tokens: [ERC20_ARB, ERC20_WETH],
     id: LP_UNISWAP_V3_ARB_WETH,
+    fee: 500,
     startBlock: LP_UNISWAP_V3_ARB_WETH_CREATION_BLOCK,
   },
   // Native ETH prices via WETH (1:1). NativeBalanceState is populated at

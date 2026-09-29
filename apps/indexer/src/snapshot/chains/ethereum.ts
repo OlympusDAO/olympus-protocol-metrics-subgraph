@@ -44,6 +44,9 @@ const OTC_ESCROW = addr("0xe3312c3f1ab30878d9686452f7205ebe11e965eb");
 const BOND_MANAGER = addr("0xf577c77ee3578c7f216327f41b5d7221ead2b2a3");
 const BOND_FIXED_EXPIRY_TELLER = addr("0x007fe70dc9797c4198528ae43d8195fff82bdc95");
 const MIGRATION_CONTRACT = addr("0x184f3fad8618a6f458c16bae63f70c426fe784b3");
+// Bophades BondCallback policy. Holds bond reserves (DAI) between
+// batchToTreasury sweeps to TRSRY; OHM it receives is burned in the same tx.
+const BOND_CALLBACK = addr("0x73df08CE9dcC8d74d22F23282c4d49F13b4c795E");
 
 // Bonds.
 const BONDS_DEPOSIT = addr("0x9025046c6fb25Fb39e720d97a8FD881ED69a1Ef6");
@@ -82,6 +85,7 @@ const WALLET_ADDRESSES = [
   AURA_ALLOCATOR_V2,
   AURA_ALLOCATOR,
   BALANCER_ALLOCATOR,
+  BOND_CALLBACK,
   BONDS_DEPOSIT,
   BONDS_INVERSE_DEPOSIT,
   BUYBACK_MS,
@@ -327,6 +331,7 @@ const AURA_VAULT_OHM_DAI_WETH = addr("0xF01e29461f1FCEdD82f5258Da006295E23b4Fab3
 const AURA_VAULT_OHM_WSTETH = addr("0x636024f9ddef77e625161b2ccf3a2adfbfad3615");
 
 const LP_UNISWAP_V3_WETH_OHM = addr("0x88051b0eea095007d3bef21ab287be961f3d8598");
+const LP_UNISWAP_V3_WETH_OHM_ONE_PERCENT = addr("0x584eC2562b937C4AC0452184D8d83346382B5D3a");
 const LP_UNISWAP_V3_OHM_SUSDS = addr("0x0858e2B0F9D75f7300B38D64482aC2C8DF06a755");
 const LP_UNISWAP_V3_WETH_WSTETH = addr("0x109830a1aaad605bbf02a9dfa7b0b92ec2fb7daa");
 const LP_UNISWAP_V3_WEETH_WETH = addr("0x202A6012894Ae5c288eA824cbc8A9bfb26A49b93");
@@ -431,6 +436,7 @@ const names: Record<string, string> = {
   [BOND_MANAGER]: "Bond Manager",
   [BOND_FIXED_EXPIRY_TELLER]: "Bond Fixed Expiry Teller",
   [MIGRATION_CONTRACT]: "Migration Contract",
+  [BOND_CALLBACK]: "Bond Callback",
   // Tokens and pools
   [CONVEX_REWARD_OHM_ETH]: "Convex Staked Curve OHM-ETH",
   [CONVEX_REWARD_OHM_FRAXBP]: "Convex Staked Curve OHM-FraxBP",
@@ -506,7 +512,8 @@ const names: Record<string, string> = {
   [LP_UNISWAP_V3_WEETH_WETH]: "UniswapV3 weETH-WETH",
   [LP_UNISWAP_V3_WETH_BTRFLY_V1]: "UniswapV3 WETH-BTRFLY V1",
   [LP_UNISWAP_V3_WETH_BTRFLY_V2]: "UniswapV3 WETH-BTRFLY V2",
-  [LP_UNISWAP_V3_WETH_OHM]: "UniswapV3 WETH-OHM",
+  [LP_UNISWAP_V3_WETH_OHM]: "UniswapV3 0.3% WETH-OHM",
+  [LP_UNISWAP_V3_WETH_OHM_ONE_PERCENT]: "UniswapV3 1% WETH-OHM",
   [LP_UNISWAP_V3_OHM_SUSDS]: "UniswapV3 OHM-sUSDS",
   [LP_UNISWAP_V3_WETH_WSTETH]: "UniswapV3 WETH-wstETH",
 };
@@ -569,7 +576,19 @@ const univ3WethOhm: LiquidityHandler = {
   kind: "univ3",
   tokens: [ERC20_OHM_V2, ERC20_WETH],
   id: LP_UNISWAP_V3_WETH_OHM,
+  fee: 3000,
   startBlock: ERC20_OHM_V2_BLOCK,
+};
+
+// Treasury concentrated WETH-OHM position in the 1% fee-tier pool. This is
+// intentionally an owned-liquidity handler only: the smaller pool is POL but
+// should not become an OHM oracle candidate.
+const univ3WethOhmOnePercent: LiquidityHandler = {
+  kind: "univ3",
+  tokens: [ERC20_OHM_V2, ERC20_WETH],
+  id: LP_UNISWAP_V3_WETH_OHM_ONE_PERCENT,
+  fee: 10000,
+  startBlock: 25_000_000,
 };
 
 // OHM-sUSDS UniV3 pool (per inventory-ethereum.md §6). Treasury holds NFT
@@ -581,10 +600,15 @@ const univ3OhmSusds: LiquidityHandler = {
   kind: "univ3",
   tokens: [ERC20_OHM_V2, ERC20_SUSDS],
   id: LP_UNISWAP_V3_OHM_SUSDS,
+  fee: 3000,
   startBlock: LP_UNISWAP_V3_OHM_SUSDS_BLOCK,
 };
 
-const ownedLiquidityHandlers: LiquidityHandler[] = [univ3WethOhm, univ3OhmSusds];
+const ownedLiquidityHandlers: LiquidityHandler[] = [
+  univ3WethOhm,
+  univ3WethOhmOnePercent,
+  univ3OhmSusds,
+];
 
 // Cooler Loans clearinghouses. Each clearinghouse's principal receivable is
 // added to the snapshot as a DAI / USDS TokenRecord priced via the
@@ -749,6 +773,7 @@ const liquidityHandlers: LiquidityHandler[] = [
     kind: "univ3",
     tokens: [ERC20_ENA, ERC20_WETH],
     id: LP_UNISWAP_V3_ENA_WETH,
+    fee: 3000,
     startBlock: LP_UNISWAP_V3_ENA_WETH_BLOCK,
     twap: { pricedToken: ERC20_ENA, seconds: 3600, spotWarningBps: 1000 },
   },
@@ -766,12 +791,14 @@ const liquidityHandlers: LiquidityHandler[] = [
     kind: "univ3",
     tokens: [ERC20_WETH, ERC20_WSTETH],
     id: LP_UNISWAP_V3_WETH_WSTETH,
+    fee: 100,
     startBlock: ETHEREUM_START_BLOCK,
   },
   {
     kind: "univ3",
     tokens: [ERC20_WEETH, ERC20_WETH],
     id: LP_UNISWAP_V3_WEETH_WETH,
+    fee: 100,
     startBlock: ERC20_WEETH_BLOCK,
   },
   // Long-tail volatiles priced via WETH UniV3 pools (each recurses to WETH
@@ -782,30 +809,35 @@ const liquidityHandlers: LiquidityHandler[] = [
     kind: "univ3",
     tokens: [ERC20_FXS, ERC20_WETH],
     id: LP_UNISWAP_V3_FXS_ETH,
+    fee: 10000,
     startBlock: ERC20_FXS_BLOCK,
   },
   {
     kind: "univ3",
     tokens: [ERC20_LDO, ERC20_WETH],
     id: LP_UNISWAP_V3_LDO_WETH,
+    fee: 3000,
     startBlock: ETHEREUM_START_BLOCK,
   },
   {
     kind: "univ3",
     tokens: [ERC20_LQTY, ERC20_WETH],
     id: LP_UNISWAP_V3_LQTY_WETH,
+    fee: 3000,
     startBlock: ETHEREUM_START_BLOCK,
   },
   {
     kind: "univ3",
     tokens: [ERC20_WETH, ERC20_BTRFLY_V1],
     id: LP_UNISWAP_V3_WETH_BTRFLY_V1,
+    fee: 10000,
     startBlock: ETHEREUM_START_BLOCK,
   },
   {
     kind: "univ3",
     tokens: [ERC20_WETH, ERC20_BTRFLY_V2],
     id: LP_UNISWAP_V3_WETH_BTRFLY_V2,
+    fee: 10000,
     startBlock: ETHEREUM_START_BLOCK,
   },
   // cvxCRV — Convex's liquid staked-CRV wrapper. Held by Convex vlCVX
@@ -824,6 +856,7 @@ const liquidityHandlers: LiquidityHandler[] = [
     kind: "univ3",
     tokens: [ERC20_FEI, ERC20_USDC],
     id: LP_UNISWAP_V3_FEI_USDC,
+    fee: 100,
     startBlock: LP_UNISWAP_V3_FEI_USDC_BLOCK,
   },
   // UST (0xa693...) has no pool of its own: legacy's UST-ETH pair holds the

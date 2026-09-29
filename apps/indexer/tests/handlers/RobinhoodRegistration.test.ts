@@ -32,37 +32,37 @@ describe("Robinhood treasury ingestion registration", () => {
     });
     expect(ROBINHOOD.mellowVault).toMatchObject({ shares: RUSDG, asset: USDG });
   });
-  test.each([
-    USDG,
-    RUSDG,
-  ])("treasury transfer handler records %s for the Safe once", async (token) => {
-    const context = {
-      TokenBalance: { get: vi.fn(async () => undefined), set: vi.fn() },
-      TokenBalanceUpdate: { set: vi.fn() },
-    };
-    await handleTreasuryTransfer({
-      event: {
-        chainId: 4663,
-        srcAddress: token,
-        logIndex: 26,
-        block: { number: 65047107, timestamp: 1789615919 },
-        params: {
-          from: "0x0000000000000000000000000000000000000000",
-          to: WALLET,
-          value: 499977966094n,
+  test.each([USDG, RUSDG])(
+    "treasury transfer handler records %s for the Safe once",
+    async (token) => {
+      const context = {
+        TokenBalance: { get: vi.fn(async () => undefined), set: vi.fn() },
+        TokenBalanceUpdate: { set: vi.fn() },
+      };
+      await handleTreasuryTransfer({
+        event: {
+          chainId: 4663,
+          srcAddress: token,
+          logIndex: 26,
+          block: { number: 65047107, timestamp: 1789615919 },
+          params: {
+            from: "0x0000000000000000000000000000000000000000",
+            to: WALLET,
+            value: 499977966094n,
+          },
         },
-      },
-      context,
-    });
-    expect(context.TokenBalance.set).toHaveBeenCalledTimes(1);
-    expect(context.TokenBalance.set).toHaveBeenCalledWith(
-      expect.objectContaining({
-        chainId: 4663,
-        tokenAddress: token,
-        walletAddress: WALLET,
-        balance: 499977966094n,
-      }),
-    );
-    expect(context.TokenBalanceUpdate.set).toHaveBeenCalledTimes(1);
-  });
+        context,
+      });
+      expect(context.TokenBalance.set).toHaveBeenCalledTimes(1);
+      expect(context.TokenBalance.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          chainId: 4663,
+          tokenAddress: token,
+          walletAddress: WALLET,
+          balance: 499977966094n,
+        }),
+      );
+      expect(context.TokenBalanceUpdate.set).toHaveBeenCalledTimes(1);
+    },
+  );
 });

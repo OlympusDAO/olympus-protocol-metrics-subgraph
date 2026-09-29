@@ -1,6 +1,6 @@
 {
   "name": "@olympusdao/treasury-subgraph-indexer",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "bignumber.js": "11.1.5",
-    "envio": "3.6.1",
+    "envio": "3.12.1",
     "viem": "2.56.8"
   },
   "devDependencies": {

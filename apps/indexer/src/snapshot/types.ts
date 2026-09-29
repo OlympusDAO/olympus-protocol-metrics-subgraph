@@ -223,6 +223,11 @@ export type ChainConfig = {
   names: Record<string, string>;
   abbreviations: Record<string, string>;
   protocolAddresses: string[];
+  // Protocol wallets whose holdings count toward market value but not liquid
+  // backing (e.g. third-party custody). Every record sourced from one is
+  // illiquid and its token name gets ` - ${label}`, so the frontend doesn't
+  // merge it with the same token held liquid elsewhere.
+  illiquidWallets?: { address: string; label: string }[];
   circulatingSupplyWallets: string[];
   treasuryBlacklist: Record<string, string[]>;
   basePriceFeeds: Record<string, BasePriceFeed>;
@@ -346,6 +351,8 @@ export type LiquidityHandler =
       kind: "univ3";
       id: string;
       tokens: string[];
+      /** Pool fee tier in hundredths of a basis point. */
+      fee: number;
       startBlock?: number;
       twap?: { pricedToken: string; seconds: number; spotWarningBps: number };
     }

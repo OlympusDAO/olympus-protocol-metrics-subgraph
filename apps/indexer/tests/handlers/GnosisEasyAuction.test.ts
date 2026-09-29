@@ -44,7 +44,7 @@ describe("applyAuctionCleared", () => {
     );
     expect(setSpy).toHaveBeenCalledTimes(1);
     const updated = setSpy.mock.calls[0]?.[0];
-    expect((updated?.bidQuantity as BigDecimal).toString()).toBe("5.5");
+    expect(updated?.bidQuantity?.toString()).toBe("5.5");
     expect(updated?.auctionCloseTimestamp).toBe(1_700_086_400n);
   });
 

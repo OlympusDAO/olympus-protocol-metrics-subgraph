@@ -880,3 +880,100 @@ describe("pushTokenBalanceRecords per-chain validation", () => {
     expect(daiRecords[0].value).toBe("1000");
   });
 });
+
+// Issue #334: the Bophades BondCallback policy parks bond reserves (DAI)
+// between batchToTreasury sweeps, and burns any OHM it receives in the same
+// transaction. It is a static protocol wallet, so it has to reach every
+// wallet-driven path: the Transfer ledger, treasury records, and the
+// "Treasury" supply deduction.
+describe("Ethereum BondCallback", () => {
+  const ETHEREUM = CHAIN_CONFIGS[1];
+  const BOND_CALLBACK = addr("0x73df08CE9dcC8d74d22F23282c4d49F13b4c795E");
+  const DAI = "0x6b175474e89094c44da98b954eedeac495271d0f";
+  const DAI_USD_FEED = "0xaed0c38402a5d19df6e4c03f4e2dced6e29c1ee9";
+  // Inside the 2024-01-27 to 01-30 window when BondCallback held its peak.
+  const SNAPSHOT_BLOCK = 19_110_000n;
+  const lower = (addresses: string[]) => addresses.map((a) => addr(a));
+
+  test("is a protocol wallet, a circulating-supply wallet and treasury-blacklisted for OHM", () => {
+    expect(lower(ETHEREUM.protocolAddresses)).toContain(BOND_CALLBACK);
+    expect(lower(ETHEREUM.circulatingSupplyWallets)).toContain(BOND_CALLBACK);
+    expect(lower(ETHEREUM.treasuryBlacklist[addr(ETHEREUM.ohmToken)] ?? [])).toContain(
+      BOND_CALLBACK,
+    );
+  });
+
+  test("DAI parked between sweeps is a liquid treasury TokenRecord", async () => {
+    const context = buildMockContext({
+      chainId: 1,
+      chainlinkAnswer: {
+        feedAddress: DAI_USD_FEED,
+        tokenAddress: DAI,
+        answer: 100_000_000n, // $1
+        decimals: 8,
+      },
+      tokenBalance: {
+        tokenAddress: DAI,
+        walletAddress: BOND_CALLBACK,
+        balance: 422_708n * 10n ** 18n,
+      },
+    });
+    const records: SerializedTokenRecord[] = [];
+    await pushTokenBalanceRecords(
+      context,
+      ETHEREUM,
+      buildMockClient(1),
+      records,
+      TIMESTAMP,
+      SNAPSHOT_BLOCK,
+    );
+    const fromCallback = records.filter((r) => r.sourceAddress === BOND_CALLBACK);
+    expect(fromCallback).toHaveLength(1);
+    expect(fromCallback[0].tokenAddress).toBe(DAI);
+    expect(fromCallback[0].source).toBe("Bond Callback");
+    expect(fromCallback[0].balance).toBe("422708");
+    expect(fromCallback[0].value).toBe("422708");
+    expect(fromCallback[0].isLiquid).toBe(true);
+  });
+
+  test("a zero balance emits no TokenRecord", async () => {
+    const context = buildMockContext({
+      chainId: 1,
+      chainlinkAnswer: {
+        feedAddress: DAI_USD_FEED,
+        tokenAddress: DAI,
+        answer: 100_000_000n,
+        decimals: 8,
+      },
+    });
+    const records: SerializedTokenRecord[] = [];
+    await pushTokenBalanceRecords(
+      context,
+      ETHEREUM,
+      buildMockClient(1),
+      records,
+      TIMESTAMP,
+      SNAPSHOT_BLOCK,
+    );
+    expect(records.filter((r) => r.sourceAddress === BOND_CALLBACK)).toHaveLength(0);
+  });
+
+  test("OHM held there is deducted as a Treasury supply row at -1", async () => {
+    const context = buildMockContext({
+      chainId: 1,
+      tokenBalance: {
+        tokenAddress: ETHEREUM.ohmToken,
+        walletAddress: BOND_CALLBACK,
+        balance: 100_000_000_000n, // 100 OHM
+      },
+    });
+    const supplies: SerializedTokenSupply[] = [];
+    await pushTreasuryOhm(context, ETHEREUM, supplies, TIMESTAMP, SNAPSHOT_BLOCK);
+    const fromCallback = supplies.filter((s) => s.sourceAddress === BOND_CALLBACK);
+    expect(fromCallback).toHaveLength(1);
+    expect(fromCallback[0].type).toBe("Treasury");
+    expect(fromCallback[0].source).toBe("Bond Callback");
+    expect(fromCallback[0].balance).toBe("100");
+    expect(fromCallback[0].supplyBalance).toBe("-100");
+  });
+});

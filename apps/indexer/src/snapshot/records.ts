@@ -25,14 +25,18 @@ export function createTokenRecord(
   const valueExcludingOhm = isLiability
     ? baseValue.times(multiplier).times(-1)
     : baseValue.times(multiplier);
+  const illiquidWallet = config.illiquidWallets?.find((wallet) =>
+    same(wallet.address, sourceAddress),
+  );
+  const token = illiquidWallet ? `${tokenName} - ${illiquidWallet.label}` : tokenName;
   return {
-    id: `${date}/${config.chainId}/${blockNumber}/${sourceName}/${tokenName}`,
+    id: `${date}/${config.chainId}/${blockNumber}/${sourceName}/${token}`,
     chainId: config.chainId,
     blockchain: config.blockchain,
     block: blockNumber.toString(),
     timestamp: timestamp.toString(),
     date,
-    token: tokenName,
+    token,
     tokenAddress,
     source: sourceName,
     sourceAddress,
@@ -42,7 +46,7 @@ export function createTokenRecord(
     value: value.toString(10),
     valueExcludingOhm: valueExcludingOhm.toString(10),
     category: category ?? definition?.category ?? "Unknown",
-    isLiquid: definition?.isLiquid ?? true,
+    isLiquid: illiquidWallet ? false : (definition?.isLiquid ?? true),
     isBluechip: definition?.isBluechip ?? false,
   };
 }
