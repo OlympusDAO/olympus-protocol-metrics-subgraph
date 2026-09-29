@@ -221,6 +221,11 @@ export type ChainConfig = {
   names: Record<string, string>;
   abbreviations: Record<string, string>;
   protocolAddresses: string[];
+  // Protocol wallets whose holdings count toward market value but not liquid
+  // backing (e.g. third-party custody). Every record sourced from one is
+  // illiquid and its token name gets ` - ${label}`, so the frontend doesn't
+  // merge it with the same token held liquid elsewhere.
+  illiquidWallets?: { address: string; label: string }[];
   circulatingSupplyWallets: string[];
   treasuryBlacklist: Record<string, string[]>;
   basePriceFeeds: Record<string, BasePriceFeed>;

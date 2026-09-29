@@ -1,6 +1,7 @@
 import BigNumber from "bignumber.js";
 import { describe, expect, test } from "vitest";
 
+import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
 import {
   aggregateAcrossChains,
   computeApy,
@@ -11,6 +12,7 @@ import {
   TYPE_TOTAL_SUPPLY,
   TYPE_TREASURY,
 } from "../../src/snapshot/global";
+import { createTokenRecord, getContractName } from "../../src/snapshot/records";
 import type { SerializedTokenRecord, SerializedTokenSupply } from "../../src/snapshot/types";
 
 const DAI = "0x6b175474e89094c44da98b954eedeac495271d0f";
@@ -163,6 +165,41 @@ describe("computePerChainAggregate", () => {
     expect(aggPost.ohmFloatingSupply.toString()).toBe("850000");
     // Backed = circulating + liquidity + BLV = 820_000
     expect(aggPost.ohmBackedSupply.toString()).toBe("820000");
+  });
+});
+
+describe("computePerChainAggregate: Berachain custodian BERA", () => {
+  test("counts custodian BERA in market value but not in liquid backing", () => {
+    const BERACHAIN = CHAIN_CONFIGS[80094];
+    const NATIVE_BERA = "0x0000000000000000000000000000000000000000";
+    const INFRARED_CUSTODIAN = "0xb65e74f6b2c0633e30ba1be75db818bb9522a81a";
+    const DAO_MULTISIG = "0x91494d1bc2286343d51c55e46ae80c9356d099b5";
+    const beraAt = (wallet: string, balance: string) =>
+      createTokenRecord(
+        BERACHAIN,
+        1_790_000_000n,
+        getContractName(BERACHAIN, NATIVE_BERA),
+        NATIVE_BERA,
+        getContractName(BERACHAIN, wallet),
+        wallet,
+        new BigNumber("0.25"),
+        new BigNumber(balance),
+        10_000_000n,
+      );
+
+    const agg = computePerChainAggregate(
+      80_094,
+      "Berachain",
+      "2026-09-26",
+      10_000_000n,
+      1_790_000_000n,
+      [beraAt(INFRARED_CUSTODIAN, "2800000"), beraAt(DAO_MULTISIG, "1000")],
+      [],
+    );
+    // 2,800,000 × 0.25 + 1,000 × 0.25
+    expect(agg.treasuryMarketValue.toString()).toBe("700250");
+    // Only the DAO MS BERA is liquid.
+    expect(agg.treasuryLiquidBacking.toString()).toBe("250");
   });
 });
 
