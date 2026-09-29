@@ -10,6 +10,7 @@ This repository indexes protocol-level metrics for Olympus contracts and Treasur
 - For a treasury wallet, token or chain, trace and test the complete path: chain configuration → protocol wallet registration → token definition and valuation → indexer/snapshot handling → publisher and published metric coverage.
 - Use existing chain configuration and token-routing extension points. Keep the chain start block authoritative; do not add duplicate date calendars, timestamp lookups or date-specific publisher filters.
 - Define valuation semantics explicitly for nonstandard assets, receipt tokens and redemption claims. Preserve liquid-backing versus economic-value distinctions, explain exceptional accounting guards and units, and avoid double counting.
+- Classify liquidity with `.agents/skills/asset-liquidity/SKILL.md` whenever you add or change `isLiquid`, `multiplier` or `illiquidWallets`, or assess whether an asset is liquid. The definition it applies is `docs/asset-liquidity-rubric.md`.
 - For historical balances, prices or contract state, prove reads at an anchored block with archive-capable infrastructure. A current RPC result is not historical evidence.
 - Prefer supported native `viem` chain definitions over local definitions. Update version and changelog metadata only in the package being changed.
 - Test pre-start and zero states, position transitions and exactly-once aggregation. After merge, verify indexed progress past the position start block, token records, price conversion and published/global inclusion.

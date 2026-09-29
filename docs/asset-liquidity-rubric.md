@@ -2,7 +2,7 @@
 
 This is the definition of which treasury assets are **liquid** in the metrics indexer.
 Every `TokenDefinition` (and every handler that sets `isLiquid` or `multiplier`) is
-classified against it. The `asset-liquidity` skill (`.claude/skills/asset-liquidity/`)
+classified against it. The `asset-liquidity` skill (`.agents/skills/asset-liquidity/`)
 applies this rubric; it does not change it. To change the rubric, change this file in a PR.
 
 ## What "liquid" means here
