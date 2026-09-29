@@ -48,7 +48,7 @@
   "dependencies": {
     "bignumber.js": "11.1.5",
     "envio": "3.6.1",
-    "tsx": "4.22.4",
+    "tsx": "4.23.15",
     "viem": "2.56.8"
   },
   "devDependencies": {
