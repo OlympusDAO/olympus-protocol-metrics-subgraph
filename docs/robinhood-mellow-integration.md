@@ -81,7 +81,8 @@ For redemptions, enumerate all pages of `requestsOf(account, offset, limit)`:
 1. Unprocessed requests: value the returned **post-redemption-fee** locked shares
    at report NAV. Never add the original pre-fee amount or wallet shares twice.
 2. Processed requests: use the fixed `assets` amount, even if liquidity is not
-   yet claimable. Do not mark it liquid or reprice it with later share NAV.
+   yet claimable. Only the subset with `isClaimable=true` is liquid; neither
+   subset reprices with later share NAV.
 3. Claimed requests disappear from the queue; the received USDG appears in idle
    wallet balance. If proceeds go elsewhere, do not fabricate a Safe holding.
 
@@ -92,9 +93,9 @@ An already-priced request with missing cutoff history aborts the snapshot.
 
 Total = idle USDG + active/claimable-share NAV + unprocessed locked-share NAV +
 fixed redemption claims. No separate vault backing or internal vault liability
-is added/subtracted. Shares and all queued claims are `isLiquid: false`; idle
-USDG is `isLiquid: true` under the existing treasury metric convention, not a
-claim that all balances are unencumbered operational cash.
+is added/subtracted. Held shares, pending shares and non-claimable fixed claims
+are `isLiquid: false`. Idle USDG and claimable fixed USDG are `isLiquid: true`.
+This review proposal does not identify unencumbered operational cash.
 
 ### Price and freshness policy
 
@@ -102,7 +103,13 @@ USDG uses an **explicit nominal $1 stable handler**, as used for stable assets
 elsewhere in this indexer. No market-price feed or executable quote is claimed;
 a USDG depeg would not be reflected by this nominal valuation.
 
-When share NAV is needed, reject zero, suspicious or future-dated reports. A past report remains a valid on-chain observation even when it is older than the vault's live `maxAge`; accepting it prevents an external oracle delay from halting historical replay and rolling back the batch.
+When share NAV is needed, reject zero, suspicious or future-dated reports. A past
+report remains an on-chain valuation observation; accepting it for economic value
+prevents an external oracle delay from halting historical replay. Held and pending
+shares are non-liquid regardless of report age, so stale NAV cannot increase
+liquid backing. The pinned Oracle `securityParams()` defines deviation limits and
+processing intervals, not a reporting `maxAge`. Queue-specific freshness settings
+are not implicitly an Olympus reporting threshold.
 This indexing policy preserves the latest on-chain NAV during historical replay;
 it does not claim that stale NAV is current market data. Fail the snapshot rather
 than omit the position and publish an understated treasury. Existing
@@ -222,8 +229,8 @@ operational gates; this evidence does not claim production indexing or publicati
 
 - **Wallet and tokens:** `src/snapshot/chains/robinhood.ts` registers the Safe in
   `protocolAddresses`, USDG as a six-decimal liquid stable asset and rUSDG as an
-  eighteen-decimal illiquid receipt. `Erc20Transfers.ts` consumes the same wallet
-  list for both its event filter and balance updates. `config.yaml` subscribes
+  eighteen-decimal non-liquid receipt valued at NAV. `Erc20Transfers.ts`
+  consumes the same wallet list for both its event filter and balance updates. `config.yaml` subscribes
   the two contracts; it is not the wallet or valuation registry.
 - **USDG valuation:** the `usdg-nominal-usd` stable handler prices idle USDG at
   nominal $1. This works before any vault deposit and is not a market-price feed.
@@ -233,7 +240,9 @@ operational gates; this evidence does not claim production indexing or publicati
   verified inverse oracle conversion; an ordinary ERC20/$1 path would be wrong.
 - **Queue terms:** `pendingShares` are post-fee locked shares awaiting pricing;
   `fixedAssets` are priced USDG claims awaiting payment. Only the former floats
-  with NAV. Neither is counted in idle USDG or liquid backing.
+  with NAV. `claimableAssets` is a subset of `fixedAssets`, split into its own
+  liquid row; it is subtracted from the non-claimable fixed row, never added twice.
+  Queue claims are never also counted as idle USDG.
 - **OHM guards:** Robinhood has no configured verified OHM deployment. Supply
   conversion, total-supply emission and treasury OHM exclusions therefore exit
   without producing fictitious OHM records. Treasury asset records still run.
@@ -249,5 +258,69 @@ operational gates; this evidence does not claim production indexing or publicati
 Offline registration tests exercise the production transfer filter and handler
 for both assets. A mixed-position snapshot test covers idle USDG, wallet rUSDG,
 pending shares and fixed assets through one token pass, asserting four distinct
-records and excluding all vault/queue exposure from liquid backing. These tests
-are deterministic fixtures, not new authenticated replay or deployment evidence.
+records. Separate mixed-claim and claimable-to-idle tests prove disjoint records
+and stable backing through collection. These are deterministic fixtures, not new
+authenticated replay or deployment evidence.
+
+## Liquid-backing classification - revised for maintainer review
+
+At JJ's request, this revision takes the conservative route: full NAV remains in economic value,
+not liquid backing. Held shares and pending redemptions are non-liquid. Fixed
+USDG enters liquid backing only when the pinned request reports `isClaimable`.
+This withdraws the earlier full-NAV held-share inclusion proposal in response to
+maintainer review. Upstream acceptance, merge and deployment remain outstanding.
+
+| State | Economic value | Liquid backing |
+| --- | --- | --- |
+| Held rUSDG | Latest valid on-chain NAV | No |
+| Pending shares | Post-fee shares at NAV | No |
+| Fixed, not claimable | Fixed USDG | No |
+| Fixed, claimable | Fixed USDG | Yes |
+| Claimed into treasury wallet | Idle USDG | Yes |
+
+The pinned `RedeemQueue.requestsOf` and `claim` implementations use the same
+processed-batch boundary. `isClaimable` is not inferred from a nonzero asset
+amount. Starting redemption therefore creates no artificial backing drop;
+claiming an already-liquid fixed claim creates no artificial increase. Actual
+redemption fees remain economic costs and are not smoothed away.
+
+If held receipts must instead count toward a broader backing metric, approval
+must specify the rationale, NAV freshness boundary, haircut (if any) and treatment
+of every queued state. No arbitrary number is introduced in this revision.
+
+## Required rollout and historical backfill
+
+A frontend-only deploy or prospective indexer restart is insufficient. The
+maintainer deployment owner must complete and record this sequence before
+publishing the revised classification:
+
+1. Preserve the accepted deployment SHA, database and complete artifact/manifest
+   backup. The publisher removes old deployment shards after successful publish;
+   do not rely on those shards as the only rollback copy.
+2. Deploy the approved SHA to a separate replay database/deployment. Replay
+   Robinhood from `ROBINHOOD_START_BLOCK` (65,044,796; September 17 UTC), including
+   transfers, immutable queue updates, snapshot token records and aggregates.
+   Do not start at deployment day. If the runtime cannot reset one chain safely,
+   use a clean full multichain replay instead of deleting selected live rows.
+3. Verify credentialed archive reads at the exact retained baseline and replay
+   through the agreed cutoff. Recompute every affected Robinhood snapshot from
+   September 17 through that cutoff. An unchanged schema does not waive replay.
+4. Recompute affected global/chain aggregates and publish under the approved
+   `INDEXER_DEPLOYMENT_ID`. Use the repository's normal full historical backfill
+   for the new deployment identity: its manifest must retain complete supported
+   history, not a Robinhood-only September replacement. Explicit range overrides
+   are acceptable only if the resulting manifest is proven complete. Follow
+   `docs/local-compose.md` and wait for the all-chain readiness gate; a successful
+   process with `skipReason: not_data_ready` is not publication evidence.
+5. Before promoting the manifest, compare old/new snapshots at September 17, all
+   observed redemption transitions and the latest common cutoff. Market value
+   and OHM supply must remain unchanged by classification. Liquid backing must
+   equal idle USDG plus only claimable fixed USDG exactly once. Verify first and
+   last affected dates, chain/global totals and API/frontend readback against the
+   same snapshot. Reject any unexplained deployment-day step.
+6. Record replay deployment ID, block/date coverage, publisher manifest identity,
+   source SHA and readback evidence. Roll back both the application and backed-up
+   artifact manifest if reconciliation fails; never serve mixed-policy history.
+
+This is a required rollout contract, not a claim that replay, publication or
+production deployment has occurred. Actual deployment remains maintainer-owned.
