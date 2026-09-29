@@ -259,14 +259,14 @@ describe("Ethereum ENA/sENA treasury coverage", () => {
     expect(missing.log.warn).not.toHaveBeenCalled();
   });
 
-  test.each([
-    "0",
-    "-1",
-  ])("invalid secondary price %s fails rather than omitting held assets", async (ethPrice) => {
-    await expect(snapshot({ ethPrice, balances: [[ENA, MS, 10n ** 18n]] })).rejects.toThrow(
-      "secondary price",
-    );
-  });
+  test.each(["0", "-1"])(
+    "invalid secondary price %s fails rather than omitting held assets",
+    async (ethPrice) => {
+      await expect(snapshot({ ethPrice, balances: [[ENA, MS, 10n ** 18n]] })).rejects.toThrow(
+        "secondary price",
+      );
+    },
+  );
 
   test("out-of-range tick fails closed", async () => {
     await expect(
@@ -290,42 +290,42 @@ describe("Ethena production transfer filtering", () => {
       { to: expect.arrayContaining([TRSRY, MS]) },
     ]);
   });
-  test.each([
-    ENA,
-    SENA,
-  ])("%s incoming transfer persists balance and immutable history once", async (token) => {
-    const context = {
-      TokenBalance: { get: vi.fn(async () => undefined), set: vi.fn() },
-      TokenBalanceUpdate: { set: vi.fn() },
-    };
-    await handleTreasuryTransfer({
-      context,
-      event: {
-        chainId: 1,
-        srcAddress: token,
-        logIndex: 7,
-        block: { number: Number(BLOCK), timestamp: Number(TIMESTAMP) },
-        params: {
-          from: "0x0000000000000000000000000000000000000000",
-          to: TRSRY,
-          value: 5n * 10n ** 18n,
+  test.each([ENA, SENA])(
+    "%s incoming transfer persists balance and immutable history once",
+    async (token) => {
+      const context = {
+        TokenBalance: { get: vi.fn(async () => undefined), set: vi.fn() },
+        TokenBalanceUpdate: { set: vi.fn() },
+      };
+      await handleTreasuryTransfer({
+        context,
+        event: {
+          chainId: 1,
+          srcAddress: token,
+          logIndex: 7,
+          block: { number: Number(BLOCK), timestamp: Number(TIMESTAMP) },
+          params: {
+            from: "0x0000000000000000000000000000000000000000",
+            to: TRSRY,
+            value: 5n * 10n ** 18n,
+          },
         },
-      },
-    });
-    expect(context.TokenBalance.set).toHaveBeenCalledTimes(1);
-    expect(context.TokenBalanceUpdate.set).toHaveBeenCalledTimes(1);
-    expect(context.TokenBalanceUpdate.set).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: `1-${token}-${TRSRY}-${BLOCK}-7`,
-        block: BLOCK,
-        timestamp: TIMESTAMP,
-        tokenAddress: token,
-        walletAddress: TRSRY,
-        delta: 5n * 10n ** 18n,
-        balance: 5n * 10n ** 18n,
-      }),
-    );
-  });
+      });
+      expect(context.TokenBalance.set).toHaveBeenCalledTimes(1);
+      expect(context.TokenBalanceUpdate.set).toHaveBeenCalledTimes(1);
+      expect(context.TokenBalanceUpdate.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: `1-${token}-${TRSRY}-${BLOCK}-7`,
+          block: BLOCK,
+          timestamp: TIMESTAMP,
+          tokenAddress: token,
+          walletAddress: TRSRY,
+          delta: 5n * 10n ** 18n,
+          balance: 5n * 10n ** 18n,
+        }),
+      );
+    },
+  );
 });
 
 describe("sENA transfer ledger", () => {

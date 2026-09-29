@@ -139,14 +139,14 @@ describe("retryRpc", () => {
     expect(operation).toHaveBeenCalledTimes(1);
   });
 
-  test.each([
-    { code: Symbol("code") },
-    { status: Symbol("status") },
-  ])("preserves errors with non-numeric RPC metadata", async (metadata) => {
-    const rpcError = Object.assign(new Error("RPC Request failed."), metadata);
-    const operation = vi.fn().mockRejectedValue(rpcError);
+  test.each([{ code: Symbol("code") }, { status: Symbol("status") }])(
+    "preserves errors with non-numeric RPC metadata",
+    async (metadata) => {
+      const rpcError = Object.assign(new Error("RPC Request failed."), metadata);
+      const operation = vi.fn().mockRejectedValue(rpcError);
 
-    await expect(retryRpc(operation)).rejects.toBe(rpcError);
-    expect(operation).toHaveBeenCalledTimes(1);
-  });
+      await expect(retryRpc(operation)).rejects.toBe(rpcError);
+      expect(operation).toHaveBeenCalledTimes(1);
+    },
+  );
 });

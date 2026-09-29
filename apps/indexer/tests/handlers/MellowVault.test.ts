@@ -280,28 +280,28 @@ describe("Robinhood snapshot integration", () => {
       records.find((record) => record.token === "USDG - Mellow redemption claim")?.isLiquid,
     ).toBe(false);
   });
-  test.each([
-    NOW - 60,
-    NOW - 30 * 86400,
-  ])("NAV age %s cannot promote held shares into liquid backing or halt replay", async (reportTimestamp) => {
-    const records: SerializedTokenRecord[] = [];
-    // Deliberately hostile token metadata proves row classification is explicit.
-    const config = {
-      ...ROBINHOOD,
-      tokens: ROBINHOOD.tokens.map((token) => ({ ...token, isLiquid: true })),
-    };
-    await pushMellowRecords(
-      context(position({ reportTimestamp })) as unknown as EvmOnBlockContext,
-      config,
-      client,
-      records,
-      BigInt(NOW),
-      block,
-    );
-    expect(records).toHaveLength(1);
-    expect(Number(records[0].value)).toBeCloseTo(1.011345929971074, 12);
-    expect(records[0].isLiquid).toBe(false);
-  });
+  test.each([NOW - 60, NOW - 30 * 86400])(
+    "NAV age %s cannot promote held shares into liquid backing or halt replay",
+    async (reportTimestamp) => {
+      const records: SerializedTokenRecord[] = [];
+      // Deliberately hostile token metadata proves row classification is explicit.
+      const config = {
+        ...ROBINHOOD,
+        tokens: ROBINHOOD.tokens.map((token) => ({ ...token, isLiquid: true })),
+      };
+      await pushMellowRecords(
+        context(position({ reportTimestamp })) as unknown as EvmOnBlockContext,
+        config,
+        client,
+        records,
+        BigInt(NOW),
+        block,
+      );
+      expect(records).toHaveLength(1);
+      expect(Number(records[0].value)).toBeCloseTo(1.011345929971074, 12);
+      expect(records[0].isLiquid).toBe(false);
+    },
+  );
   test("mixed fixed claims split by claimability without counting principal twice", async () => {
     const records: SerializedTokenRecord[] = [];
     const ctx = {
