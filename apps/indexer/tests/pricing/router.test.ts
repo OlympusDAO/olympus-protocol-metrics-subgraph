@@ -104,6 +104,7 @@ describe("recursive router guards", () => {
       [
         {
           kind: "univ3",
+          fee: 3000,
           id: POOL_1,
           tokens: [TOKEN_A, USDC_ALT_1],
         },
@@ -141,11 +142,13 @@ describe("recursive router guards", () => {
       [
         {
           kind: "univ3",
+          fee: 3000,
           id: POOL_1,
           tokens: [TOKEN_A, USDC_ALT_1],
         },
         {
           kind: "univ3",
+          fee: 3000,
           id: POOL_2,
           tokens: [TOKEN_A, USDC_ALT_1],
         },
@@ -181,11 +184,13 @@ describe("recursive router guards", () => {
       [
         {
           kind: "univ3",
+          fee: 3000,
           id: POOL_1,
           tokens: [TOKEN_A, USDC_ALT_1],
         },
         {
           kind: "univ3",
+          fee: 3000,
           id: POOL_2,
           tokens: [TOKEN_A, USDC_ALT_2],
         },
@@ -242,9 +247,9 @@ describe("recursive router guards", () => {
 
     const config = buildConfig(
       [
-        { kind: "univ3", id: POOL_AB, tokens: [TOKEN_A, TOKEN_B] },
-        { kind: "univ3", id: POOL_BC, tokens: [TOKEN_B, TOKEN_C] },
-        { kind: "univ3", id: POOL_CA, tokens: [TOKEN_C, TOKEN_A] },
+        { kind: "univ3", fee: 3000, id: POOL_AB, tokens: [TOKEN_A, TOKEN_B] },
+        { kind: "univ3", fee: 3000, id: POOL_BC, tokens: [TOKEN_B, TOKEN_C] },
+        { kind: "univ3", fee: 3000, id: POOL_CA, tokens: [TOKEN_C, TOKEN_A] },
       ],
       [
         { address: TOKEN_A, spec: VOLATILE },

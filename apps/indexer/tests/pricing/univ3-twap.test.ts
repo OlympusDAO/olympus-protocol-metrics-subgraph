@@ -66,6 +66,7 @@ describe("TWAP pair routing", () => {
         kind: "univ3",
         id: "0xc3db44adc1fcdfd5671f555236eae49f4a8eea18",
         tokens: [token1, token0],
+        fee: 3000,
         startBlock: 100,
         twap: { pricedToken, seconds: 3600, spotWarningBps: 1000 },
       });

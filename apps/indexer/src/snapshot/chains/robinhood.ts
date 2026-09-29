@@ -42,6 +42,7 @@ export const ROBINHOOD: ChainConfig = {
       address: ERC20_RUSDG,
       category: "Stable",
       decimals: 18,
+      // A held receipt must pass through the redeem queue before becoming USDG.
       isLiquid: false,
       isBluechip: false,
       startBlock: ROBINHOOD_START_BLOCK,
