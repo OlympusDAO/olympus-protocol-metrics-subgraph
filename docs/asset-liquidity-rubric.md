@@ -19,6 +19,9 @@ The flag has one effect (`apps/indexer/src/snapshot/global.ts`, `computePerChain
 It is all-or-nothing: an illiquid asset contributes nothing to liquid backing, so a
 multiplier on an illiquid asset has no effect on these metrics.
 
+The multiplier scales `valueExcludingOhm`, which only feeds liquid backing. **It
+never changes market value**, which sums `value` (balance × mark).
+
 ## The gates
 
 An asset is **liquid only if it passes all three gates**. Failing any one makes it
@@ -35,14 +38,22 @@ Every gate is judged on:
 At least one exit path turns the full position into stablecoins or ETH within 7 days of
 deciding to exit.
 
+"Stablecoins" means Stable-category tokens that are themselves liquid under this
+rubric (for example USDC, DAI, USDS, USDe, HONEY, USDG).
+
 Exit paths:
 
 - protocol redemption, unlock, or withdrawal, including cooldowns and withdrawal queues;
 - selling on a DEX or CEX;
 - for LP and staked LP positions: unstake, remove liquidity, then redeem or sell the
-  non-OHM side.
+  non-OHM side. The position and Gate 2 are measured on the non-OHM side only, because
+  that is all the POL multiplier counts.
 
-A 7-day wait passes. More than 7 days fails.
+An asset with no market and no redemption (for example a one-way wrapper that no
+aggregator routes) fails **Gate 1**: it has no path at all.
+
+A 7-day wait passes. More than 7 days fails. A sale in 7 daily slices (days 1-7)
+fits the window.
 
 The gate fails when every path takes longer than 7 days. Typical examples:
 
@@ -69,8 +80,9 @@ lossless exit that takes 14 days are two failing paths, not one passing asset.
 
 ### Gate 3: no blocked or impaired custodian
 
-This gate applies when a third party sits between the treasury and the underlying: a
-bridge, custodian, CEX, RWA issuer, or lending pool.
+This gate applies to the path that passed Gates 1 and 2. It covers any third party
+whose failure would break that path: a bridge, custodian, CEX, RWA issuer, lending
+pool, LST or wrapper protocol, or the issuer of the stablecoin the path ends in.
 
 It fails if that party:
 
@@ -78,14 +90,25 @@ It fails if that party:
   asset; or
 - can currently block or delay our exit beyond 7 days.
 
-A healthy custodian with normal withdrawals passes. Assets held directly in
-treasury-controlled wallets or contracts are n/a.
+A party passes when its part of the exit is working as stated (a live quote, normal
+withdrawals) and there is no known impairment. Mark it unproven only when there's a
+specific reason for doubt (a pause, depeg, incident, or announcement) that can't be
+resolved. The gate is n/a when the path
+depends on no third party, and when no path passed Gates 1 and 2 (the asset is
+already illiquid).
 
 ## Burden of proof
 
-A gate that cannot be shown to pass is a **fail**. If the data does not exist (no
-aggregator route, no order book, an unreadable contract), the verdict is
-**illiquid (provisional)** and the assessment is flagged for a human to review.
+A gate that cannot be shown to pass is a **fail**. Two cases differ:
+
+- **Measured and absent.** Every source that covers the chain was asked and found no
+  market: every supporting aggregator returned no route, and there is no CEX order
+  book. That is evidence there is no market. The gate fails and the verdict is
+  **illiquid**.
+- **Could not measure.** No source covers the chain, the sources were down, the
+  contract could not be read, or a fact (lock length, custodian status) could not
+  be established. The gate is unproven, the verdict is **illiquid (provisional)**,
+  and a human reviews it.
 
 Counting an asset as liquid needs evidence. Counting it as illiquid does not.
 
@@ -101,6 +124,10 @@ Counting an asset as liquid needs evidence. Counting it as illiquid does not.
 
   A multiplier is never a discount for "hard to sell". A hard-to-sell asset passes
   Gate 2 at a multiplier of 1, or it is illiquid.
+
+  Deciding to write an asset off is an accounting call for the team. The skill
+  never proposes one. A mark that overstates what the asset can be sold for is a
+  pricing bug and is reported separately.
 - **Every `TokenDefinition` carries a rationale comment**, and so does every handler
   that overrides `isLiquid`:
 
@@ -114,8 +141,12 @@ Counting an asset as liquid needs evidence. Counting it as illiquid does not.
   (a lock started, a bridge collapsed, a peg broke). Earlier history keeps the old
   classification.
 
-  The indexer cannot yet vary `isLiquid` by block. Until it can, flipping a definition
-  rewrites all history on the next reindex, and the PR must say so.
+  When nothing changed in the world (a new asset, retiring a haircut, or correcting a
+  classification that was wrong from the start), the effective block is the
+  definition's `startBlock`.
+
+  The indexer cannot yet vary `isLiquid` or `multiplier` by block. Until it can,
+  changing either rewrites all history on the next reindex, and the PR must say so.
 
 ## Exceptions
 
@@ -164,7 +195,7 @@ These are expected results from applying the rubric to the assets tracked on
 | rUSDG (Mellow vault) | Robinhood | illiquid | depends on queue length | no secondary market (no ParaSwap route); liquid only if the redeem queue settles within 7 days |
 | iBERA, iBGT, lBGT | Berachain | illiquid | measure | iBGT/lBGT are one-way wrappers, so only the sale path counts |
 | JONES, VSTA, KLIMA, sKLIMA | Arbitrum, Polygon | liquid with haircut | measure; multiplier 1 either way | haircuts retired; JONES's write-off to 0 is mechanical and stays |
-| Multichain-bridged DAI, FRAX, USDC, WETH | Fantom | liquid | illiquid from the July 2023 collapse | G3 fail; Fantom wETH is already marked ~$229 against ~$2,690 ETH |
+| Multichain-bridged DAI, FRAX, USDC, WETH | Fantom | liquid | illiquid from the July 2023 collapse | bridge frozen (redeem fails G1), DEX far below the mark (G2); Fantom wETH is already marked ~$229 against ~$2,690 ETH |
 | DEI | Fantom | liquid | illiquid | G2 fail (depegged against a par mark) |
 | UniV3 and staked Kodiak/Beradrome POL | Ethereum, Base, Berachain | liquid | liquid if the non-OHM side exits | computed non-OHM multiplier stays |
 | Convex/Aura staked LP wrappers | Ethereum | illiquid (flag unused) | measure | POL wrappers never reach the Stable/Volatile record path, so the flag has no effect today |

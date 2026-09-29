@@ -79,17 +79,21 @@ every chain) and OpenOcean (Cloudflare challenge page). Several of the indexer's
 default RPCs failed from a plain client (`eth.llamarpc.com`, `rpc.ftm.tools` 401,
 `polygon-rpc.com` 403), so use the RPCs in the table.
 
-"No route" from a chain an aggregator supports is evidence: nobody makes a market
-for that pair at that size. ParaSwap returning "No routes found with enough
-liquidity" for rUSDG -> USDG on Robinhood is an example. "Chain not supported" is
-*not* evidence. Move to the next source.
+"No route" from an aggregator that supports the chain is evidence: nobody makes a
+market for that pair at that size. ParaSwap returning "No routes found with enough
+liquidity" for rUSDG -> USDG on Robinhood is an example. "Chain not supported" and an
+API that is down are *not* evidence. Move to the next source.
 
-### Fallback order
+### Source order
 
-1. KyberSwap.
-2. ParaSwap.
-3. A direct router quote over RPC on the chain's main DEX.
-4. Nothing works: Gate 2 is unproven, so the verdict is illiquid (provisional).
+1. Ask **every** aggregator that supports the chain (KyberSwap, ParaSwap).
+   - If any returns a route, use the best quote.
+   - If they all return "no route", and there's no CEX book, that is proof of no
+     market. The sale path fails.
+2. If no aggregator supports the chain, or they're all down, use a direct router
+   quote over RPC on the chain's main DEX.
+3. If nothing can be queried, the sale path is unproven, so the verdict is illiquid
+   (provisional).
 
 ## Commands
 
