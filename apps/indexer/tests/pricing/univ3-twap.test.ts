@@ -47,40 +47,40 @@ describe("TWAP arithmetic and configuration", () => {
 describe("TWAP pair routing", () => {
   const token0 = "0x57e114b691db790c35207b2e685d4a43181e6061";
   const token1 = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
-  test.each([
-    token0,
-    token1,
-  ])("normalizes mixed decimals for priced token %s", async (pricedToken) => {
-    const config = {
-      ...CHAIN_CONFIGS[1],
-      tokens: CHAIN_CONFIGS[1].tokens
-        .filter((token) => [token0, token1].includes(token.address))
-        .map((token) => ({ ...token, decimals: token.address === token0 ? 18 : 6 })),
-    };
-    const context = {
-      effect: vi.fn(async (def: { name: string }) =>
-        def.name === "readUniv3Twap" ? observation : "1000000000000000000",
-      ),
-      log: { warn: vi.fn() },
-    } as unknown as EvmOnBlockContext;
-    const handler = new Univ3PriceHandler(config, context, {} as PublicClient, {
-      kind: "univ3",
-      id: "0xc3db44adc1fcdfd5671f555236eae49f4a8eea18",
-      tokens: [token1, token0],
-      startBlock: 100,
-      twap: { pricedToken, seconds: 3600, spotWarningBps: 1000 },
-    });
-    const lookup = vi.fn(async () => ({ price: new BigNumber(1), liquidity: new BigNumber(1) }));
-    expect(handler.matches(pricedToken)).toBe(true);
-    expect(handler.matches(pricedToken === token0 ? token1 : token0)).toBe(false);
-    expect(await handler.getPrice(pricedToken, lookup, 99n)).toBeNull();
-    expect(context.effect).not.toHaveBeenCalled();
-    const quote = await handler.getPrice(pricedToken, lookup, 100n);
-    expect(quote?.price.toString()).toBe(pricedToken === token0 ? "1000000000000" : "1e-12");
-    expect(lookup).toHaveBeenCalledWith(
-      pricedToken === token0 ? token1 : token0,
-      100n,
-      handler.getId(),
-    );
-  });
+  test.each([token0, token1])(
+    "normalizes mixed decimals for priced token %s",
+    async (pricedToken) => {
+      const config = {
+        ...CHAIN_CONFIGS[1],
+        tokens: CHAIN_CONFIGS[1].tokens
+          .filter((token) => [token0, token1].includes(token.address))
+          .map((token) => ({ ...token, decimals: token.address === token0 ? 18 : 6 })),
+      };
+      const context = {
+        effect: vi.fn(async (def: { name: string }) =>
+          def.name === "readUniv3Twap" ? observation : "1000000000000000000",
+        ),
+        log: { warn: vi.fn() },
+      } as unknown as EvmOnBlockContext;
+      const handler = new Univ3PriceHandler(config, context, {} as PublicClient, {
+        kind: "univ3",
+        id: "0xc3db44adc1fcdfd5671f555236eae49f4a8eea18",
+        tokens: [token1, token0],
+        startBlock: 100,
+        twap: { pricedToken, seconds: 3600, spotWarningBps: 1000 },
+      });
+      const lookup = vi.fn(async () => ({ price: new BigNumber(1), liquidity: new BigNumber(1) }));
+      expect(handler.matches(pricedToken)).toBe(true);
+      expect(handler.matches(pricedToken === token0 ? token1 : token0)).toBe(false);
+      expect(await handler.getPrice(pricedToken, lookup, 99n)).toBeNull();
+      expect(context.effect).not.toHaveBeenCalled();
+      const quote = await handler.getPrice(pricedToken, lookup, 100n);
+      expect(quote?.price.toString()).toBe(pricedToken === token0 ? "1000000000000" : "1e-12");
+      expect(lookup).toHaveBeenCalledWith(
+        pricedToken === token0 ? token1 : token0,
+        100n,
+        handler.getId(),
+      );
+    },
+  );
 });
