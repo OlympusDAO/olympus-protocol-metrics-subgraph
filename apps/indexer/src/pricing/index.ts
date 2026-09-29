@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 
-import { isActive, ZERO } from "../snapshot/math";
+import { isActive, same, ZERO } from "../snapshot/math";
 import type { ChainConfig, LiquidityHandler } from "../snapshot/types";
 import { BalancerPriceHandler } from "./balancer";
 import { ChainlinkPriceHandler } from "./chainlink";
@@ -13,7 +13,7 @@ import { GohmPriceHandler } from "./gohm";
 import { KodiakPriceHandler } from "./kodiak";
 import { RemapPriceHandler } from "./remap";
 import { StablePriceHandler } from "./stable";
-import type { PriceHandler, PriceLookupResult } from "./types";
+import type { PriceHandler, PriceLookup, PriceLookupResult } from "./types";
 import { Univ2PriceHandler } from "./univ2";
 import { Univ3PriceHandler, Univ3QuoterPriceHandler } from "./univ3";
 
@@ -156,13 +156,14 @@ export async function getTotalValue(
       handler.id,
       [...excludedTokens].map((token) => token.toLowerCase()).sort(),
     ],
-    () =>
-      createPriceHandler(config, context, client, handler).getTotalValue(
+    () => {
+      const priceHandler = createPriceHandler(config, context, client, handler);
+      return priceHandler.getTotalValue(
         excludedTokens,
-        (lookupToken, lookupBlock, lookupPool) =>
-          getPrice(config, context, client, lookupToken, lookupBlock, lookupPool),
+        withOwnPoolFallback(config, context, client, priceHandler),
         blockNumber,
-      ),
+      );
+    },
     null,
   );
 }
@@ -176,14 +177,44 @@ export async function getUnitPrice(
 ) {
   return cachedPricingLookup(
     ["unitPrice", config.chainId, blockNumber.toString(), handler.kind, handler.id],
-    () =>
-      createPriceHandler(config, context, client, handler).getUnitPrice(
-        (lookupToken, lookupBlock, lookupPool) =>
-          getPrice(config, context, client, lookupToken, lookupBlock, lookupPool),
+    () => {
+      const priceHandler = createPriceHandler(config, context, client, handler);
+      return priceHandler.getUnitPrice(
+        withOwnPoolFallback(config, context, client, priceHandler),
         blockNumber,
-      ),
+      );
+    },
     null,
   );
+}
+
+// Valuing a pool prices each of its tokens with that pool excluded
+// (`currentPool`), so a pool that is the chain's only OHM source values its
+// OHM side at zero — Arbitrum's Camelot OHM-wETH POL showed the wETH leg alone
+// as TVL and a multiplier of 1. When the router finds no outside OHM price,
+// price OHM off the pool's own reserves; the other leg still goes through the
+// plain router, so this can't recurse back. Only `config.ohmToken` qualifies:
+// valueExcludingOhm always drops it, so this corrects TVL and the multiplier
+// without touching liquid backing. Self-pricing any other lone token (e.g.
+// gOHM in Arbitrum's gOHM-wETH) would add it to backing.
+function withOwnPoolFallback(
+  config: ChainConfig,
+  context: EvmOnBlockContext,
+  client: PublicClient,
+  priceHandler: PriceHandler,
+): PriceLookup {
+  const lookup: PriceLookup = (lookupToken, lookupBlock, lookupPool) =>
+    getPrice(config, context, client, lookupToken, lookupBlock, lookupPool);
+  return async (lookupToken, lookupBlock, lookupPool) => {
+    const result = await lookup(lookupToken, lookupBlock, lookupPool);
+    if (
+      !result.price.eq(ZERO) ||
+      !same(lookupToken, config.ohmToken) ||
+      !priceHandler.matches(lookupToken)
+    )
+      return result;
+    return (await priceHandler.getPrice(lookupToken, lookup, lookupBlock)) ?? result;
+  };
 }
 
 export async function getTokenQuantityPerLp(
