@@ -4,7 +4,7 @@ import type { PublicClient } from "viem";
 
 import { readPositionAmount } from "../effects";
 import { getPrice } from "../pricing";
-import { getTokenDecimals, isActive, toDecimal, ZERO } from "../snapshot/math";
+import { getTokenDecimals, isActive, isAtOrAfterBlock, toDecimal, ZERO } from "../snapshot/math";
 import { createTokenRecord, getContractName } from "../snapshot/records";
 import type { ChainConfig, PositionReadMethod, SerializedTokenRecord } from "../snapshot/types";
 
@@ -79,11 +79,7 @@ export async function pushProtocolPositionRecords(
 
     if (position.kind === "read") {
       const decimals = getTokenDecimals(config.tokens, position.token);
-      if (
-        position.writeOffFromBlock !== undefined &&
-        blockNumber >= BigInt(position.writeOffFromBlock)
-      )
-        continue;
+      if (isAtOrAfterBlock(position.writeOffFromBlock, blockNumber)) continue;
       for (const wallet of position.wallets) {
         const raw = await read(position.contract, position.method, wallet);
         await push({

@@ -3,6 +3,7 @@ import type { PublicClient } from "viem";
 import { describe, expect, test, vi } from "vitest";
 import {
   BLOCK_HANDLERS,
+  pushOwnedLiquidityRecords,
   pushTokenBalanceRecords,
   pushTotalSupply,
   pushTreasuryOhm,
@@ -11,7 +12,8 @@ import {
 import { getPrice } from "../../src/pricing";
 import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
 import { ERC20_JONES, JONES_TREASURY_EXCLUSION_BLOCK } from "../../src/snapshot/chains/arbitrum";
-import { addr } from "../../src/snapshot/math";
+import { computePerChainAggregate } from "../../src/snapshot/global";
+import { addr, omitTreasuryExcludedRecords } from "../../src/snapshot/math";
 import type { SerializedTokenRecord, SerializedTokenSupply } from "../../src/snapshot/types";
 
 // Per-chain snapshot validation. Each test wires a minimal mock context
@@ -45,6 +47,7 @@ function buildMockContext(seed: {
   tokenBalances?: { tokenAddress: string; walletAddress: string; balance: bigint }[];
   ohmIndex?: { chainId: number; sOhmAddress: string; index: bigint };
   erc20Supply?: { chainId: number; tokenAddress: string; totalSupply: bigint };
+  univ2Pool?: { id: string; reserve0: bigint; reserve1: bigint };
 }): EvmOnBlockContext {
   const chainlinkStates = new Map<string, unknown>();
   if (seed.chainlinkAnswer) {
@@ -94,7 +97,12 @@ function buildMockContext(seed: {
   return {
     OhmIndexState: { get: async (id: string) => ohmIndexStates.get(id) },
     TokenBalance: { get: async (id: string) => tokenBalances.get(id) },
-    Univ2PoolState: { get: async () => undefined },
+    Univ2PoolState: {
+      get: async (id: string) =>
+        id === seed.univ2Pool?.id
+          ? { reserve0: seed.univ2Pool.reserve0, reserve1: seed.univ2Pool.reserve1 }
+          : undefined,
+    },
     Univ3PoolState: { get: async () => undefined },
     BalancerPoolState: { get: async () => undefined },
     KodiakPool: { get: async () => undefined },
@@ -196,14 +204,16 @@ describe("pushTokenBalanceRecords per-chain validation", () => {
         },
       },
     ) as EvmOnBlockContext;
+    const excludedRecords: SerializedTokenRecord[] = [];
     await pushTokenBalanceRecords(
       noReadContext,
       config,
       buildMockClient(arbitrum.chainId),
-      [],
+      excludedRecords,
       TIMESTAMP,
       cutoff,
     );
+    expect(excludedRecords).toHaveLength(0);
 
     for (const block of [12_000_000n, cutoff - 1n, cutoff, cutoff + 1n]) {
       const records: SerializedTokenRecord[] = [];
@@ -226,6 +236,130 @@ describe("pushTokenBalanceRecords per-chain validation", () => {
       } else {
         expect(records).toHaveLength(0);
       }
+    }
+  });
+
+  test("real JONES-WETH pool pricing and LP records survive the JONES cutoff", async () => {
+    const arbitrum = CHAIN_CONFIGS[42161];
+    const pool = arbitrum.liquidityHandlers.find(
+      (handler) => handler.kind === "univ2" && handler.tokens.includes(ERC20_JONES),
+    );
+    expect(pool).toBeDefined();
+    if (!pool) throw new Error("JONES-WETH pool missing");
+    const weth = pool.tokens.find((token) => token !== ERC20_JONES);
+    const feed = arbitrum.liquidityHandlers.find(
+      (handler) => handler.kind === "chainlink" && handler.tokens.includes(weth ?? ""),
+    );
+    expect(feed).toBeDefined();
+    if (!feed || !weth) throw new Error("WETH feed missing");
+    const config = {
+      ...arbitrum,
+      liquidityHandlers: [feed, pool],
+      ownedLiquidityHandlers: [pool],
+    };
+    const context = buildMockContext({
+      chainId: arbitrum.chainId,
+      chainlinkAnswer: {
+        feedAddress: feed.id,
+        tokenAddress: weth,
+        answer: 300_000_000_000n,
+        decimals: 8,
+      },
+      univ2Pool: {
+        id: `${arbitrum.chainId}-${addr(pool.id)}`,
+        reserve0: 100n * 10n ** 18n,
+        reserve1: 10n * 10n ** 18n,
+      },
+      erc20Supply: {
+        chainId: arbitrum.chainId,
+        tokenAddress: pool.id,
+        totalSupply: 10n * 10n ** 18n,
+      },
+      tokenBalance: {
+        tokenAddress: pool.id,
+        walletAddress: arbitrum.protocolAddresses[0],
+        balance: 2n * 10n ** 18n,
+      },
+    });
+    for (const block of [
+      BigInt(JONES_TREASURY_EXCLUSION_BLOCK),
+      BigInt(JONES_TREASURY_EXCLUSION_BLOCK) + 1n,
+    ]) {
+      const price = await getPrice(
+        config,
+        context,
+        buildMockClient(arbitrum.chainId),
+        ERC20_JONES,
+        block,
+        null,
+      );
+      expect(price.price.gt(0)).toBe(true);
+      const records: SerializedTokenRecord[] = [];
+      await pushOwnedLiquidityRecords(
+        context,
+        config,
+        buildMockClient(arbitrum.chainId),
+        records,
+        TIMESTAMP,
+        block,
+      );
+      const treasuryRecords = omitTreasuryExcludedRecords(config.tokens, records, block);
+      expect(treasuryRecords).toHaveLength(1);
+      expect(treasuryRecords[0].tokenAddress).toBe(pool.id);
+      expect(Number(treasuryRecords[0].value)).toBeGreaterThan(0);
+    }
+  });
+
+  test("final treasury filter removes direct JONES from rows and aggregate, not LP", () => {
+    const arbitrum = CHAIN_CONFIGS[42161];
+    const cutoff = BigInt(JONES_TREASURY_EXCLUSION_BLOCK);
+    const jones = arbitrum.tokens.find((token) => token.address === ERC20_JONES);
+    const pool = arbitrum.liquidityHandlers.find(
+      (handler) => handler.kind === "univ2" && handler.tokens.includes(ERC20_JONES),
+    );
+    if (!jones || !pool) throw new Error("JONES configuration missing");
+    const direct = {
+      id: "jones",
+      chainId: arbitrum.chainId,
+      blockchain: arbitrum.blockchain,
+      block: cutoff.toString(),
+      timestamp: TIMESTAMP.toString(),
+      date: "2026-09-27",
+      token: "JONES",
+      tokenAddress: ERC20_JONES,
+      source: "Treasury",
+      sourceAddress: arbitrum.protocolAddresses[0],
+      rate: "1",
+      balance: "100",
+      multiplier: "0.83",
+      value: "100",
+      valueExcludingOhm: "83",
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+    } satisfies SerializedTokenRecord;
+    const lp = {
+      ...direct,
+      id: "pool",
+      tokenAddress: pool.id,
+      value: "20",
+      valueExcludingOhm: "20",
+    };
+    expect(omitTreasuryExcludedRecords(arbitrum.tokens, [direct, lp], cutoff - 1n)).toHaveLength(2);
+    for (const block of [cutoff, cutoff + 1n]) {
+      const filtered = omitTreasuryExcludedRecords(arbitrum.tokens, [direct, lp], block);
+      expect(filtered).toEqual([lp]);
+      const aggregate = computePerChainAggregate(
+        arbitrum.chainId,
+        arbitrum.blockchain,
+        direct.date,
+        block,
+        TIMESTAMP,
+        filtered,
+        [],
+      );
+      expect(aggregate.treasuryMarketValue.toString()).toBe("20");
+      expect(aggregate.treasuryLiquidBacking.toString()).toBe("20");
     }
   });
 

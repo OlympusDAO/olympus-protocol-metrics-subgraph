@@ -1,7 +1,13 @@
 import BigNumber from "bignumber.js";
 import { BigDecimal } from "envio";
 
-import type { BasePriceFeed, Bytes32, LiquidityHandler, TokenDefinition } from "./types";
+import type {
+  BasePriceFeed,
+  Bytes32,
+  LiquidityHandler,
+  SerializedTokenRecord,
+  TokenDefinition,
+} from "./types";
 
 export const ZERO = new BigNumber(0);
 export const ONE = new BigNumber(1);
@@ -109,6 +115,35 @@ export function isActive(
   return (
     definition.lastActiveBlock === undefined || blockNumber <= BigInt(definition.lastActiveBlock)
   );
+}
+
+/** Exclude a token's standalone treasury records from this block onward. */
+export function isTreasuryExcluded(
+  definition: Pick<TokenDefinition, "treasuryExcludedFromBlock">,
+  blockNumber: bigint,
+): boolean {
+  return isAtOrAfterBlock(definition.treasuryExcludedFromBlock, blockNumber);
+}
+
+/** Inclusive optional block boundary shared by treasury and position exclusions. */
+export function isAtOrAfterBlock(cutoff: number | undefined, blockNumber: bigint): boolean {
+  return cutoff !== undefined && blockNumber >= BigInt(cutoff);
+}
+
+/** Apply the same treasury boundary to persisted rows and snapshot aggregates. */
+export function omitTreasuryExcludedRecords(
+  definitions: TokenDefinition[],
+  records: SerializedTokenRecord[],
+  blockNumber: bigint,
+): SerializedTokenRecord[] {
+  const excluded = new Set(
+    definitions
+      .filter((definition) => isTreasuryExcluded(definition, blockNumber))
+      .map((definition) => definition.address),
+  );
+  return excluded.size === 0
+    ? records
+    : records.filter((record) => !excluded.has(addr(record.tokenAddress)));
 }
 
 // UniV3 token amounts from L + sqrtPrice + tick bounds. Mirrors legacy

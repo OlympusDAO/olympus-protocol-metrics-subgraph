@@ -27,7 +27,9 @@ import {
   addr,
   getTokenDecimals,
   isActive,
+  isTreasuryExcluded,
   matches,
+  omitTreasuryExcludedRecords,
   toBigDecimal,
   toDecimal,
   ZERO,
@@ -233,7 +235,8 @@ async function processSnapshot(
     }),
   );
 
-  for (const record of records) {
+  const treasuryRecords = omitTreasuryExcludedRecords(config.tokens, records, blockNumber);
+  for (const record of treasuryRecords) {
     const entity: TokenRecord = {
       ...record,
       block: BigInt(record.block),
@@ -280,7 +283,7 @@ async function processSnapshot(
         client,
         blockNumber,
         timestamp,
-        records,
+        treasuryRecords,
         supplies,
       ),
     ),
@@ -288,7 +291,7 @@ async function processSnapshot(
 
   context.log.info(
     `Finished ${name} block ${blockNumberInput} on chain ${chainId} in ${Date.now() - startedAt}ms`,
-    { tokenRecords: records.length, tokenSupplies: supplies.length },
+    { tokenRecords: treasuryRecords.length, tokenSupplies: supplies.length },
   );
 }
 
@@ -551,11 +554,7 @@ export async function pushTokenBalanceRecords(
     if (definition.category !== "Stable" && definition.category !== "Volatile") continue;
     if (!isActive(definition, blockNumber)) continue;
 
-    if (
-      definition.treasuryExcludedFromBlock !== undefined &&
-      blockNumber >= BigInt(definition.treasuryExcludedFromBlock)
-    )
-      continue;
+    if (isTreasuryExcluded(definition, blockNumber)) continue;
 
     // Price only held assets; pre-acquisition replay needs no pool history.
     let rate: BigNumber | undefined;
@@ -616,7 +615,7 @@ export async function pushTokenBalanceRecords(
 
 // ----- Owned-liquidity records (LP balances from entities, prices via RPC) -----
 
-async function pushOwnedLiquidityRecords(
+export async function pushOwnedLiquidityRecords(
   context: EvmOnBlockContext,
   config: ChainConfig,
   client: ReturnType<typeof getClient>,

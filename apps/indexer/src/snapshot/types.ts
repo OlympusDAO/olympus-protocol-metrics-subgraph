@@ -55,8 +55,8 @@ export type TokenDefinition = {
   isBluechip: boolean;
   decimals: number;
   multiplier?: string;
-  // Inclusive cutoff for standalone wallet and staking treasury records only.
-  // Does not deactivate pricing or change separately held LP accounting.
+  // Inclusive cutoff for direct treasury records carrying this token address.
+  // Pricing remains active; LP records carry the pool address and are unaffected.
   treasuryExcludedFromBlock?: number;
   isLiability?: boolean;
   startBlock?: number;

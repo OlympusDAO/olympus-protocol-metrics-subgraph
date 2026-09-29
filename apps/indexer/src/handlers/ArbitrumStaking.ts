@@ -2,7 +2,7 @@ import type BigNumber from "bignumber.js";
 import type { EvmOnBlockContext } from "envio";
 
 import { getPrice } from "../pricing";
-import { addr, isActive, toDecimal, ZERO } from "../snapshot/math";
+import { addr, isActive, isTreasuryExcluded, toDecimal, ZERO } from "../snapshot/math";
 import { createTokenRecord, getContractName } from "../snapshot/records";
 import { getClient } from "../snapshot/rpc-client";
 import type { ChainConfig, SerializedTokenRecord } from "../snapshot/types";
@@ -47,11 +47,7 @@ async function pushJonesStakingRecords(
   const jonesToken = config.tokens.find((token) => token.address === addr(JONES_TOKEN_ADDRESS));
   if (!jonesToken || !isActive(jonesToken, blockNumber)) return;
 
-  if (
-    jonesToken.treasuryExcludedFromBlock !== undefined &&
-    blockNumber >= BigInt(jonesToken.treasuryExcludedFromBlock)
-  )
-    return;
+  if (isTreasuryExcluded(jonesToken, blockNumber)) return;
 
   const client = getClient(config);
   let rate: BigNumber | null = null;

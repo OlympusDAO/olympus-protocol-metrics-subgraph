@@ -135,7 +135,7 @@ describe("Arbitrum staking handlers", () => {
       await pushArbitrumStakingRecords(context, ARBITRUM, records, TIMESTAMP, block);
       expect(records).toHaveLength(0);
     }
-    expect(get).toHaveBeenCalledTimes(1);
+    expect(get).toHaveBeenCalledTimes(ARBITRUM.protocolAddresses.length);
     expect(getPrice).not.toHaveBeenCalled();
   });
 });
