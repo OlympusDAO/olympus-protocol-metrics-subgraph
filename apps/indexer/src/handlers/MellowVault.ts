@@ -86,8 +86,8 @@ export function valueMellowPosition(
 
 /**
  * Emit mutually exclusive held-share and redemption-claim records at a pinned block.
- * NAV-dependent held/pending shares and non-claimable fixed claims are non-liquid.
- * Only fixed, currently claimable USDG is liquid. Pre-start/zero emit no records.
+ * Held shares and all redemption claims remain liquid during the temporary
+ * redemption cooling-off period. Pre-start/zero emit no records.
  */
 export async function pushMellowRecords(
   context: EvmOnBlockContext,
@@ -122,21 +122,21 @@ export async function pushMellowRecords(
         vault.shares,
         values.rate.times(assetPrice),
         values.shares,
-        false,
+        true,
       ],
       [
         "rUSDG - Pending redemption",
         vault.shares,
         values.rate.times(assetPrice),
         values.pendingShares,
-        false,
+        true,
       ],
       [
         "USDG - Mellow redemption claim",
         vault.asset,
         assetPrice,
         values.fixedAssets.minus(values.claimableAssets),
-        false,
+        true,
       ],
       ["USDG - Mellow claimable redemption", vault.asset, assetPrice, values.claimableAssets, true],
     ] as const) {
@@ -153,7 +153,7 @@ export async function pushMellowRecords(
           balance,
           blockNumber,
         ),
-        // Classification belongs to the economic state, not the token address.
+        // The temporary redemption cooling-off period does not remove liquid backing.
         isLiquid,
       });
     }

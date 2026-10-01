@@ -170,8 +170,8 @@ describe("Robinhood snapshot integration", () => {
     );
     const total = aggregateAcrossChains("2026-09-17", [chain]);
     expect(total.treasuryMarketValue.toNumber()).toBeCloseTo(1.011345929971074, 12);
-    expect(total.treasuryLiquidBacking.toString()).toBe("0");
-    expect(records[0].isLiquid).toBe(false);
+    expect(total.treasuryLiquidBacking.toNumber()).toBeCloseTo(1.011345929971074, 12);
+    expect(records[0].isLiquid).toBe(true);
     expect(records[0].sourceAddress).toBe(ROBINHOOD.protocolAddresses[0]);
     expect(Number(records[0].value)).toBeCloseTo(1.011345929971074, 12);
   });
@@ -185,7 +185,7 @@ describe("Robinhood snapshot integration", () => {
     { timestamp: 200, shares: "990000000000000000", assets: "0", isClaimable: false },
     { timestamp: 100, shares: "1000000000000000000", assets: "1005000", isClaimable: false },
     { timestamp: 100, shares: "1000000000000000000", assets: "1005000", isClaimable: true },
-  ])("only fixed claimable exposure enters backing: %o", async (request) => {
+  ])("redemption exposure stays liquid during the cooling-off period: %o", async (request) => {
     const records: SerializedTokenRecord[] = [];
     const ctx = {
       ...context(position({ shares: "0", requests: [request] })),
@@ -200,7 +200,7 @@ describe("Robinhood snapshot integration", () => {
       block,
     );
     expect(records).toHaveLength(1);
-    expect(records[0].isLiquid).toBe(request.isClaimable);
+    expect(records[0].isLiquid).toBe(true);
     const aggregate = computePerChainAggregate(
       4663,
       "Robinhood",
@@ -211,7 +211,9 @@ describe("Robinhood snapshot integration", () => {
       [],
     );
     expect(aggregate.treasuryMarketValue.gt(0)).toBe(true);
-    expect(aggregate.treasuryLiquidBacking.toString()).toBe(request.isClaimable ? "1.005" : "0");
+    expect(aggregate.treasuryLiquidBacking.toString()).toBe(
+      aggregate.treasuryMarketValue.toString(),
+    );
   });
   test("completed redemption is idle USDG with no residual claim", async () => {
     const records: SerializedTokenRecord[] = [];
@@ -271,23 +273,25 @@ describe("Robinhood snapshot integration", () => {
       10 + 1.99 * 1.011345929971074 + 1.005,
       10,
     );
-    expect(aggregate.treasuryLiquidBacking.toString()).toBe("10");
-    expect(records.filter((record) => record.isLiquid)).toHaveLength(1);
+    expect(aggregate.treasuryLiquidBacking.toString()).toBe(
+      aggregate.treasuryMarketValue.toString(),
+    );
+    expect(records.filter((record) => record.isLiquid)).toHaveLength(4);
     expect(records.find((record) => record.token === "rUSDG - Pending redemption")?.isLiquid).toBe(
-      false,
+      true,
     );
     expect(
       records.find((record) => record.token === "USDG - Mellow redemption claim")?.isLiquid,
-    ).toBe(false);
+    ).toBe(true);
   });
   test.each([NOW - 60, NOW - 30 * 86400])(
-    "NAV age %s cannot promote held shares into liquid backing or halt replay",
+    "NAV age %s preserves liquid classification without halting replay",
     async (reportTimestamp) => {
       const records: SerializedTokenRecord[] = [];
-      // Deliberately hostile token metadata proves row classification is explicit.
+      // Row classification stays liquid even if token metadata disagrees.
       const config = {
         ...ROBINHOOD,
-        tokens: ROBINHOOD.tokens.map((token) => ({ ...token, isLiquid: true })),
+        tokens: ROBINHOOD.tokens.map((token) => ({ ...token, isLiquid: false })),
       };
       await pushMellowRecords(
         context(position({ reportTimestamp })) as unknown as EvmOnBlockContext,
@@ -299,7 +303,7 @@ describe("Robinhood snapshot integration", () => {
       );
       expect(records).toHaveLength(1);
       expect(Number(records[0].value)).toBeCloseTo(1.011345929971074, 12);
-      expect(records[0].isLiquid).toBe(false);
+      expect(records[0].isLiquid).toBe(true);
     },
   );
   test("mixed fixed claims split by claimability without counting principal twice", async () => {
@@ -329,7 +333,7 @@ describe("Robinhood snapshot integration", () => {
     expect(records).toHaveLength(2);
     expect(new Set(records.map((record) => record.id)).size).toBe(2);
     expect(records.map((record) => [record.balance, record.isLiquid])).toEqual([
-      ["1.005", false],
+      ["1.005", true],
       ["2.01", true],
     ]);
     const aggregate = computePerChainAggregate(
@@ -342,7 +346,7 @@ describe("Robinhood snapshot integration", () => {
       [],
     );
     expect(aggregate.treasuryMarketValue.toString()).toBe("3.015");
-    expect(aggregate.treasuryLiquidBacking.toString()).toBe("2.01");
+    expect(aggregate.treasuryLiquidBacking.toString()).toBe("3.015");
   });
   test("claimable-to-idle transition preserves backing with no residual claim", async () => {
     const totals: string[] = [];
