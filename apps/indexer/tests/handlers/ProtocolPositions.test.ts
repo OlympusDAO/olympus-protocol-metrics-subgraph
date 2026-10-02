@@ -131,15 +131,19 @@ describe("pushProtocolPositionRecords", () => {
     expect(records.length).toBeGreaterThan(0);
   });
 
-  test("cvxCRV stays in market value but leaves liquid backing after the write-off", async () => {
+  test("bricked cvxCRV leaves all reported treasury value from the write-off block", async () => {
     const before = await snapshot(17_358_800n);
     const beforeRecord = before.byLabel(VLCVX_ALLOCATOR, "Curve - Convex CRV Reward Pool (cvxCRV)");
     expect(beforeRecord?.valueExcludingOhm).toBe(beforeRecord?.value);
 
     const after = await snapshot(18_121_728n);
-    const afterRecord = after.byLabel(VLCVX_ALLOCATOR, "Curve - Convex CRV Reward Pool (cvxCRV)");
-    expect(afterRecord?.value).toBe("180802.664699649017940303");
-    expect(afterRecord?.valueExcludingOhm).toBe("0");
+    expect(
+      after.byLabel(VLCVX_ALLOCATOR, "Curve - Convex CRV Reward Pool (cvxCRV)"),
+    ).toBeUndefined();
+    expect(after.effect).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ contract: CONVEX_CRV_POOL }),
+    );
   });
 
   test("vlCVX unlockable balance is valued under legacy's Unlocked label", async () => {

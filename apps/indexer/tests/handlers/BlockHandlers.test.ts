@@ -3,13 +3,17 @@ import type { PublicClient } from "viem";
 import { describe, expect, test, vi } from "vitest";
 import {
   BLOCK_HANDLERS,
+  pushOwnedLiquidityRecords,
   pushTokenBalanceRecords,
   pushTotalSupply,
   pushTreasuryOhm,
   updateGlobalMetricSnapshot,
 } from "../../src/handlers/BlockHandlers";
+import { getPrice } from "../../src/pricing";
 import { CHAIN_CONFIGS } from "../../src/snapshot/chains";
-import { addr } from "../../src/snapshot/math";
+import { ERC20_JONES, JONES_TREASURY_EXCLUSION_BLOCK } from "../../src/snapshot/chains/arbitrum";
+import { computePerChainAggregate } from "../../src/snapshot/global";
+import { addr, omitTreasuryExcludedRecords } from "../../src/snapshot/math";
 import type { SerializedTokenRecord, SerializedTokenSupply } from "../../src/snapshot/types";
 
 // Per-chain snapshot validation. Each test wires a minimal mock context
@@ -43,6 +47,7 @@ function buildMockContext(seed: {
   tokenBalances?: { tokenAddress: string; walletAddress: string; balance: bigint }[];
   ohmIndex?: { chainId: number; sOhmAddress: string; index: bigint };
   erc20Supply?: { chainId: number; tokenAddress: string; totalSupply: bigint };
+  univ2Pool?: { id: string; reserve0: bigint; reserve1: bigint };
 }): EvmOnBlockContext {
   const chainlinkStates = new Map<string, unknown>();
   if (seed.chainlinkAnswer) {
@@ -92,7 +97,12 @@ function buildMockContext(seed: {
   return {
     OhmIndexState: { get: async (id: string) => ohmIndexStates.get(id) },
     TokenBalance: { get: async (id: string) => tokenBalances.get(id) },
-    Univ2PoolState: { get: async () => undefined },
+    Univ2PoolState: {
+      get: async (id: string) =>
+        id === seed.univ2Pool?.id
+          ? { reserve0: seed.univ2Pool.reserve0, reserve1: seed.univ2Pool.reserve1 }
+          : undefined,
+    },
     Univ3PoolState: { get: async () => undefined },
     BalancerPoolState: { get: async () => undefined },
     KodiakPool: { get: async () => undefined },
@@ -134,6 +144,225 @@ function buildMockContext(seed: {
 }
 
 describe("pushTokenBalanceRecords per-chain validation", () => {
+  test("Arbitrum: JONES preserves historical valuation and is excluded from its cutoff", async () => {
+    const arbitrum = CHAIN_CONFIGS[42161];
+    const wallet = arbitrum.protocolAddresses[0];
+    const jones = arbitrum.tokens.find((definition) => definition.address === ERC20_JONES);
+    expect(jones).toBeDefined();
+    if (!jones) throw new Error("JONES token definition missing");
+    expect(jones.isLiquid).toBe(true);
+    expect(jones.multiplier).toBe("0.83");
+    expect(jones.treasuryExcludedFromBlock).toBe(509_232_195);
+    const config = {
+      ...arbitrum,
+      tokens: [jones],
+      liquidityHandlers: [{ kind: "stable" as const, tokens: [ERC20_JONES], id: "jones-test" }],
+    };
+    const context = buildMockContext({
+      chainId: arbitrum.chainId,
+      tokenBalance: {
+        tokenAddress: ERC20_JONES,
+        walletAddress: wallet,
+        balance: 100_000_000_000_000_000_000n,
+      },
+    });
+
+    const control: SerializedTokenRecord[] = [];
+    await pushTokenBalanceRecords(
+      context,
+      { ...config, treasuryBlacklist: {} },
+      buildMockClient(arbitrum.chainId),
+      control,
+      TIMESTAMP,
+      12_000_000n,
+    );
+    expect(control).toHaveLength(1);
+
+    expect(control[0]).toMatchObject({
+      value: "100",
+      valueExcludingOhm: "83",
+      multiplier: "0.83",
+      isLiquid: true,
+    });
+    const cutoff = BigInt(JONES_TREASURY_EXCLUSION_BLOCK);
+    // Treasury exclusion must not disable the shared pricing path used by LPs.
+    const price = await getPrice(
+      config,
+      context,
+      buildMockClient(arbitrum.chainId),
+      ERC20_JONES,
+      cutoff,
+      null,
+    );
+    expect(price.price.toString()).toBe("1");
+    // Excluded wallet records must not attempt balance or price reads.
+    const noReadContext = new Proxy(
+      {},
+      {
+        get: () => {
+          throw new Error("excluded JONES read");
+        },
+      },
+    ) as EvmOnBlockContext;
+    const excludedRecords: SerializedTokenRecord[] = [];
+    await pushTokenBalanceRecords(
+      noReadContext,
+      config,
+      buildMockClient(arbitrum.chainId),
+      excludedRecords,
+      TIMESTAMP,
+      cutoff,
+    );
+    expect(excludedRecords).toHaveLength(0);
+
+    for (const block of [12_000_000n, cutoff - 1n, cutoff, cutoff + 1n]) {
+      const records: SerializedTokenRecord[] = [];
+      await pushTokenBalanceRecords(
+        context,
+        config,
+        buildMockClient(arbitrum.chainId),
+        records,
+        TIMESTAMP,
+        block,
+      );
+      if (block < cutoff) {
+        expect(records).toHaveLength(1);
+        expect(records[0]).toMatchObject({
+          value: "100",
+          valueExcludingOhm: "83",
+          multiplier: "0.83",
+          isLiquid: true,
+        });
+      } else {
+        expect(records).toHaveLength(0);
+      }
+    }
+  });
+
+  test("real JONES-WETH pool pricing and LP records survive the JONES cutoff", async () => {
+    const arbitrum = CHAIN_CONFIGS[42161];
+    const pool = arbitrum.liquidityHandlers.find(
+      (handler) => handler.kind === "univ2" && handler.tokens.includes(ERC20_JONES),
+    );
+    expect(pool).toBeDefined();
+    if (!pool) throw new Error("JONES-WETH pool missing");
+    const weth = pool.tokens.find((token) => token !== ERC20_JONES);
+    const feed = arbitrum.liquidityHandlers.find(
+      (handler) => handler.kind === "chainlink" && handler.tokens.includes(weth ?? ""),
+    );
+    expect(feed).toBeDefined();
+    if (!feed || !weth) throw new Error("WETH feed missing");
+    const config = {
+      ...arbitrum,
+      liquidityHandlers: [feed, pool],
+      ownedLiquidityHandlers: [pool],
+    };
+    const context = buildMockContext({
+      chainId: arbitrum.chainId,
+      chainlinkAnswer: {
+        feedAddress: feed.id,
+        tokenAddress: weth,
+        answer: 300_000_000_000n,
+        decimals: 8,
+      },
+      univ2Pool: {
+        id: `${arbitrum.chainId}-${addr(pool.id)}`,
+        reserve0: 100n * 10n ** 18n,
+        reserve1: 10n * 10n ** 18n,
+      },
+      erc20Supply: {
+        chainId: arbitrum.chainId,
+        tokenAddress: pool.id,
+        totalSupply: 10n * 10n ** 18n,
+      },
+      tokenBalance: {
+        tokenAddress: pool.id,
+        walletAddress: arbitrum.protocolAddresses[0],
+        balance: 2n * 10n ** 18n,
+      },
+    });
+    for (const block of [
+      BigInt(JONES_TREASURY_EXCLUSION_BLOCK),
+      BigInt(JONES_TREASURY_EXCLUSION_BLOCK) + 1n,
+    ]) {
+      const price = await getPrice(
+        config,
+        context,
+        buildMockClient(arbitrum.chainId),
+        ERC20_JONES,
+        block,
+        null,
+      );
+      expect(price.price.gt(0)).toBe(true);
+      const records: SerializedTokenRecord[] = [];
+      await pushOwnedLiquidityRecords(
+        context,
+        config,
+        buildMockClient(arbitrum.chainId),
+        records,
+        TIMESTAMP,
+        block,
+      );
+      const treasuryRecords = omitTreasuryExcludedRecords(config.tokens, records, block);
+      expect(treasuryRecords).toHaveLength(1);
+      expect(treasuryRecords[0].tokenAddress).toBe(pool.id);
+      expect(Number(treasuryRecords[0].value)).toBeGreaterThan(0);
+    }
+  });
+
+  test("final treasury filter removes direct JONES from rows and aggregate, not LP", () => {
+    const arbitrum = CHAIN_CONFIGS[42161];
+    const cutoff = BigInt(JONES_TREASURY_EXCLUSION_BLOCK);
+    const jones = arbitrum.tokens.find((token) => token.address === ERC20_JONES);
+    const pool = arbitrum.liquidityHandlers.find(
+      (handler) => handler.kind === "univ2" && handler.tokens.includes(ERC20_JONES),
+    );
+    if (!jones || !pool) throw new Error("JONES configuration missing");
+    const direct = {
+      id: "jones",
+      chainId: arbitrum.chainId,
+      blockchain: arbitrum.blockchain,
+      block: cutoff.toString(),
+      timestamp: TIMESTAMP.toString(),
+      date: "2026-09-27",
+      token: "JONES",
+      tokenAddress: ERC20_JONES,
+      source: "Treasury",
+      sourceAddress: arbitrum.protocolAddresses[0],
+      rate: "1",
+      balance: "100",
+      multiplier: "0.83",
+      value: "100",
+      valueExcludingOhm: "83",
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+    } satisfies SerializedTokenRecord;
+    const lp = {
+      ...direct,
+      id: "pool",
+      tokenAddress: pool.id,
+      value: "20",
+      valueExcludingOhm: "20",
+    };
+    expect(omitTreasuryExcludedRecords(arbitrum.tokens, [direct, lp], cutoff - 1n)).toHaveLength(2);
+    for (const block of [cutoff, cutoff + 1n]) {
+      const filtered = omitTreasuryExcludedRecords(arbitrum.tokens, [direct, lp], block);
+      expect(filtered).toEqual([lp]);
+      const aggregate = computePerChainAggregate(
+        arbitrum.chainId,
+        arbitrum.blockchain,
+        direct.date,
+        block,
+        TIMESTAMP,
+        filtered,
+        [],
+      );
+      expect(aggregate.treasuryMarketValue.toString()).toBe("20");
+      expect(aggregate.treasuryLiquidBacking.toString()).toBe("20");
+    }
+  });
+
   test("Fantom snapshot interval is short enough to avoid skipped UTC dates", () => {
     const fantom = BLOCK_HANDLERS.find((handler) => handler.chain === 250);
 
@@ -649,5 +878,102 @@ describe("pushTokenBalanceRecords per-chain validation", () => {
     expect(daiRecords[0].blockchain).toBe("Ethereum");
     expect(daiRecords[0].balance).toBe("1000");
     expect(daiRecords[0].value).toBe("1000");
+  });
+});
+
+// Issue #334: the Bophades BondCallback policy parks bond reserves (DAI)
+// between batchToTreasury sweeps, and burns any OHM it receives in the same
+// transaction. It is a static protocol wallet, so it has to reach every
+// wallet-driven path: the Transfer ledger, treasury records, and the
+// "Treasury" supply deduction.
+describe("Ethereum BondCallback", () => {
+  const ETHEREUM = CHAIN_CONFIGS[1];
+  const BOND_CALLBACK = addr("0x73df08CE9dcC8d74d22F23282c4d49F13b4c795E");
+  const DAI = "0x6b175474e89094c44da98b954eedeac495271d0f";
+  const DAI_USD_FEED = "0xaed0c38402a5d19df6e4c03f4e2dced6e29c1ee9";
+  // Inside the 2024-01-27 to 01-30 window when BondCallback held its peak.
+  const SNAPSHOT_BLOCK = 19_110_000n;
+  const lower = (addresses: string[]) => addresses.map((a) => addr(a));
+
+  test("is a protocol wallet, a circulating-supply wallet and treasury-blacklisted for OHM", () => {
+    expect(lower(ETHEREUM.protocolAddresses)).toContain(BOND_CALLBACK);
+    expect(lower(ETHEREUM.circulatingSupplyWallets)).toContain(BOND_CALLBACK);
+    expect(lower(ETHEREUM.treasuryBlacklist[addr(ETHEREUM.ohmToken)] ?? [])).toContain(
+      BOND_CALLBACK,
+    );
+  });
+
+  test("DAI parked between sweeps is a liquid treasury TokenRecord", async () => {
+    const context = buildMockContext({
+      chainId: 1,
+      chainlinkAnswer: {
+        feedAddress: DAI_USD_FEED,
+        tokenAddress: DAI,
+        answer: 100_000_000n, // $1
+        decimals: 8,
+      },
+      tokenBalance: {
+        tokenAddress: DAI,
+        walletAddress: BOND_CALLBACK,
+        balance: 422_708n * 10n ** 18n,
+      },
+    });
+    const records: SerializedTokenRecord[] = [];
+    await pushTokenBalanceRecords(
+      context,
+      ETHEREUM,
+      buildMockClient(1),
+      records,
+      TIMESTAMP,
+      SNAPSHOT_BLOCK,
+    );
+    const fromCallback = records.filter((r) => r.sourceAddress === BOND_CALLBACK);
+    expect(fromCallback).toHaveLength(1);
+    expect(fromCallback[0].tokenAddress).toBe(DAI);
+    expect(fromCallback[0].source).toBe("Bond Callback");
+    expect(fromCallback[0].balance).toBe("422708");
+    expect(fromCallback[0].value).toBe("422708");
+    expect(fromCallback[0].isLiquid).toBe(true);
+  });
+
+  test("a zero balance emits no TokenRecord", async () => {
+    const context = buildMockContext({
+      chainId: 1,
+      chainlinkAnswer: {
+        feedAddress: DAI_USD_FEED,
+        tokenAddress: DAI,
+        answer: 100_000_000n,
+        decimals: 8,
+      },
+    });
+    const records: SerializedTokenRecord[] = [];
+    await pushTokenBalanceRecords(
+      context,
+      ETHEREUM,
+      buildMockClient(1),
+      records,
+      TIMESTAMP,
+      SNAPSHOT_BLOCK,
+    );
+    expect(records.filter((r) => r.sourceAddress === BOND_CALLBACK)).toHaveLength(0);
+  });
+
+  test("OHM held there is deducted as a Treasury supply row at -1", async () => {
+    const context = buildMockContext({
+      chainId: 1,
+      tokenBalance: {
+        tokenAddress: ETHEREUM.ohmToken,
+        walletAddress: BOND_CALLBACK,
+        balance: 100_000_000_000n, // 100 OHM
+      },
+    });
+    const supplies: SerializedTokenSupply[] = [];
+    await pushTreasuryOhm(context, ETHEREUM, supplies, TIMESTAMP, SNAPSHOT_BLOCK);
+    const fromCallback = supplies.filter((s) => s.sourceAddress === BOND_CALLBACK);
+    expect(fromCallback).toHaveLength(1);
+    expect(fromCallback[0].type).toBe("Treasury");
+    expect(fromCallback[0].source).toBe("Bond Callback");
+    expect(fromCallback[0].balance).toBe("100");
+    expect(fromCallback[0].supplyBalance).toBe("-100");
   });
 });
