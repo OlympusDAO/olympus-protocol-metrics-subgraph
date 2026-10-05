@@ -42,7 +42,8 @@ export const ROBINHOOD: ChainConfig = {
       address: ERC20_RUSDG,
       category: "Stable",
       decimals: 18,
-      isLiquid: false,
+      // The temporary redemption cooling-off period does not make rUSDG illiquid.
+      isLiquid: true,
       isBluechip: false,
       startBlock: ROBINHOOD_START_BLOCK,
     }),

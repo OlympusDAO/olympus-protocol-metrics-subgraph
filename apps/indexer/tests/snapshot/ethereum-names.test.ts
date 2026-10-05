@@ -20,4 +20,12 @@ describe("Ethereum source labels", () => {
   test.each(LEGACY_SOURCE_LABELS)("%s is labelled as in legacy", (address, label) => {
     expect(getContractName(ETHEREUM, address)).toBe(label);
   });
+
+  // Legacy never tracked the Bophades BondCallback policy, so there is no
+  // legacy label to mirror.
+  test("BondCallback is labelled", () => {
+    expect(getContractName(ETHEREUM, "0x73df08CE9dcC8d74d22F23282c4d49F13b4c795E")).toBe(
+      "Bond Callback",
+    );
+  });
 });

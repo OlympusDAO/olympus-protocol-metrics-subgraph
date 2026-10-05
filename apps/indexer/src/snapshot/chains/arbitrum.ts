@@ -45,6 +45,9 @@ const ARB_CREATION_BLOCK = 70_398_215;
 const FRAX_CREATION_BLOCK = 1_693_791;
 const OHM_CREATION_BLOCK = 85_886_493;
 const JONES_CREATION_BLOCK = 4_936_079;
+// First Arbitrum block at 2026-09-27 00:00:00 UTC (timestamp 1790467200).
+// Preserve prior reporting; exclude the perpetual-hold allocation prospectively.
+export const JONES_TREASURY_EXCLUSION_BLOCK = 509_232_195;
 const LQTY_CREATION_BLOCK = 68_940_603;
 const LUSD_CREATION_BLOCK = 20_063_879;
 const MAGIC_CREATION_BLOCK = 2_028_077;
@@ -160,12 +163,14 @@ const liquidityHandlers: LiquidityHandler[] = [
     kind: "univ3",
     tokens: [ERC20_USDC, ERC20_WETH],
     id: LP_UNISWAP_V3_WETH_USDC,
+    fee: 500,
     startBlock: ARBITRUM_START_BLOCK,
   },
   {
     kind: "univ3",
     tokens: [ERC20_ARB, ERC20_WETH],
     id: LP_UNISWAP_V3_ARB_WETH,
+    fee: 500,
     startBlock: LP_UNISWAP_V3_ARB_WETH_CREATION_BLOCK,
   },
   // Native ETH prices via WETH (1:1). NativeBalanceState is populated at
@@ -220,6 +225,7 @@ export const ARBITRUM: ChainConfig = {
       isBluechip: false,
       multiplier: "0.83",
       startBlock: JONES_CREATION_BLOCK,
+      treasuryExcludedFromBlock: JONES_TREASURY_EXCLUSION_BLOCK,
       decimals: 18,
     }),
     token({

@@ -46,10 +46,12 @@ export function valueMellowPosition(
 ) {
   let pendingShares = new BigNumber(0);
   let fixedAssets = new BigNumber(0);
+  let claimableAssets = new BigNumber(0);
   for (const request of position.requests) {
     if (request.timestamp <= handledTimestamp) {
       // Includes a processed zero-asset/dust claim, even before it is claimable.
       fixedAssets = fixedAssets.plus(request.assets);
+      if (request.isClaimable) claimableAssets = claimableAssets.plus(request.assets);
     } else {
       if (request.isClaimable || new BigNumber(request.assets).gt(0))
         throw new Error("Missing Mellow ReportHandled history");
@@ -77,10 +79,16 @@ export function valueMellowPosition(
     shares: shares.div(1e18),
     pendingShares: pendingShares.div(1e18),
     fixedAssets: fixedAssets.div(1e6),
+    claimableAssets: claimableAssets.div(1e6),
     rate,
   };
 }
 
+/**
+ * Emit mutually exclusive held-share and redemption-claim records at a pinned block.
+ * Held shares and all redemption claims remain liquid during the temporary
+ * redemption cooling-off period. Pre-start/zero emit no records.
+ */
 export async function pushMellowRecords(
   context: EvmOnBlockContext,
   config: ChainConfig,
@@ -108,35 +116,46 @@ export async function pushMellowRecords(
     const assetPrice = (await getPrice(config, context, client, vault.asset, blockNumber, null))
       .price;
     if (assetPrice.lte(0)) throw new Error("Missing USDG valuation");
-    for (const [name, address, rate, balance] of [
+    for (const [name, address, rate, balance, isLiquid] of [
       [
         getContractName(config, vault.shares),
         vault.shares,
         values.rate.times(assetPrice),
         values.shares,
+        true,
       ],
       [
         "rUSDG - Pending redemption",
         vault.shares,
         values.rate.times(assetPrice),
         values.pendingShares,
+        true,
       ],
-      ["USDG - Mellow redemption claim", vault.asset, assetPrice, values.fixedAssets],
+      [
+        "USDG - Mellow redemption claim",
+        vault.asset,
+        assetPrice,
+        values.fixedAssets.minus(values.claimableAssets),
+        true,
+      ],
+      ["USDG - Mellow claimable redemption", vault.asset, assetPrice, values.claimableAssets, true],
     ] as const) {
       if (balance.isZero()) continue;
-      const record = createTokenRecord(
-        config,
-        timestamp,
-        name,
-        address,
-        getContractName(config, wallet),
-        wallet,
-        rate,
-        balance,
-        blockNumber,
-      );
-      record.isLiquid = false; // NAV/queued claims are not idle USDG or liquid backing.
-      records.push(record);
+      records.push({
+        ...createTokenRecord(
+          config,
+          timestamp,
+          name,
+          address,
+          getContractName(config, wallet),
+          wallet,
+          rate,
+          balance,
+          blockNumber,
+        ),
+        // The temporary redemption cooling-off period does not remove liquid backing.
+        isLiquid,
+      });
     }
   }
 }

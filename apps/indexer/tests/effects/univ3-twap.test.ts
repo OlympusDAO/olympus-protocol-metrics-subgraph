@@ -46,13 +46,13 @@ describe("block-pinned UniV3 TWAP effect", () => {
       expect.objectContaining({ functionName: "slot0", blockNumber: 26056846n }),
     );
   });
-  test.each([
-    "OLD",
-    "RPC timeout",
-  ])("propagates %s without a zero or spot fallback", async (message) => {
-    readContract.mockReset().mockRejectedValue(new Error(message));
-    await expect(run()).rejects.toThrow(message);
-  });
+  test.each(["OLD", "RPC timeout"])(
+    "propagates %s without a zero or spot fallback",
+    async (message) => {
+      readContract.mockReset().mockRejectedValue(new Error(message));
+      await expect(run()).rejects.toThrow(message);
+    },
+  );
   test("slot0 failure retains a successful full-window observation", async () => {
     readContract.mockReset().mockImplementation(async ({ functionName }) => {
       if (functionName === "slot0") throw new Error("slot unavailable");

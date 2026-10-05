@@ -1,4 +1,4 @@
-import type { BigDecimal, EvmOnEventContext, GnosisAuction, GnosisAuctionRoot } from "envio";
+import type { EvmOnEventContext, GnosisAuction, GnosisAuctionRoot } from "envio";
 import { describe, expect, test, vi } from "vitest";
 
 import { applyGnosisAuctionLaunched } from "../../src/handlers/BondManager";
@@ -61,7 +61,7 @@ describe("applyGnosisAuctionLaunched", () => {
     expect(auction?.bidQuantity).toBeUndefined();
     expect(auction?.auctionCloseTimestamp).toBeUndefined();
     // capacity 10_000_000_000 at 9 decimals = 10 OHM
-    expect((auction?.payoutCapacity as BigDecimal).toString()).toBe("10");
+    expect(auction?.payoutCapacity?.toString()).toBe("10");
   });
 
   test("appends to existing GnosisAuctionRoot without duplicating", async () => {
