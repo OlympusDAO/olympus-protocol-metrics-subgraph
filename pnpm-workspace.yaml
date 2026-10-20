@@ -97,6 +97,10 @@ overrides:
   # fixed in 8.5.18, plus the current incomplete-fix advisory fixed in
   # 8.5.23. Use the newest patched release past the 7-day cutoff.
   "postcss@<8.5.23": "8.5.23"
+  # source-map-js GHSA-68fv-2mgg-jv7q (high, event-loop DoS via indexed
+  # source-map section offsets), fixed in 1.2.2. Pulled transitively via
+  # vitest>vite>postcss.
+  "source-map-js@>=1.0.0 <1.2.2": "1.2.2"
   # nanoid GHSA-2v37-7h3g-55p8 (high, zero-size custom generator loop),
   # fixed in 3.3.18. Scope this to the vulnerable 3.x range.
   "nanoid@>=3.0.0 <3.3.18": "3.3.18"
