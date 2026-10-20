@@ -102,7 +102,8 @@ is still protocol-owned, backed by pool OHM inside Ethereum's supply.
 Chains reached over CCIP that we don't index (Optimism, Robinhood, Solana)
 need nothing: OHM bridged there is locked in the same pool, so it's
 already in Ethereum's total supply. Index one only if the protocol holds
-OHM there, so its treasury or liquidity deductions apply.
+OHM there, so its treasury or liquidity deductions apply, and set its
+`ohmTotalSupplyEndBlock` to its start block so its supply never counts.
 
 Railway deploys reindex from the start block, so setting the blocks
 applies to every snapshot since. Pick them with the snapshot schedule in
