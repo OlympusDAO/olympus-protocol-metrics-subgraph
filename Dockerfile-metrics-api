@@ -1,4 +1,4 @@
-FROM node:24-slim@sha256:6f7b03f7c2c8e2e784dcf9295400527b9b1270fd37b7e9a7285cf83b6951452d
+FROM node:24-slim@sha256:a5f4366e834695d5f363b920c104953a535d3a9864d1bdf74566a0ebe01daee5
 
 ENV CI=true
 ENV PNPM_HOME=/pnpm
@@ -8,7 +8,7 @@ ENV PATH=/pnpm:$PATH
 WORKDIR /app
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends --only-upgrade libgcrypt20 libgnutls30 libpcre2-8-0 \
+  && apt-get install -y --no-install-recommends --only-upgrade libgcrypt20 libgnutls30 libpcre2-8-0 perl-base \
   && apt-get install -y --no-install-recommends ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
