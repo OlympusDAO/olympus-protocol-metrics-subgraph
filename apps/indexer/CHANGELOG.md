@@ -2,6 +2,10 @@
 
 All notable changes to this package will be documented in this file. Dates are displayed in UTC.
 
+## [v0.3.2] - 2026-10-20
+
+- Add a per-chain `ohmTotalSupplyEndBlock` so L2 OHM total supply stops counting once bridged OHM is locked in the mainnet CCIP lock/release pool. L2 treasury and liquidity deductions still apply. Unset on every chain until the pool is funded.
+
 ## [v0.3.1] - 2026-09-27
 
 - Keep held and pending rUSDG at NAV outside liquid backing; split fixed redemption claims so only claimable USDG is liquid. Classify each row explicitly and document the required historical replay and publication checks.

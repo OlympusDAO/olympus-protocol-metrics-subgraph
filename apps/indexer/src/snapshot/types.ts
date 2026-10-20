@@ -233,6 +233,12 @@ export type ChainConfig = {
   basePriceFeeds: Record<string, BasePriceFeed>;
   ohmToken: string;
   ohmStartBlock?: number;
+  // OHM bridged over CCIP stays locked in the mainnet lock/release pool,
+  // so from this block on Ethereum's total supply already covers this
+  // chain's OHM and its Total Supply row would count it twice (exclusive).
+  // Set on the L2s to the block matching the mainnet pool funding.
+  // Treasury and liquidity deductions still apply after it.
+  ohmTotalSupplyEndBlock?: number;
   nativeToken?: string;
   coolerClearinghouses?: CoolerClearinghouse[];
   makerDsr?: MakerDsrConfig;

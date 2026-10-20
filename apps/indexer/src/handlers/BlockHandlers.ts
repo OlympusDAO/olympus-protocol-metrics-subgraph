@@ -727,6 +727,9 @@ export async function pushTotalSupply(
   blockNumber: bigint,
 ): Promise<void> {
   if (config.ohmStartBlock && blockNumber < BigInt(config.ohmStartBlock)) return;
+  if (config.ohmTotalSupplyEndBlock && blockNumber >= BigInt(config.ohmTotalSupplyEndBlock)) {
+    return;
+  }
 
   // Robinhood tracks treasury assets only; no verified OHM deployment means
   // no OHM supply records or treasury OHM exclusions may be fabricated.

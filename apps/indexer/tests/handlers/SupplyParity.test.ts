@@ -1,7 +1,7 @@
 import type { EvmOnBlockContext } from "envio";
 import { describe, expect, test, vi } from "vitest";
 
-import { pushTreasuryOhm } from "../../src/handlers/BlockHandlers";
+import { pushTotalSupply, pushTreasuryOhm } from "../../src/handlers/BlockHandlers";
 import { pushIncurDebtSupply } from "../../src/handlers/BlvSupply";
 import { pushGnosisAuctionSupply } from "../../src/handlers/GnosisAuctions";
 import { pushLendingDeploymentSupply } from "../../src/handlers/LendingDeployments";
@@ -173,5 +173,65 @@ describe("Gnosis auction bonds", () => {
     expect(byType["1:Bonds (Vesting Deposits)"]).toBe("-177431");
     expect(byType["2:Bonds (Deposits)"]).toBe("-93789.846341694");
     expect(supplies.every((s) => Number(s.supplyBalance) <= 0)).toBe(true);
+  });
+});
+
+describe("CCIP lock/release cutover", () => {
+  const BASE = CHAIN_CONFIGS[8453];
+  const OHM = addr(BASE.ohmToken);
+  const DAO_MS = addr("0x18a390bd45bcc92652b9a91ad51aed7f1c1358f5");
+  // Hypothetical: the real cutover is the Base block matching the mainnet
+  // CCIP pool funding, which hasn't happened yet.
+  const CUTOVER = 52_900_000;
+  const BASE_AT_CUTOVER = { ...BASE, ohmTotalSupplyEndBlock: CUTOVER };
+
+  // Base on 2026-10-20: 45,180.488364365 OHM total supply, 384.63 OHM in the
+  // DAO MS.
+  function buildContext() {
+    return {
+      Erc20Supply: {
+        get: async (id: string) =>
+          id === `8453-${OHM}` ? { totalSupply: 45_180_488_364_365n } : undefined,
+      },
+      TokenBalance: {
+        get: async (id: string) =>
+          id === `8453-${OHM}-${DAO_MS}` ? { balance: 384_630_000_000n } : undefined,
+      },
+      OhmIndexState: { get: async () => undefined },
+      log: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
+      effect: vi.fn(async () => "0"),
+    } as unknown as EvmOnBlockContext;
+  }
+
+  async function totalSupplyAt(config: typeof BASE, blockNumber: number) {
+    const supplies: SerializedTokenSupply[] = [];
+    await pushTotalSupply(buildContext(), config, supplies, TIMESTAMP, BigInt(blockNumber));
+    return supplies.filter((s) => s.type === "Total Supply");
+  }
+
+  test("L2 total supply counts up to the block before the cutover", async () => {
+    const rows = await totalSupplyAt(BASE_AT_CUTOVER, CUTOVER - 1);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].supplyBalance).toBe("45180.488364365");
+  });
+
+  test("L2 total supply stops counting from the cutover block", async () => {
+    expect(await totalSupplyAt(BASE_AT_CUTOVER, CUTOVER)).toHaveLength(0);
+    expect(await totalSupplyAt(BASE_AT_CUTOVER, CUTOVER + 1)).toHaveLength(0);
+  });
+
+  test("L2 protocol-owned OHM is still deducted after the cutover", async () => {
+    const supplies: SerializedTokenSupply[] = [];
+    await pushTreasuryOhm(buildContext(), BASE_AT_CUTOVER, supplies, TIMESTAMP, BigInt(CUTOVER));
+    const row = supplies.find((s) => s.sourceAddress === DAO_MS);
+    expect(row?.type).toBe("Treasury");
+    expect(row?.supplyBalance).toBe("-384.63");
+  });
+
+  test("no chain has a cutover until the pool is funded", async () => {
+    for (const config of Object.values(CHAIN_CONFIGS)) {
+      expect(config.ohmTotalSupplyEndBlock).toBeUndefined();
+    }
+    expect(await totalSupplyAt(BASE, CUTOVER)).toHaveLength(1);
   });
 });

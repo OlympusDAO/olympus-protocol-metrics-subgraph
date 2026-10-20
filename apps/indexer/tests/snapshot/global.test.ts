@@ -410,3 +410,68 @@ describe("computeApy", () => {
     expect(result.currentApy.toString()).toBe("0");
   });
 });
+
+describe("CCIP lock/release cutover", () => {
+  // OHM supply rows on 2026-10-20. The mainnet CCIP pool gets funded with the
+  // OHM minted on the L2s (130,720.92), after which the L2s stop emitting
+  // Total Supply rows but keep their treasury and liquidity deductions.
+  const ETHEREUM_TOTAL = new BigNumber("19690957.88");
+  const L2_TOTAL = new BigNumber("130720.92");
+  const L2_ROWS: [number, string, string, string, string][] = [
+    [42_161, "Arbitrum", "14860.70", "0", "-6961.19"],
+    [8453, "Base", "45180.49", "-384.63", "-39572.91"],
+    [80_094, "Berachain", "70679.73", "-434.35", "-11714.33"],
+  ];
+
+  function aggregate(ethereumTotal: BigNumber, ethereumTreasury: BigNumber, cutover: boolean) {
+    const ethereum = computePerChainAggregate(
+      1,
+      "Ethereum",
+      "2026-10-20",
+      1n,
+      1n,
+      [],
+      [
+        supply(TYPE_TOTAL_SUPPLY, ethereumTotal.toString(), ethereumTotal.toString()),
+        supply(TYPE_TREASURY, "0", ethereumTreasury.toString()),
+        supply(TYPE_LIQUIDITY, "0", "-651099.11"),
+      ],
+    );
+    const l2s = L2_ROWS.map(([chainId, name, total, treasury, liquidity]) =>
+      computePerChainAggregate(
+        chainId,
+        name,
+        "2026-10-20",
+        1n,
+        1n,
+        [],
+        [
+          ...(cutover ? [] : [supply(TYPE_TOTAL_SUPPLY, total, total)]),
+          supply(TYPE_TREASURY, "0", treasury),
+          supply(TYPE_LIQUIDITY, "0", liquidity),
+        ],
+      ),
+    );
+    return aggregateAcrossChains("2026-10-20", [ethereum, ...l2s]);
+  }
+
+  const before = aggregate(ETHEREUM_TOTAL, new BigNumber("-4883963.77"), false);
+
+  test("before the cutover, total supply sums mainnet and L2 supply", () => {
+    expect(before.ohmTotalSupply.toFixed(2)).toBe("19821678.80");
+  });
+
+  test.each([
+    ["minted for the pool", ETHEREUM_TOTAL.plus(L2_TOTAL), new BigNumber("-4883963.77")],
+    ["sent from treasury", ETHEREUM_TOTAL, new BigNumber("-4883963.77").plus(L2_TOTAL)],
+  ])(
+    "circulating, floating and backed supply hold when the pool OHM is %s",
+    (_, total, treasury) => {
+      const after = aggregate(total, treasury, true);
+      expect(after.ohmTotalSupply.toString()).toBe(total.toString());
+      expect(after.ohmCirculatingSupply.toString()).toBe(before.ohmCirculatingSupply.toString());
+      expect(after.ohmFloatingSupply.toString()).toBe(before.ohmFloatingSupply.toString());
+      expect(after.ohmBackedSupply.toString()).toBe(before.ohmBackedSupply.toString());
+    },
+  );
+});
