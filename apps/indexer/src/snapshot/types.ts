@@ -237,7 +237,8 @@ export type ChainConfig = {
   // so from this block on Ethereum's total supply already covers this
   // chain's OHM and its Total Supply row would count it twice (exclusive).
   // Set on the L2s to the block matching the mainnet pool funding.
-  // Treasury and liquidity deductions still apply after it.
+  // Treasury and liquidity deductions still apply after it. See the
+  // README's "OHM supply and CCIP bridging".
   ohmTotalSupplyEndBlock?: number;
   nativeToken?: string;
   coolerClearinghouses?: CoolerClearinghouse[];

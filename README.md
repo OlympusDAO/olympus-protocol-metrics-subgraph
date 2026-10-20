@@ -84,6 +84,33 @@ The intervals are tuned per chain (see `BLOCK_HANDLERS` in
 `apps/indexer/src/handlers/BlockHandlers.ts`) so each chain emits ~3
 snapshots per UTC day.
 
+## OHM supply and CCIP bridging
+
+The legacy LayerZero bridge burned OHM on Ethereum and minted it on the
+destination chain, so OHM total supply is the sum of every chain's supply.
+CCIP instead locks bridged OHM in the Ethereum lock/release token pool
+(`0xa5588e518CE5ee0e4628C005E4edAbD5e87de3aD`), so once the DAO MS funds
+that pool with the OHM already minted on the L2s, Ethereum's total supply
+covers all OHM on every chain.
+
+`ChainConfig.ohmTotalSupplyEndBlock` (exclusive) stops a chain's Total
+Supply row from that block on. It is set on Arbitrum, Base and Berachain
+to the block matching the pool funding, and is unset until the pool is
+funded. Treasury and liquidity deductions still apply after it: that OHM
+is still protocol-owned, backed by pool OHM inside Ethereum's supply.
+
+Chains reached over CCIP that we don't index (Optimism, Robinhood, Solana)
+need nothing: OHM bridged there is locked in the same pool, so it's
+already in Ethereum's total supply. Index one only if the protocol holds
+OHM there, so its treasury or liquidity deductions apply.
+
+Railway deploys reindex from the start block, so setting the blocks
+applies to every snapshot since. Pick them with the snapshot schedule in
+hand: the daily rollup uses each chain's last snapshot of the UTC day, and
+an L2 whose last snapshot on the funding day falls on the other side of
+the cutover from Ethereum's would double count (or drop) its supply for
+that day.
+
 ## Tests
 
 ```sh
