@@ -140,6 +140,9 @@ export const BERACHAIN: ChainConfig = {
   rpcUrls: rpcUrls("BERACHAIN", "https://rpc.berachain.com"),
   ohmToken: ERC20_OHM,
   ohmStartBlock: BERACHAIN_START_BLOCK,
+  // Block matching the mainnet CCIP pool funding (Ethereum block 26,245,881,
+  // 2026-10-22T04:51:47Z).
+  ohmTotalSupplyEndBlock: 27_814_996,
   nativeToken: NATIVE_BERA,
   tokens: [
     token({

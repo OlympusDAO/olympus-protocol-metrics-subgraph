@@ -180,10 +180,7 @@ describe("CCIP lock/release cutover", () => {
   const BASE = CHAIN_CONFIGS[8453];
   const OHM = addr(BASE.ohmToken);
   const DAO_MS = addr("0x18a390bd45bcc92652b9a91ad51aed7f1c1358f5");
-  // Hypothetical: the real cutover is the Base block matching the mainnet
-  // CCIP pool funding, which hasn't happened yet.
-  const CUTOVER = 52_900_000;
-  const BASE_AT_CUTOVER = { ...BASE, ohmTotalSupplyEndBlock: CUTOVER };
+  const CUTOVER = 52_927_680;
 
   // Base on 2026-10-20: 45,180.488364365 OHM total supply, 384.63 OHM in the
   // DAO MS.
@@ -210,28 +207,30 @@ describe("CCIP lock/release cutover", () => {
   }
 
   test("L2 total supply counts up to the block before the cutover", async () => {
-    const rows = await totalSupplyAt(BASE_AT_CUTOVER, CUTOVER - 1);
+    const rows = await totalSupplyAt(BASE, CUTOVER - 1);
     expect(rows).toHaveLength(1);
     expect(rows[0].supplyBalance).toBe("45180.488364365");
   });
 
   test("L2 total supply stops counting from the cutover block", async () => {
-    expect(await totalSupplyAt(BASE_AT_CUTOVER, CUTOVER)).toHaveLength(0);
-    expect(await totalSupplyAt(BASE_AT_CUTOVER, CUTOVER + 1)).toHaveLength(0);
+    expect(await totalSupplyAt(BASE, CUTOVER)).toHaveLength(0);
+    expect(await totalSupplyAt(BASE, CUTOVER + 1)).toHaveLength(0);
   });
 
   test("L2 protocol-owned OHM is still deducted after the cutover", async () => {
     const supplies: SerializedTokenSupply[] = [];
-    await pushTreasuryOhm(buildContext(), BASE_AT_CUTOVER, supplies, TIMESTAMP, BigInt(CUTOVER));
+    await pushTreasuryOhm(buildContext(), BASE, supplies, TIMESTAMP, BigInt(CUTOVER));
     const row = supplies.find((s) => s.sourceAddress === DAO_MS);
     expect(row?.type).toBe("Treasury");
     expect(row?.supplyBalance).toBe("-384.63");
   });
 
-  test("no chain has a cutover until the pool is funded", async () => {
-    for (const config of Object.values(CHAIN_CONFIGS)) {
-      expect(config.ohmTotalSupplyEndBlock).toBeUndefined();
-    }
-    expect(await totalSupplyAt(BASE, CUTOVER)).toHaveLength(1);
+  test("only the CCIP burn/mint L2s have a cutover, at the pool funding", () => {
+    const cutovers = Object.fromEntries(
+      Object.entries(CHAIN_CONFIGS)
+        .filter(([, config]) => config.ohmTotalSupplyEndBlock !== undefined)
+        .map(([chainId, config]) => [chainId, config.ohmTotalSupplyEndBlock]),
+    );
+    expect(cutovers).toEqual({ 42161: 517_125_754, 8453: CUTOVER, 80094: 27_814_996 });
   });
 });

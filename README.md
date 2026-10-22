@@ -95,9 +95,10 @@ covers all OHM on every chain.
 
 `ChainConfig.ohmTotalSupplyEndBlock` (exclusive) stops a chain's Total
 Supply row from that block on. It is set on Arbitrum, Base and Berachain
-to the block matching the pool funding, and is unset until the pool is
-funded. Treasury and liquidity deductions still apply after it: that OHM
-is still protocol-owned, backed by pool OHM inside Ethereum's supply.
+to each chain's first block at or after the pool funding (Ethereum block
+26,245,881, 2026-10-22T04:51:47Z). Treasury and liquidity deductions still
+apply after it: that OHM is still protocol-owned, backed by pool OHM inside
+Ethereum's supply.
 
 Chains reached over CCIP that we don't index (Optimism, Robinhood, Solana)
 need nothing: OHM bridged there is locked in the same pool, so it's
@@ -105,12 +106,12 @@ already in Ethereum's total supply. Index one only if the protocol holds
 OHM there, so its treasury or liquidity deductions apply, and set its
 `ohmTotalSupplyEndBlock` to its start block so its supply never counts.
 
-Railway deploys reindex from the start block, so setting the blocks
-applies to every snapshot since. Pick them with the snapshot schedule in
-hand: the daily rollup uses each chain's last snapshot of the UTC day, and
-an L2 whose last snapshot on the funding day falls on the other side of
-the cutover from Ethereum's would double count (or drop) its supply for
-that day.
+Railway deploys reindex from the start block, so the blocks apply to
+every snapshot since. Matching them by timestamp keeps each chain's
+snapshots consistent whatever the snapshot schedule. The daily rollup
+uses each chain's last snapshot of the UTC day, and every chain's last
+snapshot on 2026-10-22 falls after the funding, so that day counts
+cleanly.
 
 ## Tests
 

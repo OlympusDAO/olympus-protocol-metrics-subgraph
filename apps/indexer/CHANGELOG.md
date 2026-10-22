@@ -2,9 +2,9 @@
 
 All notable changes to this package will be documented in this file. Dates are displayed in UTC.
 
-## [v0.3.2] - 2026-10-20
+## [v0.3.2] - 2026-10-22
 
-- Add a per-chain `ohmTotalSupplyEndBlock` so L2 OHM total supply stops counting once bridged OHM is locked in the mainnet CCIP lock/release pool. L2 treasury and liquidity deductions still apply. Unset on every chain until the pool is funded.
+- Add a per-chain `ohmTotalSupplyEndBlock` so L2 OHM total supply stops counting once bridged OHM is locked in the mainnet CCIP lock/release pool. L2 treasury and liquidity deductions still apply. Set on Arbitrum, Base and Berachain to the blocks matching the pool funding (Ethereum block 26,245,881, 2026-10-22T04:51:47Z).
 
 ## [v0.3.1] - 2026-09-27
 
