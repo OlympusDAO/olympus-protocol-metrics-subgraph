@@ -1,7 +1,12 @@
 import type { EvmOnBlockContext } from "envio";
+import type { PublicClient } from "viem";
 import { describe, expect, test, vi } from "vitest";
 
-import { pushTotalSupply, pushTreasuryOhm } from "../../src/handlers/BlockHandlers";
+import {
+  pushTotalSupply,
+  pushTreasuryOhm,
+  updateGlobalMetricSnapshot,
+} from "../../src/handlers/BlockHandlers";
 import { pushIncurDebtSupply } from "../../src/handlers/BlvSupply";
 import { pushGnosisAuctionSupply } from "../../src/handlers/GnosisAuctions";
 import { pushLendingDeploymentSupply } from "../../src/handlers/LendingDeployments";
@@ -223,6 +228,54 @@ describe("CCIP lock/release cutover", () => {
     const row = supplies.find((s) => s.sourceAddress === DAO_MS);
     expect(row?.type).toBe("Treasury");
     expect(row?.supplyBalance).toBe("-384.63");
+  });
+
+  test("a snapshot after the cutover clears the Total Supply category written earlier that day", async () => {
+    const categories = new Map<string, { category: string; balance: { toString(): string } }>();
+    const chainValues: Record<string, unknown> = {};
+    const context = {
+      ...buildContext(),
+      GlobalMetricSnapshot: { get: async () => undefined, set: vi.fn() },
+      ChainMetricValues: {
+        set: (entity: { id: string }) => {
+          chainValues[entity.id] = entity;
+        },
+        getWhere: async () => Object.values(chainValues),
+      },
+      ChainSupplyCategory: {
+        set: (entity: { id: string; category: string; balance: { toString(): string } }) => {
+          categories.set(entity.id, entity);
+        },
+        deleteUnsafe: (id: string) => {
+          categories.delete(id);
+        },
+      },
+    } as unknown as EvmOnBlockContext;
+
+    async function snapshot(blockNumber: number) {
+      const supplies: SerializedTokenSupply[] = [];
+      await pushTotalSupply(context, BASE, supplies, TIMESTAMP, BigInt(blockNumber));
+      await pushTreasuryOhm(context, BASE, supplies, TIMESTAMP, BigInt(blockNumber));
+      await updateGlobalMetricSnapshot(
+        context,
+        BASE,
+        {} as PublicClient,
+        BigInt(blockNumber),
+        TIMESTAMP,
+        [],
+        supplies,
+      );
+      return new Map([...categories.values()].map((row) => [row.category, row.balance.toString()]));
+    }
+
+    // Same UTC date on both sides of the cutover.
+    expect(await snapshot(CUTOVER - 1)).toEqual(
+      new Map([
+        ["TOTAL_SUPPLY", "45180.488364365"],
+        ["TREASURY", "384.63"],
+      ]),
+    );
+    expect(await snapshot(CUTOVER)).toEqual(new Map([["TREASURY", "384.63"]]));
   });
 
   test("only the CCIP burn/mint L2s have a cutover, at the pool funding", () => {
