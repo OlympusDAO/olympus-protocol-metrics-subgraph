@@ -169,3 +169,13 @@ If those match but disagree with the actual on-chain `balanceOf`, the token is n
 **Fix in this codebase:** `isContractRevert(error)` in `src/snapshot/rpc-client.ts` walks viem's cause chain for `ContractFunctionRevertedError` (reverted) or `ContractFunctionZeroDataError` (returned `0x`: not deployed yet, or a Chainlink proxy with no round). Every effect catch rethrows anything else. Envio doesn't cache a thrown effect; the batch fails and the indexer can resume.
 
 **Where to apply:** any new effect, and any `try/catch` around an RPC read whose result is persisted. Default only on `isContractRevert`, never on a bare `catch`. A production indexer that already ran with the old catches can hold bad cached values, so deploy this with a full reindex (reset drops the effect cache tables), not a resume.
+
+---
+
+## 2026-10-22 — Represent removed state as zero, never delete entities
+
+**Rule:** the indexer only ever `.set`s entities. When state goes away, write the existing row with a zero value (an emptied wallet keeps its `TokenBalance` row at 0). Don't reach for `deleteUnsafe`.
+
+**What caught us:** `ChainSupplyCategory` rows are keyed by `date/chain/category` and each snapshot only upserts the categories it emits, so a category written earlier the same UTC day outlived later snapshots (an L2's Total Supply after its mid-day CCIP cutover on 2026-10-22). The first fix deleted the missing rows, which was the only delete in the codebase. The consistent fix zeroes an existing row instead.
+
+**Where to apply:** any date-keyed rollup entity written per snapshot. "Last snapshot of the day wins" only holds for rows the last snapshot actually writes.

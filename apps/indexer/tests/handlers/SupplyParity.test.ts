@@ -230,7 +230,7 @@ describe("CCIP lock/release cutover", () => {
     expect(row?.supplyBalance).toBe("-384.63");
   });
 
-  test("a snapshot after the cutover clears the Total Supply category written earlier that day", async () => {
+  test("a snapshot after the cutover zeroes the Total Supply category written earlier that day", async () => {
     const categories = new Map<string, { category: string; balance: { toString(): string } }>();
     const chainValues: Record<string, unknown> = {};
     const context = {
@@ -246,9 +246,7 @@ describe("CCIP lock/release cutover", () => {
         set: (entity: { id: string; category: string; balance: { toString(): string } }) => {
           categories.set(entity.id, entity);
         },
-        deleteUnsafe: (id: string) => {
-          categories.delete(id);
-        },
+        get: async (id: string) => categories.get(id),
       },
     } as unknown as EvmOnBlockContext;
 
@@ -275,7 +273,12 @@ describe("CCIP lock/release cutover", () => {
         ["TREASURY", "384.63"],
       ]),
     );
-    expect(await snapshot(CUTOVER)).toEqual(new Map([["TREASURY", "384.63"]]));
+    expect(await snapshot(CUTOVER)).toEqual(
+      new Map([
+        ["TOTAL_SUPPLY", "0"],
+        ["TREASURY", "384.63"],
+      ]),
+    );
   });
 
   test("only the CCIP burn/mint L2s have a cutover, at the pool funding", () => {

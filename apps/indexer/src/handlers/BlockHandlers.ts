@@ -501,10 +501,20 @@ export async function updateGlobalMetricSnapshot(
   }
   // Rows are keyed by date, so a category an earlier snapshot wrote today
   // would otherwise outlive this one (e.g. an L2's Total Supply once its CCIP
-  // cutover lands mid-day). Delete every category this snapshot didn't emit.
+  // cutover lands mid-day). Zero any existing category this snapshot didn't
+  // emit.
   for (const [type, categoryEnum] of Object.entries(CATEGORY_TYPE_TO_ENUM)) {
     if (thisChain.supplyCategories.has(type)) continue;
-    context.ChainSupplyCategory.deleteUnsafe(`${date}/${config.chainId}/${categoryEnum}`);
+    const existing = await context.ChainSupplyCategory.get(
+      `${date}/${config.chainId}/${categoryEnum}`,
+    );
+    if (!existing) continue;
+    context.ChainSupplyCategory.set({
+      ...existing,
+      snapshot_id: snapshotId,
+      balance: toBigDecimal(ZERO),
+      supplyBalance: toBigDecimal(ZERO),
+    });
   }
 }
 
