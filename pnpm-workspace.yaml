@@ -90,7 +90,9 @@ overrides:
   "path-to-regexp@<0.1.13": "0.1.13"
   "qs@<6.16.0": "6.16.0"
   "fflate@<0.8.3": "0.8.3"
-  "vitest@>=4.0.0 <4.1.11": "4.1.11"
+  # vitest 4.1.12 pins @vitest/mocker 4.1.12, which fixes GHSA-qxg6-89mg-rqv8
+  # and GHSA-xp26-3454-mjgp (moderate). Pulled via envio>@fuel-ts/utils too.
+  "vitest@>=4.0.0 <4.1.12": "4.1.12"
   "send@<0.19.0": "0.19.0"
   "serve-static@<1.16.0": "1.16.0"
   # postcss GHSA-r28c-9q8g-f849 (high, arbitrary source-map disclosure),
@@ -114,9 +116,10 @@ overrides:
   # pinned vite DOWN to 8.0.13 purely as a maturity-gate workaround (vitest@4
   # accepts vite ^6/^7/^8 and the resolver picked the too-fresh 8.0.14). The
   # patched 8.0.16 (released 2026-06-01) is now well past the 7-day cutoff,
-  # so the override doubles as the CVE fix. Range-scoped per the convention
-  # above: only the vulnerable 8.0.x line is forced to 8.0.16.
-  "vite@>=8.0.0 <8.0.16": "8.0.16"
+  # so the override doubles as the CVE fix. Bumped to 8.1.6 (released
+  # 2026-10-06) for GHSA-587h-7wmj-h5pm (high), GHSA-698v-4r3x-3vcv,
+  # GHSA-r825-w8mm-5pxw and GHSA-rq7h-c2jc-7f22, which cover vite through 8.1.5.
+  "vite@>=8.0.0 <8.1.6": "8.1.6"
   # esbuild GHSA-gv7w-rqvm-qjhr (RCE via NPM_CONFIG_REGISTRY in the Deno
   # module) + GHSA-g7r4-m6w7-qqqr (dev-server arbitrary file read), both
   # fixed in 0.28.1. vite@8.0.16 accepts esbuild ^0.27.0 || ^0.28.0, so the
