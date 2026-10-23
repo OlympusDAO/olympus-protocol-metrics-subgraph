@@ -1,6 +1,6 @@
 {
   "name": "@olympusdao/treasury-subgraph",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Subgraphs for the Olympus treasury",
   "author": {
     "name": "Jem",
@@ -55,13 +55,13 @@
     "@biomejs/biome": "2.5.14",
     "@types/node": "24.12.2",
     "typescript": "6.0.3",
-    "vitest": "4.1.11"
+    "vitest": "4.1.12"
   },
   "engines": {
     "node": "^24",
-    "pnpm": ">=11.13.0 <12",
+    "pnpm": ">=11.28.7 <12",
     "npm": "use-pnpm",
     "yarn": "use-pnpm"
   },
-  "packageManager": "pnpm@11.13.0"
+  "packageManager": "pnpm@11.28.7"
 }
