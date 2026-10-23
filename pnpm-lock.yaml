@@ -50,7 +50,6 @@ overrides:
   path-to-regexp@<0.1.13: 0.1.13
   qs@<6.16.0: 6.16.0
   fflate@<0.8.3: 0.8.3
-  vitest@>=4.0.0 <4.1.12: 4.1.12
   send@<0.19.0: 0.19.0
   serve-static@<1.16.0: 1.16.0
   postcss@<8.5.23: 8.5.23
@@ -2412,9 +2411,9 @@ snapshots:
       path-expression-matcher: 1.5.0
       strnum: 2.3.0
 
-  fdir@6.5.0(picomatch@4.0.4):
+  fdir@6.5.0(picomatch@4.0.7):
     optionalDependencies:
-      picomatch: 4.0.4
+      picomatch: 4.0.7
 
   finalhandler@1.2.0:
     dependencies:
@@ -2836,8 +2835,8 @@ snapshots:
 
   tinyglobby@0.2.17:
     dependencies:
-      fdir: 6.5.0(picomatch@4.0.4)
-      picomatch: 4.0.4
+      fdir: 6.5.0(picomatch@4.0.7)
+      picomatch: 4.0.7
 
   tinyrainbow@3.1.0: {}
 
