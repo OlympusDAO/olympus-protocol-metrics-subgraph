@@ -224,6 +224,11 @@ describe("Railway config-as-code", () => {
       expect(packageJson).toContain(`"docker:tag:scan:${name}"`);
       expect(workflow).toContain(dockerfile);
       expect(workflow).toContain(`olympus-protocol-metrics/${name}:scan`);
+      const configScan = workflow
+        .split(/(?= {6}- name: )/)
+        .find((step) => step.includes(`scan-ref: ${dockerfile}\n`));
+      expect(configScan).toContain("scan-type: config");
+      expect(configScan).toContain('TRIVY_FILE_PATTERNS: "dockerfile:Dockerfile-.*"');
     }
   });
 });
