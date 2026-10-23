@@ -93,7 +93,7 @@ CCIP instead locks bridged OHM in the Ethereum lock/release token pool
 that pool with the OHM already minted on the L2s, Ethereum's total supply
 covers all OHM on every chain.
 
-`ChainConfig.ohmTotalSupplyEndBlock` (exclusive) stops a chain's Total
+`ChainConfig.ohmTotalSupplyEndBlock` (exclusive) zeroes a chain's Total
 Supply row from that block on. It is set on Arbitrum, Base and Berachain
 to each chain's first block at or after the pool funding (Ethereum block
 26,245,881, 2026-10-22T04:51:47Z). Treasury and liquidity deductions still

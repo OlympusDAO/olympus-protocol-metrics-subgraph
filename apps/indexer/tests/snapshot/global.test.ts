@@ -413,8 +413,8 @@ describe("computeApy", () => {
 
 describe("CCIP lock/release cutover", () => {
   // OHM supply rows on 2026-10-20. The mainnet CCIP pool gets funded with the
-  // OHM minted on the L2s (130,720.92), after which the L2s stop emitting
-  // Total Supply rows but keep their treasury and liquidity deductions.
+  // OHM minted on the L2s (130,720.92), after which the L2s emit zero Total
+  // Supply rows but keep their treasury and liquidity deductions.
   const ETHEREUM_TOTAL = new BigNumber("19690957.88");
   const L2_TOTAL = new BigNumber("130720.92");
   const L2_ROWS: [number, string, string, string, string][] = [
@@ -446,7 +446,7 @@ describe("CCIP lock/release cutover", () => {
         1n,
         [],
         [
-          ...(cutover ? [] : [supply(TYPE_TOTAL_SUPPLY, total, total)]),
+          supply(TYPE_TOTAL_SUPPLY, cutover ? "0" : total, cutover ? "0" : total),
           supply(TYPE_TREASURY, "0", treasury),
           supply(TYPE_LIQUIDITY, "0", liquidity),
         ],

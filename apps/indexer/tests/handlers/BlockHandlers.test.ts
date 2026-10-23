@@ -709,7 +709,7 @@ describe("pushTokenBalanceRecords per-chain validation", () => {
           return [eth, ...fromWritten];
         },
       },
-      ChainSupplyCategory: { set: vi.fn(), get: async () => undefined },
+      ChainSupplyCategory: { set: vi.fn() },
       log: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
       effect: vi.fn(async () => ""),
     } as unknown as Parameters<typeof updateGlobalMetricSnapshot>[0];
@@ -800,7 +800,7 @@ describe("pushTokenBalanceRecords per-chain validation", () => {
         },
         getWhere: async () => Object.values(writtenChainValues),
       },
-      ChainSupplyCategory: { set: vi.fn(), get: async () => undefined },
+      ChainSupplyCategory: { set: vi.fn() },
       log: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
       effect: vi.fn(async () => ""),
     } as unknown as Parameters<typeof updateGlobalMetricSnapshot>[0];

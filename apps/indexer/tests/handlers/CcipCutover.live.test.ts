@@ -42,7 +42,7 @@ type SupplyRow = { block: bigint; type: string; sourceAddress?: string; supplyBa
 
 describe.skipIf(!hasApiToken)("CCIP cutover — live snapshots around the pool funding", () => {
   for (const { chainId, before, after, supply } of L2S) {
-    it(`chain ${chainId}: total supply counts before the cutover and stops after`, async () => {
+    it(`chain ${chainId}: total supply counts before the cutover and is zero after`, async () => {
       const config = CHAIN_CONFIGS[chainId as keyof typeof CHAIN_CONFIGS];
       const cutover = config.ohmTotalSupplyEndBlock as number;
       expect(before).toBeLessThan(cutover);
@@ -87,7 +87,9 @@ describe.skipIf(!hasApiToken)("CCIP cutover — live snapshots around the pool f
         ).toHaveLength(1);
       }
       expect(totalSupplyAt(before)).toHaveLength(1);
-      expect(totalSupplyAt(after)).toHaveLength(0);
+      expect(String(totalSupplyAt(before)[0].supplyBalance)).not.toBe("0");
+      expect(totalSupplyAt(after)).toHaveLength(1);
+      expect(String(totalSupplyAt(after)[0].supplyBalance)).toBe("0");
 
       if (chainId === 8453) {
         // Protocol-owned OHM is still deducted after the cutover.

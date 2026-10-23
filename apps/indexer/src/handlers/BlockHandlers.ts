@@ -499,23 +499,6 @@ export async function updateGlobalMetricSnapshot(
       supplyBalance: toBigDecimal(bucket.supplyBalance),
     });
   }
-  // Rows are keyed by date, so a category an earlier snapshot wrote today
-  // would otherwise outlive this one (e.g. an L2's Total Supply once its CCIP
-  // cutover lands mid-day). Zero any existing category this snapshot didn't
-  // emit.
-  for (const [type, categoryEnum] of Object.entries(CATEGORY_TYPE_TO_ENUM)) {
-    if (thisChain.supplyCategories.has(type)) continue;
-    const existing = await context.ChainSupplyCategory.get(
-      `${date}/${config.chainId}/${categoryEnum}`,
-    );
-    if (!existing) continue;
-    context.ChainSupplyCategory.set({
-      ...existing,
-      snapshot_id: snapshotId,
-      balance: toBigDecimal(ZERO),
-      supplyBalance: toBigDecimal(ZERO),
-    });
-  }
 }
 
 // Maps the legacy TYPE_* string values (kept as strings in TokenSupply.type
@@ -744,22 +727,11 @@ export async function pushTotalSupply(
   blockNumber: bigint,
 ): Promise<void> {
   if (config.ohmStartBlock && blockNumber < BigInt(config.ohmStartBlock)) return;
-  if (config.ohmTotalSupplyEndBlock && blockNumber >= BigInt(config.ohmTotalSupplyEndBlock)) {
-    return;
-  }
 
   // Robinhood tracks treasury assets only; no verified OHM deployment means
   // no OHM supply records or treasury OHM exclusions may be fabricated.
   if (!config.ohmToken) return;
-  const entity = await context.Erc20Supply.get(`${config.chainId}-${addr(config.ohmToken)}`);
-  if (!entity) return;
-  const decimals = getTokenDecimals(config.tokens, config.ohmToken);
-  const multiplier = await getOhmEquivalentMultiplier(context, config);
-  if (!multiplier) return;
-
-  const balance = toDecimal(entity.totalSupply, decimals).times(multiplier);
-  if (balance.eq(ZERO)) return;
-  supplies.push(
+  const totalSupplyRow = (balance: BigNumber) =>
     createTokenSupply(
       config,
       timestamp,
@@ -772,8 +744,22 @@ export async function pushTotalSupply(
       "Total Supply",
       balance,
       blockNumber,
-    ),
-  );
+    );
+  // After the CCIP cutover, emit a zero row rather than none: it overwrites
+  // the Total Supply category an earlier snapshot wrote the same UTC day.
+  if (config.ohmTotalSupplyEndBlock && blockNumber >= BigInt(config.ohmTotalSupplyEndBlock)) {
+    supplies.push(totalSupplyRow(ZERO));
+    return;
+  }
+  const entity = await context.Erc20Supply.get(`${config.chainId}-${addr(config.ohmToken)}`);
+  if (!entity) return;
+  const decimals = getTokenDecimals(config.tokens, config.ohmToken);
+  const multiplier = await getOhmEquivalentMultiplier(context, config);
+  if (!multiplier) return;
+
+  const balance = toDecimal(entity.totalSupply, decimals).times(multiplier);
+  if (balance.eq(ZERO)) return;
+  supplies.push(totalSupplyRow(balance));
 }
 
 export async function pushTreasuryOhm(

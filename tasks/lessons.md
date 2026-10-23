@@ -176,6 +176,6 @@ If those match but disagree with the actual on-chain `balanceOf`, the token is n
 
 **Rule:** the indexer only ever `.set`s entities. When state goes away, write the existing row with a zero value (an emptied wallet keeps its `TokenBalance` row at 0). Don't reach for `deleteUnsafe`.
 
-**What caught us:** `ChainSupplyCategory` rows are keyed by `date/chain/category` and each snapshot only upserts the categories it emits, so a category written earlier the same UTC day outlived later snapshots (an L2's Total Supply after its mid-day CCIP cutover on 2026-10-22). The first fix deleted the missing rows, which was the only delete in the codebase. The consistent fix zeroes an existing row instead.
+**What caught us:** `ChainSupplyCategory` rows are keyed by `date/chain/category` and each snapshot only upserts the categories it emits, so a category written earlier the same UTC day outlived later snapshots (an L2's Total Supply after its mid-day CCIP cutover on 2026-10-22). The first fix deleted the missing rows, which was the only delete in the codebase. Review settled on the simplest consistent shape: the cutover emits a zero Total Supply row, so the normal upsert overwrites the day's row with zero.
 
-**Where to apply:** any date-keyed rollup entity written per snapshot. "Last snapshot of the day wins" only holds for rows the last snapshot actually writes.
+**Where to apply:** any date-keyed rollup entity written per snapshot. "Last snapshot of the day wins" only holds for rows the last snapshot actually writes, so when a source stops contributing, emit it at zero at the source rather than skipping it or cleaning up downstream.

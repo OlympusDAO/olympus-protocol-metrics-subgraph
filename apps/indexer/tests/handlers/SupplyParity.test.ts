@@ -217,9 +217,13 @@ describe("CCIP lock/release cutover", () => {
     expect(rows[0].supplyBalance).toBe("45180.488364365");
   });
 
-  test("L2 total supply stops counting from the cutover block", async () => {
-    expect(await totalSupplyAt(BASE, CUTOVER)).toHaveLength(0);
-    expect(await totalSupplyAt(BASE, CUTOVER + 1)).toHaveLength(0);
+  test("L2 total supply is zero from the cutover block", async () => {
+    for (const blockNumber of [CUTOVER, CUTOVER + 1]) {
+      const rows = await totalSupplyAt(BASE, blockNumber);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].balance).toBe("0");
+      expect(rows[0].supplyBalance).toBe("0");
+    }
   });
 
   test("L2 protocol-owned OHM is still deducted after the cutover", async () => {
@@ -246,7 +250,6 @@ describe("CCIP lock/release cutover", () => {
         set: (entity: { id: string; category: string; balance: { toString(): string } }) => {
           categories.set(entity.id, entity);
         },
-        get: async (id: string) => categories.get(id),
       },
     } as unknown as EvmOnBlockContext;
 
