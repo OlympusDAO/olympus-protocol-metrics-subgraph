@@ -6,6 +6,14 @@ blockExoticSubdeps: true
 engineStrict: true
 minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
+  # Explicitly requested latest pnpm 11; retain the age gate for other releases.
+  - "@pnpm/exe@11.28.7"
+  - "@pnpm/linux-arm64@11.28.7"
+  - "@pnpm/linux-x64@11.28.7"
+  - "@pnpm/linuxstatic-x64@11.28.7"
+  - "@pnpm/macos-arm64@11.28.7"
+  - "@pnpm/win-arm64@11.28.7"
+  - "@pnpm/win-x64@11.28.7"
   - "@vitest/expect@4.1.12"
   - "@vitest/mocker@4.1.12"
   - "@vitest/pretty-format@4.1.12"
