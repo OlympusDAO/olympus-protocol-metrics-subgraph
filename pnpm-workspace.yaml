@@ -5,6 +5,23 @@ packages:
 blockExoticSubdeps: true
 engineStrict: true
 minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  # Explicitly requested latest pnpm 11; retain the age gate for other releases.
+  - "@pnpm/exe@11.28.7"
+  - "@pnpm/linux-arm64@11.28.7"
+  - "@pnpm/linux-x64@11.28.7"
+  - "@pnpm/linuxstatic-x64@11.28.7"
+  - "@pnpm/macos-arm64@11.28.7"
+  - "@pnpm/win-arm64@11.28.7"
+  - "@pnpm/win-x64@11.28.7"
+  - "@vitest/expect@4.1.12"
+  - "@vitest/mocker@4.1.12"
+  - "@vitest/pretty-format@4.1.12"
+  - "@vitest/runner@4.1.12"
+  - "@vitest/snapshot@4.1.12"
+  - "@vitest/spy@4.1.12"
+  - "@vitest/utils@4.1.12"
+  - "vitest@4.1.12"
 allowBuilds:
   # esbuild ships native binaries it builds on install; required because
   # vitest (our test runner) depends on it transitively. Without this entry,
@@ -90,13 +107,16 @@ overrides:
   "path-to-regexp@<0.1.13": "0.1.13"
   "qs@<6.16.0": "6.16.0"
   "fflate@<0.8.3": "0.8.3"
-  "vitest@>=4.0.0 <4.1.11": "4.1.11"
   "send@<0.19.0": "0.19.0"
   "serve-static@<1.16.0": "1.16.0"
   # postcss GHSA-r28c-9q8g-f849 (high, arbitrary source-map disclosure),
   # fixed in 8.5.18, plus the current incomplete-fix advisory fixed in
   # 8.5.23. Use the newest patched release past the 7-day cutoff.
   "postcss@<8.5.23": "8.5.23"
+  # source-map-js event-loop DoS through indexed source-map section offsets,
+  # fixed in 1.2.2. Pulled through postcss by vite/vitest, including Envio's
+  # @fuel-ts utility subtree.
+  "source-map-js@<1.2.2": "1.2.2"
   # nanoid GHSA-2v37-7h3g-55p8 (high, zero-size custom generator loop),
   # fixed in 3.3.18. Scope this to the vulnerable 3.x range.
   "nanoid@>=3.0.0 <3.3.18": "3.3.18"
@@ -105,17 +125,13 @@ overrides:
   # 8.20.1 predates this advisory and is still vulnerable; bumped to 8.21.0
   # (released 2026-05-22, past the 7-day cutoff). Range-scoped per convention.
   "ws@>=8.0.0 <8.21.0": "8.21.0"
-  # vite GHSA-fx2h-pf6j-xcff (server.fs.deny bypass) + GHSA-v6wh-96g9-6wx3
-  # (NTLMv2 disclosure), both fixed in 8.0.16. Previously this override
-  # pinned vite DOWN to 8.0.13 purely as a maturity-gate workaround (vitest@4
-  # accepts vite ^6/^7/^8 and the resolver picked the too-fresh 8.0.14). The
-  # patched 8.0.16 (released 2026-06-01) is now well past the 7-day cutoff,
-  # so the override doubles as the CVE fix. Range-scoped per the convention
-  # above: only the vulnerable 8.0.x line is forced to 8.0.16.
-  "vite@>=8.0.0 <8.0.16": "8.0.16"
+  # Vite 8.1.6 fixes the launch-editor command-injection advisories and the
+  # server.fs.allow bypass. Vitest 4.1.12 and @vitest/mocker 4.1.12 accept
+  # Vite 8, so constrain only their vulnerable Vite 8 release line.
+  "vite@>=8.0.0 <8.1.6": "8.1.6"
   # esbuild GHSA-gv7w-rqvm-qjhr (RCE via NPM_CONFIG_REGISTRY in the Deno
   # module) + GHSA-g7r4-m6w7-qqqr (dev-server arbitrary file read), both
-  # fixed in 0.28.1. vite@8.0.16 accepts esbuild ^0.27.0 || ^0.28.0, so the
+  # fixed in 0.28.1. vite@8.1.6 accepts esbuild ^0.27.0 || ^0.28.0, so the
   # bump is peer-compatible.
   "esbuild@>=0.17.0 <0.28.1": "0.28.1"
 preferFrozenLockfile: true

@@ -52,6 +52,9 @@ jobs:
 
       - name: Scan indexer Dockerfile for misconfigurations
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        env:
+          # Trivy's default Dockerfile names do not include Dockerfile-*.
+          TRIVY_FILE_PATTERNS: "dockerfile:Dockerfile-.*"
         with:
           scan-type: config
           scan-ref: Dockerfile-indexer
@@ -61,6 +64,8 @@ jobs:
 
       - name: Scan Hasura Dockerfile for misconfigurations
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        env:
+          TRIVY_FILE_PATTERNS: "dockerfile:Dockerfile-.*"
         with:
           scan-type: config
           scan-ref: Dockerfile-hasura
@@ -70,6 +75,8 @@ jobs:
 
       - name: Scan metrics API Dockerfile for misconfigurations
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        env:
+          TRIVY_FILE_PATTERNS: "dockerfile:Dockerfile-.*"
         with:
           scan-type: config
           scan-ref: Dockerfile-metrics-api
@@ -79,6 +86,8 @@ jobs:
 
       - name: Scan metrics publisher Dockerfile for misconfigurations
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        env:
+          TRIVY_FILE_PATTERNS: "dockerfile:Dockerfile-.*"
         with:
           scan-type: config
           scan-ref: Dockerfile-metrics-publisher

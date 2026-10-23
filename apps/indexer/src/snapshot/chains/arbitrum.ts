@@ -187,6 +187,9 @@ export const ARBITRUM: ChainConfig = {
   ]),
   ohmToken: ERC20_OHM,
   ohmStartBlock: OHM_CREATION_BLOCK,
+  // Block matching the mainnet CCIP pool funding (Ethereum block 26,245,881,
+  // 2026-10-22T04:51:47Z).
+  ohmTotalSupplyEndBlock: 517_125_754,
   nativeToken: NATIVE_ETH,
   tokens: [
     token({
