@@ -727,6 +727,92 @@ export const readSOhmCirculatingSupply = createEffect(
   },
 );
 
+// Cached effect for Ethereum's index and staked OHM before sOHM v3's first
+// rebase (OhmIndexState only follows v3). Both are raw 9-decimal strings.
+//
+// - Once sOHM v2's index() is above 0 (its first rebase, ~12.64M), the index
+//   is v2's, and staked OHM is v1 + v2 circulatingSupply: holders moved from
+//   v1 to v2 staking over several days, and the APY numerator already sums
+//   both staking contracts' distributions.
+// - Before that, sOHM v1 has no index(). Its totalSupply only grows by rebase
+//   from the 500,000 sOHM it was created with, so totalSupply / 500,000 is
+//   the index. Staked OHM is v1 circulatingSupply. sOHM v2 reports a
+//   placeholder 5,000,000 circulating until its first rebase, so it isn't
+//   read before then.
+//
+// Not-deployed reads count as 0; anything else is thrown, so a transport
+// failure is never cached.
+const SOHM_V1_V2_ABI = [
+  {
+    inputs: [],
+    name: "index",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "circulatingSupply",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "totalSupply",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+// sOHM v1 INITIAL_FRAGMENTS_SUPPLY (its totalSupply at creation), 9 decimals.
+const SOHM_V1_INITIAL_SUPPLY_OHM = 500_000n;
+
+export const readPreV3SOhmState = createEffect(
+  {
+    name: "readPreV3SOhmState",
+    input: { chainId: S.number, sOhmV1: S.string, sOhmV2: S.string, atBlock: S.number },
+    output: S.schema({ index: S.string, circulatingSupply: S.string }),
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    const blockNumber = BigInt(input.atBlock);
+    const read = async (
+      sOhm: string,
+      functionName: "index" | "circulatingSupply" | "totalSupply",
+    ): Promise<bigint> => {
+      try {
+        return (await retryRpc(() =>
+          client.readContract({
+            address: getAddress(sOhm),
+            abi: SOHM_V1_V2_ABI,
+            functionName,
+            blockNumber,
+          }),
+        )) as bigint;
+      } catch (error) {
+        if (!isContractRevert(error)) throw error;
+        return 0n;
+      }
+    };
+
+    const v2Index = await read(input.sOhmV2, "index");
+    if (v2Index > 0n) {
+      const staked =
+        (await read(input.sOhmV1, "circulatingSupply")) +
+        (await read(input.sOhmV2, "circulatingSupply"));
+      return { index: v2Index.toString(), circulatingSupply: staked.toString() };
+    }
+    const v1Index = (await read(input.sOhmV1, "totalSupply")) / SOHM_V1_INITIAL_SUPPLY_OHM;
+    const staked = await read(input.sOhmV1, "circulatingSupply");
+    return { index: v1Index.toString(), circulatingSupply: staked.toString() };
+  },
+);
+
 // Cached effect that snapshots the "next OHM distribution" across the active
 // staking contracts at a given block. V1 always tried; V2/V3 only after their
 // respective start blocks. Returns the sum as a stringified 9-decimal raw

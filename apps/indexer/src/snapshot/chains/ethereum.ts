@@ -156,6 +156,8 @@ const ERC20_SOHM_V3 = addr("0x04906695D6D12CF5459975d7C3C03356E4Ccd460");
 // Indexing". Treated as direct OHM-equivalent (1 sOHM V2 = 1 OHM).
 const ERC20_SOHM_V2 = addr("0x04f2694c8fcee23e8fd0dfea1d4f5bb8c352111f");
 const ERC20_SOHM_V2_TREASURY_START_BLOCK = 18_260_000;
+// sOHM V1 (12,084,973). Publishes the index and staked OHM before sOHM V2.
+const ERC20_SOHM_V1 = addr("0x31932e6e45012476ba3a3a4953cba62aee77fbbe");
 // Start block from which gOHM / sOHM V3 in protocol wallets contribute to
 // TREASURY OHM (per inventory-ethereum.md §"gOHM Indexing Start").
 const ERC20_GOHM_TREASURY_START_BLOCK = 17_115_000;
@@ -2249,6 +2251,7 @@ export const ETHEREUM: ChainConfig = {
     startBlock: 14_381_564,
     endBlock: 24_550_660,
   },
+  preV3SOhm: { v1: ERC20_SOHM_V1, v2: ERC20_SOHM_V2 },
   // Olympus staking contracts (per inventory §8 + Constants.ts:139-143). The
   // APY effect reads the per-epoch distribution from whichever versions are
   // active at the snapshot block (V1 always tried; V2/V3 gated).

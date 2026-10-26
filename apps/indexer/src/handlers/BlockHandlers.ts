@@ -7,7 +7,12 @@ import {
   type TokenSupply,
 } from "envio";
 import type { PublicClient } from "viem";
-import { readBlockTimestamp, readNextOhmDistribution, readSOhmCirculatingSupply } from "../effects";
+import {
+  readBlockTimestamp,
+  readNextOhmDistribution,
+  readPreV3SOhmState,
+  readSOhmCirculatingSupply,
+} from "../effects";
 import {
   getPrice,
   getTotalValue,
@@ -391,16 +396,31 @@ export async function updateGlobalMetricSnapshot(
   // chainId. Reading it from any chain's snapshot gives the latest sOHM-V3
   // rebase, so we always populate it (independent of write ordering).
   let ohmIndex = new BigNumberCtor("0");
+  let hasV3Index = false;
   const ethereumConfig = CHAIN_CONFIGS[CHAIN_IDS.ETHEREUM];
   const canonicalSOhm = ethereumConfig?.migrationOffset?.sOhmAddress;
   if (canonicalSOhm) {
     const indexState = await context.OhmIndexState.get(`1-${addr(canonicalSOhm)}`);
     if (indexState && indexState.index > 0n) {
+      hasV3Index = true;
       ohmIndex = new BigNumberCtor(indexState.index.toString()).div(
         new BigNumberCtor("1000000000"),
       );
     }
   }
+
+  // Before sOHM v3's first rebase, Ethereum reads the index and staked OHM
+  // from sOHM v2 or v1 instead (see readPreV3SOhmState).
+  const preV3 =
+    isCanonicalChain && !hasV3Index && config.preV3SOhm
+      ? await context.effect(readPreV3SOhmState, {
+          chainId: config.chainId,
+          sOhmV1: config.preV3SOhm.v1,
+          sOhmV2: config.preV3SOhm.v2,
+          atBlock: Number(blockNumber),
+        })
+      : undefined;
+  if (preV3) ohmIndex = toDecimal(BigInt(preV3.index), SOHM_INDEX_DECIMALS);
 
   // ohmPrice / sOhmCirculatingSupply: only Ethereum currently has a complete
   // OHM pricing path (Phase 4 ported the WETH-OHM UniV3 pool) and the
@@ -418,7 +438,9 @@ export async function updateGlobalMetricSnapshot(
       null,
     );
     ohmPrice = result.price;
-    if (config.migrationOffset?.sOhmAddress) {
+    if (preV3) {
+      sOhmCirculatingSupply = toDecimal(BigInt(preV3.circulatingSupply), SOHM_INDEX_DECIMALS);
+    } else if (config.migrationOffset?.sOhmAddress) {
       const raw = (await context.effect(readSOhmCirculatingSupply, {
         chainId: config.chainId,
         sOhm: config.migrationOffset.sOhmAddress,
