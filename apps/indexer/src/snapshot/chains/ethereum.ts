@@ -378,6 +378,9 @@ const LP_CURVE_OHM_FRAXBP_BLOCK = 15_300_000; // ~2022-08-15
 const LP_CURVE_FRAX_USDC_BLOCK = 14_950_000; // ~2022-05-28
 const LP_FRAXSWAP_V1_OHM_FRAX_BLOCK = 14_490_000;
 const LP_FRAXSWAP_V2_OHM_FRAX_BLOCK = 15_395_619; // pair deployment, 2022-08-23
+// UniV3 pool creation blocks (getCode). Before them the pools have no state.
+const LP_UNISWAP_V3_WETH_WSTETH_BLOCK = 15_384_250;
+const LP_UNISWAP_V3_WETH_BTRFLY_V1_BLOCK = 13_826_232;
 
 // Balancer + Aura deployment blocks (approximate; effect reverts before
 // the actual creation gracefully zero out).
@@ -867,7 +870,7 @@ const liquidityHandlers: LiquidityHandler[] = [
     tokens: [ERC20_WETH, ERC20_WSTETH],
     id: LP_UNISWAP_V3_WETH_WSTETH,
     fee: 100,
-    startBlock: ETHEREUM_START_BLOCK,
+    startBlock: LP_UNISWAP_V3_WETH_WSTETH_BLOCK,
   },
   {
     kind: "univ3",
@@ -906,7 +909,7 @@ const liquidityHandlers: LiquidityHandler[] = [
     tokens: [ERC20_WETH, ERC20_BTRFLY_V1],
     id: LP_UNISWAP_V3_WETH_BTRFLY_V1,
     fee: 10000,
-    startBlock: ETHEREUM_START_BLOCK,
+    startBlock: LP_UNISWAP_V3_WETH_BTRFLY_V1_BLOCK,
   },
   {
     kind: "univ3",

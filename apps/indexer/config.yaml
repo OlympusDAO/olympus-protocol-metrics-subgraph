@@ -311,7 +311,7 @@ chains:
           - "0x183ea22691c54806fe96555436dd312b6befac2f" # UniV3 OHM-USDC
 
   - id: 137 # Polygon
-    start_block: 23000000 # ~2021-09-22, no graft per Phase 1 decision #3
+    start_block: 23000000 # 2021-12-26, no graft per Phase 1 decision #3
     rpc:
       - url: ${ENVIO_POLYGON_RPC_URL:-https://polygon-rpc.com}
         for: fallback
@@ -380,7 +380,7 @@ chains:
       # No Chainlink feeds on Fantom (legacy used UniV2 + stable only).
 
   - id: 1 # Ethereum
-    start_block: 12000000 # ~2021-04-29; before Treasury V2 (12525281)
+    start_block: 12000000 # 2021-03-08; before OHM V1 (12084967)
     rpc:
       - url: ${ENVIO_ETHEREUM_RPC_URL:-https://eth.llamarpc.com}
         for: fallback
