@@ -106,7 +106,7 @@ export const BLOCK_HANDLERS = [
   {
     name: "PolygonEightHourSnapshot",
     chain: 137 as const,
-    startBlock: 23000000, // ~2021-09-22, matches POLYGON config
+    startBlock: 23000000, // 2021-12-26, matches POLYGON config
     interval: 14400, // ~8h at Polygon's ~2s block time
   },
   {
@@ -121,7 +121,7 @@ export const BLOCK_HANDLERS = [
   {
     name: "EthereumEightHourSnapshot",
     chain: 1 as const,
-    startBlock: 12000000, // ~2021-04-29, matches ETHEREUM config
+    startBlock: 12000000, // 2021-03-08, before OHM V1; matches ETHEREUM config
     interval: 2400, // ~8h at Ethereum's ~12s block time
   },
 ];

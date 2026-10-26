@@ -445,10 +445,10 @@ an item only once a test, build or live check proves it.
   - [x] Tokemak staking: no change. Only the DAO wallet held staked TOKE in
         the window, and the existing read covers it.
   - [ ] List CRV, ALCX, FOX, KP3R, SYN, THOR and SUSHI as known gaps in the PR.
-  - [ ] Start blocks: UniV3 WETH-wstETH (15,384,250), WETH-BTRFLY v1
-        (13,826,232), both verified with `getCode`; fix the Ethereum
-        start-block comments (12,000,000 is 2021-03-08) and the Polygon one
-        (23,000,000 is 2021-12-26).
+  - [x] Start blocks: UniV3 WETH-wstETH (15,384,250), WETH-BTRFLY v1
+        (13,826,232), both verified with `getCode`; Ethereum start-block
+        comments (12,000,000 is 2021-03-08) and Polygon's (23,000,000 is
+        2021-12-26).
 - [ ] 4. Publisher
   - [ ] Date-dependent completeness in `global.ts` and `legacy-shape.ts`
         (`isCrossChainComplete` takes the date; update its three callers).

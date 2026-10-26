@@ -247,3 +247,14 @@ describe("vlCVX v1", () => {
     });
   });
 });
+
+describe("UniV3 pricing pools start at creation", () => {
+  test.each([
+    ["0x109830a1aaad605bbf02a9dfa7b0b92ec2fb7daa", 15_384_250], // WETH-wstETH
+    ["0xdf9ab3c649005ebfdf682d2302ca1f673e0d37a2", 13_826_232], // WETH-BTRFLY v1
+  ])("%s starts at %i (getCode)", (pool, startBlock) => {
+    expect(ETHEREUM.liquidityHandlers.find((handler) => handler.id === pool)?.startBlock).toBe(
+      startBlock,
+    );
+  });
+});
