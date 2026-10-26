@@ -585,7 +585,7 @@ describe("metrics publisher", () => {
     });
 
     expect(observedCompleteness).toEqual(["all_chains"]);
-    expect(result.range).toEqual({ start: "2022-05-01", end: "2026-05-31", days: 1492 });
+    expect(result.range).toEqual({ start: "2021-03-23", end: "2026-05-31", days: 1896 });
     expect(result.deploymentId).toBe("current-indexer");
     expect(result.indexingProgress).toMatchObject({
       chains: {
@@ -594,9 +594,9 @@ describe("metrics publisher", () => {
       },
     });
     expect(observedRanges).toEqual([
-      { start: "2022-05-01", end: "2026-05-31", days: 1492 },
-      { start: "2022-05-01", end: "2026-05-31", days: 1492 },
-      { start: "2022-05-01", end: "2026-05-31", days: 1492 },
+      { start: "2021-03-23", end: "2026-05-31", days: 1896 },
+      { start: "2021-03-23", end: "2026-05-31", days: 1896 },
+      { start: "2021-03-23", end: "2026-05-31", days: 1896 },
     ]);
     expect(result.writtenKeys).toContain(
       "v2/deployments/current-indexer/metrics/daily/2026-05.json",
@@ -763,14 +763,21 @@ describe("metrics publisher", () => {
   });
 
   test("defaults to the public start date for the initial backfill when no manifest exists", async () => {
+    const store = new MemoryArtifactStore();
     const result = await publishMetricsArtifacts({
       deploymentId: "current-indexer",
       source: source(),
-      store: new MemoryArtifactStore(),
+      store,
       now: () => new Date(generatedAt),
     });
 
-    expect(result.range).toEqual({ start: "2022-05-01", end: "2026-06-01", days: 1493 });
+    // OHM v1's first full day with a price.
+    expect(result.range).toEqual({ start: "2021-03-23", end: "2026-06-01", days: 1897 });
+    expect(result.writtenKeys).toContain(
+      "v2/deployments/current-indexer/metrics/daily/2021-03.json",
+    );
+    // /v2/bounds serves the manifest's earliestDate.
+    expect(store.json<Manifest>("v2/manifest.json").earliestDate).toBe("2021-03-23");
   });
 
   test("writes deployment-scoped shards and deletes historical deployment files after publishing manifest", async () => {
@@ -847,7 +854,7 @@ describe("metrics publisher", () => {
       now: () => new Date(generatedAt),
     });
 
-    expect(result.range).toEqual({ start: "2022-05-01", end: "2026-06-01", days: 1493 });
+    expect(result.range).toEqual({ start: "2021-03-23", end: "2026-06-01", days: 1897 });
     expect(result.writtenKeys).toContain("v2/deployments/new-indexer/metrics/daily/2026-05.json");
     expect(result.writtenKeys).toContain("v2/deployments/new-indexer/metrics/daily/2022-05.json");
     expect(result.writtenKeys).toContain("v2/deployments/new-indexer/metrics/daily/2026-06.json");
@@ -1062,7 +1069,7 @@ describe("metrics publisher", () => {
     });
 
     expect(result.skipped).toBe(false);
-    expect(result.range).toEqual({ start: "2022-05-01", end: "2026-06-01", days: 1493 });
+    expect(result.range).toEqual({ start: "2021-03-23", end: "2026-06-01", days: 1897 });
     await expect(store.getJson("v2/publisher.lock")).rejects.toThrow("Artifact not found");
   });
 

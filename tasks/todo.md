@@ -454,9 +454,10 @@ an item only once a test, build or live check proves it.
         (`isCrossChainComplete` takes the date; its three callers pass it).
         Tests: 2022-04-30, 2022-05-01, a recent date, plus
         `tests/monorepo/completeness-rule.test.ts` keeping both copies equal.
-  - [ ] Public start date. Check the first day with an OHM price: the OHM-DAI
-        v1 pool was created 2021-03-23 01:18 UTC. Update the publisher tests,
-        assert `/v2/bounds`, compose default, Railway doc.
+  - [x] Public start date `2021-03-23` (changed from the draft's 03-22: the
+        first v1 pool was created 2021-03-23 01:18 UTC). Publisher tests
+        updated, manifest `earliestDate` (what `/v2/bounds` serves) asserted,
+        compose default and Railway/local-compose docs updated.
 - [ ] 5. Verification
   - [ ] `pnpm run check`, `build`, `test` after each section; `validate` at
         the end.

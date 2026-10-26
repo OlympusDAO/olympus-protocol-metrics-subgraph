@@ -207,7 +207,8 @@ publisher writes immutable monthly JSON shards before publishing the manifest.
 - Required `ARTIFACT_ACCESS_KEY_ID`: bucket access key.
 - Required `ARTIFACT_SECRET_ACCESS_KEY`: bucket secret key.
 - Optional `PUBLISHER_PUBLIC_START_DATE`: first public API date, default
-  `2022-05-01`.
+  `2021-03-23` (OHM v1's first full day with a price). Leave it unset unless
+  you mean to publish a shorter history.
 - Optional `PUBLISHER_LOCK_TTL_MS`: S3 lock timeout for overlapping cron runs. The
   documented default is 12 hours (`43200000`) so a slow first bootstrap is not
   overtaken by the next hourly cron.

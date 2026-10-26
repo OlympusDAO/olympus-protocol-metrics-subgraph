@@ -55,7 +55,10 @@ export type PublishResult = {
 
 const SCHEMA_VERSION = "1.0.0";
 const DEFAULT_GENERATED_AT = "2026-06-01T08:15:00.000Z";
-const DEFAULT_PUBLIC_START_DATE = "2022-05-01";
+// First full day with an OHM price: OHM v1 launched 2021-03-21 22:48 UTC,
+// but its first pool (SushiSwap OHM-DAI v1) was only created 2021-03-23
+// 01:18 UTC.
+const DEFAULT_PUBLIC_START_DATE = "2021-03-23";
 const DEFAULT_LOCK_TTL_MS = 12 * 60 * 60 * 1000;
 const PUBLISHER_LOCK_KEY = "v2/publisher.lock";
 const DAY_MS = 24 * 60 * 60 * 1000;
