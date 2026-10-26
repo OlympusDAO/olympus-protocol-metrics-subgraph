@@ -438,10 +438,12 @@ an item only once a test, build or live check proves it.
         snapshot). (`masterchef.test.ts`.)
   - [x] vlCVX v1: illiquid (17-week lock), read for the CVX allocator only;
         unlocked-but-unwithdrawn vlCVX v1 valued as CVX.
-  - [ ] SPELL, PRIME, agEUR: **blocked on a decision.** All three are still
-        held after 2022-05-01 (SPELL to at least 2022-09, PRIME and agEUR to at
-        least 2023-04), so pricing them changes published
-        numbers. Not done until Zach decides.
+  - [x] SPELL, PRIME, agEUR priced, including on published dates (Zach
+        approved, 2026-10-26): SushiSwap SPELL-WETH, Balancer D2D-USDC 80/20,
+        Chainlink EUR/USD. SPELL and agEUR liquid, PRIME illiquid. Holding
+        windows confirmed by Transfer scan (SPELL to 2023-04-05, agEUR to
+        2023-05-19, PRIME still held). (`PreV2Treasury.test.ts`, live
+        `HeldPastMay2022.live.test.ts` at 14,690,400.)
   - [x] Tokemak staking: no change. Only the DAO wallet held staked TOKE in
         the window, and the existing read covers it.
   - [ ] List CRV, ALCX, FOX, KP3R, SYN, THOR and SUSHI as known gaps in the PR.

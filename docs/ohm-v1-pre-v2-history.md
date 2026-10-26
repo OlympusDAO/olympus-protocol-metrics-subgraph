@@ -236,13 +236,31 @@ each exists, so they need no start blocks.
   unwithdrawn vlCVX v1 (810,426 at block 14,500,000) is a separate read,
   valued and classified as CVX since it can be withdrawn at once. The read
   is narrowed to the CVX allocator (`positionRead`), the only holder.
-- SPELL (6.66M), PRIME (500k; on-chain symbol D2D) and agEUR. **Not done,
-  pending a decision.** The draft treated them as Dec 2021–Apr 2022 gaps,
-  but all three are still held well after 2022-05-01 (SPELL in Treasury v3
-  through at least block 15,500,000, 2022-09; PRIME in Treasury v2 and
-  33,010 agEUR in Treasury v3, then the DAO wallet, through at least block
-  17,000,000, 2023-04). Pricing them changes published numbers, which is
-  outside what this design accepts. See the PR.
+- SPELL (6.66M), PRIME (500k; on-chain symbol D2D) and agEUR (33k; on-chain
+  symbol now EURA). The draft treated them as Dec 2021–Apr 2022 gaps, but
+  all three were held well past 2022-05-01, so pricing them revises
+  published numbers. Zach approved that on 2026-10-26 (see the PR's
+  "Changes to already-published data"). Holding windows, from a HyperSync
+  Transfer scan of every protocol wallet:
+  - SPELL: Treasury v2 from 13,320,646 (2021-09-29, bonded in), moved to
+    Treasury v3 at 14,429,877 (through the migrator in one transaction),
+    then the DAO wallet at 16,877,400, sold through CoW at 16,984,253
+    (2023-04-05).
+  - PRIME: Treasury v2 from 13,823,051 (2021-12-17), never moved; still
+    held.
+  - agEUR: accrued in Treasury v3 from 13,824,145 (2021-12-17) to 33,010,
+    moved to the DAO wallet at 16,877,400, sold through CoW at 17,294,257
+    (2023-05-19).
+
+  Every holder is a protocol wallet, so registering the three tokens under
+  `TreasuryERC20` covers them. Price sources: SushiSwap SPELL-WETH for SPELL
+  (far deeper than the Uniswap V2/V3 SPELL pools throughout), the Balancer
+  D2D-USDC 80/20 pool for PRIME (the only PRIME market with more than a few
+  dollars, created 13,823,879; it held $351k of USDC at 13,900,000 and $213
+  at head, so PRIME's mark today rests on a very thin pool), and Chainlink
+  EUR/USD for agEUR. Liquidity, with the asset-liquidity skill: SPELL and
+  agEUR liquid, PRIME illiquid (a 1/7 slice moves the Balancer pool ~10%
+  today, ~5.3% at acquisition), so PRIME counts in market value only.
 - OHM-FRAX v2 and OHM-LUSD v2 as owned liquidity (above)
 - stranded v1 LPs in Onsen and Treasury v2, covered by the items above
 - the Tokemak staking read: no change needed. Sampling every 100k blocks
