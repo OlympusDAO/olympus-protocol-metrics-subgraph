@@ -90,3 +90,85 @@ describe("Ethereum OHM price selection", () => {
     expect(result.liquidity.toNumber()).toBeCloseTo(19_555_934.7, 0);
   });
 });
+
+describe("Ethereum OHM v1 price", () => {
+  const OHM_V1 = addr("0x383518188c0c6d7730d91b2c03a03c837814a899");
+  const FRAX = addr("0x853d955acef822db058eb8505911ed77f175b99e");
+  const SUSHI_OHM_DAI_V1 = addr("0x34d7d7Aaf50AD4944B70B320aCB24C95fa2def7c");
+  const SUSHI_OHM_ETH_V1 = addr("0xfffae4a0f4ac251f4705717cd24cadccc9f33e06");
+  const UNI_OHM_FRAX_V1 = addr("0x2dce0dda1c2f98e0f171de8333c3c6fe1bbf4877");
+  const SUSHI_OHM_LUSD_V1 = addr("0xfdf12d1f85b5082877a6e070524f50f6c84faa6b");
+
+  // getReserves() at block 13,000,000 (2021-08-10). token0 is OHM v1 in all
+  // three pairs. ETH/USD from the Chainlink feed at that block.
+  const V1_BLOCK = 13_000_000n;
+  const RESERVES: Record<string, { reserve0: bigint; reserve1: bigint }> = {
+    [SUSHI_OHM_DAI_V1]: {
+      reserve0: 57_952_733_574_972n,
+      reserve1: 23_737_950_634_680_499_314_363_618n,
+    },
+    [SUSHI_OHM_ETH_V1]: { reserve0: 23_882_598_723n, reserve1: 3_182_614_422_195_771_645n },
+    [UNI_OHM_FRAX_V1]: {
+      reserve0: 18_460_033_499_145n,
+      reserve1: 7_542_845_012_074_438_791_123_702n,
+    },
+  };
+
+  function v1Context(): EvmOnBlockContext {
+    const ethFeed = wethFeed();
+    return {
+      Univ2PoolState: { get: async (id: string) => RESERVES[id.slice(2)] },
+      Univ3PoolState: { get: async () => undefined },
+      BalancerPoolState: { get: async () => undefined },
+      KodiakPool: { get: async () => undefined },
+      Erc20Supply: { get: async () => undefined },
+      TokenBalance: { get: async () => undefined },
+      OhmIndexState: { get: async () => undefined },
+      effect: async (_effectDef: unknown, input: { feedAddress?: string }) => {
+        if (input.feedAddress !== undefined) {
+          return (input.feedAddress.toLowerCase() === ethFeed ? 318_423_364_018 : 1e8).toString();
+        }
+        return "0";
+      },
+    } as unknown as EvmOnBlockContext;
+  }
+
+  const client = {
+    chain: { id: 1 },
+    readContract: async () => {
+      throw new Error("OHM v1 price must come from indexed pool state");
+    },
+  } as unknown as PublicClient;
+
+  test("the v1 pairs are OHM v1 price sources from their creation blocks", () => {
+    const starts = Object.fromEntries(
+      ETHEREUM.liquidityHandlers
+        .filter((handler) => matches(handler, OHM_V1))
+        .map((handler) => [handler.id, handler.startBlock]),
+    );
+    expect(starts).toEqual({
+      [SUSHI_OHM_DAI_V1]: 12_092_097,
+      [SUSHI_OHM_ETH_V1]: 12_310_798,
+      [SUSHI_OHM_LUSD_V1]: 13_327_921,
+    });
+  });
+
+  test("prices OHM v1 from the deepest v1 pool (SushiSwap OHM-DAI)", async () => {
+    const result = await getPrice(ETHEREUM, v1Context(), client, OHM_V1, V1_BLOCK, null);
+    // 23,737,950.63 DAI / 57,952.73 OHM at $1 DAI.
+    expect(result.price.toNumber()).toBeCloseTo(409.61, 2);
+    expect(result.liquidity.toNumber()).toBeCloseTo(23_737_950.6, 0);
+  });
+
+  // FRAX had no Chainlink feed before 12,974,035, so a price handler for the
+  // OHM-FRAX v1 pair would price FRAX off OHM through that pair. It only
+  // values the treasury's OHM-FRAX v1 LP (section 3), so FRAX stays at the
+  // stable $1.
+  test("OHM-FRAX v1 never prices FRAX", async () => {
+    expect(ETHEREUM.liquidityHandlers.some((handler) => handler.id === UNI_OHM_FRAX_V1)).toBe(
+      false,
+    );
+    const result = await getPrice(ETHEREUM, v1Context(), client, FRAX, 12_900_000n, null);
+    expect(result.price.toString()).toBe("1");
+  });
+});

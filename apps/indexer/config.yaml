@@ -520,6 +520,11 @@ chains:
           - "0x05767d9ef41dc40689678ffca0608878fb3de906" # CVX-ETH (prices CVX, vlCVX)
           - "0x055475920a8c93cffb64d039a8205f7acc7722d3" # SushiSwap OHM V2-DAI (POL value only)
           - "0x69b81152c5a8d35a67b32a4d3772795d96cae4da" # SushiSwap OHM V2-ETH (POL value only)
+          # OHM V1 pairs: OHM V1 price and V1 POL (FRAX: POL value only).
+          - "0x34d7d7aaf50ad4944b70b320acb24c95fa2def7c" # SushiSwap OHM V1-DAI
+          - "0xfffae4a0f4ac251f4705717cd24cadccc9f33e06" # SushiSwap OHM V1-ETH
+          - "0x2dce0dda1c2f98e0f171de8333c3c6fe1bbf4877" # Uniswap V2 OHM V1-FRAX
+          - "0xfdf12d1f85b5082877a6e070524f50f6c84faa6b" # SushiSwap OHM V1-LUSD
 
       # ---- sOHM V3 LogRebase drives OhmIndexState; consumed by GohmPriceHandler.
       - name: SOhmV3

@@ -694,6 +694,33 @@ const sushiOhmEth: LiquidityHandler = {
   startBlock: LP_SUSHI_OHM_ETH_BLOCK,
 };
 
+// OHM V1 pairs, the OHM price sources before the v2 launch (legacy
+// PAIR_UNISWAP_V2_OHM_*). Creation blocks from getCode. The router takes the
+// deepest, which is SushiSwap OHM-DAI. Uni OHM-FRAX V1 is only a POL pricing
+// handler, not an OHM price source: FRAX had no Chainlink feed before
+// 12,974,035, and as a price source the pair would price FRAX off OHM.
+const LP_SUSHI_OHM_DAI_V1 = addr("0x34d7d7Aaf50AD4944B70B320aCB24C95fa2def7c");
+const LP_SUSHI_OHM_ETH_V1 = addr("0xfffae4a0f4ac251f4705717cd24cadccc9f33e06");
+const LP_SUSHI_OHM_LUSD_V1 = addr("0xfdf12d1f85b5082877a6e070524f50f6c84faa6b");
+const sushiOhmDaiV1: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V1, ERC20_DAI],
+  id: LP_SUSHI_OHM_DAI_V1,
+  startBlock: 12_092_097,
+};
+const sushiOhmEthV1: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V1, ERC20_WETH],
+  id: LP_SUSHI_OHM_ETH_V1,
+  startBlock: 12_310_798,
+};
+const sushiOhmLusdV1: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V1, ERC20_LUSD],
+  id: LP_SUSHI_OHM_LUSD_V1,
+  startBlock: 13_327_921,
+};
+
 const liquidityHandlers: LiquidityHandler[] = [
   // Chainlink feeds (highest priority via CHAINLINK_PRIORITY = 10^30).
   // aDAI / aEthUSDe / varDebtEthUSDT / varDebtEthUSDC piggyback the same
@@ -770,6 +797,9 @@ const liquidityHandlers: LiquidityHandler[] = [
   univ3WethOhm,
   sushiOhmDai,
   sushiOhmEth,
+  sushiOhmDaiV1,
+  sushiOhmEthV1,
+  sushiOhmLusdV1,
   // OHM-sUSDS UniV3 pool — both a price candidate and an owned-liquidity
   // (POL) source. Listed here so the router can use it for OHM pricing in
   // addition to WETH-OHM, and so pushUniv3NftPol recognizes the pair when

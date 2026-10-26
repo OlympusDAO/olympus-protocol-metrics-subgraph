@@ -407,9 +407,10 @@ an item only once a test, build or live check proves it.
         (13,805,112); OHM v2 was deployed at 13,782,589 with zero supply.
         Pool values exclude every era's token (`ohmTokens`).
         (`OhmEras.test.ts`; #384 cutover tests unchanged and passing.)
-  - [ ] v1 price: `univ2` handlers for Sushi OHM-DAI v1, OHM-ETH v1, OHM-LUSD
-        v1 and Uni OHM-FRAX v1, registered under `UniswapV2Pool`. Test the
-        router picks the deepest v1 pool.
+  - [x] v1 price: all four v1 pairs registered under `UniswapV2Pool`; price
+        handlers for Sushi OHM-DAI, OHM-ETH and OHM-LUSD v1. Uni OHM-FRAX v1
+        is POL-only so it can't price FRAX before its Chainlink feed.
+        (`ohm-price.test.ts`: deepest pool wins at block 13,000,000.)
   - [ ] Non-circulating v1 OHM: `treasuryOhmExtraWallets` takes a token and a
         block window; add the oracle's six non-DAO addresses (DAO wallet is
         already a protocol wallet). Test each wallet and the window.
