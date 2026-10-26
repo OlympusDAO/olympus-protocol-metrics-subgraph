@@ -117,7 +117,7 @@ date and block.
 
 If no manifest exists, or the manifest has no snapshots for the current
 `INDEXER_DEPLOYMENT_ID`, `pnpm run compose:publish` creates the initial
-historical backfill from `2022-05-01` through Hasura's latest date where every
+historical backfill from `2021-03-23` through Hasura's latest date where every
 supported chain id is indexed. That latest all-chain date must also be within
 one day of the current UTC date, otherwise the publisher exits successfully with
 `skipReason: "not_data_ready"` and leaves any existing manifest untouched. After
