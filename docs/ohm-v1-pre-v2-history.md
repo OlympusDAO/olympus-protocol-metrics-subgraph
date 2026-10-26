@@ -291,9 +291,12 @@ publisher's `normalizeDailyMetric` (`metrics-source.ts`) and the API's
 have the row's date, so the helper takes it too. The publisher's bounds query
 filters on the stored `crossChainComplete`, so it follows the indexer.
 
-**Public start date.** Set `DEFAULT_PUBLIC_START_DATE` to `2021-03-22`. That
-is the first full UTC day after OHM v1's creation block 12,084,967
-(2021-03-21 22:48:40 UTC). Update the publisher tests at
+**Public start date.** Set `DEFAULT_PUBLIC_START_DATE` to `2021-03-23`, OHM
+v1's first full UTC day with a price. The draft had `2021-03-22`, the first
+full day after OHM v1's creation block 12,084,967 (2021-03-21 22:48:40 UTC),
+but the only v1 price source, SushiSwap OHM-DAI v1, was created at
+12,092,097 (2021-03-23 01:18:51 UTC). 2021-03-22 would publish an OHM price
+and market cap of 0. Update the publisher tests at
 `publisher.test.ts:588` and `:773`, and assert that `/v2/bounds` reports the
 new earliest date. `docker-compose.yml` also defaults
 `PUBLISHER_PUBLIC_START_DATE` to `2022-05-01`, and
