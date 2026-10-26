@@ -40,6 +40,7 @@ export function token(args: {
   decimals?: number;
   isLiability?: boolean;
   nonStandardBalance?: boolean;
+  mintsFromSelf?: boolean;
   positionRead?: TokenDefinition["positionRead"];
 }): TokenDefinition {
   return {
@@ -54,6 +55,7 @@ export function token(args: {
     treasuryExcludedFromBlock: args.treasuryExcludedFromBlock,
     isLiability: args.isLiability,
     nonStandardBalance: args.nonStandardBalance,
+    mintsFromSelf: args.mintsFromSelf,
     positionRead: args.positionRead
       ? { ...args.positionRead, wallets: args.positionRead.wallets?.map(addr) }
       : undefined,

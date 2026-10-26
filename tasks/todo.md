@@ -399,7 +399,7 @@ an item only once a test, build or live check proves it.
       pairs, the date argument for `isCrossChainComplete`'s three callers, and
       the compose default for the public start date.
 - [x] Write this plan.
-- [ ] 1. Supply and price (one commit each, test first)
+- [x] 1. Supply and price (one commit each, test first)
   - [x] `ohmEras` + `ohmTokenAt(config, block)`; switch total supply, treasury
         OHM, OHM-equivalent decimals, snapshot price, owned-liquidity
         exclusion and supply, both `LiquidityPositions` sites and
@@ -415,7 +415,7 @@ an item only once a test, build or live check proves it.
         token (era-scoped) and an optional `lastActiveBlock`; the oracle's six
         non-DAO addresses are scoped to OHM v1, the Association to OHM v2.
         (`OhmEras.test.ts`. Oracle parity is the live check in 5.)
-- [ ] 2. Index and APY
+- [x] 2. Index and APY
   - [x] Cached effect `readPreV3SOhmState` for the pre-v3 index (sOHM v2
         `index()` once above 0, else sOHM v1 `totalSupply` ÷ 500,000), used
         only when no v3 `OhmIndexState` exists. (`pre-v3-sohm.test.ts`,
@@ -426,7 +426,7 @@ an item only once a test, build or live check proves it.
         before that and the v1 to v2 migration took days.
   - [x] APY numerator (staking v1, v1 + v2) and APY 0, not NaN, before the
         first distribution or with nothing staked.
-- [ ] 3. Treasury and backing
+- [x] 3. Treasury and backing
   - [x] Four v1 LPs and OHM-FRAX v2 / OHM-LUSD v2 in `liquidityPositions`
         (Treasury v1/v2/v3 and DAO wallets). None is held by a protocol wallet
         from 14,670,310 on (HyperSync Transfer scan to head).
@@ -451,7 +451,7 @@ an item only once a test, build or live check proves it.
         (13,826,232), both verified with `getCode`; Ethereum start-block
         comments (12,000,000 is 2021-03-08) and Polygon's (23,000,000 is
         2021-12-26).
-- [ ] 4. Publisher
+- [x] 4. Publisher
   - [x] Date-dependent completeness in `global.ts` and `legacy-shape.ts`
         (`isCrossChainComplete` takes the date; its three callers pass it).
         Tests: 2022-04-30, 2022-05-01, a recent date, plus
@@ -461,14 +461,19 @@ an item only once a test, build or live check proves it.
         updated, manifest `earliestDate` (what `/v2/bounds` serves) asserted,
         compose default and Railway/local-compose docs updated.
 - [ ] 5. Verification
-  - [ ] `pnpm run check`, `build`, `test` after each section; `validate` at
-        the end.
-  - [ ] Live suites (skip without RPC): circulating supply exactly against the
-        v1 oracle `0x0EFF…5034` at sample blocks, index at 12.64M / 13.0M /
-        13.78M, v1 LP reserves and treasury ownership, key treasury balances.
+  - [x] `pnpm run check`, `build`, `test` after each section; `validate` at
+        the end (indexer 384 passed, 21 skipped live).
+  - [x] Live suites (skip without RPC): `OhmV1Supply` (circulating equals the
+        v1 oracle to 9 decimals at 6 blocks), `OhmV1Index` (index, staked
+        OHM, APY at 12.6M / 12.64M / 13.0M / 13.78M), `OhmV1Pol` (v1 LP
+        balances, reserves and OHM at 13,780,800), `HeldPastMay2022` (SPELL,
+        PRIME, agEUR at 2022-05-01). Key treasury balances: checked against
+        the local-compose run instead, since `createTestIndexer` double-applies
+        events inside a range (lessons, 2026-10-26).
   - [ ] Local-compose run over Ethereum 12M to ~13.9M (wall time, RPC volume).
         Stop if it runs past ~1-2 hours or rate-limits.
-  - [ ] Rough treasury comparison with DefiLlama (~$730M on 2021-12-11),
-        labelled as different methodology.
+  - [x] Rough treasury comparison with DefiLlama: seeded snapshot at
+        13,780,800 gives $755.4M market value ($496.5M without POL's OHM
+        side) vs DefiLlama's $730.4M, labelled as different methodology.
 - [ ] After the full reindex: pre-v2 days appear in published global metrics,
       and the frontend owners know pre-2022-05 days now arrive as complete.

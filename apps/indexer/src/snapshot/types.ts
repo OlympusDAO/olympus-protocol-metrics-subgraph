@@ -74,6 +74,9 @@ export type TokenDefinition = {
   // negative, polluting downstream rollups. See tasks/lessons.md
   // "2026-05-17 — Tokens that mutate balance without Transfer events".
   nonStandardBalance?: boolean;
+  // The contract mints with Transfer(address(this), to, amount), not from the
+  // zero address (OHM v1). The OhmERC20 handler counts those as mints.
+  mintsFromSelf?: boolean;
   // Snapshot-time read for receipts whose ERC20 `balanceOf` isn't the asset
   // amount (e.g. veFXS returns decaying voting power, not the locked FXS).
   // `method` selects a fixed ABI in `readPositionAmount`; `wallets` narrows
