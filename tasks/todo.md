@@ -383,3 +383,76 @@ surface.
 
 - [x] **Fantom/Polygon gOHM `TokenBalance` drift.** Confirmed same root cause as the broader non-standard-balance class (bridge mint credits balance without a standard Transfer event). Worked around 2026-05-17 by flagging `ERC20_GOHM` as `nonStandardBalance: true` on both chains and threading the flag through `pushTreasuryOhm` so snapshot-time `balanceOf` (cached via `readErc20BalanceOf` effect) replaces the drifting `TokenBalance` entity. See 2026-05-17 entry in `tasks/lessons.md`.
   - **Note: the underlying ledger is still wrong.** `nonStandardBalance` is a snapshot-time read-around, not a fix — `TokenBalance` rows for bridged gOHM on Fantom/Polygon (and the bridge-mint sources on those chains: WETH, DAI, FRAX, sKLIMA) remain incorrect for any consumer that queries them directly. The snapshot path is the only consumer today, so this is acceptable, but a real fix would require either (a) indexing the bridge-mint events that mutate balance, or (b) deriving `TokenBalance` from `balanceOf` instead of from Transfer accumulation. Track if a downstream consumer ever needs raw `TokenBalance` correctness.
+
+## OHM v1 and pre-v2 history (#336)
+
+Publish every metric from OHM v1 launch instead of 2022-05-01. Design:
+`docs/ohm-v1-pre-v2-history.md`. Ships as one PR (draft, branch
+`brightiron/ohm-v1-pre-v2-history`), because the public start date only moves
+once everything else is in. The prerequisites #368 and #369 are merged. Tick
+an item only once a test, build or live check proves it.
+
+- [x] Reconcile the design with #384 and develop. `ohmEras` is Ethereum-only
+      and #384's cutover is L2-only, so they meet in `pushTotalSupply` without
+      overlapping (design, "Interaction with #384"). Also added the
+      `withOwnPoolFallback` site, the `UniswapV2Pool` registration for the v1
+      pairs, the date argument for `isCrossChainComplete`'s three callers, and
+      the compose default for the public start date.
+- [x] Write this plan.
+- [ ] 1. Supply and price (one commit each, test first)
+  - [ ] `ohmEras` + `ohmTokenAt(config, block)`; switch total supply, treasury
+        OHM, OHM-equivalent decimals, snapshot price, owned-liquidity
+        exclusion and supply, both `LiquidityPositions` sites and
+        `withOwnPoolFallback`. Tests: era boundary, supply before OHM v1
+        exists, L2s and #384 cutover unchanged. Check the boundary on-chain:
+        OHM v2 was deployed at 13,782,589 but its first mint is 13,805,112.
+  - [ ] v1 price: `univ2` handlers for Sushi OHM-DAI v1, OHM-ETH v1, OHM-LUSD
+        v1 and Uni OHM-FRAX v1, registered under `UniswapV2Pool`. Test the
+        router picks the deepest v1 pool.
+  - [ ] Non-circulating v1 OHM: `treasuryOhmExtraWallets` takes a token and a
+        block window; add the oracle's six non-DAO addresses (DAO wallet is
+        already a protocol wallet). Test each wallet and the window.
+- [ ] 2. Index and APY
+  - [ ] Cached effect for the pre-v3 index (sOHM v2 `index()` once above 0,
+        else sOHM v1 `totalSupply` ÷ 500,000) and staked supply; used only
+        when no v3 `OhmIndexState` exists. Tests for each source and switch.
+  - [ ] sOHM circulating supply by era. Check the v2 switch on-chain: sOHM v2
+        reports 5,000,000 circulating before its first rebase.
+  - [ ] APY numerator (staking v1, v2) and APY 0, not NaN, before the first
+        distribution.
+- [ ] 3. Treasury and backing
+  - [ ] Four v1 LPs and OHM-FRAX v2 / OHM-LUSD v2 in `liquidityPositions`
+        (Treasury v1/v2/v3 and DAO wallets). Confirm on-chain that none is held
+        on or after 2022-05-01.
+  - [ ] Onsen allocator as a protocol wallet, plus a MasterChef v1 read source
+        for pids 185 and 323 that checks `poolInfo(pid).lpToken` at the block.
+  - [ ] vlCVX v1 (classified with the asset-liquidity skill).
+  - [ ] SPELL, PRIME, agEUR: **blocked on a decision.** All three are still
+        held after 2022-05-01 (into 2023), so pricing them changes published
+        numbers. Not done until Zach decides.
+  - [ ] Tokemak staking: check which wallets held staked TOKE Dec 2021 to
+        Apr 2022.
+  - [ ] List CRV, ALCX, FOX, KP3R, SYN, THOR and SUSHI as known gaps in the PR.
+  - [ ] Start blocks: UniV3 WETH-wstETH (15,384,250), WETH-BTRFLY v1
+        (13,826,232), both verified with `getCode`; fix the Ethereum
+        start-block comments (12,000,000 is 2021-03-08) and the Polygon one
+        (23,000,000 is 2021-12-26).
+- [ ] 4. Publisher
+  - [ ] Date-dependent completeness in `global.ts` and `legacy-shape.ts`
+        (`isCrossChainComplete` takes the date; update its three callers).
+        Tests: 2022-04-30, 2022-05-01, a recent date.
+  - [ ] Public start date. Check the first day with an OHM price: the OHM-DAI
+        v1 pool was created 2021-03-23 01:18 UTC. Update the publisher tests,
+        assert `/v2/bounds`, compose default, Railway doc.
+- [ ] 5. Verification
+  - [ ] `pnpm run check`, `build`, `test` after each section; `validate` at
+        the end.
+  - [ ] Live suites (skip without RPC): circulating supply exactly against the
+        v1 oracle `0x0EFF…5034` at sample blocks, index at 12.64M / 13.0M /
+        13.78M, v1 LP reserves and treasury ownership, key treasury balances.
+  - [ ] Local-compose run over Ethereum 12M to ~13.9M (wall time, RPC volume).
+        Stop if it runs past ~1-2 hours or rate-limits.
+  - [ ] Rough treasury comparison with DefiLlama (~$730M on 2021-12-11),
+        labelled as different methodology.
+- [ ] After the full reindex: pre-v2 days appear in published global metrics,
+      and the frontend owners know pre-2022-05 days now arrive as complete.
