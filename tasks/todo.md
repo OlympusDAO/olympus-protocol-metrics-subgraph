@@ -400,12 +400,13 @@ an item only once a test, build or live check proves it.
       the compose default for the public start date.
 - [x] Write this plan.
 - [ ] 1. Supply and price (one commit each, test first)
-  - [ ] `ohmEras` + `ohmTokenAt(config, block)`; switch total supply, treasury
+  - [x] `ohmEras` + `ohmTokenAt(config, block)`; switch total supply, treasury
         OHM, OHM-equivalent decimals, snapshot price, owned-liquidity
         exclusion and supply, both `LiquidityPositions` sites and
-        `withOwnPoolFallback`. Tests: era boundary, supply before OHM v1
-        exists, L2s and #384 cutover unchanged. Check the boundary on-chain:
-        OHM v2 was deployed at 13,782,589 but its first mint is 13,805,112.
+        `withOwnPoolFallback`. Boundary moved to the first OHM v2 mint
+        (13,805,112); OHM v2 was deployed at 13,782,589 with zero supply.
+        Pool values exclude every era's token (`ohmTokens`).
+        (`OhmEras.test.ts`; #384 cutover tests unchanged and passing.)
   - [ ] v1 price: `univ2` handlers for Sushi OHM-DAI v1, OHM-ETH v1, OHM-LUSD
         v1 and Uni OHM-FRAX v1, registered under `UniswapV2Pool`. Test the
         router picks the deepest v1 pool.

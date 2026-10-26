@@ -4,6 +4,7 @@ import { BigDecimal } from "envio";
 import type {
   BasePriceFeed,
   Bytes32,
+  ChainConfig,
   LiquidityHandler,
   SerializedTokenRecord,
   TokenDefinition,
@@ -99,6 +100,30 @@ export function bytes32(value: string): Bytes32 {
 
 export function same(left: string, right: string) {
   return addr(left) === addr(right);
+}
+
+// The OHM token counted for supply and price at a block: the latest era that
+// has started, or `ohmToken` on chains without eras. Callers gate on
+// `ohmStartBlock` for blocks before the first era.
+export function ohmTokenAt(
+  config: Pick<ChainConfig, "ohmToken" | "ohmEras">,
+  blockNumber: bigint,
+): string {
+  const eras = config.ohmEras;
+  if (!eras || eras.length === 0) return config.ohmToken;
+  let token = eras[0].token;
+  for (const era of eras) {
+    if (blockNumber >= BigInt(era.startBlock)) token = era.token;
+  }
+  return token;
+}
+
+// Every OHM-family token the chain has had. Pool values exclude all of them
+// from backing, so a v1 pool valued after the v2 launch still keeps its v1
+// OHM out.
+export function ohmTokens(config: Pick<ChainConfig, "ohmToken" | "ohmEras">): string[] {
+  if (config.ohmEras && config.ohmEras.length > 0) return config.ohmEras.map((era) => era.token);
+  return config.ohmToken ? [config.ohmToken] : [];
 }
 
 export function matches(handler: LiquidityHandler, tokenAddress: string) {

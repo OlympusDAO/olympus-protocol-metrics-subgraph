@@ -5,7 +5,7 @@ import type { PublicClient } from "viem";
 import { readPositionAmount } from "../effects";
 import { getTokenQuantityPerLp, getTotalValue, getUnitPrice } from "../pricing";
 import { TYPE_LIQUIDITY } from "../snapshot/global";
-import { isActive, toDecimal, ZERO } from "../snapshot/math";
+import { isActive, ohmTokenAt, ohmTokens, toDecimal, ZERO } from "../snapshot/math";
 import { createTokenRecord, createTokenSupply, getContractName } from "../snapshot/records";
 import type {
   ChainConfig,
@@ -86,7 +86,7 @@ export async function pushLiquidityPositionRecords(
       context,
       client,
       pricing,
-      [config.ohmToken],
+      ohmTokens(config),
       blockNumber,
     );
     const unitRate = await getUnitPrice(config, context, client, pricing, blockNumber);
@@ -111,12 +111,15 @@ export async function pushLiquidityPositionRecords(
       );
     }
 
+    // The OHM side counts as Liquidity supply only for the era's token: after
+    // the v2 launch a v1 pool's OHM is outside v2 supply.
+    const ohmToken = ohmTokenAt(config, blockNumber);
     const ohmPerLp = await getTokenQuantityPerLp(
       config,
       context,
       client,
       pricing,
-      config.ohmToken,
+      ohmToken,
       blockNumber,
     );
     if (!ohmPerLp || ohmPerLp.eq(ZERO)) continue;
@@ -129,8 +132,8 @@ export async function pushLiquidityPositionRecords(
         createTokenSupply(
           config,
           timestamp,
-          getContractName(config, config.ohmToken),
-          config.ohmToken,
+          getContractName(config, ohmToken),
+          ohmToken,
           position.poolLabel,
           position.lpToken,
           getContractName(config, wallet),

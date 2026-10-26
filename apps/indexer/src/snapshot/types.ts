@@ -233,6 +233,11 @@ export type ChainConfig = {
   basePriceFeeds: Record<string, BasePriceFeed>;
   ohmToken: string;
   ohmStartBlock?: number;
+  // OHM-family token counted for supply and price, by era, oldest first. Each
+  // era runs from its startBlock to the next era's. Read it through
+  // `ohmTokenAt`. Unset means `ohmToken` throughout. Only Ethereum has eras
+  // (OHM v1, then v2).
+  ohmEras?: { token: string; startBlock: number }[];
   // OHM bridged over CCIP stays locked in the mainnet lock/release pool,
   // so from this block on Ethereum's total supply already covers this
   // chain's OHM and its Total Supply row would count it twice (exclusive).

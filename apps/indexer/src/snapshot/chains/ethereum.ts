@@ -360,8 +360,16 @@ const LP_BALANCER_OHM_WSTETH_BLOCK = 16_800_000;
 
 // ---- Block windows (per inventory section 2.1). ----
 
-const ETHEREUM_START_BLOCK = 12_000_000; // ~2021-04-29, before Treasury V2 (12525281).
+const ETHEREUM_START_BLOCK = 12_000_000; // 2021-03-08, before OHM V1 (12,084,967).
+// OHM V1 creation (getCode binary search), 2021-03-21 22:48 UTC.
+const ERC20_OHM_V1_BLOCK = 12_084_967;
+// OHM V2 deployment. Its supply stays 0 until the first mint below.
 const ERC20_OHM_V2_BLOCK = 13_782_589;
+// First OHM V2 mint, to the migrator in its migrateContracts tx
+// (0x418b240a…5019), 2021-12-14 19:10 UTC. OHM supply switches from V1 to V2
+// here: from the V2 deployment to this block, V2 supply was 0 while V1 kept
+// circulating.
+const ERC20_OHM_V2_FIRST_MINT_BLOCK = 13_805_112;
 // sOHM V3 deployment (per inventory-ethereum.md §2.1). LogRebase from sOHM V3
 // feeds OhmIndexState; gOHM pricing becomes available once the first rebase
 // after this block is observed.
@@ -496,7 +504,7 @@ const names: Record<string, string> = {
   [ERC20_LDO]: "Lido DAO",
   [ERC20_LQTY]: "Liquity",
   [ERC20_LUSD]: "Liquity USD",
-  [ERC20_OHM_V1]: "OHM (V1)",
+  [ERC20_OHM_V1]: "OHM V1",
   [ERC20_OHM_V2]: "OHM",
   [ERC20_USDC]: "USDC",
   [ERC20_USDE]: "USDe",
@@ -1553,7 +1561,11 @@ export const ETHEREUM: ChainConfig = {
   startBlock: ETHEREUM_START_BLOCK,
   rpcUrls: rpcUrls("ETHEREUM", "https://eth.llamarpc.com"),
   ohmToken: ERC20_OHM_V2,
-  ohmStartBlock: ERC20_OHM_V2_BLOCK,
+  ohmStartBlock: ERC20_OHM_V1_BLOCK,
+  ohmEras: [
+    { token: ERC20_OHM_V1, startBlock: ERC20_OHM_V1_BLOCK },
+    { token: ERC20_OHM_V2, startBlock: ERC20_OHM_V2_FIRST_MINT_BLOCK },
+  ],
   nativeToken: NATIVE_ETH,
   tokens: [
     token({
