@@ -32,6 +32,24 @@ const OLYMPUS_INCUR_DEBT = addr("0xd9d87586774fb9d036fa95a5991474513ff6c96e");
 const OLYMPUS_ASSOCIATION = addr("0x4c71db02aeeb336cbd8f3d2cc866911f6e2fbd94");
 const SILO_LENDING = addr("0xb2374f84b3cEeFF6492943Df613C9BcF45322a0c");
 const EULER_LENDING = addr("0x27182842E098f60e3D576794A5bFFb0777E025d3");
+// OHM V1 contracts the v1 CirculatingSupply oracle
+// (0x0EFFf9199Aa1Ac3C3E34E957567C1BE8bF295034) excludes. Roles read on-chain.
+const OHM_V1_STAKING_DISTRIBUTOR = addr("0xbe731507810C8747C3E01E62c676b1cA6F93242f");
+// Same shape as the distributor (stakingContract(), nextEpochBlock()).
+const OHM_V1_STAKING_DISTRIBUTOR_2 = addr("0xcE6568338708400D03F430d29F2Eb40a33a3f4C4");
+const OHM_V1_SLP_BOND = addr("0xd27001d1aAEd5f002C722Ad729de88a91239fF29");
+const OHM_V1_SLP_BOND_2 = addr("0x13E8484a86327f5882d1340ed0D7643a29548536");
+const OHM_V1_AOHM_MIGRATION = addr("0xC7f56EC779cB9e60afA116d73F3708761197dB3d"); // aOHM()
+// Role unconfirmed (no OHM-family getters); listed because the oracle lists it.
+const OHM_V1_UNCONFIRMED_EXCLUSION = addr("0x39Baa524eab3f5C9D0738BdF781c3eC9C8D34867");
+const OHM_V1_NON_CIRCULATING = [
+  OHM_V1_STAKING_DISTRIBUTOR,
+  OHM_V1_STAKING_DISTRIBUTOR_2,
+  OHM_V1_SLP_BOND,
+  OHM_V1_SLP_BOND_2,
+  OHM_V1_AOHM_MIGRATION,
+  OHM_V1_UNCONFIRMED_EXCLUSION,
+];
 // Bophades TRSRY module — two historical versions. The active one holds the
 // balance; the inactive one reads zero. Kernel upgrade events are tracked
 // separately (see Erc20Transfers.ts handlers + BophadesKernel handler).
@@ -435,6 +453,12 @@ const names: Record<string, string> = {
   [VENDOR_LENDING]: "Vendor Finance",
   [OLYMPUS_INCUR_DEBT]: "IncurDebt",
   [OLYMPUS_ASSOCIATION]: "Olympus Association",
+  [OHM_V1_STAKING_DISTRIBUTOR]: "Staking Distributor V1",
+  [OHM_V1_STAKING_DISTRIBUTOR_2]: "Staking Distributor V1 (2)",
+  [OHM_V1_SLP_BOND]: "OHM-DAI SLP Bond V1",
+  [OHM_V1_SLP_BOND_2]: "OHM-DAI SLP Bond V1 (2)",
+  [OHM_V1_AOHM_MIGRATION]: "aOHM Migration",
+  [OHM_V1_UNCONFIRMED_EXCLUSION]: "Circulating Supply Exclusion 0x39Ba",
   [SILO_LENDING]: "Silo Router",
   [EULER_LENDING]: "Euler Protocol",
   [TREASURY_ADDRESS_V1]: "Treasury Wallet V1",
@@ -2161,7 +2185,17 @@ export const ETHEREUM: ChainConfig = {
   incurDebt: { address: OLYMPUS_INCUR_DEBT, startBlock: OLYMPUS_INCUR_DEBT_BLOCK },
   lendingDeployments,
   treasuryOhmExtraWallets: [
-    { address: OLYMPUS_ASSOCIATION, lastActiveBlock: OLYMPUS_ASSOCIATION_LAST_ACTIVE_BLOCK },
+    {
+      address: OLYMPUS_ASSOCIATION,
+      token: ERC20_OHM_V2,
+      lastActiveBlock: OLYMPUS_ASSOCIATION_LAST_ACTIVE_BLOCK,
+    },
+    // The v1 CirculatingSupply oracle's nonCirculatingOHMAddresses, so v1
+    // circulating supply matches its OHMCirculatingSupply() exactly. The DAO
+    // wallet, also on the list, is a protocol wallet. Used before the oracle
+    // existed (12,235,926) too. v1 bond depositories' vesting payouts stay
+    // circulating, as the oracle had them.
+    ...OHM_V1_NON_CIRCULATING.map((address) => ({ address, token: ERC20_OHM_V1 })),
   ],
   // Olympus Boosted Liquidity Vault registry (per inventory §8). The effect
   // iterates active vaults and reads getPoolOhmShare() per vault. Starts at

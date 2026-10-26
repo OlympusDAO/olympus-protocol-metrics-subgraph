@@ -255,8 +255,11 @@ export type ChainConfig = {
   // Vault supply from `startBlock`.
   incurDebt?: { address: string; startBlock: number };
   lendingDeployments?: LendingDeployment[];
-  // Non-protocol wallets legacy counted as treasury OHM up to a block.
-  treasuryOhmExtraWallets?: { address: string; lastActiveBlock: number }[];
+  // Non-protocol wallets whose OHM is deducted as treasury OHM (not
+  // circulating). Read with balanceOf at each snapshot, since they aren't
+  // protocol wallets and have no Transfer ledger. `token` limits an entry to
+  // the era when that token is the chain's OHM; `lastActiveBlock` ends it.
+  treasuryOhmExtraWallets?: { address: string; token?: string; lastActiveBlock?: number }[];
   mellowVault?: {
     shares: string;
     oracle: string;

@@ -120,15 +120,21 @@ the parity oracle for 2021-04-13 through the v2 launch:
 - the DAO wallet (already a circulating-supply wallet)
 - Staking Distributor V1, which held about 90% of v1 supply in Mar–May 2021
 - SLP bonds 1 and 2
-- three small contracts listed by the oracle (never more than 21k OHM)
+- three small contracts listed by the oracle (never more than 21k OHM):
+  `0xcE65…f4C4` has the distributor's getters (`stakingContract()`,
+  `nextEpochBlock()`), `0xC7f5…dB3d` is the aOHM migration (`aOHM()`), and
+  `0x39Ba…4867`'s role is still unconfirmed
 
 Use the same list before the oracle existed (2021-03 to 2021-04-13).
 
 Other v1 bond depositories' vesting payouts count as circulating, as the
 oracle did (at most about 1% of supply).
 
-Implementation: extend `treasuryOhmExtraWallets` to take a token and an
-active block window. Adding these wallets to `PROTOCOL_ADDRESSES` would pull
+Implementation: extend `treasuryOhmExtraWallets` with an optional token. An
+entry with a token only applies while that token is the era's OHM, which
+gives the v1 wallets their window; `lastActiveBlock` (now optional) still
+ends the Olympus Association, which is scoped to OHM v2 so it keeps its
+current behavior. Adding these wallets to `PROTOCOL_ADDRESSES` would pull
 them into every token's Transfer filter and the balance backfill.
 
 ### 2. Index and APY
@@ -322,8 +328,9 @@ metrics.
 
 ## Open risks
 
-- Three oracle-listed exclusion contracts have unconfirmed roles
-  (`0xcE65…f4C4`, `0x39Ba…4867` and `0xC7f5…dB3d`). They are included
+- One oracle-listed exclusion contract, `0x39Ba…4867`, has an unconfirmed
+  role (`0xcE65…f4C4` and `0xC7f5…dB3d` were identified on-chain, see
+  section 1). All three are included
   because the oracle includes them. Together they never held more than about
   21k OHM.
 - SPELL's address is confirmed only by an on-chain `symbol()` read. It
