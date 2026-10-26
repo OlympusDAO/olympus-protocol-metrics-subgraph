@@ -42,7 +42,12 @@ const ERC20_ABI = parseAbi([
 const SAMPLES = [12_098_400, 12_240_000, 12_398_400, 12_640_800, 13_200_000, 13_804_800];
 
 describe.skipIf(!canRun)("OHM v1 circulating supply — live, against the v1 oracle", () => {
-  const client = createPublicClient({ transport: http(RPC_URL) });
+  // Built on first use: the describe body runs even when skipped.
+  let rpc: ReturnType<typeof createPublicClient> | undefined;
+  const client = () => {
+    rpc ??= createPublicClient({ transport: http(RPC_URL) });
+    return rpc;
+  };
   const read = (
     address: string,
     abi: typeof ERC20_ABI | typeof ORACLE_ABI,
@@ -50,7 +55,7 @@ describe.skipIf(!canRun)("OHM v1 circulating supply — live, against the v1 ora
     block: number,
     args: unknown[] = [],
   ) =>
-    client.readContract({
+    client().readContract({
       address: getAddress(address),
       abi,
       functionName: fn as never,
