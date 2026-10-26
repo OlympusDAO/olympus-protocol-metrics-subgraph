@@ -525,6 +525,8 @@ chains:
           - "0xfffae4a0f4ac251f4705717cd24cadccc9f33e06" # SushiSwap OHM V1-ETH
           - "0x2dce0dda1c2f98e0f171de8333c3c6fe1bbf4877" # Uniswap V2 OHM V1-FRAX
           - "0xfdf12d1f85b5082877a6e070524f50f6c84faa6b" # SushiSwap OHM V1-LUSD
+          - "0xb612c37688861f1f90761dc7f382c2af3a50cc39" # Uniswap V2 OHM V2-FRAX (POL value only)
+          - "0x46e4d8a1322b9448905225e52f914094dbd6dddf" # SushiSwap OHM V2-LUSD (POL value only)
 
       # ---- sOHM V3 LogRebase drives OhmIndexState; consumed by GohmPriceHandler.
       - name: SOhmV3

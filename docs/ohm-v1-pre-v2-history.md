@@ -194,34 +194,61 @@ Transfer handler already keeps the protocol-wallet LP ledger and the LP total
 supply, the same way it does for the SushiSwap v2 pairs, and Envio's address
 table can't hold one address under two contracts, so they don't go in
 `LpERC20`. Add them to `liquidityPositions`, so their value splits as v2 LPs
-do today. Non-OHM value
-goes to treasury and backing, and OHM goes to the Liquidity supply row. The
-liquid-backing treatment is the same as for the existing v2 LPs.
+do today. Non-OHM value goes to treasury and backing, and OHM goes to the
+Liquidity supply row. The liquid-backing treatment is the same as for the
+existing v2 LPs. The wallet source covers Treasury v1, v2 and v3 and the DAO
+wallet: the bonded LP sat in Treasury v1, then v2.
 
-**Onsen allocator.** Add it as a protocol wallet, and add a MasterChef V1
-read source for its staked SLP: pid 185 is OHM-DAI v1 and pid 323 is
-OHM-LUSD v1. At each snapshot, read `poolInfo(pid).lpToken` at that block
-and count `userInfo(pid, allocator).amount` only while the LP token matches
-the expected pool. The head value of pid 185's `lpToken` now points to an
-address with no code, so neither a head read nor a hard-coded mapping on its
-own is safe.
+OHM-FRAX v1 and the two v2 pairs below get their own pricing handlers, not
+price handlers in `liquidityHandlers` (section 1 for FRAX v1). As price
+handlers, OHM-FRAX v2 and OHM-LUSD v2 would join the OHM v2 price selection
+on published dates.
+
+Every position stops mattering before published dates: the last LP Transfer
+touching a protocol wallet for any of the six pairs is at 14,670,310
+(2022-04-28), checked with a HyperSync Transfer scan from 14,600,000 to head.
+
+**Onsen allocator.** A MasterChef V1 read source for its staked SLP: pid 185
+is OHM-DAI v1 and pid 323 is OHM-LUSD v1. At each snapshot, read
+`poolInfo(pid).lpToken` at that block and count `userInfo(pid,
+allocator).amount` only while the LP token matches the expected pool
+(`readMasterChefStake`). The head value of pid 185's `lpToken` now points to
+an address with no code, so neither a head read nor a hard-coded mapping on
+its own is safe. The source reads from the allocator's creation (12,744,441)
+to the block it withdrew both stakes (14,360,925).
+
+The draft also made the allocator a protocol wallet. It isn't one here. All
+217 of its ERC20 transfers (SUSHI harvests swapped to xSUSHI and sent to
+Treasury v2, and the final unstake) pass through within one transaction, so
+it never holds anything at a snapshot. As a protocol wallet it would add a
+`balanceOf` read per non-standard token to every Ethereum snapshot, forever,
+for nothing.
 
 Treasury v1 and v2 are already configured. Their balances are zero before
 each exists, so they need no start blocks.
 
 **Dec 2021–Apr 2022 gaps.** These dates become public in the same PR:
 
-- vlCVX v1 in the CVX allocator (about $24M), priced as CVX
-- SPELL (6.66M), PRIME (500k; on-chain symbol D2D) and agEUR (26k; on-chain
-  symbol now EURA). None has a price path today. Add one for each: a
-  Chainlink EUR/USD feed for agEUR, and the deepest v2-style pool for SPELL
-  and PRIME. Confirm each source's address and liquidity during
-  implementation. A token with no source of meaningful liquidity is listed in
-  the PR as a known gap rather than priced from a thin pool.
-- OHM-FRAX v2 and OHM-LUSD v2 as owned liquidity
+- vlCVX v1 in the CVX allocator (about 810k–814k vlCVX, ~$24M). Locked
+  CvxLocker v1 balance, priced as CVX through a remap. Classified with the
+  asset-liquidity skill as illiquid: it's a 17-week vote lock
+  (`lockDuration` 10,281,600 s) and non-transferable. Expired but
+  unwithdrawn vlCVX v1 (810,426 at block 14,500,000) is a separate read,
+  valued and classified as CVX since it can be withdrawn at once. The read
+  is narrowed to the CVX allocator (`positionRead`), the only holder.
+- SPELL (6.66M), PRIME (500k; on-chain symbol D2D) and agEUR. **Not done,
+  pending a decision.** The draft treated them as Dec 2021–Apr 2022 gaps,
+  but all three are still held well after 2022-05-01 (SPELL in Treasury v3
+  through at least block 15,500,000, 2022-09; PRIME in Treasury v2 and
+  33,010 agEUR in Treasury v3, then the DAO wallet, through at least block
+  17,000,000, 2023-04). Pricing them changes published numbers, which is
+  outside what this design accepts. See the PR.
+- OHM-FRAX v2 and OHM-LUSD v2 as owned liquidity (above)
 - stranded v1 LPs in Onsen and Treasury v2, covered by the items above
-- the Tokemak staking read extended to the wallets that held it in that
-  window
+- the Tokemak staking read: no change needed. Sampling every 100k blocks
+  from 13,000,000 to 14,700,000 over every protocol wallet and the legacy
+  Tokemak allocator, the only staked TOKE in that window is the DAO wallet's
+  (from ~14.3M), which the existing read already covers.
 
 **Small pre-v2 tokens** (under about $0.5M combined): CRV, ALCX, FOX, KP3R,
 SYN, THOR and SUSHI. The approved rule is to add each one that has a working

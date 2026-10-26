@@ -427,17 +427,23 @@ an item only once a test, build or live check proves it.
   - [x] APY numerator (staking v1, v1 + v2) and APY 0, not NaN, before the
         first distribution or with nothing staked.
 - [ ] 3. Treasury and backing
-  - [ ] Four v1 LPs and OHM-FRAX v2 / OHM-LUSD v2 in `liquidityPositions`
-        (Treasury v1/v2/v3 and DAO wallets). Confirm on-chain that none is held
-        on or after 2022-05-01.
-  - [ ] Onsen allocator as a protocol wallet, plus a MasterChef v1 read source
-        for pids 185 and 323 that checks `poolInfo(pid).lpToken` at the block.
-  - [ ] vlCVX v1 (classified with the asset-liquidity skill).
+  - [x] Four v1 LPs and OHM-FRAX v2 / OHM-LUSD v2 in `liquidityPositions`
+        (Treasury v1/v2/v3 and DAO wallets). None is held by a protocol wallet
+        from 14,670,310 on (HyperSync Transfer scan to head).
+        (`PreV2Treasury.test.ts`: split, own-pool OHM price, v1 pool after the
+        switch.)
+  - [x] Onsen MasterChef v1 read for pids 185 and 323, checking
+        `poolInfo(pid).lpToken` at the block. Changed from the draft: the
+        allocator is not a protocol wallet (never holds anything at a
+        snapshot). (`masterchef.test.ts`.)
+  - [x] vlCVX v1: illiquid (17-week lock), read for the CVX allocator only;
+        unlocked-but-unwithdrawn vlCVX v1 valued as CVX.
   - [ ] SPELL, PRIME, agEUR: **blocked on a decision.** All three are still
-        held after 2022-05-01 (into 2023), so pricing them changes published
+        held after 2022-05-01 (SPELL to at least 2022-09, PRIME and agEUR to at
+        least 2023-04), so pricing them changes published
         numbers. Not done until Zach decides.
-  - [ ] Tokemak staking: check which wallets held staked TOKE Dec 2021 to
-        Apr 2022.
+  - [x] Tokemak staking: no change. Only the DAO wallet held staked TOKE in
+        the window, and the existing read covers it.
   - [ ] List CRV, ALCX, FOX, KP3R, SYN, THOR and SUSHI as known gaps in the PR.
   - [ ] Start blocks: UniV3 WETH-wstETH (15,384,250), WETH-BTRFLY v1
         (13,826,232), both verified with `getCode`; fix the Ethereum
