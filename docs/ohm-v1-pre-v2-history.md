@@ -102,10 +102,16 @@ reading `config.ohmToken`. Each is gated to blocks well after the v2 launch
 `ohmStartBlock` becomes the first era's start. Chains without `ohmEras`
 behave exactly as today.
 
-**v1 price.** Add `univ2` price handlers for the four v1 pools and register
-them in the `UniswapV2Pool` list in `config.yaml`. The router already picks
-the handler with the most liquidity, so OHM-DAI dominates, as it did in
-legacy. No new pricing code.
+**v1 price.** Register the four v1 pools in the `UniswapV2Pool` list in
+`config.yaml`, and add `univ2` price handlers for SushiSwap OHM-DAI, OHM-ETH
+and OHM-LUSD v1. The router already picks the handler with the most
+liquidity, so OHM-DAI dominates, as it did in legacy. No new pricing code.
+
+Uni OHM-FRAX v1 is not a price handler, only the pricing handler of its
+liquidity position (section 3). A price handler matches both of its tokens,
+and FRAX had no Chainlink feed before block 12,974,035, so the pair would
+have priced FRAX off OHM from June to August 2021 (the stable handler has no
+liquidity weight). OHM-DAI is far deeper, so the OHM price doesn't change.
 
 **Non-circulating v1 OHM.** Match the exclusion list of the v1 on-chain
 CirculatingSupply contract exactly. Its `OHMCirculatingSupply()` then becomes
