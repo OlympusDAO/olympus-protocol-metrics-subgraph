@@ -65,11 +65,23 @@ start date moves in the same PR.
 
 | Era | Token | Blocks |
 | --- | --- | --- |
-| v1 | OHM v1 | from OHM v1 creation up to and including 13,782,589 |
-| v2 | OHM v2 | after 13,782,589 |
+| v1 | OHM v1 | from OHM v1 creation (12,084,967) up to and including 13,805,111 |
+| v2 | OHM v2 | from 13,805,112, the first OHM v2 mint |
 
-This follows the legacy rule (`gt(13782589)` selects v2). Every site that
-reads `config.ohmToken` and can run before v2 switches to the helper:
+The draft followed the legacy rule (`gt(13782589)` selects v2). That block is
+OHM v2's deployment, but its supply stayed 0 until the migrator's
+`migrateContracts` minted the first OHM v2 at 13,805,112 (2021-12-14 19:10
+UTC), while OHM v1 kept circulating. Switching at the deployment would publish
+three days (2021-12-11 to 12-14) of zero total and circulating supply, so the
+switch is at the first mint. Legacy never indexed those blocks, so nothing
+changes for published dates.
+
+Pool values exclude every era's token from backing (`ohmTokens`), not just
+the current one, so a v1 pool valued after the switch still keeps its v1 OHM
+out of liquid backing. The Liquidity supply row uses the era's token only.
+
+Every site that reads `config.ohmToken` and can run before v2 switches to the
+helper:
 
 - total supply (`pushTotalSupply`)
 - treasury OHM (`pushTreasuryOhm`) and the OHM-equivalent multiplier's
@@ -277,7 +289,7 @@ Before the PR:
 
 - `pnpm run check`, `pnpm run build`, `pnpm test` and `pnpm run validate`.
 - Unit tests for:
-  - the era boundaries at 13,782,589 and 13,782,590
+  - the era boundaries at 13,805,111 and 13,805,112
   - supply before OHM v1 exists
   - each exclusion wallet
   - the index sources and their switch points
