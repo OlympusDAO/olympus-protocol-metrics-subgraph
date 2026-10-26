@@ -32,6 +32,7 @@ import {
   ohmTokenAt,
   ohmTokens,
   omitTreasuryExcludedRecords,
+  same,
   toBigDecimal,
   toDecimal,
   ZERO,
@@ -830,11 +831,13 @@ export async function pushTreasuryOhm(
     );
   }
 
-  // Wallets legacy counted as treasury OHM only up to a block (the Olympus
-  // Association before 17,115,000). They aren't protocol wallets, so there's
-  // no Transfer ledger for them; read balanceOf at the snapshot.
+  // Non-protocol wallets counted as treasury OHM: the OHM v1 contracts the
+  // v1 CirculatingSupply oracle excluded, and the Olympus Association before
+  // 17,115,000. There's no Transfer ledger for them; read balanceOf at the
+  // snapshot.
   for (const extra of config.treasuryOhmExtraWallets ?? []) {
-    if (blockNumber > BigInt(extra.lastActiveBlock)) continue;
+    if (!isActive(extra, blockNumber)) continue;
+    if (extra.token !== undefined && !same(extra.token, ohmToken)) continue;
     const rawBalance = await readNonStandardBalance(
       context,
       config.chainId,

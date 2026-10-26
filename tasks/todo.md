@@ -411,9 +411,10 @@ an item only once a test, build or live check proves it.
         handlers for Sushi OHM-DAI, OHM-ETH and OHM-LUSD v1. Uni OHM-FRAX v1
         is POL-only so it can't price FRAX before its Chainlink feed.
         (`ohm-price.test.ts`: deepest pool wins at block 13,000,000.)
-  - [ ] Non-circulating v1 OHM: `treasuryOhmExtraWallets` takes a token and a
-        block window; add the oracle's six non-DAO addresses (DAO wallet is
-        already a protocol wallet). Test each wallet and the window.
+  - [x] Non-circulating v1 OHM: `treasuryOhmExtraWallets` takes an optional
+        token (era-scoped) and an optional `lastActiveBlock`; the oracle's six
+        non-DAO addresses are scoped to OHM v1, the Association to OHM v2.
+        (`OhmEras.test.ts`. Oracle parity is the live check in 5.)
 - [ ] 2. Index and APY
   - [ ] Cached effect for the pre-v3 index (sOHM v2 `index()` once above 0,
         else sOHM v1 `totalSupply` ÷ 500,000) and staked supply; used only
