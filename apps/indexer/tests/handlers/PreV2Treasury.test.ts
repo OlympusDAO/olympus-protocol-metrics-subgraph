@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 import { describe, expect, test, vi } from "vitest";
@@ -256,5 +258,46 @@ describe("UniV3 pricing pools start at creation", () => {
     expect(ETHEREUM.liquidityHandlers.find((handler) => handler.id === pool)?.startBlock).toBe(
       startBlock,
     );
+  });
+});
+
+describe("SPELL, PRIME and agEUR", () => {
+  const SPELL = addr("0x090185f2135308BaD17527004364eBcC2D37e5F6");
+  const PRIME = addr("0x43D4A3cd90ddD2F8f4f693170C9c8098163502ad");
+  const AGEUR = addr("0x1a7e4e63778B4f12a199C062f3eFdD288afCBce8");
+  const SUSHI_SPELL_WETH = addr("0xb5De0C3753b6E1B4dBA616Db82767F17513E6d4E");
+  const BALANCER_D2D_USDC = "0x27c9f71cc31464b906e0006d4fcbc8900f48f15f00020000000000000000010f";
+  const CHAINLINK_EUR_USD = addr("0xb49f677943BC038e9857d61E7d053CaA2C1734C1");
+
+  test.each([
+    [SPELL, true, 12_454_535],
+    [PRIME, false, 13_726_726],
+    [AGEUR, true, 13_473_069],
+  ])("%s is a volatile treasury token from its creation", (token, isLiquid, startBlock) => {
+    expect(getTokenDefinition(ETHEREUM, token)).toMatchObject({
+      category: "Volatile",
+      isLiquid,
+      startBlock,
+      decimals: 18,
+    });
+  });
+
+  test("each is priced from its deepest source", () => {
+    const handler = (id: string) => ETHEREUM.liquidityHandlers.find((value) => value.id === id);
+    expect(handler(SUSHI_SPELL_WETH)).toMatchObject({ kind: "univ2", startBlock: 12_519_150 });
+    expect(handler(SUSHI_SPELL_WETH)?.tokens).toContain(SPELL);
+    expect(handler(BALANCER_D2D_USDC)).toMatchObject({ kind: "balancer", startBlock: 13_823_879 });
+    expect(handler(BALANCER_D2D_USDC)?.tokens).toContain(PRIME);
+    expect(handler(CHAINLINK_EUR_USD)).toMatchObject({
+      kind: "chainlink",
+      tokens: [AGEUR],
+      decimals: 8,
+    });
+  });
+
+  test("their Transfers are indexed for protocol wallets", () => {
+    const config = readFileSync(resolve(__dirname, "../../config.yaml"), "utf8").toLowerCase();
+    for (const token of [SPELL, PRIME, AGEUR]) expect(config).toContain(`"${token}"`);
+    expect(config).toContain(`"${SUSHI_SPELL_WETH}"`);
   });
 });

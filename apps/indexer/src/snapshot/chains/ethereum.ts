@@ -240,6 +240,30 @@ const ERC20_AURA_BAL = addr("0x616e8BfA43F920657B3497DBf40D6b1A02D4608d");
 const ERC20_BAL = addr("0xba100000625a3754423978a60c9317c58a424e3d");
 const ERC20_BB_A_USD = addr("0xA13a9247ea42D743238089903570127DdA72fE44");
 const ERC20_CVX_FRAX_3CRV = addr("0xbe0f6478e0e4894cfb14f32855603a083a57c7da");
+// Tokens the treasury acquired before May 2022 and held past it: SPELL
+// (Treasury V2 from 2021-09, then V3 and the DAO wallet, sold 2023-04), PRIME
+// (on-chain symbol D2D; Treasury V2 since 2021-12, still held) and agEUR
+// (on-chain symbol EURA; Treasury V3 from 2021-12, then the DAO wallet, sold
+// 2023-05). Creation blocks from getCode.
+const ERC20_SPELL = addr("0x090185f2135308BaD17527004364eBcC2D37e5F6");
+const ERC20_SPELL_BLOCK = 12_454_535;
+const ERC20_PRIME = addr("0x43D4A3cd90ddD2F8f4f693170C9c8098163502ad");
+const ERC20_PRIME_BLOCK = 13_726_726;
+const ERC20_AGEUR = addr("0x1a7e4e63778B4f12a199C062f3eFdD288afCBce8");
+const ERC20_AGEUR_BLOCK = 13_473_069;
+// Their price sources: the deepest venue over each holding window.
+// SushiSwap SPELL-WETH (created 12,519,150) held 1.57B SPELL / 7,015 WETH at
+// 14,000,000, far above the Uniswap V2/V3 SPELL pools. Balancer D2D-USDC 80/20
+// (created 13,823,879) is the only PRIME pool with more than a few dollars;
+// it held 3.34M PRIME / $351k USDC at 13,900,000 but only $213 of USDC at
+// 26,277,686. agEUR prices at Chainlink EUR/USD.
+const LP_SUSHI_SPELL_WETH = addr("0xb5De0C3753b6E1B4dBA616Db82767F17513E6d4E");
+const LP_SUSHI_SPELL_WETH_BLOCK = 12_519_150;
+const LP_BALANCER_POOL_D2D_USDC = bytes32(
+  "0x27c9f71cc31464b906e0006d4fcbc8900f48f15f00020000000000000000010f",
+);
+const LP_BALANCER_D2D_USDC_BLOCK = 13_823_879;
+const CHAINLINK_FEED_EUR_USD = addr("0xb49f677943BC038e9857d61E7d053CaA2C1734C1");
 
 // Price pools for the tokens above (legacy LIQUIDITY_POOL_TOKEN_LOOKUP).
 const LP_UNISWAP_V3_FEI_USDC = addr("0xdf50fbde8180c8785842c8e316ebe06f542d3443");
@@ -532,6 +556,9 @@ const names: Record<string, string> = {
   [ERC20_BAL]: "Balancer",
   [ERC20_BB_A_USD]: "Balancer Aave Boosted StablePool",
   [ERC20_CVX_FRAX_3CRV]: "Curve FRAX3Pool",
+  [ERC20_SPELL]: "Spell Token",
+  [ERC20_PRIME]: "PrimeDAO",
+  [ERC20_AGEUR]: "agEUR",
   [ERC20_CVX_CRV]: "Curve - Convex CRV Reward Pool",
   [ERC20_FRAX]: "FRAX",
   [ERC20_FXS]: "Frax Share",
@@ -614,6 +641,8 @@ const abbreviations: Record<string, string> = {
   [ERC20_BAL]: "BAL",
   [ERC20_BB_A_USD]: "bb-a-USD",
   [ERC20_CVX_FRAX_3CRV]: "cvxFRAX3CRV",
+  [ERC20_SPELL]: "SPELL",
+  [ERC20_PRIME]: "D2D",
 };
 
 // OHM gets priced via the WETH-OHM UniV3 pool, which recurses through WETH
@@ -999,6 +1028,26 @@ const liquidityHandlers: LiquidityHandler[] = [
     vault: BALANCER_VAULT,
     id: LP_BALANCER_POOL_GRAVIAURA_AURABAL_WETH,
     startBlock: LP_BALANCER_GRAVIAURA_AURABAL_WETH_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_SPELL, ERC20_WETH],
+    id: LP_SUSHI_SPELL_WETH,
+    startBlock: LP_SUSHI_SPELL_WETH_BLOCK,
+  },
+  {
+    kind: "balancer",
+    tokens: [ERC20_PRIME, ERC20_USDC],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_D2D_USDC,
+    startBlock: LP_BALANCER_D2D_USDC_BLOCK,
+  },
+  {
+    kind: "chainlink",
+    tokens: [ERC20_AGEUR],
+    id: CHAINLINK_FEED_EUR_USD,
+    decimals: 8,
+    startBlock: ERC20_AGEUR_BLOCK,
   },
   // Lock receipts price as their underlying (legacy getUnstakedToken), and
   // Curve / Balancer stable derivatives price at the USDC rate (legacy
@@ -2181,6 +2230,33 @@ export const ETHEREUM: ChainConfig = {
       isLiquid: true,
       isBluechip: false,
       startBlock: ERC20_AURA_BLOCK,
+      decimals: 18,
+    }),
+    // liquidity: liquid. G1 pass: DEX (SushiSwap SPELL-WETH), 7 daily slices. G2 pass: 0.08% per slice of 951k SPELL ($2.5k) at 16,900,000; 0.06% at 14,000,000. G3 n/a (no third party). (assessed 2026-10-26)
+    token({
+      address: ERC20_SPELL,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_SPELL_BLOCK,
+      decimals: 18,
+    }),
+    // liquidity: illiquid. DEX: G2 fail (Balancer D2D-USDC 80/20 is the only market; a 71.4k PRIME slice of the 500k position moves it ~10% against 1.69M PRIME / $213 USDC at 26,277,686, ~5.3% at 13,900,000). G3 n/a (no passing path). (assessed 2026-10-26)
+    token({
+      address: ERC20_PRIME,
+      category: "Volatile",
+      isLiquid: false,
+      isBluechip: false,
+      startBlock: ERC20_PRIME_BLOCK,
+      decimals: 18,
+    }),
+    // liquidity: liquid. G1 pass: DEX (Uniswap V3 agEUR-USDC, $2.76M USDC at 15,000,000) or Angle redemption, 7 daily slices. G2 pass: ~0% per slice of 4.7k agEUR. G3 pass: Angle normal while held, except the Euler-exploit pause from 2023-03-13; the DAO sold the position through CoW on 2023-05-19. (assessed 2026-10-26)
+    token({
+      address: ERC20_AGEUR,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_AGEUR_BLOCK,
       decimals: 18,
     }),
     // CvxLocker v1 emits no Transfer; balanceOf is the CVX still locked. Only
