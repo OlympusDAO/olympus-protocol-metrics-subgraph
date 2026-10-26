@@ -21,10 +21,18 @@ export const CHAIN_IDS_BY_NAME: Record<ChainName, number> = {
 };
 
 export const ALL_CHAIN_IDS: number[] = CHAIN_NAMES.map((chainName) => CHAIN_IDS_BY_NAME[chainName]);
-export const REQUIRED_CHAIN_IDS_FOR_COMPLETE: number[] = [
-  CHAIN_IDS_BY_NAME.Arbitrum,
-  CHAIN_IDS_BY_NAME.Ethereum,
-];
+// First UTC date of Arbitrum's snapshots (its start block 10,950,000 is
+// 2022-05-01 02:14 UTC). Before it only Ethereum indexed Olympus, so only
+// Ethereum is required; from it on, Arbitrum and Ethereum, as legacy's
+// crossChainDataComplete. Must match the indexer's rule in
+// apps/indexer/src/snapshot/global.ts.
+export const ARBITRUM_REQUIRED_FROM_DATE = "2022-05-01";
+
+export function requiredChainIdsForComplete(date: string): number[] {
+  return date < ARBITRUM_REQUIRED_FROM_DATE
+    ? [CHAIN_IDS_BY_NAME.Ethereum]
+    : [CHAIN_IDS_BY_NAME.Arbitrum, CHAIN_IDS_BY_NAME.Ethereum];
+}
 
 const CHAIN_ID_TO_NAME = new Map<number, ChainName>(
   Object.entries(CHAIN_IDS_BY_NAME).map(([chainName, chainId]) => [
@@ -125,8 +133,8 @@ function missingChainIds(chainsIndexed: number[]): number[] {
   return ALL_CHAIN_IDS.filter((chainId) => !chainsIndexed.includes(chainId));
 }
 
-export function isCrossChainComplete(chainsIndexed: number[]): boolean {
-  return REQUIRED_CHAIN_IDS_FOR_COMPLETE.every((chainId) => chainsIndexed.includes(chainId));
+export function isCrossChainComplete(chainsIndexed: number[], date: string): boolean {
+  return requiredChainIdsForComplete(date).every((chainId) => chainsIndexed.includes(chainId));
 }
 
 export function buildDailyMetric(input: {
@@ -175,7 +183,7 @@ export function buildDailyMetric(input: {
     date: input.date,
     blocks,
     timestamps,
-    crossChainComplete: isCrossChainComplete(chainsIndexed),
+    crossChainComplete: isCrossChainComplete(chainsIndexed, input.date),
     chainsIndexed,
     chainsMissing,
     ohmIndex: 0,
