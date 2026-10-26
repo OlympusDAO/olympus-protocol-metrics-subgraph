@@ -2319,6 +2319,8 @@ export const ETHEREUM: ChainConfig = {
     // by protocol wallets (multiplier 0). For the baseline, the protocol
     // wallet blacklist below excludes both from treasury balance entirely;
     // they get counted on the supply side.
+    // OHM V1 mints with Transfer(OHM V1, to, amount), not from 0x0, so its
+    // Erc20Supply needs mintsFromSelf.
     token({
       address: ERC20_OHM_V1,
       category: "Volatile",
@@ -2327,6 +2329,7 @@ export const ETHEREUM: ChainConfig = {
       multiplier: "0",
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 9,
+      mintsFromSelf: true,
     }),
     token({
       address: ERC20_OHM_V2,

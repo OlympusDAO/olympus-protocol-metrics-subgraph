@@ -43,8 +43,13 @@ start date moves in the same PR.
   in `config.yaml` and `BlockHandlers.ts` say 2021-04-29, and this PR
   corrects them. OHM v1, staking v1, treasury v1 and the OHM-DAI v1 pool were
   all created after that block. The Transfer ledger and the 2,400-block
-  snapshots therefore already cover the v1 era. What is missing is the logic
-  that uses them.
+  snapshots therefore already cover the v1 era, with one exception found in
+  the local run: OHM v1 mints with `Transfer(address(this), to, amount)`, not
+  from the zero address, so its `Erc20Supply` only saw burns and stayed at 0.
+  The OHM token definition now carries `mintsFromSelf`, and the OhmERC20
+  handler subscribes to and counts those mints (1,187 mints minus 2 burns
+  reproduce `totalSupply()` at 12,643,200 exactly). Otherwise what is missing
+  is the logic that uses them.
 - Today `pushTotalSupply` and `pushTreasuryOhm` return early before
   `ohmStartBlock` (the v2 block), and about eight call sites read
   `config.ohmToken`, which is always v2. The index is read only from sOHM v3,
