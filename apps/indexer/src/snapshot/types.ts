@@ -299,6 +299,10 @@ export type ChainConfig = {
     startBlock: number;
     convertVia: "gohm-index" | "direct";
   }>;
+  // sOHM v1 and v2. Before sOHM v3's first rebase there is no OhmIndexState,
+  // so the published index and staked OHM (the APY denominator) come from
+  // these instead (readPreV3SOhmState). Ethereum only.
+  preV3SOhm?: { v1: string; v2: string };
   // Olympus staking contracts. Used to read the per-epoch OHM distribution
   // for the APY calculation. V1 is always tried; V2/V3 are gated on their
   // respective start blocks.

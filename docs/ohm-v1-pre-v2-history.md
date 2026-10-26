@@ -139,7 +139,8 @@ them into every token's Transfer filter and the balance backfill.
 
 ### 2. Index and APY
 
-**Index by era**, read by RPC once per snapshot through a cached effect:
+**Index by era**, read by RPC once per snapshot through a cached effect
+(`readPreV3SOhmState`, Ethereum's `preV3SOhm` config):
 
 | Condition at the snapshot block | Source |
 | --- | --- |
@@ -156,9 +157,26 @@ and v2 figures differ by about 0.2% where they meet (4.609 vs 4.601), so the
 chart shows a small step there. Switching at v2's first rebase keeps that
 step as small as possible.
 
-**sOHM circulating supply** (the APY denominator) follows the same eras: v1
-`circulatingSupply` before block 12,622,596, then v2, then v3. The ~1.6k v1
-residual after the switch is ignored, as in legacy.
+**sOHM circulating supply** (the APY denominator) follows the index's eras,
+from the same cached read (`readPreV3SOhmState`):
+
+| Condition | Staked OHM |
+| --- | --- |
+| v3 `OhmIndexState` exists | sOHM v3 `circulatingSupply`, unchanged from today |
+| sOHM v2 `index()` above 0 | sOHM v1 + v2 `circulatingSupply` |
+| otherwise | sOHM v1 `circulatingSupply` |
+
+The draft switched from v1 to v2 at v2's deployment (12,622,596) and dropped
+the v1 residual, as legacy did. On-chain that doesn't hold up: sOHM v2
+reports a placeholder 5,000,000 circulating until its first rebase (two
+days), and holders moved from v1 to v2 staking over several days (at
+12,639,600, 177k in v1 and 133k in v2). The APY numerator already sums both
+staking contracts' distributions, so the denominator sums both sOHMs. After
+the migration the v1 residual is ~1.6k OHM (0.03%), and staking v1
+distributes nothing.
+
+The v1 index is sOHM v1 `totalSupply` ÷ 500,000: sOHM v1's totalSupply was
+exactly 500,000 at creation and only grows by rebase.
 
 **APY numerator.** Staking v1 `ohmToDistributeNextEpoch`, then v2
 `epoch().distribute`. The research indicates this already works; tests

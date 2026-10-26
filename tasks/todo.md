@@ -416,13 +416,16 @@ an item only once a test, build or live check proves it.
         non-DAO addresses are scoped to OHM v1, the Association to OHM v2.
         (`OhmEras.test.ts`. Oracle parity is the live check in 5.)
 - [ ] 2. Index and APY
-  - [ ] Cached effect for the pre-v3 index (sOHM v2 `index()` once above 0,
-        else sOHM v1 `totalSupply` ÷ 500,000) and staked supply; used only
-        when no v3 `OhmIndexState` exists. Tests for each source and switch.
-  - [ ] sOHM circulating supply by era. Check the v2 switch on-chain: sOHM v2
-        reports 5,000,000 circulating before its first rebase.
-  - [ ] APY numerator (staking v1, v2) and APY 0, not NaN, before the first
-        distribution.
+  - [x] Cached effect `readPreV3SOhmState` for the pre-v3 index (sOHM v2
+        `index()` once above 0, else sOHM v1 `totalSupply` ÷ 500,000), used
+        only when no v3 `OhmIndexState` exists. (`pre-v3-sohm.test.ts`,
+        `PreV3Index.test.ts`, live `OhmV1Index.live.test.ts` at 12.6M,
+        12.64M, 13.0M, 13.78M.)
+  - [x] sOHM circulating supply by the same eras. Changed from the draft: v1 +
+        v2 once v2 has rebased, since sOHM v2 reports a placeholder 5,000,000
+        before that and the v1 to v2 migration took days.
+  - [x] APY numerator (staking v1, v1 + v2) and APY 0, not NaN, before the
+        first distribution or with nothing staked.
 - [ ] 3. Treasury and backing
   - [ ] Four v1 LPs and OHM-FRAX v2 / OHM-LUSD v2 in `liquidityPositions`
         (Treasury v1/v2/v3 and DAO wallets). Confirm on-chain that none is held
