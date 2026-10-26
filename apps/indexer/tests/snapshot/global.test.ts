@@ -262,6 +262,31 @@ describe("aggregateAcrossChains", () => {
     expect(agg.crossChainComplete).toBe(false);
   });
 
+  // Arbitrum's snapshots start at block 10,950,000 (2022-05-01 02:14 UTC).
+  // Before that only Ethereum indexed Olympus, so only Ethereum is required.
+  describe("completeness by date", () => {
+    const at = (date: string, chainId: number, blockchain: string) =>
+      computePerChainAggregate(chainId, blockchain, date, 1n, 1n, [], []);
+
+    test("2022-04-30 is complete with Ethereum alone", () => {
+      const agg = aggregateAcrossChains("2022-04-30", [at("2022-04-30", 1, "Ethereum")]);
+      expect(agg.crossChainComplete).toBe(true);
+    });
+
+    test("pre-v2 days still need Ethereum", () => {
+      const agg = aggregateAcrossChains("2021-12-27", [at("2021-12-27", 137, "Polygon")]);
+      expect(agg.crossChainComplete).toBe(false);
+    });
+
+    test.each(["2022-05-01", "2026-10-26"])("%s still needs Arbitrum and Ethereum", (date) => {
+      expect(aggregateAcrossChains(date, [at(date, 1, "Ethereum")]).crossChainComplete).toBe(false);
+      expect(
+        aggregateAcrossChains(date, [at(date, 1, "Ethereum"), at(date, 42_161, "Arbitrum")])
+          .crossChainComplete,
+      ).toBe(true);
+    });
+  });
+
   test("missing-chain — Base/Polygon/Fantom present without Ethereum is still incomplete", () => {
     const arbitrum = computePerChainAggregate(
       42_161,

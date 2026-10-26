@@ -446,7 +446,7 @@ function normalizeDailyMetric(row: RawDailyMetric): DailyMetric {
     date: row.date,
     blocks,
     timestamps,
-    crossChainComplete: isCrossChainComplete(row.chainsIndexed),
+    crossChainComplete: isCrossChainComplete(row.chainsIndexed, row.date),
     chainsIndexed: row.chainsIndexed,
     chainsMissing,
     ohmIndex: toNumber(row.ohmIndex),

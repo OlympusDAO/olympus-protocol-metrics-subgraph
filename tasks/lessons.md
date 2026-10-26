@@ -179,3 +179,11 @@ If those match but disagree with the actual on-chain `balanceOf`, the token is n
 **What caught us:** `ChainSupplyCategory` rows are keyed by `date/chain/category` and each snapshot only upserts the categories it emits, so a category written earlier the same UTC day outlived later snapshots (an L2's Total Supply after its mid-day CCIP cutover on 2026-10-22). The first fix deleted the missing rows, which was the only delete in the codebase. Review settled on the simplest consistent shape: the cutover emits a zero Total Supply row, so the normal upsert overwrites the day's row with zero.
 
 **Where to apply:** any date-keyed rollup entity written per snapshot. "Last snapshot of the day wins" only holds for rows the last snapshot actually writes, so when a source stops contributing, emit it at zero at the source rather than skipping it or cleaning up downstream.
+
+---
+
+## 2026-10-26 — createTestIndexer applies each event twice to running ledgers
+
+**The trap:** a live test that runs `createTestIndexer().process()` over a block range and then checks a ledger built from events (TokenBalance, Erc20Supply) gets double the on-chain value. A single DAI Transfer of 100.9 into Treasury V2 at block 12,530,585 left `TokenBalance` at 201.8, with one `TokenBalanceUpdate` row (same id, `delta` 100.9). The handler ran twice for the same log, and the second run read the first run's write. It reproduces on develop. The production runtime is exact: the local-compose indexer over the same blocks matched `balanceOf` to the wei.
+
+**Rule:** in live tests, seed ledgers from archive reads at `block - 1` and process only the snapshot block (as `OhmV1Supply.live.test.ts`, `OhmV1Pol.live.test.ts` and `CcipCutover.live.test.ts` do). Don't assert ledger balances accumulated from events inside a `createTestIndexer` range. To check event-built balances, use the local-compose run.

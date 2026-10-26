@@ -32,6 +32,24 @@ const OLYMPUS_INCUR_DEBT = addr("0xd9d87586774fb9d036fa95a5991474513ff6c96e");
 const OLYMPUS_ASSOCIATION = addr("0x4c71db02aeeb336cbd8f3d2cc866911f6e2fbd94");
 const SILO_LENDING = addr("0xb2374f84b3cEeFF6492943Df613C9BcF45322a0c");
 const EULER_LENDING = addr("0x27182842E098f60e3D576794A5bFFb0777E025d3");
+// OHM V1 contracts the v1 CirculatingSupply oracle
+// (0x0EFFf9199Aa1Ac3C3E34E957567C1BE8bF295034) excludes. Roles read on-chain.
+const OHM_V1_STAKING_DISTRIBUTOR = addr("0xbe731507810C8747C3E01E62c676b1cA6F93242f");
+// Same shape as the distributor (stakingContract(), nextEpochBlock()).
+const OHM_V1_STAKING_DISTRIBUTOR_2 = addr("0xcE6568338708400D03F430d29F2Eb40a33a3f4C4");
+const OHM_V1_SLP_BOND = addr("0xd27001d1aAEd5f002C722Ad729de88a91239fF29");
+const OHM_V1_SLP_BOND_2 = addr("0x13E8484a86327f5882d1340ed0D7643a29548536");
+const OHM_V1_AOHM_MIGRATION = addr("0xC7f56EC779cB9e60afA116d73F3708761197dB3d"); // aOHM()
+// Role unconfirmed (no OHM-family getters); listed because the oracle lists it.
+const OHM_V1_UNCONFIRMED_EXCLUSION = addr("0x39Baa524eab3f5C9D0738BdF781c3eC9C8D34867");
+const OHM_V1_NON_CIRCULATING = [
+  OHM_V1_STAKING_DISTRIBUTOR,
+  OHM_V1_STAKING_DISTRIBUTOR_2,
+  OHM_V1_SLP_BOND,
+  OHM_V1_SLP_BOND_2,
+  OHM_V1_AOHM_MIGRATION,
+  OHM_V1_UNCONFIRMED_EXCLUSION,
+];
 // Bophades TRSRY module — two historical versions. The active one holds the
 // balance; the inactive one reads zero. Kernel upgrade events are tracked
 // separately (see Erc20Transfers.ts handlers + BophadesKernel handler).
@@ -70,6 +88,10 @@ const MAKER_DSR_ALLOCATOR = addr("0x0EA26319836fF05B8C5C5afD83b8aB17dd46d063");
 const MAKER_DSR_ALLOCATOR_PROXY = addr("0x5db0761487e26B555F5Bfd5E40F4CBC3E1a7d11E");
 const RARI_ALLOCATOR = addr("0x061C8610A784b8A1599De5B1157631e35180d818");
 const VEFXS_ALLOCATOR = addr("0xde7b85f52577b113181921a7aa8fc0c22e309475");
+// Onsen allocator: staked OHM V1 SLP in SushiSwap MasterChef v1. Not a
+// protocol wallet (see onsenStaked below).
+const ONSEN_ALLOCATOR = addr("0x0316508a1b5abf1CAe42912Dc2C8B9774b682fFC");
+const SUSHI_MASTERCHEF_V1 = addr("0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd");
 
 // Cooler clearinghouses.
 const COOLER_LOANS_CLEARINGHOUSE_V1 = addr("0xD6A6E8d9e82534bD65821142fcCd91ec9cF31880");
@@ -138,6 +160,8 @@ const ERC20_SOHM_V3 = addr("0x04906695D6D12CF5459975d7C3C03356E4Ccd460");
 // Indexing". Treated as direct OHM-equivalent (1 sOHM V2 = 1 OHM).
 const ERC20_SOHM_V2 = addr("0x04f2694c8fcee23e8fd0dfea1d4f5bb8c352111f");
 const ERC20_SOHM_V2_TREASURY_START_BLOCK = 18_260_000;
+// sOHM V1 (12,084,973). Publishes the index and staked OHM before sOHM V2.
+const ERC20_SOHM_V1 = addr("0x31932e6e45012476ba3a3a4953cba62aee77fbbe");
 // Start block from which gOHM / sOHM V3 in protocol wallets contribute to
 // TREASURY OHM (per inventory-ethereum.md §"gOHM Indexing Start").
 const ERC20_GOHM_TREASURY_START_BLOCK = 17_115_000;
@@ -207,12 +231,39 @@ const ERC20_XSUSHI = addr("0x8798249c2e607446efb7ad49ec89dd1865ff4272");
 const ERC20_BOND = addr("0x0391D2021f89DC339F60Fff84546EA23E337750f"); // BarnBridge
 const ERC20_CVX = addr("0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b");
 const ERC20_CVX_VL = addr("0x72a19342e8F1838460eBFCCEf09F6585e32db86E"); // CvxLockerV2
+// CvxLocker (v1). The CVX allocator held ~810k-814k vlCVX in it from Dec 2021
+// until it unlocked in Apr 2022; Convex then moved to CvxLockerV2.
+const ERC20_CVX_VL_V1 = addr("0xD18140b4B819b895A3dba5442F959fA44994AF50");
 const ERC20_AURA = addr("0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF");
 const ERC20_AURA_VL = addr("0x3Fa73f1E5d8A792C80F426fc8F84FBF7Ce9bBCAC"); // AuraLocker
 const ERC20_AURA_BAL = addr("0x616e8BfA43F920657B3497DBf40D6b1A02D4608d");
 const ERC20_BAL = addr("0xba100000625a3754423978a60c9317c58a424e3d");
 const ERC20_BB_A_USD = addr("0xA13a9247ea42D743238089903570127DdA72fE44");
 const ERC20_CVX_FRAX_3CRV = addr("0xbe0f6478e0e4894cfb14f32855603a083a57c7da");
+// Tokens the treasury acquired before May 2022 and held past it: SPELL
+// (Treasury V2 from 2021-09, then V3 and the DAO wallet, sold 2023-04), PRIME
+// (on-chain symbol D2D; Treasury V2 since 2021-12, still held) and agEUR
+// (on-chain symbol EURA; Treasury V3 from 2021-12, then the DAO wallet, sold
+// 2023-05). Creation blocks from getCode.
+const ERC20_SPELL = addr("0x090185f2135308BaD17527004364eBcC2D37e5F6");
+const ERC20_SPELL_BLOCK = 12_454_535;
+const ERC20_PRIME = addr("0x43D4A3cd90ddD2F8f4f693170C9c8098163502ad");
+const ERC20_PRIME_BLOCK = 13_726_726;
+const ERC20_AGEUR = addr("0x1a7e4e63778B4f12a199C062f3eFdD288afCBce8");
+const ERC20_AGEUR_BLOCK = 13_473_069;
+// Their price sources: the deepest venue over each holding window.
+// SushiSwap SPELL-WETH (created 12,519,150) held 1.57B SPELL / 7,015 WETH at
+// 14,000,000, far above the Uniswap V2/V3 SPELL pools. Balancer D2D-USDC 80/20
+// (created 13,823,879) is the only PRIME pool with more than a few dollars;
+// it held 3.34M PRIME / $351k USDC at 13,900,000 but only $213 of USDC at
+// 26,277,686. agEUR prices at Chainlink EUR/USD.
+const LP_SUSHI_SPELL_WETH = addr("0xb5De0C3753b6E1B4dBA616Db82767F17513E6d4E");
+const LP_SUSHI_SPELL_WETH_BLOCK = 12_519_150;
+const LP_BALANCER_POOL_D2D_USDC = bytes32(
+  "0x27c9f71cc31464b906e0006d4fcbc8900f48f15f00020000000000000000010f",
+);
+const LP_BALANCER_D2D_USDC_BLOCK = 13_823_879;
+const CHAINLINK_FEED_EUR_USD = addr("0xb49f677943BC038e9857d61E7d053CaA2C1734C1");
 
 // Price pools for the tokens above (legacy LIQUIDITY_POOL_TOKEN_LOOKUP).
 const LP_UNISWAP_V3_FEI_USDC = addr("0xdf50fbde8180c8785842c8e316ebe06f542d3443");
@@ -238,6 +289,7 @@ const ERC20_UST_BLOCK = 13_408_366; // legacy ERC20_UST_BLOCK
 const ERC20_UST_LAST_ACTIVE_BLOCK = 14_730_000; // legacy ERC20_UST_BLOCK_DEATH
 const ERC20_CVX_BLOCK = 12_460_000; // legacy ERC20_CVX_BLOCK
 const ERC20_CVX_VL_BLOCK = 14_320_609;
+const ERC20_CVX_VL_V1_BLOCK = 13_153_663; // getCode
 const ERC20_AURA_BLOCK = 14_932_168;
 const ERC20_AURA_VL_BLOCK = 14_932_220;
 const ERC20_AURA_BAL_BLOCK = 14_932_194;
@@ -350,6 +402,9 @@ const LP_CURVE_OHM_FRAXBP_BLOCK = 15_300_000; // ~2022-08-15
 const LP_CURVE_FRAX_USDC_BLOCK = 14_950_000; // ~2022-05-28
 const LP_FRAXSWAP_V1_OHM_FRAX_BLOCK = 14_490_000;
 const LP_FRAXSWAP_V2_OHM_FRAX_BLOCK = 15_395_619; // pair deployment, 2022-08-23
+// UniV3 pool creation blocks (getCode). Before them the pools have no state.
+const LP_UNISWAP_V3_WETH_WSTETH_BLOCK = 15_384_250;
+const LP_UNISWAP_V3_WETH_BTRFLY_V1_BLOCK = 13_826_232;
 
 // Balancer + Aura deployment blocks (approximate; effect reverts before
 // the actual creation gracefully zero out).
@@ -360,8 +415,16 @@ const LP_BALANCER_OHM_WSTETH_BLOCK = 16_800_000;
 
 // ---- Block windows (per inventory section 2.1). ----
 
-const ETHEREUM_START_BLOCK = 12_000_000; // ~2021-04-29, before Treasury V2 (12525281).
+const ETHEREUM_START_BLOCK = 12_000_000; // 2021-03-08, before OHM V1 (12,084,967).
+// OHM V1 creation (getCode binary search), 2021-03-21 22:48 UTC.
+const ERC20_OHM_V1_BLOCK = 12_084_967;
+// OHM V2 deployment. Its supply stays 0 until the first mint below.
 const ERC20_OHM_V2_BLOCK = 13_782_589;
+// First OHM V2 mint, to the migrator in its migrateContracts tx
+// (0x418b240a…5019), 2021-12-14 19:10 UTC. OHM supply switches from V1 to V2
+// here: from the V2 deployment to this block, V2 supply was 0 while V1 kept
+// circulating.
+const ERC20_OHM_V2_FIRST_MINT_BLOCK = 13_805_112;
 // sOHM V3 deployment (per inventory-ethereum.md §2.1). LogRebase from sOHM V3
 // feeds OhmIndexState; gOHM pricing becomes available once the first rebase
 // after this block is observed.
@@ -427,6 +490,13 @@ const names: Record<string, string> = {
   [VENDOR_LENDING]: "Vendor Finance",
   [OLYMPUS_INCUR_DEBT]: "IncurDebt",
   [OLYMPUS_ASSOCIATION]: "Olympus Association",
+  [ONSEN_ALLOCATOR]: "Onsen Allocator",
+  [OHM_V1_STAKING_DISTRIBUTOR]: "Staking Distributor V1",
+  [OHM_V1_STAKING_DISTRIBUTOR_2]: "Staking Distributor V1 (2)",
+  [OHM_V1_SLP_BOND]: "OHM-DAI SLP Bond V1",
+  [OHM_V1_SLP_BOND_2]: "OHM-DAI SLP Bond V1 (2)",
+  [OHM_V1_AOHM_MIGRATION]: "aOHM Migration",
+  [OHM_V1_UNCONFIRMED_EXCLUSION]: "Circulating Supply Exclusion 0x39Ba",
   [SILO_LENDING]: "Silo Router",
   [EULER_LENDING]: "Euler Protocol",
   [TREASURY_ADDRESS_V1]: "Treasury Wallet V1",
@@ -479,12 +549,16 @@ const names: Record<string, string> = {
   [ERC20_BOND]: "BarnBridge Governance",
   [ERC20_CVX]: "Convex",
   [ERC20_CVX_VL]: "Convex - Vote-Locked",
+  [ERC20_CVX_VL_V1]: "Convex - Vote-Locked",
   [ERC20_AURA]: "Aura Finance",
   [ERC20_AURA_VL]: "Aura Finance - Vote-Locked",
   [ERC20_AURA_BAL]: "auraBAL",
   [ERC20_BAL]: "Balancer",
   [ERC20_BB_A_USD]: "Balancer Aave Boosted StablePool",
   [ERC20_CVX_FRAX_3CRV]: "Curve FRAX3Pool",
+  [ERC20_SPELL]: "Spell Token",
+  [ERC20_PRIME]: "PrimeDAO",
+  [ERC20_AGEUR]: "agEUR",
   [ERC20_CVX_CRV]: "Curve - Convex CRV Reward Pool",
   [ERC20_FRAX]: "FRAX",
   [ERC20_FXS]: "Frax Share",
@@ -496,7 +570,7 @@ const names: Record<string, string> = {
   [ERC20_LDO]: "Lido DAO",
   [ERC20_LQTY]: "Liquity",
   [ERC20_LUSD]: "Liquity USD",
-  [ERC20_OHM_V1]: "OHM (V1)",
+  [ERC20_OHM_V1]: "OHM V1",
   [ERC20_OHM_V2]: "OHM",
   [ERC20_USDC]: "USDC",
   [ERC20_USDE]: "USDe",
@@ -561,11 +635,14 @@ const abbreviations: Record<string, string> = {
   [ERC20_BOND]: "BOND",
   [ERC20_CVX]: "CVX",
   [ERC20_CVX_VL]: "vlCVX",
+  [ERC20_CVX_VL_V1]: "vlCVX V1",
   [ERC20_AURA]: "AURA",
   [ERC20_AURA_VL]: "vlAURA",
   [ERC20_BAL]: "BAL",
   [ERC20_BB_A_USD]: "bb-a-USD",
   [ERC20_CVX_FRAX_3CRV]: "cvxFRAX3CRV",
+  [ERC20_SPELL]: "SPELL",
+  [ERC20_PRIME]: "D2D",
 };
 
 // OHM gets priced via the WETH-OHM UniV3 pool, which recurses through WETH
@@ -686,6 +763,33 @@ const sushiOhmEth: LiquidityHandler = {
   startBlock: LP_SUSHI_OHM_ETH_BLOCK,
 };
 
+// OHM V1 pairs, the OHM price sources before the v2 launch (legacy
+// PAIR_UNISWAP_V2_OHM_*). Creation blocks from getCode. The router takes the
+// deepest, which is SushiSwap OHM-DAI. Uni OHM-FRAX V1 is only a POL pricing
+// handler, not an OHM price source: FRAX had no Chainlink feed before
+// 12,974,035, and as a price source the pair would price FRAX off OHM.
+const LP_SUSHI_OHM_DAI_V1 = addr("0x34d7d7Aaf50AD4944B70B320aCB24C95fa2def7c");
+const LP_SUSHI_OHM_ETH_V1 = addr("0xfffae4a0f4ac251f4705717cd24cadccc9f33e06");
+const LP_SUSHI_OHM_LUSD_V1 = addr("0xfdf12d1f85b5082877a6e070524f50f6c84faa6b");
+const sushiOhmDaiV1: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V1, ERC20_DAI],
+  id: LP_SUSHI_OHM_DAI_V1,
+  startBlock: 12_092_097,
+};
+const sushiOhmEthV1: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V1, ERC20_WETH],
+  id: LP_SUSHI_OHM_ETH_V1,
+  startBlock: 12_310_798,
+};
+const sushiOhmLusdV1: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V1, ERC20_LUSD],
+  id: LP_SUSHI_OHM_LUSD_V1,
+  startBlock: 13_327_921,
+};
+
 const liquidityHandlers: LiquidityHandler[] = [
   // Chainlink feeds (highest priority via CHAINLINK_PRIORITY = 10^30).
   // aDAI / aEthUSDe / varDebtEthUSDT / varDebtEthUSDC piggyback the same
@@ -762,6 +866,9 @@ const liquidityHandlers: LiquidityHandler[] = [
   univ3WethOhm,
   sushiOhmDai,
   sushiOhmEth,
+  sushiOhmDaiV1,
+  sushiOhmEthV1,
+  sushiOhmLusdV1,
   // OHM-sUSDS UniV3 pool — both a price candidate and an owned-liquidity
   // (POL) source. Listed here so the router can use it for OHM pricing in
   // addition to WETH-OHM, and so pushUniv3NftPol recognizes the pair when
@@ -792,7 +899,7 @@ const liquidityHandlers: LiquidityHandler[] = [
     tokens: [ERC20_WETH, ERC20_WSTETH],
     id: LP_UNISWAP_V3_WETH_WSTETH,
     fee: 100,
-    startBlock: ETHEREUM_START_BLOCK,
+    startBlock: LP_UNISWAP_V3_WETH_WSTETH_BLOCK,
   },
   {
     kind: "univ3",
@@ -831,7 +938,7 @@ const liquidityHandlers: LiquidityHandler[] = [
     tokens: [ERC20_WETH, ERC20_BTRFLY_V1],
     id: LP_UNISWAP_V3_WETH_BTRFLY_V1,
     fee: 10000,
-    startBlock: ETHEREUM_START_BLOCK,
+    startBlock: LP_UNISWAP_V3_WETH_BTRFLY_V1_BLOCK,
   },
   {
     kind: "univ3",
@@ -922,10 +1029,31 @@ const liquidityHandlers: LiquidityHandler[] = [
     id: LP_BALANCER_POOL_GRAVIAURA_AURABAL_WETH,
     startBlock: LP_BALANCER_GRAVIAURA_AURABAL_WETH_BLOCK,
   },
+  {
+    kind: "univ2",
+    tokens: [ERC20_SPELL, ERC20_WETH],
+    id: LP_SUSHI_SPELL_WETH,
+    startBlock: LP_SUSHI_SPELL_WETH_BLOCK,
+  },
+  {
+    kind: "balancer",
+    tokens: [ERC20_PRIME, ERC20_USDC],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_D2D_USDC,
+    startBlock: LP_BALANCER_D2D_USDC_BLOCK,
+  },
+  {
+    kind: "chainlink",
+    tokens: [ERC20_AGEUR],
+    id: CHAINLINK_FEED_EUR_USD,
+    decimals: 8,
+    startBlock: ERC20_AGEUR_BLOCK,
+  },
   // Lock receipts price as their underlying (legacy getUnstakedToken), and
   // Curve / Balancer stable derivatives price at the USDC rate (legacy
   // resolvePrice special case).
   { kind: "remap", tokens: [ERC20_CVX_VL], id: ERC20_CVX_VL, target: ERC20_CVX },
+  { kind: "remap", tokens: [ERC20_CVX_VL_V1], id: ERC20_CVX_VL_V1, target: ERC20_CVX },
   { kind: "remap", tokens: [ERC20_AURA_VL], id: ERC20_AURA_VL, target: ERC20_AURA },
   { kind: "remap", tokens: [ERC20_BB_A_USD], id: ERC20_BB_A_USD, target: ERC20_USDC },
   {
@@ -1252,6 +1380,18 @@ const protocolPositions: ProtocolPosition[] = [
     wallets: [CONVEX_CVX_VL_ALLOCATOR, DAO_WALLET],
     startBlock: ERC20_CVX_VL_BLOCK,
   },
+  // Expired vlCVX v1 the CVX allocator hadn't withdrawn yet (810,426 at block
+  // 14,500,000). It's claimable CVX, so it's valued and classified as CVX.
+  // liquidity: liquid. G1 pass: withdraw (already unlocked), then hold CVX. G2 pass: withdraw, 0%. G3 pass: Convex CvxLocker normal at the time. (assessed 2026-10-26)
+  {
+    kind: "read",
+    contract: ERC20_CVX_VL_V1,
+    method: "vlCvx.unlockable",
+    token: ERC20_CVX,
+    label: "Convex - Unlocked (vlCVX V1)",
+    wallets: [CONVEX_CVX_ALLOCATOR],
+    startBlock: ERC20_CVX_VL_V1_BLOCK,
+  },
   {
     kind: "read",
     contract: ERC20_AURA_VL,
@@ -1353,6 +1493,67 @@ function pricingHandler(id: string): LiquidityHandler {
 }
 
 const POL_WALLETS = [TREASURY_ADDRESS_V3, DAO_WALLET];
+// Before Treasury V3 the bonded LP sat in Treasury V1, then V2.
+const PRE_V2_POL_WALLETS = [
+  TREASURY_ADDRESS_V1,
+  TREASURY_ADDRESS_V2,
+  TREASURY_ADDRESS_V3,
+  DAO_WALLET,
+];
+
+// OHM-FRAX and OHM-LUSD pairs only valued as POL. Not OHM price sources: as
+// price handlers they'd also price FRAX/LUSD, and the V2 pairs would join the
+// OHM V2 price selection on published dates.
+const LP_UNI_OHM_FRAX_V1 = addr("0x2dce0dda1c2f98e0f171de8333c3c6fe1bbf4877");
+const LP_UNI_OHM_FRAX_V2 = addr("0xB612c37688861f1f90761DC7F382C2aF3a50Cc39");
+const LP_SUSHI_OHM_LUSD_V2 = addr("0x46E4D8A1322B9448905225E52F914094dBd6dDdF");
+const uniOhmFraxV1: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V1, ERC20_FRAX],
+  id: LP_UNI_OHM_FRAX_V1,
+  startBlock: 12_563_434,
+};
+const uniOhmFraxV2: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V2, ERC20_FRAX],
+  id: LP_UNI_OHM_FRAX_V2,
+  startBlock: 13_823_710,
+};
+const sushiOhmLusdV2: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V2, ERC20_LUSD],
+  id: LP_SUSHI_OHM_LUSD_V2,
+  startBlock: 14_381_693,
+};
+
+// The Onsen allocator staked OHM-DAI v1 (pid 185) and OHM-LUSD v1 (pid 323)
+// SLP in SushiSwap's MasterChef v1. It isn't a protocol wallet: its 217
+// ERC20 transfers (SUSHI harvests swapped to xSUSHI and sent to Treasury V2)
+// all pass through within one transaction, so it never held anything at a
+// snapshot. Read from its creation to the block it withdrew both stakes.
+const onsenStaked = (pid: number, poolLabel: string): LiquidityPosition["sources"][number] => ({
+  kind: "masterchef",
+  contract: SUSHI_MASTERCHEF_V1,
+  pid,
+  label: `${poolLabel} - Staked in Onsen`,
+  wallets: [ONSEN_ALLOCATOR],
+  startBlock: 12_744_441,
+  lastActiveBlock: 14_360_925,
+});
+
+// OHM V1 pairs and the two V2 pairs the treasury held before May 2022. None
+// is held by a protocol wallet from 14,670,310 on (HyperSync Transfer scan).
+const preV2Position = (
+  pricing: LiquidityHandler,
+  poolLabel: string,
+  extra: LiquidityPosition["sources"] = [],
+): LiquidityPosition => ({
+  pricing,
+  lpToken: pricing.id,
+  poolLabel,
+  sources: [{ kind: "wallet", label: poolLabel, wallets: PRE_V2_POL_WALLETS }, ...extra],
+  startBlock: pricing.startBlock ?? ETHEREUM_START_BLOCK,
+});
 
 const auraStaked = (pool: string, deposit: string, poolLabel: string, vault: string) =>
   ({
@@ -1517,6 +1718,16 @@ const liquidityPositions: LiquidityPosition[] = [
     ],
     startBlock: LP_FRAXSWAP_V2_OHM_FRAX_BLOCK,
   },
+  preV2Position(pricingHandler(LP_SUSHI_OHM_DAI_V1), "SushiSwap OHM V1-DAI Liquidity Pool", [
+    onsenStaked(185, "SushiSwap OHM V1-DAI Liquidity Pool"),
+  ]),
+  preV2Position(pricingHandler(LP_SUSHI_OHM_ETH_V1), "SushiSwap OHM V1-ETH Liquidity Pool"),
+  preV2Position(uniOhmFraxV1, "Uniswap V2 OHM V1-FRAX Liquidity Pool"),
+  preV2Position(pricingHandler(LP_SUSHI_OHM_LUSD_V1), "SushiSwap OHM V1-LUSD Liquidity Pool", [
+    onsenStaked(323, "SushiSwap OHM V1-LUSD Liquidity Pool"),
+  ]),
+  preV2Position(uniOhmFraxV2, "Uniswap V2 OHM V2-FRAX Liquidity Pool"),
+  preV2Position(sushiOhmLusdV2, "SushiSwap OHM V2-LUSD Liquidity Pool"),
 ];
 
 // ---- OHM supply parity with legacy OhmCalculations.
@@ -1553,7 +1764,11 @@ export const ETHEREUM: ChainConfig = {
   startBlock: ETHEREUM_START_BLOCK,
   rpcUrls: rpcUrls("ETHEREUM", "https://eth.llamarpc.com"),
   ohmToken: ERC20_OHM_V2,
-  ohmStartBlock: ERC20_OHM_V2_BLOCK,
+  ohmStartBlock: ERC20_OHM_V1_BLOCK,
+  ohmEras: [
+    { token: ERC20_OHM_V1, startBlock: ERC20_OHM_V1_BLOCK },
+    { token: ERC20_OHM_V2, startBlock: ERC20_OHM_V2_FIRST_MINT_BLOCK },
+  ],
   nativeToken: NATIVE_ETH,
   tokens: [
     token({
@@ -2017,6 +2232,45 @@ export const ETHEREUM: ChainConfig = {
       startBlock: ERC20_AURA_BLOCK,
       decimals: 18,
     }),
+    // liquidity: liquid. G1 pass: DEX (SushiSwap SPELL-WETH), 7 daily slices. G2 pass: 0.08% per slice of 951k SPELL ($2.5k) at 16,900,000; 0.06% at 14,000,000. G3 n/a (no third party). (assessed 2026-10-26)
+    token({
+      address: ERC20_SPELL,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_SPELL_BLOCK,
+      decimals: 18,
+    }),
+    // liquidity: illiquid. DEX: G2 fail (Balancer D2D-USDC 80/20 is the only market; a 71.4k PRIME slice of the 500k position moves it ~10% against 1.69M PRIME / $213 USDC at 26,277,686, ~5.3% at 13,900,000). G3 n/a (no passing path). (assessed 2026-10-26)
+    token({
+      address: ERC20_PRIME,
+      category: "Volatile",
+      isLiquid: false,
+      isBluechip: false,
+      startBlock: ERC20_PRIME_BLOCK,
+      decimals: 18,
+    }),
+    // liquidity: liquid. G1 pass: DEX (Uniswap V3 agEUR-USDC, $2.76M USDC at 15,000,000) or Angle redemption, 7 daily slices. G2 pass: ~0% per slice of 4.7k agEUR. G3 pass: Angle normal while held, except the Euler-exploit pause from 2023-03-13; the DAO sold the position through CoW on 2023-05-19. (assessed 2026-10-26)
+    token({
+      address: ERC20_AGEUR,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_AGEUR_BLOCK,
+      decimals: 18,
+    }),
+    // CvxLocker v1 emits no Transfer; balanceOf is the CVX still locked. Only
+    // the CVX allocator ever locked in it.
+    // liquidity: illiquid. unlock: G1 fail (17-week lock, lockDuration 10,281,600s). DEX: G1 fail (non-transferable). G3 n/a (no passing path). (assessed 2026-10-26)
+    token({
+      address: ERC20_CVX_VL_V1,
+      category: "Volatile",
+      isLiquid: false,
+      isBluechip: false,
+      startBlock: ERC20_CVX_VL_V1_BLOCK,
+      decimals: 18,
+      positionRead: { method: "erc20.balanceOf", wallets: [CONVEX_CVX_ALLOCATOR] },
+    }),
     // vlAURA is valued from AuraLocker.lockedBalances, not balanceOf; the
     // definition carries its category and price path.
     token({
@@ -2065,6 +2319,8 @@ export const ETHEREUM: ChainConfig = {
     // by protocol wallets (multiplier 0). For the baseline, the protocol
     // wallet blacklist below excludes both from treasury balance entirely;
     // they get counted on the supply side.
+    // OHM V1 mints with Transfer(OHM V1, to, amount), not from 0x0, so its
+    // Erc20Supply needs mintsFromSelf.
     token({
       address: ERC20_OHM_V1,
       category: "Volatile",
@@ -2073,6 +2329,7 @@ export const ETHEREUM: ChainConfig = {
       multiplier: "0",
       startBlock: ETHEREUM_START_BLOCK,
       decimals: 9,
+      mintsFromSelf: true,
     }),
     token({
       address: ERC20_OHM_V2,
@@ -2119,7 +2376,17 @@ export const ETHEREUM: ChainConfig = {
   incurDebt: { address: OLYMPUS_INCUR_DEBT, startBlock: OLYMPUS_INCUR_DEBT_BLOCK },
   lendingDeployments,
   treasuryOhmExtraWallets: [
-    { address: OLYMPUS_ASSOCIATION, lastActiveBlock: OLYMPUS_ASSOCIATION_LAST_ACTIVE_BLOCK },
+    {
+      address: OLYMPUS_ASSOCIATION,
+      token: ERC20_OHM_V2,
+      lastActiveBlock: OLYMPUS_ASSOCIATION_LAST_ACTIVE_BLOCK,
+    },
+    // The v1 CirculatingSupply oracle's nonCirculatingOHMAddresses, so v1
+    // circulating supply matches its OHMCirculatingSupply() exactly. The DAO
+    // wallet, also on the list, is a protocol wallet. Used before the oracle
+    // existed (12,235,926) too. v1 bond depositories' vesting payouts stay
+    // circulating, as the oracle had them.
+    ...OHM_V1_NON_CIRCULATING.map((address) => ({ address, token: ERC20_OHM_V1 })),
   ],
   // Olympus Boosted Liquidity Vault registry (per inventory §8). The effect
   // iterates active vaults and reads getPoolOhmShare() per vault. Starts at
@@ -2173,6 +2440,7 @@ export const ETHEREUM: ChainConfig = {
     startBlock: 14_381_564,
     endBlock: 24_550_660,
   },
+  preV3SOhm: { v1: ERC20_SOHM_V1, v2: ERC20_SOHM_V2 },
   // Olympus staking contracts (per inventory §8 + Constants.ts:139-143). The
   // APY effect reads the per-epoch distribution from whichever versions are
   // active at the snapshot block (V1 always tried; V2/V3 gated).

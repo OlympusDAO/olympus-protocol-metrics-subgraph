@@ -117,7 +117,7 @@ date and block.
 
 If no manifest exists, or the manifest has no snapshots for the current
 `INDEXER_DEPLOYMENT_ID`, `pnpm run compose:publish` creates the initial
-historical backfill from `2022-05-01` through Hasura's latest date where every
+historical backfill from `2021-03-23` through Hasura's latest date where every
 supported chain id is indexed. That latest all-chain date must also be within
 one day of the current UTC date, otherwise the publisher exits successfully with
 `skipReason: "not_data_ready"` and leaves any existing manifest untouched. After
@@ -166,7 +166,7 @@ Most variables have local defaults. Override these when needed:
   startup wrapper derives `ENVIO_INDEXER_PORT` from this value.
 - `PUBLISHER_PUBLIC_START_DATE`, `PUBLISHER_LOCK_TTL_MS`,
   `PUBLISHER_START_DATE`, and `PUBLISHER_END_DATE`: publisher range controls. If
-  no manifest exists, publishing starts at `2022-05-01`; otherwise it backfills
+  no manifest exists, publishing starts at `2021-03-23`; otherwise it backfills
   unpublished months and regenerates at least the previous and current month. A
   fresh `v2/publisher.lock` makes overlapping publisher runs exit successfully
   without writing artifacts.

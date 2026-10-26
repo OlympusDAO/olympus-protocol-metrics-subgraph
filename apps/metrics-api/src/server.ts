@@ -252,7 +252,7 @@ function normalizeMetricCompleteness(metric: DailyMetric): DailyMetric {
   return {
     ...metric,
     chainsMissing,
-    crossChainComplete: isCrossChainComplete(metric.chainsIndexed),
+    crossChainComplete: isCrossChainComplete(metric.chainsIndexed, metric.date),
   };
 }
 

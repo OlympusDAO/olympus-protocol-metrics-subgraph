@@ -74,6 +74,9 @@ export type TokenDefinition = {
   // negative, polluting downstream rollups. See tasks/lessons.md
   // "2026-05-17 — Tokens that mutate balance without Transfer events".
   nonStandardBalance?: boolean;
+  // The contract mints with Transfer(address(this), to, amount), not from the
+  // zero address (OHM v1). The OhmERC20 handler counts those as mints.
+  mintsFromSelf?: boolean;
   // Snapshot-time read for receipts whose ERC20 `balanceOf` isn't the asset
   // amount (e.g. veFXS returns decaying voting power, not the locked FXS).
   // `method` selects a fixed ABI in `readPositionAmount`; `wallets` narrows
@@ -111,6 +114,18 @@ export type LiquidityPositionSource =
       receiptToken: string; // token address the record carries (legacy parity)
       label: string;
       wallets: string[];
+    }
+  // LP staked in a SushiSwap MasterChef pool, counted only while the pid's
+  // lpToken is the position's LP (readMasterChefStake). The record carries
+  // the LP token. Read only inside [startBlock, lastActiveBlock].
+  | {
+      kind: "masterchef";
+      contract: string;
+      pid: number;
+      label: string;
+      wallets: string[];
+      startBlock?: number;
+      lastActiveBlock?: number;
     };
 
 export type LiquidityPosition = {
@@ -233,6 +248,11 @@ export type ChainConfig = {
   basePriceFeeds: Record<string, BasePriceFeed>;
   ohmToken: string;
   ohmStartBlock?: number;
+  // OHM-family token counted for supply and price, by era, oldest first. Each
+  // era runs from its startBlock to the next era's. Read it through
+  // `ohmTokenAt`. Unset means `ohmToken` throughout. Only Ethereum has eras
+  // (OHM v1, then v2).
+  ohmEras?: { token: string; startBlock: number }[];
   // OHM bridged over CCIP stays locked in the mainnet lock/release pool,
   // so from this block on Ethereum's total supply already covers this
   // chain's OHM and its Total Supply row would count it twice (exclusive).
@@ -250,8 +270,11 @@ export type ChainConfig = {
   // Vault supply from `startBlock`.
   incurDebt?: { address: string; startBlock: number };
   lendingDeployments?: LendingDeployment[];
-  // Non-protocol wallets legacy counted as treasury OHM up to a block.
-  treasuryOhmExtraWallets?: { address: string; lastActiveBlock: number }[];
+  // Non-protocol wallets whose OHM is deducted as treasury OHM (not
+  // circulating). Read with balanceOf at each snapshot, since they aren't
+  // protocol wallets and have no Transfer ledger. `token` limits an entry to
+  // the era when that token is the chain's OHM; `lastActiveBlock` ends it.
+  treasuryOhmExtraWallets?: { address: string; token?: string; lastActiveBlock?: number }[];
   mellowVault?: {
     shares: string;
     oracle: string;
@@ -291,6 +314,10 @@ export type ChainConfig = {
     startBlock: number;
     convertVia: "gohm-index" | "direct";
   }>;
+  // sOHM v1 and v2. Before sOHM v3's first rebase there is no OhmIndexState,
+  // so the published index and staked OHM (the APY denominator) come from
+  // these instead (readPreV3SOhmState). Ethereum only.
+  preV3SOhm?: { v1: string; v2: string };
   // Olympus staking contracts. Used to read the per-epoch OHM distribution
   // for the APY calculation. V1 is always tried; V2/V3 are gated on their
   // respective start blocks.

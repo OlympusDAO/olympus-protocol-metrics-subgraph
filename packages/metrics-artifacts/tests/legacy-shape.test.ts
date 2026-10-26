@@ -6,6 +6,7 @@ import {
   emptySupplyCategoryValues,
   groupOhmSupplyByChain,
   groupTreasuryAssetsByChain,
+  isCrossChainComplete,
 } from "../src";
 
 const treasuryAsset: TreasuryAsset = {
@@ -188,6 +189,22 @@ describe("legacy-compatible metric shape", () => {
 
     expect(metric.chainsMissing).toEqual([42161, 4663]);
     expect(metric.crossChainComplete).toBe(false);
+  });
+
+  test("before Arbitrum's first snapshot (2022-05-01), Ethereum alone is complete", () => {
+    const metric = buildDailyMetric({
+      date: "2022-04-30",
+      chainValues: {},
+      chainsIndexed: [1, 137],
+      generatedAt: "2026-06-01T08:15:00.000Z",
+    });
+    expect(metric.crossChainComplete).toBe(true);
+    expect(isCrossChainComplete([137], "2021-12-27")).toBe(false);
+  });
+
+  test.each(["2022-05-01", "2026-10-26"])("%s still needs Arbitrum and Ethereum", (date) => {
+    expect(isCrossChainComplete([1], date)).toBe(false);
+    expect(isCrossChainComplete([42161, 1], date)).toBe(true);
   });
 
   test("handles incomplete chain data without failing", () => {

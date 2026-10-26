@@ -311,7 +311,7 @@ chains:
           - "0x183ea22691c54806fe96555436dd312b6befac2f" # UniV3 OHM-USDC
 
   - id: 137 # Polygon
-    start_block: 23000000 # ~2021-09-22, no graft per Phase 1 decision #3
+    start_block: 23000000 # 2021-12-26, no graft per Phase 1 decision #3
     rpc:
       - url: ${ENVIO_POLYGON_RPC_URL:-https://polygon-rpc.com}
         for: fallback
@@ -380,7 +380,7 @@ chains:
       # No Chainlink feeds on Fantom (legacy used UniV2 + stable only).
 
   - id: 1 # Ethereum
-    start_block: 12000000 # ~2021-04-29; before Treasury V2 (12525281)
+    start_block: 12000000 # 2021-03-08; before OHM V1 (12084967)
     rpc:
       - url: ${ENVIO_ETHEREUM_RPC_URL:-https://eth.llamarpc.com}
         for: fallback
@@ -443,6 +443,9 @@ chains:
           - "0x616e8BfA43F920657B3497DBf40D6b1A02D4608d" # auraBAL
           - "0xba100000625a3754423978a60c9317c58a424e3d" # BAL
           - "0xA13a9247ea42D743238089903570127DdA72fE44" # bb-a-USD
+          - "0x090185f2135308bad17527004364ebcc2d37e5f6" # SPELL
+          - "0x43d4a3cd90ddd2f8f4f693170c9c8098163502ad" # PRIME (symbol D2D)
+          - "0x1a7e4e63778b4f12a199c062f3efdd288afcbce8" # agEUR (symbol EURA)
           # Convex BaseRewardPool wrappers (priced via Curve LP remap)
           - "0xd683c7051a28fa150eb3f4bd92263865d4a67778" # cvxCurveOhmEth
           - "0x27a8c58e3de84280826d615d80ddb33930383fe9" # cvxCurveOhmFraxBp
@@ -520,6 +523,14 @@ chains:
           - "0x05767d9ef41dc40689678ffca0608878fb3de906" # CVX-ETH (prices CVX, vlCVX)
           - "0x055475920a8c93cffb64d039a8205f7acc7722d3" # SushiSwap OHM V2-DAI (POL value only)
           - "0x69b81152c5a8d35a67b32a4d3772795d96cae4da" # SushiSwap OHM V2-ETH (POL value only)
+          # OHM V1 pairs: OHM V1 price and V1 POL (FRAX: POL value only).
+          - "0x34d7d7aaf50ad4944b70b320acb24c95fa2def7c" # SushiSwap OHM V1-DAI
+          - "0xfffae4a0f4ac251f4705717cd24cadccc9f33e06" # SushiSwap OHM V1-ETH
+          - "0x2dce0dda1c2f98e0f171de8333c3c6fe1bbf4877" # Uniswap V2 OHM V1-FRAX
+          - "0xfdf12d1f85b5082877a6e070524f50f6c84faa6b" # SushiSwap OHM V1-LUSD
+          - "0xb612c37688861f1f90761dc7f382c2af3a50cc39" # Uniswap V2 OHM V2-FRAX (POL value only)
+          - "0x46e4d8a1322b9448905225e52f914094dbd6dddf" # SushiSwap OHM V2-LUSD (POL value only)
+          - "0xb5de0c3753b6e1b4dba616db82767f17513e6d4e" # SushiSwap SPELL-WETH (prices SPELL)
 
       # ---- sOHM V3 LogRebase drives OhmIndexState; consumed by GohmPriceHandler.
       - name: SOhmV3
