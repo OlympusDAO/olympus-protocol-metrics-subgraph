@@ -463,15 +463,24 @@ an item only once a test, build or live check proves it.
 - [ ] 5. Verification
   - [x] `pnpm run check`, `build`, `test` after each section; `validate` at
         the end (indexer 384 passed, 21 skipped live).
-  - [x] Live suites (skip without RPC): `OhmV1Supply` (circulating equals the
+  - [x] Live suites (skip without RPC): `OhmV1SupplyFromScratch` (OHM v1
+        supply and DAO balance rebuilt from an empty ledger, 483 Transfers),
+        `OhmV1Supply` (circulating equals the
         v1 oracle to 9 decimals at 6 blocks), `OhmV1Index` (index, staked
         OHM, APY at 12.6M / 12.64M / 13.0M / 13.78M), `OhmV1Pol` (v1 LP
         balances, reserves and OHM at 13,780,800), `HeldPastMay2022` (SPELL,
         PRIME, agEUR at 2022-05-01). Key treasury balances: checked against
         the local-compose run instead, since `createTestIndexer` double-applies
         events inside a range (lessons, 2026-10-26).
-  - [ ] Local-compose run over Ethereum 12M to ~13.9M (wall time, RPC volume).
-        Stop if it runs past ~1-2 hours or rate-limits.
+  - [ ] Local-compose run over Ethereum 12M to ~13.9M: **partial.** Public
+        RPC made it ~14.5 s per snapshot (~110 `eth_call` each), so 13.9M
+        would take ~4 h. Run 1 (12,000,000-12,645,600, 87 min, 37.5k RPC
+        calls) found the OHM v1 self-mint bug (fixed in c975fa5). Run 2 with
+        the fix (12,000,000-12,309,600, 64 min including 8 restarts after
+        drpc free-plan timeouts, 26.3k RPC calls): total supply and
+        circulating supply equal the chain / v1 oracle on all 35 indexed
+        dates, 11 treasury balances equal `balanceOf`. Not covered by a local
+        run: 12.31M-13.9M (the live suites cover sample blocks there).
   - [x] Rough treasury comparison with DefiLlama: seeded snapshot at
         13,780,800 gives $755.4M market value ($496.5M without POL's OHM
         side) vs DefiLlama's $730.4M, labelled as different methodology.
