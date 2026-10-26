@@ -111,6 +111,18 @@ export type LiquidityPositionSource =
       receiptToken: string; // token address the record carries (legacy parity)
       label: string;
       wallets: string[];
+    }
+  // LP staked in a SushiSwap MasterChef pool, counted only while the pid's
+  // lpToken is the position's LP (readMasterChefStake). The record carries
+  // the LP token. Read only inside [startBlock, lastActiveBlock].
+  | {
+      kind: "masterchef";
+      contract: string;
+      pid: number;
+      label: string;
+      wallets: string[];
+      startBlock?: number;
+      lastActiveBlock?: number;
     };
 
 export type LiquidityPosition = {

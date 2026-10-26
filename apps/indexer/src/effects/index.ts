@@ -434,6 +434,89 @@ export const readPositionAmount = createEffect(
   },
 );
 
+// Cached effect for LP staked in a SushiSwap MasterChef (v1) pool:
+// userInfo(pid, wallet).amount, but only while poolInfo(pid).lpToken is the
+// expected LP. Pool ids can be repointed (MasterChef v1 pid 185 held OHM-DAI
+// v1 SLP but now points at an address with no code), so neither a head read
+// nor a fixed pid-to-pool mapping is safe. A pid that doesn't exist yet
+// reverts, which counts as 0.
+const MASTERCHEF_ABI = [
+  {
+    inputs: [{ name: "pid", type: "uint256" }],
+    name: "poolInfo",
+    outputs: [
+      { name: "lpToken", type: "address" },
+      { name: "allocPoint", type: "uint256" },
+      { name: "lastRewardBlock", type: "uint256" },
+      { name: "accSushiPerShare", type: "uint256" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { name: "pid", type: "uint256" },
+      { name: "user", type: "address" },
+    ],
+    name: "userInfo",
+    outputs: [
+      { name: "amount", type: "uint256" },
+      { name: "rewardDebt", type: "uint256" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
+
+export const readMasterChefStake = createEffect(
+  {
+    name: "readMasterChefStake",
+    input: {
+      chainId: S.number,
+      contract: S.string,
+      pid: S.number,
+      lpToken: S.string,
+      wallet: S.string,
+      atBlock: S.number,
+    },
+    output: S.string,
+    rateLimit: { calls: 1_000_000, per: "second" },
+    cache: true,
+  },
+  async ({ input }) => {
+    const config = CHAIN_CONFIGS[input.chainId as ChainId];
+    if (!config) throw new Error(`Unsupported chain ${input.chainId}`);
+    const client = getClient(config);
+    const blockNumber = BigInt(input.atBlock);
+    const pid = BigInt(input.pid);
+    try {
+      const pool = (await retryRpc(() =>
+        client.readContract({
+          address: getAddress(input.contract),
+          abi: MASTERCHEF_ABI,
+          functionName: "poolInfo",
+          args: [pid],
+          blockNumber,
+        }),
+      )) as readonly [string, bigint, bigint, bigint];
+      if (pool[0].toLowerCase() !== input.lpToken.toLowerCase()) return "0";
+      const user = (await retryRpc(() =>
+        client.readContract({
+          address: getAddress(input.contract),
+          abi: MASTERCHEF_ABI,
+          functionName: "userInfo",
+          args: [pid, getAddress(input.wallet)],
+          blockNumber,
+        }),
+      )) as readonly [bigint, bigint];
+      return user[0].toString();
+    } catch (error) {
+      if (!isContractRevert(error)) throw error;
+      return "0";
+    }
+  },
+);
+
 // Cached effect that reads `totalDebt()` on the MonoCooler clearinghouse.
 // MonoCooler debt is denominated in USDS but priced via the DAI Chainlink
 // rate (legacy quirk — see Phase 1 decision #5 / inventory open question #3).

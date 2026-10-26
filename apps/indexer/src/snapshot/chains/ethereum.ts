@@ -88,6 +88,10 @@ const MAKER_DSR_ALLOCATOR = addr("0x0EA26319836fF05B8C5C5afD83b8aB17dd46d063");
 const MAKER_DSR_ALLOCATOR_PROXY = addr("0x5db0761487e26B555F5Bfd5E40F4CBC3E1a7d11E");
 const RARI_ALLOCATOR = addr("0x061C8610A784b8A1599De5B1157631e35180d818");
 const VEFXS_ALLOCATOR = addr("0xde7b85f52577b113181921a7aa8fc0c22e309475");
+// Onsen allocator: staked OHM V1 SLP in SushiSwap MasterChef v1. Not a
+// protocol wallet (see onsenStaked below).
+const ONSEN_ALLOCATOR = addr("0x0316508a1b5abf1CAe42912Dc2C8B9774b682fFC");
+const SUSHI_MASTERCHEF_V1 = addr("0xc2EdaD668740f1aA35E4D8f227fB8E17dcA888Cd");
 
 // Cooler clearinghouses.
 const COOLER_LOANS_CLEARINGHOUSE_V1 = addr("0xD6A6E8d9e82534bD65821142fcCd91ec9cF31880");
@@ -227,6 +231,9 @@ const ERC20_XSUSHI = addr("0x8798249c2e607446efb7ad49ec89dd1865ff4272");
 const ERC20_BOND = addr("0x0391D2021f89DC339F60Fff84546EA23E337750f"); // BarnBridge
 const ERC20_CVX = addr("0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b");
 const ERC20_CVX_VL = addr("0x72a19342e8F1838460eBFCCEf09F6585e32db86E"); // CvxLockerV2
+// CvxLocker (v1). The CVX allocator held ~810k-814k vlCVX in it from Dec 2021
+// until it unlocked in Apr 2022; Convex then moved to CvxLockerV2.
+const ERC20_CVX_VL_V1 = addr("0xD18140b4B819b895A3dba5442F959fA44994AF50");
 const ERC20_AURA = addr("0xC0c293ce456fF0ED870ADd98a0828Dd4d2903DBF");
 const ERC20_AURA_VL = addr("0x3Fa73f1E5d8A792C80F426fc8F84FBF7Ce9bBCAC"); // AuraLocker
 const ERC20_AURA_BAL = addr("0x616e8BfA43F920657B3497DBf40D6b1A02D4608d");
@@ -258,6 +265,7 @@ const ERC20_UST_BLOCK = 13_408_366; // legacy ERC20_UST_BLOCK
 const ERC20_UST_LAST_ACTIVE_BLOCK = 14_730_000; // legacy ERC20_UST_BLOCK_DEATH
 const ERC20_CVX_BLOCK = 12_460_000; // legacy ERC20_CVX_BLOCK
 const ERC20_CVX_VL_BLOCK = 14_320_609;
+const ERC20_CVX_VL_V1_BLOCK = 13_153_663; // getCode
 const ERC20_AURA_BLOCK = 14_932_168;
 const ERC20_AURA_VL_BLOCK = 14_932_220;
 const ERC20_AURA_BAL_BLOCK = 14_932_194;
@@ -455,6 +463,7 @@ const names: Record<string, string> = {
   [VENDOR_LENDING]: "Vendor Finance",
   [OLYMPUS_INCUR_DEBT]: "IncurDebt",
   [OLYMPUS_ASSOCIATION]: "Olympus Association",
+  [ONSEN_ALLOCATOR]: "Onsen Allocator",
   [OHM_V1_STAKING_DISTRIBUTOR]: "Staking Distributor V1",
   [OHM_V1_STAKING_DISTRIBUTOR_2]: "Staking Distributor V1 (2)",
   [OHM_V1_SLP_BOND]: "OHM-DAI SLP Bond V1",
@@ -513,6 +522,7 @@ const names: Record<string, string> = {
   [ERC20_BOND]: "BarnBridge Governance",
   [ERC20_CVX]: "Convex",
   [ERC20_CVX_VL]: "Convex - Vote-Locked",
+  [ERC20_CVX_VL_V1]: "Convex - Vote-Locked",
   [ERC20_AURA]: "Aura Finance",
   [ERC20_AURA_VL]: "Aura Finance - Vote-Locked",
   [ERC20_AURA_BAL]: "auraBAL",
@@ -595,6 +605,7 @@ const abbreviations: Record<string, string> = {
   [ERC20_BOND]: "BOND",
   [ERC20_CVX]: "CVX",
   [ERC20_CVX_VL]: "vlCVX",
+  [ERC20_CVX_VL_V1]: "vlCVX V1",
   [ERC20_AURA]: "AURA",
   [ERC20_AURA_VL]: "vlAURA",
   [ERC20_BAL]: "BAL",
@@ -990,6 +1001,7 @@ const liquidityHandlers: LiquidityHandler[] = [
   // Curve / Balancer stable derivatives price at the USDC rate (legacy
   // resolvePrice special case).
   { kind: "remap", tokens: [ERC20_CVX_VL], id: ERC20_CVX_VL, target: ERC20_CVX },
+  { kind: "remap", tokens: [ERC20_CVX_VL_V1], id: ERC20_CVX_VL_V1, target: ERC20_CVX },
   { kind: "remap", tokens: [ERC20_AURA_VL], id: ERC20_AURA_VL, target: ERC20_AURA },
   { kind: "remap", tokens: [ERC20_BB_A_USD], id: ERC20_BB_A_USD, target: ERC20_USDC },
   {
@@ -1316,6 +1328,18 @@ const protocolPositions: ProtocolPosition[] = [
     wallets: [CONVEX_CVX_VL_ALLOCATOR, DAO_WALLET],
     startBlock: ERC20_CVX_VL_BLOCK,
   },
+  // Expired vlCVX v1 the CVX allocator hadn't withdrawn yet (810,426 at block
+  // 14,500,000). It's claimable CVX, so it's valued and classified as CVX.
+  // liquidity: liquid. G1 pass: withdraw (already unlocked), then hold CVX. G2 pass: withdraw, 0%. G3 pass: Convex CvxLocker normal at the time. (assessed 2026-10-26)
+  {
+    kind: "read",
+    contract: ERC20_CVX_VL_V1,
+    method: "vlCvx.unlockable",
+    token: ERC20_CVX,
+    label: "Convex - Unlocked (vlCVX V1)",
+    wallets: [CONVEX_CVX_ALLOCATOR],
+    startBlock: ERC20_CVX_VL_V1_BLOCK,
+  },
   {
     kind: "read",
     contract: ERC20_AURA_VL,
@@ -1417,6 +1441,67 @@ function pricingHandler(id: string): LiquidityHandler {
 }
 
 const POL_WALLETS = [TREASURY_ADDRESS_V3, DAO_WALLET];
+// Before Treasury V3 the bonded LP sat in Treasury V1, then V2.
+const PRE_V2_POL_WALLETS = [
+  TREASURY_ADDRESS_V1,
+  TREASURY_ADDRESS_V2,
+  TREASURY_ADDRESS_V3,
+  DAO_WALLET,
+];
+
+// OHM-FRAX and OHM-LUSD pairs only valued as POL. Not OHM price sources: as
+// price handlers they'd also price FRAX/LUSD, and the V2 pairs would join the
+// OHM V2 price selection on published dates.
+const LP_UNI_OHM_FRAX_V1 = addr("0x2dce0dda1c2f98e0f171de8333c3c6fe1bbf4877");
+const LP_UNI_OHM_FRAX_V2 = addr("0xB612c37688861f1f90761DC7F382C2aF3a50Cc39");
+const LP_SUSHI_OHM_LUSD_V2 = addr("0x46E4D8A1322B9448905225E52F914094dBd6dDdF");
+const uniOhmFraxV1: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V1, ERC20_FRAX],
+  id: LP_UNI_OHM_FRAX_V1,
+  startBlock: 12_563_434,
+};
+const uniOhmFraxV2: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V2, ERC20_FRAX],
+  id: LP_UNI_OHM_FRAX_V2,
+  startBlock: 13_823_710,
+};
+const sushiOhmLusdV2: LiquidityHandler = {
+  kind: "univ2",
+  tokens: [ERC20_OHM_V2, ERC20_LUSD],
+  id: LP_SUSHI_OHM_LUSD_V2,
+  startBlock: 14_381_693,
+};
+
+// The Onsen allocator staked OHM-DAI v1 (pid 185) and OHM-LUSD v1 (pid 323)
+// SLP in SushiSwap's MasterChef v1. It isn't a protocol wallet: its 217
+// ERC20 transfers (SUSHI harvests swapped to xSUSHI and sent to Treasury V2)
+// all pass through within one transaction, so it never held anything at a
+// snapshot. Read from its creation to the block it withdrew both stakes.
+const onsenStaked = (pid: number, poolLabel: string): LiquidityPosition["sources"][number] => ({
+  kind: "masterchef",
+  contract: SUSHI_MASTERCHEF_V1,
+  pid,
+  label: `${poolLabel} - Staked in Onsen`,
+  wallets: [ONSEN_ALLOCATOR],
+  startBlock: 12_744_441,
+  lastActiveBlock: 14_360_925,
+});
+
+// OHM V1 pairs and the two V2 pairs the treasury held before May 2022. None
+// is held by a protocol wallet from 14,670,310 on (HyperSync Transfer scan).
+const preV2Position = (
+  pricing: LiquidityHandler,
+  poolLabel: string,
+  extra: LiquidityPosition["sources"] = [],
+): LiquidityPosition => ({
+  pricing,
+  lpToken: pricing.id,
+  poolLabel,
+  sources: [{ kind: "wallet", label: poolLabel, wallets: PRE_V2_POL_WALLETS }, ...extra],
+  startBlock: pricing.startBlock ?? ETHEREUM_START_BLOCK,
+});
 
 const auraStaked = (pool: string, deposit: string, poolLabel: string, vault: string) =>
   ({
@@ -1581,6 +1666,16 @@ const liquidityPositions: LiquidityPosition[] = [
     ],
     startBlock: LP_FRAXSWAP_V2_OHM_FRAX_BLOCK,
   },
+  preV2Position(pricingHandler(LP_SUSHI_OHM_DAI_V1), "SushiSwap OHM V1-DAI Liquidity Pool", [
+    onsenStaked(185, "SushiSwap OHM V1-DAI Liquidity Pool"),
+  ]),
+  preV2Position(pricingHandler(LP_SUSHI_OHM_ETH_V1), "SushiSwap OHM V1-ETH Liquidity Pool"),
+  preV2Position(uniOhmFraxV1, "Uniswap V2 OHM V1-FRAX Liquidity Pool"),
+  preV2Position(pricingHandler(LP_SUSHI_OHM_LUSD_V1), "SushiSwap OHM V1-LUSD Liquidity Pool", [
+    onsenStaked(323, "SushiSwap OHM V1-LUSD Liquidity Pool"),
+  ]),
+  preV2Position(uniOhmFraxV2, "Uniswap V2 OHM V2-FRAX Liquidity Pool"),
+  preV2Position(sushiOhmLusdV2, "SushiSwap OHM V2-LUSD Liquidity Pool"),
 ];
 
 // ---- OHM supply parity with legacy OhmCalculations.
@@ -2084,6 +2179,18 @@ export const ETHEREUM: ChainConfig = {
       isBluechip: false,
       startBlock: ERC20_AURA_BLOCK,
       decimals: 18,
+    }),
+    // CvxLocker v1 emits no Transfer; balanceOf is the CVX still locked. Only
+    // the CVX allocator ever locked in it.
+    // liquidity: illiquid. unlock: G1 fail (17-week lock, lockDuration 10,281,600s). DEX: G1 fail (non-transferable). G3 n/a (no passing path). (assessed 2026-10-26)
+    token({
+      address: ERC20_CVX_VL_V1,
+      category: "Volatile",
+      isLiquid: false,
+      isBluechip: false,
+      startBlock: ERC20_CVX_VL_V1_BLOCK,
+      decimals: 18,
+      positionRead: { method: "erc20.balanceOf", wallets: [CONVEX_CVX_ALLOCATOR] },
     }),
     // vlAURA is valued from AuraLocker.lockedBalances, not balanceOf; the
     // definition carries its category and price path.

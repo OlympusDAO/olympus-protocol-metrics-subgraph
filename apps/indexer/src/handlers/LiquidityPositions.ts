@@ -2,7 +2,7 @@ import type BigNumber from "bignumber.js";
 import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 
-import { readPositionAmount } from "../effects";
+import { readMasterChefStake, readPositionAmount } from "../effects";
 import { getTokenQuantityPerLp, getTotalValue, getUnitPrice } from "../pricing";
 import { TYPE_LIQUIDITY } from "../snapshot/global";
 import { isActive, ohmTokenAt, ohmTokens, toDecimal, ZERO } from "../snapshot/math";
@@ -29,15 +29,37 @@ async function readHoldings(
 ): Promise<Holding[]> {
   const holdings: Holding[] = [];
   for (const source of position.sources) {
+    if (source.kind === "masterchef" && !isActive(source, blockNumber)) continue;
     for (const wallet of source.wallets) {
       const amount =
         source.kind === "wallet"
           ? await readTokenBalance(context, config.chainId, position.lpToken, wallet, LP_DECIMALS)
-          : await readStaked(context, config, source, wallet, blockNumber);
+          : source.kind === "masterchef"
+            ? await readMasterChef(context, config, position.lpToken, source, wallet, blockNumber)
+            : await readStaked(context, config, source, wallet, blockNumber);
       if (!amount.eq(ZERO)) holdings.push({ source, wallet, amount });
     }
   }
   return holdings;
+}
+
+async function readMasterChef(
+  context: EvmOnBlockContext,
+  config: ChainConfig,
+  lpToken: string,
+  source: Extract<LiquidityPositionSource, { kind: "masterchef" }>,
+  wallet: string,
+  blockNumber: bigint,
+): Promise<BigNumber> {
+  const raw = await context.effect(readMasterChefStake, {
+    chainId: config.chainId,
+    contract: source.contract,
+    pid: source.pid,
+    lpToken,
+    wallet,
+    atBlock: Number(blockNumber),
+  });
+  return raw === "0" ? ZERO : toDecimal(BigInt(raw), LP_DECIMALS);
 }
 
 async function readStaked(
@@ -99,7 +121,7 @@ export async function pushLiquidityPositionRecords(
           config,
           timestamp,
           holding.source.label,
-          holding.source.kind === "wallet" ? position.lpToken : holding.source.receiptToken,
+          holding.source.kind === "read" ? holding.source.receiptToken : position.lpToken,
           getContractName(config, holding.wallet),
           holding.wallet,
           unitRate,
