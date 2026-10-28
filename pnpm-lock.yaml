@@ -73,8 +73,8 @@ importers:
         specifier: 4.23.15
         version: 4.23.15
       viem:
-        specifier: 2.57.7
-        version: 2.57.7(typescript@6.0.3)(zod@3.25.76)
+        specifier: 2.57.8
+        version: 2.57.8(typescript@6.0.3)(zod@3.25.76)
     devDependencies:
       '@biomejs/biome':
         specifier: 2.5.15
@@ -100,8 +100,8 @@ importers:
         specifier: 3.14.0
         version: 3.14.0(typescript@6.0.3)(zod@3.25.76)
       viem:
-        specifier: 2.57.7
-        version: 2.57.7(typescript@6.0.3)(zod@3.25.76)
+        specifier: 2.57.8
+        version: 2.57.8(typescript@6.0.3)(zod@3.25.76)
     devDependencies:
       '@types/node':
         specifier: 24.19.2
@@ -1365,8 +1365,8 @@ packages:
       typescript:
         optional: true
 
-  viem@2.57.7:
-    resolution: {integrity: sha512-x3UqqrcQuESaRVK6a0BvNmoNP0SVhu913uxEAxYLJx1lNYnj6ylTntfUdakCUKjk1+T+63gkdwFGJQ2O5C/nRw==}
+  viem@2.57.8:
+    resolution: {integrity: sha512-WYxDGltqjnHxM7sMZ/IBYpesbrEDDhLcmsbUE5zIPjVYOtP8gztcOhiL7OHZHJbI6vfuWNW4NCR5Gdddw+/Ovw==}
     peerDependencies:
       typescript: '>=5.0.4'
     peerDependenciesMeta:
@@ -2724,7 +2724,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  viem@2.57.7(typescript@6.0.3)(zod@3.25.76):
+  viem@2.57.8(typescript@6.0.3)(zod@3.25.76):
     dependencies:
       '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
