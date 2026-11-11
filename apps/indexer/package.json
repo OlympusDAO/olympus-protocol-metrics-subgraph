@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "bignumber.js": "11.1.5",
-    "envio": "3.14.0",
+    "envio": "3.15.0",
     "viem": "2.57.7"
   },
   "devDependencies": {
