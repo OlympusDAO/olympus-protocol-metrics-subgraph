@@ -212,52 +212,84 @@ indexer.onEvent(
 );
 
 // OHM ERC20 Transfer: track BOTH treasury balances and totalSupply (mints/burns).
+// OHM tokens whose contract mints with Transfer(address(this), to, amount)
+// instead of Transfer(0x0, to, amount): OHM v1 (OlympusERC20Token). Flagged
+// `mintsFromSelf` on the token definition.
+function selfMintingTokens(chainId: number): `0x${string}`[] {
+  const config = CHAIN_CONFIGS[chainId as ChainId];
+  if (!config) return [];
+  return config.tokens
+    .filter((token) => token.mintsFromSelf)
+    .map((token) => addr(token.address) as `0x${string}`);
+}
+
+export const buildOhmTransferWhere = ({ chain }: { chain: { id: number } }) => {
+  const wallets = treasuryWalletsForChain(chain.id);
+  if (wallets.length === 0) return false as const;
+  const selfMinting = selfMintingTokens(chain.id);
+  return {
+    params: [
+      { from: wallets },
+      { to: wallets },
+      { from: [ZERO_ADDRESS_PARAM] },
+      { to: [ZERO_ADDRESS_PARAM] },
+      ...(selfMinting.length > 0 ? [{ from: selfMinting }] : []),
+    ],
+  };
+};
+
+export async function handleOhmTransfer(args: {
+  event: {
+    chainId: number;
+    srcAddress: string;
+    logIndex: number;
+    block: { number: number; timestamp: number };
+    params: { from: string; to: string; value: bigint };
+  };
+  context: Parameters<typeof applyTransferToWalletBalance>[0] &
+    Parameters<typeof applyMintBurnToSupply>[0] &
+    Parameters<typeof applyDeployedOhmDelta>[0];
+}): Promise<void> {
+  const { event, context } = args;
+  const wallets = new Set<string>(treasuryWalletsForChain(event.chainId));
+  const from = addr(event.params.from);
+  const to = addr(event.params.to);
+  const value = event.params.value;
+  const token = addr(event.srcAddress);
+  const meta: EventMeta = {
+    block: event.block.number,
+    timestamp: event.block.timestamp,
+    logIndex: event.logIndex,
+  };
+  const isMint =
+    from === ZERO_ADDRESS ||
+    (from === token && selfMintingTokens(event.chainId).some((self) => self === token));
+
+  if (isMint) {
+    await applyMintBurnToSupply(context, event.chainId, token, value, meta);
+    // Mint to an active Lender AMO → deployedOhm += value. Replaces the
+    // per-snapshot getDeployedOhm RPC call.
+    await applyDeployedOhmDelta(context, event.chainId, to, value, event.block.number);
+  } else if (wallets.has(from)) {
+    await applyTransferToWalletBalance(context, event.chainId, token, from, -value, meta);
+  }
+
+  if (to === ZERO_ADDRESS) {
+    await applyMintBurnToSupply(context, event.chainId, token, -value, meta);
+    // Burn from an active Lender AMO → deployedOhm -= value.
+    await applyDeployedOhmDelta(context, event.chainId, from, -value, event.block.number);
+  } else if (wallets.has(to)) {
+    await applyTransferToWalletBalance(context, event.chainId, token, to, value, meta);
+  }
+}
+
 indexer.onEvent(
   {
     contract: "OhmERC20",
     event: "Transfer",
-    where: ({ chain }) => {
-      const wallets = treasuryWalletsForChain(chain.id);
-      if (wallets.length === 0) return false;
-      return {
-        params: [
-          { from: wallets },
-          { to: wallets },
-          { from: [ZERO_ADDRESS_PARAM] },
-          { to: [ZERO_ADDRESS_PARAM] },
-        ],
-      };
-    },
+    where: buildOhmTransferWhere,
   },
-  async ({ event, context }) => {
-    const wallets = new Set<string>(treasuryWalletsForChain(event.chainId));
-    const from = addr(event.params.from);
-    const to = addr(event.params.to);
-    const value = event.params.value;
-    const token = addr(event.srcAddress);
-    const meta: EventMeta = {
-      block: event.block.number,
-      timestamp: event.block.timestamp,
-      logIndex: event.logIndex,
-    };
-
-    if (from === ZERO_ADDRESS) {
-      await applyMintBurnToSupply(context, event.chainId, token, value, meta);
-      // Mint to an active Lender AMO → deployedOhm += value. Replaces the
-      // per-snapshot getDeployedOhm RPC call.
-      await applyDeployedOhmDelta(context, event.chainId, to, value, event.block.number);
-    } else if (wallets.has(from)) {
-      await applyTransferToWalletBalance(context, event.chainId, token, from, -value, meta);
-    }
-
-    if (to === ZERO_ADDRESS) {
-      await applyMintBurnToSupply(context, event.chainId, token, -value, meta);
-      // Burn from an active Lender AMO → deployedOhm -= value.
-      await applyDeployedOhmDelta(context, event.chainId, from, -value, event.block.number);
-    } else if (wallets.has(to)) {
-      await applyTransferToWalletBalance(context, event.chainId, token, to, value, meta);
-    }
-  },
+  handleOhmTransfer,
 );
 
 // LP token Transfer: tracks treasury POL balances + LP totalSupply (mint/burn).

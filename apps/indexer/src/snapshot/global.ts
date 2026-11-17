@@ -167,9 +167,18 @@ export type CrossChainAggregate = {
   crossChainComplete: boolean;
 };
 
-// Chains required for `crossChainComplete` to be true. Per Phase 1 decision
-// #10 the legacy `crossChainDataComplete` only requires Arbitrum + Ethereum.
-const REQUIRED_CHAINS_FOR_COMPLETE: number[] = [CHAIN_IDS.ARBITRUM, CHAIN_IDS.ETHEREUM];
+// Chains required for `crossChainComplete` to be true on a date. Per Phase 1
+// decision #10 the legacy `crossChainDataComplete` only requires Arbitrum +
+// Ethereum. Arbitrum's snapshots start at its start block 10,950,000
+// (2022-05-01 02:14 UTC); before that only Ethereum indexed Olympus (OHM v1),
+// so only Ethereum is required. Must match requiredChainIdsForComplete in
+// packages/metrics-artifacts/src/legacy-shape.ts.
+export const ARBITRUM_REQUIRED_FROM_DATE = "2022-05-01";
+export function requiredChainsForComplete(date: string): number[] {
+  return date < ARBITRUM_REQUIRED_FROM_DATE
+    ? [CHAIN_IDS.ETHEREUM]
+    : [CHAIN_IDS.ARBITRUM, CHAIN_IDS.ETHEREUM];
+}
 const ALL_CHAIN_IDS: number[] = [
   CHAIN_IDS.ARBITRUM,
   CHAIN_IDS.ETHEREUM,
@@ -209,7 +218,7 @@ export function aggregateAcrossChains(
 
   const chainsIndexed = perChain.map((chain) => chain.chainId);
   const chainsMissing = ALL_CHAIN_IDS.filter((chainId) => !chainsIndexed.includes(chainId));
-  const crossChainComplete = REQUIRED_CHAINS_FOR_COMPLETE.every((chainId) =>
+  const crossChainComplete = requiredChainsForComplete(date).every((chainId) =>
     chainsIndexed.includes(chainId),
   );
 

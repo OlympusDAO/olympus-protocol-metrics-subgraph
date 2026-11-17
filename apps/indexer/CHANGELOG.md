@@ -2,6 +2,17 @@
 
 All notable changes to this package will be documented in this file. Dates are displayed in UTC.
 
+## [v0.4.0] - 2026-10-26
+
+- Index Olympus from OHM v1 launch (#336). Ethereum counts OHM v1 supply until the first OHM v2 mint (13,805,112), prices OHM v1 from the v1 SushiSwap pairs, and deducts the contracts the v1 CirculatingSupply oracle excluded, so v1 circulating supply matches that oracle exactly.
+- Publish the index, staked OHM and APY before sOHM v3 from sOHM v1/v2 (`readPreV3SOhmState`).
+- Value the pre-v2 treasury: the four OHM v1 pairs and the OHM-FRAX v2 / OHM-LUSD v2 pairs as protocol-owned liquidity, the Onsen allocator's MasterChef v1 stakes, and vlCVX v1 (illiquid).
+- Value SPELL, PRIME (illiquid) and agEUR, which were also held after 2022-05-01, so this revises published market value and liquid backing for those dates.
+- Restore the nine tokens legacy tracked and the Envio port dropped: ALCX, CRV, FDT, FOX, FPIS, KP3R, SUSHI, SYN and THOR (all liquid). They were held from 2021-04 to 2023-04 (a CRV tail to 2023-09, and 12,282 FDT still held), so this revises published market value and liquid backing from 2022-05-01 by up to $1.53M (2022-05-04; $0.5-0.6M from 2022-08 to 2022-12). The Chainlink handler takes an optional `quote` token, for feeds priced in ETH.
+- Read MasterChef v1 `poolLength()` before `poolInfo(pid)`, so the Onsen read returns 0 for a pool that doesn't exist yet. Before, it hit an invalid opcode at 13,329,600 and the snapshot retried forever.
+- Require only Ethereum for `crossChainComplete` before 2022-05-01, Arbitrum's first snapshot date.
+- Start the UniV3 WETH-wstETH and WETH-BTRFLY v1 pricing handlers at pool creation.
+
 ## [v0.3.3] - 2026-10-23
 
 - Add a per-chain `ohmTotalSupplyEndBlock` so L2 OHM total supply stops counting once bridged OHM is locked in the mainnet CCIP lock/release pool. From that block the chain emits a zero Total Supply row, so the Total Supply category a snapshot wrote earlier the same UTC day doesn't outlive the cutover in the published `ohmSupplyCategories`. L2 treasury and liquidity deductions still apply. Set on Arbitrum, Base and Berachain to the blocks matching the pool funding (Ethereum block 26,245,881, 2026-10-22T04:51:47Z).

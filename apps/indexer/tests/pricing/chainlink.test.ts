@@ -8,6 +8,8 @@ import type { ChainConfig, LiquidityHandler } from "../../src/snapshot/types";
 const CHAIN_ID = 42161;
 const ETH_USD_FEED = "0x639fe6ab55c921f74e7fac1ee960c0b6293ba612";
 const WETH = "0x82af49447d8a07e3bd95bd0d56f35241523fbab1";
+const KP3R_ETH_FEED = "0xe7015ccb7e5f788b8c1010fc22343473eaac3741";
+const KP3R = "0x1ceb5cb57c4d4e2b2433641b95dd330a33185a44";
 const BLOCK = 100_000_000n;
 
 function mockClient(): PublicClient {
@@ -51,6 +53,13 @@ function buildConfig(handlers: LiquidityHandler[]): ChainConfig {
         category: "Volatile",
         isLiquid: true,
         isBluechip: true,
+        decimals: 18,
+      },
+      {
+        address: KP3R,
+        category: "Volatile",
+        isLiquid: true,
+        isBluechip: false,
         decimals: 18,
       },
     ],
@@ -99,6 +108,28 @@ describe("ChainlinkPriceHandler", () => {
     // configuring no answer ensures the test fails loudly if that changes.
     const context = mockContext();
     const result = await getPrice(config, context, mockClient(), WETH, BLOCK, null);
+    expect(result.price.eq("0")).toBe(true);
+  });
+
+  test("multiplies an ETH-quoted feed by the quote token's price", async () => {
+    const config = buildConfig([
+      { kind: "chainlink", id: ETH_USD_FEED, tokens: [WETH], decimals: 8 },
+      { kind: "chainlink", id: KP3R_ETH_FEED, tokens: [KP3R], decimals: 18, quote: WETH },
+    ]);
+    const context = mockContext({
+      [ETH_USD_FEED]: 200_000_000_000n, // $2000
+      [KP3R_ETH_FEED]: 50_000_000_000_000_000n, // 0.05 ETH
+    });
+    const result = await getPrice(config, context, mockClient(), KP3R, BLOCK, null);
+    expect(result.price.eq("100")).toBe(true);
+  });
+
+  test("returns ZERO for an ETH-quoted feed when the quote token has no price", async () => {
+    const config = buildConfig([
+      { kind: "chainlink", id: KP3R_ETH_FEED, tokens: [KP3R], decimals: 18, quote: WETH },
+    ]);
+    const context = mockContext({ [KP3R_ETH_FEED]: 50_000_000_000_000_000n });
+    const result = await getPrice(config, context, mockClient(), KP3R, BLOCK, null);
     expect(result.price.eq("0")).toBe(true);
   });
 });

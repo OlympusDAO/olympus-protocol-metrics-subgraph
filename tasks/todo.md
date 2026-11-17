@@ -347,7 +347,7 @@ surface.
 3. **Re-index scope** — re-index from genesis on all six chains. No grafts. Leverages HyperSync backfill speed; captures the data gap legacy grafts hid.
 4. **Snapshot cadence** — per-chain block interval, calibrated to ~8h based on current chain block time. Matches existing Envio handler patterns; `GlobalMetricSnapshot` tolerates partial chains so cadence drift is acceptable.
 5. **Latent legacy bugs** — fix during port, document each per-row delta in the Phase 6 changelog. Covers Fantom (wETH/abbreviation/wFTM), Arbitrum (DAO/CCB dedupe pending verification), Bera (iBGT/lBGT), Ethereum (CoolerV2 USDS, UniV3 float tick math), and the all-handler `liquidity` field fix.
-6. **Treasury-subgraph metricHelper inventory** — do now as Phase 1 closeout. Repo cloned at `/Users/zach/Documents/repos/olympus/treasury-subgraph`. Inventory the whole `apps/server/src/core/` directory (8 helpers) since metricHelper depends on the others.
+6. **Treasury-subgraph metricHelper inventory** — do now as Phase 1 closeout. Repo: `OlympusDAO/treasury-subgraph`. Inventory the whole `apps/server/src/core/` directory (8 helpers) since metricHelper depends on the others.
 7. **`GlobalMetricSnapshot` shape** — nested `ChainValues` child entities (26 top-level scalars + 6 per-chain nested) to mirror the legacy endpoint exactly. Zero consumer changes. ~32 entities per day instead of one wide row.
 8. **`ohmSupplyCategories`** — preserve nested with both `balance` (raw on-chain) and `supplyBalance` (signed contribution). Required for exact-match parity.
 9. **Canonical chain for `protocolMetrics[0]`-derived fields** — Ethereum is canonical for `ohmIndex`/`ohmApy`/`ohmPrice`/`gOhmPrice`/`sOhmCirculatingSupply`/`totalValueLocked`. Schema reads these from the Ethereum-specific snapshot row, not from a merged array.
@@ -383,3 +383,169 @@ surface.
 
 - [x] **Fantom/Polygon gOHM `TokenBalance` drift.** Confirmed same root cause as the broader non-standard-balance class (bridge mint credits balance without a standard Transfer event). Worked around 2026-05-17 by flagging `ERC20_GOHM` as `nonStandardBalance: true` on both chains and threading the flag through `pushTreasuryOhm` so snapshot-time `balanceOf` (cached via `readErc20BalanceOf` effect) replaces the drifting `TokenBalance` entity. See 2026-05-17 entry in `tasks/lessons.md`.
   - **Note: the underlying ledger is still wrong.** `nonStandardBalance` is a snapshot-time read-around, not a fix — `TokenBalance` rows for bridged gOHM on Fantom/Polygon (and the bridge-mint sources on those chains: WETH, DAI, FRAX, sKLIMA) remain incorrect for any consumer that queries them directly. The snapshot path is the only consumer today, so this is acceptable, but a real fix would require either (a) indexing the bridge-mint events that mutate balance, or (b) deriving `TokenBalance` from `balanceOf` instead of from Transfer accumulation. Track if a downstream consumer ever needs raw `TokenBalance` correctness.
+
+## OHM v1 and pre-v2 history (#336)
+
+Publish every metric from OHM v1 launch instead of 2022-05-01. Design:
+`docs/ohm-v1-pre-v2-history.md`. Ships as one PR (draft, branch
+`brightiron/ohm-v1-pre-v2-history`), because the public start date only moves
+once everything else is in. The prerequisites #368 and #369 are merged. Tick
+an item only once a test, build or live check proves it.
+
+- [x] Reconcile the design with #384 and develop. `ohmEras` is Ethereum-only
+      and #384's cutover is L2-only, so they meet in `pushTotalSupply` without
+      overlapping (design, "Interaction with #384"). Also added the
+      `withOwnPoolFallback` site, the `UniswapV2Pool` registration for the v1
+      pairs, the date argument for `isCrossChainComplete`'s three callers, and
+      the compose default for the public start date.
+- [x] Write this plan.
+- [x] 1. Supply and price (one commit each, test first)
+  - [x] `ohmEras` + `ohmTokenAt(config, block)`; switch total supply, treasury
+        OHM, OHM-equivalent decimals, snapshot price, owned-liquidity
+        exclusion and supply, both `LiquidityPositions` sites and
+        `withOwnPoolFallback`. Boundary moved to the first OHM v2 mint
+        (13,805,112); OHM v2 was deployed at 13,782,589 with zero supply.
+        Pool values exclude every era's token (`ohmTokens`).
+        (`OhmEras.test.ts`; #384 cutover tests unchanged and passing.)
+  - [x] v1 price: all four v1 pairs registered under `UniswapV2Pool`; price
+        handlers for Sushi OHM-DAI, OHM-ETH and OHM-LUSD v1. Uni OHM-FRAX v1
+        is POL-only so it can't price FRAX before its Chainlink feed.
+        (`ohm-price.test.ts`: deepest pool wins at block 13,000,000.)
+  - [x] Non-circulating v1 OHM: `treasuryOhmExtraWallets` takes an optional
+        token (era-scoped) and an optional `lastActiveBlock`; the oracle's six
+        non-DAO addresses are scoped to OHM v1, the Association to OHM v2.
+        (`OhmEras.test.ts`. Oracle parity is the live check in 5.)
+- [x] 2. Index and APY
+  - [x] Cached effect `readPreV3SOhmState` for the pre-v3 index (sOHM v2
+        `index()` once above 0, else sOHM v1 `totalSupply` ÷ 500,000), used
+        only when no v3 `OhmIndexState` exists. (`pre-v3-sohm.test.ts`,
+        `PreV3Index.test.ts`, live `OhmV1Index.live.test.ts` at 12.6M,
+        12.64M, 13.0M, 13.78M.)
+  - [x] sOHM circulating supply by the same eras. Changed from the draft: v1 +
+        v2 once v2 has rebased, since sOHM v2 reports a placeholder 5,000,000
+        before that and the v1 to v2 migration took days.
+  - [x] APY numerator (staking v1, v1 + v2) and APY 0, not NaN, before the
+        first distribution or with nothing staked.
+- [x] 3. Treasury and backing
+  - [x] Four v1 LPs and OHM-FRAX v2 / OHM-LUSD v2 in `liquidityPositions`
+        (Treasury v1/v2/v3 and DAO wallets). None is held by a protocol wallet
+        from 14,670,310 on (HyperSync Transfer scan to head).
+        (`PreV2Treasury.test.ts`: split, own-pool OHM price, v1 pool after the
+        switch.)
+  - [x] Onsen MasterChef v1 read for pids 185 and 323, checking
+        `poolInfo(pid).lpToken` at the block. Changed from the draft: the
+        allocator is not a protocol wallet (never holds anything at a
+        snapshot). (`masterchef.test.ts`.)
+  - [x] vlCVX v1: illiquid (17-week lock), read for the CVX allocator only;
+        unlocked-but-unwithdrawn vlCVX v1 valued as CVX.
+  - [x] SPELL, PRIME, agEUR priced, including on published dates (approved,
+        2026-10-26): SushiSwap SPELL-WETH, Balancer D2D-USDC 80/20,
+        Chainlink EUR/USD. SPELL and agEUR liquid, PRIME illiquid. Holding
+        windows confirmed by Transfer scan (SPELL to 2023-04-05, agEUR to
+        2023-05-19, PRIME still held). (`PreV2Treasury.test.ts`, live
+        `HeldPastMay2022.live.test.ts` at 14,690,400.)
+  - [x] Tokemak staking: no change. Only the DAO wallet held staked TOKE in
+        the window, and the existing read covers it.
+  - [ ] Restore the 9 tokens legacy tracked and the Envio port dropped:
+        ALCX, CRV, FDT, FOX, FPIS, KP3R, SUSHI, SYN, THOR (approved,
+        2026-11-17, in this PR). A Transfer scan of every protocol wallet
+        (2026-11-17) found them, mostly Olympus Pro fees. At DefiLlama prices
+        the 9 were worth up to ~$2.3M (2022-01); the local run puts them at
+        $1.44M on 2022-05-01 (peak $1.53M, 2022-05-04), $0.5-0.6M 2022-08 to
+        2022-12.
+        Published numbers change from 2022-05 to 2023-09, as with SPELL
+        (plus a few dollars of FDT to date).
+    - [x] Holding windows (`balanceOf` over every protocol wallet,
+          binary-searched; the HyperSync scan was too slow on the shared
+          token): first held 2021-04-06 (SUSHI) to 2022-04-19 (FPIS); sold
+          2023-01-25 to 2023-04-05; CRV under 1 from 2023-09-20; 12,282 FDT
+          still in Treasury V2. Start blocks are creation blocks (getCode).
+    - [x] Price sources, checked at held blocks: Chainlink CRV/USD,
+          FOX/USD (from 13,810,120; Uniswap V2 FOX-ETH before), ALCX/ETH,
+          KP3R/ETH, SUSHI/ETH (SUSHI/USD only answers from 12,516,509);
+          legacy pools for FDT (Balancer 20/80), FPIS (UniV3 1%) and THOR
+          (SushiSwap); SYN from SushiSwap SYN-WETH because legacy's SYN-FRAX
+          pair was empty from 15,000,000
+    - [x] Chainlink handler: optional `quote` token for ETH-quoted feeds
+          (`chainlink.test.ts`)
+    - [x] Liquidity verdict per token (asset-liquidity skill): all liquid;
+          FDT scored on today's 12,282, with the 5M DAO-wallet window
+          (16% per slice) noted
+    - [x] Tests: config (`PreV2Treasury.test.ts`), live
+          `LegacyDroppedTokens.live.test.ts` at 16,000,800 (all nine) and
+          13,780,800 (FOX before its feed)
+    - [x] Local run 12,000,000 to 16,700,000 (to 2023-02-24, ~1h55 at
+          batch size 100, no errors). 96 weekly snapshots: every
+          protocol-wallet balance of the nine has a record equal to
+          `balanceOf`, and every rate equals an independent Chainlink or pool
+          mark (1e-6). Only exception: FDT before its Balancer pool
+          (14,528,660) has no price, so no record (12k-58k FDT, ~$5-10k).
+          Restored value: $1.5-2.5M (2022-01 to 2022-04), $1.44-1.53M in
+          early 2022-05, $0.5-0.6M (2022-08 to 2022-12). Over all 712 days: total supply, price
+          (within 2% of OHM-DAI), staked OHM and index match the chain;
+          circulating matches the v1 oracle on all 275 pre-v2 days. The
+          2,321 record-vs-`balanceOf` mismatches are all existing position
+          readers (veFXS, Liquity, cvxCRV, Rari, DSR, vlCVX unlocked, BAL
+          rewards), not wallet balances; not checked individually.
+  - [ ] Still untracked, listed as known gaps: INV, LOBI, PDT, IQ, BANK,
+        QUARTZ, XRUNE, MTA and smaller (never tracked by legacy either;
+        peak ~$310k combined in 2022-04, under $2k since 2023-09).
+  - [x] Start blocks: UniV3 WETH-wstETH (15,384,250), WETH-BTRFLY v1
+        (13,826,232), both verified with `getCode`; Ethereum start-block
+        comments (12,000,000 is 2021-03-08) and Polygon's (23,000,000 is
+        2021-12-26).
+- [x] 4. Publisher
+  - [x] Date-dependent completeness in `global.ts` and `legacy-shape.ts`
+        (`isCrossChainComplete` takes the date; its three callers pass it).
+        Tests: 2022-04-30, 2022-05-01, a recent date, plus
+        `tests/monorepo/completeness-rule.test.ts` keeping both copies equal.
+  - [x] Public start date `2021-03-23` (changed from the draft's 03-22: the
+        first v1 pool was created 2021-03-23 01:18 UTC). Publisher tests
+        updated, manifest `earliestDate` (what `/v2/bounds` serves) asserted,
+        compose default and Railway/local-compose docs updated.
+- [ ] 5. Verification
+  - [x] `pnpm run check`, `build`, `test` after each section; `validate` at
+        the end (indexer 384 passed, 21 skipped live).
+  - [x] Live suites (skip without RPC): `OhmV1SupplyFromScratch` (OHM v1
+        supply and DAO balance rebuilt from an empty ledger, 483 Transfers),
+        `OhmV1Supply` (circulating equals the
+        v1 oracle to 9 decimals at 6 blocks), `OhmV1Index` (index, staked
+        OHM, APY at 12.6M / 12.64M / 13.0M / 13.78M), `OhmV1Pol` (v1 LP
+        balances, reserves and OHM at 13,780,800), `HeldPastMay2022` (SPELL,
+        PRIME, agEUR at 2022-05-01). Key treasury balances: checked against
+        the local-compose run instead, since `createTestIndexer` double-applies
+        events inside a range (lessons, 2026-10-26).
+  - [x] Local-compose run over Ethereum 12,000,000 to 14,700,000 (launch to
+        2022-05-02), Ethereum only, on the Railway Alchemy RPC (2026-11-17).
+        Earlier partial runs on public RPC: run 1 (12.0M-12.65M) found the
+        OHM v1 self-mint bug (c975fa5); run 2 (12.0M-12.31M) was exact.
+        The full run stalled at 13,329,600: the Onsen read called MasterChef
+        v1 `poolInfo(323)` while `poolLength()` was 301, which hits INVALID
+        (0xFE) on that 0.6 contract, not a revert, so the effect threw on
+        every retry. Production on the same RPC would have stalled there.
+        Fixed by checking `poolLength()` first (lessons, 2026-11-17). With the
+        fix it ran to the end block with no errors. Checked every indexed day
+        against archive reads at that day's snapshot block:
+        - total supply equals OHM v1 (v2 after 13,805,112) `totalSupply()`
+          on all ~410 days; circulating equals the v1 oracle on every pre-v2
+          day (its formula with its 13,000,000 list before it was deployed);
+        - staked OHM equals the sOHM contracts' `circulatingSupply()` every
+          day, through the staking v1, v2 and v3 switches; the index never
+          falls or jumps; price is within 2% of the main OHM-DAI pair;
+        - every v1-era TokenRecord equals its source: `balanceOf`, the
+          Convex reward pool, MasterChef `userInfo` for the Onsen stakes,
+          and CvxLocker v1 `lockedBalances().unlockable` for vlCVX v1.
+        Overlap with production on 2022-05-01 and 05-02: supply, index, APY,
+        price and staked OHM equal; all 47 shared Ethereum assets equal; the
+        Ethereum market value and liquid backing differ by exactly the new
+        PRIME + SPELL + agEUR (and SPELL + agEUR) values.
+        Publisher and API: the real publisher (through a local harness that
+        forwards first-publish bounds as `cross_chain` and pins `now`) wrote
+        2021-03-23 to 2022-04-30, and the real metrics-api served it.
+        `ENVIO_RPC_HTTP_BATCH_SIZE=100` sped the run up ~1.7x (no Multicall3
+        before 14,353,601).
+  - [x] Rough treasury comparison with DefiLlama: seeded snapshot at
+        13,780,800 gives $755.4M market value ($496.5M without POL's OHM
+        side) vs DefiLlama's $730.4M, labelled as different methodology.
+- [ ] After the full reindex: pre-v2 days appear in published global metrics,
+      and the frontend owners know pre-2022-05 days now arrive as complete.

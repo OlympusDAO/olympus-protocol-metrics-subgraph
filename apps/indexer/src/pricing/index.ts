@@ -2,7 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import type { EvmOnBlockContext } from "envio";
 import type { PublicClient } from "viem";
 
-import { isActive, same, ZERO } from "../snapshot/math";
+import { isActive, ohmTokens, same, ZERO } from "../snapshot/math";
 import type { ChainConfig, LiquidityHandler } from "../snapshot/types";
 import { BalancerPriceHandler } from "./balancer";
 import { ChainlinkPriceHandler } from "./chainlink";
@@ -193,9 +193,10 @@ export async function getUnitPrice(
 // OHM side at zero — Arbitrum's Camelot OHM-wETH POL showed the wETH leg alone
 // as TVL and a multiplier of 1. When the router finds no outside OHM price,
 // price OHM off the pool's own reserves; the other leg still goes through the
-// plain router, so this can't recurse back. Only `config.ohmToken` qualifies:
-// valueExcludingOhm always drops it, so this corrects TVL and the multiplier
-// without touching liquid backing. Self-pricing any other lone token (e.g.
+// plain router, so this can't recurse back. Only the chain's OHM tokens
+// (`ohmTokens`, every era) qualify: valueExcludingOhm always drops them, so this
+// corrects TVL and the multiplier without touching liquid backing. On Ethereum
+// that covers the OHM-DAI v1 pool while it was the only v1 pool. Self-pricing any other lone token (e.g.
 // gOHM in Arbitrum's gOHM-wETH) would add it to backing.
 function withOwnPoolFallback(
   config: ChainConfig,
@@ -209,7 +210,7 @@ function withOwnPoolFallback(
     const result = await lookup(lookupToken, lookupBlock, lookupPool);
     if (
       !result.price.eq(ZERO) ||
-      !same(lookupToken, config.ohmToken) ||
+      !ohmTokens(config).some((ohmToken) => same(lookupToken, ohmToken)) ||
       !priceHandler.matches(lookupToken)
     )
       return result;

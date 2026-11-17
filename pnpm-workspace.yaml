@@ -101,11 +101,14 @@ overrides:
   # Envio bundles express + ws; patches the transitive advisories CI's
   # audit gate flagged at moderate+. Pinned to ranges known to address
   # each CVE without churning unrelated majors.
-  "body-parser@<1.20.6": "1.20.6"
+  # body-parser GHSA-27r3-jxmh-p828 (high, DoS via trailing bytes after a
+  # compressed body) fixed in 1.20.9; qs GHSA-6pq8-jhm2-2vcw (moderate,
+  # stringify DoS) fixed in 6.16.1.
+  "body-parser@<1.20.9": "1.20.9"
   "cookie@<0.7.0": "0.7.0"
   "express@<4.20.0": "4.20.0"
   "path-to-regexp@<0.1.13": "0.1.13"
-  "qs@<6.16.0": "6.16.0"
+  "qs@<6.16.1": "6.16.1"
   "fflate@<0.8.3": "0.8.3"
   "send@<0.19.0": "0.19.0"
   "serve-static@<1.16.0": "1.16.0"
@@ -134,5 +137,16 @@ overrides:
   # fixed in 0.28.1. vite@8.1.6 accepts esbuild ^0.27.0 || ^0.28.0, so the
   # bump is peer-compatible.
   "esbuild@>=0.17.0 <0.28.1": "0.28.1"
+  # zod GHSA-mrhx-c7xc-m3w5 (high), fixed only in 4.6.6. The sole consumer is
+  # abitype's optional zod peer (accepts ^3.22.0 || ^4.0.0); nothing here,
+  # in viem, ox or envio imports zod or abitype/zod.
+  "zod@<4.6.6": "4.6.7"
 preferFrozenLockfile: true
 strictDepBuilds: true
+auditConfig:
+  ignoreGhsas:
+    # picomatch GHSA-fc5q-39xc-vjpf (high, ReDoS via repeated extglobs) has no
+    # patched release (4.0.7 is the latest and is affected). It's dev-only,
+    # through vite/vitest/tinyglobby (`pnpm why picomatch --prod` is empty),
+    # and only sees our own glob patterns. Remove once a fix ships.
+    - GHSA-fc5q-39xc-vjpf

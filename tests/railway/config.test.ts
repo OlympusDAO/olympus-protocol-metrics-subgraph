@@ -154,6 +154,8 @@ describe("Railway config-as-code", () => {
       expect(content).toContain("@sha256:");
       expect(content).toContain("apt-get install -y --no-install-recommends ca-certificates");
       expect(content).toContain("--only-upgrade libgcrypt20 libgnutls30");
+      // apt CVE-2026-109518 (high), fixed in 2.6.2 on bookworm.
+      expect(content).toContain("perl-base apt libapt-pkg6.0");
       expect(content).not.toContain("apt-get upgrade");
       expect(content).toContain("COREPACK_HOME=/corepack");
       expect(content).toContain("pnpm --version");

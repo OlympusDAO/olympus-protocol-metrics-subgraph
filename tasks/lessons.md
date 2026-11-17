@@ -179,3 +179,27 @@ If those match but disagree with the actual on-chain `balanceOf`, the token is n
 **What caught us:** `ChainSupplyCategory` rows are keyed by `date/chain/category` and each snapshot only upserts the categories it emits, so a category written earlier the same UTC day outlived later snapshots (an L2's Total Supply after its mid-day CCIP cutover on 2026-10-22). The first fix deleted the missing rows, which was the only delete in the codebase. Review settled on the simplest consistent shape: the cutover emits a zero Total Supply row, so the normal upsert overwrites the day's row with zero.
 
 **Where to apply:** any date-keyed rollup entity written per snapshot. "Last snapshot of the day wins" only holds for rows the last snapshot actually writes, so when a source stops contributing, emit it at zero at the source rather than skipping it or cleaning up downstream.
+
+---
+
+## 2026-10-26 — createTestIndexer applies each event twice to running ledgers
+
+**The trap:** a live test that runs `createTestIndexer().process()` over a block range and then checks a ledger built from events (TokenBalance, Erc20Supply) gets double the on-chain value. A single DAI Transfer of 100.9 into Treasury V2 at block 12,530,585 left `TokenBalance` at 201.8, with one `TokenBalanceUpdate` row (same id, `delta` 100.9). The handler ran twice for the same log, and the second run read the first run's write. It reproduces on develop. The production runtime is exact: the local-compose indexer over the same blocks matched `balanceOf` to the wei.
+
+**Rule:** in live tests, seed ledgers from archive reads at `block - 1` and process only the snapshot block (as `OhmV1Supply.live.test.ts`, `OhmV1Pol.live.test.ts` and `CcipCutover.live.test.ts` do). Don't assert ledger balances accumulated from events inside a `createTestIndexer` range. To check event-built balances, use the local-compose run.
+
+---
+
+## 2026-11-17 — An out-of-range read on a pre-0.8 contract isn't a revert
+
+**What caught us:** the Onsen read called MasterChef v1 `poolInfo(323)` at 13,329,600, when `poolLength()` was 301. MasterChef v1 is Solidity 0.6, so indexing past the end of `poolInfo[]` hits `INVALID` (0xFE), not `revert`. Alchemy returns that as `TransactionRejectedRpcError` with "EVM error: InvalidFEOpcode", which `isContractRevert` doesn't match, so the effect threw and the snapshot retried forever. The unit test mocked a missing pid as `ContractFunctionRevertedError`, so it passed. The live suites sampled blocks where the pid existed, and the earlier local runs stopped at 12.31M.
+
+**Rule:** before indexing an array getter on a contract compiled with Solidity below 0.8, read its length (`poolLength()`, `length()` or similar) and return the empty value when the index is out of range. Don't rely on catching the failure: providers word an invalid opcode differently and none of them call it a revert. In tests, mock the out-of-range case with the error a real provider returns, not a revert.
+
+---
+
+## 2026-11-17 — Size a "small" untracked-token gap from a wallet scan, not a guess
+
+**What caught us:** the OHM v1 plan listed CRV, ALCX, FOX, KP3R, SYN, THOR and SUSHI as known gaps "under about $0.5M combined", and skipped them on that estimate. A Transfer scan of every protocol wallet found the gap peaked at ~$2.3M (2022-01), was $1.44M on the first published date (2022-05-01) and $0.5-0.6M later in 2022, and covered two more tokens (FDT, FPIS). All nine were in legacy's `ERC20_TOKENS`, so the Envio port had silently dropped them from published data. Legacy's SYN-FRAX price pair had also been empty since 15,000,000.
+
+**Rule:** before calling an untracked holding immaterial, scan protocol-wallet Transfers (or binary-search `balanceOf`) over its whole holding window, to head, and value it at historical prices. When porting a legacy token list, diff it against the new config and list every token that was dropped. Re-check each legacy price source at blocks where the token was held; an old pool can be empty.

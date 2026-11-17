@@ -7,7 +7,12 @@ import {
   type TokenSupply,
 } from "envio";
 import type { PublicClient } from "viem";
-import { readBlockTimestamp, readNextOhmDistribution, readSOhmCirculatingSupply } from "../effects";
+import {
+  readBlockTimestamp,
+  readNextOhmDistribution,
+  readPreV3SOhmState,
+  readSOhmCirculatingSupply,
+} from "../effects";
 import {
   getPrice,
   getTotalValue,
@@ -29,7 +34,10 @@ import {
   isActive,
   isTreasuryExcluded,
   matches,
+  ohmTokenAt,
+  ohmTokens,
   omitTreasuryExcludedRecords,
+  same,
   toBigDecimal,
   toDecimal,
   ZERO,
@@ -98,7 +106,7 @@ export const BLOCK_HANDLERS = [
   {
     name: "PolygonEightHourSnapshot",
     chain: 137 as const,
-    startBlock: 23000000, // ~2021-09-22, matches POLYGON config
+    startBlock: 23000000, // 2021-12-26, matches POLYGON config
     interval: 14400, // ~8h at Polygon's ~2s block time
   },
   {
@@ -113,7 +121,7 @@ export const BLOCK_HANDLERS = [
   {
     name: "EthereumEightHourSnapshot",
     chain: 1 as const,
-    startBlock: 12000000, // ~2021-04-29, matches ETHEREUM config
+    startBlock: 12000000, // 2021-03-08, before OHM V1; matches ETHEREUM config
     interval: 2400, // ~8h at Ethereum's ~12s block time
   },
 ];
@@ -388,16 +396,31 @@ export async function updateGlobalMetricSnapshot(
   // chainId. Reading it from any chain's snapshot gives the latest sOHM-V3
   // rebase, so we always populate it (independent of write ordering).
   let ohmIndex = new BigNumberCtor("0");
+  let hasV3Index = false;
   const ethereumConfig = CHAIN_CONFIGS[CHAIN_IDS.ETHEREUM];
   const canonicalSOhm = ethereumConfig?.migrationOffset?.sOhmAddress;
   if (canonicalSOhm) {
     const indexState = await context.OhmIndexState.get(`1-${addr(canonicalSOhm)}`);
     if (indexState && indexState.index > 0n) {
+      hasV3Index = true;
       ohmIndex = new BigNumberCtor(indexState.index.toString()).div(
         new BigNumberCtor("1000000000"),
       );
     }
   }
+
+  // Before sOHM v3's first rebase, Ethereum reads the index and staked OHM
+  // from sOHM v2 or v1 instead (see readPreV3SOhmState).
+  const preV3 =
+    isCanonicalChain && !hasV3Index && config.preV3SOhm
+      ? await context.effect(readPreV3SOhmState, {
+          chainId: config.chainId,
+          sOhmV1: config.preV3SOhm.v1,
+          sOhmV2: config.preV3SOhm.v2,
+          atBlock: Number(blockNumber),
+        })
+      : undefined;
+  if (preV3) ohmIndex = toDecimal(BigInt(preV3.index), SOHM_INDEX_DECIMALS);
 
   // ohmPrice / sOhmCirculatingSupply: only Ethereum currently has a complete
   // OHM pricing path (Phase 4 ported the WETH-OHM UniV3 pool) and the
@@ -406,9 +429,18 @@ export async function updateGlobalMetricSnapshot(
   let ohmPrice = new BigNumberCtor("0");
   let sOhmCirculatingSupply = new BigNumberCtor("0");
   if (isCanonicalChain) {
-    const result = await getPrice(config, context, client, config.ohmToken, blockNumber, null);
+    const result = await getPrice(
+      config,
+      context,
+      client,
+      ohmTokenAt(config, blockNumber),
+      blockNumber,
+      null,
+    );
     ohmPrice = result.price;
-    if (config.migrationOffset?.sOhmAddress) {
+    if (preV3) {
+      sOhmCirculatingSupply = toDecimal(BigInt(preV3.circulatingSupply), SOHM_INDEX_DECIMALS);
+    } else if (config.migrationOffset?.sOhmAddress) {
       const raw = (await context.effect(readSOhmCirculatingSupply, {
         chainId: config.chainId,
         sOhm: config.migrationOffset.sOhmAddress,
@@ -635,7 +667,7 @@ export async function pushOwnedLiquidityRecords(
       context,
       client,
       handler,
-      [config.ohmToken],
+      ohmTokens(config),
       blockNumber,
     );
     if (!includedValue) continue;
@@ -685,7 +717,7 @@ export async function pushOwnedLiquidityRecords(
 
 const SOHM_INDEX_DECIMALS = 9;
 
-// Returns the multiplier needed to convert `config.ohmToken` amounts into
+// Returns the multiplier needed to convert `ohmToken` amounts into
 // OHM-equivalent units before they flow into the cross-chain supply rollup.
 // OHM-native chains (Ethereum, Arbitrum, Base, Berachain) return 1. On chains
 // where `ohmToken` is gOHM (Fantom, Polygon) we multiply by the current sOHM
@@ -696,10 +728,11 @@ const SOHM_INDEX_DECIMALS = 9;
 async function getOhmEquivalentMultiplier(
   context: EvmOnBlockContext,
   config: ChainConfig,
+  ohmToken: string,
 ): Promise<BigNumber | null> {
   // Treasury-only chains have no OHM denomination to convert.
-  if (!config.ohmToken) return null;
-  const decimals = getTokenDecimals(config.tokens, config.ohmToken);
+  if (!ohmToken) return null;
+  const decimals = getTokenDecimals(config.tokens, ohmToken);
   if (decimals === 9) return new BigNumberCtor(1);
   return getSOhmV3Index(context);
 }
@@ -730,13 +763,14 @@ export async function pushTotalSupply(
 
   // Robinhood tracks treasury assets only; no verified OHM deployment means
   // no OHM supply records or treasury OHM exclusions may be fabricated.
-  if (!config.ohmToken) return;
+  const ohmToken = ohmTokenAt(config, blockNumber);
+  if (!ohmToken) return;
   const totalSupplyRow = (balance: BigNumber) =>
     createTokenSupply(
       config,
       timestamp,
-      getContractName(config, config.ohmToken),
-      config.ohmToken,
+      getContractName(config, ohmToken),
+      ohmToken,
       undefined,
       undefined,
       undefined,
@@ -751,10 +785,10 @@ export async function pushTotalSupply(
     supplies.push(totalSupplyRow(ZERO));
     return;
   }
-  const entity = await context.Erc20Supply.get(`${config.chainId}-${addr(config.ohmToken)}`);
+  const entity = await context.Erc20Supply.get(`${config.chainId}-${addr(ohmToken)}`);
   if (!entity) return;
-  const decimals = getTokenDecimals(config.tokens, config.ohmToken);
-  const multiplier = await getOhmEquivalentMultiplier(context, config);
+  const decimals = getTokenDecimals(config.tokens, ohmToken);
+  const multiplier = await getOhmEquivalentMultiplier(context, config, ohmToken);
   if (!multiplier) return;
 
   const balance = toDecimal(entity.totalSupply, decimals).times(multiplier);
@@ -773,9 +807,10 @@ export async function pushTreasuryOhm(
 
   // Robinhood tracks treasury assets only; no verified OHM deployment means
   // no OHM supply records or treasury OHM exclusions may be fabricated.
-  if (!config.ohmToken) return;
-  const decimals = getTokenDecimals(config.tokens, config.ohmToken);
-  const multiplier = await getOhmEquivalentMultiplier(context, config);
+  const ohmToken = ohmTokenAt(config, blockNumber);
+  if (!ohmToken) return;
+  const decimals = getTokenDecimals(config.tokens, ohmToken);
+  const multiplier = await getOhmEquivalentMultiplier(context, config, ohmToken);
   if (!multiplier) return;
 
   // Bridged gOHM on Fantom/Polygon mints without a standard Transfer event,
@@ -783,7 +818,7 @@ export async function pushTreasuryOhm(
   // wallets. When the token definition is flagged `nonStandardBalance`, fall
   // back to a snapshot-time balanceOf RPC (cached per (chain, token, wallet,
   // block) via the readErc20BalanceOf effect).
-  const ohmTokenDef = getTokenDefinition(config, config.ohmToken);
+  const ohmTokenDef = getTokenDefinition(config, ohmToken);
   const useOnChainBalance = ohmTokenDef?.nonStandardBalance === true;
 
   for (const wallet of config.circulatingSupplyWallets) {
@@ -791,12 +826,12 @@ export async function pushTreasuryOhm(
       ? await readNonStandardBalance(
           context,
           config.chainId,
-          config.ohmToken,
+          ohmToken,
           wallet,
           decimals,
           blockNumber,
         )
-      : await readTokenBalance(context, config.chainId, config.ohmToken, wallet, decimals);
+      : await readTokenBalance(context, config.chainId, ohmToken, wallet, decimals);
     if (rawBalance.eq(ZERO)) continue;
     const balance = rawBalance.times(multiplier);
     if (balance.eq(ZERO)) continue;
@@ -804,8 +839,8 @@ export async function pushTreasuryOhm(
       createTokenSupply(
         config,
         timestamp,
-        getContractName(config, config.ohmToken),
-        config.ohmToken,
+        getContractName(config, ohmToken),
+        ohmToken,
         undefined,
         undefined,
         getContractName(config, wallet),
@@ -818,15 +853,17 @@ export async function pushTreasuryOhm(
     );
   }
 
-  // Wallets legacy counted as treasury OHM only up to a block (the Olympus
-  // Association before 17,115,000). They aren't protocol wallets, so there's
-  // no Transfer ledger for them; read balanceOf at the snapshot.
+  // Non-protocol wallets counted as treasury OHM: the OHM v1 contracts the
+  // v1 CirculatingSupply oracle excluded, and the Olympus Association before
+  // 17,115,000. There's no Transfer ledger for them; read balanceOf at the
+  // snapshot.
   for (const extra of config.treasuryOhmExtraWallets ?? []) {
-    if (blockNumber > BigInt(extra.lastActiveBlock)) continue;
+    if (!isActive(extra, blockNumber)) continue;
+    if (extra.token !== undefined && !same(extra.token, ohmToken)) continue;
     const rawBalance = await readNonStandardBalance(
       context,
       config.chainId,
-      config.ohmToken,
+      ohmToken,
       extra.address,
       decimals,
       blockNumber,
@@ -836,8 +873,8 @@ export async function pushTreasuryOhm(
       createTokenSupply(
         config,
         timestamp,
-        getContractName(config, config.ohmToken),
-        config.ohmToken,
+        getContractName(config, ohmToken),
+        ohmToken,
         undefined,
         undefined,
         getContractName(config, extra.address),
@@ -859,7 +896,7 @@ export async function pushTreasuryOhm(
   // and start-block gates.
   if (config.treasuryOhmEquivalents) {
     // gOHM-style entries need the sOHM V3 rebase index. On Ethereum the
-    // `multiplier` above is 1 (ohmToken is OHM, not gOHM) so we can't
+    // `multiplier` above is 1 (the OHM token is OHM, not gOHM) so we can't
     // reuse it — fetch the index directly. Cache it so we don't hit
     // OhmIndexState once per (entry × wallet).
     let gohmIndex: BigNumber | null | undefined;
@@ -916,12 +953,13 @@ async function pushOwnedLiquiditySupply(
   // Univ2 / Kodiak resolve the pool ratio from event-sourced state. Balancer /
   // Kodiak underlying pool calls still hit cached RPC until Phase 2B replaces
   // Balancer with event-driven pool state.
-  const multiplier = await getOhmEquivalentMultiplier(context, config);
+  const ohmToken = ohmTokenAt(config, blockNumber);
+  const multiplier = await getOhmEquivalentMultiplier(context, config, ohmToken);
   if (!multiplier) return;
 
   for (const handler of config.ownedLiquidityHandlers) {
     if (!isActive(handler, blockNumber)) continue;
-    if (!matches(handler, config.ohmToken)) continue;
+    if (!matches(handler, ohmToken)) continue;
 
     for (const wallet of config.circulatingSupplyWallets) {
       const rawBalance = await getUnderlyingTokenBalance(
@@ -930,7 +968,7 @@ async function pushOwnedLiquiditySupply(
         client,
         handler,
         wallet,
-        config.ohmToken,
+        ohmToken,
         blockNumber,
       );
       if (rawBalance.eq(ZERO)) continue;
@@ -940,8 +978,8 @@ async function pushOwnedLiquiditySupply(
         createTokenSupply(
           config,
           timestamp,
-          getContractName(config, config.ohmToken),
-          config.ohmToken,
+          getContractName(config, ohmToken),
+          ohmToken,
           getContractName(config, handler.id),
           handler.id,
           getContractName(config, wallet),

@@ -25,7 +25,7 @@ const LP_UNISWAP_V2_WETH_GOHM = addr("0x1549e0e8127d380080aab448b82d280433ce4030
 // Polygon mainnet launched 2020-05-30 at block 0; OHM-related activity began
 // later. Per Phase 1 decision #3 (re-index from genesis, no graft), pick a
 // start block close to when Olympus first bridged assets to Polygon.
-const POLYGON_START_BLOCK = 23_000_000; // ~2021-09-22
+const POLYGON_START_BLOCK = 23_000_000; // 2021-12-26
 
 // Per @0xJem on PR #311: per-chain protocolAddresses should be trimmed to
 // just the wallets that actually hold assets on this chain. Rigorous on-chain
