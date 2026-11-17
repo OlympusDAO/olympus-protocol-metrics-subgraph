@@ -301,3 +301,120 @@ describe("SPELL, PRIME and agEUR", () => {
     expect(config).toContain(`"${SUSHI_SPELL_WETH}"`);
   });
 });
+
+describe("tokens legacy tracked and the Envio port dropped", () => {
+  const T = {
+    ALCX: addr("0xdbdb4d16eda451d0503b854cf79d55697f90c8df"),
+    CRV: addr("0xd533a949740bb3306d119cc777fa900ba034cd52"),
+    FDT: addr("0xed1480d12be41d92f36f5f7bdd88212e381a3677"),
+    FOX: addr("0xc770eefad204b5180df6a14ee197d99d808ee52d"),
+    FPIS: addr("0xc2544a32872a91f4a553b404c6950e89de901fdb"),
+    KP3R: addr("0x1ceb5cb57c4d4e2b2433641b95dd330a33185a44"),
+    SUSHI: addr("0x6b3595068778dd592e39a122f4f5a5cf09c90fe2"),
+    SYN: addr("0x0f2d719407fdbeff09d87557abb7232601fd9f29"),
+    THOR: addr("0xa5f2211b9b8170f694421f2046281775e8468044"),
+  };
+  const WETH = addr("0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2");
+  const FRAX = addr("0x853d955acef822db058eb8505911ed77f175b99e");
+  const handler = (id: string) =>
+    ETHEREUM.liquidityHandlers.find((value) => value.id.toLowerCase() === id.toLowerCase());
+
+  test.each([
+    ["ALCX", T.ALCX, "Alchemix", 11_937_199],
+    ["CRV", T.CRV, "Curve", 10_647_806],
+    ["FDT", T.FDT, "FDT", 13_542_271],
+    ["FOX", T.FOX, "FOX", 7_446_830],
+    ["FPIS", T.FPIS, "FPIS", 14_482_720],
+    ["KP3R", T.KP3R, "KP3R", 11_143_904],
+    ["SUSHI", T.SUSHI, "SushiSwap", 10_736_094],
+    ["SYN", T.SYN, "SYN", 13_025_432],
+    ["THOR", T.THOR, "THOR", 13_456_700],
+  ])(
+    "%s is a liquid volatile token named as legacy named it, from its creation",
+    (symbol, token, name, startBlock) => {
+      expect(getTokenDefinition(ETHEREUM, token)).toMatchObject({
+        category: "Volatile",
+        isLiquid: true,
+        isBluechip: false,
+        startBlock,
+        decimals: 18,
+      });
+      expect(ETHEREUM.names[token]).toBe(name);
+      expect(ETHEREUM.abbreviations[token]).toBe(symbol);
+    },
+  );
+
+  test("Chainlink prices CRV and FOX in USD, ALCX, KP3R and SUSHI through ETH", () => {
+    expect(handler("0xCd627aA160A6fA45Eb793D19Ef54f5062F20f33f")).toMatchObject({
+      kind: "chainlink",
+      tokens: [T.CRV],
+      decimals: 8,
+    });
+    expect(handler("0xccA02FFEFAcE21325befD6616cB4Ba5fCB047480")).toMatchObject({
+      kind: "chainlink",
+      tokens: [T.FOX],
+      decimals: 8,
+      startBlock: 13_810_120,
+    });
+    for (const [feed, token] of [
+      ["0x194a9AaF2e0b67c35915cD01101585A33Fe25CAa", T.ALCX],
+      ["0xe7015CCb7E5F788B8c1010FC22343473EaaC3741", T.KP3R],
+      ["0xe572CeF69f43c2E488b33924AF04BDacE19079cf", T.SUSHI],
+    ]) {
+      expect(handler(feed)).toMatchObject({
+        kind: "chainlink",
+        tokens: [token],
+        decimals: 18,
+        quote: WETH,
+      });
+    }
+  });
+
+  test("the rest price from pools, with FOX-ETH covering FOX before its feed", () => {
+    expect(handler("0x470e8de2ebaef52014a47cb5e6af86884947f08c")).toMatchObject({ kind: "univ2" });
+    expect(handler("0x470e8de2ebaef52014a47cb5e6af86884947f08c")?.tokens).toEqual(
+      expect.arrayContaining([T.FOX, WETH]),
+    );
+    expect(handler("0x4a86c01d67965f8cb3d0aaa2c655705e64097c31")).toMatchObject({
+      kind: "univ2",
+      startBlock: 13_116_399,
+    });
+    expect(handler("0x4a86c01d67965f8cb3d0aaa2c655705e64097c31")?.tokens).toEqual(
+      expect.arrayContaining([T.SYN, WETH]),
+    );
+    expect(handler("0x3d3f13f2529ec3c84b2940155effbf9b39a8f3ec")).toMatchObject({
+      kind: "univ2",
+      startBlock: 13_547_236,
+    });
+    expect(handler("0x3d3f13f2529ec3c84b2940155effbf9b39a8f3ec")?.tokens).toEqual(
+      expect.arrayContaining([T.THOR, WETH]),
+    );
+    expect(
+      handler("0x2d344a84bac123660b021eebe4eb6f12ba25fe8600020000000000000000018a"),
+    ).toMatchObject({ kind: "balancer", startBlock: 14_528_660 });
+    expect(
+      handler("0x2d344a84bac123660b021eebe4eb6f12ba25fe8600020000000000000000018a")?.tokens,
+    ).toEqual(expect.arrayContaining([T.FDT, WETH]));
+    expect(handler("0x8fe536c7dc019455cce34746755c64bbe2aa163b")).toMatchObject({
+      kind: "univ3",
+      fee: 10000,
+      startBlock: 14_546_561,
+    });
+    expect(handler("0x8fe536c7dc019455cce34746755c64bbe2aa163b")?.tokens).toEqual(
+      expect.arrayContaining([T.FPIS, FRAX]),
+    );
+  });
+
+  test("their Transfers and their pools' events are indexed", () => {
+    const config = readFileSync(resolve(__dirname, "../../config.yaml"), "utf8").toLowerCase();
+    for (const token of Object.values(T)) expect(config).toContain(`"${token}"`);
+    for (const pool of [
+      "0x470e8de2ebaef52014a47cb5e6af86884947f08c",
+      "0x4a86c01d67965f8cb3d0aaa2c655705e64097c31",
+      "0x3d3f13f2529ec3c84b2940155effbf9b39a8f3ec",
+      "0x8fe536c7dc019455cce34746755c64bbe2aa163b",
+    ]) {
+      expect(config).toContain(`"${pool}"`);
+    }
+  });
+});

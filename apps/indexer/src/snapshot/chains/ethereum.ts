@@ -264,6 +264,51 @@ const LP_BALANCER_POOL_D2D_USDC = bytes32(
 );
 const LP_BALANCER_D2D_USDC_BLOCK = 13_823_879;
 const CHAINLINK_FEED_EUR_USD = addr("0xb49f677943BC038e9857d61E7d053CaA2C1734C1");
+// Tokens legacy tracked (ERC20_TOKENS) that the Envio port dropped, mostly
+// Olympus Pro fees in Treasury V2/V3. First held 2021-04 (SUSHI) to 2022-04
+// (FPIS); sold 2023-01-25 to 2023-04-05, except CRV (under 1 CRV from
+// 2023-09-20) and FDT (12,282 still in Treasury V2). Creation blocks from
+// getCode.
+const ERC20_ALCX = addr("0xdbdb4d16eda451d0503b854cf79d55697f90c8df");
+const ERC20_ALCX_BLOCK = 11_937_199;
+const ERC20_CRV = addr("0xd533a949740bb3306d119cc777fa900ba034cd52");
+const ERC20_CRV_BLOCK = 10_647_806;
+const ERC20_FDT = addr("0xed1480d12be41d92f36f5f7bdd88212e381a3677");
+const ERC20_FDT_BLOCK = 13_542_271;
+const ERC20_FOX = addr("0xc770eefad204b5180df6a14ee197d99d808ee52d");
+const ERC20_FOX_BLOCK = 7_446_830;
+const ERC20_FPIS = addr("0xc2544a32872a91f4a553b404c6950e89de901fdb");
+const ERC20_FPIS_BLOCK = 14_482_720;
+const ERC20_KP3R = addr("0x1ceb5cb57c4d4e2b2433641b95dd330a33185a44");
+const ERC20_KP3R_BLOCK = 11_143_904;
+const ERC20_SUSHI = addr("0x6b3595068778dd592e39a122f4f5a5cf09c90fe2");
+const ERC20_SUSHI_BLOCK = 10_736_094;
+const ERC20_SYN = addr("0x0f2d719407fdbeff09d87557abb7232601fd9f29");
+const ERC20_SYN_BLOCK = 13_025_432;
+const ERC20_THOR = addr("0xa5f2211b9b8170f694421f2046281775e8468044");
+const ERC20_THOR_BLOCK = 13_456_700;
+// Their price sources. Chainlink where a feed answers over the holding window:
+// CRV/USD, FOX/USD (first answer 13,810,120), and ALCX, KP3R and SUSHI
+// against ETH. Otherwise legacy's pool, except for SYN: legacy's SYN-FRAX pair
+// was empty from 15,000,000, so SYN prices from SushiSwap SYN-WETH. FOX-ETH
+// covers FOX before its feed. FDT has no market before the Balancer pool.
+const CHAINLINK_FEED_CRV_USD = addr("0xCd627aA160A6fA45Eb793D19Ef54f5062F20f33f");
+const CHAINLINK_FEED_FOX_USD = addr("0xccA02FFEFAcE21325befD6616cB4Ba5fCB047480");
+const CHAINLINK_FEED_FOX_USD_BLOCK = 13_810_120;
+const CHAINLINK_FEED_ALCX_ETH = addr("0x194a9AaF2e0b67c35915cD01101585A33Fe25CAa");
+const CHAINLINK_FEED_KP3R_ETH = addr("0xe7015CCb7E5F788B8c1010FC22343473EaaC3741");
+const CHAINLINK_FEED_SUSHI_ETH = addr("0xe572CeF69f43c2E488b33924AF04BDacE19079cf");
+const LP_UNISWAP_V2_FOX_ETH = addr("0x470e8de2ebaef52014a47cb5e6af86884947f08c");
+const LP_SUSHI_SYN_WETH = addr("0x4a86c01d67965f8cb3d0aaa2c655705e64097c31");
+const LP_SUSHI_SYN_WETH_BLOCK = 13_116_399;
+const LP_SUSHI_THOR_WETH = addr("0x3d3f13f2529ec3c84b2940155effbf9b39a8f3ec");
+const LP_SUSHI_THOR_WETH_BLOCK = 13_547_236;
+const LP_BALANCER_POOL_WETH_FDT = bytes32(
+  "0x2d344a84bac123660b021eebe4eb6f12ba25fe8600020000000000000000018a",
+);
+const LP_BALANCER_WETH_FDT_BLOCK = 14_528_660;
+const LP_UNISWAP_V3_FPIS_FRAX = addr("0x8fe536c7dc019455cce34746755c64bbe2aa163b");
+const LP_UNISWAP_V3_FPIS_FRAX_BLOCK = 14_546_561;
 
 // Price pools for the tokens above (legacy LIQUIDITY_POOL_TOKEN_LOOKUP).
 const LP_UNISWAP_V3_FEI_USDC = addr("0xdf50fbde8180c8785842c8e316ebe06f542d3443");
@@ -559,6 +604,15 @@ const names: Record<string, string> = {
   [ERC20_SPELL]: "Spell Token",
   [ERC20_PRIME]: "PrimeDAO",
   [ERC20_AGEUR]: "agEUR",
+  [ERC20_ALCX]: "Alchemix",
+  [ERC20_CRV]: "Curve",
+  [ERC20_FDT]: "FDT",
+  [ERC20_FOX]: "FOX",
+  [ERC20_FPIS]: "FPIS",
+  [ERC20_KP3R]: "KP3R",
+  [ERC20_SUSHI]: "SushiSwap",
+  [ERC20_SYN]: "SYN",
+  [ERC20_THOR]: "THOR",
   [ERC20_CVX_CRV]: "Curve - Convex CRV Reward Pool",
   [ERC20_FRAX]: "FRAX",
   [ERC20_FXS]: "Frax Share",
@@ -643,6 +697,15 @@ const abbreviations: Record<string, string> = {
   [ERC20_CVX_FRAX_3CRV]: "cvxFRAX3CRV",
   [ERC20_SPELL]: "SPELL",
   [ERC20_PRIME]: "D2D",
+  [ERC20_ALCX]: "ALCX",
+  [ERC20_CRV]: "CRV",
+  [ERC20_FDT]: "FDT",
+  [ERC20_FOX]: "FOX",
+  [ERC20_FPIS]: "FPIS",
+  [ERC20_KP3R]: "KP3R",
+  [ERC20_SUSHI]: "SUSHI",
+  [ERC20_SYN]: "SYN",
+  [ERC20_THOR]: "THOR",
 };
 
 // OHM gets priced via the WETH-OHM UniV3 pool, which recurses through WETH
@@ -1048,6 +1111,76 @@ const liquidityHandlers: LiquidityHandler[] = [
     id: CHAINLINK_FEED_EUR_USD,
     decimals: 8,
     startBlock: ERC20_AGEUR_BLOCK,
+  },
+  {
+    kind: "chainlink",
+    tokens: [ERC20_CRV],
+    id: CHAINLINK_FEED_CRV_USD,
+    decimals: 8,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "chainlink",
+    tokens: [ERC20_FOX],
+    id: CHAINLINK_FEED_FOX_USD,
+    decimals: 8,
+    startBlock: CHAINLINK_FEED_FOX_USD_BLOCK,
+  },
+  {
+    kind: "chainlink",
+    tokens: [ERC20_ALCX],
+    id: CHAINLINK_FEED_ALCX_ETH,
+    decimals: 18,
+    quote: ERC20_WETH,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "chainlink",
+    tokens: [ERC20_KP3R],
+    id: CHAINLINK_FEED_KP3R_ETH,
+    decimals: 18,
+    quote: ERC20_WETH,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "chainlink",
+    tokens: [ERC20_SUSHI],
+    id: CHAINLINK_FEED_SUSHI_ETH,
+    decimals: 18,
+    quote: ERC20_WETH,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_FOX, ERC20_WETH],
+    id: LP_UNISWAP_V2_FOX_ETH,
+    startBlock: ETHEREUM_START_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_SYN, ERC20_WETH],
+    id: LP_SUSHI_SYN_WETH,
+    startBlock: LP_SUSHI_SYN_WETH_BLOCK,
+  },
+  {
+    kind: "univ2",
+    tokens: [ERC20_THOR, ERC20_WETH],
+    id: LP_SUSHI_THOR_WETH,
+    startBlock: LP_SUSHI_THOR_WETH_BLOCK,
+  },
+  {
+    kind: "balancer",
+    tokens: [ERC20_FDT, ERC20_WETH],
+    vault: BALANCER_VAULT,
+    id: LP_BALANCER_POOL_WETH_FDT,
+    startBlock: LP_BALANCER_WETH_FDT_BLOCK,
+  },
+  {
+    kind: "univ3",
+    tokens: [ERC20_FPIS, ERC20_FRAX],
+    id: LP_UNISWAP_V3_FPIS_FRAX,
+    fee: 10000,
+    startBlock: LP_UNISWAP_V3_FPIS_FRAX_BLOCK,
   },
   // Lock receipts price as their underlying (legacy getUnstakedToken), and
   // Curve / Balancer stable derivatives price at the USDC rate (legacy
@@ -2257,6 +2390,89 @@ export const ETHEREUM: ChainConfig = {
       isLiquid: true,
       isBluechip: false,
       startBlock: ERC20_AGEUR_BLOCK,
+      decimals: 18,
+    }),
+    // Slices below are 1/7 of each token's peak position, quoted at blocks
+    // where it was held (historical reserves or on-chain quotes).
+    // liquidity: liquid. G1 pass: DEX (SushiSwap ALCX-WETH), 7 daily slices. G2 pass: 0.54% per slice of 488 ALCX ($97k) at 13,800,000; 0.55% ($7.5k) at 16,400,000. G3 n/a (no third party). (assessed 2026-11-17)
+    token({
+      address: ERC20_ALCX,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_ALCX_BLOCK,
+      decimals: 18,
+    }),
+    // liquidity: liquid. G1 pass: DEX (Curve CRV/ETH), 7 daily slices. G2 pass: 0.07% per slice of 59.4k CRV ($41k) at 15,000,000; 0.11% ($43k) at 16,400,000 (get_dy at the block). G3 n/a (no third party). (assessed 2026-11-17)
+    token({
+      address: ERC20_CRV,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_CRV_BLOCK,
+      decimals: 18,
+    }),
+    // liquidity: liquid. G1 pass: DEX (Balancer WETH-FDT 80/20, the only market), 7 daily slices. G2 pass: 1.22% per slice of the 12,282 FDT still in Treasury V2 ($1) at 26,436,000; 1.23% per slice of 55k FDT at 14,800,000. G3 n/a (no third party). The DAO wallet's 5M FDT (16,091,728 to 16,628,542, ~$12-20k) failed G2 at 16% per slice; the flag can't vary by block. (assessed 2026-11-17)
+    token({
+      address: ERC20_FDT,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_FDT_BLOCK,
+      decimals: 18,
+    }),
+    // liquidity: liquid. G1 pass: DEX (Uniswap V2 FOX-ETH), 7 daily slices. G2 pass: 0.59% per slice of 73.8k FOX ($32k) at 13,800,000; 0.44% ($2.9k) at 16,400,000. G3 n/a (no third party). (assessed 2026-11-17)
+    token({
+      address: ERC20_FOX,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_FOX_BLOCK,
+      decimals: 18,
+    }),
+    // liquidity: liquid. G1 pass: DEX (Uniswap V3 FPIS-FRAX 1%), 7 daily slices. G2 pass: 4.96% per slice of 8,369 FPIS ($23k) at 14,800,000; 3.63% ($9.8k) at 16,400,000 (QuoterV1 at the block). G3 n/a (no third party). (assessed 2026-11-17)
+    token({
+      address: ERC20_FPIS,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_FPIS_BLOCK,
+      decimals: 18,
+    }),
+    // liquidity: liquid. G1 pass: DEX (SushiSwap KP3R-WETH and Uniswap V3 KP3R-WETH 1%), 7 daily slices. G2 pass: 0.95% per slice of 197 KP3R ($72k) on SushiSwap alone at 14,400,000; at 16,400,000 ($13.6k) half a slice costs 1.97% on SushiSwap and 3.81% on Uniswap V3 (alone: 5.21% and 6.63%). G3 n/a (no third party). (assessed 2026-11-17)
+    token({
+      address: ERC20_KP3R,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_KP3R_BLOCK,
+      decimals: 18,
+    }),
+    // liquidity: liquid. G1 pass: DEX (SushiSwap SUSHI-WETH), 7 daily slices. G2 pass: 0.32% per slice of 1,041 SUSHI ($7.3k) at 14,000,000 and ($1.2k) at 16,400,000. G3 n/a (no third party). (assessed 2026-11-17)
+    token({
+      address: ERC20_SUSHI,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_SUSHI_BLOCK,
+      decimals: 18,
+    }),
+    // liquidity: liquid. G1 pass: DEX (SushiSwap SYN-WETH), 7 daily slices. G2 pass: 0.52% per slice of 6,953 SYN ($12k) at 13,800,000; 0.42% ($4.5k) at 16,400,000. G3 n/a (no third party). (assessed 2026-11-17)
+    token({
+      address: ERC20_SYN,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_SYN_BLOCK,
+      decimals: 18,
+    }),
+    // liquidity: liquid. G1 pass: DEX (SushiSwap THOR-WETH), 7 daily slices. G2 pass: 1.88% per slice of 19.4k THOR ($15k) at 14,400,000; 1.19% ($5.5k) at 16,400,000. G3 n/a (no third party). (assessed 2026-11-17)
+    token({
+      address: ERC20_THOR,
+      category: "Volatile",
+      isLiquid: true,
+      isBluechip: false,
+      startBlock: ERC20_THOR_BLOCK,
       decimals: 18,
     }),
     // CvxLocker v1 emits no Transfer; balanceOf is the CVX still locked. Only

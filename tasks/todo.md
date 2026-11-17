@@ -446,7 +446,48 @@ an item only once a test, build or live check proves it.
         `HeldPastMay2022.live.test.ts` at 14,690,400.)
   - [x] Tokemak staking: no change. Only the DAO wallet held staked TOKE in
         the window, and the existing read covers it.
-  - [ ] List CRV, ALCX, FOX, KP3R, SYN, THOR and SUSHI as known gaps in the PR.
+  - [ ] Restore the 9 tokens legacy tracked and the Envio port dropped:
+        ALCX, CRV, FDT, FOX, FPIS, KP3R, SUSHI, SYN, THOR (approved,
+        2026-11-17, in this PR). A Transfer scan of every protocol wallet
+        (2026-11-17) found them, mostly Olympus Pro fees. At DefiLlama prices
+        the 9 were worth up to ~$2.3M (2022-01) and $0.4-0.9M through 2022.
+        Published numbers change from 2022-05 to 2023-09, as with SPELL
+        (plus a few dollars of FDT to date).
+    - [x] Holding windows (`balanceOf` over every protocol wallet,
+          binary-searched; the HyperSync scan was too slow on the shared
+          token): first held 2021-04-06 (SUSHI) to 2022-04-19 (FPIS); sold
+          2023-01-25 to 2023-04-05; CRV under 1 from 2023-09-20; 12,282 FDT
+          still in Treasury V2. Start blocks are creation blocks (getCode).
+    - [x] Price sources, checked at held blocks: Chainlink CRV/USD,
+          FOX/USD (from 13,810,120; Uniswap V2 FOX-ETH before), ALCX/ETH,
+          KP3R/ETH, SUSHI/ETH (SUSHI/USD only answers from 12,516,509);
+          legacy pools for FDT (Balancer 20/80), FPIS (UniV3 1%) and THOR
+          (SushiSwap); SYN from SushiSwap SYN-WETH because legacy's SYN-FRAX
+          pair was empty from 15,000,000
+    - [x] Chainlink handler: optional `quote` token for ETH-quoted feeds
+          (`chainlink.test.ts`)
+    - [x] Liquidity verdict per token (asset-liquidity skill): all liquid;
+          FDT scored on today's 12,282, with the 5M DAO-wallet window
+          (16% per slice) noted
+    - [x] Tests: config (`PreV2Treasury.test.ts`), live
+          `LegacyDroppedTokens.live.test.ts` at 16,000,800 (all nine) and
+          13,780,800 (FOX before its feed)
+    - [x] Local run 12,000,000 to 16,700,000 (to 2023-02-24, ~1h55 at
+          batch size 100, no errors). 96 weekly snapshots: every
+          protocol-wallet balance of the nine has a record equal to
+          `balanceOf`, and every rate equals an independent Chainlink or pool
+          mark (1e-6). Only exception: FDT before its Balancer pool
+          (14,528,660) has no price, so no record (12k-58k FDT, ~$5-10k).
+          Restored value: $1.5-1.9M (2022-01 to 2022-04), $0.4-0.8M
+          (2022-05 to 2023-01). Over all 712 days: total supply, price
+          (within 2% of OHM-DAI), staked OHM and index match the chain;
+          circulating matches the v1 oracle on all 275 pre-v2 days. The
+          2,321 record-vs-`balanceOf` mismatches are all existing position
+          readers (veFXS, Liquity, cvxCRV, Rari, DSR, vlCVX unlocked, BAL
+          rewards), not wallet balances; not checked individually.
+  - [ ] Still untracked, listed as known gaps: INV, LOBI, PDT, IQ, BANK,
+        QUARTZ, XRUNE, MTA and smaller (never tracked by legacy either;
+        peak ~$310k combined in 2022-04, under $2k since 2023-09).
   - [x] Start blocks: UniV3 WETH-wstETH (15,384,250), WETH-BTRFLY v1
         (13,826,232), both verified with `getCode`; Ethereum start-block
         comments (12,000,000 is 2021-03-08) and Polygon's (23,000,000 is
@@ -472,15 +513,35 @@ an item only once a test, build or live check proves it.
         PRIME, agEUR at 2022-05-01). Key treasury balances: checked against
         the local-compose run instead, since `createTestIndexer` double-applies
         events inside a range (lessons, 2026-10-26).
-  - [ ] Local-compose run over Ethereum 12M to ~13.9M: **partial.** Public
-        RPC made it ~14.5 s per snapshot (~110 `eth_call` each), so 13.9M
-        would take ~4 h. Run 1 (12,000,000-12,645,600, 87 min, 37.5k RPC
-        calls) found the OHM v1 self-mint bug (fixed in c975fa5). Run 2 with
-        the fix (12,000,000-12,309,600, 64 min including 8 restarts after
-        drpc free-plan timeouts, 26.3k RPC calls): total supply and
-        circulating supply equal the chain / v1 oracle on all 35 indexed
-        dates, 11 treasury balances equal `balanceOf`. Not covered by a local
-        run: 12.31M-13.9M (the live suites cover sample blocks there).
+  - [x] Local-compose run over Ethereum 12,000,000 to 14,700,000 (launch to
+        2022-05-02), Ethereum only, on the Railway Alchemy RPC (2026-11-17).
+        Earlier partial runs on public RPC: run 1 (12.0M-12.65M) found the
+        OHM v1 self-mint bug (c975fa5); run 2 (12.0M-12.31M) was exact.
+        The full run stalled at 13,329,600: the Onsen read called MasterChef
+        v1 `poolInfo(323)` while `poolLength()` was 301, which hits INVALID
+        (0xFE) on that 0.6 contract, not a revert, so the effect threw on
+        every retry. Production on the same RPC would have stalled there.
+        Fixed by checking `poolLength()` first (lessons, 2026-11-17). With the
+        fix it ran to the end block with no errors. Checked every indexed day
+        against archive reads at that day's snapshot block:
+        - total supply equals OHM v1 (v2 after 13,805,112) `totalSupply()`
+          on all ~410 days; circulating equals the v1 oracle on every pre-v2
+          day (its formula with its 13,000,000 list before it was deployed);
+        - staked OHM equals the sOHM contracts' `circulatingSupply()` every
+          day, through the staking v1, v2 and v3 switches; the index never
+          falls or jumps; price is within 2% of the main OHM-DAI pair;
+        - every v1-era TokenRecord equals its source: `balanceOf`, the
+          Convex reward pool, MasterChef `userInfo` for the Onsen stakes,
+          and CvxLocker v1 `lockedBalances().unlockable` for vlCVX v1.
+        Overlap with production on 2022-05-01 and 05-02: supply, index, APY,
+        price and staked OHM equal; all 47 shared Ethereum assets equal; the
+        Ethereum market value and liquid backing differ by exactly the new
+        PRIME + SPELL + agEUR (and SPELL + agEUR) values.
+        Publisher and API: the real publisher (through a local harness that
+        forwards first-publish bounds as `cross_chain` and pins `now`) wrote
+        2021-03-23 to 2022-04-30, and the real metrics-api served it.
+        `ENVIO_RPC_HTTP_BATCH_SIZE=100` sped the run up ~1.7x (no Multicall3
+        before 14,353,601).
   - [x] Rough treasury comparison with DefiLlama: seeded snapshot at
         13,780,800 gives $755.4M market value ($496.5M without POL's OHM
         side) vs DefiLlama's $730.4M, labelled as different methodology.

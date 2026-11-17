@@ -273,13 +273,43 @@ each exists, so they need no start blocks.
   Tokemak allocator, the only staked TOKE in that window is the DAO wallet's
   (from ~14.3M), which the existing read already covers.
 
-**Small pre-v2 tokens** (under about $0.5M combined): CRV, ALCX, FOX, KP3R,
-SYN, THOR and SUSHI. The approved rule is to add each one that has a working
-price path and list the rest as known gaps. None of them has an Envio price
-path today; legacy priced them from pools such as CRV-ETH and SUSHI-ETH.
-Adding those pools would index their Sync events all the way to head for
-under $0.5M of value. All seven are therefore listed in the PR as known
-gaps.
+**Tokens legacy tracked and the Envio port dropped.** The draft listed CRV,
+ALCX, FOX, KP3R, SYN, THOR and SUSHI as known gaps worth under about $0.5M.
+A HyperSync Transfer scan of every protocol wallet (2026-11-17) found the gap
+was larger and lasted into published dates, so this PR restores the nine
+tokens that legacy's `ERC20_TOKENS` had and the Envio port dropped: ALCX,
+CRV, FDT, FOX, FPIS, KP3R, SUSHI, SYN and THOR (approved, 2026-11-17).
+Mostly Olympus Pro fees, they were worth up to ~$2.3M (2022-01) and
+$0.4-0.9M through 2022 at DefiLlama prices. First held from 2021-04 (SUSHI)
+to 2022-04 (FPIS), they were sold between 2023-01-25 and 2023-04-05, except a
+CRV tail (under 1 CRV from 2023-09-20) and 12,282 FDT still in Treasury V2.
+Windows from `balanceOf` over every protocol wallet, binary-searched.
+
+Price sources:
+
+- Chainlink, read at the snapshot block (no indexed events): CRV/USD,
+  FOX/USD (first answer 13,810,120), and ALCX/ETH, KP3R/ETH and SUSHI/ETH.
+  The Chainlink handler gains an optional `quote` token so an X/ETH feed is
+  multiplied by WETH's price.
+- Legacy's pools otherwise: Uniswap V2 FOX-ETH (FOX before its feed),
+  SushiSwap THOR-WETH, Balancer WETH-FDT 20/80 and Uniswap V3 FPIS-FRAX 1%.
+- SYN prices from SushiSwap SYN-WETH, not legacy's SYN-FRAX pair, which was
+  empty from 15,000,000.
+
+FDT has no price before the Balancer pool (created 14,528,660), so the
+12k-58k FDT held from 13,812,368 gets no record until then (the indexer
+skips unpriced holdings). Legacy priced it from the same pool.
+
+Liquidity, with the asset-liquidity skill: all nine liquid. KP3R passes only
+on venues combined (half a slice on SushiSwap and half on Uniswap V3 1%), and
+FPIS passes at 4.96% per slice at acquisition. FDT is scored on today's
+12,282 FDT. The DAO wallet's 5M FDT (16,091,728 to 16,628,542, $12-20k) would have
+failed Gate 2 at 16% per slice, and the flag can't vary by block.
+
+Still untracked (legacy never tracked them either): INV, LOBI, PDT, IQ,
+BANK, QUARTZ, XRUNE, MTA and smaller tokens. Together they peaked at about
+$310k (2022-04) and have been under $2k since 2023-09. The PR lists them as
+known gaps.
 
 **Start-block fixes.** Set the real creation blocks for the UniV3 pools
 WETH-wstETH (15,384,250) and WETH-BTRFLY v1 (13,826,232). Both currently use

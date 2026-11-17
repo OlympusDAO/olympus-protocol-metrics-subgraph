@@ -16,7 +16,7 @@ export class ChainlinkPriceHandler extends BasePriceHandler<
 > {
   async getPrice(
     _tokenAddress: string,
-    _priceLookup: PriceLookup,
+    priceLookup: PriceLookup,
     blockNumber: bigint,
   ): Promise<PriceLookupResult | null> {
     if (!this.isActive(blockNumber)) return null;
@@ -33,7 +33,12 @@ export class ChainlinkPriceHandler extends BasePriceHandler<
     });
     const answer = BigInt(raw);
     if (answer === 0n) return null;
-    return { price: toDecimal(answer, this.handler.decimals), liquidity: CHAINLINK_PRIORITY };
+    const price = toDecimal(answer, this.handler.decimals);
+    if (!this.handler.quote) return { price, liquidity: CHAINLINK_PRIORITY };
+    // An X/ETH feed answers in the quote token; convert through its USD price.
+    const quote = await priceLookup(this.handler.quote, blockNumber, this.getId());
+    if (quote.price.lte(ZERO)) return null;
+    return { price: price.times(quote.price), liquidity: CHAINLINK_PRIORITY };
   }
 
   async getTotalValue(): Promise<BigNumber | null> {

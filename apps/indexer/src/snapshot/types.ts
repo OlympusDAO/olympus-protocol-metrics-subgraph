@@ -344,6 +344,7 @@ export type LiquidityHandler =
       id: string; // feed (aggregator) address — also used as ChainlinkPriceState lookup key
       tokens: string[]; // exactly one token: the asset this feed prices
       decimals: number; // feed decimals (8 for USD pairs, 18 for ETH pairs)
+      quote?: string; // token the feed is denominated in (WETH for X/ETH feeds); omit for USD
       startBlock?: number;
     }
   | {
