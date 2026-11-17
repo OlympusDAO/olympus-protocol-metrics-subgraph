@@ -3,7 +3,7 @@ import { createPublicClient, http } from "viem";
 import { mainnet } from "viem/chains";
 
 for (const line of readFileSync(
-  "/Users/zach/Documents/repos/olympus/olympus-protocol-metrics-subgraph/.env",
+  new URL("../.env", import.meta.url),
   "utf8",
 ).split("\n")) {
   const match = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.+?)\s*$/);
