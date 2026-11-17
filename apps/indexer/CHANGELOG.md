@@ -8,7 +8,7 @@ All notable changes to this package will be documented in this file. Dates are d
 - Publish the index, staked OHM and APY before sOHM v3 from sOHM v1/v2 (`readPreV3SOhmState`).
 - Value the pre-v2 treasury: the four OHM v1 pairs and the OHM-FRAX v2 / OHM-LUSD v2 pairs as protocol-owned liquidity, the Onsen allocator's MasterChef v1 stakes, and vlCVX v1 (illiquid).
 - Value SPELL, PRIME (illiquid) and agEUR, which were also held after 2022-05-01, so this revises published market value and liquid backing for those dates.
-- Restore the nine tokens legacy tracked and the Envio port dropped: ALCX, CRV, FDT, FOX, FPIS, KP3R, SUSHI, SYN and THOR (all liquid). They were held from 2021-04 to 2023-04 (a CRV tail to 2023-09, and 12,282 FDT still held), so this revises published market value and liquid backing from 2022-05-01 by up to ~$0.8M. The Chainlink handler takes an optional `quote` token, for feeds priced in ETH.
+- Restore the nine tokens legacy tracked and the Envio port dropped: ALCX, CRV, FDT, FOX, FPIS, KP3R, SUSHI, SYN and THOR (all liquid). They were held from 2021-04 to 2023-04 (a CRV tail to 2023-09, and 12,282 FDT still held), so this revises published market value and liquid backing from 2022-05-01 by up to $1.53M (2022-05-04; $0.5-0.6M from 2022-08 to 2022-12). The Chainlink handler takes an optional `quote` token, for feeds priced in ETH.
 - Read MasterChef v1 `poolLength()` before `poolInfo(pid)`, so the Onsen read returns 0 for a pool that doesn't exist yet. Before, it hit an invalid opcode at 13,329,600 and the snapshot retried forever.
 - Require only Ethereum for `crossChainComplete` before 2022-05-01, Arbitrum's first snapshot date.
 - Start the UniV3 WETH-wstETH and WETH-BTRFLY v1 pricing handlers at pool creation.

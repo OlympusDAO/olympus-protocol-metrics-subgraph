@@ -279,8 +279,9 @@ A HyperSync Transfer scan of every protocol wallet (2026-11-17) found the gap
 was larger and lasted into published dates, so this PR restores the nine
 tokens that legacy's `ERC20_TOKENS` had and the Envio port dropped: ALCX,
 CRV, FDT, FOX, FPIS, KP3R, SUSHI, SYN and THOR (approved, 2026-11-17).
-Mostly Olympus Pro fees, they were worth up to ~$2.3M (2022-01) and
-$0.4-0.9M through 2022 at DefiLlama prices. First held from 2021-04 (SUSHI)
+Mostly Olympus Pro fees, they were worth up to $2.5M (2022-01-16) and, on
+published dates, $1.44M on 2022-05-01 (peak $1.53M on 2022-05-04) falling to
+$0.5-0.6M from 2022-08 to 2022-12 (local run, indexer marks). First held from 2021-04 (SUSHI)
 to 2022-04 (FPIS), they were sold between 2023-01-25 and 2023-04-05, except a
 CRV tail (under 1 CRV from 2023-09-20) and 12,282 FDT still in Treasury V2.
 Windows from `balanceOf` over every protocol wallet, binary-searched.

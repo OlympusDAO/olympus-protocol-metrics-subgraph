@@ -450,7 +450,9 @@ an item only once a test, build or live check proves it.
         ALCX, CRV, FDT, FOX, FPIS, KP3R, SUSHI, SYN, THOR (approved,
         2026-11-17, in this PR). A Transfer scan of every protocol wallet
         (2026-11-17) found them, mostly Olympus Pro fees. At DefiLlama prices
-        the 9 were worth up to ~$2.3M (2022-01) and $0.4-0.9M through 2022.
+        the 9 were worth up to ~$2.3M (2022-01); the local run puts them at
+        $1.44M on 2022-05-01 (peak $1.53M, 2022-05-04), $0.5-0.6M 2022-08 to
+        2022-12.
         Published numbers change from 2022-05 to 2023-09, as with SPELL
         (plus a few dollars of FDT to date).
     - [x] Holding windows (`balanceOf` over every protocol wallet,
@@ -478,8 +480,8 @@ an item only once a test, build or live check proves it.
           `balanceOf`, and every rate equals an independent Chainlink or pool
           mark (1e-6). Only exception: FDT before its Balancer pool
           (14,528,660) has no price, so no record (12k-58k FDT, ~$5-10k).
-          Restored value: $1.5-1.9M (2022-01 to 2022-04), $0.4-0.8M
-          (2022-05 to 2023-01). Over all 712 days: total supply, price
+          Restored value: $1.5-2.5M (2022-01 to 2022-04), $1.44-1.53M in
+          early 2022-05, $0.5-0.6M (2022-08 to 2022-12). Over all 712 days: total supply, price
           (within 2% of OHM-DAI), staked OHM and index match the chain;
           circulating matches the v1 oracle on all 275 pre-v2 days. The
           2,321 record-vs-`balanceOf` mismatches are all existing position
