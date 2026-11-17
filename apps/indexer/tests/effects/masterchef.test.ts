@@ -1,4 +1,4 @@
-import { ContractFunctionExecutionError, ContractFunctionRevertedError } from "viem";
+import { ContractFunctionExecutionError, TransactionRejectedRpcError } from "viem";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const { readContract } = vi.hoisted(() => ({ readContract: vi.fn() }));
@@ -41,9 +41,11 @@ const run = () =>
     context: {},
   });
 
-function chain(poolLp: string | Error, staked: bigint) {
+// 400 pools by default: pid 185 exists.
+function chain(poolLp: string | Error, staked: bigint, poolLength = 400n) {
   readContract.mockImplementation(
     async ({ functionName, args }: { functionName: string; args: unknown[] }) => {
+      if (functionName === "poolLength") return poolLength;
       if (functionName === "poolInfo") {
         expect(args).toEqual([185n]);
         if (poolLp instanceof Error) throw poolLp;
@@ -77,14 +79,23 @@ describe("readMasterChefStake", () => {
     expect(await run()).toBe("0");
   });
 
-  test("returns 0 when the pid doesn't exist yet", async () => {
+  test("returns 0 without reading poolInfo when the pid doesn't exist yet", async () => {
+    // MasterChef v1 is pre-0.8 Solidity: poolInfo(pid) past the end of the
+    // array hits INVALID (0xFE), not a revert. Alchemy reports it as
+    // "EVM error: InvalidFEOpcode" (pid 323 at 13,329,600, when poolLength
+    // was 301), which isContractRevert doesn't match, so reading it stalled
+    // the snapshot.
     chain(
       new ContractFunctionExecutionError(
-        new ContractFunctionRevertedError({ abi: ABI, functionName: "poolInfo" }),
+        new TransactionRejectedRpcError(new Error("EVM error: InvalidFEOpcode")),
         { abi: ABI, functionName: "poolInfo", contractAddress: MASTERCHEF },
       ),
       0n,
+      185n,
     );
     expect(await run()).toBe("0");
+    expect(readContract).not.toHaveBeenCalledWith(
+      expect.objectContaining({ functionName: "poolInfo" }),
+    );
   });
 });

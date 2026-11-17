@@ -187,3 +187,12 @@ If those match but disagree with the actual on-chain `balanceOf`, the token is n
 **The trap:** a live test that runs `createTestIndexer().process()` over a block range and then checks a ledger built from events (TokenBalance, Erc20Supply) gets double the on-chain value. A single DAI Transfer of 100.9 into Treasury V2 at block 12,530,585 left `TokenBalance` at 201.8, with one `TokenBalanceUpdate` row (same id, `delta` 100.9). The handler ran twice for the same log, and the second run read the first run's write. It reproduces on develop. The production runtime is exact: the local-compose indexer over the same blocks matched `balanceOf` to the wei.
 
 **Rule:** in live tests, seed ledgers from archive reads at `block - 1` and process only the snapshot block (as `OhmV1Supply.live.test.ts`, `OhmV1Pol.live.test.ts` and `CcipCutover.live.test.ts` do). Don't assert ledger balances accumulated from events inside a `createTestIndexer` range. To check event-built balances, use the local-compose run.
+
+---
+
+## 2026-11-17 — An out-of-range read on a pre-0.8 contract isn't a revert
+
+**What caught us:** the Onsen read called MasterChef v1 `poolInfo(323)` at 13,329,600, when `poolLength()` was 301. MasterChef v1 is Solidity 0.6, so indexing past the end of `poolInfo[]` hits `INVALID` (0xFE), not `revert`. Alchemy returns that as `TransactionRejectedRpcError` with "EVM error: InvalidFEOpcode", which `isContractRevert` doesn't match, so the effect threw and the snapshot retried forever. The unit test mocked a missing pid as `ContractFunctionRevertedError`, so it passed. The live suites sampled blocks where the pid existed, and the earlier local runs stopped at 12.31M.
+
+**Rule:** before indexing an array getter on a contract compiled with Solidity below 0.8, read its length (`poolLength()`, `length()` or similar) and return the empty value when the index is out of range. Don't rely on catching the failure: providers word an invalid opcode differently and none of them call it a revert. In tests, mock the out-of-range case with the error a real provider returns, not a revert.
+

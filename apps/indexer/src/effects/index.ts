@@ -439,8 +439,18 @@ export const readPositionAmount = createEffect(
 // expected LP. Pool ids can be repointed (MasterChef v1 pid 185 held OHM-DAI
 // v1 SLP but now points at an address with no code), so neither a head read
 // nor a fixed pid-to-pool mapping is safe. A pid that doesn't exist yet
-// reverts, which counts as 0.
+// counts as 0, checked with poolLength(): MasterChef v1 is pre-0.8 Solidity,
+// so poolInfo(pid) past the end hits INVALID (0xFE) rather than reverting,
+// and providers report that as a non-revert error (Alchemy:
+// "EVM error: InvalidFEOpcode").
 const MASTERCHEF_ABI = [
+  {
+    inputs: [],
+    name: "poolLength",
+    outputs: [{ name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
   {
     inputs: [{ name: "pid", type: "uint256" }],
     name: "poolInfo",
@@ -490,6 +500,15 @@ export const readMasterChefStake = createEffect(
     const blockNumber = BigInt(input.atBlock);
     const pid = BigInt(input.pid);
     try {
+      const poolLength = (await retryRpc(() =>
+        client.readContract({
+          address: getAddress(input.contract),
+          abi: MASTERCHEF_ABI,
+          functionName: "poolLength",
+          blockNumber,
+        }),
+      )) as bigint;
+      if (pid >= poolLength) return "0";
       const pool = (await retryRpc(() =>
         client.readContract({
           address: getAddress(input.contract),
