@@ -2,6 +2,11 @@
 
 All notable changes to this package will be documented in this file. Dates are displayed in UTC.
 
+## [v0.4.0]
+
+- Resume indexing from the stored checkpoint on normal startup and after recoverable crashes.
+- Add an explicit local reset command that pauses ingestion, runs Envio’s schema setup, and restarts indexing after a successful migration.
+
 ## [v0.3.1] - 2026-09-27
 
 - Keep held and pending rUSDG at NAV outside liquid backing; split fixed redemption claims so only claimable USDG is liquid. Classify each row explicitly and document the required historical replay and publication checks.

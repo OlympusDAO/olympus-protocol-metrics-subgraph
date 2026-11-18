@@ -74,6 +74,42 @@ services:
     networks:
       - metrics-private
 
+  rpc-cache-postgres:
+    image: postgres:17-alpine@sha256:979c4379dd698aba0b890599a6104e082035f98ef31d9b9291ec22f2b13059ca
+    environment:
+      POSTGRES_DB: rpc_cache
+      POSTGRES_USER: rpc_cache
+      POSTGRES_PASSWORD: ${RPC_CACHE_POSTGRES_PASSWORD:-local-rpc-cache}
+    volumes:
+      - rpc-cache-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rpc_cache -d rpc_cache"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - metrics-private
+
+  rpc-cache:
+    build:
+      context: .
+      dockerfile: Dockerfile-rpc-cache
+    environment:
+      RPC_CACHE_DATABASE_URL: postgresql://rpc_cache:${RPC_CACHE_POSTGRES_PASSWORD:-local-rpc-cache}@rpc-cache-postgres:5432/rpc_cache
+      RPC_CACHE_MAX_RPS: ${RPC_CACHE_MAX_RPS:-100}
+      UPSTREAM_RPC_URL_1: ${UPSTREAM_RPC_URL_1:-${ENVIO_ETHEREUM_RPC_URL:-https://eth.llamarpc.com}}
+      UPSTREAM_RPC_URL_137: ${UPSTREAM_RPC_URL_137:-${ENVIO_POLYGON_RPC_URL:-https://polygon-bor-rpc.publicnode.com}}
+      UPSTREAM_RPC_URL_250: ${UPSTREAM_RPC_URL_250:-${ENVIO_FANTOM_RPC_URL:-https://rpcapi.fantom.network}}
+      UPSTREAM_RPC_URL_4663: ${UPSTREAM_RPC_URL_4663:-${ENVIO_ROBINHOOD_RPC_URL:-https://rpc.mainnet.chain.robinhood.com}}
+      UPSTREAM_RPC_URL_8453: ${UPSTREAM_RPC_URL_8453:-${ENVIO_BASE_RPC_URL:-https://base.llamarpc.com}}
+      UPSTREAM_RPC_URL_42161: ${UPSTREAM_RPC_URL_42161:-${ENVIO_ARBITRUM_RPC_URL:-https://arbitrum.rpc.subquery.network/public}}
+      UPSTREAM_RPC_URL_80094: ${UPSTREAM_RPC_URL_80094:-${ENVIO_BERACHAIN_RPC_URL:-https://rpc.berachain.com}}
+    depends_on:
+      rpc-cache-postgres:
+        condition: service_healthy
+    networks:
+      - metrics-private
+
   indexer:
     build:
       context: .
@@ -93,13 +129,13 @@ services:
       PORT: ${INDEXER_PORT:-9898}
       ENVIO_MAX_PARTITION_CONCURRENCY: ${ENVIO_MAX_PARTITION_CONCURRENCY:-10}
       ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:?Set ENVIO_API_TOKEN in .env to run the compose stack}
-      ENVIO_ARBITRUM_RPC_URL: ${ENVIO_ARBITRUM_RPC_URL:-https://arbitrum.rpc.subquery.network/public}
-      ENVIO_ROBINHOOD_RPC_URL: ${ENVIO_ROBINHOOD_RPC_URL:-https://rpc.mainnet.chain.robinhood.com}
-      ENVIO_BERACHAIN_RPC_URL: ${ENVIO_BERACHAIN_RPC_URL:-https://rpc.berachain.com}
-      ENVIO_BASE_RPC_URL: ${ENVIO_BASE_RPC_URL:-https://base.llamarpc.com}
-      ENVIO_POLYGON_RPC_URL: ${ENVIO_POLYGON_RPC_URL:-https://polygon-bor-rpc.publicnode.com}
-      ENVIO_FANTOM_RPC_URL: ${ENVIO_FANTOM_RPC_URL:-https://rpcapi.fantom.network}
-      ENVIO_ETHEREUM_RPC_URL: ${ENVIO_ETHEREUM_RPC_URL:-https://eth.llamarpc.com}
+      ENVIO_ARBITRUM_RPC_URL: http://rpc-cache:4000/metrics/evm/42161
+      ENVIO_ROBINHOOD_RPC_URL: http://rpc-cache:4000/metrics/evm/4663
+      ENVIO_BERACHAIN_RPC_URL: http://rpc-cache:4000/metrics/evm/80094
+      ENVIO_BASE_RPC_URL: http://rpc-cache:4000/metrics/evm/8453
+      ENVIO_POLYGON_RPC_URL: http://rpc-cache:4000/metrics/evm/137
+      ENVIO_FANTOM_RPC_URL: http://rpc-cache:4000/metrics/evm/250
+      ENVIO_ETHEREUM_RPC_URL: http://rpc-cache:4000/metrics/evm/1
       ENVIO_RPC_HTTP_BATCH_SIZE: ${ENVIO_RPC_HTTP_BATCH_SIZE:-10}
       ENVIO_RPC_MULTICALL_BATCH_SIZE: ${ENVIO_RPC_MULTICALL_BATCH_SIZE:-128}
       ENVIO_RPC_TIMEOUT_MS: ${ENVIO_RPC_TIMEOUT_MS:-30000}
@@ -108,6 +144,8 @@ services:
         condition: service_healthy
       hasura:
         condition: service_healthy
+      rpc-cache:
+        condition: service_started
     networks:
       - metrics-private
 
@@ -160,6 +198,7 @@ services:
       - metrics-private
 
 volumes:
+  rpc-cache-postgres-data:
   postgres-data:
   minio-data:
 

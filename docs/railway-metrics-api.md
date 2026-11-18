@@ -1,7 +1,9 @@
 # Railway Metrics API Deployment
 
-This deployment keeps Envio, Hasura, Postgres, and the artifact publisher private
-inside Railway. Only `metrics-api` should receive a public Railway domain.
+Railway runs Envio, Hasura, Postgres, a persistent RPC cache, and the scheduled
+artifact publisher. The metrics API serves published snapshots. The migration
+preserves existing generated domains. See the
+[Railway infrastructure definition and plan procedure](../.railway/README.md).
 
 ## Services
 
@@ -11,7 +13,9 @@ inside Railway. Only `metrics-api` should receive a public Railway domain.
 | `metrics-publisher` | No | Scheduled artifact generation and upload. |
 | `hasura` | No | Private GraphQL access for the publisher only. |
 | `indexer` | No | Envio indexer process and Envio `/healthz` liveness probe. |
-| Postgres | No | Railway private database service. |
+| Postgres | No | Envio and Hasura database. |
+| `rpc-cache` | No | eRPC archive provider routing and finalized-read caching. |
+| `rpc-cache-postgres` | No | Persistent cache database on a dedicated volume. |
 
 Hasura must use Railway private networking only. Configure publisher-to-Hasura
 traffic with the private service hostname, not the public internet hostname.
@@ -31,16 +35,12 @@ Use Railway's Variables tab or raw editor for each service. Variables listed as
 
 ### Setup order
 
-1. Create the Postgres, Hasura, indexer, metrics publisher, and metrics API
-   services.
-2. Add Postgres first so its generated variables are available for references.
-3. Set Hasura variables, including `PORT`.
-4. Set indexer variables, pointing `HASURA_GRAPHQL_ENDPOINT` at Hasura's private
-   metadata endpoint.
-5. Set publisher variables, pointing `HASURA_GRAPHQL_ENDPOINT` at Hasura's
-   private GraphQL endpoint.
-6. Set metrics API variables and give only `metrics-api` a public Railway
-   domain.
+1. Review the whole-project plan and confirm the existing database, bucket, and
+   services retain their identities. Follow the [IaC plan procedure](../.railway/README.md).
+2. Configure the cache with the seven archive endpoints and verify private
+   routing before switching the indexer to the cache.
+3. Verify Hasura and indexer readiness, then verify the publisher can produce a
+   complete artifact set and the metrics API serves it.
 
 ### Postgres service
 
@@ -96,32 +96,21 @@ check requires the core variables below before Envio starts.
 - Do not set `ENVIO_PG_SCHEMA` on Railway. The indexer intentionally uses
   Envio's default schema, currently `public`, so each deployment operates on the
   same Envio schema instead of accumulating deployment-specific schemas.
-- Railway indexer startup runs `envio start -r`. This deletes and recreates the
-  Envio tables in the default schema before indexing. That is intentional:
-  Postgres/Hasura is not the public availability boundary for this service.
-  Published artifact snapshots and the metrics API are the handover boundary.
-- The startup wrapper supervises Envio rather than exiting with it. Envio treats
-  a failed batch write as fatal, so a Postgres restart underneath a running
-  indexer kills the process. On an unexpected exit the wrapper waits for
-  Postgres to accept connections again (up to ten minutes) and respawns Envio
-  as plain `envio start` — no `-r` — so the indexer resumes rather than
-  replaying from the beginning. A crash inside the first minute is treated as a
-  failed startup instead and repeats the original `-r`, because a run that never
-  got under way may have left the schema half-created.
+- Startup and crash recovery use plain `envio start` and resume from the
+  committed checkpoint. After an unexpected exit, the wrapper waits up to ten
+  minutes for Postgres to accept connections before retrying.
 - Required `ENVIO_PG_SSL_MODE`: set according to the Railway Postgres
   connection mode. Envio accepts `false`, `true`, `require`, `allow`, `prefer`,
   or `verify-full`; it does not accept libpq-style `disable`.
 - Optional `ENVIO_PG_MAX_CONNECTIONS`: Envio Postgres pool size.
-- Required on Railway `PORT`: Railway HTTP target port for the indexer
-  healthcheck. Use `9898` unless you intentionally need a different port. The
+- Required on Railway `PORT`: Railway HTTP target port for Envio. Use `9898` unless you intentionally need a different port. The
   indexer startup wrapper derives `ENVIO_INDEXER_PORT` from Railway's runtime
   `PORT` before Envio starts.
 - Required `HASURA_GRAPHQL_ENDPOINT`: private Hasura metadata endpoint, for
   example `http://hasura.railway.internal:8080/v1/metadata`.
 - Required `HASURA_GRAPHQL_ADMIN_SECRET`: same value used by Hasura.
-- Required `ENVIO_ETHEREUM_RPC_URL`, `ENVIO_ARBITRUM_RPC_URL`,
-  `ENVIO_BASE_RPC_URL`, `ENVIO_BERACHAIN_RPC_URL`, `ENVIO_POLYGON_RPC_URL`, and
-  `ENVIO_FANTOM_RPC_URL`: primary per-chain archive RPC URLs.
+- The seven `ENVIO_<CHAIN>_RPC_URL` values point to the private cache.
+  The same values serve Envio's fallback RPC configuration and snapshot reads.
 - Optional `ENVIO_MAX_PARTITION_CONCURRENCY`: Envio concurrency setting.
 
 Example indexer raw variables:
@@ -137,12 +126,13 @@ ENVIO_PG_SSL_MODE=prefer
 PORT=9898
 HASURA_GRAPHQL_ENDPOINT=http://${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.PORT}}/v1/metadata
 HASURA_GRAPHQL_ADMIN_SECRET=${{hasura.HASURA_GRAPHQL_ADMIN_SECRET}}
-ENVIO_ETHEREUM_RPC_URL=<ethereum-archive-rpc-url>
-ENVIO_ARBITRUM_RPC_URL=<arbitrum-archive-rpc-url>
-ENVIO_BASE_RPC_URL=<base-archive-rpc-url>
-ENVIO_BERACHAIN_RPC_URL=<berachain-archive-rpc-url>
-ENVIO_POLYGON_RPC_URL=<polygon-archive-rpc-url>
-ENVIO_FANTOM_RPC_URL=<fantom-archive-rpc-url>
+ENVIO_ETHEREUM_RPC_URL=http://${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/1
+ENVIO_ARBITRUM_RPC_URL=http://${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/42161
+ENVIO_BASE_RPC_URL=http://${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/8453
+ENVIO_BERACHAIN_RPC_URL=http://${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/80094
+ENVIO_POLYGON_RPC_URL=http://${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/137
+ENVIO_FANTOM_RPC_URL=http://${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/250
+ENVIO_ROBINHOOD_RPC_URL=http://${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/4663
 ```
 
 Railway Postgres variable names can differ depending on how the database service
@@ -157,30 +147,43 @@ Envio's RPC schema supports batch/backoff/timeout/polling fields in
 `config.yaml`; it does not consume `requests_per_second` environment variables
 for event ingestion.
 
-Railway deployment flow:
+### Manual indexer reset
 
-1. A new indexer deployment starts with `envio start -r` against Envio's default
-   schema. Any restart of the indexer *container* does the same, including
-   platform-initiated restarts that keep the current deployment. An in-process
-   respawn after an Envio crash does not: the wrapper resumes the existing
-   schema, so a transient Postgres outage costs seconds rather than a full
-   reindex.
-2. Existing metric artifacts remain in the bucket, and `metrics-api` continues
-   serving the currently published manifest while the indexer reindexes.
-3. The publisher cron reads Hasura but skips cleanly with
-   `skipReason: "not_data_ready"` until the indexer has produced complete
-   eligible data.
-4. Once the indexer is data-ready, the publisher regenerates the deployment's
-   snapshots, uploads all shard files, then publishes `v2/manifest.json` last.
-5. After the manifest update, `metrics-api` serves the newly published artifact
-   set.
+Reset is an explicit operator action for a deliberate historical rebuild or a
+schema-incompatible deployment. It recreates the Envio schema and starts
+indexing at the configured chain start blocks. Verify the deployment and
+database target before executing the command from the indexer service shell
+as the same operating-system user as the running indexer (`node`).
 
-Do not use `ENVIO_PG_SCHEMA` for Railway blue/green handover. If Envio config or
-schema changes are incompatible with existing data, reset-on-start handles the
-database side. Client-visible handover is handled by the publisher manifest.
+```bash
+cd /app/apps/indexer
+tsx src/start-envio.ts reset
+```
 
-This repository's snapshot effect RPC client does consume optional runtime
-tuning variables:
+The command uses the supervisor's local Unix socket. The supervisor stops the
+ingestion process group, runs Envio's local migration, and starts ingestion
+after migration succeeds. If migration fails, ingestion stays paused. Resolve
+the failure before retrying the reset. The RPC cache uses its own database
+and remains available across an indexer reset.
+
+The metrics API serves the current published manifest during the rebuild. The
+publisher skips until the indexer has complete eligible data and publishes the
+new manifest after uploading the regenerated shards. Keep the default Envio
+schema on Railway so every deployment uses the existing index database.
+
+### RPC cache service
+
+Set `UPSTREAM_RPC_URL_<chain ID>` on `rpc-cache` for chain IDs 1, 137, 250,
+8453, 42161, 80094, and 4663. Use archive endpoints that serve the indexer's
+historical blocks. `RPC_CACHE_DATABASE_URL` references the dedicated cache
+Postgres service. Keep the RPC and metrics ports private.
+
+eRPC permanently stores eligible historical reads only when the provider
+reports them finalized. Providers without a usable finalized tag can still
+serve reads, with no permanent cache entries for unconfirmed data. Cache
+capacity and index database capacity are independent.
+
+The snapshot effect RPC client accepts these optional runtime settings.
 
 - Optional `ENVIO_RPC_HTTP_BATCH_SIZE`, `ENVIO_RPC_MULTICALL_BATCH_SIZE`, and
   `ENVIO_RPC_TIMEOUT_MS`.

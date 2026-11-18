@@ -1,0 +1,37 @@
+--- a/erpc/http_server.go
++++ b/erpc/http_server.go
+@@ -6,0 +7 @@
++	"encoding/hex"
+@@ -1882,0 +1884,11 @@
++		if includeErrorDetails != nil && !*includeErrorDetails {
++			message = "RPC request failed"
++			lower := strings.ToLower(jre.Message)
++			if strings.Contains(lower, "historical state") && strings.Contains(lower, "not available") {
++				message = "historical state is not available"
++			} else if jre.NormalizedCode() == common.JsonRpcErrorEvmReverted && strings.TrimSpace(lower) == "execution reverted" {
++				// Only a genuinely bare EVM revert is an empty array-bounds signal.
++				// Code 3 also covers reasoned reverts and other execution failures.
++				message = "execution reverted"
++			}
++		}
+@@ -1904 +1916,8 @@
+-		if jre.Details["data"] != nil {
++		if includeErrorDetails != nil && !*includeErrorDetails {
++			// Keep ABI revert bytes, never provider-authored text or objects.
++			if data, ok := jre.Details["data"].(string); ok && strings.HasPrefix(data, "0x") {
++				if _, err := hex.DecodeString(data[2:]); err == nil {
++					errObj["data"] = data
++				}
++			}
++		} else if jre.Details["data"] != nil {
+@@ -1918,0 +1938,10 @@
++			Request: nq,
++		}
++	}
++
++	if includeErrorDetails != nil && !*includeErrorDetails {
++		return &HttpJsonRpcErrorResponse{
++			Jsonrpc: jsonrpcVersion,
++			Id: reqId,
++			Error: map[string]interface{}{"code": -32603, "message": "RPC request failed"},
++			Cause: causeForStatus,

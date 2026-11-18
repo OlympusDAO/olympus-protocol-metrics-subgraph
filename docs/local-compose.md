@@ -3,7 +3,7 @@
 `docker-compose.yml` runs the local Railway-like stack for integration testing.
 By default, only `metrics-api` is reachable from the host at
 `http://127.0.0.1:${METRICS_API_PORT:-3000}`. Hasura, Postgres, MinIO, the
-indexer, and the publisher stay internal to the compose network.
+indexer, publisher, and both RPC cache services stay internal to the Compose network.
 
 ## Start
 
@@ -25,7 +25,8 @@ pnpm run compose:up
 ```
 
 The indexer is included in the default daemon stack and remains internal-only.
-For a useful local backfill, set reliable archive RPC URLs in `.env`. If you
+For a useful local backfill, set reliable archive RPC URLs in `.env` using
+`UPSTREAM_RPC_URL_<chainId>`. If you
 only want to start the API/storage/database path without local indexing, omit
 the `indexer` service:
 
@@ -35,8 +36,9 @@ docker compose up --build postgres hasura minio minio-init metrics-api
 
 Local indexer startup does not reset the Envio database. Compose sets
 `ENVIO_PG_SCHEMA` to `public` by default and runs plain `envio start`, so local
-work can resume from the existing Postgres volume. Reset-on-start is reserved
-for the Railway indexer runtime.
+work can resume from the existing Postgres volume. The RPC cache uses its own
+Postgres service and volume, so rebuilding the Envio database preserves cached
+RPC responses.
 
 ## Which Command to Run
 
@@ -75,8 +77,9 @@ Postgres, Hasura, and the indexer change less often:
 pnpm run compose:core
 ```
 
-This starts `postgres`, `hasura`, and `indexer` in the foreground. They share
-the same private compose network and volumes as the rest of the stack.
+This starts `postgres`, `hasura`, `rpc-cache-postgres`, `rpc-cache`, and
+`indexer` in the foreground on the same private Compose network as the rest of
+the stack.
 
 Start or refresh the storage/API side when needed:
 
@@ -140,7 +143,8 @@ needed.
 Compose startup order is declared with `depends_on` health conditions:
 `minio-init` waits for MinIO's readiness endpoint, `metrics-api` waits for
 `minio-init` to finish bucket creation, Hasura waits for Postgres, and the
-indexer waits for both Postgres and Hasura to be healthy.
+indexer waits for Postgres and Hasura to be healthy and for eRPC to start.
+eRPC waits for its own Postgres health check.
 
 ## Local Variables
 
@@ -155,8 +159,14 @@ Most variables have local defaults. Override these when needed:
   avoid MinIO's built-in `minioadmin:minioadmin` warning.
 - `ENVIO_API_TOKEN`: required. With the current Envio config, RPC entries are
   configured as fallbacks, not as the primary sync source.
-- `ENVIO_*_RPC_URL`: per-chain archive RPC URLs for indexer backfills and
-  snapshot-time contract reads.
+- `UPSTREAM_RPC_URL_<chainId>`: per-chain archive provider URL used by eRPC.
+  Existing `ENVIO_*_RPC_URL` values serve as upstream defaults. Inside the
+  indexer container, those variables point to eRPC for both Envio fallback
+  RPC and snapshot reads. eRPC persists eligible provider-finalized responses.
+- `RPC_CACHE_POSTGRES_PASSWORD`: URL-safe password for the independent local
+  RPC cache database.
+- `RPC_CACHE_MAX_RPS`: aggregate upstream JSON-RPC request limit per second,
+  default `100`.
 - `ENVIO_RPC_HTTP_BATCH_SIZE`, `ENVIO_RPC_MULTICALL_BATCH_SIZE`, and
   `ENVIO_RPC_TIMEOUT_MS`: repository snapshot effect RPC tuning. These are not
   Envio event-ingestion settings.
@@ -185,5 +195,18 @@ environment variables.
 ## Privacy Model
 
 The compose stack intentionally does not publish host ports for Hasura,
-Postgres, MinIO, the indexer, or the publisher. Use `docker compose exec` for
+Postgres, MinIO, the indexer, publisher, or the RPC cache services. Use `docker compose exec` for
 local inspection rather than exposing those services by default.
+
+## Test RPC Cache Persistence
+
+The fixture runs the real eRPC image and a disposable Postgres with a synthetic
+upstream. It checks that finalized historical reads reach Postgres, become
+cache hits, and survive restarting eRPC. It also checks that latest reads,
+provider errors, and reads from a provider without a finalized tag bypass the
+persistent cache.
+
+```sh
+podman build -f Dockerfile-rpc-cache -t localhost/olympus-metrics-rpc-cache:local .
+node --test services/rpc-cache/integration.test.mjs
+```

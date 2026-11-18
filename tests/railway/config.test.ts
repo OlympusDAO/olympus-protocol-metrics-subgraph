@@ -1,136 +1,235 @@
 import { existsSync, readFileSync } from "node:fs";
-import { describe, expect, test } from "vitest";
+import { createRailwayContext, type ResourceNode } from "railway/iac";
+import { describe, expect, test, vi } from "vitest";
+import { assertExpectedPlan, productionId } from "../../.railway/plan";
+import defineInfrastructure from "../../.railway/railway";
+
+async function graph() {
+  const ctx = createRailwayContext({ environment: "production" });
+  const definition = await defineInfrastructure(ctx, () => {
+    throw new Error("Unexpected project helper");
+  });
+  expect(definition.name).toBe("treasury-subgraph");
+  const resources = new Map(
+    (definition.resources?.flat() ?? []).map((resource) => [resource.address, resource]),
+  );
+  return {
+    addresses: [...resources.keys()].sort(),
+    get(address: ResourceNode["address"]) {
+      const resource = resources.get(address);
+      if (resource === undefined) throw new Error(`Missing resource ${address}`);
+      return resource;
+    },
+  };
+}
 
 describe("Railway config-as-code", () => {
-  test("defines expected service configs and Dockerfile paths", () => {
-    for (const [configPath, dockerfilePath] of [
-      ["railway-indexer.json", "Dockerfile-indexer"],
-      ["railway-hasura.json", "Dockerfile-hasura"],
-      ["railway-metrics-publisher.json", "Dockerfile-metrics-publisher"],
-      ["railway-metrics-api.json", "Dockerfile-metrics-api"],
+  test("retains the eight imported resources and adds the private cache stack", async () => {
+    const { addresses, get } = await graph();
+    expect(addresses).toEqual([
+      "bucket.bucket",
+      "database.Postgres",
+      "group.PostgreSQL",
+      "service.hasura",
+      "service.indexer",
+      "service.metrics-api",
+      "service.metrics-publisher",
+      "service.rpc-cache",
+      "service.rpc-cache-postgres",
+      "volume.postgres-volume-ytRO",
+      "volume.rpc-cache-postgres-volume",
+    ]);
+    expect(get("bucket.bucket")).toMatchObject({ config: { region: "sjc" } });
+    expect(get("volume.postgres-volume-ytRO")).toMatchObject({
+      config: {
+        region: "us-west2",
+        sizeMB: 50000,
+        allowOnlineResize: true,
+        alerts: { usage: { "80": {}, "95": {}, "100": {} } },
+      },
+    });
+    const db = get("database.Postgres");
+    expect(db).toMatchObject({
+      groupId: "PostgreSQL",
+      image: "ghcr.io/railwayapp-templates/postgres-ssl:18",
+      deploy: { requiredMountPath: "/var/lib/postgresql/data" },
+      networking: { privateNetworkEndpoint: "postgres" },
+    });
+    expect(db).not.toHaveProperty("volumeAttachments");
+    expect(get("service.rpc-cache-postgres")).toMatchObject({
+      volumeAttachments: {
+        "rpc-cache-postgres-volume": {
+          volume: "volume.rpc-cache-postgres-volume",
+          mountPath: "/var/lib/postgresql/data",
+        },
+      },
+      variables: { POSTGRES_PASSWORD: { type: "preserve" } },
+    });
+    const cache = get("service.rpc-cache");
+    expect(cache).toMatchObject({ networking: { tcpProxies: {} } });
+    expect(cache).not.toHaveProperty("networking.customDomains");
+    expect(cache).toMatchObject({
+      variables: {
+        PORT: { type: "literal", value: "4000" },
+        RPC_CACHE_DATABASE_URL: {
+          type: "reference",
+          resource: "service.rpc-cache-postgres",
+          output: "DATABASE_URL",
+        },
+      },
+    });
+    expect(get("service.metrics-api")).toMatchObject({
+      networking: { customDomains: { "treasury-subgraph-api.olympusdao.finance": { port: 8080 } } },
+      variables: { ARTIFACT_ENDPOINT: { type: "preserve" } },
+    });
+  });
+
+  test("evaluates service builds, restart behavior, existing domains and cutover routes", async () => {
+    const { get } = await graph();
+    for (const name of [
+      "hasura",
+      "indexer",
+      "metrics-api",
+      "metrics-publisher",
+      "rpc-cache",
     ] as const) {
-      const config = JSON.parse(readFileSync(configPath, "utf8")) as {
-        build: { dockerfilePath: string; watchPatterns: string[] };
-      };
-      expect(config.build.dockerfilePath).toBe(dockerfilePath);
-      expect(config.build.watchPatterns).toContain(`/${configPath}`);
-      expect(config.build.watchPatterns).toContain(`/${dockerfilePath}`);
-      expect(config.build.watchPatterns.every((pattern) => pattern.startsWith("/"))).toBe(true);
-      expect(existsSync(dockerfilePath)).toBe(true);
+      const dockerfile = `Dockerfile-${name}`;
+      expect(existsSync(dockerfile)).toBe(true);
+      expect(existsSync(`railway-${name}.json`)).toBe(false);
+      expect(get(`service.${name}`)).toMatchObject({
+        build: {
+          builder: "DOCKERFILE",
+          dockerfilePath: dockerfile,
+          watchPatterns: expect.arrayContaining([`/${dockerfile}`, "/.railway/**"]),
+        },
+        source: {
+          repo: "OlympusDAO/olympus-protocol-metrics-subgraph",
+          branch: "master",
+          checkSuites: true,
+        },
+        deploy: { multiRegionConfig: { "us-west2": { numReplicas: 1 } } },
+      });
+    }
+    const publisher = get("service.metrics-publisher");
+    expect(publisher).toMatchObject({
+      build: {
+        watchPatterns: expect.arrayContaining([
+          "/Dockerfile-indexer",
+          "/apps/indexer/**",
+          "/apps/metrics-publisher/**",
+          "/packages/metrics-artifacts/**",
+        ]),
+      },
+      deploy: { cronSchedule: "15 * * * *", restartPolicyType: "NEVER" },
+      networking: { serviceDomains: { "metrics-publisher-production.up.railway.app": {} } },
+    });
+    const indexer = get("service.indexer");
+    expect(indexer).toMatchObject({
+      deploy: {
+        restartPolicyType: "ON_FAILURE",
+        restartPolicyMaxRetries: 10,
+        limitOverride: { containers: { cpu: 2, memoryBytes: 2000000000 } },
+      },
+      networking: { serviceDomains: { "indexer-production-973a.up.railway.app": {} } },
+      variables: { ENVIO_PG_PASSWORD: { type: "preserve" } },
+    });
+    expect(indexer).not.toHaveProperty("deploy.healthcheckPath");
+    const routes = [
+      ["ETHEREUM", 1],
+      ["POLYGON", 137],
+      ["FANTOM", 250],
+      ["BASE", 8453],
+      ["ARBITRUM", 42161],
+      ["BERACHAIN", 80094],
+      ["ROBINHOOD", 4663],
+    ] as const;
+    for (const [chain, id] of routes) {
+      expect(indexer).toHaveProperty([`variables`, `ENVIO_${chain}_RPC_URL`], {
+        type: "literal",
+        value: `http://\${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/${id}`,
+      });
+      expect(get("service.rpc-cache")).toHaveProperty(["variables", `UPSTREAM_RPC_URL_${id}`], {
+        type: "preserve",
+      });
+    }
+    vi.stubEnv("METRICS_RAILWAY_CACHE_BOOTSTRAP", "1");
+    try {
+      expect((await graph()).get("service.indexer")).toHaveProperty(
+        "variables.ENVIO_ETHEREUM_RPC_URL",
+        { type: "preserve" },
+      );
+    } finally {
+      vi.unstubAllEnvs();
     }
   });
 
-  test("configures service deploy behavior", () => {
-    const publisher = JSON.parse(readFileSync("railway-metrics-publisher.json", "utf8")) as {
-      build: { watchPatterns: string[] };
-      deploy: { cronSchedule: string; restartPolicyType: string };
+  test("rejects unapproved changes in production plans", () => {
+    const metadata = {
+      kind: "railway.config.plan",
+      version: 1,
+      environmentId: productionId,
+      destructive: false,
     };
-    const api = JSON.parse(readFileSync("railway-metrics-api.json", "utf8")) as {
-      deploy: {
-        healthcheckPath: string;
-        restartPolicyMaxRetries: number;
-        restartPolicyType: string;
-      };
+    const create = {
+      kind: "resource.create",
+      address: "volume.rpc-cache-postgres-volume",
+      path: "resources.volume.rpc-cache-postgres-volume",
     };
-    const hasura = JSON.parse(readFileSync("railway-hasura.json", "utf8")) as {
-      deploy: {
-        healthcheckPath: string;
-        restartPolicyMaxRetries: number;
-        restartPolicyType: string;
-      };
+    const update = {
+      kind: "resource.update",
+      address: "service.indexer",
+      field: "build",
+      path: "resources.service.indexer.build",
+      details: ["build.builder (RAILPACK → DOCKERFILE)"],
     };
-    const indexer = JSON.parse(readFileSync("railway-indexer.json", "utf8")) as {
-      deploy: {
-        healthcheckPath: string;
-        restartPolicyMaxRetries: number;
-        restartPolicyType: string;
-      };
-    };
-
-    expect(publisher.deploy.cronSchedule).toBe("15 * * * *");
-    expect(publisher.deploy.restartPolicyType).toBe("NEVER");
-    expect(publisher.build.watchPatterns).toContain("/apps/indexer/**");
-    expect(publisher.build.watchPatterns).toContain("/apps/metrics-publisher/**");
-    expect(publisher.build.watchPatterns).toContain("/packages/metrics-artifacts/**");
-    expect(hasura.deploy.healthcheckPath).toBe("/healthz");
-    expect(hasura.deploy.restartPolicyType).toBe("ON_FAILURE");
-    expect(hasura.deploy.restartPolicyMaxRetries).toBe(1);
-    expect(indexer.deploy.healthcheckPath).toBe("/healthz");
-    expect(indexer.deploy.restartPolicyType).toBe("ON_FAILURE");
-    // Envio exits on a failed batch write, so a Postgres restart takes the
-    // indexer down with it. One retry is consumed long before Postgres finishes
-    // crash recovery; the wrapper's own supervisor handles the common case and
-    // this is the backstop for anything that kills the wrapper too.
-    expect(indexer.deploy.restartPolicyMaxRetries).toBe(10);
-    expect(api.deploy.healthcheckPath).toBe("/ready");
-    expect(api.deploy.restartPolicyType).toBe("ON_FAILURE");
-    expect(api.deploy.restartPolicyMaxRetries).toBe(1);
-  });
-
-  test("configures service watch patterns by runtime ownership", () => {
-    const indexer = JSON.parse(readFileSync("railway-indexer.json", "utf8")) as {
-      build: { watchPatterns: string[] };
-    };
-    const hasura = JSON.parse(readFileSync("railway-hasura.json", "utf8")) as {
-      build: { watchPatterns: string[] };
-    };
-    const api = JSON.parse(readFileSync("railway-metrics-api.json", "utf8")) as {
-      build: { watchPatterns: string[] };
-    };
-    const publisher = JSON.parse(readFileSync("railway-metrics-publisher.json", "utf8")) as {
-      build: { watchPatterns: string[] };
-    };
-
-    expect(hasura.build.watchPatterns).toEqual(["/Dockerfile-hasura", "/railway-hasura.json"]);
-    expect(indexer.build.watchPatterns).toContain("/apps/indexer/**");
-    expect(api.build.watchPatterns).toContain("/apps/metrics-api/**");
-    expect(api.build.watchPatterns).toContain("/packages/metrics-artifacts/**");
-    expect(publisher.build.watchPatterns).toContain("/apps/indexer/**");
-    expect(publisher.build.watchPatterns).toContain("/Dockerfile-indexer");
-    expect(publisher.build.watchPatterns).toContain("/railway-indexer.json");
-    expect(publisher.build.watchPatterns).toContain("/apps/metrics-publisher/**");
-    expect(publisher.build.watchPatterns).toContain("/packages/metrics-artifacts/**");
-
-    for (const config of [indexer, api, publisher]) {
-      expect(config.build.watchPatterns).toContain("/package.json");
-      expect(config.build.watchPatterns).toContain("/pnpm-lock.yaml");
-      expect(config.build.watchPatterns).toContain("/pnpm-workspace.yaml");
-      expect(config.build.watchPatterns).toContain("/tsconfig.json");
-    }
-  });
-
-  test("documents required Railway variables and public exposure rules", () => {
-    const doc = readFileSync("docs/railway-metrics-api.md", "utf8");
-
-    for (const variable of [
-      "DATABASE_URL",
-      "ENVIO_PG_HOST",
-      "HASURA_GRAPHQL_ADMIN_SECRET",
-      "ENVIO_ETHEREUM_RPC_URL",
-      "ENVIO_ARBITRUM_RPC_URL",
-      "ARTIFACT_BUCKET",
-      "ARTIFACT_ACCESS_KEY_ID",
-      "ARTIFACT_SECRET_ACCESS_KEY",
-      "METRICS_API_MAX_RANGE_DAYS",
-      "INDEXER_DEPLOYMENT_ID",
+    expect(() =>
+      assertExpectedPlan({ ...metadata, changeSet: { changes: [create, update] } }, true),
+    ).not.toThrow();
+    for (const change of [
+      { ...update, details: ["build.rootDirectory (/ → /tmp)"] },
+      { ...update, severity: "destructive" },
+      { ...create, kind: "resource.delete" },
+      { ...create, kind: "resource.replace" },
+      {
+        kind: "resource.update",
+        address: "volume.postgres-volume-ytRO",
+        path: "resources.volume.postgres-volume-ytRO.config",
+        details: ["config.sizeMB (50000 → 20000)"],
+      },
     ]) {
-      expect(doc).toContain(variable);
+      expect(() =>
+        assertExpectedPlan({ ...metadata, changeSet: { changes: [change] } }, true),
+      ).toThrow();
     }
-
-    expect(doc).toContain("Do not set `ENVIO_PG_SCHEMA` on Railway");
-    expect(doc).toContain("Railway indexer startup runs `envio start -r`");
-    expect(doc).toContain(
-      "Published artifact snapshots and the metrics API are the handover boundary",
-    );
-    expect(doc).not.toContain(
-      "copies Railway's runtime `RAILWAY_DEPLOYMENT_ID` into `ENVIO_PG_SCHEMA`",
-    );
-    expect(doc).toContain("indexer startup wrapper derives `ENVIO_INDEXER_PORT`");
-    expect(doc).toContain(`\${{hasura.RAILWAY_PRIVATE_DOMAIN}}:\${{hasura.PORT}}/v1/graphql`);
-    expect(doc).toContain(`\${{hasura.RAILWAY_PRIVATE_DOMAIN}}:\${{hasura.PORT}}/v1/metadata`);
-    expect(doc).toContain("Only `metrics-api` should receive a public Railway domain");
-    expect(doc).toContain("Cloudflare");
-    expect(doc).toContain("WAF");
+    expect(() =>
+      assertExpectedPlan({ ...metadata, changeSet: { changes: [create] } }, false),
+    ).toThrow();
+    expect(() =>
+      assertExpectedPlan({ ...metadata, changeSet: { changes: [update] } }, false),
+    ).toThrow();
+    expect(() =>
+      assertExpectedPlan(
+        {
+          ...metadata,
+          changeSet: {
+            changes: [
+              {
+                kind: "variable.set",
+                address: "service.indexer",
+                path: "resources.service.indexer.variables.ENVIO_ROBINHOOD_RPC_URL",
+              },
+            ],
+          },
+        },
+        false,
+      ),
+    ).not.toThrow();
+    expect(() =>
+      assertExpectedPlan(
+        { ...metadata, environmentId: "unexpected", changeSet: { changes: [] } },
+        true,
+      ),
+    ).toThrow();
   });
 
   test("uses pinned production Dockerfiles with real service commands", () => {

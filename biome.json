@@ -8,6 +8,7 @@
   "files": {
     "includes": [
       ".github/**",
+      ".railway/**",
       "apps/**",
       "packages/**",
       "tests/**",

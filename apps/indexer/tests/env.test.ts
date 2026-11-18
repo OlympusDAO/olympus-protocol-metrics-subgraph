@@ -3,7 +3,6 @@ import { describe, expect, test } from "vitest";
 import {
   type EnvioSupervisorOptions,
   formatEnvioSpawnError,
-  isRailwayRuntime,
   prepareIndexerEnv,
   resolveEnvioArgs,
   superviseEnvio,
@@ -102,28 +101,17 @@ describe("indexer env validation", () => {
   });
 
   test("defaults local startup to envio start without resetting the database", () => {
-    expect(isRailwayRuntime(validEnv)).toBe(false);
-    expect(resolveEnvioArgs([], validEnv)).toEqual(["start"]);
-    expect(resolveEnvioArgs(["start"], validEnv)).toEqual(["start"]);
-    expect(resolveEnvioArgs(["dev"], validEnv)).toEqual(["dev"]);
+    expect(resolveEnvioArgs([])).toEqual(["start"]);
+    expect(resolveEnvioArgs(["start"])).toEqual(["start"]);
+    expect(resolveEnvioArgs(["dev"])).toEqual(["dev"]);
   });
 
-  test("resets Envio only for Railway start commands", () => {
-    const railwayEnv = {
-      ...validEnv,
-      ENVIO_INDEXER_PORT: "9898",
-      ENVIO_PG_SCHEMA: "",
-      PORT: "9898",
-      RAILWAY_SERVICE_ID: "railway-service-1",
-    };
-
-    expect(isRailwayRuntime(railwayEnv)).toBe(true);
-    expect(resolveEnvioArgs([], railwayEnv)).toEqual(["start", "-r"]);
-    expect(resolveEnvioArgs(["start"], railwayEnv)).toEqual(["start", "-r"]);
-    expect(resolveEnvioArgs(["start", "-r"], railwayEnv)).toEqual(["start", "-r"]);
-    expect(resolveEnvioArgs(["start", "--reset"], railwayEnv)).toEqual(["start", "--reset"]);
-    expect(resolveEnvioArgs(["dev"], railwayEnv)).toEqual(["dev"]);
-  });
+  test.each(["-r", "-rd", "--restart", "--reset"])(
+    "requires the reset command instead of %s on start",
+    (flag) => {
+      expect(() => resolveEnvioArgs(["start", flag])).toThrow("Use start-envio.ts reset");
+    },
+  );
 
   test("formats spawn failures loudly before Envio starts", () => {
     expect(
@@ -132,23 +120,6 @@ describe("indexer env validation", () => {
     expect(
       formatEnvioSpawnError(Object.assign(new Error("permission denied"), { code: "EACCES" })),
     ).toBe("Failed to start envio: EACCES: permission denied");
-  });
-
-  test("resumes instead of resetting when respawning after a crash", () => {
-    const railwayEnv = {
-      ...validEnv,
-      ENVIO_INDEXER_PORT: "9898",
-      ENVIO_PG_SCHEMA: "",
-      PORT: "9898",
-      RAILWAY_SERVICE_ID: "railway-service-1",
-    };
-
-    expect(resolveEnvioArgs([], railwayEnv, { respawn: true })).toEqual(["start"]);
-    expect(resolveEnvioArgs(["start"], railwayEnv, { respawn: true })).toEqual(["start"]);
-    expect(resolveEnvioArgs(["start", "-r"], railwayEnv, { respawn: true })).toEqual(["start"]);
-    expect(resolveEnvioArgs(["start", "--reset"], railwayEnv, { respawn: true })).toEqual([
-      "start",
-    ]);
   });
 
   test("fails loudly when required env variables are missing", () => {
@@ -262,8 +233,7 @@ describe("envio supervisor", () => {
       superviseEnvio([], railwayEnv, { ...options, maxRespawns: 2 }),
     ).resolves.toBeUndefined();
 
-    // First boot resets, every respawn resumes.
-    expect(spawnedArgs).toEqual([["start", "-r"], ["start"], ["start"]]);
+    expect(spawnedArgs).toEqual([["start"], ["start"], ["start"]]);
     expect(exits).toEqual([]);
   });
 
@@ -284,7 +254,7 @@ describe("envio supervisor", () => {
     expect(spawnedArgs.length).toBe(13);
   });
 
-  test("repeats the reset when the crash happened before a healthy run", async () => {
+  test("resumes after a startup crash", async () => {
     const { options, spawnedArgs } = harness([
       { code: 1, runtimeMs: 500 },
       { code: 1, runtimeMs: 500 },
@@ -295,13 +265,7 @@ describe("envio supervisor", () => {
       "exit 1",
     );
 
-    // A crash during startup may have left a half-created schema, so the reset
-    // is repeated rather than resumed.
-    expect(spawnedArgs).toEqual([
-      ["start", "-r"],
-      ["start", "-r"],
-      ["start", "-r"],
-    ]);
+    expect(spawnedArgs).toEqual([["start"], ["start"], ["start"]]);
   });
 
   test("gives up to Railway once the respawn budget is exhausted", async () => {

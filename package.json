@@ -11,6 +11,7 @@
   "type": "module",
   "repository": "https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph",
   "scripts": {
+    "benchmark:rpc": "node scripts/benchmark-rpc.mjs",
     "build": "tsc --noEmit && pnpm --dir apps/client build",
     "check": "biome check .",
     "codegen": "pnpm --dir apps/indexer codegen",
@@ -34,6 +35,7 @@
     "envio:start": "pnpm --dir apps/indexer envio:start",
     "format": "biome format --write .",
     "format:check": "biome format .",
+    "railway:plan": "tsx .railway/plan.ts",
     "test": "pnpm test:root && pnpm test:artifacts && pnpm test:client && pnpm test:metrics-api && pnpm test:metrics-publisher && pnpm test:indexer",
     "test:artifacts": "vitest run packages/metrics-artifacts/tests",
     "test:client": "pnpm --dir apps/client test",
@@ -54,6 +56,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
     "@types/node": "24.12.2",
+    "railway": "3.16.0",
     "typescript": "6.0.3",
     "vitest": "4.1.11"
   },

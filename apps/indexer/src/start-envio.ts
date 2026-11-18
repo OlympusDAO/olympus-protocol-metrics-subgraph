@@ -1,6 +1,8 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { createConnection } from "node:net";
-import { pathToFileURL } from "node:url";
+import { setTimeout as delay } from "node:timers/promises";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { requestReset, runWithReset } from "./reset-envio";
 import { validateIndexerEnv } from "./validate-env";
 
 // Envio treats a failed batch write as a fatal error and exits (see
@@ -27,29 +29,15 @@ export function prepareIndexerEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   return env;
 }
 
-export function isRailwayRuntime(env: NodeJS.ProcessEnv): boolean {
-  return Object.entries(env).some(([key, value]) => key.startsWith("RAILWAY_") && isPresent(value));
-}
-
-export function resolveEnvioArgs(
-  args: string[],
-  env: NodeJS.ProcessEnv = process.env,
-  options: { respawn?: boolean } = {},
-): string[] {
-  const resolvedArgs = args.length === 0 ? ["start"] : args;
-
-  // A respawn re-enters a database whose schema this same deployment already
-  // created; resetting again would throw away every block indexed since. Drop
-  // the reset so the indexer resumes where the crash left it.
-  if (options.respawn) {
-    return resolvedArgs.filter((arg) => arg !== "-r" && arg !== "--reset");
+export function resolveEnvioArgs(args: string[]): string[] {
+  const resolved = args.length === 0 ? ["start"] : args;
+  if (
+    resolved[0] === "start" &&
+    resolved.some((arg) => /^(?:-r|--(?:restart|reset)(?:=|$))/.test(arg))
+  ) {
+    throw new Error("Use start-envio.ts reset to reset the running indexer");
   }
-
-  if (!isRailwayRuntime(env) || resolvedArgs[0] !== "start" || hasResetFlag(resolvedArgs)) {
-    return resolvedArgs;
-  }
-
-  return [...resolvedArgs, "-r"];
+  return resolved;
 }
 
 export function probeDatabase(
@@ -80,10 +68,11 @@ export async function waitForDatabase(
     logInfo?: (message: string) => void;
     timeoutMs?: number;
     intervalMs?: number;
+    signal?: AbortSignal;
   } = {},
 ): Promise<boolean> {
   const probe = options.probe ?? ((host, port) => probeDatabase(host, port));
-  const sleep = options.sleep ?? defaultSleep;
+  const sleep = options.sleep ?? ((ms) => delay(ms, undefined, { signal: options.signal }));
   const now = options.now ?? Date.now;
   const logInfo = options.logInfo ?? console.error;
   const timeoutMs = options.timeoutMs ?? DATABASE_WAIT_TIMEOUT_MS;
@@ -100,7 +89,7 @@ export async function waitForDatabase(
   const deadline = now() + timeoutMs;
   logInfo(`Waiting up to ${Math.round(timeoutMs / 1000)}s for Postgres at ${host}:${port}`);
 
-  for (;;) {
+  while (!options.signal?.aborted) {
     if (await probe(host, port)) {
       logInfo(`Postgres at ${host}:${port} is accepting connections`);
       return true;
@@ -111,8 +100,13 @@ export async function waitForDatabase(
       return false;
     }
 
-    await sleep(intervalMs);
+    try {
+      await sleep(intervalMs);
+    } catch (error) {
+      if (!options.signal?.aborted) throw error;
+    }
   }
+  return false;
 }
 
 export type EnvioSupervisorOptions = {
@@ -120,7 +114,9 @@ export type EnvioSupervisorOptions = {
   waitForDatabase?: (env: NodeJS.ProcessEnv) => Promise<boolean>;
   logError?: (message: string) => void;
   logInfo?: (message: string) => void;
-  exit?: (code?: number) => never;
+  exit?: (code?: number) => void;
+  signal?: AbortSignal;
+  drainChild?: () => Promise<void>;
   kill?: (pid: number, signal: NodeJS.Signals) => void;
   pid?: number;
   now?: () => number;
@@ -139,23 +135,27 @@ export async function superviseEnvio(
     options.spawnEnvio ??
     ((spawnArgs, spawnEnv) => spawn("envio", spawnArgs, { env: spawnEnv, stdio: "inherit" }));
   const waitForDatabaseFn =
-    options.waitForDatabase ?? ((waitEnv) => waitForDatabase(waitEnv, { logInfo }));
+    options.waitForDatabase ??
+    ((waitEnv) => waitForDatabase(waitEnv, { logInfo, signal: options.signal }));
   const exit = options.exit ?? process.exit;
   const maxRespawns = options.maxRespawns ?? MAX_ENVIO_RESPAWNS;
   const minHealthyRuntimeMs = options.minHealthyRuntimeMs ?? MIN_HEALTHY_RUNTIME_MS;
   const now = options.now ?? Date.now;
 
-  const initialArgs = resolveEnvioArgs(args, env);
-  let nextArgs = initialArgs;
+  const nextArgs = resolveEnvioArgs(args);
   let respawns = 0;
 
-  for (;;) {
+  while (!options.signal?.aborted) {
     const startedAt = now();
     const outcome = await runEnvioOnce(spawnEnvio(nextArgs, env), {
       kill: options.kill,
       pid: options.pid,
+      signal: options.signal,
     });
     const runtimeMs = now() - startedAt;
+    if (options.signal?.aborted) return;
+    await options.drainChild?.();
+    if (options.signal?.aborted) return;
 
     if (outcome.type === "signal") {
       // The container is being torn down. Existing behaviour: re-raise on self
@@ -175,8 +175,7 @@ export async function superviseEnvio(
       return;
     }
 
-    // A run that survived past startup proves the schema is usable, so its
-    // budget is refunded and the retry may resume rather than reset.
+    // Refund the crash budget after a run makes it through startup.
     const startedCleanly = runtimeMs >= minHealthyRuntimeMs;
     if (startedCleanly) {
       respawns = 0;
@@ -192,6 +191,7 @@ export async function superviseEnvio(
 
     logError(`Envio exited with code ${code} after ${runtimeMs}ms; checking Postgres before retry`);
     const databaseReachable = await waitForDatabaseFn(env);
+    if (options.signal?.aborted) return;
     if (!databaseReachable) {
       logError("Postgres did not become reachable; exiting so Railway can restart the container");
       exit(code);
@@ -199,10 +199,6 @@ export async function superviseEnvio(
     }
 
     respawns += 1;
-    // A crash before the first healthy run may have left an incomplete schema
-    // (for example a failure during the reset itself), so repeat the original
-    // arguments. Only a run that got properly under way is safe to resume.
-    nextArgs = startedCleanly ? resolveEnvioArgs(args, env, { respawn: true }) : initialArgs;
     logInfo(`Restarting envio (attempt ${respawns}/${maxRespawns}): envio ${nextArgs.join(" ")}`);
   }
 }
@@ -214,7 +210,11 @@ type EnvioOutcome =
 
 function runEnvioOnce(
   child: Pick<ChildProcess, "on">,
-  options: { kill?: (pid: number, signal: NodeJS.Signals) => void; pid?: number } = {},
+  options: {
+    kill?: (pid: number, signal: NodeJS.Signals) => void;
+    pid?: number;
+    signal?: AbortSignal;
+  } = {},
 ): Promise<EnvioOutcome> {
   const kill = options.kill ?? process.kill;
   const pid = options.pid ?? process.pid;
@@ -226,7 +226,7 @@ function runEnvioOnce(
 
     child.on("exit", (code, signal) => {
       if (signal !== null) {
-        kill(pid, signal);
+        if (!options.signal?.aborted) kill(pid, signal);
         resolve({ type: "signal", signal });
         return;
       }
@@ -239,14 +239,46 @@ export async function runIndexerStartup(
   args: string[] = process.argv.slice(2),
   env: NodeJS.ProcessEnv = process.env,
 ): Promise<void> {
-  const preparedEnv = prepareIndexerEnv(env);
-  validateIndexerEnv(preparedEnv);
-
-  if (args[0] === "check") {
+  if (args[0] === "reset") {
+    if (args.length !== 1) throw new Error("Usage: start-envio.ts reset");
+    process.exitCode = await requestReset(prepareIndexerEnv(env));
     return;
   }
 
-  await superviseEnvio(args, preparedEnv);
+  const preparedEnv = prepareIndexerEnv(env);
+  validateIndexerEnv(preparedEnv);
+
+  if (args[0] === "check") return;
+
+  const startArgs = resolveEnvioArgs(args);
+  if (
+    startArgs[0] !== "start" ||
+    startArgs.some((arg) => /^--(?:chain(?:=|$)|help$)/.test(arg) || arg === "-h")
+  ) {
+    await superviseEnvio(startArgs, preparedEnv);
+    return;
+  }
+
+  const checkScript = fileURLToPath(new URL("./check-envio-storage.mjs", import.meta.url));
+  const checkStorage = async () => {
+    const runCheck = () =>
+      new Promise<number>((resolve, reject) => {
+        const check = spawn(process.execPath, [checkScript, ...startArgs], {
+          env: preparedEnv,
+          stdio: "inherit",
+          timeout: 30_000,
+          killSignal: "SIGKILL",
+        });
+        check.once("error", reject);
+        check.once("exit", (code) => resolve(code ?? 1));
+      });
+    let status = await runCheck();
+    if (status !== 0 && status !== 78 && (await waitForDatabase(preparedEnv))) {
+      status = await runCheck();
+    }
+    return status;
+  };
+  await runWithReset(startArgs, preparedEnv, checkStorage, superviseEnvio);
 }
 
 export function formatEnvioSpawnError(error: Error & { code?: string }): string {
@@ -254,18 +286,6 @@ export function formatEnvioSpawnError(error: Error & { code?: string }): string 
     return `Failed to start envio: envio binary was not found in PATH (${error.message})`;
   }
   return `Failed to start envio: ${error.code ? `${error.code}: ` : ""}${error.message}`;
-}
-
-function defaultSleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function hasResetFlag(args: string[]): boolean {
-  return args.includes("-r") || args.includes("--reset");
-}
-
-function isPresent(value: string | undefined): boolean {
-  return value !== undefined && value.trim() !== "";
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {

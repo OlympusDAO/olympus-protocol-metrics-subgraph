@@ -1,0 +1,286 @@
+import { execFileSync } from "node:child_process";
+import type { RailwayContext, VariableValue } from "railway/iac";
+import {
+  bucket,
+  database,
+  defineRailway,
+  github,
+  group,
+  image,
+  preserve,
+  project,
+  ref,
+  service,
+  volume,
+} from "railway/iac";
+
+const postgresPasswordGenerator = `\${{ secret(64, "0123456789abcdef") }}`;
+
+function postgresPassword(
+  name: string,
+  existingServices: ReadonlySet<string> | undefined,
+): VariableValue {
+  // Offline typechecks cannot establish that a database is new. Fail closed.
+  return existingServices === undefined || existingServices.has(name)
+    ? preserve()
+    : { type: "raw", value: { defaultValue: postgresPasswordGenerator } };
+}
+
+function existingResources(ctx: RailwayContext):
+  | {
+      serviceNames: ReadonlySet<string>;
+      volumeSizes: ReadonlyMap<string, number>;
+    }
+  | undefined {
+  if (!ctx.environmentId) return undefined;
+  try {
+    const result = JSON.parse(
+      execFileSync(
+        "railway",
+        [
+          "api",
+          "query($id: String!) { environment(id: $id) { serviceInstances(first: 100) { edges { node { serviceName } } pageInfo { hasNextPage } } volumeInstances(first: 100) { edges { node { sizeMB volume { name } } } pageInfo { hasNextPage } } } }",
+          "--var",
+          `id=${ctx.environmentId}`,
+          "--compact",
+        ],
+        { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 30000 },
+      ),
+    );
+    const services = result.data?.environment?.serviceInstances;
+    const volumes = result.data?.environment?.volumeInstances;
+    if (
+      result.errors?.length ||
+      !Array.isArray(services?.edges) ||
+      services.pageInfo?.hasNextPage !== false ||
+      services.edges.some(
+        (edge: { node?: { serviceName?: unknown } }) =>
+          typeof edge.node?.serviceName !== "string" || !edge.node.serviceName.trim(),
+      ) ||
+      !Array.isArray(volumes?.edges) ||
+      volumes.pageInfo?.hasNextPage !== false ||
+      volumes.edges.some(
+        (edge: { node?: { sizeMB?: unknown; volume?: { name?: unknown } } }) =>
+          typeof edge.node?.volume?.name !== "string" ||
+          !edge.node.volume.name.trim() ||
+          typeof edge.node.sizeMB !== "number" ||
+          !Number.isSafeInteger(edge.node.sizeMB) ||
+          edge.node.sizeMB <= 0,
+      )
+    )
+      throw new Error("Incomplete resource lookup");
+    const volumeSizes = new Map<string, number>(
+      volumes.edges.map((edge: { node: { sizeMB: number; volume: { name: string } } }) => [
+        edge.node.volume.name,
+        edge.node.sizeMB,
+      ]),
+    );
+    if (volumeSizes.size !== volumes.edges.length) throw new Error("Ambiguous volume lookup");
+    return {
+      serviceNames: new Set(
+        services.edges.map((edge: { node: { serviceName: string } }) => edge.node.serviceName),
+      ),
+      volumeSizes,
+    };
+  } catch {
+    throw new Error(
+      "Cannot establish existing Railway services and volumes; refusing to plan database passwords or capacity.",
+    );
+  }
+}
+
+const region = "us-west2";
+const mountPath = "/var/lib/postgresql/data";
+const artifactKeys = [
+  "ARTIFACT_ACCESS_KEY_ID",
+  "ARTIFACT_BUCKET",
+  "ARTIFACT_ENDPOINT",
+  "ARTIFACT_REGION",
+  "ARTIFACT_SECRET_ACCESS_KEY",
+];
+const hasuraKeys = ["HASURA_GRAPHQL_ADMIN_SECRET", "HASURA_GRAPHQL_ENDPOINT"];
+const sharedWatch = ["/package.json", "/pnpm-lock.yaml", "/pnpm-workspace.yaml", "/tsconfig.json"];
+const rpcVariables = {
+  1: "ENVIO_ETHEREUM_RPC_URL",
+  137: "ENVIO_POLYGON_RPC_URL",
+  250: "ENVIO_FANTOM_RPC_URL",
+  8453: "ENVIO_BASE_RPC_URL",
+  42161: "ENVIO_ARBITRUM_RPC_URL",
+  80094: "ENVIO_BERACHAIN_RPC_URL",
+  4663: "ENVIO_ROBINHOOD_RPC_URL",
+};
+const preserved = (keys: string[]) => Object.fromEntries(keys.map((key) => [key, preserve()]));
+const volumeSettings = {
+  region,
+  allowOnlineResize: true,
+  alerts: { usage: { "80": {}, "95": {}, "100": {} } },
+};
+const failure = (healthcheckPath: string) => ({
+  healthcheckPath,
+  healthcheckTimeout: 30,
+  restartPolicyType: "ON_FAILURE" as const,
+  restartPolicyMaxRetries: 1,
+});
+
+export default defineRailway((ctx) => {
+  const live = existingResources(ctx);
+  const size = (name: string, minimum: number) =>
+    Math.max(minimum, live?.volumeSizes.get(name) ?? 0);
+  const source = github("OlympusDAO/olympus-protocol-metrics-subgraph", {
+    branch: "master",
+    checkSuites: true,
+  });
+  const build = (name: string, paths: string[]) => ({
+    builder: "DOCKERFILE" as const,
+    buildEnvironment: "V3" as const,
+    dockerfilePath: `Dockerfile-${name}`,
+    watchPatterns: [`/Dockerfile-${name}`, "/.railway/**", ...paths],
+  });
+  const deployment = { source, replicas: { [region]: 1 } };
+  const runtime = { runtime: "V2", useLegacyStacker: false, ipv6EgressEnabled: false };
+  const limits = (cpu = 1, memoryBytes = 1000000000) => ({
+    ...runtime,
+    limitOverride: { containers: { cpu, memoryBytes } },
+  });
+  const importedVolume = volume("postgres-volume-ytRO", {
+    ...volumeSettings,
+    sizeMB: size("postgres-volume-ytRO", 50000),
+  });
+  const cacheVolume = volume("rpc-cache-postgres-volume", {
+    ...volumeSettings,
+    sizeMB: size("rpc-cache-postgres-volume", 20000),
+  });
+  const postgres = database("Postgres", "postgres", {
+    image: "ghcr.io/railwayapp-templates/postgres-ssl:18",
+    region,
+    defaultMountPath: mountPath,
+  });
+  postgres.deploy = { ...postgres.deploy, ...runtime, requiredMountPath: mountPath };
+  postgres.networking = {
+    privateNetworkEndpoint: "postgres",
+    serviceDomains: { "postgres-production-1a7d.up.railway.app": {} },
+  };
+  // Railway CLI represents an existing managed database mount separately
+  // from ordinary service attachments. Keep its mount through the live binding.
+
+  // An image-backed service avoids the managed Postgres template's public TCP proxy.
+  const cacheDatabase = service("rpc-cache-postgres", {
+    source: image(
+      "ghcr.io/railwayapp-templates/postgres-ssl:18@sha256:14bece74105090e05d4eb57c075442cb2057e899cd8858b508c5eafda3fe725f",
+    ),
+    replicas: { [region]: 1 },
+    deploy: { ...limits(), requiredMountPath: mountPath },
+    tcp: [],
+    volumeMounts: { [mountPath]: cacheVolume },
+    env: {
+      PGDATA: `${mountPath}/pgdata`,
+      POSTGRES_DB: "railway",
+      POSTGRES_USER: "postgres",
+      POSTGRES_PASSWORD: postgresPassword("rpc-cache-postgres", live?.serviceNames),
+      DATABASE_URL: `postgresql://postgres:\${{POSTGRES_PASSWORD}}@\${{RAILWAY_PRIVATE_DOMAIN}}:5432/railway`,
+    },
+  });
+  const cache = service("rpc-cache", {
+    ...deployment,
+    build: build("rpc-cache", ["/services/rpc-cache/**"]),
+    tcp: [],
+    deploy: { ...limits(), ...failure("/healthcheck") },
+    env: {
+      PORT: "4000",
+      RPC_CACHE_DATABASE_URL: ref(cacheDatabase, "DATABASE_URL"),
+      ...preserved(Object.keys(rpcVariables).map((id) => `UPSTREAM_RPC_URL_${id}`)),
+    },
+  });
+
+  // The first plan provisions the cache while indexer traffic still uses its current endpoints.
+  const bootstrap = process.env.METRICS_RAILWAY_CACHE_BOOTSTRAP === "1";
+  const routes = Object.fromEntries(
+    Object.entries(rpcVariables).map(([id, key]) => [
+      key,
+      bootstrap
+        ? preserve()
+        : `http://\${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/${id}`,
+    ]),
+  );
+  const indexer = service("indexer", {
+    ...deployment,
+    build: build("indexer", ["/apps/indexer/**", ...sharedWatch]),
+    deploy: {
+      ...limits(2, 2000000000),
+      restartPolicyType: "ON_FAILURE",
+      restartPolicyMaxRetries: 10,
+    },
+    networking: { serviceDomains: { "indexer-production-973a.up.railway.app": {} } },
+    env: {
+      ...preserved([
+        "ENVIO_API_TOKEN",
+        "ENVIO_PG_DATABASE",
+        "ENVIO_PG_HOST",
+        "ENVIO_PG_PASSWORD",
+        "ENVIO_PG_PORT",
+        "ENVIO_PG_SSL_MODE",
+        "ENVIO_PG_USER",
+        ...hasuraKeys,
+        "PORT",
+      ]),
+      ...routes,
+    },
+  });
+  const hasura = service("hasura", {
+    ...deployment,
+    build: build("hasura", []),
+    deploy: { ...limits(), ...failure("/healthz") },
+    networking: { serviceDomains: { "hasura-production-29ba.up.railway.app": {} } },
+    env: preserved(["HASURA_GRAPHQL_ADMIN_SECRET", "HASURA_GRAPHQL_DATABASE_URL", "PORT"]),
+  });
+  const metricsPublisher = service("metrics-publisher", {
+    ...deployment,
+    build: build("metrics-publisher", [
+      "/Dockerfile-indexer",
+      "/apps/indexer/**",
+      "/apps/metrics-publisher/**",
+      "/packages/metrics-artifacts/**",
+      ...sharedWatch,
+    ]),
+    deploy: { ...limits(), cronSchedule: "15 * * * *", restartPolicyType: "NEVER" },
+    networking: { serviceDomains: { "metrics-publisher-production.up.railway.app": {} } },
+    env: preserved([...artifactKeys, ...hasuraKeys]),
+  });
+  const metricsApi = service("metrics-api", {
+    ...deployment,
+    build: build("metrics-api", [
+      "/apps/metrics-api/**",
+      "/packages/metrics-artifacts/**",
+      ...sharedWatch,
+    ]),
+    deploy: { ...limits(), ...failure("/ready") },
+    domains: [{ domain: "treasury-subgraph-api.olympusdao.finance", port: 8080 }],
+    env: preserved(artifactKeys),
+  });
+
+  const definition = {
+    variables: {
+      managed: true,
+      ignore: [
+        "ENVIO_*_FALLBACK_RPC_URLS",
+        "ENVIO_PG_MAX_CONNECTIONS",
+        "INDEXER_DEPLOYMENT_ID",
+        "METRICS_*",
+        "RPC_CACHE_MAX_RPS",
+      ],
+    },
+    resources: [
+      group("PostgreSQL", [postgres]),
+      importedVolume,
+      bucket("bucket", { region: "sjc" }),
+      indexer,
+      hasura,
+      metricsPublisher,
+      metricsApi,
+      cache,
+      cacheDatabase,
+      cacheVolume,
+    ],
+  };
+  return project("treasury-subgraph", definition);
+});
