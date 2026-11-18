@@ -50,9 +50,29 @@ jobs:
       - name: Tag metrics publisher image for scan
         run: pnpm run docker:tag:scan:metrics-publisher
 
+      - name: Install verified Trivy
+        shell: bash
+        env:
+          TRIVY_VERSION: "0.69.3"
+          TRIVY_SHA256: "1816b632dfe529869c740c0913e36bd1629cb7688bd5634f4a858c1d57c88b75"
+        run: |
+          set -euo pipefail
+          trivy_dir="$(mktemp -d "$RUNNER_TEMP/trivy.XXXXXX")"
+          archive="trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          cd "$trivy_dir"
+          curl --fail --silent --show-error --location --retry 3 \
+            --proto '=https' --proto-redir '=https' \
+            --output "$archive" \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/$archive"
+          printf '%s  %s\n' "$TRIVY_SHA256" "$archive" | sha256sum --check --strict
+          tar -xzf "$archive" trivy
+          "$trivy_dir/trivy" --version
+          printf '%s\n' "$trivy_dir" >> "$GITHUB_PATH"
+
       - name: Scan indexer Dockerfile for misconfigurations
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
+          skip-setup-trivy: true
           scan-type: config
           scan-ref: Dockerfile-indexer
           scanners: misconfig
@@ -62,6 +82,7 @@ jobs:
       - name: Scan Hasura Dockerfile for misconfigurations
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
+          skip-setup-trivy: true
           scan-type: config
           scan-ref: Dockerfile-hasura
           scanners: misconfig
@@ -71,6 +92,7 @@ jobs:
       - name: Scan metrics API Dockerfile for misconfigurations
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
+          skip-setup-trivy: true
           scan-type: config
           scan-ref: Dockerfile-metrics-api
           scanners: misconfig
@@ -80,6 +102,7 @@ jobs:
       - name: Scan metrics publisher Dockerfile for misconfigurations
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
+          skip-setup-trivy: true
           scan-type: config
           scan-ref: Dockerfile-metrics-publisher
           scanners: misconfig
@@ -89,6 +112,7 @@ jobs:
       - name: Scan indexer image for vulnerabilities
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
+          skip-setup-trivy: true
           image-ref: olympus-protocol-metrics/indexer:scan
           format: table
           severity: MEDIUM,HIGH,CRITICAL
@@ -98,6 +122,7 @@ jobs:
       - name: Scan Hasura image for vulnerabilities
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
+          skip-setup-trivy: true
           image-ref: olympus-protocol-metrics/hasura:scan
           format: table
           severity: MEDIUM,HIGH,CRITICAL
@@ -107,6 +132,7 @@ jobs:
       - name: Scan metrics API image for vulnerabilities
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
+          skip-setup-trivy: true
           image-ref: olympus-protocol-metrics/metrics-api:scan
           format: table
           severity: MEDIUM,HIGH,CRITICAL
@@ -116,6 +142,7 @@ jobs:
       - name: Scan metrics publisher image for vulnerabilities
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
         with:
+          skip-setup-trivy: true
           image-ref: olympus-protocol-metrics/metrics-publisher:scan
           format: table
           severity: MEDIUM,HIGH,CRITICAL
