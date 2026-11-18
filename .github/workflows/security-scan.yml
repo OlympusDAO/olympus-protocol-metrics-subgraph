@@ -21,6 +21,7 @@ jobs:
           persist-credentials: false
 
       - name: Bootstrap
+        id: bootstrap
         uses: ./.github/actions/bootstrap
 
       - name: Setup Docker Buildx
@@ -62,7 +63,7 @@ jobs:
       - name: Install Trivy
         uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5
         with:
-          version: "2026.11.9"
+          version: ${{ steps.bootstrap.outputs.mise-version }}
           install_args: trivy --locked
           add_shims_to_path: false
           cache: false

@@ -2,10 +2,19 @@ name: Bootstrap CI environment
 description: Standardized repository setup for CI.
 
 inputs:
+  mise-version:
+    description: Version of the mise tool manager.
+    required: false
+    default: "2026.11.9"
   install-foundry:
     description: Install foundry toolchain if required by the project.
     required: false
     default: "false"
+
+outputs:
+  mise-version:
+    description: Mise version selected for this job.
+    value: ${{ inputs.mise-version }}
 
 runs:
   using: composite
@@ -13,7 +22,7 @@ runs:
     - name: Install validation tools
       uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5
       with:
-        version: "2026.11.9"
+        version: ${{ inputs.mise-version }}
         install_args: node pnpm actionlint --locked
         add_shims_to_path: false
         cache: false
