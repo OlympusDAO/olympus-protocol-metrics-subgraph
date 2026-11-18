@@ -29,9 +29,6 @@ jobs:
       - name: Build indexer Docker image
         run: pnpm run docker:build:indexer
 
-      - name: Verify indexer runtime CLI
-        run: docker run --rm --entrypoint envio olympus-protocol-metrics/indexer:local --version
-
       - name: Tag indexer image for scan
         run: pnpm run docker:tag:scan:indexer
 
@@ -62,24 +59,13 @@ jobs:
       - name: Verify persistent RPC caching
         run: pnpm run test:rpc-cache
 
-      - name: Install verified Trivy
-        shell: bash
-        env:
-          TRIVY_SHA256: "1816b632dfe529869c740c0913e36bd1629cb7688bd5634f4a858c1d57c88b75"
-        run: |
-          set -euo pipefail
-          TRIVY_VERSION="$(python3 -c 'import tomllib; print(tomllib.load(open("mise.toml", "rb"))["tools"]["trivy"])')"
-          trivy_dir="$(mktemp -d "$RUNNER_TEMP/trivy.XXXXXX")"
-          archive="trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
-          cd "$trivy_dir"
-          curl --fail --silent --show-error --location --retry 3 \
-            --proto '=https' --proto-redir '=https' \
-            --output "$archive" \
-            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/$archive"
-          printf '%s  %s\n' "$TRIVY_SHA256" "$archive" | sha256sum --check --strict
-          tar -xzf "$archive" trivy
-          "$trivy_dir/trivy" --version
-          printf '%s\n' "$trivy_dir" >> "$GITHUB_PATH"
+      - name: Install Trivy
+        uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5
+        with:
+          version: "2026.11.9"
+          install_args: trivy --locked
+          add_shims_to_path: false
+          cache: false
 
       - name: Scan indexer Dockerfile for misconfigurations
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0

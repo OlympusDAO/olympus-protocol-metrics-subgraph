@@ -7,6 +7,10 @@ indexer, publisher, and both RPC cache services stay internal to the Compose net
 
 ## Start
 
+Install the command-line tools declared in `mise.toml` with `mise install`, then
+run `pnpm install --frozen-lockfile`. A running Docker Engine with the Compose
+plugin is required separately.
+
 Optional: copy `.env.compose.sample` to `.env` and replace any values you need
 to override locally. `ENVIO_API_TOKEN` is required because the current Envio
 config uses HyperSync as the primary source on supported chains and RPCs as
@@ -214,8 +218,8 @@ pnpm run docker:scan:rpc-cache
 ```
 
 The shared `docker:scan` script uses the Trivy version in `mise.toml` and the same
-vulnerability severity and fix-availability policy as CI. CI reads the same pin
-and verifies the release archive checksum. Scan the other built
+vulnerability severity and fix-availability policy as CI. CI installs that version
+with mise and verifies the release checksum from `mise.lock`. Scan the other built
 and tagged images with `docker:scan:indexer`, `docker:scan:hasura`,
 `docker:scan:metrics-api`, and `docker:scan:metrics-publisher`.
 

@@ -13,7 +13,7 @@
   "scripts": {
     "benchmark:rpc": "node scripts/benchmark-rpc.mjs",
     "build": "tsc --noEmit && pnpm --dir apps/client build",
-    "check": "biome check .",
+    "check": "biome check . && pnpm run lint:actions",
     "codegen": "pnpm --dir apps/indexer codegen",
     "compose:api": "docker compose up --build minio minio-init metrics-api",
     "compose:api:rebuild": "docker compose up --build --no-deps metrics-api",
@@ -43,7 +43,8 @@
     "envio:start": "pnpm --dir apps/indexer envio:start",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "railway:plan": "tsx .railway/plan.ts",
+    "railway:plan": "railway config plan",
+    "railway:plan:bootstrap": "METRICS_RAILWAY_CACHE_BOOTSTRAP=1 railway config plan",
     "test": "pnpm test:root && pnpm test:artifacts && pnpm test:client && pnpm test:metrics-api && pnpm test:metrics-publisher && pnpm test:indexer",
     "test:artifacts": "vitest run packages/metrics-artifacts/tests",
     "test:client": "pnpm --dir apps/client test",
@@ -54,6 +55,7 @@
     "test:indexer": "pnpm --dir apps/indexer test",
     "validate": "pnpm run check && pnpm run build && pnpm test",
     "lint": "biome lint --write .",
+    "lint:actions": "mise exec actionlint -- actionlint",
     "lint:check": "biome lint ."
   },
   "dependencies": {

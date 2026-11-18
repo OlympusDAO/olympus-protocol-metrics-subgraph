@@ -10,13 +10,13 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Setup Node.js
-      uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+    - name: Install validation tools
+      uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5
       with:
-        node-version-file: .nvmrc
-
-    - name: Install pnpm
-      uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+        version: "2026.11.9"
+        install_args: node pnpm actionlint --locked
+        add_shims_to_path: false
+        cache: false
 
     - name: Install Foundry
       if: ${{ inputs.install-foundry == 'true' }}

@@ -1,2 +1,6 @@
 [tools]
+actionlint = "1.7.12"
+node = "24.22.3"
+pnpm = "11.28.13"
+railway = "5.75.0"
 trivy = "0.69.3"

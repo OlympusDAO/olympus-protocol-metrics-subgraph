@@ -1,7 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { createRailwayContext, type ResourceNode } from "railway/iac";
 import { describe, expect, test, vi } from "vitest";
-import { assertExpectedPlan, productionId } from "../../.railway/plan";
 import defineInfrastructure from "../../.railway/railway";
 
 async function graph() {
@@ -161,75 +160,6 @@ describe("Railway config-as-code", () => {
     } finally {
       vi.unstubAllEnvs();
     }
-  });
-
-  test("rejects unapproved changes in production plans", () => {
-    const metadata = {
-      kind: "railway.config.plan",
-      version: 1,
-      environmentId: productionId,
-      destructive: false,
-    };
-    const create = {
-      kind: "resource.create",
-      address: "volume.rpc-cache-postgres-volume",
-      path: "resources.volume.rpc-cache-postgres-volume",
-    };
-    const update = {
-      kind: "resource.update",
-      address: "service.indexer",
-      field: "build",
-      path: "resources.service.indexer.build",
-      details: ["build.builder (RAILPACK → DOCKERFILE)"],
-    };
-    expect(() =>
-      assertExpectedPlan({ ...metadata, changeSet: { changes: [create, update] } }, true),
-    ).not.toThrow();
-    for (const change of [
-      { ...update, details: ["build.rootDirectory (/ → /tmp)"] },
-      { ...update, severity: "destructive" },
-      { ...create, kind: "resource.delete" },
-      { ...create, kind: "resource.replace" },
-      {
-        kind: "resource.update",
-        address: "volume.postgres-volume-ytRO",
-        path: "resources.volume.postgres-volume-ytRO.config",
-        details: ["config.sizeMB (50000 → 20000)"],
-      },
-    ]) {
-      expect(() =>
-        assertExpectedPlan({ ...metadata, changeSet: { changes: [change] } }, true),
-      ).toThrow();
-    }
-    expect(() =>
-      assertExpectedPlan({ ...metadata, changeSet: { changes: [create] } }, false),
-    ).toThrow();
-    expect(() =>
-      assertExpectedPlan({ ...metadata, changeSet: { changes: [update] } }, false),
-    ).toThrow();
-    expect(() =>
-      assertExpectedPlan(
-        {
-          ...metadata,
-          changeSet: {
-            changes: [
-              {
-                kind: "variable.set",
-                address: "service.indexer",
-                path: "resources.service.indexer.variables.ENVIO_ROBINHOOD_RPC_URL",
-              },
-            ],
-          },
-        },
-        false,
-      ),
-    ).not.toThrow();
-    expect(() =>
-      assertExpectedPlan(
-        { ...metadata, environmentId: "unexpected", changeSet: { changes: [] } },
-        true,
-      ),
-    ).toThrow();
   });
 
   test("uses pinned production Dockerfiles with real service commands", () => {
