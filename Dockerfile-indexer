@@ -39,7 +39,7 @@ RUN pnpm --dir apps/indexer codegen \
     /usr/local/lib/node_modules/corepack /usr/local/lib/node_modules/npm
 RUN chown -R node:node apps/indexer/.envio
 
-ENV PATH=/app/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV PATH=/app/apps/indexer/node_modules/.bin:/app/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 WORKDIR /app/apps/indexer
 

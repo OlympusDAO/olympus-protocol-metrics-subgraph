@@ -266,7 +266,7 @@ describe("Railway config-as-code", () => {
       expect(content).toContain("/root/.cache/pnpm");
       expect(content).toContain("/usr/local/lib/node_modules/corepack");
       expect(content).toContain("/usr/local/lib/node_modules/npm");
-      expect(content).toContain("ENV PATH=/app/node_modules/.bin:");
+      expect(content).toMatch(/^ENV PATH=.*\/app\/node_modules\/\.bin:/m);
       expect(content).not.toContain('node", "--version');
       expect(content).toContain("USER node");
     }

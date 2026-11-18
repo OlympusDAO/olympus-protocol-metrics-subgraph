@@ -213,8 +213,9 @@ pnpm run docker:tag:scan:rpc-cache
 pnpm run docker:scan:rpc-cache
 ```
 
-The shared `docker:scan` script pins Trivy 0.69.3 through mise and uses the same
-vulnerability severity and fix-availability policy as CI. Scan the other built
+The shared `docker:scan` script uses the Trivy version in `mise.toml` and the same
+vulnerability severity and fix-availability policy as CI. CI reads the same pin
+and verifies the release archive checksum. Scan the other built
 and tagged images with `docker:scan:indexer`, `docker:scan:hasura`,
 `docker:scan:metrics-api`, and `docker:scan:metrics-publisher`.
 

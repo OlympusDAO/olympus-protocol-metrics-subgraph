@@ -29,6 +29,9 @@ jobs:
       - name: Build indexer Docker image
         run: pnpm run docker:build:indexer
 
+      - name: Verify indexer runtime CLI
+        run: docker run --rm --entrypoint envio olympus-protocol-metrics/indexer:local --version
+
       - name: Tag indexer image for scan
         run: pnpm run docker:tag:scan:indexer
 
@@ -62,10 +65,10 @@ jobs:
       - name: Install verified Trivy
         shell: bash
         env:
-          TRIVY_VERSION: "0.69.3"
           TRIVY_SHA256: "1816b632dfe529869c740c0913e36bd1629cb7688bd5634f4a858c1d57c88b75"
         run: |
           set -euo pipefail
+          TRIVY_VERSION="$(python3 -c 'import tomllib; print(tomllib.load(open("mise.toml", "rb"))["tools"]["trivy"])')"
           trivy_dir="$(mktemp -d "$RUNNER_TEMP/trivy.XXXXXX")"
           archive="trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
           cd "$trivy_dir"

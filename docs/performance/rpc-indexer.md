@@ -8,7 +8,7 @@ a faster first cold replay or production billing savings.
 
 ## Measured workload
 
-The devbox campaign ran before and after implementation with Node 24.22.3,
+The benchmark ran before and after implementation with Node 24.22.3,
 Envio 3.14.0, real PostgreSQL and Hasura, and the same Robinhood archive provider.
 It retained the configured start block 65,044,796 and stopped at 65,664,000.
 This includes the treasury funding transition and valued historical snapshots.

@@ -27,7 +27,7 @@
     "docker:build:rpc-cache": "docker build -f Dockerfile-rpc-cache -t localhost/olympus-metrics-rpc-cache:local .",
     "docker:build:metrics-api": "docker build -f Dockerfile-metrics-api -t olympus-protocol-metrics/metrics-api:local .",
     "docker:build:metrics-publisher": "docker build -f Dockerfile-metrics-publisher -t olympus-protocol-metrics/metrics-publisher:local .",
-    "docker:scan": "mise exec trivy@0.69.3 -- trivy image --scanners vuln --severity MEDIUM,HIGH,CRITICAL --ignore-unfixed --exit-code 1",
+    "docker:scan": "mise exec -- trivy image --scanners vuln --severity MEDIUM,HIGH,CRITICAL --ignore-unfixed --exit-code 1",
     "docker:scan:hasura": "pnpm run docker:scan olympus-protocol-metrics/hasura:scan",
     "docker:scan:indexer": "pnpm run docker:scan olympus-protocol-metrics/indexer:scan",
     "docker:scan:metrics-api": "pnpm run docker:scan olympus-protocol-metrics/metrics-api:scan",
@@ -57,8 +57,6 @@
     "lint:check": "biome lint ."
   },
   "dependencies": {
-    "bignumber.js": "11.1.5",
-    "envio": "3.14.0",
     "tsx": "4.23.15",
     "viem": "2.56.8",
     "zod": "4.6.6"

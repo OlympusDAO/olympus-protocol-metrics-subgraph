@@ -36,6 +36,7 @@ if (!outputLocation.startsWith(`..${path.sep}`) && !path.isAbsolute(outputLocati
 }
 const require = createRequire(path.join(sourceRoot, "apps/indexer/package.json"));
 const YAML = require("yaml");
+const envioBin = path.join(path.dirname(require.resolve("envio/package.json")), "bin.mjs");
 let credentials;
 try {
   credentials = JSON.parse(fs.readFileSync(credentialsPath, "utf8"));
@@ -280,10 +281,10 @@ try {
       );
       const baseEnv = {
         ...inherited,
-        PATH: `${work}/node_modules/.bin:${path.dirname(node)}:${process.env.PATH}`,
+        PATH: `${cwd}/node_modules/.bin:${work}/node_modules/.bin:${path.dirname(node)}:${process.env.PATH}`,
       };
       const password = randomBytes(16).toString("hex");
-      command([node, path.join(sourceRoot, "node_modules/envio/bin.mjs"), "codegen"], {
+      command([node, envioBin, "codegen"], {
         cwd,
         env: baseEnv,
         stdio: ["ignore", log, log],
