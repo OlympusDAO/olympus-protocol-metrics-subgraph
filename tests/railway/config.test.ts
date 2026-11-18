@@ -252,7 +252,7 @@ describe("Railway config-as-code", () => {
       const content = readFileSync(dockerfile, "utf8");
       expect(content).toContain("@sha256:");
       expect(content).toContain("apt-get install -y --no-install-recommends ca-certificates");
-      expect(content).toContain("--only-upgrade libgcrypt20 libgnutls30");
+      expect(content).toContain("--only-upgrade apt libapt-pkg6.0 libgcrypt20 libgnutls30");
       expect(content).not.toContain("apt-get upgrade");
       expect(content).toContain("COREPACK_HOME=/corepack");
       expect(content).toContain("pnpm --version");

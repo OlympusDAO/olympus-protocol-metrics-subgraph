@@ -2,6 +2,12 @@ packages:
   - apps/*
   - packages/*
 
+audit:
+  ignore:
+    # picomatch ReDoS has no published fix. Remove when a patched release is available.
+    # https://github.com/advisories/GHSA-fc5q-39xc-vjpf
+    - GHSA-fc5q-39xc-vjpf
+
 blockExoticSubdeps: true
 engineStrict: true
 minimumReleaseAge: 10080
@@ -84,13 +90,13 @@ overrides:
   # Envio bundles express + ws; patches the transitive advisories CI's
   # audit gate flagged at moderate+. Pinned to ranges known to address
   # each CVE without churning unrelated majors.
-  "body-parser@<1.20.6": "1.20.6"
+  "body-parser@>=1.0.0 <1.20.9": "1.20.9"
   "cookie@<0.7.0": "0.7.0"
   "express@<4.20.0": "4.20.0"
   "path-to-regexp@<0.1.13": "0.1.13"
-  "qs@<6.16.0": "6.16.0"
+  "qs@>=6.0.0 <6.16.1": "6.16.1"
   "fflate@<0.8.3": "0.8.3"
-  "vitest@>=4.0.0 <4.1.11": "4.1.11"
+  "vitest@>=4.0.0 <4.1.12": "4.1.12"
   "send@<0.19.0": "0.19.0"
   "serve-static@<1.16.0": "1.16.0"
   # postcss GHSA-r28c-9q8g-f849 (high, arbitrary source-map disclosure),
@@ -109,14 +115,9 @@ overrides:
   # 8.20.1 predates this advisory and is still vulnerable; bumped to 8.21.0
   # (released 2026-05-22, past the 7-day cutoff). Range-scoped per convention.
   "ws@>=8.0.0 <8.21.0": "8.21.0"
-  # vite GHSA-fx2h-pf6j-xcff (server.fs.deny bypass) + GHSA-v6wh-96g9-6wx3
-  # (NTLMv2 disclosure), both fixed in 8.0.16. Previously this override
-  # pinned vite DOWN to 8.0.13 purely as a maturity-gate workaround (vitest@4
-  # accepts vite ^6/^7/^8 and the resolver picked the too-fresh 8.0.14). The
-  # patched 8.0.16 (released 2026-06-01) is now well past the 7-day cutoff,
-  # so the override doubles as the CVE fix. Range-scoped per the convention
-  # above: only the vulnerable 8.0.x line is forced to 8.0.16.
-  "vite@>=8.0.0 <8.0.16": "8.0.16"
+  # Vite 8.1.6 fixes launch-editor command injection and server.fs.allow
+  # bypasses. Keep the fix within Vitest's supported Vite 8 peer range.
+  "vite@>=8.0.0 <8.1.6": "8.1.6"
   # esbuild GHSA-gv7w-rqvm-qjhr (RCE via NPM_CONFIG_REGISTRY in the Deno
   # module) + GHSA-g7r4-m6w7-qqqr (dev-server arbitrary file read), both
   # fixed in 0.28.1. vite@8.0.16 accepts esbuild ^0.27.0 || ^0.28.0, so the

@@ -8,13 +8,13 @@ ENV PATH=/pnpm:$PATH
 WORKDIR /app
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends --only-upgrade libgcrypt20 libgnutls30 libpcre2-8-0 perl-base \
+  && apt-get install -y --no-install-recommends --only-upgrade apt libapt-pkg6.0 libgcrypt20 libgnutls30 libpcre2-8-0 perl-base \
   && apt-get install -y --no-install-recommends ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /corepack /pnpm \
   && corepack enable \
-  && corepack prepare pnpm@11.13.1 --activate \
+  && corepack prepare pnpm@11.28.13 --activate \
   && pnpm --version \
   && chown -R node:node /corepack /pnpm
 

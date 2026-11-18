@@ -27,7 +27,12 @@
     "docker:build:rpc-cache": "docker build -f Dockerfile-rpc-cache -t localhost/olympus-metrics-rpc-cache:local .",
     "docker:build:metrics-api": "docker build -f Dockerfile-metrics-api -t olympus-protocol-metrics/metrics-api:local .",
     "docker:build:metrics-publisher": "docker build -f Dockerfile-metrics-publisher -t olympus-protocol-metrics/metrics-publisher:local .",
-    "docker:scan:rpc-cache": "mise exec trivy@0.69.3 -- trivy image --scanners vuln --severity MEDIUM,HIGH,CRITICAL --ignore-unfixed --exit-code 1 olympus-protocol-metrics/rpc-cache:scan",
+    "docker:scan": "mise exec trivy@0.69.3 -- trivy image --scanners vuln --severity MEDIUM,HIGH,CRITICAL --ignore-unfixed --exit-code 1",
+    "docker:scan:hasura": "pnpm run docker:scan olympus-protocol-metrics/hasura:scan",
+    "docker:scan:indexer": "pnpm run docker:scan olympus-protocol-metrics/indexer:scan",
+    "docker:scan:metrics-api": "pnpm run docker:scan olympus-protocol-metrics/metrics-api:scan",
+    "docker:scan:metrics-publisher": "pnpm run docker:scan olympus-protocol-metrics/metrics-publisher:scan",
+    "docker:scan:rpc-cache": "pnpm run docker:scan olympus-protocol-metrics/rpc-cache:scan",
     "docker:tag:scan:hasura": "docker tag olympus-protocol-metrics/hasura:local olympus-protocol-metrics/hasura:scan",
     "docker:tag:scan:indexer": "docker tag olympus-protocol-metrics/indexer:local olympus-protocol-metrics/indexer:scan",
     "docker:tag:scan:rpc-cache": "docker tag localhost/olympus-metrics-rpc-cache:local olympus-protocol-metrics/rpc-cache:scan",
@@ -55,20 +60,21 @@
     "bignumber.js": "11.1.5",
     "envio": "3.14.0",
     "tsx": "4.23.15",
-    "viem": "2.56.8"
+    "viem": "2.56.8",
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.14",
     "@types/node": "24.12.2",
     "railway": "3.16.0",
     "typescript": "6.0.3",
-    "vitest": "4.1.11"
+    "vitest": "4.1.12"
   },
   "engines": {
     "node": "^24",
-    "pnpm": ">=11.13.1 <12",
+    "pnpm": ">=11.28.13 <12",
     "npm": "use-pnpm",
     "yarn": "use-pnpm"
   },
-  "packageManager": "pnpm@11.13.1"
+  "packageManager": "pnpm@11.28.13"
 }

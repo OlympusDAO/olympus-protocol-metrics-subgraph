@@ -66,8 +66,3 @@ The runner uses disposable databases, limits the campaign to 15,000 upstream
 requests, rejects a changed fixture start, verifies matching entity digests,
 and records immutable image identities. For the separate synthetic cache test,
 Docker or Podman is supported; see [the local stack guide](../local-compose.md#test-rpc-cache-persistence).
-
-The package-manager pin was subsequently patched from pnpm 11.13.0 to 11.13.1
-because current pnpm installers reject the broken 11.13.0 executable release.
-That tooling correction and the CI/test portability changes are not new timing
-measurements; the report retains the original measured runtime and sources.

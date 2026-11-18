@@ -213,8 +213,10 @@ pnpm run docker:tag:scan:rpc-cache
 pnpm run docker:scan:rpc-cache
 ```
 
-The scan script runs Trivy 0.69.3 through mise and uses the same vulnerability
-severity and fix-availability policy as CI.
+The shared `docker:scan` script pins Trivy 0.69.3 through mise and uses the same
+vulnerability severity and fix-availability policy as CI. Scan the other built
+and tagged images with `docker:scan:indexer`, `docker:scan:hasura`,
+`docker:scan:metrics-api`, and `docker:scan:metrics-publisher`.
 
 The integration test defaults to Docker, matching the build command and CI.
 On a Podman-only machine, build the same image with
