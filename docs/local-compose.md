@@ -207,6 +207,18 @@ provider errors, and reads from a provider without a finalized tag bypass the
 persistent cache.
 
 ```sh
-podman build -f Dockerfile-rpc-cache -t localhost/olympus-metrics-rpc-cache:local .
-node --test services/rpc-cache/integration.test.mjs
+pnpm run docker:build:rpc-cache
+pnpm run test:rpc-cache
+pnpm run docker:tag:scan:rpc-cache
+pnpm run docker:scan:rpc-cache
 ```
+
+The scan script runs Trivy 0.69.3 through mise and uses the same vulnerability
+severity and fix-availability policy as CI.
+
+The integration test defaults to Docker, matching the build command and CI.
+On a Podman-only machine, build the same image with
+`podman build -f Dockerfile-rpc-cache -t localhost/olympus-metrics-rpc-cache:local .`
+and run `CONTAINER_RUNTIME=podman pnpm run test:rpc-cache`.
+The [benchmark report](performance/rpc-indexer.md) records the devbox baseline,
+candidate results, reproduction commands, and measurement limits.

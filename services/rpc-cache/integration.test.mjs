@@ -9,8 +9,9 @@ const chains = [1, 137, 250, 8453, 42161, 80094, 4663];
 const cacheImage = process.env.RPC_CACHE_IMAGE ?? "localhost/olympus-metrics-rpc-cache:local";
 const databaseImage =
   "docker.io/library/postgres:17-alpine@sha256:979c4379dd698aba0b890599a6104e082035f98ef31d9b9291ec22f2b13059ca";
+const runtime = process.env.CONTAINER_RUNTIME ?? "docker";
 const container = (...args) =>
-  execFileSync("podman", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+  execFileSync(runtime, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
 
 async function eventually(check, message) {
   const deadline = Date.now() + 40_000;
@@ -28,7 +29,7 @@ async function eventually(check, message) {
 test("eRPC persists finalized calls across process restarts and bypasses volatile responses", {
   timeout: 150_000,
 }, async (t) => {
-  container("image", "exists", cacheImage);
+  container("image", "inspect", cacheImage);
   const prefix = `metrics-cache-test-${randomBytes(5).toString("hex")}`;
   const postgres = `${prefix}-postgres`;
   const cache = `${prefix}-erpc`;
@@ -106,10 +107,14 @@ test("eRPC persists finalized calls across process restarts and bypasses volatil
   }, "Cache Postgres did not become ready");
   container(
     "run", "-d", "--pull=never", "--name", cache, "--network", prefix,
+    ...(runtime === "docker" && process.platform === "linux"
+      ? ["--add-host", "host.docker.internal:host-gateway"]
+      : []),
     "-p", "127.0.0.1::4000",
     "-e", `RPC_CACHE_DATABASE_URL=postgresql://postgres:cache-fixture@${postgres}:5432/postgres`,
     ...chains.flatMap((chain) => {
-      const endpoint = `http://host.containers.internal:${upstream.address().port}/${chain}`;
+      const host = runtime === "podman" ? "host.containers.internal" : "host.docker.internal";
+      const endpoint = `http://${host}:${upstream.address().port}/${chain}`;
       return ["-e", `UPSTREAM_RPC_URL_${chain}=${endpoint}/fixture-provider-secret`];
     }),
     cacheImage,

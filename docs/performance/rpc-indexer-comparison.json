@@ -1,0 +1,442 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "source": "e499692d993d4fd1269fa508f6a9a34988ae6ea2",
+    "node": "v24.22.3",
+    "images": {
+      "docker.io/library/postgres:17-alpine": "6b75136145ddabf3d9a4b69660402082de7c56b734cfe50555b0674774dd742a",
+      "docker.io/hasura/graphql-engine:v2.48.16": "f45f62afd4cab3604067e6c79c805f43168d6acda04bbe5a6b424e796cdf7d3e"
+    },
+    "workload": {
+      "chain": 4663,
+      "start": 65044796,
+      "end": 65664000,
+      "description": "Robinhood historical fixture with configured start and funded Mellow snapshots"
+    },
+    "trials": [
+      {
+        "status": "complete",
+        "phases": [
+          {
+            "phase": "cold-start",
+            "elapsedMs": 19454,
+            "upstreamRequests": 13,
+            "methods": {
+              "eth_getBlockByNumber": 3,
+              "eth_call": 10
+            },
+            "discoveryAndFinalityRequests": 0,
+            "checkpoint": null,
+            "persistedCacheRows": null,
+            "priorCacheRows": null,
+            "entityDigest": "de08128cd44f0250c00a1fb31b52b09b40aaa1b140c362589003ac9f3d22cca1",
+            "nonemptyEntityRows": {
+              "public.ChainMetricValues": 1,
+              "public.GlobalMetricSnapshot": 1,
+              "public.MellowQueueState": 1,
+              "public.MellowQueueUpdate": 1,
+              "public.TokenBalance": 2,
+              "public.TokenBalanceUpdate": 3,
+              "public.TokenRecord": 2
+            }
+          },
+          {
+            "phase": "container-restart",
+            "elapsedMs": 23987,
+            "upstreamRequests": 13,
+            "methods": {
+              "eth_getBlockByNumber": 3,
+              "eth_call": 10
+            },
+            "discoveryAndFinalityRequests": 0,
+            "checkpoint": null,
+            "persistedCacheRows": null,
+            "priorCacheRows": null,
+            "entityDigest": "de08128cd44f0250c00a1fb31b52b09b40aaa1b140c362589003ac9f3d22cca1",
+            "nonemptyEntityRows": {
+              "public.ChainMetricValues": 1,
+              "public.GlobalMetricSnapshot": 1,
+              "public.MellowQueueState": 1,
+              "public.MellowQueueUpdate": 1,
+              "public.TokenBalance": 2,
+              "public.TokenBalanceUpdate": 3,
+              "public.TokenRecord": 2
+            }
+          }
+        ]
+      },
+      {
+        "status": "complete",
+        "phases": [
+          {
+            "phase": "cold-start",
+            "elapsedMs": 20378,
+            "upstreamRequests": 13,
+            "methods": {
+              "eth_getBlockByNumber": 3,
+              "eth_call": 10
+            },
+            "discoveryAndFinalityRequests": 0,
+            "checkpoint": null,
+            "persistedCacheRows": null,
+            "priorCacheRows": null,
+            "entityDigest": "de08128cd44f0250c00a1fb31b52b09b40aaa1b140c362589003ac9f3d22cca1",
+            "nonemptyEntityRows": {
+              "public.ChainMetricValues": 1,
+              "public.GlobalMetricSnapshot": 1,
+              "public.MellowQueueState": 1,
+              "public.MellowQueueUpdate": 1,
+              "public.TokenBalance": 2,
+              "public.TokenBalanceUpdate": 3,
+              "public.TokenRecord": 2
+            }
+          },
+          {
+            "phase": "container-restart",
+            "elapsedMs": 18871,
+            "upstreamRequests": 13,
+            "methods": {
+              "eth_getBlockByNumber": 3,
+              "eth_call": 10
+            },
+            "discoveryAndFinalityRequests": 0,
+            "checkpoint": null,
+            "persistedCacheRows": null,
+            "priorCacheRows": null,
+            "entityDigest": "de08128cd44f0250c00a1fb31b52b09b40aaa1b140c362589003ac9f3d22cca1",
+            "nonemptyEntityRows": {
+              "public.ChainMetricValues": 1,
+              "public.GlobalMetricSnapshot": 1,
+              "public.MellowQueueState": 1,
+              "public.MellowQueueUpdate": 1,
+              "public.TokenBalance": 2,
+              "public.TokenBalanceUpdate": 3,
+              "public.TokenRecord": 2
+            }
+          }
+        ]
+      },
+      {
+        "status": "complete",
+        "phases": [
+          {
+            "phase": "cold-start",
+            "elapsedMs": 19153,
+            "upstreamRequests": 13,
+            "methods": {
+              "eth_getBlockByNumber": 3,
+              "eth_call": 10
+            },
+            "discoveryAndFinalityRequests": 0,
+            "checkpoint": null,
+            "persistedCacheRows": null,
+            "priorCacheRows": null,
+            "entityDigest": "de08128cd44f0250c00a1fb31b52b09b40aaa1b140c362589003ac9f3d22cca1",
+            "nonemptyEntityRows": {
+              "public.ChainMetricValues": 1,
+              "public.GlobalMetricSnapshot": 1,
+              "public.MellowQueueState": 1,
+              "public.MellowQueueUpdate": 1,
+              "public.TokenBalance": 2,
+              "public.TokenBalanceUpdate": 3,
+              "public.TokenRecord": 2
+            }
+          },
+          {
+            "phase": "container-restart",
+            "elapsedMs": 18849,
+            "upstreamRequests": 13,
+            "methods": {
+              "eth_getBlockByNumber": 3,
+              "eth_call": 10
+            },
+            "discoveryAndFinalityRequests": 0,
+            "checkpoint": null,
+            "persistedCacheRows": null,
+            "priorCacheRows": null,
+            "entityDigest": "de08128cd44f0250c00a1fb31b52b09b40aaa1b140c362589003ac9f3d22cca1",
+            "nonemptyEntityRows": {
+              "public.ChainMetricValues": 1,
+              "public.GlobalMetricSnapshot": 1,
+              "public.MellowQueueState": 1,
+              "public.MellowQueueUpdate": 1,
+              "public.TokenBalance": 2,
+              "public.TokenBalanceUpdate": 3,
+              "public.TokenRecord": 2
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "candidate": {
+    "source": "798bd32cc4c577d67920e4daba4dbcf400619ee9",
+    "node": "v24.22.3",
+    "images": {
+      "docker.io/library/postgres:17-alpine": "6b75136145ddabf3d9a4b69660402082de7c56b734cfe50555b0674774dd742a",
+      "docker.io/hasura/graphql-engine:v2.48.16": "f45f62afd4cab3604067e6c79c805f43168d6acda04bbe5a6b424e796cdf7d3e",
+      "localhost/olympus-metrics-rpc-cache:local": "411faa3946c8da14e72e5f757204b2168afcdd5de8650755f1abc6d6a7a4c3ab"
+    },
+    "workload": {
+      "chain": 4663,
+      "start": 65044796,
+      "end": 65664000,
+      "description": "Robinhood historical fixture with configured start and funded Mellow snapshots"
+    },
+    "trials": [
+      {
+        "status": "complete",
+        "phases": [
+          {
+            "phase": "cold-start",
+            "elapsedMs": 19769,
+            "upstreamRequests": 13,
+            "methods": {
+              "eth_getBlockByNumber": 3,
+              "eth_call": 10
+            },
+            "discoveryAndFinalityRequests": 0,
+            "checkpoint": 65664000,
+            "persistedCacheRows": 13,
+            "priorCacheRows": 0,
+            "entityDigest": "de08128cd44f0250c00a1fb31b52b09b40aaa1b140c362589003ac9f3d22cca1",
+            "nonemptyEntityRows": {
+              "public.ChainMetricValues": 1,
+              "public.GlobalMetricSnapshot": 1,
+              "public.MellowQueueState": 1,
+              "public.MellowQueueUpdate": 1,
+              "public.TokenBalance": 2,
+              "public.TokenBalanceUpdate": 3,
+              "public.TokenRecord": 2
+            }
+          },
+          {
+            "phase": "container-restart",
+            "elapsedMs": 11641,
+            "upstreamRequests": 3,
+            "methods": {
+              "eth_getBlockByNumber": 2,
+              "eth_syncing": 1
+            },
+            "discoveryAndFinalityRequests": 3,
+            "checkpoint": 65664000,
+            "persistedCacheRows": 13,
+            "priorCacheRows": 13,
+            "entityDigest": "de08128cd44f0250c00a1fb31b52b09b40aaa1b140c362589003ac9f3d22cca1",
+            "nonemptyEntityRows": {
+              "public.ChainMetricValues": 1,
+              "public.GlobalMetricSnapshot": 1,
+              "public.MellowQueueState": 1,
+              "public.MellowQueueUpdate": 1,
+              "public.TokenBalance": 2,
+              "public.TokenBalanceUpdate": 3,
+              "public.TokenRecord": 2
+            }
+          },
+          {
+            "phase": "warm-cache-rebuild",
+            "elapsedMs": 20960,
+            "upstreamRequests": 3,
+            "methods": {
+              "eth_getBlockByNumber": 2,
+              "eth_syncing": 1
+            },
+            "discoveryAndFinalityRequests": 3,
+            "checkpoint": 65664000,
+            "persistedCacheRows": 13,
+            "priorCacheRows": 13,
+            "entityDigest": "de08128cd44f0250c00a1fb31b52b09b40aaa1b140c362589003ac9f3d22cca1",
+            "nonemptyEntityRows": {
+              "public.ChainMetricValues": 1,
+              "public.GlobalMetricSnapshot": 1,
+              "public.MellowQueueState": 1,
+              "public.MellowQueueUpdate": 1,
+              "public.TokenBalance": 2,
+              "public.TokenBalanceUpdate": 3,
+              "public.TokenRecord": 2
+            }
+          },
+          {
+            "phase": "manual-reset-rebuild",
+            "elapsedMs": 25398,
+            "upstreamRequests": 3,
+            "methods": {
+              "eth_getBlockByNumber": 2,
+              "eth_syncing": 1
+            },
+            "discoveryAndFinalityRequests": 3,
+            "checkpoint": 65664000,
+            "persistedCacheRows": 13,
+            "priorCacheRows": 13,
+            "entityDigest": "de08128cd44f0250c00a1fb31b52b09b40aaa1b140c362589003ac9f3d22cca1",
+            "nonemptyEntityRows": {
+              "public.ChainMetricValues": 1,
+              "public.GlobalMetricSnapshot": 1,
+              "public.MellowQueueState": 1,
+              "public.MellowQueueUpdate": 1,
+              "public.TokenBalance": 2,
+              "public.TokenBalanceUpdate": 3,
+              "public.TokenRecord": 2
+            }
+          }
+        ]
+      },
+      {
+        "status": "complete",
+        "phases": [
+          {
+            "phase": "cold-start",
+            "elapsedMs": 19761,
+            "upstreamRequests": 13,
+            "methods": {
+              "eth_getBlockByNumber": 3,
+              "eth_call": 10
+            },
+            "discoveryAndFinalityRequests": 0,
+            "checkpoint": 65664000,
+            "persistedCacheRows": 13,
+            "priorCacheRows": 0,
+            "entityDigest": "de08128cd44f0250c00a1fb31b52b09b40aaa1b140c362589003ac9f3d22cca1",
+            "nonemptyEntityRows": {
+              "public.ChainMetricValues": 1,
+              "public.GlobalMetricSnapshot": 1,
+              "public.MellowQueueState": 1,
+              "public.MellowQueueUpdate": 1,
+              "public.TokenBalance": 2,
+              "public.TokenBalanceUpdate": 3,
+              "public.TokenRecord": 2
+            }
+          },
+          {
+            "phase": "container-restart",
+            "elapsedMs": 11640,
+            "upstreamRequests": 3,
+            "methods": {
+              "eth_syncing": 1,
+              "eth_getBlockByNumber": 2
+            },
+            "discoveryAndFinalityRequests": 3,
+            "checkpoint": 65664000,
+            "persistedCacheRows": 13,
+            "priorCacheRows": 13,
+            "entityDigest": "de08128cd44f0250c00a1fb31b52b09b40aaa1b140c362589003ac9f3d22cca1",
+            "nonemptyEntityRows": {
+              "public.ChainMetricValues": 1,
+              "public.GlobalMetricSnapshot": 1,
+              "public.MellowQueueState": 1,
+              "public.MellowQueueUpdate": 1,
+              "public.TokenBalance": 2,
+              "public.TokenBalanceUpdate": 3,
+              "public.TokenRecord": 2
+            }
+          },
+          {
+            "phase": "warm-cache-rebuild",
+            "elapsedMs": 24258,
+            "upstreamRequests": 4,
+            "methods": {
+              "eth_getBlockByNumber": 2,
+              "eth_syncing": 1,
+              "eth_chainId": 1
+            },
+            "discoveryAndFinalityRequests": 4,
+            "checkpoint": 65664000,
+            "persistedCacheRows": 13,
+            "priorCacheRows": 13,
+            "entityDigest": "de08128cd44f0250c00a1fb31b52b09b40aaa1b140c362589003ac9f3d22cca1",
+            "nonemptyEntityRows": {
+              "public.ChainMetricValues": 1,
+              "public.GlobalMetricSnapshot": 1,
+              "public.MellowQueueState": 1,
+              "public.MellowQueueUpdate": 1,
+              "public.TokenBalance": 2,
+              "public.TokenBalanceUpdate": 3,
+              "public.TokenRecord": 2
+            }
+          }
+        ]
+      },
+      {
+        "status": "complete",
+        "phases": [
+          {
+            "phase": "cold-start",
+            "elapsedMs": 24856,
+            "upstreamRequests": 13,
+            "methods": {
+              "eth_getBlockByNumber": 3,
+              "eth_call": 10
+            },
+            "discoveryAndFinalityRequests": 0,
+            "checkpoint": 65664000,
+            "persistedCacheRows": 13,
+            "priorCacheRows": 0,
+            "entityDigest": "de08128cd44f0250c00a1fb31b52b09b40aaa1b140c362589003ac9f3d22cca1",
+            "nonemptyEntityRows": {
+              "public.ChainMetricValues": 1,
+              "public.GlobalMetricSnapshot": 1,
+              "public.MellowQueueState": 1,
+              "public.MellowQueueUpdate": 1,
+              "public.TokenBalance": 2,
+              "public.TokenBalanceUpdate": 3,
+              "public.TokenRecord": 2
+            }
+          },
+          {
+            "phase": "container-restart",
+            "elapsedMs": 20687,
+            "upstreamRequests": 3,
+            "methods": {
+              "eth_getBlockByNumber": 2,
+              "eth_syncing": 1
+            },
+            "discoveryAndFinalityRequests": 3,
+            "checkpoint": 65664000,
+            "persistedCacheRows": 13,
+            "priorCacheRows": 13,
+            "entityDigest": "de08128cd44f0250c00a1fb31b52b09b40aaa1b140c362589003ac9f3d22cca1",
+            "nonemptyEntityRows": {
+              "public.ChainMetricValues": 1,
+              "public.GlobalMetricSnapshot": 1,
+              "public.MellowQueueState": 1,
+              "public.MellowQueueUpdate": 1,
+              "public.TokenBalance": 2,
+              "public.TokenBalanceUpdate": 3,
+              "public.TokenRecord": 2
+            }
+          },
+          {
+            "phase": "warm-cache-rebuild",
+            "elapsedMs": 24041,
+            "upstreamRequests": 3,
+            "methods": {
+              "eth_getBlockByNumber": 2,
+              "eth_syncing": 1
+            },
+            "discoveryAndFinalityRequests": 3,
+            "checkpoint": 65664000,
+            "persistedCacheRows": 13,
+            "priorCacheRows": 13,
+            "entityDigest": "de08128cd44f0250c00a1fb31b52b09b40aaa1b140c362589003ac9f3d22cca1",
+            "nonemptyEntityRows": {
+              "public.ChainMetricValues": 1,
+              "public.GlobalMetricSnapshot": 1,
+              "public.MellowQueueState": 1,
+              "public.MellowQueueUpdate": 1,
+              "public.TokenBalance": 2,
+              "public.TokenBalanceUpdate": 3,
+              "public.TokenRecord": 2
+            }
+          }
+        ]
+      }
+    ],
+    "implementationCommit": "2327b69abcd16c25fbf2c20dc2d6439732caeae7"
+  },
+  "limitations": [
+    "Single Robinhood fixture with 13 historical reads; not full-history or seven-chain performance certification.",
+    "Baseline first restart overlapped dependency installation; raw samples retained and medians reported.",
+    "RPC request counts do not establish provider-billed units or net hosting savings.",
+    "Candidate used a staged Git tree; the implementation commit also contains an unrelated CI scanner fix."
+  ]
+}

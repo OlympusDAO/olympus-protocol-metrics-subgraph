@@ -311,13 +311,15 @@ describe("Railway config-as-code", () => {
     expect(workflow).toContain(
       "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd",
     );
-    expect(workflow.match(/ignore-unfixed: true/g)?.length).toBe(4);
+    expect(workflow.match(/ignore-unfixed: true/g)?.length).toBe(5);
+    expect(workflow).toContain("pnpm run test:rpc-cache");
 
     for (const [name, dockerfile] of [
       ["indexer", "Dockerfile-indexer"],
       ["hasura", "Dockerfile-hasura"],
       ["metrics-api", "Dockerfile-metrics-api"],
       ["metrics-publisher", "Dockerfile-metrics-publisher"],
+      ["rpc-cache", "Dockerfile-rpc-cache"],
     ] as const) {
       expect(packageJson).toContain(`"docker:build:${name}"`);
       expect(packageJson).toContain(`"docker:tag:scan:${name}"`);

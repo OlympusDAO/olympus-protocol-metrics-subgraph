@@ -50,6 +50,15 @@ jobs:
       - name: Tag metrics publisher image for scan
         run: pnpm run docker:tag:scan:metrics-publisher
 
+      - name: Build RPC cache Docker image
+        run: pnpm run docker:build:rpc-cache
+
+      - name: Tag RPC cache image for scan
+        run: pnpm run docker:tag:scan:rpc-cache
+
+      - name: Verify persistent RPC caching
+        run: pnpm run test:rpc-cache
+
       - name: Install verified Trivy
         shell: bash
         env:
@@ -114,6 +123,26 @@ jobs:
         with:
           skip-setup-trivy: true
           image-ref: olympus-protocol-metrics/indexer:scan
+          format: table
+          severity: MEDIUM,HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+      - name: Scan RPC cache Dockerfile for misconfigurations
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          skip-setup-trivy: true
+          scan-type: config
+          scan-ref: Dockerfile-rpc-cache
+          scanners: misconfig
+          severity: MEDIUM,HIGH,CRITICAL
+          exit-code: "1"
+
+      - name: Scan RPC cache image for vulnerabilities
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # v0.35.0
+        with:
+          skip-setup-trivy: true
+          image-ref: olympus-protocol-metrics/rpc-cache:scan
           format: table
           severity: MEDIUM,HIGH,CRITICAL
           ignore-unfixed: true

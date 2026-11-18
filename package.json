@@ -24,10 +24,13 @@
     "compose:up": "docker compose up --build postgres hasura minio minio-init indexer metrics-api",
     "docker:build:hasura": "docker build -f Dockerfile-hasura -t olympus-protocol-metrics/hasura:local .",
     "docker:build:indexer": "docker build -f Dockerfile-indexer -t olympus-protocol-metrics/indexer:local .",
+    "docker:build:rpc-cache": "docker build -f Dockerfile-rpc-cache -t localhost/olympus-metrics-rpc-cache:local .",
     "docker:build:metrics-api": "docker build -f Dockerfile-metrics-api -t olympus-protocol-metrics/metrics-api:local .",
     "docker:build:metrics-publisher": "docker build -f Dockerfile-metrics-publisher -t olympus-protocol-metrics/metrics-publisher:local .",
+    "docker:scan:rpc-cache": "mise exec trivy@0.69.3 -- trivy image --scanners vuln --severity MEDIUM,HIGH,CRITICAL --ignore-unfixed --exit-code 1 olympus-protocol-metrics/rpc-cache:scan",
     "docker:tag:scan:hasura": "docker tag olympus-protocol-metrics/hasura:local olympus-protocol-metrics/hasura:scan",
     "docker:tag:scan:indexer": "docker tag olympus-protocol-metrics/indexer:local olympus-protocol-metrics/indexer:scan",
+    "docker:tag:scan:rpc-cache": "docker tag localhost/olympus-metrics-rpc-cache:local olympus-protocol-metrics/rpc-cache:scan",
     "docker:tag:scan:metrics-api": "docker tag olympus-protocol-metrics/metrics-api:local olympus-protocol-metrics/metrics-api:scan",
     "docker:tag:scan:metrics-publisher": "docker tag olympus-protocol-metrics/metrics-publisher:local olympus-protocol-metrics/metrics-publisher:scan",
     "envio": "pnpm --dir apps/indexer envio",
@@ -42,6 +45,7 @@
     "test:metrics-api": "pnpm --dir apps/metrics-api test",
     "test:metrics-publisher": "pnpm --dir apps/metrics-publisher test",
     "test:root": "vitest run --dir tests",
+    "test:rpc-cache": "node --test services/rpc-cache/integration.test.mjs",
     "test:indexer": "pnpm --dir apps/indexer test",
     "validate": "pnpm run check && pnpm run build && pnpm test",
     "lint": "biome lint --write .",
@@ -62,9 +66,9 @@
   },
   "engines": {
     "node": "^24",
-    "pnpm": ">=11.13.0 <12",
+    "pnpm": ">=11.13.1 <12",
     "npm": "use-pnpm",
     "yarn": "use-pnpm"
   },
-  "packageManager": "pnpm@11.13.0"
+  "packageManager": "pnpm@11.13.1"
 }
