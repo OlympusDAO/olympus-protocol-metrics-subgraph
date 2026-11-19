@@ -1,8 +1,10 @@
 # Railway Metrics API Deployment
 
 Railway runs Envio, Hasura, Postgres, a persistent RPC cache, and the scheduled
-artifact publisher. The metrics API serves published snapshots. The migration
-preserves existing generated domains. See the
+artifact publisher. The metrics API serves published snapshots and its
+`/openapi.json` specification, with no HTML documentation site (`/docs` is 404).
+REST endpoints remain available. Domain reconciliation requires its separate
+review and live approval. See the
 [Railway infrastructure definition and plan procedure](../.railway/README.md).
 
 ## Services

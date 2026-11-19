@@ -8,6 +8,8 @@ import { setTimeout as delay } from "node:timers/promises";
 import { promisify } from "node:util";
 
 const images = JSON.parse(readFileSync(".railway/images.json", "utf8"));
+if (process.env.METRICS_INTEGRATION_IMAGES)
+  images.built = JSON.parse(process.env.METRICS_INTEGRATION_IMAGES);
 const docker = (...args) =>
   execFileSync("docker", args, {
     encoding: "utf8",
@@ -71,7 +73,7 @@ test("patched upstream template preserves an existing PostgreSQL 18 cluster and 
   t.after(() => {
     for (const name of [previous, candidate]) {
       try {
-        docker("rm", "-f", name);
+        docker("rm", "-f", "-v", name);
       } catch {
         /* setup failed */
       }
@@ -126,7 +128,7 @@ test("patched upstream template preserves an existing PostgreSQL 18 cluster and 
   const version = sql(previous, "SHOW server_version_num");
   const certificate = docker("exec", previous, "sha256sum", sql(previous, "SHOW ssl_cert_file"));
   docker("stop", previous);
-  start(candidate, images.external["postgres-production"]);
+  start(candidate, images.provider["postgres-production"]);
   await eventually(
     () => sql(candidate, "SELECT id FROM compatibility_marker") === "42",
     "Candidate did not retain existing data",
@@ -283,7 +285,7 @@ test("compiled publisher and API round trip through an HTTP S3 fixture", {
   const api = `${prefix}-api`;
   t.after(() => {
     try {
-      docker("rm", "-f", api);
+      docker("rm", "-f", "-v", api);
     } catch {
       /* failed setup */
     }
@@ -316,6 +318,11 @@ test("compiled publisher and API round trip through an HTTP S3 fixture", {
     async () => (await fetch(`${base}/ready`)).status === 200,
     "Compiled API did not become ready",
   );
+  assert.equal((await fetch(`${base}/docs`)).status, 404);
+  const specification = await fetch(`${base}/openapi.json`);
+  assert.equal(specification.status, 200);
+  assert(specification.headers.get("content-type").includes("application/json"));
+  assert.equal((await specification.json()).openapi, "3.1.0");
   const response = await fetch(`${base}/v2/metrics/daily?start=${date}&end=${date}`);
   assert.equal(response.status, 200);
   const result = await response.json();
@@ -346,7 +353,7 @@ test("real Hasura image starts privately against PostgreSQL", { timeout: 120_000
   t.after(() => {
     for (const name of [hasura, pg]) {
       try {
-        docker("rm", "-f", name);
+        docker("rm", "-f", "-v", name);
       } catch {
         /* setup failed */
       }
@@ -363,12 +370,20 @@ test("real Hasura image starts privately against PostgreSQL", { timeout: 120_000
     prefix,
     "-e",
     "POSTGRES_PASSWORD=fixture",
-    images.external["postgres-local"],
+    images.local["postgres-local"],
   );
   await eventually(() => {
-    docker("exec", pg, "pg_isready", "-U", "postgres");
+    docker("exec", pg, "pg_isready", "-h", "127.0.0.1", "-U", "postgres");
     return true;
   }, "Postgres did not become ready");
+  assert.equal(
+    docker("exec", pg, "psql", "-h", "127.0.0.1", "-U", "postgres", "-Atc", "SHOW server_version"),
+    "18.6",
+  );
+  assert.equal(
+    docker("exec", pg, "psql", "-h", "127.0.0.1", "-U", "postgres", "-Atc", "SHOW data_directory"),
+    "/var/lib/postgresql/18/docker",
+  );
   docker(
     "run",
     "-d",

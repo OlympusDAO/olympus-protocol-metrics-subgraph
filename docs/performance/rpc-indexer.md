@@ -55,12 +55,16 @@ The private credentials JSON supplies `ENVIO_API_TOKEN` and
 
 ```sh
 pnpm install --frozen-lockfile
-podman pull docker.io/library/postgres:17-alpine
+podman pull docker.io/library/postgres:18.6-alpine3.24@sha256:9ba53c7d41ea093baf5c1ba635ba5434c4f979880527d49bb7d9237d3193085b
 podman pull docker.io/hasura/graphql-engine:v2.48.16
 podman build -f Dockerfile-rpc-cache -t localhost/olympus-metrics-rpc-cache:local .
 pnpm benchmark:rpc baseline <baseline-checkout> <credentials.json> <baseline-result.json> <baseline-commit> 3
 pnpm benchmark:rpc candidate <candidate-checkout> <credentials.json> <candidate-result.json> <candidate-commit-or-tree> <baseline-result.json> 3
 ```
+
+New baselines use the current pinned local PostgreSQL image. Historical
+candidate comparisons retain their recorded immutable baseline image; this
+does not change earlier measurement receipts.
 
 The runner uses disposable databases, limits the campaign to 15,000 upstream
 requests, rejects a changed fixture start, verifies matching entity digests,

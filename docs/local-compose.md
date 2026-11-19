@@ -5,6 +5,14 @@ By default, only `metrics-api` is reachable from the host at
 `http://127.0.0.1:${METRICS_API_PORT:-3000}`. Hasura, Postgres, MinIO, the
 indexer, publisher, and both RPC cache services stay internal to the Compose network.
 
+Local databases use pinned official Alpine PostgreSQL 18.6, distinct from the
+Railway SSL template used in production. Their default data directory is
+`/var/lib/postgresql/18/docker`; volumes mount the parent `/var/lib/postgresql`.
+The fresh ephemeral volume names are `postgres18-data` and
+`rpc-cache-postgres18-data`. Older local clusters are not reused, migrated or
+deleted by this change. No production volume or PGDATA setting changes.
+API documentation is JSON-only at `/openapi.json`; `/docs` returns 404.
+
 ## Start
 
 Install the command-line tools declared in `mise.toml` with `mise install`, then
@@ -211,9 +219,10 @@ pnpm run validate:images
 pnpm run test:integration
 ```
 
-The first command builds all five service images, scans their immutable
-identities and the external database/object-store images, and checks all
-Dockerfiles with the Trivy pin/checksum in mise. The second uses the built
+The first command gates the five owned service images and their Dockerfiles
+using immutable image IDs and pinned Trivy. Railway PostgreSQL is optional
+provider-advisory coverage; local PostgreSQL and MinIO/MC fixtures are excluded
+from default scans. The second uses the built
 images for cache persistence, real indexer restart/manual-reset isolation,
 API/publisher behavior and Hasura health. Missing prerequisites fail.
 The standalone `pnpm run test:rpc-cache` remains available after building

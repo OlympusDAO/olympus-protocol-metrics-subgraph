@@ -48,19 +48,24 @@ describe("artifact runtime contracts", () => {
       }).success,
     ).toBe(false);
   });
-  test.each(["0", "-1", "NaN", "1.5", "9007199254740992"])(
-    "rejects invalid configured read limits: %s",
-    (limit) => {
-      expect(() =>
-        createArtifactReaderFromEnv({
-          ARTIFACT_BUCKET: "fixture",
-          ARTIFACT_ENDPOINT: "http://127.0.0.1",
-          ARTIFACT_REGION: "us-east-1",
-          ARTIFACT_ACCESS_KEY_ID: "fixture",
-          ARTIFACT_SECRET_ACCESS_KEY: "fixture",
-          METRICS_API_ARTIFACT_MAX_BYTES: limit,
-        }),
-      ).toThrow(/positive safe integer/);
-    },
-  );
+  test.each([
+    ["METRICS_API_ARTIFACT_MAX_BYTES", "0"],
+    ["METRICS_API_ARTIFACT_MAX_BYTES", "-1"],
+    ["METRICS_API_ARTIFACT_MAX_BYTES", "NaN"],
+    ["METRICS_API_ARTIFACT_MAX_BYTES", "1.5"],
+    ["METRICS_API_ARTIFACT_MAX_BYTES", "9007199254740992"],
+    ["METRICS_API_ARTIFACT_REQUEST_TIMEOUT_MS", "2147483648"],
+    ["METRICS_API_ARTIFACT_BODY_TIMEOUT_MS", "2147483648"],
+  ])("rejects invalid configured read limits: %s=%s", (name, limit) => {
+    expect(() =>
+      createArtifactReaderFromEnv({
+        ARTIFACT_BUCKET: "fixture",
+        ARTIFACT_ENDPOINT: "http://127.0.0.1",
+        ARTIFACT_REGION: "us-east-1",
+        ARTIFACT_ACCESS_KEY_ID: "fixture",
+        ARTIFACT_SECRET_ACCESS_KEY: "fixture",
+        [name]: limit,
+      }),
+    ).toThrow(/positive safe integer|must not exceed/);
+  });
 });

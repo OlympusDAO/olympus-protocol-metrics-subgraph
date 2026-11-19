@@ -71,7 +71,6 @@ const LEGACY_IGNORED_VARIABLE_KEYS = new Set(["dateOffset"]);
 
 const SUPPORTED_QUERY_PARAMS = new Map<string, readonly string[]>([
   ["/openapi.json", []],
-  ["/docs", []],
   ["/operations/health", []],
   ["/ready", []],
   ["/v2/bounds", []],
@@ -688,19 +687,6 @@ async function handleMetricsApiRequestUnchecked(
   if (url.pathname === "/openapi.json") {
     res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
     sendJson(req, res, 200, getOpenApiDocument());
-    return;
-  }
-
-  if (url.pathname === "/docs") {
-    res.statusCode = 200;
-    res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
-    sendBody(
-      req,
-      res,
-      200,
-      "text/html; charset=utf-8",
-      "<!doctype html><title>Olympus Protocol Metrics API</title><h1>OpenAPI</h1>",
-    );
     return;
   }
 

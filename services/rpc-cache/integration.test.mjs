@@ -2,14 +2,16 @@ import { verifyIndexerResumeAndReset } from "../../tests/integration/indexer.mjs
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { test } from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
 
 const chains = [1, 137, 250, 8453, 42161, 80094, 4663];
 const cacheImage = process.env.RPC_CACHE_IMAGE ?? "localhost/olympus-metrics-rpc-cache:local";
-const databaseImage =
-  "docker.io/library/postgres:17-alpine@sha256:979c4379dd698aba0b890599a6104e082035f98ef31d9b9291ec22f2b13059ca";
+const databaseImage = JSON.parse(
+  readFileSync(new URL("../../.railway/images.json", import.meta.url), "utf8"),
+).local["postgres-local"];
 const runtime = process.env.CONTAINER_RUNTIME ?? "docker";
 const container = (...args) =>
   execFileSync(runtime, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
@@ -96,7 +98,7 @@ test("eRPC persists finalized calls across process restarts and bypasses volatil
   t.after(() => {
     for (const name of [cache, postgres]) {
       try {
-        container("rm", "-f", name);
+        container("rm", "-f", "-v", name);
       } catch {
         // A failed setup may leave a container absent.
       }
@@ -112,6 +114,8 @@ test("eRPC persists finalized calls across process restarts and bypasses volatil
     container("exec", postgres, "pg_isready", "-h", "127.0.0.1", "-U", "postgres");
     return true;
   }, "Cache Postgres did not become ready");
+  assert.equal(container("exec", postgres, "psql", "-U", "postgres", "-Atc", "SHOW server_version"), "18.6");
+  assert.equal(container("exec", postgres, "psql", "-U", "postgres", "-Atc", "SHOW data_directory"), "/var/lib/postgresql/18/docker");
   container(
     "run", "-d", "--pull=never", "--name", cache, "--network", prefix,
     ...(runtime === "docker" && process.platform === "linux"

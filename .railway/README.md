@@ -1,20 +1,46 @@
 # Railway infrastructure
 
-The whole-project definition covers the `treasury-subgraph` production environment. It retains the imported application services, database, database volume, PostgreSQL group, and bucket. It adds the private `rpc-cache` service and an independent, image-backed PostgreSQL 18 service and volume. The image-backed database avoids the managed template's public TCP proxy. Application limits, schedules and artifact variables retain the imported deployment settings. Only `metrics-api` has a public custom domain. Main Postgres, cache Postgres, eRPC, Hasura, indexer and scheduled publisher explicitly remove public service/custom domains and TCP proxies; private endpoints remain available. The indexer has no docs site or public ingestion specification endpoint. Optional operator variables remain available through the ignore list.
+The `treasury-subgraph` definition preserves existing services, database/volume
+identities and credentials, and adds a private persistent RPC cache. Only
+`metrics-api` may have HTTP domains. See [security posture](../docs/security-posture.md)
+for exposure, storage and native CLI limits; this runbook does not certify live state.
 
 ## Preview the change
 
-Run `mise install --locked` to install the pinned Node, pnpm and Railway CLI versions. With a Railway login or token that can read the production project, link project `1eff0b7c-1ab5-4f50-8c0d-29086746a17b` and environment `34764411-35d7-466c-8249-612730c36c07`.
+First follow [public-domain reconciliation](domain-reconciliation.md) if the
+read-only inventory finds HTTP domains on any non-API service. Prepare and
+review exact native `railway domain delete` commands, obtain separate live
+approval, and verify their removal before generating the normal IaC plan.
+CLI 5.75.0 does not declaratively delete those HTTP domains. The service-level
+allowlist permits generated/custom domains on `metrics-api`; the desired source
+hostname remains unchanged.
+
+Run `mise install node pnpm railway trivy jactionlint --locked` to install the pinned Node, pnpm and Railway CLI versions. With a Railway login or token that can read the production project, link project `1eff0b7c-1ab5-4f50-8c0d-29086746a17b` and environment `34764411-35d7-466c-8249-612730c36c07`.
+
+Before the first plan in the current operator shell, restrict the output file.
+Git ignore is not filesystem protection; native CLI writes inherit permissions.
+Keep plans and private archives at 0600 and avoid shell logging/uploads.
 
 ```bash
+umask 077
+touch railway-plan.json
+chmod 600 railway-plan.json
 pnpm install --frozen-lockfile
 railway status
 railway config migrate status
-plan_dir="$(mktemp -d)"
-pnpm railway:plan:bootstrap --environment 34764411-35d7-466c-8249-612730c36c07 --out "$plan_dir/bootstrap.json"
+pnpm run railway:plan:bootstrap --environment 34764411-35d7-466c-8249-612730c36c07
 ```
 
-The package scripts call Railway's native read-only `config plan` command. Bootstrap preserves the current indexer RPC URLs while adding the cache stack. Review the saved change set and confirm the existing resource IDs, database image and mount, volume size, bucket, and domains before approval. Both production databases use the same verified upstream PostgreSQL 18.6 template digest from `.railway/images.json`. Keep the template entrypoint, TLS behavior, PGDATA, existing mount paths and volume identities. Digest pinning does not establish a clean vulnerability scan; inspect the canonical image-validation evidence before approval. Keep plans, CLI variable exports, and provider credentials outside Git.
+The plan aliases write native `config plan --out railway-plan.json`. Review that
+artifact and obtain separate live approval; do not regenerate it between review
+and apply. `railway:apply` uses that pinned plan and requires the reviewed
+environment name or ID. Repeat the file preparation in a new shell or if the
+artifact is removed. Keep plans, variable exports and credentials outside Git.
+
+Bootstrap preserves existing indexer RPC URLs while provisioning the cache.
+Review resource IDs, volumes/capacity, preserved passwords, private endpoints,
+image pins and networking removals before approval. Preserve both databases’
+existing TLS/PGDATA/mount contracts; see the security posture document.
 
 If the plan is blocked by active Config as Code ownership, get approval for the ownership switch before publishing the legacy file removals. Use Railway's `config migrate cutover` in the verified production environment. Target only `hasura`, `indexer`, `metrics-api`, and `metrics-publisher`. Railway saves their previous config paths for `config migrate undo`. Generate a fresh plan after an ownership change.
 
@@ -26,22 +52,54 @@ and runtime files named in the plan.
 
 1. After approval, apply the saved bootstrap plan manually. Bootstrap preserves the indexer's current RPC URLs. Configure `UPSTREAM_RPC_URL_<id>` on the new cache for chain IDs 1, 137, 250, 8453, 42161, 80094, and 4663, using each chain's archive provider. `preserve()` retains supplied values. Provisioning does not inject the provider secrets.
 2. Verify the cache health endpoint and historical RPC reads over the Railway private network. Verify that the cache database has its own attached volume. Confirm that the existing indexer and scheduled publisher remain healthy.
-3. Run `pnpm railway:plan --environment 34764411-35d7-466c-8249-612730c36c07 --out <private-plan-path>` to preview the seven indexer RPC routes. Approve and apply that fresh plan manually, then verify indexer progress and publisher output. For each approved apply, use `railway config apply --environment 34764411-35d7-466c-8249-612730c36c07 --plan <private-plan-path>`. The plan etag prevents applying against a changed environment.
+3. Run `pnpm run railway:plan --environment 34764411-35d7-466c-8249-612730c36c07` to preview the seven indexer routes. Review this fresh artifact, obtain separate approval, then follow the apply acceptance below and verify indexer progress/publisher output.
 
-Retain the original RPC credentials in the team's secret store so the seven direct indexer URLs can be restored if cutover fails. A route rollback does not require an Envio reset or removal of the cache volume. The approved source removes non-API public domains/proxies on a future apply. Verify the saved plan removes only those networking resources, preserves private communication, and retains the bucket mapping and existing data/volume bindings. These are prepared source changes, not a statement that production has already been changed.
 
-[Railway CLI IaC and Config as Code migration](https://github.com/railwayapp/cli/blob/v5.75.0/assets/iac/README.md)
+Retain original RPC credentials in the team secret store for route rollback.
+Rollback does not require an Envio reset or deleting the cache volume.
 
-## Storage and local checks
+## Accept an apply result
 
-Use native `railway config plan`/`railway config apply` with the explicit environment
-and reviewed saved plan above. There is no custom plan/apply wrapper. The
-bootstrap alias only preserves upstream routes during cache provisioning; it
-does not bypass resource lookup, password preservation, capacity or target checks.
-No live plan or apply is part of local validation.
+Only after separate live approval, apply the reviewed artifact with the explicit
+reviewed environment and native JSON output:
 
-See [canonical validation](../docs/validation.md),
-[artifact permissions and provider limitations](../docs/artifact-permissions.md)
-and [cache capacity](../docs/cache-capacity.md). True API read-only credentials
-need provider support and separately approved live provisioning. Do not put
-provider credentials or plan contents in Git.
+```sh
+pnpm run railway:apply production --json
+```
+
+Substitute the reviewed preview name or environment ID when applicable; do not
+append another `--environment` option. `--json` bypasses native confirmation:
+it is a mutation, not a dry run, and does not replace separate live approval.
+
+CLI 5.75.0 can exit zero and print success for a failed/partial pinned apply.
+Inspect the native top-level `status`, every `changes[].status` and diagnostics:
+
+- Require top-level `applied` and a complete change list with individual statuses
+  `applied` or `noop`, with no failed/unresolved diagnostics.
+- Top-level `noop` is acceptable only for the reviewed empty plan/result.
+- `staged` is pending configuration, not completed deployment/cutover. Stop on
+  `failed`, `partially_applied`, `applying`, missing/unknown statuses or any failed,
+  pending, missing/unknown per-change status. Do not retry mutations blindly.
+
+Inspect sensitive raw results locally without shell logging, uploads or commits.
+Keep only a redacted status summary, reviewed target/plan identity and approval
+reference in the private operator record. Do not decrypt variables.
+
+After apply, inventory the whole environment’s HTTP/TCP exposure: no HTTP domains
+on non-API services and no public TCP proxies. Verify preserved resource/volume
+identities, private connectivity, health, indexed progress and published output.
+Retain the consumed plan privately, then generate a fresh read-only plan for the
+same target. Review remaining changes; a subsequent apply needs separate approval.
+Saved-plan apply does not reevaluate the source guard. This manual procedure is
+not an automated checker or proof of live success.
+
+Native implementation: [runner](https://github.com/railwayapp/cli/blob/v5.75.0/src/commands/config/runner.rs),
+[saved-plan path](https://github.com/railwayapp/cli/blob/v5.75.0/src/iac/saved_plan.rs),
+[engine](https://github.com/railwayapp/cli/blob/v5.75.0/src/iac/engine.rs).
+
+## Local validation
+
+Use [canonical validation](../docs/validation.md) for commands, scan policy and
+required integration. See [artifact permissions](../docs/artifact-permissions.md)
+for provider IAM limitations and [cache capacity](../docs/cache-capacity.md).
+No live plan/apply is part of local validation.

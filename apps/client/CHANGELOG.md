@@ -38,7 +38,7 @@ Complete rewrite after Wundergraph was discontinued. API compatibility maintaine
 - Removed @wundergraph/sdk dependency
 - Implemented native fetch HTTP client
 - New TreasurySubgraphClient class with same query() interface
-- Production URL baked in at build time via __DEFAULT_BASE_URL__
+- Production URL baked in at build time via `__DEFAULT_BASE_URL__`
 - Added Queries type export for type completeness
 - Response format wrapped in { data: T } for Wundergraph compatibility
 - Fixed build:prod script to properly load .env.prod using dotenv-cli
@@ -96,7 +96,6 @@ Complete rewrite after Wundergraph was discontinued. API compatibility maintaine
 ## [v1.0.5](https://github.com/OlympusDAO/treasury-subgraph/compare/v1.0.3...v1.0.5)
 
 > 3 May 2023
-
 - Filter TokenSupply records by the latest block per day per blockchain [`358521f`](https://github.com/OlympusDAO/treasury-subgraph/commit/358521f873f644a0bddf3f84fe414d969c424b3d)
 - Add blockchain property to TokenSupply [`468fd1a`](https://github.com/OlympusDAO/treasury-subgraph/commit/468fd1a9a7d725fe29a28cbb1d9c053419b43e0f)
 - Less aggressive live query [`e7a4b77`](https://github.com/OlympusDAO/treasury-subgraph/commit/e7a4b772a5ca532a2d871cf16705b49734c15960)
@@ -106,5 +105,4 @@ Complete rewrite after Wundergraph was discontinued. API compatibility maintaine
 ## [v1.0.3]
 
 > 2 May 2023
-
 - Initial version

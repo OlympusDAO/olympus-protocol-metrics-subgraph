@@ -17,9 +17,9 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/bootstrap
       - uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
-      - name: Build and scan all images and Dockerfiles
+      - name: Build and scan repository-owned application images and Dockerfiles
         id: images
         run: pnpm run validate:images
-      - name: Test those images
+      - name: Prepare required fixtures and test service images
         if: ${{ !cancelled() && steps.images.outcome != 'skipped' }}
         run: pnpm run test:integration

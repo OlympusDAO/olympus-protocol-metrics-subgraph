@@ -9,7 +9,7 @@
     "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1072.0"
+    "@aws-sdk/client-s3": "3.1152.0"
   },
   "files": [
     "dist"

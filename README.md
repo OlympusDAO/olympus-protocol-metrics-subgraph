@@ -4,6 +4,10 @@ Treasury and protocol metrics indexer for Olympus DAO. Powers the
 [Olympus Treasury Dashboard](https://app.olympusdao.finance/).
 
 Built on [Envio HyperIndex](https://docs.envio.dev/) (v3, multichain).
+See [security posture and deployment acceptance](docs/security-posture.md) for
+service exposure, trust boundaries and current image-validation blockers.
+The metrics API publishes its specification at `/openapi.json`; it has no HTML
+documentation site at `/docs`. REST endpoints remain available.
 The previous implementation used The Graph Protocol with separate
 subgraphs per chain; that code has been replaced by the single Envio
 indexer in this repository (see `apps/indexer/config.yaml`,

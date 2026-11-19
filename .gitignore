@@ -77,3 +77,6 @@ generated/
 
 # Generated from a template
 matchstick.yaml
+
+# Native Railway plan artifact; review locally, never publish.
+railway-plan.json

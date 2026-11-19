@@ -10,15 +10,16 @@
     "envio:dev": "ENVIO_TUI=${ENVIO_TUI:-false} tsx src/start-envio.ts dev",
     "envio:start": "tsx src/start-envio.ts start",
     "test": "vitest run tests",
-    "build": "tsc -p tsconfig.json"
+    "build": "pnpm --workspace-root exec tsc -p apps/indexer/tsconfig.json"
   },
   "dependencies": {
     "bignumber.js": "11.1.5",
     "envio": "3.14.0",
-    "viem": "2.56.8",
+    "viem": "2.57.14",
     "tsx": "4.23.15"
   },
   "devDependencies": {
+    "typescript": "npm:@typescript/typescript6@6.0.2",
     "yaml": "2.9.1"
   },
   "files": [

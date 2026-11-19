@@ -1,14 +1,19 @@
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { createRailwayContext, type ResourceNode } from "railway/iac";
 import { describe, expect, test, vi } from "vitest";
 import images from "../../.railway/images.json";
+import { currentExposure } from "../../.railway/networking";
 import defineInfrastructure from "../../.railway/railway";
+
+vi.mock("node:child_process", () => ({ execFileSync: vi.fn() }));
 
 async function graph() {
   const ctx = createRailwayContext({ environment: "production" });
-  const definition = await defineInfrastructure(ctx, () => {
+  const evaluated = await defineInfrastructure(ctx, () => {
     throw new Error("Unexpected project helper");
   });
+  const definition: typeof evaluated = JSON.parse(JSON.stringify(evaluated));
   expect(definition.name).toBe("treasury-subgraph");
   const resources = new Map(
     (definition.resources?.flat() ?? []).map((resource) => [resource.address, resource]),
@@ -51,7 +56,7 @@ describe("Railway config-as-code", () => {
     const db = get("database.Postgres");
     expect(db).toMatchObject({
       groupId: "PostgreSQL",
-      image: images.external["postgres-production"],
+      image: images.provider["postgres-production"],
       deploy: { requiredMountPath: "/var/lib/postgresql/data" },
       networking: { privateNetworkEndpoint: "postgres" },
     });
@@ -161,26 +166,214 @@ describe("Railway config-as-code", () => {
     }
   });
 
-  test("keeps all services except the metrics API private", async () => {
+  test("serialized SDK output keeps every non-API service private with TCP removals", async () => {
     const { get } = await graph();
-    for (const address of [
-      "database.Postgres",
-      "service.hasura",
-      "service.indexer",
-      "service.metrics-publisher",
-      "service.rpc-cache",
-      "service.rpc-cache-postgres",
-    ] as const) {
-      expect(get(address)).toMatchObject({
-        networking: { serviceDomains: {}, customDomains: {}, tcpProxies: {} },
-      });
+    const ports = {
+      "database.Postgres": "5432",
+      "service.rpc-cache-postgres": "5432",
+      "service.rpc-cache": "4000",
+      "service.indexer": "9898",
+      "service.hasura": "8080",
+      "service.metrics-publisher": undefined,
+    } as const;
+    for (const [address, port] of Object.entries(ports)) {
+      const resource = get(address as ResourceNode["address"]);
+      expect(resource).toHaveProperty("networking.serviceDomains", {});
+      expect(resource).toHaveProperty("networking.customDomains", {});
+      expect(resource).toHaveProperty("networking.tcpProxies", port ? { [port]: null } : {});
     }
-    expect(get("database.Postgres")).toMatchObject({
-      networking: { privateNetworkEndpoint: "postgres" },
-    });
-    expect(get("service.metrics-api")).toMatchObject({
-      networking: { customDomains: { "treasury-subgraph-api.olympusdao.finance": { port: 8080 } } },
-    });
+    expect(get("database.Postgres")).toHaveProperty(
+      "networking.privateNetworkEndpoint",
+      "postgres",
+    );
+    expect(get("service.metrics-api")).toHaveProperty("networking.tcpProxies", { 8080: null });
+  });
+
+  test("refuses unexpected HTTP exposure and incomplete or ambiguous provider snapshots", () => {
+    const config = { services: { id: { networking: { tcpProxies: { 5432: {} } } } } };
+    const node = {
+      serviceId: "id",
+      serviceName: "indexer",
+      domains: { serviceDomains: [], customDomains: [] },
+    };
+    expect(currentExposure(config, [{ node }]).get("indexer")).toEqual([5432]);
+    expect(() => currentExposure({}, [{ node }])).toThrow();
+    expect(currentExposure({ services: { removed: null } }, []).size).toBe(0);
+    expect(currentExposure({ services: { removed: { isDeleted: true } } }, []).size).toBe(0);
+    for (const service of [{}, { isDeleted: false }, { isDeleted: "true" }, "unknown"]) {
+      expect(() => currentExposure({ services: { unmatched: service } }, [])).toThrow(
+        "Unaccounted",
+      );
+    }
+    expect(() => currentExposure(config, [{ node }, { node }])).toThrow("Ambiguous");
+    expect(() =>
+      currentExposure(config, [{ node: { ...node, serviceName: "unknown-public-tcp" } }]),
+    ).toThrow("Unrecognized");
+    expect(() =>
+      currentExposure(
+        {
+          services: {
+            ...config.services,
+            unaccounted: { networking: { tcpProxies: { 5432: {} } } },
+          },
+        },
+        [{ node }],
+      ),
+    ).toThrow("Unaccounted");
+    expect(() => currentExposure(config, [{ node: { ...node, domains: {} } }])).toThrow();
+    expect(() =>
+      currentExposure({ services: { id: { networking: { tcpProxies: { invalid: {} } } } } }, [
+        { node },
+      ]),
+    ).toThrow("Invalid");
+  });
+
+  test("allows generated and custom domains on the API service, regardless of hostname", () => {
+    expect(
+      currentExposure({ services: { api: {} } }, [
+        {
+          node: {
+            serviceId: "api",
+            serviceName: "metrics-api",
+            domains: {
+              serviceDomains: [{ domain: "api-generated.example" }],
+              customDomains: [{ domain: "api-alternate.example" }],
+            },
+          },
+        },
+      ]).get("metrics-api"),
+    ).toEqual([]);
+  });
+
+  test("blocks either HTTP domain kind on every private service", () => {
+    for (const serviceName of [
+      "Postgres",
+      "rpc-cache-postgres",
+      "rpc-cache",
+      "hasura",
+      "indexer",
+      "metrics-publisher",
+    ]) {
+      for (const kind of ["serviceDomains", "customDomains"]) {
+        expect(() =>
+          currentExposure({ services: { private: {} } }, [
+            {
+              node: {
+                serviceId: "private",
+                serviceName,
+                domains: {
+                  serviceDomains: [],
+                  customDomains: [],
+                  [kind]: [{ domain: "unexpected.example" }],
+                },
+              },
+            },
+          ]),
+        ).toThrow("Unexpected public HTTP exposure");
+      }
+    }
+  });
+
+  test("SDK callback rejects drift, then emits serialized imported TCP removals after reconciliation", async () => {
+    const nodes = ["Postgres", "indexer"].map((serviceName) => ({
+      serviceId: serviceName,
+      serviceName,
+      domains: { serviceDomains: [] as { domain: string }[], customDomains: [] },
+    }));
+    const response = {
+      data: {
+        environment: {
+          config: {
+            services: {
+              Postgres: { networking: { tcpProxies: { 15432: {} } } },
+              indexer: { networking: { tcpProxies: { 9000: {} } } },
+            },
+          },
+          serviceInstances: {
+            edges: nodes.map((node) => ({ node })),
+            pageInfo: { hasNextPage: false },
+          },
+          volumeInstances: {
+            edges: [{ node: { sizeMB: 50000, volume: { name: "postgres-volume-ytRO" } } }],
+            pageInfo: { hasNextPage: false },
+          },
+        },
+      },
+    };
+    const execute = vi.mocked(execFileSync);
+    const evaluate = () =>
+      defineInfrastructure(
+        createRailwayContext({
+          command: "plan",
+          environment: "production",
+          environmentId: "fixture-env",
+        }),
+        () => {
+          throw Error("Unexpected helper");
+        },
+      );
+    try {
+      nodes[1].domains.serviceDomains = [{ domain: "unexpected.example" }];
+      execute.mockReturnValue(JSON.stringify(response));
+      await expect(Promise.resolve().then(evaluate)).rejects.toThrow(
+        "Cannot establish safe Railway",
+      );
+      nodes[1].domains.serviceDomains = [];
+      execute.mockReturnValue(JSON.stringify(response));
+      const definition = JSON.parse(JSON.stringify(await evaluate()));
+      expect(
+        definition.resources.find((r: ResourceNode) => r.address === "database.Postgres"),
+      ).toMatchObject({
+        type: "database",
+        deploy: { requiredMountPath: "/var/lib/postgresql/data" },
+        networking: { privateNetworkEndpoint: "postgres", tcpProxies: { 5432: null, 15432: null } },
+      });
+      expect(
+        definition.resources.find((r: ResourceNode) => r.address === "service.indexer").networking
+          .tcpProxies,
+      ).toEqual({ 9898: null, 9000: null });
+      for (const [executable, args] of execute.mock.calls) {
+        expect(executable).toBe("railway");
+        expect(args?.[0]).toBe("api");
+        expect(args?.[1]).toMatch(/^query\(/);
+        expect(args?.[1]).toContain("config(decryptVariables: false)");
+      }
+    } finally {
+      execute.mockReset();
+    }
+  });
+
+  test("fixed image groups cover the whole evaluated project and known local fixtures", async () => {
+    const { addresses, get } = await graph();
+    expect(Object.keys(images).sort()).toEqual(["built", "comparison", "local", "provider"]);
+    expect(Object.keys(images.local).sort()).toEqual([
+      "minio-client-local",
+      "minio-local",
+      "postgres-local",
+    ]);
+    expect(Object.keys(images.comparison)).toEqual(["postgres-previous"]);
+    expect(Object.keys(images.provider)).toEqual(["postgres-production"]);
+    const built = [];
+    const provider = [];
+    for (const address of addresses) {
+      const resource = get(address as ResourceNode["address"]);
+      if (resource.type === "database") provider.push(resource.image);
+      if (resource.type === "service") {
+        if (resource.source?.image) provider.push(resource.source.image);
+        else {
+          expect(resource.build?.builder).toBe("DOCKERFILE");
+          built.push(resource.name);
+        }
+      }
+    }
+    expect(built.sort()).toEqual(Object.keys(images.built).sort());
+    expect(provider).toEqual([
+      images.provider["postgres-production"],
+      images.provider["postgres-production"],
+    ]);
+    expect(images.provider["postgres-production"]).toMatch(
+      /^ghcr\.io\/railwayapp-templates\/postgres-ssl:/,
+    );
   });
 
   test("deploys production closures without coupling public artifact services to codegen", () => {
@@ -217,8 +410,16 @@ describe("Railway config-as-code", () => {
     expect(workflow).toContain("pnpm run test:integration");
     expect(readFileSync(".github/workflows/main.yml", "utf8")).toContain("pnpm run validate");
     const scripts = JSON.parse(readFileSync("package.json", "utf8")).scripts;
+    expect(scripts["railway:plan"]).toBe("railway config plan --out railway-plan.json");
+    expect(scripts["railway:apply"]).toBe(
+      "railway config apply --plan railway-plan.json --environment",
+    );
+    expect(readFileSync(".gitignore", "utf8").split(/\r?\n/)).toContain("railway-plan.json");
+    expect(JSON.parse(readFileSync("package.json", "utf8")).engines).toMatchObject({
+      node: ">=24.22.3 <25",
+      pnpm: ">=11.28.13 <12",
+    });
     for (const name of Object.keys(images.built))
       expect(scripts[`docker:build:${name}`]).toBeDefined();
-    expect(Object.keys(images.external)).toContain("postgres-production");
   });
 });

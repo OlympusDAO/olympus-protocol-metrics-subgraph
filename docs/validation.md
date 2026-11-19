@@ -1,17 +1,28 @@
 # Local validation
 
-Install the exact tools in `mise.toml`/`mise.lock` with `mise install --locked`.
+Install the exact tools in `mise.toml`/`mise.lock` with `mise install node pnpm railway trivy jactionlint --locked`.
 Use the pinned Node and pnpm versions. Docker must be running for image and
 integration checks. No cloud login, provider token or live database is required
 for these checks.
 
+Main TypeScript is exactly 7.0.2; indexer builds use the root CLI. Its scoped
+Envio 3.14 compiler-API compatibility test and intentional alias are described
+in [security posture](security-posture.md#shared-tooling-and-intentional-differences).
+
 | Command | Required work |
 | --- | --- |
-| `pnpm run validate` | Runtime alignment, frozen install, codegen, Biome, actionlint, typecheck/build, ordinary tests and dependency audit. Does not use Docker. |
-| `pnpm run validate:images` | Build all five service images; scan their immutable identities, both database images and the local object-store/client images; scan all five Dockerfiles. |
+| `pnpm run check:runtime-versions` | Verify exact Node/pnpm runtimes, locked Railway CLI/Trivy/jactionlint and Docker Node/pnpm source pins; no Docker required. |
+| `pnpm run lint:actions` | Run jactionlint with `--profile correctness --no-online`. |
+| `pnpm run validate` | Runtime alignment, frozen install, codegen, Biome, jactionlint correctness/offline, typecheck/build, ordinary tests and dependency audit. Does not use Docker. |
+| `pnpm run validate:images` | Build and scan the five repository-owned application images and Dockerfiles. Record Railway PostgreSQL as advisory-provider/not-run and explicit local/historical exclusions; no provider or fixture pulls/scans. |
+| `pnpm scan:images:provider` | Optional advisory scan of configured Railway PostgreSQL template images only; no app builds or local fixtures. Vulnerabilities do not fail the command; registry/scanner errors do. |
 | `pnpm run test:integration` | Use the built images to check persistent cache hits, cache restart, real indexer restart and manual reset isolation, template PostgreSQL TLS/data path, compiled API/publisher behavior and Hasura health. |
 | `pnpm run validate:all` | Run all three groups, collecting failures without suppressing the remaining groups. |
 
+Builds record an IID file in their unique validation directory; scans inspect
+and target that immutable ID rather than the shared local tag. Combined
+validation passes those same built IDs into integration; standalone integration
+resolves its inputs once and passes the recorded IDs to all fixture processes.
 Build images before integration. Missing Docker, images or other required
 prerequisites fail the check. The integration fixtures create fresh databases
 and containers, then remove only those containers and networks. They do not
@@ -21,19 +32,49 @@ The isolated PostgreSQL compatibility test starts the previous template on a
 fresh named volume, then checks the candidate on that same volume. It verifies
 cluster identity, nonempty data, TLS certificate, PGDATA and restart persistence.
 The old image is an isolated comparison input in `.railway/images.json`, not a
-shipped release image; its identity is recorded separately from release scans.
+shipped release image. Integration independently prepares the exact current
+provider PostgreSQL 18.6, official local Alpine PostgreSQL 18.6 and historical PostgreSQL 18 refs
+it consumes; unavailable prerequisites
+fail. MinIO/MC are Compose fixtures and are not used by this HTTP S3 integration.
 Live-provider indexer tests remain separate opt-in tests in the ordinary suite.
 
-Each canonical command prints a private temporary evidence directory containing
-step logs and `report.json`: revision, dirty state, exit codes and image identities.
-Image scans retain all severities, including unfixed findings. The gate fails on
-fixable MEDIUM/HIGH/CRITICAL findings except the existing reviewed picomatch
-exception in `.trivyignore`. The matching pnpm advisory exception is in
+The inventory has fixed `built`, `provider`, `local` and `comparison` groups.
+Every built application is built and gated, without classification/deduplication
+rules. A whole-project SDK/inventory test checks complete membership and that
+provider entries are exactly the configured Railway PostgreSQL resources.
+Provider images are advisory-provider/not-run by default: upstream maintains
+their contents, while this repository selects pinned refs. Optional provider
+scans allow vulnerabilities but fail execution/registry errors.
+
+Local PostgreSQL and MinIO/MC are local development/test fixtures, not deployed
+by Railway IaC, excluded by explicit user policy. Historical fixtures are also
+excluded. Excluded/not-run rows have reasons, never scanned/clean claims. Even
+if a reference is shared, every built app remains gated. No gosu CVEs are ignored.
+
+Canonical commands print a private temporary evidence directory with native
+step logs and `report.json`: command/exit/timing, revision/dirty state, group
+outcomes, exclusions, image IDs, scan policy and cache metadata. Test/scan detail
+stays in native output rather than parallel counters or parsed skip summaries.
+Docker groups check stable context/daemon identity. Trivy uses its shared native
+cache; `TRIVY_CACHE_DIR` may select an existing shared cache without duplication.
+Native scanner table output stays in the step log; no raw ImageConfig, environment
+or image-history JSON artifact is retained.
+
+Owned image scans use native Trivy table output/exit status: fixable
+MEDIUM/HIGH/CRITICAL findings fail, with the existing picomatch exception in
+`.trivyignore`. Optional provider scans show all severities/unfixed findings
+without an ignorefile or vulnerability-based failure; scanner errors still fail.
+The matching pnpm advisory exception is in
 `pnpm-workspace.yaml`. A successful audit or policy gate does not mean zero
 vulnerabilities. Unavailable image pulls fail validation; they are not skipped.
 
-CI runs source validation once, and builds/scans images once before using those
-same images for integration. The separate dependency-audit workflow is manual.
+CI runs source validation once, and builds/scans owned application images once before
+integration prepares required fixtures and tests those same service images.
+`validate:all` uses the same owned-app selection and excludes the optional provider
+group. No aggregate scans local fixtures by default. The explicit
+`docker:scan <image>` convenience command is
+an operator-selected single-image scan, not inventory-driven default selection.
+The separate dependency-audit workflow is manual.
 There is no Metrics handover command; that rehearsal belongs to protocol-indexer.
 
 Before committing, run source validation and the image/integration groups for
@@ -41,3 +82,5 @@ container, deployment or runtime changes. Before pushing, verify that evidence
 matches the content being pushed, run the required local review and privacy gate,
 and obtain publication approval. Infrastructure plan/apply is separate from
 these local checks; see [the Railway runbook](../.railway/README.md).
+
+See [security posture](security-posture.md) for exposure acceptance layers, database blockers, and intentional Envio/compiler differences. Image integration requires ingestion `/healthz` 200 and `/docs`, `/openapi.json`, `/llms.txt` 404.

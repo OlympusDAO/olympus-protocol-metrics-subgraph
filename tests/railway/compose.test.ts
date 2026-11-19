@@ -92,9 +92,9 @@ describe("local Docker Compose stack", () => {
     expect(indexer).toContain("rpc-cache:\n        condition: service_started");
     expect(cache).toContain("rpc-cache-postgres:5432/rpc_cache");
     expect(cache).toContain("rpc-cache-postgres:\n        condition: service_healthy");
-    expect(database).toContain("rpc-cache-postgres-data:/var/lib/postgresql/data");
-    expect(serviceBlock(compose, "postgres")).toContain("postgres-data:/var/lib/postgresql/data");
-    expect(compose).toContain("\n  rpc-cache-postgres-data:");
+    expect(database).toContain("rpc-cache-postgres18-data:/var/lib/postgresql");
+    expect(serviceBlock(compose, "postgres")).toContain("postgres18-data:/var/lib/postgresql");
+    expect(compose).toContain("\n  rpc-cache-postgres18-data:");
   });
 
   test("includes indexer in the default stack and runs publisher as an explicit profile", () => {

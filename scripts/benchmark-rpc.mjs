@@ -5,6 +5,7 @@ import http from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
+import { benchmarkPostgresImage } from "./benchmark-images.mjs";
 
 const [mode, sourceInput, credentialsPath, outputInput, revision, ...options] =
   process.argv.slice(2);
@@ -230,14 +231,19 @@ function entityDigest(pg, database) {
 }
 
 try {
-  const postgresTag = "docker.io/library/postgres:17-alpine";
+  const postgresTag = JSON.parse(
+    fs.readFileSync(new URL("../.railway/images.json", import.meta.url), "utf8"),
+  ).local["postgres-local"];
   const hasuraTag = "docker.io/hasura/graphql-engine:v2.48.16";
   const cacheTag = "localhost/olympus-metrics-rpc-cache:local";
   const inspect = (image) => command(["podman", "image", "inspect", "--format", "{{.Id}}", image]);
-  const postgresImage = candidate ? baseline.images[postgresTag] : inspect(postgresTag);
+  // Historical baselines keep their original immutable image for comparison.
+  const { reference: postgresReference, id: postgresImage } = candidate
+    ? benchmarkPostgresImage(baseline.images, postgresTag)
+    : { reference: postgresTag, id: inspect(postgresTag) };
   const hasuraImage = candidate ? baseline.images[hasuraTag] : inspect(hasuraTag);
   const cacheImageId = candidate ? inspect(cacheTag) : undefined;
-  result.images = { [postgresTag]: postgresImage, [hasuraTag]: hasuraImage };
+  result.images = { [postgresReference]: postgresImage, [hasuraTag]: hasuraImage };
   if (candidate) {
     result.images[cacheTag] = cacheImageId;
     result.baselineDigest = baselineDigest;
@@ -257,7 +263,10 @@ try {
     try {
       fs.cpSync(sourceRoot, work, {
         recursive: true,
-        filter: (file) => !["node_modules", ".git", ".envio", ".env"].includes(path.basename(file)),
+        filter: (file) =>
+          !["node_modules", ".git", ".envio", ".env", "railway-plan.json"].includes(
+            path.basename(file),
+          ),
       });
       fs.symlinkSync(path.join(sourceRoot, "node_modules"), path.join(work, "node_modules"));
       for (const app of fs.readdirSync(path.join(sourceRoot, "apps"))) {

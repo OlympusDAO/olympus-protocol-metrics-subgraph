@@ -11,6 +11,8 @@ import { promisify } from "node:util";
 // Uses only fresh fixture databases, never a developer's database or volume.
 export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
   const images = JSON.parse(readFileSync(".railway/images.json", "utf8"));
+  if (process.env.METRICS_INTEGRATION_IMAGES)
+    images.built = JSON.parse(process.env.METRICS_INTEGRATION_IMAGES);
   const docker = (...args) =>
     execFileSync(runtime, args, {
       encoding: "utf8",
@@ -66,7 +68,7 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
   t.after(() => {
     for (const name of [indexer, hasura, pg]) {
       try {
-        docker("rm", "-f", name);
+        docker("rm", "-f", "-v", name);
       } catch {
         /* failed setup */
       }
@@ -87,7 +89,7 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
     "POSTGRES_DB=railway",
     "-e",
     "PGDATA=/var/lib/postgresql/data/pgdata",
-    images.external["postgres-production"],
+    images.provider["postgres-production"],
   );
   await eventually(() => sql("SELECT 1") === "1", "Template PostgreSQL did not become ready");
   assert.equal(sql("SHOW ssl"), "on");
@@ -160,7 +162,8 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
       `
     import assert from 'node:assert/strict';
     assert.equal(process.versions.node, ${JSON.stringify(readFileSync(".node-version", "utf8").trim())});
-    for (const path of ['/docs', '/openapi.json']) {
+    assert.equal((await fetch('http://127.0.0.1:9898/healthz', {signal: AbortSignal.timeout(2000)})).status, 200);
+    for (const path of ['/docs', '/openapi.json', '/llms.txt']) {
       const response = await fetch('http://127.0.0.1:9898' + path, {signal: AbortSignal.timeout(2000)});
       assert.equal(response.status, 404);
     }

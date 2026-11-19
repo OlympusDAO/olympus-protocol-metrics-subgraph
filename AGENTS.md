@@ -18,7 +18,7 @@ This repository indexes protocol-level metrics for Olympus contracts and Treasur
 ## Node and Tooling
 
 - Node.js must use version 24+.
-- Run `mise install --locked` to install the tools declared in `mise.toml` and `mise.lock`.
+- Run `mise install node pnpm railway trivy jactionlint --locked` to install the tools declared in `mise.toml` and `mise.lock`.
 - Keep `.nvmrc`, `.node-version`, Dockerfiles and `package.json` aligned with the mise tool versions.
 - Run `pnpm install --frozen-lockfile` before dependency-dependent work.
 
@@ -29,23 +29,22 @@ and polling controls. Do not append redirection, `tee`, `tail`, environment
 assignments or shell wrappers merely to manage output. Durable logging belongs
 inside the canonical script and must preserve its exit status.
 
-- `pnpm run validate`: runtime alignment, frozen install, codegen, Biome,
-  actionlint, typecheck/build, ordinary tests and dependency audit; no Docker.
-- `pnpm run validate:images`: build every shipped service image and scan the
-  images, databases and Dockerfiles. Requires Docker and locked Trivy via mise.
-- `pnpm run test:integration`: required container-backed cache persistence,
-  restart/resume/reset isolation and real service-image behavior. Build images
-  first; absent prerequisites fail rather than silently skip.
-- `pnpm run validate:all`: run all applicable groups above.
+Use the [canonical validation command table](docs/validation.md):
 
-See [validation prerequisites and evidence](docs/validation.md).
+- `pnpm run validate`: required source checks; no Docker.
+- `pnpm run validate:images` and `pnpm run test:integration`: required for
+  container/deployment/runtime changes; build owned images before integration.
+- `pnpm run validate:all`: all applicable groups. Optional
+  `pnpm scan:images:provider` reports provider vulnerabilities separately.
+
 Before committing code, dependencies or CI changes, run `pnpm run validate`.
 For container, deployment or runtime changes, also run image and integration
 validation. Do not repeat unchanged successful checks without a reason.
 For documentation-only changes, run `pnpm run check` and inspect command/link
-examples. For manifest changes, preserve caches, run
-`pnpm install --no-frozen-lockfile`, then `pnpm install --frozen-lockfile`.
-If pnpm requires relinking generated `node_modules`, preserve the package store.
+examples. For manifest/lock policy changes, clear generated root/workspace `node_modules`
+and any repository-local package store, then run `pnpm install --no-frozen-lockfile`
+followed by `pnpm install --frozen-lockfile`. Preserve unrelated global caches.
+Use `pnpm run check:runtime-versions` and `pnpm run lint:actions` for focused checks.
 
 For nontrivial changes, use the `autoreview` skill unless the task explicitly
 prohibits extra agents or assigns review to a coordinator. Correct accepted

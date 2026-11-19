@@ -1,6 +1,6 @@
 import { once } from "node:events";
 import { createServer, type ServerResponse } from "node:http";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { S3ArtifactReader } from "../src/artifact-store";
 
@@ -42,6 +42,36 @@ async function reader(handler: (response: ServerResponse) => void, limits = {}) 
 }
 
 describe("bounded S3 artifact reads", () => {
+  test("keeps a 100ms deadline with auto defaults and an unresponsive loopback IMDS", async () => {
+    let metadataRequests = 0;
+    const metadata = createServer(() => {
+      metadataRequests++;
+    });
+    metadata.listen(0, "127.0.0.1");
+    await once(metadata, "listening");
+    cleanups.push(async () => {
+      metadata.closeAllConnections();
+      await new Promise<void>((resolve) => metadata.close(() => resolve()));
+    });
+    const address = metadata.address();
+    if (!address || typeof address === "string") throw new Error("No metadata test port");
+    vi.stubEnv("AWS_DEFAULTS_MODE", "auto");
+    vi.stubEnv("AWS_EXECUTION_ENV", undefined);
+    vi.stubEnv("AWS_EC2_METADATA_DISABLED", undefined);
+    vi.stubEnv("AWS_EC2_METADATA_SERVICE_ENDPOINT", `http://127.0.0.1:${address.port}`);
+    try {
+      const { store } = await reader(() => {}, { requestTimeoutMs: 100 });
+      const started = performance.now();
+      await expect(store.getJson("v2/fixture.json", z.unknown())).rejects.toThrow(
+        /request timed out/i,
+      );
+      expect(performance.now() - started).toBeLessThan(500);
+      expect(metadataRequests).toBeGreaterThan(0);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   test("parses a body through the supplied runtime schema", async () => {
     const { store } = await reader((res) => res.end('{"count":3,"private":"ignored"}'));
     await expect(

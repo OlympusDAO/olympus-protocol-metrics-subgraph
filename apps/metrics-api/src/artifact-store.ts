@@ -1,4 +1,4 @@
-import { Readable } from "node:stream";
+import { addAbortSignal, Readable } from "node:stream";
 import { GetObjectCommand, NoSuchKey, S3Client } from "@aws-sdk/client-s3";
 import type { ZodType } from "zod";
 
@@ -21,7 +21,7 @@ export type ArtifactReader = {
 };
 
 export class S3ArtifactReader implements ArtifactReader {
-  private readonly client: Pick<S3Client, "send">;
+  private readonly client: S3Client;
 
   constructor(
     private readonly input: {
@@ -30,7 +30,6 @@ export class S3ArtifactReader implements ArtifactReader {
       bucket: string;
       accessKeyId: string;
       secretAccessKey: string;
-      client?: Pick<S3Client, "send">;
       requestTimeoutMs?: number;
       bodyTimeoutMs?: number;
       maxResponseBytes?: number;
@@ -41,93 +40,70 @@ export class S3ArtifactReader implements ArtifactReader {
         throw new Error("Artifact read limits must be positive safe integers.");
       }
     }
-    this.client =
-      input.client ??
-      new S3Client({
-        endpoint: input.endpoint,
-        region: input.region,
-        forcePathStyle: true,
-        credentials: {
-          accessKeyId: input.accessKeyId,
-          secretAccessKey: input.secretAccessKey,
-        },
-      });
+    for (const timeout of [input.requestTimeoutMs, input.bodyTimeoutMs]) {
+      if (timeout !== undefined && timeout > 2_147_483_647) {
+        throw new Error("Artifact timeouts must not exceed 2147483647 ms.");
+      }
+    }
+    this.client = new S3Client({
+      endpoint: input.endpoint,
+      region: input.region,
+      forcePathStyle: true,
+      credentials: {
+        accessKeyId: input.accessKeyId,
+        secretAccessKey: input.secretAccessKey,
+      },
+    });
   }
 
   async getJson<T>(key: string, schema: ZodType<T>): Promise<T> {
-    const controller = new AbortController();
+    const requestSignal = AbortSignal.timeout(this.input.requestTimeoutMs ?? 30_000);
     let body: Readable | undefined;
-    let bodyTimer: ReturnType<typeof setTimeout> | undefined;
-    let requestTimer: ReturnType<typeof setTimeout> | undefined;
+    let bodySignal: AbortSignal | undefined;
     const maxBytes = this.input.maxResponseBytes ?? 64 * 1024 * 1024;
-    const stop = (error: ArtifactReadError) => {
-      controller.abort(error);
-      body?.destroy(error);
-      return error;
-    };
     try {
-      return await Promise.race([
-        new Promise<never>((_resolve, reject) => {
-          requestTimer = setTimeout(() => {
-            reject(stop(new ArtifactReadError("Artifact request timed out.")));
-          }, this.input.requestTimeoutMs ?? 30_000);
+      let onAbort: (() => void) | undefined;
+      const response = await Promise.race([
+        this.client.send(new GetObjectCommand({ Bucket: this.input.bucket, Key: key }), {
+          abortSignal: requestSignal,
         }),
-        (async () => {
-          const response = await this.client.send(
-            new GetObjectCommand({ Bucket: this.input.bucket, Key: key }),
-            { abortSignal: controller.signal },
-          );
-          if (!(response.Body instanceof Readable)) {
-            throw new ArtifactReadError("Artifact had no readable response body.");
-          }
-          body = response.Body;
-          // Always observe stream errors, including a response that arrives after abort.
-          body.on("error", () => {});
-          if (controller.signal.aborted) {
-            body.destroy();
-            throw controller.signal.reason;
-          }
-          if ((response.ContentLength ?? 0) > maxBytes) {
-            throw stop(new ArtifactReadError("Artifact exceeds the response size limit."));
-          }
-          const text = await Promise.race([
-            new Promise<never>((_resolve, reject) => {
-              bodyTimer = setTimeout(() => {
-                reject(stop(new ArtifactReadError("Artifact body timed out.")));
-              }, this.input.bodyTimeoutMs ?? 10_000);
-            }),
-            (async () => {
-              const chunks: Buffer[] = [];
-              let bytes = 0;
-              for await (const chunk of body) {
-                const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-                bytes += buffer.length;
-                if (bytes > maxBytes) {
-                  throw stop(new ArtifactReadError("Artifact exceeds the response size limit."));
-                }
-                chunks.push(buffer);
-              }
-              return Buffer.concat(chunks, bytes).toString("utf8");
-            })(),
-          ]);
-          try {
-            return schema.parse(JSON.parse(text));
-          } catch {
-            throw new ArtifactReadError("Invalid artifact JSON or runtime shape.");
-          }
-        })(),
-      ]);
+        new Promise<never>((_resolve, reject) => {
+          onAbort = () => reject(requestSignal.reason);
+          requestSignal.addEventListener("abort", onAbort, { once: true });
+          if (requestSignal.aborted) onAbort();
+        }),
+      ]).finally(() => {
+        if (onAbort) requestSignal.removeEventListener("abort", onAbort);
+      });
+      if (!(response.Body instanceof Readable))
+        throw new ArtifactReadError("Artifact had no readable response body.");
+      body = response.Body;
+      bodySignal = AbortSignal.timeout(this.input.bodyTimeoutMs ?? 10_000);
+      addAbortSignal(requestSignal, body);
+      addAbortSignal(bodySignal, body);
+      if ((response.ContentLength ?? 0) > maxBytes)
+        throw new ArtifactReadError("Artifact exceeds the response size limit.");
+      const chunks: Buffer[] = [];
+      let bytes = 0;
+      for await (const chunk of body) {
+        const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+        bytes += buffer.length;
+        if (bytes > maxBytes)
+          throw new ArtifactReadError("Artifact exceeds the response size limit.");
+        chunks.push(buffer);
+      }
+      try {
+        return schema.parse(JSON.parse(Buffer.concat(chunks, bytes).toString("utf8")));
+      } catch {
+        throw new ArtifactReadError("Invalid artifact JSON or runtime shape.");
+      }
     } catch (error) {
       body?.destroy();
-      if (isNotFoundError(error)) {
-        throw new ArtifactNotFoundError(key);
-      }
-      if (controller.signal.aborted) throw controller.signal.reason;
+      if (isNotFoundError(error)) throw new ArtifactNotFoundError(key);
+      if (requestSignal.aborted) throw new ArtifactReadError("Artifact request timed out.");
+      if (bodySignal?.aborted) throw new ArtifactReadError("Artifact body timed out.");
       if (error instanceof ArtifactReadError) throw error;
       throw new ArtifactReadError("Artifact storage request failed.");
-    } finally {
-      clearTimeout(requestTimer);
-      clearTimeout(bodyTimer);
     }
   }
 }

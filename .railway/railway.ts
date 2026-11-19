@@ -14,6 +14,7 @@ import {
   volume,
 } from "railway/iac";
 import images from "./images.json" with { type: "json" };
+import { currentExposure, enforceExposure } from "./networking.ts";
 
 const postgresPasswordGenerator = `\${{ secret(64, "0123456789abcdef") }}`;
 
@@ -31,6 +32,7 @@ function existingResources(ctx: RailwayContext):
   | {
       serviceNames: ReadonlySet<string>;
       volumeSizes: ReadonlyMap<string, number>;
+      tcpPorts: ReadonlyMap<string, number[]>;
     }
   | undefined {
   if (!ctx.environmentId) return undefined;
@@ -40,7 +42,7 @@ function existingResources(ctx: RailwayContext):
         "railway",
         [
           "api",
-          "query($id: String!) { environment(id: $id) { serviceInstances(first: 100) { edges { node { serviceName } } pageInfo { hasNextPage } } volumeInstances(first: 100) { edges { node { sizeMB volume { name } } } pageInfo { hasNextPage } } } }",
+          "query($id: String!) { environment(id: $id) { config(decryptVariables: false) serviceInstances(first: 100) { edges { node { serviceId serviceName domains { serviceDomains { domain } customDomains { domain } } } } pageInfo { hasNextPage } } volumeInstances(first: 100) { edges { node { sizeMB volume { name } } } pageInfo { hasNextPage } } } }",
           "--var",
           `id=${ctx.environmentId}`,
           "--compact",
@@ -78,6 +80,7 @@ function existingResources(ctx: RailwayContext):
     );
     if (volumeSizes.size !== volumes.edges.length) throw new Error("Ambiguous volume lookup");
     return {
+      tcpPorts: currentExposure(result.data.environment.config, services.edges),
       serviceNames: new Set(
         services.edges.map((edge: { node: { serviceName: string } }) => edge.node.serviceName),
       ),
@@ -85,7 +88,7 @@ function existingResources(ctx: RailwayContext):
     };
   } catch {
     throw new Error(
-      "Cannot establish existing Railway services and volumes; refusing to plan database passwords or capacity.",
+      "Cannot establish safe Railway services, exposure and volumes; refusing to plan. Check pagination, current TCP ports and the HTTP domain allowlist; unexpected domains need separately authorized provider removal.",
     );
   }
 }
@@ -152,7 +155,7 @@ export default defineRailway((ctx) => {
     sizeMB: size("rpc-cache-postgres-volume", 20000),
   });
   const postgres = database("Postgres", "postgres", {
-    image: images.external["postgres-production"],
+    image: images.provider["postgres-production"],
     region,
     defaultMountPath: mountPath,
   });
@@ -166,9 +169,9 @@ export default defineRailway((ctx) => {
   // Railway CLI represents an existing managed database mount separately
   // from ordinary service attachments. Keep its mount through the live binding.
 
-  // An image-backed service avoids the managed Postgres template's public TCP proxy.
+  // Keep the independently provisioned cache database and its volume binding.
   const cacheDatabase = service("rpc-cache-postgres", {
-    source: image(images.external["postgres-production"]),
+    source: image(images.provider["postgres-production"]),
     replicas: { [region]: 1 },
     deploy: { ...limits(), requiredMountPath: mountPath },
     domains: [],
@@ -291,5 +294,5 @@ export default defineRailway((ctx) => {
       cacheVolume,
     ],
   };
-  return project("treasury-subgraph", definition);
+  return enforceExposure(project("treasury-subgraph", definition), live?.tcpPorts);
 });
