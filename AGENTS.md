@@ -22,69 +22,46 @@ This repository indexes protocol-level metrics for Olympus contracts and Treasur
 - Keep `.nvmrc`, `.node-version`, Dockerfiles and `package.json` aligned with the mise tool versions.
 - Run `pnpm install --frozen-lockfile` before dependency-dependent work.
 
-## Common Commands
-
-- `pnpm install --frozen-lockfile`: install dependencies
-- `pnpm run check`: run Biome and actionlint without modifying files
-- `pnpm run validate`: run checks, type checking, builds and the unit test suite
-- `pnpm audit --audit-level moderate`: run the dependency vulnerability check
-
 ## Local Validation Before Commit and Push
 
-Run existing package and repository scripts unchanged. Use tool-level working-directory, output-limit and polling controls.
-Do not append redirection, `tee`, environment assignments or shell wrappers to manage output.
-For durable logs, implement logging in the canonical script and preserve its exit status.
+Invoke canonical scripts unchanged. Use tool-level working-directory, output-limit
+and polling controls. Do not append redirection, `tee`, `tail`, environment
+assignments or shell wrappers merely to manage output. Durable logging belongs
+inside the canonical script and must preserve its exit status.
 
-### Before a commit
+- `pnpm run validate`: runtime alignment, frozen install, codegen, Biome,
+  actionlint, typecheck/build, ordinary tests and dependency audit; no Docker.
+- `pnpm run validate:images`: build every shipped service image and scan the
+  images, databases and Dockerfiles. Requires Docker and locked Trivy via mise.
+- `pnpm run test:integration`: required container-backed cache persistence,
+  restart/resume/reset isolation and real service-image behavior. Build images
+  first; absent prerequisites fail rather than silently skip.
+- `pnpm run validate:all`: run all applicable groups above.
 
-For code, dependency, build or CI changes, run these commands from the repository root:
+See [validation prerequisites and evidence](docs/validation.md).
+Before committing code, dependencies or CI changes, run `pnpm run validate`.
+For container, deployment or runtime changes, also run image and integration
+validation. Do not repeat unchanged successful checks without a reason.
+For documentation-only changes, run `pnpm run check` and inspect command/link
+examples. For manifest changes, preserve caches, run
+`pnpm install --no-frozen-lockfile`, then `pnpm install --frozen-lockfile`.
+If pnpm requires relinking generated `node_modules`, preserve the package store.
 
-```sh
-pnpm install --frozen-lockfile
-pnpm run codegen
-pnpm run validate
-pnpm audit --audit-level moderate
-```
+For nontrivial changes, use the `autoreview` skill unless the task explicitly
+prohibits extra agents or assigns review to a coordinator. Correct accepted
+findings and repeat affected validation. Run `git diff --check`, invoke the
+`privacy-gate` skill and run `privacy-gate pre-commit` before each Git commit.
+Never bypass installed hooks.
 
-`validate` includes Biome, actionlint, type checking, builds and unit tests. Do not repeat these checks separately without a reason.
+For indexing performance changes, measure the baseline first and repeat the same
+workload after implementation using `pnpm run benchmark:rpc`; see
+[benchmark limitations](docs/performance/rpc-indexer.md). Do not claim savings
+from a synthetic cache hit alone. For IaC, inspect a native Railway plan using
+[the runbook](.railway/README.md); live application requires separate approval.
 
-- For manifest, lockfile or workspace policy changes, first clear the repository's generated install state.
-  Remove the root and workspace `node_modules` directories and any repository-local pnpm store.
-  Run `pnpm install --no-frozen-lockfile`.
-  Clear that install state again.
-  Run `pnpm install --frozen-lockfile`.
-- For nontrivial code or CI changes, use the `autoreview` skill before the commit.
-  Correct accepted findings and repeat the affected validation.
-- For documentation-only changes, run `pnpm run check` and review the changed links and command examples.
-- For Git checkouts, run `git diff --check`.
-- Invoke the `privacy-gate` skill before each Git commit.
-  Run `privacy-gate pre-commit` before committing.
-
-### Additional checks for affected components
-
-- For Dockerfile, container startup or dependency changes, validate each affected image.
-  The image names are `indexer`, `hasura`, `metrics-api`, `metrics-publisher` and `rpc-cache`.
-  Build the current source with `pnpm run docker:build:<image>`.
-  Tag that image with `pnpm run docker:tag:scan:<image>`.
-  Scan that image with `pnpm run docker:scan:<image>`.
-- For RPC cache or cache integration changes, build the cache image and run `pnpm run test:rpc-cache`.
-  This test requires Docker, or the documented Podman override.
-- For indexing performance changes, measure the baseline before implementation.
-  After implementation, repeat the benchmark with the same workload.
-  Compare the results before claiming an improvement.
-  Use `pnpm run benchmark:rpc` as described in `docs/performance/rpc-indexer.md`.
-- For IaC changes, generate and inspect a native Railway plan as described in `.railway/README.md`.
-  Infrastructure application requires separate approval and is not a validation command.
-
-### Before a push
-
-- Verify that the checks cover the exact changes to push.
-  If the validated content is unchanged, reuse the successful results.
-- Use the `coderabbit-local-review` skill before pushing or updating a PR.
-  Correct accepted findings and repeat the affected validation.
-- Before any PR operation, invoke the `github-account` skill.
-- Complete the `privacy-gate` push procedure.
-  Keep the installed hooks enabled.
-- Ask before pushing or changing PR state.
-- Report the checks performed, skipped checks and unresolved blockers.
-  Do not report an unperformed check as passed.
+Before pushing, confirm validation covers the exact content, use
+`coderabbit-local-review`, complete the privacy-gate push procedure and ask for
+publication approval. Before any PR operation, invoke `github-account`.
+Report performed checks, skips and blockers; never claim unrun checks passed.
+Ask before rewriting, discarding or publishing history or changing PR state.
+Explicit Crit requests use the `crit-review` skill.

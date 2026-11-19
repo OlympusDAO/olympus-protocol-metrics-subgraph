@@ -12,8 +12,8 @@ import {
   type OhmSupply,
   type SupplyCategoryValues,
   type TreasuryAsset,
-} from "../../../packages/metrics-artifacts/src";
-import { DEFAULT_EXTERNAL_REQUEST_TIMEOUT_MS, withTimeout } from "./timeout";
+} from "../../../packages/metrics-artifacts/src/index.js";
+import { DEFAULT_EXTERNAL_REQUEST_TIMEOUT_MS, withTimeout } from "./timeout.js";
 
 export type MetricsBounds = {
   earliestDate: string;

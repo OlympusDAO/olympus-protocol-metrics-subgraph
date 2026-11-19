@@ -7,7 +7,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-import { DEFAULT_EXTERNAL_REQUEST_TIMEOUT_MS, withTimeout } from "./timeout";
+import { DEFAULT_EXTERNAL_REQUEST_TIMEOUT_MS, withTimeout } from "./timeout.js";
 
 export class ArtifactNotFoundError extends Error {
   constructor(readonly key: string) {

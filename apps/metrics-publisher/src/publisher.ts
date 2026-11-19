@@ -4,7 +4,7 @@ import {
   type Manifest,
   monthKeysForRange,
   resolveDateRange,
-} from "../../../packages/metrics-artifacts/src";
+} from "../../../packages/metrics-artifacts/src/index.js";
 import {
   type ArtifactEntry,
   ArtifactNotFoundError,
@@ -12,7 +12,7 @@ import {
   artifactEntry,
   MemoryArtifactStore,
   S3ArtifactStore,
-} from "./artifact-store";
+} from "./artifact-store.js";
 import {
   EmptyMetricsSource,
   HasuraGraphqlMetricsSource,
@@ -21,8 +21,8 @@ import {
   MetricsNotDataReadyError,
   type MetricsSource,
   type PublishBoundsCompleteness,
-} from "./metrics-source";
-import { DEFAULT_EXTERNAL_REQUEST_TIMEOUT_MS, validateTimeoutMs } from "./timeout";
+} from "./metrics-source.js";
+import { DEFAULT_EXTERNAL_REQUEST_TIMEOUT_MS, validateTimeoutMs } from "./timeout.js";
 
 export {
   type ArtifactStore,

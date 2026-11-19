@@ -13,6 +13,7 @@ import {
   service,
   volume,
 } from "railway/iac";
+import images from "./images.json" with { type: "json" };
 
 const postgresPasswordGenerator = `\${{ secret(64, "0123456789abcdef") }}`;
 
@@ -151,26 +152,28 @@ export default defineRailway((ctx) => {
     sizeMB: size("rpc-cache-postgres-volume", 20000),
   });
   const postgres = database("Postgres", "postgres", {
-    image: "ghcr.io/railwayapp-templates/postgres-ssl:18",
+    image: images.external["postgres-production"],
     region,
     defaultMountPath: mountPath,
   });
   postgres.deploy = { ...postgres.deploy, ...runtime, requiredMountPath: mountPath };
   postgres.networking = {
     privateNetworkEndpoint: "postgres",
-    serviceDomains: { "postgres-production-1a7d.up.railway.app": {} },
+    serviceDomains: {},
+    customDomains: {},
+    tcpProxies: {},
   };
   // Railway CLI represents an existing managed database mount separately
   // from ordinary service attachments. Keep its mount through the live binding.
 
   // An image-backed service avoids the managed Postgres template's public TCP proxy.
   const cacheDatabase = service("rpc-cache-postgres", {
-    source: image(
-      "ghcr.io/railwayapp-templates/postgres-ssl:18@sha256:14bece74105090e05d4eb57c075442cb2057e899cd8858b508c5eafda3fe725f",
-    ),
+    source: image(images.external["postgres-production"]),
     replicas: { [region]: 1 },
     deploy: { ...limits(), requiredMountPath: mountPath },
+    domains: [],
     tcp: [],
+    networking: { serviceDomains: {} },
     volumeMounts: { [mountPath]: cacheVolume },
     env: {
       PGDATA: `${mountPath}/pgdata`,
@@ -183,7 +186,9 @@ export default defineRailway((ctx) => {
   const cache = service("rpc-cache", {
     ...deployment,
     build: build("rpc-cache", ["/services/rpc-cache/**"]),
+    domains: [],
     tcp: [],
+    networking: { serviceDomains: {} },
     deploy: { ...limits(), ...failure("/healthcheck") },
     env: {
       PORT: "4000",
@@ -210,7 +215,9 @@ export default defineRailway((ctx) => {
       restartPolicyType: "ON_FAILURE",
       restartPolicyMaxRetries: 10,
     },
-    networking: { serviceDomains: { "indexer-production-973a.up.railway.app": {} } },
+    domains: [],
+    tcp: [],
+    networking: { serviceDomains: {} },
     env: {
       ...preserved([
         "ENVIO_API_TOKEN",
@@ -230,20 +237,22 @@ export default defineRailway((ctx) => {
     ...deployment,
     build: build("hasura", []),
     deploy: { ...limits(), ...failure("/healthz") },
-    networking: { serviceDomains: { "hasura-production-29ba.up.railway.app": {} } },
+    domains: [],
+    tcp: [],
+    networking: { serviceDomains: {} },
     env: preserved(["HASURA_GRAPHQL_ADMIN_SECRET", "HASURA_GRAPHQL_DATABASE_URL", "PORT"]),
   });
   const metricsPublisher = service("metrics-publisher", {
     ...deployment,
     build: build("metrics-publisher", [
-      "/Dockerfile-indexer",
-      "/apps/indexer/**",
       "/apps/metrics-publisher/**",
       "/packages/metrics-artifacts/**",
       ...sharedWatch,
     ]),
     deploy: { ...limits(), cronSchedule: "15 * * * *", restartPolicyType: "NEVER" },
-    networking: { serviceDomains: { "metrics-publisher-production.up.railway.app": {} } },
+    domains: [],
+    tcp: [],
+    networking: { serviceDomains: {} },
     env: preserved([...artifactKeys, ...hasuraKeys]),
   });
   const metricsApi = service("metrics-api", {

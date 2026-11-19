@@ -9,14 +9,22 @@
     "envio": "envio",
     "envio:dev": "ENVIO_TUI=${ENVIO_TUI:-false} tsx src/start-envio.ts dev",
     "envio:start": "tsx src/start-envio.ts start",
-    "test": "vitest run tests"
+    "test": "vitest run tests",
+    "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "bignumber.js": "11.1.5",
     "envio": "3.14.0",
-    "viem": "2.56.8"
+    "viem": "2.56.8",
+    "tsx": "4.23.15"
   },
   "devDependencies": {
     "yaml": "2.9.1"
-  }
+  },
+  "files": [
+    "src",
+    "config.yaml",
+    "schema.graphql",
+    "envio-env.d.ts"
+  ]
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { publishMetricsArtifactsFromEnv } from "./publisher";
+import { publishMetricsArtifactsFromEnv } from "./publisher.js";
 
 const result = await publishMetricsArtifactsFromEnv();
 

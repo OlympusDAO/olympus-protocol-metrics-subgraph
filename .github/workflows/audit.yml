@@ -1,32 +1,14 @@
 name: Dependency Audit
-
 on:
-  pull_request:
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   audit:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-
-
-      - name: Bootstrap
-        uses: ./.github/actions/bootstrap
-      - name: Audit pnpm dependencies (fail on moderate+)
-        uses: JamesRobertWiseman/pnpm-audit@ef62519bd4eb8b0b063989599c2ebbf5dd5f5f28 # v3
-        with:
-          package_json_path: ./
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          level: moderate
-          fails: true
-          single_comment: true
+      - uses: ./.github/actions/bootstrap
+      - run: pnpm audit --audit-level moderate

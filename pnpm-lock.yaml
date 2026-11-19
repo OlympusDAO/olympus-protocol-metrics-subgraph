@@ -100,6 +100,9 @@ importers:
       envio:
         specifier: 3.14.0
         version: 3.14.0(typescript@6.0.3)(zod@4.6.6)
+      tsx:
+        specifier: 4.23.15
+        version: 4.23.15
       viem:
         specifier: 2.56.8
         version: 2.56.8(typescript@6.0.3)(zod@4.6.6)
@@ -113,6 +116,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: 3.1072.0
         version: 3.1072.0
+      zod:
+        specifier: 4.6.6
+        version: 4.6.6
 
   apps/metrics-publisher:
     dependencies:

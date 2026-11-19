@@ -202,30 +202,26 @@ The compose stack intentionally does not publish host ports for Hasura,
 Postgres, MinIO, the indexer, publisher, or the RPC cache services. Use `docker compose exec` for
 local inspection rather than exposing those services by default.
 
-## Test RPC Cache Persistence
+## Validate images and persistence
 
-The fixture runs the real eRPC image and a disposable Postgres with a synthetic
-upstream. It checks that finalized historical reads reach Postgres, become
-cache hits, and survive restarting eRPC. It also checks that latest reads,
-provider errors, and reads from a provider without a finalized tag bypass the
-persistent cache.
+Run the canonical checks from the repository root:
 
 ```sh
-pnpm run docker:build:rpc-cache
-pnpm run test:rpc-cache
-pnpm run docker:tag:scan:rpc-cache
-pnpm run docker:scan:rpc-cache
+pnpm run validate:images
+pnpm run test:integration
 ```
 
-The shared `docker:scan` script uses the Trivy version in `mise.toml` and the same
-vulnerability severity and fix-availability policy as CI. CI installs that version
-with mise and verifies the release checksum from `mise.lock`. Scan the other built
-and tagged images with `docker:scan:indexer`, `docker:scan:hasura`,
-`docker:scan:metrics-api`, and `docker:scan:metrics-publisher`.
+The first command builds all five service images, scans their immutable
+identities and the external database/object-store images, and checks all
+Dockerfiles with the Trivy pin/checksum in mise. The second uses the built
+images for cache persistence, real indexer restart/manual-reset isolation,
+API/publisher behavior and Hasura health. Missing prerequisites fail.
+The standalone `pnpm run test:rpc-cache` remains available after building
+all five images; its Docker/Podman runtime override also requires the indexer,
+Hasura and pinned PostgreSQL images in that runtime.
 
-The integration test defaults to Docker, matching the build command and CI.
-On a Podman-only machine, build the same image with
-`podman build -f Dockerfile-rpc-cache -t localhost/olympus-metrics-rpc-cache:local .`
-and run `CONTAINER_RUNTIME=podman pnpm run test:rpc-cache`.
-The [benchmark report](performance/rpc-indexer.md) records the devbox baseline,
-candidate results, reproduction commands, and measurement limits.
+See [validation prerequisites and private evidence](validation.md). The
+[benchmark report](performance/rpc-indexer.md) retains the devbox baseline
+and measurement limits. Live Compose also requires the pinned MinIO and mc
+images to be accessible from their registry; a rejected pull is a validation
+blocker, not permission to replace the storage system or delete its data.

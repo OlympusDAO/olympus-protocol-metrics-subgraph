@@ -5,9 +5,14 @@
   "type": "module",
   "scripts": {
     "test": "vitest run tests",
-    "start": "tsx src/cli.ts"
+    "start": "node dist/apps/metrics-api/src/cli.js",
+    "build": "tsc -p tsconfig.build.json"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1072.0"
-  }
+    "@aws-sdk/client-s3": "3.1072.0",
+    "zod": "4.6.6"
+  },
+  "files": [
+    "dist"
+  ]
 }

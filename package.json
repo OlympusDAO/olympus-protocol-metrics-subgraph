@@ -12,7 +12,7 @@
   "repository": "https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph",
   "scripts": {
     "benchmark:rpc": "node scripts/benchmark-rpc.mjs",
-    "build": "tsc --noEmit && pnpm --dir apps/client build",
+    "build": "tsc --noEmit && pnpm --dir apps/client build && pnpm --dir apps/metrics-api build && pnpm --dir apps/metrics-publisher build",
     "check": "biome check . && pnpm run lint:actions",
     "codegen": "pnpm --dir apps/indexer codegen",
     "compose:api": "docker compose up --build minio minio-init metrics-api",
@@ -50,13 +50,16 @@
     "test:client": "pnpm --dir apps/client test",
     "test:metrics-api": "pnpm --dir apps/metrics-api test",
     "test:metrics-publisher": "pnpm --dir apps/metrics-publisher test",
-    "test:root": "vitest run --dir tests",
+    "test:root": "vitest run --dir tests --exclude '**/integration/**'",
     "test:rpc-cache": "node --test services/rpc-cache/integration.test.mjs",
     "test:indexer": "pnpm --dir apps/indexer test",
-    "validate": "pnpm run check && pnpm run build && pnpm test",
+    "validate": "node scripts/validate.mjs source",
     "lint": "biome lint --write .",
     "lint:actions": "mise exec actionlint -- actionlint",
-    "lint:check": "biome lint ."
+    "lint:check": "biome lint .",
+    "validate:images": "node scripts/validate.mjs images",
+    "test:integration": "node scripts/validate.mjs integration",
+    "validate:all": "node scripts/validate.mjs all"
   },
   "dependencies": {
     "tsx": "4.23.15",

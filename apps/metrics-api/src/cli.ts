@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import { createServer } from "node:http";
-import { metricsApiConfigFromEnv, metricsApiPortFromEnv } from "./config";
-import { handleMetricsApiRequest } from "./server";
+import { metricsApiConfigFromEnv, metricsApiPortFromEnv } from "./config.js";
+import { handleMetricsApiRequest } from "./server.js";
 
 // The API intentionally uses Node's built-in HTTP server. The public surface is
 // a small GET/HEAD/OPTIONS REST API, and avoiding Express keeps the runtime

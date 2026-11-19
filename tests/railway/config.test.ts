@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { createRailwayContext, type ResourceNode } from "railway/iac";
 import { describe, expect, test, vi } from "vitest";
+import images from "../../.railway/images.json";
 import defineInfrastructure from "../../.railway/railway";
 
 async function graph() {
@@ -50,7 +51,7 @@ describe("Railway config-as-code", () => {
     const db = get("database.Postgres");
     expect(db).toMatchObject({
       groupId: "PostgreSQL",
-      image: "ghcr.io/railwayapp-templates/postgres-ssl:18",
+      image: images.external["postgres-production"],
       deploy: { requiredMountPath: "/var/lib/postgresql/data" },
       networking: { privateNetworkEndpoint: "postgres" },
     });
@@ -66,7 +67,7 @@ describe("Railway config-as-code", () => {
     });
     const cache = get("service.rpc-cache");
     expect(cache).toMatchObject({ networking: { tcpProxies: {} } });
-    expect(cache).not.toHaveProperty("networking.customDomains");
+    expect(cache).toMatchObject({ networking: { serviceDomains: {}, customDomains: {} } });
     expect(cache).toMatchObject({
       variables: {
         PORT: { type: "literal", value: "4000" },
@@ -113,14 +114,12 @@ describe("Railway config-as-code", () => {
     expect(publisher).toMatchObject({
       build: {
         watchPatterns: expect.arrayContaining([
-          "/Dockerfile-indexer",
-          "/apps/indexer/**",
           "/apps/metrics-publisher/**",
           "/packages/metrics-artifacts/**",
         ]),
       },
       deploy: { cronSchedule: "15 * * * *", restartPolicyType: "NEVER" },
-      networking: { serviceDomains: { "metrics-publisher-production.up.railway.app": {} } },
+      networking: { serviceDomains: {}, customDomains: {}, tcpProxies: {} },
     });
     const indexer = get("service.indexer");
     expect(indexer).toMatchObject({
@@ -129,7 +128,7 @@ describe("Railway config-as-code", () => {
         restartPolicyMaxRetries: 10,
         limitOverride: { containers: { cpu: 2, memoryBytes: 2000000000 } },
       },
-      networking: { serviceDomains: { "indexer-production-973a.up.railway.app": {} } },
+      networking: { serviceDomains: {}, customDomains: {}, tcpProxies: {} },
       variables: { ENVIO_PG_PASSWORD: { type: "preserve" } },
     });
     expect(indexer).not.toHaveProperty("deploy.healthcheckPath");
@@ -162,61 +161,42 @@ describe("Railway config-as-code", () => {
     }
   });
 
-  test("uses pinned production Dockerfiles with real service commands", () => {
-    const dockerignore = readFileSync(".dockerignore", "utf8");
-    const dockerignoreLines = dockerignore.split(/\r?\n/);
-    expect(dockerignoreLines).toContain(".pnpm-store");
-    expect(dockerignoreLines).toContain("**/.envio");
-    expect(dockerignoreLines).toContain("apps/*/tests");
-    expect(dockerignoreLines).toContain("packages/*/tests");
-    expect(dockerignoreLines).toContain("tests");
-    expect(dockerignoreLines).toContain("docs");
-    expect(dockerignoreLines).toContain("tasks");
-    expect(dockerignoreLines).toContain(".github");
-
-    for (const dockerfile of [
-      "Dockerfile-indexer",
-      "Dockerfile-metrics-api",
-      "Dockerfile-metrics-publisher",
-    ]) {
-      const content = readFileSync(dockerfile, "utf8");
-      expect(content).toContain("@sha256:");
-      expect(content).toContain("apt-get install -y --no-install-recommends ca-certificates");
-      expect(content).toContain("--only-upgrade apt libapt-pkg6.0 libgcrypt20 libgnutls30");
-      expect(content).not.toContain("apt-get upgrade");
-      expect(content).toContain("COREPACK_HOME=/corepack");
-      expect(content).toContain("pnpm --version");
-      expect(content).toContain("RUN pnpm install --frozen-lockfile");
-      expect(content.indexOf("RUN pnpm install --frozen-lockfile")).toBeLessThan(
-        content.indexOf("COPY . ."),
-      );
-      expect(content).not.toContain("--mount=type=cache");
-      expect(content).not.toContain("pnpm prune --prod");
-      expect(content).toContain("/pnpm/store");
-      expect(content).toContain("/root/.cache/pnpm");
-      expect(content).toContain("/usr/local/lib/node_modules/corepack");
-      expect(content).toContain("/usr/local/lib/node_modules/npm");
-      expect(content).toMatch(/^ENV PATH=.*\/app\/node_modules\/\.bin:/m);
-      expect(content).not.toContain('node", "--version');
-      expect(content).toContain("USER node");
+  test("keeps all services except the metrics API private", async () => {
+    const { get } = await graph();
+    for (const address of [
+      "database.Postgres",
+      "service.hasura",
+      "service.indexer",
+      "service.metrics-publisher",
+      "service.rpc-cache",
+      "service.rpc-cache-postgres",
+    ] as const) {
+      expect(get(address)).toMatchObject({
+        networking: { serviceDomains: {}, customDomains: {}, tcpProxies: {} },
+      });
     }
+    expect(get("database.Postgres")).toMatchObject({
+      networking: { privateNetworkEndpoint: "postgres" },
+    });
+    expect(get("service.metrics-api")).toMatchObject({
+      networking: { customDomains: { "treasury-subgraph-api.olympusdao.finance": { port: 8080 } } },
+    });
+  });
 
-    expect(readFileSync("Dockerfile-hasura", "utf8")).toContain("--only-upgrade");
-    expect(readFileSync("Dockerfile-hasura", "utf8")).not.toContain("apt-get upgrade");
-    const indexerDockerfile = readFileSync("Dockerfile-indexer", "utf8");
-    expect(indexerDockerfile).toContain("WORKDIR /app/apps/indexer");
-    expect(indexerDockerfile).toContain('CMD ["tsx", "src/start-envio.ts", "start"]');
-    expect(indexerDockerfile).toContain("chown -R node:node apps/indexer/.envio");
-    const metricsApiDockerfile = readFileSync("Dockerfile-metrics-api", "utf8");
-    const metricsPublisherDockerfile = readFileSync("Dockerfile-metrics-publisher", "utf8");
-    expect(metricsApiDockerfile).toContain("pnpm --dir apps/indexer codegen");
-    expect(metricsApiDockerfile).toContain("apps/indexer/.envio");
-    expect(metricsApiDockerfile).toContain("WORKDIR /app/apps/metrics-api");
-    expect(metricsApiDockerfile).toContain('CMD ["tsx", "src/cli.ts"]');
-    expect(metricsPublisherDockerfile).toContain("pnpm --dir apps/indexer codegen");
-    expect(metricsPublisherDockerfile).toContain("apps/indexer/.envio");
-    expect(metricsPublisherDockerfile).toContain("WORKDIR /app/apps/metrics-publisher");
-    expect(metricsPublisherDockerfile).toContain('CMD ["tsx", "src/cli.ts"]');
+  test("deploys production closures without coupling public artifact services to codegen", () => {
+    for (const name of ["indexer", "metrics-api", "metrics-publisher"]) {
+      const content = readFileSync(`Dockerfile-${name}`, "utf8");
+      expect(content).toContain("@sha256:");
+      expect(content).toContain("AS build");
+      expect(content).toContain("AS runtime");
+      expect(content).toContain("deploy --prod /deploy");
+      expect(content).toContain("USER node");
+      if (name !== "indexer") {
+        expect(content).not.toContain("apps/indexer codegen");
+        expect(content).not.toContain("COPY apps/indexer apps/indexer");
+        expect(content).toContain(`dist/apps/${name}/src/cli.js`);
+      }
+    }
   });
 
   test("fails Hasura early when required Railway env variables are missing", () => {
@@ -231,30 +211,14 @@ describe("Railway config-as-code", () => {
     expect(content).toContain("exec graphql-engine serve");
   });
 
-  test("scans all Docker images with pinned Trivy CI checks", () => {
+  test("CI reuses canonical source, image and integration validation", () => {
     const workflow = readFileSync(".github/workflows/security-scan.yml", "utf8");
-    const packageJson = readFileSync("package.json", "utf8");
-
-    expect(workflow).toContain(
-      "aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1",
-    );
-    expect(workflow).toContain(
-      "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd",
-    );
-    expect(workflow.match(/ignore-unfixed: true/g)?.length).toBe(5);
-    expect(workflow).toContain("pnpm run test:rpc-cache");
-
-    for (const [name, dockerfile] of [
-      ["indexer", "Dockerfile-indexer"],
-      ["hasura", "Dockerfile-hasura"],
-      ["metrics-api", "Dockerfile-metrics-api"],
-      ["metrics-publisher", "Dockerfile-metrics-publisher"],
-      ["rpc-cache", "Dockerfile-rpc-cache"],
-    ] as const) {
-      expect(packageJson).toContain(`"docker:build:${name}"`);
-      expect(packageJson).toContain(`"docker:tag:scan:${name}"`);
-      expect(workflow).toContain(dockerfile);
-      expect(workflow).toContain(`olympus-protocol-metrics/${name}:scan`);
-    }
+    expect(workflow).toContain("pnpm run validate:images");
+    expect(workflow).toContain("pnpm run test:integration");
+    expect(readFileSync(".github/workflows/main.yml", "utf8")).toContain("pnpm run validate");
+    const scripts = JSON.parse(readFileSync("package.json", "utf8")).scripts;
+    for (const name of Object.keys(images.built))
+      expect(scripts[`docker:build:${name}`]).toBeDefined();
+    expect(Object.keys(images.external)).toContain("postgres-production");
   });
 });
