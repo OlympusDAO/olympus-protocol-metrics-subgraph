@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import type { RailwayContext, VariableValue } from "railway/iac";
+import type { RailwayContext } from "railway/iac";
 import {
   bucket,
   database,
@@ -18,20 +18,8 @@ import { currentExposure, enforceExposure } from "./networking.ts";
 
 const postgresPasswordGenerator = `\${{ secret(64, "0123456789abcdef") }}`;
 
-function postgresPassword(
-  name: string,
-  existingServices: ReadonlySet<string> | undefined,
-): VariableValue {
-  // Preserve existing credentials; generate a password only for a confirmed new DB.
-  // Offline typechecks cannot prove newness, so preserve there too.
-  return existingServices === undefined || existingServices.has(name)
-    ? preserve()
-    : { type: "raw", value: { defaultValue: postgresPasswordGenerator } };
-}
-
 function existingResources(ctx: RailwayContext):
   | {
-      serviceNames: ReadonlySet<string>;
       volumeSizes: ReadonlyMap<string, number>;
       tcpPorts: ReadonlyMap<string, number[]>;
     }
@@ -57,10 +45,6 @@ function existingResources(ctx: RailwayContext):
       result.errors?.length ||
       !Array.isArray(services?.edges) ||
       services.pageInfo?.hasNextPage !== false ||
-      services.edges.some(
-        (edge: { node?: { serviceName?: unknown } }) =>
-          typeof edge.node?.serviceName !== "string" || !edge.node.serviceName.trim(),
-      ) ||
       !Array.isArray(volumes?.edges) ||
       volumes.pageInfo?.hasNextPage !== false ||
       volumes.edges.some(
@@ -82,9 +66,6 @@ function existingResources(ctx: RailwayContext):
     if (volumeSizes.size !== volumes.edges.length) throw new Error("Ambiguous volume lookup");
     return {
       tcpPorts: currentExposure(result.data.environment.config, services.edges),
-      serviceNames: new Set(
-        services.edges.map((edge: { node: { serviceName: string } }) => edge.node.serviceName),
-      ),
       volumeSizes,
     };
   } catch {
@@ -161,12 +142,7 @@ export default defineRailway((ctx) => {
     defaultMountPath: mountPath,
   });
   postgres.deploy = { ...postgres.deploy, ...runtime, requiredMountPath: mountPath };
-  postgres.networking = {
-    privateNetworkEndpoint: "postgres",
-    serviceDomains: {},
-    customDomains: {},
-    tcpProxies: {},
-  };
+  postgres.networking = { privateNetworkEndpoint: "postgres" };
   // Railway CLI represents an existing managed database mount separately
   // from ordinary service attachments. Keep its mount through the live binding.
 
@@ -175,24 +151,22 @@ export default defineRailway((ctx) => {
     source: image(images.provider["postgres-production"]),
     replicas: { [region]: 1 },
     deploy: { ...limits(), requiredMountPath: mountPath },
-    domains: [],
-    tcp: [],
-    networking: { serviceDomains: {} },
     volumeMounts: { [mountPath]: cacheVolume },
     env: {
       PGDATA: `${mountPath}/pgdata`,
       POSTGRES_DB: "railway",
       POSTGRES_USER: "postgres",
-      POSTGRES_PASSWORD: postgresPassword("rpc-cache-postgres", live?.serviceNames),
+      // Preserve credentials unless complete inventory proves this database is new.
+      POSTGRES_PASSWORD:
+        !live || live.tcpPorts.has("rpc-cache-postgres")
+          ? preserve()
+          : { type: "raw", value: { defaultValue: postgresPasswordGenerator } },
       DATABASE_URL: `postgresql://postgres:\${{POSTGRES_PASSWORD}}@\${{RAILWAY_PRIVATE_DOMAIN}}:5432/railway`,
     },
   });
   const cache = service("rpc-cache", {
     ...deployment,
     build: build("rpc-cache", ["/services/rpc-cache/**"]),
-    domains: [],
-    tcp: [],
-    networking: { serviceDomains: {} },
     deploy: { ...limits(), ...failure("/healthcheck") },
     env: {
       PORT: "4000",
@@ -219,9 +193,6 @@ export default defineRailway((ctx) => {
       restartPolicyType: "ON_FAILURE",
       restartPolicyMaxRetries: 10,
     },
-    domains: [],
-    tcp: [],
-    networking: { serviceDomains: {} },
     env: {
       ...preserved([
         "ENVIO_API_TOKEN",
@@ -241,9 +212,6 @@ export default defineRailway((ctx) => {
     ...deployment,
     build: build("hasura", []),
     deploy: { ...limits(), ...failure("/healthz") },
-    domains: [],
-    tcp: [],
-    networking: { serviceDomains: {} },
     env: preserved(["HASURA_GRAPHQL_ADMIN_SECRET", "HASURA_GRAPHQL_DATABASE_URL", "PORT"]),
   });
   const metricsPublisher = service("metrics-publisher", {
@@ -254,9 +222,6 @@ export default defineRailway((ctx) => {
       ...sharedWatch,
     ]),
     deploy: { ...limits(), cronSchedule: "15 * * * *", restartPolicyType: "NEVER" },
-    domains: [],
-    tcp: [],
-    networking: { serviceDomains: {} },
     env: preserved([...artifactKeys, ...hasuraKeys]),
   });
   const metricsApi = service("metrics-api", {

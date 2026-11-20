@@ -5,15 +5,30 @@ identities and credentials, and adds a private persistent RPC cache. Only
 `metrics-api` may have HTTP domains. See [security posture](../docs/security-posture.md)
 for exposure, storage and native CLI limits; this runbook does not certify live state.
 
-## Preview the change
+## Reconcile public domains
 
-First follow [public-domain reconciliation](domain-reconciliation.md) if the
-read-only inventory finds HTTP domains on any non-API service. Prepare and
-review exact native `railway domain delete` commands, obtain separate live
-approval, and verify their removal before generating the normal IaC plan.
-CLI 5.75.0 does not declaratively delete those HTTP domains. The service-level
-allowlist permits generated/custom domains on `metrics-api`; the desired source
-hostname remains unchanged.
+CLI 5.75.0 cannot delete existing HTTP domains through its native config diff.
+Before planning, inventory the whole environment's services and HTTP/TCP exposure
+with complete pagination, including cache services when provisioned. Unreadable
+metadata is not evidence of absence. Preserve all domains on `metrics-api`.
+Keep a private record of the target, timestamp, service/domain IDs and exact
+scoped deletions; obtain separate live approval for those named operations.
+
+These native command templates require exact reviewed IDs; do not loop over domains:
+
+```sh
+railway domain list --project PROJECT_ID --environment ENVIRONMENT_ID --service SERVICE_ID --json
+railway domain delete DOMAIN_ID --project PROJECT_ID --environment ENVIRONMENT_ID --service SERVICE_ID --yes --json
+```
+
+Run deletion only after approval. If inventory changes or a command fails, stop
+and re-inventory before continuing. Then verify zero generated/custom domains on
+every non-API service, TCP proxies separately, and unchanged volume/resource
+identities and private connectivity. Do not decrypt variables or log credentials.
+Continue with a fresh native plan; domain deletion does not replace plan approval.
+See the pinned [native domain command](https://github.com/railwayapp/cli/blob/v5.75.0/src/commands/domain.rs).
+
+## Preview the change
 
 Run `mise install node pnpm railway trivy jactionlint --locked` to install the pinned Node, pnpm and Railway CLI versions. With a Railway login or token that can read the production project, link project `1eff0b7c-1ab5-4f50-8c0d-29086746a17b` and environment `34764411-35d7-466c-8249-612730c36c07`.
 

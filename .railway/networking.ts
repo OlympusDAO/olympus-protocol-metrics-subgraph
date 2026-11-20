@@ -103,10 +103,9 @@ export function enforceExposure(
     resource.networking = {
       ...resource.networking,
       serviceDomains: {},
-      customDomains:
-        resource.name === "metrics-api"
-          ? { "treasury-subgraph-api.olympusdao.finance": { port: 8080 } }
-          : {},
+      customDomains: publicServices.has(resource.name)
+        ? (resource.networking?.customDomains ?? {})
+        : {},
       tcpProxies: Object.fromEntries(
         [...ports].sort((a, b) => a - b).map((port) => [String(port), null]),
       ),

@@ -52,7 +52,7 @@ that a live endpoint was removed. See the upstream
 [engine](https://github.com/railwayapp/cli/blob/v5.75.0/src/iac/engine.rs) and
 [change-set implementation](https://github.com/railwayapp/cli/blob/v5.75.0/src/iac/change_set.rs).
 
-Use the [domain-reconciliation procedure](../.railway/domain-reconciliation.md)
+Use the [domain-reconciliation procedure](../.railway/README.md#reconcile-public-domains)
 for exact-ID deletion review and the [native plan/apply runbook](../.railway/README.md)
 for private artifacts, approval and JSON status acceptance. The public allowlist
 is service-level: valid generated/custom domains on `metrics-api` pass regardless

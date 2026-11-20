@@ -71,8 +71,6 @@ describe("Railway config-as-code", () => {
       variables: { POSTGRES_PASSWORD: { type: "preserve" } },
     });
     const cache = get("service.rpc-cache");
-    expect(cache).toMatchObject({ networking: { tcpProxies: {} } });
-    expect(cache).toMatchObject({ networking: { serviceDomains: {}, customDomains: {} } });
     expect(cache).toMatchObject({
       variables: {
         PORT: { type: "literal", value: "4000" },
@@ -124,7 +122,6 @@ describe("Railway config-as-code", () => {
         ]),
       },
       deploy: { cronSchedule: "15 * * * *", restartPolicyType: "NEVER" },
-      networking: { serviceDomains: {}, customDomains: {}, tcpProxies: {} },
     });
     const indexer = get("service.indexer");
     expect(indexer).toMatchObject({
@@ -133,7 +130,6 @@ describe("Railway config-as-code", () => {
         restartPolicyMaxRetries: 10,
         limitOverride: { containers: { cpu: 2, memoryBytes: 2000000000 } },
       },
-      networking: { serviceDomains: {}, customDomains: {}, tcpProxies: {} },
       variables: { ENVIO_PG_PASSWORD: { type: "preserve" } },
     });
     expect(indexer).not.toHaveProperty("deploy.healthcheckPath");
@@ -274,7 +270,7 @@ describe("Railway config-as-code", () => {
     }
   });
 
-  test("SDK callback rejects drift, then emits serialized imported TCP removals after reconciliation", async () => {
+  test("SDK callback rejects drift, preserves resources and emits imported TCP removals", async () => {
     const nodes = ["Postgres", "indexer"].map((serviceName) => ({
       serviceId: serviceName,
       serviceName,
@@ -294,7 +290,7 @@ describe("Railway config-as-code", () => {
             pageInfo: { hasNextPage: false },
           },
           volumeInstances: {
-            edges: [{ node: { sizeMB: 50000, volume: { name: "postgres-volume-ytRO" } } }],
+            edges: [{ node: { sizeMB: 75000, volume: { name: "postgres-volume-ytRO" } } }],
             pageInfo: { hasNextPage: false },
           },
         },
@@ -332,6 +328,35 @@ describe("Railway config-as-code", () => {
         definition.resources.find((r: ResourceNode) => r.address === "service.indexer").networking
           .tcpProxies,
       ).toEqual({ 9898: null, 9000: null });
+      expect(
+        definition.resources.find((r: ResourceNode) => r.address === "volume.postgres-volume-ytRO")
+          .config.sizeMB,
+      ).toBe(75000);
+      expect(
+        definition.resources.find((r: ResourceNode) => r.address === "service.rpc-cache-postgres")
+          .variables.POSTGRES_PASSWORD,
+      ).toEqual({
+        type: "raw",
+        value: { defaultValue: `\${{ secret(64, "0123456789abcdef") }}` },
+      });
+      nodes.push({
+        serviceId: "cache-db",
+        serviceName: "rpc-cache-postgres",
+        domains: { serviceDomains: [], customDomains: [] },
+      });
+      Object.assign(response.data.environment.config.services, { "cache-db": {} });
+      response.data.environment.serviceInstances.edges = nodes.map((node) => ({ node }));
+      execute.mockReturnValue(JSON.stringify(response));
+      const existing = JSON.parse(JSON.stringify(await evaluate()));
+      expect(
+        existing.resources.find((r: ResourceNode) => r.address === "service.rpc-cache-postgres")
+          .variables.POSTGRES_PASSWORD,
+      ).toEqual({ type: "preserve" });
+      nodes[2].serviceName = "";
+      execute.mockReturnValue(JSON.stringify(response));
+      await expect(Promise.resolve().then(evaluate)).rejects.toThrow(
+        "Cannot establish safe Railway",
+      );
       for (const [executable, args] of execute.mock.calls) {
         expect(executable).toBe("railway");
         expect(args?.[0]).toBe("api");
