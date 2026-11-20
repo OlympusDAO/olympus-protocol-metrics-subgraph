@@ -71,8 +71,10 @@ vulnerabilities. Unavailable image pulls fail validation; they are not skipped.
 
 CI exposes formatting/lint, build and ordinary tests as separate jobs/steps,
 with offline codegen in each job that needs generated types. The dedicated
-Dependency Audit PR workflow owns the moderate+ audit; the trusted workflow-run
-commenter reads only its bounded JSON artifact and never checks out PR code.
+Dependency Audit PR workflow owns the moderate+ audit. Same-repository PRs use
+the pinned pnpm audit action for findings and comments; fork PRs skip the entire
+job before checkout or token use. Non-PR runs use native `pnpm audit`, including
+the Monday 00:00 UTC schedule shared by all three protocol repositories.
 Local source validation still includes the audit.
 
 Image CI gives each build and each native Trivy scan its own named step, followed
@@ -84,7 +86,6 @@ required fixture images even after scan failures. Local aggregates remain availa
 group. No aggregate scans local fixtures by default. The explicit
 `docker:scan <image>` convenience command is
 an operator-selected single-image scan, not inventory-driven default selection.
-The separate dependency-audit workflow is manual.
 There is no Metrics handover command; that rehearsal belongs to protocol-indexer.
 
 Before committing, run source validation and the image/integration groups for

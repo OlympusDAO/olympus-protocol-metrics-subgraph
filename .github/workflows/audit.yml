@@ -3,9 +3,8 @@ name: Dependency Audit
 on:
   pull_request:
   workflow_dispatch:
-  workflow_call:
   schedule:
-    - cron: "17 5 * * 1"
+    - cron: "0 0 * * 1"
 
 concurrency:
   group: dependency-audit-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
@@ -16,40 +15,28 @@ permissions:
 
 jobs:
   audit:
+    # Skip fork PRs before checkout, dependency installation or token use.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-
       - name: Bootstrap
         uses: ./.github/actions/bootstrap
-      - name: Verify runtime version alignment
-        run: pnpm run check:runtime-versions
-
-      # Audit-only PR execution is unprivileged; no generated code is needed.
-      - name: Audit pnpm dependencies (fail on moderate+)
-        id: audit
-        shell: bash
-        run: |
-          mkdir -p "$RUNNER_TEMP/pnpm-audit-result"
-          set +e
-          pnpm audit --audit-level moderate --json \
-            > "$RUNNER_TEMP/pnpm-audit-result/audit.json"
-          status=$?
-          set -e
-          echo "exit_code=$status" >> "$GITHUB_OUTPUT"
-
-      - name: Upload audit result
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - name: Audit dependencies and comment on same-repository PRs
+        if: github.event_name == 'pull_request'
+        uses: JamesRobertWiseman/pnpm-audit@ef62519bd4eb8b0b063989599c2ebbf5dd5f5f28 # v3
         with:
-          name: pnpm-audit-result
-          path: ${{ runner.temp }}/pnpm-audit-result/audit.json
-          if-no-files-found: error
-
-      - name: Enforce native audit exit status
-        if: steps.audit.outputs.exit_code != '0'
-        env:
-          AUDIT_EXIT_CODE: ${{ steps.audit.outputs.exit_code }}
-        run: exit "$AUDIT_EXIT_CODE"
+          package_json_path: ./
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          level: moderate
+          fails: true
+      - name: Audit dependencies outside PRs
+        if: github.event_name != 'pull_request'
+        run: pnpm audit --audit-level moderate

@@ -6,11 +6,6 @@ on:
 permissions:
   contents: read
 jobs:
-  audit:
-    name: Dependency audit (manual dispatch)
-    # PRs already have one standalone audit; manual CI dispatch reuses it here.
-    if: github.event_name == 'workflow_dispatch'
-    uses: ./.github/workflows/audit.yml
   quality:
     name: Formatting, lint and workflow checks
     runs-on: ubuntu-latest
