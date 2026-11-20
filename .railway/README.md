@@ -5,6 +5,26 @@ identities and credentials, and adds a private persistent RPC cache. Only
 `metrics-api` may have HTTP domains. See [security posture](../docs/security-posture.md)
 for exposure, storage and native CLI limits; this runbook does not certify live state.
 
+Application sources currently follow `master`. Native IaC uses the manual saved-plan
+flow below; no automatic IaC apply controller is implemented. Plan evaluates
+executable authoring config and previews changes without provider writes. Apply
+changes infrastructure and service source/image/env/build/network settings and
+may redeploy or restart services; it is not a database migration.
+
+Routine deployments should become automatic: credential-free PR checks → reviewed
+`master` merge → required checks → trusted production plan and automatic apply
+inside CI → app deployment. Manual commands below are for bootstrap,
+maintenance and recovery while that controller remains unimplemented.
+
+`master` is production. `develop` exists, but its Railway staging mapping is
+unverified. Establish a separate staging target before enabling `develop`;
+never map both branches to production.
+
+Live activation first requires protected production branch/environment rules
+and environment-only credentials, with repository-token fallback removed.
+Production credentials must never reach PR jobs. These prerequisites and
+deployment behavior are unchanged by this documentation.
+
 ## Reconcile public domains
 
 CLI 5.75.0 cannot delete existing HTTP domains through its native config diff.
