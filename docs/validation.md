@@ -61,15 +61,25 @@ Native scanner table output stays in the step log; no raw ImageConfig, environme
 or image-history JSON artifact is retained.
 
 Owned image scans use native Trivy table output/exit status: fixable
-MEDIUM/HIGH/CRITICAL findings fail, with the existing picomatch exception in
-`.trivyignore`. Optional provider scans show all severities/unfixed findings
+MEDIUM/HIGH/CRITICAL vulnerabilities and MEDIUM/HIGH/CRITICAL secrets fail,
+with the existing picomatch exception in `.trivyignore`. Optional provider
+vulnerability scans show all severities/unfixed findings
 without an ignorefile or vulnerability-based failure; scanner errors still fail.
 The matching pnpm advisory exception is in
 `pnpm-workspace.yaml`. A successful audit or policy gate does not mean zero
 vulnerabilities. Unavailable image pulls fail validation; they are not skipped.
 
-CI runs source validation once, and builds/scans owned application images once before
-integration prepares required fixtures and tests those same service images.
+CI exposes formatting/lint, build and ordinary tests as separate jobs/steps,
+with offline codegen in each job that needs generated types. The dedicated
+Dependency Audit PR workflow owns the moderate+ audit; the trusted workflow-run
+commenter reads only its bounded JSON artifact and never checks out PR code.
+Local source validation still includes the audit.
+
+Image CI gives each build and each native Trivy scan its own named step, followed
+by Dockerfile checks. Builds write IIDs to one same-job temporary directory;
+native scans and integration consume those IDs without rebuilding or falling
+back to tags. Integration uses `METRICS_IMAGE_IID_DIR` and prepares only its
+required fixture images even after scan failures. Local aggregates remain available.
 `validate:all` uses the same owned-app selection and excludes the optional provider
 group. No aggregate scans local fixtures by default. The explicit
 `docker:scan <image>` convenience command is

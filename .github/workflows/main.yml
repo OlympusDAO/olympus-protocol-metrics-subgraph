@@ -6,12 +6,51 @@ on:
 permissions:
   contents: read
 jobs:
-  validate:
+  audit:
+    name: Dependency audit (manual dispatch)
+    # PRs already have one standalone audit; manual CI dispatch reuses it here.
+    if: github.event_name == 'workflow_dispatch'
+    uses: ./.github/workflows/audit.yml
+  quality:
+    name: Formatting, lint and workflow checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
       - uses: ./.github/actions/bootstrap
-      - name: Validate source
-        run: pnpm run validate
+      - name: Verify runtime pins
+        run: pnpm run check:runtime-versions
+      - name: Check formatting
+        run: pnpm run format:check
+      - name: Check code quality and import organization
+        run: pnpm exec biome check . --formatter-enabled=false
+      - name: Check GitHub Actions
+        run: pnpm run lint:actions
+  build:
+    name: Typecheck and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/bootstrap
+      # Generated Envio types are required by the root typecheck; codegen is offline.
+      - name: Generate indexer types
+        run: pnpm run codegen
+      - name: Typecheck and build packages
+        run: pnpm run build
+  test:
+    name: Unit and contract tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/bootstrap
+      # Jobs have isolated checkouts; tests need their own generated handler types.
+      - name: Generate indexer types
+        run: pnpm run codegen
+      - name: Run ordinary tests
+        run: pnpm run test
+      # Dependency Audit owns the PR audit; local `validate` still includes it.

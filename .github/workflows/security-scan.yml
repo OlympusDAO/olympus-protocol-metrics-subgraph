@@ -16,10 +16,78 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/bootstrap
+        id: bootstrap
       - uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
-      - name: Build and scan repository-owned application images and Dockerfiles
-        id: images
-        run: pnpm run validate:images
+      - name: Prepare same-job immutable image IDs
+        id: iids
+        run: |
+          mkdir -p "$RUNNER_TEMP/metrics-image-iids"
+          echo "METRICS_IMAGE_IID_DIR=$RUNNER_TEMP/metrics-image-iids" >> "$GITHUB_ENV"
+      # Independent builds continue after a sibling fails. Missing IIDs fail closed;
+      # scans/integration never substitute a pre-existing mutable local tag.
+      - name: Build indexer
+        if: ${{ !cancelled() && steps.iids.outcome == 'success' }}
+        run: pnpm run docker:build:indexer --iidfile "$METRICS_IMAGE_IID_DIR/build-indexer.iid"
+      - name: Build Hasura
+        if: ${{ !cancelled() && steps.iids.outcome == 'success' }}
+        run: pnpm run docker:build:hasura --iidfile "$METRICS_IMAGE_IID_DIR/build-hasura.iid"
+      - name: Build metrics API
+        if: ${{ !cancelled() && steps.iids.outcome == 'success' }}
+        run: pnpm run docker:build:metrics-api --iidfile "$METRICS_IMAGE_IID_DIR/build-metrics-api.iid"
+      - name: Build publisher
+        if: ${{ !cancelled() && steps.iids.outcome == 'success' }}
+        run: pnpm run docker:build:metrics-publisher --iidfile "$METRICS_IMAGE_IID_DIR/build-metrics-publisher.iid"
+      - name: Build RPC cache
+        if: ${{ !cancelled() && steps.iids.outcome == 'success' }}
+        run: pnpm run docker:build:rpc-cache --iidfile "$METRICS_IMAGE_IID_DIR/build-rpc-cache.iid"
+      - name: Scan indexer
+        if: ${{ !cancelled() && steps.iids.outcome == 'success' }}
+        run: |
+          image_id=$(cat "$METRICS_IMAGE_IID_DIR/build-indexer.iid")
+          [[ "$image_id" =~ ^sha256:[a-f0-9]{64}$ ]]
+          mise exec --locked trivy -- trivy image --scanners vuln,secret \
+            --input "" --format table --output "" --severity MEDIUM,HIGH,CRITICAL \
+            --ignore-unfixed=true --ignorefile .trivyignore --exit-code 1 "$image_id"
+      - name: Scan Hasura
+        if: ${{ !cancelled() && steps.iids.outcome == 'success' }}
+        run: |
+          image_id=$(cat "$METRICS_IMAGE_IID_DIR/build-hasura.iid")
+          [[ "$image_id" =~ ^sha256:[a-f0-9]{64}$ ]]
+          mise exec --locked trivy -- trivy image --scanners vuln,secret \
+            --input "" --format table --output "" --severity MEDIUM,HIGH,CRITICAL \
+            --ignore-unfixed=true --ignorefile .trivyignore --exit-code 1 "$image_id"
+      - name: Scan metrics API
+        if: ${{ !cancelled() && steps.iids.outcome == 'success' }}
+        run: |
+          image_id=$(cat "$METRICS_IMAGE_IID_DIR/build-metrics-api.iid")
+          [[ "$image_id" =~ ^sha256:[a-f0-9]{64}$ ]]
+          mise exec --locked trivy -- trivy image --scanners vuln,secret \
+            --input "" --format table --output "" --severity MEDIUM,HIGH,CRITICAL \
+            --ignore-unfixed=true --ignorefile .trivyignore --exit-code 1 "$image_id"
+      - name: Scan publisher
+        if: ${{ !cancelled() && steps.iids.outcome == 'success' }}
+        run: |
+          image_id=$(cat "$METRICS_IMAGE_IID_DIR/build-metrics-publisher.iid")
+          [[ "$image_id" =~ ^sha256:[a-f0-9]{64}$ ]]
+          mise exec --locked trivy -- trivy image --scanners vuln,secret \
+            --input "" --format table --output "" --severity MEDIUM,HIGH,CRITICAL \
+            --ignore-unfixed=true --ignorefile .trivyignore --exit-code 1 "$image_id"
+      - name: Scan RPC cache
+        if: ${{ !cancelled() && steps.iids.outcome == 'success' }}
+        run: |
+          image_id=$(cat "$METRICS_IMAGE_IID_DIR/build-rpc-cache.iid")
+          [[ "$image_id" =~ ^sha256:[a-f0-9]{64}$ ]]
+          mise exec --locked trivy -- trivy image --scanners vuln,secret \
+            --input "" --format table --output "" --severity MEDIUM,HIGH,CRITICAL \
+            --ignore-unfixed=true --ignorefile .trivyignore --exit-code 1 "$image_id"
+      - name: Check Dockerfiles
+        if: ${{ !cancelled() && steps.bootstrap.outcome == 'success' }}
+        run: |
+          mise exec --locked trivy -- trivy config --format table --output "" \
+            --file-patterns "dockerfile:Dockerfile-*" --skip-dirs node_modules \
+            --skip-dirs .pnpm-store --severity MEDIUM,HIGH,CRITICAL --exit-code 1 .
+      # Required integration runs even after security failures and prepares only
+      # the exact DB fixtures it uses; provider/local scan exclusions still apply.
       - name: Prepare required fixtures and test service images
-        if: ${{ !cancelled() && steps.images.outcome != 'skipped' }}
+        if: ${{ !cancelled() && steps.iids.outcome == 'success' }}
         run: pnpm run test:integration

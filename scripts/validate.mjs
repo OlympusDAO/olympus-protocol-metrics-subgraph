@@ -25,7 +25,7 @@ const report = {
   imageFailures: [],
   providerImages: [],
   scanPolicy:
-    "Default: repository-owned application images/Dockerfiles only; fixable MEDIUM/HIGH/CRITICAL findings fail except existing approved CVEs. Configured Railway PostgreSQL is advisory-provider/not-run by default; optional provider scans report findings without vulnerability-based failure. Scanner/registry errors fail. Local/historical fixtures excluded.",
+    "Default: repository-owned application images/Dockerfiles only; fixable MEDIUM/HIGH/CRITICAL vulnerabilities fail except existing approved CVEs, and MEDIUM/HIGH/CRITICAL secrets fail. Configured Railway PostgreSQL is advisory-provider/not-run by default; optional provider scans report vulnerabilities without vulnerability-based failure. Scanner/registry errors fail. Local/historical fixtures excluded.",
   ignorefile: ".trivyignore",
 };
 const trivyCache = process.env.TRIVY_CACHE_DIR;
@@ -116,7 +116,7 @@ async function scan(name, reference, advisory = false) {
     ...(trivyCache ? ["--cache-dir", trivyCache] : []),
     "image",
     "--scanners",
-    "vuln",
+    advisory ? "vuln" : "vuln,secret",
     "--input",
     "",
     "--format",
@@ -200,6 +200,10 @@ async function images() {
       "trivy",
       ...(trivyCache ? ["--cache-dir", trivyCache] : []),
       "config",
+      "--format",
+      "table",
+      "--output",
+      "",
       "--file-patterns",
       "dockerfile:Dockerfile-*",
       "--skip-dirs",
@@ -253,8 +257,21 @@ async function integration() {
     await run("docker", ["pull", reference]);
   const integrationImages = {};
   for (const [name, reference] of Object.entries(inventory.built)) {
-    const target = mode === "all" ? builtImages.get(name) : reference;
-    if (!target) throw new Error(`Missing build IID for integration: ${name}`);
+    const target =
+      mode === "all"
+        ? builtImages.get(name)
+        : process.env.METRICS_IMAGE_IID_DIR
+          ? readFileSync(
+              join(process.env.METRICS_IMAGE_IID_DIR, `build-${name}.iid`),
+              "utf8",
+            ).trim()
+          : reference;
+    if (
+      !target ||
+      ((mode === "all" || process.env.METRICS_IMAGE_IID_DIR) &&
+        !/^sha256:[a-f0-9]{64}$/.test(target))
+    )
+      throw new Error(`Missing or invalid build IID for integration: ${name}`);
     integrationImages[name] = imageIdentity(name, target).id;
   }
   for (const [name, reference] of Object.entries({

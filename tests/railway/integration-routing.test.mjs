@@ -1,5 +1,7 @@
 import { EventEmitter } from "node:events";
-import { readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { PassThrough } from "node:stream";
 import { expect, test, vi } from "vitest";
 import images from "../../.railway/images.json";
@@ -13,10 +15,19 @@ test.each([
   "owned-finding",
   "provider-finding",
   "provider-error",
+  "shared-integration",
+  "missing-shared-iid",
+  "failed-shared-build",
 ])("canonical image provenance: %s", async (scenario) => {
   const imageID = `sha256:${"b".repeat(64)}`;
   const movedID = `sha256:${"c".repeat(64)}`;
-  const invalidIID = ["missing-iid", "wrong-iid", "mismatched-inspect"].includes(scenario);
+  const invalidIID = [
+    "missing-iid",
+    "wrong-iid",
+    "mismatched-inspect",
+    "missing-shared-iid",
+    "failed-shared-build",
+  ].includes(scenario);
   const provider = scenario.startsWith("provider");
   const failed = invalidIID || ["owned-finding", "provider-error"].includes(scenario);
   const execFileSync = vi.fn((command, args) => {
@@ -34,6 +45,14 @@ test.each([
     child.stdout = new PassThrough();
     child.stderr = new PassThrough();
     setImmediate(() => {
+      if (
+        command === "pnpm" &&
+        args[1]?.startsWith("docker:build:") &&
+        scenario === "failed-shared-build"
+      ) {
+        child.emit("close", 1, null);
+        return;
+      }
       if (
         command === "pnpm" &&
         args[1]?.startsWith("docker:build:") &&
@@ -59,6 +78,16 @@ test.each([
   const error = vi.spyOn(console, "error").mockImplementation(() => {});
   const argv = process.argv;
   const exitCode = process.exitCode;
+  const iidDirectory = ["shared-integration", "missing-shared-iid", "failed-shared-build"].includes(
+    scenario,
+  )
+    ? mkdtempSync(join(tmpdir(), "metrics-ci-iids-"))
+    : undefined;
+  if (iidDirectory && scenario !== "missing-shared-iid") {
+    for (const name of Object.keys(images.built))
+      writeFileSync(join(iidDirectory, `build-${name}.iid`), imageID);
+  }
+  vi.stubEnv("METRICS_IMAGE_IID_DIR", iidDirectory);
   vi.stubEnv("RPC_CACHE_IMAGE", "unrelated:caller-image");
   vi.stubEnv("CONTAINER_RUNTIME", "podman");
   vi.stubEnv("TRIVY_EXIT_CODE", "19");
@@ -68,7 +97,11 @@ test.each([
     process.argv = [
       process.execPath,
       "scripts/validate.mjs",
-      provider ? "provider" : scenario === "integration" ? "integration" : "all",
+      provider
+        ? "provider"
+        : ["integration", "shared-integration", "missing-shared-iid"].includes(scenario)
+          ? "integration"
+          : "all",
     ];
     await import("../../scripts/validate.mjs");
     const evidence = log.mock.calls
@@ -76,7 +109,7 @@ test.each([
       .slice("Validation evidence: ".length);
     const report = JSON.parse(readFileSync(`${evidence}/report.json`, "utf8"));
     expect(report.status).toBe(failed ? "failed" : provider ? "completed-advisory" : "passed");
-    if (scenario !== "integration") {
+    if (!["integration", "shared-integration"].includes(scenario)) {
       const inspections = execFileSync.mock.calls.filter(
         ([command, args]) => command === "docker" && args[0] === "image",
       );
@@ -90,6 +123,7 @@ test.each([
       expect(scans.every(([, args]) => args.at(-1) === imageID)).toBe(true);
       for (const [, args] of scans) {
         for (const [flag, value] of [
+          ["--scanners", provider ? "vuln" : "vuln,secret"],
           ["--format", "table"],
           ["--output", ""],
           ["--input", ""],
@@ -143,5 +177,6 @@ test.each([
     vi.unstubAllEnvs();
     vi.doUnmock("node:child_process");
     if (evidence) rmSync(evidence, { recursive: true, force: true });
+    if (iidDirectory) rmSync(iidDirectory, { recursive: true, force: true });
   }
 });

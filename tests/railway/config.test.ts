@@ -404,12 +404,17 @@ describe("Railway config-as-code", () => {
     expect(content).toContain("exec graphql-engine serve");
   });
 
-  test("CI reuses canonical source, image and integration validation", () => {
+  test("CI exposes source and image phases while retaining local aggregates", () => {
     const workflow = readFileSync(".github/workflows/security-scan.yml", "utf8");
-    expect(workflow).toContain("pnpm run validate:images");
+    expect(workflow).toContain("trivy image --scanners vuln,secret");
+    expect(workflow).toContain("trivy config");
+    expect(workflow).toContain("--iidfile");
     expect(workflow).toContain("pnpm run test:integration");
-    expect(readFileSync(".github/workflows/main.yml", "utf8")).toContain("pnpm run validate");
+    const main = readFileSync(".github/workflows/main.yml", "utf8");
+    expect(main).toContain("pnpm run build");
+    expect(main).toContain("pnpm run test");
     const scripts = JSON.parse(readFileSync("package.json", "utf8")).scripts;
+    expect(scripts.validate).toBe("node scripts/validate.mjs source");
     expect(scripts["railway:plan"]).toBe("railway config plan --out railway-plan.json");
     expect(scripts["railway:apply"]).toBe(
       "railway config apply --plan railway-plan.json --environment",
