@@ -29,7 +29,7 @@ const report = {
   ignorefile: ".trivyignore",
 };
 const trivyCache = process.env.TRIVY_CACHE_DIR;
-const builtImages = new Map();
+let buildFailed = false;
 report.scanCache = trivyCache ?? "Trivy native default cache";
 console.log(`Validation evidence: ${directory}`);
 
@@ -88,11 +88,6 @@ function imageIdentity(name, reference) {
   const raw = JSON.parse(
     execFileSync("docker", ["image", "inspect", reference], { encoding: "utf8" }),
   )[0];
-  if (
-    !/^sha256:[a-f0-9]{64}$/.test(raw?.Id) ||
-    (reference.startsWith("sha256:") && raw.Id !== reference)
-  )
-    throw new Error(`Invalid or mismatched Docker image identity: ${name}`);
   const identity = {
     name,
     reference,
@@ -130,7 +125,7 @@ async function scan(name, reference, advisory = false) {
     advisory ? "/dev/null" : ".trivyignore",
     "--exit-code",
     advisory ? "0" : "1",
-    identity.id,
+    reference,
   ]);
   identity.scanStatus = advisory ? "advisory-provider/scanned" : "passed";
   identity.scanLog = report.steps.at(-1).log;
@@ -179,12 +174,11 @@ async function images() {
   let failure;
   for (const [name, reference] of Object.entries(inventory.built)) {
     try {
-      const iidFile = join(directory, `build-${name}.iid`);
-      await run("pnpm", ["run", `docker:build:${name}`, "--iidfile", iidFile]);
-      const target = readFileSync(iidFile, "utf8").trim();
-      if (!/^sha256:[a-f0-9]{64}$/.test(target)) throw new Error(`Invalid build IID: ${name}`);
-      builtImages.set(name, target);
-      await scan(name, target);
+      await run("pnpm", ["run", `docker:build:${name}`]).catch((error) => {
+        buildFailed = true;
+        throw error;
+      });
+      await scan(name, reference);
     } catch (error) {
       report.imageFailures.push({ name, reference, status: "failed", error: error.message });
       failure ??= error;
@@ -245,6 +239,8 @@ async function provider() {
   if (failure) throw failure;
 }
 async function integration() {
+  if (mode === "all" && buildFailed)
+    throw new Error("Integration not run: a required application image build failed");
   await run("docker", ["info", "--format", "{{.ServerVersion}}"]);
   dockerIdentity();
   // Security scans do not pull fixtures. Integration prepares only the exact
@@ -255,47 +251,24 @@ async function integration() {
     ...Object.values(inventory.comparison),
   ])
     await run("docker", ["pull", reference]);
-  const integrationImages = {};
-  for (const [name, reference] of Object.entries(inventory.built)) {
-    const target =
-      mode === "all"
-        ? builtImages.get(name)
-        : process.env.METRICS_IMAGE_IID_DIR
-          ? readFileSync(
-              join(process.env.METRICS_IMAGE_IID_DIR, `build-${name}.iid`),
-              "utf8",
-            ).trim()
-          : reference;
-    if (
-      !target ||
-      ((mode === "all" || process.env.METRICS_IMAGE_IID_DIR) &&
-        !/^sha256:[a-f0-9]{64}$/.test(target))
-    )
-      throw new Error(`Missing or invalid build IID for integration: ${name}`);
-    integrationImages[name] = imageIdentity(name, target).id;
-  }
   for (const [name, reference] of Object.entries({
+    ...inventory.built,
     ...inventory.provider,
     "postgres-local": inventory.local["postgres-local"],
     ...inventory.comparison,
   }))
     imageIdentity(name, reference);
-  const env = {
-    METRICS_INTEGRATION_IMAGES: JSON.stringify(integrationImages),
-    RPC_CACHE_IMAGE: integrationImages["rpc-cache"],
-    CONTAINER_RUNTIME: "docker",
-  };
   let failure;
   try {
     await run("pnpm", ["run", "test:rpc-cache"], {
-      env,
+      env: { RPC_CACHE_IMAGE: inventory.built["rpc-cache"], CONTAINER_RUNTIME: "docker" },
     });
   } catch (error) {
     failure = error;
     console.error(error.message);
   }
   try {
-    await run(process.execPath, ["--test", "tests/integration/runtime.test.mjs"], { env });
+    await run(process.execPath, ["--test", "tests/integration/runtime.test.mjs"]);
   } catch (error) {
     failure ??= error;
     console.error(error.message);

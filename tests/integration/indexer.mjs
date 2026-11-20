@@ -11,8 +11,6 @@ import { promisify } from "node:util";
 // Uses only fresh fixture databases, never a developer's database or volume.
 export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
   const images = JSON.parse(readFileSync(".railway/images.json", "utf8"));
-  if (process.env.METRICS_INTEGRATION_IMAGES)
-    images.built = JSON.parse(process.env.METRICS_INTEGRATION_IMAGES);
   const docker = (...args) =>
     execFileSync(runtime, args, {
       encoding: "utf8",

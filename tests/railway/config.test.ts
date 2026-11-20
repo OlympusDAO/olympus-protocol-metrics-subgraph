@@ -408,7 +408,7 @@ describe("Railway config-as-code", () => {
     const workflow = readFileSync(".github/workflows/security-scan.yml", "utf8");
     expect(workflow).toContain("trivy image --scanners vuln,secret");
     expect(workflow).toContain("trivy config");
-    expect(workflow).toContain("--iidfile");
+    expect(workflow).toContain("fail-fast: false");
     expect(workflow).toContain("pnpm run test:integration");
     const main = readFileSync(".github/workflows/main.yml", "utf8");
     expect(main).toContain("pnpm run build");

@@ -16,12 +16,8 @@ jobs:
       - uses: ./.github/actions/bootstrap
       - name: Verify runtime pins
         run: pnpm run check:runtime-versions
-      - name: Check formatting
-        run: pnpm run format:check
-      - name: Check code quality and import organization
-        run: pnpm exec biome check . --formatter-enabled=false
-      - name: Check GitHub Actions
-        run: pnpm run lint:actions
+      - name: Check formatting, code quality and GitHub Actions
+        run: pnpm run check
   build:
     name: Typecheck and build
     runs-on: ubuntu-latest

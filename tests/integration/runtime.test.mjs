@@ -8,8 +8,6 @@ import { setTimeout as delay } from "node:timers/promises";
 import { promisify } from "node:util";
 
 const images = JSON.parse(readFileSync(".railway/images.json", "utf8"));
-if (process.env.METRICS_INTEGRATION_IMAGES)
-  images.built = JSON.parse(process.env.METRICS_INTEGRATION_IMAGES);
 const docker = (...args) =>
   execFileSync("docker", args, {
     encoding: "utf8",

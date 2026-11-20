@@ -19,11 +19,10 @@ in [security posture](security-posture.md#shared-tooling-and-intentional-differe
 | `pnpm run test:integration` | Use the built images to check persistent cache hits, cache restart, real indexer restart and manual reset isolation, template PostgreSQL TLS/data path, compiled API/publisher behavior and Hasura health. |
 | `pnpm run validate:all` | Run all three groups, collecting failures without suppressing the remaining groups. |
 
-Builds record an IID file in their unique validation directory; scans inspect
-and target that immutable ID rather than the shared local tag. Combined
-validation passes those same built IDs into integration; standalone integration
-resolves its inputs once and passes the recorded IDs to all fixture processes.
-Build images before integration. Missing Docker, images or other required
+Builds, scans and integration use the configured `:local` application tags.
+Owned fixture containers use `--pull=never`; build the images before integration.
+Recorded image IDs are diagnostic snapshots, not an immutable handoff protocol.
+Missing Docker, images or other required
 prerequisites fail the check. The integration fixtures create fresh databases
 and containers, then remove only those containers and networks. They do not
 touch existing volumes or developer caches. The API/publisher round trip uses
@@ -77,11 +76,13 @@ job before checkout or token use. Non-PR runs use native `pnpm audit`, including
 the Monday 00:00 UTC schedule shared by all three protocol repositories.
 Local source validation still includes the audit.
 
-Image CI gives each build and each native Trivy scan its own named step, followed
-by Dockerfile checks. Builds write IIDs to one same-job temporary directory;
-native scans and integration consume those IDs without rebuilding or falling
-back to tags. Integration uses `METRICS_IMAGE_IID_DIR` and prepares only its
-required fixture images even after scan failures. Local aggregates remain available.
+Image CI has five independent matrix cells with separate native build, image
+scan and Dockerfile-check steps. The RPC cache + integration cell builds four
+companions using the existing build scripts, then runs the full integration
+suite even after scan failures if all its builds succeeded. This is nine builds
+total: four inexpensive companion duplicates, with no second eRPC build or image
+transfer. Integration prepares only its required fixture images. Local aggregates
+remain available.
 `validate:all` uses the same owned-app selection and excludes the optional provider
 group. No aggregate scans local fixtures by default. The explicit
 `docker:scan <image>` convenience command is
