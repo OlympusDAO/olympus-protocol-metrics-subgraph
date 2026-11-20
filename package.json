@@ -46,7 +46,7 @@
     "test:rpc-cache": "node --test services/rpc-cache/integration.test.mjs",
     "test:indexer": "pnpm --dir apps/indexer test",
     "validate": "node scripts/validate.mjs source",
-    "lint": "biome lint .",
+    "lint": "biome lint . && pnpm run lint:actions",
     "lint:actions": "mise exec --locked jactionlint -- jactionlint --profile correctness --no-online",
     "lint:check": "biome lint .",
     "validate:images": "node scripts/validate.mjs images",
