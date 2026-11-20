@@ -15,7 +15,7 @@ in [security posture](security-posture.md#shared-tooling-and-intentional-differe
 | `pnpm run lint:actions` | Run jactionlint with `--profile correctness --no-online`. |
 | `pnpm run validate` | Runtime alignment, frozen install, codegen, Biome, jactionlint correctness/offline, typecheck/build, ordinary tests and dependency audit. Does not use Docker. |
 | `pnpm run validate:images` | Build and scan the five repository-owned application images and Dockerfiles. Record Railway PostgreSQL as advisory-provider/not-run and explicit local/historical exclusions; no provider or fixture pulls/scans. |
-| `pnpm scan:images:provider` | Optional advisory scan of configured Railway PostgreSQL template images only; no app builds or local fixtures. Vulnerabilities do not fail the command; registry/scanner errors do. |
+| `pnpm docker:scan:provider` | Optional advisory scan of configured Railway PostgreSQL template images only; no app builds or local fixtures. Vulnerabilities do not fail the command; registry/scanner errors do. |
 | `pnpm run test:integration` | Use the built images to check persistent cache hits, cache restart, real indexer restart and manual reset isolation, template PostgreSQL TLS/data path, compiled API/publisher behavior and Hasura health. |
 | `pnpm run validate:all` | Run all three groups, collecting failures without suppressing the remaining groups. |
 
@@ -85,8 +85,9 @@ transfer. Integration prepares only its required fixture images. Local aggregate
 remain available.
 `validate:all` uses the same owned-app selection and excludes the optional provider
 group. No aggregate scans local fixtures by default. The explicit
-`docker:scan <image>` convenience command is
-an operator-selected single-image scan, not inventory-driven default selection.
+`docker:scan <image>` convenience command uses pinned Trivy's native `vuln,secret`
+default; callers can select `--scanners`. It scans an operator-selected image,
+not inventory-driven default selection.
 There is no Metrics handover command; that rehearsal belongs to protocol-indexer.
 
 Before committing, run source validation and the image/integration groups for

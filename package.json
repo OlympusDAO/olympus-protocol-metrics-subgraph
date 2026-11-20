@@ -28,7 +28,7 @@
     "docker:build:rpc-cache": "docker build -f Dockerfile-rpc-cache -t localhost/olympus-metrics-rpc-cache:local .",
     "docker:build:metrics-api": "docker build -f Dockerfile-metrics-api -t olympus-protocol-metrics/metrics-api:local .",
     "docker:build:metrics-publisher": "docker build -f Dockerfile-metrics-publisher -t olympus-protocol-metrics/metrics-publisher:local .",
-    "docker:scan": "mise exec -- trivy image --scanners vuln --severity MEDIUM,HIGH,CRITICAL --ignore-unfixed --exit-code 1",
+    "docker:scan": "mise exec -- trivy image --severity MEDIUM,HIGH,CRITICAL --ignore-unfixed --exit-code 1",
     "envio": "pnpm --dir apps/indexer envio",
     "envio:dev": "pnpm --dir apps/indexer envio:dev",
     "envio:start": "pnpm --dir apps/indexer envio:start",
@@ -50,7 +50,7 @@
     "lint:actions": "mise exec --locked jactionlint -- jactionlint --profile correctness --no-online",
     "lint:check": "biome lint .",
     "validate:images": "node scripts/validate.mjs images",
-    "scan:images:provider": "node scripts/validate.mjs provider",
+    "docker:scan:provider": "node scripts/validate.mjs provider",
     "test:integration": "node scripts/validate.mjs integration",
     "validate:all": "node scripts/validate.mjs all"
   },

@@ -415,6 +415,9 @@ describe("Railway config-as-code", () => {
     expect(main).toContain("pnpm run test");
     const scripts = JSON.parse(readFileSync("package.json", "utf8")).scripts;
     expect(scripts.validate).toBe("node scripts/validate.mjs source");
+    expect(scripts["docker:scan:provider"]).toBe("node scripts/validate.mjs provider");
+    expect(scripts["scan:images:provider"]).toBeUndefined();
+    expect(scripts["docker:scan"]).not.toContain("--scanners");
     expect(scripts["railway:plan"]).toBe("railway config plan --out railway-plan.json");
     expect(scripts["railway:apply"]).toBe(
       "railway config apply --plan railway-plan.json --environment",

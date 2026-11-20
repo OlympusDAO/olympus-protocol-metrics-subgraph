@@ -35,7 +35,7 @@ Use the [canonical validation command table](docs/validation.md):
 - `pnpm run validate:images` and `pnpm run test:integration`: required for
   container/deployment/runtime changes; build owned images before integration.
 - `pnpm run validate:all`: all applicable groups. Optional
-  `pnpm scan:images:provider` reports provider vulnerabilities separately.
+  `pnpm docker:scan:provider` reports provider vulnerabilities separately.
 
 Before committing code, dependencies or CI changes, run `pnpm run validate`.
 For container, deployment or runtime changes, also run image and integration
