@@ -37,6 +37,7 @@ export function currentExposure(configInput: unknown, instances: unknown) {
     )
       throw new Error("Ambiguous Railway service lookup");
     ids.add(serviceId);
+    // Unknown services could hide public exposure outside the declared allowlist.
     if (!Object.hasOwn(managedPorts, serviceName))
       throw new Error("Unrecognized Railway service; whole-project exposure cannot be verified");
     const domains = object(node.domains);
@@ -46,6 +47,7 @@ export function currentExposure(configInput: unknown, instances: unknown) {
         const domain = object(entry).domain;
         if (typeof domain !== "string" || !domain.trim())
           throw new Error("Incomplete Railway domain lookup");
+        // Native IaC cannot delete live HTTP domains; require authorized removal first.
         if (!publicServices.has(serviceName)) {
           throw new Error(
             "Unexpected public HTTP exposure; separately authorized provider removal and verification are required before planning.",
@@ -66,6 +68,7 @@ export function currentExposure(configInput: unknown, instances: unknown) {
       });
     ports.set(serviceName, active);
   }
+  // Unmatched active config IDs could hide exposure; only deletion tombstones are safe.
   if (
     Object.entries(services).some(
       ([id, service]) =>
@@ -82,6 +85,7 @@ export function currentExposure(configInput: unknown, instances: unknown) {
   return ports;
 }
 
+// Empty TCP maps are a native no-op; named nulls remove managed and discovered ports.
 // service() normalizes tcp entries to creation records. Apply removal tombstones
 // to the final emitted project so null survives SDK normalization/serialization.
 export function enforceExposure(

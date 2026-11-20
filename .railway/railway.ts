@@ -22,7 +22,8 @@ function postgresPassword(
   name: string,
   existingServices: ReadonlySet<string> | undefined,
 ): VariableValue {
-  // Offline typechecks cannot establish that a database is new. Fail closed.
+  // Preserve existing credentials; generate a password only for a confirmed new DB.
+  // Offline typechecks cannot prove newness, so preserve there too.
   return existingServices === undefined || existingServices.has(name)
     ? preserve()
     : { type: "raw", value: { defaultValue: postgresPasswordGenerator } };
