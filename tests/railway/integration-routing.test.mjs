@@ -73,6 +73,14 @@ test.each([
       .slice("Validation evidence: ".length);
     const report = JSON.parse(readFileSync(`${evidence}/report.json`, "utf8"));
     expect(report.status).toBe(failed ? "failed" : provider ? "completed-advisory" : "passed");
+    if (scenario === "owned-finding")
+      expect(report.steps.slice(0, 8).map(({ command }) => command)).toEqual([
+        ["pnpm", "install", "--frozen-lockfile"],
+        ...["check:runtime-versions", "codegen", "check", "typecheck", "build", "test"].map(
+          (script) => ["pnpm", "run", script],
+        ),
+        ["pnpm", "audit", "--audit-level", "moderate"],
+      ]);
     if (scenario === "failed-build") {
       // The inspect mock still offers the old local tag; a failed build must not use it.
       expect(report.groups.find(({ name }) => name === "integration")).toMatchObject({

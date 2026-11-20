@@ -1,0 +1,50 @@
+name: CI
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [master]
+  workflow_dispatch:
+concurrency:
+  group: source-ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+permissions:
+  contents: read
+jobs:
+  source:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Runtime versions
+            command: check:runtime-versions
+          - name: Format and lint
+            command: check
+          - name: Typecheck
+            command: typecheck
+          - name: Build
+            command: build
+          - name: Tests
+            command: test
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/bootstrap
+      # Generated Envio types are needed by typechecking and the ordinary suites.
+      # Artifact-only builds do not import the indexer or need its codegen.
+      - name: Generate indexer types
+        if: matrix.command == 'typecheck' || matrix.command == 'test'
+        run: pnpm run codegen
+      - name: Prepare test artifacts
+        if: matrix.command == 'test'
+        run: pnpm run build
+      - name: ${{ matrix.name }}
+        run: pnpm run ${{ matrix.command }}
+  images:
+    name: Image security and integration
+    if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/security-scan.yml

@@ -118,7 +118,7 @@ of resume, incompatible storage and explicit reset. Other repositories already
 on 3.15.0 need no downgrade. Main TypeScript is exactly 7.0.2 for all build and
 typecheck CLIs. Only the indexer has a dev-only `typescript` alias to official
 `@typescript/typescript6@6.0.2`, because unchanged Envio 3.14 loads the stable
-`findConfigFile`/`createProgram` API from its project directory. Its build script
+`findConfigFile`/`createProgram` API from its project directory. Its typecheck script
 explicitly invokes the workspace-root TypeScript 7 compiler. No third-party
 patch, Envio adapter/storage change or new runtime dependency is introduced.
 

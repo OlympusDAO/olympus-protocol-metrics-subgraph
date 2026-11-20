@@ -22,7 +22,7 @@ COPY apps/client/package.json apps/client/package.json
 RUN pnpm install --frozen-lockfile --filter @olympusdao/treasury-subgraph --filter @olympusdao/treasury-subgraph-indexer
 COPY apps/indexer apps/indexer
 COPY tsconfig.json ./
-RUN pnpm --dir apps/indexer codegen && pnpm --dir apps/indexer build
+RUN pnpm --dir apps/indexer codegen && pnpm --dir apps/indexer typecheck
 RUN pnpm --filter @olympusdao/treasury-subgraph-indexer deploy --prod /deploy
 
 FROM base AS runtime

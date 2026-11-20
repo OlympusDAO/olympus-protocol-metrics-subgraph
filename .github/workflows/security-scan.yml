@@ -1,17 +1,20 @@
 name: Image security and integration
 on:
   pull_request:
-  push:
-    branches: [master]
   workflow_dispatch:
+  workflow_call:
   schedule:
     - cron: "17 5 * * 1"
+concurrency:
+  group: image-ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 permissions:
   contents: read
 jobs:
   images:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:

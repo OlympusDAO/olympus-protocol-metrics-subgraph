@@ -10,12 +10,13 @@
   "main": "./dist/apps/client/src/index.js",
   "types": "./dist/apps/client/src/index.d.ts",
   "scripts": {
-    "build": "rm -rf dist && tsc -p tsconfig.build.json && pnpm run openapi:generate",
+    "build": "pnpm run openapi:check && rm -rf dist && tsc -p tsconfig.build.json && pnpm run openapi:generate",
+    "openapi:check": "tsx scripts/write-openapi.ts --check",
     "openapi:generate": "tsx scripts/write-openapi.ts",
     "pack:dry-run": "pnpm run build && npm pack --dry-run --ignore-scripts --cache /tmp/olympus-treasury-subgraph-npm-cache",
     "prepack": "pnpm run build",
     "prepublishOnly": "pnpm run release:check",
-    "pretest": "pnpm run openapi:generate",
+    "pretest": "pnpm run openapi:check",
     "release:check": "tsx scripts/release-check.ts",
     "test": "vitest run tests"
   },

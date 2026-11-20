@@ -85,7 +85,17 @@ const artifactKeys = [
   "ARTIFACT_SECRET_ACCESS_KEY",
 ];
 const hasuraKeys = ["HASURA_GRAPHQL_ADMIN_SECRET", "HASURA_GRAPHQL_ENDPOINT"];
-const sharedWatch = ["/package.json", "/pnpm-lock.yaml", "/pnpm-workspace.yaml", "/tsconfig.json"];
+const sharedWatch = [
+  "/.dockerignore",
+  "/package.json",
+  "/pnpm-lock.yaml",
+  "/pnpm-workspace.yaml",
+  "/tsconfig.json",
+  "/apps/client/package.json",
+  "/apps/indexer/package.json",
+  "/apps/metrics-api/package.json",
+  "/apps/metrics-publisher/package.json",
+];
 const rpcVariables = {
   1: "ENVIO_ETHEREUM_RPC_URL",
   137: "ENVIO_POLYGON_RPC_URL",
@@ -120,7 +130,7 @@ export default defineRailway((ctx) => {
     builder: "DOCKERFILE" as const,
     buildEnvironment: "V3" as const,
     dockerfilePath: `Dockerfile-${name}`,
-    watchPatterns: [`/Dockerfile-${name}`, "/.railway/**", ...paths],
+    watchPatterns: [`/Dockerfile-${name}`, ...paths],
   });
   const deployment = { source, replicas: { [region]: 1 } };
   const runtime = { runtime: "V2", useLegacyStacker: false, ipv6EgressEnabled: false };
@@ -166,7 +176,12 @@ export default defineRailway((ctx) => {
   });
   const cache = service("rpc-cache", {
     ...deployment,
-    build: build("rpc-cache", ["/services/rpc-cache/**"]),
+    build: build("rpc-cache", [
+      "/.dockerignore",
+      "/services/rpc-cache/erpc.js",
+      "/services/rpc-cache/private-errors.patch",
+      "/services/rpc-cache/pgx-v5.patch",
+    ]),
     deploy: { ...limits(), ...failure("/healthcheck") },
     env: {
       PORT: "4000",
@@ -187,7 +202,15 @@ export default defineRailway((ctx) => {
   );
   const indexer = service("indexer", {
     ...deployment,
-    build: build("indexer", ["/apps/indexer/**", ...sharedWatch]),
+    build: build("indexer", [
+      "/apps/indexer/src/**",
+      "/apps/indexer/config.yaml",
+      "/apps/indexer/schema.graphql",
+      "/apps/indexer/tsconfig.json",
+      "/apps/indexer/envio-env.d.ts",
+      "/apps/indexer/.env.sample",
+      ...sharedWatch,
+    ]),
     deploy: {
       ...limits(2, 2000000000),
       restartPolicyType: "ON_FAILURE",
@@ -217,8 +240,9 @@ export default defineRailway((ctx) => {
   const metricsPublisher = service("metrics-publisher", {
     ...deployment,
     build: build("metrics-publisher", [
-      "/apps/metrics-publisher/**",
-      "/packages/metrics-artifacts/**",
+      "/apps/metrics-publisher/src/**",
+      "/apps/metrics-publisher/tsconfig.build.json",
+      "/packages/metrics-artifacts/src/**",
       ...sharedWatch,
     ]),
     deploy: { ...limits(), cronSchedule: "15 * * * *", restartPolicyType: "NEVER" },
@@ -227,8 +251,9 @@ export default defineRailway((ctx) => {
   const metricsApi = service("metrics-api", {
     ...deployment,
     build: build("metrics-api", [
-      "/apps/metrics-api/**",
-      "/packages/metrics-artifacts/**",
+      "/apps/metrics-api/src/**",
+      "/apps/metrics-api/tsconfig.build.json",
+      "/packages/metrics-artifacts/src/**",
       ...sharedWatch,
     ]),
     deploy: { ...limits(), ...failure("/ready") },

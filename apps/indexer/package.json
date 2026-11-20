@@ -10,7 +10,7 @@
     "envio:dev": "ENVIO_TUI=${ENVIO_TUI:-false} tsx src/start-envio.ts dev",
     "envio:start": "tsx src/start-envio.ts start",
     "test": "vitest run tests",
-    "build": "pnpm --workspace-root exec tsc -p apps/indexer/tsconfig.json"
+    "typecheck": "pnpm --workspace-root exec tsc -p apps/indexer/tsconfig.json"
   },
   "dependencies": {
     "bignumber.js": "11.1.5",

@@ -1,17 +1,24 @@
 name: Bootstrap CI environment
-description: Standardized repository setup for CI.
+description: Install locked repository tools and dependencies.
+
+inputs:
+  install-dependencies:
+    description: Install workspace dependencies.
+    required: false
+    default: "true"
 
 runs:
   using: composite
   steps:
-    - name: Install validation tools
-      uses: jdx/mise-action@236a21c3b91f5db6d4e174b348674a0f0caac06d # v5
+    - name: Install pinned repository tools
+      uses: jdx/mise-action@94c60b39bc2d90ab2f9bab27f38d3cc4812c1834 # v5.1.0
       with:
         version: "2026.11.9"
         install_args: node pnpm railway trivy jactionlint --locked
         add_shims_to_path: false
-        cache: false
+        cache: true
 
     - name: Install dependencies
+      if: inputs.install-dependencies == 'true'
       run: pnpm install --frozen-lockfile
       shell: bash

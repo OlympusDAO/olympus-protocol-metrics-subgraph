@@ -398,13 +398,14 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(packageJson.files).toContain("openapi.json");
     expect(packageJson.files).toContain("dist");
     expect(packageJson.scripts.build).toBe(
-      "rm -rf dist && tsc -p tsconfig.build.json && pnpm run openapi:generate",
+      "pnpm run openapi:check && rm -rf dist && tsc -p tsconfig.build.json && pnpm run openapi:generate",
     );
     expect(packageJson.scripts["openapi:generate"]).toBe("tsx scripts/write-openapi.ts");
+    expect(packageJson.scripts["openapi:check"]).toBe("tsx scripts/write-openapi.ts --check");
     expect(packageJson.scripts["pack:dry-run"]).toBe(
       "pnpm run build && npm pack --dry-run --ignore-scripts --cache /tmp/olympus-treasury-subgraph-npm-cache",
     );
-    expect(packageJson.scripts.pretest).toBe("pnpm run openapi:generate");
+    expect(packageJson.scripts.pretest).toBe("pnpm run openapi:check");
     expect(packageJson.scripts.prepack).toBe("pnpm run build");
     expect(packageJson.scripts.prepublishOnly).toBe("pnpm run release:check");
     expect(packageJson.scripts["publish:client"]).toBeUndefined();
@@ -437,8 +438,8 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(workflow).toContain("id-token: write");
     expect(workflow).toContain("contents: write");
     expect(workflow).toContain("environment: npm-stage");
-    expect(workflow).toContain("actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f");
-    expect(workflow).toContain("node-version: 24");
+    expect(workflow).not.toContain("actions/setup-node@");
+    expect(workflow).toContain('install-dependencies: "false"');
     expect(workflow).toContain("npm install -g npm@11.15.0");
     expect(workflow).toContain('pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts validate');
     expect(workflow).toContain('pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts pack');
@@ -551,6 +552,7 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     };
     const canonical = getCanonicalOpenApiDocument();
 
+    expect(packaged).toEqual(canonical);
     expect(packaged.openapi).toBe("3.1.0");
     expect(Object.keys(packaged.paths).sort()).toEqual(Object.keys(canonical.paths).sort());
     expect(Object.keys(getOpenApiDocument().paths).sort()).toEqual(

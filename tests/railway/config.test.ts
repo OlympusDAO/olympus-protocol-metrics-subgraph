@@ -103,7 +103,7 @@ describe("Railway config-as-code", () => {
         build: {
           builder: "DOCKERFILE",
           dockerfilePath: dockerfile,
-          watchPatterns: expect.arrayContaining([`/${dockerfile}`, "/.railway/**"]),
+          watchPatterns: expect.arrayContaining([`/${dockerfile}`]),
         },
         source: {
           repo: "OlympusDAO/olympus-protocol-metrics-subgraph",
@@ -112,13 +112,18 @@ describe("Railway config-as-code", () => {
         },
         deploy: { multiRegionConfig: { "us-west2": { numReplicas: 1 } } },
       });
+      expect(get(`service.${name}`)).not.toHaveProperty(
+        "build.watchPatterns",
+        expect.arrayContaining(["/.railway/**"]),
+      );
     }
     const publisher = get("service.metrics-publisher");
     expect(publisher).toMatchObject({
       build: {
         watchPatterns: expect.arrayContaining([
-          "/apps/metrics-publisher/**",
-          "/packages/metrics-artifacts/**",
+          "/apps/metrics-publisher/src/**",
+          "/apps/metrics-publisher/tsconfig.build.json",
+          "/packages/metrics-artifacts/src/**",
         ]),
       },
       deploy: { cronSchedule: "15 * * * *", restartPolicyType: "NEVER" },
@@ -435,11 +440,18 @@ describe("Railway config-as-code", () => {
     expect(workflow).toContain("trivy config");
     expect(workflow).toContain("fail-fast: false");
     expect(workflow).toContain("pnpm run test:integration");
-    const main = readFileSync(".github/workflows/main.yml", "utf8");
-    expect(main).toContain("pnpm run build");
-    expect(main).toContain("pnpm run test");
+    const ci = readFileSync(".github/workflows/ci.yml", "utf8");
+    for (const command of ["check:runtime-versions", "check", "typecheck", "build", "test"])
+      expect(ci).toContain(`command: ${command}`);
+    expect(ci).toContain("pnpm run build");
     const scripts = JSON.parse(readFileSync("package.json", "utf8")).scripts;
     expect(scripts.validate).toBe("node scripts/validate.mjs source");
+    expect(scripts.typecheck).toBe("tsc --noEmit");
+    expect(scripts.build).not.toContain("--noEmit");
+    expect(scripts.lint).toBe("biome check --write . && pnpm run lint:actions");
+    expect(scripts.check).toBe("biome check . && pnpm run lint:actions");
+    for (const obsolete of ["format", "format:check", "lint:fix", "lint:check"])
+      expect(scripts[obsolete]).toBeUndefined();
     expect(scripts["docker:scan:provider"]).toBe("node scripts/validate.mjs provider");
     expect(scripts["scan:images:provider"]).toBeUndefined();
     expect(scripts["docker:scan"]).not.toContain("--scanners");

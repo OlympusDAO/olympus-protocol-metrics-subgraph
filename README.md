@@ -93,9 +93,11 @@ snapshots per UTC day.
 ```sh
 pnpm test           # vitest, all handler tests
 pnpm test -- --watch
-pnpm build          # tsc --noEmit
-pnpm check          # biome (lint + format)
-pnpm validate       # check + build + test (CI parity)
+pnpm typecheck      # whole-workspace tsc --noEmit, after codegen
+pnpm build          # client, API and publisher artifacts
+pnpm check          # read-only Biome + workflow lint
+pnpm lint           # safe fixes + formatting + workflow lint
+pnpm validate       # ordered source validation, including dependency audit
 ```
 
 Indexer tests use Envio's `createTestIndexer()` to drive handlers against

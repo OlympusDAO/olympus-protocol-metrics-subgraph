@@ -78,9 +78,9 @@ async function run(command, args = [], options = {}) {
 }
 
 async function source() {
-  await run("pnpm", ["run", "check:runtime-versions"]);
   await run("pnpm", ["install", "--frozen-lockfile"], { env: { CI: "true" } });
-  for (const script of ["codegen", "check", "build", "test"]) await run("pnpm", ["run", script]);
+  for (const script of ["check:runtime-versions", "codegen", "check", "typecheck", "build", "test"])
+    await run("pnpm", ["run", script]);
   await run("pnpm", ["audit", "--audit-level", "moderate"]);
 }
 
