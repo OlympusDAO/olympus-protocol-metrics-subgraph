@@ -5,6 +5,7 @@ import http from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
+import { isDeepStrictEqual } from "node:util";
 import { benchmarkPostgresImage } from "./benchmark-images.mjs";
 
 const [mode, sourceInput, credentialsPath, outputInput, revision, ...options] =
@@ -93,6 +94,8 @@ const save = () => fs.writeFileSync(output, JSON.stringify(result, null, 2), { m
 fs.writeFileSync(output, JSON.stringify(result, null, 2), { flag: "wx", mode: 0o600 });
 const workRoot = `${output}.trials`;
 fs.mkdirSync(workRoot, { mode: 0o700 });
+const sourceArchive = path.join(workRoot, "source.tar");
+const cacheConfig = path.join(workRoot, "benchmark-erpc.js");
 let calls = 0;
 const cap = 15000;
 let counters = {};
@@ -130,7 +133,6 @@ const observer = http.createServer(async (req, res) => {
       body,
       signal: AbortSignal.timeout(35000),
     });
-    res.writeHead(upstream.status, { "content-type": "application/json" });
     const bytes = Buffer.from(await upstream.arrayBuffer());
     if (
       requests.some(
@@ -145,7 +147,7 @@ const observer = http.createServer(async (req, res) => {
         if (/^0x[0-9a-f]+$/i.test(block ?? "")) finalizedHeight = Number(block);
       }
     }
-    res.end(bytes);
+    res.writeHead(upstream.status, { "content-type": "application/json" }).end(bytes);
   } catch {
     res.writeHead(502).end("Benchmark upstream unavailable");
   }
@@ -168,7 +170,7 @@ async function poll(fn, timeout = 60000) {
   throw Error("Benchmark condition timed out");
 }
 async function stop(child) {
-  if (!child || child.exitCode !== null || child.signalCode !== null) return;
+  if (!child?.pid || child.exitCode !== null || child.signalCode !== null) return;
   const ended = new Promise((resolve) => child.once("exit", resolve));
   try {
     process.kill(-child.pid, "SIGTERM");
@@ -231,23 +233,45 @@ function entityDigest(pg, database) {
 }
 
 try {
+  command(["git", "archive", "--format=tar", `--output=${sourceArchive}`, revision], {
+    cwd: sourceRoot,
+  });
+  const archivedLock = YAML.parse(command(["tar", "-xOf", sourceArchive, "pnpm-lock.yaml"]));
+  const installedLock = path.join(sourceRoot, "node_modules/.pnpm/lock.yaml");
+  if (
+    !fs.existsSync(installedLock) ||
+    !isDeepStrictEqual(archivedLock, YAML.parse(fs.readFileSync(installedLock, "utf8")))
+  ) {
+    throw Error("Use a source checkout with frozen dependencies matching the requested revision.");
+  }
+  if (candidate) {
+    // Host networking is needed to reach the observer and the fixture database.
+    // Keep RPC on loopback and disable the separate wildcard metrics listener.
+    fs.writeFileSync(
+      cacheConfig,
+      `import config from "./erpc.js";
+export default {
+  ...config,
+  server: { ...config.server, listenV4: false, listenV6: true, httpHostV6: "[::1]" },
+  metrics: { ...config.metrics, enabled: false },
+};
+`,
+    );
+    fs.chmodSync(cacheConfig, 0o644); // The container runs as a nonroot user.
+  }
   const postgresTag = JSON.parse(
     fs.readFileSync(new URL("../.railway/images.json", import.meta.url), "utf8"),
   ).local["postgres-local"];
   const hasuraTag = "docker.io/hasura/graphql-engine:v2.48.16";
-  const cacheTag = "localhost/olympus-metrics-rpc-cache:local";
   const inspect = (image) => command(["podman", "image", "inspect", "--format", "{{.Id}}", image]);
   // Historical baselines keep their original immutable image for comparison.
   const { reference: postgresReference, id: postgresImage } = candidate
     ? benchmarkPostgresImage(baseline.images, postgresTag)
     : { reference: postgresTag, id: inspect(postgresTag) };
   const hasuraImage = candidate ? baseline.images[hasuraTag] : inspect(hasuraTag);
-  const cacheImageId = candidate ? inspect(cacheTag) : undefined;
   result.images = { [postgresReference]: postgresImage, [hasuraTag]: hasuraImage };
-  if (candidate) {
-    result.images[cacheTag] = cacheImageId;
-    result.baselineDigest = baselineDigest;
-  }
+  if (candidate) result.baselineDigest = baselineDigest;
+  let cacheImageId;
   let expectedDigest = baselineDigest;
   for (let trial = 0; trial < trials; trial++) {
     const suffix = randomBytes(4).toString("hex");
@@ -260,16 +284,29 @@ try {
     result.trials.push(entry);
     save();
     let child;
+    let log;
     try {
-      fs.cpSync(sourceRoot, work, {
-        recursive: true,
-        filter: (file) =>
-          !["node_modules", ".git", ".envio", ".env", "railway-plan.json"].includes(
-            path.basename(file),
-          ),
-      });
+      fs.mkdirSync(work, { mode: 0o700 });
+      command(["tar", "-xf", sourceArchive, "-C", work]);
+      if (candidate && trial === 0) {
+        const cacheTag = `localhost/olympus-metrics-rpc-cache:benchmark-${randomBytes(12).toString("hex")}`;
+        const imageIdFile = path.join(workRoot, "cache-image.id");
+        const buildLog = fs.openSync(path.join(workRoot, "cache-build.log"), "wx", 0o600);
+        try {
+          command(
+            ["podman", "build", "--file", "Dockerfile-rpc-cache", "--tag", cacheTag, "--iidfile", imageIdFile, "."],
+            { cwd: work, timeout: 30 * 60_000, stdio: ["ignore", buildLog, buildLog] },
+          );
+        } finally {
+          fs.closeSync(buildLog);
+        }
+        cacheImageId = fs.readFileSync(imageIdFile, "utf8").trim();
+        if (!cacheImageId) throw Error("Candidate cache build did not record an image ID");
+        result.images[cacheTag] = cacheImageId;
+        save();
+      }
       fs.symlinkSync(path.join(sourceRoot, "node_modules"), path.join(work, "node_modules"));
-      for (const app of fs.readdirSync(path.join(sourceRoot, "apps"))) {
+      for (const app of fs.readdirSync(path.join(work, "apps"))) {
         const deps = path.join(sourceRoot, "apps", app, "node_modules");
         if (fs.existsSync(deps)) fs.symlinkSync(deps, path.join(work, "apps", app, "node_modules"));
       }
@@ -282,7 +319,7 @@ try {
       if (config.chains.length !== 1 || config.chains[0].start_block !== result.workload.start)
         throw Error("Unexpected fixture start");
       fs.writeFileSync(configPath, YAML.stringify(config));
-      const log = fs.openSync(path.join(work, "indexer.log"), "a", 0o600);
+      log = fs.openSync(path.join(work, "indexer.log"), "a", 0o600);
       const inherited = Object.fromEntries(
         Object.entries(process.env).filter(
           ([key]) => !/^(ENVIO_|HASURA_|RAILWAY_|DATABASE_URL$)/.test(key),
@@ -368,10 +405,14 @@ try {
           cache,
           "--network",
           "host",
+          "--mount",
+          `type=bind,source=${cacheConfig},target=/etc/erpc/benchmark.js,readonly`,
           "-e",
           `RPC_CACHE_DATABASE_URL=postgresql://postgres:${password}@127.0.0.1:15433/metrics?sslmode=disable`,
           ...upstreamEnv,
           cacheImageId,
+          "/erpc-server",
+          "/etc/erpc/benchmark.js",
         ]);
         await poll(async () => {
           try {
@@ -416,11 +457,15 @@ try {
       }
       const wrapper = path.join(work, "node_modules/.bin/tsx");
       const startIndexer = () =>
-        spawn(wrapper, ["src/start-envio.ts", "start"], {
-          cwd,
-          env,
-          detached: true,
-          stdio: ["ignore", log, log],
+        new Promise((resolve, reject) => {
+          const started = spawn(wrapper, ["src/start-envio.ts", "start"], {
+            cwd,
+            env,
+            detached: true,
+            stdio: ["ignore", log, log],
+          });
+          started.once("error", reject);
+          started.once("spawn", () => resolve(started));
         });
       const cacheRows = () =>
         candidate ? Number(db(cachePg, "SELECT count(*) FROM rpc_cache")) : undefined;
@@ -437,7 +482,7 @@ try {
           db(pg, `UPDATE envio_info SET config='{}' WHERE id=1`, env.ENVIO_PG_DATABASE);
           const logPath = path.join(work, "indexer.log");
           const logOffset = fs.statSync(logPath).size;
-          child = startIndexer();
+          child = await startIndexer();
           await poll(() => {
             if (child.exitCode !== null || child.signalCode)
               throw Error("Indexer failed to pause on the incompatible fixture");
@@ -464,7 +509,7 @@ try {
             );
           });
         } else {
-          child = startIndexer();
+          child = await startIndexer();
         }
         await poll(async () => {
           if (child.signalCode || (child.exitCode !== null && child.exitCode !== 0))
@@ -534,13 +579,13 @@ try {
         );
       }
       entry.status = "complete";
-      fs.closeSync(log);
     } catch (error) {
       entry.status = "failed";
       entry.error = error.message;
       throw error;
     } finally {
       await stop(child);
+      if (log !== undefined) fs.closeSync(log);
       for (const name of [cache, hasura, cachePg, pg])
         spawnSync("podman", ["rm", "-f", name], { stdio: "ignore" });
       save();
@@ -555,4 +600,5 @@ try {
   observer.closeAllConnections();
   observer.close();
   save();
+  fs.rmSync(sourceArchive, { force: true });
 }

@@ -43,4 +43,4 @@ Before adopting retention, establish which historical ranges must remain cheap
 to replay, whether the provider can still serve them, and the cold-cache RPC
 cost/latency. Review supported cache expiry/maintenance behavior for the pinned
 versions and recovery needs. Capacity increases or retention changes require
-separate approval. This branch defines no cache-deletion operation or policy.
+separate approval. The repository defines no cache-deletion operation or policy.

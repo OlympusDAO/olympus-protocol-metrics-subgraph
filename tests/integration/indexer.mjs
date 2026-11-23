@@ -17,8 +17,14 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
       stdio: ["ignore", "pipe", "pipe"],
       timeout: 60_000,
     }).trim();
-  const logs = () =>
-    spawnSync(runtime, ["logs", indexer], { encoding: "utf8" }).output.slice(1).join("");
+  const logs = () => {
+    const { stdout, stderr } = spawnSync(runtime, ["logs", indexer], {
+      encoding: "utf8",
+      timeout: 5_000,
+      killSignal: "SIGKILL",
+    });
+    return `${stdout ?? ""}${stderr ?? ""}`;
+  };
   const prefix = `metrics-indexer-${randomBytes(5).toString("hex")}`;
   const pg = `${prefix}-pg`,
     hasura = `${prefix}-hasura`,
@@ -59,7 +65,11 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
       }
       await delay(200);
     }
-    console.error(logs());
+    try {
+      console.error(logs());
+    } catch {
+      // A failed diagnostic must preserve the fixture assertion.
+    }
     assert.fail(message);
   }
   docker("network", "create", "--internal", prefix);
@@ -145,10 +155,10 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
   );
   const sentinel = () => sql(`SELECT count(*) FROM "BackfillSentinel" WHERE id='resume-fixture'`);
   docker("restart", indexer);
-  await eventually(
-    () => logs().includes("Resuming") || logs().includes("resum"),
-    "Real indexer did not report resume",
-  );
+  await eventually(() => {
+    const output = logs();
+    return output.includes("Resuming") || output.includes("resum");
+  }, "Real indexer did not report resume");
   assert.equal(sentinel(), "1");
   await eventually(() => {
     docker(

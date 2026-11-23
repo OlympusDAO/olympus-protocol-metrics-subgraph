@@ -5,22 +5,21 @@ import { expect, test, vi } from "vitest";
 import images from "../../.railway/images.json";
 
 test.each([
-  "integration",
-  "missing-image",
-  "failed-build",
-  "owned-finding",
-  "provider-finding",
-  "provider-error",
-])("canonical image routing: %s", async (scenario) => {
-  const provider = scenario.startsWith("provider");
-  const failed = ["missing-image", "failed-build", "owned-finding", "provider-error"].includes(
-    scenario,
-  );
+  ["integration", "integration", "passed"],
+  ["missing-image", "integration", "failed"],
+  ["failed-build", "all", "failed"],
+  ["setup-abort", "all", "failed"],
+  ["owned-finding", "all", "failed"],
+  ["provider-finding", "provider", "completed-advisory"],
+  ["provider-error", "provider", "failed"],
+])("canonical image routing: %s", async (scenario, mode, status) => {
+  const provider = mode === "provider";
   const execFileSync = vi.fn((command, args) => {
     if (command === "git") return args[0] === "rev-parse" ? "fixture-head" : "";
     if (command === "mise") return JSON.stringify({ Version: "0.76.2" });
     if (args[0] === "image") {
-      if (scenario === "missing-image") throw new Error("No such image");
+      if (scenario === "missing-image" && args[2] === images.built.indexer)
+        throw new Error("No such image");
       return JSON.stringify([
         { Id: "fixture-image", RepoDigests: [], Os: "linux", Architecture: "arm64" },
       ]);
@@ -32,6 +31,10 @@ test.each([
     child.stdout = new PassThrough();
     child.stderr = new PassThrough();
     setImmediate(() => {
+      if (scenario === "setup-abort" && command === "mise" && args[0] === "install") {
+        child.emit("close", 2, null);
+        return;
+      }
       if (scenario === "failed-build" && command === "pnpm" && args[1] === "docker:build:indexer") {
         child.emit("close", 1, null);
         return;
@@ -58,21 +61,19 @@ test.each([
   vi.stubEnv("TRIVY_IGNORE_UNFIXED", provider ? "true" : "false");
   try {
     vi.resetModules();
-    process.argv = [
-      process.execPath,
-      "scripts/validate.mjs",
-      provider
-        ? "provider"
-        : ["failed-build", "owned-finding"].includes(scenario)
-          ? "all"
-          : "integration",
-    ];
+    process.argv = [process.execPath, "scripts/validate.mjs", mode];
     await import("../../scripts/validate.mjs");
     const evidence = log.mock.calls
       .find(([line]) => line.startsWith("Validation evidence: "))[0]
       .slice("Validation evidence: ".length);
     const report = JSON.parse(readFileSync(`${evidence}/report.json`, "utf8"));
-    expect(report.status).toBe(failed ? "failed" : provider ? "completed-advisory" : "passed");
+    if (scenario === "missing-image")
+      expect(execFileSync).toHaveBeenCalledWith(
+        "docker",
+        ["image", "inspect", images.built.indexer],
+        { encoding: "utf8" },
+      );
+    expect(report.status).toBe(status);
     if (scenario === "owned-finding")
       expect(report.steps.slice(0, 8).map(({ command }) => command)).toEqual([
         ["pnpm", "install", "--frozen-lockfile"],
@@ -81,11 +82,11 @@ test.each([
         ),
         ["pnpm", "audit", "--audit-level", "moderate"],
       ]);
-    if (scenario === "failed-build") {
-      // The inspect mock still offers the old local tag; a failed build must not use it.
+    if (scenario === "failed-build" || scenario === "setup-abort") {
+      // Old local tags remain available; incomplete builds must not use them.
       expect(report.groups.find(({ name }) => name === "integration")).toMatchObject({
         status: "failed",
-        error: expect.stringMatching(/not run.*build failed/),
+        error: expect.stringMatching(/Integration not run/),
       });
       expect(spawn.mock.calls.some(([, args]) => args[0] === "pull")).toBe(false);
       expect(
@@ -100,7 +101,7 @@ test.each([
             command === "docker" && args[0] === "image" && args[2] === images.built.indexer,
         ),
       ).toBe(false);
-      expect(process.exitCode).toBe(1);
+      expect(process.exitCode).toBe(scenario === "setup-abort" ? 2 : 1);
       return;
     }
     if (provider || scenario === "owned-finding") {
@@ -122,6 +123,8 @@ test.each([
         ])
           expect(args[args.indexOf(flag) + 1]).toBe(value);
         expect(args).toContain(`--ignore-unfixed=${!provider}`);
+        expect(args.includes("--image-config-scanners")).toBe(!provider);
+        if (!provider) expect(args[args.indexOf("--image-config-scanners") + 1]).toBe("secret");
       }
     }
     const call = spawn.mock.calls.find(
@@ -129,6 +132,11 @@ test.each([
     );
     if (scenario === "missing-image" || provider) {
       expect(call).toBeUndefined();
+      expect(spawn).not.toHaveBeenCalledWith(
+        process.execPath,
+        ["--test", "tests/integration/runtime.test.mjs"],
+        expect.anything(),
+      );
       if (provider)
         expect(
           spawn.mock.calls.filter(([command]) => command === "docker").map(([, args]) => args),
@@ -142,6 +150,13 @@ test.each([
       RPC_CACHE_IMAGE: images.built["rpc-cache"],
       CONTAINER_RUNTIME: "docker",
     });
+    const runtimeIndex = spawn.mock.calls.findIndex(
+      ([command, args]) =>
+        command === process.execPath &&
+        args[0] === "--test" &&
+        args[1] === "tests/integration/runtime.test.mjs",
+    );
+    expect(runtimeIndex).toBeGreaterThan(spawn.mock.calls.indexOf(call));
     expect(
       execFileSync.mock.calls.some(
         ([command, args]) => command === "docker" && args[0] === "image",

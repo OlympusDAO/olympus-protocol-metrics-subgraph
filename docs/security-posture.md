@@ -107,7 +107,7 @@ no live REINDEX, backup, constraint repair or production update was performed.
 ## Shared tooling and intentional differences
 
 The shared tool pins are Node 24.22.3, pnpm 11.28.13, Railway CLI 5.75.0,
-Trivy 0.76.2 and jactionlint 2.4.0. The Railway TypeScript SDK is a separate
+Trivy 0.76.2, jactionlint 2.4.0 and Zizmor 1.32.0. The Railway TypeScript SDK is a separate
 package, currently 3.16.0. Shared direct packages present here use viem 2.57.14,
 AWS S3 client 3.1152.0, Biome 2.6.3 and Node types 24.19.2.
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
-import { appendFileSync, existsSync } from "node:fs";
+import { appendFileSync, existsSync, writeFileSync } from "node:fs";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
@@ -30,6 +30,7 @@ if (args[0] === "worker") {
     });
   }
 } else {
+  writeFileSync("migration-pid", String(process.pid));
   log(`migration ${args.join(" ")}`);
   while (existsSync("hold")) await delay(50);
   if (existsSync("fail")) process.exit(2);

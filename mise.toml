@@ -4,3 +4,4 @@ node = "24.22.3"
 pnpm = "11.28.13"
 railway = "5.75.0" # CLI; the package.json dependency is the separate TypeScript SDK.
 trivy = "0.76.2"
+zizmor = "1.32.0"

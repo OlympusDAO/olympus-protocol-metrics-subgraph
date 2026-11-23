@@ -115,9 +115,8 @@ overrides:
   # 8.20.1 predates this advisory and is still vulnerable; bumped to 8.21.0
   # (released 2026-05-22, past the 7-day cutoff). Range-scoped per convention.
   "ws@>=8.0.0 <8.21.0": "8.21.0"
-  # Vite 8.1.6 fixes launch-editor command injection and server.fs.allow
-  # bypasses. Keep the fix within Vitest's supported Vite 8 peer range.
-  "vite@>=8.0.0 <8.1.6": "8.1.6"
+  # Vite dev-server path traversal (GHSA-p4f5-76q4-ffq7), fixed on the same minor.
+  "vite@>=8.0.0 <8.1.7": "8.1.7"
   # esbuild GHSA-gv7w-rqvm-qjhr (RCE via NPM_CONFIG_REGISTRY in the Deno
   # module) + GHSA-g7r4-m6w7-qqqr (dev-server arbitrary file read), both
   # fixed in 0.28.1. vite@8.0.16 accepts esbuild ^0.27.0 || ^0.28.0, so the

@@ -181,6 +181,7 @@ export default defineRailway((ctx) => {
       "/services/rpc-cache/erpc.js",
       "/services/rpc-cache/private-errors.patch",
       "/services/rpc-cache/pgx-v5.patch",
+      "/services/rpc-cache/reject-null-cache.patch",
     ]),
     deploy: { ...limits(), ...failure("/healthcheck") },
     env: {

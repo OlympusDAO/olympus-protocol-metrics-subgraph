@@ -1,0 +1,3 @@
+rules:
+  excessive-permissions: error
+  untrusted-checkout: error

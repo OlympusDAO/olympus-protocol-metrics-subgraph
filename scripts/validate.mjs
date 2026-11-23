@@ -29,7 +29,15 @@ const report = {
   ignorefile: ".trivyignore",
 };
 const trivyCache = process.env.TRIVY_CACHE_DIR;
-let buildFailed = false;
+const trivyArguments = [
+  "exec",
+  "--locked",
+  "trivy",
+  "--",
+  "trivy",
+  ...(trivyCache ? ["--cache-dir", trivyCache] : []),
+];
+let buildsReady = false;
 report.scanCache = trivyCache ?? "Trivy native default cache";
 console.log(`Validation evidence: ${directory}`);
 
@@ -103,15 +111,11 @@ function imageIdentity(name, reference) {
 async function scan(name, reference, advisory = false) {
   const identity = imageIdentity(name, reference);
   await run("mise", [
-    "exec",
-    "--locked",
-    "trivy",
-    "--",
-    "trivy",
-    ...(trivyCache ? ["--cache-dir", trivyCache] : []),
+    ...trivyArguments,
     "image",
     "--scanners",
     advisory ? "vuln" : "vuln,secret",
+    ...(!advisory ? ["--image-config-scanners", "secret"] : []),
     "--input",
     "",
     "--format",
@@ -130,21 +134,10 @@ async function scan(name, reference, advisory = false) {
   identity.scanStatus = advisory ? "advisory-provider/scanned" : "passed";
   identity.scanLog = report.steps.at(-1).log;
   report.scanner = JSON.parse(
-    execFileSync(
-      "mise",
-      [
-        "exec",
-        "--locked",
-        "trivy",
-        "--",
-        "trivy",
-        ...(trivyCache ? ["--cache-dir", trivyCache] : []),
-        "version",
-        "--format",
-        "json",
-      ],
-      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
-    ),
+    execFileSync("mise", [...trivyArguments, "version", "--format", "json"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }),
   );
 }
 const providerReason =
@@ -174,10 +167,7 @@ async function images() {
   let failure;
   for (const [name, reference] of Object.entries(inventory.built)) {
     try {
-      await run("pnpm", ["run", `docker:build:${name}`]).catch((error) => {
-        buildFailed = true;
-        throw error;
-      });
+      await run("pnpm", ["run", `docker:build:${name}`]);
       await scan(name, reference);
     } catch (error) {
       report.imageFailures.push({ name, reference, status: "failed", error: error.message });
@@ -185,14 +175,16 @@ async function images() {
       console.error(error.message);
     }
   }
+  // Scan findings do not invalidate successful native builds.
+  buildsReady = Object.keys(inventory.built).every((name) =>
+    report.steps.some(
+      ({ command, exitCode }) =>
+        command[0] === "pnpm" && command[2] === `docker:build:${name}` && exitCode === 0,
+    ),
+  );
   try {
     await run("mise", [
-      "exec",
-      "--locked",
-      "trivy",
-      "--",
-      "trivy",
-      ...(trivyCache ? ["--cache-dir", trivyCache] : []),
+      ...trivyArguments,
       "config",
       "--format",
       "table",
@@ -239,8 +231,10 @@ async function provider() {
   if (failure) throw failure;
 }
 async function integration() {
-  if (mode === "all" && buildFailed)
-    throw new Error("Integration not run: a required application image build failed");
+  if (mode === "all" && !buildsReady)
+    throw new Error(
+      "Integration not run: required application image builds did not complete successfully",
+    );
   await run("docker", ["info", "--format", "{{.ServerVersion}}"]);
   dockerIdentity();
   // Security scans do not pull fixtures. Integration prepares only the exact

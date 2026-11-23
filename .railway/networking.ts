@@ -20,8 +20,10 @@ function object(value: unknown): Record<string, unknown> {
 
 export function currentExposure(configInput: unknown, instances: unknown) {
   const config = object(typeof configInput === "string" ? JSON.parse(configInput) : configInput);
-  const services = object(config.services);
   if (!Array.isArray(instances)) throw new Error("Incomplete Railway exposure lookup");
+  const services = object(
+    config.services === undefined && instances.length === 0 ? {} : config.services,
+  );
   const ports = new Map<string, number[]>();
   const ids = new Set<string>();
   for (const edge of instances) {

@@ -1,15 +1,15 @@
 {
   "name": "@olympusdao/treasury-subgraph",
   "version": "0.1.0",
+  "private": true,
   "description": "Subgraphs for the Olympus treasury",
+  "repository": "https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph",
   "author": {
     "name": "Jem",
     "email": "0x0xjem@gmail.com",
     "url": "https://github.com/0xJem"
   },
-  "private": true,
   "type": "module",
-  "repository": "https://github.com/OlympusDAO/olympus-protocol-metrics-subgraph",
   "scripts": {
     "benchmark:rpc": "node scripts/benchmark-rpc.mjs",
     "build": "pnpm --dir apps/client build && pnpm --dir apps/metrics-api build && pnpm --dir apps/metrics-publisher build",
@@ -25,32 +25,32 @@
     "compose:up": "docker compose up --build postgres hasura minio minio-init indexer metrics-api",
     "docker:build:hasura": "docker build -f Dockerfile-hasura -t olympus-protocol-metrics/hasura:local .",
     "docker:build:indexer": "docker build -f Dockerfile-indexer -t olympus-protocol-metrics/indexer:local .",
-    "docker:build:rpc-cache": "docker build -f Dockerfile-rpc-cache -t localhost/olympus-metrics-rpc-cache:local .",
     "docker:build:metrics-api": "docker build -f Dockerfile-metrics-api -t olympus-protocol-metrics/metrics-api:local .",
     "docker:build:metrics-publisher": "docker build -f Dockerfile-metrics-publisher -t olympus-protocol-metrics/metrics-publisher:local .",
-    "docker:scan": "mise exec -- trivy image --severity MEDIUM,HIGH,CRITICAL --ignore-unfixed --exit-code 1",
+    "docker:build:rpc-cache": "docker build -f Dockerfile-rpc-cache -t localhost/olympus-metrics-rpc-cache:local .",
+    "docker:scan": "mise exec -- trivy image --image-config-scanners secret --severity MEDIUM,HIGH,CRITICAL --ignore-unfixed --exit-code 1",
+    "docker:scan:provider": "node scripts/validate.mjs provider",
     "envio": "pnpm --dir apps/indexer envio",
     "envio:dev": "pnpm --dir apps/indexer envio:dev",
     "envio:start": "pnpm --dir apps/indexer envio:start",
-    "railway:plan": "railway config plan --out railway-plan.json",
+    "lint": "biome check --write . && pnpm run lint:actions",
+    "lint:actions": "mise exec --locked jactionlint -- jactionlint --profile correctness --no-online && mise exec --locked zizmor -- zizmor --offline --strict-collection --persona auditor --min-severity medium --min-confidence low --collect=workflows --collect=actions .github",
     "railway:apply": "railway config apply --plan railway-plan.json --environment",
+    "railway:plan": "railway config plan --out railway-plan.json",
     "railway:plan:bootstrap": "METRICS_RAILWAY_CACHE_BOOTSTRAP=1 railway config plan --out railway-plan.json",
     "test": "pnpm test:root && pnpm test:artifacts && pnpm test:client && pnpm test:metrics-api && pnpm test:metrics-publisher && pnpm test:indexer",
     "test:artifacts": "vitest run packages/metrics-artifacts/tests",
     "test:client": "pnpm --dir apps/client test",
+    "test:indexer": "pnpm --dir apps/indexer test",
+    "test:integration": "node scripts/validate.mjs integration",
     "test:metrics-api": "pnpm --dir apps/metrics-api test",
     "test:metrics-publisher": "pnpm --dir apps/metrics-publisher test",
     "test:root": "vitest run --dir tests --exclude '**/integration/**'",
     "test:rpc-cache": "node --test services/rpc-cache/integration.test.mjs",
-    "test:indexer": "pnpm --dir apps/indexer test",
     "typecheck": "tsc --noEmit",
     "validate": "node scripts/validate.mjs source",
-    "lint": "biome check --write . && pnpm run lint:actions",
-    "lint:actions": "mise exec --locked jactionlint -- jactionlint --profile correctness --no-online",
-    "validate:images": "node scripts/validate.mjs images",
-    "docker:scan:provider": "node scripts/validate.mjs provider",
-    "test:integration": "node scripts/validate.mjs integration",
-    "validate:all": "node scripts/validate.mjs all"
+    "validate:all": "node scripts/validate.mjs all",
+    "validate:images": "node scripts/validate.mjs images"
   },
   "dependencies": {
     "tsx": "4.23.15",
@@ -63,11 +63,11 @@
     "typescript": "7.0.2",
     "vitest": "4.1.12"
   },
+  "packageManager": "pnpm@11.28.13",
   "engines": {
     "node": ">=24.22.3 <25",
-    "pnpm": ">=11.28.13 <12",
     "npm": "use-pnpm",
+    "pnpm": ">=11.28.13 <12",
     "yarn": "use-pnpm"
-  },
-  "packageManager": "pnpm@11.28.13"
+  }
 }

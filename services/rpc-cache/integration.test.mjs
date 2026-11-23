@@ -8,13 +8,19 @@ import { test } from "node:test";
 import { setTimeout as delay } from "node:timers/promises";
 
 const chains = [1, 137, 250, 8453, 42161, 80094, 4663];
-const cacheImage = process.env.RPC_CACHE_IMAGE ?? "localhost/olympus-metrics-rpc-cache:local";
-const databaseImage = JSON.parse(
+const images = JSON.parse(
   readFileSync(new URL("../../.railway/images.json", import.meta.url), "utf8"),
-).local["postgres-local"];
+);
+const cacheImage = process.env.RPC_CACHE_IMAGE ?? images.built["rpc-cache"];
+const databaseImage = images.local["postgres-local"];
 const runtime = process.env.CONTAINER_RUNTIME ?? "docker";
 const container = (...args) =>
-  execFileSync(runtime, args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+  execFileSync(runtime, args, {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+    timeout: 60_000,
+    killSignal: "SIGKILL",
+  }).trim();
 
 // eRPC can reserialize object keys; physical request counts must ignore key order.
 const requestKey = (chain, method, params) => JSON.stringify([chain, method, params], (_key, value) =>
@@ -38,11 +44,26 @@ async function eventually(check, message) {
 test("eRPC persists finalized calls across process restarts and bypasses volatile responses", {
   timeout: 300_000,
 }, async (t) => {
-  container("image", "inspect", cacheImage);
+  for (const image of [
+    cacheImage,
+    images.built.indexer,
+    images.built.hasura,
+    images.provider["postgres-production"],
+    databaseImage,
+  ]) {
+    try {
+      container("image", "inspect", image);
+    } catch (error) {
+      throw Error(`Required image unavailable in ${runtime}: ${image}. See docs/local-compose.md.`, {
+        cause: error,
+      });
+    }
+  }
   const prefix = `metrics-cache-test-${randomBytes(5).toString("hex")}`;
   const postgres = `${prefix}-postgres`;
   const cache = `${prefix}-erpc`;
   const counts = new Map();
+  const zeroWord = `0x${"00".repeat(32)}`;
   const upstream = createServer(async (request, response) => {
     let raw = "";
     for await (const chunk of request) raw += chunk;
@@ -76,14 +97,28 @@ test("eRPC persists finalized calls across process restarts and bypasses volatil
             },
           };
         case "eth_call":
-          if (params[0]?.data === "0xdead") {
-            return {
-              jsonrpc: "2.0",
-              id,
-              error: { code: -32000, message: "temporary provider failure fixture-provider-secret" },
-            };
+          switch (params[0]?.data) {
+            case "0xdead":
+              return {
+                jsonrpc: "2.0",
+                id,
+                error: { code: -32000, message: "temporary provider failure fixture-provider-secret" },
+              };
+            case "0x0000":
+              return { jsonrpc: "2.0", id, result: "0x" };
+            case "0x0001":
+              return { jsonrpc: "2.0", id, result: zeroWord };
+            case "0xbbbb":
+              return { jsonrpc: "2.0", id, result: null };
+            case "0xabcd":
+              return { jsonrpc: "2.0", id, result: "0xabcd" };
+            default:
+              return { jsonrpc: "2.0", id, result: "0x1234" };
           }
-          return { jsonrpc: "2.0", id, result: "0x1234" };
+        case "eth_getBalance":
+          return { jsonrpc: "2.0", id, result: "0x0" };
+        case "eth_getLogs":
+          return { jsonrpc: "2.0", id, result: [] };
         default:
           return { jsonrpc: "2.0", id, error: { code: -32601, message: "Unsupported method" } };
       }
@@ -106,7 +141,7 @@ test("eRPC persists finalized calls across process restarts and bypasses volatil
     container("network", "rm", prefix);
   });
   container(
-    "run", "-d", "--name", postgres, "--network", prefix,
+    "run", "-d", "--pull=never", "--name", postgres, "--network", prefix,
     "-e", "POSTGRES_PASSWORD=cache-fixture",
     databaseImage,
   );
@@ -162,6 +197,8 @@ test("eRPC persists finalized calls across process restarts and bypasses volatil
   };
 
   const call = (chain, params) => rpc(chain, "eth_call", params);
+  const cacheSql = (query) =>
+    container("exec", postgres, "psql", "-U", "postgres", "-v", "ON_ERROR_STOP=1", "-Atc", query);
   const target = { to: `0x${"11".repeat(20)}`, data: "0x1234" };
   const historical = [target, "0x100"];
   const first = await call(137, historical);
@@ -170,13 +207,66 @@ test("eRPC persists finalized calls across process restarts and bypasses volatil
   assert.equal(count(137, "eth_call", historical), 1);
   let persistedRows;
   await eventually(() => {
-    persistedRows = Number(container("exec", postgres, "psql", "-U", "postgres", "-Atc",
-      "SELECT count(*) FROM rpc_cache WHERE partition_key LIKE 'evm:137:%' AND range_key LIKE 'eth_call:%'"));
+    persistedRows = Number(cacheSql(
+      "SELECT count(*) FROM rpc_cache WHERE partition_key LIKE 'evm:137:%' AND range_key LIKE 'eth_call:%'",
+    ));
     return persistedRows >= 1;
   }, () => `Historical call did not persist to Postgres (observed rows: ${persistedRows})`);
   console.log(`Persisted historical-call cache rows: ${persistedRows}`);
   assert.equal((await call(137, historical)).status, "HIT");
   assert.equal(count(137, "eth_call", historical), 1);
+
+  for (const [method, params, expected] of [
+    ["eth_call", [{ ...target, data: "0x0000" }, "0x100"], "0x"],
+    ["eth_call", [{ ...target, data: "0x0001" }, "0x100"], zeroWord],
+    ["eth_getBalance", [target.to, "0x100"], "0x0"],
+    ["eth_getLogs", [{ fromBlock: "0x10", toBlock: "0x20" }], []],
+  ]) {
+    assert.equal((await rpc(137, method, params)).status, "MISS");
+    await eventually(
+      async () => (await rpc(137, method, params)).status === "HIT",
+      `Finalized empty result did not persist: ${method}`,
+    );
+    const before = count(137, method, params);
+    const cached = await rpc(137, method, params);
+    assert.equal(cached.status, "HIT");
+    assert.deepEqual(cached.body.result, expected);
+    assert.equal(count(137, method, params), before);
+  }
+
+  const nullCall = [{ ...target, data: "0xbbbb" }, "0x100"];
+  for (let index = 0; index < 2; index += 1) {
+    const response = await call(137, nullCall);
+    assert.equal(response.status, "MISS");
+    assert.equal(response.body.result, null);
+    await delay(100);
+  }
+  assert.equal(count(137, "eth_call", nullCall), 2);
+
+  // Replace one known finalized value with raw null, as an older cache could store.
+  const legacyCall = [{ ...target, data: "0xabcd" }, "0x100"];
+  const initial = await call(137, legacyCall);
+  assert.equal(initial.status, "MISS");
+  assert.equal(initial.body.result, "0xabcd");
+  const legacyValue = `value = convert_to('"0xabcd"', 'UTF8')`;
+  const legacyRows = () => cacheSql(`SELECT count(*) FROM rpc_cache WHERE ${legacyValue}`);
+  const nullRows = () =>
+    cacheSql("SELECT count(*) FROM rpc_cache WHERE value = convert_to('null', 'UTF8')");
+  await eventually(() => legacyRows() === "1", "Legacy test key was not cached");
+  assert.equal(nullRows(), "0");
+  assert.equal(cacheSql(`WITH seeded AS (
+    UPDATE rpc_cache SET value = convert_to('null', 'UTF8') WHERE ${legacyValue} RETURNING 1
+  ) SELECT count(*) FROM seeded`), "1");
+
+  const refetched = await call(137, legacyCall);
+  assert.equal(refetched.status, "MISS");
+  assert.equal(refetched.body.result, "0xabcd");
+  assert.equal(count(137, "eth_call", legacyCall), 2);
+  await eventually(() => legacyRows() === "1", "Refetched result was not cached");
+  const repaired = await call(137, legacyCall);
+  assert.equal(repaired.status, "HIT");
+  assert.equal(repaired.body.result, "0xabcd");
+  assert.equal(nullRows(), "0");
 
   for (const [chain, params, error] of [
     [137, [target, "latest"], false],

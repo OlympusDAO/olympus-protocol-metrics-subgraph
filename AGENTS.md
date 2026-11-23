@@ -18,7 +18,7 @@ This repository indexes protocol-level metrics for Olympus contracts and Treasur
 ## Node and Tooling
 
 - Node.js must use version 24+.
-- Run `mise install node pnpm railway trivy jactionlint --locked` to install the tools declared in `mise.toml` and `mise.lock`.
+- Run `mise install node pnpm railway trivy jactionlint zizmor --locked` to install the tools declared in `mise.toml` and `mise.lock`.
 - Keep `.nvmrc`, `.node-version`, Dockerfiles and `package.json` aligned with the mise tool versions.
 - Run `pnpm install --frozen-lockfile` before dependency-dependent work.
 
@@ -63,4 +63,11 @@ Before pushing, confirm validation covers the exact content, use
 publication approval. Before any PR operation, invoke `github-account`.
 Report performed checks, skips and blockers; never claim unrun checks passed.
 Ask before rewriting, discarding or publishing history or changing PR state.
-Explicit Crit requests use the `crit-review` skill.
+
+## Maintenance conventions
+
+- Configure Dependabot daily with `open-pull-requests-limit: 0`: security updates only, no routine version-update PRs.
+- Schedule weekly image security scans for Monday at 00:00 UTC.
+- Write documentation as the current repository contract; avoid temporary phrases such as “this branch”.
+- Keep Markdown table cells unpadded to avoid alignment-only churn.
+- Use the existing Biome package.json sorting action for manifest keys.

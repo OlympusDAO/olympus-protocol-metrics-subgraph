@@ -1,0 +1,37 @@
+--- a/architecture/evm/json_rpc_cache.go
++++ b/architecture/evm/json_rpc_cache.go
+@@ -1149,6 +1149,11 @@
+ 		resultBytes = decompressed
+ 	}
+ 
++	if isNullCacheResult(resultBytes) {
++		span.SetAttributes(attribute.String("cache.connector_result", "null_result"))
++		return nil, nil
++	}
++
+ 	jrr, err := common.NewJsonRpcResponseFromBytes(nil, resultBytes, nil)
+ 	if err != nil {
+ 		return nil, err
+@@ -1205,6 +1210,10 @@
+ 		}
+ 	}
+ 	result := rpcResp.GetResultBytes()
++	if isNullCacheResult(result) {
++		lg.Debug().Msg("skip caching because response result is null")
++		return false, nil
++	}
+ 	// Check if we should cache empty results
+ 	isEmpty := resp == nil || rpcResp == nil || result == nil || resp.IsObjectNull() || resp.IsResultEmptyish()
+ 	// Never cache an empty result for a not-yet-produced (future) block: the block
+@@ -1226,6 +1235,11 @@
+ 	}
+ }
+ 
++// isNullCacheResult matches raw JSON null while preserving valid empty results.
++func isNullCacheResult(result []byte) bool {
++	return bytes.Equal(bytes.TrimSpace(result), []byte("null"))
++}
++
+ // useUpstreamSelector returns the request's use-upstream directive, used to gate
+ // which cache connectors may serve/store it (empty = no gating).
+ func useUpstreamSelector(req *common.NormalizedRequest) string {

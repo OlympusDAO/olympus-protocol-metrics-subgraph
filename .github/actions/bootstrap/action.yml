@@ -14,7 +14,7 @@ runs:
       uses: jdx/mise-action@94c60b39bc2d90ab2f9bab27f38d3cc4812c1834 # v5.1.0
       with:
         version: "2026.11.9"
-        install_args: node pnpm railway trivy jactionlint --locked
+        install_args: node pnpm railway trivy jactionlint zizmor --locked
         add_shims_to_path: false
         cache: true
 

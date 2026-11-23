@@ -21,7 +21,7 @@ and [storage buckets](https://docs.railway.com/storage-buckets).
 The source therefore preserves the existing credentials. Enforcing API read-only
 storage requires scoped credentials from a provider that supports them, or new
 Railway functionality. Choosing that provider and changing live credentials
-require separate approval; this branch performs neither action.
+require separate approval; the repository performs neither action.
 
 Artifact reads default to a 30-second total request deadline, a 10-second body
 deadline and a 64 MiB response cap. These are per object. Override with positive

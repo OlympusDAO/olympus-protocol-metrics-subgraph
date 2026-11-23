@@ -20,7 +20,8 @@ function fixture(compatibility: number, files: string[] = []) {
   for (const file of files) writeFileSync(join(cwd, file), "");
   const env = {
     ...process.env,
-    TMPDIR: cwd,
+    // Both subprocesses share the private cwd. Keep the Unix socket path short.
+    TMPDIR: ".",
     PATH: `${cwd}:${process.env.PATH}`,
     PORT: "9898",
     ENVIO_INDEXER_PORT: "9898",
@@ -35,11 +36,14 @@ function fixture(compatibility: number, files: string[] = []) {
     stderr += chunk;
   });
   const exit = new Promise<number | null>((resolve) => child.once("exit", resolve));
+  const shutdown = () => child.kill("SIGTERM");
   return {
     events: () => readFileSync(join(cwd, "events"), "utf8").trim().split("\n").filter(Boolean),
     stderr: () => stderr,
+    migrationPid: () => Number(readFileSync(join(cwd, "migration-pid"), "utf8")),
     removeMarker: (name: string) => rmSync(join(cwd, name)),
     exit,
+    shutdown,
     reset: () =>
       new Promise<number | null>((resolve) => {
         const caller = spawn(process.execPath, [...nodeArgs, startup, "reset"], {
@@ -50,7 +54,7 @@ function fixture(compatibility: number, files: string[] = []) {
         caller.once("exit", resolve);
       }),
     async close() {
-      child.kill("SIGTERM");
+      shutdown();
       await exit;
       rmSync(cwd, { recursive: true, force: true });
     },
@@ -88,6 +92,35 @@ test.skipIf(process.platform !== "linux")(
   },
   25_000,
 );
+
+test("SIGTERM stops an active reset migration without restarting ingestion", async () => {
+  const run = fixture(78, ["hold"]);
+  const migration = "migration local db-migrate setup --config fixture.yaml";
+  try {
+    await expect.poll(run.stderr, { timeout: 8000 }).toContain("storage is incompatible");
+    const reset = run.reset();
+    await expect.poll(run.events, { timeout: 8000 }).toContain(migration);
+    const migrationPid = run.migrationPid();
+    const groupExists = () => {
+      try {
+        return process.kill(-migrationPid, 0);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ESRCH") return false;
+        throw error;
+      }
+    };
+    expect(groupExists()).toBe(true);
+
+    run.shutdown();
+    await expect.poll(groupExists, { timeout: 8000 }).toBe(false);
+    expect(await run.exit).toBe(143);
+    expect(await reset).toBe(1);
+    expect(run.events()).toEqual([migration]);
+  } finally {
+    run.removeMarker("hold");
+    await run.close();
+  }
+}, 25_000);
 
 test.skipIf(process.platform !== "linux")(
   "accepts explicit reset while incompatible and stays paused after migration failure",

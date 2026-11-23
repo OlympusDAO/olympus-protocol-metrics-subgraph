@@ -18,7 +18,7 @@ if (
   pkg.packageManager !== `pnpm@${pin("pnpm")}` ||
   execFileSync("pnpm", ["--version"], { encoding: "utf8" }).trim() !== pin("pnpm")
 ) throw new Error("pnpm runtime/manifest does not match mise.toml");
-for (const tool of ["railway", "trivy", "jactionlint"]) {
+for (const tool of ["railway", "trivy", "jactionlint", "zizmor"]) {
   const version = execFileSync("mise", ["exec", "--locked", tool, "--", tool, "--version"], {
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
@@ -32,4 +32,4 @@ for (const name of ["indexer", "metrics-api", "metrics-publisher"]) {
   if (!dockerfile.includes(`pnpm@${pin("pnpm")}`))
     throw new Error(`Dockerfile-${name} has a different pnpm pin`);
 }
-console.log(`Runtime alignment passed: ${["node", "pnpm", "railway", "trivy", "jactionlint"].map((tool) => `${tool} ${pin(tool)}`).join(", ")}`);
+console.log(`Runtime alignment passed: ${["node", "pnpm", "railway", "trivy", "jactionlint", "zizmor"].map((tool) => `${tool} ${pin(tool)}`).join(", ")}`);

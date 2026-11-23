@@ -1,5 +1,4 @@
 {
-  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
@@ -7,6 +6,7 @@
     "outDir": "dist",
     "rootDir": "../.."
   },
-  "include": ["src/**/*.ts", "../../packages/metrics-artifacts/src/**/*.ts"],
-  "exclude": ["dist", "tests"]
+  "exclude": ["dist", "tests"],
+  "extends": "../../tsconfig.json",
+  "include": ["src/**/*.ts", "../../packages/metrics-artifacts/src/**/*.ts"]
 }

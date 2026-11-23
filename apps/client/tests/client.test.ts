@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, expectTypeOf, test, vi } from "vitest";
 import { getOpenApiDocument as getCanonicalOpenApiDocument } from "../../../packages/metrics-artifacts/src";
 import {
+  type ChainName,
   type ChainTokenRecords,
   type ChainTokenSupplies,
   createClient,
@@ -564,19 +565,11 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
   });
 
   test("exports semantic v2 and legacy-compatible TypeScript types", () => {
-    const treasuryAsset = {} as TreasuryAsset;
-    const tokenRecord: TokenRecord = treasuryAsset;
-    const ohmSupply = {} as OhmSupply;
-    const tokenSupply: TokenSupply = ohmSupply;
-    const tokenRecords = {} as ChainTokenRecords;
-    const tokenSupplies = {} as ChainTokenSupplies;
-    const health = {} as Health;
-
-    expect(tokenRecord).toBe(treasuryAsset);
-    expect(tokenSupply).toBe(ohmSupply);
+    expectTypeOf<TokenRecord>().toEqualTypeOf<TreasuryAsset>();
+    expectTypeOf<TokenSupply>().toEqualTypeOf<OhmSupply>();
+    expectTypeOf<ChainTokenRecords>().toEqualTypeOf<Record<ChainName, TreasuryAsset[]>>();
+    expectTypeOf<ChainTokenSupplies>().toEqualTypeOf<Record<ChainName, OhmSupply[]>>();
+    expectTypeOf<Health>().toEqualTypeOf<{ status: string; timestamp: string; version: string }>();
     expectTypeOf<Metric["_meta"]["chainsComplete"]>().toEqualTypeOf<string[]>();
-    expect(tokenRecords).toBe(tokenRecords);
-    expect(tokenSupplies).toBe(tokenSupplies);
-    expect(health).toBe(health);
   });
 });

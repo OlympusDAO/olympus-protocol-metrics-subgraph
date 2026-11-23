@@ -199,6 +199,9 @@ describe("Railway config-as-code", () => {
     };
     expect(currentExposure(config, [{ node }]).get("indexer")).toEqual([5432]);
     expect(() => currentExposure({}, [{ node }])).toThrow();
+    expect(currentExposure({}, []).size).toBe(0);
+    expect(currentExposure("{}", []).size).toBe(0);
+    for (const services of [null, []]) expect(() => currentExposure({ services }, [])).toThrow();
     expect(currentExposure({ services: { removed: null } }, []).size).toBe(0);
     expect(currentExposure({ services: { removed: { isDeleted: true } } }, []).size).toBe(0);
     for (const service of [{}, { isDeleted: false }, { isDeleted: "true" }, "unknown"]) {

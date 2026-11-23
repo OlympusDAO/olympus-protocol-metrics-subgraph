@@ -1,6 +1,6 @@
 # Local validation
 
-Install the exact tools in `mise.toml`/`mise.lock` with `mise install node pnpm railway trivy jactionlint --locked`.
+Install the exact tools in `mise.toml`/`mise.lock` with `mise install node pnpm railway trivy jactionlint zizmor --locked`.
 Use the pinned Node and pnpm versions. Docker must be running for image and
 integration checks. No cloud login, provider token or live database is required
 for these checks.
@@ -11,8 +11,8 @@ in [security posture](security-posture.md#shared-tooling-and-intentional-differe
 
 | Command | Required work |
 | --- | --- |
-| `pnpm run check:runtime-versions` | Verify exact Node/pnpm runtimes, locked Railway CLI/Trivy/jactionlint and Docker Node/pnpm source pins; no Docker required. |
-| `pnpm run lint:actions` | Run jactionlint with `--profile correctness --no-online`. |
+| `pnpm run check:runtime-versions` | Verify exact Node/pnpm runtimes, locked Railway CLI/Trivy/jactionlint/Zizmor and Docker Node/pnpm source pins; no Docker required. |
+| `pnpm run lint:actions` | Run jactionlint correctness/offline with permission/checkout errors, then Zizmor 1.32.0 offline audits with persona `auditor` at medium severity/low confidence. Online audits are not run. |
 | `pnpm run codegen` | Generate Envio types offline, before typechecking or ordinary tests. |
 | `pnpm run check` | Read-only Biome formatting/code checks and workflow lint, once. |
 | `pnpm run lint` | Apply safe Biome fixes and formatting, then workflow lint. |

@@ -50,7 +50,7 @@ See the pinned [native domain command](https://github.com/railwayapp/cli/blob/v5
 
 ## Preview the change
 
-Run `mise install node pnpm railway trivy jactionlint --locked` to install the pinned Node, pnpm and Railway CLI versions. With a Railway login or token that can read the production project, link project `1eff0b7c-1ab5-4f50-8c0d-29086746a17b` and environment `34764411-35d7-466c-8249-612730c36c07`.
+Run `mise install node pnpm railway trivy jactionlint zizmor --locked` to install the pinned Node, pnpm and Railway CLI versions. With a Railway login or token that can read the production project, link project `1eff0b7c-1ab5-4f50-8c0d-29086746a17b` and environment `34764411-35d7-466c-8249-612730c36c07`.
 
 Before the first plan in the current operator shell, restrict the output file.
 Git ignore is not filesystem protection; native CLI writes inherit permissions.

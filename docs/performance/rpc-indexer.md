@@ -1,10 +1,10 @@
 # RPC caching and restart benchmark
 
-The branch resumes compatible Envio state, provides an explicit reset command,
+The indexer resumes compatible Envio state, provides an explicit reset command,
 and routes historical RPC reads through an independent persistent eRPC cache.
-The [recorded results](rpc-indexer-comparison.json) show fewer repeat archive
-reads and a shorter restart on a small Robinhood fixture. They do not establish
-a faster first cold replay or production billing savings.
+Historical measurements showed fewer repeat archive reads and a shorter restart
+on a small Robinhood fixture. They do not establish a faster first cold replay
+or production billing savings. Raw comparison reports are not repository artifacts.
 
 ## Measured workload
 
@@ -19,8 +19,8 @@ subsequently included in implementation commit `2327b69a`.
 Each side had three cold trials and three fresh-container restart trials.
 The candidate also had three warm-cache rebuilds and one manual-reset rebuild.
 Preparation and image builds were outside measured time. The first baseline
-restart overlapped dependency installation; the individual samples are retained
-in the results rather than discarded. The three repetitions are too few to
+restart overlapped dependency installation; the individual samples were retained
+rather than discarded. The three repetitions are too few to
 characterize environment noise precisely.
 
 Completion required the persisted checkpoint, a successful bounded process exit,
@@ -48,7 +48,7 @@ usable finalized tag can serve requests through eRPC without persistent hits.
 ## Reproduce
 
 The historical campaign command requires Linux, Podman, Node 24, frozen repository
-dependencies, and the database/Hasura images identified in the recorded results.
+dependencies, and the database/Hasura images recorded by the benchmark runner.
 Keep credentials, raw logs and trial directories outside the source checkout.
 The private credentials JSON supplies `ENVIO_API_TOKEN` and
 `ENVIO_ROBINHOOD_RPC_URL`. Do not commit either value.
@@ -57,10 +57,11 @@ The private credentials JSON supplies `ENVIO_API_TOKEN` and
 pnpm install --frozen-lockfile
 podman pull docker.io/library/postgres:18.6-alpine3.24@sha256:9ba53c7d41ea093baf5c1ba635ba5434c4f979880527d49bb7d9237d3193085b
 podman pull docker.io/hasura/graphql-engine:v2.48.16
-podman build -f Dockerfile-rpc-cache -t localhost/olympus-metrics-rpc-cache:local .
 pnpm benchmark:rpc baseline <baseline-checkout> <credentials.json> <baseline-result.json> <baseline-commit> 3
 pnpm benchmark:rpc candidate <candidate-checkout> <credentials.json> <candidate-result.json> <candidate-commit-or-tree> <baseline-result.json> 3
 ```
+
+Each candidate campaign builds its cache image once from the requested revision archive, before trial-specific changes, and reuses that build across trials. A prebuilt local cache tag is not a benchmark input. The reused installed dependencies must match the archived lockfile.
 
 New baselines use the current pinned local PostgreSQL image. Historical
 candidate comparisons retain their recorded immutable baseline image; this

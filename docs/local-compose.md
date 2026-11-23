@@ -15,7 +15,7 @@ API documentation is JSON-only at `/openapi.json`; `/docs` returns 404.
 
 ## Start
 
-Install the command-line tools declared in `mise.toml` with `mise install`, then
+Install the command-line tools declared in `mise.toml` with `mise install node pnpm railway trivy jactionlint zizmor --locked`, then
 run `pnpm install --frozen-lockfile`. A running Docker Engine with the Compose
 plugin is required separately.
 
@@ -225,9 +225,12 @@ provider-advisory coverage; local PostgreSQL and MinIO/MC fixtures are excluded
 from default scans. The second uses the built
 images for cache persistence, real indexer restart/manual-reset isolation,
 API/publisher behavior and Hasura health. Missing prerequisites fail.
-The standalone `pnpm run test:rpc-cache` remains available after building
-all five images; its Docker/Podman runtime override also requires the indexer,
-Hasura and pinned PostgreSQL images in that runtime.
+The standalone `pnpm run test:rpc-cache` requires the eRPC, indexer and Hasura
+images and both pinned PostgreSQL images from `.railway/images.json` in the
+selected Docker or Podman runtime. It checks these images before creating the
+fixture and always verifies indexer resume and reset. `pnpm run test:integration`
+pulls the PostgreSQL prerequisites for Docker and expects the owned images to
+be built already.
 
 See [validation prerequisites and private evidence](validation.md). The
 [benchmark report](performance/rpc-indexer.md) retains the devbox baseline
