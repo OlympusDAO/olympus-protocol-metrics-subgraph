@@ -54,14 +54,14 @@
   },
   "dependencies": {
     "tsx": "4.23.15",
-    "viem": "2.57.14"
+    "viem": "2.57.16"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.3",
     "@types/node": "24.19.2",
     "railway": "3.16.0",
     "typescript": "7.0.2",
-    "vitest": "4.1.12"
+    "vitest": "5.1.0"
   },
   "packageManager": "pnpm@11.28.13",
   "engines": {
