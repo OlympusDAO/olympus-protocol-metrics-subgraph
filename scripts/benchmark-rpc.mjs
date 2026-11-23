@@ -5,6 +5,7 @@ import http from "node:http";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
+import { setTimeout as sleep } from "node:timers/promises";
 import { isDeepStrictEqual } from "node:util";
 import { benchmarkPostgresImage } from "./benchmark-images.mjs";
 
@@ -163,7 +164,6 @@ const observer = http.createServer(async (req, res) => {
 });
 await new Promise((resolve) => observer.listen(0, "127.0.0.1", resolve));
 const observerPort = observer.address().port;
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 function command(argv, options = {}) {
   const proc = spawnSync(argv[0], argv.slice(1), { encoding: "utf8", timeout: 120000, ...options });
   if (proc.status !== 0)

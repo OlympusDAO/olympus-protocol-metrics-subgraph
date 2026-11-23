@@ -175,8 +175,6 @@ export async function superviseEnvio(
     if (options.signal?.aborted) return;
 
     if (outcome.type === "signal") {
-      // The container is being torn down. Existing behaviour: re-raise on self
-      // so the exit status reflects the signal. Never respawn.
       return;
     }
 
@@ -192,7 +190,6 @@ export async function superviseEnvio(
       return;
     }
 
-    // Refund the crash budget after a run makes it through startup.
     const startedCleanly = runtimeMs >= minHealthyRuntimeMs;
     if (startedCleanly) {
       respawns = 0;
