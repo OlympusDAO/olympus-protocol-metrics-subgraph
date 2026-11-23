@@ -111,18 +111,17 @@ Trivy 0.76.2, jactionlint 2.4.0 and Zizmor 1.32.0. The Railway TypeScript SDK is
 package, currently 3.16.0. Shared direct packages present here use viem 2.57.14,
 AWS S3 client 3.1152.0, Biome 2.6.3 and Node types 24.19.2.
 
-Metrics intentionally retains Envio 3.14.0 and its exact fail-closed adapter
-guard. Envio 3.15.0 removes `PgStorage`/`isInitialized` and replaces persistence
-with native-addon `Storage`; migrating that preflight needs separate validation
-of resume, incompatible storage and explicit reset. Other repositories already
-on 3.15.0 need no downgrade. Main TypeScript is exactly 7.0.2 for all build and
-typecheck CLIs. Only the indexer has a dev-only `typescript` alias to official
-`@typescript/typescript6@6.0.2`, because unchanged Envio 3.14 loads the stable
-`findConfigFile`/`createProgram` API from its project directory. Its typecheck script
-explicitly invokes the workspace-root TypeScript 7 compiler. No third-party
-patch, Envio adapter/storage change or new runtime dependency is introduced.
+Metrics pins Envio 3.18.1. Its isolated preflight uses native storage reads and
+the native configuration/address comparisons, never initialization, schema setup,
+chain addition or storage takeover. Incompatible state pauses ingestion for an
+explicit operator reset; transient failures stay errors. Persisted configuration
+includes the Envio version, so this upgrade can refuse an older cluster: rehearse
+on a clone before separately approving a live reset. Main TypeScript remains
+exactly 7.0.2 for build/typecheck and Envio's native handler-check CLI. The old
+TypeScript 6 API alias is removed because Envio now invokes the project's `tsc`.
 
 The pnpm policy uses preferred `audit.ignore`. pnpm 11.28.13 still recognizes
 the deprecated `auditConfig.ignoreGhsas`, but the former takes precedence.
-Existing approved picomatch exceptions and range-scoped overrides remain;
-tool/dependency convergence adds no waiver or cooldown exception.
+Existing approved picomatch exceptions and range-scoped overrides remain.
+The explicitly selected Envio 3.18.1 and its five exact platform packages alone
+have release-age exceptions; the global 10080-minute age gate remains enabled.

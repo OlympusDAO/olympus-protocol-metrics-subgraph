@@ -12,7 +12,7 @@ const native = (name) => import(pathToFileURL(join(envioRoot, "src", `${name}.re
 let storage;
 try {
   const { version } = JSON.parse(readFileSync(join(envioRoot, "package.json"), "utf8"));
-  if (version !== "3.14.0") throw new Error("Review the storage check before upgrading Envio");
+  if (version !== "3.18.1") throw new Error("Review the storage check before upgrading Envio");
   await native("Env");
   const Core = await native("Core");
   const result = await Core.runCli(process.argv.slice(2));
@@ -20,27 +20,54 @@ try {
     const command = JSON.parse(result);
     if (command.kind !== "start") throw new Error("Expected start command");
     if (!command.reset) {
+      const Config = await native("Config");
+      Config.prime(command.config);
       process.chdir(command.cwd);
       Object.assign(process.env, command.env);
-      const [Config, PgStorage, ResumePlan, ChainMap] = await Promise.all([
-        native("Config"),
-        native("PgStorage"),
+      const [Storage, ResumePlan, ChainMap, Logger] = await Promise.all([
+        native("Storage"),
         native("ResumePlan"),
         native("ChainMap"),
+        native("Logger"),
       ]);
-      Config.prime(command.config);
       const config = Config.load();
-      storage = PgStorage.makeStorageFromEnv(config, PgStorage.makeClient(1));
-      if (await storage.isInitialized()) {
+      storage = Storage.makeStorageFromEnv(config, Logger.makeInMemory(), undefined, false, 1);
+      const holding = await storage.holding();
+      if (["Stranded", "Diverged", "Outdated"].includes(holding)) {
+        process.exitCode = 78;
+      } else if (holding === "Nothing") {
+        if (config.isolated) process.exitCode = 78;
+      } else if (holding === "Initialized") {
+        const stored = await storage.readStoredConfig();
+        const chains = ChainMap.values(config.chainMap);
         const plan = ResumePlan.make(
-          await storage.readStoredConfig(),
+          stored,
           config.envioInfo,
-          ChainMap.values(config.chainMap),
+          chains,
           config.contractMapping,
-          config.lowercaseAddresses,
           config.isolated,
         );
-        if (plan?.TAG === "Incompatible") process.exitCode = 78;
+        if (plan?.TAG === "Incompatible") {
+          process.exitCode = 78;
+        } else {
+          // This native read does not take over storage. Compare addresses before any mutation.
+          const state = await storage.resumeInitialState(
+            chains.map((chain) => chain.id),
+            stored.contractMapping,
+          );
+          const changed = ResumePlan.changedConfigAddressPaths(
+            chains.flatMap((chain) => {
+              const resumed = state.chains.find((entry) => entry.id === chain.id);
+              return resumed ? [[chain, resumed.addressRows]] : [];
+            }),
+            config.ecosystem.name,
+            stored.contractMapping,
+            config.lowercaseAddresses,
+          );
+          if (changed.length) process.exitCode = 78;
+        }
+      } else {
+        throw new Error("Invalid storage holding state");
       }
     }
   }

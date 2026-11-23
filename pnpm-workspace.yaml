@@ -11,6 +11,14 @@ audit:
 blockExoticSubdeps: true
 engineStrict: true
 minimumReleaseAge: 10080
+minimumReleaseAgeExclude:
+  # Exact Envio release explicitly selected by the user; retain the global age gate.
+  - "envio@3.18.1"
+  - "envio-darwin-arm64@3.18.1"
+  - "envio-darwin-x64@3.18.1"
+  - "envio-linux-arm64@3.18.1"
+  - "envio-linux-x64@3.18.1"
+  - "envio-linux-x64-musl@3.18.1"
 allowBuilds:
   # esbuild ships native binaries it builds on install; required because
   # vitest (our test runner) depends on it transitively. Without this entry,

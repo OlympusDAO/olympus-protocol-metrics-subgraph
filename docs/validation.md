@@ -5,9 +5,15 @@ Use the pinned Node and pnpm versions. Docker must be running for image and
 integration checks. No cloud login, provider token or live database is required
 for these checks.
 
-Main TypeScript is exactly 7.0.2; indexer typechecks use the root CLI. Its scoped
-Envio 3.14 compiler-API compatibility test and intentional alias are described
+Main TypeScript is exactly 7.0.2; indexer and Envio 3.18 handler checks use the root CLI.
+The native compiler regression and read-only storage preflight are described
 in [security posture](security-posture.md#shared-tooling-and-intentional-differences).
+
+Envio 3.18's read-only preflight loads resume state, including registered addresses
+and effect-cache counts, under the existing 30-second parent deadline. Passing a
+small local fixture does not establish warm restart timing at production scale.
+Before a live upgrade, rehearse a warm restart with representative stored state
+and confirm the preflight completes within that deadline.
 
 | Command | Required work |
 | --- | --- |

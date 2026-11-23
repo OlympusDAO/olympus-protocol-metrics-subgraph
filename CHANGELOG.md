@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Resume compatible Envio state and provide an explicit operator reset while
-  retaining Envio 3.14.0 and its native compatibility guard.
+  using Envio 3.18.1 and its native compatibility guard.
 - Add a private persistent cache for finalized historical RPC reads, separate
   from the indexer database and schema reset.
 - Bound and validate artifact reads, and isolate the public Metrics API from

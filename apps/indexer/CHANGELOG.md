@@ -4,6 +4,7 @@ All notable changes to this package will be documented in this file. Dates are d
 
 ## [v0.4.0]
 
+- Upgrade Envio to 3.18.1 with a read-only native storage/address compatibility preflight and TypeScript 7 CLI handler checks.
 - Resume indexing from the stored checkpoint on normal startup and after recoverable crashes.
 - Add an explicit local reset command that pauses ingestion, runs Envio’s schema setup, and restarts indexing after a successful migration.
 
