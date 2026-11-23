@@ -84,6 +84,9 @@ export const BASE: ChainConfig = {
   rpcUrls: rpcUrls("BASE", "https://base.llamarpc.com"),
   ohmToken: ERC20_OHM,
   ohmStartBlock: BASE_START_BLOCK,
+  // Block matching the mainnet CCIP pool funding (Ethereum block 26,245,881,
+  // 2026-10-22T04:51:47Z).
+  ohmTotalSupplyEndBlock: 52_927_680,
   nativeToken: NATIVE_ETH,
   tokens: [
     token({

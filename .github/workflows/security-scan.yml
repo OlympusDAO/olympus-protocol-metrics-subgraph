@@ -54,7 +54,7 @@ jobs:
         if: ${{ !cancelled() && steps.bootstrap.outcome == 'success' }}
         run: |
           mise exec --locked trivy -- trivy config --format table --output "" \
-            --file-patterns "dockerfile:Dockerfile-*" --severity MEDIUM,HIGH,CRITICAL \
+            --file-patterns "dockerfile:Dockerfile-.*" --severity MEDIUM,HIGH,CRITICAL \
             --exit-code 1 "Dockerfile-${{ matrix.app }}"
       # Keep the expensive eRPC build in one cell. Integration needs four companion
       # builds here, duplicated from their isolated matrix cells: nine builds total.

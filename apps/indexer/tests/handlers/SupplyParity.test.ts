@@ -1,7 +1,12 @@
 import type { EvmOnBlockContext } from "envio";
+import type { PublicClient } from "viem";
 import { describe, expect, test, vi } from "vitest";
 
-import { pushTreasuryOhm } from "../../src/handlers/BlockHandlers";
+import {
+  pushTotalSupply,
+  pushTreasuryOhm,
+  updateGlobalMetricSnapshot,
+} from "../../src/handlers/BlockHandlers";
 import { pushIncurDebtSupply } from "../../src/handlers/BlvSupply";
 import { pushGnosisAuctionSupply } from "../../src/handlers/GnosisAuctions";
 import { pushLendingDeploymentSupply } from "../../src/handlers/LendingDeployments";
@@ -173,5 +178,118 @@ describe("Gnosis auction bonds", () => {
     expect(byType["1:Bonds (Vesting Deposits)"]).toBe("-177431");
     expect(byType["2:Bonds (Deposits)"]).toBe("-93789.846341694");
     expect(supplies.every((s) => Number(s.supplyBalance) <= 0)).toBe(true);
+  });
+});
+
+describe("CCIP lock/release cutover", () => {
+  const BASE = CHAIN_CONFIGS[8453];
+  const OHM = addr(BASE.ohmToken);
+  const DAO_MS = addr("0x18a390bd45bcc92652b9a91ad51aed7f1c1358f5");
+  const CUTOVER = 52_927_680;
+
+  // Base on 2026-10-20: 45,180.488364365 OHM total supply, 384.63 OHM in the
+  // DAO MS.
+  function buildContext() {
+    return {
+      Erc20Supply: {
+        get: async (id: string) =>
+          id === `8453-${OHM}` ? { totalSupply: 45_180_488_364_365n } : undefined,
+      },
+      TokenBalance: {
+        get: async (id: string) =>
+          id === `8453-${OHM}-${DAO_MS}` ? { balance: 384_630_000_000n } : undefined,
+      },
+      OhmIndexState: { get: async () => undefined },
+      log: { info: vi.fn(), debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
+      effect: vi.fn(async () => "0"),
+    } as unknown as EvmOnBlockContext;
+  }
+
+  async function totalSupplyAt(config: typeof BASE, blockNumber: number) {
+    const supplies: SerializedTokenSupply[] = [];
+    await pushTotalSupply(buildContext(), config, supplies, TIMESTAMP, BigInt(blockNumber));
+    return supplies.filter((s) => s.type === "Total Supply");
+  }
+
+  test("L2 total supply counts up to the block before the cutover", async () => {
+    const rows = await totalSupplyAt(BASE, CUTOVER - 1);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].supplyBalance).toBe("45180.488364365");
+  });
+
+  test("L2 total supply is zero from the cutover block", async () => {
+    for (const blockNumber of [CUTOVER, CUTOVER + 1]) {
+      const rows = await totalSupplyAt(BASE, blockNumber);
+      expect(rows).toHaveLength(1);
+      expect(rows[0].balance).toBe("0");
+      expect(rows[0].supplyBalance).toBe("0");
+    }
+  });
+
+  test("L2 protocol-owned OHM is still deducted after the cutover", async () => {
+    const supplies: SerializedTokenSupply[] = [];
+    await pushTreasuryOhm(buildContext(), BASE, supplies, TIMESTAMP, BigInt(CUTOVER));
+    const row = supplies.find((s) => s.sourceAddress === DAO_MS);
+    expect(row?.type).toBe("Treasury");
+    expect(row?.supplyBalance).toBe("-384.63");
+  });
+
+  test("a snapshot after the cutover zeroes the Total Supply category written earlier that day", async () => {
+    const categories = new Map<string, { category: string; balance: { toString(): string } }>();
+    const chainValues: Record<string, unknown> = {};
+    const context = {
+      ...buildContext(),
+      GlobalMetricSnapshot: { get: async () => undefined, set: vi.fn() },
+      ChainMetricValues: {
+        set: (entity: { id: string }) => {
+          chainValues[entity.id] = entity;
+        },
+        getWhere: async () => Object.values(chainValues),
+      },
+      ChainSupplyCategory: {
+        set: (entity: { id: string; category: string; balance: { toString(): string } }) => {
+          categories.set(entity.id, entity);
+        },
+      },
+    } as unknown as EvmOnBlockContext;
+
+    async function snapshot(blockNumber: number) {
+      const supplies: SerializedTokenSupply[] = [];
+      await pushTotalSupply(context, BASE, supplies, TIMESTAMP, BigInt(blockNumber));
+      await pushTreasuryOhm(context, BASE, supplies, TIMESTAMP, BigInt(blockNumber));
+      await updateGlobalMetricSnapshot(
+        context,
+        BASE,
+        {} as PublicClient,
+        BigInt(blockNumber),
+        TIMESTAMP,
+        [],
+        supplies,
+      );
+      return new Map([...categories.values()].map((row) => [row.category, row.balance.toString()]));
+    }
+
+    // Same UTC date on both sides of the cutover.
+    expect(await snapshot(CUTOVER - 1)).toEqual(
+      new Map([
+        ["TOTAL_SUPPLY", "45180.488364365"],
+        ["TREASURY", "384.63"],
+      ]),
+    );
+    expect(await snapshot(CUTOVER)).toEqual(
+      new Map([
+        ["TOTAL_SUPPLY", "0"],
+        ["TREASURY", "384.63"],
+      ]),
+    );
+  });
+
+  test("only the CCIP burn/mint L2s have a cutover, at the pool funding", () => {
+    const cutovers = Object.fromEntries(
+      Object.entries(CHAIN_CONFIGS)
+        .filter(([, config]) => config.ohmTotalSupplyEndBlock !== undefined)
+        .map(([chainId, config]) => [chainId, config.ohmTotalSupplyEndBlock]),
+    );
+    expect(cutovers).toEqual({ 42161: 517_125_754, 8453: CUTOVER, 80094: 27_814_996 });
   });
 });

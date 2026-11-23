@@ -119,7 +119,7 @@ overrides:
   "vite@>=8.0.0 <8.1.7": "8.1.7"
   # esbuild GHSA-gv7w-rqvm-qjhr (RCE via NPM_CONFIG_REGISTRY in the Deno
   # module) + GHSA-g7r4-m6w7-qqqr (dev-server arbitrary file read), both
-  # fixed in 0.28.1. vite@8.0.16 accepts esbuild ^0.27.0 || ^0.28.0, so the
+  # fixed in 0.28.1. vite@8.1.7 accepts esbuild ^0.27.0 || ^0.28.0, so the
   # bump is peer-compatible.
   "esbuild@>=0.17.0 <0.28.1": "0.28.1"
 preferFrozenLockfile: true

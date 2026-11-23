@@ -191,7 +191,7 @@ async function images() {
       "--output",
       "",
       "--file-patterns",
-      "dockerfile:Dockerfile-*",
+      "dockerfile:Dockerfile-.*",
       "--skip-dirs",
       "node_modules",
       "--skip-dirs",
