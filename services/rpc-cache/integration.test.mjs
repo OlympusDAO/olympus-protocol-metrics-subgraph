@@ -104,6 +104,17 @@ test("eRPC persists finalized calls across process restarts and bypasses volatil
                 id,
                 error: { code: -32000, message: "temporary provider failure fixture-provider-secret" },
               };
+            case "0xeee1":
+              return { jsonrpc: "2.0", id, error: { code: -32602, message: " \tInTeRnAl ErRoR\n" } };
+            case "0xeee2":
+              return {
+                jsonrpc: "2.0",
+                id,
+                error: {
+                  code: -32602,
+                  message: "Internal error https://fixture.invalid/fixture-provider-secret?key=fixture-provider-secret",
+                },
+              };
             case "0x0000":
               return { jsonrpc: "2.0", id, result: "0x" };
             case "0x0001":
@@ -267,6 +278,22 @@ test("eRPC persists finalized calls across process restarts and bypasses volatil
   assert.equal(repaired.status, "HIT");
   assert.equal(repaired.body.result, "0xabcd");
   assert.equal(nullRows(), "0");
+
+  for (const [data, expected] of [
+    ["0xeee1", "Internal error"],
+    ["0xeee2", "RPC request failed"],
+  ]) {
+    const params = [{ ...target, data }, "0x100"];
+    for (let index = 0; index < 2; index += 1) {
+      const before = count(137, "eth_call", params);
+      const response = await call(137, params);
+      assert.equal(response.body.error?.code, -32602);
+      assert.equal(response.body.error?.message, expected);
+      assert.notEqual(response.status, "HIT");
+      assert(count(137, "eth_call", params) > before);
+      await delay(100);
+    }
+  }
 
   for (const [chain, params, error] of [
     [137, [target, "latest"], false],

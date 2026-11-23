@@ -1,5 +1,7 @@
 import type { ProjectDefinition } from "railway/iac";
 
+export class ExposureError extends Error {}
+
 const publicServices = new Set(["metrics-api"]);
 
 const managedPorts: Record<string, number[]> = {
@@ -14,13 +16,13 @@ const managedPorts: Record<string, number[]> = {
 
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value))
-    throw new Error("Incomplete Railway exposure lookup");
+    throw new ExposureError("Incomplete Railway exposure lookup");
   return value as Record<string, unknown>;
 }
 
 export function currentExposure(configInput: unknown, instances: unknown) {
   const config = object(typeof configInput === "string" ? JSON.parse(configInput) : configInput);
-  if (!Array.isArray(instances)) throw new Error("Incomplete Railway exposure lookup");
+  if (!Array.isArray(instances)) throw new ExposureError("Incomplete Railway exposure lookup");
   const services = object(
     config.services === undefined && instances.length === 0 ? {} : config.services,
   );
@@ -37,35 +39,37 @@ export function currentExposure(configInput: unknown, instances: unknown) {
       !serviceName.trim() ||
       ports.has(serviceName)
     )
-      throw new Error("Ambiguous Railway service lookup");
+      throw new ExposureError("Ambiguous Railway service lookup");
     ids.add(serviceId);
     // Unknown services could hide public exposure outside the declared allowlist.
     if (!Object.hasOwn(managedPorts, serviceName))
-      throw new Error("Unrecognized Railway service; whole-project exposure cannot be verified");
+      throw new ExposureError(
+        "Unrecognized Railway service; whole-project exposure cannot be verified",
+      );
     const domains = object(node.domains);
     for (const kind of ["serviceDomains", "customDomains"] as const) {
-      if (!Array.isArray(domains[kind])) throw new Error("Incomplete Railway domain lookup");
+      if (!Array.isArray(domains[kind]))
+        throw new ExposureError("Incomplete Railway domain lookup");
       for (const entry of domains[kind]) {
         const domain = object(entry).domain;
         if (typeof domain !== "string" || !domain.trim())
-          throw new Error("Incomplete Railway domain lookup");
+          throw new ExposureError("Incomplete Railway domain lookup");
         // Native IaC cannot delete live HTTP domains; require authorized removal first.
         if (!publicServices.has(serviceName)) {
-          throw new Error(
+          throw new ExposureError(
             "Unexpected public HTTP exposure; separately authorized provider removal and verification are required before planning.",
           );
         }
       }
     }
     const serviceConfig = object(services[serviceId]);
-    const networking =
-      serviceConfig.networking === undefined ? {} : object(serviceConfig.networking);
-    const proxies = networking.tcpProxies === undefined ? {} : object(networking.tcpProxies);
+    const networking = object(serviceConfig.networking ?? {});
+    const proxies = object(networking.tcpProxies ?? {});
     const active = Object.entries(proxies)
       .filter(([, value]) => value !== null)
       .map(([port]) => {
         if (!/^[1-9]\d*$/.test(port) || Number(port) > 65535)
-          throw new Error("Invalid Railway TCP proxy port");
+          throw new ExposureError("Invalid Railway TCP proxy port");
         return Number(port);
       });
     ports.set(serviceName, active);
@@ -83,7 +87,7 @@ export function currentExposure(configInput: unknown, instances: unknown) {
         ),
     )
   )
-    throw new Error("Unaccounted Railway config service ID");
+    throw new ExposureError("Unaccounted Railway config service ID");
   return ports;
 }
 

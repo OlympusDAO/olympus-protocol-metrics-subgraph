@@ -53,8 +53,12 @@ Keep credentials, raw logs and trial directories outside the source checkout.
 The private credentials JSON supplies `ENVIO_API_TOKEN` and
 `ENVIO_ROBINHOOD_RPC_URL`. Do not commit either value.
 
+Install dependencies in both source checkouts at the exact revisions being
+measured. Run the benchmark commands from the checkout that contains this runner.
+
 ```sh
-pnpm install --frozen-lockfile
+pnpm --dir <baseline-checkout> install --frozen-lockfile
+pnpm --dir <candidate-checkout> install --frozen-lockfile
 podman pull docker.io/library/postgres:18.6-alpine3.24@sha256:9ba53c7d41ea093baf5c1ba635ba5434c4f979880527d49bb7d9237d3193085b
 podman pull docker.io/hasura/graphql-engine:v2.48.16
 pnpm benchmark:rpc baseline <baseline-checkout> <credentials.json> <baseline-result.json> <baseline-commit> 3
@@ -70,4 +74,4 @@ does not change earlier measurement receipts.
 The runner uses disposable databases, limits the campaign to 15,000 upstream
 requests, rejects a changed fixture start, verifies matching entity digests,
 and records immutable image identities. For the separate synthetic cache test,
-Docker or Podman is supported; see [the local stack guide](../local-compose.md#test-rpc-cache-persistence).
+Docker or Podman is supported; see [the local stack guide](../local-compose.md#validate-images-and-persistence).

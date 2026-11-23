@@ -77,6 +77,24 @@ describe("bounded S3 artifact reads", () => {
     await expect(
       store.getJson("v2/fixture.json", z.object({ count: z.number() })),
     ).resolves.toEqual({ count: 3 });
+    await expect(
+      store.getJson(
+        "v2/fixture.json",
+        z.object({
+          count: z.number().transform((value) => value + 1),
+          label: z.string().default("default"),
+        }),
+      ),
+    ).resolves.toEqual({ count: 4, label: "default" });
+  });
+
+  test("stops on the first invalid row without validating the rest of the shard", async () => {
+    const visit = vi.fn((row: unknown) => row);
+    const schema = z.array(z.preprocess(visit, z.object({ count: z.number() })));
+    const body = JSON.stringify(Array.from({ length: 1000 }, () => ({})));
+    const { store } = await reader((res) => res.end(body), { maxResponseBytes: 64 * 1024 });
+    await expect(store.getJson("v2/fixture.json", schema)).rejects.toThrow(/invalid artifact/i);
+    expect(visit).toHaveBeenCalledTimes(1);
   });
 
   test("rejects a valid JSON body with the wrong shape", async () => {

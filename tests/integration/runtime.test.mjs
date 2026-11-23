@@ -100,6 +100,8 @@ test("patched upstream template preserves an existing PostgreSQL 18 cluster and 
       "exec",
       "-e",
       "PGPASSWORD=fixture",
+      "-e",
+      "PGSSLMODE=require",
       name,
       "psql",
       "-h",
@@ -133,6 +135,7 @@ test("patched upstream template preserves an existing PostgreSQL 18 cluster and 
   );
   assert.equal(sql(candidate, "SELECT system_identifier FROM pg_control_system()"), systemId);
   assert.equal(sql(candidate, "SHOW ssl"), "on");
+  assert.equal(sql(candidate, "SELECT ssl FROM pg_stat_ssl WHERE pid = pg_backend_pid()"), "t");
   assert.equal(sql(candidate, "SHOW data_directory"), "/var/lib/postgresql/data/pgdata");
   assert.equal(sql(candidate, "SHOW server_version_num"), version);
   assert.equal(
@@ -152,7 +155,8 @@ test("compiled publisher and API round trip through an HTTP S3 fixture", {
   const prefix = `metrics-runtime-${randomBytes(5).toString("hex")}`;
   const date = new Date().toISOString().slice(0, 10);
   const objects = new Map();
-  const apiMethods = [];
+  const apiRequests = [];
+  let apiPhase = false;
   const xml = (value) => value.replaceAll("&", "&amp;").replaceAll("<", "&lt;");
   const s3 = createServer(async (req, res) => {
     const url = new URL(req.url, "http://fixture");
@@ -190,10 +194,12 @@ test("compiled publisher and API round trip through an HTTP S3 fixture", {
 
     const key = decodeURIComponent(url.pathname.replace(/^\/metrics\/?/, ""));
     const reader = req.headers.authorization?.includes("Credential=fixture-reader/");
-    if (reader) apiMethods.push(req.method);
-    if (reader && req.method !== "GET") {
-      res.writeHead(403).end();
-      return;
+    if (apiPhase) {
+      apiRequests.push({ method: req.method, reader });
+      if (!reader || req.method !== "GET") {
+        res.writeHead(403).end();
+        return;
+      }
     }
     if (url.searchParams.has("list-type")) {
       const rows = [...objects.keys()].filter((key) =>
@@ -280,6 +286,7 @@ test("compiled publisher and API round trip through an HTTP S3 fixture", {
     )[0].ohmPrice,
     12,
   );
+  apiPhase = true;
   const api = `${prefix}-api`;
   t.after(() => {
     try {
@@ -339,8 +346,9 @@ test("compiled publisher and API round trip through an HTTP S3 fixture", {
     "Restarted API did not become ready",
   );
   assert.equal((await fetch(`${base}/v2/bounds`)).status, 200);
-  assert(apiMethods.length > 0);
-  assert(apiMethods.every((method) => method === "GET"));
+  assert(apiRequests.length > 0);
+  assert(apiRequests.every(({ method }) => method === "GET"));
+  assert.equal(apiRequests.filter(({ reader }) => !reader).length, 0);
 });
 
 test("real Hasura image starts privately against PostgreSQL", { timeout: 120_000 }, async (t) => {
@@ -405,14 +413,13 @@ test("real Hasura image starts privately against PostgreSQL", { timeout: 120_000
     async () => (await fetch(`${base}/healthz`)).ok,
     "Real Hasura image failed health check",
   );
-  assert.equal(
-    (
-      await fetch(`${base}/v1/graphql`, {
-        method: "POST",
-        headers: { "content-type": "application/json", "x-hasura-admin-secret": "fixture" },
-        body: JSON.stringify({ query: "{__typename}" }),
-      })
-    ).status,
-    200,
-  );
+  const response = await fetch(`${base}/v1/graphql`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-hasura-admin-secret": "fixture" },
+    body: JSON.stringify({ query: "{__typename}" }),
+  });
+  assert.equal(response.status, 200);
+  const result = await response.json();
+  assert.equal(result.errors, undefined);
+  assert.equal(result.data?.__typename, "query_root");
 });

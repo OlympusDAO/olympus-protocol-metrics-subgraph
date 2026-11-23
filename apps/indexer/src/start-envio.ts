@@ -2,6 +2,7 @@ import { type ChildProcess, spawn } from "node:child_process";
 import { createConnection } from "node:net";
 import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { parseArgs } from "node:util";
 import { requestReset, runWithReset } from "./reset-envio";
 import { validateIndexerEnv } from "./validate-env";
 
@@ -30,7 +31,23 @@ export function prepareIndexerEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
 }
 
 export function resolveEnvioArgs(args: string[]): string[] {
-  const resolved = args.length === 0 ? ["start"] : args;
+  let resolved = args.length === 0 ? ["start"] : args;
+  if (resolved[0] !== "start") {
+    const command = parseArgs({
+      args: resolved,
+      allowPositionals: true,
+      strict: false,
+      tokens: true,
+      options: { directory: { type: "string", short: "d" }, config: { type: "string" } },
+    }).tokens.find((token) => token.kind === "positional");
+    if (command?.value === "start") {
+      resolved = [
+        "start",
+        ...resolved.slice(0, command.index),
+        ...resolved.slice(command.index + 1),
+      ];
+    }
+  }
   if (
     resolved[0] === "start" &&
     resolved.some((arg) => /^(?:-r|--(?:restart|reset)(?:=|$))/.test(arg))

@@ -13,6 +13,7 @@ let storage;
 try {
   const { version } = JSON.parse(readFileSync(join(envioRoot, "package.json"), "utf8"));
   if (version !== "3.14.0") throw new Error("Review the storage check before upgrading Envio");
+  await native("Env");
   const Core = await native("Core");
   const result = await Core.runCli(process.argv.slice(2));
   if (result !== null) {

@@ -1,6 +1,6 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { lstatSync, mkdirSync, unlinkSync } from "node:fs";
+import { lstatSync, mkdirSync, rmdirSync, unlinkSync } from "node:fs";
 import { createServer, request, type Server } from "node:http";
 import { createConnection } from "node:net";
 import { constants, tmpdir } from "node:os";
@@ -63,19 +63,25 @@ async function listen(server: Server, socketPath: string): Promise<void> {
     await bind();
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "EADDRINUSE") throw error;
-    await new Promise<void>((resolve, reject) => {
-      const probe = createConnection(socketPath);
-      probe.once("connect", () => {
-        probe.destroy();
-        reject(new Error("An indexer reset control server is already running"));
+    const recoveryLock = `${socketPath}.recovery-lock`;
+    mkdirSync(recoveryLock, { mode: 0o700 });
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const probe = createConnection(socketPath);
+        probe.once("connect", () => {
+          probe.destroy();
+          reject(new Error("An indexer reset control server is already running"));
+        });
+        probe.once("error", (cause: NodeJS.ErrnoException) => {
+          if (cause.code === "ECONNREFUSED") resolve();
+          else reject(cause);
+        });
       });
-      probe.once("error", (cause: NodeJS.ErrnoException) => {
-        if (cause.code === "ECONNREFUSED") resolve();
-        else reject(cause);
-      });
-    });
-    unlinkSync(socketPath);
-    await bind();
+      unlinkSync(socketPath);
+      await bind();
+    } finally {
+      rmdirSync(recoveryLock);
+    }
   }
 }
 

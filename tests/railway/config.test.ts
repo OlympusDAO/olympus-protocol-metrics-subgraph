@@ -198,6 +198,24 @@ describe("Railway config-as-code", () => {
       domains: { serviceDomains: [], customDomains: [] },
     };
     expect(currentExposure(config, [{ node }]).get("indexer")).toEqual([5432]);
+    for (const value of [undefined, null]) {
+      expect(
+        currentExposure({ services: { id: { networking: value } } }, [{ node }]).get("indexer"),
+      ).toEqual([]);
+      expect(
+        currentExposure({ services: { id: { networking: { tcpProxies: value } } } }, [
+          { node },
+        ]).get("indexer"),
+      ).toEqual([]);
+    }
+    for (const value of [[], false, 0, "invalid"]) {
+      expect(() =>
+        currentExposure({ services: { id: { networking: value } } }, [{ node }]),
+      ).toThrow("Incomplete Railway exposure lookup");
+      expect(() =>
+        currentExposure({ services: { id: { networking: { tcpProxies: value } } } }, [{ node }]),
+      ).toThrow("Incomplete Railway exposure lookup");
+    }
     expect(() => currentExposure({}, [{ node }])).toThrow();
     expect(currentExposure({}, []).size).toBe(0);
     expect(currentExposure("{}", []).size).toBe(0);
@@ -322,6 +340,13 @@ describe("Railway config-as-code", () => {
       await expect(Promise.resolve().then(evaluate)).rejects.toThrow(
         "Cannot establish safe Railway",
       );
+      await expect(Promise.resolve().then(evaluate)).rejects.toThrow(
+        "Reason: Unexpected public HTTP exposure",
+      );
+      execute.mockReturnValueOnce("malformed fixture-sensitive-provider-response");
+      const malformed = Promise.resolve().then(evaluate);
+      await expect(malformed).rejects.toThrow("Cannot establish safe Railway");
+      await expect(malformed).rejects.not.toThrow("fixture-sensitive-provider-response");
       nodes[1].domains.serviceDomains = [];
       execute.mockReturnValue(JSON.stringify(response));
       const definition = JSON.parse(JSON.stringify(await evaluate()));

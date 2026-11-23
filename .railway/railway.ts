@@ -14,7 +14,7 @@ import {
   volume,
 } from "railway/iac";
 import images from "./images.json" with { type: "json" };
-import { currentExposure, enforceExposure } from "./networking.ts";
+import { currentExposure, ExposureError, enforceExposure } from "./networking.ts";
 
 const postgresPasswordGenerator = `\${{ secret(64, "0123456789abcdef") }}`;
 
@@ -56,21 +56,23 @@ function existingResources(ctx: RailwayContext):
           edge.node.sizeMB <= 0,
       )
     )
-      throw new Error("Incomplete resource lookup");
+      throw new ExposureError("Incomplete resource lookup");
     const volumeSizes = new Map<string, number>(
       volumes.edges.map((edge: { node: { sizeMB: number; volume: { name: string } } }) => [
         edge.node.volume.name,
         edge.node.sizeMB,
       ]),
     );
-    if (volumeSizes.size !== volumes.edges.length) throw new Error("Ambiguous volume lookup");
+    if (volumeSizes.size !== volumes.edges.length)
+      throw new ExposureError("Ambiguous volume lookup");
     return {
       tcpPorts: currentExposure(result.data.environment.config, services.edges),
       volumeSizes,
     };
-  } catch {
+  } catch (error) {
+    const reason = error instanceof ExposureError ? ` Reason: ${error.message}` : "";
     throw new Error(
-      "Cannot establish safe Railway services, exposure and volumes; refusing to plan. Check pagination, current TCP ports and the HTTP domain allowlist; unexpected domains need separately authorized provider removal.",
+      `Cannot establish safe Railway services, exposure and volumes; refusing to plan. Check pagination, current TCP ports and the HTTP domain allowlist; unexpected domains need separately authorized provider removal.${reason}`,
     );
   }
 }

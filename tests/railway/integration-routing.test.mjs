@@ -6,6 +6,7 @@ import images from "../../.railway/images.json";
 
 test.each([
   ["integration", "integration", "passed"],
+  ["context-precedence", "images", "passed"],
   ["missing-image", "integration", "failed"],
   ["failed-build", "all", "failed"],
   ["setup-abort", "all", "failed"],
@@ -58,6 +59,10 @@ test.each([
   vi.stubEnv("RPC_CACHE_IMAGE", "unrelated:caller-image");
   vi.stubEnv("CONTAINER_RUNTIME", "podman");
   vi.stubEnv("TRIVY_EXIT_CODE", "19");
+  if (scenario === "context-precedence") {
+    vi.stubEnv("DOCKER_CONTEXT", "fixture-context");
+    vi.stubEnv("DOCKER_HOST", "unix:///fixture-other-daemon");
+  }
   vi.stubEnv("TRIVY_IGNORE_UNFIXED", provider ? "true" : "false");
   try {
     vi.resetModules();
@@ -74,6 +79,15 @@ test.each([
         { encoding: "utf8" },
       );
     expect(report.status).toBe(status);
+    if (scenario === "context-precedence") {
+      const scans = spawn.mock.calls.filter(
+        ([command, args]) => command === "mise" && args.includes("image"),
+      );
+      expect(scans).toHaveLength(Object.keys(images.built).length);
+      for (const [, , options] of scans) expect(options.env.DOCKER_HOST).toBeUndefined();
+      expect(process.env.DOCKER_HOST).toBe("unix:///fixture-other-daemon");
+      return;
+    }
     if (scenario === "owned-finding")
       expect(report.steps.slice(0, 8).map(({ command }) => command)).toEqual([
         ["pnpm", "install", "--frozen-lockfile"],

@@ -1,3 +1,9 @@
+import { spawnSync } from "node:child_process";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { describe, expect, test } from "vitest";
 
 import {
@@ -104,6 +110,11 @@ describe("indexer env validation", () => {
     expect(resolveEnvioArgs([])).toEqual(["start"]);
     expect(resolveEnvioArgs(["start"])).toEqual(["start"]);
     expect(resolveEnvioArgs(["dev"])).toEqual(["dev"]);
+    expect(resolveEnvioArgs(["--directory", "start", "dev"])).toEqual([
+      "--directory",
+      "start",
+      "dev",
+    ]);
   });
 
   test.each(["-r", "-rd", "--restart", "--reset"])(
@@ -112,6 +123,20 @@ describe("indexer env validation", () => {
       expect(() => resolveEnvioArgs(["start", flag])).toThrow("Use start-envio.ts reset");
     },
   );
+
+  test.each([
+    ["--directory", "."],
+    ["--directory=."],
+    ["-d", "."],
+    ["-d."],
+    ["--config", "config.yaml"],
+    ["--config=config.yaml"],
+  ])("applies start guards after native global options %j", (...globalOptions) => {
+    expect(resolveEnvioArgs([...globalOptions, "start"])).toEqual(["start", ...globalOptions]);
+    expect(() => resolveEnvioArgs([...globalOptions, "start", "--restart"])).toThrow(
+      "Use start-envio.ts reset",
+    );
+  });
 
   test("formats spawn failures loudly before Envio starts", () => {
     expect(
@@ -379,4 +404,82 @@ describe("postgres readiness probe", () => {
 
     expect(reachable).toBe(false);
   });
+});
+
+test("storage preflight captures launch dotenv before native CLI changes project directory", () => {
+  const directory = mkdtempSync(join(tmpdir(), "metrics-storage-env-"));
+  try {
+    const launch = join(directory, "launch");
+    const project = join(directory, "project");
+    mkdirSync(launch);
+    mkdirSync(project);
+    writeFileSync(join(launch, ".env"), "ENVIO_PG_SCHEMA=launch_schema\n");
+    writeFileSync(join(project, ".env"), "ENVIO_PG_SCHEMA=project_schema\n");
+    writeFileSync(join(project, "schema.graphql"), "type Transfer { id: ID! }\n");
+    writeFileSync(join(project, "handler.js"), "export {};\n");
+    writeFileSync(
+      join(project, "config.yaml"),
+      `name: storage-env-fixture
+contracts:
+  - name: Example
+    handler: ./handler.js
+    events:
+      - event: Transfer(address indexed from, address indexed to, uint256 value)
+chains:
+  - id: 1
+    start_block: 0
+    contracts:
+      - name: Example
+        address: "0x0000000000000000000000000000000000000001"
+`,
+    );
+    const envioRoot = dirname(createRequire(import.meta.url).resolve("envio/package.json"));
+    const nativeUrl = (name: string) =>
+      pathToFileURL(join(envioRoot, "src", `${name}.res.mjs`)).href;
+    const trace = join(directory, "storage.json");
+    // Run the real adapter/CLI/config/Env; replace only the database boundary.
+    const storage = `import { writeFileSync } from "node:fs";
+import { Db } from ${JSON.stringify(nativeUrl("Env"))};
+export const makeClient = () => undefined;
+export const makeStorageFromEnv = () => ({
+  isInitialized: async () => false,
+  close: async () => writeFileSync(${JSON.stringify(trace)}, JSON.stringify({ schema: Db.publicSchema, closed: true }))
+});`;
+    const preload = `import { registerHooks } from "node:module";
+registerHooks({ load(url, context, nextLoad) {
+  return url === ${JSON.stringify(nativeUrl("PgStorage"))}
+    ? { format: "module", shortCircuit: true, source: ${JSON.stringify(storage)} }
+    : nextLoad(url, context);
+}});`;
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--import",
+        `data:text/javascript,${encodeURIComponent(preload)}`,
+        fileURLToPath(new URL("../src/check-envio-storage.mjs", import.meta.url)),
+        "start",
+        "--directory",
+        project,
+      ],
+      {
+        cwd: launch,
+        env: {
+          PATH: process.env.PATH,
+          NODE_ENV: "development",
+          LOG_STRATEGY: "ecs-console",
+          LOG_LEVEL: "silent",
+          ENVIO_API_TOKEN: "fixture-only",
+        },
+        encoding: "utf8",
+        timeout: 10_000,
+      },
+    );
+    expect(result.status, result.stderr).toBe(0);
+    expect(JSON.parse(readFileSync(trace, "utf8"))).toEqual({
+      schema: "launch_schema",
+      closed: true,
+    });
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
 });

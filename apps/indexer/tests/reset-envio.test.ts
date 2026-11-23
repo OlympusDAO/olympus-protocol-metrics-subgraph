@@ -1,5 +1,13 @@
 import { spawn } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  lstatSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -36,14 +44,24 @@ function fixture(compatibility: number, files: string[] = []) {
     stderr += chunk;
   });
   const exit = new Promise<number | null>((resolve) => child.once("exit", resolve));
+  const closed = new Promise<number | null>((resolve) => child.once("close", resolve));
   const shutdown = () => child.kill("SIGTERM");
   return {
+    cwd,
+    child,
+    closed,
     events: () => readFileSync(join(cwd, "events"), "utf8").trim().split("\n").filter(Boolean),
     stderr: () => stderr,
     migrationPid: () => Number(readFileSync(join(cwd, "migration-pid"), "utf8")),
     removeMarker: (name: string) => rmSync(join(cwd, name)),
     exit,
     shutdown,
+    restart: (preload?: string) =>
+      spawn(
+        process.execPath,
+        [...(preload ? ["--import", preload] : []), ...nodeArgs, runtime, "0"],
+        { cwd, env, stdio: "ignore" },
+      ),
     reset: () =>
       new Promise<number | null>((resolve) => {
         const caller = spawn(process.execPath, [...nodeArgs, startup, "reset"], {
@@ -55,11 +73,98 @@ function fixture(compatibility: number, files: string[] = []) {
       }),
     async close() {
       shutdown();
-      await exit;
+      await closed;
       rmSync(cwd, { recursive: true, force: true });
     },
   };
 }
+
+async function staleFixture() {
+  const run = fixture(78, ["bounded"]);
+  try {
+    await expect.poll(run.stderr, { timeout: 8000 }).toContain("storage is incompatible");
+    run.child.kill("SIGKILL");
+    await run.closed;
+    const directory = readdirSync(run.cwd).find((name) => name.startsWith("metrics-envio-"));
+    if (!directory) throw new Error("Missing fixture control directory");
+    const socket = join(run.cwd, directory, "reset.sock");
+    expect(lstatSync(socket).isSocket()).toBe(true);
+    return { run, socket };
+  } catch (error) {
+    await run.close();
+    throw error;
+  }
+}
+
+test("recovers a stale control socket after a single wrapper crashes", async () => {
+  const { run, socket } = await staleFixture();
+  const child = run.restart();
+  const closed = new Promise<number | null>((resolve) => child.once("close", resolve));
+  try {
+    expect(await closed).toBe(0);
+    expect(run.events()).toEqual(["start --config fixture.yaml"]);
+    expect(existsSync(`${socket}.recovery-lock`)).toBe(false);
+  } finally {
+    child.kill("SIGTERM");
+    await closed;
+    await run.close();
+  }
+}, 25_000);
+
+test("serializes competing recoverers of a stale control socket before ingestion", async () => {
+  const { run, socket } = await staleFixture();
+  const preload = join(run.cwd, "hold-probe.mjs");
+  writeFileSync(
+    preload,
+    `
+import net from "node:net";
+import { existsSync, writeFileSync } from "node:fs";
+import { syncBuiltinESMExports } from "node:module";
+const connect = net.createConnection;
+net.createConnection = (...args) => {
+  const socket = connect(...args);
+  const emit = socket.emit.bind(socket);
+  socket.emit = (event, ...values) => {
+    if (event === "error" && values[0]?.code === "ECONNREFUSED") {
+      writeFileSync("probe-held", "");
+      const timer = setInterval(() => {
+        if (!existsSync("release-probe")) return;
+        clearInterval(timer);
+        emit(event, ...values);
+      }, 5);
+      return true;
+    }
+    return emit(event, ...values);
+  };
+  return socket;
+};
+syncBuiltinESMExports();
+`,
+  );
+  const first = run.restart(preload);
+  const firstClosed = new Promise<number | null>((resolve) => first.once("close", resolve));
+  let second: ReturnType<typeof spawn> | undefined;
+  let secondClosed: Promise<number | null> | undefined;
+  try {
+    await expect.poll(() => existsSync(join(run.cwd, "probe-held")), { timeout: 8000 }).toBe(true);
+    const contender = run.restart();
+    second = contender;
+    secondClosed = new Promise((resolve) => contender.once("close", resolve));
+    expect(await secondClosed).not.toBe(0);
+    expect(run.events()).toEqual([]);
+    expect(existsSync(`${socket}.recovery-lock`)).toBe(true);
+    writeFileSync(join(run.cwd, "release-probe"), "");
+    expect(await firstClosed).toBe(0);
+    expect(run.events()).toEqual(["start --config fixture.yaml"]);
+    expect(existsSync(`${socket}.recovery-lock`)).toBe(false);
+  } finally {
+    writeFileSync(join(run.cwd, "release-probe"), "");
+    first.kill("SIGTERM");
+    second?.kill("SIGTERM");
+    await Promise.all([firstClosed, secondClosed]);
+    await run.close();
+  }
+}, 25_000);
 
 test.skipIf(process.platform !== "linux")(
   "drains the complete process group before migration and rejects concurrent reset",

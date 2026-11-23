@@ -30,8 +30,14 @@ if (
   trials < 1 ||
   options.length > (candidate ? 2 : 1)
 ) throw Error(usage);
-const sourceRoot = path.resolve(sourceInput);
-const output = path.resolve(outputInput);
+const sourceRoot = fs.realpathSync(sourceInput);
+const requestedOutput = path.resolve(outputInput);
+let outputAncestor = path.dirname(requestedOutput);
+while (!fs.existsSync(outputAncestor)) outputAncestor = path.dirname(outputAncestor);
+const output = path.resolve(
+  fs.realpathSync(outputAncestor),
+  path.relative(outputAncestor, requestedOutput),
+);
 const outputLocation = path.relative(sourceRoot, output);
 if (!outputLocation.startsWith(`..${path.sep}`) && !path.isAbsolute(outputLocation)) {
   throw Error("Write benchmark evidence outside the source checkout.");
@@ -100,8 +106,10 @@ let calls = 0;
 const cap = 15000;
 let counters = {};
 let finalizedHeight = null;
+let finalizedGeneration = 0;
 let discoveryCalls = 0;
 const observer = http.createServer(async (req, res) => {
+  const generation = finalizedGeneration;
   try {
     if (candidate && req.url !== "/4663") {
       res.writeHead(503).end("Out of fixture");
@@ -144,7 +152,8 @@ const observer = http.createServer(async (req, res) => {
       const responses = Array.isArray(data) ? data : [data];
       for (const request of requests.filter((request) => request.params?.[0] === "finalized")) {
         const block = responses.find((response) => response.id === request.id)?.result?.number;
-        if (/^0x[0-9a-f]+$/i.test(block ?? "")) finalizedHeight = Number(block);
+        if (generation === finalizedGeneration && /^0x[0-9a-f]+$/i.test(block ?? ""))
+          finalizedHeight = Number(block);
       }
     }
     res.writeHead(upstream.status, { "content-type": "application/json" }).end(bytes);
@@ -353,8 +362,11 @@ export default {
         ]);
         await poll(
           () =>
-            spawnSync("podman", ["exec", name, "pg_isready", "-U", "postgres"], { stdio: "ignore" })
-              .status === 0,
+            spawnSync(
+              "podman",
+              ["exec", name, "pg_isready", "-h", "127.0.0.1", "-p", "5432", "-U", "postgres"],
+              { stdio: "ignore" },
+            ).status === 0,
         );
       };
       const startHasura = async (database) => {
@@ -373,6 +385,8 @@ export default {
           `HASURA_GRAPHQL_ADMIN_SECRET=${password}`,
           "-e",
           "HASURA_GRAPHQL_SERVER_PORT=18080",
+          "-e",
+          "HASURA_GRAPHQL_SERVER_HOST=127.0.0.1",
           hasuraImage,
           "graphql-engine",
           "serve",
@@ -391,6 +405,7 @@ export default {
         await startPg(cachePg, 15433);
         counters = {};
         const beforeCacheStartup = calls;
+        finalizedGeneration++;
         finalizedHeight = null;
         const upstreamEnv = [1, 137, 250, 8453, 42161, 80094, 4663].flatMap((id) => [
           "-e",
@@ -496,16 +511,24 @@ export default {
         const priorCalls = calls;
         const priorDiscoveryCalls = discoveryCalls;
         const started = performance.now();
+        const deadline = Date.now() + 300_000;
         if (reset) {
           await new Promise((resolve, reject) => {
             const resetClient = spawn(wrapper, ["src/start-envio.ts", "reset"], {
               cwd,
               env,
               stdio: ["ignore", log, log],
+              timeout: Math.max(1, deadline - Date.now()),
+              killSignal: "SIGKILL",
             });
-            resetClient.once("error", reject);
-            resetClient.once("exit", (code) =>
-              code === 0 ? resolve() : reject(Error("Manual reset client failed")),
+            let spawnError;
+            resetClient.once("error", (error) => {
+              spawnError = error;
+            });
+            resetClient.once("close", (code) =>
+              code === 0 && !spawnError
+                ? resolve()
+                : reject(spawnError ?? Error("Manual reset client failed")),
             );
           });
         } else {
@@ -529,7 +552,7 @@ export default {
           } catch {
             return false;
           }
-        }, 300000);
+        }, Math.max(0, deadline - Date.now()));
         const elapsedMs = performance.now() - started;
         const upstreamRequests = calls - priorCalls;
         const discoveryAndFinalityRequests = discoveryCalls - priorDiscoveryCalls;

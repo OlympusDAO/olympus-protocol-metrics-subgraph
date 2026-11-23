@@ -168,10 +168,19 @@ after migration succeeds. If migration fails, ingestion stays paused. Resolve
 the failure before retrying the reset. The RPC cache uses its own database
 and remains available across an indexer reset.
 
-The metrics API serves the current published manifest during the rebuild. The
-publisher skips until the indexer has complete eligible data and publishes the
-new manifest after uploading the regenerated shards. Keep the default Envio
-schema on Railway so every deployment uses the existing index database.
+A hard kill during stale-socket recovery can leave `reset.sock.recovery-lock`
+behind and block a replacement wrapper. Stop the wrapper and confirm no other
+wrapper is running before removing only that empty recovery-lock directory and
+restarting. Never remove a recovery lock while a wrapper is running.
+
+The metrics API serves the current published manifest during the rebuild. Before
+publication resumes after an explicit reset, set the publisher
+`INDEXER_DEPLOYMENT_ID` to a fresh value so it regenerates the full historical
+range. A reset on the same commit does not change that identity; retaining it
+would refresh only recent and unpublished months. The publisher waits for complete,
+fresh all-chain data and uploads the regenerated shards before switching the
+manifest. Keep the default Envio schema on Railway so every deployment uses the
+existing index database.
 
 ### RPC cache service
 

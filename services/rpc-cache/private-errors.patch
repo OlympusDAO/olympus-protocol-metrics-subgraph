@@ -2,11 +2,13 @@
 +++ b/erpc/http_server.go
 @@ -6,0 +7 @@
 +	"encoding/hex"
-@@ -1882,0 +1884,11 @@
+@@ -1882,0 +1884,13 @@
 +		if includeErrorDetails != nil && !*includeErrorDetails {
 +			message = "RPC request failed"
 +			lower := strings.ToLower(jre.Message)
-+			if strings.Contains(lower, "historical state") && strings.Contains(lower, "not available") {
++			if strings.TrimSpace(lower) == "internal error" {
++				message = "Internal error"
++			} else if strings.Contains(lower, "historical state") && strings.Contains(lower, "not available") {
 +				message = "historical state is not available"
 +			} else if jre.NormalizedCode() == common.JsonRpcErrorEvmReverted && strings.TrimSpace(lower) == "execution reverted" {
 +				// Only a genuinely bare EVM revert is an empty array-bounds signal.
@@ -14,7 +16,7 @@
 +				message = "execution reverted"
 +			}
 +		}
-@@ -1904 +1916,8 @@
+@@ -1904 +1918,8 @@
 -		if jre.Details["data"] != nil {
 +		if includeErrorDetails != nil && !*includeErrorDetails {
 +			// Keep ABI revert bytes, never provider-authored text or objects.
@@ -24,7 +26,7 @@
 +				}
 +			}
 +		} else if jre.Details["data"] != nil {
-@@ -1918,0 +1938,10 @@
+@@ -1918,0 +1940,10 @@
 +			Request: nq,
 +		}
 +	}

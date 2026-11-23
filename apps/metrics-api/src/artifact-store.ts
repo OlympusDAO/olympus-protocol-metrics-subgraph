@@ -93,7 +93,10 @@ export class S3ArtifactReader implements ArtifactReader {
         chunks.push(buffer);
       }
       try {
-        return schema.parse(JSON.parse(Buffer.concat(chunks, bytes).toString("utf8")));
+        const parsed: unknown = JSON.parse(Buffer.concat(chunks, bytes).toString("utf8"));
+        if (!schema.validate(parsed))
+          throw new ArtifactReadError("Invalid artifact JSON or runtime shape.");
+        return schema.parse(parsed);
       } catch {
         throw new ArtifactReadError("Invalid artifact JSON or runtime shape.");
       }

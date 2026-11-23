@@ -110,27 +110,31 @@ function imageIdentity(name, reference) {
 }
 async function scan(name, reference, advisory = false) {
   const identity = imageIdentity(name, reference);
-  await run("mise", [
-    ...trivyArguments,
-    "image",
-    "--scanners",
-    advisory ? "vuln" : "vuln,secret",
-    ...(!advisory ? ["--image-config-scanners", "secret"] : []),
-    "--input",
-    "",
-    "--format",
-    "table",
-    "--output",
-    "",
-    "--severity",
-    advisory ? "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL" : "MEDIUM,HIGH,CRITICAL",
-    `--ignore-unfixed=${!advisory}`,
-    "--ignorefile",
-    advisory ? "/dev/null" : ".trivyignore",
-    "--exit-code",
-    advisory ? "0" : "1",
-    reference,
-  ]);
+  await run(
+    "mise",
+    [
+      ...trivyArguments,
+      "image",
+      "--scanners",
+      advisory ? "vuln" : "vuln,secret",
+      ...(!advisory ? ["--image-config-scanners", "secret"] : []),
+      "--input",
+      "",
+      "--format",
+      "table",
+      "--output",
+      "",
+      "--severity",
+      advisory ? "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL" : "MEDIUM,HIGH,CRITICAL",
+      `--ignore-unfixed=${!advisory}`,
+      "--ignorefile",
+      advisory ? "/dev/null" : ".trivyignore",
+      "--exit-code",
+      advisory ? "0" : "1",
+      reference,
+    ],
+    { env: { DOCKER_HOST: process.env.DOCKER_CONTEXT ? undefined : process.env.DOCKER_HOST } },
+  );
   identity.scanStatus = advisory ? "advisory-provider/scanned" : "passed";
   identity.scanLog = report.steps.at(-1).log;
   report.scanner = JSON.parse(
