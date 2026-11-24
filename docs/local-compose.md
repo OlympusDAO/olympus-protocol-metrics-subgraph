@@ -219,7 +219,7 @@ pnpm run validate:images
 pnpm run test:integration
 ```
 
-The first command gates the five owned service images and their Dockerfiles
+The first command gates the six owned service images and their Dockerfiles
 using immutable image IDs and pinned Trivy. Railway PostgreSQL is optional
 provider-advisory coverage; local PostgreSQL and MinIO/MC fixtures are excluded
 from default scans. The second uses the built

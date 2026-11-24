@@ -234,6 +234,21 @@ export default defineRailway((ctx) => {
       ...routes,
     },
   });
+  const indexerMonitor = service("indexer-monitor", {
+    ...deployment,
+    build: build("indexer-monitor", ["/apps/indexer/src/monitor-indexer.mjs"]),
+    deploy: {
+      ...limits(),
+      restartPolicyType: "ON_FAILURE",
+      restartPolicyMaxRetries: 1,
+    },
+    env: {
+      INDEXER_METRICS_URL: `http://\${{indexer.RAILWAY_PRIVATE_DOMAIN}}:\${{indexer.PORT}}/metrics`,
+      DISCORD_WEBHOOK_URL: ctx.shared.DISCORD_WEBHOOK_URL,
+      MONITOR_NAME: `Metrics (${ctx.environment ?? "default"})`,
+      MONITOR_INTERVAL_SECONDS: preserve(),
+    },
+  });
   const hasura = service("hasura", {
     ...deployment,
     build: build("hasura", []),
@@ -280,6 +295,7 @@ export default defineRailway((ctx) => {
       importedVolume,
       bucket("bucket", { region: "sjc" }),
       indexer,
+      indexerMonitor,
       hasura,
       metricsPublisher,
       metricsApi,

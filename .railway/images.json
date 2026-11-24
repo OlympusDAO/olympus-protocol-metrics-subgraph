@@ -2,6 +2,7 @@
   "built": {
     "hasura": "olympus-protocol-metrics/hasura:local",
     "indexer": "olympus-protocol-metrics/indexer:local",
+    "indexer-monitor": "olympus-protocol-metrics/indexer-monitor:local",
     "metrics-api": "olympus-protocol-metrics/metrics-api:local",
     "metrics-publisher": "olympus-protocol-metrics/metrics-publisher:local",
     "rpc-cache": "localhost/olympus-metrics-rpc-cache:local"

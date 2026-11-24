@@ -25,7 +25,7 @@ const report = {
   imageFailures: [],
   providerImages: [],
   scanPolicy:
-    "Default: repository-owned application images/Dockerfiles only; fixable MEDIUM/HIGH/CRITICAL vulnerabilities fail except existing approved CVEs, and MEDIUM/HIGH/CRITICAL secrets fail. Configured Railway PostgreSQL is advisory-provider/not-run by default; optional provider scans report vulnerabilities without vulnerability-based failure. Scanner/registry errors fail. Local/historical fixtures excluded.",
+    "Default: owned application images and Dockerfiles. Trivy loads trivy.yaml to filter unfixed vulnerabilities. Fixable MEDIUM/HIGH/CRITICAL vulnerabilities and secrets at those severities fail. Approved CVE exceptions expire through .trivyignore. Configured Railway PostgreSQL is advisory-provider/not-run by default. Optional provider scans report vulnerabilities at all severities, including unfixed findings, without vulnerability-based failure. Scanner and registry errors fail. Local and historical fixtures are excluded.",
   ignorefile: ".trivyignore",
 };
 const trivyCache = process.env.TRIVY_CACHE_DIR;
@@ -126,7 +126,7 @@ async function scan(name, reference, advisory = false) {
       "",
       "--severity",
       advisory ? "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL" : "MEDIUM,HIGH,CRITICAL",
-      `--ignore-unfixed=${!advisory}`,
+      ...(advisory ? ["--ignore-unfixed=false"] : []),
       "--ignorefile",
       advisory ? "/dev/null" : ".trivyignore",
       "--exit-code",

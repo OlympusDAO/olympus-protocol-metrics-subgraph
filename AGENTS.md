@@ -64,6 +64,31 @@ publication approval. Before any PR operation, invoke `github-account`.
 Report performed checks, skips and blockers; never claim unrun checks passed.
 Ask before rewriting, discarding or publishing history or changing PR state.
 
+## Service environment variables
+
+Treat service environment variables as required unless the runbook explicitly
+marks them optional and states their default or behavior when absent.
+Validate required values at service startup before network or database requests.
+Exit nonzero on missing or invalid configuration. Log the variable name or a
+fixed diagnostic, never its value. Validate optional values when supplied.
+
+## Image Security Policy
+
+- Scan owned images with Trivy `vuln,secret` at `MEDIUM,HIGH,CRITICAL`.
+  The native default in `trivy.yaml` filters unfixed vulnerabilities.
+  Keep the default in that file. Fixable vulnerabilities and secrets at
+  those severities fail with exit code 1. Scanner errors fail. Do not add
+  status filters.
+- Each CVE exception requires explicit user approval. Record the affected
+  package and version, rationale, and approval in comments above the native
+  `.trivyignore` entry `CVE-… exp:YYYY-MM-DD`. Remove it when fixed. Trivy
+  enforces expiration.
+- Provider scans use `--scanners vuln` at all severities and
+  `--ignore-unfixed=false` to include unfixed findings. Findings are advisory
+  with `--exit-code 0`. Native execution errors fail. Default scans exclude
+  local and historical fixtures. Record exclusions and provider scans that
+  were not run separately from passed scans.
+
 ## Maintenance conventions
 
 - Configure Dependabot daily with `open-pull-requests-limit: 0`: security updates only, no routine version-update PRs.

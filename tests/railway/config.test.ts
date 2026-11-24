@@ -8,8 +8,8 @@ import defineInfrastructure from "../../.railway/railway";
 
 vi.mock("node:child_process", () => ({ execFileSync: vi.fn() }));
 
-async function graph() {
-  const ctx = createRailwayContext({ environment: "production" });
+async function graph(environment = "production") {
+  const ctx = createRailwayContext({ environment });
   const evaluated = await defineInfrastructure(ctx, () => {
     throw new Error("Unexpected project helper");
   });
@@ -29,7 +29,7 @@ async function graph() {
 }
 
 describe("Railway config-as-code", () => {
-  test("retains the eight imported resources and adds the private cache stack", async () => {
+  test("retains the imported resources and adds the private cache stack and monitor", async () => {
     const { addresses, get } = await graph();
     expect(addresses).toEqual([
       "bucket.bucket",
@@ -37,6 +37,7 @@ describe("Railway config-as-code", () => {
       "group.PostgreSQL",
       "service.hasura",
       "service.indexer",
+      "service.indexer-monitor",
       "service.metrics-api",
       "service.metrics-publisher",
       "service.rpc-cache",
@@ -92,6 +93,7 @@ describe("Railway config-as-code", () => {
     for (const name of [
       "hasura",
       "indexer",
+      "indexer-monitor",
       "metrics-api",
       "metrics-publisher",
       "rpc-cache",
@@ -167,6 +169,35 @@ describe("Railway config-as-code", () => {
     }
   });
 
+  test("binds the private monitor to its dedicated image and only its own inputs", async () => {
+    const { get } = await graph("staging");
+    const monitor = get("service.indexer-monitor");
+    expect(monitor).toMatchObject({
+      build: {
+        dockerfilePath: "Dockerfile-indexer-monitor",
+        watchPatterns: ["/Dockerfile-indexer-monitor", "/apps/indexer/src/monitor-indexer.mjs"],
+      },
+      deploy: {
+        restartPolicyType: "ON_FAILURE",
+        restartPolicyMaxRetries: 1,
+        multiRegionConfig: { "us-west2": { numReplicas: 1 } },
+        limitOverride: { containers: { cpu: 1, memoryBytes: 1000000000 } },
+      },
+    });
+    expect(monitor).toHaveProperty("variables", {
+      DISCORD_WEBHOOK_URL: { type: "sharedReference", name: "DISCORD_WEBHOOK_URL" },
+      INDEXER_METRICS_URL: {
+        type: "literal",
+        value: `http://\${{indexer.RAILWAY_PRIVATE_DOMAIN}}:\${{indexer.PORT}}/metrics`,
+      },
+      MONITOR_INTERVAL_SECONDS: { type: "preserve" },
+      MONITOR_NAME: { type: "literal", value: "Metrics (staging)" },
+    });
+    expect(monitor).not.toHaveProperty("deploy.startCommand");
+    expect(monitor).not.toHaveProperty("deploy.healthcheckPath");
+    expect(monitor).not.toHaveProperty("volumeAttachments");
+  });
+
   test("serialized SDK output keeps every non-API service private with TCP removals", async () => {
     const { get } = await graph();
     const ports = {
@@ -174,6 +205,7 @@ describe("Railway config-as-code", () => {
       "service.rpc-cache-postgres": "5432",
       "service.rpc-cache": "4000",
       "service.indexer": "9898",
+      "service.indexer-monitor": undefined,
       "service.hasura": "8080",
       "service.metrics-publisher": undefined,
     } as const;
@@ -274,6 +306,7 @@ describe("Railway config-as-code", () => {
       "rpc-cache",
       "hasura",
       "indexer",
+      "indexer-monitor",
       "metrics-publisher",
     ]) {
       for (const kind of ["serviceDomains", "customDomains"]) {
@@ -297,7 +330,7 @@ describe("Railway config-as-code", () => {
   });
 
   test("SDK callback rejects drift, preserves resources and emits imported TCP removals", async () => {
-    const nodes = ["Postgres", "indexer"].map((serviceName) => ({
+    const nodes = ["Postgres", "indexer", "indexer-monitor"].map((serviceName) => ({
       serviceId: serviceName,
       serviceName,
       domains: { serviceDomains: [] as { domain: string }[], customDomains: [] },
@@ -309,6 +342,7 @@ describe("Railway config-as-code", () => {
             services: {
               Postgres: { networking: { tcpProxies: { 15432: {} } } },
               indexer: { networking: { tcpProxies: { 9000: {} } } },
+              "indexer-monitor": { networking: { tcpProxies: { 9001: {} } } },
             },
           },
           serviceInstances: {
@@ -362,6 +396,10 @@ describe("Railway config-as-code", () => {
           .tcpProxies,
       ).toEqual({ 9898: null, 9000: null });
       expect(
+        definition.resources.find((r: ResourceNode) => r.address === "service.indexer-monitor")
+          .networking.tcpProxies,
+      ).toEqual({ 9001: null });
+      expect(
         definition.resources.find((r: ResourceNode) => r.address === "volume.postgres-volume-ytRO")
           .config.sizeMB,
       ).toBe(75000);
@@ -385,7 +423,7 @@ describe("Railway config-as-code", () => {
         existing.resources.find((r: ResourceNode) => r.address === "service.rpc-cache-postgres")
           .variables.POSTGRES_PASSWORD,
       ).toEqual({ type: "preserve" });
-      nodes[2].serviceName = "";
+      nodes[3].serviceName = "";
       execute.mockReturnValue(JSON.stringify(response));
       await expect(Promise.resolve().then(evaluate)).rejects.toThrow(
         "Cannot establish safe Railway",
@@ -434,6 +472,19 @@ describe("Railway config-as-code", () => {
     );
   });
 
+  test("packages the monitor script without JavaScript dependencies in the Alpine image", () => {
+    const dockerfile = readFileSync("Dockerfile-indexer-monitor", "utf8");
+    const [base, ...instructions] = dockerfile.trim().split(/\r?\n/);
+    expect(base).toMatch(/^FROM node:\d+\.\d+\.\d+-alpine@sha256:[a-f0-9]{64}$/);
+    expect(instructions).toContain("WORKDIR /app");
+    expect(dockerfile).toContain("RUN apk upgrade --no-cache libcrypto3 libssl3 zlib");
+    expect(dockerfile).toContain("rm -rf /usr/local/lib/node_modules /opt/yarn*");
+    expect(instructions.filter((line) => line.startsWith("COPY "))).toEqual([
+      "COPY --chown=node:node apps/indexer/src/monitor-indexer.mjs ./monitor-indexer.mjs",
+    ]);
+    expect(instructions.slice(-2)).toEqual(["USER node", 'CMD ["node", "monitor-indexer.mjs"]']);
+  });
+
   test("deploys production closures without coupling public artifact services to codegen", () => {
     for (const name of ["indexer", "metrics-api", "metrics-publisher"]) {
       const content = readFileSync(`Dockerfile-${name}`, "utf8");
@@ -465,6 +516,7 @@ describe("Railway config-as-code", () => {
   test("CI exposes source and image phases while retaining local aggregates", () => {
     const workflow = readFileSync(".github/workflows/security-scan.yml", "utf8");
     expect(workflow).toContain("trivy image --scanners vuln,secret");
+    expect(workflow).not.toContain("--ignore-unfixed");
     expect(workflow).toContain("trivy config");
     expect(workflow).toContain('--file-patterns "dockerfile:Dockerfile-.*"');
     expect(workflow).toContain("fail-fast: false");
@@ -483,6 +535,8 @@ describe("Railway config-as-code", () => {
       expect(scripts[obsolete]).toBeUndefined();
     expect(scripts["docker:scan:provider"]).toBe("node scripts/validate.mjs provider");
     expect(scripts["scan:images:provider"]).toBeUndefined();
+    expect(scripts["docker:scan"]).not.toContain("--ignore-unfixed");
+    expect(readFileSync("trivy.yaml", "utf8")).toBe("vulnerability:\n  ignore-unfixed: true\n");
     expect(scripts["docker:scan"]).not.toContain("--scanners");
     expect(scripts["railway:plan"]).toBe("railway config plan --out railway-plan.json");
     expect(scripts["railway:apply"]).toBe(
@@ -493,7 +547,15 @@ describe("Railway config-as-code", () => {
       node: ">=24.22.3 <25",
       pnpm: ">=11.28.13 <12",
     });
-    for (const name of Object.keys(images.built))
-      expect(scripts[`docker:build:${name}`]).toBeDefined();
+    for (const [name, image] of Object.entries(images.built)) {
+      expect(scripts[`docker:build:${name}`]).toBe(
+        `docker build -f Dockerfile-${name} -t ${image} .`,
+      );
+    }
+    const monitorImage = images.built["indexer-monitor"];
+    expect(workflow).toContain(
+      `- app: indexer-monitor\n            name: Indexer monitor\n            image: ${monitorImage}\n`,
+    );
+    expect(workflow).toContain("pnpm run docker:build:indexer-monitor\n");
   });
 });

@@ -69,14 +69,21 @@ cache; `TRIVY_CACHE_DIR` may select an existing shared cache without duplication
 Native scanner table output stays in the step log; no raw ImageConfig, environment
 or image-history JSON artifact is retained.
 
-Owned image scans use native Trivy table output/exit status: fixable
-MEDIUM/HIGH/CRITICAL vulnerabilities and MEDIUM/HIGH/CRITICAL secrets fail,
-with the existing picomatch exception in `.trivyignore`. Optional provider
-vulnerability scans show all severities/unfixed findings
-without an ignorefile or vulnerability-based failure; scanner errors still fail.
-The matching pnpm advisory exception is in
-`pnpm-workspace.yaml`. A successful audit or policy gate does not mean zero
-vulnerabilities. Unavailable image pulls fail validation; they are not skipped.
+Owned image scans use native Trivy table output and exit status.
+Trivy loads `trivy.yaml` from the repository root and filters unfixed
+vulnerabilities by default. Fixable MEDIUM/HIGH/CRITICAL vulnerabilities
+and secrets at those severities fail the gate.
+Each approved CVE exception has its own `.trivyignore` entry in the form
+`CVE-… exp:YYYY-MM-DD`, with comments recording the affected package and
+version, rationale, and explicit user approval. Remove the entry when fixed.
+Trivy enforces expiration. The separate pnpm audit exception is in
+`pnpm-workspace.yaml`.
+
+Optional provider scans report vulnerabilities at every severity and use
+`--ignore-unfixed=false` to include unfixed findings. They use `--exit-code 0`
+and no ignorefile entries. Scanner errors and failed image pulls fail
+validation. Reports distinguish local and historical exclusions and provider
+scans that were not run from passed scans.
 
 CI has five independent source matrix checks: Runtime versions, Format and lint,
 Typecheck, Build and Tests. Each has a 20-minute timeout. Typecheck and Tests run
@@ -87,20 +94,20 @@ job before checkout or token use. Non-PR runs use native `pnpm audit`, including
 the Monday 00:00 UTC schedule shared by all three protocol repositories.
 Local source validation still includes the audit.
 
-Image CI has five independent matrix cells with separate native build, image
+Image CI has six independent matrix cells with separate native build, image
 scan and Dockerfile-check steps and a 45-minute timeout. PRs run it directly;
 non-PR source CI calls the reusable workflow, avoiding duplicate push builds.
-Superseded PR source/image runs are cancelled independently. The RPC cache + integration cell builds four
+Superseded PR source/image runs are cancelled independently. The RPC cache + integration cell builds five
 companions using the existing build scripts, then runs the full integration
-suite even after scan failures if all its builds succeeded. This is nine builds
-total: four inexpensive companion duplicates, with no second eRPC build or image
+suite even after scan failures if all its builds succeeded. This is eleven builds
+total: five inexpensive companion duplicates, with no second eRPC build or image
 transfer. Integration prepares only its required fixture images. Local aggregates
 remain available.
 `validate:all` uses the same owned-app selection and excludes the optional provider
 group. No aggregate scans local fixtures by default. The explicit
-`docker:scan <image>` convenience command uses pinned Trivy's native `vuln,secret`
-default; callers can select `--scanners`. It scans an operator-selected image,
-not inventory-driven default selection.
+`docker:scan <image>` convenience command scans an operator-selected image with
+pinned Trivy's native `vuln,secret` default and the filtering from
+`trivy.yaml`. Callers can select `--scanners`.
 There is no Metrics handover command; that rehearsal belongs to protocol-indexer.
 
 Before committing, run source validation and the image/integration groups for

@@ -136,7 +136,9 @@ test.each([
           ["--severity", provider ? "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL" : "MEDIUM,HIGH,CRITICAL"],
         ])
           expect(args[args.indexOf(flag) + 1]).toBe(value);
-        expect(args).toContain(`--ignore-unfixed=${!provider}`);
+        expect(args.filter((arg) => arg.startsWith("--ignore-unfixed"))).toEqual(
+          provider ? ["--ignore-unfixed=false"] : [],
+        );
         expect(args.includes("--image-config-scanners")).toBe(!provider);
         if (!provider) expect(args[args.indexOf("--image-config-scanners") + 1]).toBe("secret");
       }

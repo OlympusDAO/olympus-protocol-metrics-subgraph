@@ -22,6 +22,9 @@ jobs:
           - app: indexer
             name: Indexer
             image: olympus-protocol-metrics/indexer:local
+          - app: indexer-monitor
+            name: Indexer monitor
+            image: olympus-protocol-metrics/indexer-monitor:local
           - app: hasura
             name: Hasura
             image: olympus-protocol-metrics/hasura:local
@@ -49,20 +52,21 @@ jobs:
         run: |
           mise exec --locked trivy -- trivy image --scanners vuln,secret \
             --input "" --format table --output "" --severity MEDIUM,HIGH,CRITICAL \
-            --ignore-unfixed=true --ignorefile .trivyignore --exit-code 1 "${{ matrix.image }}"
+            --ignorefile .trivyignore --exit-code 1 "${{ matrix.image }}"
       - name: Check Dockerfile
         if: ${{ !cancelled() && steps.bootstrap.outcome == 'success' }}
         run: |
           mise exec --locked trivy -- trivy config --format table --output "" \
             --file-patterns "dockerfile:Dockerfile-.*" --severity MEDIUM,HIGH,CRITICAL \
             --exit-code 1 "Dockerfile-${{ matrix.app }}"
-      # Keep the expensive eRPC build in one cell. Integration needs four companion
-      # builds here, duplicated from their isolated matrix cells: nine builds total.
+      # Keep the expensive eRPC build in one cell. Integration needs five companion
+      # builds here, duplicated from their isolated matrix cells: eleven builds total.
       - name: Build integration companions
         id: companions
         if: ${{ !cancelled() && matrix.app == 'rpc-cache' && steps.build.outcome == 'success' }}
         run: |
           pnpm run docker:build:indexer
+          pnpm run docker:build:indexer-monitor
           pnpm run docker:build:hasura
           pnpm run docker:build:metrics-api
           pnpm run docker:build:metrics-publisher

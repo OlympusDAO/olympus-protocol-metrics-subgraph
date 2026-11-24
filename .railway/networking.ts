@@ -10,6 +10,7 @@ const managedPorts: Record<string, number[]> = {
   "rpc-cache": [4000],
   hasura: [8080],
   indexer: [9898],
+  "indexer-monitor": [],
   "metrics-publisher": [],
   "metrics-api": [8080],
 };

@@ -124,6 +124,6 @@ Main TypeScript is exactly 7.0.2 for build/typecheck and Envio's native handler-
 
 The pnpm policy uses preferred `audit.ignore`. pnpm 11.28.13 still recognizes
 the deprecated `auditConfig.ignoreGhsas`, but the former takes precedence.
-Existing approved picomatch exceptions and range-scoped overrides remain.
+The pnpm audit ignore for picomatch and the range-scoped overrides remain.
 The explicitly selected Envio 3.18.1 and its five exact platform packages alone
 have release-age exceptions; the global 10080-minute age gate remains enabled.

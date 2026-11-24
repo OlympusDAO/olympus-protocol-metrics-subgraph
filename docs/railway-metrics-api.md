@@ -15,6 +15,7 @@ review and live approval. See the
 | `metrics-publisher` | No | Scheduled artifact generation and upload. |
 | `hasura` | No | Private GraphQL access for the publisher only. |
 | `indexer` | No | Envio indexer process and Envio `/healthz` liveness probe. |
+| `indexer-monitor` | No | Checks native Envio metrics reachability and sends Discord alerts. |
 | Postgres | No | Envio and Hasura database. |
 | `rpc-cache` | No | eRPC archive provider routing and finalized-read caching. |
 | `rpc-cache-postgres` | No | Persistent cache database on a dedicated volume. |
@@ -148,6 +149,34 @@ comma-separated fallback URL environment variables for event ingestion.
 Envio's RPC schema supports batch/backoff/timeout/polling fields in
 `config.yaml`; it does not consume `requests_per_second` environment variables
 for event ingestion.
+
+### Indexer monitor service
+
+Railway starts `indexer-monitor` from a dedicated Alpine-based Node image. The
+service watches its Dockerfile and monitor script. The monitor needs no
+inbound port or indexer credentials. IaC sets `INDEXER_METRICS_URL` to
+`http://${{indexer.RAILWAY_PRIVATE_DOMAIN}}:${{indexer.PORT}}/metrics` and labels
+messages with Metrics and the Railway environment name.
+
+Set the environment's shared `DISCORD_WEBHOOK_URL` to the intended Discord
+webhook before deploying the monitor. Both URLs are required and must use HTTP
+or HTTPS without embedded usernames or passwords. Startup validates them before
+any requests. Missing or invalid values cause exit status 1 without logging their
+values. The optional `MONITOR_INTERVAL_SECONDS` defaults to 60 and accepts whole
+numbers from 1 to 2,147,483. The optional `MONITOR_NAME` defaults to `Indexer`;
+IaC supplies the project and environment label.
+
+Each probe has a five-second timeout. Two consecutive failed probes trigger one
+outage alert per incident in the running monitor process.
+The next HTTP 2xx response sends one recovery alert. Active means the native
+`/metrics` endpoint is reachable. A backfilling indexer can be active, and
+reachability alone provides no evidence of indexing progress or sync. The
+monitor never resets the indexer. If the monitor is down or the webhook is
+unavailable, Discord can receive no alert. Invalid configuration exits with a
+nonzero status. Failed delivery, including a five-second timeout, logs a fixed
+message and retries on the next polling interval while the alert remains
+relevant. Successful deliveries are not repeated. A lost webhook response can
+cause a duplicate message on retry.
 
 ### Manual indexer reset
 

@@ -1,3 +1,1 @@
-# picomatch ReDoS: no published fix; remove when a patched release is available.
-# https://github.com/advisories/GHSA-fc5q-39xc-vjpf
-CVE-2026-112366
+# See AGENTS.md for CVE exception approval, documentation, and expiration.
