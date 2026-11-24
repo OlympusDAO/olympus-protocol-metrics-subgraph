@@ -46,21 +46,28 @@ async function endpoints(
   context,
   metrics,
   deliver = (_request, response) => response.writeHead(204).end(),
+  healthcheck = (response) => response.writeHead(200).end(),
 ) {
+  const requests = [];
   const probes = [];
   const messages = [];
   const metricsHost = await listen(context, (request, response) => {
+    requests.push([request.url, request.method]);
+    if (request.url === "/healthz") {
+      healthcheck(response);
+      return;
+    }
+    if (request.url !== "/metrics") {
+      response.writeHead(503).end("catching up");
+      return;
+    }
     probes.push({
       path: request.url,
       method: request.method,
       time: performance.now(),
       messages: messages.length,
     });
-    if (request.url === "/metrics") {
-      metrics(response, probes.length);
-      return;
-    }
-    response.writeHead(503).end("catching up");
+    metrics(response, probes.length);
   });
   const webhookHost = await listen(context, (request, response) => {
     const body = [];
@@ -76,6 +83,7 @@ async function endpoints(
     });
   });
   return {
+    requests,
     probes,
     messages,
     env: {
@@ -104,7 +112,7 @@ test("invalid or missing configuration exits before any HTTP requests", async (c
       stderr: "Invalid indexer monitor configuration.\n",
     });
   }
-  expect(fixture.probes).toEqual([]);
+  expect(fixture.requests).toEqual([]);
   expect(fixture.messages).toEqual([]);
 });
 
@@ -116,8 +124,20 @@ test("CLI alerts on the second consecutive failure and recovers once during back
   const { child, result } = start(context, { ...fixture.env, MONITOR_NAME: "Metrics (staging)" });
   await expect.poll(() => fixture.probes.length, { timeout: 11_000 }).toBe(statuses.length);
   child.kill("SIGTERM");
-  await expect(result).resolves.toEqual({ code: 0, signal: null, stdout: "", stderr: "" });
+  await expect(result).resolves.toEqual({
+    code: 0,
+    signal: null,
+    stdout:
+      "Indexer monitor started.\nIndexer monitor reported indexer unavailable.\nIndexer monitor reported indexer available again.\nIndexer monitor stopped.\n",
+    stderr: "",
+  });
 
+  expect(fixture.requests.length).toBeGreaterThan(fixture.probes.length);
+  expect(
+    fixture.requests.every(
+      ([path, method]) => ["/metrics", "/healthz"].includes(path) && method === "GET",
+    ),
+  ).toBe(true);
   expect(fixture.probes.map(({ path, method }) => [path, method])).toEqual(
     statuses.map(() => ["/metrics", "GET"]),
   );
@@ -129,13 +149,13 @@ test("CLI alerts on the second consecutive failure and recovers once during back
       "POST",
       "application/json",
       "/webhook?secret=fixture",
-      { content: "Metrics (staging): metrics are unreachable." },
+      { content: "Metrics (staging): indexer is unavailable." },
     ],
     [
       "POST",
       "application/json",
       "/webhook?secret=fixture",
-      { content: "Metrics (staging): metrics are reachable again." },
+      { content: "Metrics (staging): indexer is available again." },
     ],
   ]);
 }, 14_000);
@@ -166,34 +186,82 @@ for (const mode of ["HTTP error", "timeout"]) {
     await expect(result).resolves.toEqual({
       code: 0,
       signal: null,
-      stdout: "",
+      stdout:
+        "Indexer monitor started.\nIndexer monitor reported indexer unavailable.\nIndexer monitor reported indexer available again.\nIndexer monitor stopped.\n",
       stderr: "Indexer monitor webhook delivery failed.\n".repeat(2),
     });
     expect(fixture.probes.map(({ messages }) => messages)).toEqual([0, 0, 1, 2, 2, 3, 3, 4]);
     expect(fixture.messages.map(({ body }) => JSON.parse(body))).toEqual(
-      ["unreachable", "unreachable", "reachable again", "reachable again"].map((status) => ({
-        content: `Indexer: metrics are ${status}.`,
+      ["unavailable", "unavailable", "available again", "available again"].map((status) => ({
+        content: `Indexer: indexer is ${status}.`,
       })),
     );
     if (mode === "timeout") expect(deliveryStopped - deliveryStarted).toBeGreaterThanOrEqual(4_500);
   }, 17_000);
 }
 
-test("a hung probe times out and SIGINT aborts the next probe without an alert", async (context) => {
-  let disconnected = 0;
-  const fixture = await endpoints(context, (response) => {
-    response.on("close", () => {
-      disconnected++;
-    });
-  });
+test("healthcheck rejection alerts even while metrics stay available", async (context) => {
+  const statuses = [200, 401, 503, 503, 200, 200];
+  let healthchecks = 0;
+  const fixture = await endpoints(
+    context,
+    (response) => response.writeHead(200).end(),
+    undefined,
+    (response) => response.writeHead(statuses[healthchecks++] ?? 200).end("fixture-secret body"),
+  );
   const { child, result } = start(context, fixture.env);
-  await expect.poll(() => fixture.probes.length, { timeout: 9_000 }).toBe(2);
-  const elapsed = fixture.probes[1].time - fixture.probes[0].time;
-  expect(elapsed).toBeGreaterThanOrEqual(5_500);
-  expect(disconnected).toBe(1);
+  await expect
+    .poll(() => Math.min(healthchecks, fixture.probes.length), { timeout: 9_000 })
+    .toBe(statuses.length);
+  child.kill("SIGTERM");
+  await expect(result).resolves.toEqual({
+    code: 0,
+    signal: null,
+    stdout:
+      "Indexer monitor started.\nIndexer monitor reported indexer unavailable.\nIndexer monitor reported indexer available again.\nIndexer monitor stopped.\n",
+    stderr: "",
+  });
+  expect(fixture.messages.map(({ body }) => JSON.parse(body))).toEqual([
+    { content: "Indexer: indexer is unavailable." },
+    { content: "Indexer: indexer is available again." },
+  ]);
+}, 11_000);
 
-  child.kill("SIGINT");
-  await expect(result).resolves.toEqual({ code: 0, signal: null, stdout: "", stderr: "" });
-  await expect.poll(() => disconnected).toBe(2);
-  expect(fixture.messages).toEqual([]);
-}, 12_000);
+for (const target of ["metrics", "healthz"]) {
+  test(`a hung ${target} probe times out and SIGINT aborts the next probe without an alert`, async (context) => {
+    let disconnected = 0;
+    const hang = (response) =>
+      response.on("close", () => {
+        disconnected++;
+      });
+    const fixture = await endpoints(
+      context,
+      target === "metrics" ? hang : (response) => response.writeHead(200).end(),
+      undefined,
+      target === "healthz" ? hang : undefined,
+    );
+    const { child, result } = start(context, fixture.env);
+    await expect
+      .poll(
+        () =>
+          Math.min(
+            fixture.probes.length,
+            fixture.requests.filter(([path]) => path === `/${target}`).length,
+          ),
+        { timeout: 9_000 },
+      )
+      .toBe(2);
+    const elapsed = fixture.probes[1].time - fixture.probes[0].time;
+    expect(elapsed).toBeGreaterThanOrEqual(5_500);
+    expect(disconnected).toBe(1);
+    child.kill("SIGINT");
+    await expect(result).resolves.toEqual({
+      code: 0,
+      signal: null,
+      stdout: "Indexer monitor started.\nIndexer monitor stopped.\n",
+      stderr: "",
+    });
+    await expect.poll(() => disconnected).toBe(2);
+    expect(fixture.messages).toEqual([]);
+  }, 12_000);
+}

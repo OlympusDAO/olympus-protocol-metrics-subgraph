@@ -52,36 +52,42 @@ async function main() {
   }
 
   const { metricsUrl, webhookUrl, name, intervalSeconds } = settings;
+  const healthUrl = new URL("/healthz", metricsUrl);
   const shutdown = new AbortController();
   const stop = () => shutdown.abort();
   process.on("SIGINT", stop);
   process.on("SIGTERM", stop);
 
+  console.info("Indexer monitor started.");
   const { signal } = shutdown;
   let failures = 0;
   let alertedDown = false;
   while (!signal.aborted) {
-    const healthy = await requestSucceeded(metricsUrl, signal);
+    const healthy = (
+      await Promise.all([requestSucceeded(metricsUrl, signal), requestSucceeded(healthUrl, signal)])
+    ).every(Boolean);
     if (signal.aborted) break;
 
     failures = healthy ? 0 : Math.min(failures + 1, failureThreshold);
     const isDown = failures === failureThreshold;
     if ((isDown && !alertedDown) || (healthy && alertedDown)) {
-      const status = isDown ? "unreachable" : "reachable again";
+      const status = isDown ? "unavailable" : "available again";
       const delivered = await requestSucceeded(webhookUrl, signal, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ content: `${name}: metrics are ${status}.` }),
+        body: JSON.stringify({ content: `${name}: indexer is ${status}.` }),
       });
       if (signal.aborted) break;
       if (!delivered) {
         console.error("Indexer monitor webhook delivery failed.");
       } else {
         alertedDown = isDown;
+        console.info(`Indexer monitor reported indexer ${status}.`);
       }
     }
     await setTimeout(intervalSeconds * 1_000, undefined, { signal }).catch(() => {});
   }
+  console.info("Indexer monitor stopped.");
 }
 
 await main();

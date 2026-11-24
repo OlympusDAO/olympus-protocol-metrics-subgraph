@@ -154,7 +154,10 @@ for event ingestion.
 
 Railway starts `indexer-monitor` from a dedicated Alpine-based Node image. The
 service watches its Dockerfile and monitor script. The monitor needs no
-inbound port or indexer credentials. IaC sets `INDEXER_METRICS_URL` to
+inbound port or indexer credentials. It probes `/metrics` and `/healthz` on the
+same origin. Both must return HTTP 2xx. It ignores `/ready`, so healthy backfill
+is allowed. It does not detect stalled ingestion while HTTP still responds.
+IaC sets `INDEXER_METRICS_URL` to
 `http://${{indexer.RAILWAY_PRIVATE_DOMAIN}}:${{indexer.PORT}}/metrics` and labels
 messages with Metrics and the Railway environment name.
 
@@ -166,10 +169,13 @@ values. The optional `MONITOR_INTERVAL_SECONDS` defaults to 60 and accepts whole
 numbers from 1 to 2,147,483. The optional `MONITOR_NAME` defaults to `Indexer`;
 IaC supplies the project and environment label.
 
+The monitor logs startup, shutdown and successful outage/recovery notifications.
+Logs omit URLs and webhook values.
+
 Each probe has a five-second timeout. Two consecutive failed probes trigger one
 outage alert per incident in the running monitor process.
-The next HTTP 2xx response sends one recovery alert. Active means the native
-`/metrics` endpoint is reachable. A backfilling indexer can be active, and
+The next poll with both endpoints healthy sends one recovery alert. Active
+means both liveness endpoints respond successfully. A backfilling indexer can be active, and
 reachability alone provides no evidence of indexing progress or sync. The
 monitor never resets the indexer. If the monitor is down or the webhook is
 unavailable, Discord can receive no alert. Invalid configuration exits with a

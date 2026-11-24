@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { createRailwayContext, type ResourceNode } from "railway/iac";
 import { describe, expect, test, vi } from "vitest";
 import images from "../../.railway/images.json";
@@ -7,6 +8,10 @@ import { currentExposure } from "../../.railway/networking";
 import defineInfrastructure from "../../.railway/railway";
 
 vi.mock("node:child_process", () => ({ execFileSync: vi.fn() }));
+
+const { parse } = createRequire(new URL("../../apps/indexer/package.json", import.meta.url))(
+  "yaml",
+);
 
 async function graph(environment = "production") {
   const ctx = createRailwayContext({ environment });
@@ -335,6 +340,8 @@ describe("Railway config-as-code", () => {
       serviceName,
       domains: { serviceDomains: [] as { domain: string }[], customDomains: [] },
     }));
+    const indexerNode = nodes.find((node) => node.serviceName === "indexer");
+    if (!indexerNode) throw new Error("Missing indexer fixture");
     const response = {
       data: {
         environment: {
@@ -369,7 +376,7 @@ describe("Railway config-as-code", () => {
         },
       );
     try {
-      nodes[1].domains.serviceDomains = [{ domain: "unexpected.example" }];
+      indexerNode.domains.serviceDomains = [{ domain: "unexpected.example" }];
       execute.mockReturnValue(JSON.stringify(response));
       await expect(Promise.resolve().then(evaluate)).rejects.toThrow(
         "Cannot establish safe Railway",
@@ -381,7 +388,7 @@ describe("Railway config-as-code", () => {
       const malformed = Promise.resolve().then(evaluate);
       await expect(malformed).rejects.toThrow("Cannot establish safe Railway");
       await expect(malformed).rejects.not.toThrow("fixture-sensitive-provider-response");
-      nodes[1].domains.serviceDomains = [];
+      indexerNode.domains.serviceDomains = [];
       execute.mockReturnValue(JSON.stringify(response));
       const definition = JSON.parse(JSON.stringify(await evaluate()));
       expect(
@@ -410,11 +417,12 @@ describe("Railway config-as-code", () => {
         type: "raw",
         value: { defaultValue: `\${{ secret(64, "0123456789abcdef") }}` },
       });
-      nodes.push({
+      const cacheDatabaseNode = {
         serviceId: "cache-db",
         serviceName: "rpc-cache-postgres",
         domains: { serviceDomains: [], customDomains: [] },
-      });
+      };
+      nodes.push(cacheDatabaseNode);
       Object.assign(response.data.environment.config.services, { "cache-db": {} });
       response.data.environment.serviceInstances.edges = nodes.map((node) => ({ node }));
       execute.mockReturnValue(JSON.stringify(response));
@@ -423,7 +431,7 @@ describe("Railway config-as-code", () => {
         existing.resources.find((r: ResourceNode) => r.address === "service.rpc-cache-postgres")
           .variables.POSTGRES_PASSWORD,
       ).toEqual({ type: "preserve" });
-      nodes[3].serviceName = "";
+      cacheDatabaseNode.serviceName = "";
       execute.mockReturnValue(JSON.stringify(response));
       await expect(Promise.resolve().then(evaluate)).rejects.toThrow(
         "Cannot establish safe Railway",
@@ -536,7 +544,7 @@ describe("Railway config-as-code", () => {
     expect(scripts["docker:scan:provider"]).toBe("node scripts/validate.mjs provider");
     expect(scripts["scan:images:provider"]).toBeUndefined();
     expect(scripts["docker:scan"]).not.toContain("--ignore-unfixed");
-    expect(readFileSync("trivy.yaml", "utf8")).toBe("vulnerability:\n  ignore-unfixed: true\n");
+    expect(parse(readFileSync("trivy.yaml", "utf8")).vulnerability["ignore-unfixed"]).toBe(true);
     expect(scripts["docker:scan"]).not.toContain("--scanners");
     expect(scripts["railway:plan"]).toBe("railway config plan --out railway-plan.json");
     expect(scripts["railway:apply"]).toBe(
@@ -553,9 +561,13 @@ describe("Railway config-as-code", () => {
       );
     }
     const monitorImage = images.built["indexer-monitor"];
-    expect(workflow).toContain(
-      `- app: indexer-monitor\n            name: Indexer monitor\n            image: ${monitorImage}\n`,
+    const imageJob = parse(workflow).jobs.images;
+    expect(imageJob.strategy.matrix.include).toContainEqual(
+      expect.objectContaining({ app: "indexer-monitor", image: monitorImage }),
     );
-    expect(workflow).toContain("pnpm run docker:build:indexer-monitor\n");
+    const companions = imageJob.steps.find((step: { id?: string }) => step.id === "companions");
+    expect(companions.run.split(/\r?\n/).map((line: string) => line.trim())).toContain(
+      "pnpm run docker:build:indexer-monitor",
+    );
   });
 });
