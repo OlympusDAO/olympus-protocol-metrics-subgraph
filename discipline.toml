@@ -1,0 +1,56 @@
+# Opt-in static trial only; existing lint, security and privacy checks remain authoritative.
+[meta]
+version = 1
+name = "metrics-subgraph-trial"
+
+[directives]
+sources = []
+
+[gates]
+agent-scratch = { enabled = false }
+agents-md = { enabled = false }
+archive-contents = { enabled = false }
+assertion-reduction = { enabled = true, severity = "warning" }
+bench-regression = { enabled = false }
+build-hooks = { enabled = false }
+ci-integrity = { enabled = false }
+ci-skip-set = { enabled = false }
+citation-anchors = { enabled = false }
+citation-metadata = { enabled = false }
+claim-labels = { enabled = false }
+command = { enabled = false }
+commit-provenance = { enabled = false }
+companion-edit = { enabled = false }
+config-integrity = { enabled = false }
+deletion-rationale = { enabled = false }
+dependency-delta = { enabled = false }
+error-swallowing = { enabled = false }
+gate-command-lint = { enabled = false }
+golden-output = { enabled = false }
+harness-tampering = { enabled = false }
+ignored-tests = { enabled = false }
+instruction-smuggling = { enabled = false }
+issue-link = { enabled = false }
+manifest-sync = { enabled = false }
+mechanism-sections = { enabled = false }
+miri = { enabled = false }
+msrv = { enabled = false }
+pii = { enabled = false }
+pr-checklist = { enabled = false }
+provenance-tags = { enabled = false }
+ratified-paths = { enabled = false }
+review-threads = { enabled = false }
+sandbox-config = { enabled = false }
+sanitizers = { enabled = false }
+scope-confinement = { enabled = false }
+shell-secrets = { enabled = false }
+stub-bodies = { enabled = false }
+suppression-delta = { enabled = false }
+test-budget = { enabled = false }
+test-floor = { enabled = false }
+time-estimates = { enabled = false }
+toolchain-config = { enabled = false }
+unsafe-budget = { enabled = false }
+unsafe-safety-comment = { enabled = false }
+vacuous-tests = { enabled = true, severity = "warning" }
+version-lockstep = { enabled = false }

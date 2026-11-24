@@ -17,6 +17,7 @@ if (args[0] === "worker") {
   setInterval(() => {}, 1000);
 } else if (args[0] === "start") {
   log(`start ${args.slice(1).join(" ")}`);
+  if (existsSync("refuse")) process.exit(2);
   if (!existsSync("bounded")) {
     const worker = spawn(process.execPath, [fileURLToPath(import.meta.url), "worker"], {
       stdio: "inherit",

@@ -75,3 +75,8 @@ The runner uses disposable databases, limits the campaign to 15,000 upstream
 requests, rejects a changed fixture start, verifies matching entity digests,
 and records immutable image identities. For the separate synthetic cache test,
 Docker or Podman is supported; see [the local stack guide](../local-compose.md#validate-images-and-persistence).
+
+The manual-reset phase stops the indexer before running the pinned workspace
+Envio binary's `local db-migrate setup`, then starts normal ingestion. Migration
+and replay share the existing five-minute phase budget. This explicit fixture
+maintenance does not authorize an automatic or live reset.

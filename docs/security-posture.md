@@ -111,12 +111,13 @@ Trivy 0.76.2, jactionlint 2.4.0 and Zizmor 1.32.0. The Railway TypeScript SDK is
 package, currently 3.16.0. Shared direct packages present here use viem 2.57.14,
 AWS S3 client 3.1152.0, Biome 2.6.3 and Node types 24.19.2.
 
-Metrics pins Envio 3.18.1. Its isolated preflight uses native storage reads and
-the native configuration/address comparisons, never initialization, schema setup,
-chain addition or storage takeover. Incompatible state pauses ingestion for an
-explicit operator reset; transient failures stay errors. Persisted configuration
+Metrics pins Envio 3.18.1. Native startup refuses incompatible configuration or
+addresses before storage takeover. The wrapper retains its bounded retry policy
+and forwards failure; it does not reset automatically. Persisted configuration
 includes the Envio version, so this upgrade can refuse an older cluster: rehearse
-on a clone before separately approving a live reset. Main TypeScript remains
+on a clone before separately approving a live reset. A stopped indexer can be
+reset with the native maintenance command in [the runbook](railway-metrics-api.md#manual-indexer-reset).
+Main TypeScript remains
 exactly 7.0.2 for build/typecheck and Envio's native handler-check CLI. The old
 TypeScript 6 API alias is removed because Envio now invokes the project's `tsc`.
 

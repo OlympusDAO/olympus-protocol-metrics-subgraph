@@ -151,8 +151,15 @@ for event ingestion.
 
 ### Manual indexer reset
 
-Reset is an explicit operator action for a deliberate historical rebuild or a
-schema-incompatible deployment. It recreates the Envio schema and starts
+Native Envio refuses incompatible stored configuration or addresses without
+resetting them. The wrapper exits nonzero after its bounded retry policy. For
+this case, stop the indexer, verify its database target, and run
+`envio local db-migrate setup` with the same config, environment and operating-system
+user before starting it normally. This is an explicit maintenance operation,
+not an automatic deployment step.
+
+For an already-running wrapper, reset is an explicit operator action for a
+deliberate historical rebuild or a schema-incompatible deployment. It recreates the Envio schema and starts
 indexing at the configured chain start blocks. Verify the deployment and
 database target before executing the command from the indexer service shell
 as the same operating-system user as the running indexer (`node`).
@@ -162,7 +169,7 @@ cd /app/apps/indexer
 tsx src/start-envio.ts reset
 ```
 
-The command uses the supervisor's local Unix socket. The supervisor stops the
+The command uses the wrapper's local Unix socket. The supervisor stops the
 ingestion process group, runs Envio's local migration, and starts ingestion
 after migration succeeds. If migration fails, ingestion stays paused. Resolve
 the failure before retrying the reset. The RPC cache uses its own database

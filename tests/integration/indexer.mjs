@@ -1,11 +1,10 @@
 import assert from "node:assert/strict";
-import { execFile, execFileSync, spawnSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { promisify } from "node:util";
 
 // Called while the eRPC test has a known nonempty persisted cache entry.
 // Uses only fresh fixture databases, never a developer's database or volume.
@@ -28,7 +27,8 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
   const prefix = `metrics-indexer-${randomBytes(5).toString("hex")}`;
   const pg = `${prefix}-pg`,
     hasura = `${prefix}-hasura`,
-    indexer = `${prefix}-indexer`;
+    indexer = `${prefix}-indexer`,
+    migration = `${prefix}-migration`;
   const directory = mkdtempSync(join(tmpdir(), "metrics-indexer-fixture-"));
   // Retain this tiny credential-free fixture for failed-test diagnosis.
   writeFileSync(
@@ -74,7 +74,7 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
   }
   docker("network", "create", "--internal", prefix);
   t.after(() => {
-    for (const name of [indexer, hasura, pg]) {
+    for (const name of [migration, indexer, hasura, pg]) {
       try {
         docker("rm", "-f", "-v", name);
       } catch {
@@ -117,12 +117,7 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
     "HASURA_GRAPHQL_ADMIN_SECRET=fixture",
     images.built.hasura,
   );
-  docker(
-    "run",
-    "-d",
-    "--pull=never",
-    "--name",
-    indexer,
+  const indexerOptions = [
     "--network",
     prefix,
     "--mount",
@@ -144,8 +139,8 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
         ),
       ),
     }).flatMap(([key, value]) => ["-e", `${key}=${value}`]),
-    images.built.indexer,
-  );
+  ];
+  docker("run", "-d", "--pull=never", "--name", indexer, ...indexerOptions, images.built.indexer);
   await eventually(
     () => sql(`SELECT count(*) FROM envio_info`) === "1",
     "Real indexer did not initialize storage",
@@ -179,24 +174,37 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
     );
     return true;
   }, "Private ingestion server did not reject documentation/spec routes");
-  // Force the supported incompatible-config pause before an explicit reset.
+  // Native Envio must refuse incompatible state without resetting it.
   docker("stop", indexer);
   sql(`UPDATE envio_info SET config='{}' WHERE id=1`);
   docker("start", indexer);
   await eventually(
-    () => logs().includes("Ingestion is paused"),
-    "Incompatible storage did not pause ingestion",
+    () => docker("inspect", "--format", "{{.State.Status}}", indexer) === "exited",
+    "Incompatible storage did not stop the indexer",
   );
+  assert.notEqual(docker("inspect", "--format", "{{.State.ExitCode}}", indexer), "0");
+  assert(logs().includes("config changes are incompatible with the existing indexer data"));
   assert.equal(sentinel(), "1");
-  const result = await promisify(execFile)(
-    runtime,
-    ["exec", indexer, "tsx", "src/start-envio.ts", "reset"],
-    { timeout: 60_000 },
+  docker(
+    "run",
+    "--pull=never",
+    "--name",
+    migration,
+    ...indexerOptions,
+    "--entrypoint",
+    "envio",
+    images.built.indexer,
+    "local",
+    "db-migrate",
+    "setup",
   );
-  assert(result.stdout.includes("Envio migration completed"));
+  docker("start", indexer);
   assert.equal(sentinel(), "0");
-  assert.equal(sql("SELECT count(*) FROM envio_info"), "1");
+  await eventually(
+    () => sql("SELECT count(*) FROM envio_info") === "1",
+    "Indexer did not resume after the explicit migration",
+  );
   console.log(
-    "Real indexer preserved a managed entity on restart, paused incompatible storage, and reset only its application database; template TLS/PGDATA verified.",
+    "Real indexer preserved a managed entity on restart, refused incompatible storage, and explicitly reset only its application database; template TLS/PGDATA verified.",
   );
 }

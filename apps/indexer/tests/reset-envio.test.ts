@@ -20,7 +20,7 @@ const startup = fileURLToPath(new URL("../src/start-envio.ts", import.meta.url))
 const runtime = fileURLToPath(new URL("./fixtures/reset-runtime.ts", import.meta.url));
 const fakeEnvio = fileURLToPath(new URL("./fixtures/reset-envio.mjs", import.meta.url));
 
-function fixture(compatibility: number, files: string[] = []) {
+function fixture(files: string[] = [], idle = false) {
   const cwd = mkdtempSync(join(tmpdir(), "metrics-reset-"));
   // The fixture executable is written to a private directory on the child's PATH.
   writeFileSync(join(cwd, "envio"), readFileSync(fakeEnvio), { mode: 0o700, flag: "w" });
@@ -34,7 +34,7 @@ function fixture(compatibility: number, files: string[] = []) {
     PORT: "9898",
     ENVIO_INDEXER_PORT: "9898",
   };
-  const child = spawn(process.execPath, [...nodeArgs, runtime, String(compatibility)], {
+  const child = spawn(process.execPath, [...nodeArgs, runtime, ...(idle ? ["idle"] : [])], {
     cwd,
     env,
     stdio: ["ignore", "ignore", "pipe"],
@@ -57,11 +57,11 @@ function fixture(compatibility: number, files: string[] = []) {
     exit,
     shutdown,
     restart: (preload?: string) =>
-      spawn(
-        process.execPath,
-        [...(preload ? ["--import", preload] : []), ...nodeArgs, runtime, "0"],
-        { cwd, env, stdio: "ignore" },
-      ),
+      spawn(process.execPath, [...(preload ? ["--import", preload] : []), ...nodeArgs, runtime], {
+        cwd,
+        env,
+        stdio: "ignore",
+      }),
     reset: () =>
       new Promise<number | null>((resolve) => {
         const caller = spawn(process.execPath, [...nodeArgs, startup, "reset"], {
@@ -80,9 +80,9 @@ function fixture(compatibility: number, files: string[] = []) {
 }
 
 async function staleFixture() {
-  const run = fixture(78, ["bounded"]);
+  const run = fixture(["bounded"], true);
   try {
-    await expect.poll(run.stderr, { timeout: 8000 }).toContain("storage is incompatible");
+    await expect.poll(run.stderr, { timeout: 8000 }).toContain("Fixture control ready");
     run.child.kill("SIGKILL");
     await run.closed;
     const directory = readdirSync(run.cwd).find((name) => name.startsWith("metrics-envio-"));
@@ -95,6 +95,17 @@ async function staleFixture() {
     throw error;
   }
 }
+
+test("forwards a native startup refusal without resetting or parking the wrapper", async () => {
+  const run = fixture(["refuse"]);
+  try {
+    expect(await run.exit).toBe(2);
+    expect(run.events()).toEqual(["start --config fixture.yaml"]);
+    expect(run.stderr()).not.toContain("Ingestion is paused");
+  } finally {
+    await run.close();
+  }
+}, 25_000);
 
 test("recovers a stale control socket after a single wrapper crashes", async () => {
   const { run, socket } = await staleFixture();
@@ -169,7 +180,7 @@ syncBuiltinESMExports();
 test.skipIf(process.platform !== "linux")(
   "drains the complete process group before migration and rejects concurrent reset",
   async () => {
-    const run = fixture(0, ["hold"]);
+    const run = fixture(["hold"]);
     try {
       await expect.poll(run.events, { timeout: 8000 }).toContain("worker started");
       const first = run.reset();
@@ -199,10 +210,10 @@ test.skipIf(process.platform !== "linux")(
 );
 
 test("SIGTERM stops an active reset migration without restarting ingestion", async () => {
-  const run = fixture(78, ["hold"]);
+  const run = fixture(["hold"], true);
   const migration = "migration local db-migrate setup --config fixture.yaml";
   try {
-    await expect.poll(run.stderr, { timeout: 8000 }).toContain("storage is incompatible");
+    await expect.poll(run.stderr, { timeout: 8000 }).toContain("Fixture control ready");
     const reset = run.reset();
     await expect.poll(run.events, { timeout: 8000 }).toContain(migration);
     const migrationPid = run.migrationPid();
@@ -228,11 +239,11 @@ test("SIGTERM stops an active reset migration without restarting ingestion", asy
 }, 25_000);
 
 test.skipIf(process.platform !== "linux")(
-  "accepts explicit reset while incompatible and stays paused after migration failure",
+  "keeps ingestion paused after an explicit migration failure and permits a reset retry",
   async () => {
-    const run = fixture(78, ["fail"]);
+    const run = fixture(["fail"], true);
     try {
-      await expect.poll(run.stderr, { timeout: 8000 }).toContain("storage is incompatible");
+      await expect.poll(run.stderr, { timeout: 8000 }).toContain("Fixture control ready");
       expect(run.events()).toEqual([]);
       expect(await run.reset()).toBe(1);
       expect(run.events()).toEqual(["migration local db-migrate setup --config fixture.yaml"]);
@@ -256,7 +267,7 @@ test.skipIf(process.platform !== "linux")(
 test.skipIf(process.platform !== "linux")(
   "forwards a clean bounded ingestion exit while the reset listener is idle",
   async () => {
-    const run = fixture(0, ["bounded"]);
+    const run = fixture(["bounded"]);
     try {
       expect(await run.exit).toBe(0);
       expect(run.events()).toEqual(["start --config fixture.yaml"]);

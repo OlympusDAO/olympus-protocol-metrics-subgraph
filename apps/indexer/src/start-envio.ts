@@ -1,7 +1,7 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { createConnection } from "node:net";
 import { setTimeout as delay } from "node:timers/promises";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { requestReset, runWithReset } from "./reset-envio";
 import { validateIndexerEnv } from "./validate-env";
@@ -273,26 +273,7 @@ export async function runIndexerStartup(
     return;
   }
 
-  const checkScript = fileURLToPath(new URL("./check-envio-storage.mjs", import.meta.url));
-  const checkStorage = async () => {
-    const runCheck = () =>
-      new Promise<number>((resolve, reject) => {
-        const check = spawn(process.execPath, [checkScript, ...startArgs], {
-          env: preparedEnv,
-          stdio: "inherit",
-          timeout: 30_000,
-          killSignal: "SIGKILL",
-        });
-        check.once("error", reject);
-        check.once("exit", (code) => resolve(code ?? 1));
-      });
-    let status = await runCheck();
-    if (status !== 0 && status !== 78 && (await waitForDatabase(preparedEnv))) {
-      status = await runCheck();
-    }
-    return status;
-  };
-  await runWithReset(startArgs, preparedEnv, checkStorage, superviseEnvio);
+  await runWithReset(startArgs, preparedEnv, superviseEnvio);
 }
 
 export function formatEnvioSpawnError(error: Error & { code?: string }): string {

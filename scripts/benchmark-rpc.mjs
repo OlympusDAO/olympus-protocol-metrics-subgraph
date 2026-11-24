@@ -494,18 +494,8 @@ export default {
         const reset = phase === "manual-reset-rebuild";
         const priorCacheRows = cacheRows();
         if (reset) {
-          db(pg, `UPDATE envio_info SET config='{}' WHERE id=1`, env.ENVIO_PG_DATABASE);
-          const logPath = path.join(work, "indexer.log");
-          const logOffset = fs.statSync(logPath).size;
-          child = await startIndexer();
-          await poll(() => {
-            if (child.exitCode !== null || child.signalCode)
-              throw Error("Indexer failed to pause on the incompatible fixture");
-            return fs
-              .readFileSync(logPath)
-              .subarray(logOffset)
-              .includes("Envio storage is incompatible");
-          }, 15000);
+          await stop(child);
+          child = undefined;
         }
         counters = {};
         const priorCalls = calls;
@@ -514,7 +504,7 @@ export default {
         const deadline = Date.now() + 300_000;
         if (reset) {
           await new Promise((resolve, reject) => {
-            const resetClient = spawn(wrapper, ["src/start-envio.ts", "reset"], {
+            const resetClient = spawn(node, [envioBin, "local", "db-migrate", "setup"], {
               cwd,
               env,
               stdio: ["ignore", log, log],
@@ -528,12 +518,11 @@ export default {
             resetClient.once("close", (code) =>
               code === 0 && !spawnError
                 ? resolve()
-                : reject(spawnError ?? Error("Manual reset client failed")),
+                : reject(spawnError ?? Error("Native Envio migration failed")),
             );
           });
-        } else {
-          child = await startIndexer();
         }
+        child = await startIndexer();
         await poll(async () => {
           if (child.signalCode || (child.exitCode !== null && child.exitCode !== 0))
             throw Error("Indexer failed before committed completion");

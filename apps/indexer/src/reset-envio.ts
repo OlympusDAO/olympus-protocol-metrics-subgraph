@@ -121,17 +121,11 @@ function waitForExit(child: ChildProcess): Promise<number> {
 export async function runWithReset(
   args: string[],
   env: NodeJS.ProcessEnv,
-  checkStorage: () => Promise<number>,
   supervise: typeof superviseEnvio,
 ): Promise<void> {
-  const compatibility = await checkStorage();
-  if (compatibility !== 0 && compatibility !== 78) {
-    throw new Error("Envio storage compatibility check failed");
-  }
-
   let child: ChildProcess | undefined;
   let migration: ChildProcess | undefined;
-  let maintenance = compatibility === 78;
+  let maintenance = false;
   let resetting = false;
   let shuttingDown = false;
   let run: Promise<void> | undefined;
@@ -223,13 +217,7 @@ export async function runWithReset(
       signalHandlers.set(signal, handler);
       process.on(signal, handler);
     }
-    if (maintenance) {
-      console.error(
-        "Envio storage is incompatible. Ingestion is paused until an operator requests a reset.",
-      );
-    } else {
-      start();
-    }
+    start();
     await finished;
   } finally {
     for (const [signal, handler] of signalHandlers) process.off(signal, handler);
