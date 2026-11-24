@@ -30,7 +30,7 @@ for (const name of ["indexer", "indexer-monitor", "metrics-api", "metrics-publis
   const variant = name === "indexer-monitor" ? "alpine" : "slim";
   if (!dockerfile.includes(`FROM node:${pin("node")}-${variant}@sha256:`))
     throw new Error(`Dockerfile-${name} has a different Node pin`);
-  if (name !== "indexer-monitor" && !dockerfile.includes(`pnpm@${pin("pnpm")}`))
+  if (!dockerfile.includes(`pnpm@${pin("pnpm")}`))
     throw new Error(`Dockerfile-${name} has a different pnpm pin`);
 }
 console.log(`Runtime alignment passed: ${["node", "pnpm", "railway", "trivy", "jactionlint", "zizmor"].map((tool) => `${tool} ${pin(tool)}`).join(", ")}`);

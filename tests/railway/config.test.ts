@@ -174,17 +174,25 @@ describe("Railway config-as-code", () => {
     }
   });
 
-  test("binds the private monitor to its dedicated image and only its own inputs", async () => {
+  test("schedules the private monitor with its own build and existing bucket inputs", async () => {
     const { get } = await graph("staging");
     const monitor = get("service.indexer-monitor");
     expect(monitor).toMatchObject({
       build: {
         dockerfilePath: "Dockerfile-indexer-monitor",
-        watchPatterns: ["/Dockerfile-indexer-monitor", "/apps/indexer/src/monitor-indexer.mjs"],
+        watchPatterns: [
+          "/Dockerfile-indexer-monitor",
+          "/.dockerignore",
+          "/package.json",
+          "/pnpm-lock.yaml",
+          "/pnpm-workspace.yaml",
+          "/apps/indexer-monitor/package.json",
+          "/apps/indexer-monitor/src/**",
+        ],
       },
       deploy: {
-        restartPolicyType: "ON_FAILURE",
-        restartPolicyMaxRetries: 1,
+        cronSchedule: "*/15 * * * *",
+        restartPolicyType: "NEVER",
         multiRegionConfig: { "us-west2": { numReplicas: 1 } },
         limitOverride: { containers: { cpu: 1, memoryBytes: 1000000000 } },
       },
@@ -195,8 +203,13 @@ describe("Railway config-as-code", () => {
         type: "literal",
         value: `http://\${{indexer.RAILWAY_PRIVATE_DOMAIN}}:\${{indexer.PORT}}/metrics`,
       },
-      MONITOR_INTERVAL_SECONDS: { type: "preserve" },
       MONITOR_NAME: { type: "literal", value: "Metrics (staging)" },
+      ...Object.fromEntries(
+        ["BUCKET", "ENDPOINT", "REGION", "ACCESS_KEY_ID", "SECRET_ACCESS_KEY"].map((output) => [
+          output,
+          { type: "reference", resource: "bucket.bucket", output },
+        ]),
+      ),
     });
     expect(monitor).not.toHaveProperty("deploy.startCommand");
     expect(monitor).not.toHaveProperty("deploy.healthcheckPath");
@@ -480,17 +493,31 @@ describe("Railway config-as-code", () => {
     );
   });
 
-  test("packages the monitor script without JavaScript dependencies in the Alpine image", () => {
+  test("deploys only the monitor production closure in the Alpine image", () => {
     const dockerfile = readFileSync("Dockerfile-indexer-monitor", "utf8");
     const [base, ...instructions] = dockerfile.trim().split(/\r?\n/);
-    expect(base).toMatch(/^FROM node:\d+\.\d+\.\d+-alpine@sha256:[a-f0-9]{64}$/);
+    expect(base).toMatch(/^FROM node:\d+\.\d+\.\d+-alpine@sha256:[a-f0-9]{64} AS base$/);
     expect(instructions).toContain("WORKDIR /app");
+    expect(instructions).toContain("FROM base AS build");
+    expect(instructions).toContain("FROM base AS runtime");
+    expect(instructions).toContain(
+      "RUN pnpm install --frozen-lockfile --prod --filter indexer-monitor",
+    );
+    expect(instructions).toContain("RUN pnpm --filter indexer-monitor deploy --prod /deploy");
     expect(dockerfile).toContain("RUN apk upgrade --no-cache libcrypto3 libssl3 zlib");
     expect(dockerfile).toContain("rm -rf /usr/local/lib/node_modules /opt/yarn*");
     expect(instructions.filter((line) => line.startsWith("COPY "))).toEqual([
-      "COPY --chown=node:node apps/indexer/src/monitor-indexer.mjs ./monitor-indexer.mjs",
+      "COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./",
+      "COPY apps/indexer-monitor/package.json apps/indexer-monitor/package.json",
+      "COPY apps/indexer-monitor/src apps/indexer-monitor/src",
+      "COPY --from=build --chown=node:node /deploy /app",
     ]);
-    expect(instructions.slice(-2)).toEqual(["USER node", 'CMD ["node", "monitor-indexer.mjs"]']);
+    expect(instructions.slice(-2)).toEqual([
+      "USER node",
+      'CMD ["node", "src/monitor-indexer.mjs"]',
+    ]);
+    expect(existsSync("apps/indexer-monitor/src/monitor-indexer.mjs")).toBe(true);
+    expect(existsSync("apps/indexer/src/monitor-indexer.mjs")).toBe(false);
   });
 
   test("deploys production closures without coupling public artifact services to codegen", () => {

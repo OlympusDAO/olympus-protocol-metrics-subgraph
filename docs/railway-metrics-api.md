@@ -152,37 +152,31 @@ for event ingestion.
 
 ### Indexer monitor service
 
-Railway starts `indexer-monitor` from a dedicated Alpine-based Node image. The
-service watches its Dockerfile and monitor script. The monitor needs no
-inbound port or indexer credentials. It probes `/metrics` and `/healthz` on the
-same origin. Both must return HTTP 2xx. It ignores `/ready`, so healthy backfill
-is allowed. It does not detect stalled ingestion while HTTP still responds.
-IaC sets `INDEXER_METRICS_URL` to
-`http://${{indexer.RAILWAY_PRIVATE_DOMAIN}}:${{indexer.PORT}}/metrics` and labels
-messages with Metrics and the Railway environment name.
+Railway runs the private `indexer-monitor` job every 15 minutes from its
+dedicated Alpine-based image. Each invocation reads state, probes the native
+`/metrics` endpoint once with a five-second timeout, and exits. HTTP 2xx means
+the endpoint is reachable, including during backfill. The job measures
+reachability only and never resets the indexer.
 
-Set the environment's shared `DISCORD_WEBHOOK_URL` to the intended Discord
-webhook before deploying the monitor. Both URLs are required and must use HTTP
-or HTTPS without embedded usernames or passwords. Startup validates them before
-any requests. Missing or invalid values cause exit status 1 without logging their
-values. The optional `MONITOR_INTERVAL_SECONDS` defaults to 60 and accepts whole
-numbers from 1 to 2,147,483. The optional `MONITOR_NAME` defaults to `Indexer`;
-IaC supplies the project and environment label.
+Before deploying, set the environment's shared `DISCORD_WEBHOOK_URL`. IaC
+binds `INDEXER_METRICS_URL` to the indexer's private host and port and
+references `BUCKET`, `ENDPOINT`, `REGION`, `ACCESS_KEY_ID`, and
+`SECRET_ACCESS_KEY` from the existing artifact bucket. All are required.
+Startup validates these values before any requests and exits nonzero with
+a fixed diagnostic on invalid configuration. `MONITOR_NAME` is optional
+and defaults to `Indexer`. IaC supplies Metrics and the environment name.
 
-The monitor logs startup, shutdown and successful outage/recovery notifications.
-Logs omit URLs and webhook values.
+The job persists state at `indexer-monitor/state.json`, separately from
+snapshot keys. A successful Discord error notification starts a 60-minute
+cooldown across invocations and redeploys. The first eligible run after the
+cooldown can alert again if the indexer remains unreachable. A healthy run
+sends one recovery for a previously alerted outage and keeps its cooldown,
+so a new outage within that window stays suppressed.
 
-Each probe has a five-second timeout. Two consecutive failed probes trigger one
-outage alert per incident in the running monitor process.
-The next poll with both endpoints healthy sends one recovery alert. Active
-means both liveness endpoints respond successfully. A backfilling indexer can be active, and
-reachability alone provides no evidence of indexing progress or sync. The
-monitor never resets the indexer. If the monitor is down or the webhook is
-unavailable, Discord can receive no alert. Invalid configuration exits with a
-nonzero status. Failed delivery, including a five-second timeout, logs a fixed
-message and retries on the next polling interval while the alert remains
-relevant. Successful deliveries are not repeated. A lost webhook response can
-cause a duplicate message on retry.
+Logs record the probe result, cooldown suppression, and acknowledged alerts.
+Delivery and storage failures exit nonzero. Failed delivery leaves state
+intact so the next scheduled run can retry a relevant alert. A successful
+delivery followed by a failed state write can cause a duplicate notification.
 
 ### Manual indexer reset
 

@@ -234,19 +234,31 @@ export default defineRailway((ctx) => {
       ...routes,
     },
   });
+  const artifactBucket = bucket("bucket", { region: "sjc" });
   const indexerMonitor = service("indexer-monitor", {
     ...deployment,
-    build: build("indexer-monitor", ["/apps/indexer/src/monitor-indexer.mjs"]),
+    build: build("indexer-monitor", [
+      "/.dockerignore",
+      "/package.json",
+      "/pnpm-lock.yaml",
+      "/pnpm-workspace.yaml",
+      "/apps/indexer-monitor/package.json",
+      "/apps/indexer-monitor/src/**",
+    ]),
     deploy: {
       ...limits(),
-      restartPolicyType: "ON_FAILURE",
-      restartPolicyMaxRetries: 1,
+      cronSchedule: "*/15 * * * *",
+      restartPolicyType: "NEVER",
     },
     env: {
       INDEXER_METRICS_URL: `http://\${{indexer.RAILWAY_PRIVATE_DOMAIN}}:\${{indexer.PORT}}/metrics`,
       DISCORD_WEBHOOK_URL: ctx.shared.DISCORD_WEBHOOK_URL,
       MONITOR_NAME: `Metrics (${ctx.environment ?? "default"})`,
-      MONITOR_INTERVAL_SECONDS: preserve(),
+      BUCKET: ref(artifactBucket, "BUCKET"),
+      ENDPOINT: ref(artifactBucket, "ENDPOINT"),
+      REGION: ref(artifactBucket, "REGION"),
+      ACCESS_KEY_ID: ref(artifactBucket, "ACCESS_KEY_ID"),
+      SECRET_ACCESS_KEY: ref(artifactBucket, "SECRET_ACCESS_KEY"),
     },
   });
   const hasura = service("hasura", {
@@ -293,7 +305,7 @@ export default defineRailway((ctx) => {
     resources: [
       group("PostgreSQL", [postgres]),
       importedVolume,
-      bucket("bucket", { region: "sjc" }),
+      artifactBucket,
       indexer,
       indexerMonitor,
       hasura,
