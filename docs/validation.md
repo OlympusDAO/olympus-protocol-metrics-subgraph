@@ -83,17 +83,6 @@ job before checkout or token use. Non-PR runs use native `pnpm audit`, including
 the Monday 00:00 UTC schedule shared by all three protocol repositories.
 Local source validation still includes the audit.
 
-The optional `mise run --skip-tools check:discipline` trial uses Discipline 0.32.0 to inspect
-uncommitted changes against HEAD. Install it separately with
-`mise install github:orieg/discipline --locked`. Only `vacuous-tests` and
-`assertion-reduction` run in the `agent-guard` suite, at warning severity:
-findings are reported with exit 0; tool/configuration errors
-remain errors. It is outside required checks, CI and hooks. These static syntax
-checks do not prove test coverage or runtime correctness and can flag intentional
-assertion changes. Existing Biome, workflow and privacy checks remain authoritative.
-For a one-off blocking diagnostic, use
-`discipline check --base HEAD --suite agent-guard --config discipline.toml --fail-on-warnings`.
-
 Image CI has five independent matrix cells with separate native build, image
 scan and Dockerfile-check steps and a 45-minute timeout. PRs run it directly;
 non-PR source CI calls the reusable workflow, avoiding duplicate push builds.
