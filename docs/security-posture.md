@@ -76,13 +76,12 @@ See [validation](validation.md) and the [Railway runbook](../.railway/README.md)
 ## Database image policy and operator follow-up
 
 All local PostgreSQL instances use official Alpine `18.6-alpine3.24` at the exact
-multi-platform digest in `.railway/images.json`, with parent mount
+multi-platform digest in [the image inventory](../.railway/images.json), with parent mount
 `/var/lib/postgresql` and default `PGDATA=/var/lib/postgresql/18/docker`.
 Compose uses fresh versioned ephemeral `postgres18-data` and
 `rpc-cache-postgres18-data` volumes. Existing older local clusters are not
-migrated or deleted. Both production PostgreSQL 18 databases retain
-the same upstream `postgres-ssl:18.6` digest: the provider has no 18.7 image at
-the time of verification. Preserve template TLS, environment variables,
+migrated or deleted. Both production PostgreSQL 18 databases use the same pinned
+`postgres-ssl:18.6` image in that inventory. Preserve template TLS, environment variables,
 PGDATA, mount paths and volume identities. No custom image, major upgrade or
 storage migration is introduced.
 
@@ -106,10 +105,10 @@ no live REINDEX, backup, constraint repair or production update was performed.
 
 ## Shared tooling and intentional differences
 
-The shared tool pins are Node 24.22.3, pnpm 11.28.13, Railway CLI 5.75.0,
-Trivy 0.76.2, jactionlint 2.4.0 and Zizmor 1.32.0. The Railway TypeScript SDK is a separate
-package, currently 3.16.0. Shared direct packages present here use viem 2.57.14,
-AWS S3 client 3.1152.0, Biome 2.6.3 and Node types 24.19.2.
+[mise.toml](../mise.toml) and [mise.lock](../mise.lock) own tool pins;
+[package.json](../package.json) and [the indexer manifest](../apps/indexer/package.json)
+own direct package versions. The Railway CLI and TypeScript SDK are separate
+dependencies. [Validation](validation.md) owns runtime-alignment checks.
 
 Metrics pins Envio 3.18.1. Native startup refuses incompatible configuration or
 addresses before storage takeover. The wrapper retains its bounded retry policy
@@ -121,9 +120,7 @@ no indexer healthcheck. It does not reset automatically. Persisted configuration
 includes the Envio version, so this upgrade can refuse an older cluster: rehearse
 on a clone before separately approving a live reset. The private reset command
 and stopped-app maintenance alternative are in [the runbook](railway-metrics-api.md#manual-indexer-reset).
-Main TypeScript remains
-exactly 7.0.2 for build/typecheck and Envio's native handler-check CLI. The old
-TypeScript 6 API alias is removed because Envio now invokes the project's `tsc`.
+Main TypeScript is exactly 7.0.2 for build/typecheck and Envio's native handler-check CLI.
 
 The pnpm policy uses preferred `audit.ignore`. pnpm 11.28.13 still recognizes
 the deprecated `auditConfig.ignoreGhsas`, but the former takes precedence.

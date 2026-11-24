@@ -6,6 +6,21 @@ Historical measurements showed fewer repeat archive reads and a shorter restart
 on a small Robinhood fixture. They do not establish a faster first cold replay
 or production billing savings. Raw comparison reports are not repository artifacts.
 
+## Snapshot read scope
+
+[Cached Envio effects](../../apps/indexer/src/effects/index.ts) and
+[contract-read caches](../../apps/indexer/src/snapshot/contract-cache.ts) have
+separate scopes. `withContractReadCache` shares matching block-pinned contract-read
+promises within one invocation; invariant reads use a separate process-wide cache.
+[Native-balance reads](../../apps/indexer/src/handlers/SnapshotHelpers.ts) still
+call block-pinned `getBalance`: native coins do not emit ERC20 Transfer events.
+
+[Balancer Vault handlers](../../apps/indexer/src/handlers/BalancerPools.ts) filter
+`TokensRegistered`, `PoolBalanceChanged` and `Swap` by configured pool IDs.
+The Vault is shared by every pool on a chain, so unfiltered subscriptions would
+deliver unrelated pools' events. Chains without configured Balancer pools are
+excluded by the filter.
+
 ## Measured workload
 
 The benchmark ran before and after implementation with Node 24.22.3,
