@@ -273,20 +273,6 @@ describe("envio supervisor", () => {
     expect(spawnedArgs.length).toBe(13);
   });
 
-  test("resumes after a startup crash", async () => {
-    const { options, spawnedArgs } = harness([
-      { code: 1, runtimeMs: 500 },
-      { code: 1, runtimeMs: 500 },
-      { code: 1, runtimeMs: 500 },
-    ]);
-
-    await expect(superviseEnvio([], railwayEnv, { ...options, maxRespawns: 2 })).rejects.toThrow(
-      "exit 1",
-    );
-
-    expect(spawnedArgs).toEqual([["start"], ["start"], ["start"]]);
-  });
-
   test("reports terminal failure once the respawn budget is exhausted", async () => {
     const runs = Array.from({ length: 5 }, () => ({ code: 1, runtimeMs: 500 }));
     const { options, spawnedArgs, exits, logged } = harness(runs);
@@ -295,7 +281,7 @@ describe("envio supervisor", () => {
       "exit 1",
     );
 
-    expect(spawnedArgs.length).toBe(3);
+    expect(spawnedArgs).toEqual([["start"], ["start"], ["start"]]);
     expect(exits).toEqual([1]);
     expect(logged.some((message) => message.includes("retry limit reached"))).toBe(true);
   });
