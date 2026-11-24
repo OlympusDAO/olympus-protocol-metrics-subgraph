@@ -42,6 +42,10 @@ provider PostgreSQL 18.6, official local Alpine PostgreSQL 18.6 and historical P
 it consumes; unavailable prerequisites
 fail. MinIO/MC are Compose fixtures and are not used by this HTTP S3 integration.
 Live-provider indexer tests remain separate opt-in tests in the ordinary suite.
+The indexer fixture checks native incompatibility refusal with its stored sentinel
+intact, a running private reset control and no ingestion health listener, then
+recovers through the explicit socket reset. The wrapper stays alive for SSH
+recovery after terminal nonzero supervision; this is not ingestion readiness.
 
 The inventory has fixed `built`, `provider`, `local` and `comparison` groups.
 Every built application is built and gated, without classification/deduplication

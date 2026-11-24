@@ -113,10 +113,14 @@ AWS S3 client 3.1152.0, Biome 2.6.3 and Node types 24.19.2.
 
 Metrics pins Envio 3.18.1. Native startup refuses incompatible configuration or
 addresses before storage takeover. The wrapper retains its bounded retry policy
-and forwards failure; it does not reset automatically. Persisted configuration
+then keeps private reset control alive after terminal nonzero results, including
+failures unrelated to compatibility. An operator must inspect and explicitly
+restart or reset it; Railway `ON_FAILURE` does not restart a paused wrapper.
+Ingestion's native health port is unavailable while paused, and source IaC has
+no indexer healthcheck. It does not reset automatically. Persisted configuration
 includes the Envio version, so this upgrade can refuse an older cluster: rehearse
-on a clone before separately approving a live reset. A stopped indexer can be
-reset with the native maintenance command in [the runbook](railway-metrics-api.md#manual-indexer-reset).
+on a clone before separately approving a live reset. The private reset command
+and stopped-app maintenance alternative are in [the runbook](railway-metrics-api.md#manual-indexer-reset).
 Main TypeScript remains
 exactly 7.0.2 for build/typecheck and Envio's native handler-check CLI. The old
 TypeScript 6 API alias is removed because Envio now invokes the project's `tsc`.

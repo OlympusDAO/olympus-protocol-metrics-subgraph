@@ -96,12 +96,32 @@ async function staleFixture() {
   }
 }
 
-test("forwards a native startup refusal without resetting or parking the wrapper", async () => {
+test("keeps reset control alive after native failure until an explicit reset", async () => {
+  const run = fixture(["refuse", "bounded"]);
+  try {
+    await expect.poll(run.stderr, { timeout: 8000 }).toContain("Ingestion is paused");
+    expect(run.child.exitCode).toBeNull();
+    expect(run.events()).toEqual(["start --config fixture.yaml"]);
+    run.removeMarker("refuse");
+    expect(await run.reset()).toBe(0);
+    expect(await run.exit).toBe(0);
+    expect(run.events()).toEqual([
+      "start --config fixture.yaml",
+      "migration local db-migrate setup --config fixture.yaml",
+      "start --config fixture.yaml",
+    ]);
+  } finally {
+    await run.close();
+  }
+}, 25_000);
+
+test("SIGTERM terminates a paused native failure without running a migration", async () => {
   const run = fixture(["refuse"]);
   try {
-    expect(await run.exit).toBe(2);
+    await expect.poll(run.stderr, { timeout: 8000 }).toContain("Ingestion is paused");
+    run.shutdown();
+    expect(await run.exit).toBe(143);
     expect(run.events()).toEqual(["start --config fixture.yaml"]);
-    expect(run.stderr()).not.toContain("Ingestion is paused");
   } finally {
     await run.close();
   }

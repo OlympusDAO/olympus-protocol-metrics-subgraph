@@ -152,8 +152,16 @@ export async function runWithReset(
       kill: (_pid, signal) => {
         process.exitCode = 128 + constants.signals[signal];
       },
-      exit: (code) => {
+      exit: (code = 0) => {
         process.exitCode = code;
+        if (code !== 0) {
+          // Keep SSH and the private reset socket available for operator recovery.
+          // A generic native failure is not proof that resetting storage is safe.
+          maintenance = true;
+          console.error(
+            `Envio exited with code ${code}. Ingestion is paused until an operator restarts or explicitly resets it.`,
+          );
+        }
       },
     })
       .catch(() => {

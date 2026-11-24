@@ -152,11 +152,19 @@ for event ingestion.
 ### Manual indexer reset
 
 Native Envio refuses incompatible stored configuration or addresses without
-resetting them. The wrapper exits nonzero after its bounded retry policy. For
-this case, stop the indexer, verify its database target, and run
-`envio local db-migrate setup` with the same config, environment and operating-system
-user before starting it normally. This is an explicit maintenance operation,
-not an automatic deployment step.
+resetting them. After the existing database wait and bounded retry policy ends
+in a nonzero result, the wrapper keeps its private reset control and container
+alive so an operator can SSH in and recover it. This applies to all terminal
+nonzero results, including exhausted errors, database-wait failure and spawn
+failure; a native exit code does not identify incompatibility specifically.
+These paused failures await an explicit restart or reset rather than triggering
+Railway's `ON_FAILURE` restart policy. Inspect and fix the cause before restarting;
+reset only when a deliberate rebuild is required. Clean completion and intentional
+shutdown still terminate the wrapper.
+
+While ingestion is stopped, its native `/healthz` port is unavailable. Source
+IaC does not configure an indexer healthcheck, so a running container does not
+establish that ingestion is ready.
 
 For an already-running wrapper, reset is an explicit operator action for a
 deliberate historical rebuild or a schema-incompatible deployment. It recreates the Envio schema and starts
@@ -174,6 +182,11 @@ ingestion process group, runs Envio's local migration, and starts ingestion
 after migration succeeds. If migration fails, ingestion stays paused. Resolve
 the failure before retrying the reset. The RPC cache uses its own database
 and remains available across an indexer reset.
+
+If the wrapper is fully stopped, native `envio local db-migrate setup` remains
+an offline maintenance option with the same config, environment and verified
+database target. Start normal ingestion afterwards. Never run it alongside an
+active indexer; no deployment or startup resets storage automatically.
 
 A hard kill during stale-socket recovery can leave `reset.sock.recovery-lock`
 behind and block a replacement wrapper. Stop the wrapper and confirm no other

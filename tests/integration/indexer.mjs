@@ -27,8 +27,7 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
   const prefix = `metrics-indexer-${randomBytes(5).toString("hex")}`;
   const pg = `${prefix}-pg`,
     hasura = `${prefix}-hasura`,
-    indexer = `${prefix}-indexer`,
-    migration = `${prefix}-migration`;
+    indexer = `${prefix}-indexer`;
   const directory = mkdtempSync(join(tmpdir(), "metrics-indexer-fixture-"));
   // Retain this tiny credential-free fixture for failed-test diagnosis.
   writeFileSync(
@@ -74,7 +73,7 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
   }
   docker("network", "create", "--internal", prefix);
   t.after(() => {
-    for (const name of [migration, indexer, hasura, pg]) {
+    for (const name of [indexer, hasura, pg]) {
       try {
         docker("rm", "-f", "-v", name);
       } catch {
@@ -179,26 +178,28 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
   sql(`UPDATE envio_info SET config='{}' WHERE id=1`);
   docker("start", indexer);
   await eventually(
-    () => docker("inspect", "--format", "{{.State.Status}}", indexer) === "exited",
-    "Incompatible storage did not stop the indexer",
+    () => logs().includes("Ingestion is paused"),
+    "Incompatible storage did not leave reset control available",
   );
-  assert.notEqual(docker("inspect", "--format", "{{.State.ExitCode}}", indexer), "0");
+  assert.equal(docker("inspect", "--format", "{{.State.Status}}", indexer), "running");
   assert(logs().includes("config changes are incompatible with the existing indexer data"));
   assert.equal(sentinel(), "1");
   docker(
-    "run",
-    "--pull=never",
-    "--name",
-    migration,
-    ...indexerOptions,
-    "--entrypoint",
-    "envio",
-    images.built.indexer,
-    "local",
-    "db-migrate",
-    "setup",
+    "exec",
+    indexer,
+    "node",
+    "--input-type=module",
+    "-e",
+    `
+    import assert from 'node:assert/strict';
+    await assert.rejects(
+      fetch('http://127.0.0.1:9898/healthz', {signal: AbortSignal.timeout(2000)}),
+      error => error.cause?.code === 'ECONNREFUSED',
+    );
+  `,
   );
-  docker("start", indexer);
+  const result = docker("exec", indexer, "tsx", "src/start-envio.ts", "reset");
+  assert(result.includes("Envio migration completed"));
   assert.equal(sentinel(), "0");
   await eventually(
     () => sql("SELECT count(*) FROM envio_info") === "1",

@@ -287,7 +287,7 @@ describe("envio supervisor", () => {
     expect(spawnedArgs).toEqual([["start"], ["start"], ["start"]]);
   });
 
-  test("gives up to Railway once the respawn budget is exhausted", async () => {
+  test("reports terminal failure once the respawn budget is exhausted", async () => {
     const runs = Array.from({ length: 5 }, () => ({ code: 1, runtimeMs: 500 }));
     const { options, spawnedArgs, exits, logged } = harness(runs);
 
@@ -297,9 +297,7 @@ describe("envio supervisor", () => {
 
     expect(spawnedArgs.length).toBe(3);
     expect(exits).toEqual([1]);
-    expect(logged.some((message) => message.includes("giving up so Railway can restart"))).toBe(
-      true,
-    );
+    expect(logged.some((message) => message.includes("retry limit reached"))).toBe(true);
   });
 
   test("exits when Postgres never comes back", async () => {

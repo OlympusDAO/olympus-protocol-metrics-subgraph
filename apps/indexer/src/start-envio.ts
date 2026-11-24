@@ -197,7 +197,7 @@ export async function superviseEnvio(
 
     if (respawns >= maxRespawns) {
       logError(
-        `Envio exited with code ${code} and has been respawned ${respawns} times; giving up so Railway can restart the container`,
+        `Envio exited with code ${code} and has been respawned ${respawns} times; retry limit reached`,
       );
       exit(code);
       return;
@@ -207,7 +207,7 @@ export async function superviseEnvio(
     const databaseReachable = await waitForDatabaseFn(env);
     if (options.signal?.aborted) return;
     if (!databaseReachable) {
-      logError("Postgres did not become reachable; exiting so Railway can restart the container");
+      logError("Postgres did not become reachable; stopping supervision");
       exit(code);
       return;
     }
