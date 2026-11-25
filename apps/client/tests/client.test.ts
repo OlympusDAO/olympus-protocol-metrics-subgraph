@@ -399,18 +399,18 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(packageJson.files).toContain("openapi.json");
     expect(packageJson.files).toContain("dist");
     expect(packageJson.scripts.build).toBe(
-      "pnpm run openapi:check && rm -rf dist && tsc -p tsconfig.build.json && pnpm run openapi:generate",
+      "pnpm run check:openapi && rm -rf dist && tsc -p tsconfig.build.json && pnpm run generate:openapi",
     );
-    expect(packageJson.scripts["openapi:generate"]).toBe("tsx scripts/write-openapi.ts");
-    expect(packageJson.scripts["openapi:check"]).toBe("tsx scripts/write-openapi.ts --check");
+    expect(packageJson.scripts["generate:openapi"]).toBe("tsx scripts/write-openapi.ts");
+    expect(packageJson.scripts["check:openapi"]).toBe("tsx scripts/write-openapi.ts --check");
     expect(packageJson.scripts["pack:dry-run"]).toBe(
       "pnpm run build && npm pack --dry-run --ignore-scripts --cache /tmp/olympus-treasury-subgraph-npm-cache",
     );
-    expect(packageJson.scripts.pretest).toBe("pnpm run openapi:check");
+    expect(packageJson.scripts.pretest).toBe("pnpm run check:openapi");
     expect(packageJson.scripts.prepack).toBe("pnpm run build");
-    expect(packageJson.scripts.prepublishOnly).toBe("pnpm run release:check");
+    expect(packageJson.scripts.prepublishOnly).toBe("pnpm run check:release");
     expect(packageJson.scripts["publish:client"]).toBeUndefined();
-    expect(packageJson.scripts["release:check"]).toBe("tsx scripts/release-check.ts");
+    expect(packageJson.scripts["check:release"]).toBe("tsx scripts/release-check.ts");
     expect(packageJson.scripts["stage:list"]).toBeUndefined();
     expect(packageJson.exports).toHaveProperty("./openapi.json");
     expect(packageJson.dependencies ?? {}).not.toHaveProperty("@tanstack/react-query");
@@ -445,7 +445,7 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(workflow).toContain('pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts validate');
     expect(workflow).toContain('pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts pack');
     expect(workflow).toContain('pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts notes');
-    expect(workflow).toContain('pnpm --dir "$PACKAGE_DIR" run release:check');
+    expect(workflow).toContain('pnpm --dir "$PACKAGE_DIR" run check:release');
     expect(workflow).toContain("actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a");
     expect(workflow).toContain(
       "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",

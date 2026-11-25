@@ -41,16 +41,16 @@ starts Postgres, Hasura, the indexer, MinIO, and the metrics API with the
 service-to-service environment variables wired for local use:
 
 ```sh
-pnpm run compose:core # Postgres + Hasura + indexer
-pnpm run compose:up   # full local stack, including storage and metrics API
+pnpm run up:compose:core # Postgres + Hasura + indexer
+pnpm run up:compose   # full local stack, including storage and metrics API
 ```
 
 Use the direct Envio commands only when you already have reachable Postgres and
 Hasura services and have exported the indexer environment yourself:
 
 ```sh
-pnpm run dev:envio   # runs `envio dev` against existing services
-pnpm run envio:start # runs `envio start` against existing services
+pnpm run dev:indexer   # runs `envio dev` against existing services
+pnpm run start:indexer # runs `envio start` against existing services
 ```
 
 Direct runs require `ENVIO_PG_*`, `HASURA_GRAPHQL_ENDPOINT`,

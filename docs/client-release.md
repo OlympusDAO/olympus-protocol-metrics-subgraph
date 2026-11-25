@@ -90,7 +90,7 @@ the manual staged-package review.
 4. Run the client release gate:
 
    ```sh
-   pnpm --dir apps/client run release:check
+   pnpm --dir apps/client run check:release
    ```
 
    This runs `pnpm install --frozen-lockfile`, builds the client, regenerates

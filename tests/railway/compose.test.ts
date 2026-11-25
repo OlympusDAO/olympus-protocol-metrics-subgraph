@@ -110,11 +110,11 @@ describe("local Docker Compose stack", () => {
     expect(doc).toContain(
       "docker compose up --build postgres hasura minio minio-init indexer metrics-api",
     );
-    expect(doc).toContain("pnpm run compose:publish");
-    expect(packageJson.scripts["compose:up"]).toBe(
+    expect(doc).toContain("pnpm run publish:compose");
+    expect(packageJson.scripts["up:compose"]).toBe(
       "docker compose up --build postgres hasura minio minio-init indexer metrics-api",
     );
-    expect(packageJson.scripts["compose:publish"]).toBe(
+    expect(packageJson.scripts["publish:compose"]).toBe(
       "INDEXER_DEPLOYMENT_ID=$(git rev-parse HEAD) docker compose --profile publish run --build --rm --no-deps metrics-publisher",
     );
     expect(packageJson.scripts[["compose", "publish", "full"].join(":")]).toBeUndefined();
@@ -124,21 +124,21 @@ describe("local Docker Compose stack", () => {
     const doc = readFileSync("docs/local-compose.md", "utf8");
     const packageJson = readFileSync("package.json", "utf8");
 
-    expect(packageJson).toContain('"compose:core": "docker compose up postgres hasura indexer"');
+    expect(packageJson).toContain('"up:compose:core": "docker compose up postgres hasura indexer"');
     expect(packageJson).toContain(
-      '"compose:api": "docker compose up --build minio minio-init metrics-api"',
+      '"up:compose:api": "docker compose up --build minio minio-init metrics-api"',
     );
     expect(packageJson).toContain(
-      '"compose:api:rebuild": "docker compose up --build --no-deps metrics-api"',
+      '"up:compose:api:rebuild": "docker compose up --build --no-deps metrics-api"',
     );
-    expect(packageJson).toContain('"compose:bucket:clear": "docker compose run --rm --no-deps');
+    expect(packageJson).toContain('"clear:compose:bucket": "docker compose run --rm --no-deps');
     expect(doc).toContain("## Split Workflow");
     expect(doc).toContain("in the foreground");
-    expect(doc).toContain("pnpm run compose:core");
-    expect(doc).toContain("pnpm run compose:api");
-    expect(doc).toContain("pnpm run compose:api:rebuild");
-    expect(doc).toContain("pnpm run compose:bucket:clear");
-    expect(doc).toContain("pnpm run compose:publish");
+    expect(doc).toContain("pnpm run up:compose:core");
+    expect(doc).toContain("pnpm run up:compose:api");
+    expect(doc).toContain("pnpm run up:compose:api:rebuild");
+    expect(doc).toContain("pnpm run clear:compose:bucket");
+    expect(doc).toContain("pnpm run publish:compose");
     expect(doc).toContain(
       "This rebuilds and starts only the one-shot `metrics-publisher` container",
     );

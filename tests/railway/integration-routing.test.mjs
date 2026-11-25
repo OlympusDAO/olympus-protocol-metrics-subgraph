@@ -36,7 +36,7 @@ test.each([
         child.emit("close", 2, null);
         return;
       }
-      if (scenario === "failed-build" && command === "pnpm" && args[1] === "docker:build:indexer") {
+      if (scenario === "failed-build" && command === "pnpm" && args[1] === "build:docker:indexer") {
         child.emit("close", 1, null);
         return;
       }

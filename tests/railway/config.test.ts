@@ -38,6 +38,7 @@ describe("Railway config-as-code", () => {
     const { addresses, get } = await graph();
     expect(addresses).toEqual([
       "bucket.bucket",
+      "bucket.monitor-state",
       "database.Postgres",
       "group.PostgreSQL",
       "service.hasura",
@@ -51,6 +52,7 @@ describe("Railway config-as-code", () => {
       "volume.rpc-cache-postgres-volume",
     ]);
     expect(get("bucket.bucket")).toMatchObject({ config: { region: "sjc" } });
+    expect(get("bucket.monitor-state")).toMatchObject({ config: { region: "sjc" } });
     expect(get("volume.postgres-volume-ytRO")).toMatchObject({
       config: {
         region: "us-west2",
@@ -175,7 +177,7 @@ describe("Railway config-as-code", () => {
   });
 
   test.each(["production", "staging"])(
-    "schedules the private monitor with its own build and existing bucket inputs in %s",
+    "schedules the private monitor with its own build and dedicated state bucket in %s",
     async (environment) => {
       const { get } = await graph(environment);
       const monitor = get("service.indexer-monitor");
@@ -218,7 +220,7 @@ describe("Railway config-as-code", () => {
         ...Object.fromEntries(
           ["BUCKET", "ENDPOINT", "REGION", "ACCESS_KEY_ID", "SECRET_ACCESS_KEY"].map((output) => [
             output,
-            { type: "reference", resource: "bucket.bucket", output },
+            { type: "reference", resource: "bucket.monitor-state", output },
           ]),
         ),
       });
@@ -582,13 +584,13 @@ describe("Railway config-as-code", () => {
     expect(scripts.check).toBe("biome check . && pnpm run lint:actions");
     for (const obsolete of ["format", "format:check", "lint:fix", "lint:check"])
       expect(scripts[obsolete]).toBeUndefined();
-    expect(scripts["docker:scan:provider"]).toBe("node scripts/validate.mjs provider");
+    expect(scripts["scan:docker:provider"]).toBe("node scripts/validate.mjs provider");
     expect(scripts["scan:images:provider"]).toBeUndefined();
-    expect(scripts["docker:scan"]).not.toContain("--ignore-unfixed");
+    expect(scripts["scan:docker"]).not.toContain("--ignore-unfixed");
     expect(parse(readFileSync("trivy.yaml", "utf8")).vulnerability["ignore-unfixed"]).toBe(true);
-    expect(scripts["docker:scan"]).not.toContain("--scanners");
-    expect(scripts["railway:plan"]).toBe("railway config plan --out railway-plan.json");
-    expect(scripts["railway:apply"]).toBe(
+    expect(scripts["scan:docker"]).not.toContain("--scanners");
+    expect(scripts["plan:railway"]).toBe("railway config plan --out railway-plan.json");
+    expect(scripts["apply:railway"]).toBe(
       "railway config apply --plan railway-plan.json --environment",
     );
     expect(readFileSync(".gitignore", "utf8").split(/\r?\n/)).toContain("railway-plan.json");
@@ -597,7 +599,7 @@ describe("Railway config-as-code", () => {
       pnpm: ">=11.28.13 <12",
     });
     for (const [name, image] of Object.entries(images.built)) {
-      expect(scripts[`docker:build:${name}`]).toBe(
+      expect(scripts[`build:docker:${name}`]).toBe(
         `docker build -f Dockerfile-${name} -t ${image} .`,
       );
     }
@@ -608,7 +610,7 @@ describe("Railway config-as-code", () => {
     );
     const companions = imageJob.steps.find((step: { id?: string }) => step.id === "companions");
     expect(companions.run.split(/\r?\n/).map((line: string) => line.trim())).toContain(
-      "pnpm run docker:build:indexer-monitor",
+      "pnpm run build:docker:indexer-monitor",
     );
   });
 });

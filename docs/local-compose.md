@@ -33,7 +33,7 @@ docker compose up --build postgres hasura minio minio-init indexer metrics-api
 The equivalent package script is:
 
 ```sh
-pnpm run compose:up
+pnpm run up:compose
 ```
 
 The indexer is included in the default daemon stack and remains internal-only.
@@ -54,23 +54,23 @@ RPC responses.
 
 ## Which Command to Run
 
-Use `pnpm run compose:core` when working on indexer handlers, schemas, snapshot
+Use `pnpm run up:compose:core` when working on indexer handlers, schemas, snapshot
 logic, or Hasura-backed data shape. This is the default local development path
 because Compose provides Postgres, Hasura, and the `ENVIO_PG_*` environment
 variables the startup wrapper requires.
 
-Use `pnpm run compose:up` when you also need the local artifact bucket and
+Use `pnpm run up:compose` when you also need the local artifact bucket and
 metrics API, or when validating an end-to-end API flow after the publisher has
 written artifacts.
 
-Use `pnpm run compose:api` or `pnpm run compose:api:rebuild` when the indexing
+Use `pnpm run up:compose:api` or `pnpm run up:compose:api:rebuild` when the indexing
 core is already running and you are only iterating on storage/API behavior.
 
-Use `pnpm run compose:publish` after the indexer has produced at least one
+Use `pnpm run publish:compose` after the indexer has produced at least one
 complete daily snapshot and you want to generate local `v2/` artifact shards for
 the API.
 
-Use `pnpm run dev:envio` or `pnpm run envio:start` only for direct host runs
+Use `pnpm run dev:indexer` or `pnpm run start:indexer` only for direct host runs
 against already reachable Postgres and Hasura services. These commands do not
 start Docker services and do not receive Compose's local defaults. Before
 running them, export `ENVIO_PG_HOST`, `ENVIO_PG_PORT`, `ENVIO_PG_USER`,
@@ -86,7 +86,7 @@ For day-to-day development, keep the indexing core running separately because
 Postgres, Hasura, and the indexer change less often:
 
 ```sh
-pnpm run compose:core
+pnpm run up:compose:core
 ```
 
 This starts `postgres`, `hasura`, `rpc-cache-postgres`, `rpc-cache`, and
@@ -96,7 +96,7 @@ the stack.
 Start or refresh the storage/API side when needed:
 
 ```sh
-pnpm run compose:api
+pnpm run up:compose:api
 ```
 
 The API reads `v2/manifest.json` from the artifact bucket for `/v2/bounds` and
@@ -109,14 +109,14 @@ After changing only the metrics API, rebuild just that container without
 restarting MinIO or the indexing core:
 
 ```sh
-pnpm run compose:api:rebuild
+pnpm run up:compose:api:rebuild
 ```
 
 Run the publisher after the core and API/storage services are already running
 and Hasura has indexed at least one complete daily snapshot:
 
 ```sh
-pnpm run compose:publish
+pnpm run publish:compose
 ```
 
 This rebuilds and starts only the one-shot `metrics-publisher` container with
@@ -131,7 +131,7 @@ The command prints a JSON result containing `deploymentId` and
 date and block.
 
 If no manifest exists, or the manifest has no snapshots for the current
-`INDEXER_DEPLOYMENT_ID`, `pnpm run compose:publish` creates the initial
+`INDEXER_DEPLOYMENT_ID`, `pnpm run publish:compose` creates the initial
 historical backfill from `2022-05-01` through Hasura's latest date where every
 supported chain id is indexed. That latest all-chain date must also be within
 one day of the current UTC date, otherwise the publisher exits successfully with
@@ -145,7 +145,7 @@ To clear only the local artifact bucket while keeping the rest of the compose
 stack running:
 
 ```sh
-pnpm run compose:bucket:clear
+pnpm run clear:compose:bucket
 ```
 
 This uses the `minio-init` container as a MinIO client with `--no-deps`, removes
@@ -193,7 +193,7 @@ Most variables have local defaults. Override these when needed:
   fresh `v2/publisher.lock` makes overlapping publisher runs exit successfully
   without writing artifacts.
 - `INDEXER_DEPLOYMENT_ID`: deployment identifier stamped into the internal
-  manifest. `pnpm run compose:publish` sets it to the latest local git commit
+  manifest. `pnpm run publish:compose` sets it to the latest local git commit
   hash. If running Docker Compose directly, set it manually or provide
   `RAILWAY_GIT_COMMIT_SHA`. Data shards are written under
   `v2/deployments/<id>/...`, and successful publishes remove stale files from

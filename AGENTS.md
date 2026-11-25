@@ -35,7 +35,7 @@ Use the [canonical validation command table](docs/validation.md):
 - `pnpm run validate:images` and `pnpm run test:integration`: required for
   container/deployment/runtime changes; build owned images before integration.
 - `pnpm run validate:all`: all applicable groups. Optional
-  `pnpm docker:scan:provider` reports provider vulnerabilities separately.
+  `pnpm scan:docker:provider` reports provider vulnerabilities separately.
 
 Before committing code, dependencies or CI changes, run `pnpm run validate`.
 For container, deployment or runtime changes, also run image and integration
@@ -96,3 +96,22 @@ fixed diagnostic, never its value. Validate optional values when supplied.
 - Write documentation as the current repository contract; avoid temporary phrases such as “this branch”.
 - Keep Markdown table cells unpadded to avoid alignment-only churn.
 - Use the existing Biome package.json sorting action for manifest keys.
+
+## Package commands and indexer monitoring
+
+- Name repository commands action-first: `dev:indexer`, `start:indexer`,
+  `build:docker:indexer`, `scan:docker`, `plan:railway`, and `check:openapi`.
+  Keep native package-manager lifecycle names such as `pretest` unchanged.
+  Update every tracked caller when renaming a command; do not retain duplicate aliases.
+- Run the repository-level `pnpm lint` for formatting and manifest sorting.
+- Keep the indexer monitor in `apps/indexer-monitor`, with its own compiled
+  TypeScript app and dedicated non-root Docker image. Use the same pinned Alpine
+  multi-stage `pnpm --filter indexer-monitor deploy --prod /deploy` packaging;
+  do not include the indexer runtime or development tools in its production image.
+- Give the monitor its own private `monitor-state` bucket and native bucket
+  credential references. Keep alert state separate from application artifacts.
+- Discord routing uses the actual Railway environment name: exactly `production`
+  selects the production service webhook and omits the environment label; every
+  other named environment requires the preview webhook and keeps its name.
+  Do not add production-ID or renamed-environment exceptions to Discord routing.
+  Preserve the documented explicit local mode when Railway identity is absent.

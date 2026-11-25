@@ -10,11 +10,11 @@
     "envio-env.d.ts"
   ],
   "scripts": {
+    "check:env": "tsx src/start-envio.ts check",
     "codegen": "envio codegen",
-    "env:check": "tsx src/start-envio.ts check",
+    "dev": "ENVIO_TUI=${ENVIO_TUI:-false} tsx src/start-envio.ts dev",
     "envio": "envio",
-    "envio:dev": "ENVIO_TUI=${ENVIO_TUI:-false} tsx src/start-envio.ts dev",
-    "envio:start": "tsx src/start-envio.ts start",
+    "start": "tsx src/start-envio.ts start",
     "test": "vitest run tests",
     "typecheck": "pnpm --workspace-root exec tsc -p apps/indexer/tsconfig.json"
   },

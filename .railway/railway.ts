@@ -235,6 +235,7 @@ export default defineRailway((ctx) => {
     },
   });
   const artifactBucket = bucket("bucket", { region: "sjc" });
+  const monitorState = bucket("monitor-state", { region: "sjc" });
   const indexerMonitor = service("indexer-monitor", {
     ...deployment,
     build: build("indexer-monitor", [
@@ -257,11 +258,11 @@ export default defineRailway((ctx) => {
       DISCORD_WEBHOOK_URL_PREVIEW: ctx.shared.DISCORD_WEBHOOK_URL_PREVIEW,
       MONITOR_NAME: "Metrics",
       MONITOR_COOLDOWN_MINUTES: preserve(),
-      BUCKET: ref(artifactBucket, "BUCKET"),
-      ENDPOINT: ref(artifactBucket, "ENDPOINT"),
-      REGION: ref(artifactBucket, "REGION"),
-      ACCESS_KEY_ID: ref(artifactBucket, "ACCESS_KEY_ID"),
-      SECRET_ACCESS_KEY: ref(artifactBucket, "SECRET_ACCESS_KEY"),
+      BUCKET: ref(monitorState, "BUCKET"),
+      ENDPOINT: ref(monitorState, "ENDPOINT"),
+      REGION: ref(monitorState, "REGION"),
+      ACCESS_KEY_ID: ref(monitorState, "ACCESS_KEY_ID"),
+      SECRET_ACCESS_KEY: ref(monitorState, "SECRET_ACCESS_KEY"),
     },
   });
   const hasura = service("hasura", {
@@ -309,6 +310,7 @@ export default defineRailway((ctx) => {
       group("PostgreSQL", [postgres]),
       importedVolume,
       artifactBucket,
+      monitorState,
       indexer,
       indexerMonitor,
       hasura,

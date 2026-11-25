@@ -21,7 +21,7 @@ in [security posture](security-posture.md#shared-tooling-and-intentional-differe
 | `pnpm run test` | Run all ordinary suites, including the monitor CLI tests against its compiled entry point. Prepare codegen and build artifacts first. |
 | `pnpm run validate` | Frozen install → runtime versions → codegen → check → typecheck → build → tests → moderate dependency audit. Does not use Docker. |
 | `pnpm run validate:images` | Build and scan the six repository-owned application images and Dockerfiles. Record Railway PostgreSQL as advisory-provider/not-run and explicit local/historical exclusions; no provider or fixture pulls/scans. |
-| `pnpm docker:scan:provider` | Optional advisory scan of configured Railway PostgreSQL template images only; no app builds or local fixtures. Vulnerabilities do not fail the command; registry/scanner errors do. |
+| `pnpm scan:docker:provider` | Optional advisory scan of configured Railway PostgreSQL template images only; no app builds or local fixtures. Vulnerabilities do not fail the command; registry/scanner errors do. |
 | `pnpm run test:integration` | Use the built images to check persistent cache hits, cache restart, real indexer restart and manual reset isolation, template PostgreSQL TLS/data path, compiled API/publisher behavior and Hasura health. |
 | `pnpm run validate:all` | Run all three groups, collecting failures without suppressing the remaining groups. |
 
@@ -111,7 +111,7 @@ transfer. Integration prepares only its required fixture images. Local aggregate
 remain available.
 `validate:all` uses the same owned-app selection and excludes the optional provider
 group. No aggregate scans local fixtures by default. The explicit
-`docker:scan <image>` convenience command scans an operator-selected image with
+`scan:docker <image>` convenience command scans an operator-selected image with
 pinned Trivy's native `vuln,secret` default and the filtering from
 `trivy.yaml`. Callers can select `--scanners`.
 There is no Metrics handover command; that rehearsal belongs to protocol-indexer.

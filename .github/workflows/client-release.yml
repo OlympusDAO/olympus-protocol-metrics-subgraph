@@ -58,7 +58,7 @@ jobs:
           EXPECTED_VERSION: ${{ inputs.expected_version }}
 
       - name: Run client release checks
-        run: pnpm --dir "$PACKAGE_DIR" run release:check
+        run: pnpm --dir "$PACKAGE_DIR" run check:release
 
       - name: Pack release artifact for review
         id: pack

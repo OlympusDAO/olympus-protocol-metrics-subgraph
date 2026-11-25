@@ -63,12 +63,12 @@ chmod 600 railway-plan.json
 pnpm install --frozen-lockfile
 railway status
 railway config migrate status
-pnpm run railway:plan:bootstrap --environment 34764411-35d7-466c-8249-612730c36c07
+pnpm run plan:railway:bootstrap --environment 34764411-35d7-466c-8249-612730c36c07
 ```
 
 The plan aliases write native `config plan --out railway-plan.json`. Review that
 artifact and obtain separate live approval; do not regenerate it between review
-and apply. `railway:apply` uses that pinned plan and requires the reviewed
+and apply. `apply:railway` uses that pinned plan and requires the reviewed
 environment name or ID. Repeat the file preparation in a new shell or if the
 artifact is removed. Keep plans, variable exports and credentials outside Git.
 
@@ -87,7 +87,7 @@ and runtime files named in the plan.
 
 1. After approval, apply the saved bootstrap plan manually. Bootstrap preserves the indexer's current RPC URLs. Configure `UPSTREAM_RPC_URL_<id>` on the new cache for chain IDs 1, 137, 250, 8453, 42161, 80094, and 4663, using each chain's archive provider. `preserve()` retains supplied values. Provisioning does not inject the provider secrets.
 2. Verify the cache health endpoint and historical RPC reads over the Railway private network. Verify that the cache database has its own attached volume. Confirm that the existing indexer and scheduled publisher remain healthy.
-3. Run `pnpm run railway:plan --environment 34764411-35d7-466c-8249-612730c36c07` to preview the seven indexer routes. Review this fresh artifact, obtain separate approval, then follow the apply acceptance below and verify indexer progress/publisher output.
+3. Run `pnpm run plan:railway --environment 34764411-35d7-466c-8249-612730c36c07` to preview the seven indexer routes. Review this fresh artifact, obtain separate approval, then follow the apply acceptance below and verify indexer progress/publisher output.
 
 
 Retain original RPC credentials in the team secret store for route rollback.
@@ -99,7 +99,7 @@ Only after separate live approval, apply the reviewed artifact with the explicit
 reviewed environment and native JSON output:
 
 ```sh
-pnpm run railway:apply production --json
+pnpm run apply:railway production --json
 ```
 
 Substitute the reviewed preview name or environment ID when applicable; do not

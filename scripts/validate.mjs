@@ -171,7 +171,7 @@ async function images() {
   let failure;
   for (const [name, reference] of Object.entries(inventory.built)) {
     try {
-      await run("pnpm", ["run", `docker:build:${name}`]);
+      await run("pnpm", ["run", `build:docker:${name}`]);
       await scan(name, reference);
     } catch (error) {
       report.imageFailures.push({ name, reference, status: "failed", error: error.message });
@@ -183,7 +183,7 @@ async function images() {
   buildsReady = Object.keys(inventory.built).every((name) =>
     report.steps.some(
       ({ command, exitCode }) =>
-        command[0] === "pnpm" && command[2] === `docker:build:${name}` && exitCode === 0,
+        command[0] === "pnpm" && command[2] === `build:docker:${name}` && exitCode === 0,
     ),
   );
   try {

@@ -163,16 +163,16 @@ shared `DISCORD_WEBHOOK_URL_PREVIEW` for other environments. IaC preserves the
 production value and declares the preview reference. It
 binds `INDEXER_METRICS_URL` to the indexer's private host and port and
 references `BUCKET`, `ENDPOINT`, `REGION`, `ACCESS_KEY_ID`, and
-`SECRET_ACCESS_KEY` from the existing artifact bucket. All are required.
+`SECRET_ACCESS_KEY` from the dedicated private `monitor-state` bucket. All are required.
 Startup validates these values before any requests and exits nonzero with
 a fixed diagnostic on invalid configuration. `MONITOR_NAME` is optional
 and defaults to `Indexer`. IaC supplies `Metrics`; the runtime appends Railway's
 actual environment name outside production. The supplied
 `RAILWAY_ENVIRONMENT_NAME` must not be blank. Outside Railway it is optional;
 without it the explicit `DISCORD_WEBHOOK_URL` and base label are used.
-Optional `DISCORD_PRODUCTION_ENVIRONMENT_ID` recognizes a renamed production
-environment by matching the runtime `RAILWAY_ENVIRONMENT_ID`; by default the
-name is used. Supplied IDs must not be blank, and a runtime ID requires a name.
+Only the exact environment name `production` uses the production webhook.
+Renamed environments use preview routing. A supplied runtime ID must not be blank
+and requires a name; it does not select the Discord destination.
 `MONITOR_COOLDOWN_MINUTES` is optional and defaults to `60`. When set, use
 a positive whole number that can be represented safely in milliseconds.
 

@@ -151,8 +151,8 @@ test("copied production settings use the runtime environment for webhook and lab
   const remote = await fixture(t);
   const configured = {
     ...remote.env,
-    MONITOR_NAME: "Protocol Indexer",
     DISCORD_PRODUCTION_ENVIRONMENT_ID: "fixture-production",
+    MONITOR_NAME: "Protocol Indexer",
     DISCORD_WEBHOOK_URL_PREVIEW: remote.env.DISCORD_WEBHOOK_URL.replace(
       "/webhook",
       "/preview-webhook",
@@ -160,7 +160,13 @@ test("copied production settings use the runtime environment for webhook and lab
   };
   for (const [environment, route, label, runtimeId] of [
     ["production", "POST /webhook", "Protocol Indexer", "fixture-production"],
-    ["renamed-production", "POST /webhook", "Protocol Indexer", "fixture-production"],
+    [
+      "renamed-production",
+      "POST /preview-webhook",
+      "Protocol Indexer / renamed-production",
+      "fixture-production",
+    ],
+    [" production ", "POST /preview-webhook", "Protocol Indexer /  production ", "fixture-preview"],
     [
       "protocol-indexer-pr-42",
       "POST /preview-webhook",
@@ -231,7 +237,6 @@ test("missing and invalid configuration exit before any requests", async (t) => 
     ["MONITOR_NAME", " "],
     ["RAILWAY_ENVIRONMENT_NAME", " "],
     ["RAILWAY_ENVIRONMENT_ID", " "],
-    ["DISCORD_PRODUCTION_ENVIRONMENT_ID", " "],
     ["MONITOR_COOLDOWN_MINUTES", ""],
     ["MONITOR_COOLDOWN_MINUTES", " "],
     ["MONITOR_COOLDOWN_MINUTES", "0"],
