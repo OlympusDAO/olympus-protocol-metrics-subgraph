@@ -243,6 +243,7 @@ export default defineRailway((ctx) => {
       "/pnpm-lock.yaml",
       "/pnpm-workspace.yaml",
       "/apps/indexer-monitor/package.json",
+      "/apps/indexer-monitor/tsconfig.json",
       "/apps/indexer-monitor/src/**",
     ]),
     deploy: {
@@ -254,6 +255,7 @@ export default defineRailway((ctx) => {
       INDEXER_METRICS_URL: `http://\${{indexer.RAILWAY_PRIVATE_DOMAIN}}:\${{indexer.PORT}}/metrics`,
       DISCORD_WEBHOOK_URL: ctx.shared.DISCORD_WEBHOOK_URL,
       MONITOR_NAME: `Metrics (${ctx.environment ?? "default"})`,
+      MONITOR_COOLDOWN_MINUTES: preserve(),
       BUCKET: ref(artifactBucket, "BUCKET"),
       ENDPOINT: ref(artifactBucket, "ENDPOINT"),
       REGION: ref(artifactBucket, "REGION"),

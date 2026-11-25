@@ -52,6 +52,7 @@
     {
       "includes": [
         "apps/**/tests/**/*.test.ts",
+        "apps/indexer-monitor/test/**/*.test.mjs",
         "packages/**/tests/**/*.test.ts",
         "tests/**/*.test.{ts,mjs}"
       ],

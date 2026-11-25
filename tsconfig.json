@@ -15,6 +15,6 @@
     "target": "es2022",
     "types": ["node"]
   },
-  "exclude": ["node_modules", "**/generated", "**/.envio"],
+  "exclude": ["node_modules", "**/generated", "**/.envio", "apps/indexer-monitor"],
   "include": ["apps", "packages", "tests"]
 }

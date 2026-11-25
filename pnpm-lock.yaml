@@ -112,6 +112,13 @@ importers:
       "@aws-sdk/client-s3":
         specifier: 3.1152.0
         version: 3.1152.0
+    devDependencies:
+      "@types/node":
+        specifier: 24.19.2
+        version: 24.19.2
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
 
   apps/metrics-api:
     dependencies:

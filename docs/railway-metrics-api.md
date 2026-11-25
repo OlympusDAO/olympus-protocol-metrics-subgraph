@@ -165,15 +165,18 @@ references `BUCKET`, `ENDPOINT`, `REGION`, `ACCESS_KEY_ID`, and
 Startup validates these values before any requests and exits nonzero with
 a fixed diagnostic on invalid configuration. `MONITOR_NAME` is optional
 and defaults to `Indexer`. IaC supplies Metrics and the environment name.
+`MONITOR_COOLDOWN_MINUTES` is optional and defaults to `60`. When set, use
+a positive whole number that can be represented safely in milliseconds.
 
 The job persists state at `indexer-monitor/state.json`, separately from
-snapshot keys. A successful Discord error notification starts a 60-minute
+snapshot keys. A successful Discord error notification starts the configured
 cooldown across invocations and redeploys. The first eligible run after the
 cooldown can alert again if the indexer remains unreachable. A healthy run
 sends one recovery for a previously alerted outage and keeps its cooldown,
 so a new outage within that window stays suppressed.
 
-Logs record the probe result, cooldown suppression, and acknowledged alerts.
+Discord notifications include the project, status, and timestamp. Logs record
+the probe result, cooldown suppression, and acknowledged alerts.
 Delivery and storage failures exit nonzero. Failed delivery leaves state
 intact so the next scheduled run can retry a relevant alert. A successful
 delivery followed by a failed state write can cause a duplicate notification.

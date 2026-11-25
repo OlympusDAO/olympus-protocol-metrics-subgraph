@@ -2,13 +2,11 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { createServer } from "node:http";
+import { test } from "node:test";
 import { setTimeout } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
-import { describe, test } from "vitest";
 
-const entrypoint = fileURLToPath(
-  new URL("../../apps/indexer-monitor/src/monitor-indexer.mjs", import.meta.url),
-);
+const entrypoint = fileURLToPath(new URL("../dist/monitor-indexer.js", import.meta.url));
 const statePath = "/fixture-state/indexer-monitor/state.json";
 const minute = 60_000;
 const reachable = "Indexer monitor metrics reachable.\n";
@@ -61,7 +59,7 @@ async function fixture(t) {
         }
         return;
       case "POST /webhook":
-        remote.posts.push(JSON.parse(body).content);
+        remote.posts.push(JSON.parse(body));
         if (!remote.hangWebhook) response.writeHead(remote.webhookStatus).end("fixture-secret");
         return;
       default:
@@ -70,7 +68,7 @@ async function fixture(t) {
   });
   server.listen(0, "127.0.0.1");
   await once(server, "listening");
-  t.onTestFinished(async () => {
+  t.after(async () => {
     const closed = once(server, "close");
     server.close();
     server.closeAllConnections();
@@ -108,7 +106,7 @@ function start(t, env) {
     stderr,
     elapsed: performance.now() - started,
   }));
-  t.onTestFinished(async () => {
+  t.after(async () => {
     if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
     await closed;
   });
@@ -138,6 +136,16 @@ async function run(t, remote, diagnostic = "", env = remote.env) {
   return { elapsed, stdout };
 }
 
+function assertEmbed(payload, expected, earliest) {
+  assert(Array.isArray(payload.embeds), "Discord POST must include embeds");
+  assert.equal(payload.embeds.length, 1);
+  const [{ timestamp, ...embed }] = payload.embeds;
+  assert.deepEqual(embed, expected);
+  const sentAt = Date.parse(timestamp);
+  assert(sentAt >= earliest && sentAt <= Date.now());
+  assert.equal(timestamp, new Date(sentAt).toISOString());
+}
+
 test("missing and invalid configuration exit before any requests", async (t) => {
   const remote = await fixture(t);
   for (const name of Object.keys(remote.env).filter((name) => name !== "MONITOR_NAME")) {
@@ -151,6 +159,14 @@ test("missing and invalid configuration exit before any requests", async (t) => 
     ["ENDPOINT", "not a URL with fixture-secret"],
     ["SECRET_ACCESS_KEY", " "],
     ["MONITOR_NAME", " "],
+    ["MONITOR_COOLDOWN_MINUTES", ""],
+    ["MONITOR_COOLDOWN_MINUTES", " "],
+    ["MONITOR_COOLDOWN_MINUTES", "0"],
+    ["MONITOR_COOLDOWN_MINUTES", "-1"],
+    ["MONITOR_COOLDOWN_MINUTES", "1.5"],
+    ["MONITOR_COOLDOWN_MINUTES", "NaN"],
+    ["MONITOR_COOLDOWN_MINUTES", "9007199254740992"],
+    ["MONITOR_COOLDOWN_MINUTES", "150119987580"],
   ]) {
     const { stdout } = await run(t, remote, "Invalid indexer monitor configuration.", {
       ...remote.env,
@@ -165,6 +181,7 @@ test("separate cron runs enforce the persisted cooldown before and after recover
   const remote = await fixture(t);
   const outage = "Protocol Indexer / preview: metrics are unreachable.";
   const recovery = "Protocol Indexer / preview: metrics are reachable again.";
+  const content = () => remote.posts.map((post) => post.content);
   const started = Date.now();
   assert.equal((await run(t, remote)).stdout, outageAck);
   assert.deepEqual(remote.calls, [
@@ -173,7 +190,19 @@ test("separate cron runs enforce the persisted cooldown before and after recover
     "POST /webhook",
     `PUT ${statePath}`,
   ]);
-  assert.deepEqual(remote.posts, [outage]);
+  assert.deepEqual(content(), [outage]);
+  assertEmbed(
+    remote.posts[0],
+    {
+      title: "Indexer metrics outage",
+      color: 0xe74c3c,
+      fields: [
+        { name: "Project", value: "Protocol Indexer / preview" },
+        { name: "Status", value: "Unreachable" },
+      ],
+    },
+    started,
+  );
   assert.equal(remote.state.alertedDown, true);
   assert(remote.state.lastErrorAt >= started && remote.state.lastErrorAt <= Date.now());
 
@@ -183,27 +212,59 @@ test("separate cron runs enforce the persisted cooldown before and after recover
   const withinCooldown = await run(t, remote);
   assert.deepEqual(remote.calls, [`GET ${statePath}`, "GET /metrics"]);
   assert.deepEqual(remote.state, recent);
-  assert.deepEqual(remote.posts, [outage]);
+  assert.deepEqual(content(), [outage]);
   assert.equal(withinCooldown.stdout, suppressed);
 
   const stale = Date.now() - 61 * minute;
   remote.state = { lastErrorAt: stale, alertedDown: true };
   assert.equal((await run(t, remote)).stdout, outageAck);
-  assert.deepEqual(remote.posts, [outage, outage]);
+  assert.deepEqual(content(), [outage, outage]);
   const acknowledged = remote.state.lastErrorAt;
   assert(acknowledged > stale);
 
   remote.metricsStatus = 204;
   assert.equal((await run(t, remote)).stdout, recoveryAck);
-  assert.deepEqual(remote.posts, [outage, outage, recovery]);
+  assert.deepEqual(content(), [outage, outage, recovery]);
+  assertEmbed(
+    remote.posts[2],
+    {
+      title: "Indexer metrics recovered",
+      color: 0x2ecc71,
+      fields: [
+        { name: "Project", value: "Protocol Indexer / preview" },
+        { name: "Status", value: "Reachable again" },
+      ],
+    },
+    acknowledged,
+  );
   assert.deepEqual(remote.state, { lastErrorAt: acknowledged, alertedDown: false });
   assert.equal((await run(t, remote)).stdout, reachable);
-  assert.deepEqual(remote.posts, [outage, outage, recovery]);
+  assert.deepEqual(content(), [outage, outage, recovery]);
 
   remote.metricsStatus = 503;
   assert.equal((await run(t, remote)).stdout, suppressed);
-  assert.deepEqual(remote.posts, [outage, outage, recovery]);
+  assert.deepEqual(content(), [outage, outage, recovery]);
   assert.deepEqual(remote.state, { lastErrorAt: acknowledged, alertedDown: false });
+});
+
+test("configured cooldown controls suppression across separate invocations", async (t) => {
+  const remote = await fixture(t);
+  remote.env.MONITOR_COOLDOWN_MINUTES = "10";
+  const recent = { lastErrorAt: Date.now() - 9 * minute, alertedDown: true };
+  remote.state = recent;
+  assert.equal((await run(t, remote)).stdout, suppressed);
+  assert.deepEqual(remote.calls, [`GET ${statePath}`, "GET /metrics"]);
+  assert.deepEqual(remote.state, recent);
+
+  const older = Date.now() - 11 * minute;
+  remote.state = { lastErrorAt: older, alertedDown: true };
+  const eligible = await run(t, remote);
+  assert.deepEqual(
+    remote.posts.map((post) => post.content),
+    ["Protocol Indexer / preview: metrics are unreachable."],
+  );
+  assert(remote.state.lastErrorAt > older);
+  assert.equal(eligible.stdout, outageAck);
 });
 
 test("a fresh healthy cron run reads state and probes only metrics without writing", async (t) => {
@@ -227,10 +288,10 @@ test("failed delivery leaves state unchanged and the next run retries", async (t
   assert.equal(failed.stdout, unreachable);
   remote.webhookStatus = 204;
   assert.equal((await run(t, remote, "", env)).stdout, outageAck);
-  assert.deepEqual(remote.posts, [
-    "Indexer: metrics are unreachable.",
-    "Indexer: metrics are unreachable.",
-  ]);
+  assert.deepEqual(
+    remote.posts.map((post) => post.content),
+    ["Indexer: metrics are unreachable.", "Indexer: metrics are unreachable."],
+  );
   assert.equal(remote.state.alertedDown, true);
   assert(remote.state.lastErrorAt > before.lastErrorAt);
 });
@@ -262,6 +323,26 @@ test("corrupt state, AccessDenied and non-NoSuchKey 404s all fail before probing
   assert.equal(remote.calls.length, 11);
   assert.deepEqual(remote.posts, []);
 });
+test("Discord project fields stay within the limit without shortening content", async (t) => {
+  const project = "p".repeat(1024);
+  const name = `${project}z`;
+  const remote = await fixture(t);
+  remote.env.MONITOR_NAME = name;
+
+  for (const [status, message] of [
+    [503, "unreachable"],
+    [200, "reachable again"],
+  ]) {
+    remote.metricsStatus = status;
+    await run(t, remote);
+    const payload = remote.posts.at(-1);
+    assert.equal(payload.content, `${name}: metrics are ${message}.`);
+    const field = payload.embeds[0].fields.find((field) => field.name === "Project");
+    assert.equal(field.value.length, 1024);
+    assert.equal(field.value, project);
+  }
+  assert.equal(remote.posts.length, 2);
+});
 
 test("a failed state write is reported after acknowledgement and permits redelivery", async (t) => {
   const remote = await fixture(t);
@@ -287,33 +368,35 @@ test("metrics redirects count as failed probes without following the target", as
   ]);
 });
 
-describe("native deadlines bound metrics, webhook and slow-drip S3 response bodies", () => {
-  test.concurrent("hung metrics is an unhealthy probe", async (t) => {
-    const remote = await fixture(t);
-    remote.hangMetrics = true;
-    const { elapsed, stdout } = await run(t, remote);
-    assert(elapsed >= 4_800 && elapsed < 7_500, `elapsed ${elapsed}ms`);
-    assert.equal(stdout, outageAck);
-    assert.equal(remote.posts.length, 1);
-  }, 10_000);
-
-  test.concurrent("hung webhook exits before a state write", async (t) => {
-    const remote = await fixture(t);
-    remote.hangWebhook = true;
-    const { elapsed, stdout } = await run(t, remote, "Indexer monitor webhook delivery failed.");
-    assert(elapsed >= 4_800 && elapsed < 7_500, `elapsed ${elapsed}ms`);
-    assert.equal(stdout, unreachable);
-    assert.equal(remote.state, null);
-  }, 10_000);
-
-  test.concurrent("headers and continual body bytes do not extend the S3 read", async (t) => {
-    const remote = await fixture(t);
-    remote.drip = true;
-    const { elapsed, stdout } = await run(t, remote, "Indexer monitor state read failed.");
-    assert(elapsed >= 4_800 && elapsed < 7_500, `elapsed ${elapsed}ms`);
-    assert.equal(stdout, "");
-    assert.deepEqual(remote.calls, [`GET ${statePath}`]);
-  }, 10_000);
+test("native deadlines bound metrics, webhook and slow-drip S3 response bodies", {
+  concurrency: true,
+}, async (t) => {
+  await Promise.all([
+    t.test("hung metrics is an unhealthy probe", async (t) => {
+      const remote = await fixture(t);
+      remote.hangMetrics = true;
+      const { elapsed, stdout } = await run(t, remote);
+      assert(elapsed >= 4_800 && elapsed < 7_500, `elapsed ${elapsed}ms`);
+      assert.equal(stdout, outageAck);
+      assert.equal(remote.posts.length, 1);
+    }),
+    t.test("hung webhook exits before a state write", async (t) => {
+      const remote = await fixture(t);
+      remote.hangWebhook = true;
+      const { elapsed, stdout } = await run(t, remote, "Indexer monitor webhook delivery failed.");
+      assert(elapsed >= 4_800 && elapsed < 7_500, `elapsed ${elapsed}ms`);
+      assert.equal(stdout, unreachable);
+      assert.equal(remote.state, null);
+    }),
+    t.test("headers and continual body bytes do not extend the S3 read", async (t) => {
+      const remote = await fixture(t);
+      remote.drip = true;
+      const { elapsed, stdout } = await run(t, remote, "Indexer monitor state read failed.");
+      assert(elapsed >= 4_800 && elapsed < 7_500, `elapsed ${elapsed}ms`);
+      assert.equal(stdout, "");
+      assert.deepEqual(remote.calls, [`GET ${statePath}`]);
+    }),
+  ]);
 });
 
 test("SIGTERM aborts a hung probe without posting an alert", async (t) => {

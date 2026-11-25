@@ -17,8 +17,8 @@ in [security posture](security-posture.md#shared-tooling-and-intentional-differe
 | `pnpm run check` | Read-only Biome formatting/code checks and workflow lint, once. |
 | `pnpm run lint` | Apply safe Biome fixes and formatting, then workflow lint. |
 | `pnpm run typecheck` | Whole-workspace TypeScript check without emitting artifacts. |
-| `pnpm run build` | Build client/API/publisher artifacts; reject committed OpenAPI drift before regeneration. |
-| `pnpm run test` | All ordinary suites; CI first prepares codegen and build artifacts. |
+| `pnpm run build` | Build client, API, publisher, and monitor artifacts. Reject committed OpenAPI drift before regeneration. |
+| `pnpm run test` | Run all ordinary suites, including the monitor CLI tests against its compiled entry point. Prepare codegen and build artifacts first. |
 | `pnpm run validate` | Frozen install → runtime versions → codegen → check → typecheck → build → tests → moderate dependency audit. Does not use Docker. |
 | `pnpm run validate:images` | Build and scan the five repository-owned application images and Dockerfiles. Record Railway PostgreSQL as advisory-provider/not-run and explicit local/historical exclusions; no provider or fixture pulls/scans. |
 | `pnpm docker:scan:provider` | Optional advisory scan of configured Railway PostgreSQL template images only; no app builds or local fixtures. Vulnerabilities do not fail the command; registry/scanner errors do. |

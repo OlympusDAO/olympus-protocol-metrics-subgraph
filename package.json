@@ -12,7 +12,7 @@
   "type": "module",
   "scripts": {
     "benchmark:rpc": "node scripts/benchmark-rpc.mjs",
-    "build": "pnpm --dir apps/client build && pnpm --dir apps/metrics-api build && pnpm --dir apps/metrics-publisher build",
+    "build": "pnpm --dir apps/client build && pnpm --dir apps/metrics-api build && pnpm --dir apps/metrics-publisher build && pnpm --dir apps/indexer-monitor build",
     "check": "biome check . && pnpm run lint:actions",
     "check:runtime-versions": "node scripts/check-runtime-versions.mjs",
     "codegen": "pnpm --dir apps/indexer codegen",
@@ -39,7 +39,7 @@
     "railway:apply": "railway config apply --plan railway-plan.json --environment",
     "railway:plan": "railway config plan --out railway-plan.json",
     "railway:plan:bootstrap": "METRICS_RAILWAY_CACHE_BOOTSTRAP=1 railway config plan --out railway-plan.json",
-    "test": "pnpm test:root && pnpm test:artifacts && pnpm test:client && pnpm test:metrics-api && pnpm test:metrics-publisher && pnpm test:indexer",
+    "test": "pnpm test:root && pnpm test:artifacts && pnpm test:client && pnpm test:metrics-api && pnpm test:metrics-publisher && pnpm test:indexer && pnpm --dir apps/indexer-monitor test",
     "test:artifacts": "vitest run packages/metrics-artifacts/tests",
     "test:client": "pnpm --dir apps/client test",
     "test:indexer": "pnpm --dir apps/indexer test",
@@ -48,7 +48,7 @@
     "test:metrics-publisher": "pnpm --dir apps/metrics-publisher test",
     "test:root": "vitest run --dir tests --exclude '**/integration/**'",
     "test:rpc-cache": "node --test services/rpc-cache/integration.test.mjs",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && pnpm --dir apps/indexer-monitor typecheck",
     "validate": "node scripts/validate.mjs source",
     "validate:all": "node scripts/validate.mjs all",
     "validate:images": "node scripts/validate.mjs images"

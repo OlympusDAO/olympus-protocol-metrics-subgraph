@@ -187,6 +187,7 @@ describe("Railway config-as-code", () => {
           "/pnpm-lock.yaml",
           "/pnpm-workspace.yaml",
           "/apps/indexer-monitor/package.json",
+          "/apps/indexer-monitor/tsconfig.json",
           "/apps/indexer-monitor/src/**",
         ],
       },
@@ -204,6 +205,7 @@ describe("Railway config-as-code", () => {
         value: `http://\${{indexer.RAILWAY_PRIVATE_DOMAIN}}:\${{indexer.PORT}}/metrics`,
       },
       MONITOR_NAME: { type: "literal", value: "Metrics (staging)" },
+      MONITOR_COOLDOWN_MINUTES: { type: "preserve" },
       ...Object.fromEntries(
         ["BUCKET", "ENDPOINT", "REGION", "ACCESS_KEY_ID", "SECRET_ACCESS_KEY"].map((output) => [
           output,
@@ -500,24 +502,27 @@ describe("Railway config-as-code", () => {
     expect(instructions).toContain("WORKDIR /app");
     expect(instructions).toContain("FROM base AS build");
     expect(instructions).toContain("FROM base AS runtime");
-    expect(instructions).toContain(
-      "RUN pnpm install --frozen-lockfile --prod --filter indexer-monitor",
-    );
+    expect(instructions).toContain("RUN pnpm install --frozen-lockfile --filter indexer-monitor");
+    expect(instructions).toContain("RUN pnpm --filter indexer-monitor build");
     expect(instructions).toContain("RUN pnpm --filter indexer-monitor deploy --prod /deploy");
     expect(dockerfile).toContain("RUN apk upgrade --no-cache libcrypto3 libssl3 zlib");
     expect(dockerfile).toContain("rm -rf /usr/local/lib/node_modules /opt/yarn*");
     expect(instructions.filter((line) => line.startsWith("COPY "))).toEqual([
       "COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./",
       "COPY apps/indexer-monitor/package.json apps/indexer-monitor/package.json",
+      "COPY apps/indexer-monitor/tsconfig.json apps/indexer-monitor/tsconfig.json",
       "COPY apps/indexer-monitor/src apps/indexer-monitor/src",
       "COPY --from=build --chown=node:node /deploy /app",
     ]);
     expect(instructions.slice(-2)).toEqual([
       "USER node",
-      'CMD ["node", "src/monitor-indexer.mjs"]',
+      'CMD ["node", "dist/monitor-indexer.js"]',
     ]);
-    expect(existsSync("apps/indexer-monitor/src/monitor-indexer.mjs")).toBe(true);
+    expect(existsSync("apps/indexer-monitor/src/monitor-indexer.ts")).toBe(true);
+    expect(existsSync("apps/indexer-monitor/src/monitor-indexer.mjs")).toBe(false);
     expect(existsSync("apps/indexer/src/monitor-indexer.mjs")).toBe(false);
+    expect(existsSync("apps/indexer-monitor/test/monitor-indexer.test.mjs")).toBe(true);
+    expect(existsSync("tests/railway/indexer-monitor.test.mjs")).toBe(false);
   });
 
   test("deploys production closures without coupling public artifact services to codegen", () => {
@@ -562,8 +567,10 @@ describe("Railway config-as-code", () => {
     expect(ci).toContain("pnpm run build");
     const scripts = JSON.parse(readFileSync("package.json", "utf8")).scripts;
     expect(scripts.validate).toBe("node scripts/validate.mjs source");
-    expect(scripts.typecheck).toBe("tsc --noEmit");
+    expect(scripts.typecheck).toBe("tsc --noEmit && pnpm --dir apps/indexer-monitor typecheck");
     expect(scripts.build).not.toContain("--noEmit");
+    expect(scripts.build.split(" && ")).toContain("pnpm --dir apps/indexer-monitor build");
+    expect(scripts.test.split(" && ")).toContain("pnpm --dir apps/indexer-monitor test");
     expect(scripts.lint).toBe("biome check --write . && pnpm run lint:actions");
     expect(scripts.check).toBe("biome check . && pnpm run lint:actions");
     for (const obsolete of ["format", "format:check", "lint:fix", "lint:check"])
