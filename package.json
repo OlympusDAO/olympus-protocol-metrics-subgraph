@@ -30,7 +30,6 @@
     "clear:compose:bucket": "docker compose run --rm --no-deps --entrypoint /bin/sh minio-init -c 'mc alias set local http://minio:9000 \"$MINIO_ROOT_USER\" \"$MINIO_ROOT_PASSWORD\" && mc rm --recursive --force \"local/${ARTIFACT_BUCKET:-metrics}\" && mc mb -p \"local/${ARTIFACT_BUCKET:-metrics}\"'",
     "codegen": "pnpm --dir apps/indexer codegen",
     "dev:indexer": "pnpm --dir apps/indexer dev",
-    "envio": "pnpm --dir apps/indexer envio",
     "lint": "biome check --write . && pnpm run lint:actions",
     "lint:actions": "mise exec --locked jactionlint -- jactionlint --profile correctness --no-online && mise exec --locked zizmor -- zizmor --offline --strict-collection --persona auditor --min-severity medium --min-confidence low --collect=workflows --collect=actions .github",
     "plan:railway": "railway config plan --out railway-plan.json",
