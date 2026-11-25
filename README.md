@@ -49,7 +49,7 @@ Use the direct Envio commands only when you already have reachable Postgres and
 Hasura services and have exported the indexer environment yourself:
 
 ```sh
-pnpm run envio:dev   # runs `envio dev` against existing services
+pnpm run dev:envio   # runs `envio dev` against existing services
 pnpm run envio:start # runs `envio start` against existing services
 ```
 

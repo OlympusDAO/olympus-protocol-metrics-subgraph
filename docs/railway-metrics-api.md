@@ -158,15 +158,33 @@ dedicated Alpine-based image. Each invocation reads state, probes the native
 the endpoint is reachable, including during backfill. The job measures
 reachability only and never resets the indexer.
 
-Before deploying, set the environment's shared `DISCORD_WEBHOOK_URL`. IaC
+Before deploying, configure the production service's `DISCORD_WEBHOOK_URL` and
+shared `DISCORD_WEBHOOK_URL_PREVIEW` for other environments. IaC preserves the
+production value and declares the preview reference. It
 binds `INDEXER_METRICS_URL` to the indexer's private host and port and
 references `BUCKET`, `ENDPOINT`, `REGION`, `ACCESS_KEY_ID`, and
 `SECRET_ACCESS_KEY` from the existing artifact bucket. All are required.
 Startup validates these values before any requests and exits nonzero with
 a fixed diagnostic on invalid configuration. `MONITOR_NAME` is optional
-and defaults to `Indexer`. IaC supplies Metrics and the environment name.
+and defaults to `Indexer`. IaC supplies `Metrics`; the runtime appends Railway's
+actual environment name outside production. The supplied
+`RAILWAY_ENVIRONMENT_NAME` must not be blank. Outside Railway it is optional;
+without it the explicit `DISCORD_WEBHOOK_URL` and base label are used.
+Optional `DISCORD_PRODUCTION_ENVIRONMENT_ID` recognizes a renamed production
+environment by matching the runtime `RAILWAY_ENVIRONMENT_ID`; by default the
+name is used. Supplied IDs must not be blank, and a runtime ID requires a name.
 `MONITOR_COOLDOWN_MINUTES` is optional and defaults to `60`. When set, use
 a positive whole number that can be represented safely in milliseconds.
+
+Configure the production service value and preview reference once in the base environment.
+Automatic PR deployments copy the preview reference and select it at startup;
+no plan or apply is required for each PR. Only the selected webhook is required,
+and missing preview configuration fails without a production fallback. Seal the
+production service value to keep it out of preview copies. Replace any existing
+shared production reference with the service-level secret before sealing, and
+review the old shared secret separately; `preserve()` does not migrate an alias.
+See [Railway's sealed-variable rules](https://docs.railway.com/variables#sealed-variables).
+Source changes do not perform or verify live secret setup or sealing.
 
 The job persists state at `indexer-monitor/state.json`, separately from
 snapshot keys. A successful Discord error notification starts the configured

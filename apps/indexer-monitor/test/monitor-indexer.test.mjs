@@ -58,6 +58,7 @@ async function fixture(t) {
           response.writeHead(remote.metricsStatus, { location: "/ready" }).end();
         }
         return;
+      case "POST /preview-webhook":
       case "POST /webhook":
         remote.posts.push(JSON.parse(body));
         if (!remote.hangWebhook) response.writeHead(remote.webhookStatus).end("fixture-secret");
@@ -146,6 +147,75 @@ function assertEmbed(payload, expected, earliest) {
   assert.equal(timestamp, new Date(sentAt).toISOString());
 }
 
+test("copied production settings use the runtime environment for webhook and label", async (t) => {
+  const remote = await fixture(t);
+  const configured = {
+    ...remote.env,
+    MONITOR_NAME: "Protocol Indexer",
+    DISCORD_PRODUCTION_ENVIRONMENT_ID: "fixture-production",
+    DISCORD_WEBHOOK_URL_PREVIEW: remote.env.DISCORD_WEBHOOK_URL.replace(
+      "/webhook",
+      "/preview-webhook",
+    ),
+  };
+  for (const [environment, route, label, runtimeId] of [
+    ["production", "POST /webhook", "Protocol Indexer", "fixture-production"],
+    ["renamed-production", "POST /webhook", "Protocol Indexer", "fixture-production"],
+    [
+      "protocol-indexer-pr-42",
+      "POST /preview-webhook",
+      "Protocol Indexer / protocol-indexer-pr-42",
+      "fixture-preview",
+    ],
+  ]) {
+    remote.state = null;
+    remote.calls = [];
+    remote.posts = [];
+    await run(t, remote, "", {
+      ...configured,
+      RAILWAY_ENVIRONMENT_NAME: environment,
+      RAILWAY_ENVIRONMENT_ID: runtimeId,
+    });
+    assert.deepEqual(
+      remote.calls.filter((call) => call.startsWith("POST ")),
+      [route],
+    );
+    assert.equal(remote.posts[0].content, `${label}: metrics are unreachable.`);
+  }
+  remote.state = null;
+  remote.calls = [];
+  await run(t, remote, "", {
+    ...configured,
+    DISCORD_WEBHOOK_URL: undefined,
+    RAILWAY_ENVIRONMENT_NAME: "protocol-indexer-pr-42",
+  });
+  assert.deepEqual(
+    remote.calls.filter((call) => call.startsWith("POST ")),
+    ["POST /preview-webhook"],
+  );
+  remote.calls = [];
+  await run(t, remote, "Invalid indexer monitor configuration.", {
+    ...configured,
+    RAILWAY_ENVIRONMENT_ID: "fixture-preview",
+    RAILWAY_ENVIRONMENT_NAME: undefined,
+  });
+  assert.deepEqual(remote.calls, []);
+  const { DISCORD_WEBHOOK_URL_PREVIEW: _, ...withoutPreview } = configured;
+  for (const value of [
+    undefined,
+    "",
+    "file:///fixture-secret",
+    "http://user:fixture-secret@127.0.0.1/",
+  ]) {
+    await run(t, remote, "Invalid indexer monitor configuration.", {
+      ...withoutPreview,
+      DISCORD_WEBHOOK_URL_PREVIEW: value,
+      RAILWAY_ENVIRONMENT_NAME: "protocol-indexer-pr-42",
+    });
+    assert.deepEqual(remote.calls, []);
+  }
+});
+
 test("missing and invalid configuration exit before any requests", async (t) => {
   const remote = await fixture(t);
   for (const name of Object.keys(remote.env).filter((name) => name !== "MONITOR_NAME")) {
@@ -159,6 +229,9 @@ test("missing and invalid configuration exit before any requests", async (t) => 
     ["ENDPOINT", "not a URL with fixture-secret"],
     ["SECRET_ACCESS_KEY", " "],
     ["MONITOR_NAME", " "],
+    ["RAILWAY_ENVIRONMENT_NAME", " "],
+    ["RAILWAY_ENVIRONMENT_ID", " "],
+    ["DISCORD_PRODUCTION_ENVIRONMENT_ID", " "],
     ["MONITOR_COOLDOWN_MINUTES", ""],
     ["MONITOR_COOLDOWN_MINUTES", " "],
     ["MONITOR_COOLDOWN_MINUTES", "0"],

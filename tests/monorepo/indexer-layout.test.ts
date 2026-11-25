@@ -26,7 +26,7 @@ describe("indexer monorepo layout", () => {
 
     expect(packageJson.scripts.codegen).toBe("pnpm --dir apps/indexer codegen");
     expect(packageJson.scripts.envio).toBe("pnpm --dir apps/indexer envio");
-    expect(packageJson.scripts["envio:dev"]).toBe("pnpm --dir apps/indexer envio:dev");
+    expect(packageJson.scripts["dev:envio"]).toBe("pnpm --dir apps/indexer envio:dev");
     expect(packageJson.scripts["envio:start"]).toBe("pnpm --dir apps/indexer envio:start");
   });
 

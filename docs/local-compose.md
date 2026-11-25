@@ -70,7 +70,7 @@ Use `pnpm run compose:publish` after the indexer has produced at least one
 complete daily snapshot and you want to generate local `v2/` artifact shards for
 the API.
 
-Use `pnpm run envio:dev` or `pnpm run envio:start` only for direct host runs
+Use `pnpm run dev:envio` or `pnpm run envio:start` only for direct host runs
 against already reachable Postgres and Hasura services. These commands do not
 start Docker services and do not receive Compose's local defaults. Before
 running them, export `ENVIO_PG_HOST`, `ENVIO_PG_PORT`, `ENVIO_PG_USER`,

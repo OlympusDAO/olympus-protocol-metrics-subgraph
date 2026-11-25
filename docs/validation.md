@@ -20,12 +20,18 @@ in [security posture](security-posture.md#shared-tooling-and-intentional-differe
 | `pnpm run build` | Build client, API, publisher, and monitor artifacts. Reject committed OpenAPI drift before regeneration. |
 | `pnpm run test` | Run all ordinary suites, including the monitor CLI tests against its compiled entry point. Prepare codegen and build artifacts first. |
 | `pnpm run validate` | Frozen install → runtime versions → codegen → check → typecheck → build → tests → moderate dependency audit. Does not use Docker. |
-| `pnpm run validate:images` | Build and scan the five repository-owned application images and Dockerfiles. Record Railway PostgreSQL as advisory-provider/not-run and explicit local/historical exclusions; no provider or fixture pulls/scans. |
+| `pnpm run validate:images` | Build and scan the six repository-owned application images and Dockerfiles. Record Railway PostgreSQL as advisory-provider/not-run and explicit local/historical exclusions; no provider or fixture pulls/scans. |
 | `pnpm docker:scan:provider` | Optional advisory scan of configured Railway PostgreSQL template images only; no app builds or local fixtures. Vulnerabilities do not fail the command; registry/scanner errors do. |
 | `pnpm run test:integration` | Use the built images to check persistent cache hits, cache restart, real indexer restart and manual reset isolation, template PostgreSQL TLS/data path, compiled API/publisher behavior and Hasura health. |
 | `pnpm run validate:all` | Run all three groups, collecting failures without suppressing the remaining groups. |
 
 Builds, scans and integration use the configured `:local` application tags.
+The root TypeScript project checks client, API, publisher, indexer, shared package
+sources and tests in one pass. The standalone monitor uses its own NodeNext
+project. Use `pnpm build:indexer-monitor`, `pnpm test:indexer-monitor`, and
+`pnpm typecheck:indexer-monitor` for that app. `pnpm build:client`,
+`pnpm build:metrics-api`, and `pnpm build:metrics-publisher` also have explicit
+entry points. Envio executes indexer TypeScript natively after codegen.
 Owned fixture containers use `--pull=never`; build the images before integration.
 Recorded image IDs are diagnostic snapshots, not an immutable handoff protocol.
 Missing Docker, images or other required

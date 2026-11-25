@@ -37,6 +37,20 @@ function configuration(env: NodeJS.ProcessEnv) {
     if (!value) throw new Error();
     return value;
   };
+  const environment =
+    env.RAILWAY_ENVIRONMENT_NAME === undefined ? undefined : required("RAILWAY_ENVIRONMENT_NAME");
+  const runtimeId =
+    env.RAILWAY_ENVIRONMENT_ID === undefined ? undefined : required("RAILWAY_ENVIRONMENT_ID");
+  const productionId =
+    env.DISCORD_PRODUCTION_ENVIRONMENT_ID === undefined
+      ? undefined
+      : required("DISCORD_PRODUCTION_ENVIRONMENT_ID");
+  if (runtimeId !== undefined && environment === undefined) throw new Error();
+  const preview =
+    environment !== undefined &&
+    environment !== "production" &&
+    (productionId === undefined || runtimeId !== productionId);
+  const name = env.MONITOR_NAME === undefined ? "Indexer" : required("MONITOR_NAME");
   const cooldown = env.MONITOR_COOLDOWN_MINUTES ?? "60";
   const minutes = Number(cooldown);
   const cooldownMs = minutes * 60_000;
@@ -50,8 +64,8 @@ function configuration(env: NodeJS.ProcessEnv) {
   }
   return {
     metricsUrl: httpUrl(required("INDEXER_METRICS_URL")),
-    webhookUrl: httpUrl(required("DISCORD_WEBHOOK_URL")),
-    name: env.MONITOR_NAME === undefined ? "Indexer" : required("MONITOR_NAME"),
+    webhookUrl: httpUrl(required(preview ? "DISCORD_WEBHOOK_URL_PREVIEW" : "DISCORD_WEBHOOK_URL")),
+    name: preview ? `${name} / ${environment}` : name,
     cooldownMs,
     bucket: required("BUCKET"),
     endpoint: httpUrl(required("ENDPOINT")),

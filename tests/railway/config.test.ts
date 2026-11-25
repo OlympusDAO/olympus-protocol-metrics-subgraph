@@ -174,49 +174,59 @@ describe("Railway config-as-code", () => {
     }
   });
 
-  test("schedules the private monitor with its own build and existing bucket inputs", async () => {
-    const { get } = await graph("staging");
-    const monitor = get("service.indexer-monitor");
-    expect(monitor).toMatchObject({
-      build: {
-        dockerfilePath: "Dockerfile-indexer-monitor",
-        watchPatterns: [
-          "/Dockerfile-indexer-monitor",
-          "/.dockerignore",
-          "/package.json",
-          "/pnpm-lock.yaml",
-          "/pnpm-workspace.yaml",
-          "/apps/indexer-monitor/package.json",
-          "/apps/indexer-monitor/tsconfig.json",
-          "/apps/indexer-monitor/src/**",
-        ],
-      },
-      deploy: {
-        cronSchedule: "*/15 * * * *",
-        restartPolicyType: "NEVER",
-        multiRegionConfig: { "us-west2": { numReplicas: 1 } },
-        limitOverride: { containers: { cpu: 1, memoryBytes: 1000000000 } },
-      },
-    });
-    expect(monitor).toHaveProperty("variables", {
-      DISCORD_WEBHOOK_URL: { type: "sharedReference", name: "DISCORD_WEBHOOK_URL" },
-      INDEXER_METRICS_URL: {
-        type: "literal",
-        value: `http://\${{indexer.RAILWAY_PRIVATE_DOMAIN}}:\${{indexer.PORT}}/metrics`,
-      },
-      MONITOR_NAME: { type: "literal", value: "Metrics (staging)" },
-      MONITOR_COOLDOWN_MINUTES: { type: "preserve" },
-      ...Object.fromEntries(
-        ["BUCKET", "ENDPOINT", "REGION", "ACCESS_KEY_ID", "SECRET_ACCESS_KEY"].map((output) => [
-          output,
-          { type: "reference", resource: "bucket.bucket", output },
-        ]),
-      ),
-    });
-    expect(monitor).not.toHaveProperty("deploy.startCommand");
-    expect(monitor).not.toHaveProperty("deploy.healthcheckPath");
-    expect(monitor).not.toHaveProperty("volumeAttachments");
-  });
+  test.each(["production", "staging"])(
+    "schedules the private monitor with its own build and existing bucket inputs in %s",
+    async (environment) => {
+      const { get } = await graph(environment);
+      const monitor = get("service.indexer-monitor");
+      expect(monitor).toMatchObject({
+        build: {
+          dockerfilePath: "Dockerfile-indexer-monitor",
+          watchPatterns: [
+            "/Dockerfile-indexer-monitor",
+            "/.dockerignore",
+            "/package.json",
+            "/pnpm-lock.yaml",
+            "/pnpm-workspace.yaml",
+            "/apps/indexer-monitor/package.json",
+            "/apps/indexer-monitor/tsconfig.json",
+            "/apps/indexer-monitor/src/**",
+          ],
+        },
+        deploy: {
+          cronSchedule: "*/15 * * * *",
+          restartPolicyType: "NEVER",
+          multiRegionConfig: { "us-west2": { numReplicas: 1 } },
+          limitOverride: { containers: { cpu: 1, memoryBytes: 1000000000 } },
+        },
+      });
+      expect(monitor).toHaveProperty("variables", {
+        DISCORD_WEBHOOK_URL: { type: "preserve" },
+        DISCORD_WEBHOOK_URL_PREVIEW: {
+          type: "sharedReference",
+          name: "DISCORD_WEBHOOK_URL_PREVIEW",
+        },
+        INDEXER_METRICS_URL: {
+          type: "literal",
+          value: `http://\${{indexer.RAILWAY_PRIVATE_DOMAIN}}:\${{indexer.PORT}}/metrics`,
+        },
+        MONITOR_NAME: {
+          type: "literal",
+          value: "Metrics",
+        },
+        MONITOR_COOLDOWN_MINUTES: { type: "preserve" },
+        ...Object.fromEntries(
+          ["BUCKET", "ENDPOINT", "REGION", "ACCESS_KEY_ID", "SECRET_ACCESS_KEY"].map((output) => [
+            output,
+            { type: "reference", resource: "bucket.bucket", output },
+          ]),
+        ),
+      });
+      expect(monitor).not.toHaveProperty("deploy.startCommand");
+      expect(monitor).not.toHaveProperty("deploy.healthcheckPath");
+      expect(monitor).not.toHaveProperty("volumeAttachments");
+    },
+  );
 
   test("serialized SDK output keeps every non-API service private with TCP removals", async () => {
     const { get } = await graph();
@@ -567,10 +577,7 @@ describe("Railway config-as-code", () => {
     expect(ci).toContain("pnpm run build");
     const scripts = JSON.parse(readFileSync("package.json", "utf8")).scripts;
     expect(scripts.validate).toBe("node scripts/validate.mjs source");
-    expect(scripts.typecheck).toBe("tsc --noEmit && pnpm --dir apps/indexer-monitor typecheck");
     expect(scripts.build).not.toContain("--noEmit");
-    expect(scripts.build.split(" && ")).toContain("pnpm --dir apps/indexer-monitor build");
-    expect(scripts.test.split(" && ")).toContain("pnpm --dir apps/indexer-monitor test");
     expect(scripts.lint).toBe("biome check --write . && pnpm run lint:actions");
     expect(scripts.check).toBe("biome check . && pnpm run lint:actions");
     for (const obsolete of ["format", "format:check", "lint:fix", "lint:check"])

@@ -253,8 +253,9 @@ export default defineRailway((ctx) => {
     },
     env: {
       INDEXER_METRICS_URL: `http://\${{indexer.RAILWAY_PRIVATE_DOMAIN}}:\${{indexer.PORT}}/metrics`,
-      DISCORD_WEBHOOK_URL: ctx.shared.DISCORD_WEBHOOK_URL,
-      MONITOR_NAME: `Metrics (${ctx.environment ?? "default"})`,
+      DISCORD_WEBHOOK_URL: preserve(),
+      DISCORD_WEBHOOK_URL_PREVIEW: ctx.shared.DISCORD_WEBHOOK_URL_PREVIEW,
+      MONITOR_NAME: "Metrics",
       MONITOR_COOLDOWN_MINUTES: preserve(),
       BUCKET: ref(artifactBucket, "BUCKET"),
       ENDPOINT: ref(artifactBucket, "ENDPOINT"),
