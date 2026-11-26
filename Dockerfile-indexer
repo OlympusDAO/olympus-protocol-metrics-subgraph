@@ -9,7 +9,7 @@ WORKDIR /app
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends --only-upgrade apt libapt-pkg6.0 libgcrypt20 libgnutls30 libpcre2-8-0 perl-base \
-  && apt-get install -y --no-install-recommends ca-certificates \
+  && apt-get install -y --no-install-recommends ca-certificates tini=0.19.0-1+b3 \
   && rm -rf /var/lib/apt/lists/*
 
 FROM base AS build
@@ -37,4 +37,5 @@ ENV ENVIO_THROTTLE_PRUNE_STALE_DATA_INTERVAL_MILLIS=30000
 ENV PATH=/app/apps/indexer/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 WORKDIR /app/apps/indexer
 USER node
+ENTRYPOINT ["/usr/bin/tini","--","/usr/local/bin/docker-entrypoint.sh"]
 CMD ["tsx","src/start-envio.ts","start"]

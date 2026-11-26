@@ -1,8 +1,7 @@
 import { type ChildProcess, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { lstatSync, mkdirSync, rmdirSync, unlinkSync } from "node:fs";
+import { lstatSync, mkdirSync } from "node:fs";
 import { createServer, request, type Server } from "node:http";
-import { createConnection } from "node:net";
 import { constants, tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
@@ -48,41 +47,26 @@ export async function requestReset(env: NodeJS.ProcessEnv): Promise<number> {
   }
 }
 
-async function listen(server: Server, socketPath: string): Promise<void> {
-  const bind = () =>
-    new Promise<void>((resolve, reject) => {
-      const onError = (error: Error) => reject(error);
-      server.once("error", onError);
-      server.listen(socketPath, () => {
-        server.off("error", onError);
-        resolve();
-      });
+function listen(server: Server, socketPath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const onError = (error: NodeJS.ErrnoException) => {
+      if (error.code === "EADDRINUSE") {
+        // A stale socket does not establish that the detached ingestion group stopped.
+        reject(
+          new Error(
+            "Indexer reset control endpoint is already in use. Verify the previous wrapper and ingestion have stopped before removing its reset socket, or replace the container.",
+          ),
+        );
+        return;
+      }
+      reject(error);
+    };
+    server.once("error", onError);
+    server.listen(socketPath, () => {
+      server.off("error", onError);
+      resolve();
     });
-
-  try {
-    await bind();
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== "EADDRINUSE") throw error;
-    const recoveryLock = `${socketPath}.recovery-lock`;
-    mkdirSync(recoveryLock, { mode: 0o700 });
-    try {
-      await new Promise<void>((resolve, reject) => {
-        const probe = createConnection(socketPath);
-        probe.once("connect", () => {
-          probe.destroy();
-          reject(new Error("An indexer reset control server is already running"));
-        });
-        probe.once("error", (cause: NodeJS.ErrnoException) => {
-          if (cause.code === "ECONNREFUSED") resolve();
-          else reject(cause);
-        });
-      });
-      unlinkSync(socketPath);
-      await bind();
-    } finally {
-      rmdirSync(recoveryLock);
-    }
-  }
+  });
 }
 
 function signalGroup(child: ChildProcess | undefined, signal: NodeJS.Signals | 0): boolean {

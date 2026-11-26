@@ -26,24 +26,33 @@ type DiscordPayload = {
 function httpUrl(value: string) {
   const url = new URL(value);
   if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) {
-    throw new Error();
+    throw new Error("Monitor URLs must use HTTP or HTTPS without embedded credentials.");
   }
-  return url.href;
+  return url;
 }
 
 function configuration(env: NodeJS.ProcessEnv) {
   const required = (name: string) => {
     const value = env[name]?.trim();
-    if (!value) throw new Error();
+    if (!value) throw new Error(`Missing or blank ${name}.`);
     return value;
   };
   const environment = env.RAILWAY_ENVIRONMENT_NAME;
-  if (environment !== undefined && !environment.trim()) throw new Error();
+  if (environment !== undefined && !environment.trim())
+    throw new Error("RAILWAY_ENVIRONMENT_NAME must not be blank.");
   const runtimeId =
     env.RAILWAY_ENVIRONMENT_ID === undefined ? undefined : required("RAILWAY_ENVIRONMENT_ID");
-  if (runtimeId !== undefined && environment === undefined) throw new Error();
+  if (runtimeId !== undefined && environment === undefined)
+    throw new Error("RAILWAY_ENVIRONMENT_NAME is required when RAILWAY_ENVIRONMENT_ID is set.");
   const preview = environment !== undefined && environment !== "production";
-  const name = env.MONITOR_NAME === undefined ? "Indexer" : required("MONITOR_NAME");
+  const project = env.MONITOR_NAME === undefined ? "Indexer" : required("MONITOR_NAME");
+  const name = preview ? `${project} / ${environment}` : project;
+  if (name.length > 1024)
+    throw new Error("The monitor project/environment label must fit within 1024 characters.");
+  const webhookUrl = httpUrl(
+    required(preview ? "DISCORD_WEBHOOK_URL_PREVIEW" : "DISCORD_WEBHOOK_URL"),
+  );
+  webhookUrl.searchParams.set("wait", "true");
   const cooldown = env.MONITOR_COOLDOWN_MINUTES ?? "60";
   const minutes = Number(cooldown);
   const cooldownMs = minutes * 60_000;
@@ -53,15 +62,17 @@ function configuration(env: NodeJS.ProcessEnv) {
     minutes < 1 ||
     !Number.isSafeInteger(cooldownMs)
   ) {
-    throw new Error();
+    throw new Error(
+      "MONITOR_COOLDOWN_MINUTES must be positive and fit a safe millisecond duration.",
+    );
   }
   return {
-    metricsUrl: httpUrl(required("INDEXER_METRICS_URL")),
-    webhookUrl: httpUrl(required(preview ? "DISCORD_WEBHOOK_URL_PREVIEW" : "DISCORD_WEBHOOK_URL")),
-    name: preview ? `${name} / ${environment}` : name,
+    metricsUrl: httpUrl(required("INDEXER_METRICS_URL")).href,
+    webhookUrl: webhookUrl.href,
+    name,
     cooldownMs,
     bucket: required("BUCKET"),
-    endpoint: httpUrl(required("ENDPOINT")),
+    endpoint: httpUrl(required("ENDPOINT")).href,
     region: required("REGION"),
     credentials: {
       accessKeyId: required("ACCESS_KEY_ID"),
@@ -89,7 +100,7 @@ async function readState(
   }
 
   // The SDK returns after headers. Keep the same deadline active for the body.
-  if (!(body instanceof Readable)) throw new Error();
+  if (!(body instanceof Readable)) throw new Error("Monitor state response has no readable body.");
   const state: unknown = JSON.parse(await addAbortSignal(signal, body).transformToString());
   if (
     !state ||
@@ -97,7 +108,7 @@ async function readState(
     !("lastErrorAt" in state) ||
     !("alertedDown" in state)
   ) {
-    throw new Error();
+    throw new Error("Monitor state must contain lastErrorAt and alertedDown.");
   }
   const { lastErrorAt, alertedDown } = state;
   if (
@@ -106,7 +117,7 @@ async function readState(
     typeof alertedDown !== "boolean" ||
     (alertedDown && lastErrorAt === null)
   ) {
-    throw new Error();
+    throw new Error("Monitor state has an invalid notification timestamp or outage flag.");
   }
   return { lastErrorAt, alertedDown };
 }
@@ -150,7 +161,6 @@ async function main() {
     endpoint,
     region,
     credentials,
-    forcePathStyle: true,
     maxAttempts: 1,
   });
   const object = { Bucket: bucket, Key: stateKey };
@@ -179,7 +189,7 @@ async function main() {
           title: healthy ? "Indexer metrics recovered" : "Indexer metrics outage",
           color: healthy ? 0x2ecc71 : 0xe74c3c,
           fields: [
-            { name: "Project", value: name.slice(0, 1024) },
+            { name: "Project", value: name },
             { name: "Status", value: status },
           ],
           timestamp: new Date().toISOString(),
@@ -192,7 +202,7 @@ async function main() {
       body: JSON.stringify(payload),
     });
     signal.throwIfAborted();
-    if (!delivered) throw new Error();
+    if (!delivered) throw new Error("Discord did not acknowledge the monitor notification.");
     console.log(
       healthy
         ? "Indexer monitor recovery notification acknowledged."

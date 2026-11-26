@@ -168,6 +168,7 @@ Startup validates these values before any requests and exits nonzero with
 a fixed diagnostic on invalid configuration. `MONITOR_NAME` is optional
 and defaults to `Indexer`. IaC supplies `Metrics`; the runtime appends Railway's
 actual environment name outside production. The supplied
+project/environment label must fit within 1024 characters. The supplied
 `RAILWAY_ENVIRONMENT_NAME` must not be blank. Outside Railway it is optional;
 without it the explicit `DISCORD_WEBHOOK_URL` and base label are used.
 Only the exact environment name `production` uses the production webhook.
@@ -238,10 +239,13 @@ an offline maintenance option with the same config, environment and verified
 database target. Start normal ingestion afterwards. Never run it alongside an
 active indexer; no deployment or startup resets storage automatically.
 
-A hard kill during stale-socket recovery can leave `reset.sock.recovery-lock`
-behind and block a replacement wrapper. Stop the wrapper and confirm no other
-wrapper is running before removing only that empty recovery-lock directory and
-restarting. Never remove a recovery lock while a wrapper is running.
+If the reset socket path is already occupied, the wrapper exits before starting
+ingestion and leaves the endpoint in place. A dead wrapper can leave its
+detached Envio process group running. On a direct host restart, verify that the
+previous wrapper and its ingestion process group have stopped before removing
+only its `reset.sock` in the private control directory for that working directory
+and indexer port. Then restart the wrapper. On Railway, replace the container
+through a normal redeploy to start with a fresh container filesystem.
 
 The metrics API serves the current published manifest during the rebuild. Before
 publication resumes after an explicit reset, set the publisher

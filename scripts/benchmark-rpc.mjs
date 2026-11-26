@@ -53,7 +53,7 @@ try {
     !credentials.ENVIO_API_TOKEN ||
     new URL(credentials.ENVIO_ROBINHOOD_RPC_URL).protocol !== "https:"
   ) {
-    throw Error();
+    throw Error("Benchmark credentials require an Envio token and an HTTPS archive RPC.");
   }
 } catch {
   throw Error(

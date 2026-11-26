@@ -88,12 +88,12 @@ describe("bounded S3 artifact reads", () => {
     ).resolves.toEqual({ count: 4, label: "default" });
   });
 
-  test("stops on the first invalid row without validating the rest of the shard", async () => {
-    const visit = vi.fn((row: unknown) => row);
-    const schema = z.array(z.preprocess(visit, z.object({ count: z.number() })));
-    const body = JSON.stringify(Array.from({ length: 1000 }, () => ({})));
-    const { store } = await reader((res) => res.end(body), { maxResponseBytes: 64 * 1024 });
-    await expect(store.getJson("v2/fixture.json", schema)).rejects.toThrow(/invalid artifact/i);
+  test("runs preprocessing once and returns that parsed result", async () => {
+    const visit = vi.fn((value: unknown) => (Array.isArray(value) ? value.shift() : value));
+    const { store } = await reader((res) => res.end("[3]"));
+    await expect(store.getJson("v2/fixture.json", z.preprocess(visit, z.number()))).resolves.toBe(
+      3,
+    );
     expect(visit).toHaveBeenCalledTimes(1);
   });
 

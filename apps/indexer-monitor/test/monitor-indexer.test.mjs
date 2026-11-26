@@ -17,10 +17,17 @@ const outageAck = `${unreachable}Indexer monitor outage notification acknowledge
 const recoveryAck = `${reachable}Indexer monitor recovery notification acknowledged.\n`;
 
 async function fixture(t) {
-  const remote = { state: null, metricsStatus: 503, webhookStatus: 204, calls: [], posts: [] };
+  const remote = {
+    state: null,
+    metricsStatus: 503,
+    webhookStatus: 204,
+    calls: [],
+    posts: [],
+    webhookQueries: [],
+  };
   const server = createServer(async (request, response) => {
-    const path = new URL(request.url, "http://fixture").pathname;
-    const key = `${request.method} ${path}`;
+    const url = new URL(request.url, "http://fixture");
+    const key = `${request.method} ${url.pathname}`;
     remote.calls.push(key);
     let body = "";
     for await (const chunk of request) body += chunk;
@@ -60,6 +67,7 @@ async function fixture(t) {
         return;
       case "POST /preview-webhook":
       case "POST /webhook":
+        remote.webhookQueries.push([...url.searchParams]);
         remote.posts.push(JSON.parse(body));
         if (!remote.hangWebhook) response.writeHead(remote.webhookStatus).end("fixture-secret");
         return;
@@ -78,7 +86,7 @@ async function fixture(t) {
   const origin = `http://127.0.0.1:${server.address().port}`;
   remote.env = {
     INDEXER_METRICS_URL: `${origin}/metrics`,
-    DISCORD_WEBHOOK_URL: `${origin}/webhook?token=fixture-secret`,
+    DISCORD_WEBHOOK_URL: `${origin}/webhook?token=fixture-secret&wait=false`,
     MONITOR_NAME: "Protocol Indexer / preview",
     BUCKET: "fixture-state",
     ENDPOINT: origin,
@@ -323,6 +331,11 @@ test("separate cron runs enforce the persisted cooldown before and after recover
   assert.equal((await run(t, remote)).stdout, suppressed);
   assert.deepEqual(content(), [outage, outage, recovery]);
   assert.deepEqual(remote.state, { lastErrorAt: acknowledged, alertedDown: false });
+  const expectedQuery = [
+    ["token", "fixture-secret"],
+    ["wait", "true"],
+  ];
+  assert.deepEqual(remote.webhookQueries, [expectedQuery, expectedQuery, expectedQuery]);
 });
 
 test("configured cooldown controls suppression across separate invocations", async (t) => {
@@ -401,11 +414,17 @@ test("corrupt state, AccessDenied and non-NoSuchKey 404s all fail before probing
   assert.equal(remote.calls.length, 11);
   assert.deepEqual(remote.posts, []);
 });
-test("Discord project fields stay within the limit without shortening content", async (t) => {
-  const project = "p".repeat(1024);
-  const name = `${project}z`;
+test("Discord receives complete labels at the limit and rejects overflow before requests", async (t) => {
+  const environment = "preview";
+  const name = "p".repeat(1024 - ` / ${environment}`.length);
+  const label = `${name} / ${environment}`;
   const remote = await fixture(t);
   remote.env.MONITOR_NAME = name;
+  remote.env.RAILWAY_ENVIRONMENT_NAME = environment;
+  remote.env.DISCORD_WEBHOOK_URL_PREVIEW = remote.env.DISCORD_WEBHOOK_URL.replace(
+    "/webhook",
+    "/preview-webhook",
+  );
 
   for (const [status, message] of [
     [503, "unreachable"],
@@ -414,12 +433,17 @@ test("Discord project fields stay within the limit without shortening content", 
     remote.metricsStatus = status;
     await run(t, remote);
     const payload = remote.posts.at(-1);
-    assert.equal(payload.content, `${name}: metrics are ${message}.`);
+    assert.equal(payload.content, `${label}: metrics are ${message}.`);
     const field = payload.embeds[0].fields.find((field) => field.name === "Project");
-    assert.equal(field.value.length, 1024);
-    assert.equal(field.value, project);
+    assert.equal(field.value, label);
   }
   assert.equal(remote.posts.length, 2);
+
+  remote.calls.length = 0;
+  remote.env.MONITOR_NAME += "z";
+  const { stdout } = await run(t, remote, "Invalid indexer monitor configuration.");
+  assert.equal(stdout, "");
+  assert.deepEqual(remote.calls, []);
 });
 
 test("a failed state write is reported after acknowledgement and permits redelivery", async (t) => {

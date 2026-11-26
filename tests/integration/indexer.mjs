@@ -203,7 +203,19 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
   assert.equal(sentinel(), "0");
   await eventually(
     () => sql("SELECT count(*) FROM envio_info") === "1",
-    "Indexer did not resume after the explicit migration",
+    "Explicit migration did not initialize indexer storage",
+  );
+  await eventually(
+    () =>
+      docker(
+        "exec",
+        indexer,
+        "node",
+        "--input-type=module",
+        "-e",
+        "console.log((await fetch('http://127.0.0.1:9898/healthz', {signal: AbortSignal.timeout(2000)})).status);",
+      ) === "200",
+    "Native indexer did not return HTTP 200 from /healthz after the explicit reset",
   );
   console.log(
     "Real indexer preserved a managed entity on restart, refused incompatible storage, and explicitly reset only its application database; template TLS/PGDATA verified.",

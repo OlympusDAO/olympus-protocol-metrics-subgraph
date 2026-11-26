@@ -1,16 +1,8 @@
 import { spawn } from "node:child_process";
-import {
-  existsSync,
-  lstatSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { lstatSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, test } from "vitest";
 
@@ -33,35 +25,43 @@ function fixture(files: string[] = [], idle = false) {
     PATH: `${cwd}:${process.env.PATH}`,
     PORT: "9898",
     ENVIO_INDEXER_PORT: "9898",
+    ENVIO_PG_HOST: "",
+    ENVIO_PG_PORT: "",
   };
-  const child = spawn(process.execPath, [...nodeArgs, runtime, ...(idle ? ["idle"] : [])], {
-    cwd,
-    env,
-    stdio: ["ignore", "ignore", "pipe"],
-  });
-  let stderr = "";
-  child.stderr.on("data", (chunk) => {
-    stderr += chunk;
-  });
+  const launch = (idle = false) => {
+    const child = spawn(process.execPath, [...nodeArgs, runtime, ...(idle ? ["idle"] : [])], {
+      cwd,
+      env,
+      stdio: ["ignore", "ignore", "pipe"],
+    });
+    let stderr = "";
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    return {
+      child,
+      closed: new Promise<number | null>((resolve) => child.once("close", resolve)),
+      stderr: () => stderr,
+    };
+  };
+  const { child, closed, stderr } = launch(idle);
   const exit = new Promise<number | null>((resolve) => child.once("exit", resolve));
-  const closed = new Promise<number | null>((resolve) => child.once("close", resolve));
   const shutdown = () => child.kill("SIGTERM");
   return {
-    cwd,
     child,
     closed,
     events: () => readFileSync(join(cwd, "events"), "utf8").trim().split("\n").filter(Boolean),
-    stderr: () => stderr,
+    stderr,
     migrationPid: () => Number(readFileSync(join(cwd, "migration-pid"), "utf8")),
     removeMarker: (name: string) => rmSync(join(cwd, name)),
     exit,
     shutdown,
-    restart: (preload?: string) =>
-      spawn(process.execPath, [...(preload ? ["--import", preload] : []), ...nodeArgs, runtime], {
-        cwd,
-        env,
-        stdio: "ignore",
-      }),
+    restart: () => launch(),
+    socket() {
+      const directory = readdirSync(cwd).find((name) => name.startsWith("metrics-envio-"));
+      if (!directory) throw new Error("Missing fixture control directory");
+      return join(cwd, directory, "reset.sock");
+    },
     reset: () =>
       new Promise<number | null>((resolve) => {
         const caller = spawn(process.execPath, [...nodeArgs, startup, "reset"], {
@@ -77,23 +77,6 @@ function fixture(files: string[] = [], idle = false) {
       rmSync(cwd, { recursive: true, force: true });
     },
   };
-}
-
-async function staleFixture() {
-  const run = fixture(["bounded"], true);
-  try {
-    await expect.poll(run.stderr, { timeout: 8000 }).toContain("Fixture control ready");
-    run.child.kill("SIGKILL");
-    await run.closed;
-    const directory = readdirSync(run.cwd).find((name) => name.startsWith("metrics-envio-"));
-    if (!directory) throw new Error("Missing fixture control directory");
-    const socket = join(run.cwd, directory, "reset.sock");
-    expect(lstatSync(socket).isSocket()).toBe(true);
-    return { run, socket };
-  } catch (error) {
-    await run.close();
-    throw error;
-  }
 }
 
 test("keeps reset control alive after native failure until an explicit reset", async () => {
@@ -127,72 +110,63 @@ test("SIGTERM terminates a paused native failure without running a migration", a
   }
 }, 25_000);
 
-test("recovers a stale control socket after a single wrapper crashes", async () => {
-  const { run, socket } = await staleFixture();
-  const child = run.restart();
-  const closed = new Promise<number | null>((resolve) => child.once("close", resolve));
+test("leaves a stale control socket in place and refuses to start or reset", async () => {
+  const run = fixture(["bounded"], true);
   try {
-    expect(await closed).toBe(0);
-    expect(run.events()).toEqual(["start --config fixture.yaml"]);
-    expect(existsSync(`${socket}.recovery-lock`)).toBe(false);
+    await expect.poll(run.stderr, { timeout: 8000 }).toContain("Fixture control ready");
+    run.child.kill("SIGKILL");
+    await run.closed;
+    const socket = run.socket();
+    const original = lstatSync(socket);
+    expect(original.isSocket()).toBe(true);
+
+    const replacement = run.restart();
+    try {
+      expect(await replacement.closed).toBe(1);
+      expect(replacement.stderr()).toContain(
+        "Verify the previous wrapper and ingestion have stopped",
+      );
+      expect(replacement.stderr()).not.toContain(basename(dirname(socket)));
+      expect(lstatSync(socket).ino).toBe(original.ino);
+      expect(readdirSync(dirname(socket))).toEqual(["reset.sock"]);
+      expect(await run.reset()).toBe(1);
+      expect(run.events()).toEqual([]);
+    } finally {
+      replacement.child.kill("SIGTERM");
+      await replacement.closed;
+    }
   } finally {
-    child.kill("SIGTERM");
-    await closed;
     await run.close();
   }
 }, 25_000);
 
-test("serializes competing recoverers of a stale control socket before ingestion", async () => {
-  const { run, socket } = await staleFixture();
-  const preload = join(run.cwd, "hold-probe.mjs");
-  writeFileSync(
-    preload,
-    `
-import net from "node:net";
-import { existsSync, writeFileSync } from "node:fs";
-import { syncBuiltinESMExports } from "node:module";
-const connect = net.createConnection;
-net.createConnection = (...args) => {
-  const socket = connect(...args);
-  const emit = socket.emit.bind(socket);
-  socket.emit = (event, ...values) => {
-    if (event === "error" && values[0]?.code === "ECONNREFUSED") {
-      writeFileSync("probe-held", "");
-      const timer = setInterval(() => {
-        if (!existsSync("release-probe")) return;
-        clearInterval(timer);
-        emit(event, ...values);
-      }, 5);
-      return true;
-    }
-    return emit(event, ...values);
-  };
-  return socket;
-};
-syncBuiltinESMExports();
-`,
-  );
-  const first = run.restart(preload);
-  const firstClosed = new Promise<number | null>((resolve) => first.once("close", resolve));
-  let second: ReturnType<typeof spawn> | undefined;
-  let secondClosed: Promise<number | null> | undefined;
+test("rejects a competing wrapper and leaves the live reset socket usable", async () => {
+  const run = fixture(["bounded"], true);
   try {
-    await expect.poll(() => existsSync(join(run.cwd, "probe-held")), { timeout: 8000 }).toBe(true);
+    await expect.poll(run.stderr, { timeout: 8000 }).toContain("Fixture control ready");
+    const socket = run.socket();
+    const original = lstatSync(socket);
     const contender = run.restart();
-    second = contender;
-    secondClosed = new Promise((resolve) => contender.once("close", resolve));
-    expect(await secondClosed).not.toBe(0);
+    try {
+      expect(await contender.closed).toBe(1);
+      expect(contender.stderr()).toContain(
+        "Verify the previous wrapper and ingestion have stopped",
+      );
+    } finally {
+      contender.child.kill("SIGTERM");
+      await contender.closed;
+    }
+    expect(run.child.exitCode).toBeNull();
+    expect(lstatSync(socket).ino).toBe(original.ino);
+    expect(readdirSync(dirname(socket))).toEqual(["reset.sock"]);
     expect(run.events()).toEqual([]);
-    expect(existsSync(`${socket}.recovery-lock`)).toBe(true);
-    writeFileSync(join(run.cwd, "release-probe"), "");
-    expect(await firstClosed).toBe(0);
-    expect(run.events()).toEqual(["start --config fixture.yaml"]);
-    expect(existsSync(`${socket}.recovery-lock`)).toBe(false);
+    expect(await run.reset()).toBe(0);
+    expect(await run.exit).toBe(0);
+    expect(run.events()).toEqual([
+      "migration local db-migrate setup --config fixture.yaml",
+      "start --config fixture.yaml",
+    ]);
   } finally {
-    writeFileSync(join(run.cwd, "release-probe"), "");
-    first.kill("SIGTERM");
-    second?.kill("SIGTERM");
-    await Promise.all([firstClosed, secondClosed]);
     await run.close();
   }
 }, 25_000);
