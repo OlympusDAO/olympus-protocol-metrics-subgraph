@@ -126,6 +126,10 @@ outside those scopes; do not add empty messages to satisfy the rule.
 
 ## Infrastructure release eligibility
 
+Use the same visible CI labels across the indexing repositories: `Release images
+and integration`, `Dependency audit`, `<service> image`, and `Railway infrastructure
+apply`. Preserve job IDs and gate ordering when changing display names.
+
 When CI automatically applies infrastructure, keep event, ref, repository and
 merged-commit eligibility checks inline in the workflow. Checked-out scripts
 must not grant their own apply eligibility. Gate later helpers on the eligibility

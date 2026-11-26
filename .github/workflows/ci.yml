@@ -45,11 +45,13 @@ jobs:
       - name: ${{ matrix.name }}
         run: pnpm run ${{ matrix.command }}
   images:
-    name: Image security and integration
+    name: Release images and integration
+    # PRs run the standalone image workflow; this call gates release commits.
     if: github.event_name != 'pull_request'
     uses: ./.github/workflows/security-scan.yml
 
   railway-apply:
+    name: Railway infrastructure apply
     timeout-minutes: 60
     needs: [source, images]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'

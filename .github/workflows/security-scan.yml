@@ -12,7 +12,7 @@ permissions:
   contents: read
 jobs:
   images:
-    name: ${{ matrix.name }}
+    name: ${{ matrix.name }} image
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -35,7 +35,7 @@ jobs:
             name: Publisher
             image: olympus-protocol-metrics/metrics-publisher:local
           - app: rpc-cache
-            name: RPC cache + integration
+            name: RPC cache
             image: localhost/olympus-metrics-rpc-cache:local
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
