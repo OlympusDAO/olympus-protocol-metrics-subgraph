@@ -121,11 +121,12 @@ const failure = (healthcheckPath: string) => ({
 });
 
 export default defineRailway((ctx) => {
+  const production = ctx.isEnvironment("production");
   const live = existingResources(ctx);
   const size = (name: string, minimum: number) =>
     Math.max(minimum, live?.volumeSizes.get(name) ?? 0);
   const source = github("OlympusDAO/olympus-protocol-metrics-subgraph", {
-    branch: "master",
+    branch: production ? "master" : undefined,
     checkSuites: true,
   });
   const build = (name: string, paths: string[]) => ({
@@ -291,7 +292,7 @@ export default defineRailway((ctx) => {
       ...sharedWatch,
     ]),
     deploy: { ...limits(), ...failure("/ready") },
-    domains: [{ domain: "treasury-subgraph-api.olympusdao.finance", port: 8080 }],
+    domains: production ? [{ domain: "treasury-subgraph-api.olympusdao.finance", port: 8080 }] : [],
     env: preserved(artifactKeys),
   });
 

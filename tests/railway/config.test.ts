@@ -34,6 +34,27 @@ async function graph(environment = "production") {
 }
 
 describe("Railway config-as-code", () => {
+  test.each(["staging", "olympus-protocol-metrics--pr-406"])(
+    "lets %s follow its own branch without attaching the production domain",
+    async (environment) => {
+      const { get } = await graph(environment);
+      for (const name of [
+        "indexer",
+        "indexer-monitor",
+        "hasura",
+        "metrics-api",
+        "metrics-publisher",
+        "rpc-cache",
+      ] as const) {
+        const resource = get(`service.${name}`);
+        expect(resource).toMatchObject({
+          source: { repo: "OlympusDAO/olympus-protocol-metrics-subgraph", checkSuites: true },
+        });
+        expect(resource).not.toHaveProperty("source.branch");
+      }
+      expect(get("service.metrics-api")).toHaveProperty("networking.customDomains", {});
+    },
+  );
   test("retains the imported resources and adds the private cache stack and monitor", async () => {
     const { addresses, get } = await graph();
     expect(addresses).toEqual([
