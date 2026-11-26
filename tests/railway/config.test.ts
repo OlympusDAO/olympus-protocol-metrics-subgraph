@@ -322,13 +322,39 @@ describe("Railway config-as-code", () => {
             serviceId: "api",
             serviceName: "metrics-api",
             domains: {
-              serviceDomains: [{ domain: "api-generated.example" }],
-              customDomains: [{ domain: "api-alternate.example" }],
+              serviceDomains: [{ domain: "api-generated.example", targetPort: 8080 }],
+              customDomains: [{ domain: "api-alternate.example", targetPort: 8080 }],
             },
           },
         },
       ]).get("metrics-api"),
     ).toEqual([]);
+  });
+
+  test("enforces explicit API domain ports and permits automatic targets", () => {
+    for (const kind of ["serviceDomains", "customDomains"]) {
+      for (const targetPort of [8080, null, 4100, 8081, "8080", undefined]) {
+        const read = () =>
+          currentExposure({ services: { api: {} } }, [
+            {
+              node: {
+                serviceId: "api",
+                serviceName: "metrics-api",
+                domains: {
+                  serviceDomains: [],
+                  customDomains: [],
+                  [kind]: [
+                    { domain: "first.example", targetPort: 8080 },
+                    { domain: "second.example", targetPort },
+                  ],
+                },
+              },
+            },
+          ]);
+        if (targetPort !== null && targetPort !== 8080) expect(read).toThrow("target port");
+        else expect(read().get("metrics-api")).toEqual([]);
+      }
+    }
   });
 
   test("blocks either HTTP domain kind on every private service", () => {

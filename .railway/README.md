@@ -49,6 +49,8 @@ CLI 5.75.0 cannot delete existing HTTP domains through its native config diff.
 Before planning, inventory the whole environment's services and HTTP/TCP exposure
 with complete pagination, including cache services when provisioned. Unreadable
 metadata is not evidence of absence. Preserve all domains on `metrics-api`.
+Planning rejects explicit generated or custom API domain targets other than 8080.
+Automatic/null targets remain allowed; verify their effective routing after apply.
 Keep a private record of the target, timestamp, service/domain IDs and exact
 scoped deletions; obtain separate live approval for those named operations.
 

@@ -52,13 +52,19 @@ export function currentExposure(configInput: unknown, instances: unknown) {
       if (!Array.isArray(domains[kind]))
         throw new ExposureError("Incomplete Railway domain lookup");
       for (const entry of domains[kind]) {
-        const domain = object(entry).domain;
+        const metadata = object(entry);
+        const domain = metadata.domain;
         if (typeof domain !== "string" || !domain.trim())
           throw new ExposureError("Incomplete Railway domain lookup");
         // Native IaC cannot delete live HTTP domains; require authorized removal first.
         if (!publicServices.has(serviceName)) {
           throw new ExposureError(
             "Unexpected public HTTP exposure; separately authorized provider removal and verification are required before planning.",
+          );
+        }
+        if (metadata.targetPort !== null && metadata.targetPort !== managedPorts[serviceName][0]) {
+          throw new ExposureError(
+            `Unexpected HTTP target port on metrics-api: expected ${managedPorts[serviceName][0]} or automatic. Verify live domain routing before planning.`,
           );
         }
       }
