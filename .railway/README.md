@@ -5,25 +5,43 @@ identities and credentials, and adds a private persistent RPC cache. Only
 `metrics-api` may have HTTP domains. See [security posture](../docs/security-posture.md)
 for exposure, storage and native CLI limits; this runbook does not certify live state.
 
-Application sources currently follow `master`. Native IaC uses the manual saved-plan
-flow below; no automatic IaC apply controller is implemented. Plan evaluates
+Application sources follow `master` with `checkSuites: true` (Wait for CI).
+The CI workflow applies infrastructure after source and owned-image/integration
+checks, before GitHub-triggered app deployments proceed. Plan evaluates
 executable authoring config and previews changes without provider writes. Apply
 changes infrastructure and service source/image/env/build/network settings and
 may redeploy or restart services; it is not a database migration.
 
-Routine deployments should become automatic: credential-free PR checks → reviewed
+Routine deployments are automatic: credential-free PR checks → reviewed
 `master` merge → required checks → trusted production plan and automatic apply
-inside CI → app deployment. Manual commands below are for bootstrap,
-maintenance and recovery while that controller remains unimplemented.
+inside CI → app deployment. The serialized `railway-apply` job reconciles every
+reviewed merge, including docs-only changes. It waits for exact-SHA Dependency
+Audit, managed CodeQL and external checks, rejects stale master revisions before
+bootstrap and again before apply, and accepts only complete native applied/noop
+results. Direct master pushes fail CI instead of bypassing IaC. Manual commands
+below remain for separately authorized bootstrap, maintenance and recovery.
 
-`master` is production. `develop` exists, but its Railway staging mapping is
-unverified. Establish a separate staging target before enabling `develop`;
-never map both branches to production.
+`master` is production. `develop` still exists as the GitHub default branch, but
+there is no staging/develop environment. Merging into `develop` does not release
+production. Retiring that branch and retargeting open PRs is separate work; never
+map both branches to production.
 
 Live activation first requires protected production branch/environment rules
 and environment-only credentials, with repository-token fallback removed.
-Production credentials must never reach PR jobs. These prerequisites and
-deployment behavior are unchanged by this documentation.
+Production credentials must never reach PR jobs. In GitHub environment
+`treasury-subgraph / production`, configure environment-only `RAILWAY_DEPLOY_TOKEN`.
+The job maps it to `RAILWAY_API_TOKEN` only for native plan/apply against the exact
+project/environment IDs below. It never falls back to `RAILWAY_TOKEN`. No live
+secret, branch or environment settings are changed by these source edits.
+
+Verify Wait for CI on every GitHub-backed service before activation. Production
+push workflows and the infrastructure job do not automatically cancel older runs.
+Manual cancellation is not a deployment stop: Railway can ignore a cancelled
+workflow when another workflow succeeded. Native IaC may itself start builds or
+restart services during apply; this is not an atomic infrastructure/code rollout.
+Use compatible staged changes for dependent service replacements. Existing main
+Postgres image changes still require separately approved rebuilds. No automatic
+Envio reset or independent RPC cache deletion is added.
 
 ## Reconcile public domains
 

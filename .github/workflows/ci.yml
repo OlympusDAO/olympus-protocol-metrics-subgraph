@@ -48,3 +48,100 @@ jobs:
     name: Image security and integration
     if: github.event_name != 'pull_request'
     uses: ./.github/workflows/security-scan.yml
+
+  railway-apply:
+    timeout-minutes: 60
+    needs: [source, images]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment:
+      name: treasury-subgraph / production
+      deployment: false
+    concurrency:
+      group: railway-infrastructure-production
+      cancel-in-progress: false
+      queue: max
+    env:
+      RAILWAY_PROJECT_ID: 1eff0b7c-1ab5-4f50-8c0d-29086746a17b
+      RAILWAY_ENVIRONMENT_ID: 34764411-35d7-466c-8249-612730c36c07
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+      statuses: read
+      pull-requests: read
+    steps:
+      - name: Checkout merged configuration
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Select production infrastructure change
+        id: eligibility
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            // Keep this gate inline so the checked-out revision cannot grant its own release eligibility.
+            if (
+              context.eventName !== "push" || context.ref !== "refs/heads/master" ||
+              context.payload.forced || context.payload.created || context.payload.deleted
+            ) {
+              throw new Error("Production apply requires an exact master push.");
+            }
+            const prs = await github.paginate(
+              github.rest.repos.listPullRequestsAssociatedWithCommit,
+              {
+                ...context.repo,
+                commit_sha: context.sha,
+                per_page: 100,
+              }
+            );
+            const pr = prs.find(
+              (pr) =>
+                pr.merged_at &&
+                pr.merge_commit_sha === context.sha &&
+                pr.base.ref === "master" &&
+                pr.base.repo?.full_name === context.payload.repository.full_name
+            );
+            if (!pr) {
+              throw new Error(
+                "Production deployment requires a reviewed PR merged into master at this commit."
+              );
+            }
+            core.setOutput("relevant", "true");
+      - name: Wait for external checks
+        if: steps.eligibility.outputs.relevant == 'true'
+        timeout-minutes: 35
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          MERGE_COMMIT_SHA: ${{ github.sha }}
+        with:
+          script: |
+            await require("./scripts/railway-release.cjs").waitForExternalChecks({ github, context, core });
+      - name: Bootstrap
+        if: steps.eligibility.outputs.relevant == 'true'
+        uses: ./.github/actions/bootstrap
+      - name: Plan production changes
+        if: steps.eligibility.outputs.relevant == 'true'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_DEPLOY_TOKEN }}
+        with:
+          script: |
+            await require("./scripts/railway-release.cjs").plan({ core });
+      - name: Verify production plan target
+        if: steps.eligibility.outputs.relevant == 'true'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          PLAN_PATH: ${{ runner.temp }}/railway-plan.json
+        with:
+          script: |
+            await require("./scripts/railway-release.cjs").verify({ github, context });
+      - name: Apply reviewed production plan
+        if: steps.eligibility.outputs.relevant == 'true'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_DEPLOY_TOKEN }}
+        with:
+          script: |
+            await require("./scripts/railway-release.cjs").apply({ core });

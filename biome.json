@@ -10,6 +10,7 @@
   "files": {
     "includes": [
       "scripts/validate.mjs",
+      "scripts/railway-release.cjs",
       "config/*.json",
       ".github/**",
       ".railway/**",
@@ -45,7 +46,10 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "preset": "recommended"
+      "preset": "recommended",
+      "suspicious": {
+        "useErrorMessage": "error"
+      }
     }
   },
   "overrides": [

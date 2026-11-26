@@ -115,3 +115,25 @@ fixed diagnostic, never its value. Validate optional values when supplied.
   other named environment requires the preview webhook and keeps its name.
   Do not add production-ID or renamed-environment exceptions to Discord routing.
   Preserve the documented explicit local mode when Railway identity is absent.
+
+## Error reasons
+
+Give thrown errors meaningful, nonempty reasons. Use fixed descriptions or
+configuration names; never include credentials or private request values.
+The existing Biome checks enforce `suspicious/useErrorMessage` as an error
+within their configured source scopes. This policy also applies to scripts
+outside those scopes; do not add empty messages to satisfy the rule.
+
+## Infrastructure release eligibility
+
+When CI automatically applies infrastructure, keep event, ref, repository and
+merged-commit eligibility checks inline in the workflow. Checked-out scripts
+must not grant their own apply eligibility. Gate later helpers on the eligibility
+output and keep provider credentials behind the required status checks.
+Production IaC applies inside the same CI workflow after source, image/integration
+and required external checks. Fail closed for direct or untrusted production
+pushes. Do not automatically cancel production workflows or active applies.
+Keep Railway GitHub sources on `checkSuites: true`; verify live Wait for CI before
+activation. Native apply can itself trigger builds, so use compatible staged
+service changes. Preserve separately approved database reset/rebuild procedures.
+Manual maintenance apply still requires explicit operator approval.
