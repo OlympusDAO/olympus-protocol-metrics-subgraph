@@ -67,7 +67,8 @@
     "@types/node": "24.19.2",
     "railway": "3.16.0",
     "typescript": "7.0.2",
-    "vitest": "5.1.0"
+    "vitest": "5.1.0",
+    "yaml": "2.9.1"
   },
   "packageManager": "pnpm@11.28.13",
   "engines": {

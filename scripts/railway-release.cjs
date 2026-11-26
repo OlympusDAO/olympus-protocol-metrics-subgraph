@@ -165,9 +165,15 @@ module.exports = {
       throw new Error("Production branch advanced; refusing an outdated queued apply.");
     }
   },
-  async apply({ core }) {
+  async apply({ github, context, core }) {
     if (!process.env.RAILWAY_API_TOKEN)
       throw new Error("Set the production environment-only RAILWAY_DEPLOY_TOKEN secret.");
+    const { data: branch } = await github.rest.repos.getBranch({
+      ...context.repo,
+      branch: "master",
+    });
+    if (branch.commit.sha !== context.sha)
+      throw new Error("Production branch advanced; refusing an outdated queued apply.");
     // Native 5.75 saved-plan apply can exit zero on failed/partial results.
     // Keep both streams private: outputs/diagnostics can contain secrets.
     const applied = require("node:child_process").spawnSync(

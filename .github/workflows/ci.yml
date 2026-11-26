@@ -144,4 +144,4 @@ jobs:
           RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_DEPLOY_TOKEN }}
         with:
           script: |
-            await require("./scripts/railway-release.cjs").apply({ core });
+            await require("./scripts/railway-release.cjs").apply({ github, context, core });
