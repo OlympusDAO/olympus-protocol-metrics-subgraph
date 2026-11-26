@@ -171,9 +171,7 @@ export default defineRailway((ctx) => {
       POSTGRES_USER: "postgres",
       // Preserve credentials unless complete inventory proves this database is new.
       POSTGRES_PASSWORD:
-        !live || live.tcpPorts.has("rpc-cache-postgres")
-          ? preserve()
-          : { type: "raw", value: { defaultValue: postgresPasswordGenerator } },
+        !live || live.tcpPorts.has("rpc-cache-postgres") ? preserve() : postgresPasswordGenerator,
       DATABASE_URL: `postgresql://postgres:\${{POSTGRES_PASSWORD}}@\${{RAILWAY_PRIVATE_DOMAIN}}:5432/railway`,
     },
   });

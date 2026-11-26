@@ -488,8 +488,8 @@ describe("Railway config-as-code", () => {
         definition.resources.find((r: ResourceNode) => r.address === "service.rpc-cache-postgres")
           .variables.POSTGRES_PASSWORD,
       ).toEqual({
-        type: "raw",
-        value: { defaultValue: `\${{ secret(64, "0123456789abcdef") }}` },
+        type: "literal",
+        value: `\${{ secret(64, "0123456789abcdef") }}`,
       });
       const cacheDatabaseNode = {
         serviceId: "cache-db",
