@@ -5,7 +5,7 @@ Use the pinned Node and pnpm versions. Docker must be running for image and
 integration checks. No cloud login, provider token or live database is required
 for these checks.
 
-Main TypeScript is exactly 7.0.2; indexer and Envio 3.18 handler checks use the root CLI.
+The indexer and Envio 3.19.0 handler checks use the root TypeScript 7.0.2 CLI.
 The native compiler regression and storage refusal behavior are described
 in [security posture](security-posture.md#shared-tooling-and-intentional-differences).
 
@@ -48,10 +48,11 @@ provider PostgreSQL 18.6, official local Alpine PostgreSQL 18.6 and historical P
 it consumes; unavailable prerequisites
 fail. MinIO/MC are Compose fixtures and are not used by this HTTP S3 integration.
 Live-provider indexer tests remain separate opt-in tests in the ordinary suite.
-The indexer fixture checks native incompatibility refusal with its stored sentinel
-intact, a running private reset control and no ingestion health listener, then
-recovers through the explicit socket reset. The wrapper stays alive for SSH
-recovery after terminal nonzero supervision; this is not ingestion readiness.
+The indexer fixture checks that a changed `chainIdMode` causes a nonzero native
+exit and preserves the stored configuration and sentinel. It resets the verified
+indexer schema from the PostgreSQL host, starts normal ingestion, and requires
+HTTP 200 from `/healthz`. The eRPC fixture verifies the cached keys and values
+survive this reset.
 
 The inventory has fixed `built`, `provider`, `local` and `comparison` groups.
 Every built application is built and gated, without classification/deduplication

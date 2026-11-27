@@ -5,10 +5,11 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { expect, test } from "vitest";
 
-test("Envio 3.18 checks actual handlers with the root TypeScript 7 CLI", async () => {
+test("Envio 3.19.0 checks actual handlers with the root TypeScript 7 CLI", async () => {
   const cwd = resolve(dirname(fileURLToPath(import.meta.url)), "..");
   const indexerRequire = createRequire(join(cwd, "package.json"));
   const rootRequire = createRequire(join(cwd, "../../package.json"));
+  expect(indexerRequire("envio/package.json").version).toBe("3.19.0");
   expect(rootRequire("typescript/package.json").version).toBe("7.0.2");
   expect(indexerRequire.resolve("typescript/package.json")).toBe(
     rootRequire.resolve("typescript/package.json"),

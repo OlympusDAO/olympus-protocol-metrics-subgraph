@@ -2,17 +2,17 @@ import type { ProjectDefinition } from "railway/iac";
 
 export class ExposureError extends Error {}
 
-const publicServices = new Set(["metrics-api"]);
+export const publicHttpTargetPorts = { "metrics-api": 8080 } as const;
 
 const managedPorts: Record<string, number[]> = {
   Postgres: [5432],
   "rpc-cache-postgres": [5432],
-  "rpc-cache": [4000],
+  "rpc-cache": [4000, 4001],
   hasura: [8080],
   indexer: [9898],
   "indexer-monitor": [],
   "metrics-publisher": [],
-  "metrics-api": [8080],
+  "metrics-api": [publicHttpTargetPorts["metrics-api"]],
 };
 
 function object(value: unknown): Record<string, unknown> {
@@ -47,29 +47,33 @@ export function currentExposure(configInput: unknown, instances: unknown) {
       throw new ExposureError(
         "Unrecognized Railway service; whole-project exposure cannot be verified",
       );
+    const serviceConfig = object(services[serviceId]);
+    if (serviceConfig.name !== undefined && serviceConfig.name !== serviceName)
+      throw new ExposureError("Service identity mismatch between config and inventory");
+    const allowedPort = Object.hasOwn(publicHttpTargetPorts, serviceName)
+      ? publicHttpTargetPorts[serviceName as keyof typeof publicHttpTargetPorts]
+      : undefined;
     const domains = object(node.domains);
     for (const kind of ["serviceDomains", "customDomains"] as const) {
       if (!Array.isArray(domains[kind]))
         throw new ExposureError("Incomplete Railway domain lookup");
       for (const entry of domains[kind]) {
-        const metadata = object(entry);
-        const domain = metadata.domain;
-        if (typeof domain !== "string" || !domain.trim())
+        const { id, domain, targetPort } = object(entry);
+        if (typeof id !== "string" || !id.trim() || typeof domain !== "string" || !domain.trim())
           throw new ExposureError("Incomplete Railway domain lookup");
         // Native IaC cannot delete live HTTP domains; require authorized removal first.
-        if (!publicServices.has(serviceName)) {
+        if (allowedPort === undefined) {
           throw new ExposureError(
             "Unexpected public HTTP exposure; separately authorized provider removal and verification are required before planning.",
           );
         }
-        if (metadata.targetPort !== null && metadata.targetPort !== managedPorts[serviceName][0]) {
+        if (targetPort !== null && targetPort !== allowedPort) {
           throw new ExposureError(
-            `Unexpected HTTP target port on metrics-api: expected ${managedPorts[serviceName][0]} or automatic. Verify live domain routing before planning.`,
+            `Unexpected HTTP target port on ${serviceName}: expected ${allowedPort} or automatic. Verify live domain routing before planning.`,
           );
         }
       }
     }
-    const serviceConfig = object(services[serviceId]);
     const networking = object(serviceConfig.networking ?? {});
     const proxies = object(networking.tcpProxies ?? {});
     const active = Object.entries(proxies)
@@ -101,7 +105,7 @@ export function currentExposure(configInput: unknown, instances: unknown) {
 // Empty TCP maps are a native no-op; named nulls remove managed and discovered ports.
 // service() normalizes tcp entries to creation records. Apply removal tombstones
 // to the final emitted project so null survives SDK normalization/serialization.
-export function enforceExposure(
+export function enforcePublicNetworking(
   definition: ProjectDefinition,
   current?: ReadonlyMap<string, number[]>,
 ) {
@@ -116,7 +120,7 @@ export function enforceExposure(
     resource.networking = {
       ...resource.networking,
       serviceDomains: {},
-      customDomains: publicServices.has(resource.name)
+      customDomains: Object.hasOwn(publicHttpTargetPorts, resource.name)
         ? (resource.networking?.customDomains ?? {})
         : {},
       tcpProxies: Object.fromEntries(

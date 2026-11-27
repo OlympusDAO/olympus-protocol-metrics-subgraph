@@ -30,31 +30,41 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
     indexer = `${prefix}-indexer`;
   const directory = mkdtempSync(join(tmpdir(), "metrics-indexer-fixture-"));
   // Retain this tiny credential-free fixture for failed-test diagnosis.
+  const configFile = join(directory, "config.yaml");
   writeFileSync(
-    join(directory, "config.yaml"),
+    configFile,
     readFileSync("apps/indexer/config.yaml", "utf8").replace(
       /^( {2}- id: \d+[^\n]*)$/gm,
       "$1\n    hypersync_config:\n      url: http://127.0.0.1:1",
     ),
   );
-  const sql = (query) =>
-    docker(
-      "exec",
-      "-e",
-      "PGPASSWORD=fixture",
-      pg,
-      "psql",
-      "-h",
-      "127.0.0.1",
-      "-U",
-      "postgres",
-      "-d",
-      "railway",
-      "-v",
-      "ON_ERROR_STOP=1",
-      "-Atc",
-      query,
-    );
+  const psql = [
+    "-e",
+    "PGPASSWORD=fixture",
+    pg,
+    "psql",
+    "-X",
+    "-w",
+    "-h",
+    "127.0.0.1",
+    "-U",
+    "postgres",
+    "-d",
+    "railway",
+    "-v",
+    "ON_ERROR_STOP=1",
+  ];
+  const sql = (query) => docker("exec", ...psql, "-Atc", query);
+  const resetScript = readFileSync(
+    new URL("../../scripts/reset-indexer-schema.sql", import.meta.url),
+  );
+  const resetSchema = () =>
+    execFileSync(runtime, ["exec", "-i", ...psql, "--file=-"], {
+      input: resetScript,
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "pipe"],
+      timeout: 60_000,
+    });
   async function eventually(check, message) {
     for (let i = 0; i < 200; i++) {
       try {
@@ -120,7 +130,7 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
     "--network",
     prefix,
     "--mount",
-    `type=bind,source=${join(directory, "config.yaml")},target=/app/apps/indexer/config.yaml,readonly`,
+    `type=bind,source=${configFile},target=/app/apps/indexer/config.yaml,readonly`,
     ...Object.entries({
       ENVIO_API_TOKEN: "fixture",
       ENVIO_PG_HOST: pg,
@@ -173,38 +183,51 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
     );
     return true;
   }, "Private ingestion server did not reject documentation/spec routes");
-  // Native Envio must refuse incompatible state without resetting it.
+  const storedConfig = () => sql("SELECT config::text FROM envio_info WHERE id = 1");
+  const originalConfig = JSON.parse(storedConfig());
+  assert.equal(Object.hasOwn(originalConfig, "chainIdMode"), false);
   docker("stop", indexer);
-  sql(`UPDATE envio_info SET config='{}' WHERE id=1`);
+  sql(`UPDATE envio_info
+    SET config = jsonb_set(config::jsonb, '{chainIdMode}', '"int64"'::jsonb)
+    WHERE id = 1`);
+  const incompatibleConfig = storedConfig();
+  assert.deepEqual(JSON.parse(incompatibleConfig), { ...originalConfig, chainIdMode: "int64" });
   docker("start", indexer);
   await eventually(
-    () => logs().includes("Ingestion is paused"),
-    "Incompatible storage did not leave reset control available",
+    () => docker("inspect", "--format", "{{.State.Status}}", indexer) === "exited",
+    "Native Envio did not exit on an incompatible chainIdMode",
   );
-  assert.equal(docker("inspect", "--format", "{{.State.Status}}", indexer), "running");
-  assert(logs().includes("config changes are incompatible with the existing indexer data"));
+  assert.match(docker("inspect", "--format", "{{.State.ExitCode}}", indexer), /^[1-9]\d*$/);
+  const failure = logs();
+  assert.match(failure, /config changes are incompatible with the existing indexer data/);
+  assert.match(failure, /- chainIdMode\b/);
+  assert.equal(storedConfig(), incompatibleConfig);
   assert.equal(sentinel(), "1");
-  docker(
-    "exec",
-    indexer,
-    "node",
-    "--input-type=module",
-    "-e",
-    `
-    import assert from 'node:assert/strict';
-    await assert.rejects(
-      fetch('http://127.0.0.1:9898/healthz', {signal: AbortSignal.timeout(2000)}),
-      error => error.cause?.code === 'ECONNREFUSED',
-    );
-  `,
-  );
-  const result = docker("exec", indexer, "tsx", "src/start-envio.ts", "reset");
-  assert(result.includes("Envio migration completed"));
-  assert.equal(sentinel(), "0");
-  await eventually(
-    () => sql("SELECT count(*) FROM envio_info") === "1",
-    "Explicit migration did not initialize indexer storage",
-  );
+
+  docker("stop", hasura);
+  assert.equal(sql("SELECT current_database()"), "railway");
+  const publicAcl = () =>
+    sql(`SELECT ARRAY(
+      SELECT entry::text FROM unnest(nspacl) AS entry ORDER BY entry::text COLLATE "C"
+    )::text FROM pg_namespace WHERE nspname = 'public'`);
+  const originalAcl = publicAcl();
+  sql("REVOKE USAGE ON SCHEMA public FROM PUBLIC");
+  const alteredAcl = publicAcl();
+  assert.notEqual(alteredAcl, originalAcl);
+  assert.throws(resetSchema, {
+    status: 3,
+    stderr: /Unsupported owner or ACL on existing public schema/,
+  });
+  assert.equal(publicAcl(), alteredAcl);
+  assert.equal(storedConfig(), incompatibleConfig);
+  assert.equal(sentinel(), "1");
+  sql("GRANT USAGE ON SCHEMA public TO PUBLIC");
+  assert.equal(publicAcl(), originalAcl);
+  resetSchema();
+  assert.equal(sql("SELECT to_regclass('public.envio_info') IS NULL"), "t");
+  assert.equal(publicAcl(), originalAcl);
+  docker("start", hasura);
+  docker("start", indexer);
   await eventually(
     () =>
       docker(
@@ -215,9 +238,11 @@ export async function verifyIndexerResumeAndReset(t, runtime = "docker") {
         "-e",
         "console.log((await fetch('http://127.0.0.1:9898/healthz', {signal: AbortSignal.timeout(2000)})).status);",
       ) === "200",
-    "Native indexer did not return HTTP 200 from /healthz after the explicit reset",
+    "Native indexer did not return HTTP 200 from /healthz after the database-host reset",
   );
+  assert.deepEqual(JSON.parse(storedConfig()), originalConfig);
+  assert.equal(sentinel(), "0");
   console.log(
-    "Real indexer preserved a managed entity on restart, refused incompatible storage, and explicitly reset only its application database; template TLS/PGDATA verified.",
+    "Native Envio resumed, exited on incompatible storage with data intact, and restarted after the PostgreSQL-host schema reset. Template TLS/PGDATA verified.",
   );
 }

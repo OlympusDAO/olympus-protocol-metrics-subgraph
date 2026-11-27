@@ -8,7 +8,7 @@ ENV PATH=/pnpm:$PATH
 WORKDIR /app
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends --only-upgrade apt libapt-pkg6.0 libgcrypt20 libgnutls30 libpcre2-8-0 perl-base \
+  && apt-get install -y --no-install-recommends --only-upgrade apt libapt-pkg6.0 libgcrypt20 libgnutls30 libpam-modules libpam-modules-bin libpam-runtime libpam0g libpcre2-8-0 perl-base \
   && apt-get install -y --no-install-recommends ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 

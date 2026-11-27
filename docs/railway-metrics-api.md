@@ -66,9 +66,8 @@ These variables belong on the private `hasura` service.
 - Required `HASURA_GRAPHQL_ADMIN_SECRET`: high-entropy admin secret. Reuse the
   same value on the private indexer and publisher services so they can call
   Hasura.
-- Required on Railway `PORT`: Hasura HTTP port. Use `8080` unless there is a
-  specific reason to change it. The Dockerfile derives
-  `HASURA_GRAPHQL_SERVER_PORT` from `PORT` before Hasura starts.
+- Railway IaC sets Hasura's `PORT=8080` in every environment. The Dockerfile
+  maps `PORT` to `HASURA_GRAPHQL_SERVER_PORT` before Hasura starts.
 - Optional `HASURA_GRAPHQL_ENABLE_CONSOLE`: must be `false`. The Dockerfile also
   sets this as a default.
 - Optional `HASURA_GRAPHQL_ENABLED_LOG_TYPES`: recommended
@@ -96,19 +95,19 @@ check requires the core variables below before Envio starts.
 - Required `ENVIO_PG_HOST`, `ENVIO_PG_PORT`, `ENVIO_PG_USER`,
   `ENVIO_PG_PASSWORD`, and `ENVIO_PG_DATABASE`: Envio's Postgres connection
   settings, usually references to Railway Postgres private-network variables.
-- Do not set `ENVIO_PG_SCHEMA` on Railway. The indexer intentionally uses
-  Envio's default schema, currently `public`, so each deployment operates on the
-  same Envio schema instead of accumulating deployment-specific schemas.
-- Startup and crash recovery use plain `envio start` and resume from the
-  committed checkpoint. After an unexpected exit, the wrapper waits up to ten
-  minutes for Postgres to accept connections before retrying.
+- Leave `ENVIO_PG_SCHEMA` and `ENVIO_PG_PUBLIC_SCHEMA` unset on Railway so each
+  deployment uses the same Envio schema. Native Envio checks
+  `ENVIO_PG_SCHEMA` first, then the legacy `ENVIO_PG_PUBLIC_SCHEMA`, and
+  defaults to `public`.
+- Startup uses plain `envio start` and resumes compatible state from the
+  committed checkpoint. Envio exits on fatal errors. Railway can retry those
+  exits under its bounded `ON_FAILURE` policy.
 - Required `ENVIO_PG_SSL_MODE`: set according to the Railway Postgres
   connection mode. Envio accepts `false`, `true`, `require`, `allow`, `prefer`,
   or `verify-full`; it does not accept libpq-style `disable`.
 - Optional `ENVIO_PG_MAX_CONNECTIONS`: Envio Postgres pool size.
-- Required on Railway `PORT`: Railway HTTP target port for Envio. Use `9898` unless you intentionally need a different port. The
-  indexer startup wrapper derives `ENVIO_INDEXER_PORT` from Railway's runtime
-  `PORT` before Envio starts.
+- Railway IaC sets the indexer's `PORT=9898` in every environment. Startup maps
+  `PORT` to `ENVIO_INDEXER_PORT` before launching Envio.
 - Required `HASURA_GRAPHQL_ENDPOINT`: private Hasura metadata endpoint, for
   example `http://hasura.railway.internal:8080/v1/metadata`.
 - Required `HASURA_GRAPHQL_ADMIN_SECRET`: same value used by Hasura.
@@ -140,8 +139,7 @@ ENVIO_ROBINHOOD_RPC_URL=http://${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metric
 
 Railway Postgres variable names can differ depending on how the database service
 was created. Use the names exposed by your Postgres service. If it only exposes
-`DATABASE_URL`, either split it into the `ENVIO_PG_*` variables above or add a
-startup wrapper that derives them before running Envio.
+`DATABASE_URL`, split the URL into the required `ENVIO_PG_*` settings.
 
 Envio v3 supports fallback RPCs by adding multiple `rpc` entries in
 `apps/indexer/config.yaml` with `for: fallback`. It does not consume
@@ -202,50 +200,66 @@ delivery followed by a failed state write can cause a duplicate notification.
 
 ### Manual indexer reset
 
-Native Envio refuses incompatible stored configuration or addresses without
-resetting them. After the existing database wait and bounded retry policy ends
-in a nonzero result, the wrapper keeps its private reset control and container
-alive so an operator can SSH in and recover it. This applies to all terminal
-nonzero results, including exhausted errors, database-wait failure and spawn
-failure; a native exit code does not identify incompatibility specifically.
-These paused failures await an explicit restart or reset rather than triggering
-Railway's `ON_FAILURE` restart policy. Inspect and fix the cause before restarting;
-reset only when a deliberate rebuild is required. Clean completion and intentional
-shutdown still terminate the wrapper.
+Envio exits nonzero when it refuses incompatible stored configuration or
+addresses. Startup never resets storage. Inspect the indexer logs and restore
+the compatible configuration if possible. Use this procedure only after an
+operator approves a rebuild from the configured chain start blocks.
 
-While ingestion is stopped, its native `/healthz` port is unavailable. Source
-IaC does not configure an indexer healthcheck, so a running container does not
-establish that ingestion is ready.
+1. Verify the Railway project and environment IDs. Record the main indexer's
+   Postgres service, `ENVIO_PG_DATABASE`, `ENVIO_PG_PORT`, and effective schema.
+   Check both `ENVIO_PG_SCHEMA` and `ENVIO_PG_PUBLIC_SCHEMA` in the indexer's
+   runtime environment. Proceed only when the effective schema is `public`.
+   Perform the reset on the main `Postgres` service. The separate eRPC database
+   is outside this procedure.
+2. Stop all writers to the indexer schema, including every indexer replica,
+   and prevent automatic restarts until the reset finishes. Stop Hasura when
+   it uses this schema. Pause publisher runs until the rebuilt dataset is ready.
+3. Use the verified IDs to open a shell on the main `Postgres` service. Complete
+   normal SSH host verification during this interactive connection.
 
-For an already-running wrapper, reset is an explicit operator action for a
-deliberate historical rebuild or a schema-incompatible deployment. It recreates the Envio schema and starts
-indexing at the configured chain start blocks. Verify the deployment and
-database target before executing the command from the indexer service shell
-as the same operating-system user as the running indexer (`node`).
+   ```sh
+   railway ssh --project PROJECT_ID --environment ENVIRONMENT_ID --service Postgres
+   ```
 
-```bash
-cd /app/apps/indexer
-tsx src/start-envio.ts reset
-```
+   From that shell, substitute the verified port and database name, and an
+   authorized role that can drop and recreate the schema.
 
-The command uses the wrapper's local Unix socket. The supervisor stops the
-ingestion process group, runs Envio's local migration, and starts ingestion
-after migration succeeds. If migration fails, ingestion stays paused. Resolve
-the failure before retrying the reset. The RPC cache uses its own database
-and remains available across an indexer reset.
+   ```sh
+   psql -X -v ON_ERROR_STOP=1 --host 127.0.0.1 --port VERIFIED_DB_PORT --dbname VERIFIED_DB_NAME --username VERIFIED_DB_ROLE
+   ```
 
-If the wrapper is fully stopped, native `envio local db-migrate setup` remains
-an offline maintenance option with the same config, environment and verified
-database target. Start normal ingestion afterwards. Never run it alongside an
-active indexer; no deployment or startup resets storage automatically.
+   Confirm the connection with `\conninfo` and
+   `SELECT current_database(), current_user;`. Check
+   `pg_stat_activity` for remaining writer sessions. Inspect all schema
+   objects and dependencies, and record the owner and grants with `\dn+ public`.
+   Stop if any unrelated objects or dependencies would be dropped. Take a
+   database backup and verify it is available for recovery.
+4. Exit the interactive session. From the repository root, run the
+   [checked-in reset script](../scripts/reset-indexer-schema.sql) with the same
+   verified IDs, database port, database name, and role. The streamed command
+   uses the service's existing `POSTGRES_PASSWORD` for its verified
+   `POSTGRES_USER` role. A different role requires separately approved noninteractive
+   authentication.
 
-If the reset socket path is already occupied, the wrapper exits before starting
-ingestion and leaves the endpoint in place. A dead wrapper can leave its
-detached Envio process group running. On a direct host restart, verify that the
-previous wrapper and its ingestion process group have stopped before removing
-only its `reset.sock` in the private control directory for that working directory
-and indexer port. Then restart the wrapper. On Railway, replace the container
-through a normal redeploy to start with a fresh container filesystem.
+   ```sh
+   railway ssh --project PROJECT_ID --environment ENVIRONMENT_ID --service Postgres -- \
+     'PGPASSWORD="$POSTGRES_PASSWORD" psql -X -w -v ON_ERROR_STOP=1 --host 127.0.0.1 --port VERIFIED_DB_PORT --dbname VERIFIED_DB_NAME --username VERIFIED_DB_ROLE --file=-' \
+     < scripts/reset-indexer-schema.sql
+   ```
+
+   The script requires `public.envio_info` and the standard PostgreSQL
+   `public` schema owned by `pg_database_owner`, with `USAGE` granted to
+   `PUBLIC`. It also preserves a direct `USAGE` and `CREATE` grant from the
+   schema owner to the database owner when present. It checks the recreated
+   owner and grants before committing. For other owners or grants, keep the
+   services stopped and use a separately reviewed manual restore that recreates
+   the recorded owner and exact grants. Verify the grants before committing
+   that restore.
+
+5. Start Hasura if you stopped it, then redeploy the indexer normally. Envio
+   initializes the empty schema and starts indexing. Check the native
+   `/healthz` response for HTTP 200 and verify chain progress before resuming
+   downstream work.
 
 The metrics API serves the current published manifest during the rebuild. Before
 publication resumes after an explicit reset, set the publisher
@@ -386,11 +400,13 @@ version for debugging and stale-data checks.
 These variables belong on the public `metrics-api` service. The API reads from
 the same bucket the publisher writes to.
 
-- Optional `PORT`: Railway normally provides this.
+- Railway IaC sets `PORT=8080` for the public `metrics-api` listener in every
+  environment. The production custom domain uses the same port.
+  [Service declaration](../.railway/railway.ts).
 - Optional `METRICS_API_MAX_RANGE_DAYS`: maximum inclusive v2 range. The
   documented default is `366`.
-- Optional `METRICS_API_PORT`: port override if the runtime does not provide
-  `PORT`.
+- Optional `METRICS_API_PORT`: local port override when the runtime does not
+  provide `PORT`. Local API and Compose default to `3000`.
 - Required `ARTIFACT_BUCKET`, `ARTIFACT_ENDPOINT`, `ARTIFACT_REGION`,
   `ARTIFACT_ACCESS_KEY_ID`, and `ARTIFACT_SECRET_ACCESS_KEY`: read-only
   artifact access.

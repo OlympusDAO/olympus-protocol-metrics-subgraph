@@ -52,7 +52,11 @@ describe("Railway config-as-code", () => {
         });
         expect(resource).not.toHaveProperty("source.branch");
       }
-      expect(get("service.metrics-api")).toHaveProperty("networking.customDomains", {});
+      expect(get("service.metrics-api")).toMatchObject({
+        deploy: { healthcheckPath: "/ready" },
+        networking: { customDomains: {}, serviceDomains: {} },
+        variables: { PORT: { type: "literal", value: "8080" } },
+      });
     },
   );
   test("retains the imported resources and adds the private cache stack and monitor", async () => {
@@ -112,7 +116,10 @@ describe("Railway config-as-code", () => {
     });
     expect(get("service.metrics-api")).toMatchObject({
       networking: { customDomains: { "treasury-subgraph-api.olympusdao.finance": { port: 8080 } } },
-      variables: { ARTIFACT_ENDPOINT: { type: "preserve" } },
+      variables: {
+        ARTIFACT_ENDPOINT: { type: "preserve" },
+        PORT: { type: "literal", value: "8080" },
+      },
     });
   });
 
@@ -251,38 +258,57 @@ describe("Railway config-as-code", () => {
     },
   );
 
-  test("serialized SDK output keeps every non-API service private with TCP removals", async () => {
-    const { get } = await graph();
-    const ports = {
-      "database.Postgres": "5432",
-      "service.rpc-cache-postgres": "5432",
-      "service.rpc-cache": "4000",
-      "service.indexer": "9898",
-      "service.indexer-monitor": undefined,
-      "service.hasura": "8080",
-      "service.metrics-publisher": undefined,
-    } as const;
-    for (const [address, port] of Object.entries(ports)) {
-      const resource = get(address as ResourceNode["address"]);
-      expect(resource).toHaveProperty("networking.serviceDomains", {});
-      expect(resource).toHaveProperty("networking.customDomains", {});
-      expect(resource).toHaveProperty("networking.tcpProxies", port ? { [port]: null } : {});
-    }
-    expect(get("database.Postgres")).toHaveProperty(
-      "networking.privateNetworkEndpoint",
-      "postgres",
-    );
-    expect(get("service.metrics-api")).toHaveProperty("networking.tcpProxies", { 8080: null });
-  });
+  test.each(["production", "olympus-protocol-metrics--pr-406"])(
+    "serialized SDK output pins private listener ports and restricts exposure in %s",
+    async (environment) => {
+      const { get } = await graph(environment);
+      const ports = {
+        "database.Postgres": [5432],
+        "service.rpc-cache-postgres": [5432],
+        "service.rpc-cache": [4000, 4001],
+        "service.indexer": [9898],
+        "service.indexer-monitor": [],
+        "service.hasura": [8080],
+        "service.metrics-publisher": [],
+      } as const;
+      for (const [address, servicePorts] of Object.entries(ports)) {
+        const resource = get(address as ResourceNode["address"]);
+        expect(resource).toHaveProperty("networking.serviceDomains", {});
+        expect(resource).toHaveProperty("networking.customDomains", {});
+        expect(resource).toHaveProperty(
+          "networking.tcpProxies",
+          Object.fromEntries(servicePorts.map((port) => [port, null])),
+        );
+      }
+      expect(get("database.Postgres")).toHaveProperty(
+        "networking.privateNetworkEndpoint",
+        "postgres",
+      );
+      expect(get("service.metrics-api")).toHaveProperty("networking.tcpProxies", { 8080: null });
+      expect(get("service.hasura")).toHaveProperty("variables.PORT", {
+        type: "literal",
+        value: "8080",
+      });
+      expect(get("service.indexer")).toHaveProperty("variables.PORT", {
+        type: "literal",
+        value: "9898",
+      });
+    },
+  );
 
   test("refuses unexpected HTTP exposure and incomplete or ambiguous provider snapshots", () => {
-    const config = { services: { id: { networking: { tcpProxies: { 5432: {} } } } } };
+    const config = {
+      services: { id: { name: "indexer", networking: { tcpProxies: { 5432: {} } } } },
+    };
     const node = {
       serviceId: "id",
       serviceName: "indexer",
       domains: { serviceDomains: [], customDomains: [] },
     };
     expect(currentExposure(config, [{ node }]).get("indexer")).toEqual([5432]);
+    expect(() =>
+      currentExposure({ services: { id: { name: "metrics-api" } } }, [{ node }]),
+    ).toThrow("Service identity mismatch");
     for (const value of [undefined, null]) {
       expect(
         currentExposure({ services: { id: { networking: value } } }, [{ node }]).get("indexer"),
@@ -343,8 +369,10 @@ describe("Railway config-as-code", () => {
             serviceId: "api",
             serviceName: "metrics-api",
             domains: {
-              serviceDomains: [{ domain: "api-generated.example", targetPort: 8080 }],
-              customDomains: [{ domain: "api-alternate.example", targetPort: 8080 }],
+              serviceDomains: [
+                { id: "generated", domain: "api-generated.example", targetPort: 8080 },
+              ],
+              customDomains: [{ id: "custom", domain: "api-alternate.example", targetPort: 8080 }],
             },
           },
         },
@@ -365,8 +393,8 @@ describe("Railway config-as-code", () => {
                   serviceDomains: [],
                   customDomains: [],
                   [kind]: [
-                    { domain: "first.example", targetPort: 8080 },
-                    { domain: "second.example", targetPort },
+                    { id: "first", domain: "first.example", targetPort: 8080 },
+                    { id: "second", domain: "second.example", targetPort },
                   ],
                 },
               },
@@ -375,6 +403,26 @@ describe("Railway config-as-code", () => {
         if (targetPort !== null && targetPort !== 8080) expect(read).toThrow("target port");
         else expect(read().get("metrics-api")).toEqual([]);
       }
+    }
+  });
+
+  test.each([undefined, "", " ", 123])("rejects non-identifying domain IDs %j", (id) => {
+    for (const kind of ["serviceDomains", "customDomains"] as const) {
+      expect(() =>
+        currentExposure({ services: { api: {} } }, [
+          {
+            node: {
+              serviceId: "api",
+              serviceName: "metrics-api",
+              domains: {
+                serviceDomains: [],
+                customDomains: [],
+                [kind]: [{ id, domain: "preview.example", targetPort: null }],
+              },
+            },
+          },
+        ]),
+      ).toThrow("Incomplete Railway domain lookup");
     }
   });
 
@@ -398,7 +446,7 @@ describe("Railway config-as-code", () => {
                 domains: {
                   serviceDomains: [],
                   customDomains: [],
-                  [kind]: [{ domain: "unexpected.example" }],
+                  [kind]: [{ id: "unexpected", domain: "unexpected.example", targetPort: null }],
                 },
               },
             },
@@ -409,13 +457,19 @@ describe("Railway config-as-code", () => {
   });
 
   test("SDK callback rejects drift, preserves resources and emits imported TCP removals", async () => {
-    const nodes = ["Postgres", "indexer", "indexer-monitor"].map((serviceName) => ({
-      serviceId: serviceName,
-      serviceName,
-      domains: { serviceDomains: [] as { domain: string }[], customDomains: [] },
-    }));
+    const nodes = ["Postgres", "indexer", "indexer-monitor", "metrics-api", "rpc-cache"].map(
+      (serviceName) => ({
+        serviceId: serviceName,
+        serviceName,
+        domains: {
+          serviceDomains: [] as { id: string; domain: string; targetPort: number | null }[],
+          customDomains: [],
+        },
+      }),
+    );
     const indexerNode = nodes.find((node) => node.serviceName === "indexer");
-    if (!indexerNode) throw new Error("Missing indexer fixture");
+    const apiNode = nodes.find((node) => node.serviceName === "metrics-api");
+    if (!indexerNode || !apiNode) throw new Error("Missing indexer or API fixture");
     const response = {
       data: {
         environment: {
@@ -424,6 +478,8 @@ describe("Railway config-as-code", () => {
               Postgres: { networking: { tcpProxies: { 15432: {} } } },
               indexer: { networking: { tcpProxies: { 9000: {} } } },
               "indexer-monitor": { networking: { tcpProxies: { 9001: {} } } },
+              "metrics-api": { name: "metrics-api" },
+              "rpc-cache": { networking: { tcpProxies: { 4400: {} } } },
             },
           },
           serviceInstances: {
@@ -438,11 +494,11 @@ describe("Railway config-as-code", () => {
       },
     };
     const execute = vi.mocked(execFileSync);
-    const evaluate = () =>
+    const evaluate = (environment = "production") =>
       defineInfrastructure(
         createRailwayContext({
           command: "plan",
-          environment: "production",
+          environment,
           environmentId: "fixture-env",
         }),
         () => {
@@ -450,16 +506,18 @@ describe("Railway config-as-code", () => {
         },
       );
     try {
-      indexerNode.domains.serviceDomains = [{ domain: "unexpected.example" }];
+      indexerNode.domains.serviceDomains = [
+        { id: "unexpected", domain: "unexpected.example", targetPort: null },
+      ];
       execute.mockReturnValue(JSON.stringify(response));
-      await expect(Promise.resolve().then(evaluate)).rejects.toThrow(
-        "Cannot establish safe Railway",
+      await expect(Promise.resolve().then(() => evaluate("preview"))).rejects.toThrow(
+        "Reason: Unexpected public HTTP exposure",
       );
-      await expect(Promise.resolve().then(evaluate)).rejects.toThrow(
+      await expect(Promise.resolve().then(() => evaluate())).rejects.toThrow(
         "Reason: Unexpected public HTTP exposure",
       );
       execute.mockReturnValueOnce("malformed fixture-sensitive-provider-response");
-      const malformed = Promise.resolve().then(evaluate);
+      const malformed = Promise.resolve().then(() => evaluate());
       await expect(malformed).rejects.toThrow("Cannot establish safe Railway");
       await expect(malformed).rejects.not.toThrow("fixture-sensitive-provider-response");
       indexerNode.domains.serviceDomains = [];
@@ -481,6 +539,10 @@ describe("Railway config-as-code", () => {
           .networking.tcpProxies,
       ).toEqual({ 9001: null });
       expect(
+        definition.resources.find((r: ResourceNode) => r.address === "service.rpc-cache").networking
+          .tcpProxies,
+      ).toEqual({ 4000: null, 4001: null, 4400: null });
+      expect(
         definition.resources.find((r: ResourceNode) => r.address === "volume.postgres-volume-ytRO")
           .config.sizeMB,
       ).toBe(75000);
@@ -491,6 +553,22 @@ describe("Railway config-as-code", () => {
         type: "literal",
         value: `\${{ secret(64, "0123456789abcdef") }}`,
       });
+      const previewDomain = { id: "preview", domain: "metrics-preview.example", targetPort: null };
+      apiNode.domains.serviceDomains = [previewDomain];
+      execute.mockReturnValue(JSON.stringify(response));
+      const preview = JSON.parse(JSON.stringify(await evaluate("preview")));
+      expect(
+        preview.resources.find((r: ResourceNode) => r.address === "service.metrics-api"),
+      ).toMatchObject({
+        networking: { customDomains: {}, serviceDomains: {}, tcpProxies: { 8080: null } },
+        variables: { PORT: { type: "literal", value: "8080" } },
+      });
+      apiNode.domains.serviceDomains = [{ ...previewDomain, targetPort: 3000 }];
+      execute.mockReturnValue(JSON.stringify(response));
+      await expect(Promise.resolve().then(() => evaluate("preview"))).rejects.toThrow(
+        "Unexpected HTTP target port",
+      );
+      apiNode.domains.serviceDomains = [];
       const cacheDatabaseNode = {
         serviceId: "cache-db",
         serviceName: "rpc-cache-postgres",
@@ -507,7 +585,7 @@ describe("Railway config-as-code", () => {
       ).toEqual({ type: "preserve" });
       cacheDatabaseNode.serviceName = "";
       execute.mockReturnValue(JSON.stringify(response));
-      await expect(Promise.resolve().then(evaluate)).rejects.toThrow(
+      await expect(Promise.resolve().then(() => evaluate())).rejects.toThrow(
         "Cannot establish safe Railway",
       );
       for (const [executable, args] of execute.mock.calls) {
@@ -515,6 +593,9 @@ describe("Railway config-as-code", () => {
         expect(args?.[0]).toBe("api");
         expect(args?.[1]).toMatch(/^query\(/);
         expect(args?.[1]).toContain("config(decryptVariables: false)");
+        expect(args?.[1]).toContain(
+          "serviceDomains { id domain targetPort } customDomains { id domain targetPort }",
+        );
       }
     } finally {
       execute.mockReset();

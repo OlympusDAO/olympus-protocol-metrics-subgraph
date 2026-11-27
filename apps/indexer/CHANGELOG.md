@@ -4,9 +4,9 @@ All notable changes to this package will be documented in this file. Dates are d
 
 ## [v0.4.0]
 
-- Upgrade Envio to 3.18.1 with native startup compatibility checks and TypeScript 7 CLI handler checks.
-- Resume indexing from the stored checkpoint on normal startup and after recoverable crashes.
-- Add an explicit local reset command that pauses ingestion, runs Envio’s schema setup, and restarts indexing after a successful migration.
+- Upgrade Envio to 3.19.0 with native startup compatibility checks and TypeScript 7 CLI handler checks.
+- Resume compatible state from the stored checkpoint. Native Envio exits on fatal startup failures.
+- Reset the verified indexer schema from the PostgreSQL host for an explicit rebuild.
 
 ## [v0.3.3] - 2026-10-23
 

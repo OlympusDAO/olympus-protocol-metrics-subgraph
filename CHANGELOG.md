@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-- Resume compatible Envio state and provide an explicit operator reset while
-  using Envio 3.18.1 and its native compatibility guard.
+- Resume compatible Envio 3.19.0 state and surface native startup failures.
+  Rebuild incompatible state with an explicit reset from the database host.
 - Add a private persistent cache for finalized historical RPC reads, separate
   from the indexer database and schema reset.
 - Bound and validate artifact reads, and isolate the public Metrics API from

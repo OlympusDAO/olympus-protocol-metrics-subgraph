@@ -45,6 +45,33 @@ Envio reset or independent RPC cache deletion is added.
 
 ## Reconcile public domains
 
+The public HTTP policy allows only `metrics-api`, on port `8080`. The Railway
+service uses that port for its listener in every environment and for the
+production custom domain. The local API and Compose still default to `3000`.
+[Networking policy](networking.ts) and [service declaration](railway.ts).
+
+Keep a Railway-generated domain on the base environment's `metrics-api` service.
+[Railway automatically generates PR domains](https://docs.railway.com/environments#domains-in-pr-environments)
+only when the corresponding base service has a Railway-generated domain. A
+custom domain alone does not enable this. Production custom domains are not
+assigned to previews.
+
+A preview may predate the base service's generated domain, or its generated
+route may have been removed. Inspect the base and selected preview
+`metrics-api` domain inventories first. Confirm the preview is missing its
+generated domain and its API is listening with `PORT=8080`. After separate
+approval, create the missing domain with explicit preview identifiers.
+
+```sh
+railway domain --project PROJECT_ID --environment PR_ENVIRONMENT_ID --service metrics-api --port 8080 --json
+```
+
+Request `/operations/health` through the generated preview domain and verify
+HTTP 200.
+
+Native config plan/apply does not provision generated domains; the IaC `domains`
+field configures custom domains.
+
 CLI 5.75.0 cannot delete existing HTTP domains through its native config diff.
 Before planning, inventory the whole environment's services and HTTP/TCP exposure
 with complete pagination, including cache services when provisioned. Unreadable

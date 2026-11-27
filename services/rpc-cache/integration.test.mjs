@@ -320,8 +320,19 @@ test("eRPC persists finalized calls across process restarts and bypasses volatil
   await eventually(ready, "Restarted eRPC did not become healthy");
   assert.equal((await call(137, historical)).status, "HIT");
   assert.equal(count(137, "eth_call", historical), 1);
+  const historicalEntries = () => cacheSql(`SELECT partition_key, range_key, encode(value, 'hex')
+    FROM rpc_cache
+    WHERE partition_key LIKE 'evm:137:%'
+      AND range_key LIKE 'eth_call:%'
+      AND value = convert_to('"0x1234"', 'UTF8')
+    ORDER BY partition_key, range_key`);
+  const entriesBeforeReset = historicalEntries();
+  assert.notEqual(entriesBeforeReset, "");
   await verifyIndexerResumeAndReset(t, runtime);
-  assert.equal((await call(137, historical)).status, "HIT");
+  assert.equal(historicalEntries(), entriesBeforeReset);
+  const cachedAfterReset = await call(137, historical);
+  assert.equal(cachedAfterReset.status, "HIT");
+  assert.equal(cachedAfterReset.body.result, "0x1234");
   assert.equal(count(137, "eth_call", historical), 1);
   assert(!container("logs", cache).includes("fixture-provider-secret"));
 });

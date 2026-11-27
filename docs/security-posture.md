@@ -110,20 +110,17 @@ no live REINDEX, backup, constraint repair or production update was performed.
 own direct package versions. The Railway CLI and TypeScript SDK are separate
 dependencies. [Validation](validation.md) owns runtime-alignment checks.
 
-Metrics pins Envio 3.18.1. Native startup refuses incompatible configuration or
-addresses before storage takeover. The wrapper retains its bounded retry policy
-then keeps private reset control alive after terminal nonzero results, including
-failures unrelated to compatibility. An operator must inspect and explicitly
-restart or reset it; Railway `ON_FAILURE` does not restart a paused wrapper.
-Ingestion's native health port is unavailable while paused, and source IaC has
-no indexer healthcheck. It does not reset automatically. Persisted configuration
-includes the Envio version, so this upgrade can refuse an older cluster: rehearse
-on a clone before separately approving a live reset. The private reset command
-and stopped-app maintenance alternative are in [the runbook](railway-metrics-api.md#manual-indexer-reset).
+Metrics pins Envio 3.19.0. Native startup exits nonzero on incompatible
+configuration or addresses before taking over storage. Railway applies its
+bounded failure restart policy. Source IaC has no indexer healthcheck.
+Persisted configuration includes the Envio version, so an upgrade can refuse
+an older cluster. Rehearse on a clone before approving a live rebuild.
+Operators reset the verified indexer schema from its PostgreSQL host only
+after stopping all writers. See the [manual reset runbook](railway-metrics-api.md#manual-indexer-reset).
 Main TypeScript is exactly 7.0.2 for build/typecheck and Envio's native handler-check CLI.
 
 The pnpm policy uses preferred `audit.ignore`. pnpm 11.28.13 still recognizes
 the deprecated `auditConfig.ignoreGhsas`, but the former takes precedence.
 The pnpm audit ignore for picomatch and the range-scoped overrides remain.
-The explicitly selected Envio 3.18.1 and its five exact platform packages alone
+The explicitly selected Envio 3.19.0 and its five exact platform packages alone
 have release-age exceptions; the global 10080-minute age gate remains enabled.

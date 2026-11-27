@@ -14,7 +14,12 @@ import {
   volume,
 } from "railway/iac";
 import images from "./images.json" with { type: "json" };
-import { currentExposure, ExposureError, enforceExposure } from "./networking.ts";
+import {
+  currentExposure,
+  ExposureError,
+  enforcePublicNetworking,
+  publicHttpTargetPorts,
+} from "./networking.ts";
 
 const postgresPasswordGenerator = `\${{ secret(64, "0123456789abcdef") }}`;
 
@@ -31,7 +36,7 @@ function existingResources(ctx: RailwayContext):
         "railway",
         [
           "api",
-          "query($id: String!) { environment(id: $id) { config(decryptVariables: false) serviceInstances(first: 100) { edges { node { serviceId serviceName domains { serviceDomains { domain targetPort } customDomains { domain targetPort } } } } pageInfo { hasNextPage } } volumeInstances(first: 100) { edges { node { sizeMB volume { name } } } pageInfo { hasNextPage } } } }",
+          "query($id: String!) { environment(id: $id) { config(decryptVariables: false) serviceInstances(first: 100) { edges { node { serviceId serviceName domains { serviceDomains { id domain targetPort } customDomains { id domain targetPort } } } } pageInfo { hasNextPage } } volumeInstances(first: 100) { edges { node { sizeMB volume { name } } } pageInfo { hasNextPage } } } }",
           "--var",
           `id=${ctx.environmentId}`,
           "--compact",
@@ -228,8 +233,8 @@ export default defineRailway((ctx) => {
         "ENVIO_PG_SSL_MODE",
         "ENVIO_PG_USER",
         ...hasuraKeys,
-        "PORT",
       ]),
+      PORT: "9898",
       ...routes,
     },
   });
@@ -268,7 +273,10 @@ export default defineRailway((ctx) => {
     ...deployment,
     build: build("hasura", []),
     deploy: { ...limits(), ...failure("/healthz") },
-    env: preserved(["HASURA_GRAPHQL_ADMIN_SECRET", "HASURA_GRAPHQL_DATABASE_URL", "PORT"]),
+    env: {
+      ...preserved(["HASURA_GRAPHQL_ADMIN_SECRET", "HASURA_GRAPHQL_DATABASE_URL"]),
+      PORT: "8080",
+    },
   });
   const metricsPublisher = service("metrics-publisher", {
     ...deployment,
@@ -281,6 +289,7 @@ export default defineRailway((ctx) => {
     deploy: { ...limits(), cronSchedule: "15 * * * *", restartPolicyType: "NEVER" },
     env: preserved([...artifactKeys, ...hasuraKeys]),
   });
+  const metricsApiPort = publicHttpTargetPorts["metrics-api"];
   const metricsApi = service("metrics-api", {
     ...deployment,
     build: build("metrics-api", [
@@ -290,8 +299,10 @@ export default defineRailway((ctx) => {
       ...sharedWatch,
     ]),
     deploy: { ...limits(), ...failure("/ready") },
-    domains: production ? [{ domain: "treasury-subgraph-api.olympusdao.finance", port: 8080 }] : [],
-    env: preserved(artifactKeys),
+    domains: production
+      ? [{ domain: "treasury-subgraph-api.olympusdao.finance", port: metricsApiPort }]
+      : [],
+    env: { ...preserved(artifactKeys), PORT: String(metricsApiPort) },
   });
 
   const definition = {
@@ -320,5 +331,5 @@ export default defineRailway((ctx) => {
       cacheVolume,
     ],
   };
-  return enforceExposure(project("treasury-subgraph", definition), live?.tcpPorts);
+  return enforcePublicNetworking(project("treasury-subgraph", definition), live?.tcpPorts);
 });

@@ -34,11 +34,11 @@ describe("indexer monorepo layout", () => {
       scripts: Record<string, string>;
     };
 
-    expect(packageJson.scripts["check:env"]).toBe("tsx src/start-envio.ts check");
+    expect(packageJson.scripts["check:env"]).toBe("node --import tsx src/start-envio.ts check");
     expect(packageJson.scripts.dev).toBe(
-      `ENVIO_TUI=\${ENVIO_TUI:-false} tsx src/start-envio.ts dev`,
+      `ENVIO_TUI=\${ENVIO_TUI:-false} node --import tsx src/start-envio.ts dev`,
     );
-    expect(packageJson.scripts.start).toBe("tsx src/start-envio.ts start");
+    expect(packageJson.scripts.start).toBe("node --import tsx src/start-envio.ts start");
   });
 
   test("declares apps and packages as workspace packages", () => {

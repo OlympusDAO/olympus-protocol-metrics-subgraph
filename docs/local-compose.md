@@ -57,7 +57,7 @@ RPC responses.
 Use `pnpm run up:compose:core` when working on indexer handlers, schemas, snapshot
 logic, or Hasura-backed data shape. This is the default local development path
 because Compose provides Postgres, Hasura, and the `ENVIO_PG_*` environment
-variables the startup wrapper requires.
+variables the startup validation requires.
 
 Use `pnpm run up:compose` when you also need the local artifact bucket and
 metrics API, or when validating an end-to-end API flow after the publisher has
@@ -184,8 +184,8 @@ Most variables have local defaults. Override these when needed:
   Envio event-ingestion settings.
 - `INDEXER_HASURA_GRAPHQL_ENDPOINT`: Envio metadata endpoint used by the
   indexer, default `http://hasura:8080/v1/metadata`.
-- `INDEXER_PORT`: internal Envio indexer HTTP port, default `9898`. The indexer
-  startup wrapper derives `ENVIO_INDEXER_PORT` from this value.
+- `INDEXER_PORT`: internal Envio indexer HTTP port, default `9898`. Startup
+  maps this value to `ENVIO_INDEXER_PORT`.
 - `PUBLISHER_PUBLIC_START_DATE`, `PUBLISHER_LOCK_TTL_MS`,
   `PUBLISHER_START_DATE`, and `PUBLISHER_END_DATE`: publisher range controls. If
   no manifest exists, publishing starts at `2022-05-01`; otherwise it backfills
