@@ -1,0 +1,21 @@
+{
+  "built": {
+    "hasura": "olympus-protocol-metrics/hasura:local",
+    "indexer": "olympus-protocol-metrics/indexer:local",
+    "indexer-monitor": "olympus-protocol-metrics/indexer-monitor:local",
+    "metrics-api": "olympus-protocol-metrics/metrics-api:local",
+    "metrics-publisher": "olympus-protocol-metrics/metrics-publisher:local",
+    "rpc-cache": "localhost/olympus-metrics-rpc-cache:local"
+  },
+  "comparison": {
+    "postgres-previous": "ghcr.io/railwayapp-templates/postgres-ssl:18@sha256:14bece74105090e05d4eb57c075442cb2057e899cd8858b508c5eafda3fe725f"
+  },
+  "local": {
+    "minio-client-local": "quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z@sha256:a7fe349ef4bd8521fb8497f55c6042871b2ae640607cf99d9bede5e9bdf11727",
+    "minio-local": "quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+    "postgres-local": "postgres:18.6-alpine3.24@sha256:9ba53c7d41ea093baf5c1ba635ba5434c4f979880527d49bb7d9237d3193085b"
+  },
+  "provider": {
+    "postgres-production": "ghcr.io/railwayapp-templates/postgres-ssl:18.6@sha256:4fc833b43d2aaf6ecc9b18615f5533602b723a32d0e2efe2dae8ca0f7217c863"
+  }
+}

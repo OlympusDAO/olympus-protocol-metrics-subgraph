@@ -1,25 +1,29 @@
 {
   "name": "@olympusdao/treasury-subgraph-indexer",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
+  "files": [
+    "src",
+    "config.yaml",
+    "schema.graphql",
+    "envio-env.d.ts"
+  ],
   "scripts": {
+    "check:env": "node --import tsx src/start-envio.ts check",
     "codegen": "envio codegen",
-    "env:check": "tsx src/start-envio.ts check",
-    "envio": "envio",
-    "envio:dev": "ENVIO_TUI=${ENVIO_TUI:-false} tsx src/start-envio.ts dev",
-    "envio:start": "tsx src/start-envio.ts start",
-    "test": "vitest run tests"
+    "dev": "ENVIO_TUI=${ENVIO_TUI:-false} node --import tsx src/start-envio.ts dev",
+    "start": "node --import tsx src/start-envio.ts start",
+    "test": "vitest run tests",
+    "typecheck": "pnpm --workspace-root exec tsc -p apps/indexer/tsconfig.json"
   },
   "dependencies": {
     "bignumber.js": "11.1.5",
-    "envio": "3.14.0",
-    "viem": "2.57.7"
+    "envio": "3.19.0",
+    "tsx": "4.23.15",
+    "viem": "2.57.16"
   },
   "devDependencies": {
-    "@types/node": "24.19.2",
-    "typescript": "6.0.3",
-    "vitest": "4.1.12",
     "yaml": "2.9.1"
   }
 }

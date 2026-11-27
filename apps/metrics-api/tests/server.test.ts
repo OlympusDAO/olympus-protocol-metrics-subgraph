@@ -185,9 +185,14 @@ describe("metrics API HTTP behavior", () => {
     ).toThrow("METRICS_API_MAX_RANGE_DAYS");
   });
 
-  test("has /ready but no /healthz", async () => {
+  test("serves readiness and OpenAPI JSON without an HTML docs site", async () => {
     expect((await request("/ready")).status).toBe(200);
     expect((await request("/healthz")).status).toBe(404);
+    expect((await request("/docs")).status).toBe(404);
+    const spec = await request("/openapi.json");
+    expect(spec.status).toBe(200);
+    expect(spec.headers.get("content-type")).toContain("application/json");
+    expect(await spec.json()).toMatchObject({ openapi: "3.1.0" });
   });
 
   test("supports CORS preflight", async () => {

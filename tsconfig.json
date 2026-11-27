@@ -1,19 +1,20 @@
 {
   "compilerOptions": {
-    "target": "es2022",
-    "lib": ["es2022", "dom"],
     "allowJs": false,
     "checkJs": false,
-    "outDir": "build",
-    "strict": true,
-    "noImplicitAny": true,
     "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
+    "lib": ["es2022", "dom"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "noImplicitAny": true,
+    "outDir": "build",
+    "resolveJsonModule": true,
+    "rewriteRelativeImportExtensions": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "es2022",
     "types": ["node"]
   },
-  "include": ["apps", "packages", "tests"],
-  "exclude": ["node_modules", "**/generated", "**/.envio"]
+  "exclude": ["node_modules", "**/generated", "**/.envio", "apps/indexer-monitor"],
+  "include": ["apps", "packages", "tests"]
 }

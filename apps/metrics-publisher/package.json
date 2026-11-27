@@ -3,9 +3,13 @@
   "version": "0.1.1",
   "private": true,
   "type": "module",
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "test": "vitest run tests",
-    "start": "tsx src/cli.ts"
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/apps/metrics-publisher/src/cli.js",
+    "test": "vitest run tests"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1152.0"

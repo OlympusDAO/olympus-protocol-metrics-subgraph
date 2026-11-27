@@ -2,26 +2,23 @@ packages:
   - apps/*
   - packages/*
 
+audit:
+  ignore:
+    # picomatch ReDoS has no published fix. Remove when a patched release is available.
+    # https://github.com/advisories/GHSA-fc5q-39xc-vjpf
+    - GHSA-fc5q-39xc-vjpf
+
 blockExoticSubdeps: true
 engineStrict: true
 minimumReleaseAge: 10080
 minimumReleaseAgeExclude:
-  # Explicitly requested latest pnpm 11; retain the age gate for other releases.
-  - "@pnpm/exe@11.28.7"
-  - "@pnpm/linux-arm64@11.28.7"
-  - "@pnpm/linux-x64@11.28.7"
-  - "@pnpm/linuxstatic-x64@11.28.7"
-  - "@pnpm/macos-arm64@11.28.7"
-  - "@pnpm/win-arm64@11.28.7"
-  - "@pnpm/win-x64@11.28.7"
-  - "@vitest/expect@4.1.12"
-  - "@vitest/mocker@4.1.12"
-  - "@vitest/pretty-format@4.1.12"
-  - "@vitest/runner@4.1.12"
-  - "@vitest/snapshot@4.1.12"
-  - "@vitest/spy@4.1.12"
-  - "@vitest/utils@4.1.12"
-  - "vitest@4.1.12"
+  # Exact Envio release explicitly selected by the user; retain the global age gate.
+  - "envio@3.19.0"
+  - "envio-darwin-arm64@3.19.0"
+  - "envio-darwin-x64@3.19.0"
+  - "envio-linux-arm64@3.19.0"
+  - "envio-linux-x64@3.19.0"
+  - "envio-linux-x64-musl@3.19.0"
 allowBuilds:
   # esbuild ships native binaries it builds on install; required because
   # vitest (our test runner) depends on it transitively. Without this entry,
@@ -101,12 +98,13 @@ overrides:
   # Envio bundles express + ws; patches the transitive advisories CI's
   # audit gate flagged at moderate+. Pinned to ranges known to address
   # each CVE without churning unrelated majors.
-  "body-parser@<1.20.6": "1.20.6"
+  "body-parser@>=1.0.0 <1.20.9": "1.20.9"
   "cookie@<0.7.0": "0.7.0"
   "express@<4.20.0": "4.20.0"
   "path-to-regexp@<0.1.13": "0.1.13"
-  "qs@<6.16.0": "6.16.0"
+  "qs@>=6.0.0 <6.16.1": "6.16.1"
   "fflate@<0.8.3": "0.8.3"
+  "vitest@>=4.0.0 <4.1.12": "4.1.12"
   "send@<0.19.0": "0.19.0"
   "serve-static@<1.16.0": "1.16.0"
   # postcss GHSA-r28c-9q8g-f849 (high, arbitrary source-map disclosure),
@@ -125,13 +123,11 @@ overrides:
   # 8.20.1 predates this advisory and is still vulnerable; bumped to 8.21.0
   # (released 2026-05-22, past the 7-day cutoff). Range-scoped per convention.
   "ws@>=8.0.0 <8.21.0": "8.21.0"
-  # Vite 8.1.6 fixes the launch-editor command-injection advisories and the
-  # server.fs.allow bypass. Vitest 4.1.12 and @vitest/mocker 4.1.12 accept
-  # Vite 8, so constrain only their vulnerable Vite 8 release line.
-  "vite@>=8.0.0 <8.1.6": "8.1.6"
+  # Vite dev-server path traversal (GHSA-p4f5-76q4-ffq7), fixed on the same minor.
+  "vite@>=8.0.0 <8.1.7": "8.1.7"
   # esbuild GHSA-gv7w-rqvm-qjhr (RCE via NPM_CONFIG_REGISTRY in the Deno
   # module) + GHSA-g7r4-m6w7-qqqr (dev-server arbitrary file read), both
-  # fixed in 0.28.1. vite@8.1.6 accepts esbuild ^0.27.0 || ^0.28.0, so the
+  # fixed in 0.28.1. vite@8.1.7 accepts esbuild ^0.27.0 || ^0.28.0, so the
   # bump is peer-compatible.
   "esbuild@>=0.17.0 <0.28.1": "0.28.1"
 preferFrozenLockfile: true

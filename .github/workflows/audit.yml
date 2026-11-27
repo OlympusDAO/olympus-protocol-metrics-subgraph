@@ -2,14 +2,26 @@ name: Dependency Audit
 
 on:
   pull_request:
+  push:
+    branches: [master]
   workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 1"
+
+concurrency:
+  group: dependency-audit-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
   audit:
+    name: Dependency audit
+    # Skip fork PRs before checkout, dependency installation or token use.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: write
@@ -18,15 +30,16 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-
-
       - name: Bootstrap
         uses: ./.github/actions/bootstrap
-      - name: Audit pnpm dependencies (fail on moderate+)
+      - name: Audit dependencies and comment on same-repository PRs
+        if: github.event_name == 'pull_request'
         uses: JamesRobertWiseman/pnpm-audit@ef62519bd4eb8b0b063989599c2ebbf5dd5f5f28 # v3
         with:
           package_json_path: ./
           github_token: ${{ secrets.GITHUB_TOKEN }}
           level: moderate
           fails: true
-          single_comment: true
+      - name: Audit dependencies outside PRs
+        if: github.event_name != 'pull_request'
+        run: pnpm audit --audit-level moderate

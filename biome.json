@@ -1,13 +1,19 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
-  "vcs": {
-    "enabled": true,
-    "clientKind": "git",
-    "useIgnoreFile": true
+  "$schema": "https://biomejs.dev/schemas/2.6.3/schema.json",
+  "assist": {
+    "actions": {
+      "source": {
+        "useSortedPackageJson": "on"
+      }
+    }
   },
   "files": {
     "includes": [
+      "scripts/validate.mjs",
+      "scripts/railway-release.cjs",
+      "config/*.json",
       ".github/**",
+      ".railway/**",
       "apps/**",
       "packages/**",
       "tests/**",
@@ -30,17 +36,57 @@
     "indentWidth": 2,
     "lineWidth": 100
   },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "preset": "recommended"
-    }
-  },
   "javascript": {
     "formatter": {
       "quoteStyle": "double",
       "semicolons": "always",
       "trailingCommas": "all"
     }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "suspicious": {
+        "useErrorMessage": "error"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "apps/**/tests/**/*.test.ts",
+        "apps/indexer-monitor/test/**/*.test.mjs",
+        "packages/**/tests/**/*.test.ts",
+        "tests/**/*.test.{ts,mjs}"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noFocusedTests": "error"
+          }
+        }
+      }
+    },
+    {
+      "assist": {
+        "actions": {
+          "source": {
+            "useSortedKeys": "on"
+          }
+        }
+      },
+      "includes": [
+        "**/*.{json,jsonc}",
+        "!**/package.json",
+        "!docs/performance/**",
+        "!apps/client/openapi.json"
+      ]
+    }
+  ],
+  "vcs": {
+    "clientKind": "git",
+    "enabled": true,
+    "useIgnoreFile": true
   }
 }

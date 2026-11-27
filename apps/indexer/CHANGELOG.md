@@ -2,6 +2,12 @@
 
 All notable changes to this package will be documented in this file. Dates are displayed in UTC.
 
+## [v0.4.0]
+
+- Upgrade Envio to 3.19.0 with native startup compatibility checks and TypeScript 7 CLI handler checks.
+- Resume compatible state from the stored checkpoint. Native Envio exits on fatal startup failures.
+- Reset the verified indexer schema from the PostgreSQL host for an explicit rebuild.
+
 ## [v0.3.3] - 2026-10-23
 
 - Add a per-chain `ohmTotalSupplyEndBlock` so L2 OHM total supply stops counting once bridged OHM is locked in the mainnet CCIP lock/release pool. From that block the chain emits a zero Total Supply row, so the Total Supply category a snapshot wrote earlier the same UTC day doesn't outlive the cutover in the published `ohmSupplyCategories`. L2 treasury and liquidity deductions still apply. Set on Arbitrum, Base and Berachain to the blocks matching the pool funding (Ethereum block 26,245,881, 2026-10-22T04:51:47Z).

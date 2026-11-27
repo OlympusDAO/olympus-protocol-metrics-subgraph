@@ -25,9 +25,8 @@ describe("indexer monorepo layout", () => {
     };
 
     expect(packageJson.scripts.codegen).toBe("pnpm --dir apps/indexer codegen");
-    expect(packageJson.scripts.envio).toBe("pnpm --dir apps/indexer envio");
-    expect(packageJson.scripts["envio:dev"]).toBe("pnpm --dir apps/indexer envio:dev");
-    expect(packageJson.scripts["envio:start"]).toBe("pnpm --dir apps/indexer envio:start");
+    expect(packageJson.scripts["dev:indexer"]).toBe("pnpm --dir apps/indexer dev");
+    expect(packageJson.scripts["start:indexer"]).toBe("pnpm --dir apps/indexer start");
   });
 
   test("runs indexer env validation before Envio starts", () => {
@@ -35,11 +34,11 @@ describe("indexer monorepo layout", () => {
       scripts: Record<string, string>;
     };
 
-    expect(packageJson.scripts["env:check"]).toBe("tsx src/start-envio.ts check");
-    expect(packageJson.scripts["envio:dev"]).toBe(
-      `ENVIO_TUI=\${ENVIO_TUI:-false} tsx src/start-envio.ts dev`,
+    expect(packageJson.scripts["check:env"]).toBe("node --import tsx src/start-envio.ts check");
+    expect(packageJson.scripts.dev).toBe(
+      `ENVIO_TUI=\${ENVIO_TUI:-false} node --import tsx src/start-envio.ts dev`,
     );
-    expect(packageJson.scripts["envio:start"]).toBe("tsx src/start-envio.ts start");
+    expect(packageJson.scripts.start).toBe("node --import tsx src/start-envio.ts start");
   });
 
   test("declares apps and packages as workspace packages", () => {

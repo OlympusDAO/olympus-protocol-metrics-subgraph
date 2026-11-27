@@ -20,6 +20,8 @@ describe("local Docker Compose stack", () => {
 
     for (const service of [
       "postgres",
+      "rpc-cache-postgres",
+      "rpc-cache",
       "hasura",
       "minio",
       "minio-init",
@@ -34,7 +36,15 @@ describe("local Docker Compose stack", () => {
   test("keeps non-API services internal by default", () => {
     const compose = readFileSync("docker-compose.yml", "utf8");
 
-    for (const service of ["postgres", "hasura", "minio", "indexer", "metrics-publisher"]) {
+    for (const service of [
+      "postgres",
+      "rpc-cache-postgres",
+      "rpc-cache",
+      "hasura",
+      "minio",
+      "indexer",
+      "metrics-publisher",
+    ]) {
       expect(serviceBlock(compose, service), service).not.toContain("ports:");
     }
 
@@ -58,6 +68,35 @@ describe("local Docker Compose stack", () => {
     expect(serviceBlock(compose, "indexer")).toContain("hasura:");
   });
 
+  test("routes every indexer RPC through the persistent private cache", () => {
+    const compose = readFileSync("docker-compose.yml", "utf8");
+    const indexer = serviceBlock(compose, "indexer");
+    const cache = serviceBlock(compose, "rpc-cache");
+    const database = serviceBlock(compose, "rpc-cache-postgres");
+
+    for (const [chain, name] of [
+      [1, "ETHEREUM"],
+      [137, "POLYGON"],
+      [250, "FANTOM"],
+      [8453, "BASE"],
+      [42161, "ARBITRUM"],
+      [80094, "BERACHAIN"],
+      [4663, "ROBINHOOD"],
+    ]) {
+      expect(indexer).toContain(
+        `ENVIO_${name}_RPC_URL: http://rpc-cache:4000/metrics/evm/${chain}`,
+      );
+      expect(cache).toContain(`UPSTREAM_RPC_URL_${chain}:`);
+    }
+
+    expect(indexer).toContain("rpc-cache:\n        condition: service_started");
+    expect(cache).toContain("rpc-cache-postgres:5432/rpc_cache");
+    expect(cache).toContain("rpc-cache-postgres:\n        condition: service_healthy");
+    expect(database).toContain("rpc-cache-postgres18-data:/var/lib/postgresql");
+    expect(serviceBlock(compose, "postgres")).toContain("postgres18-data:/var/lib/postgresql");
+    expect(compose).toContain("\n  rpc-cache-postgres18-data:");
+  });
+
   test("includes indexer in the default stack and runs publisher as an explicit profile", () => {
     const compose = readFileSync("docker-compose.yml", "utf8");
     const doc = readFileSync("docs/local-compose.md", "utf8");
@@ -71,11 +110,11 @@ describe("local Docker Compose stack", () => {
     expect(doc).toContain(
       "docker compose up --build postgres hasura minio minio-init indexer metrics-api",
     );
-    expect(doc).toContain("pnpm run compose:publish");
-    expect(packageJson.scripts["compose:up"]).toBe(
+    expect(doc).toContain("pnpm run publish:compose");
+    expect(packageJson.scripts["up:compose"]).toBe(
       "docker compose up --build postgres hasura minio minio-init indexer metrics-api",
     );
-    expect(packageJson.scripts["compose:publish"]).toBe(
+    expect(packageJson.scripts["publish:compose"]).toBe(
       "INDEXER_DEPLOYMENT_ID=$(git rev-parse HEAD) docker compose --profile publish run --build --rm --no-deps metrics-publisher",
     );
     expect(packageJson.scripts[["compose", "publish", "full"].join(":")]).toBeUndefined();
@@ -85,21 +124,21 @@ describe("local Docker Compose stack", () => {
     const doc = readFileSync("docs/local-compose.md", "utf8");
     const packageJson = readFileSync("package.json", "utf8");
 
-    expect(packageJson).toContain('"compose:core": "docker compose up postgres hasura indexer"');
+    expect(packageJson).toContain('"up:compose:core": "docker compose up postgres hasura indexer"');
     expect(packageJson).toContain(
-      '"compose:api": "docker compose up --build minio minio-init metrics-api"',
+      '"up:compose:api": "docker compose up --build minio minio-init metrics-api"',
     );
     expect(packageJson).toContain(
-      '"compose:api:rebuild": "docker compose up --build --no-deps metrics-api"',
+      '"up:compose:api:rebuild": "docker compose up --build --no-deps metrics-api"',
     );
-    expect(packageJson).toContain('"compose:bucket:clear": "docker compose run --rm --no-deps');
+    expect(packageJson).toContain('"clear:compose:bucket": "docker compose run --rm --no-deps');
     expect(doc).toContain("## Split Workflow");
     expect(doc).toContain("in the foreground");
-    expect(doc).toContain("pnpm run compose:core");
-    expect(doc).toContain("pnpm run compose:api");
-    expect(doc).toContain("pnpm run compose:api:rebuild");
-    expect(doc).toContain("pnpm run compose:bucket:clear");
-    expect(doc).toContain("pnpm run compose:publish");
+    expect(doc).toContain("pnpm run up:compose:core");
+    expect(doc).toContain("pnpm run up:compose:api");
+    expect(doc).toContain("pnpm run up:compose:api:rebuild");
+    expect(doc).toContain("pnpm run clear:compose:bucket");
+    expect(doc).toContain("pnpm run publish:compose");
     expect(doc).toContain(
       "This rebuilds and starts only the one-shot `metrics-publisher` container",
     );

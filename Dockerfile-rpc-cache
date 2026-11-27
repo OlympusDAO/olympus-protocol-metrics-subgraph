@@ -1,0 +1,32 @@
+# Build the verified eRPC 0.5.0 release with a small private-error patch.
+# The official image (1d0687aa...) contains Go 1.26.5 advisories; rebuild with
+# fixed tooling/modules and omit the unused profiler binary and config SDK.
+FROM golang:1.26.11-alpine3.24@sha256:ae52b5bc6ed045a9ed26ab03dc19327a802a9cc9aa8b27ed57f5c6b60579b0bb AS build
+WORKDIR /src
+ADD --checksum=sha256:54c1776002ed22a93741296781fc7996a1bf64bf3f243da23545958b2f182138 https://codeload.github.com/erpc/erpc/tar.gz/refs/tags/0.5.0 /tmp/erpc.tar.gz
+RUN tar -xzf /tmp/erpc.tar.gz --strip-components=1
+# Security updates scoped to this new service; monorepo dependencies are unchanged.
+ENV GOTOOLCHAIN=local CGO_ENABLED=0
+COPY services/rpc-cache/private-errors.patch /tmp/private-errors.patch
+COPY services/rpc-cache/pgx-v5.patch /tmp/pgx-v5.patch
+COPY services/rpc-cache/reject-null-cache.patch /tmp/reject-null-cache.patch
+RUN apk add --no-cache patch \
+    && patch -p1 < /tmp/private-errors.patch \
+    && patch -p1 < /tmp/pgx-v5.patch \
+    && patch -p1 < /tmp/reject-null-cache.patch \
+    && gofmt -w erpc/http_server.go data/postgresql*.go auth/strategy_database_test.go \
+    && go get golang.org/x/crypto@v0.58.0 golang.org/x/net@v0.62.0 github.com/jackc/pgx/v5@v5.12.0 go.opentelemetry.io/otel/sdk@v1.47.0 go.opentelemetry.io/otel/trace@v1.47.0 \
+    && go mod tidy \
+    && go mod verify \
+    && go test ./data ./auth -run 'Test(PgxDataRowRejectsInvalidLength|PostgreSQLPoolChecksConnectivity|IsPostgresConnectionError|ClassifyDbError)$'
+# Railway requires service-specific IDs for cache mounts. Use a portable build.
+RUN go build -ldflags="-w -s -X github.com/erpc/erpc/common.ErpcVersion=0.5.0-pv1 -X github.com/erpc/erpc/common.ErpcCommitSha=204f98cb" -o /erpc-server ./cmd/erpc/main.go
+
+# Same nonroot static runtime pinned by the upstream release Dockerfile.
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:f5b485ea962d9bd1186b2f6b3a061191539b905b82ec395de78cbfae51f20e35
+COPY --from=build /erpc-server /erpc-server
+COPY --from=build /src/LICENSE /licenses/erpc/LICENSE
+COPY --chown=nonroot:nonroot services/rpc-cache/erpc.js /etc/erpc/erpc.js
+USER nonroot
+EXPOSE 4000 4001
+CMD ["/erpc-server", "/etc/erpc/erpc.js"]

@@ -1,193 +1,684 @@
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
-import { describe, expect, test } from "vitest";
+import { createRequire } from "node:module";
+import { createRailwayContext, type ResourceNode } from "railway/iac";
+import { describe, expect, test, vi } from "vitest";
+import images from "../../.railway/images.json";
+import { currentExposure } from "../../.railway/networking";
+import defineInfrastructure from "../../.railway/railway";
+
+vi.mock("node:child_process", () => ({ execFileSync: vi.fn() }));
+
+const { parse } = createRequire(new URL("../../apps/indexer/package.json", import.meta.url))(
+  "yaml",
+);
+
+async function graph(environment = "production") {
+  const ctx = createRailwayContext({ environment });
+  const evaluated = await defineInfrastructure(ctx, () => {
+    throw new Error("Unexpected project helper");
+  });
+  const definition: typeof evaluated = JSON.parse(JSON.stringify(evaluated));
+  expect(definition.name).toBe("treasury-subgraph");
+  const resources = new Map(
+    (definition.resources?.flat() ?? []).map((resource) => [resource.address, resource]),
+  );
+  return {
+    addresses: [...resources.keys()].sort(),
+    get(address: ResourceNode["address"]) {
+      const resource = resources.get(address);
+      if (resource === undefined) throw new Error(`Missing resource ${address}`);
+      return resource;
+    },
+  };
+}
 
 describe("Railway config-as-code", () => {
-  test("defines expected service configs and Dockerfile paths", () => {
-    for (const [configPath, dockerfilePath] of [
-      ["railway-indexer.json", "Dockerfile-indexer"],
-      ["railway-hasura.json", "Dockerfile-hasura"],
-      ["railway-metrics-publisher.json", "Dockerfile-metrics-publisher"],
-      ["railway-metrics-api.json", "Dockerfile-metrics-api"],
+  test.each(["staging", "olympus-protocol-metrics--pr-406"])(
+    "lets %s follow its own branch without attaching the production domain",
+    async (environment) => {
+      const { get } = await graph(environment);
+      for (const name of [
+        "indexer",
+        "indexer-monitor",
+        "hasura",
+        "metrics-api",
+        "metrics-publisher",
+        "rpc-cache",
+      ] as const) {
+        const resource = get(`service.${name}`);
+        expect(resource).toMatchObject({
+          source: { repo: "OlympusDAO/olympus-protocol-metrics-subgraph", checkSuites: true },
+        });
+        expect(resource).not.toHaveProperty("source.branch");
+      }
+      expect(get("service.metrics-api")).toMatchObject({
+        deploy: { healthcheckPath: "/ready" },
+        networking: { customDomains: {}, serviceDomains: {} },
+        variables: { PORT: { type: "literal", value: "8080" } },
+      });
+    },
+  );
+  test("retains the imported resources and adds the private cache stack and monitor", async () => {
+    const { addresses, get } = await graph();
+    expect(addresses).toEqual([
+      "bucket.bucket",
+      "bucket.monitor-state",
+      "database.Postgres",
+      "group.PostgreSQL",
+      "service.hasura",
+      "service.indexer",
+      "service.indexer-monitor",
+      "service.metrics-api",
+      "service.metrics-publisher",
+      "service.rpc-cache",
+      "service.rpc-cache-postgres",
+      "volume.postgres-volume-ytRO",
+      "volume.rpc-cache-postgres-volume",
+    ]);
+    expect(get("bucket.bucket")).toMatchObject({ config: { region: "sjc" } });
+    expect(get("bucket.monitor-state")).toMatchObject({ config: { region: "sjc" } });
+    expect(get("volume.postgres-volume-ytRO")).toMatchObject({
+      config: {
+        region: "us-west2",
+        sizeMB: 50000,
+        allowOnlineResize: true,
+        alerts: { usage: { "80": {}, "95": {}, "100": {} } },
+      },
+    });
+    const db = get("database.Postgres");
+    expect(db).toMatchObject({
+      groupId: "PostgreSQL",
+      image: images.provider["postgres-production"],
+      deploy: { requiredMountPath: "/var/lib/postgresql/data" },
+      networking: { privateNetworkEndpoint: "postgres" },
+    });
+    expect(db).not.toHaveProperty("volumeAttachments");
+    expect(get("service.rpc-cache-postgres")).toMatchObject({
+      volumeAttachments: {
+        "rpc-cache-postgres-volume": {
+          volume: "volume.rpc-cache-postgres-volume",
+          mountPath: "/var/lib/postgresql/data",
+        },
+      },
+      variables: { POSTGRES_PASSWORD: { type: "preserve" } },
+    });
+    const cache = get("service.rpc-cache");
+    expect(cache).toMatchObject({
+      variables: {
+        PORT: { type: "literal", value: "4000" },
+        RPC_CACHE_DATABASE_URL: {
+          type: "reference",
+          resource: "service.rpc-cache-postgres",
+          output: "DATABASE_URL",
+        },
+      },
+    });
+    expect(get("service.metrics-api")).toMatchObject({
+      networking: { customDomains: { "treasury-subgraph-api.olympusdao.finance": { port: 8080 } } },
+      variables: {
+        ARTIFACT_ENDPOINT: { type: "preserve" },
+        PORT: { type: "literal", value: "8080" },
+      },
+    });
+  });
+
+  test("evaluates service builds, restart behavior, existing domains and cutover routes", async () => {
+    const { get } = await graph();
+    for (const name of [
+      "hasura",
+      "indexer",
+      "indexer-monitor",
+      "metrics-api",
+      "metrics-publisher",
+      "rpc-cache",
     ] as const) {
-      const config = JSON.parse(readFileSync(configPath, "utf8")) as {
-        build: { dockerfilePath: string; watchPatterns: string[] };
-      };
-      expect(config.build.dockerfilePath).toBe(dockerfilePath);
-      expect(config.build.watchPatterns).toContain(`/${configPath}`);
-      expect(config.build.watchPatterns).toContain(`/${dockerfilePath}`);
-      expect(config.build.watchPatterns.every((pattern) => pattern.startsWith("/"))).toBe(true);
-      expect(existsSync(dockerfilePath)).toBe(true);
-    }
-  });
-
-  test("configures service deploy behavior", () => {
-    const publisher = JSON.parse(readFileSync("railway-metrics-publisher.json", "utf8")) as {
-      build: { watchPatterns: string[] };
-      deploy: { cronSchedule: string; restartPolicyType: string };
-    };
-    const api = JSON.parse(readFileSync("railway-metrics-api.json", "utf8")) as {
-      deploy: {
-        healthcheckPath: string;
-        restartPolicyMaxRetries: number;
-        restartPolicyType: string;
-      };
-    };
-    const hasura = JSON.parse(readFileSync("railway-hasura.json", "utf8")) as {
-      deploy: {
-        healthcheckPath: string;
-        restartPolicyMaxRetries: number;
-        restartPolicyType: string;
-      };
-    };
-    const indexer = JSON.parse(readFileSync("railway-indexer.json", "utf8")) as {
-      deploy: {
-        healthcheckPath: string;
-        restartPolicyMaxRetries: number;
-        restartPolicyType: string;
-      };
-    };
-
-    expect(publisher.deploy.cronSchedule).toBe("15 * * * *");
-    expect(publisher.deploy.restartPolicyType).toBe("NEVER");
-    expect(publisher.build.watchPatterns).toContain("/apps/indexer/**");
-    expect(publisher.build.watchPatterns).toContain("/apps/metrics-publisher/**");
-    expect(publisher.build.watchPatterns).toContain("/packages/metrics-artifacts/**");
-    expect(hasura.deploy.healthcheckPath).toBe("/healthz");
-    expect(hasura.deploy.restartPolicyType).toBe("ON_FAILURE");
-    expect(hasura.deploy.restartPolicyMaxRetries).toBe(1);
-    expect(indexer.deploy.healthcheckPath).toBe("/healthz");
-    expect(indexer.deploy.restartPolicyType).toBe("ON_FAILURE");
-    // Envio exits on a failed batch write, so a Postgres restart takes the
-    // indexer down with it. One retry is consumed long before Postgres finishes
-    // crash recovery; the wrapper's own supervisor handles the common case and
-    // this is the backstop for anything that kills the wrapper too.
-    expect(indexer.deploy.restartPolicyMaxRetries).toBe(10);
-    expect(api.deploy.healthcheckPath).toBe("/ready");
-    expect(api.deploy.restartPolicyType).toBe("ON_FAILURE");
-    expect(api.deploy.restartPolicyMaxRetries).toBe(1);
-  });
-
-  test("configures service watch patterns by runtime ownership", () => {
-    const indexer = JSON.parse(readFileSync("railway-indexer.json", "utf8")) as {
-      build: { watchPatterns: string[] };
-    };
-    const hasura = JSON.parse(readFileSync("railway-hasura.json", "utf8")) as {
-      build: { watchPatterns: string[] };
-    };
-    const api = JSON.parse(readFileSync("railway-metrics-api.json", "utf8")) as {
-      build: { watchPatterns: string[] };
-    };
-    const publisher = JSON.parse(readFileSync("railway-metrics-publisher.json", "utf8")) as {
-      build: { watchPatterns: string[] };
-    };
-
-    expect(hasura.build.watchPatterns).toEqual(["/Dockerfile-hasura", "/railway-hasura.json"]);
-    expect(indexer.build.watchPatterns).toContain("/apps/indexer/**");
-    expect(api.build.watchPatterns).toContain("/apps/metrics-api/**");
-    expect(api.build.watchPatterns).toContain("/packages/metrics-artifacts/**");
-    expect(publisher.build.watchPatterns).toContain("/apps/indexer/**");
-    expect(publisher.build.watchPatterns).toContain("/Dockerfile-indexer");
-    expect(publisher.build.watchPatterns).toContain("/railway-indexer.json");
-    expect(publisher.build.watchPatterns).toContain("/apps/metrics-publisher/**");
-    expect(publisher.build.watchPatterns).toContain("/packages/metrics-artifacts/**");
-
-    for (const config of [indexer, api, publisher]) {
-      expect(config.build.watchPatterns).toContain("/package.json");
-      expect(config.build.watchPatterns).toContain("/pnpm-lock.yaml");
-      expect(config.build.watchPatterns).toContain("/pnpm-workspace.yaml");
-      expect(config.build.watchPatterns).toContain("/tsconfig.json");
-    }
-  });
-
-  test("documents required Railway variables and public exposure rules", () => {
-    const doc = readFileSync("docs/railway-metrics-api.md", "utf8");
-
-    for (const variable of [
-      "DATABASE_URL",
-      "ENVIO_PG_HOST",
-      "HASURA_GRAPHQL_ADMIN_SECRET",
-      "ENVIO_ETHEREUM_RPC_URL",
-      "ENVIO_ARBITRUM_RPC_URL",
-      "ARTIFACT_BUCKET",
-      "ARTIFACT_ACCESS_KEY_ID",
-      "ARTIFACT_SECRET_ACCESS_KEY",
-      "METRICS_API_MAX_RANGE_DAYS",
-      "INDEXER_DEPLOYMENT_ID",
-    ]) {
-      expect(doc).toContain(variable);
-    }
-
-    expect(doc).toContain("Do not set `ENVIO_PG_SCHEMA` on Railway");
-    expect(doc).toContain("Railway indexer startup runs `envio start -r`");
-    expect(doc).toContain(
-      "Published artifact snapshots and the metrics API are the handover boundary",
-    );
-    expect(doc).not.toContain(
-      "copies Railway's runtime `RAILWAY_DEPLOYMENT_ID` into `ENVIO_PG_SCHEMA`",
-    );
-    expect(doc).toContain("indexer startup wrapper derives `ENVIO_INDEXER_PORT`");
-    expect(doc).toContain(`\${{hasura.RAILWAY_PRIVATE_DOMAIN}}:\${{hasura.PORT}}/v1/graphql`);
-    expect(doc).toContain(`\${{hasura.RAILWAY_PRIVATE_DOMAIN}}:\${{hasura.PORT}}/v1/metadata`);
-    expect(doc).toContain("Only `metrics-api` should receive a public Railway domain");
-    expect(doc).toContain("Cloudflare");
-    expect(doc).toContain("WAF");
-  });
-
-  test("uses pinned production Dockerfiles with real service commands", () => {
-    const dockerignore = readFileSync(".dockerignore", "utf8");
-    const dockerignoreLines = dockerignore.split(/\r?\n/);
-    expect(dockerignoreLines).toContain(".pnpm-store");
-    expect(dockerignoreLines).toContain("**/.envio");
-    expect(dockerignoreLines).toContain("apps/*/tests");
-    expect(dockerignoreLines).toContain("packages/*/tests");
-    expect(dockerignoreLines).toContain("tests");
-    expect(dockerignoreLines).toContain("docs");
-    expect(dockerignoreLines).toContain("tasks");
-    expect(dockerignoreLines).toContain(".github");
-
-    for (const dockerfile of [
-      "Dockerfile-indexer",
-      "Dockerfile-metrics-api",
-      "Dockerfile-metrics-publisher",
-    ]) {
-      const content = readFileSync(dockerfile, "utf8");
-      expect(content).toContain("@sha256:");
-      expect(content).toContain("apt-get install -y --no-install-recommends ca-certificates");
-      expect(content).toContain("--only-upgrade libgcrypt20 libgnutls30");
-      expect(content).not.toContain("apt-get upgrade");
-      expect(content).toContain("COREPACK_HOME=/corepack");
-      expect(content).toContain("pnpm --version");
-      expect(content).toContain("RUN pnpm install --frozen-lockfile");
-      expect(content.indexOf("RUN pnpm install --frozen-lockfile")).toBeLessThan(
-        content.indexOf("COPY . ."),
+      const dockerfile = `Dockerfile-${name}`;
+      expect(existsSync(dockerfile)).toBe(true);
+      expect(existsSync(`railway-${name}.json`)).toBe(false);
+      expect(get(`service.${name}`)).toMatchObject({
+        build: {
+          builder: "DOCKERFILE",
+          dockerfilePath: dockerfile,
+          watchPatterns: expect.arrayContaining([`/${dockerfile}`]),
+        },
+        source: {
+          repo: "OlympusDAO/olympus-protocol-metrics-subgraph",
+          branch: "master",
+          checkSuites: true,
+        },
+        deploy: { multiRegionConfig: { "us-west2": { numReplicas: 1 } } },
+      });
+      expect(get(`service.${name}`)).not.toHaveProperty(
+        "build.watchPatterns",
+        expect.arrayContaining(["/.railway/**"]),
       );
-      expect(content).not.toContain("--mount=type=cache");
-      expect(content).not.toContain("pnpm prune --prod");
-      expect(content).toContain("/pnpm/store");
-      expect(content).toContain("/root/.cache/pnpm");
-      expect(content).toContain("/usr/local/lib/node_modules/corepack");
-      expect(content).toContain("/usr/local/lib/node_modules/npm");
-      expect(content).toContain("ENV PATH=/app/node_modules/.bin:");
-      expect(content).not.toContain('node", "--version');
-      expect(content).toContain("USER node");
     }
+    const publisher = get("service.metrics-publisher");
+    expect(publisher).toMatchObject({
+      build: {
+        watchPatterns: expect.arrayContaining([
+          "/apps/metrics-publisher/src/**",
+          "/apps/metrics-publisher/tsconfig.build.json",
+          "/packages/metrics-artifacts/src/**",
+        ]),
+      },
+      deploy: { cronSchedule: "15 * * * *", restartPolicyType: "NEVER" },
+    });
+    const indexer = get("service.indexer");
+    expect(indexer).toMatchObject({
+      deploy: {
+        restartPolicyType: "ON_FAILURE",
+        restartPolicyMaxRetries: 10,
+        limitOverride: { containers: { cpu: 2, memoryBytes: 2000000000 } },
+      },
+      variables: { ENVIO_PG_PASSWORD: { type: "preserve" } },
+    });
+    expect(indexer).not.toHaveProperty("deploy.healthcheckPath");
+    const routes = [
+      ["ETHEREUM", 1],
+      ["POLYGON", 137],
+      ["FANTOM", 250],
+      ["BASE", 8453],
+      ["ARBITRUM", 42161],
+      ["BERACHAIN", 80094],
+      ["ROBINHOOD", 4663],
+    ] as const;
+    for (const [chain, id] of routes) {
+      expect(indexer).toHaveProperty([`variables`, `ENVIO_${chain}_RPC_URL`], {
+        type: "literal",
+        value: `http://\${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/${id}`,
+      });
+      expect(get("service.rpc-cache")).toHaveProperty(["variables", `UPSTREAM_RPC_URL_${id}`], {
+        type: "preserve",
+      });
+    }
+    vi.stubEnv("METRICS_RAILWAY_CACHE_BOOTSTRAP", "1");
+    try {
+      expect((await graph()).get("service.indexer")).toHaveProperty(
+        "variables.ENVIO_ETHEREUM_RPC_URL",
+        { type: "preserve" },
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
 
-    expect(readFileSync("Dockerfile-hasura", "utf8")).toContain("--only-upgrade");
-    expect(readFileSync("Dockerfile-hasura", "utf8")).not.toContain("apt-get upgrade");
-    const indexerDockerfile = readFileSync("Dockerfile-indexer", "utf8");
-    expect(indexerDockerfile).toContain("WORKDIR /app/apps/indexer");
-    expect(indexerDockerfile).toContain('CMD ["tsx", "src/start-envio.ts", "start"]');
-    expect(indexerDockerfile).toContain("chown -R node:node apps/indexer/.envio");
-    const metricsApiDockerfile = readFileSync("Dockerfile-metrics-api", "utf8");
-    const metricsPublisherDockerfile = readFileSync("Dockerfile-metrics-publisher", "utf8");
-    expect(metricsApiDockerfile).toContain("pnpm --dir apps/indexer codegen");
-    expect(metricsApiDockerfile).toContain("apps/indexer/.envio");
-    expect(metricsApiDockerfile).toContain("WORKDIR /app/apps/metrics-api");
-    expect(metricsApiDockerfile).toContain('CMD ["tsx", "src/cli.ts"]');
-    expect(metricsPublisherDockerfile).toContain("pnpm --dir apps/indexer codegen");
-    expect(metricsPublisherDockerfile).toContain("apps/indexer/.envio");
-    expect(metricsPublisherDockerfile).toContain("WORKDIR /app/apps/metrics-publisher");
-    expect(metricsPublisherDockerfile).toContain('CMD ["tsx", "src/cli.ts"]');
+  test.each(["production", "staging"])(
+    "schedules the private monitor with its own build and dedicated state bucket in %s",
+    async (environment) => {
+      const { get } = await graph(environment);
+      const monitor = get("service.indexer-monitor");
+      expect(monitor).toMatchObject({
+        build: {
+          dockerfilePath: "Dockerfile-indexer-monitor",
+          watchPatterns: [
+            "/Dockerfile-indexer-monitor",
+            "/.dockerignore",
+            "/package.json",
+            "/pnpm-lock.yaml",
+            "/pnpm-workspace.yaml",
+            "/apps/indexer-monitor/package.json",
+            "/apps/indexer-monitor/tsconfig.json",
+            "/apps/indexer-monitor/src/**",
+          ],
+        },
+        deploy: {
+          cronSchedule: "*/15 * * * *",
+          restartPolicyType: "NEVER",
+          multiRegionConfig: { "us-west2": { numReplicas: 1 } },
+          limitOverride: { containers: { cpu: 1, memoryBytes: 1000000000 } },
+        },
+      });
+      expect(monitor).toHaveProperty("variables", {
+        DISCORD_WEBHOOK_URL: { type: "preserve" },
+        DISCORD_WEBHOOK_URL_PREVIEW: {
+          type: "sharedReference",
+          name: "DISCORD_WEBHOOK_URL_PREVIEW",
+        },
+        INDEXER_METRICS_URL: {
+          type: "literal",
+          value: `http://\${{indexer.RAILWAY_PRIVATE_DOMAIN}}:\${{indexer.PORT}}/metrics`,
+        },
+        MONITOR_NAME: {
+          type: "literal",
+          value: "Metrics",
+        },
+        MONITOR_COOLDOWN_MINUTES: { type: "preserve" },
+        ...Object.fromEntries(
+          ["BUCKET", "ENDPOINT", "REGION", "ACCESS_KEY_ID", "SECRET_ACCESS_KEY"].map((output) => [
+            output,
+            { type: "reference", resource: "bucket.monitor-state", output },
+          ]),
+        ),
+      });
+      expect(monitor).not.toHaveProperty("deploy.startCommand");
+      expect(monitor).not.toHaveProperty("deploy.healthcheckPath");
+      expect(monitor).not.toHaveProperty("volumeAttachments");
+    },
+  );
+
+  test.each(["production", "olympus-protocol-metrics--pr-406"])(
+    "serialized SDK output pins private listener ports and restricts exposure in %s",
+    async (environment) => {
+      const { get } = await graph(environment);
+      const ports = {
+        "database.Postgres": [5432],
+        "service.rpc-cache-postgres": [5432],
+        "service.rpc-cache": [4000, 4001],
+        "service.indexer": [9898],
+        "service.indexer-monitor": [],
+        "service.hasura": [8080],
+        "service.metrics-publisher": [],
+      } as const;
+      for (const [address, servicePorts] of Object.entries(ports)) {
+        const resource = get(address as ResourceNode["address"]);
+        expect(resource).toHaveProperty("networking.serviceDomains", {});
+        expect(resource).toHaveProperty("networking.customDomains", {});
+        expect(resource).toHaveProperty(
+          "networking.tcpProxies",
+          Object.fromEntries(servicePorts.map((port) => [port, null])),
+        );
+      }
+      expect(get("database.Postgres")).toHaveProperty(
+        "networking.privateNetworkEndpoint",
+        "postgres",
+      );
+      expect(get("service.metrics-api")).toHaveProperty("networking.tcpProxies", { 8080: null });
+      expect(get("service.hasura")).toHaveProperty("variables.PORT", {
+        type: "literal",
+        value: "8080",
+      });
+      expect(get("service.indexer")).toHaveProperty("variables.PORT", {
+        type: "literal",
+        value: "9898",
+      });
+    },
+  );
+
+  test("refuses unexpected HTTP exposure and incomplete or ambiguous provider snapshots", () => {
+    const config = {
+      services: { id: { name: "indexer", networking: { tcpProxies: { 5432: {} } } } },
+    };
+    const node = {
+      serviceId: "id",
+      serviceName: "indexer",
+      domains: { serviceDomains: [], customDomains: [] },
+    };
+    expect(currentExposure(config, [{ node }]).get("indexer")).toEqual([5432]);
+    expect(() =>
+      currentExposure({ services: { id: { name: "metrics-api" } } }, [{ node }]),
+    ).toThrow("Service identity mismatch");
+    for (const value of [undefined, null]) {
+      expect(
+        currentExposure({ services: { id: { networking: value } } }, [{ node }]).get("indexer"),
+      ).toEqual([]);
+      expect(
+        currentExposure({ services: { id: { networking: { tcpProxies: value } } } }, [
+          { node },
+        ]).get("indexer"),
+      ).toEqual([]);
+    }
+    for (const value of [[], false, 0, "invalid"]) {
+      expect(() =>
+        currentExposure({ services: { id: { networking: value } } }, [{ node }]),
+      ).toThrow("Incomplete Railway exposure lookup");
+      expect(() =>
+        currentExposure({ services: { id: { networking: { tcpProxies: value } } } }, [{ node }]),
+      ).toThrow("Incomplete Railway exposure lookup");
+    }
+    expect(() => currentExposure({}, [{ node }])).toThrow();
+    expect(currentExposure({}, []).size).toBe(0);
+    expect(currentExposure("{}", []).size).toBe(0);
+    for (const services of [null, []]) expect(() => currentExposure({ services }, [])).toThrow();
+    expect(currentExposure({ services: { removed: null } }, []).size).toBe(0);
+    expect(currentExposure({ services: { removed: { isDeleted: true } } }, []).size).toBe(0);
+    for (const service of [{}, { isDeleted: false }, { isDeleted: "true" }, "unknown"]) {
+      expect(() => currentExposure({ services: { unmatched: service } }, [])).toThrow(
+        "Unaccounted",
+      );
+    }
+    expect(() => currentExposure(config, [{ node }, { node }])).toThrow("Ambiguous");
+    expect(() =>
+      currentExposure(config, [{ node: { ...node, serviceName: "unknown-public-tcp" } }]),
+    ).toThrow("Unrecognized");
+    expect(() =>
+      currentExposure(
+        {
+          services: {
+            ...config.services,
+            unaccounted: { networking: { tcpProxies: { 5432: {} } } },
+          },
+        },
+        [{ node }],
+      ),
+    ).toThrow("Unaccounted");
+    expect(() => currentExposure(config, [{ node: { ...node, domains: {} } }])).toThrow();
+    expect(() =>
+      currentExposure({ services: { id: { networking: { tcpProxies: { invalid: {} } } } } }, [
+        { node },
+      ]),
+    ).toThrow("Invalid");
+  });
+
+  test("allows generated and custom domains on the API service, regardless of hostname", () => {
+    expect(
+      currentExposure({ services: { api: {} } }, [
+        {
+          node: {
+            serviceId: "api",
+            serviceName: "metrics-api",
+            domains: {
+              serviceDomains: [
+                { id: "generated", domain: "api-generated.example", targetPort: 8080 },
+              ],
+              customDomains: [{ id: "custom", domain: "api-alternate.example", targetPort: 8080 }],
+            },
+          },
+        },
+      ]).get("metrics-api"),
+    ).toEqual([]);
+  });
+
+  test("enforces explicit API domain ports and permits automatic targets", () => {
+    for (const kind of ["serviceDomains", "customDomains"]) {
+      for (const targetPort of [8080, null, 4100, 8081, "8080", undefined]) {
+        const read = () =>
+          currentExposure({ services: { api: {} } }, [
+            {
+              node: {
+                serviceId: "api",
+                serviceName: "metrics-api",
+                domains: {
+                  serviceDomains: [],
+                  customDomains: [],
+                  [kind]: [
+                    { id: "first", domain: "first.example", targetPort: 8080 },
+                    { id: "second", domain: "second.example", targetPort },
+                  ],
+                },
+              },
+            },
+          ]);
+        if (targetPort !== null && targetPort !== 8080) expect(read).toThrow("target port");
+        else expect(read().get("metrics-api")).toEqual([]);
+      }
+    }
+  });
+
+  test.each([undefined, "", " ", 123])("rejects non-identifying domain IDs %j", (id) => {
+    for (const kind of ["serviceDomains", "customDomains"] as const) {
+      expect(() =>
+        currentExposure({ services: { api: {} } }, [
+          {
+            node: {
+              serviceId: "api",
+              serviceName: "metrics-api",
+              domains: {
+                serviceDomains: [],
+                customDomains: [],
+                [kind]: [{ id, domain: "preview.example", targetPort: null }],
+              },
+            },
+          },
+        ]),
+      ).toThrow("Incomplete Railway domain lookup");
+    }
+  });
+
+  test("blocks either HTTP domain kind on every private service", () => {
+    for (const serviceName of [
+      "Postgres",
+      "rpc-cache-postgres",
+      "rpc-cache",
+      "hasura",
+      "indexer",
+      "indexer-monitor",
+      "metrics-publisher",
+    ]) {
+      for (const kind of ["serviceDomains", "customDomains"]) {
+        expect(() =>
+          currentExposure({ services: { private: {} } }, [
+            {
+              node: {
+                serviceId: "private",
+                serviceName,
+                domains: {
+                  serviceDomains: [],
+                  customDomains: [],
+                  [kind]: [{ id: "unexpected", domain: "unexpected.example", targetPort: null }],
+                },
+              },
+            },
+          ]),
+        ).toThrow("Unexpected public HTTP exposure");
+      }
+    }
+  });
+
+  test("SDK callback rejects drift, preserves resources and emits imported TCP removals", async () => {
+    const nodes = ["Postgres", "indexer", "indexer-monitor", "metrics-api", "rpc-cache"].map(
+      (serviceName) => ({
+        serviceId: serviceName,
+        serviceName,
+        domains: {
+          serviceDomains: [] as { id: string; domain: string; targetPort: number | null }[],
+          customDomains: [],
+        },
+      }),
+    );
+    const indexerNode = nodes.find((node) => node.serviceName === "indexer");
+    const apiNode = nodes.find((node) => node.serviceName === "metrics-api");
+    if (!indexerNode || !apiNode) throw new Error("Missing indexer or API fixture");
+    const response = {
+      data: {
+        environment: {
+          config: {
+            services: {
+              Postgres: { networking: { tcpProxies: { 15432: {} } } },
+              indexer: { networking: { tcpProxies: { 9000: {} } } },
+              "indexer-monitor": { networking: { tcpProxies: { 9001: {} } } },
+              "metrics-api": { name: "metrics-api" },
+              "rpc-cache": { networking: { tcpProxies: { 4400: {} } } },
+            },
+          },
+          serviceInstances: {
+            edges: nodes.map((node) => ({ node })),
+            pageInfo: { hasNextPage: false },
+          },
+          volumeInstances: {
+            edges: [{ node: { sizeMB: 75000, volume: { name: "postgres-volume-ytRO" } } }],
+            pageInfo: { hasNextPage: false },
+          },
+        },
+      },
+    };
+    const execute = vi.mocked(execFileSync);
+    const evaluate = (environment = "production") =>
+      defineInfrastructure(
+        createRailwayContext({
+          command: "plan",
+          environment,
+          environmentId: "fixture-env",
+        }),
+        () => {
+          throw Error("Unexpected helper");
+        },
+      );
+    try {
+      indexerNode.domains.serviceDomains = [
+        { id: "unexpected", domain: "unexpected.example", targetPort: null },
+      ];
+      execute.mockReturnValue(JSON.stringify(response));
+      await expect(Promise.resolve().then(() => evaluate("preview"))).rejects.toThrow(
+        "Reason: Unexpected public HTTP exposure",
+      );
+      await expect(Promise.resolve().then(() => evaluate())).rejects.toThrow(
+        "Reason: Unexpected public HTTP exposure",
+      );
+      execute.mockReturnValueOnce("malformed fixture-sensitive-provider-response");
+      const malformed = Promise.resolve().then(() => evaluate());
+      await expect(malformed).rejects.toThrow("Cannot establish safe Railway");
+      await expect(malformed).rejects.not.toThrow("fixture-sensitive-provider-response");
+      indexerNode.domains.serviceDomains = [];
+      execute.mockReturnValue(JSON.stringify(response));
+      const definition = JSON.parse(JSON.stringify(await evaluate()));
+      expect(
+        definition.resources.find((r: ResourceNode) => r.address === "database.Postgres"),
+      ).toMatchObject({
+        type: "database",
+        deploy: { requiredMountPath: "/var/lib/postgresql/data" },
+        networking: { privateNetworkEndpoint: "postgres", tcpProxies: { 5432: null, 15432: null } },
+      });
+      expect(
+        definition.resources.find((r: ResourceNode) => r.address === "service.indexer").networking
+          .tcpProxies,
+      ).toEqual({ 9898: null, 9000: null });
+      expect(
+        definition.resources.find((r: ResourceNode) => r.address === "service.indexer-monitor")
+          .networking.tcpProxies,
+      ).toEqual({ 9001: null });
+      expect(
+        definition.resources.find((r: ResourceNode) => r.address === "service.rpc-cache").networking
+          .tcpProxies,
+      ).toEqual({ 4000: null, 4001: null, 4400: null });
+      expect(
+        definition.resources.find((r: ResourceNode) => r.address === "volume.postgres-volume-ytRO")
+          .config.sizeMB,
+      ).toBe(75000);
+      expect(
+        definition.resources.find((r: ResourceNode) => r.address === "service.rpc-cache-postgres")
+          .variables.POSTGRES_PASSWORD,
+      ).toEqual({
+        type: "literal",
+        value: `\${{ secret(64, "0123456789abcdef") }}`,
+      });
+      const previewDomain = { id: "preview", domain: "metrics-preview.example", targetPort: null };
+      apiNode.domains.serviceDomains = [previewDomain];
+      execute.mockReturnValue(JSON.stringify(response));
+      const preview = JSON.parse(JSON.stringify(await evaluate("preview")));
+      expect(
+        preview.resources.find((r: ResourceNode) => r.address === "service.metrics-api"),
+      ).toMatchObject({
+        networking: { customDomains: {}, serviceDomains: {}, tcpProxies: { 8080: null } },
+        variables: { PORT: { type: "literal", value: "8080" } },
+      });
+      apiNode.domains.serviceDomains = [{ ...previewDomain, targetPort: 3000 }];
+      execute.mockReturnValue(JSON.stringify(response));
+      await expect(Promise.resolve().then(() => evaluate("preview"))).rejects.toThrow(
+        "Unexpected HTTP target port",
+      );
+      apiNode.domains.serviceDomains = [];
+      const cacheDatabaseNode = {
+        serviceId: "cache-db",
+        serviceName: "rpc-cache-postgres",
+        domains: { serviceDomains: [], customDomains: [] },
+      };
+      nodes.push(cacheDatabaseNode);
+      Object.assign(response.data.environment.config.services, { "cache-db": {} });
+      response.data.environment.serviceInstances.edges = nodes.map((node) => ({ node }));
+      execute.mockReturnValue(JSON.stringify(response));
+      const existing = JSON.parse(JSON.stringify(await evaluate()));
+      expect(
+        existing.resources.find((r: ResourceNode) => r.address === "service.rpc-cache-postgres")
+          .variables.POSTGRES_PASSWORD,
+      ).toEqual({ type: "preserve" });
+      cacheDatabaseNode.serviceName = "";
+      execute.mockReturnValue(JSON.stringify(response));
+      await expect(Promise.resolve().then(() => evaluate())).rejects.toThrow(
+        "Cannot establish safe Railway",
+      );
+      for (const [executable, args] of execute.mock.calls) {
+        expect(executable).toBe("railway");
+        expect(args?.[0]).toBe("api");
+        expect(args?.[1]).toMatch(/^query\(/);
+        expect(args?.[1]).toContain("config(decryptVariables: false)");
+        expect(args?.[1]).toContain(
+          "serviceDomains { id domain targetPort } customDomains { id domain targetPort }",
+        );
+      }
+    } finally {
+      execute.mockReset();
+    }
+  });
+
+  test("fixed image groups cover the whole evaluated project and known local fixtures", async () => {
+    const { addresses, get } = await graph();
+    expect(Object.keys(images).sort()).toEqual(["built", "comparison", "local", "provider"]);
+    expect(Object.keys(images.local).sort()).toEqual([
+      "minio-client-local",
+      "minio-local",
+      "postgres-local",
+    ]);
+    expect(Object.keys(images.comparison)).toEqual(["postgres-previous"]);
+    expect(Object.keys(images.provider)).toEqual(["postgres-production"]);
+    const built = [];
+    const provider = [];
+    for (const address of addresses) {
+      const resource = get(address as ResourceNode["address"]);
+      if (resource.type === "database") provider.push(resource.image);
+      if (resource.type === "service") {
+        if (resource.source?.image) provider.push(resource.source.image);
+        else {
+          expect(resource.build?.builder).toBe("DOCKERFILE");
+          built.push(resource.name);
+        }
+      }
+    }
+    expect(built.sort()).toEqual(Object.keys(images.built).sort());
+    expect(provider).toEqual([
+      images.provider["postgres-production"],
+      images.provider["postgres-production"],
+    ]);
+    expect(images.provider["postgres-production"]).toMatch(
+      /^ghcr\.io\/railwayapp-templates\/postgres-ssl:/,
+    );
+  });
+
+  test("deploys only the monitor production closure in the Alpine image", () => {
+    const dockerfile = readFileSync("Dockerfile-indexer-monitor", "utf8");
+    const [base, ...instructions] = dockerfile.trim().split(/\r?\n/);
+    expect(base).toMatch(/^FROM node:\d+\.\d+\.\d+-alpine@sha256:[a-f0-9]{64} AS base$/);
+    expect(instructions).toContain("WORKDIR /app");
+    expect(instructions).toContain("FROM base AS build");
+    expect(instructions).toContain("FROM base AS runtime");
+    expect(instructions).toContain("RUN pnpm install --frozen-lockfile --filter indexer-monitor");
+    expect(instructions).toContain("RUN pnpm --filter indexer-monitor build");
+    expect(instructions).toContain("RUN pnpm --filter indexer-monitor deploy --prod /deploy");
+    expect(dockerfile).toContain("RUN apk upgrade --no-cache libcrypto3 libssl3 zlib");
+    expect(dockerfile).toContain("rm -rf /usr/local/lib/node_modules /opt/yarn*");
+    expect(instructions.filter((line) => line.startsWith("COPY "))).toEqual([
+      "COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./",
+      "COPY apps/indexer-monitor/package.json apps/indexer-monitor/package.json",
+      "COPY apps/indexer-monitor/tsconfig.json apps/indexer-monitor/tsconfig.json",
+      "COPY apps/indexer-monitor/src apps/indexer-monitor/src",
+      "COPY --from=build --chown=node:node /deploy /app",
+    ]);
+    expect(instructions.slice(-2)).toEqual([
+      "USER node",
+      'CMD ["node", "dist/monitor-indexer.js"]',
+    ]);
+    expect(existsSync("apps/indexer-monitor/src/monitor-indexer.ts")).toBe(true);
+    expect(existsSync("apps/indexer-monitor/src/monitor-indexer.mjs")).toBe(false);
+    expect(existsSync("apps/indexer/src/monitor-indexer.mjs")).toBe(false);
+    expect(existsSync("apps/indexer-monitor/test/monitor-indexer.test.mjs")).toBe(true);
+    expect(existsSync("tests/railway/indexer-monitor.test.mjs")).toBe(false);
+  });
+
+  test("deploys production closures without coupling public artifact services to codegen", () => {
+    for (const name of ["indexer", "metrics-api", "metrics-publisher"]) {
+      const content = readFileSync(`Dockerfile-${name}`, "utf8");
+      expect(content).toContain("@sha256:");
+      expect(content).toContain("AS build");
+      expect(content).toContain("AS runtime");
+      expect(content).toContain("deploy --prod /deploy");
+      expect(content).toContain("USER node");
+      if (name !== "indexer") {
+        expect(content).not.toContain("apps/indexer codegen");
+        expect(content).not.toContain("COPY apps/indexer apps/indexer");
+        expect(content).toContain(`dist/apps/${name}/src/cli.js`);
+      }
+    }
   });
 
   test("fails Hasura early when required Railway env variables are missing", () => {
@@ -202,33 +693,52 @@ describe("Railway config-as-code", () => {
     expect(content).toContain("exec graphql-engine serve");
   });
 
-  test("scans all Docker images with pinned Trivy CI checks", () => {
+  test("CI exposes source and image phases while retaining local aggregates", () => {
     const workflow = readFileSync(".github/workflows/security-scan.yml", "utf8");
-    const packageJson = readFileSync("package.json", "utf8");
-
-    expect(workflow).toContain(
-      "aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1",
+    expect(workflow).toContain("trivy image --scanners vuln,secret");
+    expect(workflow).not.toContain("--ignore-unfixed");
+    expect(workflow).toContain("trivy config");
+    expect(workflow).toContain('--file-patterns "dockerfile:Dockerfile-.*"');
+    expect(workflow).toContain("fail-fast: false");
+    expect(workflow).toContain("pnpm run test:integration");
+    const ci = readFileSync(".github/workflows/ci.yml", "utf8");
+    for (const command of ["check:runtime-versions", "check", "typecheck", "build", "test"])
+      expect(ci).toContain(`command: ${command}`);
+    expect(ci).toContain("pnpm run build");
+    const scripts = JSON.parse(readFileSync("package.json", "utf8")).scripts;
+    expect(scripts.validate).toBe("node scripts/validate.mjs source");
+    expect(scripts.build).not.toContain("--noEmit");
+    expect(scripts.lint).toBe("biome check --write . && pnpm run lint:actions");
+    expect(scripts.check).toBe("biome check . && pnpm run lint:actions");
+    for (const obsolete of ["format", "format:check", "lint:fix", "lint:check"])
+      expect(scripts[obsolete]).toBeUndefined();
+    expect(scripts["scan:docker:provider"]).toBe("node scripts/validate.mjs provider");
+    expect(scripts["scan:images:provider"]).toBeUndefined();
+    expect(scripts["scan:docker"]).not.toContain("--ignore-unfixed");
+    expect(parse(readFileSync("trivy.yaml", "utf8")).vulnerability["ignore-unfixed"]).toBe(true);
+    expect(scripts["scan:docker"]).not.toContain("--scanners");
+    expect(scripts["plan:railway"]).toBe("railway config plan --out railway-plan.json");
+    expect(scripts["apply:railway"]).toBe(
+      "railway config apply --plan railway-plan.json --environment",
     );
-    expect(workflow).toContain(
-      "docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd",
-    );
-    expect(workflow.match(/ignore-unfixed: true/g)?.length).toBe(4);
-
-    for (const [name, dockerfile] of [
-      ["indexer", "Dockerfile-indexer"],
-      ["hasura", "Dockerfile-hasura"],
-      ["metrics-api", "Dockerfile-metrics-api"],
-      ["metrics-publisher", "Dockerfile-metrics-publisher"],
-    ] as const) {
-      expect(packageJson).toContain(`"docker:build:${name}"`);
-      expect(packageJson).toContain(`"docker:tag:scan:${name}"`);
-      expect(workflow).toContain(dockerfile);
-      expect(workflow).toContain(`olympus-protocol-metrics/${name}:scan`);
-      const configScan = workflow
-        .split(/(?= {6}- name: )/)
-        .find((step) => step.includes(`scan-ref: ${dockerfile}\n`));
-      expect(configScan).toContain("scan-type: config");
-      expect(configScan).toContain('TRIVY_FILE_PATTERNS: "dockerfile:Dockerfile-.*"');
+    expect(readFileSync(".gitignore", "utf8").split(/\r?\n/)).toContain("railway-plan.json");
+    expect(JSON.parse(readFileSync("package.json", "utf8")).engines).toMatchObject({
+      node: ">=24.22.3 <25",
+      pnpm: ">=11.28.13 <12",
+    });
+    for (const [name, image] of Object.entries(images.built)) {
+      expect(scripts[`build:docker:${name}`]).toBe(
+        `docker build -f Dockerfile-${name} -t ${image} .`,
+      );
     }
+    const monitorImage = images.built["indexer-monitor"];
+    const imageJob = parse(workflow).jobs.images;
+    expect(imageJob.strategy.matrix.include).toContainEqual(
+      expect.objectContaining({ app: "indexer-monitor", image: monitorImage }),
+    );
+    const companions = imageJob.steps.find((step: { id?: string }) => step.id === "companions");
+    expect(companions.run.split(/\r?\n/).map((line: string) => line.trim())).toContain(
+      "pnpm run build:docker:indexer-monitor",
+    );
   });
 });

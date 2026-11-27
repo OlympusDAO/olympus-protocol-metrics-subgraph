@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import type { ZodType } from "zod";
 import {
   ALL_CHAIN_IDS,
   type ApiErrorResponse,
@@ -15,8 +16,14 @@ import {
   resolveDateRange,
   type TreasuryAsset,
   type WundergraphResponse,
-} from "../../../packages/metrics-artifacts/src";
-import { ArtifactNotFoundError, type ArtifactReader } from "./artifact-store";
+} from "../../../packages/metrics-artifacts/src/index.js";
+import { ArtifactNotFoundError, ArtifactReadError, type ArtifactReader } from "./artifact-store.js";
+import {
+  dailyMetricsSchema,
+  manifestSchema,
+  ohmSuppliesSchema,
+  treasuryAssetsSchema,
+} from "./artifact-validation.js";
 
 export type MetricsApiConfig = {
   maxRangeDays: number;
@@ -64,7 +71,6 @@ const LEGACY_IGNORED_VARIABLE_KEYS = new Set(["dateOffset"]);
 
 const SUPPORTED_QUERY_PARAMS = new Map<string, readonly string[]>([
   ["/openapi.json", []],
-  ["/docs", []],
   ["/operations/health", []],
   ["/ready", []],
   ["/v2/bounds", []],
@@ -167,7 +173,7 @@ async function getManifest(config: MetricsApiConfig): Promise<Manifest> {
     return config.manifest;
   }
   if (config.artifactReader !== undefined) {
-    return config.artifactReader.getJson<Manifest>("v2/manifest.json");
+    return config.artifactReader.getJson("v2/manifest.json", manifestSchema);
   }
   throw new ArtifactNotFoundError("v2/manifest.json");
 }
@@ -272,6 +278,7 @@ async function readArtifactRows<T>(
   manifest: Manifest,
   range: { start: string; end: string; days: number },
   keyPrefix: string,
+  schema: ZodType<T[]>,
 ): Promise<T[]> {
   if (config.artifactReader === undefined) {
     return [];
@@ -282,6 +289,7 @@ async function readArtifactRows<T>(
     try {
       const monthRows = await config.artifactReader.getJson<T[]>(
         artifactKeyForMonth(manifest, keyPrefix, month),
+        schema,
       );
       rows.push(...monthRows.filter((row) => isInRange((row as { date: string }).date, range)));
     } catch (error) {
@@ -300,10 +308,11 @@ async function readSelectedDailyRecords<
   manifest: Manifest,
   range: { start: string; end: string; days: number },
   keyPrefix: string,
+  schema: ZodType<T[]>,
 ): Promise<T[]> {
   const [metricRows, records] = await Promise.all([
-    readArtifactRows<DailyMetric>(config, manifest, range, "v2/metrics/daily"),
-    readArtifactRows<T>(config, manifest, range, keyPrefix),
+    readArtifactRows<DailyMetric>(config, manifest, range, "v2/metrics/daily", dailyMetricsSchema),
+    readArtifactRows<T>(config, manifest, range, keyPrefix, schema),
   ]);
   const metricsByDate = new Map(
     metricRows.map((metric) => [metric.date, normalizeMetricCompleteness(metric)]),
@@ -387,15 +396,28 @@ async function readDailyMetrics(
     manifest,
     range,
     "v2/metrics/daily",
+    dailyMetricsSchema,
   );
   const metricsByDate = new Map(
     metricRows.map((metric) => [metric.date, normalizeMetricCompleteness(metric)]),
   );
   const treasuryAssets = includeRecords
-    ? await readArtifactRows<TreasuryAsset>(config, manifest, range, "v2/treasury-assets/daily")
+    ? await readArtifactRows<TreasuryAsset>(
+        config,
+        manifest,
+        range,
+        "v2/treasury-assets/daily",
+        treasuryAssetsSchema,
+      )
     : [];
   const ohmSupply = includeRecords
-    ? await readArtifactRows<OhmSupply>(config, manifest, range, "v2/ohm-supply/daily")
+    ? await readArtifactRows<OhmSupply>(
+        config,
+        manifest,
+        range,
+        "v2/ohm-supply/daily",
+        ohmSuppliesSchema,
+      )
     : [];
 
   return dateKeysForRange(range).map((date) => {
@@ -553,12 +575,19 @@ async function readLegacyOperation(
         manifest,
         range,
         "v2/treasury-assets/daily",
+        treasuryAssetsSchema,
       ),
     );
   }
   if (pathname.endsWith("/tokenSupplies")) {
     return legacyRowsDescending(
-      await readSelectedDailyRecords<OhmSupply>(config, manifest, range, "v2/ohm-supply/daily"),
+      await readSelectedDailyRecords<OhmSupply>(
+        config,
+        manifest,
+        range,
+        "v2/ohm-supply/daily",
+        ohmSuppliesSchema,
+      ),
     );
   }
 
@@ -661,19 +690,6 @@ async function handleMetricsApiRequestUnchecked(
     return;
   }
 
-  if (url.pathname === "/docs") {
-    res.statusCode = 200;
-    res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
-    sendBody(
-      req,
-      res,
-      200,
-      "text/html; charset=utf-8",
-      "<!doctype html><title>Olympus Protocol Metrics API</title><h1>OpenAPI</h1>",
-    );
-    return;
-  }
-
   let manifest: Manifest | undefined;
   const getPublishedManifest = async (): Promise<Manifest | undefined> => {
     if (manifest !== undefined) {
@@ -683,6 +699,10 @@ async function handleMetricsApiRequestUnchecked(
       manifest = await getManifest(config);
       return manifest;
     } catch (error) {
+      if (error instanceof ArtifactReadError) {
+        sendError(req, res, 503, "artifact_unavailable", "Metrics artifact is unavailable.");
+        return;
+      }
       if (error instanceof ArtifactNotFoundError) {
         sendError(
           req,
@@ -743,6 +763,10 @@ async function handleMetricsApiRequestUnchecked(
         emptyResponse<DailyMetric[]>(config, range, metrics, publishedManifest),
       );
     } catch (error) {
+      if (error instanceof ArtifactReadError) {
+        sendError(req, res, 503, "artifact_unavailable", "Metrics artifact is unavailable.");
+        return;
+      }
       if (error instanceof ArtifactNotFoundError) {
         return;
       }
@@ -769,6 +793,7 @@ async function handleMetricsApiRequestUnchecked(
         publishedManifest,
         range,
         "v2/treasury-assets/daily",
+        treasuryAssetsSchema,
       );
       res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
       sendJson(
@@ -778,6 +803,10 @@ async function handleMetricsApiRequestUnchecked(
         emptyResponse<TreasuryAsset[]>(config, range, treasuryAssets, publishedManifest),
       );
     } catch (error) {
+      if (error instanceof ArtifactReadError) {
+        sendError(req, res, 503, "artifact_unavailable", "Metrics artifact is unavailable.");
+        return;
+      }
       if (error instanceof ArtifactNotFoundError) {
         return;
       }
@@ -804,6 +833,7 @@ async function handleMetricsApiRequestUnchecked(
         publishedManifest,
         range,
         "v2/ohm-supply/daily",
+        ohmSuppliesSchema,
       );
       res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
       sendJson(
@@ -813,6 +843,10 @@ async function handleMetricsApiRequestUnchecked(
         emptyResponse<OhmSupply[]>(config, range, ohmSupply, publishedManifest),
       );
     } catch (error) {
+      if (error instanceof ArtifactReadError) {
+        sendError(req, res, 503, "artifact_unavailable", "Metrics artifact is unavailable.");
+        return;
+      }
       if (error instanceof ArtifactNotFoundError) {
         return;
       }
@@ -874,6 +908,10 @@ async function handleMetricsApiRequestUnchecked(
       res.setHeader("cache-control", PUBLIC_CACHE_CONTROL);
       sendJson(req, res, 200, legacyResponse(data));
     } catch (error) {
+      if (error instanceof ArtifactReadError) {
+        sendError(req, res, 503, "artifact_unavailable", "Metrics artifact is unavailable.");
+        return;
+      }
       if (error instanceof ArtifactNotFoundError) {
         return;
       }

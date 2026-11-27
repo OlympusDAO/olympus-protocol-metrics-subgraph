@@ -1,0 +1,6 @@
+{
+  "compilerOptions": { "noEmit": true },
+  "exclude": ["tests", "node_modules"],
+  "extends": "../../tsconfig.json",
+  "include": ["src/**/*.ts", "envio-env.d.ts"]
+}

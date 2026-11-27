@@ -1,0 +1,26 @@
+FROM node:24.22.3-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5 AS base
+WORKDIR /app
+RUN apk upgrade --no-cache libcrypto3 libssl3 zlib
+
+FROM base AS build
+ENV CI=true
+ENV PNPM_HOME=/pnpm
+ENV COREPACK_HOME=/corepack
+ENV PATH=/pnpm:$PATH
+RUN mkdir -p /corepack /pnpm && corepack enable && corepack prepare pnpm@11.28.13 --activate
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/indexer-monitor/package.json apps/indexer-monitor/package.json
+RUN pnpm install --frozen-lockfile --filter indexer-monitor
+COPY apps/indexer-monitor/tsconfig.json apps/indexer-monitor/tsconfig.json
+COPY apps/indexer-monitor/src apps/indexer-monitor/src
+RUN pnpm --filter indexer-monitor build
+RUN pnpm --filter indexer-monitor deploy --prod /deploy
+
+FROM base AS runtime
+RUN rm -rf /usr/local/lib/node_modules /opt/yarn* \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+    /usr/local/bin/pnpm /usr/local/bin/pnpx /usr/local/bin/yarn /usr/local/bin/yarnpkg
+COPY --from=build --chown=node:node /deploy /app
+ENV NODE_ENV=production
+USER node
+CMD ["node", "dist/monitor-indexer.js"]

@@ -1,4 +1,7 @@
 .git
+railway-plan.json
+logs
+**/*.log
 .DS_Store
 .claude
 .pnpm-store

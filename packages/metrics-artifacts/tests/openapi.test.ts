@@ -12,6 +12,7 @@ describe("OpenAPI document", () => {
     };
 
     expect(document.paths["/v2/bounds"]).toBeDefined();
+    expect(document.paths["/docs"]).toBeUndefined();
     expect(document.paths["/v2/metrics/daily"]).toBeDefined();
     expect(document.paths["/v2/treasury-assets/daily"]).toBeDefined();
     expect(document.paths["/v2/ohm-supply/daily"]).toBeDefined();

@@ -1,0 +1,161 @@
+--- a/data/postgresql.go
++++ b/data/postgresql.go
+@@ -17,9 +17,9 @@
+ 
+ 	"github.com/erpc/erpc/common"
+ 	"github.com/erpc/erpc/util"
+-	"github.com/jackc/pgconn"
+-	"github.com/jackc/pgx/v4"
+-	"github.com/jackc/pgx/v4/pgxpool"
++	"github.com/jackc/pgx/v5/pgconn"
++	"github.com/jackc/pgx/v5"
++	"github.com/jackc/pgx/v5/pgxpool"
+ 	"github.com/rs/zerolog"
+ 	"go.opentelemetry.io/otel/attribute"
+ 	"go.opentelemetry.io/otel/trace"
+@@ -159,6 +159,19 @@
+ 	return connector, nil
+ }
+ 
++// pgx v5 pool creation is lazy. Verify a connection before publishing the pool.
++func connectPostgreSQLPool(ctx context.Context, config *pgxpool.Config) (*pgxpool.Pool, error) {
++	pool, err := pgxpool.NewWithConfig(ctx, config)
++	if err != nil {
++		return nil, err
++	}
++	if err := pool.Ping(ctx); err != nil {
++		pool.Close()
++		return nil, err
++	}
++	return pool, nil
++}
++
+ // connectTask establishes (or re-establishes) the pgxpool used by this
+ // connector. It is invoked once by the initial bootstrap call and again by
+ // the util.Initializer auto-retry loop whenever handleConnectionFailure
+@@ -209,7 +222,7 @@
+ 	connectCtx, cancel := context.WithTimeout(ctx, p.initTimeout)
+ 	defer cancel()
+ 
+-	newConn, err := pgxpool.ConnectConfig(connectCtx, config)
++	newConn, err := connectPostgreSQLPool(connectCtx, config)
+ 	if err != nil {
+ 		return err
+ 	}
+@@ -956,7 +969,7 @@
+ 			lcfg.MaxConns = p.maxConns
+ 			// Build the new listener pool OUTSIDE any lock — this is the
+ 			// slow operation (TCP dial + TLS + auth + MinConns conns).
+-			newPool, err := pgxpool.ConnectConfig(ctx, lcfg)
++			newPool, err := connectPostgreSQLPool(ctx, lcfg)
+ 			if err != nil {
+ 				time.Sleep(5 * time.Second)
+ 				continue
+--- a/data/postgresql_iam_auth.go
++++ b/data/postgresql_iam_auth.go
+@@ -8,7 +8,7 @@
+ 	"github.com/aws/aws-sdk-go/aws/session"
+ 	"github.com/aws/aws-sdk-go/service/rds/rdsutils"
+ 	"github.com/erpc/erpc/common"
+-	"github.com/jackc/pgx/v4"
++	"github.com/jackc/pgx/v5"
+ )
+ 
+ // newRDSBeforeConnect returns a pgxpool BeforeConnect hook that injects a fresh
+--- a/data/postgresql_test.go
++++ b/data/postgresql_test.go
+@@ -12,8 +12,10 @@
+ 	"time"
+ 
+ 	"github.com/erpc/erpc/common"
+-	"github.com/jackc/pgconn"
+-	"github.com/jackc/pgx/v4"
++	"github.com/jackc/pgx/v5/pgconn"
++	"github.com/jackc/pgx/v5"
++	"github.com/jackc/pgx/v5/pgproto3"
++	"github.com/jackc/pgx/v5/pgxpool"
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
+ )
+@@ -442,3 +444,48 @@
+ 	assert.Equal(t, `a\\b`, postgresLikePattern(`a\b`))
+ 	assert.Equal(t, `a%b\_c\%d`, postgresLikePattern(`a*b_c%d`))
+ }
++
++// CVE-2026-32286: a compromised database must not panic the cache client.
++func TestPgxDataRowRejectsInvalidLength(t *testing.T) {
++	for _, frame := range [][]byte{
++		{0, 1, 255, 255, 255, 254}, // -2 is invalid; only -1 means NULL.
++		{0, 1, 128, 0, 0, 0},
++		{0, 1, 127, 255, 255, 255},
++		{0, 1, 0},
++	} {
++		var row pgproto3.DataRow
++		require.Error(t, row.Decode(frame))
++	}
++	var row pgproto3.DataRow
++	require.NoError(t, row.Decode([]byte{0, 1, 255, 255, 255, 255}))
++	require.Equal(t, [][]byte{nil}, row.Values)
++}
++
++func TestPostgreSQLPoolChecksConnectivity(t *testing.T) {
++	server, err := net.Listen("tcp", "127.0.0.1:0")
++	require.NoError(t, err)
++	defer server.Close()
++	go func() {
++		for {
++			conn, err := server.Accept()
++			if err != nil {
++				return
++			}
++			go func() {
++				defer conn.Close()
++				_, _ = io.Copy(io.Discard, conn) // Accept TCP but never answer startup.
++			}()
++		}
++	}()
++	config, err := pgxpool.ParseConfig("postgres://fixture:fixture@" + server.Addr().String() + "/fixture?sslmode=disable")
++	require.NoError(t, err)
++	config.MinConns = 1
++	config.ConnConfig.ConnectTimeout = 50 * time.Millisecond
++	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
++	defer cancel()
++	start := time.Now()
++	pool, err := connectPostgreSQLPool(ctx, config)
++	require.Error(t, err)
++	require.Nil(t, pool)
++	require.Less(t, time.Since(start), 2*time.Second)
++}
+--- a/data/postgresql_connector_test.go
++++ b/data/postgresql_connector_test.go
+@@ -12,7 +12,7 @@
+ 
+ 	"github.com/erpc/erpc/common"
+ 	"github.com/erpc/erpc/util"
+-	"github.com/jackc/pgx/v4/pgxpool"
++	"github.com/jackc/pgx/v5/pgxpool"
+ 	"github.com/rs/zerolog"
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
+@@ -55,7 +55,9 @@
+ // rows the connector API cannot produce (already-expired rows, legacy schema).
+ func rawPgPool(t *testing.T, uri string) *pgxpool.Pool {
+ 	t.Helper()
+-	pool, err := pgxpool.Connect(context.Background(), uri)
++	config, err := pgxpool.ParseConfig(uri)
++	require.NoError(t, err)
++	pool, err := connectPostgreSQLPool(context.Background(), config)
+ 	require.NoError(t, err)
+ 	t.Cleanup(pool.Close)
+ 	return pool
+--- a/auth/strategy_database_test.go
++++ b/auth/strategy_database_test.go
+@@ -13,7 +13,7 @@
+ 
+ 	"github.com/erpc/erpc/common"
+ 	"github.com/erpc/erpc/data"
+-	"github.com/jackc/pgconn"
++	"github.com/jackc/pgx/v5/pgconn"
+ 	"github.com/rs/zerolog"
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"

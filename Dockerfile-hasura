@@ -1,6 +1,8 @@
 FROM hasura/graphql-engine:v2.48.16@sha256:6ff7d8ba122c69f7be377092b0c1f5314d3e4e28274dc089cd774ce6a8ba6479
 RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get update \
   && DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get install -y --no-install-recommends --only-upgrade \
+    apt \
+    apt-transport-https \
     bsdutils \
     coreutils \
     curl \
@@ -9,7 +11,9 @@ RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get update \
     gcc-12-base \
     gzip \
     libattr1 \
+    libapt-pkg6.0 \
     libblkid1 \
+    libbrotli1 \
     libcap2 \
     libc-bin \
     libc6 \
@@ -29,6 +33,7 @@ RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get update \
     libpam-runtime \
     libpam0g \
     libp11-kit0 \
+    libpcre2-8-0 \
     libperl5.34 \
     libpq5 \
     libpython3.10-minimal \

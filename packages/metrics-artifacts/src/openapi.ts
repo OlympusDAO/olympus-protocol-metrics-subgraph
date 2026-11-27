@@ -71,7 +71,7 @@ export function getOpenApiDocument(): {
       title: "Olympus Protocol Metrics API",
       version: "2.0.0",
       description:
-        "Cacheable REST API for Olympus protocol metrics, treasury assets, and OHM supply. /operations routes are deprecated compatibility routes.",
+        "Cacheable REST API for Olympus protocol metrics, treasury assets, and OHM supply. Documentation is served as /openapi.json only; no HTML docs site. /operations routes are deprecated compatibility routes.",
     },
     paths: {
       "/ready": {

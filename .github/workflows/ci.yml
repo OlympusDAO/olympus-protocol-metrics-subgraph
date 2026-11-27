@@ -1,0 +1,149 @@
+name: CI
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [master]
+  workflow_dispatch:
+concurrency:
+  group: source-ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+permissions:
+  contents: read
+jobs:
+  source:
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Runtime versions
+            command: check:runtime-versions
+          - name: Format and lint
+            command: check
+          - name: Typecheck
+            command: typecheck
+          - name: Build
+            command: build
+          - name: Tests
+            command: test
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/bootstrap
+      # Generated Envio types are needed by typechecking and the ordinary suites.
+      # Artifact-only builds do not import the indexer or need its codegen.
+      - name: Generate indexer types
+        if: matrix.command == 'typecheck' || matrix.command == 'test'
+        run: pnpm run codegen
+      - name: Prepare test artifacts
+        if: matrix.command == 'test'
+        run: pnpm run build
+      - name: ${{ matrix.name }}
+        run: pnpm run ${{ matrix.command }}
+  images:
+    name: Release images and integration
+    # PRs run the standalone image workflow; this call gates release commits.
+    if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/security-scan.yml
+
+  railway-apply:
+    name: Railway infrastructure apply
+    timeout-minutes: 60
+    needs: [source, images]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment:
+      name: treasury-subgraph / production
+      deployment: false
+    concurrency:
+      group: railway-infrastructure-production
+      cancel-in-progress: false
+      queue: max
+    env:
+      RAILWAY_PROJECT_ID: 1eff0b7c-1ab5-4f50-8c0d-29086746a17b
+      RAILWAY_ENVIRONMENT_ID: 34764411-35d7-466c-8249-612730c36c07
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+      statuses: read
+      pull-requests: read
+    steps:
+      - name: Checkout merged configuration
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          ref: ${{ github.sha }}
+      - name: Select production infrastructure change
+        id: eligibility
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            // Keep this gate inline so the checked-out revision cannot grant its own release eligibility.
+            if (
+              context.eventName !== "push" || context.ref !== "refs/heads/master" ||
+              context.payload.forced || context.payload.created || context.payload.deleted
+            ) {
+              throw new Error("Production apply requires an exact master push.");
+            }
+            const prs = await github.paginate(
+              github.rest.repos.listPullRequestsAssociatedWithCommit,
+              {
+                ...context.repo,
+                commit_sha: context.sha,
+                per_page: 100,
+              }
+            );
+            const pr = prs.find(
+              (pr) =>
+                pr.merged_at &&
+                pr.merge_commit_sha === context.sha &&
+                pr.base.ref === "master" &&
+                pr.base.repo?.full_name === context.payload.repository.full_name
+            );
+            if (!pr) {
+              throw new Error(
+                "Production deployment requires a reviewed PR merged into master at this commit."
+              );
+            }
+            core.setOutput("relevant", "true");
+      - name: Wait for external checks
+        if: steps.eligibility.outputs.relevant == 'true'
+        timeout-minutes: 35
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          MERGE_COMMIT_SHA: ${{ github.sha }}
+        with:
+          script: |
+            await require("./scripts/railway-release.cjs").waitForExternalChecks({ github, context, core });
+      - name: Bootstrap
+        if: steps.eligibility.outputs.relevant == 'true'
+        uses: ./.github/actions/bootstrap
+      - name: Plan production changes
+        if: steps.eligibility.outputs.relevant == 'true'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_DEPLOY_TOKEN }}
+        with:
+          script: |
+            await require("./scripts/railway-release.cjs").plan({ core });
+      - name: Verify production plan target
+        if: steps.eligibility.outputs.relevant == 'true'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          PLAN_PATH: ${{ runner.temp }}/railway-plan.json
+        with:
+          script: |
+            await require("./scripts/railway-release.cjs").verify({ github, context });
+      - name: Apply reviewed production plan
+        if: steps.eligibility.outputs.relevant == 'true'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_DEPLOY_TOKEN }}
+        with:
+          script: |
+            await require("./scripts/railway-release.cjs").apply({ github, context, core });

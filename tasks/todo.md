@@ -95,8 +95,8 @@ All commits on `envio-multichain-migration`. Validation: codegen + build + 21/21
 ## Phase 7 — Performance validation
 
 - [ ] Fresh DB backfill benchmark (blocked on deployment)
-- [x] Confirm per-snapshot RPC count ≈ 0 except accepted timestamp/invariant effects — audited in `docs/envio-migration/phase-7-audit.md`. All RPC paths go through cached effects or `withContractReadCache`; the one exception is `getNativeBalance` (inherited TODO, documented).
-- [x] Confirm BalancerVault + shared contracts filtered by poolId — audited in `docs/envio-migration/phase-7-audit.md`. `buildBalancerPoolIdWhere` filter is wired on all three BalancerVault events; per-address registration covers the rest.
+- [x] Document snapshot read-cache scope and the native-balance RPC exception — see [snapshot read scope](../docs/performance/rpc-indexer.md#snapshot-read-scope).
+- [x] Document BalancerVault poolId filtering for shared-contract events — see [snapshot read scope](../docs/performance/rpc-indexer.md#snapshot-read-scope).
 
 ---
 

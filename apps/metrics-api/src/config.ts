@@ -1,5 +1,5 @@
-import { createArtifactReaderFromEnv } from "./artifact-store";
-import type { MetricsApiConfig } from "./server";
+import { createArtifactReaderFromEnv } from "./artifact-store.js";
+import type { MetricsApiConfig } from "./server.js";
 
 export function metricsApiPortFromEnv(env: NodeJS.ProcessEnv): number {
   const port = Number(env.PORT ?? env.METRICS_API_PORT ?? "3000");

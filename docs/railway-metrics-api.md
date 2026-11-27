@@ -1,7 +1,11 @@
 # Railway Metrics API Deployment
 
-This deployment keeps Envio, Hasura, Postgres, and the artifact publisher private
-inside Railway. Only `metrics-api` should receive a public Railway domain.
+Railway runs Envio, Hasura, Postgres, a persistent RPC cache, and the scheduled
+artifact publisher. The metrics API serves published snapshots and its
+`/openapi.json` specification, with no HTML documentation site (`/docs` is 404).
+REST endpoints remain available. Domain reconciliation requires its separate
+review and live approval. See the
+[Railway infrastructure definition and plan procedure](../.railway/README.md).
 
 ## Services
 
@@ -11,7 +15,10 @@ inside Railway. Only `metrics-api` should receive a public Railway domain.
 | `metrics-publisher` | No | Scheduled artifact generation and upload. |
 | `hasura` | No | Private GraphQL access for the publisher only. |
 | `indexer` | No | Envio indexer process and Envio `/healthz` liveness probe. |
-| Postgres | No | Railway private database service. |
+| `indexer-monitor` | No | Checks native Envio metrics reachability and sends Discord alerts. |
+| Postgres | No | Envio and Hasura database. |
+| `rpc-cache` | No | eRPC archive provider routing and finalized-read caching. |
+| `rpc-cache-postgres` | No | Persistent cache database on a dedicated volume. |
 
 Hasura must use Railway private networking only. Configure publisher-to-Hasura
 traffic with the private service hostname, not the public internet hostname.
@@ -31,16 +38,12 @@ Use Railway's Variables tab or raw editor for each service. Variables listed as
 
 ### Setup order
 
-1. Create the Postgres, Hasura, indexer, metrics publisher, and metrics API
-   services.
-2. Add Postgres first so its generated variables are available for references.
-3. Set Hasura variables, including `PORT`.
-4. Set indexer variables, pointing `HASURA_GRAPHQL_ENDPOINT` at Hasura's private
-   metadata endpoint.
-5. Set publisher variables, pointing `HASURA_GRAPHQL_ENDPOINT` at Hasura's
-   private GraphQL endpoint.
-6. Set metrics API variables and give only `metrics-api` a public Railway
-   domain.
+1. Review the whole-project plan and confirm the existing database, bucket, and
+   services retain their identities. Follow the [IaC plan procedure](../.railway/README.md).
+2. Configure the cache with the seven archive endpoints and verify private
+   routing before switching the indexer to the cache.
+3. Verify Hasura and indexer readiness, then verify the publisher can produce a
+   complete artifact set and the metrics API serves it.
 
 ### Postgres service
 
@@ -63,9 +66,8 @@ These variables belong on the private `hasura` service.
 - Required `HASURA_GRAPHQL_ADMIN_SECRET`: high-entropy admin secret. Reuse the
   same value on the private indexer and publisher services so they can call
   Hasura.
-- Required on Railway `PORT`: Hasura HTTP port. Use `8080` unless there is a
-  specific reason to change it. The Dockerfile derives
-  `HASURA_GRAPHQL_SERVER_PORT` from `PORT` before Hasura starts.
+- Railway IaC sets Hasura's `PORT=8080` in every environment. The Dockerfile
+  maps `PORT` to `HASURA_GRAPHQL_SERVER_PORT` before Hasura starts.
 - Optional `HASURA_GRAPHQL_ENABLE_CONSOLE`: must be `false`. The Dockerfile also
   sets this as a default.
 - Optional `HASURA_GRAPHQL_ENABLED_LOG_TYPES`: recommended
@@ -93,35 +95,24 @@ check requires the core variables below before Envio starts.
 - Required `ENVIO_PG_HOST`, `ENVIO_PG_PORT`, `ENVIO_PG_USER`,
   `ENVIO_PG_PASSWORD`, and `ENVIO_PG_DATABASE`: Envio's Postgres connection
   settings, usually references to Railway Postgres private-network variables.
-- Do not set `ENVIO_PG_SCHEMA` on Railway. The indexer intentionally uses
-  Envio's default schema, currently `public`, so each deployment operates on the
-  same Envio schema instead of accumulating deployment-specific schemas.
-- Railway indexer startup runs `envio start -r`. This deletes and recreates the
-  Envio tables in the default schema before indexing. That is intentional:
-  Postgres/Hasura is not the public availability boundary for this service.
-  Published artifact snapshots and the metrics API are the handover boundary.
-- The startup wrapper supervises Envio rather than exiting with it. Envio treats
-  a failed batch write as fatal, so a Postgres restart underneath a running
-  indexer kills the process. On an unexpected exit the wrapper waits for
-  Postgres to accept connections again (up to ten minutes) and respawns Envio
-  as plain `envio start` — no `-r` — so the indexer resumes rather than
-  replaying from the beginning. A crash inside the first minute is treated as a
-  failed startup instead and repeats the original `-r`, because a run that never
-  got under way may have left the schema half-created.
+- Leave `ENVIO_PG_SCHEMA` and `ENVIO_PG_PUBLIC_SCHEMA` unset on Railway so each
+  deployment uses the same Envio schema. Native Envio checks
+  `ENVIO_PG_SCHEMA` first, then the legacy `ENVIO_PG_PUBLIC_SCHEMA`, and
+  defaults to `public`.
+- Startup uses plain `envio start` and resumes compatible state from the
+  committed checkpoint. Envio exits on fatal errors. Railway can retry those
+  exits under its bounded `ON_FAILURE` policy.
 - Required `ENVIO_PG_SSL_MODE`: set according to the Railway Postgres
   connection mode. Envio accepts `false`, `true`, `require`, `allow`, `prefer`,
   or `verify-full`; it does not accept libpq-style `disable`.
 - Optional `ENVIO_PG_MAX_CONNECTIONS`: Envio Postgres pool size.
-- Required on Railway `PORT`: Railway HTTP target port for the indexer
-  healthcheck. Use `9898` unless you intentionally need a different port. The
-  indexer startup wrapper derives `ENVIO_INDEXER_PORT` from Railway's runtime
-  `PORT` before Envio starts.
+- Railway IaC sets the indexer's `PORT=9898` in every environment. Startup maps
+  `PORT` to `ENVIO_INDEXER_PORT` before launching Envio.
 - Required `HASURA_GRAPHQL_ENDPOINT`: private Hasura metadata endpoint, for
   example `http://hasura.railway.internal:8080/v1/metadata`.
 - Required `HASURA_GRAPHQL_ADMIN_SECRET`: same value used by Hasura.
-- Required `ENVIO_ETHEREUM_RPC_URL`, `ENVIO_ARBITRUM_RPC_URL`,
-  `ENVIO_BASE_RPC_URL`, `ENVIO_BERACHAIN_RPC_URL`, `ENVIO_POLYGON_RPC_URL`, and
-  `ENVIO_FANTOM_RPC_URL`: primary per-chain archive RPC URLs.
+- The seven `ENVIO_<CHAIN>_RPC_URL` values point to the private cache.
+  The same values serve Envio's fallback RPC configuration and snapshot reads.
 - Optional `ENVIO_MAX_PARTITION_CONCURRENCY`: Envio concurrency setting.
 
 Example indexer raw variables:
@@ -137,18 +128,18 @@ ENVIO_PG_SSL_MODE=prefer
 PORT=9898
 HASURA_GRAPHQL_ENDPOINT=http://${{hasura.RAILWAY_PRIVATE_DOMAIN}}:${{hasura.PORT}}/v1/metadata
 HASURA_GRAPHQL_ADMIN_SECRET=${{hasura.HASURA_GRAPHQL_ADMIN_SECRET}}
-ENVIO_ETHEREUM_RPC_URL=<ethereum-archive-rpc-url>
-ENVIO_ARBITRUM_RPC_URL=<arbitrum-archive-rpc-url>
-ENVIO_BASE_RPC_URL=<base-archive-rpc-url>
-ENVIO_BERACHAIN_RPC_URL=<berachain-archive-rpc-url>
-ENVIO_POLYGON_RPC_URL=<polygon-archive-rpc-url>
-ENVIO_FANTOM_RPC_URL=<fantom-archive-rpc-url>
+ENVIO_ETHEREUM_RPC_URL=http://${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/1
+ENVIO_ARBITRUM_RPC_URL=http://${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/42161
+ENVIO_BASE_RPC_URL=http://${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/8453
+ENVIO_BERACHAIN_RPC_URL=http://${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/80094
+ENVIO_POLYGON_RPC_URL=http://${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/137
+ENVIO_FANTOM_RPC_URL=http://${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/250
+ENVIO_ROBINHOOD_RPC_URL=http://${{rpc-cache.RAILWAY_PRIVATE_DOMAIN}}:4000/metrics/evm/4663
 ```
 
 Railway Postgres variable names can differ depending on how the database service
 was created. Use the names exposed by your Postgres service. If it only exposes
-`DATABASE_URL`, either split it into the `ENVIO_PG_*` variables above or add a
-startup wrapper that derives them before running Envio.
+`DATABASE_URL`, split the URL into the required `ENVIO_PG_*` settings.
 
 Envio v3 supports fallback RPCs by adding multiple `rpc` entries in
 `apps/indexer/config.yaml` with `for: fallback`. It does not consume
@@ -157,30 +148,141 @@ Envio's RPC schema supports batch/backoff/timeout/polling fields in
 `config.yaml`; it does not consume `requests_per_second` environment variables
 for event ingestion.
 
-Railway deployment flow:
+### Indexer monitor service
 
-1. A new indexer deployment starts with `envio start -r` against Envio's default
-   schema. Any restart of the indexer *container* does the same, including
-   platform-initiated restarts that keep the current deployment. An in-process
-   respawn after an Envio crash does not: the wrapper resumes the existing
-   schema, so a transient Postgres outage costs seconds rather than a full
-   reindex.
-2. Existing metric artifacts remain in the bucket, and `metrics-api` continues
-   serving the currently published manifest while the indexer reindexes.
-3. The publisher cron reads Hasura but skips cleanly with
-   `skipReason: "not_data_ready"` until the indexer has produced complete
-   eligible data.
-4. Once the indexer is data-ready, the publisher regenerates the deployment's
-   snapshots, uploads all shard files, then publishes `v2/manifest.json` last.
-5. After the manifest update, `metrics-api` serves the newly published artifact
-   set.
+Railway runs the private `indexer-monitor` job every 15 minutes from its
+dedicated Alpine-based image. Each invocation reads state, probes the native
+`/metrics` endpoint once with a five-second timeout, and exits. HTTP 2xx means
+the endpoint is reachable, including during backfill. The job measures
+reachability only and never resets the indexer.
 
-Do not use `ENVIO_PG_SCHEMA` for Railway blue/green handover. If Envio config or
-schema changes are incompatible with existing data, reset-on-start handles the
-database side. Client-visible handover is handled by the publisher manifest.
+Before deploying, configure the production service's `DISCORD_WEBHOOK_URL` and
+shared `DISCORD_WEBHOOK_URL_PREVIEW` for other environments. IaC preserves the
+production value and declares the preview reference. It
+binds `INDEXER_METRICS_URL` to the indexer's private host and port and
+references `BUCKET`, `ENDPOINT`, `REGION`, `ACCESS_KEY_ID`, and
+`SECRET_ACCESS_KEY` from the dedicated private `monitor-state` bucket. All are required.
+Startup validates these values before any requests and exits nonzero with
+a fixed diagnostic on invalid configuration. `MONITOR_NAME` is optional
+and defaults to `Indexer`. IaC supplies `Metrics`; the runtime appends Railway's
+actual environment name outside production. The supplied
+project/environment label must fit within 1024 characters. The supplied
+`RAILWAY_ENVIRONMENT_NAME` must not be blank. Outside Railway it is optional;
+without it the explicit `DISCORD_WEBHOOK_URL` and base label are used.
+Only the exact environment name `production` uses the production webhook.
+Renamed environments use preview routing. A supplied runtime ID must not be blank
+and requires a name; it does not select the Discord destination.
+`MONITOR_COOLDOWN_MINUTES` is optional and defaults to `60`. When set, use
+a positive whole number that can be represented safely in milliseconds.
 
-This repository's snapshot effect RPC client does consume optional runtime
-tuning variables:
+Configure the production service value and preview reference once in the base environment.
+Automatic PR deployments copy the preview reference and select it at startup;
+no plan or apply is required for each PR. Only the selected webhook is required,
+and missing preview configuration fails without a production fallback. Seal the
+production service value to keep it out of preview copies. Replace any existing
+shared production reference with the service-level secret before sealing, and
+review the old shared secret separately; `preserve()` does not migrate an alias.
+See [Railway's sealed-variable rules](https://docs.railway.com/variables#sealed-variables).
+Source changes do not perform or verify live secret setup or sealing.
+
+The job persists state at `indexer-monitor/state.json`, separately from
+snapshot keys. A successful Discord error notification starts the configured
+cooldown across invocations and redeploys. The first eligible run after the
+cooldown can alert again if the indexer remains unreachable. A healthy run
+sends one recovery for a previously alerted outage and keeps its cooldown,
+so a new outage within that window stays suppressed.
+
+Discord notifications include the project, status, and timestamp. Logs record
+the probe result, cooldown suppression, and acknowledged alerts.
+Delivery and storage failures exit nonzero. Failed delivery leaves state
+intact so the next scheduled run can retry a relevant alert. A successful
+delivery followed by a failed state write can cause a duplicate notification.
+
+### Manual indexer reset
+
+Envio exits nonzero when it refuses incompatible stored configuration or
+addresses. Startup never resets storage. Inspect the indexer logs and restore
+the compatible configuration if possible. Use this procedure only after an
+operator approves a rebuild from the configured chain start blocks.
+
+1. Verify the Railway project and environment IDs. Record the main indexer's
+   Postgres service, `ENVIO_PG_DATABASE`, `ENVIO_PG_PORT`, and effective schema.
+   Check both `ENVIO_PG_SCHEMA` and `ENVIO_PG_PUBLIC_SCHEMA` in the indexer's
+   runtime environment. Proceed only when the effective schema is `public`.
+   Perform the reset on the main `Postgres` service. The separate eRPC database
+   is outside this procedure.
+2. Stop all writers to the indexer schema, including every indexer replica,
+   and prevent automatic restarts until the reset finishes. Stop Hasura when
+   it uses this schema. Pause publisher runs until the rebuilt dataset is ready.
+3. Use the verified IDs to open a shell on the main `Postgres` service. Complete
+   normal SSH host verification during this interactive connection.
+
+   ```sh
+   railway ssh --project PROJECT_ID --environment ENVIRONMENT_ID --service Postgres
+   ```
+
+   From that shell, substitute the verified port and database name, and an
+   authorized role that can drop and recreate the schema.
+
+   ```sh
+   psql -X -v ON_ERROR_STOP=1 --host 127.0.0.1 --port VERIFIED_DB_PORT --dbname VERIFIED_DB_NAME --username VERIFIED_DB_ROLE
+   ```
+
+   Confirm the connection with `\conninfo` and
+   `SELECT current_database(), current_user;`. Check
+   `pg_stat_activity` for remaining writer sessions. Inspect all schema
+   objects and dependencies, and record the owner and grants with `\dn+ public`.
+   Stop if any unrelated objects or dependencies would be dropped. Take a
+   database backup and verify it is available for recovery.
+4. Exit the interactive session. From the repository root, run the
+   [checked-in reset script](../scripts/reset-indexer-schema.sql) with the same
+   verified IDs, database port, database name, and role. The streamed command
+   uses the service's existing `POSTGRES_PASSWORD` for its verified
+   `POSTGRES_USER` role. A different role requires separately approved noninteractive
+   authentication.
+
+   ```sh
+   railway ssh --project PROJECT_ID --environment ENVIRONMENT_ID --service Postgres -- \
+     'PGPASSWORD="$POSTGRES_PASSWORD" psql -X -w -v ON_ERROR_STOP=1 --host 127.0.0.1 --port VERIFIED_DB_PORT --dbname VERIFIED_DB_NAME --username VERIFIED_DB_ROLE --file=-' \
+     < scripts/reset-indexer-schema.sql
+   ```
+
+   The script requires `public.envio_info` and the standard PostgreSQL
+   `public` schema owned by `pg_database_owner`, with `USAGE` granted to
+   `PUBLIC`. It also preserves a direct `USAGE` and `CREATE` grant from the
+   schema owner to the database owner when present. It checks the recreated
+   owner and grants before committing. For other owners or grants, keep the
+   services stopped and use a separately reviewed manual restore that recreates
+   the recorded owner and exact grants. Verify the grants before committing
+   that restore.
+
+5. Start Hasura if you stopped it, then redeploy the indexer normally. Envio
+   initializes the empty schema and starts indexing. Check the native
+   `/healthz` response for HTTP 200 and verify chain progress before resuming
+   downstream work.
+
+The metrics API serves the current published manifest during the rebuild. Before
+publication resumes after an explicit reset, set the publisher
+`INDEXER_DEPLOYMENT_ID` to a fresh value so it regenerates the full historical
+range. A reset on the same commit does not change that identity; retaining it
+would refresh only recent and unpublished months. The publisher waits for complete,
+fresh all-chain data and uploads the regenerated shards before switching the
+manifest. Keep the default Envio schema on Railway so every deployment uses the
+existing index database.
+
+### RPC cache service
+
+Set `UPSTREAM_RPC_URL_<chain ID>` on `rpc-cache` for chain IDs 1, 137, 250,
+8453, 42161, 80094, and 4663. Use archive endpoints that serve the indexer's
+historical blocks. `RPC_CACHE_DATABASE_URL` references the dedicated cache
+Postgres service. Keep the RPC and metrics ports private.
+
+eRPC permanently stores eligible historical reads only when the provider
+reports them finalized. Providers without a usable finalized tag can still
+serve reads, with no permanent cache entries for unconfirmed data. Cache
+capacity and index database capacity are independent.
+
+The snapshot effect RPC client accepts these optional runtime settings.
 
 - Optional `ENVIO_RPC_HTTP_BATCH_SIZE`, `ENVIO_RPC_MULTICALL_BATCH_SIZE`, and
   `ENVIO_RPC_TIMEOUT_MS`.
@@ -298,11 +400,13 @@ version for debugging and stale-data checks.
 These variables belong on the public `metrics-api` service. The API reads from
 the same bucket the publisher writes to.
 
-- Optional `PORT`: Railway normally provides this.
+- Railway IaC sets `PORT=8080` for the public `metrics-api` listener in every
+  environment. The production custom domain uses the same port.
+  [Service declaration](../.railway/railway.ts).
 - Optional `METRICS_API_MAX_RANGE_DAYS`: maximum inclusive v2 range. The
   documented default is `366`.
-- Optional `METRICS_API_PORT`: port override if the runtime does not provide
-  `PORT`.
+- Optional `METRICS_API_PORT`: local port override when the runtime does not
+  provide `PORT`. Local API and Compose default to `3000`.
 - Required `ARTIFACT_BUCKET`, `ARTIFACT_ENDPOINT`, `ARTIFACT_REGION`,
   `ARTIFACT_ACCESS_KEY_ID`, and `ARTIFACT_SECRET_ACCESS_KEY`: read-only
   artifact access.

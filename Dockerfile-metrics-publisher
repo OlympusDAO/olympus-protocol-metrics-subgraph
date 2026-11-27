@@ -1,4 +1,4 @@
-FROM node:24-slim@sha256:55fb5f5a527ea2c5c4a95f963e48ef90aa38c7b346054fdc8ee9957a2b55d205
+FROM node:24.22.3-slim@sha256:dc26ae92c9fb15cf6b1d63e20f0944b2efe0f115b20e00be48fb23fceb061c54 AS base
 
 ENV CI=true
 ENV PNPM_HOME=/pnpm
@@ -8,41 +8,29 @@ ENV PATH=/pnpm:$PATH
 WORKDIR /app
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends --only-upgrade libgcrypt20 libgnutls30 libpcre2-8-0 perl-base \
+  && apt-get install -y --no-install-recommends --only-upgrade apt libapt-pkg6.0 libgcrypt20 libgnutls30 libpam-modules libpam-modules-bin libpam-runtime libpam0g libpcre2-8-0 perl-base \
   && apt-get install -y --no-install-recommends ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /corepack /pnpm \
-  && corepack enable \
-  && corepack prepare pnpm@11.28.7 --activate \
-  && pnpm --version \
-  && chown -R node:node /corepack /pnpm
-
+FROM base AS build
+RUN mkdir -p /corepack /pnpm && corepack enable && corepack prepare pnpm@11.28.13 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-# pnpm validates every workspace importer under a frozen lockfile, so copy all
-# package manifests before the full source copy. These are install/cache inputs,
-# not runtime dependencies of this service.
 COPY apps/indexer/package.json apps/indexer/package.json
 COPY apps/metrics-api/package.json apps/metrics-api/package.json
 COPY apps/metrics-publisher/package.json apps/metrics-publisher/package.json
 COPY apps/client/package.json apps/client/package.json
+RUN pnpm install --frozen-lockfile --filter @olympusdao/treasury-subgraph --filter @olympusdao/treasury-subgraph-metrics-publisher
+COPY apps/metrics-publisher/src apps/metrics-publisher/src
+COPY apps/metrics-publisher/tsconfig.build.json apps/metrics-publisher/tsconfig.build.json
+COPY packages/metrics-artifacts/src packages/metrics-artifacts/src
+COPY tsconfig.json ./
+RUN pnpm --dir apps/metrics-publisher build
+RUN pnpm --filter @olympusdao/treasury-subgraph-metrics-publisher deploy --prod /deploy
 
-RUN pnpm install --frozen-lockfile \
-  && rm -rf /app/.pnpm-store /pnpm/store /root/.cache/pnpm
-
-COPY . .
-RUN pnpm --dir apps/indexer codegen \
-  && pnpm run build \
-  && rm -rf /app/.pnpm-store /corepack /pnpm /root/.cache/pnpm \
-    /usr/local/bin/corepack /usr/local/bin/npm /usr/local/bin/npx \
-    /usr/local/bin/pnpm /usr/local/bin/pnpx \
-    /usr/local/lib/node_modules/corepack /usr/local/lib/node_modules/npm \
-    apps/indexer/.envio
-
-ENV PATH=/app/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-
-WORKDIR /app/apps/metrics-publisher
-
+FROM base AS runtime
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/pnpm /usr/local/bin/pnpx
+COPY --from=build --chown=node:node /deploy /app
+ENV NODE_ENV=production
+WORKDIR /app
 USER node
-
-CMD ["tsx", "src/cli.ts"]
+CMD ["node","dist/apps/metrics-publisher/src/cli.js"]

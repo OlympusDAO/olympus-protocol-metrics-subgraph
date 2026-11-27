@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": "../.."
+  },
+  "exclude": ["dist", "tests"],
+  "extends": "../../tsconfig.json",
+  "include": ["src/**/*.ts", "../../packages/metrics-artifacts/src/**/*.ts"]
+}

@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, expectTypeOf, test, vi } from "vitest";
 import { getOpenApiDocument as getCanonicalOpenApiDocument } from "../../../packages/metrics-artifacts/src";
 import {
+  type ChainName,
   type ChainTokenRecords,
   type ChainTokenSupplies,
   createClient,
@@ -398,17 +399,18 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(packageJson.files).toContain("openapi.json");
     expect(packageJson.files).toContain("dist");
     expect(packageJson.scripts.build).toBe(
-      "rm -rf dist && tsc -p tsconfig.build.json && pnpm run openapi:generate",
+      "pnpm run check:openapi && rm -rf dist && tsc -p tsconfig.build.json && pnpm run generate:openapi",
     );
-    expect(packageJson.scripts["openapi:generate"]).toBe("tsx scripts/write-openapi.ts");
+    expect(packageJson.scripts["generate:openapi"]).toBe("tsx scripts/write-openapi.ts");
+    expect(packageJson.scripts["check:openapi"]).toBe("tsx scripts/write-openapi.ts --check");
     expect(packageJson.scripts["pack:dry-run"]).toBe(
       "pnpm run build && npm pack --dry-run --ignore-scripts --cache /tmp/olympus-treasury-subgraph-npm-cache",
     );
-    expect(packageJson.scripts.pretest).toBe("pnpm run openapi:generate");
+    expect(packageJson.scripts.pretest).toBe("pnpm run check:openapi");
     expect(packageJson.scripts.prepack).toBe("pnpm run build");
-    expect(packageJson.scripts.prepublishOnly).toBe("pnpm run release:check");
+    expect(packageJson.scripts.prepublishOnly).toBe("pnpm run check:release");
     expect(packageJson.scripts["publish:client"]).toBeUndefined();
-    expect(packageJson.scripts["release:check"]).toBe("tsx scripts/release-check.ts");
+    expect(packageJson.scripts["check:release"]).toBe("tsx scripts/release-check.ts");
     expect(packageJson.scripts["stage:list"]).toBeUndefined();
     expect(packageJson.exports).toHaveProperty("./openapi.json");
     expect(packageJson.dependencies ?? {}).not.toHaveProperty("@tanstack/react-query");
@@ -437,13 +439,13 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     expect(workflow).toContain("id-token: write");
     expect(workflow).toContain("contents: write");
     expect(workflow).toContain("environment: npm-stage");
-    expect(workflow).toContain("actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f");
-    expect(workflow).toContain("node-version: 24");
+    expect(workflow).not.toContain("actions/setup-node@");
+    expect(workflow).toContain('install-dependencies: "false"');
     expect(workflow).toContain("npm install -g npm@11.15.0");
     expect(workflow).toContain('pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts validate');
     expect(workflow).toContain('pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts pack');
     expect(workflow).toContain('pnpm --dir "$PACKAGE_DIR" exec tsx scripts/ci-release.ts notes');
-    expect(workflow).toContain('pnpm --dir "$PACKAGE_DIR" run release:check');
+    expect(workflow).toContain('pnpm --dir "$PACKAGE_DIR" run check:release');
     expect(workflow).toContain("actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a");
     expect(workflow).toContain(
       "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
@@ -551,6 +553,7 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
     };
     const canonical = getCanonicalOpenApiDocument();
 
+    expect(packaged).toEqual(canonical);
     expect(packaged.openapi).toBe("3.1.0");
     expect(Object.keys(packaged.paths).sort()).toEqual(Object.keys(canonical.paths).sort());
     expect(Object.keys(getOpenApiDocument().paths).sort()).toEqual(
@@ -562,19 +565,11 @@ describe("@olympusdao/treasury-subgraph-client compatibility", () => {
   });
 
   test("exports semantic v2 and legacy-compatible TypeScript types", () => {
-    const treasuryAsset = {} as TreasuryAsset;
-    const tokenRecord: TokenRecord = treasuryAsset;
-    const ohmSupply = {} as OhmSupply;
-    const tokenSupply: TokenSupply = ohmSupply;
-    const tokenRecords = {} as ChainTokenRecords;
-    const tokenSupplies = {} as ChainTokenSupplies;
-    const health = {} as Health;
-
-    expect(tokenRecord).toBe(treasuryAsset);
-    expect(tokenSupply).toBe(ohmSupply);
+    expectTypeOf<TokenRecord>().toEqualTypeOf<TreasuryAsset>();
+    expectTypeOf<TokenSupply>().toEqualTypeOf<OhmSupply>();
+    expectTypeOf<ChainTokenRecords>().toEqualTypeOf<Record<ChainName, TreasuryAsset[]>>();
+    expectTypeOf<ChainTokenSupplies>().toEqualTypeOf<Record<ChainName, OhmSupply[]>>();
+    expectTypeOf<Health>().toEqualTypeOf<{ status: string; timestamp: string; version: string }>();
     expectTypeOf<Metric["_meta"]["chainsComplete"]>().toEqualTypeOf<string[]>();
-    expect(tokenRecords).toBe(tokenRecords);
-    expect(tokenSupplies).toBe(tokenSupplies);
-    expect(health).toBe(health);
   });
 });

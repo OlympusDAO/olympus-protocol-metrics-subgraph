@@ -4,6 +4,10 @@ Treasury and protocol metrics indexer for Olympus DAO. Powers the
 [Olympus Treasury Dashboard](https://app.olympusdao.finance/).
 
 Built on [Envio HyperIndex](https://docs.envio.dev/) (v3, multichain).
+See [security posture and deployment acceptance](docs/security-posture.md) for
+service exposure, trust boundaries and current image-validation blockers.
+The metrics API publishes its specification at `/openapi.json`; it has no HTML
+documentation site at `/docs`. REST endpoints remain available.
 The previous implementation used The Graph Protocol with separate
 subgraphs per chain; that code has been replaced by the single Envio
 indexer in this repository (see `apps/indexer/config.yaml`,
@@ -37,16 +41,16 @@ starts Postgres, Hasura, the indexer, MinIO, and the metrics API with the
 service-to-service environment variables wired for local use:
 
 ```sh
-pnpm run compose:core # Postgres + Hasura + indexer
-pnpm run compose:up   # full local stack, including storage and metrics API
+pnpm run up:compose:core # Postgres + Hasura + indexer
+pnpm run up:compose   # full local stack, including storage and metrics API
 ```
 
 Use the direct Envio commands only when you already have reachable Postgres and
 Hasura services and have exported the indexer environment yourself:
 
 ```sh
-pnpm run envio:dev   # runs `envio dev` against existing services
-pnpm run envio:start # runs `envio start` against existing services
+pnpm run dev:indexer   # runs `envio dev` against existing services
+pnpm run start:indexer # runs `envio start` against existing services
 ```
 
 Direct runs require `ENVIO_PG_*`, `HASURA_GRAPHQL_ENDPOINT`,
@@ -106,8 +110,9 @@ already in Ethereum's total supply. Index one only if the protocol holds
 OHM there, so its treasury or liquidity deductions apply, and set its
 `ohmTotalSupplyEndBlock` to its start block so its supply never counts.
 
-Railway deploys reindex from the start block, so the blocks apply to
-every snapshot since. Matching them by timestamp keeps each chain's
+Existing indexed data needs an explicit operator reset and rebuild to apply
+this cutover to past snapshots; normal Railway deploys resume stored state.
+Matching the cutover blocks by timestamp keeps each chain's
 snapshots consistent whatever the snapshot schedule. The daily rollup
 uses each chain's last snapshot of the UTC day, and every chain's last
 snapshot on 2026-10-22 falls after the funding, so that day counts
@@ -118,9 +123,11 @@ cleanly.
 ```sh
 pnpm test           # vitest, all handler tests
 pnpm test -- --watch
-pnpm build          # tsc --noEmit
-pnpm check          # biome (lint + format)
-pnpm validate       # check + build + test (CI parity)
+pnpm typecheck      # whole-workspace tsc --noEmit, after codegen
+pnpm build          # client, API and publisher artifacts
+pnpm check          # read-only Biome + workflow lint
+pnpm lint           # safe fixes + formatting + workflow lint
+pnpm validate       # ordered source validation, including dependency audit
 ```
 
 Indexer tests use Envio's `createTestIndexer()` to drive handlers against

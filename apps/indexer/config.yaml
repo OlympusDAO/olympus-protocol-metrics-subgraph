@@ -289,7 +289,6 @@ chains:
         address:
           - "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" # USDC
           # WETH registered under Wrapped9 contract (Transfer + Deposit + Withdrawal).
-
       # Base predeploy WETH9 — wrap/unwrap via Deposit/Withdrawal, no Transfer.
       - name: Wrapped9
         address:
@@ -360,7 +359,6 @@ chains:
           - "0x04068da6c83afcfa0e13ba15a6696662335d5b75" # USDC
           - "0x74b23882a30290451a17c44f4f05243b6b58c76d" # WETH (Multichain-bridged)
           # WFTM registered under Wrapped9 contract (Transfer + Deposit + Withdrawal).
-
       # wFTM is the canonical Fantom WETH9 fork — wrap/unwrap via Deposit/Withdrawal.
       - name: Wrapped9
         address:
